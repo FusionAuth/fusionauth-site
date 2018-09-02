@@ -1,52 +1,10 @@
 /*
  * Copyright (c) 2016-2018, Inversoft Inc., All Rights Reserved
  */
-savantVersion = "1.0.0"
 
 project(group: "com.fusionauth", name: "fusionauth-site", version: "1.0.0", licenses: ["ApacheV2_0"]) {
   workflow {
     standard()
-  }
-
-  publishWorkflow {
-    subversion(repository: "http://svn.inversoft.org/savant")
-  }
-
-  publications {
-    main {
-      publication(name: "fusionauth-docs", type: "zip", file: "build/fusionauth-docs.zip")
-    }
-  }
-}
-
-// Plugins
-dependency = loadPlugin(id: "org.savantbuild.plugin:dependency:${savantVersion}")
-file = loadPlugin(id: "org.savantbuild.plugin:file:${savantVersion}")
-idea = loadPlugin(id: "org.savantbuild.plugin:idea:${savantVersion}")
-
-target(name: "clean", description: "Cleans build directory") {
-  file.prune(dir: "build")
-}
-
-// You'll need asciidoctor, haml, tilt and thread_safe, etc (all defined in the Gemfile
-// $ bundle install
-//
-// You'll also need an HTTP server
-// $ npm -g install http-server
-// $ http-server build
-target(name: "compile", description: "Compiles the Asciidoctor files") {
-  output.infoln("Compiling site using Jekyll")
-
-  if (!cleanExecute(['bundle', 'install'], new File('.'))) {
-    fail("Unable to run 'bundle install' for FusionAuth Site. Are you certain you have Jekyll installed?")
-  }
-
-  if (!cleanExecute(['bundle', 'exec', 'jekyll', 'build'], new File('.'))) {
-    fail("Unable to compile FusionAuth Site. Are you certain you have Jekyll installed?")
-  }
-
-  file.zip(file: "build/fusionauth-site.zip") {
-    fileSet(dir: "_site")
   }
 }
 
@@ -60,19 +18,10 @@ target(name: "optimize-images") {
       process.consumeProcessOutput(System.out, System.err)
       process.waitFor()
       if (process.exitValue() != 0) {
-        fail(
-            "Unable to optimize images, are you sure you have ImageOptim installed? \n https://imageoptim.com/command-line.html")
+        fail("Unable to optimize images, are you sure you have ImageOptim installed? \n https://imageoptim.com/command-line.html")
       }
     }
   }
-}
-
-target(name: "int", description: "Releases a local integration build of the project", dependsOn: ["clean", "compile"]) {
-  dependency.integrate()
-}
-
-target(name: "idea", description: "Updates the IntelliJ IDEA module file") {
-  idea.iml()
 }
 
 target(name: "push", description: "Push the zip to fusionauth.io") {
@@ -83,33 +32,27 @@ target(name: "push", description: "Push the zip to fusionauth.io") {
   proc.waitFor()
 
   if (!switches.has("force") && proc.exitValue() != 0) {
-    output.infoln(
-        "You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
+    output.infoln("You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
     exit 1
   }
 
   output.infoln("Deploying...")
-  proc = new ProcessBuilder("ssh", "-t", "fusionauth.io", "sudo -u www-data /var/git/fusionauth-docs/src/deploy.sh")
+  proc = new ProcessBuilder("ssh", "-t", "fusionauth.io", "sudo -u www-data /var/git/fusionauth-docs/deploy.sh")
       .inheritIO()
       .start()
   proc.waitFor()
-
-  return proc.exitValue()
 }
 
 target(name: "serve", description: "Serve the project") {
-  proc = new ProcessBuilder("bundle", "exec", "jekyll", "serve", "--incremental", "-o")
-      .inheritIO()
-      .start()
-  proc.waitFor()
+  if (!cleanExecute(['bundle', 'install'])) {
+    fail("Unable to run 'bundle install' for FusionAuth Site. Are you certain you have Jekyll installed?")
+  }
+
+  cleanExecute(["bundle", "exec", "jekyll", "serve", "--incremental", "-o"])
 }
 
-target(name: "release", description: "Releases a full version of the project", dependsOn: ["int"]) {
-}
-
-
-boolean cleanExecute(List<String> args, File dir) {
-  ProcessBuilder pb = new ProcessBuilder(args).inheritIO().directory(dir)
+boolean cleanExecute(List<String> args) {
+  ProcessBuilder pb = new ProcessBuilder(args).inheritIO().directory(new File('.'))
   clearEnvironment(pb)
 
   def process = pb.start()
