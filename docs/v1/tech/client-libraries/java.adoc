@@ -1,0 +1,112 @@
+---
+layout: doc
+title: Passport Java Client
+description: The Passport Java Client library allows you to call Passport from Java using a simple Java class
+---
+
+:sectnumlevels: 0
+
+== Java Client Library
+
+The Java client library allows you to integrate Passport with your Java application.
+
+Source Code:
+
+* https://github.com/FusionAuth/fusionauth-java-client
+
+Maven Dependency
+[source,xml]
+----
+<dependency>
+  <groupId>com.inversoft.passport</groupId>
+  <artifactId>passport-java-client</artifactId>
+  <version>1.17.0</version>
+</dependency>
+----
+When building your application, utilize the version that corresponds to the version of Passport your running. View all available versions on https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.inversoft.passport%22%20AND%20a%3A%22passport-java-client%22[https://search.maven.org]
+
+== Using the Passport and consuming the ClientResponse
+
+The Java client has two styles of use, the first return a `ClientResponse` object. This object contains everything that occurred while communicating with the Passport server. If the communication with the server encountered a network issue, the `ClientResponse#exception` might contain an `IOException`.
+
+Here is an example of using these methods to retrieve a User by their email address via the Passport User API:
+
+[source,java]
+----
+import com.inversoft.error.Errors;
+import com.inversoft.passport.client.PassportClient;
+import com.inversoft.passport.domain.User;
+import com.inversoft.passport.domain.api.UserResponse;
+import com.inversoft.rest.ClientResponse;
+
+public class Example {
+  private final String apiKey = "6b87a398-39f2-4692-927b-13188a81a9a3";
+
+  private final String passportURL = "http://localhost:9011";
+
+  private final PassportClient client;
+
+  public Example(String apiKey, String passportURL) {
+    client = new PassportClient(apiKey, passportURL);
+  }
+
+  public User getUserByEmail(String email) {
+    ClientResponse<UserResponse, Errors> response = client.retrieveUserByEmail("user@example.com");
+    if (response.wasSuccessful()) {
+      User user = response.successResponse.user;
+      return user;
+    } else if (response.errorResponse != null) {
+      // Error Handling
+      Errors errors = response.errorResponse;
+    } else if (response.exception != null) {
+      // Exception Handling
+      Exception exception = response.exception;
+    }
+  }
+}
+----
+
+== Using the Lambda Delegate
+
+The Java Client may also be used along with our Lambda delegate that provides exception handling and allows you to write code assuming a happy path.
+Here is the same example from above using the lambda delegate:
+
+[source,java]
+----
+import com.inversoft.error.Errors;
+import com.inversoft.passport.client.LambdaDelegate;
+import com.inversoft.passport.client.PassportClient;
+import com.inversoft.passport.domain.User;
+import com.inversoft.rest.ClientResponse;
+
+public class Example {
+  private final String apiKey = "6b87a398-39f2-4692-927b-13188a81a9a3";
+
+  private final String passportURL = "http://localhost:9011";
+
+  private final PassportClient client;
+
+  private final LambdaDelegate delegate;
+
+  public Example(String apiKey, String passportURL) {
+    this.client = new PassportClient(apiKey, passportURL);
+    this.delegate = new LambdaDelegate(this.client, (r) -> r.successResponse, this::handleError);
+  }
+
+  public User getUserByEmail(String email) {
+    return delegate.execute(c -> c.retrieveUserByEmail("user@example.com")).user;
+  }
+
+  private <T, U> void handleError(ClientResponse<T, U> clientResponse) {
+    if (clientResponse.exception != null) {
+      // Handle the exception
+      ...
+    } else if (clientResponse.errorResponse != null && clientResponse.errorResponse instanceof Errors) {
+      // Handle errors
+      ...
+    }
+  }
+}
+----
+
+As you can see, using the lambda delegate requires less code to handle the success response and the error handling code can be re-used.

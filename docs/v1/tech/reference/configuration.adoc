@@ -1,0 +1,137 @@
+---
+layout: doc
+title: Configuration Reference
+description: A complete list of the configuration options in the fusionauth.properties file
+---
+
+:sectnumlevels: 0
+== Configuration Reference
+
+Much of the FusionAuth configuration is performed in the UI. Some additional advanced configuration is provided through a configuration file.
+You may modify this file in order to change your configuration, Passport will need to be restarted to pick up changes to this configuration.
+Assuming you installed in the default locations, the configuration file may be found in the following directory. If you have installed in an
+alternate location the path to this file will be different.
+
+[.command-line]
+.Linux and Mac OS X
+----
+/usr/local/fusionauth/config/fusionauth.properties
+----
+
+[.command-line]
+.Windows
+----
+C:\fusionauth\config\fusionauth.properties
+----
+
+This table contains all of the configuration options available in the `fusionauth.properties` file.
+
+[cols="3a,7a"]
+[.api]
+.Properties
+|===
+|[field]#database.url# [type]#[String]#
+|The JDBC connection URL to your database. The following are example values.
+
+- Example MySQL URL: `database.url=jdbc:mysql://localhost:3306/fusionauth?serverTimezone=UTC`
+- Example PostgreSQL URL: `database.url=jdbc:postgresql://localhost:5432/fusionauth`
+
+If you are using MySQL, you must include the `serverTimezone=UTC` parameter in the URL. The `?` character is the same as a standard URL parameter, so if you have additional parameters, you should only have a single `?` and parameters should be separated by `&`.
+
+|[field]#database.username# [type]#[String]#
+|The username used to connect to the database.
+
+|[field]#database.password# [type]#[String]#
+|The password used to connect to the database.
+
+|[field]#database.mysql.enforce-utf8mb4# [type]#[String]# [default]#defaults to `true`#
+|When set to `true` and using MySQL, full 4 byte unique configuration is enforced at startup.
+
+If this validation is not desired or not it is not possible to modify your MySQL configuration so satisfy the validation, disable this check
+by setting this value to `false`.
+
+|[field]#fusionauth-search.transport-port# [type]#[Integer]# [default]#defaults to `9020`#
+|The port that the search engine will use for optimized TCP communications instead of HTTP communications. This port is used internally by the search engine to communicate between clustered nodes.
+
+|[field]#fusionauth-search.http-port# [type]#[Integer]# [default]#defaults to `9021`#
+|The port number that the Search Engine will use to accept HTTP requests. This value is also utilized by Passport Backend to make HTTP
+requests to the FusionAuth Search.
+
+|[field]#fusionauth-search.memory# [type]#[String (Memory)]# [default]#defaults to `256M`#
+|
+include::docs/v1/tech/reference/_property-memory.adoc[]
+
+|[field]#fusionauth-search.additional-java-args# [type]#[String]#
+|
+include::docs/v1/tech/reference/_property-additional-jvm-args.adoc[]
+
+|[field]#fusionauth-search.hosts# [type]#[String]# [default]#defaults to `\_local_`#
+|This parameter indicates which address or network interfaces to bind during service startup. The default value will cause the service to bind  any
+loopback address on the system such as `127.0.0.1`.
+
+This default value is sufficient for running Passport Backend and the Search Engine on the same server. If you run the Search Engine on a separate system than
+Passport Backend you will need to modify this value. You may specify a single hostname or IP address or one of the special values in any combination.
+
+Special values include:
+
+* `\_[networkInterface]_` - Addresses of a network interface, for example `\_en0_`
+* `\_local_` - Any loopback address on the system, for example `127.0.0.1`
+* `\_site_` - Any site-local addresses on the system, for example `192.168.0.1`.
+* `\_global_` - Any globally-scoped addresses on the system, for example `8.8.8.8`.
+
+The following is an example to bind to `localhost` as well as any site local addresses on the system such at `192.168.1.42`.
+
+[block-quote]#`fusionauth-search.hosts=\_local_,\_site_`#
+
+|[field]#fusionauth-search.servers# [type]#[String]# [default]#defaults to `localhost:9020`#
+|A comma separated list of stand-alone search engine servers that will be used by Passport. The port specified on the server should be the
+Search Engine Transport port, not the HTTP port.
+
+The following is an example of a configuration for two separate search engines, one running on localhost and the other is on remote system.
+
+[block-quote]#`fusionauth-search.servers=localhost:9020,search2.example.com:9020`#
+
+This configuration value is used by the FusionAuth Search and the Passport Backend services. Even when running Passport Backend without
+Passport Search Engine on the same server this configuration value will need to be provided.
+
+|[field]#fusionauth-search.data-directory# [type]#[String (Path)]#
+|The location on disk where FusionAuth Search will store its data. This value is defaulted if not specified and generally should not be modified.
+
+|[field]#fusionauth-app.public-url# [type]#[String]#
+|The Passport backend URL that is used to communicate with other Passport nodes. This value is defaulted if not specified and generally should
+not be modified. Passport will attempt to use a localhost address or a site local if available. Unless you have multiple Passport nodes the
+generated value should always work. You may need to manually specify this value if you have multiple Passport nodes and the only way the nodes
+can communicate is on a public network.
+
+|[field]#fusionauth-app.search-engine-servers# [type]#[String]# [default]#defaults to `http://localhost:9021`#
+|A comma separated list of URLS that will be used by Passport backend to connect to the search engine. The port specified on the URL should
+be the Search Engine HTTP port. (see `fusionauth-search.http-port`) It is not recommended to ever run the FusionAuth Search open
+to the public internet.
+
+Generally this should be the same list provided by `fusionauth-search.servers` except this list will be a list of URLs and this value
+is utilized by the Passport backend webservice. If this property is not defined it will be generated based upon the value of `fusionauth-search.servers`.
+
+The following is an example of a configuration for two separate search engines, one running on localhost and the other is on a remote system.
+
+[block-quote]#`fusionauth-app.search-engine-servers=http://localhost:9021,http://search2.example.com:9021`#
+
+|[field]#fusionauth-app.management-port# [type]#[Integer]# [default]#defaults to `9010`#
+|The port number used for internal Tomcat administration.
+
+|[field]#fusionauth-app.http-port# [type]#[Integer]# [default]#defaults to `9011`#
+|The port number that Passport will use to accept HTTP requests.
+
+|[field]#fusionauth-app.https-port# [type]#[Integer]# [default]#defaults to `9013`#
+|The port number that Passport will use to accept HTTPS requests.
+
+|[field]#fusionauth-app.ajp-port# [type]#[Integer]# [default]#defaults to `9019`#
+|The port number that Passport will use to accept AJP requests.
+
+|[field]#fusionauth-app.memory# [type]#[String]# [default]#defaults to `256M`#
+|
+include::docs/v1/tech/reference/_property-memory.adoc[]
+
+|[field]#fusionauth-app.additional-java-args# [type]#[String]#
+|
+include::docs/v1/tech/reference/_property-additional-jvm-args.adoc[]
+|===

@@ -1,0 +1,118 @@
+---
+layout: doc
+title: Upgrades and Patches
+description: Learn how to upgrade and patch Passport using our bundles and migration scripts
+---
+
+== FusionAuth Updates and Patches
+
+Periodically, Inversoft releases updates for the Passport. You might also require a patch if you are running into problems and have contacted Inversoft Support for assistance. In these cases, you will need to update the application.
+
+To download or check on the latest updates, please visit your https://www.inversoft.com/account/[Inversoft Account] and find the Download link for your license.
+
+=== Linux
+
+Updating your application is easy if you installed using the RPM or Debian packages. All you need to do is to issue an update command to the dpkg or rpm program and specify the new package file. Here is an example:
+
+[NOTE]
+====
+Running the update script will shut down the Passport service if they have not yet been stopped The service will need to be restarted after the update is finished.
+====
+
+[source,title=Shutdown FusionAuth]
+----
+$ sudo service fusionauth-app stop
+$ sudo service fusionauth-search stop
+----
+
+[source,shell,title=Upgrade FusionAuth using Debian bundles]
+----
+$ sudo dpkg -i fusionauth-search-<version>.deb
+$ sudo dpkg -i fusionauth-app-<version>.deb
+----
+
+[source,shell,title=Upgrade FusionAuth using RPM bundles]
+----
+$ sudo rpm -U fusionauth-search-<version>.rpm
+$ sudo rpm -U fusionauth-app-<version>.rpm
+----
+
+[source,title=Start FusionAuth]
+----
+$ sudo service fusionauth-search start
+$ sudo service fusionauth-app start
+----
+
+=== Windows
+
+For this example, we'll assume you have previously installed Passport in `C:\inversoft`. this will be referred to `FUSIONAUTH_HOME`.
+
+[source,title=Example filesystem layout]
+----
+C:\fusionauth\config
+C:\fusionauth\config\keystore
+C:\fusionauth\config\fusionauth.properties
+C:\fusionauth\passport-backend\
+C:\fusionauth\fusionauth-search\
+----
+
+[source,title=Shutdown and Uninstall FusionAuth]
+----
+# Stop Services
+C:\> net stop FusionAuthApp
+C:\> net stop FusionAuthSearch
+
+# Uninstall Services
+C:\fusionauth\fusionauth-app\apache-tomcat\bin>FusionAuthApp.exe /uninstall
+C:\fusionauth\fusionauth-search\elasticsearch\bin>FusionAuthSearch.exe /uninstall
+
+# Delete or move existing installation
+C:\fusionauth> move fusionauth-app passport-app-old
+C:\fusionauth> move fusionauth-search fusionauth-search-old
+----
+
+Extract the new zips and place in `FUSIONAUTH_HOME`.
+
+[source,title=Install and Start FusionAuth]
+----
+# Install Windows Services
+C:\fusionauth\fusionauth-app\apache-tomcat\bin>FusionAuthApp.exe /install
+C:\fusionauth\fusionauth-search\elasticsearch\bin>FusionAuthSearch.exe /install
+
+# Startup Services
+C:\> net start FusionAuthSearch
+C:\> net start FusionAuthApp
+----
+
+=== Database
+
+[NOTE]
+====
+In most cases, you will not need to upgrade you database manually using the information below. Passport ships with a system called Maintenance
+ Mode. When you restart Passport after installing a new bundle using the steps above, Passport will automatically upgrade your database.
+
+You should always backup your database prior to using Maintenance Mode.
+====
+
+Depending on your current version and the new version you will be updating to you might need to execute one or more SQL scripts to update your
+ database. These scripts are located in the migrations folder inside the Database Schema ZIP file. This file can be downloaded by logging into your account at www.inversoft.com.
+
+[WARNING]
+====
+When upgrading your database from a previous version, be sure to only run the scripts located in the `migrations` folder, the base files
+ `mysql.sql` and `postgresql.sql` should only be used during a clean installation when no database schema is present.
+====
+
+Inside of the database schema zip file, you will find the following Passport migrations, run in this order, starting with the first migration that is
+greater than the version you are coming from, and ending with the version that is less than or equal to the target version.
+
+[source]
+----
+fusionauth-database-schema
+  |
+  migrations
+    |
+    mysql | postgresql
+      |
+      |- 1.0.0.sql
+----

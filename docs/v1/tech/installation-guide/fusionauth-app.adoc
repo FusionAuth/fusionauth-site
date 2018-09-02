@@ -1,0 +1,236 @@
+---
+layout: doc
+title: Backend Installation
+description: Install the Passport App bundle.
+---
+
+== Overview
+
+This guide will assist you with installing FusionAuth App on your own server running Linux, Mac OS, or Windows. The FusionAuth App
+bundle provides access to the API and the web based user interface.
+
+== Download the Packages
+
+Log into your https://www.inversoft.com/account[Inversoft account] and click Download. Find the FusionAuth App package for your target platform.
+
+== Red Hat
+
+To install on a Red Hat based system, use the RPM bundle. Execute this command to install the FusionAuth App RPM (replace `<version>` with
+ the correct version number):
+
+[source,shell]
+----
+$ sudo rpm -i passport-backend<version>.rpm
+----
+
+== Debian
+
+To install on a Debian based system, use the DEB bundle. Execute this command to install the FusionAuth App DEB (replace `<version>` with
+ the correct version number):
+
+[source,shell]
+----
+$ sudo dpkg -i passport-backend<version>.deb
+----
+
+== Mac OS X
+
+To install on Mac OS use the ZIP bundle. Extract the FusionAuth App ZIP file anywhere on the file system. Remember where you extract the file.
+ This location will be referred to as `FUSIONAUTH_HOME`. We suggest extracting this file to a directory such as `/usr/local/fusionauth`.
+
+Once the zip bundle has been extracted, the directory structure should look similar to this. If you installed somewhere other the default `FUSIONAUTH_HOME`,
+ your directory structure will be different, this is only for shown as an example.
+
+[source,shell]
+----
+/usr/local/fusionauth/config
+/usr/local/fusionauth/config/keystore
+/usr/local/fusionauth/config/fusionauth.properties
+/usr/local/fusionauth/fusionauth-app
+----
+
+== Windows
+
+To install on Windows use the ZIP bundle. Extract the FusionAuth App ZIP file anywhere on the file system. Remember where you extract
+ the file. This location will be referred to as `FUSIONAUTH_HOME`. We suggest extracting this file to a directory such as `C:\inversoft` on Windows.
+
+Once the zip bundle has been extracted, the directory structure should look similar to this. If you installed somewhere other the default `FUSIONAUTH_HOME`,
+ your directory structure will be different, this is only for shown as an example.
+
+[source]
+----
+C:\fusionauth\config
+C:\fusionauth\config\keystore
+C:\fusionauth\config\fusionauth.properties
+C:\fusionauth\passport-backend\
+----
+
+Next, install the Windows service by changing to the directory designated as `FUSIONAUTH_HOME` and then running the install command.
+
+[source]
+----
+C:\> cd C:\fusionauth\passport-backend\apache-tomcat\bin
+C:\fusionauth\passport-backend\apache-tomcat\bin> PassportBackend.exe /install
+----
+
+== Start FusionAuth App
+
+Next, you need to start FusionAuth App so that you can enter Maintenance Mode and allow Passport to create the database. Use the instructions
+ below to start Passport. FusionAuth App depends on the Search Engine, the Search Engine must be started first.
+
+[NOTE]
+====
+Maintenance Mode makes installation simple. If it is not possible for you to use maintenance mode, you can edit the Passport configuration
+ files and install the database schema via the command-line using the <<advanced-installation,Advanced Installation>> instructions below.
+
+If you do not plan to use Maintenance Mode to configure Passport, do not start Passport at this point. Instead, skip the to <<advanced-installation,Advanced Installation>>
+ section and then return to this section after you have configured Passport and the database via the command-line.
+====
+
+
+[source,shell]
+.Linux (RPM or DEB package)
+----
+$ sudo service passport-backend start
+----
+
+[source,shell]
+.Mac OS X (ZIP package)
+----
+$ <FUSIONAUTH_HOME>/fusionauth-app/apache-tomcat/bin/startup.sh
+----
+
+[source]
+.Windows (ZIP package)
+----
+C:\fusionauth\passport-backend\apache-tomcat\bin>startup.bat
+----
+
+[source]
+.Windows Service
+----
+C:\> net start PassportBackend
+----
+
+== Maintenance Mode
+
+You will access FusionAuth App's Maintenance Mode setup via the browser. If you installed FusionAuth App on your local machine, you'll
+access this interface by opening http://localhost:9011 in your browser. If Passport is running on a remote server, change the server
+name in the URL to match your server's name.
+
+=== Provide your License Id
+
+The first step of Maintenance Mode will prompt you to enter your license Id. You can retrieve your license Id from the Inversoft website
+by logging into your account here: https://www.inversoft.com/account/
+
+image::maintenance-mode-license.png[Maintenance Mode Enter License Id,width=900,role=shadowed]
+
+=== Database Configuration
+
+The next step will be to configure the database connection to allow Passport to configure the database.
+
+To complete this step you will need to confirm the database type, host, port and name. The connection type defaults to `MySQL` with the default
+MySQL port of `3306`. If you are connecting to a PostgreSQL database the default port is `5432`, your configuration may be different.
+
+In the Super User credentials section you will need to supply Passport with a username and password to the database so that it may create
+a new database and configure the Passport schema. The provided credentials must have adequate authority to complete successfully. These credentials
+are not persisted and only utilized to complete maintenance mode.
+
+The final section labeled Passport credentials will be used to define a new database user to own the Passport schema and connect to the database
+when Passport starts up. While default values for this section have been provided, at minimum the password field should be modified to utilize
+a password of higher entropy. These credentials will be saved to the `fusionauth.properties` configuration file.
+
+Click the submit button once you have completed this form and if the provided credentials and database connection information was correct
+you should see an in progress panel indicating that Passport is starting up. Once this step completes Passport will be running and ready for you to
+complete the initial configuration using the link:../tutorials/setup-wizard[Setup Wizard].
+
+image::maintenance-mode-database.png[Maintenance Mode Database Configuration,width=900,role=shadowed]
+
+== Advanced Installation
+
+These instructions will assist you in editing the Passport Backend configuration file and installing the database schema via the command-line. If you used Maintenance Mode to configure Passport Backend, you can skip this section.
+
+=== Database Schema
+
+[WARNING]
+====
+**Security**
+
+By default, the application is configured to connect to the database named passport on localhost with the user name passport and the password passport. For development and testing, you can use these defaults; however, we recommend a more secure password for production systems.
+====
+
+In the following examples, `<root_user>` is the name of the root user for your database. The `<root_user>` must be either the root user or a user that has privileges to create databases. For MySQL, this is generally a user named `root`, on PostgreSQL, this is generally a user named `postgres`, your configuration may vary. Run the following SQL commands to configure the database for use by Passport. Additionall, `<ordinary_user>` and `<ordinary_password>` are non-superuser accounts that are used to connect to the Passport database.
+
+[source,shell]
+.MySQL
+----
+# Create the passport database, replace <root_user> a valid superuser.
+mysql --default-character-set=utf8 -u<root_user> -e "create database passport character set = 'utf8mb4' collate = 'utf8mb4_bin';"
+
+# Create the non-superuser account in the database, replace <root_user> a valid superuser, <ordinary_user> a valid non-superuser and <ordinary_password> with a secure password.
+mysql --default-character-set=utf8mb4 -u<root_user> -e "create user <ordinary_user> identified by '<ordinary_password>'"
+
+# Grant ordinary user all authority to passport database, replace <root_user> a valid superuser and <ordinary_user> with your user from above.
+mysql --default-character-set=utf8mb4 -u<root_user> -e "grant all on passport.* to '<ordinary_user>'@'localhost'" passport
+
+# Create Passport schema, run this command from the directory where you have extracted the Passport Database Schema zip, replace <ordinary_user> and <ordinary_password> with the values from above.
+mysql --default-character-set=utf8mb4 -u<ordinary_user> -p<ordinary_password> passport < mysql.sql
+----
+
+[source,shell]
+.PostgreSQL
+----
+# Create the passport database, replace <root_user> a valid superuser.
+psql -U<root_user> -c "CREATE DATABASE passport ENCODING 'UTF-8' LC_CTYPE 'en_US.UTF-8' LC_COLLATE 'en_US.UTF-8' TEMPLATE template0"
+
+# Note, if installing on Windows, the Encoding values are different, replace the previous command with this version.
+psql -U<root_user> -c "CREATE DATABASE passport ENCODING 'UTF-8' LC_CTYPE 'English_United States' LC_COLLATE 'English_United States' TEMPLATE template0;"
+
+# Create the non-superuser account in the database, replace <root_user> a valid superuser, <ordinary_user> a valid non-superuser and <ordinary_password> with a secure password.
+psql -U<root_user> -c "CREATE ROLE <ordinary_user> WITH LOGIN PASSWORD '<ordinary_password>';"
+
+# Grant ordinary user all authority to passport database, replace <root_user> a valid superuser and <ordinary_user> with your user from above.
+psql -U<root_user> -c "GRANT ALL PRIVILEGES ON DATABASE passport TO <ordinary_user>; ALTER DATABASE passport OWNER TO <ordinary_user>;"
+
+# Create Passport schema, run this command from the directory where you have extracted the Passport Database Schema zip, replace <ordinary_user> with the value from above.
+psql -U<ordinary_user> passport < postgresql.sql
+----
+
+=== Configuration
+
+Before starting Passport Backend for the first time, you'll need to add your license Id and verify your database connection in the the Passport configuration. The name of this file is `fusionauth.properties`.
+
+The configuration file may be found in the following directory, assuming you installed in the default locations. If you have installed in an alternate location, the path to this file will be different.
+
+Windows::
+  `C:\fusionauth\config`
+
+Mac OS X or Linux::
+  `/usr/local/fusionauth/config`
+
+For more information about the other configuration options found in this file, see the link:../reference/configuration[Configuration Reference] section.
+
+Find the license Id field at the top of this configuration file and enter your license Id. You can find your License Id by logging into your account at https://www.inversoft.com/account/.
+
+[source,ini]
+.License Id
+----
+license.id=
+----
+
+Find the default database JDBC url, username and password values, verify this information is correct. The default JDBC url is configured for MySQL, if you're using PostgreSQL you'll need to update the URL. See the `database.url` property documentation in link:../reference/configuration[Configuration Reference] for more information.
+
+[NOTE]
+====
+If you are using MySQL, your `database.url` property must have a parameter at the end like this: `?serverTimezone=UTC`. The `?` character is the same as a standard URL parameter, so if you have additional parameters, you should only have a single `?` and parameters should be separated by `&`.
+====
+
+[source,ini]
+.Database Configuration
+----
+database.url=jdbc:mysql://localhost:3306/passport?serverTimezone=UTC
+database.username=passport
+database.password=passport
+----
+
+Passport Backend should now be configured, the database should be created and everything should be ready to run. You can start Passport Backend using the instructions in the <<Start Passport Backend>> section above.

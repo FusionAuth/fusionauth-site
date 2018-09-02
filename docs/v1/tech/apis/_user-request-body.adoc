@@ -1,0 +1,152 @@
+You must specify either the **email** or the **username** or both for the User. Either of these values may be used to uniquely identify the User and may be used to authenticate the User. These fields are marked as optional below, but you must specify at least one of them.
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+ifeval::["{http_method}" == "POST"]
+|[field]#sendSetPasswordEmail# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|Indicates to Passport to send the User an email asking them to set their password. The Email Template that is used is configured in the System
+Configuration setting for **Set Password Email Template**.
+
+
+[since]#Available Since 1.21.1#
+If you have also enabled email verification and do not select to skip verification using the `skipVerification` parameter, only the setup password email will be
+sent to the user. Setting up the password using the email sent during this user create operation will implicitly verify the User's email if it is not already verified.
+endif::[]
+
+|[field]#skipVerification# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|Indicates to Passport that it should skip email verification even if it is enabled. This is useful for creating admin or internal User accounts.
+
+|[field]#user.birthDate# [type]#[String]# [optional]#Optional#
+|An `ISO-8601` formatted date of the User's birthdate such as `YYYY-MM-DD`.
+
+|[field]#user.data# [type]#[Object]# [optional]#Optional#
+|Object that holds **attributes** and **preferredLanguage**.
+
+|[field]#user.data.attributes# [type]#[Object]# [optional]#Optional#
+|An object that can hold any information about a User that should be persisted.
+
+|[field]#user.data.preferredLanguages# [type]#[Array<String>]# [optional]#Optional#
+|An array of locale strings that give, in order, the User's preferred languages. These are important for email templates and other localizable text.
+See link:../reference/data-types#locales[Locales].
+
+|[field]#user.email# [type]#[String]# [optional]#Optional#
+|The User's email address. An email address is a unique in Passport and stored in lower case.
+
+If email is not provided, then the `username` will be required.
+
+|[field]#user.encryptionScheme# [type]#[String]# [optional]#Optional# [default]#defaults to `salted-pbkdf2-hmac-sha256`#
+|The method for encrypting the User's password. The following encryptors are provided with Passport:
+
+* `link:../reference/password-encryptors#salted-md5[salted-md5]`
+* `link:../reference/password-encryptors#salted-sha-256[salted-sha256]`
+* `link:../reference/password-encryptors#salted-hmac-sha-256[salted-hmac-sha256]`
+* `link:../reference/password-encryptors#salted-pbkdf2-hmac-sha-256[salted-pbkdf2-hmac-sha256]`
+* `link:../reference/password-encryptors#salted-bcrypt[bcrypt]`
+
+ifeval::["{http_method}" == "PUT"]
+This field is ignored unless the `password` field is also provided.
+endif::[]
+
+You can also create your own password encryptor. See the link:../plugins/password-encryptors[Password Encryptors] section for more information.
+
+|[field]#user.expiry# [type]#[Long]# [optional]#Optional#
+|The expiration link:../reference/data-types#instants[instant] of the User's account. An expired user is not permitted to login.
+
+|[field]#user.factor# [type]#[String]# [optional]#Optional#
+|The factor used by the password encryption scheme. If not provided, the `PasswordEncryptor` provides a default value. Generally this will be used as an iteration count to generate the hash. The actual use of this value is up to the `PasswordEncryptor` implementation.
+
+|[field]#user.firstName# [type]#[String]# [optional]#Optional#
+|The first name of the User.
+
+|[field]#user.fullName# [type]#[String]# [optional]#Optional#
+|The User's full name (as a separate field that is not calculated from **firstName** and **lastName**)
+
+|[field]#user.imageUrl# [type]#[String]# [optional]#Optional#
+|The URL that points to an image file that is the User's profile image.
+
+|[field]#user.lastName# [type]#[String]# [optional]#Optional#
+|The User's last name.
+
+|[field]#user.middleName# [type]#[String]# [optional]#Optional#
+|The User's middle name.
+
+|[field]#user.mobilePhone# [type]#[String]# [optional]#Optional#
+|The User's mobile phone number. This is useful is you will be sending push notifications or SMS messages to the User.
+
+|[field]#user.parentId# [type]#[UUID]# [optional]#Optional#
+|The Id of this User's parent. This field forms a parent child relationship that is useful for COPPA and other parental account management features.
+
+|[field]#user.parentalConsentType# [type]#[String]# [optional]#Optional#
+|
+include::_parental_consent_type.adoc[]
+
+|[field]#user.password# [type]#[String]# [optional]#Optional#
+|The User's password.
+
+|[field]#user.passwordChangeRequired# [type]#[Boolean]# [optional]#Optional#
+|Indicates that the User's password needs to be changed during their next login attempt.
+
+|[field]#user.timezone# [type]#[String]# [optional]#Optional#
+|The User's preferred timezone. The format is not enforced, however it is recommended to use a timezone in the TZ format such as
+
+[block-quote]#`America/Denver` or `US/Mountain`#
+
+|[field]#users.twoFactorDelivery# [type]#[String]# [optional]#Optional# [default]#defaults to `None`#
+|The User's preferred delivery for verification codes during a two factor login request.
+
+The possible values are:
+
+* `None`
+* `TextMessage`
+
+When using `TextMessage` the User will also need a valid `mobilePhone`.
+
+ifeval::["{http_method}" == "PUT"]
+If Two Factor authentication is already enabled for this user, the delivery may not be modified. In order to change the delivery type you
+must first disable Two Factor authentication and re-enable with a new delivery type.
+endif::[]
+
+|[field]#user.twoFactorEnabled# [type]#[Boolean]# [optional]#Optional#
+|Determines if the User has two factor authentication enabled for their account or not.
+
+ifeval::["{http_method}" == "PUT"]
+If Two Factor authentication is already enabled for this user disabling Two Factor authentication will reset the delivery type and secret.
+endif::[]
+
+See the link:../apis/two-factor#enable-two-factor[Enable Two Factor] and link:../apis/two-factor#disable-two-factor[Disable Two Factor] APIs
+as an alternative to performing this action using the User API.
+
+|[field]#user.twoFactorSecret# [type]#[String]# [optional]#Optional#
+|The secret used to generate Two Factor verification codes.
+
+You may optionally use value provided in the `secret` field returned by the link:../apis/two-factor#generate-a-secret[Two Factor Secret] API
+instead of generating this value yourself.
+
+Unless you are using `TextMessage` as your delivery type, ensure you are able to share the secret with the User before enabling Two Factor authentication.
+Beginning in version 1.17.0, if you do create a User with `TextMessage` set as the `twoFactorDelivery` type and you omit this value, the secret will
+be generated for you. The secret can be generated because it is not necessary to share the secret with the User for this delivery method.
+
+When using `None` as the `twoFactorDelivery` this value will be required.
+
+ifeval::["{http_method}" == "PUT"]
+If Two Factor authentication is already enabled for this user, the secret may not be modified. In order to change the secret you
+must first disable Two Factor authentication and re-enable with a new secret.
+endif::[]
+
+|[field]#user.username# [type]#[String]# [optional]#Optional#
+|The username of the User. The username is stored and returned as a case sensitive value, however a username is considered unique regardless of the case. `bob` is considered equal to `BoB` so either version of this username can be used whenever providing it as input to an API.
+
+If username is not provided, then the `email` will be required.
+
+|[field]#user.usernameStatus# [type]#[String]# [optional]#Optional#
+|
+include::_moderation_status_request.adoc[]
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::../../../src/json/users/request.json[]
+----

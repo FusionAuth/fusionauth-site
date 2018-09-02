@@ -1,0 +1,118 @@
+-# Modified for Inversoft:
+-#    I changed the Document title to use a <header> element instead of a <div>
+-#    I changed the TOC to be outside of the <header> and to be a <nav> instead of a <div>
+-#    I changed the footer to be a <footer> instead of a <div>
+-#    Added Prime.js and normalize.css to the <head>
+!!! 5
+%html{:lang=>(attr :lang, 'en')}
+  %head
+    %meta(charset="#{attr :encoding, 'UTF-8'}")
+    /[if IE]
+      %meta(http-equiv="X-UA-Compatible" content="IE=edge")
+    %meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    %meta(name='apple-mobile-web-app-capable' content='yes')
+    %meta(name='apple-mobile-web-app-status-bar-style' content='black')
+    - { 'app-name'=>'application-name', 'description'=>nil, 'keywords'=>nil, 'authors'=>'author', 'copyright'=>nil }.each do |key, meta|
+      - if attr? key
+        %meta{:name=>(meta || key), :content=>(attr key)}
+    %title=((doctitle :sanitize => true) || (attr 'untitled-label'))
+    %link(rel='stylesheet'){:href=>'/docs/css/normalize.css'}
+    %link(rel='stylesheet'){:href=>'/docs/css/Widgets.SideMenu.css'}
+    -#%link(rel='stylesheet'){:href=>'https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800,300,700italic,600italic,400italic,300italic,800italic'}
+    %link(rel='stylesheet'){:href=>'https://fonts.googleapis.com/css?family=Source+Code+Pro:500'}
+    - if attr? :icons, 'font'
+      - if !(attr 'iconfont-remote', '').nil?
+        %link(rel='stylesheet'){:href=>(attr 'iconfont-cdn', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css')}
+      - else
+        %link(rel='stylesheet'){:href=>normalize_web_path("#{attr 'iconfont-name', 'font-awesome'}.css", (attr :stylesdir, ''))}
+    %link(rel='stylesheet'){:href=>'/docs/css/docs.css'}
+    %script(type='text/javascript' src='/docs/js/prime-min-0.35.0.js')
+    - case attr 'source-highlighter'
+      - when 'coderay'
+        - if (attr 'coderay-css', 'class') == 'class'
+          - if @safe >= Asciidoctor::SafeMode::SECURE || (attr? :linkcss)
+            %link(rel='stylesheet'){:href=>normalize_web_path('asciidoctor-coderay.css', (attr :stylesdir, ''))}
+          - else
+            %style=Asciidoctor::Stylesheets.instance.coderay_stylesheet_data
+      - when 'pygments'
+        - if (attr 'pygments-css', 'class') == 'class'
+          - if @safe >= Asciidoctor::SafeMode::SECURE || (attr? :linkcss)
+            %link(rel='stylesheet'){:href=>normalize_web_path('asciidoctor-pygments.css', (attr :stylesdir, ''))}
+          - else
+            %style=Asciidoctor::Stylesheets.instance.pygments_stylesheet_data(attr 'pygments-style')
+      - when 'highlightjs'
+        %link(rel='stylesheet' href="#{attr :highlightjsdir, 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4'}/styles/#{attr 'highlightjs-theme', 'googlecode'}.min.css")
+        %script(src="#{attr :highlightjsdir, 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4'}/highlight.min.js")
+        %script hljs.initHighlightingOnLoad()
+      - when 'prettify'
+        %link(rel='stylesheet' href="#{attr :prettifydir, 'https://cdnjs.cloudflare.com/ajax/libs/prettify/r298'}/#{attr 'prettify-theme', 'prettify'}.min.css")
+        %script(src="#{attr :prettifydir, 'https://cdnjs.cloudflare.com/ajax/libs/prettify/r298'}/prettify.min.js")
+        %script document.addEventListener('DOMContentLoaded', prettyPrint)
+    - unless (docinfo_content = docinfo).empty?
+      =docinfo_content
+    - if attr? :toc
+      %script(type='text/javascript')
+        :plain
+          Prime.Document.onReady(function() {
+            new Prime.Widgets.SideMenu(Prime.Document.queryFirst('.side-menu-button'), Prime.Document.queryById('doc-body'))
+                .copyFromElement(Prime.Document.queryById('doc-toc'));
+          });
+  %body
+    #doc-body
+      - unless noheader
+        -# AsciiDoc leaves an empty header div even if there's no doctitle
+        %header
+          - if attr? :toc
+            %a.side-menu-button(href='#')
+              %i(class='fa fa-bars')
+          - if has_header?
+            - unless notitle
+              %h1=@header.title
+            -#- if (attr? :author) || (attr? :revnumber) || (attr? :revdate) || (attr? :revremark)
+            -#  .details
+            -#    - if attr? :author
+            -#      %span#author.author=attr :author
+            -#      %br
+            -#      - if attr? :email
+            -#        %span#email.email=sub_macros(attr :email)
+            -#        %br
+            -#      - if (authorcount = (attr :authorcount).to_i) > 1
+            -#        - (2..authorcount).each do |idx|
+            -#          %span{:id=>"author#{idx}", :class=>"author"}=(attr "author_#{idx}")
+            -#          %br
+            -#          - if attr? "email_#{idx}"
+            -#            %span{:id=>"email#{idx}", :class=>"email"}= sub_macros(attr "email_#{idx}")
+            -#    - if attr? :revnumber
+            -#      %span#revnumber #{((attr 'version-label') || '').downcase} #{attr :revnumber}#{',' if (attr? :revdate)}
+            -#    - if attr? :revdate
+            -#      %span#revdate=attr :revdate
+            -#    - if attr? :revremark
+            -#      %br
+            -#      %span#revremark=attr :revremark
+      #doc-main
+        - if (attr? :toc) && (attr? 'toc-placement', 'auto')
+          %nav#doc-toc
+            %h2=attr 'toc-title'
+            %a.doc-home-button{:href=>'https://www.inversoft.com'} Inversoft Home
+            %a.doc-home-button{:href=>(attr 'doc-root')} Documentation Home
+            =converter.convert self, 'outline'
+        #doc-content
+          =content
+        - unless !footnotes? || attr?(:nofootnotes)
+          #footnotes
+            %hr
+            - footnotes.each do |fn|
+              .footnote{:id=>['_footnote', fn.index]}
+                = succeed ". #{fn.text}" do
+                  %a(href="#_footnoteref_#{fn.index}")=fn.index
+      - unless nofooter
+        %footer
+          %p
+            - if attr? :revnumber
+              = precede %(#{attr 'version-label'} #{attr :revnumber}) do
+                - if attr? 'last-update-label'
+                  %br
+            - if attr? 'last-update-label'
+              #{attr 'last-update-label'} #{attr :localdatetime}
+          - unless (docinfo_content = (docinfo :footer)).empty?
+            =docinfo_content

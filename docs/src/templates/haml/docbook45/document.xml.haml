@@ -1,0 +1,62 @@
+- docinfo = capture_haml do
+  - if has_header? && !notitle
+    - segments = @header.title.rpartition(': ')
+    - if segments.first.empty?
+      %title=segments.last
+    - else
+      %title=segments.first
+      %subtitle=segments.last
+  %date=(attr? :revdate) ? (attr :revdate) : (attr :docdate)
+  - if has_header?
+    - if attr? :author
+      - if attr? :authorcount, 1
+        %author
+          - if attr? :firstname
+            %firstname=attr :firstname
+          - if attr? :middlename
+            %othername=attr :middlename
+          - if attr? :lastname
+            %surname=attr :lastname
+          - if attr? :email
+            %email=attr :email
+        %authorinitials=attr :authorinitials
+      - else
+        %authorgroup
+          - (1..(attr :authorcount)).each do |idx|
+            %author
+              - if attr? "firstname_#{idx}"
+                %firstname=attr "firstname_#{idx}"
+              - if attr? "middlename_#{idx}"
+                %othername=attr "middlename_#{idx}"
+              - if attr? "lastname_#{idx}"
+                %surname=attr "lastname_#{idx}"
+              - if attr? "email_#{idx}"
+                %email=attr "email_#{idx}"
+    -# this check seems weak
+    - if (attr? :revdate) && ((attr? :revnumber) || (attr? :revremark))
+      %revhistory
+          %revision
+            - if attr? :revnumber
+              %revnumber=attr :revnumber
+              %date=attr :revdate
+            - if attr? :authorinitials
+              %authorinitials=attr :authorinitials
+            - if attr? :revremark
+              %revremark=attr :revremark
+<?xml version="1.0" encoding="#{attr :encoding, 'UTF-8'}"?>
+<!DOCTYPE #{doctype} PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+- if attr? :toc
+  <?asciidoc-toc?>
+- if attr? :sectnums
+  <?asciidoc-numbered?>
+- case doctype
+- when 'book'
+  %book{:lang=>(attr :lang, 'en' unless attr? :nolang)}
+    %bookinfo
+      =docinfo
+    =content
+- when 'article'
+  %article{:lang=>(attr :lang, 'en' unless attr? :nolang)}
+    %articleinfo
+      =docinfo
+    =content

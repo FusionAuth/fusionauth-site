@@ -1,0 +1,130 @@
+/*
+ * Copyright (c) 2016-2018, Inversoft Inc., All Rights Reserved
+ */
+savantVersion = "1.0.0"
+
+project(group: "com.fusionauth", name: "fusionauth-site", version: "1.0.0", licenses: ["ApacheV2_0"]) {
+  workflow {
+    standard()
+  }
+
+  publishWorkflow {
+    subversion(repository: "http://svn.inversoft.org/savant")
+  }
+
+  publications {
+    main {
+      publication(name: "fusionauth-docs", type: "zip", file: "build/fusionauth-docs.zip")
+    }
+  }
+}
+
+// Plugins
+dependency = loadPlugin(id: "org.savantbuild.plugin:dependency:${savantVersion}")
+file = loadPlugin(id: "org.savantbuild.plugin:file:${savantVersion}")
+idea = loadPlugin(id: "org.savantbuild.plugin:idea:${savantVersion}")
+
+target(name: "clean", description: "Cleans build directory") {
+  file.prune(dir: "build")
+}
+
+// You'll need asciidoctor, haml, tilt and thread_safe, etc (all defined in the Gemfile
+// $ bundle install
+//
+// You'll also need an HTTP server
+// $ npm -g install http-server
+// $ http-server build
+target(name: "compile", description: "Compiles the Asciidoctor files") {
+  output.infoln("Compiling site using Jekyll")
+
+  if (!cleanExecute(['bundle', 'install'], new File('.'))) {
+    fail("Unable to run 'bundle install' for FusionAuth Site. Are you certain you have Jekyll installed?")
+  }
+
+  if (!cleanExecute(['bundle', 'exec', 'jekyll', 'build'], new File('.'))) {
+    fail("Unable to compile FusionAuth Site. Are you certain you have Jekyll installed?")
+  }
+
+  file.zip(file: "build/fusionauth-site.zip") {
+    fileSet(dir: "_site")
+  }
+}
+
+target(name: "optimize-images") {
+  new File("assets/img").traverse(maxDepth: 0) {
+    if (it.getName().endsWith(".png")) {
+      output.infoln "  --> Optimizing : " + it.getName()
+      def process = new ProcessBuilder("/Applications/ImageOptim.app/Contents/MacOS/ImageOptim", it.getCanonicalPath())
+          .inheritIO()
+          .start()
+      process.consumeProcessOutput(System.out, System.err)
+      process.waitFor()
+      if (process.exitValue() != 0) {
+        fail(
+            "Unable to optimize images, are you sure you have ImageOptim installed? \n https://imageoptim.com/command-line.html")
+      }
+    }
+  }
+}
+
+target(name: "int", description: "Releases a local integration build of the project", dependsOn: ["clean", "compile"]) {
+  dependency.integrate()
+}
+
+target(name: "idea", description: "Updates the IntelliJ IDEA module file") {
+  idea.iml()
+}
+
+target(name: "push", description: "Push the zip to fusionauth.io") {
+  output.infoln("Checking git")
+  proc = new ProcessBuilder("git", "diff-index", "--quiet", "origin/master", "--")
+      .inheritIO()
+      .start()
+  proc.waitFor()
+
+  if (!switches.has("force") && proc.exitValue() != 0) {
+    output.infoln(
+        "You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
+    exit 1
+  }
+
+  output.infoln("Deploying...")
+  proc = new ProcessBuilder("ssh", "-t", "fusionauth.io", "sudo -u www-data /var/git/fusionauth-docs/src/deploy.sh")
+      .inheritIO()
+      .start()
+  proc.waitFor()
+
+  return proc.exitValue()
+}
+
+target(name: "serve", description: "Serve the project") {
+  proc = new ProcessBuilder("bundle", "exec", "jekyll", "serve", "--incremental", "-o")
+      .inheritIO()
+      .start()
+  proc.waitFor()
+}
+
+target(name: "release", description: "Releases a full version of the project", dependsOn: ["int"]) {
+}
+
+
+boolean cleanExecute(List<String> args, File dir) {
+  ProcessBuilder pb = new ProcessBuilder(args).inheritIO().directory(dir)
+  clearEnvironment(pb)
+
+  def process = pb.start()
+  process.consumeProcessOutput(System.out, System.err)
+  process.waitFor()
+  return process.exitValue() == 0
+}
+
+/**
+ * Clears out the RBENV variables in the environment.
+ *
+ * @param pb The ProcessBuilder to clear out.
+ */
+static def clearEnvironment(ProcessBuilder pb) {
+  pb.environment().remove("RBENV_VERSION")
+  pb.environment().remove("RBENV_DIR")
+  pb.environment().remove("RBENV_ROOT")
+}

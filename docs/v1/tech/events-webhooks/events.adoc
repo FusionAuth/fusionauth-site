@@ -1,0 +1,222 @@
+---
+layout: doc
+title: Events
+description: Learn about the different events that Passport generates
+---
+
+== Events
+
+These are the events that Passport generates that can be optionally consumed by your registered Webhook.
+
+* <<User Actions>> - when a moderator takes an action on a user
+* <<User Bulk Create>> - when multiple users are create (i.e. during an import)
+* <<User Create>> - when a users is created
+* <<User Deactivate>> - when a users is deactivated
+* <<User Delete>> - when a users is deleted
+* <<User Reactivate>> - when a users is reactivated
+* <<User Update>> - when a users is updated
+* <<JWT Public Key Update>> - when a JWT RSA Public / Private keypair used for signing may have been updated.
+* <<JWT Refresh Token Revoke>> - when a refresh token (or multiple tokens) are revoked
+
+== User Actions
+
+This event is generated when a User Action is taken on a user and when temporal actions transition between phases.
+
+[cols="3a,7a"]
+[.api]
+.Event Body
+|===
+|[field]#event.action# [type]#[String]#
+|This parameter specifies the name of the action that is occurring.
+
+|[field]#event.actionId# [type]#[UUID]#
+|This parameter specifies the unique Id of the action that is occurring.
+
+|[field]#event.actioneeUserId# [type]#[UUID]#
+|This parameter specifies the unique identifier of the user the action is being performed on.
+
+|[field]#event.actionerUserId# [type]#[UUID]#
+|This parameter specifies the Id of the User that performed the action that resulted in the notification being sent. If the action was initiated by Passport this value will not be provided.
+
+|[field]#event.applicationIds# [type]#[Array<UUID>]#
+|This parameter if provided specifies the scope of the User Action. When an Action is scoped to one or more Applications the Application Ids will be provided in this parameter.
+
+|[field]#event.comment# [type]#[String]#
+|An optional comment left to possibly indicate why the action was taken, modified or canceled.
+
+|[field]#event.createInstant# [type]#[Long]#
+|The link:../reference/data-types#instant[instant] that the event was generated.
+
+|[field]#event.email# [type]#[Object]#
+|Email object. See Example POST body below for fields.
+
+|[field]#event.expiry# [type]#[Long]#
+|The link:../reference/data-types#instant[instant] that the action will expire, if the action expires.
+
+|[field]#event.id# [type]#[UUID]#
+|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identity a duplicate event.
+
+|[field]#event.localizedAction# [type]#[String]#
+|This parameter specifies the localized name of the action that's occurring, based on the user's preferred languages.
+
+|[field]#event.localizedDuration# [type]#[String]#
+|The duration of the action in a human readable format that is localized based on the user's preferred languages.
+
+|[field]#event.localizedOption# [type]#[String]#
+|This parameter specifies the localized option of the action that's occurring, based on the user's preferred languages.
+
+|[field]#event.localizedReason# [type]#[String]#
+|This parameter specifies the localized reason of the action that's occurring, based on the user's preferred languages.
+
+|[field]#event.notifyUser# [type]#[Boolean]#
+|This parameter specifies whether the user should be notified or not.
+
+|[field]#event.option# [type]#[String]#
+|An optional value to provide additional context to the Action. This value is free form and defined by the User Action.
+
+|[field]#event.passportEmailedUser# [type]#[Boolean]#
+|This parameter specifies whether the Passport has attempted to send an email to notify the User of the event.
+
+|[field]#event.phase# [type]#[Boolean]#
+|If the Action is temporal, this parameter will be provided to indicate the current phase of the action. The following are the possible Action states:
+
+* `start` - The event has started.
+* `modify` - The event has been modified.
+* `cancel` - The event has been canceled, the `end` phase will not be reached.
+* `end` - The event has ended.
+
+When the action is started by an admin, the phase will be "start". If an admin changes the duration of the action, the phase will be "modify". If an admin cancels an action it will be "cancel" or the action expires, the phase will be "end". If the action is key-based, the phase will be "start".
+
+|[field]#event.reason# [type]#[String]#
+|The reason the admin selected. Reasons are configured in the Web Interface via System -> User Action Reasons. This value will be null when no reasons are selected (or configured).
+
+|[field]#event.reasonCode# [type]#[String]#
+|The reason code the admin selected. Reasons are configured in the Web Interface via System -> User Action Reasons. This value will be null when no reasons are selected (or configured).
+
+|[field]#event.type# [type]#[String]#
+|This parameter specifies the type of notification and will always be `userAction` for this type of notification.
+|===
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/user-actions.json[]
+----
+
+== User Bulk Create
+
+This event is generated when multiple users are created. The JSON includes each of the Users that were created. The array of User objects inside the JSON are the same as the response from the link:../apis/users#search-for-users[Search for Users API].
+
+=== Event JSON
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/user-bulk-create.json[]
+----
+
+== User Create
+
+This event is generated when a single user is created. The JSON includes the User that was created. The User object inside the JSON is the same as the response from the link:../apis/users#retrieve-a-user[Retrieve a User API].
+
+=== Event JSON
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/user-create.json[]
+----
+
+== User Deactivate
+
+This event is generated when a user is deactivated. The JSON includes the User that was deactivated. The User object inside the JSON is the same as the response from the link:../apis/users#retrieve-a-user[Retrieve a User API].
+
+=== Event JSON
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/user-deactivate.json[]
+----
+
+== User Delete
+
+This event is generated when a user id deleted. The JSON includes the User that was deleted. The User object inside the JSON is the same as the response from the link:../apis/users#retrieve-a-user[Retrieve a User API].
+
+=== Event JSON
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/user-delete.json[]
+----
+
+== User Reactivate
+
+This event is generated when user is reactivated. The JSON includes the User that was reactivated. The User object inside the JSON is the same as the response from the link:../apis/users#retrieve-a-user[Retrieve a User API].
+
+=== Event JSON
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/user-reactivate.json[]
+----
+
+== User Update
+
+This event is generated when a user is updated. The JSON includes the User that was updated including the original data for the User and the new data for the User. The User objects (``original`` and ``user``) inside the JSON is the same as the response from the link:../apis/users#retrieve-a-user[Retrieve a User API].
+
+=== Event JSON
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/user-update.json[]
+----
+
+== JWT Public Key Update
+
+This event is generated when a single token, all of a User's tokens, or all tokens for an entire Application revoked. The JSON includes either the User id or the Application id depending on what was revoked. It will also include the time to live duration (in seconds) for each Application. This value is used to determine if JWTs are valid or not based on their expiration instants.
+
+=== Event JSON (for a User)
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/jwt-refresh-token-revoke-user.json[]
+----
+
+=== Event JSON (for an entire Application)
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/jwt-refresh-token-revoke-application.json[]
+----
+
+== JWT Refresh Token Revoke
+
+This event is generated when a refresh token is revoked. The JSON includes either the User Id or the Application Id depending on what was revoked. It will also include the time to live duration (in seconds) for each Application. This value is used to determine if JWTs are valid or not based on their expiration instants.
+
+The following scenarios will cause this event to be generated:
+
+* A single Refresh Token is revoked
+* All Refresh Tokens owned by a single User are revoked
+* All Refresh Tokens for a Passport Application are revoked
+
+=== Event JSON (for a User)
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/jwt-refresh-token-revoke-user.json[]
+----
+
+=== Event JSON (for an entire Application)
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/jwt-refresh-token-revoke-application.json[]
+----
