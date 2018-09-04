@@ -2,7 +2,7 @@
 
 set -e
 
-cd /var/git/fusionauth-docs
+cd /var/git/fusionauth-site
 
 git pull
 
