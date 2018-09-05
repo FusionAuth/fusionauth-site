@@ -110,10 +110,10 @@ build_includes(html_doc, script_directory)
 copy_assets(export_directory, script_directory)
 
 # Handle the blog pages specially
-html_doc = File.open("#{export_directory}/blog-post.html") { |f| Nokogiri::HTML(f) }
-build_blog_post_layout(html_doc, script_directory)
-html_doc = File.open("#{export_directory}/blog-post-list.html") { |f| Nokogiri::HTML(f) }
-build_blog_post_list_layout(html_doc, script_directory)
+# html_doc = File.open("#{export_directory}/blog-post.html") { |f| Nokogiri::HTML(f) }
+# build_blog_post_layout(html_doc, script_directory)
+# html_doc = File.open("#{export_directory}/blog-post-list.html") { |f| Nokogiri::HTML(f) }
+# build_blog_post_list_layout(html_doc, script_directory)
 
 # Handle the rest of the files
 Dir.foreach(export_directory) do |file|
