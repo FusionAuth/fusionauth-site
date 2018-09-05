@@ -89,7 +89,7 @@ def build_blog_post_list_layout(html_doc, script_directory)
   main.at_css(".post-author").content = "{{ post.author }}"
   main.at_css(".post-date").content = "{{ post.date }}"
   main.at_css("nav").content = "{% include _pagination.html %}"
-  link = main.at_css("a.post-link").dup
+  link = main.at_css(".post-link").dup
   link.attribute("href").value = "{{post.url}}"
   body = main.at_css(".post-body-content")
   body.content = "{{ post.excerpt }}"
