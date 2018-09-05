@@ -67,10 +67,10 @@ end
 
 def build_blog_post_layout(html_doc, script_directory)
   main = html_doc.at_css("main")
-  main.at_css("h3.post-title").content = "{{ page.title }}"
-  main.at_css("span.post-author").content = "{{ page.author }}"
-  main.at_css("span.post-date").content = "{{ page.date }}"
-  main.at_css("div.post-body-content").content = "\n{% if page.markdown == 1 %}\n  {{ content | markdownify }}\n{% else %}\n  {{ content }}\n{% endif %}"
+  main.at_css(".post-title").content = "{{ page.title }}"
+  main.at_css(".post-author").content = "{{ page.author }}"
+  main.at_css(".post-date").content = "{{ page.date }}"
+  main.at_css(".post-body-content").content = "\n{% if page.markdown == 1 %}\n  {{ content | markdownify }}\n{% else %}\n  {{ content }}\n{% endif %}"
   File.open("#{script_directory}/_layouts/blog-post.html", "w", :encoding => "UTF-8") do |f|
     f.puts("<!doctype html>\n<html>\n{% include _head.html %}\n<body>\n{% include _navigation.html %}\n")
     f.puts(main.to_s)
@@ -85,16 +85,16 @@ def build_blog_post_list_layout(html_doc, script_directory)
   description_text = description != nil ? description.attribute("content").value : ""
 
   main = html_doc.at_css("main")
-  main.at_css("h3.post-title").content = "{{ post.title }}"
-  main.at_css("span.post-author").content = "{{ post.author }}"
-  main.at_css("span.post-date").content = "{{ post.date }}"
+  main.at_css(".post-title").content = "{{ post.title }}"
+  main.at_css(".post-author").content = "{{ post.author }}"
+  main.at_css(".post-date").content = "{{ post.date }}"
   main.at_css("nav").content = "{% include _pagination.html %}"
   link = main.at_css("a.post-link").dup
   link.attribute("href").value = "{{post.url}}"
-  body = main.at_css("div.post-body-content")
+  body = main.at_css(".post-body-content")
   body.content = "{{ post.excerpt }}"
   body.add_child(link)
-  list = main.at_css("ul.post-list")
+  list = main.at_css(".post-list")
   list.add_previous_sibling("{% for post in paginator.posts %}\n")
   list.add_next_sibling("\n{% endfor %}")
   File.open("#{script_directory}/blog/index.html", "w", :encoding => "UTF-8") do |f|
@@ -110,10 +110,10 @@ build_includes(html_doc, script_directory)
 copy_assets(export_directory, script_directory)
 
 # Handle the blog pages specially
-# html_doc = File.open("#{export_directory}/blog-post.html") { |f| Nokogiri::HTML(f) }
-# build_blog_post_layout(html_doc, script_directory)
-# html_doc = File.open("#{export_directory}/blog-post-list.html") { |f| Nokogiri::HTML(f) }
-# build_blog_post_list_layout(html_doc, script_directory)
+html_doc = File.open("#{export_directory}/blog-post.html") { |f| Nokogiri::HTML(f) }
+build_blog_post_layout(html_doc, script_directory)
+html_doc = File.open("#{export_directory}/blog-post-list.html") { |f| Nokogiri::HTML(f) }
+build_blog_post_list_layout(html_doc, script_directory)
 
 # Handle the rest of the files
 Dir.foreach(export_directory) do |file|
