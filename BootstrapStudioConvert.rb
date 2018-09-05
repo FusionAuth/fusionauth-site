@@ -39,7 +39,7 @@ def build_includes(html_doc, script_directory)
   # Handle footer (including scripts and everything below the <footer> tag)
   footer = html_doc.at_css("footer")
   File.open("#{script_directory}/_includes/_footer.html", "w", :encoding => "UTF-8") do |f|
-    f.puts(footer.to_s.gsub(/\.html/, ""))
+    f.puts(footer.to_s.gsub(/\.html/, "").gsub(/a href="\/\//, "a href=\"/"))
     sibling = footer.next_element
     until sibling == nil
       f.puts(sibling.to_s)
