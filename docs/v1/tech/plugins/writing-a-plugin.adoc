@@ -1,24 +1,24 @@
 ---
 layout: doc
 title: Writing a Plugin
-description: Learn how to write a Passport Plugin
+description: Learn how to write a FusionAuth Plugin
 ---
 
 == Overview
 
-Passport provides a plugin mechanism that loads plugins at startup rather than at runtime. This provides much better performance than a runtime plugin system. Therefore, you must restart Passport anytime a plugin is installed.
+FusionAuth provides a plugin mechanism that loads plugins at startup rather than at runtime. This provides much better performance than a runtime plugin system. Therefore, you must restart FusionAuth anytime a plugin is installed.
 
-There are two steps to adding a plugin to Passport:
+There are two steps to adding a plugin to FusionAuth:
 
 1. Write the plugin by implementing the correct plugin interface
-2. Install the plugin into your Passport installation
+2. Install the plugin into your FusionAuth installation
 
 
 == Writing a Plugin
 
-First, you need to create a plugin project. If you use an IDE, you might also want to setup the classpath for the project to include all of the Passport JAR files. You can also use whatever Java build system you prefer (Savant, Maven, Ant, Gradle, etc). Our examples will use the Savant build system since that is the build system Inversoft uses internally and all of the necessary artifacts needed to build plugins are easily retrieved using Savant.
+First, you need to create a plugin project. If you use an IDE, you might also want to setup the classpath for the project to include all of the FusionAuth JAR files. You can also use whatever Java build system you prefer (Savant, Maven, Ant, Gradle, etc). Our examples will use the Savant build system, an open-source build tool built by Inversoft, and all of the necessary artifacts needed to build plugins are easily retrieved using Savant.
 
-Create a directory for our plugin, the source code, the Passport libraries (JAR files) and our tests. Here is a common directory structure for Java projects:
+Create a directory for our plugin, the source code, the FusionAuth libraries (JAR files) and our tests. Here is a common directory structure for Java projects:
 
 [source]
 .Plugin Project Layout
@@ -35,7 +35,7 @@ my-plugin
   |- build.savant
 ----
 
-Following the Java convention of using packages for all classes, you will want to create sub-directories under src/main/java and src/test/java that identify the package for your plugin. For example, you might create a directory under each called com/mycompany/passport/plugins that will contain your plugin code.
+Following the Java convention of using packages for all classes, you will want to create sub-directories under src/main/java and src/test/java that identify the package for your plugin. For example, you might create a directory under each called com/mycompany/fusionauth/plugins that will contain your plugin code.
 
 Your project is now ready for you to start coding.
 
@@ -66,7 +66,7 @@ After you create your project directory, create the Savant build file named buil
 ----
 savantVersion = "1.0.0"
 
-project(group: "com.inversoft.passport", name: "test-plugin", version: "0.1.0", licenses: ["ApacheV2_0"]) {
+project(group: "io.fusionauth", name: "test-plugin", version: "0.1.0", licenses: ["ApacheV2_0"]) {
   workflow {
     standard()
   }
@@ -77,7 +77,7 @@ project(group: "com.inversoft.passport", name: "test-plugin", version: "0.1.0", 
 
   dependencies {
     group(name: "compile") {
-      dependency(id: "com.inversoft.passport:passport-plugin-api:1.0.10")
+      dependency(id: "io.fusionauth:fusionauth-plugin-api:1.0.10")
       dependency(id: "com.google.inject:guice:4.0.0")
       dependency(id: "com.google.inject.extensions:guice-multibindings:4.0.0")
     }
@@ -152,35 +152,35 @@ $ sb idea
 
 === Create the Plugin Guice Module
 
-Passport uses Guice for dependency injection and also to setup plugins. No matter what type of plugin you are writing, you need to add a single Guice module to your project.
+FusionAuth uses Guice for dependency injection and also to setup plugins. No matter what type of plugin you are writing, you need to add a single Guice module to your project.
 
 [WARNING]
 ====
-In order for Passport to locate your plugin, the package you put your plugin module into must include a parent package named either plugin or plugins. For example, a plugin class cannot be named com.mycompany.MyPassportPluginModule. Instead, it must be named com.mycompany.plugins.MyPassportPluginModule.
+In order for FusionAuth to locate your plugin, the package you put your plugin module into must include a parent package named either plugin or plugins. For example, a plugin class cannot be named com.mycompany.MyFusionAuthPluginModule. Instead, it must be named com.mycompany.plugins.MyFusionAuthPluginModule.
 ====
 
 Create a Guice module under the src/main/java directory. Here is an example, but you can change the directory names and file name to anything you want:
 
 [source]
 ----
-com/mycompany/passport/plugins/guice/MyPassportPluginModule.java
+com/mycompany/fusionauth/plugins/guice/MyFusionAuthPluginModule.java
 ----
 
 Here is an template Guice module that you will use for your plugin:
 
 [source,java]
 ----
-package com.mycompany.passport.plugins.guice;
+package com.mycompany.fusionauth.plugins.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
-import com.inversoft.passport.plugin.spi.PluginModule;
+import io.fusionauth.plugin.spi.PluginModule;
 
 /**
- * My cool Passport plugin module.
+ * My cool FusionAuth plugin module.
  */
 @PluginModule
-public class MyCompanyPassportPluginsModule extends AbstractModule {
+public class MyCompanyFusionAuthPluginsModule extends AbstractModule {
   @Override
   protected void configure() {
     // You Guice bindings will go here!
@@ -188,15 +188,15 @@ public class MyCompanyPassportPluginsModule extends AbstractModule {
 }
 ----
 
-Notice that this plugin is annotated with the class com.inversoft.passport.plugin.spi.PluginModule. This is how Passport locates the Guice module and installs your plugin.
+Notice that this plugin is annotated with the class io.fusionauth.plugin.spi.PluginModule. This is how FusionAuth locates the Guice module and installs your plugin.
 
 === Write your Plugin
 
-Currently, Passport provides a single plugin point for password encryption schemes. This allows you to define a password encryption scheme that matches your current method so that imported users don't need to reset their passwords. You can read more about implementing the password encryption plugin interface on the Password Encryptors page.
+Currently, FusionAuth provides a single plugin point for password encryption schemes. This allows you to define a password encryption scheme that matches your current method so that imported users don't need to reset their passwords. You can read more about implementing the password encryption plugin interface on the Password Encryptors page.
 
 === Install a Plugin
 
-After you have completed your plugin code and all of your unit tests pass, you are ready to install the plugin into Passport. First, you need to create the plugin JAR file. If you are using our Savant build script from above, you will execute this command:
+After you have completed your plugin code and all of your unit tests pass, you are ready to install the plugin into FusionAuth. First, you need to create the plugin JAR file. If you are using our Savant build script from above, you will execute this command:
 
 [source,shell]
 ----
@@ -205,36 +205,36 @@ $ sb jar
 
 This will produce the plugin JAR and place it in the build/jars directory.
 
-Next, you need to create the plugin directory in your Passport installation. Depending on where you installed Passport, you will create the plugin directory in the INVERSOFT_HOME directory. This directory is the directory right above the FUSIONAUTH_HOME directory. Here are some examples for the plugin directory:
+Next, you need to create the plugin directory in your FusionAuth installation. Depending on where you installed FusionAuth, you will create the plugin directory in the FUSIONAUTH_HOME directory. This directory is the directory right above the FUSIONAUTH_HOME directory. Here are some examples for the plugin directory:
 
 [cols="2h,8m"]
 |===
 |Linux/Mac/Unix
-|/usr/local/fusionauth/plugins/passport
+|/usr/local/fusionauth/plugins
 |Windows
-|C:\fusionauth\plugins\passport
+|C:\fusionauth\plugins
 |===
 
-The location of this directory might be different if you install using the ZIP bundles and placed Passport somewhere else.
+The location of this directory might be different if you install using the ZIP bundles and placed FusionAuth somewhere else.
 
 Next, you copy this JAR file from your plugin project into the plugin directory like this:
 
 [source,shell]
 .Linux/Mac/Unix
 ----
-$ cp build/jars/test-plugin-0.1.0.jar /usr/local/fusionauth/plugins/passport
+$ cp build/jars/test-plugin-0.1.0.jar /usr/local/fusionauth/plugins
 ----
 
 [source]
 .Windows
 ----
-C:\myplugin> cp build\jars\test-plugin-0.1.0.jar C:\fusionauth\plugins\passport
+C:\myplugin> cp build\jars\test-plugin-0.1.0.jar C:\fusionauth\plugins
 ----
 
-Now you can restart Passport and it should load your plugin. If you plugin is found and loaded successfully, you should see a message like this in the logs:
+Now you can restart FusionAuth and it should load your plugin. If you plugin is found and loaded successfully, you should see a message like this in the logs:
 
 [source,log]
 ----
-INFO  com.inversoft.passport.api.plugin.guice.PluginModule - Installing plugin [com.mycompany.passport.plugins.guice.MyCompanyPassportPluginsModule]
-INFO  com.inversoft.passport.api.plugin.guice.PluginModule - Plugin successfully installed
+INFO  io.fusionauth.api.plugin.guice.PluginModule - Installing plugin [com.mycompany.fusionauth.plugins.guice.MyCompanyFusionAuthPluginsModule]
+INFO  io.fusionauth.api.plugin.guice.PluginModule - Plugin successfully installed
 ----
