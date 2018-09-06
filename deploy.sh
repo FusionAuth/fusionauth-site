@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-HOSTNAME=`hostname`
-
-if [ ! "$HOSTNAME" = "fusionauth" ]; then
-  echo "You are only supposed to run this on fusionauth.io"
+if [ ! "$(hostname)" = "fusionauth" ]; then
+  echo "You are only supposed to run this on fusionauth.io, run sb push instead."
   exit 0
 fi
 
