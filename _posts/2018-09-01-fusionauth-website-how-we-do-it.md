@@ -1,3 +1,38 @@
+---
+layout: blog-post
+title:  "FusionAuth website - how we do it"
+author: Brian Pontarelli
+categories: blog
+image: fusionauth-website.png
+---
+
+We recently launched the FusionAuth website, so I thought it would be fun to write a blog post about how we build the site. We use a combination of a couple of tools, some scriptage, and Jekyll. If you want to check out our source, this website is stored as a public repository in Github here:
+
+[https://github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site) 
+
+Here's how it all comes together:
+
+## Bootstrap Studio
+
+{% include _blog-image.html src="/assets/img/blogs/bootstrap-studio.png" alt="Bootstrap Studio screenshot" class="img-thumbnail float-left mr-md-4" %}
+
+I'm personally a big fan of frameworks and while Bootstrap 4 has a couple of things that I'm not a huge fan of (namely their base grid, lack of control for fluid snap points, and some of their widgets like add-ons), overall it's a solid framework. The biggest hurdle is finding an awesome designer that can code Bootstrap - can you say Unicorn? This isn't as much of a hurdle as it once was though. There are now a bunch of decent tools to help designers design and developers tweak. We landed on Bootstrap Studio. It works pretty well, but it still requires quite a bit of knowledge about CSS and HTML. Bryan Giese, our faithful CMO, was able to get the base design busted out and then Daniel and I "bootstrap-ified" it.
+
+One of the other key reasons we selected Bootstrap Studio was that it has the ability to run a script after exporting. This is a big win for us because it allows us to rip apart the HTML that is generated and put it into Jekyll includes. Luckily, Bootstrap Studio creates excellent HTML that is well formed, clean, not deeply nested, and concise. This makes parsing and using it easy.
+
+Here's the quick overview of the tasks this script does (they are all near the bottom of the script).
+
+1. Covert the index.html file (homepage) to a Jekyll page by removing everything except the main content
+2. Build the Jekyll includes (_head.html, _navigation.html, etc) by parsing index.html and finding `<head>`, `<main>`, etc.
+3. Copy all the assets from the Bootstrap Studio `/assets` directory into Jekyll
+4. Build the blog listing page using the file `blog-post-list.html` from Bootstrap Studio. This becomes a Jekyll page at `/blog/index.html` so we can use the Paginate plugin
+5. Build the blog post page using the file `blog-post.html` from Bootstrap. This becomes a Jekyll layout page called `blog-post.html`
+6. Convert the rest of the pages from Bootstrap Studio to Jekyll pages by removing everything except the main content  
+
+Below is the Ruby script that we wrote to do the conversion. Also, you'll see that this uses the awesome [Nokogiri](http://www.nokogiri.org) library for parsing and manipulating HTML. Hats off to the team of contributors to the Nokogiri project, it's epically awesome.
+
+{% raw %}
+```ruby
 #!/usr/bin/env ruby
 require 'fileutils'
 require 'nokogiri'
@@ -123,4 +158,48 @@ Dir.foreach(export_directory) do |file|
     convert_file(html_doc, "#{script_directory}/#{file}")
   end
 end
+```
+{% endraw %}
 
+This is a work in progress, but you can always see the latest version in the Github repository.
+
+## Jekyll
+
+Once we have the Bootstrap Studio files converted to Jekyll, the rest is pretty straight forward. We use base Jekyll with the `jekyll-paginate` plugin for the blog list page and `jekyll-asciidoc` plugin for our docs. The reason we use Asciidoc for our docs is that they are quite a bit more complicated than can be easily supported with Markdown.
+
+The Jekyll project is run locally while we are deving on the site using this command:
+
+```bash
+$ bundle exec jekyll serve
+```
+
+## Deployment
+
+The release process is a bit different. We have an Amazon EC2 instance (t2.medium I believe) that is setup with Chef and has separate accounts for the team. Any team member can deploy the site using a command-line. 
+
+To accomplish this, we are using the Savant build tool. Savant makes it very simple to write build files and add build targets that perform arbitrary tasks. We could have written all of our build tasks as separate shell scripts, but since we maintain Savant, we figured we might as well use it. :)
+
+The Savant build file contains a target named `push`. On the server, we have a clone of the Github repository. The build target ssh's to the server and then runs the `deploy.sh` script in the directory that contains the clone of the project. 
+
+The `deploy.sh` command is simple. It updates the project and then runs a Jekyll build. Here's what the `deploy.sh` script looks like:
+
+```bash
+#!/usr/bin/env bash
+
+if [ ! "$(hostname)" = "fusionauth" ]; then
+  echo "You are only supposed to run this on fusionauth.io, run sb push instead."
+  exit 0
+fi
+
+set -e
+
+cd /var/git/fusionauth-site
+
+git pull
+
+bundle exec jekyll build
+
+cp -R _site/* /var/www/fusionauth.io
+```
+
+That's basically it. We have a couple of other components like the Mailchimp form at the bottom of the page and the Formspree.io for our Contact Us form. Those are integrated via the HTML, CSS and JavaScript provided by those companies.
