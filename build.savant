@@ -24,16 +24,19 @@ target(name: "optimize-images") {
   }
 }
 
-target(name: "push", description: "Push the zip to fusionauth.io") {
-  output.infoln("Checking git")
-  proc = new ProcessBuilder("git", "diff-index", "--quiet", "origin/master", "--")
-      .inheritIO()
-      .start()
-  proc.waitFor()
+target(name: "push", description: "Push the site to fusionauth.io") {
+  // Skip checking Git if we are forced to do so (use the force Luke)
+  if (!switches.has("force")) {
+    output.infoln("Checking git")
+    proc = new ProcessBuilder("git", "diff-index", "--quiet", "origin/master", "--")
+        .inheritIO()
+        .start()
+    proc.waitFor()
 
-  if (!switches.has("force") && proc.exitValue() != 0) {
-    output.infoln("You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
-    exit 1
+    if (proc.exitValue() != 0) {
+      output.infoln("You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
+      exit 1
+    }
   }
 
   output.infoln("Deploying...")
