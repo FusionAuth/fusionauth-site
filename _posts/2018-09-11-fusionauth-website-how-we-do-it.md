@@ -14,14 +14,14 @@ Here's how it all comes together:
 
 {% include _blog-image.html src="/assets/img/blogs/bootstrap-studio.png" alt="Bootstrap Studio screenshot" class="img-thumbnail float-left mr-md-4" %}
 
-I'm personally a big fan of frameworks and while Bootstrap 4 has a couple of things that I'm not a huge fan of (namely their grid using padding instead of margin, lack of control for fluid snap points, and some of their widgets like add-ons), overall it's a solid framework. The biggest hurdle is finding an awesome designer that can code Bootstrap - can you say Unicorn? This isn't as much of a hurdle as it once was though. There are now a bunch of decent tools to help designers design and developers tweak. We landed on Bootstrap Studio. It works pretty well, but it still requires quite a bit of knowledge about CSS and HTML. Bryan Giese, our faithful CMO, was able to get the base design busted out and then Daniel and I "bootstrap-ified" it.
+I'm personally a big fan of frameworks and while Bootstrap 4 has a couple of things that I'm not a huge fan of, namely their use of padding instead of margin in grid layout, lack of control for fluid snap points, and some of their widgets like add-ons. However, overall Bootstrap is a solid framework. The biggest hurdle is finding an awesome designer that can code Bootstrap - can you say Unicorn? This isn't as much of a hurdle as it once was though. There are now a bunch of decent tools to help designers design and developers tweak. We landed on Bootstrap Studio. It works pretty well, but it still requires quite a bit of knowledge about CSS and HTML. Bryan Giese, our faithful CMO, was able to get the base design busted out and then Daniel and I "bootstrap-ified" it.
 
 One of the other key reasons we selected Bootstrap Studio was that it has the ability to run a script after exporting. This is a big win for us because it allows us to rip apart the HTML that is generated and put it into Jekyll includes. Luckily, Bootstrap Studio creates excellent HTML that is well formed, clean, not deeply nested, and concise. This makes parsing and using it easy.
 
 Here's the quick overview of the tasks our Bootstrap Studio export script does (they are all near the bottom of the script).
 
-1. Covert the index.html file (homepage) to a Jekyll page by removing everything except the main content.
-2. Build the Jekyll includes (_head.html, _navigation.html, etc) by parsing index.html and finding `<head>`, `<nav>`, etc.
+1. Covert the `index.html` file (homepage) to a Jekyll page by removing everything except the main content.
+2. Build the Jekyll includes (`_head.html`, `_navigation.html`, etc) by parsing `index.html` and finding `<head>`, `<nav>`, etc.
 3. Copy all the assets from the Bootstrap Studio `/assets` directory into Jekyll.
 4. Build the blog listing page using the file `blog-post-list.html` from Bootstrap Studio. This becomes a Jekyll page at `/blog/index.html` so we can use the Paginate plugin.
 5. Build the blog post page using the file `blog-post.html` from Bootstrap. This becomes a Jekyll layout page called `blog-post.html`.
@@ -157,6 +157,7 @@ Dir.foreach(export_directory) do |file|
   end
 end
 ```
+_`BootstrapStudioConvert.rb`_
 {% endraw %}
 
 This is a work in progress, but you can always see the latest version in the Github repository.
