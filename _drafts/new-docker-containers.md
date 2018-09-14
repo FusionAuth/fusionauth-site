@@ -3,7 +3,7 @@ layout: blog-post
 title:  "New docker containers"
 author: Unknown
 categories: blog
-image: fusionauth-website.png
+image: docker-hub.png
 ---
 
 Put the blog here!
