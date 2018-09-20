@@ -80,7 +80,9 @@ Finally, I write all the header row and the counts out to the CSV file. The CSV 
 
 ## Deployment and Cyfe
 
-I deployed this script to the `/etc/cron.hourly` directory on the server to ensure it runs every hour. Ubuntu defaults hourly jobs to run at 17 minutes after the hour. Each hour my script runs and rebuilds the CSV file. Pro-tip, because Cron will use `run-parts` to execute the script you'll need to ensure you remove the file extension because the `.` (dot) is not allowed by `run-parts`. You may only use ASCII upper, lower, digits, underscores or hyphens, so the file extension that includes a dot is out. If you fail to do so, Cron will quietly fail and not run your script. Ask me how I know.
+I deployed this script to the `/etc/cron.hourly` directory on the server to ensure it runs every hour. Ubuntu defaults hourly jobs to run at 17 minutes after the hour. Each hour my script runs and rebuilds the CSV file. 
+
+**Pro-tip**: Because Cron will use `run-parts` to execute the script you'll need to ensure you remove the file extension because the `.` (dot) is not allowed by `run-parts`. You may only use ASCII upper, lower, digits, underscores or hyphens, so the file extension that includes a dot is out. If you fail to do so, Cron will quietly fail and not run your script. Ask me how I know.
 
 In Cyfe, I added a **Private URL** widget to my dashboard. This widget uses the **Line Chart** mode with the URL above and refreshes every hour. This will pick up any changes made to the CSV file on the server. The nice part of about this setup is that I can see as downloads increase during the day since the server is continually updating the CSV file. I'm assuming that Cyfe might not handle UTC correctly and that Google Cloud Storage uses UTC, so my script might need some updates to fix that, but otherwise this works nicely.
 
