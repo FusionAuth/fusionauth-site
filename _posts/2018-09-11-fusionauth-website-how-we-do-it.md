@@ -158,6 +158,7 @@ Dir.foreach(export_directory) do |file|
 end
 ```
 _`BootstrapStudioConvert.rb`_
+{: .mt-0 .text-right}
 {% endraw %}
 
 This is a work in progress, but you can always see the latest version in the Github repository.
