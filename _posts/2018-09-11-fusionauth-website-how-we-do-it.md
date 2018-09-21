@@ -1,6 +1,7 @@
 ---
 layout: blog-post
-title:  "FusionAuth website - how we do it"
+title: The FusionAuth website - How we do it - FusionAuth
+description: How we built the FusionAuth website using BootstrapStudio, Jekyll, JustComments and other tools
 author: Brian Pontarelli
 categories: blog
 image: blogs/fusionauth-website.png
