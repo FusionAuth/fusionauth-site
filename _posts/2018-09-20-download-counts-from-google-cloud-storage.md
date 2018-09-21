@@ -3,7 +3,7 @@ layout: blog-post
 title:  "Download counts from Google Cloud Storage"
 author: Brian Pontarelli
 categories: blog
-image: download-count.png
+image: blogs/download-count.png
 ---
 
 Watching real-time Google Analytics is fun but it wasn't telling us how many people are downloading FusionAuth. Since we are using download count to measure if people are finding FusionAuth and the website is making it easy for them to download and play around with it, I wanted to display our download count on the dashboard we have in the office.

@@ -3,7 +3,7 @@ layout: blog-post
 title:  "FusionAuth Tenants - Dev, Stage and Production"
 author: Daniel DeGroff
 categories: blog
-image: fusionauth-website.png
+image: blogs/fusionauth-website.png
 ---
 
 When we built FusionAuth we intentionally decided against a multi-tenancy architecture. A multi-tenant model makes scaling and selling a SaaS offering easier and more cost effect, but it isn't a great feature for the end user as it pertains to security.

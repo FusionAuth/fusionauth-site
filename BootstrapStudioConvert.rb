@@ -15,7 +15,7 @@ def build_includes(html_doc, script_directory)
   description = head.at_css("meta[name=\"description\"]")
   description["content"] = "{{page.description}}"
   head.add_child("<link rel=\"stylesheet\" href=\"/assets/css/highlight.css\">")
-  File.open("#{script_directory}/_includes/_head.html", "w", :encoding => "UTF-8") {|f| f.puts(head.to_s.gsub(/\.html/, ""))}
+  File.open("#{script_directory}/_includes/_head.html", "w", :encoding => "UTF-8") {|f| f.puts(head.to_s)}
 
   # Handle navigation
   nav = html_doc.at_css("nav")
@@ -57,7 +57,7 @@ def convert_file(html_doc, output_file_name)
   main = html_doc.at_css("main")
 
   File.open(output_file_name, "w", :encoding => "UTF-8") do |f|
-    f.puts("---\nlayout: default\ntitle: #{title_text}\ndescription: #{description_text}\n---\n")
+    f.puts("---\nlayout: default\ntitle: #{title_text}\ndescription: #{description_text}\nimage: fusionauth-share-image.jpg\n---\n")
     f.puts(main.to_s.gsub(/\.html/, ""))
   end
 end
@@ -72,7 +72,7 @@ def build_blog_post_layout(html_doc, script_directory)
   main.at_css(".post-author").content = "{{ page.author }}"
   main.at_css(".post-date").content = "{{ page.date | date_to_string: \"ordinal\", \"US\" }}"
   main.at_css(".post-body-content").content = "\n{% if page.markdown == 1 %}\n  {{ content | markdownify }}\n{% else %}\n  {{ content }}\n{% endif %}"
-  main.at_css(".post-image")["style"] = "background-image: url('/assets/img/blogs/{{ page.image }}');"
+  main.at_css(".post-image")["style"] = "background-image: url('/assets/img/{{ page.image }}');"
   File.open("#{script_directory}/_layouts/blog-post.html", "w", :encoding => "UTF-8") do |f|
     f.puts("<!doctype html>\n<html>\n{% include _head.html %}\n<body>\n{% include _navigation.html %}\n")
     f.puts(main.to_s)
@@ -92,7 +92,7 @@ def build_blog_post_list_layout(html_doc, script_directory)
   main.at_css(".post-date").content = "{{ post.date | date_to_string: \"ordinal\", \"US\" }}"
   main.at_css("nav").content = "{% include _pagination.html %}"
   main.at_css(".post-link")["href"] = "{{post.url}}"
-  main.at_css(".post-image img")["src"] = "/assets/img/blogs/{{post.image}}"
+  main.at_css(".post-image img")["src"] = "/assets/img/{{post.image}}"
   body = main.at_css(".post-body-content")
   body.content = "{{ post.excerpt }}"
   list = main.at_css(".post-list")

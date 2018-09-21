@@ -3,7 +3,7 @@ layout: blog-post
 title: Multi-tenancy in a Single-tenant Architecture
 author: Daniel DeGroff
 categories: blog
-image: multi-tenancy.png
+image: blogs/multi-tenancy.png
 excerpt_separator: <!--more-->
 ---
 
