@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title:  Download counts from Google Cloud Storage - FusionAuth
+title:  Download counts from Google Cloud Storage
 description: Getting download counts from Google Cloud Storage using access logs and a Ruby script
 author: Brian Pontarelli
 categories: blog

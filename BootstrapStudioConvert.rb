@@ -11,9 +11,9 @@ def build_includes(html_doc, script_directory)
   # Handle the head
   head = html_doc.at_css("head")
   title = head.at_css("title")
-  title.content = "{{page.title}}"
+  title.content = "{{ page.title }} - FusionAuth"
   description = head.at_css("meta[name=\"description\"]")
-  description["content"] = "{{page.description}}"
+  description["content"] = "{{ page.description }}"
   head.add_child("<link rel=\"stylesheet\" href=\"/assets/css/highlight.css\">")
   File.open("#{script_directory}/_includes/_head.html", "w", :encoding => "UTF-8") {|f| f.puts(head.to_s)}
 
