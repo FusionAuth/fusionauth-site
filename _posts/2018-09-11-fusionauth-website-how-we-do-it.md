@@ -13,7 +13,7 @@ Here's how it all comes together:
 
 ## Bootstrap Studio
 
-{% include _blog-image.html src="/assets/img/blogs/bootstrap-studio.png" alt="Bootstrap Studio screenshot" class="img-thumbnail float-left mr-md-4" %}
+{% include _blog-image.html src="/assets/img/blogs/bootstrap-studio.png" alt="Bootstrap Studio screenshot" class="img-thumbnail float-left mr-md-4" figure=true %}
 
 I'm personally a big fan of frameworks and while Bootstrap 4 has a couple of things that I'm not a huge fan of, namely their use of padding instead of margin in grid layout, lack of control for fluid snap points, and some of their widgets like add-ons. However, overall Bootstrap is a solid framework. The biggest hurdle is finding an awesome designer that can code Bootstrap - can you say Unicorn? This isn't as much of a hurdle as it once was though. There are now a bunch of decent tools to help designers design and developers tweak. We landed on Bootstrap Studio. It works pretty well, but it still requires quite a bit of knowledge about CSS and HTML. Bryan Giese, our faithful CMO, was able to get the base design busted out and then Daniel and I "bootstrap-ified" it.
 
