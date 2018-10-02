@@ -16,6 +16,73 @@ docker pull fusionauth/fusionauth-app
 ```
 
 === FusionAuth Search
+The FusionAuth Search image is provided for convenience, you may also choose to use any ElasticSearch container or service running at version 6.3.
 ```
 docker pull fusionauth/fusionauth-search
 ```
+
+=== Docker Compose
+If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. The following is an example and it may not be the most recent version. Refer to the following link in https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/docker-compose.yml[GitHub] to find the latest version.
+
+```yaml
+version: '3.3'
+
+services:
+  db:
+    image: postgres:9.6
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: always
+    environment:
+      PGDATA : /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3_rulcA
+
+  search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.1
+    environment:
+      - cluster.name=fusionauth
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data1:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+  app:
+    depends_on:
+      - db
+      - search
+    image: fusionauth/fusionauth-app:latest
+    ports:
+      - 9011:9011
+    volumes:
+      - fa_config:/usr/local/fusionauth/config
+
+volumes:
+  db_data:
+  es_data1:
+  fa_config:
+```
+
+
+=== Database Service
+
+At a minimum, you wil want to modify the database root user password property `POSTGRES_PASSWORD` to set it to something unique and secure for your installation. Ensure the other properties fit your requirements.
+
+=== Search Service
+
+We currently are only supporting Elasticsearch 6.3.1, do not modify the image value. Let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
+
+=== FusionAuth Service
+
+
+
+
