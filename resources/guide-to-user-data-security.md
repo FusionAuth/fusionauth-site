@@ -70,9 +70,7 @@ In order to illustrate our thinking around server security, we need to cover wha
 * A web application where a user can login, access their account and perform various functions
 * A mobile application that communicates with the server to manage user accounts and user data
 
-As we mentioned above, the application we built while writing this guide is a web application that allows users to manage their "to-do list".
-
-Now that we know what type of servers and applications we will be securing, let's take a look at the server architecture we used for our to-do application and the server architecture we recommend you use for your applications.
+Now that we know what type of servers and applications we will be securing, let's take a look at the server architecture for a simple example of a fictional "To-do Application" and the server architecture we recommend you use for your applications.
 
 ![](/assets/img/resources/guide/server-architecture.png){: .w-md-50 .mw-100}
 {: .text-center}
@@ -83,9 +81,9 @@ On the Application Server you will install the server-side code for your applica
 
 ### 3.2.	Provisioning {#provisioning}
 
-In this guide, we will take you through the steps to create servers using Linode, a virtual server provider. Linode provisions stock versions of most operating systems and the server is open to the world. This would be the same setup if you were running your own servers. If you use Amazon, Google or other similar providers instead, some of the security configurations below will be managed using the web based configuration systems of the hosting provider. We'll try to indicate places where providers like Amazon provide web tools to manage security.
+In this guide, we will take you through the steps to create servers using Linode, a virtual server provider. Linode provisions stock versions of most operating systems and the server is open to the world. This would be the same setup if you were running your own servers. If you use Amazon, Google or other cloud providers instead, some of the security configurations below will be managed using the web based configuration systems of the hosting provider or their APIs. We'll try to indicate places where providers like Amazon provide tools to manage various security components.
 
-Now that you know what the architecture looks like, let's create the two servers you need. We'll be using the Ubuntu Linux version 16.04 LTS image for this guide. Most of the file locations and instructions assume that you will be using Ubuntu. If you prefer to use CentOS or a different distribution, you will need to translate these instructions.
+Now that you know what the architecture looks like, let's create the two servers you need. We'll be using the Ubuntu Linux version 18.04 LTS image for this guide. Most of the file locations and instructions assume that you will be using Ubuntu. If you prefer to use CentOS or a different distribution, you will need to translate these instructions.
 
 Our examples will use two Linode 1024 instances hosted in California. Here are the setup steps you can use to create the servers:
 
@@ -110,16 +108,19 @@ Prevent direct access when it isn't required
 
 You need to give both servers a private IP address that is not world accessible, but is accessible between Linode servers. This setting is on the Remote Access page.
 
-![](/assets/img/resources/guide/linode-setup-3.png){: .w-md-50 .mw-100}
-{: .text-center}
+![](/assets/img/resources/guide/linode-setup-3.png){: .mw-100}
 
-After you add a private IP address, your configuration should look like this:
+Once you click the `Add a Private IP` button, you will be presented with this screen that allows you to create a private IP for the server.
 
 ![](/assets/img/resources/guide/linode-setup-4.png){: .mw-100}
   
-Before the private IP address will take effect, you need to enable the "Auto-configure Networking" setting. From the Dashboard click the "Edit" link to the right of your configuration at the top of the page. This will take you to the configuration options. At the bottom, enable the "Auto-configure networking setting". This option looks like this:
+After you add a private IP address, your configuration should look like this:
 
 ![](/assets/img/resources/guide/linode-setup-5.png){: .mw-100}
+
+Before the private IP address will take effect, you need to enable the "Auto-configure Networking" setting. From the Dashboard click the "Edit" link to the right of your configuration at the top of the page. This will take you to the configuration options. At the bottom, enable the "Auto-configure networking setting". This option looks like this:
+
+![](/assets/img/resources/guide/linode-setup-6.png){: .mw-100}
   
 Then click "Save Changes".
 
@@ -127,9 +128,9 @@ Then click "Save Changes".
 
 Now, boot your Linode server by clicking the Boot button on the details page:
 
-![](/assets/img/resources/guide/linode-setup-6.png){: .mw-100}
+![](/assets/img/resources/guide/linode-setup-7.png){: .mw-100}
 
-Both servers should now be running. The next step of the process is to lock down remote access to the servers and secure passwords and user accounts. You will need to perform all of these steps on each server to ensure they both are secure. There are numerous guides available to help you secure Linux servers, but we will cover the most common steps we use at Inversoft.
+Both servers should now be running. The next step of the process is to lock down remote access to the servers and secure passwords and user accounts. You will need to perform all of these steps on each server to ensure they both are secure. There are numerous guides available to help you secure Linux servers, but we will cover the most common steps we use at FusionAuth.
 
 **NOTE:** We assume once a hacker has gained access to the server undetected, they will eventually succeed in gaining root access and will have access to everything. Therefore, we will cover some steps to secure user accounts and make the hacker's job harder, but we won't go into extreme detail here. Instead, we will focus primarily on preventing hackers from gaining access to the server in the first place.
 
@@ -719,7 +720,7 @@ The last step to configuring Monit is to edit the file `/etc/monit/monitrc`. Add
 
 ```config
 set mailserver smtp.sendgrid.net port 587 username "&lt;sendgrid-username>" password "&lt;sendgrid-password>" using tlsv12
-set alert brian@inversoft.com not on { instance, action }
+set alert brian@fusionauth.io not on { instance, action }
 ```
         
 The second line tells Monit to email me whenever alerts happen, but to ignore alerts I created manually. This will reduce spamming your inbox if you choose to use Monit for other tasks such as process watching and restarting.
@@ -1043,21 +1044,21 @@ Each web server will have a different mechanism for implementing SSL. In all cas
 Our application was developed on Node.js and we purchased a SSL certificate through GoDaddy. To purchase the SSL certificate, we first needed to create a certificate signing request (CSR). To create a CSR, we executed these commands:
 
 ```bash
-$ openssl req -new -newkey rsa:2048 -nodes -keyout hackthis.inversoft.com.key -out hackthis.inversoft.com.csr
+$ openssl req -new -newkey rsa:2048 -nodes -keyout hackthis.fusionauth.io.key -out hackthis.fusionauth.io.csr
 ```
         
 This created two files in the current directory:
 
-* A 2048 bit RSA private key file named hackthis.inversoft.com.key
-* A certificate signing request file named hackthis.inversoft.com.csr
+* A 2048 bit RSA private key file named hackthis.fusionauth.io.key
+* A certificate signing request file named hackthis.fusionauth.io.csr
 
 We used the CSR to initiate the creation of our SSL certificate with GoDaddy. Once the certificate was issued, we installed it on our Application Server in a secure location that was only readable by the application user we created above. Here are the commands we used to install the certificate after we downloaded it to our local computer:
 
 ```bash
-$ scp * inversoft@hackthis.inversoft.com:/tmp
-$ ssh inversoft@hackthis.inversoft.com
+$ scp * fusionauth@hackthis.fusionauth.io:/tmp
+$ ssh fusionauth@hackthis.fusionauth.io
 $ sudo mkdir -p /usr/local/application/ssl
-$ sudo cp /tmp/hackthis.inversoft.com.* /usr/local/application/ssl
+$ sudo cp /tmp/hackthis.fusionauth.io.* /usr/local/application/ssl
 $ sudo chown -R application:application /usr/local/application
 $ sudo chmod -R go-rwx /usr/local/application
 ```
@@ -1065,7 +1066,7 @@ $ sudo chmod -R go-rwx /usr/local/application
 These commands read as follows:
 
 1. Copy SSL certificate files to the server.
-2. Log into the server as the inversoft user.
+2. Log into the server as the fusionauth user.
 3. Make a new directory for our application's SSL certificate files (the application will be deployed in this directory as well).
 4. Copy the SSL certificate files to the directory.
 5. Change the ownership of the directory and the files so they are owned by the application user.
@@ -1078,8 +1079,8 @@ var https = require('https');
 
 var fs = require('fs');
 var options = {
-  key: fs.readFileSync('ssl/hackthis.inversoft.com.key'),
-  cert: fs.readFileSync('ssl/hackthis.inversoft.com.crt')
+  key: fs.readFileSync('ssl/hackthis.fusionauth.io.key'),
+  cert: fs.readFileSync('ssl/hackthis.fusionauth.io.crt')
 };
 
 https.createServer(options, function (req, res) {
@@ -1089,7 +1090,7 @@ https.createServer(options, function (req, res) {
 // Redirect from http port 80 to 443 (https)
 var http = require('http');
 http.createServer(function (req, res) {
-  res.writeHead(301, { "Location": "https://hackthis.inversoft.com" + req.url });
+  res.writeHead(301, { "Location": "https://hackthis.fusionauth.io" + req.url });
   res.end();
 }).listen(3000);
 ```
@@ -1230,7 +1231,7 @@ http://www.my-application.com/some-data?sort=(select%20CAST((select concat(email
 It will cause an SQL error, which will also contain the email and password for the first user in the database. The error might look something like this:
 
 ```java
-"admin@inversoft.com:173ad94aa37d140a5aab46795b14cef88efe8be76930b90460b5da60f4cff76e"
+"admin@fusionauth.io:173ad94aa37d140a5aab46795b14cef88efe8be76930b90460b5da60f4cff76e"
 ```
         
 If the error is sent back from the server to the browser either in JSON or HTML, hackers can then modify the URL above to learn everything about the database and query the data of every user.
@@ -1335,11 +1336,11 @@ Use the least privilege possible
 
 The most important aspect of securing a database is the database user the application connects with. Never connect your application to your database as a superuser (AKA a root database user). Instead, create an application user and limit the privileges of this user to only those needed for the application.
 
-For our example application, we created a database user named `inversoft`. We granted this user permission to only the database for our application. Here's the SQL statements we used:
+For our example application, we created a database user named `fusionauth`. We granted this user permission to only the database for our application. Here's the SQL statements we used:
 
 ```sql
-mysql> create user 'inversoft'@'192.81.133.144' identified by 'super-strong-password';
-mysql> grant insert, select, update, delete on users_todos.* to 'inversoft'@'192.81.133.144'
+mysql> create user 'fusionauth'@'192.81.133.144' identified by 'super-strong-password';
+mysql> grant insert, select, update, delete on users_todos.* to 'fusionauth'@'192.81.133.144'
 ```
         
 This creates our user and then allows the user to perform the standard SQL data options (insert, select, update and delete) on our database only.
@@ -1430,7 +1431,7 @@ This guide covers a set of best practices that will help you secure your user da
 
 We also would like to note that this guide is applicable for both large and small companies. Even if you have 10,000 servers and large configuration, deployment and management processes, you can still use the concepts in this guide to ensure your processes are secure.
 
-If you find any errors in this guide, please let us know. Also, if you find any vulnerabilities in this guide, send us an email at dev@inversoft.com so that we can investigate them and update the guide.
+If you find any errors in this guide, please let us know. Also, if you find any vulnerabilities in this guide, send us an email at dev@fusionauth.io so that we can investigate them and update the guide.
 
 ## 6. References {#references}
 
