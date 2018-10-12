@@ -1,6 +1,6 @@
 ---
 layout: guide
-title: 2018 Guide to User Data Security
+title: Guide to User Data Security
 subtitle: by Brian Pontarelli
 description: FusionAuth gives you the control and power you need to secure your app and manage your users quickly and efficiently.
 image: fusionauth-share-image.jpg
@@ -166,6 +166,8 @@ To make the most of this module, you need to edit the configuration file to requ
 ```bash
 $ nano /etc/pam.d/common-password
 ```
+
+**NOTE:** You can also use `vi` if you prefer that over `nano` for text file editing. If you aren't familiar with vi, `nano` will save you a lot of headache learning `vi` commands. 
         
 Find the line that starts with:
 
@@ -191,38 +193,11 @@ The configuration options are as follows:
 
 You can change these values if you wish, but you should ensure users are selecting complex passwords that are hard to brute force attack.
 
-### 3.5. Locking Remote Access {#locking-remote-access}
+### 3.5. Locking Sudo {#locking-sudo}
 
-Remote access is always through SSH on Linux servers. In most cases, SSH is setup to allow access to user accounts via passwords. By allowing users to log in to your server using their passwords, you allow hackers to brute force attack your server from anywhere in the world. Instead, your servers should use RSA keys to allow users to login. This will only allow users to access the server from the computer that contains their private key. Since private keys will be password locked and never shared, this will ensure that only authorized users will be able to access the server.
-
-<div class="card float-md-right callout ml-md-3 mb-3">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
-Identify users that can access the server
-</div>
-</div>
-
-To secure remote access to your servers, change server configuration so that SSH access requires RSA keys. If you are running in Amazon, some of this configuration is standard on their servers. You'll still want to verify your configuration using the steps below.
-
-To start this process, you need to create a public/private key pair on your local computer. To generate a key pair on a Mac or Linux machine, execute this command:
-
-```bash
-$ ssh-keygen -t rsa -b 2048
-```
-        
-This process will ask for a passphrase for the key. You should select a passphrase that is complex.
-
-**NOTE:** A complex passphrase generally means it is 16 characters or longer and contains numbers, letters and punctuation. You should always use a complex passphrase for your keys because leaving the key without a passphrase makes it much more vulnerable overall. Even if your private key is stolen or socially hacked, a passphrase will ensure it will be much more difficult to use.
-
-Once logged in you will create an ordinary user account so that you aren't constantly logging into the root account. This also allows you to secure the machine further. To create an ordinary user account, run this command and specify the username you want to use:
-
-```bash
-$ useradd -m -G sudo -s /bin/bash your-username
-```
-        
-This command specifies that the user should have an extra group of sudo (the -G sudo option). This group will allow the user permissions to execute superuser commands on the server.
-
-**NOTE:** Some systems have passwordless sudo enabled for the sudo group. You need to disable this so that all users are forced to type in their passwords to use the sudo command.
+Some standard Linux installations allow passwordless sudo superuser access using the `sudo` command. Often this capability is provided to users in the `sudo` group. One potential issue with passwordless superuser access is that if a hacker gains access to a ordinary user account on your server, and that odrinary user account is in the correct group, then the hacker can become the root user without knowing the user's password.
+ 
+To prevent this, we will lock down the `sudo` command to require all users to type their password in before the `sudo` command will grant them superuser privileges.
 
 From your terminal window that is logged into the root account, edit the file `/etc/sudoers` like this:
 
@@ -230,7 +205,7 @@ From your terminal window that is logged into the root account, edit the file `/
 $ nano /etc/sudoers
 ```
         
-You can also use `vi` if you prefer that over `nano` for text file editing. If you aren't familiar with vi, `nano` will save you a lot of headache learning `vi` commands. This file should contain a line that looks like this:
+This file should contain a line that looks like this:
 
 ```config
 %sudo   ALL=(ALL:ALL) ALL
@@ -244,6 +219,27 @@ If this line looks like this:
         
 You will want to remove the `"NOPASSWD":` part of the line.
 
+### 3.6. Setup Ordinary User Account {#setup-ordinary-user-account}
+
+<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card-header bg-info text-white">GUIDELINE</div>
+<div class="card-body">
+Identify users that can access the server
+</div>
+</div>
+
+Up to this point, we have been using the root user account for everything. This is fine when you are setting up a server but it is better to create an ordinary user account and start using that instead. This method provides better security because ordinary user accounts must use the `sudo` command in order to gain superuser privileges. Plus, we know that our configuration change above will require them to type in their password as well.  
+
+**NOTE:** You will still want to leave a terminal window open with the root user logged into your server just in case something goes wrong.
+ 
+To create an ordinary user account, run this command and specify the username you want to use from the terminal window that is logged in as the root user:
+
+```bash
+$ useradd -m -G sudo -s /bin/bash your-username
+```
+        
+This command specifies that the user should have an extra group of sudo (the `-G sudo` option). This group will allow the user permissions to execute superuser commands on the server.
+
 Now that the user has been created, you need to set a strong password for this user. This password should be complex. To set the password for your user, execute this command:
 
 ```bash
@@ -255,7 +251,7 @@ In another terminal window, ensure that you can log into this user account using
 ```bash
 $ ssh your-username@173.255.241.203
 ```
-        
+
 While you are here, you should also verify that this user has sudo access. Type this command to test for sudo access:
 
 ```bash
@@ -270,9 +266,27 @@ You should see a directory listing of the server. However, if you see a message 
         
 You can logout of this terminal by typing `exit` or hitting `ctrl-d`.
 
-Next, copy your public key from your local computer to the server.
+### 3.7. Locking Remote Access {#locking-remote-access}
 
-**NOTE:** Be sure to copy your public key only and NOT your private key. Here's the command to copy your public key to the server:
+Remote access is always through SSH on Linux servers. In most cases, SSH is setup to allow access to user accounts via passwords. By allowing users to log in to your server using their passwords, you allow hackers to brute force attack your server from anywhere in the world. Instead, your servers should use RSA keys to allow users to login. This will only allow users to access the server from the computer that contains their private key. Since private keys will be password locked and never shared, this will ensure that only authorized users will be able to access the server.
+
+To secure remote access to your servers, we will change the server configuration so that SSH access requires RSA keys. If you are running in Amazon, they will require an RSA public key in order to provision a server (such as an EC2 instance). However, this doesn't prevent someone from changing the configuration of the server to allow passwords, or from using an AMI (the images used to create EC2 instances) that allows password based login. Your best bet is to apply this configuration regardless of the hosting provider you are using.
+
+To start this process, you need to create a public/private key pair on your local computer. To generate a key pair on a Mac or Linux machine, execute this command:
+
+```bash
+$ ssh-keygen -t rsa -b 2048
+```
+        
+This process will ask for a passphrase for the key. You should select a passphrase that is complex.
+
+**NOTE:** A complex passphrase generally means it is 16 characters or longer and contains numbers, letters and punctuation. You should always use a complex passphrase for your keys because leaving the key without a passphrase makes it much more vulnerable overall. Even if your private key is stolen or socially hacked, a passphrase will ensure it will be much more difficult to use.
+
+Next, copy your public key from your local computer to the server and store it under the ordinary user account we created above.
+
+**NOTE:** Be sure to copy your public key only and NOT your private key. 
+
+Here's the command to copy your public key to the server:
 
 ```bash
 $ scp ~/.ssh/id_rsa.pub your-username@173.255.241.203:/home/your-username
@@ -286,8 +300,10 @@ $ chmod 700 .ssh
 $ mv id_rsa.pub .ssh/authorized_keys
 $ chmod 600 .ssh/authorized_keys
 ```
+
+**NOTE:** The commands above change the permissions of the `.ssh` directory and the `authorized_keys` file so that only the ordinary user can read them. This is required for this model of using RSA keys to work on the server. If you don't do this and jump ahead to where we disable password login for SSH, your server could become inaccessible.  
         
-Now, logout of the server and log back in as the ordinary user. You should not be prompted to type in a password. You should instead be prompted to enter the passphrase you used when creating the SSH key above. If you are prompted for a password rather than the passphrase you likely renamed your key files or specified a different name when you created them. Therefore, you must use the -i flag to tell SSH to use the proper identity file for this server like this:
+Now, logout of the server and log back in as the ordinary user. You should not be prompted to type in a password. You should instead be prompted to enter the passphrase you used when creating the SSH key above. If you are prompted for a password rather than the passphrase you likely renamed your key files or specified a different name when you created them. Therefore, you must use the `-i` flag to tell SSH to use the proper identity file for this server like this:
 
 ```bash
 $ ssh -i server_rsa your-username@173.255.241.203
@@ -312,7 +328,7 @@ You can verify that your server is now secure by attempting to SSH to it as the 
 Permission denied (publickey).
 ```
         
-### 3.6. SSH Agents {#ssh-agents}
+### 3.8. SSH Agents {#ssh-agents}
 
 You might be wondering what will happen if you SSH to the Application Server and then try to SSH from there to the Database Server. By default, you won't be able to do this because your private key won't be on the Application Server. However, SSH has a feature that allows you to accomplish this without copying your private key all over the place.
 
@@ -326,17 +342,17 @@ $ ssh-add
         
 This will add your default private key to the SSH agent.
 
-**NOTE:** If you are on a Mac, you don't need to run this command. OSX will automatically prompt for your private key passphrase and add this key to your SSH agent.
+**NOTE:** If you are on a Mac, you don't need to run this command. macOS will automatically prompt for your private key passphrase and add this key to your SSH agent.
 
-You need to enable your SSH agent when you SSH to a server. To do this, you will use the -A option like this:
+You need to enable your SSH agent when you SSH to a server. To do this, you will use the `-A` option like this:
 
 ```bash
 $ ssh -A -i server_rsa your-username@173.255.241.203
 ```
         
-You can also add an alias for the SSH command to automatically add the -A option in your shell's configuration file.
+You can also add an alias for the SSH command to automatically add the `-A` option in your shell's configuration file.
 
-### 3.7. Locking the Root Account {#locking-root-account}
+### 3.9. Locking the Root Account {#locking-root-account}
 
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
@@ -345,13 +361,13 @@ Prevent direct access when it isn't required
 </div>
 </div>
 
-Disable the root user's login to prevent users from trying to brute force attack the root user if they ever gain access to the server. You might be concerned that if you lock the root account you won't be able to administer the server easily. Even if the root user account is locked, you'll still be able to use the root account via the command `"sudo su -"`, but you won't be able to log in directly to the root user's account. To lock the root user's login, type this command into the root user terminal:
+Next, we will disable the root user's login to prevent users from trying to brute force attack the root user if they ever gain access to the server. You might be concerned that if you lock the root account you won't be able to administer the server easily. Even if the root user account is locked, you'll still be able to use the root account via the command `sudo su -`, but you won't be able to log in directly to the root user's account. To lock the root user's login, type this command into the terminal window that is logged in as the root user:
 
 ```bash
 $ usermod -p '*' root
 ```
         
-### 3.8. Two-Factor Authentication {#two-factor-authentication}
+### 3.10. Two-Factor Authentication {#two-factor-authentication}
 
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
@@ -360,9 +376,9 @@ Identify users that can access to the server
 </div>
 </div>
 
-Since we are going for über security, let's get crazy and add one more layer of authentication to your remote access. Add two-factor authentication to the server; this will require users to type in a 6-digit code from their mobile phone in order to log in. Even if a user's private key is compromised, two-factor authentication ensures a hacker would still need the user's mobile phone to log into the server.
+Since we are going for über security, let's get crazy and add one more layer of authentication to your remote access. We will add two-factor authentication to the server. This will require users to type in a 6-digit code from their mobile phone in order to log in. Even if a user's private key is compromised, two-factor authentication ensures a hacker would still need the user's mobile phone to log into the server.
 
-First, you will need to install a two-factor app on your smartphone. There are many two-factor applications available for iOS and Android. Next, install the Google Authenticator two-factor PAM module on the server by executing this command in the root user terminal:
+First, you will need to install a two-factor app on your mobile phone. There are many two-factor applications available for iOS and Android. I personally like the Authy app because it has slick icons for different services like AWS and Github. Next, install the Google Authenticator two-factor PAM module on the server by executing this command in the root user terminal:
 
 ```bash
 $ apt-get install libpam-google-authenticator
@@ -380,7 +396,7 @@ Add this line to the top of the file:
 auth [success=done new_authtok_reqd=done default=die] pam_google_authenticator.so nullok
 ```
         
-Save this file and then open the SSH configuration file like this:
+This line enables the two-factor PAM module and also specifies what happens if the user fails two-factor login. In this case, the handling will be to reject the login if the two-factor code is invalid (i.e. `default=die`). Save this file and then open the SSH configuration file like this:
 
 ```bash
 $ nano /etc/ssh/sshd_config
@@ -392,13 +408,17 @@ Find and modify or add the configuration parameters below:
 ChallengeResponseAuthentication yes
 AuthenticationMethods publickey,keyboard-interactive
 ```
-        
-Before enabling this module for a user, install the network time system so that the server's clock is updated and consistent with the atomic clock. Since the two-factor authentication system uses a time-based algorithm, this will ensure that the server clock remains in sync with your smartphone. To install this package, type this command:
+
+These two settings are a bit tricky. If you recall from above, we changed our SSH configuration to only allow `publickey` authentication. This would normally not allow our two-factor PAM module to work because that setting also refuses to let the user type anything in during login. Now, we need to allow the user to type in their two-factor code during login. Therefore, we need to enable the `ChallengeResponesAuthentication` setting and enable `keyboard-interactive` as an allowed `AuthenticationMethod`.
+   
+Before enabling this module for a user, you must install the network time system so that the server's clock is updated and consistent with the atomic clock. Since the two-factor authentication system uses a time-based algorithm, this will ensure that the server clock remains in sync with your mobile phone. This is an assumption that your mobile phone is syncing with an atomic clock, but this is generally a safe assumption since most phones periodically update the time to be in sync. 
+
+To install this package, type this command:
 
 ```bash
 $ apt-get install ntp
 ```
-Now restart the SSH service to pick up these changes like this:
+Now restart the SSH service to pick up all of our changes changes like this:
 
 ```bash
 $ service ssh restart
@@ -411,11 +431,11 @@ $ google-authenticator -l 'your-username@Application Server'
         
 This will display a QRCode that you can scan from the two-factor authentication app on your smartphone. It will also ask you additional questions to determine how you want to handle time-skew and brute force login attempts. Additionally, there will be 5 emergency scratch codes generated for your account. You should write these down in a secure location such as iCloud Secure Notes.
 
-Before logging out of this terminal, open a new terminal window and verify that you can still login to the ordinary user account with your SSH key and the two-factor code from your smartphone. If you ever have problems logging in, you can use one of the scratch codes that you saved off above. This will grant you access to your account and allow you to fix the two-factor authentication issue.
+Before logging out of this terminal, open a new terminal window and verify that you can still login to the ordinary user account with your SSH key and the two-factor code from the authenticator app on your mobile phone. If you ever have problems logging in, you can use one of the scratch codes that you saved off above. This will grant you access to your account and allow you to fix the two-factor authentication issue.
 
-If you install the two-factor authentication as described above and a user doesn't enable it for their account, everything will still work fine. They will be able to log in using just their SSH key.
+If you install the two-factor authentication as described above and a user doesn't enable it for their account, everything will still work fine. They will be able to log in using their SSH key but it will also prompt them for their password as their two-factor response.
 
-### 3.9. Firewalling {#firewalling}
+### 3.11. Firewalling {#firewalling}
 
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
@@ -436,9 +456,9 @@ $ apt-get install iptables-persistent
 
 Make sure you save both the rules.v4 and rules.v6 file during this installation process.
 
-Now, setup the firewall on the Application Server. Your application isn't running yet, but when it does run it will be listening on two ports. These will vary based on your setup, but our examples will use 3003 for HTTPS web requests and port 3000 for HTTP web requests. We will actually forward requests from the standard ports 80 for HTTP and 443 for HTTPS to ports 3000 and 3003 respectively. This forwarding is covered later.
+Now, setup the firewall on the Application Server. Your application isn't running yet, but when it does run it might be listening on a couple of ports. These will vary based on your setup, but our examples will use 3003 for HTTPS web requests and port 3000 for HTTP web requests. We will actually forward requests from the standard ports 80 for HTTP and 443 for HTTPS to ports 3000 and 3003 respectively. This forwarding is covered later.
 
-Likewise, the Application Server will listen on port 22 for SSH requests. Since you installed the persistent IPTables package, you can simply edit the rules file to set your rules. Copy and paste the following content into the `/etc/iptables/rules.v4` file (via `nano` or any other editor):
+Additionally, the Application Server will listen on port 22 for SSH requests. Since you installed the persistent IPTables package, you can simply edit the rules file to set your rules. Copy and paste the following content into the `/etc/iptables/rules.v4` file (via `nano` or any other editor):
 
 ```config
 *filter
@@ -515,7 +535,7 @@ COMMIT
         
 A complete explanation of the IPTables rule file format is out of scope for this guide however we will cover some of the basics so that you can configure your file to suit your needs. IPTables rule files are broken down into Tables. Tables are defined using an asterisk character followed by the table name. Everything after the table definition is included in that table's rules until the `COMMIT` command is hit.
 
-The filter table is the most important table above, but the nat table is also used and we'll cover that shortly. The filter table defined like this:
+The `filter` table is the most important table above, but the nat table is also used and we'll cover that shortly. The filter table defined like this:
 
 ```config
 *filter
@@ -523,7 +543,7 @@ The filter table is the most important table above, but the nat table is also us
 COMMIT
 ```
         
-We'll ignore the raw, security and mangle tables for now. You can find more information about them online if you are interested.
+We'll ignore the `raw`, `security` and `mangle` tables for now. You can find more information about them online if you are interested.
 
 A table can hold one or more chains. There are a number of predefined chains in each table, but for the filter table the three chains are `INPUT`, `OUTPUT` and `FORWARD`. In the nat table, we will use the `PREROUTING` chain as well. Here are the definitions of these chains:
 
@@ -558,7 +578,7 @@ Each rule must define a policy that determines how packets are handled. This is 
 * `DROP` - the packet is completely ignored; the external computer that sent the packet will not receive a response and will be forced to time-out the connection
 * `REJECT` - a response is sent to the external computer indicating that the server has rejected the packet
 
-In the configuration above, we initialize the `INPUT` and `FORWARD` chains to `DROP` everything by default. This prevents your server from accepting packets unless you explicitly define a rule. The `OUTPUT` chain on the other hand is set to `ACCEPT` by default. In most cases, if you are on the server, you'll likely want to access other servers. You might need to do a DNS lookup or download packages to install, but it is generally safe to leave the `OUTPUT` chain open.
+In the configuration above, we initialize the `INPUT` and `FORWARD` chains to `DROP` everything by default. This prevents your server from accepting packets unless you explicitly define a rule. The `OUTPUT` chain on the other hand is set to `ACCEPT` by default. The `OUTPUT` chain is used when a new connect is opened from the server to an external source (usually another server) or when a packet is sent back to a client on an established connect (like an HTTP response to an HTTP request). Therefore, you should almost always set the `OUTPUT` to `ACCEPT` for all traffic. You can lock the `OUTPUT` chain down if you want, just be careful because it could lock your server since outgoing packets for SSH might be dropped. 
 
 The file above sets up a few default rules for the predefined `INPUT` chain. These rules are:
 
@@ -589,9 +609,9 @@ The final rules are setup for each of the protocols you are interested in. By de
         
 These rules read like this, "for TCP packets (`-A TCP -p tcp`), on port 22 (`--dport 22`), accept them (`-j ACCEPT`)". There is a separate rule for each port that should be open on the server. You'll notice that the server listens on the standard HTTP and HTTPS ports, but also port 3000 and 3003, which are the ports our example application will be listening on.
 
-In addition to the filter table, the configuration above also makes use of the nat table. The nat table is used because later in this guide, you will run your application as a non-privileged user (i.e. not the root user). This is to ensure that breaches to the application won't allow hackers full access to the server. Linux servers don't allow non-privileged users to bind ports below 1000. Therefore, the IPTables configuration forwards traffic on port 80 to port 3000 and traffic on port 443 to port 3003. To accomplish this port forwarding, we make use of the `PREROUTING` chain in the nat table.
+In addition to the `filter` table, the configuration above also makes use of the `nat` table. The `nat` table is used because later in this guide, you will run your application as a non-privileged user (i.e. not the root user). This is to ensure that breaches to the application won't allow hackers full access to the server. Linux servers don't allow non-privileged users to bind ports below 1000. Therefore, the IPTables configuration forwards traffic on port 80 to port 3000 and traffic on port 443 to port 3003. To accomplish this port forwarding, we make use of the `PREROUTING` chain in the `nat` table.
 
-Under the nat table, there are two rules defined:
+Under the `nat` table, there are two rules defined:
 
 ```config
 -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
@@ -688,7 +708,7 @@ It might seem like a pain to have to log into the Application Server in order to
 
 Both are challenging feats and it is likely the hacker will be discovered well before they accomplish either task.
 
-### 3.10. Intrusion Detection {#intrusion-detection}
+### 3.12. Intrusion Detection {#intrusion-detection}
 
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
@@ -719,7 +739,7 @@ You can also whitelist certain IP addresses by uncommenting the ignore match lin
 The last step to configuring Monit is to edit the file `/etc/monit/monitrc`. Add the lines below to configure Monit to send email alerts to you. This configuration will vary depending on your SMTP mail server, the authentication required for your SMTP server and your email address. Our examples use Sendgrid for sending emails and my email address.
 
 ```config
-set mailserver smtp.sendgrid.net port 587 username "&lt;sendgrid-username>" password "&lt;sendgrid-password>" using tlsv12
+set mailserver smtp.sendgrid.net port 587 username "<sendgrid-username>" password "<sendgrid-password>" using tlsv12
 set alert brian@fusionauth.io not on { instance, action }
 ```
         
@@ -805,10 +825,10 @@ Once you create the Pushover application it will have an id associated with it. 
 For Slack integration, configure an Incoming Webhook using these steps:
 
 1. Open your Slack interface and click on the name in the top left corner.
-2. Select "Apps & Integrations".
-3. Click "Build your own" in top right corner.
-4. Click "Make a Customer Integration" under "Just for my team".
-  * Here you'll select the channel you want to post to. You'll have some other options to set if you want. All you need from here is the integration URL.
+2. Select "Administration" -> "Manage Apps".
+3. Click "Custom Integrations" on the right menu.
+4. Click "Incoming WebHooks" and then click the "Add Configuration" button on the left. 
+  * Here you'll select the channel you want to post to and then create the WebHook. On the next page, you'll have some other options to set if you want. All you need from here is the integration URL.
 5. Copy and paste that URL into the variable `slack_webhook_url` in the script above.
 
 To ensure the Ruby script above will run properly, make sure you have Ruby installed and the script is executable by executing these commands:
@@ -865,7 +885,7 @@ drwx------  2 mysql mysql 4096 Apr 28 19:33 mysql-files
 drwx------  2 mysql mysql 4096 Apr 28 19:33 mysql-keyring
 ```
         
-Your directories should look similar. They should all be owned by the user and group named mysql. The permissions should be read, write, execute for the user only (that's what `"drwx------"` means). If this is not how your directories are set, you can change the ownership and permissions for these directories by executing these commands:
+Your directories should look similar. They should all be owned by the user and group named `mysql`. The permissions should be read, write, execute for that user only (that's what `"drwx------"` means). If this is not how your directories are set, you can change the ownership and permissions for these directories by executing these commands:
 
 ```bash
 $ chown -R mysql:mysql /var/lib/mysql*
@@ -900,7 +920,7 @@ $ openssl rsa -in private-key.pem -out public-key.pem -outform PEM -pubout
         
 Now that you have the key pair, leave the `public-key.pem` on the Database Server and move the `private-key.pem` file to the Backup Server (or any other secure location). Now you are ready to backup the database and encrypt the backup file.
 
-First, get the backups running on your Database Server. The simplest way to run a backup is using the mysqldump command via cron. To start, you need to create a shell script in a protected directory. For this example, we are going to use the root user's home directory. From the root user terminal, type these commands:
+First, get the backups running on your Database Server. The simplest way to run a backup is using the `mysqldump` command via cron. To start, you need to create a shell script in a protected directory. For this example, we are going to use the root user's home directory. From the root user terminal, type these commands:
 
 ```bash
 $ cd
@@ -910,7 +930,7 @@ $ chmod +x bin/backup.sh
 $ nano bin/backup.sh
 ```
         
-In this file, you will need to dump the contents of your database to a file. The command to do this is mysqldump. Here's an example script that creates a backup of a database called production to the `/tmp/backups` directory:
+In this file, you will need to dump the contents of your database to a file. The command to do this is `mysqldump`. Here's an example script that creates a backup of a database called production to the `/tmp/backups` directory:
 
 ```bash
 #!/bin/bash
@@ -931,7 +951,7 @@ ls *.gz.enc | sort | tail -n +7 | xargs rm
 ls *.gz.passphrase.enc | sort | tail -n +7 | xargs rm
 
 # Backup the MySQL databases
-mysqldump -u&lt;username> -p&lt;password> production > production.sql
+mysqldump -u<username> -p<password> production > production.sql
 
 # Tar GZ everything (modify this line to include more files and directories in the backup)
 tar -pczf ${BACKUP_FILE} *.sql
@@ -949,7 +969,7 @@ openssl rsautl -encrypt -pubin -inkey ~/public-key.pem < ${BACKUP_PASSPHRASE_FIL
 rm ${BACKUP_FILE} ${BACKUP_PASSPHRASE_FILE}
 
 # Copy offsite
-#scp ${BACKUP_FILE_ENCRYPTED} ${BACKUP_PASSPHRASE_FILE_ENCRYPTED} &lt;username>@&lt;backup-server>:backups/.
+scp ${BACKUP_FILE_ENCRYPTED} ${BACKUP_PASSPHRASE_FILE_ENCRYPTED} <username>@<backup-server>:backups/.
 ```
         
 You might want to backup additional files and directories in this script as well. The last line is used to copy the file offsite to a Backup Server. If you choose to store your backups offsite, you will need to create a Backup Server and secure it using a similar process as above. The setup of the Backup Server is out of scope for this guide, but the main differences in the process above are as follows:
@@ -1020,7 +1040,7 @@ You should instead create a new user that is a locked account just for your appl
 $ useradd -M -s /bin/false application
 ```
         
-This command creates a user named application that has no password and no home directory. It cannot be logged into. However, you will be able to start your application as this user using the `sudo` or `su` commands like this:
+This command creates a user named `application` that has no password and no home directory. It cannot be logged into. However, you will be able to start your application as this user using the `sudo` or `su` commands like this:
 
 ```bash
 #!/bin/bash
@@ -1030,7 +1050,9 @@ sudo -u application nodejs /usr/local/application/app.js
         
 ### 4.2. SSL {#ssl}
 
-The first level of defense for any application is to use SSL (we use the term SSL to mean both SSL and TLS) for all network traffic to the web server. Without SSL encryption, a hacker could intercept network traffic in and out of the server and store it. Since this network traffic would contain usernames, passwords and other user data this would generally be the same level of breach as a hacker gaining access to the user database.
+**NOTE:** We use the term SSL but in reality, we are talking specifically about TLS v1.2 or newer. SSL and earlier versions of TLS are no longer considered secure and many browsers will refuse to connect to websites and services that use them. 
+
+The first level of defense for any application is to use SSL for all network traffic to the web server. Without SSL encryption, a hacker could intercept network traffic in and out of the server and store it. Since this network traffic would contain usernames, passwords and other user data this would generally be the same level of breach as a hacker gaining access to the user database.
 
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
@@ -1039,48 +1061,63 @@ Encrypt all communications
 </div>
 </div>
 
-Each web server will have a different mechanism for implementing SSL. In all cases, you will need to purchase a validated and signed SSL certificate from a known certificate authority (also known as a CA). Rather than cover all possible web servers and how you configure SSL, we'll cover the example application we built for this guide. You can translate these instructions for your application.
+Each web server will have a different mechanism for implementing SSL. In all cases, you will need to obtain a validated and signed SSL certificate from a known certificate authority (also known as a CA). Rather than cover all possible web servers and how you configure SSL, we'll cover the example application we built for this guide. You can translate these instructions for your application.
 
-Our application was developed on Node.js and we purchased a SSL certificate through GoDaddy. To purchase the SSL certificate, we first needed to create a certificate signing request (CSR). To create a CSR, we executed these commands:
-
-```bash
-$ openssl req -new -newkey rsa:2048 -nodes -keyout hackthis.fusionauth.io.key -out hackthis.fusionauth.io.csr
-```
-        
-This created two files in the current directory:
-
-* A 2048 bit RSA private key file named hackthis.fusionauth.io.key
-* A certificate signing request file named hackthis.fusionauth.io.csr
-
-We used the CSR to initiate the creation of our SSL certificate with GoDaddy. Once the certificate was issued, we installed it on our Application Server in a secure location that was only readable by the application user we created above. Here are the commands we used to install the certificate after we downloaded it to our local computer:
+Our application was developed on Node.js and we obtained an SSL certificate through LetsEncrypt. LetsEncrypt is an awesome free service that allows you to obtain a certificate and also ensure it never expires. LetsEncrypt will automatically check and renew your certificate using a cron job on the server. To setup LetsEncrypt on our Ubuntu 18.04 server we used these steps: 
 
 ```bash
-$ scp * fusionauth@hackthis.fusionauth.io:/tmp
-$ ssh fusionauth@hackthis.fusionauth.io
-$ sudo mkdir -p /usr/local/application/ssl
-$ sudo cp /tmp/hackthis.fusionauth.io.* /usr/local/application/ssl
-$ sudo chown -R application:application /usr/local/application
-$ sudo chmod -R go-rwx /usr/local/application
+$ sudo apt-get update
+$ sudo apt-get install software-properties-common
+$ sudo add-apt-repository ppa:certbot/certbot
+$ sudo apt-get update
+$ sudo apt-get install certbot
 ```
+
+These commands install Certbot. Certbot is an implementation of an automated bot that will contact LetsEncrypt using the ACME protcol to issue and renew certificates. On Ubuntu, the Certbot installation creates a systemd timer that will run the Certbot twice per day to check the certificates on the server and possibly renew them.
+
+Before you generate a certificate, you need to setup your DNS entry to point to your server. LetsEncrypt/Certbot uses a verification process that ensures that the DNS is pointed at the server you are requesting the certificate for. For our example application, we setup the DNS `hackthis.fusionauth.io` and pointed it to our Linode public IP address.   
+
+Now that Certbot is installed and we have setup our DNS, we can generate a certificate. To do this, execute this command:
+
+```bash
+$ certbot certonly
+```
+
+This command is interactive and will ask you if you want to spin up a local HTTP server or use Apache (webroot). This process is necessary for LetsEncrypt to verify domain ownership. You will also need to provide an email address where notices will be sent. We suggest that you use a mailing list for this so that it doesn't go to an employee's email that could eventually stop working. Finally, this command will ask you for one or more domain names that the certificate will be assigned to. You can enter multiple domain names if your server will respond to multiple requests.
+
+After the command runs, it should spit out a message that looks like this:
+
+```text
+IMPORTANT NOTES:
+ - Congratulations! Your certificate and chain have been saved at:
+   /etc/letsencrypt/live/hackthis.fusionauth.io/fullchain.pem
+   Your key file has been saved at:
+   /etc/letsencrypt/live/hackthis.fusionauth.io/privkey.pem
+   Your cert will expire on 2019-01-10. To obtain a new or tweaked
+   version of this certificate in the future, simply run certbot
+   again. To non-interactively renew *all* of your certificates, run
+   "certbot renew"
+```
+
+This tells you know where Certbot stored the certificate files. Certificates require 3 components to work:
+
+* A private key
+* The certificate itself
+* A certificate chain
+
+The last piece is required in order for the server to tell clients (browsers in most cases) who generate the certificate and why they should be trusted. The certificate chain lists out all of the certificates for the CA that were used when creating your certificate. At some point in that chain, the browser must have one of the certificates stored locally. These are usually referred to as "Root Certificates". Most browsers ship with hundreds of the most common root certificates including Thawte, Verisign, GoDaddy, etc. LetsEncrypt uses DST as their root certificate and it works in most browsers.
+
+In the case of LetsEncrypt, the certificate change and the certificate for your server are actually stored in the same file. In our case, this file is `/etc/letsencrypt/live/hackthis.fusionauth.io/fullchain.pem`.
         
-These commands read as follows:
-
-1. Copy SSL certificate files to the server.
-2. Log into the server as the fusionauth user.
-3. Make a new directory for our application's SSL certificate files (the application will be deployed in this directory as well).
-4. Copy the SSL certificate files to the directory.
-5. Change the ownership of the directory and the files so they are owned by the application user.
-6. Change permissions of the directory and files so that only the application user can access them.
-
-The last step we performed to setup our application for SSL was to enable it in our Node.js code. We always want visitors to be redirected to the SSL version of our website so we setup a redirect from all HTTP requests. Here's the basic Node.js code that sets up SSL for our application. This code runs from `/usr/local/application` so the `ssl` directory is relative from that location:
+The last step we performed to setup our application for SSL was to enable it in our Node.js code. We always want visitors to be redirected to the SSL version of our website so we setup a redirect from all HTTP requests. Here's the basic Node.js code that sets up SSL for our application.
 
 ```javascript
 var https = require('https');
 
 var fs = require('fs');
 var options = {
-  key: fs.readFileSync('ssl/hackthis.fusionauth.io.key'),
-  cert: fs.readFileSync('ssl/hackthis.fusionauth.io.crt')
+  cert: fs.readFileSync('/etc/letsencrypt/live/hackthis.fusionauth.io/fullchain.pem'),
+  key: fs.readFileSync('/etc/letsencrypt/live/hackthis.fusionauth.io/privkey.pem')
 };
 
 https.createServer(options, function (req, res) {
@@ -1094,6 +1131,8 @@ http.createServer(function (req, res) {
   res.end();
 }).listen(3000);
 ```
+
+You can also another CA like GoDaddy if you prefer. We don't cover the process of obtaining a certificate via CA, but most providers will step you through the process of generating a CSR (certificate signing request), creating the certificate and then downloading it to your dev box. Once you have the certificate and private key, you can copy it to the server (using SCP) and install it wherever you want. Once it is installed on the server, the code above would be updated to point to the certificate and private key file locations you used.   
         
 ### 4.3. Password Security {#password-security}
 
@@ -1106,9 +1145,7 @@ Automate security checks and constraints
 
 When a user registers, they will provide a password for their account. The application needs to ensure that all passwords provided by users are secure. This usually means that the password is sufficiently complex.
 
-**NOTE:** In most cases, a complex password is at least 10 characters, contains an uppercase letter, a lowercase letter, a number and a non-letter/non-number character (i.e. punctuation).
-
-If you aren't using a third-party user database that can ensure passwords are secure, you will need to implement this password validation routine yourself. Here's some simple Java code that can be used to validate passwords:
+If you aren't using FusionAuth, which has password security built in, you will need to implement this password validation routine yourself. Here's some simple Java code that can be used to validate passwords:
 
 ```java
 public class PasswordValidator {
@@ -1153,49 +1190,128 @@ public class PasswordValidator {
   }
 }
 ```
-        
+
+This code ensures that the password contains at least 10 characters, an uppercase letter, a lowercase letter and one special character.  
+
+**NOTE:** NIST recently updated their recommendation regarding password complexity and security. The new standard suggests that passwords should be more than 10 characters, not contain a single common word, and not be a breached password. The older requirements that require different types of characters and require users to change their password frequently are not longer part of the recommendation.
+
+**ADDITIONAL NOTE:** Even though NIST has updated their recommendations, many other standards still require passwords using the complexity requirements in the sample code above. If your application is for a regulated purposed, you should check out the [Password Checklist](https://fusionauth.io/resources/password-security-compliance-checklist.pdf). 
+
 In addition to password validation, you should never store passwords in plain-text. Passwords should always be hashed using a strong, one-way hash algorithm. The hash is then stored in the database. When a user logs in, you will perform the same hashing on the password they provide on the login form and compare it with the hash in the database.
 
-In addition to using a hashing algorithm, you should also be salting the password and performing multiple hash passes. This will prevent brute force or lookup attacks on passwords. Each user should have a different salt stored in the database and your application should perform in-memory salt modification as well. All of these techniques will make the passwords impossible to determine. A salted, in-memory modified password prior to hashing might look something like this:
+Before we get to hashing of passwords, let's take a quick look at some code and SQL that handles login. This is important to avoid SQL injection and other attacks that could compromise your application. Applications should always load the identity information from the database into memory using **ONLY** the unique identifier. Here's an example select statement:
+
+```sql
+SELECT login, password FROM users WHERE login = 'brian@fusionauth.io';
+```
+
+Once you have to identity information in memory, you can take the password that the user provided on the login form, hash it, and then compare it with the value from the database. Here's some example code:
 
 ```java
+public class LoginHelper {
+  public boolean login(String email, String password) {
+    User user = loadUser(email);
+    if (user == null) {
+      return false;
+    }
+    
+    String hashedPassword = hashPassword(password);
+    return hashedPassword.equals(user.password);
+  }
+}
+```
+
+This method ensures that you are always correctly validating passwords and this part of the code cannot be circumvented.
+
+There are two core concepts that impact the security of password hashing: salting and complexity. We will cover both of these in the sections below.
+
+#### 4.3.1. Password Salting
+
+Salting of passwords is a measure that prevents a specific type of password attack. This attack is done by leveraging lookup tables. A lookup table attack is when all possible combinations of passwords are hashed and then stored in a massive reverse lookup table. Let's assume that we aren't salting our passwords but just hashing them directly. In this case, we could build a lookup table like this:
+
+```config
+2206b1bbf30cf86bd1ecb952d1676aa3b9df45a9704e50e899d9615e20e53c2c -> foobarbaz
+4206bfbbf20cfa6bdfeab9s2da676as319d54579804150a89ffdd62e20ed3cg7 -> barbazfoo
+...
+```
+
+The attacker takes the hashes that they have stolen from your database and does a lookup to convert the hash to the original password. By salting the password, we prevent these lookup tables from working because if you hash the same password with two different salts, you will get two different hashes. 
+
+To prevent this type of attach, you salt your passwords before hashing them. Each user should have a different salt and it is safe to store the salt next to the password in the database. Your application can optionally perform in-memory salt modification as well. A salted, in-memory modified password prior to hashing might look something like this:
+
+```config
 [{SALT}]PASSWORD
 ```
         
 If the salt is a UUID like `"16e49f4f-fd87-41b9-8013-57ed3b0403d8"` and the password is something complex like `"Ksie923kd-A291kndj"`, the initial value would look like this:
 
-```java
+```config
 [{16e49f4f-fd87-41b9-8013-57ed3b0403d8}]Ksie923kd-A291kndj
 ```
         
-This value is then hashed with an algorithm like SHA-256 7 times. The result in this case would be the hash:
+This value is then hashed with an algorithm like Bcrypt or PBKDF2. The result might be a hash that looks like this:
 
-```java
+```config
 2206b1bbf30cf86bd1ecb952d1676aa3b9df45a9704e50e899d9615e20e53c2c
 ```
-        
-Here is some simple Java code that illustrates a multiple pass SHA hashing system:
+
+#### 4.3.2. Complexity
+
+The second part of password security is using a complex hashing algorithm. As engineers, we are trained that performance is good. Things that run faster are better because the end-user doesn't have to wait. This is not the case for passwords. Instead, we actually want our password hashing algorithm to be as slow and complex as tolerable.
+
+![](/assets/img/resources/guide/bitcoin-mining-farm.jpg)
+
+The reason that slow algorithms are better is that it takes the computer time to generate the hash. This time makes brute-force attacks nearly impossible. Here's why.
+
+* Let's assume that a modern day bitcoin rig can to about 10 tera-hashes per second
+* Assume passwords can contain 100 different characters
+* That's 1e18 different passwords for everything up to 9 characters in length
+* Generating every possible hash for all these passwords will take approximately 1e2 seconds
+* That's 1.5 minutes!
+
+This math is straight-forward and based on the complexity of the hashing algorithm. The simpler the algorithm, the easier for a CPU or GPU to generate hashes using it. What we want is a really complex algorithm that forces the CPU or GPU to really work to create a single hash. There are a number of modern algorithms that fit this profile: BCrypt, SCrypt, PBKDF2, etc.
+
+Each of these algorithm's have a load-factor. Sometimes this is simply how many times the algorithm is applied. In order cases, it might be a change to the way the algorithm processes the data. In either case, you should understand what valid load-factors are for each algorithm and write your code accordingly. 
+
+FusionAuth allows you to specify the load-factor for each algorithm and it also allows you to write custom hashing algorithms as well. One other feature that it provides is the ability to upgrade user's password hashing complexity over time as they log in. If for example your user's are currently using a weak hash such as MD5, you can upgrade their hash to PBKDF2 next time they log in. This removes the need to force all your users to reset their password in order to increase your security.
+
+Here is the PBKDF2 implementation of the `PasswordEncryptor` interface that ships with FusionAuth. It illustrates how the salt and load-factor are used to generate the password hash. If you are implementing your own password encryption, you will need to tweak this code to suit your needs:
 
 ```java
-public class MultiplePassSaltedSHA256PasswordHasher {
-  public String encrypt(String password, String salt) {
-    String salted =  "[{" + salt + "}]" + password;
-    MessageDigest messageDigest;
+public class PBKDF2HMACSHA256PasswordEncryptor implements PasswordEncryptor {
+  @Override
+  public int defaultFactor() {
+    return 24_000;
+  }
+
+  @Override
+  public String encrypt(String password, String salt, int factor) {
+    if (factor <= 0) {
+      throw new IllegalArgumentException("Invalid factor value [" + factor + "]");
+    }
+
+    SecretKeyFactory keyFactory;
     try {
-      messageDigest = MessageDigest.getInstance("SHA-256");
+      keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
     } catch (NoSuchAlgorithmException e) {
-      throw new IllegalArgumentException("No such algorithm [SHA-256]");
+      throw new IllegalArgumentException("No such algorithm [PBKDF2WithHmacSHA256]");
     }
 
-    byte[] hash = salted.getBytes();
-    for (int i = 0; i < 7; i++) {
-      hash = messageDigest.digest(hash);
+    KeySpec keySpec = new PBEKeySpec(password.toCharArray(), Base64.getDecoder().decode(salt), factor, 256);
+    SecretKey secret;
+    try {
+      secret = keyFactory.generateSecret(keySpec);
+    } catch (InvalidKeySpecException e) {
+      throw new IllegalArgumentException("Could not generate secret key for algorithm [PBKDF2WithHmacSHA256]");
     }
 
-    return new String(Base64.getEncoder().encode(hash));
+    byte[] encoded = secret.getEncoded();
+    return new String(Base64.getEncoder().encode(encoded));
   }
 }
 ```
+
+It is interesting to note that the PBKDF2 algorithm takes the salt as a parameter to the key specification rather than using it to modify the password String itself. Each algorithm works differently, so keep that in mind as you are writing your password hashing.
         
 ### 4.4. SQL Injections {#sql-injection}
 
