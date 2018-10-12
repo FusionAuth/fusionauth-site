@@ -1335,19 +1335,19 @@ http://www.my-application.com/some-data?sort=first_name+desc
 The application takes this information and appends it to the SQL query like this:
 
 ```sql
-select * from users order by first_name desc
+SELECT * FROM users ORDER BY first_name DESC
 ```
         
 This works, but opens a massive security risk for the application. If a hacker changes the URL to this:
 
-```
+```config
 http://www.my-application.com/some-data?sort=(select%20CAST((select concat(email,':',password) from users limit 1) as date))+desc
 ```
         
 It will cause an SQL error, which will also contain the email and password for the first user in the database. The error might look something like this:
 
-```java
-"admin@fusionauth.io:173ad94aa37d140a5aab46795b14cef88efe8be76930b90460b5da60f4cff76e"
+```config
+Cannot CAST "admin@fusionauth.io:173ad94aa37d140a5aab46795b14cef88efe8be76930b90460b5da60f4cff76e" to Date.
 ```
         
 If the error is sent back from the server to the browser either in JSON or HTML, hackers can then modify the URL above to learn everything about the database and query the data of every user.
@@ -1369,7 +1369,7 @@ This code ensures that the sort matches a specific regular expression. If it doe
 Another possible solution is to enumerate the possible sort options and pass an enumeration value instead of the SQL snippet on the URL. To use this method, the URL above would become:
 
 ```
-http://www.my-application.com/some-data?sort=first_name_DOWN
+http://www.my-application.com/some-data?sort=firstName_DOWN
 ```
         
 And the code might look like this:
@@ -1380,16 +1380,16 @@ if (sort == SortEnum.firstName_DOWN) {
 }
 ```
         
-A final solution is to use prepared statements whenever possible. Prepared statements allow you to put placeholders into a SQL statement that are replaced with a value at runtime. Most database drivers will properly escape the value that is passed into the variable which makes SQL injections impossible. An SQL statement that uses prepared statements looks like this:
+A final solution is to use prepared statements whenever possible. Prepared statements allow you to put placeholders into a SQL statement that are replaced with a value at runtime. Most database drivers will properly escape the value that is passed into the variable which makes SQL injections impossible. An SQL statements that use prepared statements looks like this:
 
 ```sql
-select * from users where name = ?
+SELECT * FROM users WHERE name = ?
 ```
         
 The '?' character would be replaced and escaped by the database driver. Therefore, even if a user sent a malicious string in an attempt to perform SQL injection, their attempt would fail because the database would properly escape the string. Here's an example of a malicious string that is attempting to select the first user from the database, but the database driver has correctly escaped it:
 
 ```sql
-select * from users where name = '\';select concat(email,\':\',password) from users limit 1;'
+SELECT * FROM users WHERE name = '\';select concat(email,\':\',password) from users limit 1;'
 ```
         
 It is a good idea to centralize all of your database logic into a single module and regularly query the code for string concatenation or variable replacements that might open your application up to security risks.
