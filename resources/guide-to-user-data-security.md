@@ -72,7 +72,7 @@ In order to illustrate our thinking around server security, we need to cover wha
 
 Now that we know what type of servers and applications we will be securing, let's take a look at the server architecture for a simple example of a fictional "To-do Application" and the server architecture we recommend you use for your applications.
 
-![](/assets/img/resources/guide/server-architecture.png){: .w-md-50 .mw-100}
+![Server architecture](/assets/img/resources/guide/server-architecture.png){: .w-md-50 .mw-100}
 {: .text-center}
   
 In general, you will want to separate your Database Server from your Application Server. While securing two servers instead of one does require additional work, it will give you the flexibility to control access to each server separately. This also means that if a breach does occur, the hacker will have a couple more hoops to jump through in order to gain access to your user data (we'll discuss this later).
@@ -89,13 +89,13 @@ Our examples will use two Linode 1024 instances hosted in California. Here are t
 
 #### Step 1: Select the server type
 
-![](/assets/img/resources/guide/linode-setup-1.png){: .mw-100}
+![Linode setup select server type](/assets/img/resources/guide/linode-setup-1.png){: .mw-100}
   
 #### Step 2: Deploy the Linux Operating System
 
 In this step, be sure to select a long and secure root password. Later you will disable root passwords, but for the initial process you need to ensure the server is secure.
 
-![](/assets/img/resources/guide/linode-setup-2.png){: .mw-100}
+![Linode setup select operating system](/assets/img/resources/guide/linode-setup-2.png){: .mw-100}
 
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
@@ -108,19 +108,19 @@ Prevent direct access when it isn't required
 
 You need to give both servers a private IP address that is not world accessible, but is accessible between Linode servers. This setting is on the Remote Access page.
 
-![](/assets/img/resources/guide/linode-setup-3.png){: .mw-100}
+![Linode setup private IP](/assets/img/resources/guide/linode-setup-3.png){: .mw-100}
 
 Once you click the `Add a Private IP` button, you will be presented with this screen that allows you to create a private IP for the server.
 
-![](/assets/img/resources/guide/linode-setup-4.png){: .mw-100}
+![Linode setup private IP form](/assets/img/resources/guide/linode-setup-4.png){: .mw-100}
   
 After you add a private IP address, your configuration should look like this:
 
-![](/assets/img/resources/guide/linode-setup-5.png){: .mw-100}
+![Linode setup private IP assigned](/assets/img/resources/guide/linode-setup-5.png){: .mw-100}
 
 Before the private IP address will take effect, you need to enable the "Auto-configure Networking" setting. From the Dashboard click the "Edit" link to the right of your configuration at the top of the page. This will take you to the configuration options. At the bottom, enable the "Auto-configure networking setting". This option looks like this:
 
-![](/assets/img/resources/guide/linode-setup-6.png){: .mw-100}
+![Linode setup automatic networking](/assets/img/resources/guide/linode-setup-6.png){: .mw-100}
   
 Then click "Save Changes".
 
@@ -128,7 +128,7 @@ Then click "Save Changes".
 
 Now, boot your Linode server by clicking the Boot button on the details page:
 
-![](/assets/img/resources/guide/linode-setup-7.png){: .mw-100}
+![Linode setup boot server](/assets/img/resources/guide/linode-setup-7.png){: .mw-100}
 
 Both servers should now be running. The next step of the process is to lock down remote access to the servers and secure passwords and user accounts. You will need to perform all of these steps on each server to ensure they both are secure. There are numerous guides available to help you secure Linux servers, but we will cover the most common steps we use at FusionAuth.
 
@@ -817,7 +817,8 @@ end
 You must configure the Pushover and Slack variables defined at the top of the file for the integrations to work properly. For the Pushover integration, create a Pushover account and a Pushover application. The Pushover application creation looks like this:
 
 ![Pushover Setup](/assets/img/resources/guide/pushover-setup.png){: .mw-100}
-  
+{: .text-center}
+
 Give your Pushover application a name, description and URL. Select "Script" from the Type select box.
 
 Once you create the Pushover application it will have an id associated with it. Take the Pushover application and user ids and put them into the variables `pushover_application` and `pushover_user` in the script above. Enable Pushover in the script by setting the variable `pushover_enabled` to true.
@@ -1259,21 +1260,21 @@ This value is then hashed with an algorithm like Bcrypt or PBKDF2. The result mi
 
 The second part of password security is using a complex hashing algorithm. As engineers, we are trained that performance is good. Things that run faster are better because the end-user doesn't have to wait. This is not the case for passwords. Instead, we actually want our password hashing algorithm to be as slow and complex as tolerable.
 
-![](/assets/img/resources/guide/bitcoin-mining-farm.jpg)
+![Bitcoin Farm](/assets/img/resources/guide/bitcoin-mining-farm.jpg){: .mw-100}
 
 The reason that slow algorithms are better is that it takes the computer time to generate the hash. This time makes brute-force attacks nearly impossible. Here's why.
 
-* Let's assume that a modern day bitcoin rig can to about 10 tera-hashes per second
+* Let's assume that a modern day bitcoin rig (like the one in the image above) can to about 10 tera-hashes per second
 * Assume passwords can contain 100 different characters
 * That's 1e18 different passwords for everything up to 9 characters in length
 * Generating every possible hash for all these passwords will take approximately 1e2 seconds
 * That's 1.5 minutes!
 
-This math is straight-forward and based on the complexity of the hashing algorithm. The simpler the algorithm, the easier for a CPU or GPU to generate hashes using it. What we want is a really complex algorithm that forces the CPU or GPU to really work to create a single hash. There are a number of modern algorithms that fit this profile: BCrypt, SCrypt, PBKDF2, etc.
+This math is straight-forward and based on the complexity of the hashing algorithm. The simpler the algorithm, the easier for a CPU or GPU to generate hashes using it. What we want is a complex algorithm that forces the CPU or GPU to work hard to create a single hash. There are a number of modern algorithms that fit this profile including: BCrypt, SCrypt, PBKDF2, etc.
 
-Each of these algorithm's have a load-factor. Sometimes this is simply how many times the algorithm is applied. In order cases, it might be a change to the way the algorithm processes the data. In either case, you should understand what valid load-factors are for each algorithm and write your code accordingly. 
+Each of these algorithm's have a load-factor. Sometimes this is simply how many times the algorithm is applied. In other cases, it might be a change to the way the algorithm processes the data. Regardless of the approach, you should understand what valid load-factors are for each algorithm and write your code accordingly. 
 
-FusionAuth allows you to specify the load-factor for each algorithm and it also allows you to write custom hashing algorithms as well. One other feature that it provides is the ability to upgrade user's password hashing complexity over time as they log in. If for example your user's are currently using a weak hash such as MD5, you can upgrade their hash to PBKDF2 next time they log in. This removes the need to force all your users to reset their password in order to increase your security.
+FusionAuth allows you to specify the load-factor for each algorithm and it also allows you to write custom hashing algorithms as well. An additional feature it provides is the ability to upgrade a user's password hashing complexity over time as they log in. If for example your user's are currently using a weak hash such as MD5, you can upgrade their hash to PBKDF2 next time they log in. This removes the need to force all your users to reset their password in order to increase your security.
 
 Here is the PBKDF2 implementation of the `PasswordEncryptor` interface that ships with FusionAuth. It illustrates how the salt and load-factor are used to generate the password hash. If you are implementing your own password encryption, you will need to tweak this code to suit your needs:
 
@@ -1318,7 +1319,8 @@ It is interesting to note that the PBKDF2 algorithm takes the salt as a paramete
 SQL injection is an application level vulnerability that is caused when an application builds SQL queries (or any type of database query) directly from user input. The XKCD comic strip illustrates this principle:
 
 ![SQL Injection](/assets/img/resources/guide/sql-injection.png){: .mw-100}
-  
+{: .text-center}
+
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
@@ -1335,7 +1337,7 @@ http://www.my-application.com/some-data?sort=first_name+desc
 The application takes this information and appends it to the SQL query like this:
 
 ```sql
-SELECT * FROM users ORDER BY first_name DESC
+SELECT * FROM users ORDER BY first_name desc
 ```
         
 This works, but opens a massive security risk for the application. If a hacker changes the URL to this:
@@ -1474,9 +1476,9 @@ Keep it on the server
 </div>
 </div>
 
-Since the user id is such a powerful component of an application, it needs to be secured. Applications should never send the user id to the front-end nor should the server require the user id to be sent from the client to take an action. Instead, the user id should only be stored on the server in a session that is associated with the client (i.e. the browser the user is using).
+Since the user id is such a powerful component of an application, it needs to be secured and validated. Applications can send the user id to the front-end but should do so in a secure and verifiable way. Leveraging JSON Web Tokens (JWTs) is a good way to send user data (including their id) to the front-end of an application. On the server side, the APIs that are open to the front-end should never take a user id as the way to identify a user. This would allow any hacker to send it arbitrary ids and exploit user accounts. Instead, a secure token should be sent to APIs from the front-end. If you are using JWTs, these should be signed using RSA key-pairs. The server can then verify that the JWT is valid (by checking the RSA signature) and extract the user id from the JWT. Other solutions to this include using session cookies as the token, OAuth access tokens or other types of tokens.
 
-Here's a code snippet from our Node.js application that is leveraging the Passport user database to store the user (which has an id field) in the session:
+Here's a code snippet from a Node.js application that is leveraging FusionAuth and HTTP cookies to store a session identifier:
 
 ```javascript
 var express = require("express");
@@ -1496,16 +1498,16 @@ app.use(session({
 
 // Store the user in the session on login
 var router = express.Router();
-var passportClient = new Passport.PassportClient("API-KEY", "http://localhost:9011");
+var fusionAuthClient = new FusionAuth.FusionAuthClient("API-KEY", "http://localhost:9011");
 router.route("/login").post(function (req, res) {
-  passportClient.login(req.body).then((clientResponse) => {
+  fusionAuthClient.login(req.body).then((clientResponse) => {
     req.session.user = clientResponse.successResponse.user;
     // ...
   });
 });
 ```
         
-Each request then uses this id when performing actions on behalf the user. Here's a code snippet of how a user id is looked up from the session to store some data in the database:
+Each request then uses the user object that was stored in the session when performing actions on behalf the user. Here's a code snippet that illustrates loading the user's id from the session and looking up the user's Todos from the database:
 
 ```javascript
 router.route("/todos").get(function (req, res) {
@@ -1514,7 +1516,7 @@ router.route("/todos").get(function (req, res) {
 });
 ```
         
-In addition to securing the user id, you should also be authorizing API calls from your front-end to ensure the user making the request has the correct permissions to do so. In most cases, a user will have a list of roles and your code will check those roles to ensure the user has permission to take an action. Here's an example of this check in our Node.js application:
+In addition to securing the user's identity, you should also be authorizing API calls from your front-end to ensure the user making the request has the correct permissions to do so. In most cases, a user will have a list of roles and your code will check those roles to ensure the user has permission to take an action. Here's an example of this check an Node.js application:
 
 ```javascript
 router.route("/todos").post(function (req, res) {
@@ -1529,21 +1531,151 @@ One thing to note about this code is that the Express session only stores data, 
 
 You can continue to secure your application on the server by adding additional checks and storing other secure data in the session.
 
-### 4.8. Social Hacks {#social-hacks}
+If you are leveraging JWTs, your code would change quite a bit since the server would no longer be using sessions. Instead, each API would take a JWT via a cookie or an HTTP header. The server would then validate the JWT and extract any necessary data from it. Since, JWTs are just JSON, you can also store roles inside your JWT and the server can use them to authorize the user.
+
+Here's the same API from above that creates Todos, but it uses JWTs instead of sessions:
+
+```javascript
+router.route("/todos").post(function (req, res) {
+  const authorization = req.header('Authorization');
+  if (authorization === null || typeof authorization === 'undefined') {
+    return;
+  }
+
+  const encodedJWT = authorization.substr('JWT '.length);
+  if (encodedJWT === null || typeof encodedJWT === 'undefined') {
+    return;
+  }
+
+  // Decode the JWT
+  const user = _decodeAndValidateJWT(encodedJWT);
+  
+  // Authorize the user
+  if (user.hasRole('CREATE_TODO')) {
+    todo.createTodo(req.body.todo, user.id);
+  }
+});
+```
+
+The code that decodes and validates the JWT was left out because there are a number of libraries out there that provide this for you. A key benefit of using JWTs is that the server only needs the RSA public key that the identity provider used to sign the JWT with. This makes backends that use JWTs stateless since they don't require a session and decouples them from the identity provider since they don't need to call the identity provider to validate the JWT.
+
+### 4.8. Cross-Site Request Forgery (CSRF) {#cross-site-request-forgery}
+
+Cross-site request forgery is a type of attack that hackers take on applications. It involves requests made to an application that a user cannot prevent or control but causes the application to perform some type of action for the user. The simplest form of CSRF is using an image tag to exploit an API that accepts GET requests. The attacker would put the URL they are trying to exploit in a forum or message board and anyone that is logged into the application would be immediately exploited. 
+
+Here's an example. Let's say you write an application and have an API that updates a user's password. For whatever reason, this API is accessible via an HTTP GET request. First off, you should avoid writing APIs that modify data as GET requests, but let's just assume this API accepts GET requests. An attacker figures out that your API takes GET requests and that it uses server sessions for identity. If a user is logged into your application and then later visits a forum, the attacker can put this HTML into a forum post to exploit your API:
+
+```html
+<img src="https://your-application.com/apis/update-user-password?newPassword=foobarbaz&confirmPassword=foobarbaz">
+```
+
+The user doesn't have to click anything to be exploited. Instead, their password will be instantly changed to `foobarbaz` because they are logged into your application, which means they have a session cookie and that cookie is sent over when their browser requests the URL in the image tag.
+
+CSRF attacks can also happen with forms embedded in other sites. Here's a simple example of a form that looks like a button, that causes the same effects as the one above:
+
+```html
+<form action="https://your-application.com/apis/update-user-password" method="POST">
+  <input type="hidden" name="newPassword" value="foobarbaz">
+  <input type="hidden" name="confirmPassword" value="foobarbaz">
+  <input type="submit" name="submit" value="Check out my cat video" style="border:none;background:none;cursor:pointer;color:blue;"
+         onMouseOver="this.style.textDecoration='underline'" onMouseOut="this.style.textDecoration='none'">
+</form>
+```
+
+You'll notice that the submit button is styled to look very similar to a standard anchor tag (`<a>`). This makes it more susceptible to unknowing users that click the button thinking it is just a link to a cat video.
+
+CSRF attacks can be mitigated in a number of ways. We'll cover them below with examples:
+
+#### 4.8.1. Session Tokens
+
+First, you can generate a secure token that is put into the session on the server and output into the form. Tokens should be 256 or more bits of information and generated using a secure random number generator. Implementations can then Base64 encode the bits to get a secure token. The resulting form would look like this:
+
+```html
+<form action="https://your-application.com/apis/update-user-password" method="POST">
+  <input type="hidden" name="csrf" value="aknjsdoiu3907sdhke4bkja9y823b1">
+  <input type="hidden" name="newPassword" value="foobarbaz">
+  <input type="hidden" name="confirmPassword" value="foobarbaz">
+  <input type="submit" name="submit" value="submit">
+</form>
+```
+
+When the form is submitted, the server then checks that the value in the session is the same as the value on the form. This works well in most cases except it breaks if the user has multiple tabs open or uses the back-button in unexpected ways. In order to prevent issues with tabs and the back-button, you need to generate a CSRF token when the user logs in and store it in the session. This means that the user has the same token for their entire session, but this method will prevent most CSRF attacks. If you prefer to generate a new token for each request, then your best approach to invalid tokens is to redraw the form. If the token is missing completely, you should log the user out immediately. 
+
+#### 4.8.2. Cookie
+
+This method uses a cookie that stores the CSRF token rather than writing it out to a form. This approach then uses JavaScript to read the value of the cookie and write it out to a form field or into a header value when making AJAX requests from a JavaScript application. This approach uses JavaScript like this:
+
+```javascript
+var cookie = document.cookie.split(";").filter(function(cookie) {
+  return cookie.startsWith("csrf");
+})[0];
+var csrfToken = cookie.split("=")[1];
+
+// Put in header or form
+```
+
+The key security constraint for this approach is that the browser must conform to the same-origin policy. This policy ensures that JavaScript can only access cookies and documents from the same origin (i.e. only JavaScript from example.com can read cookies and documents from example.com). Most browsers enforce this so it is safe to use this technique.
+
+#### 4.8.3. Cookie and Form
+
+This approach is similar to the previous example, except it writes out a cookie that contains the CSRF token and also writes it out to the form. The cookie that is written out for this should be an `httpOnly` cookie. This means that it is not readable by JavaScript. This approach also works because of the access controls enforced by the browser. Even though the user might have the CSRF token on the website where the hacker has injected the malicious code, the hackers code will not be able to access the CSRF cookie using JavaScript and therefore won't be able to craft a form that contains the same CSRF token.
+
+Here's an example HTTP resposne that contains the CSRF tokens in the cookie and the form:
+
+```http
+HTTP/1.1 200 OK
+Content-Length: 109298
+Content-Type: text/html
+Set-Cookie: csrf=aknjsdoiu3907sdhke4bkja9y823b1; HttpOnly
+Connection: Closed
+<html>
+  ...
+  <form action="https://your-application.com/apis/update-user-password" method="POST">
+    <input type="hidden" name="csrf" value="aknjsdoiu3907sdhke4bkja9y823b1">
+    <input type="hidden" name="newPassword" value="foobarbaz">
+    <input type="hidden" name="confirmPassword" value="foobarbaz">
+    <input type="submit" name="submit" value="submit">
+  </form>
+  ...
+</html>
+```
+
+#### 4.8.4. Referrer and Origin
+
+This approach verifies the HTTP `Referrer` and `Origin` headers are from the same domain your application is running on. While this seems like a simple task, it is often very challenging to implement and most people don't even bother with these checks. The issue is that your application code could be sitting behind a proxy, load-balancer or many other types of components that could strip or change these headers. Additionally, your application might be running under multiple domains and will need to configured to know the domains it should validate these headers against. Your best bet is to check these headers if they are present but do not rely sole on this approach. 
+
+Here's some simple Java code to check these conditions:
+
+```java
+String origin = frontEndSupport.request.getHeader("Origin");
+String referrer = frontEndSupport.request.getHeader("Referrer");
+if ((origin != null && !configuredDomains.contains(origin)) || 
+    (referrer != null && !configuredDomains.contains(referrer))) {
+  // Return an error
+} 
+```
+
+#### 4.8.5. Others
+
+There are a few other approaches to mitigating CSRF including encrypted tokens, HMAC and others. You should review the resources at the bottom of this guide under CSRF to determine which method works best for your application. 
+
+### 4.9. Social Hacks {#social-hacks}
 
 Social hacking is another issue that your application could be subject to. An example of a classic social hack is when a user gets a support representative to change the password of someone else's account so that they can log into that account.
 
 Here's a scene from the movie Hackers that illustrates this concept:
 
-<iframe src="https://www.youtube.com/embed/2efhrCxI4J0" frameborder="0" class="mw-100" allowfullscreen></iframe>
+<div class="video-container">
+<iframe src="https://www.youtube.com/embed/2efhrCxI4J0" frameborder="0" allowfullscreen></iframe>
+</div>
 
 Of course, you'll want to ensure your "BLT drive" is secure, but in this case you need to ensure that your application prevents your employees from falling prey to social hacks.
 
-The best way to prevent social hacking is to ensure that employees, more specifically customer service representatives, don't have too much power. For example, customer service representatives should not be able to change user passwords. Instead, they should only be allowed to send password reset emails to users so that the user can change their own password.
+The best way to prevent social hacking is to ensure that employees, more specifically customer service representatives, don't have too much power. For example, customer service representatives should not be able to change user passwords. Instead, they should only be allowed to send password reset emails to users so that the user can change their own password. You can also use push services like Twillio to send a code (also known as a one-time password) to the user's mobile phone. The user then has to read the code back to the employee, who types it into your backend in order to be granted access to the user's account.
 
 ## 5. Summary {#summary}
 
-This guide covers a set of best practices that will help you secure your user data. It is by no means exhaustive, but if you implement each of the concepts above your user data will be highly secure.
+This guide covers a set of best practices that will help you secure your user data. It is by no means exhaustive, but if you implement each of the concepts above your user data will be nicely secured.
 
 We also would like to note that this guide is applicable for both large and small companies. Even if you have 10,000 servers and large configuration, deployment and management processes, you can still use the concepts in this guide to ensure your processes are secure.
 
@@ -1596,3 +1728,9 @@ In addition to the experience and knowledge of our development team, we used add
 
 <http://stackoverflow.com/questions/20938620/node-js-express-disable-automatic-session-creation>
 <http://expressjs.com/en/advanced/best-practice-security.html>
+
+**CSRF**
+<https://en.wikipedia.org/wiki/Cross-site_request_forgery>
+<https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Token_Based_Mitigation>
+<https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS>
+<https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy>
