@@ -36,9 +36,9 @@ There are two parts to the guide: Server Security and Application Security. We d
 
 If you would rather not read our entire security guide (though we suggest you do), check out the Github project created around this guide. This project contains a set of scripts you can execute from your local computer to secure a remote server. The scripts perform most of the steps listed in this guide. The Github project also contains full configuration files based on the configuration detailed below that are deployed to the server by the scripts.
 
-In addition to setup scripts and configuration, we also added a Chef cookbook to the Github repository. Chef is a great way to provision new servers and ensure they are setup exactly how you want them. There are a number of other systems similar to Chef, but we use Chef for all of our servers and thought we would share our Chef recipe with everyone. 
+In addition to setup scripts and configuration, we also added a Chef cookbook to the Github repository. Chef is a great way to provision new servers and ensure they are setup exactly how you want them. There are a number of other systems similar to Chef, but we use Chef for all of our servers and thought we would share our Chef recipe with everyone.
 
-Find our Github project here: <https://github.com/FusionAuth/2018-security-scripts>
+Find our Github project here: <https://github.com/FusionAuth/security-scripts>
 
 **NOTE:** That is only half of the equation, so you will still want to read the Application Security section of the guide.
 
