@@ -1196,7 +1196,7 @@ This code ensures that the password contains at least 10 characters, an uppercas
 
 **NOTE:** NIST recently updated their recommendation regarding password complexity and security. The new standard suggests that passwords should be more than 10 characters, not contain a single common word, and not be a breached password. The older requirements that require different types of characters and require users to change their password frequently are not longer part of the recommendation.
 
-**ADDITIONAL NOTE:** Even though NIST has updated their recommendations, many other standards still require passwords using the complexity requirements in the sample code above. If your application is for a regulated purposed, you should check out the [Password Checklist](https://fusionauth.io/resources/password-security-compliance-checklist.pdf). 
+**ADDITIONAL NOTE:** Even though NIST has updated their recommendations, many other standards still require passwords using the complexity requirements in the sample code above. If your application is for a regulated purposed, you should check out the [Password Security Compliance Checklist](/resources/password-security-compliance-checklist.pdf). 
 
 In addition to password validation, you should never store passwords in plain-text. Passwords should always be hashed using a strong, one-way hash algorithm. The hash is then stored in the database. When a user logs in, you will perform the same hashing on the password they provide on the login form and compare it with the hash in the database.
 
