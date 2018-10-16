@@ -1,6 +1,6 @@
 ---
 layout: guide
-title: Guide to User Data Security
+title: Guide to <br/> User Data Security
 subtitle: by Brian Pontarelli
 description: FusionAuth gives you the control and power you need to secure your app and manage your users quickly and efficiently.
 image: fusionauth-share-image.jpg
@@ -1730,6 +1730,7 @@ In addition to the experience and knowledge of our development team, we used add
 <http://expressjs.com/en/advanced/best-practice-security.html>
 
 **CSRF**
+
 <https://en.wikipedia.org/wiki/Cross-site_request_forgery>
 <https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Token_Based_Mitigation>
 <https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS>
