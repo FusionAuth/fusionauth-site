@@ -2,8 +2,8 @@
 layout: guide
 title: Guide to <br/> User Data Security
 subtitle: by Brian Pontarelli
-description: FusionAuth gives you the control and power you need to secure your app and manage your users quickly and efficiently.
-image: fusionauth-share-image.jpg
+description: Protect your user data with this step-by-step guide to secure your servers and applications.
+image: resources/guide/guide-to-user-data-security.png
 ---
 
 ## 1. Overview {#overview}
