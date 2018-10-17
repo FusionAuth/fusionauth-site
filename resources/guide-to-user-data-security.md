@@ -1647,8 +1647,8 @@ This approach verifies the HTTP `Referrer` and `Origin` headers are from the sam
 Here's some simple Java code to check these conditions:
 
 ```java
-String origin = frontEndSupport.request.getHeader("Origin");
-String referrer = frontEndSupport.request.getHeader("Referrer");
+String origin = request.getHeader("Origin");
+String referrer = request.getHeader("Referrer");
 if ((origin != null && !configuredDomains.contains(origin)) || 
     (referrer != null && !configuredDomains.contains(referrer))) {
   // Return an error
