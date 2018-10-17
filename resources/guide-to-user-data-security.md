@@ -72,8 +72,7 @@ In order to illustrate our thinking around server security, we need to cover wha
 
 Now that we know what type of servers and applications we will be securing, let's take a look at the server architecture for a simple example of a fictional "To-do Application" and the server architecture we recommend you use for your applications.
 
-![Server architecture](/assets/img/resources/guide/server-architecture.png){: .w-md-50 .mw-100}
-{: .text-center}
+{% include _image.html src="/assets/img/resources/guide/server-architecture.png" alt="Server architecture" class="w-md-50 mw-100 mx-auto mb-4 text-center" figure=true %}
   
 In general, you will want to separate your Database Server from your Application Server. While securing two servers instead of one does require additional work, it will give you the flexibility to control access to each server separately. This also means that if a breach does occur, the hacker will have a couple more hoops to jump through in order to gain access to your user data (we'll discuss this later).
 
@@ -89,13 +88,13 @@ Our examples will use two Linode 1024 instances hosted in California. Here are t
 
 #### Step 1: Select the server type
 
-![Linode setup select server type](/assets/img/resources/guide/linode-setup-1.png){: .mw-100}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-1.png" alt="Linode setup select server type" class="mw-100 mx-auto mb-4 text-center" figure=true %}
   
 #### Step 2: Deploy the Linux Operating System
 
 In this step, be sure to select a long and secure root password. Later you will disable root passwords, but for the initial process you need to ensure the server is secure.
 
-![Linode setup select operating system](/assets/img/resources/guide/linode-setup-2.png){: .mw-100}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-2.png" alt="Linode setup select operating system" class="mw-100 mx-auto mb-4 text-center" figure=true %}
 
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
@@ -108,19 +107,19 @@ Prevent direct access when it isn't required
 
 You need to give both servers a private IP address that is not world accessible, but is accessible between Linode servers. This setting is on the Remote Access page.
 
-![Linode setup private IP](/assets/img/resources/guide/linode-setup-3.png){: .mw-100}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-3.png" alt="Linode setup private IP" class="mw-100 mx-auto mb-4 text-center" figure=true %}
 
 Once you click the `Add a Private IP` button, you will be presented with this screen that allows you to create a private IP for the server.
 
-![Linode setup private IP form](/assets/img/resources/guide/linode-setup-4.png){: .mw-100}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-4.png" alt="Linode setup private IP form" class="mw-100 mx-auto mb-4 text-center" figure=true %}
   
 After you add a private IP address, your configuration should look like this:
 
-![Linode setup private IP assigned](/assets/img/resources/guide/linode-setup-5.png){: .mw-100}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-5.png" alt="Linode setup private IP assigned" class="mw-100 mx-auto mb-4 text-center" figure=true %}
 
 Before the private IP address will take effect, you need to enable the "Auto-configure Networking" setting. From the Dashboard click the "Edit" link to the right of your configuration at the top of the page. This will take you to the configuration options. At the bottom, enable the "Auto-configure networking setting". This option looks like this:
 
-![Linode setup automatic networking](/assets/img/resources/guide/linode-setup-6.png){: .mw-100}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-6.png" alt="Linode setup automatic networking" class="mw-100 mx-auto mb-4 text-center" figure=true %}
   
 Then click "Save Changes".
 
@@ -128,7 +127,7 @@ Then click "Save Changes".
 
 Now, boot your Linode server by clicking the Boot button on the details page:
 
-![Linode setup boot server](/assets/img/resources/guide/linode-setup-7.png){: .mw-100}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-7.png" alt="Linode setup boot server" class="mw-100 mx-auto mb-4 text-center" figure=true %}
 
 Both servers should now be running. The next step of the process is to lock down remote access to the servers and secure passwords and user accounts. You will need to perform all of these steps on each server to ensure they both are secure. There are numerous guides available to help you secure Linux servers, but we will cover the most common steps we use at FusionAuth.
 
@@ -816,8 +815,7 @@ end
         
 You must configure the Pushover and Slack variables defined at the top of the file for the integrations to work properly. For the Pushover integration, create a Pushover account and a Pushover application. The Pushover application creation looks like this:
 
-![Pushover Setup](/assets/img/resources/guide/pushover-setup.png){: .mw-100}
-{: .text-center}
+{% include _image.html src="/assets/img/resources/guide/pushover-setup.png" alt="Pushover setup" class="mw-100 mx-auto mb-4 text-center" figure=true %}
 
 Give your Pushover application a name, description and URL. Select "Script" from the Type select box.
 
@@ -1260,11 +1258,11 @@ This value is then hashed with an algorithm like Bcrypt or PBKDF2. The result mi
 
 The second part of password security is using a complex hashing algorithm. As engineers, we are trained that performance is good. Things that run faster are better because the end-user doesn't have to wait. This is not the case for passwords. Instead, we actually want our password hashing algorithm to be as slow and complex as tolerable.
 
-![Bitcoin Farm](/assets/img/resources/guide/bitcoin-mining-farm.jpg){: .mw-100}
+{% include _image.html src="/assets/img/resources/guide/bitcoin-mining-farm.jpg" alt="Bitcoin Farm" class="img-thumbnail float-right ml-md-4" figure=true %}
 
 The reason that slow algorithms are better is that it takes the computer time to generate the hash. This time makes brute-force attacks nearly impossible. Here's why.
 
-* Let's assume that a modern day bitcoin rig (like the one in the image above) can to about 10 tera-hashes per second
+* Let's assume that a modern day bitcoin rig (like the one in the image) can to about 10 tera-hashes per second
 * Assume passwords can contain 100 different characters
 * That's 1e18 different passwords for everything up to 9 characters in length
 * Generating every possible hash for all these passwords will take approximately 1e2 seconds
@@ -1318,8 +1316,7 @@ It is interesting to note that the PBKDF2 algorithm takes the salt as a paramete
 
 SQL injection is an application level vulnerability that is caused when an application builds SQL queries (or any type of database query) directly from user input. The XKCD comic strip illustrates this principle:
 
-![SQL Injection](/assets/img/resources/guide/sql-injection.png){: .mw-100}
-{: .text-center}
+{% include _image.html src="/assets/img/resources/guide/sql-injection.png" alt="SQL Injection" class="mw-100 mx-auto mb-4 text-center" figure=true %}
 
 <div class="card float-md-right callout ml-md-3 mb-3">
 <div class="card-header bg-info text-white">GUIDELINE</div>
