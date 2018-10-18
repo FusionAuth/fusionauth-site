@@ -1682,53 +1682,58 @@ If you find any errors in this guide, please let us know. Also, if you find any 
 
 In addition to the experience and knowledge of our development team, we used additional resources to build this guide. Below is a non-exhaustive list of the references and resources we used:
 
+
+**General**
+
+* <https://www.owasp.org>
+
 **Password Complexity**
 
-<http://xmodulo.com/set-password-policy-linux.html>
+* <http://xmodulo.com/set-password-policy-linux.html>
   
 **SSH**
 
-<http://askubuntu.com/questions/20450/disable-root-account-in-ubuntu>
+* <http://askubuntu.com/questions/20450/disable-root-account-in-ubuntu>
   
 **IPTables**
 
-<https://wiki.archlinux.org/index.php/iptables>
-<https://www.digitalocean.com/community/tutorials/how-to-implement-a-basic-firewall-template-with-iptables-on-ubuntu-14-04>
-<http://www.howtogeek.com/177621/the-beginners-guide-to-iptables-the-linux-firewall/>
-<http://serverfault.com/questions/373871/dont-understand-00-iptable-syntax>
-<http://serverfault.com/questions/157375/reject-vs-drop-when-using-iptables>
-<http://www.thegeekstuff.com/2011/01/iptables-fundamentals/>
+* <https://wiki.archlinux.org/index.php/iptables>
+* <https://www.digitalocean.com/community/tutorials/how-to-implement-a-basic-firewall-template-with-iptables-on-ubuntu-14-04>
+* <http://www.howtogeek.com/177621/the-beginners-guide-to-iptables-the-linux-firewall/>
+* <http://serverfault.com/questions/373871/dont-understand-00-iptable-syntax>
+* <http://serverfault.com/questions/157375/reject-vs-drop-when-using-iptables>
+* <http://www.thegeekstuff.com/2011/01/iptables-fundamentals/>
   
 **Two-Factor Authentication**
 
-<https://www.digitalocean.com/community/tutorials/how-to-protect-ssh-with-two-factor-authentication>
-<http://serverfault.com/questions/629883/trying-to-get-ssh-with-public-key-no-password-google-authenticator-working-o>
-<http://www.howtogeek.com/121650/how-to-secure-ssh-with-google-authenticators-two-factor-authentication/>
+* <https://www.digitalocean.com/community/tutorials/how-to-protect-ssh-with-two-factor-authentication>
+* <http://serverfault.com/questions/629883/trying-to-get-ssh-with-public-key-no-password-google-authenticator-working-o>
+* <http://www.howtogeek.com/121650/how-to-secure-ssh-with-google-authenticators-two-factor-authentication/>
   
 **Monit and Intrusion Detection**
 
-<http://askubuntu.com/questions/179889/how-do-i-set-up-an-email-alert-when-a-ssh-login-is-successful>
-<https://mmonit.com/wiki/MMonit/PushoverNotification>
-<https://mmonit.com/wiki/MMonit/SlackNotification>
+* <http://askubuntu.com/questions/179889/how-do-i-set-up-an-email-alert-when-a-ssh-login-is-successful>
+* <https://mmonit.com/wiki/MMonit/PushoverNotification>
+* <https://mmonit.com/wiki/MMonit/SlackNotification>
   
 **Backup Encryption**
 
-<http://askubuntu.com/questions/95920/encrypt-tar-gz-file-on-create>
+* <http://askubuntu.com/questions/95920/encrypt-tar-gz-file-on-create>
   
 **Node.js SSL**
 
-<https://nodejs.org/api/https.html>
-<http://stackoverflow.com/questions/22453782/nodejs-http-and-https-over-same-port>
-<https://en.wikipedia.org/wiki/Transport_Layer_Security>
+* <https://nodejs.org/api/https.html>
+* <http://stackoverflow.com/questions/22453782/nodejs-http-and-https-over-same-port>
+* <https://en.wikipedia.org/wiki/Transport_Layer_Security>
   
 **Express**
 
-<http://stackoverflow.com/questions/20938620/node-js-express-disable-automatic-session-creation>
-<http://expressjs.com/en/advanced/best-practice-security.html>
+* <http://stackoverflow.com/questions/20938620/node-js-express-disable-automatic-session-creation>
+* <http://expressjs.com/en/advanced/best-practice-security.html>
 
 **CSRF**
 
-<https://en.wikipedia.org/wiki/Cross-site_request_forgery>
-<https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Token_Based_Mitigation>
-<https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS>
-<https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy>
+* <https://en.wikipedia.org/wiki/Cross-site_request_forgery>
+* <https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Token_Based_Mitigation>
+* <https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS>
+* <https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy>
