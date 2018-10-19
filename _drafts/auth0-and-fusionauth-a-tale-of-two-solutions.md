@@ -24,7 +24,7 @@ We also share more advanced features that make a difference in the usability and
 * On-Premise and Private Cloud Deployments
 * User Search and User Management Interfaces
 
-And then we both go farther to provide the extras that make a difference for the people who actually use our services, the customer:
+And then we both go farther to provide the extras that keep customer accounts secure such as:
 * Brute-Force Hack Detection
 * Password Strength Settings
 * Secure Single Sign-On
