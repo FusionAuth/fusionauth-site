@@ -33,10 +33,9 @@ Auth0 and FusionAuth share many essential elements of a customer identity manage
 
 ## How Auth0 and FusionAuth Are Different
 
-[Download the full feature comparison](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison") *Can I put a button to the PDF here?*
+[Download the full feature comparison](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf){: .btn .btn-primary}
 
-[{% include _blog-image.html src="/assets/img/blogs/auth0-fusionauth-compare-sample.png" alt="Auth0 and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Download the Auth0 and FusionAuth Feature Comparison")
-
+[{% include _image.html src="/assets/img/blogs/auth0-fusionauth-compare-sample.png" alt="Auth0 and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Download the Auth0 and FusionAuth Feature Comparison")
 
 ### Free for Unlimited Users
 
@@ -61,7 +60,7 @@ FusionAuth is a small, bootstrapped company dedicated to our customers. We have 
 
 To see more details on how Auth0 and FusionAuth stack up, [download this feature comparison](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison") and please [contact us](https://fusionauth.io/contact "Contact Us") if you have any questions.
 
-[Download the full feature comparison](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison")
+[Auth0 and FusionAuth Feature Comparison](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison"){: .btn .btn-primary}
 
 ## Learn More About FusionAuth
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available. We provide registration, login, SSO, MFA, data search, user management and more, free for unlimited users. [Find out more](https://fusionauth.io "FusionAuth Home") about FusionAuth and download it today.

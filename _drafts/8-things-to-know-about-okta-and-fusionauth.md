@@ -26,7 +26,7 @@ Despite their similarities, Okta and FusionAuth differ in ways that can be vital
 
 ## How Okta and FusionAuth Are Different
 
-[{% include _blog-image.html src="/assets/img/blogs/okta-fusionauth-compare-sample.png" alt="Download the Okta and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-okta.pdf "Download the Okta and FusionAuth Feature Comparison")
+[{% include _image.html src="/assets/img/blogs/okta-fusionauth-compare-sample.png" alt="Download the Okta and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-okta.pdf "Download the Okta and FusionAuth Feature Comparison")
 
 ### 3. Single-Tenant Security
 A big difference between Okta and FusionAuth is Okta is a multi-tenant ‘built in the cloud’ service. FusionAuth can install anywhere and delivers true data isolation as *single-tenant solution*. This eliminates the possibility of data leakage between unrelated companies, whether accidentally or through data breaches. It also eliminates the risk of another company’s poor security practices allowing access to your customer’s data. FusionAuth also enables customers to implement a firewall at any layer, further protecting their data from unauthorized access.
