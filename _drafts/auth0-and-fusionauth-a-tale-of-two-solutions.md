@@ -54,7 +54,7 @@ User reports have been in every slide presentation and corporate board meeting s
 ### Custom Feature Development
 Another difference between Auth0 and FusionAuth is our size and flexibility. Auth0 is a huge corporation with hundreds of employees and tens-of-millions in investor funding. They are beholden to an extensive range of investors and board influencers who are all chasing “the best product-market fit.” Smaller companies with unique or specific needs are often overlooked or ignored.
 
-FusionAuth is a small, bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, Mineplex, and Niantic (Pokemon).
+FusionAuth is a small, bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, StrategyCorp, Deutsche Bank and IBM.
 
 To see more details on how Auth0 and FusionAuth stack up, [download this feature comparison](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison") and please [contact us](https://fusionauth.io/contact "Contact Us") if you have any questions.
 
