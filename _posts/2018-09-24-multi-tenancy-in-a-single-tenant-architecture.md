@@ -18,7 +18,7 @@ While FusionAuth is fundamentally a single-tenant solution, we do support multip
 
 ## White labeled Identity        {#white-label}
 
-{% include _blog-image.html src="/assets/img/blogs/white-label.png" alt="white Label Tag" class="float-right" style="width: 250px;" figure=false %}
+{% include _image.html src="/assets/img/blogs/white-label.png" alt="white Label Tag" class="float-right" style="width: 250px;" figure=false %}
 
 We have several clients that, like us, are also software companies. With these clients, it is very common for them to be selling Software as a Service (SaaS) solutions. This means they have many clients using a single instance of their platform.
 
@@ -28,7 +28,7 @@ Joe uses two different websites, `funnymugs.com` and `chucknorrisjokes.com`. Bot
 
 Joe will be very (unpleasantly) surprised if he changes his password on `chucknorrisjokes.com` and magically his password is updated on `funnymugs.com`. This diagram illustrates why this unexpected password change occurs when Acme Corp. is storing single user objects.
 
-{% include _blog-image.html src="/assets/img/blogs/password-change-tenants.png" alt="Password Change" class="img-thumbnail float-left mr-md-4" figure=true %}
+{% include _image.html src="/assets/img/blogs/password-change-tenants.png" alt="Password Change" class="img-thumbnail float-left mr-md-4" figure=true %}
 
 This would be a poor user experience and not ideal for Acme Corp. While both users are technically Joe, he is not aware of this nuance in the method that Acme Corp. built their platform.
 
@@ -36,7 +36,7 @@ In most cases we want a user to be considered unique by their email address. You
 
 This is how FusionAuth views the world as well, we support one to many Applications in FusionAuth which represent different authenticated resources. A single user can register or be granted permissions to multiple Applications. This is also where our single sign-on comes into play. You login once and then you can access each Application without the need to log into each one separately.  
 
-{% include _blog-image.html src="/assets/img/blogs/password-change-multi-tenant.png" alt="Password Change w/ Tenants" class="img-thumbnail float-right ml-md-4" figure=true %}  
+{% include _image.html src="/assets/img/blogs/password-change-multi-tenant.png" alt="Password Change w/ Tenants" class="img-thumbnail float-right ml-md-4" figure=true %}  
 
 However, as you just saw with Acme Corp., when the platform is opaque to the end user and there is only a single identity for a single email address, surprising side-effects start to occur. In this case, what Acme Corp. needs is a way to partition each of their clients into their own namespace. This is one of the main reasons we built FusionAuth Tenants. 
 
@@ -47,7 +47,7 @@ We still strongly believe that a single-tenant solution is the most secure optio
 
 ## Dev, Stage and Prod      {#dev-stage-prod}
 
-{% include _blog-image.html src="/assets/img/blogs/dilbert-project.png" alt="Dilbert Project" class="float-left mt-md-2 mr-md-4" style="max-width: 650px;" figure=false %} For this use case, we don't have multiple clients, but instead we have a single production environment using FusionAuth.
+{% include _image.html src="/assets/img/blogs/dilbert-project.png" alt="Dilbert Project" class="float-left mt-md-2 mr-md-4" style="max-width: 650px;" figure=false %} For this use case, we don't have multiple clients, but instead we have a single production environment using FusionAuth.
 
 In addition to production, we need separate environments for development, build and QA. One option is to stand up a separate instance of FusionAuth for each of these environments. This ensures that the development environment doesn't impact the build environment, which doesn't impact the QA environment, and so on. 
 
