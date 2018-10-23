@@ -17,7 +17,7 @@ Steps to get going:
 1. [Download and Install FusionAuth](/)
 2. [Create an Application](/docs/v1/tech/tutorials/create-an-application)
    1. While you are creating an application, create two roles `user` and `admin` (you can create others if you like)
-   2. Add a valid redirect url to your oauth configuration. For our example we will use `http://localhost:8081/login`.
+   2. Add a valid redirect url to your OAuth configuration. For our example we will use `http://localhost:8081/login`.
    3. Click save (blue icon at the top right)
 
 3. Copy your `Client id` and `Client secret` from the Application configuration into `application.properties` under the `fusionAuth.clientId` and `fusionAuth.clientSecret` properties (respectively). Below is a template that you can use for the configuration file:
@@ -47,19 +47,37 @@ Steps to get going:
     </dependency>
     ```
 
-6. Connect our library to your application using a Spring Security configuration object.
+5. Connect our library to your application using a Spring Security configuration.
 
-    To make things easy we use `@EnableGlobalMethodSecurity(prePostEnabled = true)` to enable annotation
-    based authorization and access controls. This is a feature of Spring Security that allows you to annotate
-    Controllers in order to control the roles that are allowed to make specific requests. To learn more on this,
+    In order to connect our library, you need to tell your application how to use it.
+    This means first creating a bean (`myfilter` in our example) that returns
+    our `OpenIDConnectFilter`. The filter needs to know where you would like your login
+    endpoint to be and for our example we will use `"/login"`. The filter also needs
+    access to the `OAuth2RestTemplate` as our library builds on top of the built in
+    Spring OAuth2 workflow.
+
+    __Quick overview of OpenID workflow__
+
+    1. A user clicks on a login link `<a href="/login">Login</a>`
+    2. Spring handles the `/login` request by initiating an OAuth2 redirect to the authorize endpoint
+    on the FusionAuth instance.
+    3. The user logs in to the FusionAuth instance and gets redirected back to your application with
+    an authentication code. In our example they will get redirected back to `/login` and login will
+    detect the code to proceed to the next step.
+    4. Next, Spring exchanges the auth code for a access token. This token contains user details
+    and some data pertaining to the users authority. Unfortunately this token is encoded and we can't touch the data (yet).
+    5. Now our filter takes over and we call the `userinfo` API to get all of the data out of the token which we load into the `FusionAuthUserDetails` object from our library which is what
+    powers the `@PreAuthorize` annotation methods. This is accessible
+    via `SpringContextHolder.getContext().getAuthentication().getPrincipal()`
+
+    __Spring Security annotations__
+
+    For ease of use, we chose to use Spring Security annotations that quickly mark which Controllers
+    require what permissions. To enable these annotations you must mark your security configuration
+    with `@EnableGlobalMethodSecurity(prePostEnabled = true)` To learn more on this,
     read the Spring Security docs here: https://docs.spring.io/spring-security/site/docs/3.0.x/reference/el-access.html
 
-    Our library maps the FusionAuth roles of the currently logged in user into the Spring user authority field.
-    Now any of our `@Controller`s will be able to use annotations to control access. For example,
-    `@PreAuthorize("hasAuthority('user')"` restricts access to a Controller to users with the `user` role in FusionAuth.
-    This makes authorizing specific roles quick and easy.
-
-    Here is an example Spring Security configuration object that enables the annotation based controls.
+    __Example `SecurityConfig`__
 
     ```java
     @Configuration
@@ -76,6 +94,7 @@ Steps to get going:
 
       @Bean
       public OpenIDConnectFilter myFilter() {
+        // This is the core of our library and what is required to get role detection
         OpenIDConnectFilter filter = new OpenIDConnectFilter("/login");
         filter.setRestTemplate(restTemplate);
         return filter;
@@ -91,7 +110,7 @@ Steps to get going:
     }
     ```
 
-7. We also need to tell Spring to use our configuration for the OAuth portion of the workflow so we create a few beans.
+6. We also need to tell Spring to use our configuration for the OAuth portion of the workflow so we create a few beans.
 
     ```java
     @Configuration
@@ -293,4 +312,3 @@ http.addFilterAfter(new OAuth2ClientContextFilter(), AbstractPreAuthenticatedPro
 
 That's all it takes! When you get set up, send us a link to your site. We'd love to see what you did. If you have any
 questions or comments, let us know in the comments below or [contact us](https://fusionauth.io/contact).
-
