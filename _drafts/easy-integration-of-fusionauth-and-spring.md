@@ -15,14 +15,14 @@ Don't want to read? [Jump to the example](https://github.com/FusionAuth/fusionau
 Steps to get going:
 ----
 1. [Download and Install FusionAuth](/)
-1. [Create an Application](/docs/v1/tech/tutorials/create-an-application)
-    1. While you are creating an application, create two roles `user` and `admin` (You can create others if you like)
-    1. Add a valid redirect url to your oauth configuration. For our example we will use `http://localhost:8081/login`.
-    1. Click save (top right)
-1. Copy your clientId and Secret into `application.properties` using the following template.
+2. [Create an Application](/docs/v1/tech/tutorials/create-an-application)
+   1. While you are creating an application, create two roles `user` and `admin` (you can create others if you like)
+   2. Add a valid redirect url to your oauth configuration. For our example we will use `http://localhost:8081/login`.
+   3. Click save (blue icon at the top right)
 
-    You will need to rewrite all of the demo.fusionauth.io urls to be wherever your FusionAuth instance is
-    running. This can be localhost.
+3. Copy your `Client id` and `Client secret` from the Application configuration into `application.properties` under the `fusionAuth.clientId` and `fusionAuth.clientSecret` properties (respectively). Below is a template that you can use for the configuration file:
+
+    If you are running FusionAuth inside a container or on a server, you might need to change the URLs below to point to your FusionAuth instance.
 
     ```properties
     server.port=8081
@@ -30,14 +30,15 @@ Steps to get going:
     # OpenID
     fusionAuth.clientId=
     fusionAuth.clientSecret=
-    fusionAuth.accessTokenUri=https://demo.fusionauth.io/oauth2/token
-    fusionAuth.logoutUri=https://demo.fusionauth.io/oauth2/logout
-    fusionAuth.userAuthorizationUri=https://demo.fusionauth.io/oauth2/authorize
-    fusionAuth.userInfoUri=https://demo.fusionauth.io/oauth2/userinfo
+    fusionAuth.accessTokenUri=http://localhost:9011/oauth2/token
+    fusionAuth.logoutUri=http://localhost:9011/oauth2/logout
+    fusionAuth.userAuthorizationUri=http://localhost:9011/oauth2/authorize
+    fusionAuth.userInfoUri=http://localhost:9011/oauth2/userinfo
     fusionAuth.redirectUri=http://localhost:8081/login
     ```
 
-1. Setup basic Spring application using our library. (see Full [pom.xml](https://github.com/FusionAuth/fusionauth-spring-security-example/blob/master/pom.xml))
+4. Setup a basic Spring application and include the FusionAuth Spring Security library in your Maven POM file. (see a full example [pom.xml](https://github.com/FusionAuth/fusionauth-spring-security-example/blob/master/pom.xml))
+
     ```xml
     <dependency>
         <groupId>io.fusionauth</groupId>
@@ -46,12 +47,19 @@ Steps to get going:
     </dependency>
     ```
 
-1. Connect our library using spring security config.
+6. Connect our library to your application using a Spring Security configuration object.
 
     To make things easy we use `@EnableGlobalMethodSecurity(prePostEnabled = true)` to enable annotation
-    based access. Our library maps the FusionAuth roles of a user into the Spring user authority field.
-    Now any of our `@Controller`s will be able to use `@PreAuthorize("hasAuthority('user')"`
-    style security. This makes authorizing specific roles quick and easy.
+    based authorization and access controls. This is a feature of Spring Security that allows you to annotate
+    Controllers in order to control the roles that are allowed to make specific requests. To learn more on this,
+    read the Spring Security docs here: https://docs.spring.io/spring-security/site/docs/3.0.x/reference/el-access.html
+
+    Our library maps the FusionAuth roles of the currently logged in user into the Spring user authority field.
+    Now any of our `@Controller`s will be able to use annotations to control access. For example,
+    `@PreAuthorize("hasAuthority('user')"` restricts access to a Controller to users with the `user` role in FusionAuth.
+    This makes authorizing specific roles quick and easy.
+
+    Here is an example Spring Security configuration object that enables the annotation based controls.
 
     ```java
     @Configuration
@@ -83,8 +91,7 @@ Steps to get going:
     }
     ```
 
-1. We also need to tell Spring to use our configuration for the OAuth portion
-    of the workflow so we create a few beans.
+7. We also need to tell Spring to use our configuration for the OAuth portion of the workflow so we create a few beans.
 
     ```java
     @Configuration
@@ -130,7 +137,7 @@ Steps to get going:
     }
     ```
 
-1. Finally we register a few controller endpoints and setup the main application entry point.
+8. Finally we register a few controller endpoints and setup the main application entry point.
 
     Example controller:
     ```java
