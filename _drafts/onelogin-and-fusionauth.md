@@ -3,7 +3,7 @@ layout: blog-post
 title: "OneLogin and FusionAuth: Different Enough To Make A Difference"
 author: Bryan Giese
 categories: blog
-image: blogs/onelogin-and-fusionauth-comparison.png
+image: blogs/onelogin-and-fusionauth-comparison.jpg
 excerpt_separator: <!--more-->
 ---
 
