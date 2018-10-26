@@ -67,3 +67,14 @@ To see more details on how Ping Identity and FusionAuth stack up, [download this
 
 ## Learn More About FusionAuth
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](https://fusionauth.io "FusionAuth Home") about FusionAuth and download it today.
+
+### Additional Comparisons
+
+Interested in how FusionAuth compares to other solutions? Here are a few more:
+- [Active Directory](link "Active Directory and FusionAuth")
+- [Auth0](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Auth0 and FusionAuth")
+- [Cognito](link "Cognito and FusionAuth")
+- [Firebase](link "Firebase and FusionAuth")
+- [Ping Identity](link "Ping Identity and FusionAuth")
+- [Okta](/blog/2018/10/16/8-things-to-know-about-okta-and-fusionauth "Okta and FusionAuth")
+- [OneLogin](link "OneLogin and FusionAuth")
