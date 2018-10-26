@@ -39,8 +39,15 @@ target(name: "push", description: "Push the site to fusionauth.io") {
     }
   }
 
+  // Allow the command line switch --user to specify a different user on the SSH command
+  def host = "fusionauth.io"
+  if (switches.has("user")) {
+    host = switches.values("user")[0] + "@" + host
+  }
+
+
   output.infoln("Deploying...")
-  proc = new ProcessBuilder("ssh", "-t", "fusionauth.io", "sudo -u www-data /var/git/fusionauth-site/deploy.sh")
+  proc = new ProcessBuilder("ssh", "-t", host, "sudo -u www-data /var/git/fusionauth-site/deploy.sh")
       .inheritIO()
       .start()
   proc.waitFor()
@@ -51,7 +58,7 @@ target(name: "build", description: "builds the project") {
     fail("Unable to run 'bundle install' for FusionAuth Site. Are you certain you have Jekyll installed?")
   }
 
-  if (switches.has("--drafts")) {
+  if (switches.has("drafts")) {
     cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts"])
   } else {
     cleanExecute(["bundle", "exec", "jekyll", "build"])
