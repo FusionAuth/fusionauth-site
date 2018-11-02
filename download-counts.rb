@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
 require 'fileutils'
+require 'json'
+require 'net/http'
 
 temp_dir = "/tmp/fusionauth-access-logs"
 output_file = "/var/www/collateral/download-count.csv"
+ip_hash_file = "/var/www/collateral/ip_to_geo.json"
 whitelisted_ip_patterns_file = "/etc/monit/whitelist_ips.regex"
 
 # Load the white regex
@@ -11,6 +14,8 @@ File.readlines("#{whitelisted_ip_patterns_file}").each do |l|
   whitelisted_ip_patterns << Regexp::new(l.strip)
 end
 
+# Load the IP hash
+ip_hash = JSON.parse(File.read(ip_hash_file))
 
 # Clean up the existing access logs
 FileUtils.rm_rf(temp_dir)
@@ -25,8 +30,9 @@ Dir.foreach(temp_dir) do |file|
     File.readlines("#{temp_dir}/#{file}").each do |l|
       if l =~ /fusionauth-app[-_0-9all.]*(deb|rpm|zip)"/
 
-        if not counts.has_key? date
-          counts[date] = [0,0,0]
+        # Initialize the counts for this date
+        unless counts.has_key? date
+          counts[date] = [0, 0, 0]
         end
 
         # Check to see if the IP is whitelisted
@@ -39,6 +45,18 @@ Dir.foreach(temp_dir) do |file|
           else
             counts[date][2] = counts[date][2] + 1
           end
+
+          # Initialize the ip_hash for this IP and lookup the Country and City
+          unless ip_hash.has_key? ip
+            puts "lookup IP #{ip}..."
+            ip_response = Net::HTTP.get(URI("https://ipapi.co/#{ip}/json/"))
+            ip_json = JSON.parse(ip_response)
+
+            country = ip_json['country_name'] || '?'
+            city = ip_json['city'] || '?'
+            ip_hash[ip] = "#{country}, #{city}"
+          end
+
         end
       end
     end
@@ -57,4 +75,8 @@ File.open(output_file, "w", :encoding => "UTF-8") do |f|
   # Add some color to the chart
   f.puts("Color,#47B050,#FF7E0E,#820000,#FFFF00")
   f.puts("Type,area,stackedarea,stackedarea,stackedarea")
+end
+
+File.open(ip_hash_file,"w", :encoding => "UTF-8") do |f|
+  f.write(ip_hash.to_json)
 end
