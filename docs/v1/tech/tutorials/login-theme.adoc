@@ -1,0 +1,444 @@
+---
+layout: doc
+title: Login Theme
+description: Learn how to theme the FusionAuth login pages (including forgot password, two-factor authentication and others)
+---
+
+== Video
+
+In addition to this guide, we put together a video that illustrates how you can use FusionAuth's login theme templates to make FusionAuth look like StackOverflow.
+
+video::_ro3jH5Xkgo[youtube,width=560,height=315]
+
+== Overview
+
+FusionAuth provides the ability to theme the OAuth v2 login pages plus all of the support pages for login. Here is a list of all of the pages that can be themed using this feature:
+
+* `/email/complete`
+**  This page is used after a user has verified their email address by clicking the URL in the email. After FusionAuth has updated their user object to indicate that their email was verified, the browser is redirected to this page.
+* `/email/send`
+** This page is used after a user has asked for the verification email to be resent. This can happen if the URL in the email expired and the user clicked it. In this case, the user can provide their email address again and FusionAuth will resend the email. After the user submits their email and FusionAuth re-sends a verification email to them, the browser is redirected to this page.
+* `/email/verify`
+** This page is rendered when a user clicks the URL from the verification email and the `verificationId` has expired. FusionAuth expires `verificationId` after a period of time (which is configurable). If the user has a URL from the verification email that has expired, this page will be rendered and the error will be displayed to the user.
+* `/oauth2/authorize`
+** This is the main login page for FusionAuth and is used for all interactive OAuth and OpenId Connect workflows.
+* `/oauth2/error`
+** This page is used if the user starts or is in the middle of the OAuth workflow and any type of error occurs. This could be caused by the user messing with the URL or internally some type of information wasn't passed between the OAuth endpoints correctly. For example, if you are federating login to an external IdP and that IdP does not properly echo the `state` parameter, FusionAuth's OAuth workflow will break and this page will be displayed.
+* `/oauth2/two-factor`
+** This page is used if the user has two-factor authentication enabled and they need to type in their code again. FusionAuth will properly handle the SMS or authenticator app processing on the back end. This page contains the form that the user will put their code into.
+* `/password/change`
+** This page is used if the user is required to change their password or if they have requested a password reset. This page contains the form that allows the user to provide a new password.
+* `/password/complete`
+** This page is used after the user has successfully updated their password (or reset it). This page should instruct the user that their password was updated and that they need to login again.
+* `/password/forgot`
+** This page is used when a user starts the forgot password workflow. This page renders the form where the user types in their email address.
+* `/password/sent`
+** This page is used when a user has submitted the forgot password form with their email. FusionAuth does not indicate back to the user if their email address was valid in order to prevent malicious activity that could reveal valid email addresses. Therefore, this page should indicate to the user that if their email was valid, they will receive an email shortly with a link to reset their password.
+* `/registration/complete`
+** This page is used after a user has verified their email address for a specific application (i.e. a user registration) by clicking the URL in the email. After FusionAuth has updated their registration object to indicate that their email was verified, the browser is redirected to this page.
+* `/registration/send`
+** This page is used after a user has asked for the application specific verification email to be resent. This can happen if the URL in the email expired and the user clicked it. In this case, the user can provide their email address again and FusionAuth will resend the email. After the user submits their email and FusionAuth re-sends a verification email to them, the browser is redirected to this page.
+* `/registration/verify`
+** This page is used when a user clicks the URL from the application specific verification email and the `verificationId` has expired. FusionAuth expires `verificationId` after a period of time (which is configurable). If the user has a URL from the verification email that has expired, this page will be rendered and the error will be displayed to the user.
+
+== Helpers
+
+In addition to the pages listed above, FusionAuth has a template that contains a number of macros used in all of the page templates. This template is located at `../_helpers.ftl` and it contains a number of FreeMarker macros. The rest of the pages use these macros to generate various pieces of the HTML. The pieces contained in `_helpers.ftl` are:
+
+=== Section Helpers
+
+* `html`
+** Renders the `<html>` element
+* `head`
+** Renders the `<head>` element and everything inside it including the `<title>`, CSS, Java Script, and meta information
+* `body`
+** Renders the `<body>` element
+* `header`
+** Renders any type of header for each page. This could be a navigation bar, side bar, or page details
+* `main`
+** Renders the main content body of each page. If all of your pages will have similar HTML elements like a container, this is the place to put them.
+* `footer`
+** Renders the footer content of each page. This might contain links, nav, privacy policies, etc.
+
+Here is an example of what one of these helpers looks like:
+
+[source,html]
+.HTML helper
+----
+[#macro html]
+<!DOCTYPE html>
+<html>
+  [#nested/]
+</html>
+[/#macro]
+----
+
+The key to these macros is the `[#nested/]` element. This is the location that FreeMarker will insert any nested content when you use the macro. Here is an example of using this macro:
+
+[source,html]
+.Example usage of HTML macro
+----
+[@helpers.html]
+<body>
+Hello world!
+</body>
+[/@helpers.html]
+----
+
+Everything inside the macro will be place where the `[#nested/]` element is. Therefore, the result of our example would be this HTML:
+
+[source,html]
+.Example result
+----
+<!DOCTYPE html>
+<html>
+<body>
+Hello world!
+</body>
+</html>
+----
+
+All of the page templates use these macros, which makes it much easier to style all of the pages at one time. You simply edit the macros and your changes will take effect on all of the pages listed above.
+
+=== Social (alternative) Login Helpers
+
+In addition to the section helpers, the `_helpers.ftl` template also contains a few additional macros that can be used to setup social and alternative logins. Currently, FusionAuth supports these social login providers:
+
+* Facebook
+* Google
+* Twitter
+* Generic OpenId Connect
+
+Once you have configured your alternative logins (called identity providers in the interface and API), they will appear on the FusionAuth stock login form. This is because our stock login form includes this code:
+
+[source,html]
+.Social login code
+----
+[@helpers.head]
+  [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
+  ...
+[/@helpers.head]
+
+[@helpers.body]
+  ...
+
+  [@helpers.alternativeLogins clientId=client_id identityProviders=identityProviders/]
+[/@helpers.body]
+----
+
+The first macro (`alternativeLoginScripts`) includes the JavaScript libraries that FusionAuth uses to hook up the identity providers. Unless you want to write your own JavaScript or use a third-party library, you will need this JavaScript in the `<head>` tag in order for FusionAuth to leverage external login providers.
+
+The second macro (`alternativeLogins`) produces the login buttons for each of the configured identity providers. These buttons are all hooked up to the JavaScript included in the `<head>` of the page in order to make it all work nicely.
+
+You might want to use your own buttons for social logins. This is possible with FusionAuth, but you will need to do a couple of things to make it all work.
+
+First, you need to remove the `[@helpers.alternativeLogins]` macro call.
+
+Second, you need to use a specific `id` or `class` on your HTML element for the button. Here are the `id`s or `class`es for each identity provider:
+
+* `id="google-login-button"` is used for Google
+* `id="facebook-login-button"` is used for Facebook
+* `id="twitter-login-button"` is used for Twitter
+* `class="openid login-button"` is used for Generic OpenID Connect
+
+And finally, you need to ensure that Prime.js is included on your page. This library ships with FusionAuth and you just need to ensure it is included like this:
+
+[source,html]
+.Prime.js include
+----
+<script src="/js/prime-min.js"></script>
+----
+
+=== Alert and Error Helpers
+
+The `_helpers.ftl` template also provides a couple of macros that can be used to output errors and alerts that might occur. The best bet is to include these macros in your `main` macro. Here are the macros and their purpose:
+
+* `printErrorAlerts`
+** This outputs any error alerts. These are normally displayed at the top of the page and you might want to make them able to be dismiss (i.e. removed from the page).
+* `printInfoAlerts`
+** This outputs any informational alerts. These are the same as the errors, but might have different CSS.
+* `alert`
+** This macro is used by the `printErrorAlerts` and `printInfoAlerts` but you can also use it directly to display an error or info message anywhere on the page.
+
+=== Form Helpers
+
+The `_helpers.ftl` template also provides a couple of macros that help render form elements and output form errors. Here are the macros you can use:
+
+* `hidden`
+** This outputs a hidden input element. Many pieces of the OAuth workflow and the other pages in FusionAuth use hidden form fields to store data. This macro uses the `eval` feature of FreeMarker in order to pull in data that was in the request. You shouldn't edit this macro unless you know what you are doing.
+* `input`
+** This outputs an input element plus a label and any errors that might have occurred on the form field. You can use this for text, passwords, and other input elements. FusionAuth also leverages `addons` which are icons next to the input field that provide visual cues to the user. This macro allows you to leverage addons as well. Similar to the `hidden` element, you should not edit this unless you know what you are doing.
+* `errors`
+** This macro is used by the `input` macro to render errors on the field. You can use this if you write your own `input` macros. Otherwise, you likely won't use this.
+* `button`
+** This macro renders a button that can be used to submit a form. The FusionAuth version of this macro includes an icon and the button text.
+
+== Example of Customizing the Authorize Page
+
+Now that you have a good overview of all the templates, macros and helpers, here is an example of customizing the Authorize page.
+
+Let's assume you want to change the header and footer across all of the pages including the Authorize page. This is accomplished by editing the `helpers.header` and `helpers.footer` macros. For the header, let's assume you want to add a `Sign Up` and `Login` link. For the footer, let's assume you want to add a link to your privacy policy. Here are the macros that include these new links:
+
+[source,html]
+.Custom header helper
+----
+[#macro header]
+  <header class="my-custom-header">
+    <nav>
+      <ul>
+        <li class="login"><a target="_blank" href="https://my-application.com/login">Login</li>
+        <li class="sign-up"><a target="_blank" href="https://my-application.com/sign-up">Sign Up</li>
+      </ul>
+    </nav>
+  </header>
+
+  [#nested/]
+[/#macro]
+----
+
+[source,html]
+.Custom footer helper
+----
+[#macro footer]
+  <footer class="my-custom-footer">
+    <nav>
+      <ul>
+        <li class="privacy-policy"><a target="_blank" href="https://my-application.com/privacy-policy">Privacy Policy</li>
+      </ul>
+    </nav>
+  </footer>
+
+  [#nested/]
+[/#macro]
+----
+
+Once you make these changes, they will take effect on all of the pages listed above.
+
+== Variables
+
+Each template has different variables that are available to it. These variables can be used in the template to help with rendering the HTML. There are also a couple of common variables that are available in all of the pages. The common variables and the page specific variables are all listed below:
+
+=== Common Variables
+
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#errorMessages# [type]#[List<String>]#
+|A list of error messages that were generated during the processing of the request.
+
+|[field]#fieldMessages# [type]#[Map<String, List<String>>]#
+|A map of field messages (usually errors) that were generated during the processing of the request. The key into the map is the name of the form field and the value is a list that contains the errors for that form field.
+
+|[field]#request# [type]#[HttpServletRequest]#
+|The HttpServletRequest object that is part of the Java Servlet specification. You can find the JavaDoc for this object available here: https://docs.oracle.com/javaee/6/api/javax/servlet/http/HttpServletRequest.html
+|===
+
+=== `/email/complete`
+
+No page specific variables.
+
+=== `/email/send`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#email# [type]#[String]#
+|The email address that was passed as a URL parameter. This is the email address that is requesting that the verification email be re-sent to.
+
+|[field]#emailSent# [type]#[boolean]#
+|A boolean that indicates if the verification email was re-sent or not.
+|===
+
+=== `/email/verify`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#verificationId# [type]#[String]#
+|The verification id that was included on as a URL parameter but was invalid. This page does a redirect if the verificationId is valid.
+|===
+
+=== `/oauth2/authorize`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#client_id# [type]#[String]#
+|The OAuth v2.0 `client_id` parameter. This is synonymous with FusionAuth's Application id.
+
+|[field]#device# [type]#[String]#
+|The device identifier that user is using to log in.
+
+|[field]#grant_type# [type]#[String]#
+|The OAuth v2.0 `grant_type` parameter.
+
+|[field]#hasDomainBasedIdentityProviders# [type]#[boolean]#
+|A boolean that indicates if there are domain-based identity providers configured. These identity providers use the user's email address to determine if an external IdP should be used to log the user in.
+
+|[field]#identityProviders# [type]#[Map<String, List<Object>>]#
+|A map of the configured identity providers for the Application the user is logging into. The key into the map is the type of the identity provider (i.e. `Facebook` or `OpenIDConnect`). The value is a list of all of the configured identity providers for that type.
+
+**NOTE:** This map does not contain any "domain-based" identity providers since those are handled differently using just the Email input field to start and then possibly redirecting the browser to the external IdP login page.
+
+|[field]#loginId# [type]#[String]#
+|The value from the `loginId` form field. This is either the username or the email of the user attempting to log into FusionAuth.
+
+|[field]#redirect_uri# [type]#[String]#
+|The OAuth v2.0 `redirect_uri` parameter. This is the URI that FusionAuth will redirect the user to once they have successfully logged in.
+
+|[field]#response_type# [type]#[String]#
+|The OAuth v2.0 `response_type` parameter.
+
+|[field]#scope# [type]#[String]#
+|The OAuth v2.0 `scope` parameter.
+
+|[field]#showPasswordField# [type]#[boolean]#
+|A boolean that controls whether or not the `password` field is shown if there are domain-based identity providers. If there are domain based identity providers and the user types in an email address that is not managed by the identity provider, FusionAuth will then re-render this template with this variable set to `true`. This will indicate that the password field should be shown so that the user can complete their login. If you need an example of this behavior, check out the login page at https://www.pivotaltracker.com/signin.
+
+|[field]#state# [type]#[String]#
+|The OAuth v2.0 `state` parameter.
+
+|[field]#timezone# [type]#[String]#
+|The timezone that the user is in. This is normally guessed by the timezone JavaScript library (or something similar) and then stored in a hidden input field on the login form.
+|===
+
+=== `/oauth2/error`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#oauthJSONError# [type]#[String]#
+|The OAuth error JSON that could be helpful for developers while debugging.
+|===
+
+=== `/oauth2/two-factor`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#client_id# [type]#[String]#
+|The OAuth v2.0 `client_id` parameter. This is synonymous with FusionAuth's Application id.
+
+|[field]#code# [type]#[String]#
+|The value of the `code` form field on the page. This will be available only after the user has submitted the form.
+
+|[field]#device# [type]#[String]#
+|The device identifier that user is using to log in.
+
+|[field]#grant_type# [type]#[String]#
+|The OAuth v2.0 `grant_type` parameter.
+
+|[field]#pushEnabled# [type]#[boolean]#
+|Whether or not FusionAuth has pushed (SMS) enabled for two-factor.
+
+|[field]#pushPreferred# [type]#[boolean]#
+|Whether or not the user prefers push (SMS) for two-factor.
+
+|[field]#redirect_uri# [type]#[String]#
+|The OAuth v2.0 `redirect_uri` parameter. This is the URI that FusionAuth will redirect the user to once they have successfully logged in.
+
+|[field]#resendCode# [type]#[boolean]#
+|Whether or not the user wants the code to be resent to their phone (valid for push two-factor).
+
+|[field]#response_type# [type]#[String]#
+|The OAuth v2.0 `response_type` parameter.
+
+|[field]#scope# [type]#[String]#
+|The OAuth v2.0 `scope` parameter.
+
+|[field]#trustComputer# [type]#[boolean]#
+|The value of the "Trust this computer" form field. This will be available only after the user has submitted the form. Otherwise, it defaults to false.
+
+|[field]#state# [type]#[String]#
+|The OAuth v2.0 `state` parameter.
+
+|[field]#timezone# [type]#[String]#
+|The timezone that the user is in. This is normally guessed by the timezone JavaScript library (or something similar) and then stored in a hidden input field on the login form.
+
+|[field]#userCanReceivePush# [type]#[boolean]#
+|Whether or not the user is capable of receiving push notifications for two-factor. This means that the user has a mobile phone number.
+|===
+
+=== `/password/change`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#changePasswordId# [type]#[String]#
+|The id that was sent to the user (usually via email) that allows them to change their password. Normally, this id is included in the email template for the `forgot password` workflow and when the user clicks the link in the email, they are taken to this page with this parameter on the URL.
+
+|[field]#passwordValidationRules# [type]#[Object]#
+|An object that contains the password validation rules. The object fields are defined below.
+
+|[field]#passwordValidationRules.maxLength# [type]#[int]#
+|The maximum length of a password.
+
+|[field]#passwordValidationRules.minLength# [type]#[int]#
+|The minimum length of a password.
+
+|[field]#passwordValidationRules.rememberPreviousPasswords.count# [type]#[Object]#
+|The number of previous passwords the user is not allowed to re-use.
+
+|[field]#passwordValidationRules.requireMixedCase# [type]#[boolean]#
+|Whether or not the user must use upper and lower-cased letter.
+
+|[field]#passwordValidationRules.requireNonAlpha# [type]#[boolean]#
+|Whether or not the user must use at least one non-alphabetic character in their password.
+
+|[field]#passwordValidationRules.requireNumber# [type]#[boolean]#
+|Whether or not the user must use at least one numeric character in their password.
+|===
+
+=== `/password/complete`
+
+No page specific variables.
+
+=== `/password/forgot`
+
+No page specific variables.
+
+=== `/password/sent`
+
+No page specific variables.
+
+=== `/registration/complete`
+
+No page specific variables.
+
+=== `/registration/send`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#applicationId# [type]#[UUID]#
+|The id of the application that the user is verifying their email for and needs the email to be resent.
+
+|[field]#email# [type]#[String]#
+|The email address that was passed as a URL parameter. This is the email address that is requesting that the verification email be re-sent to.
+
+|[field]#emailSent# [type]#[boolean]#
+|A boolean that indicates if the verification email was re-sent or not.
+|===
+
+=== `/registration/verify`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#verificationId# [type]#[String]#
+|The verification id that was included on as a URL parameter but was invalid. This page does a redirect if the verificationId is valid.
+|===
+
+== Handling Failures
+
+If you happen to get into a situation where you have edited a template and it is causing errors that are preventing you from logging in, you can override the use of the UI templates to render a login form that lets you log in. To do this, open your browser and access your FusionAuth admin UI. This will redirect you to the broken `/oauth2/authorize` page. Click in your browsers address bar and scroll to the end. Finally, add the String `&bypassTheme=true` to the end of the URL and hit the Enter key. This should render the default login page that ships with FusionAuth and allow you to log in and fix any errors you have.
