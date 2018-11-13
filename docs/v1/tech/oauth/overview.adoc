@@ -1,35 +1,24 @@
 ---
 layout: doc
 title: OAuth Overview
-description: An overview of how FusionAuth provides an OAuth compliant SSO login system
+description: An overview of how FusionAuth provides an OAuth 2.0 compliant SSO login system
 ---
 
 == Overview
 
-FusionAuth supports the following two grant types as defined by https://tools.ietf.org/html/rfc6749[RFC 6749].
+FusionAuth supports the following two grant types as defined by the OAuth 2.0 framework in https://tools.ietf.org/html/rfc6749[RFC 6749].
 
-* https://tools.ietf.org/html/rfc6749#section-1.3.1[Authorization Code Grant]
-* https://tools.ietf.org/html/rfc6749#section-1.3.3[Resource Owner Password Credentials]
+* link:overview#example-authorization-code-grant[Example Authorization Code Grant]
+* link:overview#example-resource-owner-password-credentials-grant[Example Resource Owner Password Credentials Grant]
 
 
-The following is an example of a typical way to use the FusionAuth OAuth Provider with the https://tools.ietf.org/html/rfc6749#section-1.3.1[Authorization Code Grant].
-
-1. Add an Application and complete the OAuth configuration
-2. Point your application to the `/oauth2/authorize` endpoint
-3. Retrieve the authorization code on the redirect URI provided on the authorize request
-4. Make a `POST` request to `/oauth2/token` in order to exchange the authorization code for an access token and a user id
-5. Retrieve the user and log them into your application
-6. Log out
-
-== Integrate the FusionAuth OAuth Provider in your application
-
-=== Add a FusionAuth Application
+== Configure Application OAuth Settings
 
 Navigate to the Application configuration from the settings menu, [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Applications#.
 
 If you have already created a FusionAuth application for the purpose your application, you do not need to create another, however you will still need to complete the OAuth configuration. If an application has not yet been created, click *Add* and name your application accordingly and fill out the OAuth configuration.
 
-In this example you will see we have created a new Application named `Pied Piper` and have filled out the fields in the OAuth Configuration tab.
+In this example you will see we have created a new Application named `Pied Piper` and have filled out the fields in the OAuth Configuration tab. A FusionAuth application represents an authenticated resource that you will be using with FusionAuth.
 
 image::oauth-application.png[Application OAuth Configuration,width=1200,role=shadowed]
 
@@ -56,13 +45,15 @@ value empty will allow all origins.
 |The URL used to perform the `302` redirect as the response from the `/oauth2/logout` API.
 |===
 
+== Example Authorization Code Grant
+
 === Point your application to the authorize endpoint
 
-Now that your FusionAuth application has been configured to use the OAuth provider, you may now point the login for your application to the
-FusionAuth authorize endpoint which will now handle user authentication.
+Now that your FusionAuth application has been configured to use the OAuth provider, you may now point the login for your application to the FusionAuth authorize endpoint which will now handle user authentication.
 
-For the purposes of this example, I will make the assumption that FusionAuth App is running locally at `http://localhost:9011`. The authorize
-URL will look something like following, review the `/oauth2/authorize`  endpoint documentation for more detail.
+For the purposes of this example, I will make the assumption that FusionAuth App is running locally at `http://localhost:9011`, the `client_id` will be found on the OAuth tab in the application configuration, the `redirect_uri` will be where you wish FusionAuth to redirect the browser when the authorization step has completed. This value will need to be pre-defined in the authorized redirect URLs in the OAuth configuration. The `response_type` will always be `code` for this grant type.
+
+Review the link:endpoints#authorize[Authorization] endpoint documentation for more detail.
 
 [source]
 ----
@@ -71,11 +62,9 @@ http://localhost:9011/oauth2/authorize?client_id=06494b74-a796-4723-af44-1bdb96b
 
 === Consume the authorization code returned from the authorize request
 
-When the authorize request completes successfully it will respond with a status code of `302` to the location provided by the redirect_uri
-parameter. The request will contain a code parameter which can be exchanged for an access token. The access token contains the user Id of the
-authenticated user which can then be used to retrieve the entire user object.
+When the authorize request completes successfully it will respond with a status code of `302` to the location provided by the redirect_uri parameter. The request will contain a code parameter which can be exchanged for an access token. The access token contains the user Id of the authenticated user which can then be used to retrieve the entire user object.
 
-The following is an example redirect URI containing the authorization code.
+Review the link:endpoints#token[Token] endpoint documentation for more detail. The following is an example redirect URI containing the authorization code.
 
 [source]
 ----
@@ -122,6 +111,8 @@ also retrieve the User without an API key by utilizing the JWT as returned in th
 
 See the link:../apis/users#retrieve-a-user[Retrieve a User] API for examples.
 
+You may also choose to use the link:endpoints#introspect[Introspect] or link:endpoints#userinfo[Userinfo] endpoints to validate the access token returned from the Token endpoint and to provided you decode claims as a JSON object.
+
 Now that you have the user, or retrieved the roles from the JWT, you may review their roles and registration to ensure they have adequate
 authority for the intended action, and if the user is not yet registered for the requested application, you can either fail their login,
 or complete a registration workflow. Once you have determined a user can be logged into your application, you'll need to log them into
@@ -139,4 +130,32 @@ with a `302` redirect to the configured logout URL.
 
 Response: HTTP/1.1 302 Found
 Location: https://www.piedpiper.com
+----
+
+== Example Resource Owner Password Credentials Grant
+
+=== Exchange the user credentials for an access token
+
+Once you have collected the user's email and password you will make a `POST` request to the Token endpoint. Below is an example HTTP request where the user's email is `richard@piedpiper.com` and password is `disrupt`. The `grant_type` will always be `password`.
+
+[source]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=password&username=richard%40piedpiper.com&password=disrupt
+----
+
+[source,json]
+.Example HTTP Response
+----
+{
+  "access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
+  "expires_in" : 3600,
+  "token_type" : "Bearer",
+  "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
+}
 ----
