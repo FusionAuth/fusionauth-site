@@ -50,7 +50,7 @@ We've also had a number of questions regarding which parts of this guide are not
 
 The first step to securing user data is to secure the servers you will be running your applications and/or databases on. The process of securing servers centers on a couple of core guidelines.
 
-<div class="card callout mb-3">
+<div class="card callout mb-3 h-auto">
 <div class="card-header bg-info text-white">CORE GUIDELINES</div>
 <div class="card-body" markdown="1">
 * Use the least privilege possible
@@ -96,7 +96,7 @@ In this step, be sure to select a long and secure root password. Later you will 
 
 {% include _image.html src="/assets/img/resources/guide/linode-setup-2.png" alt="Linode setup select operating system" class="mw-100 mx-auto mb-4 text-center" figure=true %}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Prevent direct access when it isn't required
@@ -145,7 +145,7 @@ You can leave this terminal window open while you configure the server. This mak
 
 ### 3.4. Securing Passwords {#securing-passwords}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Automate security checks and constraints
@@ -220,7 +220,7 @@ You will want to remove the `"NOPASSWD":` part of the line.
 
 ### 3.6. Setup Ordinary User Account {#setup-ordinary-user-account}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Identify users that can access the server
@@ -353,7 +353,7 @@ You can also add an alias for the SSH command to automatically add the `-A` opti
 
 ### 3.9. Locking the Root Account {#locking-root-account}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Prevent direct access when it isn't required
@@ -368,7 +368,7 @@ $ usermod -p '*' root
         
 ### 3.10. Two-Factor Authentication {#two-factor-authentication}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Identify users that can access to the server
@@ -436,7 +436,7 @@ If you install the two-factor authentication as described above and a user doesn
 
 ### 3.11. Firewalling {#firewalling}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Prevent direct access when it isn't required
@@ -709,7 +709,7 @@ Both are challenging feats and it is likely the hacker will be discovered well b
 
 ### 3.12. Intrusion Detection {#intrusion-detection}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Send notifications for all activity
@@ -863,7 +863,7 @@ By default, MySQL only listens on the loopback interface. Change this configurat
 bind-address = 192.168.142.213
 ```
         
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Prevent direct access when it isn't required
@@ -901,7 +901,7 @@ If the MySQL user's line doesn't end in `"/bin/false"`, you can edit this file m
 
 #### 3.11.2. Backups
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Automate security checks and constraints
@@ -1005,7 +1005,7 @@ Now that your servers are nicely secured, let's take a look at securing the appl
 
 Application Security centers around a set of guidelines:
 
-<div class="card callout mb-3">
+<div class="card callout mb-3 h-auto">
 <div class="card-header bg-info text-white">CORE GUIDELINES</div>
 <div class="card-body" markdown="1">
 * Use the least privilege possible
@@ -1020,7 +1020,7 @@ This section will cover the different aspects of securing an application.
 
 ### 4.1. Application User {#application-user}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Use the least privilege possible
@@ -1053,7 +1053,7 @@ sudo -u application nodejs /usr/local/application/app.js
 
 The first level of defense for any application is to use SSL for all network traffic to the web server. Without SSL encryption, a hacker could intercept network traffic in and out of the server and store it. Since this network traffic would contain usernames, passwords and other user data this would generally be the same level of breach as a hacker gaining access to the user database.
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Encrypt all communications
@@ -1135,7 +1135,7 @@ You can also another CA like GoDaddy if you prefer. We don't cover the process o
         
 ### 4.3. Password Security {#password-security}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Automate security checks and constraints
@@ -1318,7 +1318,7 @@ SQL injection is an application level vulnerability that is caused when an appli
 
 {% include _image.html src="/assets/img/resources/guide/sql-injection.png" alt="SQL Injection" class="mw-100 mx-auto mb-4 text-center" figure=true %}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Cleanse user input
@@ -1395,7 +1395,7 @@ It is a good idea to centralize all of your database logic into a single module 
 
 ### 4.5. Configuration {#configuration}
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Keep it on the server
@@ -1442,7 +1442,7 @@ All sensitive configuration should be locked down in a similar manner. This incl
 
 We talked about securing the database at the server level in the previous section. Here we will cover securing the database at the application level. Since most applications connect to a database, these connections must be secured.
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Use the least privilege possible
@@ -1466,7 +1466,7 @@ Most modern applications use a combination of server-side code and client-side c
 
 After a user logs in, the application will need the user id in order to look up additional data for the user as well as ensure the user has the correct permissions to take actions. This user id will also be used when the user modifies, creates or deletes their data.
 
-<div class="card float-md-right callout ml-md-3 mb-3">
+<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
 <div class="card-body">
 Keep it on the server
