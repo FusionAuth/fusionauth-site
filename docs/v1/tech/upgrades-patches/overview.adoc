@@ -6,11 +6,140 @@ description: Learn how to upgrade and patch FusionAuth using our bundles and mig
 
 == FusionAuth Updates and Patches
 
-Periodically, FusionAuth releases updates and you might also require a patch if you are running into problems and have contacted FusionAuth Support for assistance. In these cases, you will need to update the application.
+In order to update FusionAuth to a later version use the following guides. Below you will find steps to follow if you are using Debian or RPM packages on Linux, or the ZIP packages on macOS, Linux or Windows.
+
+If you used the FastPath install scripts initially, you may prefer to use that same mode to download the latest version of FusionAuth. If you would like to continue by manually downloading the necessary packages, continue to read on.
+
+
 
 To download or check on the latest updates, please visit https://fusionauth.io/downloads[Downloads].
 
-=== Linux (RPM/DEB)
+== ZIP Packages
+
+FusionAuth is available in a zip package for macOS, Linux and Windows. If you are using the ZIP package, please use this guide to update an existing instance of FusionAuth.
+
+=== macOS and Linux
+
+In this example, we'll assume you have previously installed FusionAuth in `/usr/local/fusionauth` and this directory will be referred to `FUSIONAUTH_HOME`. If you have used a different directory you can adjust the following example accordingly.
+
+[source,title=Example filesystem layout]
+----
+/usr/local/fusionauth/bin
+/usr/local/fusionauth/config
+/usr/local/fusionauth/config/keystore
+/usr/local/fusionauth/config/fusionauth.properties
+/usr/local/fusionauth/data
+/usr/local/fusionauth/fusionauth-app
+/usr/local/fusionauth/fusionauth-search
+/usr/local/fusionauth/java
+----
+
+The first step will be to shutdown the FusionAuth services.
+
+[source,title=Shutdown and Uninstall FusionAuth]
+----
+# Stop Services
+/usr/local/fusionauth/bin/shutdown.sh
+
+# Delete or move existing installation
+cd /usr/local/fusionauth
+rm -rf ./fusionauth-app
+rm -rf ./fusionauth-search
+rm -rf ./bin
+----
+
+During an upgrade, most everything is saved in the database, so it is safe to delete these directories. To preserve your configuration and Elasticsearch index you want to be sure to preserve the following directories:
+
+[source,title=Preserve these directories]
+----
+/usr/local/fusionauth/config
+/usr/local/fusionauth/data
+/usr/local/fusionauth/java
+/usr/local/fusionauth/logs
+----
+
+Extract the new zips and place in `FUSIONAUTH_HOME`. In the following example, we are using the `unzip` command with the `-n` and the `-q` flags. The `-q` flag is optional, it causes the command to be run in quiet mode to reduce the amount of output to the console. The other flag `-n` is a no overwrite flag so that any configuration files are not overwritten.
+
+[source,title=Unzip the new packages with a no overwrite flag]
+----
+unzip -nq new-fusionauth-app.zip
+unzip -nq new-fusionauth-search.zip
+----
+
+Finally restart the FusionAuth services.
+
+[source,title=Shutdown and Uninstall FusionAuth]
+----
+# Start Services
+/usr/local/fusionauth/bin/startup.sh
+----
+
+=== Windows
+
+In this example, we'll assume you have previously installed FusionAuth in `\fusionauth` and this directory will be referred to `FUSIONAUTH_HOME`. If you have used a different directory you can adjust the following example accordingly.
+
+[source,title=Example filesystem layout]
+----
+\fusionauth\bin
+\fusionauth\config
+\fusionauth\config\keystore
+\fusionauth\config\fusionauth.properties
+\fusionauth\data
+\fusionauth\fusionauth-app
+\fusionauth\fusionauth-search
+\fusionauth\java
+----
+
+The first step will be to shutdown the FusionAuth services and delete the old installation.
+
+[source,title=Shutdown and Uninstall FusionAuth]
+----
+# Stop Services
+net stop FusionAuthApp
+net stop FusionAuthSearch
+
+# Uninstall Services
+cd \fusionauth\fusionauth-app\apache-tomcat\bin
+FusionAuthApp.exe /uninstall
+cd \fusionauth\fusionauth-search\elasticsearch\bin
+FusionAuthSearch.exe /uninstall
+
+# Delete or move existing installation
+cd \fusionauth
+move fusionauth-app fusionauth-app-old
+move fusionauth-search fusionauth-search-old
+----
+
+During an upgrade, most everything is saved in the database, so it is safe to delete these directories. To preserve your configuration and Elasticsearch index you want to be sure to preserve the following directories:
+
+[source,title=Preserve these directories]
+----
+\fusionauth\config
+\fusionauth\data
+\fusionauth\java
+\fusionauth\logs
+----
+
+Extract the new zips and place in `FUSIONAUTH_HOME`. You may do this using Windows File Explorer or other command line tools to unpack the zip archive. In this next step, ensure you delete or move the existing directories to ensure you do not unzip the new version on top of the existing version. If you do this, you will end up with duplicate libraries in the classpath that will lead to runtime errors.
+
+After you have extracted the new packages, re-install the Windows services and start them.
+
+[source,title=Install and Start FusionAuth]
+----
+# Install Windows Services
+cd \fusionauth\fusionauth-app\apache-tomcat\bin
+FusionAuthApp.exe /install
+cd \fusionauth\fusionauth-search\elasticsearch\bin
+FusionAuthSearch.exe /install
+
+# Startup Services
+net start FusionAuthSearch
+net start FusionAuthApp
+----
+
+That is it, you're done!
+
+== Linux Packages
 
 Updating your application is easy if you installed using the RPM or Debian packages. All you need to do is to issue an update command to the dpkg or rpm program and specify the new package file. Here is an example:
 
@@ -43,80 +172,7 @@ sudo service fusionauth-search start
 sudo service fusionauth-app start
 ----
 
-=== Mac and Linux (ZIP)
-
-If you manually installed zips then you will need to delete the existing binaries and libraries to avoid classpath conflicts.
-
-. First stop your app and search processes. The easiest way to do this is to kill their process ids.
-. Navigate using terminal to the directory that contains fusionauth.
-. It is always recommended to make a backup of your directory and database before continuing.
-. Remove the existing app directories. (This won't affect any of your data)
-
-[source,shell]
-----
-rm -rf fusionauth/fusionauth-app fusionauth/fusionauth-search fusionauth/bin
-----
-
-[start=5]
-. Unzip your new zips on top of the fusionauth directory. The best way to do this is with a no overwrite flag so that we don't overwrite
- our configuration. `unzip` has a `-n` flag that will do exactly that. We also know that all of the files we wanted to overwrite were already
- deleted so everything we need will still get unzipped.
-
-[source,shell]
-----
-unzip -nq new-fusionauth-app.zip
-unzip -nq new-fusionauth-search.zip
-----
-(Note: `-q` is to quiet the output)
-
-=== Windows (ZIP)
-
-For this example, we'll assume you have previously installed FusionAuth in `\fusionauth` this will be referred to `FUSIONAUTH_HOME`.
-
-[source,title=Example filesystem layout]
-----
-\fusionauth\bin
-\fusionauth\config
-\fusionauth\config\keystore
-\fusionauth\config\fusionauth.properties
-\fusionauth\fusionauth-app\
-\fusionauth\fusionauth-search\
-----
-
-[source,title=Shutdown and Uninstall FusionAuth]
-----
-# Stop Services
-net stop FusionAuthApp
-net stop FusionAuthSearch
-
-# Uninstall Services
-cd \fusionauth\fusionauth-app\apache-tomcat\bin
-FusionAuthApp.exe /uninstall
-cd \fusionauth\fusionauth-search\elasticsearch\bin
-FusionAuthSearch.exe /uninstall
-
-# Delete or move existing installation
-cd \fusionauth
-move fusionauth-app fusionauth-app-old
-move fusionauth-search fusionauth-search-old
-----
-
-Extract the new zips and place in `FUSIONAUTH_HOME`.
-
-[source,title=Install and Start FusionAuth]
-----
-# Install Windows Services
-cd \fusionauth\fusionauth-app\apache-tomcat\bin
-FusionAuthApp.exe /install
-cd \fusionauth\fusionauth-search\elasticsearch\bin
-FusionAuthSearch.exe /install
-
-# Startup Services
-net start FusionAuthSearch
-net start FusionAuthApp
-----
-
-=== Database
+== Database
 
 [NOTE]
 ====
