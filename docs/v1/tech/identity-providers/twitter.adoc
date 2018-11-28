@@ -8,32 +8,106 @@ description: Login with Twitter using the Twitter Identity Provider
 
 == Overview
 
-[NOTE]
-====
-Coming soon!
-====
+Adding a Login with Twitter button to FusionAuth is simple, and this guide will walk you through the steps necessary to collect the credentials from Twitter in order to enable this Social login.
 
-Until this tutorial is available, please find the Twitter Identity provider in the FusionAuth UI by navigating to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `Twitter` from the dialog.
-
-There you may fill out the required fields after configuring a Twitter app in your Twitter developer console.
+* <<Create a Twitter Account>>
+* <<Create a Twitter App>>
+* <<Create a Twitter Identity Provider>>
 
 
-=== Twitter App configuration
+Once you have completed this configuration you will be able to enable the Twitter login button for one or more FusionAuth Applications. Below is an example login page with the Twitter Identity Provider enabled.
 
-https://developer.twitter.com/en/apps
+image::login-twitter.png[Twitter Login,width=1200,role=shadowed]
 
-=== App details
+== Create a Twitter Account
 
-In this section, check `Enable Sign in with Twitter` and register the Callback URL.
+Ensure you have a Twitter account, and then navigate to the Twitter Developer dashboard.
 
-The FusionAuth callback URL in the `App details` section. This URL will be your publicly available URL of FusionAuth with the `/oauth2/callback` suffix. For example if your publicly available URL is `\https://login.piedpiper.com`, the callback URL you would need to register would be `\https://login.piedpiper.com/oauth2/callback`.
+* https://developer.twitter.com
+
+If you do not yet have a developer account, you will need to apply for access to the Twitter API.
+
+* https://developer.twitter.com/en/apply-for-access.html
+
+Once you have logged into Twitter and have obtained access to a Twitter developer account, continue to the next step.
+
+== Create a Twitter App
+
+If you do not yet have a Twitter app you will need to create an app in this step. If you already have a Twitter app that you plan to use for FusionAuth please review this section anyway to ensure your configuration is correct to support the Twitter login.
+
+* https://developer.twitter.com/en/apps
+
+In the following screenshot you will find an example of the Create an App process. Review the following sections to ensure your configuration is correct. Fill out any required fields found on this form and click the `Create` button to create a new Twitter app.
+
+=== Enable Sign in with Twitter
+
+Ensure that you check `Enable Sign in with Twitter` checkbox. If this is not checked the Twitter login will not function properly in FusionAuth.
+
+=== Add the Callback URL
+
+In this example I have registered `\https://login.piedpiper.com/oauth2/callback` as the callback URL.
+
+The first part of that value will be equal to the public URL of FusionAuth, in this case `\https://login.piedpiper.com`. The second part, the actual redirect URI will always be `/oauth2/callback`.
+
+image::twitter-create-app.png[Create Twitter APp,width=1200,role=shadowed]
+
+
+=== Configure Permissions
+
+Now you should have a Twitter app created, select the `Permissions` tab and click the `Edit` button in the top right of the panel.
+
+You may select `Read-only` in the `Access permission` section and under `Additional permissions` ensure you have checked `Request email address from users`. An email address is required to complete login in FusionAuth.
+
+If you will be using this Twitter app for other purposes, you may need more than `Read-only` permission, but for the purposes of configuring this Twitter App for FusionAuth only `Read-only` is required.
+
+Click `Save` once you have completed these changes.
+
+image::twitter-permissions.png[Twitter App Permissions,width=1200,role=shadowed mb-2]
+
+=== Keys and token
+
+Now click on the `Keys and tokens` tab, in this section you will find the Consumer API keys. These two values will be used to configure the FusionAuth Identity Provider.
+
+There is no further configuration to perform on this panel, you will only need to record or copy these values for the next step.
+
+image::twitter-keys-tokens.png[Twitter Keys and tokens,width=1200,role=shadowed mb-2]
+
+
+== Create a Twitter Identity Provider
+
+The last step will be to create a Twitter Identity Provider in FusionAuth. To create an Identity Provider navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `Twitter` from the dialog.
+
+This will take you to the `Add Twitter` panel, and you'll fill out the `Consumer key` and `Consumer secret` required fields using the values found in the Twitter App `Keys and tokens` tab from the previous step. The button text is also required but it will be defaulted to `Login with Twitter`, you may optionally modify this default value.
+
+To enable this identity provider for an application, find your application name in the `Applications` configuration section at the bottom of this panel. You will always see the `FusionAuth` application, this application represents the FusionAuth user interface. If you wish to be able to log into FusionAuth with this provide you may enable this application.
+
+In the following screenshot you will see that we have enabled this login provider for the `Piped Piper` application and enabled `Create registration`. Enabling create registration means that a user does not need to be manually registered for the application prior to using this login provider.
+
+For example, when a new user attempts to log into `Piped Piper` using Twitter, if their user does not exist in FusionAuth it will be created dynamically, and if the `Create registration` toggle has been enabled, the user will also be registered for `Piped Piper` and assigned any default roles assigned by the application.
+
+If you do not wish to automatically provision a user for this Application when logging in with Twitter, leave `Create registration` off and you will need to manually register a user for this application before they may complete login with Twitter.
+
+That's it, now the `Login with Twitter` button will show up on the login page for Pied Piper.
+
+image::identity-provider-twitter-add.png[Add Twitter,width=1200,role=shadowed]
+
+
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Consumer key [required]#Required#
+|The Twitter API key found in your Twitter App Keys and tokens settings in the `API key` field.
+
+|Consumer secret [required]#Required#
+|The Twitter API secret key found in your Twitter App Keys and tokens settings in the `API secret key` field.
+
+|Button text [required]#Required#
+|The text to be displayed in the button on the login form. This value is defaulted to `Login with Twitter` but it may be modified to your preference.
+|===
+
+== Proxy details
+
+If you are running FusionAuth behind a proxy of some sort, please review the following information.
 
 FusionAuth will detect the public URL of your instance at runtime to send to Twitter as the callback URL. If you are behind a proxy, ensure that the `X-Forwarded-Host` and the `X-Forwarded-Proto` headers are added by your proxy if the host or protocol do not match what is behind the proxy. For example, if your public URL is using `https` and your proxy is performing SSL accelerating the URL behind the proxy may be `http`. In this scenario, most proxies will have added the `X-Forwarded-Proto` header to the request which will allow FusionAuth to send the correct URL to Twitter.
-
-=== Keys and tokens
-
-In this section, you will find the `Consumer API keys` which will include the key and secret needed to configure the FusionAuth Identity Provider for Twitter.
-
-=== Permissions
-
-In this section, check `Request email address from users`, without an email address, FusionAuth will not be able to complete the login workflow.
