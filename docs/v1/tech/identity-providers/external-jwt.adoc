@@ -8,7 +8,197 @@ description: Complete a FusionAuth login with an external JWT from a third party
 
 == Overview
 
-[NOTE]
-====
-Coming soon!
-====
+The External JWT Identity Provider is not intended to provide a login button in FusionAuth. Instead this configuration is intended for use with the JWT Reconcile API.
+
+- link:../apis/identity-providers/external-jwt[External JWT API]
+- link:../apis/jwt/#reconcile-a-jwt[Reconcile a JWT API]
+
+Using this identity provider allows you to authenticate with a third party that can provide you a JSON Web Token (JWT). Then you may take this JWT and send it to FusionAuth to reconcile the user. The reconcile process is essentially logging that user into a particular FusionAuth application.
+
+The configuration for this identity provider allows you to configure some claim mapping from the third party JWT to the FusionAuth user, and it will require one or more keys that will allow FusionAuth to verify the signature of the third party JWT. These keys will be added on the `Verification Keys` section documented below.
+
+{empty} +
+
+If you are looking to add a login button to FusionAuth for users to authenticate against a third party identity provider, this is not the configuration you're looking for, move along.
+
+== Create an External JWT Identity Provider
+
+To create an Identity Provider navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `External JWT` from the dialog. This will take you to the Add panel, and you will need to fill out the required fields.
+
+* <<Options - Applications>>
+* <<Options - JWT>>
+* <<Options - Managed Domains>>
+* <<Options - Verification Keys>>
+* <<Options - OAuth>>
+
+
+image::identity-provider-external-jwt-add.png[Add External JWT,width=1200,role=shadowed]
+
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Id [optional]#Optional#
+|An optional UUID. When this value is omitted a unique Id will be generated automatically.
+
+|Name [required]#Required#
+|A unique name to identity the identity provider. This name is for display purposes only and it can be modified later if desired.
+|===
+
+== Options - Applications
+
+To enable this identity provider for an application, find your application name in the table. You will always see the `FusionAuth` application, this application represents the FusionAuth user interface. If you wish to be able to log into FusionAuth with this provide you may enable this application.
+
+In the above screenshot you will see that we have enabled this login provider for the `Piped Piper` application and enabled `Create registration`. Enabling create registration means that a user does not need to be manually registered for the application prior to using this login provider.
+
+For example, when a new user attempts to log into `Piped Piper` using PiedPiper, if their user does not exist in FusionAuth it will be created dynamically, and if the `Create registration` toggle has been enabled, the user will also be registered for `Piped Piper` and assigned any default roles assigned by the application.
+
+If you do not wish to automatically provision a user for this Application when logging in with PiedPiper, leave `Create registration` off and you will need to manually register a user for this application before they may complete login with this provider.
+
+== Options - JWT
+
+This configuration is necessary to allow FusionAuth to properly inspect the third-party JWT once the signature has been verified.
+
+image::identity-provider-external-jwt-jwt-add.png[Add External JWT,width=1200,role=shadowed]
+
+
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Unique claim [required]#Required#
+|This value is the name of the claim in the third-party JWT where FusionAuth can find the user's email address. The email address will be used in FusionAuth to uniquely identify a user.
+
+This field is defaulted to `email`, this is likely the correct claim name.
+
+|Header key identifier [required]#Required#
+|This value is the name of the claim in the third-party JWT header FusionAuth can find the identifier used to indicate which key pair was used to generate the JWT signature. This allows FusionAuth to use the correct key if more than one key is provided in the `Verification Keys` configuration.
+
+This field is defaulted to `kid`, this is a common identifier used in the JWT header to identify the key used to generate the signature.
+|===
+
+== Add Claim Mapping Dialog
+
+If you click on the `Add Claim` button on this page you will be presented with the following dialog.
+
+[.dialog-screenshot]
+--
+
+=====
+image::identity-provider-add-claim-dialog.png[Add Claim Mapping,width=300,role=box-shadow]
+=====
+
+=====
+
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Incoming claim  [required]#Required#
+|The name of the claim in the third-party JWT that you would like to map to a FusionAuth user claim
+
+|FusionAuth claim
+|The FusionAuth user claim to receive the value of the specified claim in the third-party JWT. If you select the special values `UserData` or `RegistrationData` the value will be stored in either the user or registration data with the key being the claim name.
+
+For example, if you select `company` as the incoming claim, and specify `RegistrationData`, the claim will be stored in the registration data for the corresponding application.
+
+```json
+{
+ "registration": {
+   "data": {
+    "company": "Acme. Corp"
+   }
+ }
+}
+```
+|===
+
+=====
+
+--
+
+== Options - Managed Domains
+
+In order to successfully reconcile a JWT to FusionAuth using this identify provider, you will need to specify one more managed domains. A managed domain will indicate to FusionAuth that this identify provider is able to reconcile a user based upon their email address.
+
+For example if a user's email address is `jared@piedpiper.com`, in order for a JWT owned by Jared to be reconciled to FusionAuth using this identity provider, `piedpiper.com` will need to be configured as a managed domain.
+
+A domain may only be managed by a single identity provider. More than one domain may be added per identity provider.
+
+image::identity-provider-external-jwt-domains-add.png[Add External JWT,width=1200,role=shadowed]
+
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Managed domains [optional]#Optional#
+|This identity provider may only be used to reconcile a user that has an email address that matches a configured domain. If you do not know which domains you would like to manage, you may leave this empty for now and return and add them later.
+
+If you would like to add more than one domain, use a separate line per domain.
+
+These configured domains will be used by the link:../apis/identity-providers/overview#lookup-an-identity-provider[Lookup API] and the link:../apis/jwt/#reconcile-a-jwt[Reconcile API].
+|===
+
+
+== Options - Verification Keys
+
+In order for FusionAuth to use this identity provider to reconcile third-party JWTs, you will need to provide one or more verification keys. This key will likely be an `X.509` public certificate or other PEM encoded public key that may be used to verify the JWT signature.
+
+image::identity-provider-external-jwt-keys-add.png[Add External JWT,width=1200,role=shadowed]
+
+== Add Key Dialog
+
+If you click on the `Add Key` button on this page you will be presented with the following dialog.
+
+
+[.dialog-screenshot]
+--
+
+=====
+image::identity-provider-add-key-dialog.png[Add Verification Key,width=550,role=box-shadow]
+=====
+
+=====
+
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Default key [default]#Defaults to `false`#
+|Optionally a single key may be designated as the default key. You may use this feature if the JWT you will be sending to FusionAuth to be reconciled will not have a key identifier `kid` value in the JWT header.
+
+In this scenario, there will be no `kid` to indicate which key was used to sign the JWT, so if a default key has been designated, the default key will be used to verify the signature.
+
+If you will not have JWTs that do not contain the `kid` or other key identifier, you will not use this feature. When this toggle is enabled, the `Key identifier` field will be disabled and no longer required.
+
+|Key identifier [required]#required#
+|The string identifier for this key. If this is an `X.509` certificate you may leave this field blank and the `X.509` certificate thumbprint will be generated for you.
+
+If this is a normal PEM encoded RSA public key for example, you will need to provide the key identifier. This identifier should be the value that will be written to the `kid` header of the JWT provided by the external identify provider.
+
+|Encoded key [required]#required#
+|The PEM encoded key, this may be an X.509 certificate or other PEM encoded public key.
+|===
+
+=====
+
+--
+
+== Options - OAuth
+
+The OAuth configuration is not a functional part of this identity provider. Instead it is provided for convenience only.
+
+If you review the API response of the link:../apis/identity-providers/overview#lookup-an-identity-provider[Lookup API] you will notice it returns these two values. You may use these values then at runtime to identify where to redirect the user to complete authentication.
+
+image::identity-provider-external-jwt-oauth-add.png[Add External JWT,width=1200,role=shadowed]
+
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Authorization endpoint [optional]#Optional#
+|The URL of the OAuth 2.0 Authorization endpoint in use by the third party identity provider that will be providing the third-party JWT.
+
+|Token endpoint [optional]#Optional#
+|The URL of the OAuth 2.0 Token endpoint in use by the third party identity provider that will be providing the third-party JWT.
+|===
