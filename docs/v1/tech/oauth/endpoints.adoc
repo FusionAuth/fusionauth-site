@@ -11,6 +11,9 @@ In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], the 
 * <<Authorize>>
 * <<Logout>>
 * <<Token>>
+ ** <<Authorization Code Grant Request>>
+ ** <<Resource Owner Credentials Grant Request>>
+ ** <<Refresh Token Grant Request>>
 * <<Introspect>>
 
 In support of http://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect], the following endpoints are provided:
@@ -214,29 +217,7 @@ If you will be using the Authorization Code grant, you will make a request to th
 [method]#POST# [uri]#/oauth2/token#
 --
 
-[cols="3a,7a"]
-[.api]
-.Headers
-|===
-|[field]#Authorization# [type]#[String]# [optional]#Optional#
-|If you have enabled `requireClientAuthentication` on the Application the user logged into, than you must provide client authentication in the form of a Basic Authorization header.
-
-This header is created by taking the `client_id` and `client_secret` of the Application and concatenating them together using a `:` character. Here is an example:
-
-[source]
-.Concatenation Example
-----
-463228ba-868a-462d-b86f-6096af2d70e0:salkjdsoiu32ldslnkasglhilkja892
-----
-
-This value is then Basic-64 encoded and prepended with the string `Basic`. Here is what the resulting header looks like:
-
-[source]
-.Basic Authorization Header Example
-----
-Authorization: Basic QWxhZGRpbjpPcGVuU2VzYW1l
-----
-|===
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
 
 [cols="3a,7a"]
 [.api]
@@ -277,6 +258,8 @@ If you will be using the Resource Owner Credential Grant, you will make a reques
 --
 [method]#POST# [uri]#/oauth2/token#
 --
+
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
 
 [cols="3a,7a"]
 [.api]
@@ -321,6 +304,8 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=password&loginId=bisho
 
 === Response
 
+The following response applies to both the <<Authorization Code Grant Request>> and the <<Refresh Token Grant Request>> examples.
+
 [cols="1a,9a"]
 .Response Codes
 |===
@@ -357,7 +342,7 @@ This field will be returned in the response when `openid` scope was requested.
 |[field]#refresh_token# [type]#[String]#
 |The refresh token as described by https://tools.ietf.org/html/rfc6749#section-1.5[RFC 6749 Section 1.5]
 
-This field will be returned in the response when `offline_access` scope was requested.
+This field will be returned in the response when `offline_access` scope was requested unless refresh tokens have been disabled for this application. See `oauthConfiguration.generateRefreshTokens` in the link:../apis/applications[Application API] or the `Generate refresh tokens` toggle in the FusionAuth UI when editing an application.
 
 |[field]#token_type# [type]#[String]#
 |The token type as defined by https://tools.ietf.org/html/rfc6749#section-7.1[RFC 6749 Section 7.1]. This value will always be `Bearer`.
@@ -374,6 +359,99 @@ This field will be returned in the response when `offline_access` scope was requ
   "expires_in" : 3600,
   "id_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
   "refresh_token": "ze9fi6Y9sMSf3yWp3aaO2w7AMav2MFdiMIi2GObrAi-i3248oo0jTQ",
+  "token_type" : "Bearer",
+  "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
+}
+----
+
+=== Refresh Token Grant Request
+
+Refresh Token Grant : Exchange a Refresh Token for an Access Token
+
+If you will be using the Refresh Token Grant, you will make a request to the Token endpoint to exchange the user's refresh token for an access token.
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/token#
+--
+
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [required]#Required#
+|The unique client identifier. The client Id is the Id of the FusionAuth Application in which you you are attempting to authenticate.
+
+|[field]#grant_type# [type]#[String]# [required]#Required#
+|The grant type to be used. This value must be set to `refresh_token`
+
+|[field]#refresh_token# [type]#[String]# [required]#Required#
+|The refresh token that you would like to use to exchange for an access token.
+|===
+
+[source,options="wrap"]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=refresh_token&refresh_token=ze9fi6Y9sMSf3yWp3aaO2w7AMav2MFdiMIi2GObrAi-i3248oo0jTQ
+----
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the OAuthError section of the API documentation.
+
+|500
+|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
+
+|503
+|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#access_token# [type]#[String]#
+|The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4]
+
+|[field]#expires_in# [type]#[Integer]#
+|The time in seconds the token will expire from the time the response was generated.
+
+|[field]#id_token# [type]#[String]#
+|The OpenID Id Token. This token is represented as a JSON Web Token (JWT).
+
+This field will be returned in the response when `openid` scope was requested during the initial authentication request when the refresh token was generated.
+
+|[field]#token_type# [type]#[String]#
+|The token type as defined by https://tools.ietf.org/html/rfc6749#section-7.1[RFC 6749 Section 7.1]. This value will always be `Bearer`.
+
+|[field]#userId# [type]#[String]#
+|The unique Id of the user that has been authenticated. This user Id may be used to retrieve the entire user object using the /api/user API.
+|===
+
+[source,json]
+.Example JSON Response
+----
+{
+  "access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
+  "expires_in" : 3600,
+  "id_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
   "token_type" : "Bearer",
   "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
 }
