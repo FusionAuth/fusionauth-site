@@ -1,0 +1,77 @@
+[cols="3a,7a"]
+[.api]
+.Request Headers
+|===
+|[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#
+|The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
+if available, the request body value will take precedence.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#applicationId# [type]#[UUID]# [required]#Required#
+|The Id of the Application the user is to be logged into. This application must have {loginProvider} login enabled for this request to succeed.
+
+|[field]#device# [type]#[String]# [optional]#Optional#
+|The unique device identifier for this request.
+
+Use this parameter to cause a refresh token cookie will be written to the client on the response named `refresh_token`
+and it will also be provided in the response body. This value should be unique to the device and the same device id
+should be sent on subsequent requests for the same device.
+
+|[field]#identityProviderId# [type]#[UUID]# [required]#Required#
+|The unique Id of the identity provider to process this login request.
+
+ifdef::loginProvider[]
+For the {loginProvider} identity provider, this value will always be `56abdcc7-8bd9-4321-9621-4e9bbebae494`.
+endif::[]
+
+|[field]#ipAddress# [type]#[String]# [optional]#Optional#
+|The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
+be stored in the User login history.
+
+ifeval::["{loginProvider}" == "Facebook"]
+|[field]#data.token# [type]#[String]# [required]#Required#
+|The Facebook access token returned from their login API. This token will be sent to the Facebook Me Graph API as the `access_token` parameter.
+endif::[]
+
+|[field]#metaData.device.description# [type]#[String]# [optional]#Optional#
+|A human readable description of the device represented by the `device` parameter.
+
+|[field]#metaData.device.lastAccessedAddress# [type]#[String]# [optional]#Optional#
+|The IP address of this login request.
+
+|[field]#metaData.device.name# [type]#[String]# [optional]#Optional#
+|A human readable name of the device represented by the `device` parameter.
+
+|[field]#metaData.device.type# [type]#[String]# [optional]#Optional#
+|The type of device represented by the `device` parameter. The following types may be specified:
+
+* `BROWSER`
+* `DESKTOP`
+* `LAPTOP`
+* `MOBILE`
+* `OTHER`
+* `SERVER`
+* `TABLET`
+* `TV`
+* `UNKNOWN`
+
+|[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
+
+This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
+|===
+
+[source,json]
+.Example Request JSON
+----
+ifeval::["{loginProvider}" == "Facebook"]
+include::../../../../src/json/identity-providers/login/facebook-request.json[]
+endif::[]
+----
+
