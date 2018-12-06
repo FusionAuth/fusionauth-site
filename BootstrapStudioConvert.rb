@@ -55,10 +55,12 @@ def convert_file(html_doc, output_file_name)
   title_text = title != nil ? title.content : ""
   description = html_doc.at_css("meta[name=\"description\"]")
   description_text = description != nil ? description.attribute("content").value : ""
+  og_image = html_doc.at_css("meta[property=\"share-image\"]")
+  og_image_text = og_image != nil ? og_image.attribute("content").value : "fusionauth-share-image.jpg"
   main = html_doc.at_css("main")
 
   File.open(output_file_name, "w", :encoding => "UTF-8") do |f|
-    f.puts("---\nlayout: default\ntitle: #{title_text}\ndescription: #{description_text}\nimage: fusionauth-share-image.jpg\n---\n")
+    f.puts("---\nlayout: default\ntitle: #{title_text}\ndescription: #{description_text}\nimage: #{og_image_text}\n---\n")
     f.puts(main.to_s.gsub(/\.html/, ""))
   end
 end
