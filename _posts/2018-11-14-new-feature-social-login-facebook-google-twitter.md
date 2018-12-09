@@ -12,7 +12,7 @@ You need social? We got social. Our newest update to FusionAuth makes it simple 
 
 {% include _image.html src="/assets/img/blogs/social-login-signin-screen.png" alt="Social Login Screen" class="float-left img-thumbnail mr-md-4" style="max-width: 200px;" figure=false %}
 
-To get set up, simply go to **Settings > Identity Providers** in your FusionAuth dashboard. Then tap **Add provider** to select which to enable and configure. It’s that easy. Read [the documentation here](/docs/v1/tech/apis/identity-providers/overview).
+To get set up, simply go to **Settings > Identity Providers** in your FusionAuth dashboard. Then tap **Add provider** to select which to enable and configure. It’s that easy. Read [the documentation here](/docs/v1/tech/identity-providers/).
 
 ## But wait, there’s more!
 
