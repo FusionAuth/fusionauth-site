@@ -127,3 +127,5 @@ Dir.foreach(export_directory) do |file|
   end
 end
 
+# Copy all of the landing pages w/out conversion
+FileUtils.cp_r("#{export_directory}/landing", script_directory)
