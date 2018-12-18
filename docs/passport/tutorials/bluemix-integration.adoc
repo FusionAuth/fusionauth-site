@@ -1,0 +1,152 @@
+---
+layout: passport-doc
+title: IBM Cloud Integration
+description: Learn how to integrate Passport for use in your IBM Cloud application.
+---
+
+== What you will need
+
+If you came here using the link in your https://console.ng.bluemix.net[IBM Cloud console] then you'll need to complete the Passport setup and gather an API key and some URLs.
+
+image::passport-service-binding.png[]
+
+You'll need the following two pieces of information to enter into your IBM Cloud console in order to connect Passport to your application.
+
+1. API Key
+2. Passport Backend URL
+
+Once you've complete the following steps you'll have these three items and you'll be ready to head back to your IBM Cloud dashboard.
+
+
+== Request an Evaluation
+
+If you already have a Passport license, you can skip this step.
+
+If you do not yet have a Passport license, navigate to https://www.inversoft.com/try-passport and click +++<u>Try it free</u>+++. Contact mailto:sales@inversoft.com[sales@inversoft.com] with any other questions.
+
+== Complete the Setup Wizard
+
+Once you have acquired a Passport license, you'll find that your account page has URLs to your instance of Passport. Follow the link labeled +++<u>Web interface</u>+++. There you can complete your setup by entering your license key that is also found on your account page. For more information on completing the setup wizard see the link:setup-wizard[Setup Wizard] tutorial.
+
+You can find your Inversoft account page by following this link: https://www.inversoft.com/account/.
+
+== Collect the Passport URL and API key
+Once the setup wizard is complete, make note of the URL labeled +++<u>API</u>+++ on your https://www.inversoft.com/account/[Inversoft Account] page,
+and ensure at least one API key has been configured in Passport. See link:create-an-api-key[Creating an API Key] for more information.
+
+If you've installed Passport on-premise or in your own private cloud, you will not see URLs on your account page. Instead you will substitute
+the URLs where you have Passport running. If you require more than one API key or would like to configure an API key per application, you may
+create as many as you'd like and access the API key through a +++<u>User defined Environment Variable</u>+++.
+
+== Create an Application
+In Passport, each authenticated resource is represented by an Application. You'll want to create a Passport Application for each IBM Cloud
+application you'll be connecting to the Passport service. Follow the link:create-an-application[Create an Application] tutorial to complete this task.
+You'll want to make a note of the Application Id.
+
+The Application Id will not be provided during the service binding as you see in the screenshot above. Because each application you bind the
+Passport service to will have a unique Application Id this value must be provided for each service you use Passport with in your IBM Cloud console.
+This value can either be hard coded in your application as it should never change, or you could add this value as a +++<u>User defined Environment
+Variable</u>+++ to your application and then access it programmatically.
+
+== Adding the Credentials to your Passport Service
+
+Once you have added the required fields to the service and clicked 'Create' to bind Passport to your IBM Cloud application in the IBM Cloud
+Console the Passport credentials will be available at runtime. The following is an example of user provided service credentials for Passport.
+
+[source,json]
+----
+include::docs/passport/src/json/ibm-cloud/vcap_services_user_provided.json[]
+----
+
+== Adding Application Id and additional API Keys to your Runtime Environment
+Because the Passport Application Id will be unique for each IBM Cloud application, we will not add this value to the Passport Service when it is bound to your application. Instead we'll either hard code this value in your application, or we can add this value as a +++<u>User defined Environment Variable</u>+++ and then access it as an Environment Variable at runtime.
+
+In the following screenshot the Passport Application Id and the Passport Service name have been added so they do not need to be hard coded in the IBM Cloud application.
+
+An API key is available in the User defined `VCAP_SERVICES` environment variable, if additional API keys are required they can be hard coded or you can add another +++<u>User defined Environment Variable</u>+++ to your IBM Cloud application runtime.
+
+image::passport-service-user-defined-variable.png[]
+
+== Use the Runtime Credentials and start calling APIs
+We've built a full example application using React and Node for you to use to get an idea of how you could integrate Passport into your application. All of the code and instruction for building it and pushing to IBM Cloud can be found on GitHub.
+
+* https://github.com/inversoft/passport-bluemix-example
+
+
+=== Example Code
+The following are some code examples in Node.js and show usage of our link:../client-libraries/node[Node.js PassportClient] to make API calls. We have other client libraries to assist you during integration, check out our other link:../client-libraries/[Client Libraries].
+
+==== Obtain the credentials from the `VCAP_SERVICES` runtime Environment Variable to connect to the Passport API.
+[source,javascript]
+----
+// User defined Environment Variable : passport_application_id
+let applicationId = process.env.passport_application_id;
+
+// User defined Environment Variable : passport_service_name
+const serviceName = process.env.passport_service_name;
+
+const services = JSON.parse(process.env.VCAP_SERVICES);
+let passport = null;
+const user_provided = services["user-provided"];
+for (let i=0; i < user_provided.length; i++) {
+    if (user_provided[i].name === serviceName) {
+        passport = user_provided[i];
+    }
+}
+
+let apiKey = passport.credentials.api_key;
+let backendURL = passport.credentials.passport_backend_url;
+----
+
+
+==== Construct the Passport Client
+[source,javascript]
+----
+const PassportClient = require('passport-node-client');
+let passportClient = new PassportClient(apiKey, backendURL);
+----
+
+
+==== Retrieve the JWT Public Key to verify JWT signatures
+[source,javascript]
+----
+passportClient.retrieveJwtPublicKeys(applicationId)
+.then((response) => {
+    // Store off this public key to use when verifying JWT signatures
+    const publicKey = response.successResponse.publicKey;
+});
+----
+
+
+==== Register a New User
+[source,javascript]
+----
+let request = {
+    user: {
+      email: 'user@example.com',
+      password: 'super-secret',
+      firstName: 'Joe',
+      lastName: 'User'
+    },
+    registration: {
+      applicationId: 'ea1a58bf-ae29-4c92-925a-591915aee646'
+      roles: [
+        'admin', 'user'
+      ]
+    },
+    skipVerification: true
+  };
+passportClient.register(null, request);
+----
+
+
+==== Authenticate a User to the newly registered Application
+[source,javascript]
+----
+let request = {
+  loginId: 'user@example.com',
+  password: 'super-secret',
+  applicationId: 'ea1a58bf-ae29-4c92-925a-591915aee646'
+};
+passportClient.login(request);
+----

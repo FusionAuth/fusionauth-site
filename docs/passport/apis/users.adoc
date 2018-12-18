@@ -1,0 +1,830 @@
+---
+layout: passport-doc
+title: User APIs
+description: APIs for creating, retrieving, updating, deleting, importing, searching for and verifying users
+---
+
+== Overview
+
+This page contains all of the APIs for managing users.
+
+* <<Create a User>>
+* <<Retrieve a User>>
+* <<Update a User>>
+* <<Delete a User>>
+* <<Bulk Delete Users>>
+* <<Reactivate a User>>
+* <<Import Users>>
+* <<Search for Users>>
+* link:#verify-a-users-email[Verify a User's Email]
+* <<Resend Verification Email>>
+* <<Start Forgot Password Workflow>>
+* link:#change-a-user-s-password[Change a User's Password]
+* <<Flush the Search Engine>>
+
+
+== Create a User
+
+This API is used to create a new User.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Create a User with a randomly generated Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Create a User with the provided unique Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/`\{userId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [optional]#Optional# [default]#defaults to secure random UUID#
+|The Id to use for the new User. If not specified a secure random UUID will be generated.
+|===
+
+:http_method: POST
+include::docs/passport/apis/_user-request-body.adoc[]
+
+=== Response
+
+The response for this API contains the User that was just created. The password, salt and other sensitive fields will not be returned on the API response.
+
+:webhook_event:
+:create_user:
+include::docs/passport/apis/_standard-post-response-codes.adoc[]
+:create_user!:
+:webhook_event!:
+
+include::docs/passport/apis/_user-response-body.adoc[]
+
+
+== Retrieve a User
+
+This API is used to retrieve the information about a single User. You can use the User's Id, username or email address to retrieve the User. The Id is specified on the URI and the username or email are specified as URL parameters.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve a User by Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user/`\{userId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The unique Id of the User to retrieve.
+|===
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve a User by login Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user``?loginId=\{loginId\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#loginId# [type]#[String]# [required]#Required# [since]#Available Since 1.9.4#
+|The unique Id of the User to retrieve. The loginId can be either the email or username.
+|===
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve a User by email
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user``?email=\{email\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#email# [type]#[String]# [required]#Required#
+|The email of the User to retrieve.
+|===
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve a User by username
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user``?username=\{username\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#username# [type]#[String]# [required]#Required#
+|The username of the User to retrieve.
+|===
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve a User by Change Password Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user``?changePasswordId=\{changePasswordId\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#changePasswordId# [type]#[String]# [required]#Required# [since]#Available Since 1.16.0#
+|The change password Id associated with the user when the Forgot Password workflow has been started.
+|===
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve a User by Email Verification Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user``?verificationId=\{verificationId\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#verificationId# [type]#[String]# [required]#Required# [since]#Available Since 1.13.1#
+|The verification Id associated with the user when the Email verification process has been started.
+|===
+
+link:authentication#jwt-authentication[icon:id-badge[role=green]] Retrieve a User using a JWT
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user#
+--
+
+[NOTE.since]
+====
+Available Since Version 1.6.2
+====
+
+=== Response
+
+The response for this API contains the User.
+
+include::docs/passport/apis/_standard-get-response-codes.adoc[]
+
+include::docs/passport/apis/_user-response-body.adoc[]
+
+
+== Update a User
+
+This API is used to update an existing User. You must specify the Id of the User you are updating on the URI. You must specify all of the properties of the User when calling this API. This API doesn't merge the existing User and your new data. It replaces the existing User with your new data.
+
+If you specify a new password for the User, it will be encrypted and stored. However, if you do not provide a new password, the User's old password will be preserved. This is the only field that is merged during an update.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Update the User with the given Id
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/user/`\{userId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The Id of the User to update.
+|===
+
+:http_method: PUT
+include::docs/passport/apis/_user-request-body.adoc[]
+:http_method!:
+
+=== Response
+
+The response for this API contains the User that was updated. The password hash and other sensitive fields are never returned on the API response.
+
+:webhook_event:
+include::docs/passport/apis/_standard-put-response-codes.adoc[]
+:webhook_event!:
+
+include::docs/passport/apis/_user-response-body.adoc[]
+
+
+== Delete a User
+
+This API is used to delete a User. You must specify the Id of the User on the URI. You can also specify whether or not the User is soft or hard deleted. Soft deleted Users are marked as inactive but not deleted from Passport.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Deactivate a User (Soft Delete)
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/`\{userId\}`#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Permanently Delete a User
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/`\{userId\}?hardDelete=true`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The Id of the User to delete.
+
+|[field]#hardDelete# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|To Permanently delete a user from Passport set this value to `true`. Once a user has been permanently deleted, the action cannot be undone. When this value is set to `false` the user is marked as inactive and the user will be unable log into Passport. This action may be undone by reactivating the user.
+|===
+
+=== Response
+
+This API does not return a JSON response body.
+
+:webhook_event:
+include::docs/passport/apis/_standard-delete-response-codes.adoc[]
+:webhook_event!:
+
+== Bulk Delete Users
+[NOTE.since]
+====
+Available Since Version 1.9.4
+====
+This API is used to delete multiple users in a single request.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Deactivate Users
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/bulk``?userId=\{userId\}&userId=\{userId\}``#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Permanently Delete Users
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/bulk``?userId=\{userId\}&userId=\{userId\}&hardDelete=true``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The Id of the User to delete. Repeat this parameter for each user to be deleted.
+
+|[field]#hardDelete# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|To Permanently delete a user from Passport set this value to `true`. Once a user has been permanently deleted, the action cannot be undone. When this value is set to `false` the user is marked as inactive and the user will be unable log into Passport. This action may be undone by reactivating the user.
+|===
+
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Bulk delete using the request body. This allows for larger requests than are possible using request parameters.
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/bulk#
+--
+
+[NOTE.since]
+====
+Available Since Version 1.13.0
+====
+
+include::docs/passport/apis/_user-bulk-delete-request-body.adoc[]
+
+
+=== Response
+
+This API does not return a JSON response body.
+
+:never_missing:
+:webhook_event:
+include::docs/passport/apis/_standard-delete-response-codes.adoc[]
+:webhook_event!:
+:never_missing!:
+
+== Reactivate a User
+
+This API is used to reactivate an inactive Users. You must specify the Id of the User on the URI.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Reactivate the User
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/user/`\{userId\}?reactivate=true`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The Id of the User to reactivate.
+|===
+
+=== Response
+
+The response for this API contains the information for the User that was reactivated.
+
+:webhook_event:
+include::docs/passport/apis/_standard-put-response-codes.adoc[]
+:webhook_event!:
+
+include::docs/passport/apis/_user-response-body.adoc[]
+
+
+== Import Users
+
+This API is used to bulk import multiple Users into Passport. Each User must have at least an **email** or a **username**. This request is useful for migrating data from an existing database into Passport. Additionally, you can provide an Id for each User inside the JSON User object of the request body.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Import Multiple Users
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/import#
+--
+
+include::docs/passport/apis/_users-request-body.adoc[]
+
+=== Response
+
+Only a status code is available on the Import API, no JSON body will be returned.
+
+:webhook_event:
+include::docs/passport/apis/_standard-post-response-codes.adoc[]
+:webhook_event!:
+
+== Search for Users
+
+This API is used to search for Users.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Search for Users by Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user/search``?ids=\{uuid\}&ids=\{uuid\}``#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Search for Users by a query string
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user/search``?queryString=\{queryString\}``#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Search for Users by a query string and sort the response
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user/search``?queryString=\{queryString\}&sortFields[0].name=\{name\}&sortFields[0].order=\{order\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#ids# [type]#[UUID]# [optional]#Optional#
+|The list of User Ids to lookup. By specifying this URL parameter multiple times you can lookup multiple Users.
+
+|[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to 20#
+|The number of search results to return. Used for pagination.
+
+|[field]#queryString# [type]#[String]# [optional]#Optional#
+|The Elastic Search query string that used to search for Users.
+
+|[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to 0#
+|The start row within the search results to return. Used for pagination.
+
+|[field]#sortFields# [type]#[Array]# [optional]#Optional# [since]#Availale Since 1.8.0#
+|An array of sort fields used to sort the result. The order the sort fields are provided will be maintained in the sorted output.
+
+|[field]#sortFields``[x]``.missing# [type]#[String]# [optional]#Optional# [default]#defaults to `_last`#
+|The value to substitute if this field is not defined. Two special values may be used:
+
+* `_first` When the field is not defined sort this record first.
+* `_last` When the field is not defined sort this record last.
+
+|[field]#sortFields``[x]``.name# [type]#[String]# [required]#Required#
+|The name of the field to sort.
+
+Due to how the search index is structured not all fields on the user are sortable. The following field names are supported.
+
+* `birthDate`
+* `email`
+* `fullName`
+* `insertInstant`
+* `login`
+* `username`
+
+|[field]#sortFields``[x]``.order# [type]#[String]# [optional]#Optional# [default]#defaults to `asc`#
+|The order to sort the specified field. Possible values are:
+
+* `asc`
+* `desc`
+|===
+
+=== Response
+
+The response contains the User objects that were found as part of the lookup or search.
+
+include::docs/passport/apis/_standard-get-response-codes.adoc[]
+
+include::docs/passport/apis/_users-response-body.adoc[]
+
+
+== Verify a User's Email
+
+This API is used to mark a User's email as verified. This is usually called after the User receives the verification email after they register and they click the link in the email.
+
+=== Request
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green]] Verifies the User's email address using the `verificationId`.
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/verify-email/`\{verificationId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#verificationId# [type]#[String]# [required]#Required#
+|The verification Id generated by Passport used to verify the User's account is valid by ensuring they have access to the provided email address.
+|===
+
+=== Response
+
+The response does not contain a body. It only contains one of the status codes below.
+
+include::docs/passport/apis/_standard-put-response-codes.adoc[]
+
+
+== Resend Verification Email
+
+This API is used to resend the verification email to a User. This API is useful if the User has deleted the email, or the verification Id has
+ expired. By default, the verification Id will expire after 24 hours.
+
+=== Request
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green]] Resend the verification email
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/user/verify-email``?email=\{email\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#email# [type]#[String]# [required]#Required#
+|The email address used to uniquely identify the User.
+|===
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Resend the verification email using an API key
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/user/verify-email``?email=\{email\}&sendVerifyEmail=\{sendVerifyEmail\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#email# [type]#[String]# [required]#Required#
+|The email address used to uniquely identify the User.
+
+|[field]#sendVerifyEmail# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `true`# [since]#Available Since 1.20.0#
+|If you would only like to generate a new `verificationId` and return it in the JSON body without Passport attempting to send the User an email
+set this optional parameter to `false`.
+
+This may be useful if you need to integrate the Email Verification process using a third party messaging service.
+|===
+
+=== Response
+
+When authenticated using an API key a response body will be provided. If an API key was not used to authenticate the request no body is returned.
+
+:success_code: 200
+:success_message: The request was successful. The response will contain a JSON body if an API key was used for authentication. If no API key was provided no response body will be returned.
+:403_message: The verify email functionality has been disabled. Passport is unable to send Email Verification emails.
+include::docs/passport/apis/_standard-put-response-codes.adoc[]
+:success_code!:
+:success_message!:
+:403_message!:
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#verificationId# [type]#[String]# [since]#Available Since 1.16.0#
+|The email verification Id that was generated by this API request. This identifier may be used by the <<verify-a-user-s-email,Verify a User’s Email>> API.
+This field is only returned in the JSON response body if the request was authenticated using an API key, if an API key is not used no response body is returned.
+|===
+
+[source,json]
+.Example Response JSON
+----
+include::docs/passport/src/json/users/resend-verify-email-response.json[]
+----
+
+== Start Forgot Password Workflow
+
+This API is used to start the forgot password workflow for a single User.
+
+For example, on your login form you may have a button for _Forgot your password_. This would be the API you would call to initiate the request for the user. If the email configuration is complete, the user
+ will be sent the forgot password email containing a link containing the `changePasswordId`. The provided link should take the user to a form that allows them to change their password. This form should contain a hidden
+  field for the `changePasswordId` generated by this API.
+
+By default the `changePasswordId` is valid to be used with the link:#change-a-user-s-password[Change Password] API for 10 minutes. If a `404` is returned when using this Id to change the password, the workflow
+will need to be started again to generate a new identifier. This duration can be modified using the System Configuration API or in the Passport UI.
+
+You may optionally authenticate this request with an API key to allow for some additional request parameters and the generated `changePasswordId` will be returned in the JSON body.
+ This may be helpful if you wish to use your own email system or you have an alternative method to call the link:#change-a-user-s-password[Change Password] API.
+
+=== Request
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green]] Start the forgot password workflow without an API Key.
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/forgot-password#
+--
+
+[NOTE.since]
+====
+Available Since Version 1.16.0
+====
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#loginId# [type]#[String]# [required]#Required#
+|The login identifier of the user. The login identifier can be either the `email` or the `username`. The username is not case sensitive.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/users/forgot-password-request.json[]
+----
+
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Start the forgot password workflow using an API key
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/forgot-password#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#changePasswordId# [type]#[String]# [optional]#Optional# [since]#Available Since 1.16.0#
+|The optional change password Id to be used on the <<change-a-user-s-password,Change a User's Password>> API.
+
+It is recommended to omit this parameter and allow Passport to generate the identifier. Use this parameter only if you must supply your own
+value for integration into existing systems.
+
+|[field]#email# [type]#[String]# [optional]#Optional# [deprecated]#Deprecated#
+|The email address of the User. You must specify either **email** or **username** for the User. Once available, use `loginId` instead.
+
+|[field]#loginId# [type]#[String]# [required]#Required# [since]#Available Since 1.5.2#
+|The login identifier of the user. The login identifier can be either the `email` or the `username`. The username is not case sensitive.
+
+|[field]#sendForgotPasswordEmail# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `true`# [since]#Available Since 1.5.2#
+|Whether or not calling this API should attempt to send the user an email using the Forgot Password Email Template. Setting this to
+false will skip the email attempt and only set the `changePasswordId` for the user.
+
+|[field]#username# [type]#[String]# [optional]#Optional# [deprecated]#Deprecated#
+|The username of the User. You must specify either **email** or **username** for the User. The username is not case sensitive. Once
+available, use `loginId` instead.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/users/forgot-password-request-advanced.json[]
+----
+
+=== Response
+
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. Starting in version `1.5.2` a JSON response body will be provided with authenticated using an API key. Prior to version `1.5.2` or when the API key has been omitted from the request, no response body is provided.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:errors[Errors] JSON Object with the specific errors.
+
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:authentication[Authentication].
+
+|402
+|Your license has expired. Contact sales@inversoft.com for assistance.
+
+|403
+|The forgot password functionality has been disabled. This is caused by an administrator setting the Forgot Password Email Template to the option _Feature Disabled_ under **Settings** -> **System** in Passport Backend.
+
+|404
+|The User could not be found.
+
+|422
+|The User does not have an email address, this request cannot be completed. Before attempting the request again add an email address to the user or if this is a child User that does not have an email address set the `parentId` field in the User so the parent's email address can be used to complete the request.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#changePasswordId# [type]#[String]# [since]#Available Since 1.5.2#
+|The change password Id that was generated by this API request. This identifier may be used by the <<change-a-user-s-password,Change Password>> API. This field is only returned in the JSON response body if the request was authenticated using an API key, if an API key is not used no response body is returned.
+|===
+
+[source,json]
+.Example Response JSON
+----
+include::docs/passport/src/json/users/forgot-password-response.json[]
+----
+
+
+== Change a User's Password
+
+This API is used to change the User's password.
+
+This API may be used as the second part of the Forgot Password workflow. For example, after the User is sent an email that contains a link to
+ a web form that allows them to update their password you will call this API with the `changePasswordId` and their updated password. If the
+  `changePasswordId` is valid then the User's password will be updated.
+
+This API may also be used separately from the Forgot Password workflow by omitting the `changePasswordId` and using the `loginId` instead.
+
+By default the `changePasswordId` is valid for 10 minutes after it was generated. If a `404` is returned when using the change password Id,
+the workflow will need to be started again to generate a new identifier. This duration can be modified using the System Configuration API or in the Passport UI.
+
+=== Request
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green, title="No authentication required"]] Changes a User's password using the change password Id.
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/change-password/`\{changePasswordId\}`#
+--
+
+[NOTE.since]
+====
+Available Since Version 1.16.0
+====
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#changePasswordId# [type]#[String]# [required]#Required#
+|The `changePasswordId` that is used to identity the user after the Start Forgot Password workflow has been initiated.
+
+[since]#Available Since 1.21.1#
+If this `changePasswordId` was sent via an email to the User by Passport during User create in order to set up a new password, or as
+part of a Forgot Password request the successful use of this identifier to change the User's password will implicitly verify
+the User if not already verified.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#currentPassword# [type]#[String]# [optional]#Optional#
+|The User's current password. When this parameter is provided the current password will be verified to be correct.
+
+|[field]#password# [type]#[String]# [required]#Required#
+|The User's new password.
+|===
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Changes a User's password using a login Id or change password Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/change-password/`\{changePasswordId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#changePasswordId# [type]#[String]# [optional]#Optional#
+|The `changePasswordId` that is used to identity the user after the Start Forgot Password workflow has been initiated.
+
+When this value is provided it should be in place of the `loginId` in the request body. If both the `changePasswordId` and `loginId` are
+ provided on the request, the `changePasswordId` will take precedence.
+
+[since]#Available Since 1.21.1#
+If this `changePasswordId` was sent via an email to the User by Passport during User create in order to set up a new password, or as
+part of a Forgot Password request the successful use of this identifier to change the User's password will implicitly verify
+the User if not already verified.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#currentPassword# [type]#[String]# [optional]#Optional# [since]#Available Since 1.9.1#
+|The User's current password. When this parameter is provided the current password will be verified to be correct.
+
+|[field]#loginId# [type]#[String]# [optional]#Optional# [since]#Available Since 1.9.2#
+|The login identifier of the user. The login identifier can be either the `email` or the `username`. The username is not case sensitive.
+
+When this value is provided it should be in place of the `changePasswordId` request parameter. If both the `changePasswordId` and `loginId` are
+ provided on the request, the `changePasswordId` will take precedence.
+
+|[field]#password# [type]#[String]# [required]#Required#
+|The User's new password.
+|===
+
+[source,json]
+.Example JSON Request
+----
+include::docs/passport/src/json/users/change-password-request.json[]
+----
+
+=== Response
+
+The response does not contain a body. It only contains one of the status codes below.
+
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:errors[Errors] JSON Object with the specific errors.
+
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:authentication[Authentication].
+
+|402
+|Your license has expired. Contact sales@inversoft.com for assistance.
+
+|404
+|The User could not be found using the `changePasswordId` or `loginId` value from the request. If using the `changePasswordId` the id is either incorrect or expired.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+
+== Flush the Search Engine
+
+This API is used to issue a flush request to the Passport Search Engine. This will cause any cached data to be written to disk. In practice it is unlikely
+ you'll find a need for this API in production unless you are performing search requests immediately following an operation that modifies the index and
+  expecting to see the results immediately.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Flushes the Search Engine
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/user/search#
+--
+
+=== Response
+
+The response does not contain a body. It only contains one of the status codes below.
+
+include::docs/passport/apis/_standard-post-response-codes.adoc[]
