@@ -1,0 +1,623 @@
+---
+layout: passport-doc
+title: OAuth Endpoints
+description: A description of each of the OAuth endpoints provided by Passport
+---
+
+== Overview
+
+In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], the following endpoints are provided.
+
+* <<Authorize>>
+* <<Logout>>
+* <<Token>>
+* <<Introspect>>
+
+In support of http://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect], the following endpoints are provided:
+
+* <<Userinfo>>
+* <<OpenID Configuration>>
+
+== Authorize
+
+This is an implementation of the Authorization endpoint as defined by the https://tools.ietf.org/html/rfc6749#section-3.1[IETF RFC 6749 Section 3.1].
+
+=== Request
+
+Returns the OAuth login form for authorization
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/oauth2/authorize``?client_id=\{client_id\}&redirect_uri=\{redirect_uri\}&response_type=code``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [required]#Required#
+|The unique client identifier. The client Id is the Id of the Passport Application in which you you are attempting to authenticate.
+
+|[field]#redirect_uri# [type]#[String]# [required]#Required#
+|The URI to redirect to upon a successful request. This URI must have been configured previously in the Passport Application OAuth
+configuration. See Applications in the Passport User Guide for additional information on configuring the redirect URI.
+
+|[field]#response_type# [type]#[String]# [required]#Required#
+|The requested response type. This value must be set to `code`.
+|===
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. The user is not logged in, the response will contain and HTML form to collect login credentials.
+
+|302
+|The requested user is already logged in, the request will redirect to the location specified in the `redirect_uri` on the request.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON
+is covered in the OAuthError section of the API documentation.
+
+|500
+|There was a Passport internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+=== Request
+
+Authenticate the User
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/authorize#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [required]#Required#
+|The unique client identifier. The client Id is the Id of the Passport Application in which you you are attempting to authenticate.
+
+|[field]#device# [type]#[String]# [optional]#Optional# [since]#Available Since 1.20.0#
+|The optional unique device identifier for use with the `offline_access` scope. This is required if you're using `offline_access` scope.
+
+The `offline_scope` will be ignored if the device is not provided.
+
+|[field]#loginId# [type]#[String]# [required]#Required#
+|The login identifier of the User. This might be their email or username.
+
+|[field]#password# [type]#[String]# [required]#Required#
+|The User's password.
+
+|[field]#redirect_uri# [type]#[String]# [required]#Required#
+|The URI to redirect to upon a successful request. This URI must have been configured previously in the Passport Application OAuth
+configuration. See Applications in the Passport User Guide for additional information on configuring the redirect URI.
+
+|[field]#response_type# [type]#[String]# [required]#Required#
+|The requested response type. This value must be set to `code`.
+
+|[field]#scope# [type]#[String]# [optional]#Optional# [since]#Available Since 1.19.0#
+|The optional scope you are requesting during this grant.
+
+Available grant types:
+
+* `openid`
+* `offline_access` [since]#Available Since 1.20.0#
+|===
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The login form will be displayed, the user should expect some messaging indicating an error. One of the following conditions may be true:
+
+* Invalid login, the user does not exist, or the user has provided invalid credentials.
+* The current user action prevents this user from login.
+* Email has not been verified, the user is not allowed to login.
+* User is expired and login is prevented.
+
+|302
+|The user was successfully authenticated, the request will redirect to:
+
+* The location specified in the redirect_uri on the request.
+** The URL will contain the authorization code for use with the Token endpoint and `state` if provided.
+* Two factor authentication is enabled for this user, the redirect location will be to an HTML form allowing the user to input the two factor code.
+** Location: `/oauth2/two-factor`
+* The user's password needs to be changed, the redirect location will be to an HTML form allowing the user to change their password.
+** Location: `/password/change`
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON
+is covered in the OAuthError section of the API documentation.
+
+|500
+|There was a Passport internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+
+== Logout
+
+This endpoint provides a mechanism to invalidate the user's session held by Passport, this effectively logs the user out of Passport.
+
+=== GET Request
+
+Log the User out
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/oauth2/logout``?client_id=\{client_id\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [optional]#Optional#
+|The unique client identifier. The client Id is the Id of the Passport Application in which you you are requesting to logout, this value
+is used to identify the correct redirect URI. If the `client_id` is not provided the Logout URL defined in the Global OAuth  Configuration will be used.
+|===
+
+=== GET Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|302
+|The request was successful and the the redirect location will be determined by using the configuration values in the following precedence:
+
+* The logout URL defined in the Application OAuth configuration
+* The logout URL defined in the Passport System OAuth configuration
+* The root context / (slash)
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is
+covered in the OAuthError section of the API documentation.
+
+|500
+|There was a Passport internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+
+== Token
+
+This is an implementation of the Token endpoint as defined by the https://tools.ietf.org/html/rfc6749#section-3.2[IETF RFC 6749 Section 3.2].
+
+=== Request
+
+Exchange the Authorization Code for a Token : Authorization Code Grant
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/token#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [required]#Required#
+|The unique client identifier. The client Id is the Id of the Passport Application in which you you are attempting to authenticate.
+
+|[field]#code# [type]#[String]# [required]#Required#
+|The authorization code returned on the `/oauth2/authorize` response.
+
+|[field]#grant_type# [type]#[String]# [required]#Required#
+|The grant type to be used. This value must be set to `authorization_code`
+
+|[field]#redirect_uri# [type]#[String]# [required]#Required#
+|The URI to redirect to upon a successful request. This URI must have been configured previously in the Passport Application OAuth configuration. See Applications in the Passport User Guide for additional information on configuring the redirect URI.
+|===
+
+[source]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: example-login.inversoft.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wzg&grant_type=authorization_code&redirect_uri=https%3A%2F%2Fwww.vandelayindustries.com%2Flogin
+----
+
+Exchange User Credentials for a Token : Resource Owner Credentials Grant
+[NOTE.since]
+====
+Available Since Version 1.6.2
+====
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/token#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [required]#Required#
+|The unique client identifier. The client Id is the Id of the Passport Application in which you you are attempting to authenticate.
+
+|[field]#device# [type]#[String]# [optional]#Optional# [since]#Available Since 1.20.0#
+|The optional unique device identifier for use with the `offline_access` scope. This is required if you're using `offline_access` scope.
+
+The `offline_scope` will be ignored if the device is not provided.
+
+|[field]#grant_type# [type]#[String]# [required]#Required#
+|The grant type to be used. This value must be set to `password`
+
+|[field]#loginId# [type]#[String]# [required]#Required#
+|The login identifier of the user. The login identifier can be either the `email` or the `username`.
+
+|[field]#password# [type]#[String]# [required]#Required#
+|The user's password.
+
+|[field]#scope# [type]#[String]# [optional]#Optional# [since]#Available Since 1.19.0#
+|The optional scope you are requesting during this grant.
+
+Available grant types:
+
+* `openid`
+* `offline_access` [since]#Available Since 1.20.0#
+|===
+
+[source,options="wrap"]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: example-login.inversoft.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=password&loginId=bishop%40example.com&password=Setec+Astronomy
+----
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the OAuthError section of the API documentation.
+
+|500
+|There was a Passport internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#access_token# [type]#[String]#
+|The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4]
+
+|[field]#expires_in# [type]#[Integer]#
+|The time in seconds the token will expire from the time the response was generated.
+
+|[field]#id_token# [type]#[String]# [since]#Available Since 1.19.0#
+|The OpenID ID Token. This token is represented as a JSON Web Token (JWT).
+
+This field will be returned in the response when `openid` scope was requested.
+
+|[field]#refresh_token# [type]#[String]# [since]#Available Since 1.20.0#
+|The refresh token as described by https://tools.ietf.org/html/rfc6749#section-1.5[RFC 6749 Section 1.5]
+
+This field will be returned in the response when `offline_access` scope was requested.
+
+|[field]#token_type# [type]#[String]#
+|The token type as defined by https://tools.ietf.org/html/rfc6749#section-7.1[RFC 6749 Section 7.1]. This value will always be `Bearer`.
+
+|[field]#userId# [type]#[String]#
+|The unique Id of the user that has been authenticated. This user Id may be used to retrieve the entire user object using the /api/user API.
+|===
+
+[source,json]
+.Example JSON Response
+----
+{
+  "access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
+  "expires_in" : 3600,
+  "id_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
+  "refresh_token": "ze9fi6Y9sMSf3yWp3aaO2w7AMav2MFdiMIi2GObrAi-i3248oo0jTQ",
+  "token_type" : "Bearer",
+  "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
+}
+----
+
+== Introspect
+
+This is an implementation of the Introspect endpoint as defined by the https://tools.ietf.org/html/rfc7662[RFC 7662].
+
+[NOTE.since]
+====
+Available Since Version 1.18.0
+====
+
+=== Request
+
+Inspect an access token issued by this OAuth provider
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/introspect#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [required]#Required#
+|The unique client identifier. The client Id is the Id of the Passport Application for which this token was generated.
+
+|[field]#token# [type]#[String]# [required]#Required#
+|The access token returned by this OAuth provider as the result of a successful authentication.
+|===
+
+[source,options="wrap"]
+.Example HTTP Request
+----
+POST /oauth2/introspect HTTP/1.1
+Host: example-login.inversoft.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTM3MTM3NzIsImlhdCI6MTUxMzcxMDE3MiwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiI3MWMxZjE5Yy1kZTRlLTRiZDEtODc3My0zNThkYmIwNWYxNWEiLCJlbWFpbCI6ImRhbmllbEBpbnZlcnNvZnQuY29tIiwiYXBwbGljYXRpb 25JZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsImF1dGhlbnRpY2F0aW9uVHlwZSI6IlBBU1NXT1JEIiwicm9sZXMiOltdfQ.KxfM37hlw-5mKXOP9bCm7O6qdQdleT4gJmudhFueiJA
+----
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is
+covered in the OAuthError section of the API documentation.
+
+|401
+|The token provided in the request was not issued for the `client_id` provided on the request.
+
+|500
+|There was a Passport internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#active# [type]#[String]#
+|When this value is `true` the token is valid and additional claims will be provided in the response body. When this value is
+`false` no claims will be provided in the response body.
+
+|[field]#applicationId# [type]#[UUID]#
+|The unique Id of the Application for which the User has been authenticated.
+
+|[field]#aud# [type]#[String]# [since]#Available Since 1.19.0#
+|The `client_id` that was used to request the access token.
+
+|[field]#authenticationType# [type]#[String]#
+|The method used to authenticate the User which resulted in this JWT being generated. The possible values are:
+
+* `APPLICATION_TOKEN` - The User was authenticated using an Application Authentication Token. &nbsp; [since]#Available Since 1.14.0#
+* `FEDERATED` - The User was authenticated using a JWT from a federated Identity Provider.
+* `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
+* `PASSWORD` - The User was authenticated using a loginId and password combination.
+* `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
+
+|[field]#email# [type]#[String]#
+|The email address of the User.
+
+|[field]#email_verified# [type]#[Boolean]# [since]#Available Since 1.19.0#
+|Indicates if the User's email has been verified.
+
+|[field]#exp# [type]#[Long]#
+|The expiration instant of the access token expressed as UNIX time which is the number of seconds since Epoch.
+
+|[field]#iat# [type]#[Long]#
+|The instant that the access token was issued expressed as UNIX time which is the number of seconds since Epoch.
+
+|[field]#iss# [type]#[String]#
+|The issuer of the access token.
+
+|[field]#roles# [type]#[Array<String>]#
+|The roles assigned to the User in the authenticated Application.
+
+|[field]#sub# [type]#[UUID]#
+|The subject of the access token. This value is equal to the User's unique Id in Passport.
+|===
+
+[source,json]
+.Example JSON Response for a valid token
+----
+{
+  "active": true,
+  "applicationId": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+  "aud": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+  "authenticationType": "PASSWORD",
+  "email": "test0@inversoft.com",
+  "email_verified": true,
+  "exp": 1487975407000,
+  "iat": 1487971807000,
+  "iss": "acme.com",
+  "roles": [
+    "admin"
+  ],
+  "sub": "858a4b01-62c8-4c2f-bfa7-6d018833bea7"
+}
+----
+
+[source,json]
+.Example JSON Response for an invalid token
+----
+{
+  "active": false
+}
+----
+
+
+== Userinfo
+
+This is an implementation of the OpenId Connect Userinfo endpoint as defined by the http://openid.net/specs/openid-connect-core-1_0.html#UserInfo[OpenId Connect Section 5.3].
+This endpoint may be called using the `GET` or the `POST` HTTP method.
+
+[NOTE.since]
+====
+Available Since Version 1.19.0
+====
+
+=== Request
+
+Returns the Claims about the authenticated End-User.
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/oauth2/userinfo#
+--
+
+Returns the Claims about the authenticated End-User.
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/userinfo#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Headers
+|===
+|[field]#Authorization# [type]#[String]# [required]#Required#
+|The access token issued by Passport as a result of completing one of the supported authorization grants.
+
+Example header:
+[block-quote]#`Authorization: Bearer <access_token>`#
+
+|===
+
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. The response will contain a JSON body.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is
+covered in the OAuthError section of the API documentation.
+
+|401
+|The `Authorization` header containing the access token is missing or malformed.
+
+|500
+|There was a Passport internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#applicationId# [type]#[UUID]#
+|The unique Id of the Application for which the User has been authenticated.
+
+|[field]#aud# [type]#[String]#
+|The `client_id` that was used to request the access token.
+
+|[field]#authenticationType# [type]#[String]#
+|The method used to authenticate the User which resulted in this JWT being generated. The possible values are:
+
+* `APPLICATION_TOKEN` - The User was authenticated using an Application Authentication Token. &nbsp; [since]#Available Since 1.14.0#
+* `FEDERATED` - The User was authenticated using a JWT from a federated Identity Provider.
+* `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
+* `PASSWORD` - The User was authenticated using a loginId and password combination.
+* `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
+
+
+|[field]#email# [type]#[String]#
+|The email address of the User.
+
+|[field]#email_verified# [type]#[Boolean]#
+|Indicates if the User's email has been verified.
+
+|[field]#exp# [type]#[Long]#
+|The expiration instant of the access token expressed as UNIX time which is the number of seconds since Epoch.
+
+|[field]#iat# [type]#[Long]#
+|The instant that the access token was issued expressed as UNIX time which is the number of seconds since Epoch.
+
+|[field]#iss# [type]#[String]#
+|The issuer of the access token.
+
+|[field]#roles# [type]#[Array]#
+|The roles assigned to the User in the authenticated Application.
+
+|[field]#sub# [type]#[UUID]#
+|The subject of the access token. This value is equal to the User's unique Id in Passport.
+|===
+
+[source,json]
+.Example JSON Response
+----
+{
+  "applicationId": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+  "aud": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+  "authenticationType": "PASSWORD",
+  "email": "test0@inversoft.com",
+  "email_verified": true,
+  "exp": 1487975407000,
+  "iat": 1487971807000,
+  "iss": "acme.com",
+  "roles": [
+    "admin"
+  ],
+  "sub": "858a4b01-62c8-4c2f-bfa7-6d018833bea7"
+}
+----
+
+
+== OpenID Configuration
+
+The OpenID metadata describing the configuration as defined by https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata[Section 3. OpenID Provider Metadata].
+
+[NOTE.since]
+====
+Available Since Version 1.16.0
+====
+
+=== Request
+
+Returns the well known OpenID Configuration JSON document
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/.well-known/openid-configuration#
+--
+
+[source,json]
+.Example JSON Response
+----
+include::docs/passport/src/json/openid/configuration/response.json[]
+----

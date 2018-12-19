@@ -1,0 +1,556 @@
+---
+layout: passport-doc
+title: Application APIs
+description: The APIs for creating, retrieving, updating and deleting Applications
+---
+
+== Overview
+
+This page contains the APIs that are used to manage Applications as well as the Roles of an Application. Here are the APIs:
+
+* <<Create an Application>>
+* <<Retrieve an Application>>
+* <<Update an Application>>
+* <<Delete an Application>>
+* <<Reactivate an Application>>
+* <<Create an Application Role>>
+* <<Update an Application Role>>
+* <<Delete an Application Role>>
+* <<Retrieve OAuth Configuration>>
+
+== Create an Application
+
+This API is used to create an Application. Specifying an Id on the URI will instruct Passport to use that Id when creating the Application. Otherwise, Passport will generate an Id for the Application.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Create an Application with a generated Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/application#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Create an Application with the given Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/application/`\{applicationId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [optional]#Optional# [default]#defaults to a generated UUID#
+|The Id to use for the new Application. If not specified a secure random UUID will be generated.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#application.authenticationTokenConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available Since 1.14.0#
+|Determines if Users can have Authentication Tokens associated with this Application. This feature may not be enabled for the Passport application.
+
+|[field]#application.cleanSpeakConfiguration.applicationIds# [type]#[Array<UUID>]# [optional]#Optional#
+|An array of UUIDs that map to the CleanSpeak applications for this Application. It is possible that a single Application in Passport might have multiple Applications in CleanSpeak. For example, an Passport Application for a game might have one CleanSpeak Application for usernames and another Application for chat.
+
+This property is used when CleanSpeak sends user action notifications to Passport (when users are disciplined for example). Passport will translate the CleanSpeak ids to Passport ids and then apply the user action.
+
+|[field]#application.cleanSpeakConfiguration.usernameModeration.applicationId# [type]#[UUID]# [optional]#Optional#
+|The Id of the CleanSpeak application that usernames are sent to for moderation.
+
+|[field]#application.cleanSpeakConfiguration.usernameModeration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|True if CleanSpeak username moderation is enabled.
+
+|[field]#application.jwtConfiguration.algorithm# [type]#[String]# [optional]#Optional#
+|
+include::docs/passport/apis/_jwt_algorithm.adoc[]
+
+Required when `enabled` is set to `true`.
+
+|[field]#application.jwtConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`#
+|Indicates if this application is using the JWT configuration defined here or the global JWT configuration defined by the System Configuration. If this is `false` the signing algorithm configured in the System Configuration will be used. If `true` the signing algorithm defined in this application will be used.
+
+|[field]#application.jwtConfiguration.privateKey# [type]#[String]# [optional]#Optional#
+|The private key used when an `RSA` signing algorithm has been selected. The private key will be used to sign the JWT. This key is expected to be presented in a PEM encoded format.
+
+Required when `enabled` is set to `true` and `algorithm` is set to an `RSA` based value.
+
+|[field]#application.jwtConfiguration.publicKey# [type]#[String]# [optional]#Optional#
+|The public key used when an `RSA` signing algorithms has been selected. The public key will be used to verify JWTs signed with the private key. This key is expected to be presented in a PEM encoded format.
+
+Required when `enabled` is set to `true` and `algorithm` is set to an `RSA` based value.
+
+|[field]#application.jwtConfiguration.refreshTokenTimeToLiveInMinutes# [type]#[Integer]# [optional]#Optional#
+|The length of time in minutes the JWT refresh token will live before it is expired and is not able to be exchanged for a JWT.
+
+Required when `enabled` is set to `true`.
+
+|[field]#application.jwtConfiguration.secret# [type]#[String]# [optional]#Optional#
+|The secret used when an `HMAC` based signing algorithm has been selected. This secret is used to sign and verify JWTs.
+
+Required when `enabled` is set to `true` and `algorithm` is set to an `HMAC` based value.
+
+|[field]#application.name# [type]#[String]# [required]#Required#
+|The name of the Application.
+
+|[field]#application.oauthConfiguration.authorizedOriginURLs# [type]#[Array<String>]# [optional]#Optional#
+|An array of URLs that are the authorized origins for Passport OAuth.
+
+|[field]#application.oauthConfiguration.authorizedRedirectURLs# [type]#[Array<String>]# [optional]#Optional#
+|An array of URLs that are the authorized redirect URLs for Passport OAuth.
+
+|[field]#application.oauthConfiguration.logoutURL# [type]#[String]# [optional]#Optional#
+|The logout URL for the Application. Passport will redirect to this URL after the user logs out of OAuth.
+
+|[field]#application.roles# [type]#[Array]# [optional]#Optional#
+|An array of Role objects.
+
+|[field]#application.roles``[x]``.description# [type]#[String]# [optional]#Optional#
+|A description for the role.
+
+|[field]#application.roles``[x]``.id# [type]#[UUID]# [optional]#Optional# [default]#generated if null#
+|The Id of the Role.
+
+|[field]#application.roles``[x]``.name# [type]#[String]# [required]#Required#
+|The name of the Role.
+
+|[field]#application.roles``[x]``.isDefault# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|Whether or not the Role is a default role. A default role is automatically assigned to a user during registration if no roles are provided.
+
+|[field]#application.verificationEmailTemplateId# [type]#[UUID]# [optional]#Optional# [since]#Available Since 1.21.0#
+|The Id of the Email Template that is used to send the Registration Verification emails to users. If the `verifyRegistration` field is `true` this field is required.
+
+|[field]#application.verifyRegistration# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available Since 1.21.0#
+|Whether or not registrations to this Application may be verified. When this is set to `true` the `verificationEmailTemplateId` parameter is also required.
+
+|[field]#webhookIds# [type]#[Array<UUID>]# [optional]#Optional#
+|An array of Webhook Ids. For Webhooks that are not already configured for All Applications, specifying an Id on this request will indicate the associated Webhook should handle events for this application.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/applications/post-request.json[]
+----
+
+=== Response
+
+The response for this API contains the information for the Application that was created.
+
+include::docs/passport/apis/_standard-post-response-codes.adoc[]
+
+include::docs/passport/apis/_application-response-body.adoc[]
+
+
+== Retrieve an Application
+
+This API is used to retrieve one or all of the configured Applications. Specifying an Id on the URI will retrieve a single Application. Leaving off the Id will retrieve all of the Applications.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve all of the active Applications
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/application#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve all of the inactive Applications
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/application``?inactive=true``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#inactive# [type]#[Boolean]# [optional]#Optional#
+|Set this parameter to `true` in order to retrieve only inactive Applications. Setting this parameter to `false` is equivalent omitting the `inactive` parameter.
+|===
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve a single Application by Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/application/`\{applicationId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
+|The Id of the Application to retrieve. This request will return the Application if it exists regardless if the Application is active or not.
+|===
+
+=== Response
+
+The response for this API contains either a single Application or all of the Applications. When you call this API with an Id the response will contain just that Application. When you call this API without an Id the response will contain all of the Applications. Both response types are defined below along with an example JSON response.
+
+include::docs/passport/apis/_standard-get-response-codes.adoc[]
+
+include::docs/passport/apis/_application-response-body.adoc[]
+
+include::docs/passport/apis/_applications-response-body.adoc[]
+
+
+== Update an Application
+
+This API is used to update an existing Application. You must specify the Id of the Application you are updating on the URI. You must specify all of the properties of the Application when calling this API. This API doesn't merge the existing Application and your new data. It replaces the existing Application with your new data.
+
+[NOTE]
+====
+You can't update an Application's roles via this API. This prevents you from accidentally removing all the roles of an Application. To create, update or remove a role from the Application, you need to call one of these APIs:
+
+* <<Create an Application Role>>
+* <<Update an Application Role>>
+* <<Delete an Application Role>>
+====
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Update an Application by Id
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/application``\{applicationId\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#application.authenticationTokenConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [since]#Available Since 1.14.0#
+|Determines if Users can have Authentication Tokens associated with this Application. This feature may not be enabled for the Passport application.
+
+|[field]#application.cleanSpeakConfiguration.applicationIds# [type]#[Array<UUID>]# [optional]#Optional#
+|An array of UUIDs that map to the CleanSpeak applications for this Application. It is possible that a single Application in Passport might have multiple Applications in CleanSpeak. For example, an Passport Application for a game might have one CleanSpeak Application for usernames and another Application for chat.
+
+This property is used when CleanSpeak sends user action notifications to Passport (when users are disciplined for example). Passport will translate the CleanSpeak ids to Passport ids and then apply the user action.
+
+|[field]#application.cleanSpeakConfiguration.usernameModeration.applicationId# [type]#[UUID]# [optional]#Optional#
+|The Id of the CleanSpeak application that usernames are sent to for moderation.
+
+|[field]#application.cleanSpeakConfiguration.usernameModeration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|True if CleanSpeak username moderation is enabled.
+
+|[field]#application.jwtConfiguration.algorithm# [type]#[String]# [optional]#Optional#
+|
+include::docs/passport/apis/_jwt_algorithm.adoc[]
+
+|[field]#application.jwtConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`#
+|Indicates if this application is using the JWT configuration defined here or the global JWT configuration defined by the System Configuration. If this is `false` the signing algorithm configured in the System Configuration will be used. If `true` the signing algorithm defined in this application will be used.
+
+|[field]#application.jwtConfiguration.privateKey# [type]#[String]# [optional]#Optional#
+|The private key used when an `RSA` signing algorithm has been selected. The private key will be used to sign the JWT. This key will be returned in a PEM encoded format.
+
+Required when `enabled` is set to `true` and `algorithm` is set to an `RSA` based value.
+
+|[field]#application.jwtConfiguration.publicKey# [type]#[String]# [optional]#Optional#
+|The public key used when an `RSA` signing algorithms has been selected. The public key will be used to verify JWTs signed with the private key. This key will be returned in a PEM encoded format.
+
+Required when `enabled` is set to `true` and `algorithm` is set to an `RSA` based value.
+
+|[field]#application.jwtConfiguration.refreshTokenTimeToLiveInMinutes# [type]#[Integer]# [optional]#Optional#
+|The length of time in minutes the JWT refresh token will live before it is expired and is not able to be exchanged for a JWT.
+
+Required when `enabled` is set to `true`.
+
+|[field]#application.jwtConfiguration.secret# [type]#[String]# [optional]#Optional#
+|The secret used when an `HMAC` based signing algorithm has been selected. This secret is used to sign and verify JWTs.
+
+Required when `enabled` is set to `true` and `algorithm` is set to an `HMAC` based value.
+
+|[field]#application.name# [type]#[String]# [required]#Required#
+|The name of the Application.
+
+|[field]#application.oauthConfiguration.authorizedOriginURLs# [type]#[Array<String>]# [optional]#Optional#
+|An array of URLs that are the authorized origins for Passport OAuth.
+
+|[field]#application.oauthConfiguration.authorizedRedirectURLs# [type]#[Array<String>]# [optional]#Optional#
+|An array of URLs that are the authorized redirect URLs for Passport OAuth.
+
+|[field]#application.oauthConfiguration.logoutURL# [type]#[String]# [optional]#Optional#
+|The logout URL for the Application. Passport will redirect to this URL after the user logs out of OAuth.
+
+|[field]#application.verificationEmailTemplateId# [type]#[UUID]# [optional]#Optional# [since]#Available Since 1.21.0#
+|The Id of the Email Template that is used to send the Registration Verification emails to users. If the `verifyRegistration` field is `true` this field is required.
+
+|[field]#application.verifyRegistration# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available Since 1.21.0#
+|Whether or not registrations to this Application may be verified. When this is set to `true` the `verificationEmailTemplateId` parameter is also required.
+
+|[field]#webhookIds# [type]#[Array<UUID>]# [optional]#Optional#
+|An array of Webhook Ids. For Webhooks that are not already configured for All Applications, specifying an Id on this request will indicate the associated Webhook should handle events for this application.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/applications/put-request.json[]
+----
+
+=== Response
+
+The response for this API contains the new information for the Application that was updated.
+
+include::docs/passport/apis/_standard-put-response-codes.adoc[]
+
+include::docs/passport/apis/_application-response-body.adoc[]
+
+
+== Delete an Application
+
+This API is used to delete an Application. You must specify the Id of the Application on the URI. You can also specify whether or not the Application is soft or hard deleted. Soft deleted Applications are marked as inactive but not deleted from Passport.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Soft delete an Application. This operation can be reversed by re-activating the Application.
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/application/`\{applicationId\}`#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Permanently delete an Application. This operation cannot be reversed.
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/application/`\{applicationId\}?hardDelete=true`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [required]#Required#
+|The Id of the Application to delete.
+
+|[field]#hardDelete# [type]#[Boolean]# [optional]#Optional#
+|Whether or not the Application is soft or hard deleted. A hard delete is a permanent operation.
+|===
+
+=== Response
+
+This API does not return a JSON response body.
+
+include::docs/passport/apis/_standard-delete-response-codes.adoc[]
+
+
+== Reactivate an Application
+
+This API is used to reactivate an inactive Application. You must specify the Id of the Application on the URI.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Reactivate the Application
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/application/`\{applicationId\}?reactivate=true`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [required]#Required#
+|The Id of the Application to reactivate.
+|===
+
+=== Response
+
+The response for this API contains the information for the Application that was reactivated.
+
+include::docs/passport/apis/_standard-get-response-codes.adoc[]
+
+include::docs/passport/apis/_application-response-body.adoc[]
+
+
+== Create an Application Role
+
+This API is used to create a role for an Application. Specifying an Id on the URI will instruct Passport to use that Id when creating the role. Otherwise, Passport will generate an Id for the role.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Create a Role with a generated Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/application/`\{applicationId\}/role`#
+--
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Create a Role with a given Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/application/`\{applicationId\}/role/\{roleId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [required]#Required#
+|The Id of the Application.
+
+|[field]#roleId# [type]#[UUID]# [optional]#Optional# [default]#defaults to secure random UUID#
+|The Id to use for the new role. If not specified a secure random UUID will be generated.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#role.description# [type]#[String]# [optional]#Optional#
+|A description for the role.
+
+|[field]#role.name# [type]#[String]# [required]#Required#
+|The name of the Role.
+
+|[field]#role.isDefault# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|Whether or not the Role is a default role. A default role is automatically assigned to a user during registration if no roles are provided.
+
+|[field]#role.isSuperRole# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available Since 1.8.1#
+|Whether or not the Role is a considered to be a super user role. This is a marker to indicate that it supersedes all other roles. Passport will attempt to enforce this contract when using the web UI, it is not enforced programmatically when using the API.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/applications/role-request.json[]
+----
+
+=== Response
+
+The response for this API contains the information for the role that was created.
+
+include::docs/passport/apis/_standard-post-response-codes.adoc[]
+
+include::docs/passport/apis/_role-response-body.adoc[]
+
+
+== Update an Application Role
+
+This API is used to update an existing Application role. You must specify the Application Id and the role Id on the URI to identify the role that is being updated.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Update an Application Role by Id
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/application/``\{applicationId\}``/role/``\{roleId\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [required]#Required#
+|The Id of the Application.
+
+|[field]#roleId# [type]#[UUID]# [required]#Required#
+|The Id of the role that is being updated.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#role.description# [type]#[String]# [optional]#Optional#
+|A description for the role.
+
+|[field]#role.name# [type]#[String]# [required]#Required#
+|The name of the Role.
+
+|[field]#role.isDefault# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|Whether or not the Role is a default role. A default role is automatically assigned to a user during registration if no roles are provided. More than one role can be marked as default.
+
+|[field]#role.isSuperRole# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available Since 1.8.1#
+|Whether or not the Role is a considered to be a super user role. This is a marker to indicate that it supersedes all other roles. Passport will attempt to enforce this contract when using the web UI, it is not enforced programmatically when using the API.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/applications/role-request.json[]
+----
+
+=== Response
+
+The response for this API contains the new information for the role that was updated.
+
+include::docs/passport/apis/_standard-post-response-codes.adoc[]
+
+include::docs/passport/apis/_role-response-body.adoc[]
+
+
+== Delete an Application Role
+
+This API is used to delete a role from an Application. You must specify the application Id and the role Id on the URI.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Delete an Application Role by Id
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/application/``\{applicationId\}``/role/``\{roleId\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [required]#Required#
+|The Id of the Application the role belongs.
+
+|[field]#roleId# [type]#[UUID]# [required]#Required#
+|The Id of the role to delete.
+|===
+
+=== Response
+
+This API does not return a JSON response body.
+
+include::docs/passport/apis/_standard-delete-response-codes.adoc[]
+
+== Retrieve OAuth Configuration
+
+[NOTE.since]
+====
+Available Since Version 1.17.0
+====
+
+This API is used to retrieve the Application OAuth configuration. When an API key is provided on the request the OAuth client secret
+will also be returned. When this API is called without authentication the client secret will not be returned in the response body.
+
+=== Request
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green]] link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve the OAuth Configuration for an Application
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/application/``\{applicationId\}``/oauth-configuration#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [required]#Required#
+|The Id of the Application to retrieve the OAuth configuration.
+|===
+
+=== Response
+
+:no_authorization:
+include::docs/passport/apis/_standard-get-response-codes.adoc[]
+:no_authorization!:
+
+include::docs/passport/apis/_application-oauth-configuration-response-body.adoc[]

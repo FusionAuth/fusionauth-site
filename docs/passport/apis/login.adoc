@@ -1,0 +1,478 @@
+---
+layout: passport-doc
+title: Login APIs
+description: APIs for authenticating users (logging them in) or tracking an SSO login (login ping) and two factor authentication
+---
+
+== Overview
+
+This page contains the APIs that are used to authenticate and track user logins.
+
+* <<Authenticate a User>>
+* <<Complete Two Factor Authentication>>
+* <<Update Login Instant>>
+* <<Logout a User>>
+
+
+== Authenticate a User
+
+The Login API is used authenticate a user in Passport.
+
+=== Request
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green]] Authenticate a User.
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/login#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Headers
+|===
+|[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#
+|The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
+if available, the request body value will take precedence.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
+|The Id of the Application the user is to be logged into. If this parameter is omitted the user will still be authenticated but a login
+count will not be recorded for an Application.
+
+|[field]#device# [type]#[String]# [optional]#Optional# [since]#Available Since 1.6.2#
+|The unique device identifier for this request.
+
+Use this parameter to cause a refresh token cookie will be written to the client on the response named `refresh_token`
+and it will also be provided in the response body. This value should be unique to the device and the same device id
+should be sent on subsequent requests for the same device.
+
+|[field]#email# [type]#[String]# [optional]#Optional# [deprecated]#Deprecated#
+|The email address of the user to be logged in. Once available, use `loginId` instead.
+
+|[field]#ipAddress# [type]#[String]# [optional]#Optional# [since]#Available Since 1.8.0#
+|The IP address of the end-user that is logging into Passport. If this value is omitted Passport will attempt to obtain the IP address of
+the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
+be stored in the User login history.
+
+|[field]#loginId# [type]#[String]# [required]#Required# [since]#Available Since 1.4.0#
+|The login identifier of the user. The login identifier can be either the `email` or the `username`.
+
+|[field]#metaData.device.description# [type]#[String]# [optional]#Optional# [since]#Available Since 1.6.2#
+|A human readable description of the device represented by the `device` parameter.
+
+|[field]#metaData.device.lastAccessedAddress# [type]#[String]# [optional]#Optional# [since]#Available Since 1.6.2#
+|The IP address of this login request.
+
+|[field]#metaData.device.name# [type]#[String]# [optional]#Optional# [since]#Available Since 1.6.2#
+|A human readable name of the device represented by the `device` parameter.
+
+|[field]#metaData.device.type# [type]#[String]# [optional]#Optional# [since]#Available Since 1.6.2#
+|The type of device represented by the `device` parameter. The following types may be specified:
+
+* `BROWSER`
+* `DESKTOP`
+* `LAPTOP`
+* `MOBILE`
+* `OTHER`
+* `SERVER`
+* `TABLET`
+* `TV`
+* `UNKNOWN`
+
+|[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available Since 1.14.0#
+|When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
+
+This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
+
+|[field]#password# [type]#[String]# [required]#Required#
+|The user's password or an Application specific link:../tutorials/authentication-tokens[Authentication Token].
+
+|[field]#twoFactorTrustId# [type]#[String]# [required]#Required# [since]#Available Since 1.19.0#
+|The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled.
+
+|[field]#username# [type]#[String]# [optional]#Optional# [deprecated]#Deprecated#
+|The username of the user to be logged in. Once available, use `loginId` instead.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/login/request.json[]
+----
+
+=== Response
+
+The response for this API contains the User object.
+
+[cols="1,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The authentication was successful. The response will contain the User object that was authenticated.
+
+|202
+|The user was authenticated successfully. The user is not registered for the application specified by `applicationId` on the request.
+The response will contain the User object that was authenticated.
+
+|203
+|The user was authenticated successfully. The user is required to change their password, the response will contain the `changePasswordId` to be used
+on the link:users#change-a-user-s-password[Change Password] API.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/passport/src/json/login/login-change-password-response.json[]
+----
+
+|212
+|The user's email address has not yet been verified. The response will contain the User object that was authenticated.
+
+|242
+|The user was authenticated successfully. The user has two factor authentication enabled, the response will contain the `twoFactorId` to be used
+on the <<Complete Two Factor Authentication>>.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/passport/src/json/login/login-two-factor-response.json[]
+----
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:errors[Errors] JSON Object with the specific errors.
+
+|402
+|Your license is expired. Contact sales@inversoft.com. The response will be empty.
+
+|404
+|The user was not found or the password was incorrect. The response will be empty.
+
+|409
+|The user is currently in an action that has prevented login. The response will contain the actions that prevented login.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/passport/src/json/login/login-prevented-response.json[]
+----
+
+|410
+|The user has expired. The response will be empty.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the Passport log files. The response will be empty.
+|===
+
+:login_response:
+include::docs/passport/apis/_user-response-body.adoc[]
+:login_response!:
+
+[cols="3a,7a"]
+[.api]
+.Response Cookies
+|===
+|[field]#access_token# [type]#[String]# [since]#Available Since 1.6.2#
+|The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+
+|[field]#refresh_token# [type]#[String]# [since]#Available Since 1.6.2#
+|The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the JWT
+configuration for the application or the global JWT configuration.
+|===
+
+== Complete Two Factor Authentication
+
+[NOTE.since]
+====
+Available Since Version 1.16.0
+====
+
+The Two Factor Login API is used to complete the authentication process when a `242` is returned by the Login API.
+
+=== Request
+
+Complete a login request when a User has Two Factor authentication enabled.
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green]] Complete a Two Factor Login
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/login#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Headers
+|===
+|[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#
+|The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
+if available, the request body value will take precedence.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
+|The Id of the Application the user is to be logged into. If this parameter is omitted the user will still be authenticated but a login
+count will not be recorded for an Application.
+
+|[field]#code# [type]#[String]# [required]#Required#
+|The time based one time use password, also called a Two Factor verification code.
+
+|[field]#device# [type]#[String]# [optional]#Optional#
+|The unique device identifier for this request.
+
+Use this parameter to cause a refresh token cookie will be written to the client on the response named `refresh_token` and it will also be
+provided in the response body. This value should be unique to the device and the same device id should be sent on subsequent requests for the same device.
+
+|[field]#ipAddress# [type]#[String]# [optional]#Optional#
+|The IP address of the end-user that is logging into Passport. If this value is omitted Passport will attempt to obtain the IP address
+of the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address
+will be stored in the User login history.
+
+|[field]#metaData.device.description# [type]#[String]# [optional]#Optional#
+|A human readable description of the device represented by the `device` parameter.
+
+|[field]#metaData.device.lastAccessedAddress# [type]#[String]# [optional]#Optional#
+|The IP address of this login request.
+
+|[field]#metaData.device.name# [type]#[String]# [optional]#Optional#
+|A human readable name of the device represented by the `device` parameter.
+
+|[field]#metaData.device.type# [type]#[String]# [optional]#Optional#
+|The type of device represented by the `device` parameter. The following types may be specified:
+
+* `BROWSER`
+* `DESKTOP`
+* `LAPTOP`
+* `MOBILE`
+* `OTHER`
+* `SERVER`
+* `TABLET`
+* `TV`
+* `UNKNOWN`
+
+|[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available Since 1.19.0#
+|When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field,
+and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
+
+|[field]#trustComputer# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available Since 1.19.0#
+|When this value is set to true the response will contain a Two Factor Trust identifier. This can be used on subsequent Login requests to
+allow the Two Factor challenge to be bypassed.
+
+|[field]#twoFactorId# [type]#[String]# [required]#Required#
+|The two factor Id generated and returned in the response body during the initial authentication attempt.
+
+The default duration of this identifier is 5 minutes. This means that you have 5 minutes to complete the request to this API after
+calling the Login API. Once the identifier has expired you will need to call the Login API again to restart the process.
+
+This duration can be modified using the System Configuration API or in the Passport UI.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/login/two-factor/request.json[]
+----
+
+=== Response
+
+The response for this API contains the User object.
+
+[cols="1,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The authentication was successful. The response will contain the User object that was authenticated.
+
+|202
+|The user was authenticated successfully. The user is not registered for the application specified by `applicationId` on the request.
+The response will contain the User object that was authenticated.
+
+|212
+|The user's email address has not yet been verified. The response will contain the User object that was authenticated.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:errors[Errors] JSON Object with the specific errors.
+
+|402
+|Your license is expired. Contact sales@inversoft.com. The response will be empty.
+
+|404
+|The `twoFactorId` was invalid or expired. You will need to authenticate again using the link:#authenticate-a-user[Login] API. The response will be empty.
+
+|409
+|The user is currently in an action that has prevented login. The response will contain the actions that prevented login.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/passport/src/json/login/login-prevented-response.json[]
+----
+
+|410
+|The user has expired. The response will be empty.
+
+|421
+|The `code` request parameter is not valid. The response will be empty.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the Passport log files. The response will be empty.
+|===
+
+:login_response:
+:two_factor_login_response:
+include::docs/passport/apis/_user-response-body.adoc[]
+:login_response!:
+:two_factor_login_response!:
+
+[cols="3a,7a"]
+[.api]
+.Response Cookies
+|===
+|[field]#access_token# [type]#[String]#
+|The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+
+|[field]#refresh_token# [type]#[String]#
+|The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the
+JWT configuration for the application or the global JWT configuration.
+|===
+
+== Update Login Instant
+
+Sends a ping to Passport indicating that the user was automatically logged into an application. When using Passport's SSO or your own, you
+should call this if the user is already logged in centrally, but accesses an application where they no longer have a session. This helps
+correctly track login counts, times and helps with reporting.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Update the login instant for a given User and Application
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/login/``\{userId\}/\{applicationId\}?ipAddress=\{ipAddress\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The Id of the user logging in.
+
+|[field]#applicationId# [type]#[UUID]# [required]#Required#
+|The Id of the Application the user is logging into.
+
+|[field]#ipAddress# [type]#[String]# [optional]#Optional# [since]#Available Since 1.8.0#
+|The IP address of the end-user that is logging into Passport. If this value is omitted Passport will attempt to obtain the IP address of
+the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
+be stored in the User login history.
+|===
+
+link:authentication#jwt-authentication[icon:id-badge[role=green]] Update the login instant for a given User and Application using a JWT
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/login``?ipAddress=\{ipAddress\}``#
+--
+
+[NOTE.since]
+====
+Available Since Version 1.6.2
+====
+
+The `userId` and `applicationId` are not required on the request, these values will be retrieved from the identity claims in the JWT payload.
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#ipAddress# [type]#[String]# [optional]#Optional# [since]#Available Since 1.8.0#
+|The IP address of the end-user that is logging into Passport. If this value is omitted Passport will attempt to obtain the IP address of
+the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
+be stored in the User login history.
+|===
+
+=== Response
+
+This API does not return a JSON response body.
+
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The update was successful.
+
+|202
+|The user exists but is not registered for the application specified by applicationId on the request.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:errors[Errors] JSON Object with the specific errors.
+
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:authentication[Authentication].
+
+|404
+|The user was not found.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the Passport log files.
+|===
+
+== Logout a User
+
+[NOTE.since]
+====
+Available Since Version 1.6.2
+====
+
+The Logout API is intended to be used to remove the refresh token and access token cookies if they exist on the client and revoke the refresh token. This
+API does nothing if the request does not contain an access token or refresh token cookies.
+
+=== Request
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green]] Remove the `access_token` and `refresh_token` cookies if they exist on the client.
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/logout``?global=\{global\}&refreshToken=\{refreshToken\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#global# [type]#[Boolean]# [optional]#Optional# [since]#Available Since 1.9.1#
+|When this value is set to true all of the refresh tokens issued to the owner of the provided refresh token will be revoked.
+
+|[field]#refreshToken# [type]#[String]# [optional]#Optional# [since]#Available Since 1.9.1#
+|The `refresh_token` as a request parameter instead of coming in via a cookie. If provided this takes precedence over the cookie.
+|===
+
+=== Response
+
+This API does not return a JSON response body.
+
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The update was successful.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the Passport log files.
+|===

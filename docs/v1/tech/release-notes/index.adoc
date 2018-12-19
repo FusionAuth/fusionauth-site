@@ -15,11 +15,31 @@ Hide stuff inside these lines
 == Version Next
 _Pending Release_
 
-* Something awesome I'm sure...
+=== Fixed
+* When using Docker compose, if you start up with `--pull` to update to the latest version of FusionAuth and there happens to be a database schema update, the silent configuration mode may fail. This occurs because the silent configuration was not performing the database schema update automatically. If you encounter this issue, you will need to manually update the schema.
+
+[role=release-note]
+
+== Version 1.3.1
+_December 19th, 2018_
+
+=== Changed
+* API key will take precedence for API authentication if both a JWT and an API key are provided on the request. For example, when making a GET request to the User API, if a JWT is provided in a cookie, and a valid API key is also provided in the `Authorization` HTTP header, the previous design was to prefer the JWT. This design point meant that even when an API key was provided, even when providing a valid API key, you would be unable to retrieve any user but the one represented by the JWT.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/43[GitHub Issue #43 : Id is ignored on Retrieve User when JWT is present]
+* The `client_id` is no longer required on the OAuth Token endpoint when client authentication is configured as required, in this scenario the client Id is provided in the HTTP Basic Authorization header.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/54[Github Issue #54 :Token request returning 500 when client_id is omitted]
 
 === Fixed
 * When editing the JWT settings in the FusionAuth application the UI a JavaScript error may cause some of the settings to not render properly. This error was introduced in version `1.3.0`.
 * Added missing properties to the Application view dialog in the FusionAuth UI.
+* The `openid` scope may not be honored during login when a user has Two Factor authentication enabled. The symptom of this issue is that the response from the Token endpoint will not contain an `id_token` even when the `openid` scope was requested.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/53[Github Issue #53 : Authorization with scope openid fails when 2FA is enabled]
+* Validation for the OAuth2 Token endpoint may fail when the `client_id` request body parameter is omitted and return a `500` instead of a `400` status code.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/54[Github Issue #54 : Token request returning 500 when client_id is omitted]
+* When a OAuth2 redirect URI is registered with a query parameter, the resulting redirect URI will not be built correctly.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/55[Github Issue #55 : Adding a query parameter to the redirect_uri causes an invalid URI to be returned]
+* When trying to configure Elasticsearch engine during maintenance mode the index may get created but fail to leave maintenance mode. FusionAuth makes a `HEAD` request to Elasticsearch to check if the required indexes exist during startup and prior to leaving maintenance mode. When connected to an AWS Elasticsearch cluster this request does not behave as expected which causes FusionAuth to stay in maintenance mode. This issue has been resolved and should allow FusionAuth to properly connect to and utilize Elasticsearch running in an AWS cluster.
+
 
 [role=release-note]
 

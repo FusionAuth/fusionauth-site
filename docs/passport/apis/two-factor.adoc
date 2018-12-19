@@ -1,0 +1,324 @@
+---
+layout: passport-doc
+title: Two Factor APIs
+description: APIs for enabling and disabling Two Factor Authentication
+---
+
+== Overview
+
+* <<Enable Two Factor>>
+* <<Disable Two Factor>>
+* <<Send a Two Factor Code>>
+* <<Generate a Secret>>
+
+== Enable Two Factor
+
+[NOTE.since]
+====
+Available Since Version 1.16.0
+====
+
+This API is used to enable Two Factor authentication for a single User. To use this API the User must provide a valid
+Two Factor verification code.
+
+To enable using `TextMessage` delivery, you may use the link:two-factor#send-a-two-factor-code[Two Factor Send] API to deliver a
+code to the User, the User will then provide this code as input.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Enable Two Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/two-factor/`{userId}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The Id of the User to enable Two Factor authentication.
+|===
+
+link:authentication#jwt-authentication[icon:id-badge[role=green]] Enable Two Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/two-factor#
+--
+
+include::docs/passport/apis/_two_factor-request-body.adoc[]
+
+=== Response
+
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. Two Factor has been enabled for the User.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:errors[Errors] JSON Object with the specific errors.
+
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:authentication[Authentication].
+
+|402
+|Your license has expired. The response will be empty. Contact sales@inversoft.com for assistance.
+
+|404
+|The User does not exist. The response will be empty.
+
+|421
+|The `code` request parameter is not valid. The response will be empty.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the Passport log files. The response will be empty.
+|===
+
+== Disable Two Factor
+
+[NOTE.since]
+====
+Available Since Version 1.16.0
+====
+
+This API is used to disable Two Factor authentication for a single User. To use this API the User must provide a valid
+Two Factor verification code.
+
+If the User has configured `TextMessage` delivery, you may use the link:two-factor#send-code[Two Factor Send] API to deliver a
+code to the User, the User will then provide this code as input.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Disable Two Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/two-factor/`{userId}?code={code}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The Id of the User to enable Two Factor authentication.
+
+|[field]#code# [type]#[String]# [required]#Required#
+|The time based one time use password, also called a Two Factor verification code.
+|===
+
+link:authentication#jwt-authentication[icon:id-badge[role=green]] Disable Two Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/two-factor``?code={code}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#code# [type]#[String]# [required]#Required#
+|The time based one time use password, also called a Two Factor verification code.
+|===
+
+=== Response
+
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. Two Factor has been disabled for the User.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:errors[Errors] JSON Object with the specific errors.
+
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:authentication[Authentication].
+
+|402
+|Your license has expired. The response will be empty. Contact sales@inversoft.com for assistance.
+
+|404
+|The User does not exist. The response will be empty.
+
+|421
+|The `code` request parameter is not valid. The response will be empty.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the Passport log files. The response will be empty.
+|===
+
+== Send a Two Factor Code
+
+[NOTE.since]
+====
+Available Since Version 1.16.0
+====
+
+This API is used to send a Two Factor verification code to a User. This may be useful during Two Factor authentication if the initial
+code is no longer valid. It may be also used to send a code to a User to assist in enabling or disabling Two Factor authentication.
+
+To send a code to a User that already has Two Factor enabled, it is not required they have `TextMessage` set as their preferred delivery.
+As long as the User has a mobile phone defined you may send the User a code.
+
+This API requires that the link:../integrations/twilio[Twilio] integration is enabled and configured properly.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Send a Two Factor code to an existing User by Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication to assist
+in disabling Two Factor authentication. The User must already have Two Factor enabled and have a valid mobile phone for this to succeed.
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#userId# [type]#[UUID]# [required]#Required#
+|The User Id of the User to send a Two Factor verification code. This User is expected to already have Two Factor enabled.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/two-factor/send/request_userId.json[]
+----
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Send a Two Factor code to a mobile phone
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+This request is intended to be used to send a Two Factor code to a User to assist in enabling Two Factor authentication.
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#mobilePhone# [type]#[String]# [required]#Required#
+|A mobile phone to send the Two Factor verification code.
+
+|[field]#secret# [type]#[String]# [required]#Required#
+|The Two Factor secret used to generate a Two Factor verification code to send to the provided mobile phone.
+
+You may optionally use value provided in the `secret` field returned by the link:../apis/two-factor#generate-a-secret[Two Factor Secret] API
+instead of generating this value yourself.
+|===
+
+[source,json]
+.Example Request JSON
+----
+include::docs/passport/src/json/two-factor/send/request.json[]
+----
+
+link:authentication#no-authentication-required[icon:unlock-alt[role=green]] Send a Two Factor code to complete Two Factor Login
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send/`{twoFactorId}`#
+--
+
+This request is intended to send additional messages to the User's mobile phone during login.
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#twoFactorId# [type]#[String]# [required]#Required#
+|The `twoFactorId` returned by the Login API.
+|===
+
+[NOTE.since]
+====
+Available Since Version 1.17.0
+====
+
+link:authentication#jwt-authentication[icon:id-badge[role=green]] Send a Two Factor code to an authenticated User using a JWT
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication to assist
+in disabling Two Factor authentication. When using JWT authentication the User's Id is retrieved from the JWT. The User must already have
+Two Factor enabled and have a valid mobile phone for this to succeed.
+
+=== Response
+
+:success_code: 200
+:success_message: The request was successful.
+include::docs/passport/apis/_standard-post-response-codes.adoc[]
+:success_code!:
+:success_message!:
+
+== Generate a Secret
+
+[NOTE.since]
+====
+Available Since Version 1.17.0
+====
+
+This API is used to generate a new Two Factor secret for use when enabling Two Factor authentication for a User. This is provided
+as a helper to assist you in enabling Two Factor authentication.
+
+If this secret will be used with a QR code to allow the User to scan the value it will need utilize the Base32 encoded value returned in
+the response.
+
+=== Request
+
+link:authentication#api-key-authentication[icon:lock[role=red]] Generate a Two Factor Secret
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/two-factor/secret#
+--
+
+link:authentication#jwt-authentication[icon:id-badge[role=green]] Generate a Two Factor Secret
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/two-factor/secret#
+--
+
+=== Response
+
+The response for this API contains the a Two Factor secret.
+
+:never_missing:
+:no_errors:
+include::docs/passport/apis/_standard-get-response-codes.adoc[]
+:no_errors!:
+:never_missing!:
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#secret# [type]#[String]#
+|A secret that may be used to enable Two Factor authentication.
+
+|[field]#secretBase32Encoded# [type]#[String]#
+|A Base32 encoded form of the provided secret. This useful if you need to provide a QR code to the User to enable Two Factor authentication.
+|===
+
+[source,json]
+.Example Response JSON
+----
+include::docs/passport/src/json/two-factor/secret/response.json[]
+----
