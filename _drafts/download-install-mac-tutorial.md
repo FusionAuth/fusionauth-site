@@ -1,24 +1,25 @@
 ---
 layout: blog-post
 title: Download and Install FusionAuth - Mac OS
+description: Download and install FusionAuth on Mac OS with these easy steps.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
 categories:
-- Passport
+- FusionAuth
 - Tutorials
 - Resources
 tags:
-- Passport
+- FusionAuth
 - code
 - Identity Management
 - tutorial
 - video
+image: blog/NEEDIMAGE
 ---
-NEED IMAGE
 
-Similar to the <a href="/blog/2018/03/22/download-install-passport-tutorial/">Linux process</a>, there are only a few steps to download and install FusionAuth in your test or production environment. Most existing identity technologies have a complex hierarchy of realms, principals, and distinguished names that restricts where they can be installed and requires extensive configuration. The following tutorial will explain how to install FusionAuth for Mac OS and be up and running in just a few minutes. It will also install and run on:
+Similar to the [Linux process](https://fusionauth.io/blog/NEEDLINK/download-install-passport-tutorial/ "FusionAuth Linux Install Tutorial"), there are only a few steps to download and install FusionAuth in your test or production environment. Most existing identity technologies have a complex hierarchy of realms, principals, and distinguished names that restricts where they can be installed and requires extensive configuration. The following tutorial will explain how to install FusionAuth for Mac OS and be up and running in just a few minutes. It will also install and run on:
 
-- Linux - all distributions (64-bit) - <a href="/blog/2018/03/22/download-install-passport-tutorial/>View installation</a>
+- Linux - all distributions (64-bit) - [View installation](https://fusionauth.io/blog/NEEDLINK/download-install-passport-tutorial/ "FusionAuth Linux Install Tutorial")
 - Mac OS X 10.8 (Mountain Lion) or newer
 - Windows Server 2008 SP2 (64-bit) w/ Windows Management Framework 3.0 or newer
 - Windows Server 2008 R2 (64-bit) w/ Windows Management Framework 3.0 or newer
@@ -38,11 +39,11 @@ Before you start installing onto MacOS, do a quick check on your system to make 
 <img class="aligncenter size-full wp-image-8863" src="" alt="Download and Install FusionAuth MacOS Requirements" width="1200" height="600">
 
 
-Refer to the latest documentation on <a href="/docs" >fusionauth.io/docs</a> for minimum requirements. Be sure to install your database before you continue.
+Refer to the latest documentation on [fusionauth.io/docs](https://fusionauth.io/docs "View documentation") for minimum requirements. Be sure to install your database before you continue.
 
 ## Download and Install FusionAuth
 
-Start by going to fusionauth.io and logging into your account. (If you haven’t already, use the <a href="/blog/2018/03/06/using-the-passport-setup-wizard/" >FusionAuth Setup Wizard</a> to establish your account.) Select the “my account” option in the top right of the page. Find your FusionAuth Licenses and select the blue download button on the right side of the page.
+Start by going to fusionauth.io and logging into your account. (If you haven’t already, use the [FusionAuth Setup Wizard](https://fusionauth.io/blog/NEEDLINK/using-the-passport-setup-wizard/ "FusionAuth Setup Wizard post") to establish your account.) Select the “my account” option in the top right of the page. Find your FusionAuth Licenses and select the blue download button on the right side of the page.
 
 You are now on the downloads page. This page has links to all of the needed files to install and run FusionAuth. You will notice there are file types for Linux, Mac OS and Windows. For this demonstration I will be using the MAC OS X files.
 
@@ -56,12 +57,13 @@ Selecting the FusionAuth Backend ZIP file for MAC will download the file to wher
 
 Now that you have the zip files for the backend and search engine downloaded we will need to extract and install them. Let start with the search engine. The Search Engine package contains the Elasticsearch Service that FusionAuth uses to index and search for users.
 
-Use Finder to navigate to where you downloaded the search engine package. In my system I used the <span class="lang:java decode:true crayon-inline ">Downloads</span> folder. From there extract the package to any destination folder that you like. For convenience, I have created the directory <span class="lang:java decode:true crayon-inline ">iversoft</span> </span> to extract the files to.
+Use Finder to navigate to where you downloaded the search engine package. In my system I used the <span class="lang:java decode:true crayon-inline ">Downloads</span> folder. From there extract the package to any destination folder that you like. For convenience, I have created the directory ```iversoft``` to extract the files to.
 
 After extracting,  you will want to start the search engine service. The search engine should always be started before the backend. To start this service open Terminal, and enter this command
 
-<pre class="lang:java decode:true">
+```
 $ &lt;PASSPORT_HOME&gt;/fusionauth-search-engine/elasticsearch/bin/elasticsearch -d
+```
 
 <img class="aligncenter size-full wp-image-8861" src="" alt="Download and Install FusionAuth MacOS Elasticsearch" width="1200" height="600">
 
@@ -73,13 +75,13 @@ Repeat the same process to extract and move the backend files. The backend is th
 
 To start the backend service run this command from your terminal.
 
-<pre class="lang:java decode:true">
+```
 $ &lt;PASSPORT_HOME&gt;/fusionauth-backend/apache-tomcat/bin/startup.sh
-</pre>
+```
 
 <img class="aligncenter size-full wp-image-8860" src="" alt="Download and Install FusionAuth MacOS Backend" width="1200" height="600">
 
-Next, access FusionAuth’s Maintenance Mode setup via the browser. If you installed FusionAuth Backend on your local machine, you’ll access this interface by opening <span class="lang:java decode:true crayon-inline ">http://localhost:9011 </span> in your browser. If FusionAuth is running on a remote server, change the server name in the URL to match your server’s name.
+Next, access FusionAuth’s Maintenance Mode setup via the browser. If you installed FusionAuth Backend on your local machine, you’ll access this interface by opening ```http://localhost:9011``` in your browser. If FusionAuth is running on a remote server, change the server name in the URL to match your server’s name.
 
 The first step of Maintenance Mode will prompt you to enter your license Id. You can retrieve your license Id from the FusionAuth website by logging into your FusionAuth account and copying the key from the licenses page.
 
@@ -93,14 +95,11 @@ In the **Super User credentials** section you will need to supply FusionAuth wit
 
 The final section labeled <strong>FusionAuth credentials</strong> will be used to define a new database user to own the FusionAuth schema and connect to the database when FusionAuth starts up. While default values for this section have been provided, at minimum the password field should be modified to utilize a password of higher entropy. These credentials will be saved to the **fusionauth.properties**  configuration file.
 
-Click the submit button once you have completed this form and if the provided credentials and database connection information was correct you should see an **in progress** panel indicating that FusionAuth is starting up. Once this step completes FusionAuth will be running and ready for you to complete the initial configuration using the <a href="/blog/2018/03/06/using-the-passport-setup-wizard/">FusionAuth Setup Wizard</a>. If you need any help with these steps, you can refer to our<a href="/docs/1.x/tech/getting-started/"> installation documentation</a> at fusionauth.io, or feel free to email dev@fusionauth.io.
+Click the submit button once you have completed this form and if the provided credentials and database connection information was correct you should see an **in progress** panel indicating that FusionAuth is starting up. Once this step completes FusionAuth will be running and ready for you to complete the initial configuration using the [FusionAuth Setup Wizard](https://fusionauth.io/blog/NEEDLINK/using-the-passport-setup-wizard/ "FusionAuth Setup Wizard post"). If you need any help with these steps, efer to our [installation documentation](https://fusionauth.io/docs/1.x/tech/getting-started/ "Open Getting Started Documentation Page")
+ at fusionauth.io, or feel free to email dev@fusionauth.io.
 
-## Video: Download and Install FusionAuth - Mac OS
+## Learn More About FusionAuth
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/7busnpSQc7g" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen="allowfullscreen"></iframe>
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
-## Learn More About the FusionAuth API
-
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available on the market. More than a login tool, we provide registration, data search, user segmentation and advanced user management across applications.
-
-Find out more about FusionAuth</a> and sign up for a free trial today. LINK HERE
+[Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.

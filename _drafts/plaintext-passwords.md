@@ -1,24 +1,26 @@
 ---
 layout: blog-post
 title: Stop Storing My Password in Plaintext
+description: DO NOT store passwords in plaintext! Here's why it's a big deal that you should already know.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
 categories:
 - Technology
 - Strategies
-- Passport
+- FusionAuth
 tags:
 - Security
 - Best Practices
 - plaintext password
 - multifactor authentication
 - encryption
+image: blog/NEEDIMAGE
 ---
-NEED IMAGE
 
-Believe it or not there are still companies emailing users with plaintext passwords. Worse yet, some systems are storing plaintext passwords in the database. <span style="font-weight: 400;">Storing or emailing plaintext passwords can increase security vulnerabilities by as much as 10x. 
+Believe it or not there are still companies emailing users with plaintext passwords. Worse yet, some systems are storing plaintext passwords in the database. Storing or emailing plaintext passwords can increase security vulnerabilities by as much as 10x. Just freaking stop!
+<!--more--> 
 
-<a href="http://plaintextoffenders.com/post/140680242967/mycuboulderedu-university-seriously-a-premier">CU Boulder</a>, a premier university, still emails their passwords in plaintext. Regardless of how complex a password is, if it is stored or emailed in plaintext, that password is easily accessible to anyone and security is compromised at a glance.
+[CU Boulder](http://plaintextoffenders.com/post/140680242967/mycuboulderedu-university-seriously-a-premier "Jump to article about CU Boulder's Passwords"), a premier university, still emails their passwords in plaintext. Regardless of how complex a password is, if it is stored or emailed in plaintext, that password is easily accessible to anyone and security is compromised at a glance.
 
 Bottom line. Do not store or email your passwords in plaintext. It’s a horrible idea. Here’s why:
 
@@ -28,7 +30,6 @@ Bottom line. Do not store or email your passwords in plaintext. It’s a horribl
 - Database backups are also vulnerable. A hacker can now attack a backup server and get access to passwords.
 
 ## Emailing plaintext passwords
-
 - Emails can be forwarded accidentally. This could mean a password might be leaked by a user that mistakenly forwards the email to their team or the whole company.
 - Some email servers aren't secure. Emails are stored plaintext on most email servers, so if a hacker gets access to the server, they can just run a script against the email database and find plaintext passwords.
 - Emails aren't always encrypted on the wire (when they are sent from your computer to the SMTP server or between SMTP relays). A simple packet sniffer can intercept emails and be trained to look for plaintext passwords. If you are sending emails from a hosting provider that supports multiple companies (like AWS or Rackspace), a hacker can put a packet sniffer on the same network and read your emails.
@@ -40,9 +41,14 @@ Bottom line. Do not store or email your passwords in plaintext. It’s a horribl
 3. **Multi-factor authentication** If the above fail and the password has been compromised, using MFA or 2FA keeps the user account secure. Two-factor authentication enhances user login security by requiring something the user knows (password) with something the user possesses (their cellphone for example).
 4. **Password invitations** If you are manually creating user accounts and need users to set their own passwords, avoid sending a random or temporary password via email. Instead send the user an email or push notification allowing them to set the password themselves.
 
-FusionAuth is a security company, focusing on identity and user management.  Our product, <a href="/products/identity-user-management">FusionAuth</a> ships with code based 2FA, brute force login detection, password hashing, forgot password, email templates and more. See our free **Guide to User Data Security** NEED LINK for more suggestions on password security.
+## Learn More About FusionAuth
+
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, code based MFA, brute force login detection, password hashing, forgot password & email templates, data search, social login, user management and more, 100% free for unlimited users.
+
+[Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
 
 ## Additional Resources
 
-- <a href="https://spod.cx/blog/emailing_passwords_bad_idea.shtml">https://spod.cx/blog/emailing_passwords_bad_idea.shtml</a>
-- <a href="http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in">http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in</a>
+- [https://spod.cx/blog/emailing_passwords_bad_idea.shtml](https://spod.cx/blog/emailing_passwords_bad_idea.shtml "Jump to Spod.cx article")
+- [http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in](http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in "Jump to Plaintext Offenders post")
+- NEEDLINK [**Developer’s Guide to the GDPR**](https://fusionauth.io/resources/developers-guide-gdpr "Get the Developer's Guide to the GDPR").

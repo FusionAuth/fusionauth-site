@@ -1,18 +1,19 @@
 ---
 layout: blog-post
 title: Getting Started with Email Templates In FusionAuth
+description: Emails should represent your brand, and FusionAuth's email templates help you do that with ease.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
 categories:
-- Passport
+- FusionAuth
 - Tutorials
 tags:
-- Passport
+- FusionAuth
 - tutorial
 - video
 - setup
+image: blog/NEEDIMAGE
 ---
-NEED IMAGE
 
 The email templates in FusionAuth can be customized allowing you to have your visual brand consistent across all customer touch points. In the video below we show you how to set up the email templates to be ready to use FusionAuth's integrated email features.
 <!--more-->
@@ -65,12 +66,10 @@ You can create customized HTML and text versions for the localized template. If 
 
 To save all changes on your email template, click the blue **Save** in the top right. Once saved you will return to the Email Template page. For each email template you want to use, you will need to repeat these steps.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/J44P0INFu-c" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen="allowfullscreen"></iframe>
+If you have additional questions or require assistance please let us know through [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub").
 
-In this tutorial for email templates in FusionAuth we have taken a look at email templates in FusionAuth and have prepared the Email Verification Template for use in production. If you have additional questions or require assistance please send us a note at <a href="mailto:dev@fusionauth.io">dev@fusionauth.io</a>.
+## Learn More About FusionAuth
 
-## Learn More About the FusionAuth API
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available on the market. More than a login tool, we provide registration, data search, user segmentation and advanced user management across applications.
-
-Find out more about FusionAuth</a> and sign up for a free trial today. LINK HERE
+[Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.

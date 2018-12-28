@@ -1,18 +1,20 @@
 ---
 layout: blog-post
 title: Download and Install FusionAuth Tutorial - Linux
+description: Download and install FusionAuth on Linux with these easy steps.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
 categories:
-- Passport
+- FusionAuth
 - Tutorials
 - Resources
 tags:
-- Passport
+- FusionAuth
 - code
 - Identity Management
 - tutorial
 - video
+image: blog/NEEDIMAGE
 ---
 NEED IMAGE
 
@@ -33,11 +35,11 @@ Before you start installing onto Linux, do a quick check on your system to make 
 - A 64-bit linux build of an RPM or Debian-based distribution.
 - A MySQL or PostgreSQL database
 
-Refer to the latest documentation on <a href="https://fusionauth.io/docs/v1/tech/">fusionauth.io/docs</a> for minimum versions. If you don't yet have a database installed, do this first before you continue.
+Refer to the latest documentation on [fusionauth.io/docs](https://fusionauth.io/docs/v1/tech/ "Visit FusionAuth Documentation") for minimum versions. If you don't yet have a database installed, do this first before you continue.
 
 ## Download and Install FusionAuth
 
-Start by going to fusionauth.io and logging into your account. (Use the <a href="/blog/2018/03/06/using-the-passport-setup-wizard/">FusionAuth Setup Wizard</a> to establish your account.) On your accounts page you will see your licenses. On the right side select the Download button. This will take you to the product download page. In this example we are installing onto Ubuntu Linux, so we will download the Debian packages.
+Start by going to fusionauth.io and logging into your account. (Use the [FusionAuth Setup Wizard](https://fusionauth.io/blog/NEEDLINK/using-the-passport-setup-wizard/ "FusionAuth Setup Wizard post") to establish your account.) On your accounts page you will see your licenses. On the right side select the Download button. This will take you to the product download page. In this example we are installing onto Ubuntu Linux, so we will download the Debian packages.
 
 <img class="aligncenter size-full wp-image-8209" src="" alt="Download and Install FusionAuth Downloads" width="1200" height="591">
 
@@ -45,7 +47,7 @@ FusionAuth is comprised of two web services, the FusionAuth backend and FusionAu
 
 <img class="aligncenter size-full wp-image-8210" src="" alt="Download and Install FusionAuth Search" width="1200" height="591">
 
-We will be using <a href="https://www.gnu.org/software/wget/" >Wget</a> to download the packages. If you do not have the command line tool Wget available you may optionally download the packages via a browser and transfer them to the target system.
+We will be using [Wget](https://www.gnu.org/software/wget/ "Jump to Wget site") to download the packages. If you do not have the command line tool Wget available you may optionally download the packages via a browser and transfer them to the target system.
 
 First, you’ll want to right-click on the file and copy the destination to your clipboard. Then, paste it at the end of your Wget command. Once you have the backend bundle downloaded, repeat the same steps for the search engine files.
 
@@ -63,15 +65,10 @@ If you do not have the key handy, you can find it on your FusionAuth account pag
 
 <img class="aligncenter size-full wp-image-8213" src="" alt="Download and Install FusionAuth Get Key" width="1200" height="591">
 
-Once the key is verified you will be prompted to complete the database configuration in order to finish the setup. If you need any help with these steps, you can refer to our<a href="/docs/1.x/tech/getting-started/"> installation documentation</a> at fusionauth.io, or feel free to email dev@fusionauth.io.
-
-## Video: Download and Install FusionAuth - Linux
-
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/T0-XFawW7Xs?rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen="allowfullscreen"></iframe>
+Once the key is verified you will be prompted to complete the database configuration in order to finish the setup. If you need any help with these steps, you can refer to our [installation documentation](https://fusionauth.io/docs/1.x/tech/getting-started/ "Open Getting Started Documentation Page") at fusionauth.io, or feel free to email dev@fusionauth.io.
 
 ## Learn More About the FusionAuth API
 
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available on the market. More than a login tool, we provide registration, data search, user segmentation and advanced user management across applications.
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
-Find out more about FusionAuth</a> and sign up for a free trial today. LINK HERE
+[Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.

@@ -1,23 +1,24 @@
 ---
 layout: blog-post
 title: Let's talk about JWTs baby!
+description: The pros and cons of JWTs and why you should (or shouldn't) use them.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
 categories:
 - Technology
 - Products
-- Passport
+- FusionAuth
 tags:
 - JWT
+image: blog/NEEDIMAGE
 ---
-NEED IMAGE
 
 It's week 3 of 365 Days of FusionAuth. Today, we are going geek on you. Let's talk about JWTs (JSON Web Tokens).
 
 JWTs are becoming more and more ubiquitous. CIAM providers everyone are pushing JWTs as the silver bullet for everything. JWTs are pretty cool, but let's talk about some of the downsides of JWTs and other solutions you might consider.
+<!--more-->
 
 The way I usually describe JWTs is that they are portable units of identity. That means they contain identity information as JSON and can be passed around to services and applications. Any service or application can verify a JWT itself. The service/application receiving a JWT doesn’t need to ask the identity provider that generated the JWT if it is valid. Once a JWT is verified, the service or application can use the data inside it to take action on behalf of the user.
-<!--more-->
 
 Here's a diagram that illustrates how the identity provider creates a JWT and a service can use the JWT without calling back to the identity provider:
 
@@ -41,47 +42,24 @@ To solve this problem, most applications use refresh tokens. Refresh tokens are 
 
 ## JWTs are signed
 
-Since JWTs are cryptographically signed, they require a cryptographic algorithm to verify. Cryptographic algorithms are purposefully designed to be slow. The slower the algorithm, the higher the complexity, and the less likely that the algorithm can be cracked using brute-force.</p>
-<p>On a modern quad-core MacBook Pro, about 200 JWTs can be created and signed per second using RSA public-private key signing. This number drops dramatically on virtualized hardware like Amazon EC2s. HMAC signing is much faster but lacks the same flexibility and security characteristics. Specifically, if the identity provider uses HMAC to sign a JWT, then all services that want to verify the JWT must have the HMAC secret. This means that all the services can now create and sign JWTs as well. This makes the JWTs less portable (specifically to public services) and less secure.
+Since JWTs are cryptographically signed, they require a cryptographic algorithm to verify. Cryptographic algorithms are purposefully designed to be slow. The slower the algorithm, the higher the complexity, and the less likely that the algorithm can be cracked using brute-force.
+
+On a modern quad-core MacBook Pro, about 200 JWTs can be created and signed per second using RSA public-private key signing. This number drops dramatically on virtualized hardware like Amazon EC2s. HMAC signing is much faster but lacks the same flexibility and security characteristics. Specifically, if the identity provider uses HMAC to sign a JWT, then all services that want to verify the JWT must have the HMAC secret. This means that all the services can now create and sign JWTs as well. This makes the JWTs less portable (specifically to public services) and less secure.
 
 To give you an idea of the performance characteristics of JWTs and the cryptographic algorithms used, our team ran some tests on a latest generation quad-core MacBook. Here are some of the metrics and timings we recorded for JWTs:
 
-<table class="thin">
-<tbody>
-<tr>
-<td><b>Metric</b></td>
-<td><b>Timing</b></td>
-</tr>
-<tr>
-<td><span style="font-weight: 400;">JSON Serialization + Base64 Encoding</span></td>
-<td><span style="font-weight: 400;">400,000/s</span></td>
-</tr>
-<tr>
-<td><span style="font-weight: 400;">JSON Serialization + Base64 Encoding + HMAC Signing</span></td>
-<td><span style="font-weight: 400;">150,000/s</span></td>
-</tr>
-<tr>
-<td><span style="font-weight: 400;">JSON Serialization + Base64 Encoding + RSA Signing</span></td>
-<td><span style="font-weight: 400;">200/s</span></td>
-</tr>
-<tr>
-<td><span style="font-weight: 400;">Base64 Decoding + JSON Parsing</span></td>
-<td><span style="font-weight: 400;">400,000/s</span></td>
-</tr>
-<tr>
-<td><span style="font-weight: 400;">Base64 Decoding + JSON Parsing + HMAC Verification</span></td>
-<td><span style="font-weight: 400;">130,000/s</span></td>
-</tr>
-<tr>
-<td><span style="font-weight: 400;">Base64 Decoding + JSON Parsing + RSA Verification</span></td>
-<td><span style="font-weight: 400;">6,000/s</span></td>
-</tr>
-</tbody>
-</table>
+Metric | Timing
+--- | ---
+JSON Serialization + Base64 Encoding | 400,000/s
+JSON Serialization + Base64 Encoding + HMAC Signing | 150,000/s
+JSON Serialization + Base64 Encoding + RSA Signing | 200/s
+Base64 Decoding + JSON Parsing | 400,000/s
+Base64 Decoding + JSON Parsing + HMAC Verification | 130,000/s
+Base64 Decoding + JSON Parsing + RSA Verification | 6,000/s
 
 ## JWTs aren’t easily revocable
 
-This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic last year here: <a href="/blog/2017/05/02/revoking-jwts/">https://fusionauth.io/blog/2017/05/02/revoking-jwts/</a> and also rewatch the IBM webinar where I presented our solution here: <a href="https://www.ibm.com/developerworks/community/blogs/81c130c7-4408-4e01-adf5-658ae0ef5f0c/entry/Upcoming_live_coding_event_Learn_how_to_revoke_JSON_web_tokens?lang=en">https://www.ibm.com/developerworks/community/blogs/81c130c7-4408-4e01-adf5-658ae0ef5f0c/entry/Upcoming_live_coding_event_Learn_how_to_revoke_JSON_web_tokens?lang=en</a>
+This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTS](https://fusionauth.io/blog/2017/05/02/revoking-jwts/ "Learn about Revoking JWTs") and also watch the IBM webinar where I presented our solution here (when FusionAuth was still called Passport): [Learn how to revoke JSON Web Tokens](https://developer.ibm.com/tv/learn-how-to-revoke-json-web-tokens/ "Jump to IBM Developer site").
 
 ## JWTs have exploits
 
@@ -104,3 +82,9 @@ When a user logs in, the user object is stored in the session and the server sen
 If you have a smaller application that uses a single backend, sessions work well. Once you start scaling or using microservices, sessions can be more challenging. Larger architectures require load-balancing and session pinning, where each client is pinned to the specific server where their session is stored. Session replication or a distributed cache might be needed to ensure fault tolerance or allow for zero-downtime upgrades. Even with this added complexity, sessions might still be a good option.
 
 I hope this brief overview of JWTs and Sessions has been helpful in shedding some light on these technologies that are used to identity and manage users. Either of these solutions will work in nearly any application. The choice generally comes down to your needs and the languages and frameworks you are using.
+
+## Learn More About FusionAuth
+
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
+
+[Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.

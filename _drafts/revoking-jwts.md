@@ -1,6 +1,7 @@
 ---
 layout: blog-post
 title: Revoking JWTs
+description: How to use and revoke JWTs for effective and efficient authorization management.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
 categories:
@@ -12,19 +13,21 @@ tags:
 - JWT
 - JSON Web Tokens
 - Webhooks
+image: blog/NEEDIMAGE
 ---
-NEED IMAGE
+DATE: 2017/05/02
+
 I have been talking with developers about JSON Web Tokens (JWTs) recently and a one question keeps coming up: “How do I revoke a JWT?”
 
 If you poke around online, you’ll find that the most common answers are:
 - Set the duration of the JWT to a short period (a few minutes)
-- Implement complicated blacklisting techniques</span></li>
-
+- Implement complicated blacklisting techniques
 <!--more-->
 
-There is not a simple solution because JWTs are designed to be portable, decoupled, identities. Once you authenticate against an identity provider (IdP) and get back a JWT, you don’t need to ask the IdP if the JWT is valid. This is particularly powerful when you use RSA public/private key signing. The IdP signs the JWT using the private key and then any service that has the public key can verify the integrity of the JWT.
+There is not a simple solution because JWTs are designed to be portable, decoupled identities. Once you authenticate against an identity provider (IdP) and get back a JWT, you don’t need to ask the IdP if the JWT is valid. This is particularly powerful when you use RSA public/private key signing. The IdP signs the JWT using the private key and then any service that has the public key can verify the integrity of the JWT.
 
 Here’s a diagram that illustrates this architecture:
+
 <a href="/blog/wp-content/uploads/2017/05/jwt-revoke_350.png"><img class="alignnone wp-image-7937 size-full" src="" alt="jwts" width="700" height="392"></a>
 
 The Todo Backend can use the JWT and the public key to verify the JWT and then pull the user’s id (in this case the subject) out of the JWT. The Todo Backend can then use the user’s id to perform operations on that user’s data. However, because the Todo Backend isn’t verifying the JWT with the IdP, it has no idea if an administrator has logged into the IdP and locked or deleted that user’s account.
@@ -141,4 +144,8 @@ This solution works well even in large systems with many backends. It requires t
 
 If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing JWTManager implementations into each of our client libraries so you don’t have to write those yourself. At the time of this writing, the Java client had a JWTManager you can use. The other languages might have a JWTManager implementation now but if they don’t, just submit a support ticket or a Github issue and we will write one for you.
 
-The example application built for this article is on Github here: <a href="https://github.com/FusionAuth/fusionauth-jwt-revoke-example">https://github.com/FusionAuth/fusionauth-jwt-revoke-example</a>
+## Learn More About FusionAuth
+
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, code based MFA, brute force login detection, password hashing, forgot password & email templates, data search, social login, user management and more, 100% free for unlimited users.
+
+[Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
