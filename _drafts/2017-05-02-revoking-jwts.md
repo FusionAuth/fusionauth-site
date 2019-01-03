@@ -15,8 +15,6 @@ tags:
 - Webhooks
 image: blog/NEEDIMAGE
 ---
-DATE: 2017/05/02
-
 I have been talking with developers about JSON Web Tokens (JWTs) recently and a one question keeps coming up: “How do I revoke a JWT?”
 
 If you poke around online, you’ll find that the most common answers are:
@@ -28,7 +26,8 @@ There is not a simple solution because JWTs are designed to be portable, decoupl
 
 Here’s a diagram that illustrates this architecture:
 
-<a href="/blog/wp-content/uploads/2017/05/jwt-revoke_350.png"><img class="alignnone wp-image-7937 size-full" src="" alt="jwts" width="700" height="392"></a>
+{% include _image.html src="/assets/img/blogs/jwt-revoke_350.png" alt="Revoking JWTs" class="mr-md-4" figure=false %}
+
 
 The Todo Backend can use the JWT and the public key to verify the JWT and then pull the user’s id (in this case the subject) out of the JWT. The Todo Backend can then use the user’s id to perform operations on that user’s data. However, because the Todo Backend isn’t verifying the JWT with the IdP, it has no idea if an administrator has logged into the IdP and locked or deleted that user’s account.
 
@@ -46,9 +45,9 @@ One way is leveraging a distributed event system that notifies services when ref
 
 ### FusionAuth
 
-To illustrate this, I’m going to use <a href="/products/identity-user-management">**FusionAuth**</a>’s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
+To illustrate this, I’m going to use [**FusionAuth**](https://fusionauth.io/ "FusionAuth Home")</a>’s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
 
-The FusionAuth **jwt.refresh-token.revoke** event look like this:
+The FusionAuth **jwt.refresh-token.revoke** event looks like this:
 
 ```javascript
 "event": {

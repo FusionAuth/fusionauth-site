@@ -15,7 +15,7 @@ tags:
 - Identity Management
 - CIAM
 - tutorial
-image: blog/NEEDIMAGE
+image: blogs/using-webhooks-in-fusionauth.jpg
 ---
 
 If your inbox looks anything like mine, it’s currently full of messages from companies updating their privacy policies and terms of service. This is mainly due to a newly adopted EU regulation, the [General Data Protection Regulation](https://fusionauth.io/blog/2018/03/23/white-paper-developers-guide-gdpr/ "Download the Developer's Guide to the GDPR") or GDPR, which goes into effect on May 25, 2018. The GDPR grants a set of “digital rights” to EU citizens, including a “right to erasure.” Basically, this means a user can request that their data be deleted, and there can be substantial fines if a company is not able to honor these requests.
