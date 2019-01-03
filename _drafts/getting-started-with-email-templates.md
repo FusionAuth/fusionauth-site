@@ -12,7 +12,7 @@ tags:
 - tutorial
 - video
 - setup
-image: blog/NEEDIMAGE
+image: blogs/Email-Templates-in-FusionAuth-Main.jpg
 ---
 
 The email templates in FusionAuth can be customized allowing you to have your visual brand consistent across all customer touch points. In the video below we show you how to set up the email templates to be ready to use FusionAuth's integrated email features.
@@ -26,13 +26,14 @@ You should customize these templates with your branding, but at a minimum, you w
 
 **NOTE:** Email features require that the SMTP setup has been completed. Review your FusionAuth dashboard, if you see a box labeled "Email settings" you will need to complete that task first. View the <a href="/blog/2018/03/06/using-the-passport-setup-wizard/" >Using the FusionAuth Setup Wizard tutorial</a> to see how to complete the SMTP configuration.
 
-<img class="aligncenter size-full wp-image-8181" src="" alt="Email Templates in FusionAuth Setup" width="1200" height="591">
+{% include _image.html src="/assets/img/blogs/Email-Templates-in-FusionAuth-Setup.jpg" alt="Email Templates in FusionAuth Setup" class="mr-md-4" figure=false %}
+
 
 ## Editing the Email Templates in FusionAuth
 
 Once your SMTP configuration is complete, navigate to the **Settings** option in the left side menu, then select **Email Templates.** This is the  Email Template page. Here you will see the three default Email templates provided by FusionAuth.
 
-<img class="aligncenter size-full wp-image-8182" src="" alt="Email Templates in FusionAuth View Templates" width="1200" height="591">
+{% include _image.html src="/assets/img/blogs/Email-Templates-in-FusionAuth-View-Templates.jpg" alt="Email Templates in FusionAuth View Templates" class="mr-md-4" figure=false %}
 
 In addition to the template name, you will see the unique ID of the template, this will be used when using the email APIs during your integration. For each template you may select **Edit, View,** or **Delete** from the provided row actions. Selecting the **View** action is helpful to preview how the template will render. **Delete** will permanently remove an email template and this action cannot be undone. You will be prevented from completing the **Delete** operation if the template in use by the FusionAuth configuration. To create a new template, you may click on the green **Add** button in the top right corner.
 
@@ -40,7 +41,8 @@ In addition to the template name, you will see the unique ID of the template, th
 
 Next, we will take a deeper look at the provided Email Verification template. We will modify this template to prepare it for use in our production application. To begin, click the blue **Edit** icon for the Email Verification template. This is the Edit Email Template page.
 
-<img class="aligncenter size-full wp-image-8183" src="" alt="Email Templates in FusionAuth Edit Templates" width="1200" height="591">
+{% include _image.html src="/assets/img/blogs/Email-Templates-in-FusionAuth-Edit-Templates.jpg" alt="Email Templates in FusionAuth Edit Templates" class="mr-md-4" figure=false %}
+
 
 On the top section labeled **Base Information** you will see the **Template Id**. This value is used by the Email APIs during integration and cannot be changed. The remainder of the fields in this section may be modified. The **Default Subject** and the **Default From Name** fields are marked with a code symbol indicating they may utilize replacement variables.
 
@@ -48,7 +50,7 @@ On the top section labeled **Base Information** you will see the **Template Id*
 
 Once the Base Information has been modified to your liking we will move to the bottom section labeled **Options**. Here you have access to edit the HTML and Text versions of the templates.
 
-<img class="aligncenter size-full wp-image-8184" src="" alt="Email Templates in FusionAuth Edit Code" width="1200" height="591">
+{% include _image.html src="/assets/img/blogs/Email-Templates-in-FusionAuth-Edit-Code.jpg" alt="Email Templates in FusionAuth Edit Code" class="mr-md-4" figure=false %}
 
 The URL in the default template is configured to use **localhost** which will not work properly for your production instance. You will need to modify the HTML and Text body to reflect the publicly available FusionAuth URL. There is a preview button in the bottom right that will allow you to review how the email body will look prior to saving the template changes.
 
@@ -58,7 +60,7 @@ While most modern Email clients will render emails using the HTML template, you 
 
 The last tab on the bottom section of the page is labeled **Localization**. Adding localized versions of your template allows FusionAuth to select a localized version based upon the recipient's preferred locale.
 
-<img class="aligncenter size-full wp-image-8185" src="" alt="Email Templates in FusionAuth Localization" width="1200" height="591">
+{% include _image.html src="/assets/img/blogs/Email-Templates-in-FusionAuth-Localization.jpg" alt="Email Templates in FusionAuth Localization" class="mr-md-4" figure=false %}
 
 Using Email Template localization allow you to communicate with your users in their preferred language which makes for a better user experience.
 

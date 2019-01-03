@@ -14,10 +14,8 @@ tags:
 - Identity Management
 - tutorial
 - video
-image: blog/NEEDIMAGE
+image: blogs/NEEDIMAGE
 ---
-NEED IMAGE
-
 Designed to save developer time and effort, there are only a few simple steps to download and install FusionAuth in your test or production environment. The following tutorial will explain how to install FusionAuth on a Linux system and be up and running in just a few minutes. This is one aspect that makes FusionAuth unique. Most existing identity technologies have a complex hierarchy of realms, principals, and distinguished names that restricts where they can be installed and requires extensive configuration. FusionAuth will install and run on a wide variety of systems including:
 <!--more-->
 - Linux - all distributions (64-bit)

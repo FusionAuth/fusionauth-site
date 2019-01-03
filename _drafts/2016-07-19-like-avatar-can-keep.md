@@ -13,10 +13,8 @@ tags:
 - java
 - avatar
 - programming
-image: blog/NEEDIMAGE
+image: blogs/keep-avatar.jpg
 ---
-keep_avatar.jpg
-
 Did you know that you can now bring your avatar with you when you log into FusionAuth?
 [Gravatar](https://en.gravatar.com/ "Jump to Gravatar site") provides users with a globally recognized avatar. If you already have a Gravatar account then you need not do anything else, we've taken care of everything. For those without a Gravatar account you'll still see a randomly generated Gravatar. Everyone wins.
 <!--more-->

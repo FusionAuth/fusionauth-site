@@ -10,31 +10,29 @@ categories:
 - FusionAuth
 tags:
 - JWT
-image: blog/NEEDIMAGE
+image: blogs/jwt-knuckle-bump.jpg
 ---
 
-It's week 3 of 365 Days of FusionAuth. Today, we are going geek on you. Let's talk about JWTs (JSON Web Tokens).
-
-JWTs are becoming more and more ubiquitous. CIAM providers everyone are pushing JWTs as the silver bullet for everything. JWTs are pretty cool, but let's talk about some of the downsides of JWTs and other solutions you might consider.
+Let's talk about JWTs (JSON Web Tokens). JWTs are becoming more and more ubiquitous. CIAM providers everyone are pushing JWTs as the silver bullet for everything. JWTs are pretty cool, but let's talk about some of the downsides of JWTs and other solutions you might consider.
 <!--more-->
 
 The way I usually describe JWTs is that they are portable units of identity. That means they contain identity information as JSON and can be passed around to services and applications. Any service or application can verify a JWT itself. The service/application receiving a JWT doesn’t need to ask the identity provider that generated the JWT if it is valid. Once a JWT is verified, the service or application can use the data inside it to take action on behalf of the user.
 
 Here's a diagram that illustrates how the identity provider creates a JWT and a service can use the JWT without calling back to the identity provider:
 
-<img class="aligncenter wp-image-8058 size-full" src="" alt="JWT example" width="749" height="348">
+{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-1.png" alt="JWT example" class=" img-thumbnail mr-md-4" figure=false %}
 
 When you contrast this with an opaque token, you'll see why so many developers are using JWTs. Opaque tokens are just a large string of characters that don't contain any data. A token must be verified by asking the identity provider if it is still valid and returning the user data the service needs.
 
 Here's a diagram that illustrates how the identity provider is called to verify the token and fetch the user data:
 
-<img class="aligncenter size-full wp-image-8066" src="" alt="Opaque token example" width="747" height="349">
+{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-2-1.png" alt="Opaque token example" class="img-thumbnail mr-md-4" figure=false %}
 
 This method of verifying and exchanging tokens can be very "chatty" and it also requires a method of persisting and loading the tokens inside the identity provider. JWTs on the other hand don’t require any persistence or logic in the identity provider since they are portable.
 
 There are a couple of things you should consider when deciding to use JWTs. Let's look at a few of the main ones.
 
-## JWTs expire at specific intervals</h2>
+## JWTs expire at specific intervals
 
 When a JWT is created it is given a specific expiration instant. The life of a JWT is definitive and it is recommended that it is somewhat small (think minutes not hours). If you have experience with traditional sessions, JWTs are quite different. Traditional sessions are always a specific duration from the last interaction with the user. This means that if the user clicks a button, their session is extended. If you think about most applications you use, this is pretty common. You are logged out of the application after a specific amount of inactivity. JWTs on the other hand, are not extended on user interaction. Instead, they are programmatically replaced by creating a new JWT for the user.
 
@@ -57,6 +55,7 @@ Base64 Decoding + JSON Parsing | 400,000/s
 Base64 Decoding + JSON Parsing + HMAC Verification | 130,000/s
 Base64 Decoding + JSON Parsing + RSA Verification | 6,000/s
 
+
 ## JWTs aren’t easily revocable
 
 This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTS](https://fusionauth.io/blog/2017/05/02/revoking-jwts/ "Learn about Revoking JWTs") and also watch the IBM webinar where I presented our solution here (when FusionAuth was still called Passport): [Learn how to revoke JSON Web Tokens](https://developer.ibm.com/tv/learn-how-to-revoke-json-web-tokens/ "Jump to IBM Developer site").
@@ -74,10 +73,11 @@ Instead of using JWTs or opaque tokens, you always have the option of using sess
 When a user logs in, the user object is stored in the session and the server sends back a session cookie that contains the session id. Each subsequent request to the server includes the session cookie. The server uses the session cookie to load the user object out of the session Hash. The user object is then used to identify the user making the request. Here are two diagrams that illustrate this concept:
 
 ### Login
-<img class="aligncenter wp-image-8067 size-full" src="" alt="Login example for sessions" width="698" height="360">
+{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-3-1.png" alt="login example for sessions" class="img-thumbnail mr-md-4" figure=false %}
 
 ### Second request
-<img class="aligncenter size-full wp-image-8068" src="" alt="API call with session example" width="697" height="361">
+{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-4-2.png" alt="API call with session example" class="img-thumbnail mr-md-4" figure=false %}
+
 
 If you have a smaller application that uses a single backend, sessions work well. Once you start scaling or using microservices, sessions can be more challenging. Larger architectures require load-balancing and session pinning, where each client is pinned to the specific server where their session is stored. Session replication or a distributed cache might be needed to ensure fault tolerance or allow for zero-downtime upgrades. Even with this added complexity, sessions might still be a good option.
 

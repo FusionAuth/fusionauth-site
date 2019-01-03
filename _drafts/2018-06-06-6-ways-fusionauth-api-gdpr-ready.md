@@ -14,7 +14,7 @@ tags:
 - CIAM
 - identity
 - gdpr
-image: blogs/NEEDIMAGE
+image: blogs/6-ways-fusionauth-api-gdpr-ready.jpg
 ---
 
 The GDPR is a complex regulation, but at its most basic level it requires organizations to provide “data protection by design and default.” FusionAuth is built with a powerful REST API that gives developers the tools they need to adhere to the requirements of the GDPR with quickly and easily. On May 23, 2018 FusionAuth’s CEO Brian Pontarelli presented to Colorado’s technology leaders about how the GDPR and data privacy will affect US companies, and went into detail about how the FusionAuth API is well-suited to help companies stay GDPR compliant and avoid risks of fines and data restrictions for data protection violations.
@@ -31,7 +31,7 @@ The FusionAuth API was designed with a similar conceptual framework and provides
 - Identity security for passwords, hashing, and storage
 - Consent management and history storage
 
-For more information download our NEEDLINK [**Developer’s Guide to the GDPR**](https://fusionauth.io/resources/developers-guide-gdpr "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation. If you have additional questions on the challenges of identity management and the GDRP, please [contact us](https://fusionauth.io/contact "Contact Us").
+For more information download our [**Developer’s Guide to the GDPR**](https://fusionauth.io/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation. If you have additional questions on the challenges of identity management and the GDRP, please [contact us](https://fusionauth.io/contact "Contact Us").
 
 ## Learn More About FusionAuth
 

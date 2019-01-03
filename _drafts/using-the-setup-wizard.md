@@ -31,6 +31,8 @@ On the FusionAuth Setup Wizard first screen, you will be prompted to create the 
 
 <img class="aligncenter size-full wp-image-8144" src="" alt="The FusionAuth Setup Wizard - Admin Account" width="1200" height="591">
 
+
+
 The fields that are required are marked with a red asterisk. Type in an email and password that will be used to log in to the FusionAuth management interface. The password must be at least 8 characters in length to pass validation. The selected time zone will be used to display date and times in your local time and may be selected each time you log into FusionAuth. Click the Submit button when you have completed the form.  When complete, you will return to the Dashboard and will see the three remaining items to be configured.
 
 ## Create an Application

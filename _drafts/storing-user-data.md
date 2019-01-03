@@ -14,7 +14,7 @@ tags:
 - code
 - user data
 - Identity Management
-image: blog/NEEDIMAGE
+image: blogs/storing-user-data.jpg
 ---
 
 Storing user data in FusionAuth is not difficult and can save data essential to a user's experience. This article will walk you through the basic steps of storing and retrieving user data in FusionAuth.

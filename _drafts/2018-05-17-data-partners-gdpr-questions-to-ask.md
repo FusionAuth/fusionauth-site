@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Data Partners And The GDPR: Questions To Ask
+title: Data Partners And The GDPR- Questions To Ask
 description: Here are the questions you should ask your data partners to make sure they, and you, are GDPR compliant.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
@@ -10,16 +10,15 @@ categories:
 - Resources
 - White Paper
 tags:
-- FusionAuth
 - CIAM
 - resources
 - identity
 - gdpr
 - white Paper
-image: blog/NEEDIMAGE
+image: blogs/gdpr-data-partners-questions.jpg
 ---
 
-By now, you should be fully aware of the [GDPR’s data requirements](https://fusionauth.io/blog/UPDATELINK/white-paper-developers-guide-gdpr "Read our Developer's Guide to the GDPR") for your own application, but have you talked with your data partners? If your application takes advantage of third-party tools and components to add functionality or track user information, they need to be compliant as well. The new regulations state that data privacy needs to be maintained throughout the entire lifecycle of an application, through every data controller and processor. Take the time to ask your data partners how they ensure GDPR compliance, including their security framework and how they manage data.
+By now, you should be fully aware of the [GDPR’s data requirements](https://fusionauth.io/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR") for your own application, but have you talked with your data partners? If your application takes advantage of third-party tools and components to add functionality or track user information, they need to be compliant as well. The new regulations state that data privacy needs to be maintained throughout the entire lifecycle of an application, through every data controller and processor. Take the time to ask your data partners how they ensure GDPR compliance, including their security framework and how they manage data.
 
 <!--more-->
 If your data partners do not have a clearly defined and documented data strategy, you could be exposing your company to substantial risk. Here are a few questions to get the discussion started:
@@ -66,6 +65,6 @@ Using a variety of authentication credentials within the system creates an added
 
 ## Learn More: Developer’s Guide to the GDPR
 
-The GDPR is sure to bring changes to the way developers plan applications and manage partners. It doesn’t restrict the types of applications and experiences developers can build, but it does place the need for data privacy ahead of the business needs of the company. To learn more about the GDPR and how it will impact developer’s responsibilities, download our NEEDLINK [**Developer’s Guide to the GDPR**](https://fusionauth.io/resources/developers-guide-gdpr "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation.
+The GDPR is sure to bring changes to the way developers plan applications and manage partners. It doesn’t restrict the types of applications and experiences developers can build, but it does place the need for data privacy ahead of the business needs of the company. To learn more about the GDPR and how it will impact developer’s responsibilities, download our [**Developer’s Guide to the GDPR**](https://fusionauth.io/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation.
 
-[Download Now](NEEDLINK "Download the Developer's Guide to the GDPR"){: .btn .btn-primary}
+[Download Now](https://fusionauth.io/blog/2018/03/23/white-paper-developers-guide-gdpr.html){: .btn .btn-primary}

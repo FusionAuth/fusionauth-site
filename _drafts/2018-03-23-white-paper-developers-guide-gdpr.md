@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: White Paper: Developer’s Guide to the GDPR
+title: White Paper- Developer’s Guide to the GDPR
 description: Download this Developer's Guide to the GDPR to understand how the GDPR will affect a developer's role and responsibilities in application development.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
@@ -16,7 +16,7 @@ tags:
 - resources
 - identity
 - gdpr
-image: blog/NEEDIMAGE
+image: blogs/GDPR-developers-guide-2.jpg
 ---
 2018/03/23
 
@@ -43,6 +43,6 @@ We also explain how FusionAuth was developed from the beginning with even strict
 
 ## Get the Guide Now
 
-[Download this paper](NEEDLINK "Download paper now") to help you and your development team understand how these new regulations will affect your applications, and get comfortable with the evolving best practices of data privacy. It’s clear that user privacy issues will not be going away, and most likely will become more detailed and restrictive in the coming years.
+[Download this paper](https://NEEDLINK "Download paper now") to help you and your development team understand how these new regulations will affect your applications, and get comfortable with the evolving best practices of data privacy. It’s clear that user privacy issues will not be going away, and most likely will become more detailed and restrictive in the coming years.
 
-[Download Now](NEEDLINK "Download the Developer's Guide to the GDPR"){: .btn .btn-primary}
+[Download Now](https://NEEDLINK "Download the Developer's Guide to the GDPR"){: .btn .btn-primary}

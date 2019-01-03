@@ -29,7 +29,7 @@ In case you are not familiar with webhooks in FusionAuth and other platforms, th
 ## Creating Webhooks in FusionAuth
 There are two ways to create webhooks in FusionAuth. The first is to use the FusionAuth Backend UI and it is pretty straight-forward. After logging in, click on **Settings → Webhook**.
 
-<img class="aligncenter size-full wp-image-8991" src="" alt="Using Webhooks In FusionAuth" width="1200" height="972"></p>
+<img class="aligncenter size-full wp-image-8991" src="" alt="Using Webhooks In FusionAuth" width="1200" height="972">
 
 The second way to create webhooks in FusionAuth is programmatically by using the API and sending a JSON request. Simply send a POST request to ```/api/webhook```. This will create the ID for the webhook automatically. If you want to specify the ID, post to ```/api/webhook/{webhookId}```.
 

@@ -14,7 +14,7 @@ tags:
 - plaintext password
 - multifactor authentication
 - encryption
-image: blog/NEEDIMAGE
+image: blogs/plaintext-passwords.jpg
 ---
 
 Believe it or not there are still companies emailing users with plaintext passwords. Worse yet, some systems are storing plaintext passwords in the database. Storing or emailing plaintext passwords can increase security vulnerabilities by as much as 10x. Just freaking stop!
@@ -51,4 +51,4 @@ FusionAuth is designed to be the most flexible and secure Customer Identity and 
 
 - [https://spod.cx/blog/emailing_passwords_bad_idea.shtml](https://spod.cx/blog/emailing_passwords_bad_idea.shtml "Jump to Spod.cx article")
 - [http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in](http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in "Jump to Plaintext Offenders post")
-- NEEDLINK [**Developer’s Guide to the GDPR**](https://fusionauth.io/resources/developers-guide-gdpr "Get the Developer's Guide to the GDPR").
+- [**Developer’s Guide to the GDPR**](https://fusionauth.io/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR")
