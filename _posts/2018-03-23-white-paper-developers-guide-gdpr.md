@@ -1,14 +1,10 @@
 ---
 layout: blog-post
-title: White Paper- Developer’s Guide to the GDPR
+title: "White Paper: Developer’s Guide to the GDPR"
 description: Download this Developer's Guide to the GDPR to understand how the GDPR will affect a developer's role and responsibilities in application development.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
-categories:
-- Technology
-- FusionAuth
-- Resources
-- White Paper
+categories: blog
 tags:
 - FusionAuth
 - CIAM
@@ -18,8 +14,6 @@ tags:
 - gdpr
 image: blogs/GDPR-developers-guide-2.jpg
 ---
-2018/03/23
-
 The [General Data Protection Regulation](http://eur-lex.europa.eu/legal-content/EN/TXT/?uri=uriserv:OJ.L_.2016.119.01.0001.01.ENG&amp;toc=OJ:L:2016:119:FULL "Jump to full GDPR text") (GDPR) defines a set of "user's digital rights" and becomes enforceable on May 25, 2018. Download this developer’s guide to understand how it will affect a developer's role and responsibilities in application development.
 <!--more-->
 ## What is the GDPR?
@@ -43,6 +37,13 @@ We also explain how FusionAuth was developed from the beginning with even strict
 
 ## Get the Guide Now
 
-[Download this paper](https://NEEDLINK "Download paper now") to help you and your development team understand how these new regulations will affect your applications, and get comfortable with the evolving best practices of data privacy. It’s clear that user privacy issues will not be going away, and most likely will become more detailed and restrictive in the coming years.
+[Download this paper](/resources/developers-guide-to-gdpr.pdf "Download paper now") to help you and your development team understand how these new regulations will affect your applications, and get comfortable with the evolving best practices of data privacy. It’s clear that user privacy issues will not be going away, and most likely will become more detailed and restrictive in the coming years.
 
-[Download Now](https://NEEDLINK "Download the Developer's Guide to the GDPR"){: .btn .btn-primary}
+[Download Now](/resources/developers-guide-to-gdpr.pdf "Download the Developer's Guide to the GDPR"){: .btn .btn-primary}
+
+<!--
+- Technology
+- FusionAuth
+- Resources
+- White Paper
+-->
