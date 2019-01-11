@@ -4,10 +4,7 @@ title: Stop Storing My Password in Plaintext
 description: DO NOT store passwords in plaintext! Here's why it's a big deal that you should already know.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
-categories:
-- Technology
-- Strategies
-- FusionAuth
+categories: blog
 tags:
 - Security
 - Best Practices
@@ -51,4 +48,10 @@ FusionAuth is designed to be the most flexible and secure Customer Identity and 
 
 - [https://spod.cx/blog/emailing_passwords_bad_idea.shtml](https://spod.cx/blog/emailing_passwords_bad_idea.shtml "Jump to Spod.cx article")
 - [http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in](http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in "Jump to Plaintext Offenders post")
-- [**Developer’s Guide to the GDPR**](https://fusionauth.io/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR")
+- [**Developer’s Guide to the GDPR**](/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR")
+
+<!--
+- Technology
+- Strategies
+- FusionAuth
+-->
