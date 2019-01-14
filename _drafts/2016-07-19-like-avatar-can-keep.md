@@ -19,19 +19,22 @@ Did you know that you can now bring your avatar with you when you log into Fusio
 
 Gravatar simply allow you to take your avatar everywhere you go. You create an account, register one or more email addresses and everywhere you use that email address that also supports Gravatar-boom, your avatar shows up.
 
-Adding Gravatar support in FusionAuth has been on the ToDo list for a while now and I found that I needed something to code on the bus ride home from work. As a result we now have Gravatar support in FusionAuth. Enjoy.
-
-Gravatar has some good integration examples, but if you want a Java snippet, here is a condensed version of what we've added to FusionAuth.
+If you're using FusionAuth, no coding is required. But if you're not - or you love coding and can't help yourself - by all means read on. Gravatar has some good integration examples, but if you want a Java snippet, here is a condensed version of what we've added to FusionAuth.
 
 ```java
 public class Gravatar {
-  public String getUrl(String email) throws NoSuchAlgorithmException {
-    MessageDigest md5 = MessageDigest.getInstance("MD5");
-    StringBuilder hash = new StringBuilder();
-    for (byte b : md5.digest(email.trim().toLowerCase().getBytes())) {
-      hash.append(Integer.toHexString((b &amp; 0xFF) | 0x100).substring(1, 3));
+  public String getUrl(String email) {
+    try {
+      MessageDigest md5 = MessageDigest.getInstance("MD5");
+      StringBuilder hash = new StringBuilder();
+      for (byte b : md5.digest(email.trim().toLowerCase().getBytes(StandardCharsets.UTF_8))) {
+        hash.append(Integer.toHexString((b & 0xFF) | 0x100), 1, 3);
+      }
+      return "//www.gravatar.com/avatar/" + hash.toString() + "?d=identicon&amp;s=250";      
+    } catch (NoSuchAlgorithmException e) {
+      // No MD5? Buy a lottery ticket, it is your luck day. 
+      throw new RuntimeException(e);
     }
-    return "//www.gravatar.com/avatar/" + hash.toString() + "?d=identicon&amp;s=250";
   }
 }
 ```

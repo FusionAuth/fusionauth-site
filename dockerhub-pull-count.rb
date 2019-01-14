@@ -56,7 +56,7 @@ File.open(output_file, "w", :encoding => "UTF-8") do |f|
   # Add some color to the chart
   f.puts("Color,#5AAA5C,#FF7E0E,#820000,#FFFF00")
   f.puts("Cumulative,0,0,0,0,0")
-  f.puts("Type,stackedarea,area,stackedarea,stackedarea")
+  f.puts("Type,stackedarea,line,stackedarea,line")
   f.puts("Total,#{today_count},#{total_count},#{today_star},#{star_count}")
 
 end
