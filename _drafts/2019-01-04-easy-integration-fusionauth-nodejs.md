@@ -20,23 +20,23 @@ We'll assume that you are using a unix command-line application like Power Shell
 1. Download and Install FusionAuth
 2. Create an Application and API key. When you first log into the FusionAuth dashboard, you will see a page like this:
 
-{% include _image.html src="/assets/img/blogs/initial-dashboard.png" alt="FusionAuth Dashboard" class="image-thumbnail" figure=false %}
+{% include _image.html src="/assets/img/blogs/initial-dashboard.png" alt="FusionAuth Dashboard" class="full" figure=false %}
 
 In the "Missing Application" panel, click the "Setup" button.
 
-{% include _image.html src="/assets/img/blogs/create-app.png" alt="Create Application" class="image-thumbnail" figure=false %}
+{% include _image.html src="/assets/img/blogs/create-app.png" alt="Create Application" class="full" figure=false %}
 
 Give your application a name. The ID will be auto-generated. Also, create at least one role named `user`. Then, choose the `API Keys` link in the sidebar.
 
-{% include _image.html src="/assets/img/blogs/api-key-page.png" alt="API Key Page" class="image-thumbnail" figure=false %}
+{% include _image.html src="/assets/img/blogs/api-key-page.png" alt="API Key Page" class="full" figure=false %}
 
 Just click the + in the upper right.
 
-{% include _image.html src="/assets/img/blogs/create-api-key.png" alt="Create API Key" class="image-thumbnail" figure=false %}
+{% include _image.html src="/assets/img/blogs/create-api-key.png" alt="Create API Key" class="full" figure=false %}
 
 The API key will be auto-generated. You do not need to change any of the endpoint settings. Click the save icon in the upper right. Now, if you go back to the main Dashboard, you should see a screen like this since we haven't done anything with email settings:
 
-{% include _image.html src="/assets/img/blogs/dashboard-after.png" alt="Create API Key" class="image-thumbnail" figure=false %}
+{% include _image.html src="/assets/img/blogs/dashboard-after.png" alt="Create API Key" class="full" figure=false %}
 
 ## Create a Node.js application with FusionAuth support
 Use the steps below to initialize your project and add the fusionauth-node-client and express libraries to it.
@@ -212,7 +212,7 @@ app.use(session({
 
 Note the `secret` field. This is used to verify the JavaScript Web Token (JWT). We will talk a little more about that when we look at the console output for the `/login handler`. If we were to implement JWT, we would use a real secret. The secret can be defined either in your Application dashboard or the System-wide settings. By default, when you create a new application, no secret is defined and the system-wide configuration is used which is defined in the **System -> Settings** dashboard panel, as illustrate here:
 
-{% include _image.html src="/assets/img/blogs/json-settings.png" alt="System Settings" class="image-thumbnail" figure=false %}
+{% include _image.html src="/assets/img/blogs/json-settings.png" alt="System Settings" class="full" figure=false %}
 
 We then define the four endpoints this server will respond to: `/`, `/logout`, `/login`, and `/profile`, along with the code that executes (the "handler") for each endpoint..
 

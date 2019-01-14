@@ -461,7 +461,7 @@ If you refresh your browser, the buttons will now function and the plan will be 
       ],
       "usernameStatus": "ACTIVE"
    }
-}
+}```
 
 ## Wrapping Up
 
