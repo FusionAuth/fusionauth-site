@@ -11,7 +11,7 @@ tags:
 - plaintext password
 - multifactor authentication
 - encryption
-image: blogs/plaintext-passwords.jpg
+image: blogs/plain-text-offender-cu.png
 ---
 
 Believe it or not there are still companies emailing users with plaintext passwords. Worse yet, some systems are storing plaintext passwords in the database. Storing or emailing plaintext passwords can increase security vulnerabilities by as much as 10x. Just freaking stop!
@@ -28,14 +28,14 @@ Bottom line. Do not store or email your passwords in plaintext. It’s a horribl
 
 ## Emailing plaintext passwords
 - Emails can be forwarded accidentally. This could mean a password might be leaked by a user that mistakenly forwards the email to their team or the whole company.
-- Some email servers aren't secure. Emails are stored plaintext on most email servers, so if a hacker gets access to the server, they can just run a script against the email database and find plaintext passwords.
-- Emails aren't always encrypted on the wire (when they are sent from your computer to the SMTP server or between SMTP relays). A simple packet sniffer can intercept emails and be trained to look for plaintext passwords. If you are sending emails from a hosting provider that supports multiple companies (like AWS or Rackspace), a hacker can put a packet sniffer on the same network and read your emails.
-- Emails aren't a direct communication. Emails bounce between servers on their way from your outbox to someone's inbox. Emails are rarely encrypted and therefore might be intercepted as they bounce around and are easily readable by a machine.
+- Some email servers are not secure. Emails are stored plaintext on most email servers, so if a hacker gets access to the server, they can just run a script against the email database and find plaintext passwords.
+- Emails are not always encrypted on the wire (when they are sent from your computer to the SMTP server or between SMTP relays). A simple packet sniffer can intercept emails and be trained to look for plaintext passwords. If you are sending emails from a hosting provider that supports multiple companies (like AWS or Rackspace), a hacker can put a packet sniffer on the same network and read your emails.
+- Emails are not a direct communication. Emails bounce between servers on their way from your outbox to someone's inbox. Emails are rarely encrypted and therefore might be intercepted as they bounce around and are easily readable by a machine.
 
 ## Best practices
-1. **Strong encryptions** Passwords should always be hashed using a strong, one-way hash algorithm. In addition to using a hashing algorithm, you should also be salting the password and performing multiple hash passes. This will prevent brute force or lookup attacks on passwords. In the event that the user database is compromised, it will still be nearly impossible to reverse engineer a user password from the stored hash.
+1. **Strong encryption** Passwords should always be hashed using a strong, one-way hash algorithm. In addition to using a hashing algorithm, you should also be salting the password and performing multiple hash passes. This will prevent brute force or lookup attacks on passwords. In the event that the user database is compromised, it will still be nearly impossible to reverse engineer a user password from the stored hash. Cryptographic hashes such as MD5, SHA-256 or even HMAC based SHA-256 should be avoided, instead prefer PBKDF2, bcrypt which are designed for password hashing.  
 2. **Verification ID** Never email a plaintext password. If a user forgets or needs to change their password, send a link (with a random verification ID) that allows the user to securely change their password within a set time period. The company should never know the user's password.
-3. **Multi-factor authentication** If the above fail and the password has been compromised, using MFA or 2FA keeps the user account secure. Two-factor authentication enhances user login security by requiring something the user knows (password) with something the user possesses (their cellphone for example).
+3. **Multi-factor authentication** If the above fail and the password has been compromised, using MFA or 2FA adds an additional layer to keep the user account secure. Two-factor authentication enhances user login security by requiring something the user knows (password) with something the user possesses (their cellphone for example).
 4. **Password invitations** If you are manually creating user accounts and need users to set their own passwords, avoid sending a random or temporary password via email. Instead send the user an email or push notification allowing them to set the password themselves.
 
 ## Learn More About FusionAuth
