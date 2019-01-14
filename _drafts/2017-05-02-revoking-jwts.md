@@ -4,16 +4,14 @@ title: Revoking JWTs
 description: How to use and revoke JWTs for effective and efficient authorization management.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
-categories:
-- Technology
-- FusionAuth
+categories: blog
 tags:
 - API
 - Identity Management
 - JWT
 - JSON Web Tokens
 - Webhooks
-image: blog/NEEDIMAGE
+image: blogs/revoking-jwts.jpg
 ---
 I have been talking with developers about JSON Web Tokens (JWTs) recently and a one question keeps coming up: “How do I revoke a JWT?”
 
@@ -45,11 +43,11 @@ One way is leveraging a distributed event system that notifies services when ref
 
 ### FusionAuth
 
-To illustrate this, I’m going to use [**FusionAuth**](https://fusionauth.io/ "FusionAuth Home")</a>’s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
+To illustrate this, I’m going to use [**FusionAuth**](https://fusionauth.io/ "FusionAuth Home")’s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
 
 The FusionAuth **jwt.refresh-token.revoke** event looks like this:
 
-```javascript
+```js
 "event": {
     "type": "jwt.refresh-token.revoke",
     "applicationTimeToLiveInSeconds": {
@@ -60,9 +58,9 @@ The FusionAuth **jwt.refresh-token.revoke** event looks like this:
 }
 ```
 
-Next, let’s write a simple Webhook in our application that will receive this event and update the JWTManager. (NOTE: our example has a variable called **applicationId** that is a global variable that stores the id of the application itself - in this case it would be **cc0567da-68a1-45f3-b15b-5a6228bb7146**).
+Next, let’s write a simple Webhook in our application that will receive this event and update the JWTManager. (NOTE: our example has a variable called `applicationId` that is a global variable that stores the id of the application itself - in this case it would be **cc0567da-68a1-45f3-b15b-5a6228bb7146**).
 
-```javascript
+```js
 /* Handle FusionAuth event. */
 router.post('/fusionauth-webhook', function(req, res, next) {
   JWTManager.revoke(req.body.event.userId, req.body.event.applicationTimeToLiveInSeconds[applicationId]);
@@ -72,13 +70,13 @@ router.post('/fusionauth-webhook', function(req, res, next) {
 
 Here is how the JWTManager maintains the list of user ids whose JWTs should be revoked. Our implementation also starts a thread to clean up after itself so we don’t run out of memory.
 
-```javascript
+```js
 const JWTManager = {
   revokedJWTs: {},
 
   /**
-   * Checks if a JWT is valid. This assumes that the JWT contains a property named &lt;code&gt;exp&lt;/code&gt; that is a
-   * NumericDate value defined in the JWT specification and a property named &lt;code&gt;sub&lt;/code&gt; that is the user id the
+   * Checks if a JWT is valid. This assumes that the JWT contains a property named <code>exp</code> that is a
+   * NumericDate value defined in the JWT specification and a property named <code>sub</code> that is the user id the
    * JWT belongs to.
    *
    * @param {object} jwt The JWT object.
@@ -86,7 +84,7 @@ const JWTManager = {
    */
   isValid: function(jwt) {
     const expiration = JWTManager.revokedJWTs[jwt.sub];
-    return expiration === undefined || expiration === null || expiration &lt; jwt.exp * 1000;
+    return expiration === undefined || expiration === null || expiration < jwt.exp * 1000;
   },
 
   /**
@@ -105,9 +103,9 @@ const JWTManager = {
    */
   _cleanUp: function() {
     const now = Date.now();
-    Object.keys(JWTManager.revokedJWTs).forEach((item, index, _array) =&gt; {
+    Object.keys(JWTManager.revokedJWTs).forEach((item, index, _array) => {
       const expiration = JWTManager.revokedJWTs[item];
-      if (expiration &lt; now) {
+      if (expiration < now) {
         delete JWTManager.revokedJWTs[item];
       }
     });
@@ -122,7 +120,7 @@ setInterval(JWTManager._cleanUp, 7000);
 
 Our backend also needs to ensure that it checks JWTs with the JWTManager on each API call.
 
-```javascript
+```js
 router.get('/todo', function(req, res, next) {
   const jwt = _parseJWT(req);
   if (!JWTManager.isValid(jwt)) {
@@ -135,7 +133,8 @@ router.get('/todo', function(req, res, next) {
 ```
 And finally we configure our Webhook in FusionAuth:
 
-<a href="/blog/wp-content/uploads/2017/05/webhooks.png"><img class="alignnone size-full wp-image-7905" src="" alt="webhooks" width="1238" height="900"></a>
+{% include _image.html src="/assets/img/blogs/webhooks-2019.jpg" alt="Set up a webhook in FusionAuth" class="img-thumbnail" figure=false %}
+
 
 We can now revoke a user’s refresh token and FusionAuth will broadcast the event to our Webhook. The Webhook then updates the JWTManager which will cause JWTs for that user to be revoked.
 
@@ -148,3 +147,8 @@ If you are using FusionAuth, you can use the Webhook and Event system to build t
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, code based MFA, brute force login detection, password hashing, forgot password & email templates, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
+
+<!--
+- Technology
+- FusionAuth
+-->

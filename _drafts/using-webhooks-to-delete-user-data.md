@@ -4,10 +4,7 @@ title: Using Webhooks In FusionAuth To Delete User Data
 description: Use FusionAuth's webhooks to ensure that you can delete all a user's data when they request it. GDPR compliance has never been easier.
 author: John Philips
 excerpt_separator: "<!--more-->"
-categories:
-- FusionAuth
-- Tutorials
-- Resources
+categories: blog
 tags:
 - API
 - FusionAuth
@@ -18,7 +15,7 @@ tags:
 image: blogs/using-webhooks-in-fusionauth.jpg
 ---
 
-If your inbox looks anything like mine, it’s currently full of messages from companies updating their privacy policies and terms of service. This is mainly due to a newly adopted EU regulation, the [General Data Protection Regulation](https://fusionauth.io/blog/2018/03/23/white-paper-developers-guide-gdpr/ "Download the Developer's Guide to the GDPR") or GDPR, which goes into effect on May 25, 2018. The GDPR grants a set of “digital rights” to EU citizens, including a “right to erasure.” Basically, this means a user can request that their data be deleted, and there can be substantial fines if a company is not able to honor these requests.
+If your inbox looks anything like mine, it’s currently full of messages from companies updating their privacy policies and terms of service. This is mainly due to a newly adopted EU regulation, the [General Data Protection Regulation](/blog/2018/03/23/white-paper-developers-guide-gdpr "Download the Developer's Guide to the GDPR") or GDPR, which goes into effect on May 25, 2018. The GDPR grants a set of “digital rights” to EU citizens, including a “right to erasure.” Basically, this means a user can request that their data be deleted, and there can be substantial fines if a company is not able to honor these requests.
 
 In this post, we’ll show how to set up webhooks in FusionAuth to delete all of a user’s data when they delete their account. In FusionAuth, webhooks are used to subscribe or listen to events in the system, so we’ll create a webhook that listens to the ```user.delete``` event.
 <!--more-->
@@ -33,7 +30,7 @@ There are two ways to create webhooks in FusionAuth. The first is to use the Fus
 
 The second way to create webhooks in FusionAuth is programmatically by using the API and sending a JSON request. Simply send a POST request to ```/api/webhook```. This will create the ID for the webhook automatically. If you want to specify the ID, post to ```/api/webhook/{webhookId}```.
 
-The fully qualified URL depends on where you are running the FusionAuth Backend. If it is running on your machine, the URL would be ```http://localhost:9011/api/webhook```. If we are hosting FusionAuth, the URL will be shown in your FusionAuth Account.
+The fully qualified URL depends on where you are running the FusionAuth Backend. If it is running on your machine, the URL would be `http://localhost:9011/api/webhook`. If we are hosting FusionAuth, the URL will be shown in your FusionAuth Account.
 
 ### Authentication
 
@@ -43,7 +40,7 @@ The webhook API requires authentication. To access it, you’ll need make the re
 curl -H 'Authorization: 2524a832-c1c6-4894-9125-41a9ea84e013’ http://localhost:9011/api/webhook
 ```
 
-([Learn more about creating an API key](https://fusionauth.io/docs/1.x/tech/tutorials/create-an-api-key "Jump to FusionAuth Docs") or [how authentication works in FusionAuth](https://fusionauth.io/docs/1.x/tech/apis/authentication "Jump to FusionAuth Docs").)
+([Learn more about creating an API key](/docs/1.x/tech/tutorials/create-an-api-key "Jump to FusionAuth Docs") or [how authentication works in FusionAuth](/docs/1.x/tech/apis/authentication "Jump to FusionAuth Docs").)
 
 ### JSON Request Example
 
@@ -79,13 +76,13 @@ There are three required parameters:
 In addition to the required parameters, you’ll want to add:
 **One or more ```applicationIds```**: These specify the applications associated with the webhook. If you’d rather configure the webhook to work for all your applications, set the global flag to true and omit the application IDs. However, if no IDs are specified and global flag is false, the webhook will never get called.
 
-**The events that trigger the webhook**: In this case, we want to be passed the ```user.delete``` event. (<a href="/docs/1.x/tech/events-webhooks/events" >The full list of events can be found here</a>.)
+**The events that trigger the webhook**: In this case, we want to be passed the ```user.delete``` event. [The full list of events can be found here](/docs/1.x/tech/events-webhooks/events "Jump to FusionAuth Docs").)
 
 **Any credentials needed to access the server hosting the webhook**: The example shows a user name and password, which would be used if the server has HTTP basic authentication enabled. You can also include an SSL Certificate in PEM format, if your server requires an SSL connection.
 
 **An Authorization header that contains an API key**: This prevents malicious access to the webhook. Without the key, the webhook cannot be executed. In the example, our hook is deleting data so it makes sense to be cautious.
 
-([The full list of webhook parameters is documented here](https://fusionauth.io/docs/1.x/tech/apis/webhooks#create-a-webhook "Jump to FusionAuth Docs").)
+([The full list of webhook parameters is documented here](/docs/1.x/tech/apis/webhooks#create-a-webhook "Jump to FusionAuth Docs").)
 
 ### API Response
 
@@ -198,3 +195,9 @@ This post shows the power and simplicity of using webhooks in FusionAuth. By sub
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
+
+<!--
+- FusionAuth
+- Tutorials
+- Resources
+-->

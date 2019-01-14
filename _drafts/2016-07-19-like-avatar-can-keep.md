@@ -1,12 +1,10 @@
 ---
 layout: blog-post
-title: Like your avatar? You can keep it.
+title: "Like your avatar? You can keep it."
 description: FusionAuth can take advantage of your existing Gravatar account. No problem.
 author: Daniel DeGroff
 excerpt_separator: "<!--more-->"
-categories:
-- Products
-- FusionAuth
+categories: blog
 tags:
 - code
 - gravatar
@@ -16,10 +14,10 @@ tags:
 image: blogs/keep-avatar.jpg
 ---
 Did you know that you can now bring your avatar with you when you log into FusionAuth?
-[Gravatar](https://en.gravatar.com/ "Jump to Gravatar site") provides users with a globally recognized avatar. If you already have a Gravatar account then you need not do anything else, we've taken care of everything. For those without a Gravatar account you'll still see a randomly generated Gravatar. Everyone wins.
+[Gravatar](https://en.gravatar.com/ "Jump to Gravatar site") provides users with a globally recognized avatar. If you already have a Gravatar account then you don't need to do anything else, we've taken care of everything. For those without a Gravatar account you'll still see a randomly generated Gravatar. Everyone wins.
 <!--more-->
 
-Gravatar simply allow you to take your avatar everywhere you go. You create an account, register one or more email addresses and everywhere you use that email address that also supports Gravatar - boom, your avatar shows up.
+Gravatar simply allow you to take your avatar everywhere you go. You create an account, register one or more email addresses and everywhere you use that email address that also supports Gravatar-boom, your avatar shows up.
 
 Adding Gravatar support in FusionAuth has been on the ToDo list for a while now and I found that I needed something to code on the bus ride home from work. As a result we now have Gravatar support in FusionAuth. Enjoy.
 
@@ -43,3 +41,8 @@ public class Gravatar {
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
+
+<!--
+- Products
+- FusionAuth
+-->

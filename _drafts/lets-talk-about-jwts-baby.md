@@ -1,13 +1,10 @@
 ---
 layout: blog-post
-title: Let's talk about JWTs baby!
+title: "Let's talk about JWTs baby!"
 description: The pros and cons of JWTs and why you should (or shouldn't) use them.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
-categories:
-- Technology
-- Products
-- FusionAuth
+categories: blog
 tags:
 - JWT
 image: blogs/jwt-knuckle-bump.jpg
@@ -46,19 +43,19 @@ On a modern quad-core MacBook Pro, about 200 JWTs can be created and signed per 
 
 To give you an idea of the performance characteristics of JWTs and the cryptographic algorithms used, our team ran some tests on a latest generation quad-core MacBook. Here are some of the metrics and timings we recorded for JWTs:
 
-Metric | Timing
---- | ---
-JSON Serialization + Base64 Encoding | 400,000/s
-JSON Serialization + Base64 Encoding + HMAC Signing | 150,000/s
-JSON Serialization + Base64 Encoding + RSA Signing | 200/s
-Base64 Decoding + JSON Parsing | 400,000/s
-Base64 Decoding + JSON Parsing + HMAC Verification | 130,000/s
-Base64 Decoding + JSON Parsing + RSA Verification | 6,000/s
+Metric | | Timing
+--- | | ---
+JSON Serialization + Base64 Encoding | | 400,000/s
+JSON Serialization + Base64 Encoding + HMAC Signing | | 150,000/s
+JSON Serialization + Base64 Encoding + RSA Signing | | 200/s
+Base64 Decoding + JSON Parsing | | 400,000/s
+Base64 Decoding + JSON Parsing + HMAC Verification | | 130,000/s
+Base64 Decoding + JSON Parsing + RSA Verification | | 6,000/s
 
 
 ## JWTs aren’t easily revocable
 
-This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTS](https://fusionauth.io/blog/2017/05/02/revoking-jwts/ "Learn about Revoking JWTs") and also watch the IBM webinar where I presented our solution here (when FusionAuth was still called Passport): [Learn how to revoke JSON Web Tokens](https://developer.ibm.com/tv/learn-how-to-revoke-json-web-tokens/ "Jump to IBM Developer site").
+This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTS](/blog/2017/05/02/revoking-jwts/ "Learn about Revoking JWTs") and also watch the IBM webinar where I presented our solution here (when FusionAuth was still called Passport): [Learn how to revoke JSON Web Tokens](https://developer.ibm.com/tv/learn-how-to-revoke-json-web-tokens/ "Jump to IBM Developer site").
 
 ## JWTs have exploits
 
@@ -88,3 +85,9 @@ I hope this brief overview of JWTs and Sessions has been helpful in shedding som
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
+
+<!--
+- Technology
+- Products
+- FusionAuth
+-->

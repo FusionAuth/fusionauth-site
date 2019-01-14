@@ -4,9 +4,7 @@ title: Getting Started with Email Templates In FusionAuth
 description: Emails should represent your brand, and FusionAuth's email templates help you do that with ease.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
-categories:
-- FusionAuth
-- Tutorials
+categories: blog
 tags:
 - FusionAuth
 - tutorial
@@ -24,7 +22,7 @@ FusionAuth ships with three templates to support standard workflows.
 
 You should customize these templates with your branding, but at a minimum, you will need to make minor edits prior to using them in production. To enable emails, you will need to modify the URL used in the template to be publicly accessible.
 
-**NOTE:** Email features require that the SMTP setup has been completed. Review your FusionAuth dashboard, if you see a box labeled "Email settings" you will need to complete that task first. View the <a href="/blog/2018/03/06/using-the-passport-setup-wizard/" >Using the FusionAuth Setup Wizard tutorial</a> to see how to complete the SMTP configuration.
+**NOTE:** Email features require that the SMTP setup has been completed. Review your FusionAuth dashboard, if you see a box labeled "Email settings" you will need to complete that task first. View the [Using the FusionAuth Setup Wizard tutorial](NEEDLINK/blog/2018/03/06/using-the-passport-setup-wizard/) to see how to complete the SMTP configuration.
 
 {% include _image.html src="/assets/img/blogs/Email-Templates-in-FusionAuth-Setup.jpg" alt="Email Templates in FusionAuth Setup" class="mr-md-4" figure=false %}
 
@@ -75,3 +73,8 @@ If you have additional questions or require assistance please let us know throug
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
+
+<!--
+- FusionAuth
+- Tutorials
+-->

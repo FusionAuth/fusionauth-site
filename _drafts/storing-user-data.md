@@ -4,10 +4,7 @@ title: Storing User Data in FusionAuth
 description: FusionAuth makes it simple to store and manage custom user data.
 author: John Philips
 excerpt_separator: "<!--more-->"
-categories:
-- Technology
-- Products
-- FusionAuth
+categories: blog
 tags:
 - User Management
 - FusionAuth
@@ -32,12 +29,12 @@ For this example, we are going to use the FusionAuth sandbox as our backend. If 
 First, open the file ``` fusionauth-example-template/server/config/config.json ``` in a text editor, and edit the line below.
 
 change:
-```java
+```js
 "backendUrl": "http://fusionauth.local",
 ```
 
 to:
-```java
+```js
 "backendUrl": "http://localhost:9011",
 ```
 
@@ -63,7 +60,7 @@ Before we can run the app locally, we need finish the install process. The sampl
 Open a terminal and ```cd``` into the ```/server``` directory. From there run the following command:
 
 ```
-$&gt; npm install
+> npm install
 ```
 
 This installs the node modules need to run the node app.
@@ -71,7 +68,7 @@ This installs the node modules need to run the node app.
 Now ```cd``` into the ```/react``` directory and run the same command.
 
 ```
-$&gt; npm install
+> npm install
 ```
 
 This installs the node modules the react app needs.
@@ -81,7 +78,7 @@ This installs the node modules the react app needs.
 From the terminal, ```cd``` into the ```/server``` directory and run
 
 ```
-$&gt; npm start
+> npm start
 ```
 
 This will start the node half of the example app. When the app starts, you may see the following message in the terminal.
@@ -105,12 +102,12 @@ If you had to configure JWT, you need to stop and restart the app.
 Open a new terminal window, ```cd``` into the ```/react``` directory and run:
 
 ```
-$&gt; npm start
+> npm start
 ```
 
 Go to [http://localhost:3000/](http://localhost:3000/ "Localhost"). You should see a page that looks like this:
 
-<img class="aligncenter size-full wp-image-8089" src="" alt="FusionAuth Login Page" width="1064" height="504">
+**NEED IMAGE FusionAuth Login Page**
 
 ## Register a New User
 
@@ -121,7 +118,7 @@ Because the sandbox is a shared environment, other people can see info about the
 
 Once you have registered a user, you will see the following page.
 
-<img class="aligncenter size-full wp-image-8090" src="" alt="FusionAuth Log In Successful Screen" width="1064" height="350"
+**NEED IMAGE FusionAuth Log In Successful Screen**
 
 Congratulations! You have a sample app running that is using FusionAuth to manage users.
 
@@ -132,27 +129,27 @@ Now that we have the app running, we can modify it to start storing data about o
 
 In the HelloWorld component, this is handled by the render function on line 46:
 
-```javascript
+```js
 return (
-    &lt;div&gt;
+    <div>
         {this.state.message}
-    &lt;/div&gt;
+    </div>
 );
 ```
 
 We are going to modify the page to show three buttons, each re-representing a different pricing plan. Edit the ```render``` section so that it looks like this:
 
-```javascript
+```js
 render() {
    return (
-      &lt;div&gt;
-         &lt;h1&gt;Chooose a Plan&lt;/h1&gt;
-            &lt;button className="button free"&gt;Intro – Free&lt;/button&gt;
-            &lt;button className="button basic"&gt;Basic – $5.00&lt;/button&gt;
-            &lt;button className="button deluxe"&gt;Deluxe – $10.00&lt;/button&gt;
-         &lt;h2&gt;Your Plan&lt;/h2&gt;
+      <div>
+         <h1>Chooose a Plan</h1>
+            <button className="button free">Intro – Free</button>
+            <button className="button basic">Basic – $5.00</button>
+            <button className="button deluxe">Deluxe – $10.00</button>
+         <h2>Your Plan</h2>
          {this.state.plan ? this.state.plan : 'loading'}
-      &lt;/div&gt;
+      </div>
    );
 }
 ```
@@ -201,7 +198,7 @@ In a production app, you’d probably want this code somewhere else, but adding 
 
 Now the page looks like this:
 
-<img class="aligncenter size-full wp-image-8092" src="" alt="FusionAuth Buttons Styled" width="1000" height="436">
+**NEED IMAGE FusionAuth Buttons Styled**
 
 ## Retrieving the User’s Registration
 
@@ -241,7 +238,7 @@ retrieveReg() {
    window.fetch(this.state.config.backend.url + '/api/fusionauth/registration/' + this.state.userId)
    .then(function(response) { return response.json(); })
    .then(
-      (result) =&gt; {
+      (result) => {
          if (result.registration &amp;&amp; result.registration.data &amp;&amp; result.registration.data.attributes ){
             plan = result.registration.data.attributes.plan
          };
@@ -251,7 +248,7 @@ retrieveReg() {
             plan: plan
          });
       },
-      (error) =&gt; {
+      (error) => {
          // just adding the error object to state, if it occurs
          this.setState({
             error: error
@@ -278,7 +275,7 @@ The call is to the “other half” of the app, running in the ```/server``` dir
 The other interesting part of the code is this section:
 
 ```js
-(result) =&gt; {
+(result) => {
    if (result.registration &amp;&amp; result.registration.data &amp;&amp; result.registration.data.attributes ){
       plan = result.registration.data.attributes.plan
    };
@@ -319,13 +316,13 @@ If we look at our app now, we are getting an error in the console. The call we a
 
 ```js
 // Retrieve a user registration
-router.route('/fusionauth/registration/:id').get((req, res) =&gt; {
+router.route('/fusionauth/registration/:id').get((req, res) => {
    let userId = req.params.id;
    fusionauthClient.retrieveRegistration(userId, config.fusionauth.applicationId )
-      .then((response) =&gt; {
+      .then((response) => {
          res.send(response.successResponse);
       })
-      .catch((response) =&gt; {
+      .catch((response) => {
          res.status(response.statusCode).send(response.errorResponse);
       });
 });
@@ -381,10 +378,10 @@ Now we are ready to add a function that stores the selected plan in the user’s
       headers: new Headers({
          'Content-Type': 'application/json'
       })
-   }).then(res =&gt; res.json())
-   .catch(error =&gt; this.setState({error}))
+   }).then(res => res.json())
+   .catch(error => this.setState({error}))
    .then(
-      (response) =&gt; {
+      (response) => {
          //console.log('Success:', response)
          this.setState({plan: plan});
       }
@@ -412,14 +409,14 @@ And we need to update the render function, so it looks like this:
 ```js
 render() {
    return (
-      &lt;div&gt;
-         &lt;h1&gt;Choose a Plan&lt;/h1&gt;
-         &lt;button className="button free" onClick={this.update.bind(this,'free')}&gt;Intro – Free&lt;/button&gt;
-         &lt;button className="button basic" onClick={this.update.bind(this,'basic')}&gt;Basic – $5.00&lt;/button&gt;
-         &lt;button className="button deluxe" onClick={this.update.bind(this,'deluxe')}&gt;Deluxe – $10.00&lt;/button&gt;
-         &lt;h2&gt;Your Plan&lt;/h2&gt;
+      <div&gt;
+         <h1>Choose a Plan</h1>
+         <button className="button free" onClick={this.update.bind(this,'free')}>Intro – Free</button>
+         <button className="button basic" onClick={this.update.bind(this,'basic')}>Basic – $5.00</button>
+         <button className="button deluxe" onClick={this.update.bind(this,'deluxe')}>Deluxe – $10.00</button>
+         <h2>Your Plan</h2>
          {this.state.plan ? this.state.plan : 'loading'}
-      &lt;/div&gt;
+      </div>
    );
 }
 ```
@@ -429,13 +426,13 @@ The only change here is the addition of the ```onClick={this.update.bind(this,'f
 Next we need to add a route to Express to handle this call. Open ```fusionauth.js``` and add the following route:
 
 ```js
-router.route('/fusionauth/update/:id').put((req, res) =&gt; {
+router.route('/fusionauth/update/:id').put((req, res) => {
    let userId = req.params.id;
    fusionauthClient.updateRegistration(userId, req.body )
-   .then((response) =&gt; {
+   .then((response) => {
       res.send(response.successResponse);
    })
-   .catch((response) =&gt; {
+   .catch((response) => {
       res.status(response.statusCode).send(response.errorResponse);
    });
 });
@@ -476,3 +473,9 @@ This is a pretty simple example, storing just the plan name, but we hope it demo
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
+
+<!--
+- Technology
+- Products
+- FusionAuth
+-->
