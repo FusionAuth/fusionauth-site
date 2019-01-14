@@ -42,7 +42,7 @@ That’s the URL for the sandbox API endpoint. This config change tells the app 
 
 ## Configure the Backend
 
-We also need to add an API key for our app, or verify that one is already setup. Log in to the <a href="http://localhost:9011/login?loginId=admin@fusionauth.io" >sandbox backend UI</a>, using the following credentials:
+We also need to add an API key for our app, or verify that one is already setup. Log into the <a href="http://localhost:9011/login?loginId=admin@fusionauth.io" >sandbox backend UI</a>, using the following credentials:
 
 ```
 username: admin@fusionauth.io
@@ -88,7 +88,7 @@ Unable to retrieve JWT Public Key. Status code from FusionAuth was [undefined]. 
 ```
 
 If you see this message, you need to do one more bit of configuration:
-- Log in to the FusionAuth sandbox.
+- Log into the FusionAuth sandbox.
 - Go to **Settings → Application** and locate the application named “Example Application” with the Id “4ed5eb32-0a97-40eb-a6d7-cca1f9fa3a0c”.
 - Click the **Edit** button in the **Action** column.
 - In the **Options** section, click the **JWT** tab.
