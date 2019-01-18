@@ -22,7 +22,7 @@ gem "minima", "2.5.0"
 group :jekyll_plugins do
   gem "jekyll-asciidoc", "2.1.1"
   gem "jekyll-feed", "0.11.0"
-  gem "jekyll-paginate", "1.1.0"
+  gem "jekyll-paginate-v2", "1.9.2"
 end
 
 # For the docs
