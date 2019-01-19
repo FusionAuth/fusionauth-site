@@ -3,60 +3,71 @@ require 'fileutils'
 require 'json'
 require 'net/http'
 
+data_file = "/var/www/collateral/dockerhub-pull-count.json"
 output_file = "/var/www/collateral/dockerhub-pull-count.csv"
 url = 'https://hub.docker.com/v2/repositories/fusionauth/fusionauth-app/'
 response = JSON.parse(Net::HTTP.get(URI(url)))
+data_json = JSON.parse(File.read data_file)
 
-lines = []
 today = Time.now.strftime("%Y%m%d")
+yesterday = (Time.now - (3600 * 24)).strftime("%Y%m%d")
 total_count = response['pull_count']
 star_count = response['star_count']
 
-# Read each line from the file that begins with a date column
-File.readlines("#{output_file}").each do |l|
-  if /20[1-9]{2}/.match(l) != nil
-    lines << l.strip
-  end
+out_total = data_json['total']
+out_yesterday = data_json['daily'][yesterday]
+out_today = data_json['daily'][today]
+
+# Update totals
+out_total['count'] = total_count
+out_total['stars'] = star_count
+
+# Create an entry for yesterday if it doesn't exist
+if out_yesterday == nil
+  data_json['daily'][yesterday] = {
+      count: 0,
+      stars: 0,
+      total: {
+          count: total_count,
+          stars: star_count
+      }
+  }
 end
 
-# Add today to the list if it is not there
-last_line = lines.last # Get the last dated line
-unless last_line != nil and last_line.start_with?(today)
-  lines << "#{today},0,#{total_count},#{star_count}"
+# Create an entry for today if it doesn't exist
+if out_today == nil
+  data_json['daily'][today] = {
+      count: 0,
+      stars: 0,
+      total: {
+          count: total_count,
+          stars: star_count
+      }
+  }
 end
+
 
 # Calculate the difference from yesterday for pulls and stars
-yesterday_count = 0
-yesterday_star = 0
-if lines.size > 2
-  yesterday_line = lines[-2]
-  yesterday_count = yesterday_line.split(',')[2]
-  yesterday_star = yesterday_line.split(',')[4]
+today_count = total_count.to_i - yesterday['count'].to_i
+today_star = star_count.to_i - yesterday['star'].to_i
+
+# Save the JSON file and then write out new CSV
+File.open(data_file, "w", :encoding => "UTF-8") do |f|
+  f.write(JSON.pretty_generate(data_json))
 end
-
-today_count = total_count.to_i - yesterday_count.to_i
-today_star = star_count.to_i - yesterday_star.to_i
-
-# Update the last entry
-lines[-1] = "#{today},#{today_count},#{total_count},#{today_star},#{star_count}"
 
 File.open(output_file, "w", :encoding => "UTF-8") do |f|
 
   # Write the header
-  f.puts("Date,Today,Total Pulls,Today Stars,Total Stars\n")
+  f.puts("Date,Pulls,Stars\n")
 
-  # Write each day
-  lines.each do |day|
-    f.puts(day)
+  # Write each day sorted
+  data_json['daily'].sort.to_h.each do |day, value|
+    f.puts("#{day},#{value['pulls']},#{value['stars']}")
   end
 
-  # Green 90, 170, 92, #5aaa5c
-  # Orange 194, 112, 53, #c27035
-
-  # Add some color to the chart
-  f.puts("Color,#5AAA5C,#FF7E0E,#820000,#FFFF00")
-  f.puts("Cumulative,0,0,0,0,0")
-  f.puts("Type,stackedarea,line,stackedarea,line")
-  f.puts("Total,#{today_count},#{total_count},#{today_star},#{star_count}")
+  f.puts("Cumulative,0,0,0")
+  f.puts("Type,stackedarea,stackedarea")
+  f.puts("Total,#{today_count},#{today_star}")
 
 end
