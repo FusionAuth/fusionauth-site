@@ -11,56 +11,81 @@ tags:
 - Identity Management
 - tutorial
 - video
-image: blogs/NEEDIMAGE
+image: blogs/macos-install.jpg
 ---
 Designed to save developer time and effort, there are only a few simple steps to download and install FusionAuth in your test or production environment. The following tutorial will explain how to install FusionAuth on a Linux system and be up and running in just a few minutes. This is one aspect that makes FusionAuth unique. Most existing identity technologies have a complex hierarchy of realms, principals, and distinguished names that restricts where they can be installed and requires extensive configuration. FusionAuth will install and run on a wide variety of systems including:
 <!--more-->
 - Linux - all distributions (64-bit)
-- Mac OS X 10.8 (Mountain Lion) or newer
-- Windows Server 2008 SP2 (64-bit) w/ Windows Management Framework 3.0 or newer
-- Windows Server 2008 R2 (64-bit) w/ Windows Management Framework 3.0 or newer
-- Windows 7 SP1 (64-bit) w/ Windows Management Framework 3.0 or newer
-
-We will share tutorials for these systems in the near future, but please contact us at dev@fusionauth.io if you need help before they are released.
+- macOS 10.8 (Mountain Lion) or newer
+- Windows Server 2012 R2 (64-bit) w/ Windows Management Framework 5.0 or newer
+- Windows 10 (64-bit) w/ Windows Management Framework 5.0 or newer
 
 ## Get Started
 
 Before you start installing onto Linux, do a quick check on your system to make sure it meets the minimum requirements. You will need:
 
-- A 64-bit linux build of an RPM or Debian-based distribution.
+- A 64-bit Linux distribution
 - A MySQL or PostgreSQL database
 
-Refer to the latest documentation on [fusionauth.io/docs](https://fusionauth.io/docs/v1/tech/ "Visit FusionAuth Documentation") for minimum versions. If you don't yet have a database installed, do this first before you continue.
+It is not necessary that the database be installed locally on the Linux system, as long as you can connect using a JDBC URL, FusionAuth will be able to utilize the database.
+
+Refer to the latest documentation for [System Requirements](/docs/v1/tech/installation-guide/system-requirements "Visit FusionAuth System Requirements") for minimum versions. If you don't yet have a database installed or have one accessible, do this first before you continue.
+
+## Installation Options
+
+The easiest way to get up and running on Linux will be to use the Linux [Fast Path](/docs/v1/tech/installation-guide/fast-path "Fast Path") installation. This method will download the zip packages and unzip them in the current working directory and have you up and running quickly. 
+
+The Fast Path installation may not be right for everyone, it is generally the most useful to get up and running quickly in a development environment. In this article we will be performing a manual installation using the Debian package. This installation method may be more suitable for a production instance of FusionAuth.
+
+If you're using an RPM based Linux distribution, the steps will be nearly identical, you may follow this guide and substitute the RPM package for the debian using the `rpm -i` installation command instead of the `dpkg -i` used in this example. 
+
+FusionAuth may also be run in a Docker container or a Kubernetes cluster, review our installation guide for more information. If you're still on board for a package based Linux installation, then let's do this.
 
 ## Download and Install FusionAuth
 
-Start by going to fusionauth.io and logging into your account. (Use the [FusionAuth Setup Wizard](/blog/NEEDLINK/using-the-passport-setup-wizard/ "FusionAuth Setup Wizard post") to establish your account.) On your accounts page you will see your licenses. On the right side select the Download button. This will take you to the product download page. In this example we are installing onto Ubuntu Linux, so we will download the Debian packages.
+Start by heading to the [Download](/downloads) page. In this example we are installing onto Ubuntu Linux, so we will download the Debian packages.
 
-**NEED IMAGE Download and Install FusionAuth Downloads**
+FusionAuth is comprised of two web services, the FusionAuth application (`fusionauth-app`) and FusionAuth search engine (`fusionauth-search`). The FusionAuth App bundle provides access to the API and the web-based user interface. The FusionAuth search engine is required by FusionAuth and provides full-text search uses Elasticsearch. While you may optionally use an existing Elasticsearch instance if it meets the minimum requirements, for this example  we will be installing Elasticsearch by way of the `fusionauth-search` package.
 
-FusionAuth is comprised of two web services, the FusionAuth backend and FusionAuth search engine. The FusionAuth Backend bundle provides access to the API and the web-based user interface. The search engine is required by FusionAuth and provides full-text search uses Elasticsearch. In this video we will download and install both services.
+We will be using `wget` to download the packages. If you do not have `wget` but would like to install it, you may use `apt-get` command as follows. 
 
-**NEED IMAGE Download and Install FusionAuth Search**
+```
+sudo apt-get install wget
+```
 
-We will be using [Wget](https://www.gnu.org/software/wget/ "Jump to Wget site") to download the packages. If you do not have the command line tool Wget available you may optionally download the packages via a browser and transfer them to the target system.
+You may also download the packages via a browser and transfer them to the target system if you do not have `wget` and are unable to install it. If you want to find some additional information on what packages you'll be downloading, see the [Packages](/docs/v1/tech/installation-guide/packages) section of the installation guide. 
 
-First, you’ll want to right-click on the file and copy the destination to your clipboard. Then, paste it at the end of your Wget command. Once you have the backend bundle downloaded, repeat the same steps for the search engine files.
+We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/downloads) page right-click on the file and copy the destination to your clipboard. Then, paste it at the end of your `wget` command. Repeat this for both bundles, see the example commands below.
 
-**NEED IMAGE Download and Install FusionAuth Install Code**
+```
+wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.3.1/fusionauth-app_1.3.1-1_all.deb
+wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.3.1/fusionauth-search_1.3.1-1_all.deb
+```
 
-Next, you will need to install the two packages that you just downloaded. I am using the "dpkg -i" command to install backend and search engine. Finally, you will need to start these services. **IMPORTANT: Start the FusionAuth Search Engine before the FusionAuth back end.**
+In this example we have downloaded version `1.3.1`, you will likely be downloading the latest version which may be more recent than this version. Now that you have the two packages downloaded you will need to install the packages. I am using the `dpkg -i` command to install the Debian packages, see below for an example usage of the install command.
+
+```
+dpkg -i fusionauth-app_1.3.1-1_all.deb
+dpkg -i fusionauth-search_1.3.1-1_all.deb
+```
+
+The last step is to start up FusionAuth. 
+
+```
+sudo service fusionauth-search start
+sudo service fusionauth-app start
+```
 
 ## Complete the FusionAuth Setup
 
-Now that both services have been started. You will complete the setup using the browser. In your browser you will navigate to the IP address or hostname of the server where you installed FusionAuth. This may be localhost if you are installing locally. By default FusionAuth Backend will be listening on port 9011 so we will add that to the address. When the page loads you will be prompted for your license key.
+Now that both services have been started. You will complete the setup using the browser. In your browser you will navigate to the IP address or hostname of the server where you installed FusionAuth. This may be localhost if you are installing locally. By default FusionAuth Backend will be listening on port 9011 so we will add that to the address. 
 
-**NEED IMAGE Download and Install FusionAuth Maintenance**
+Open your browser to the address of FusionAuth, in our example we'll be using `http://localhost:9011`. You should find FusionAuth in maintenance mode, complete the search and database configuration and then you will be prompted to create an admin account and then be logged into FusionAuth.
 
-If you do not have the key handy, you can find it on your FusionAuth account page.
+If you'd like to see additional information on these next steps, review the following installation guides and tutorials.
 
-**NEED IMAGE Download and Install FusionAuth Get Key**
-
-Once the key is verified you will be prompted to complete the database configuration in order to finish the setup. If you need any help with these steps, you can refer to our [installation documentation](https://fusionauth.io/docs/1.x/tech/getting-started/ "Open Getting Started Documentation Page") at fusionauth.io, or feel free to email dev@fusionauth.io.
+- [Maintenance Mode](/docs/v1/tech/installation-guide/fusionauth-app#maintenance-mode)
+- [Setup Wizard](/docs/v1/tech/tutorials/setup-wizard)
 
 ## Learn More About the FusionAuth API
 
