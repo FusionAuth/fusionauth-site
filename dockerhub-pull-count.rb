@@ -14,16 +14,12 @@ yesterday = (Time.now - (3600 * 24)).strftime("%Y%m%d")
 total_count = response['pull_count']
 star_count = response['star_count']
 
-out_total = data_json['total']
-out_yesterday = data_json['daily'][yesterday]
-out_today = data_json['daily'][today]
-
 # Update totals
-out_total['count'] = total_count
-out_total['stars'] = star_count
+data_json['total']['count'] = total_count
+data_json['total']['stars'] = star_count
 
 # Create an entry for yesterday if it doesn't exist
-if out_yesterday == nil
+if data_json['daily'][yesterday] == nil
   data_json['daily'][yesterday] = {
       count: 0,
       stars: 0,
@@ -35,7 +31,7 @@ if out_yesterday == nil
 end
 
 # Create an entry for today if it doesn't exist
-if out_today == nil
+if data_json['daily'][today] == nil
   data_json['daily'][today] = {
       count: 0,
       stars: 0,
@@ -46,10 +42,12 @@ if out_today == nil
   }
 end
 
-
 # Calculate the difference from yesterday for pulls and stars
-today_count = total_count.to_i - yesterday['count'].to_i
-today_star = star_count.to_i - yesterday['star'].to_i
+today_count = total_count.to_i - data_json['daily'][yesterday]['total']['count'].to_i
+today_star = star_count.to_i - data_json['daily'][yesterday]['total']['stars'].to_i
+
+data_json['daily'][today]['count'] = today_count
+data_json['daily'][today]['stars'] = today_star
 
 # Save the JSON file and then write out new CSV
 File.open(data_file, "w", :encoding => "UTF-8") do |f|
@@ -63,11 +61,11 @@ File.open(output_file, "w", :encoding => "UTF-8") do |f|
 
   # Write each day sorted
   data_json['daily'].sort.to_h.each do |day, value|
-    f.puts("#{day},#{value['pulls']},#{value['stars']}")
+    f.puts("#{day},#{value['count']},#{value['stars']}")
   end
 
-  f.puts("Cumulative,0,0,0")
-  f.puts("Type,stackedarea,stackedarea")
-  f.puts("Total,#{today_count},#{today_star}")
+  f.puts("Cumulative,0,0")
+  f.puts("Type,stackedarea,line")
+  f.puts("Total,#{total_count},#{star_count}")
 
 end
