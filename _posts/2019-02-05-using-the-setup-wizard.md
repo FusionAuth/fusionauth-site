@@ -52,7 +52,7 @@ The next step is to add an API key so you may begin your integration and make au
 
 As before, required fields are marked with a red asterisk. You will notice that FusionAuth has already created a unique API Key and pre-filled the Key field. You may use this generated key, or you can change it to something else if you prefer. For more effective and robust security, API keys should be long and difficult to guess. If you are going to create your own API key, be thoughtful about what you choose–once an API has been created, the key value cannot be changed. Again, the description is optional but is helpful to document the purpose or intended use of this API key.
 
-If you do not provide any additional configuration, the API Key will have access to all authenticated APIs. FusionAuth gives you the option to control the use of each key by selecting specific endpoints and HTTP Methods this key will be allowed to access. You may click on a column, row or individual HTTP Method to toggle access to each unique endpoint. Click the blue save button when you have completed the form. 
+If you do not provide any additional configuration, the API Key will have access to all authenticated APIs. FusionAuth gives you the option to control the use of each key by selecting specific endpoints and HTTP Methods this key will be allowed to access. You may click on a column, row or individual HTTP Method to toggle access to each unique endpoint. Click the blue save button when you have completed the form.
 
 To return the dashboard select Dashboard from the menu on the left.
 
@@ -73,8 +73,3 @@ For more details on how to use the FusionAuth Setup Wizard or any other function
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
-
-<!--
-- FusionAuth
-- Tutorials
--->

@@ -33,9 +33,9 @@ Refer to the latest documentation for [System Requirements](/docs/v1/tech/instal
 
 ## Installation Options
 
-The easiest way to get up and running on macOS will be to use the [Fast Path](/docs/v1/tech/installation-guide/fast-path "Fast Path") installation. This method will download the zip packages and unzip them in the current working directory and have you up and running quickly. 
+The easiest way to get up and running on macOS will be to use the [Fast Path](/docs/v1/tech/installation-guide/fast-path "Fast Path") installation. This method will download the zip packages and unzip them in the current working directory and have you up and running quickly.
 
-The Fast Path installation may not be right for everyone, it is generally the most useful to get up and running quickly in a development environment. In this article we will be performing a manual installation using the ZIP package. This installation method may be more suitable if you're looking to install a specific version or if you'd just like to know how the sausage is made. 
+The Fast Path installation may not be right for everyone, it is generally the most useful to get up and running quickly in a development environment. In this article we will be performing a manual installation using the ZIP package. This installation method may be more suitable if you're looking to install a specific version or if you'd just like to know how the sausage is made.
 
 FusionAuth may also be run on Linux, in a Docker container or a Kubernetes cluster, review our installation guide for more information. If you're still on board for installing manually on macOS, then let's do this.
 
@@ -45,7 +45,7 @@ Start by heading to the [Download](/downloads) page.
 
 FusionAuth is comprised of two web services, the FusionAuth application (`fusionauth-app`) and FusionAuth search engine (`fusionauth-search`). The FusionAuth App bundle provides access to the API and the web-based user interface. The FusionAuth search engine is required by FusionAuth and provides full-text search uses Elasticsearch. While you may optionally use an existing Elasticsearch instance if it meets the minimum requirements, for this example  we will be installing Elasticsearch by way of the `fusionauth-search` package.
 
-If you'd like to read additional information on the different packages found on the Download page, see the [Packages](/docs/v1/tech/installation-guide/packages) section of the installation guide. 
+If you'd like to read additional information on the different packages found on the Download page, see the [Packages](/docs/v1/tech/installation-guide/packages) section of the installation guide.
 
 We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/downloads) click on the file you'd like to download and select a download location. We will refer to your download location as `FUSIONAUTH_HOME`, in this example we'll use `~/fusionauth`.
 
@@ -58,7 +58,7 @@ wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusio
 wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.3.1/fusionauth-search-1.3.1.zip
 ```
 
-Once you have downloaded both zip packages to `FUSIONAUTH_HOME` you'll have the following files in a directory. 
+Once you have downloaded both zip packages to `FUSIONAUTH_HOME` you'll have the following files in a directory.
 
 ```
 ~/fusionauth
@@ -66,9 +66,9 @@ Once you have downloaded both zip packages to `FUSIONAUTH_HOME` you'll have the 
 fusionauth-app-1.3.1.zip    fusionauth-search-1.3.1.zip
 ```
 
-In this example we have downloaded version `1.3.1`, you will likely be downloading the latest version which may be more recent than this version. 
+In this example we have downloaded version `1.3.1`, you will likely be downloading the latest version which may be more recent than this version.
 
-Next we'll unzip the packages. 
+Next we'll unzip the packages.
 
 ```
 unzip -nq ./fusionauth-app-1.3.1.zip -d ./
@@ -90,7 +90,7 @@ The last step is to start up FusionAuth.
 
 ## Complete the FusionAuth Setup
 
-Now that both services have been started. You will complete the setup using the browser. In your browser you will navigate to the IP address or hostname of the server where you installed FusionAuth. This may be localhost if you are installing locally. By default FusionAuth Backend will be listening on port 9011 so we will add that to the address. 
+Now that both services have been started. You will complete the setup using the browser. In your browser you will navigate to the IP address or hostname of the server where you installed FusionAuth. This may be localhost if you are installing locally. By default FusionAuth Backend will be listening on port 9011 so we will add that to the address.
 
 Open your browser to the address of FusionAuth, in our example we'll be using `http://localhost:9011`. You should find FusionAuth in maintenance mode, complete the search and database configuration and then you will be prompted to create an admin account and then be logged into FusionAuth.
 
@@ -104,9 +104,3 @@ If you'd like to see additional information on these next steps, review the foll
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
-
-<!--
-- FusionAuth
-- Tutorials
-- Resources
--->

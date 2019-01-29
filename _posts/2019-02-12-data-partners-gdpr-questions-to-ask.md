@@ -64,10 +64,3 @@ Using a variety of authentication credentials within the system creates an added
 The GDPR is sure to bring changes to the way developers plan applications and manage partners. It doesn’t restrict the types of applications and experiences developers can build, but it does place the need for data privacy ahead of the business needs of the company. To learn more about the GDPR and how it will impact developers' responsibilities, download our [**Developer’s Guide to the GDPR**](/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation.
 
 [Get the Guide](/blog/2018/03/23/white-paper-developers-guide-gdpr.html){: .btn .btn-primary}
-
-<!--
-- Technology
-- FusionAuth
-- Resources
-- White Paper
--->
