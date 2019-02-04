@@ -20,6 +20,10 @@ sitemap:
                         <ul>
 <li><a href="mailto:?subject=About%20FusionAuth&amp;body=FusionAuth%20-%20Free%20for%20Unlimited%20Users%20-%20https://fusionauth.io">by email</a> - - - - <a href="sms:&amp;body=From%20Bryan%20Giese%20-%20FusionAuth%20-%20Free%20for%20Unlimited%20Users%20-%20https://fusionauth.io">by text</a></li>
 </ul>
+<h2>Write for Us</h2>
+<ul>
+<li><a href="mailto:?subject=Write%20for%20FusionAuth&amp;body=Write%20for%20FusionAuth-%20https://fusionauth.io/write-for-fusionauth">by email</a> - - - - <a href="sms:&amp;body=From%20Bryan%20Giese%20-%20Write%20for%20FusionAuth-%20https://fusionauth.io/write-for-fusionauth">by text</a></li>
+</ul>
 <h2>Dev Guide to GDPR</h2>
 <ul>
 <li><a href="mailto:?subject=FusionAuth:%20Devs%20Guide%20to%20the%20GDPR&amp;body=Devs%20Guide%20to%20the%20GDPR-%20https://fusionauth.io/blog/2019/01/29/white-paper-developers-guide-gdpr">by email</a> - - - - <a href="sms:&amp;body=From%20Bryan%20Giese%20-%20Devs%20Guide%20to%20the%20GDPR-%20https://fusionauth.io/blog/2019/01/29/white-paper-developers-guide-gdpr">by text</a></li>
