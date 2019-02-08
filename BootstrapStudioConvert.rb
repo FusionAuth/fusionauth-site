@@ -134,3 +134,6 @@ Dir.foreach(export_directory) do |file|
     convert_file(html_doc, "#{script_directory}/#{file}")
   end
 end
+
+# Copy all of the landing pages w/out conversion
+FileUtils.cp_r("#{export_directory}/landing", script_directory)
