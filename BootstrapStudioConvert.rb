@@ -56,11 +56,18 @@ def convert_file(html_doc, output_file_name)
   description = html_doc.at_css("meta[name=\"description\"]")
   description_text = description != nil ? description.attribute("content").value : ""
   og_image = html_doc.at_css("meta[property=\"share-image\"]")
-  og_image_text = og_image != nil ? og_image.attribute("content").value : "fusionauth-share-image.jpg"
+  og_image_text = og_image != nil ? og_image.attribute("content").value.sub(/\/assets\/img\//, "").sub(/\?.+$/, "") : "fusionauth-share-image.jpg"
   main = html_doc.at_css("main")
 
   File.open(output_file_name, "w", :encoding => "UTF-8") do |f|
-    f.puts("---\nlayout: default\ntitle: #{title_text}\ndescription: #{description_text}\nimage: #{og_image_text}\n---\n")
+    f.puts("---\nlayout: default\ntitle: #{title_text}\ndescription: #{description_text}\nimage: #{og_image_text}\n")
+
+    # Handle sitemap exclusions
+    if output_file_name.index("/landing/") != nil
+      f.puts("sitemap:\n  exclude: 'yes'\n")
+    end
+
+    f.puts("---\n")
     f.puts(main.to_s.gsub(/\.html/, ""))
   end
 end
@@ -94,16 +101,17 @@ def build_blog_post_list_layout(html_doc, script_directory)
   main.at_css(".post-author").content = "{{ post.author }}"
   main.at_css(".post-date").content = "{{ post.date | date_to_string: \"ordinal\", \"US\" }}"
   main.at_css("nav").content = "{% include _pagination.html %}"
-  main.at_css(".post-link")["href"] = "{{post.url}}"
-  main.at_css(".post-image img")["src"] = "/assets/img/{{post.image}}"
+  main.at_css(".post-link")["href"] = "{{ post.url | replace: '.html', '' }}"
+  main.at_css(".post-image img")["src"] = "/assets/img/{{ post.image }}"
   body = main.at_css(".post-body-content")
   body.content = "{{ post.excerpt }}"
   list = main.at_css(".post-list")
   list.add_previous_sibling("{% for post in paginator.posts %}\n")
   list.add_next_sibling("\n{% endfor %}")
   File.open("#{script_directory}/blog/index.html", "w", :encoding => "UTF-8") do |f|
-    f.puts("---\nlayout: default\ntitle: #{title_text}\ndescription: #{description_text}\n---\n")
-    f.puts(main.to_s.gsub(/%7B/, "{").gsub(/%7D/, "}")) # Handle the escaping of { } characters in anchor tags by Nokogiri
+    f.puts("---\nlayout: default\ntitle: #{title_text}\ndescription: #{description_text}\npagination:\n enabled: true\n---\n")
+    # f.puts(main.to_s.gsub(/%7B/, "{").gsub(/%7D/, "}")) # Handle the escaping of { } characters in anchor tags by Nokogiri
+    f.puts(main.to_xml)
   end
 end
 
