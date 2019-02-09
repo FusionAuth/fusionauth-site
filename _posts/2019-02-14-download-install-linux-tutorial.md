@@ -78,9 +78,7 @@ sudo service fusionauth-app start
 
 ## Complete the FusionAuth Setup
 
-Now that both services have been started. You will complete the setup using the browser. In your browser you will navigate to the IP address or hostname of the server where you installed FusionAuth. This may be localhost if you are installing locally. By default FusionAuth Backend will be listening on port 9011 so we will add that to the address.
-
-Open your browser to the address of FusionAuth, in our example we'll be using `http://localhost:9011`. You should find FusionAuth in maintenance mode, complete the search and database configuration and then you will be prompted to create an admin account and then be logged into FusionAuth.
+Next you will complete the setup using the browser. Open your browser to the address of FusionAuth, in our example we'll be using `http://localhost:9011`. You should find FusionAuth in maintenance mode, complete the search and database configuration and then you will be prompted to create an admin account and then be logged into FusionAuth.
 
 If you'd like to see additional information on these next steps, review the following installation guides and tutorials.
 

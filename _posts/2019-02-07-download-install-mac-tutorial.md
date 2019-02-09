@@ -47,7 +47,7 @@ FusionAuth is comprised of two web services, the FusionAuth application (`fusion
 
 If you'd like to read additional information on the different packages found on the Download page, see the [Packages](/docs/v1/tech/installation-guide/packages) section of the installation guide.
 
-We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/downloads) click on the file you'd like to download and select a download location. We will refer to your download location as `FUSIONAUTH_HOME`, in this example we'll use `~/fusionauth`.
+We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/downloads) page click on the file you'd like to download and select a download location. We will refer to your download location as `FUSIONAUTH_HOME`, in this example we'll use `~/fusionauth`.
 
 If you're a command line person, feel free to use `wget` if that is your preference, see `wget` example below.
 
@@ -85,14 +85,12 @@ rm ./fusionauth-search-1.3.1.zip
 The last step is to start up FusionAuth.
 
 ```
-~/fusionauth/bin/bin/startup.sh
+~/fusionauth/bin/startup.sh
 ```
 
 ## Complete the FusionAuth Setup
 
-Now that both services have been started. You will complete the setup using the browser. In your browser you will navigate to the IP address or hostname of the server where you installed FusionAuth. This may be localhost if you are installing locally. By default FusionAuth Backend will be listening on port 9011 so we will add that to the address.
-
-Open your browser to the address of FusionAuth, in our example we'll be using `http://localhost:9011`. You should find FusionAuth in maintenance mode, complete the search and database configuration and then you will be prompted to create an admin account and then be logged into FusionAuth.
+Next you will complete the setup using the browser. Open your browser to the address of FusionAuth, in our example we'll be using `http://localhost:9011`. You should find FusionAuth in maintenance mode, complete the search and database configuration and then you will be prompted to create an admin account and then be logged into FusionAuth.
 
 If you'd like to see additional information on these next steps, review the following installation guides and tutorials.
 
