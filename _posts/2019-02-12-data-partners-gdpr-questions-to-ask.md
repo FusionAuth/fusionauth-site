@@ -14,7 +14,7 @@ tags:
 image: blogs/gdpr-data-partners-questions.jpg
 ---
 
-By now, you should be fully aware of the [GDPR’s data requirements](/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR") for your own application, but have you talked with your data partners? If your application takes advantage of third-party tools and components to add functionality or track user information, they need to be compliant as well. The new regulations state that data privacy needs to be maintained throughout the entire lifecycle of an application, through every data controller and processor. Take the time to ask your data partners how they ensure GDPR compliance, including their security framework and how they manage data.
+By now, you should be fully aware of the [GDPR’s data requirements](/blog/2019/01/29/white-paper-developers-guide-gdpr "Get the Developer's Guide to the GDPR") for your own application, but have you talked with your data partners? If your application takes advantage of third-party tools and components to add functionality or track user information, they need to be compliant as well. The new regulations state that data privacy needs to be maintained throughout the entire lifecycle of an application, through every data controller and processor. Take the time to ask your data partners how they ensure GDPR compliance, including their security framework and how they manage data.
 
 <!--more-->
 If your data partners do not have a clearly defined and documented data strategy, you could be exposing your company to substantial risk. Here are a few questions to get the discussion started:
@@ -37,7 +37,7 @@ How will your company coordinate efforts so users can view their data and reques
 
 ## **Questions for Identity and Access Management Partners**
 
-If you are considering an identity and access management solution like [FusionAuth](https:fusionauth.io "FusionAuth Home"), here are additional questions that will provide insights into how they address security and data privacy.
+If you are considering an identity and access management solution like [FusionAuth](https://fusionauth.io "FusionAuth Home"), here are additional questions that will provide insights into how they address security and data privacy.
 
 ### Q: What are their default password constraints, and are they adjustable?
 
@@ -61,6 +61,6 @@ Using a variety of authentication credentials within the system creates an added
 
 ## Learn More: Developer’s Guide to the GDPR
 
-The GDPR is sure to bring changes to the way developers plan applications and manage partners. It doesn’t restrict the types of applications and experiences developers can build, but it does place the need for data privacy ahead of the business needs of the company. To learn more about the GDPR and how it will impact developers' responsibilities, download our [**Developer’s Guide to the GDPR**](/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation.
+The GDPR is sure to bring changes to the way developers plan applications and manage partners. It doesn’t restrict the types of applications and experiences developers can build, but it does place the need for data privacy ahead of the business needs of the company. To learn more about the GDPR and how it will impact developers' responsibilities, download our [**Developer’s Guide to the GDPR**](/blog/2019/01/29/white-paper-developers-guide-gdpr "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation.
 
-[Get the Guide](/blog/2018/03/23/white-paper-developers-guide-gdpr.html){: .btn .btn-primary}
+[Get the Guide](/blog/2019/01/29/white-paper-developers-guide-gdpr){: .btn .btn-primary}
