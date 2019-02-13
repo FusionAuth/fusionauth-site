@@ -12,33 +12,39 @@ tags:
 image: blogs/all-your-password-entropy.png
 ---
 
-Here's the reality, billions of credentials have been leaked or stolen and are now easily downloaded online by anyone. Many of these databases of identities include passwords in plain-text, while others are one-way hashed. Clearly one-way hashing is better, but it is only as secure as is mathematically feasible.
+Here's the reality, billions of credentials have been leaked or stolen and are now easily downloaded online by anyone. Many of these databases of identities include passwords in plain text, while others are one-way hashed. Clearly one-way hashing is better, but it is only as secure as is mathematically feasible.
 
 <!--more-->
 
 ## Hashing
 
-Let's take a look at one-way hashing algorithms and how computers handle them. MD5 is an algorithm that uses various bit-wise operations on any number of bytes to produce a 128-bit "hash". The algorithm was designed specifically so that going from a hash back to the original bytes is impossible. Developers use MD5 so a plain-text form of the password is never stored. Instead, only the hash is stored and when a user is authenticated, the plain-text password they type into the login form is hashed, and then compared to the hash in the database.
+Let's take a look at one-way hashing algorithms and how computers handle them. A hash by definition is a function that can map data of an arbitrary size to data of a fixed size. This attribute makes it an ideal strategy to obscure a password of variable length to a known size that can be stored. MD5 is a hashing algorithm that uses various bit-wise operations on any number of bytes to produce a 128-bit hash. The algorithm was designed specifically so that going from a hash back to the original bytes is impossible. Developers use an MD5 hash so that instead of storing a plain text password, they instead only store the hash. When a user is authenticated, the plain text password they type into the login form is hashed, and because the algorithm will always produce the same hash result given the same input, comparing this hash to the hash in the database tells us the password is correct.
 
-While one-way hashing means we aren't storing plain-text passwords, it can still be possible to determine the plain-text password by trying all combinations of bytes until you generate the same hash that is stored in the database.
+While one-way hashing means we aren't storing plain text passwords, it is still possible to determine the original plain text password. Next we'll outline the two most common approaches. 
 
 ## Cracking passwords
+There are two methods of reversing a one-way hash to produce a password. We'll review each method in more detail below. 
 
-There are two methods of reversing a one-way hash to a password. The first is called a rainbow table or lookup table. This method builds a massive lookup table that maps hashes to plain-text passwords. The table is built by simply hashing every possible password combination and storing it in some type of database or data-structure that allows for quick lookups.
+### Lookup tables
+The first is called a lookup table, or sometimes referred to a as a rainbow table. This method builds a massive lookup table that maps hashes to plain text passwords. The table is built by simply hashing every possible password combination and storing it in some type of database or data-structure that allows for quick lookups.
 
 Here's an example of a lookup table for MD5 hashed passwords:
 
 ```yaml
-60b725f10c9c85c70d97880dfe8191b3 => a
-d404401c8c6495b206fc35c95e55a6d5 => aa
-daa8075d6ac5ff8d0c6d4650adb4ef29 => ab
+md5_hash                           password
+-------------------------------------------
+60b725f10c9c85c70d97880dfe8191b3   a
+d404401c8c6495b206fc35c95e55a6d5   aa
+daa8075d6ac5ff8d0c6d4650adb4ef29   ab
 ...
-3b5d5c3712955042212316173ccf37be => b
+3b5d5c3712955042212316173ccf37be   b
 ```
 
 Using the lookup table, all the attacker needs to know is the MD5 hash of the password and they can see if it exists in the table.
 
-The best way to protect against this type of attack is to use what is called a **salt**. Salts are simply a bunch of random characters that you prepend to the password before it is hashed. Each password has a different salt, which means that a lookup table is unlikely to have an entry for the combination of the salt and the password. This makes salts an ideal defense against lookup tables.
+{% include _image.html src="/assets/img/blogs/salt.png" alt="Salt" class="float-right ml-3" style="width: 250px;" figure=false %}
+
+The best way to protect against this type of attack is to use what is called a **salt**. A salt is simply a bunch of random characters that you prepend to the password before it is hashed. Each password should have a different salt, which means that a lookup table is unlikely to have an entry for the combination of the salt and the password. This makes salts an ideal defense against lookup tables.
 
 Here's an example of a salt and the resulting combination of the password and the salt which is then hashed:
 
@@ -48,7 +54,14 @@ password = "password"
 toHash = ";L'-2!;+=#/5B)40/o-okOw8//3apassword"
 ```
 
-The second method that attackers use to crack passwords is called "brute force" cracking. This means that the attacker writes a small computer program that generates all possible combinations of characters that can be used for a password and then computes the hash for each. This program can also take a salt if the password was hashed with a salt. The attacker then runs the program until it generates a hash that is the same as the hash from the database. Here's a simple Java program for cracking passwords. I left out some detail, such as all the possible password characters, to keep the code short, but you get the idea.
+### Brute force
+
+{% include _image.html src="/assets/img/blogs/hulk.png" alt="Brute Force" class="float-left mb-3 mr-3" style="width: 150px;" figure=false %}
+
+The second method that attackers use to crack passwords is called brute force cracking. This means that the attacker writes a small computer program that generates all possible combinations of characters that can be used for a password and then computes the hash for each combination. This program can also take a salt if the password was hashed with a salt. The attacker then runs the program until it generates a hash that is the same as the hash from the database. Here's a simple Java program for cracking passwords. I left out some detail, such as all the possible password characters, to keep the code short, but you get the idea.
+
+<br>
+<br>
 
 ```java
 import org.apache.commons.codec.digest.DigestUtils;
@@ -77,7 +90,7 @@ public class PasswordCrack {
         String password = salt + new String(ca);
         String md5Hex = DigestUtils.md5Hex(password).toUpperCase();
         if (md5Hex.equals(hashFromDatabase)) {
-          System.out.println("Plain-text password is [" + password + "]");
+          System.out.println("plain text password is [" + password + "]");
           System.exit(0);
         }
       }
@@ -96,26 +109,29 @@ This is where we can start doing some math to figure out how long this program w
 totalPassword = 100^8 + 100^7 + 100^6
 ```
 
-This is equal to `10,101,000,000,000,000`. This is quite a large number, but what does it actually mean when it comes to my program running? This depends on the speed of the computer I'm running on and how long it takes my computer to execute the MD5 algorithm. The MD5 algorithm is the key component here because the rest of the program is extremely fast at just creating the passwords.
+The result of this expression is equal to `10,101,000,000,000,000`. This is quite a large number, north of 10 quadrillion to be a little more precise, but what does it actually mean when it comes to my program running? This depends on the speed of the computer I'm running on and how long it takes my computer to execute the MD5 algorithm. The MD5 algorithm is the key component here because the rest of the program is extremely fast at just creating the passwords.
 
-Here's where things get dicey. If you run a quick Google search for "fastest bitcoin rig" you'll see that these machines are rated in terms of the number of hashes they can do per second. The bigger ones can be rated as high as `44 TH/s`. That means it can generate 44 tera-hashes per second, or `44,000,000,000,000` hashes per second.
+Here's where things get dicey. If you run a quick Google search for ["fastest bitcoin rig"](http://lmgtfy.com/?q=fastest+bitcoin+rig) you'll see that these machines are rated in terms of the number of hashes they can perform per second. The bigger ones can be rated as high as `44 TH/s`. That means it can generate 44 tera-hashes per second, or `44,000,000,000,000` hashes per second. Forty trillion hashes per second is an impressive number. 
 
-Now, if we divide the total number of passwords by the number of hashes we can generate per second, we are left with the total time it takes a bitcoin rig to generate the hashes for all possible passwords. In our example above, this equates to:
+Now, if we divide the total number of passwords by the number of hashes we can generate per second, we are left with the total time it takes a Bitcoin rig to generate the hashes for all possible passwords. In our example above, this equates to:
 
 ```
-numberOfSeconds = 1.101e16 / 4.4e13 = 250
+totalPassword = 100^8 + 100^7 + 100^6
+bitcoinRig = 4.4e13 
+
+numberOfSeconds = totalPassword / 4.4e13 = 250
+numberOfMinutes = numberOfSeconds / 60 = ~ 4 minutes
 ```   
 
-This means that we can generate all the hashes for 6 to 8 character long passwords in basically 4 minutes.
-
-Let's scale this out and see how long it takes to do 9 character long passwords:
+This means that using this example Bitcoin rig, we could generate all the hashes for a password between 6 and 8 character in length in roughly 4 minutes. Feeling nervous yet? Let's scale this out and see how long it takes to do 9 character long passwords:
 
 ```
-bitcoinRig = 4.4e13
-nineCharacterPasswords = 1e18
-numberOfSeconds = 1e18 / 4.4e13 = 22,727
-numberOfMinutes = 378
-numberOfHours = 6.3
+bitcoinRig = 4.4e13                        # Hashes per second
+nineCharacterPasswords = 1e18              # Number of possible hashes
+
+numberOfSeconds = 1e18 / 4.4e13 = 22,727   # Max time time in seconds test all possible values
+numberOfMinutes = 378                      #
+numberOfHours = 6.3                        #
 ```
 
 And let's make a big jump to 16 characters:
@@ -133,7 +149,7 @@ numberOfYears = 71,917,808,219
 If we take these expressions and rename them a little bit, we can build an equation that solves for any length password:
 
 ```
-numberOfSeconds = 100^lengthOfPassword / computerSpeed
+numberOfSeconds = 100^lengthOfPassword / computeSpeed
 ```
 
 This equation shows that as the password length increases, the number of seconds to brute-force attack the password also increases since the computer power is a fixed divisor. The increase in password complexity (length and possible characters) is called **entropy**. As the entropy increases, the time required to brute-force attack a password also increases.
@@ -142,13 +158,16 @@ This equation shows that as the password length increases, the number of seconds
 
 Great question. Here's the answer:
 
-> If you let humans use short passwords that they can remember, you need to decrease `computerSpeed`.
->
-> If you force humans to use password generators that create really long passwords, you don't need to change anything.
+{:.tight}
+> If you let humans use short passwords that they can remember, you need to decrease the value of `computeSpeed` in order to maintain a level of security. 
+> 
+> If you force humans to use password generators that create really long passwords, you don't need to change anything because the value of `computeSpeed` becomes much less important as it relates to the security of your password.
 
-Let's assume we are going to let humans use short passwords. This means that we need to decrease the `computerSpeed` value. How do we accomplish that?
+Let's assume we are going to allow the user of short passwords. This means that we need to decrease the `computeSpeed` value which means we need to slow down the computation of the hash. How do we accomplish that?
 
-The way that the security industry has been solving this problem is by using more and more complex algorithms that cause the computer to spend more time generating one-way hashes. Examples of these algorithms include BCrypt, SCrypt, PBKDF2, and others. These algorithms are specifically designed to cause the CPU/GPU of the computer to take an exorbitant amount of time generating a single hash. If we can reduce the `computerSpeed` value from `4.4e13` all the way down to `1,000`, even our numbers for passwords between 6 and 8 characters long become much better:
+The way that the security industry has been solving this problem is by continuing to increase the algorithm complexity which in turn causes the computer to spend more time generating one-way hashes. Examples of these algorithms include BCrypt, SCrypt, PBKDF2, and others. These algorithms are specifically designed to cause the CPU/GPU of the computer to take an excessive amount of time generating a single hash. 
+
+If we can reduce the `computeSpeed` value from `4.4e13` to `1,000`, even our numbers for passwords between 6 and 8 characters long become much better:
 
 ```
 computerPower = 1e3
