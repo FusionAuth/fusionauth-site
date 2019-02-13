@@ -17,10 +17,14 @@ end
 # Load the IP hash
 ip_hash = JSON.parse(File.read(ip_hash_file))
 
-# Clean up the existing access logs
-FileUtils.rm_rf(temp_dir)
-FileUtils.mkdir(temp_dir)
-`/usr/bin/gsutil -m cp "gs://inversoft_access_logs/FusionAuthAccesssLog_usage_*" #{temp_dir} > /dev/null 2>&1`
+# Copy new access logs
+FileUtils.mkdir(temp_dir) unless File.directory?(temp_dir)
+# Delete today's logs to ensure we don't miss any since we are only copying ones that do not yet exist
+today = Time.now.strftime("%Y_%m_%d")
+Dir.glob("#{temp_dir}/FusionAuthAccesssLog_usage_#{today}*").each do |file|
+  File.delete(file)
+end
+`/usr/bin/gsutil -m cp -n "gs://inversoft_access_logs/FusionAuthAccesssLog_usage_*" #{temp_dir} > /dev/null 2>&1`
 
 # Collect the counts
 counts = Hash.new(0)
