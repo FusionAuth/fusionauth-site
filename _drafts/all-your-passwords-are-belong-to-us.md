@@ -235,4 +235,8 @@ Of course this is just the tip of the iceberg, we could perform a lot of analysi
 
 We think this idea has merit. As more people start using password managers with password generators, or letting the browser generate a unique password on your behalf we could dynamically select a hash that could significantly reduce the CPU/GPU utilization.
 
+Food for thought, we can hash approximately 20 passwords per second on a `t2.medium` using PBKDF2 with a load factor of 24,000. If you're Pokémon Go trying to authenticate half of the known world so they can catch Charizard, how many EC2 instances do you think it would require to handle their load? There is a real business case for changing the way the industry thinks about secure password hashing. 
+
+If we get enough interest, we'll follow up this post with some data from a real world use of this strategy to demonstrate how many passwords we can hash per second on a run of the mill `t2.medium` AWS EC2 instance. 
+
 If you'd like to discuss on this feature, comment below or visit the FusionAuth GitHub issue for it and upvote or comment. **NEED TO MAKE GITHUB ISSUE to link to**
