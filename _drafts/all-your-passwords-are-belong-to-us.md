@@ -130,8 +130,8 @@ Here's where things get dicey. If you run a quick Google search for ["fastest bi
 Now, if we divide the total number of passwords by the number of hashes we can generate per second, we are left with the total time it takes a Bitcoin rig to generate the hashes for all possible passwords. In our example above, this equates to:
 
 ```
-possiblePasswords = 100^8 + 100^7 + 100^6 = 1.0101e16
 bitcoinRig = 4.4e13 
+possiblePasswords = 100^8 + 100^7 + 100^6 = 1.0101e16
 
 numberOfSeconds = possiblePasswords / bitcoinRig = ~230
 numberOfMinutes = numberOfSeconds / 60 = ~4
@@ -148,7 +148,7 @@ numberOfMinutes = numberOfSeconds / 60 = ~383
 numberOfHours = numberOfMinutes / 60 = ~6
 ```
 
-By adding one additional character to the potential length of the password we increased the total compute time from 4 minutes to 6 hours. This is nearing a 100x increase in computational time to use the brute force strategy. You probably can see where this is going, the defeat the brute force strategy, you simply need to make it improbable to calculate all possible password combinations.  
+By adding one additional character to the potential length of the password we increased the total compute time from 4 minutes to 6 hours. This is nearing a 100x increase in computational time to use the brute force strategy. You probably can see where this is going, to defeat the brute force strategy, you simply need to make it improbable to calculate all possible password combinations.  
 
 
 Let's get crazy and make a jump to 16 characters:
@@ -164,7 +164,7 @@ numberOfDays = numberOfHours / 25 = 26,250,000,000,000 or 26.25 trillion days
 numberOfYears = numberOfDays / 365 = 71,917,808,219 or 71.9 billion years
 ```
 
-You could conclude that if as a policy we rotate our passwords ever7 50 billion years give or take, we should be able to protect against a brute force attack. To boil down our results, if we take these expressions and simplify we can build an equation that solves for any length password.
+You could conclude that if as a policy we rotate our passwords every 50 billion years give or take, we should be able to protect against a brute force attack. To boil down our results, if we take these expressions and simplify we can build an equation that solves for any length password.
 
 ```
 numberOfSeconds = 100^lengthOfPassword / computeSpeed
