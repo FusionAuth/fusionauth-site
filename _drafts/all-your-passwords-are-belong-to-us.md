@@ -156,6 +156,7 @@ Let's get crazy and make a jump to 16 characters:
 ```
 bitcoinRig = 4.4e13
 possiblePasswords = 100^16 + 100^15 ... 100^7 + 100^6 = 1e32
+
 numberOfSeconds = possiblePasswords / bitcoinRig = 2.27e18
 numberOfMinutes = numberOfSeconds / 60 = 3.78e16
 numberOfHours = numberOfMinutes / 60 = 630,000,000,000,000 or 630 trillion
@@ -184,18 +185,20 @@ Let's assume we are going to allow the user of short passwords. This means that 
 
 The way that the security industry has been solving this problem is by continuing to increase the algorithm complexity which in turn causes the computer to spend more time generating one-way hashes. Examples of these algorithms include BCrypt, SCrypt, PBKDF2, and others. These algorithms are specifically designed to cause the CPU/GPU of the computer to take an excessive amount of time generating a single hash. 
 
-If we can reduce the `computeSpeed` value from `4.4e13` to something much smaller such as  `1,000`, our compute time for passwords between 6 and 8 characters long become much better:
+If we can reduce the `computeSpeed` value from `4.4e13` to something much smaller such as  `1,000`, our compute time for passwords between 6 and 8 characters long become much better. In other words, if we can slow down the computer so it takes longer for each hash it has to generate, we can increase the length of time it will take to calculate all of the possible passwords.
 
 ```
-computePower = 1e3
+computeSpeed = 1e3
 possiblePasswords = 100^8 + 100^7 + 100^6 = 1.0101e16
 
-numberOfSeconds = possiblePasswords / computePower = 10,101,000,000,000 or 10.1 trillion
+numberOfSeconds = possiblePasswords / computeSpeed = 10,101,000,000,000 or 10.1 trillion
 numberOfMinutes = numberOfSeconds / 60 = 168,350,000,000 or 168.35 billion
 numberOfHours = numberOfMinutes / 60 = 2,805,833,333 or 2.8 billion
 numberOfDays = numberOfHours / 24 = 116,909,722 or 116.9 million
 numberOfYears = numberOfDays / 365 = 320
 ```
+
+Not bad, by slowing down the hash computation we have increased the time from 4 minutes using our Bitcoin rig to 320 days. In this comparision you can see the practical difference between using MD5 and BCrypt. BCrypt is purpose built to be extremely slow in comparison to MD5 and other more traditional hashing algorithms that may be used for data integrity which inherently need to be fast. 
 
 And here lies the debate that the security industry has been having for years:
 
