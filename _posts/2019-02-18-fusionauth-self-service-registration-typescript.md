@@ -14,14 +14,14 @@ FusionAuth 1.4 was just released and is available for [direct download](/downloa
 
 <!--more-->
 
-## New features
+## New Features
 
 
 **Self-Service Registration**<br>
 <img src="/assets/img/blogs/register-form.png" alt="Register User" class="float-right mb-3 ml-3" style="width: 225px;"/>
 It’s easier that ever for users to set up a new account or register for new applications. We now give you the option to enable self-service registration for any one of your applications. This eliminates the need to build detailed registration forms and is perfect for when you want users up and running quickly.
 
-You can start super simple and just collect the email and password, and optionally asked for their name and mobile phone. This new form may also be customized using our theme feature. See our [Theme Tutorial](/docs/v1/tech/tutorials/login-theme) for additional information. Get started by navigating to your FusionAuth application (`Settings -> Applications`) and click on the `Registration` tab, here you'll find the self service Registration configuration.
+You can start super simple and just collect an email and password, and optionally ask for their name and phone number. This new form can also be customized using our theme feature. See our [Theme Tutorial](/docs/v1/tech/tutorials/login-theme) for additional information. Get started by navigating to your FusionAuth application (`Settings -> Applications`) to `Edit` an application. Under `Options`, click on the `Registration` tab. Here you'll find the Self-service Registration configuration.
 
 
 
@@ -38,10 +38,10 @@ Real-time reporting is essential to monitor your applications. Who wants week- o
 ## Fixes & Updates
 
 - The FusionAuth [System Requirements](/docs/v1/tech/installation-guide/system-requirements) have been updated. Please review the updated requirements to ensure you meet the minimum supported versions of operating systems and databases.
-- There was an issue where silent configuration mode would fail when using Docker compose. This only occurred in FusionAuth versions prior to `1.1.0` because the silent configuration was not performing the database schema update automatically.
+- There was an issue where silent configuration mode would fail when using Docker Compose. This only occurred in FusionAuth versions prior to `1.1.0` because the silent configuration was not performing the database schema update automatically.
 - In our testing we discovered that installations with multiple tenants could delete a tenant with an API key not assigned to it. This has been corrected so when there are multiple tenants, a tenant may only be deleted using an API key that is not assigned to any tenant.
 - MySQL 8.0.13 changed their SSL/TLS handling causing FusionAuth connections to incorrectly handle public keys. This has been fixed by allowing FusionAuth to perform a secondary request to MySQL to fetch the public key.
-- We corrected an issue where if an existing FusionAuth user logs in with a Social Login provider it could cause them to be unable to log in to FusionAuth directly using their original credentials.
+- We corrected an issue where if an existing FusionAuth user logs in with a social login provider it could cause them to be unable to log in to FusionAuth directly using their original credentials.
 - We fixed an issue reported by [StanislavKD](https://github.com/StanislavKD) that was related to a user’s SSO session. Get the full details in this support thread:  [Github Issue #59: Using a access token for a lock account](https://github.com/FusionAuth/fusionauth-issues/issues/59 "Jump to GitHub")
 
 We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know in either [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub") or [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and we’ll do our best to help.
