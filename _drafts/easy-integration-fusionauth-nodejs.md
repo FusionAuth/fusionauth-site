@@ -13,45 +13,56 @@ image: blogs/node-and-fusionauth-example-tiny.jpg
 ---
 There are a variety of strategies for authentication in Node.js apps, but none provide the security, features and complete user management that come with FusionAuth. In this tutorial we'll start with simple Express application and show you how to add FusionAuth to register and authenticate users.
 <!--more-->
-We'll assume that you are using a unix command-line application like Power Shell on Windows or Terminal on OS X or a standard terminal on Linux. You will also need curl or some means of creating GET and POST requests to your localhost. I like [Postman](https://www.getpostman.com/ "Visit Postman site"). Let's get coding!
+We'll assume that you are using a unix command-line application like Power Shell on Windows or Terminal on macOS or a standard terminal on Linux. You will also need curl or some means of creating `GET` and `POST` requests to your localhost. I like REST clients such as [Insomnia](https://insomnia.rest/ "Get Insomnia") or [Postman](https://www.getpostman.com/ "Get Postman"). Let's get coding!
 
 
 ## Install and set up FusionAuth
-1. Download and Install FusionAuth
-2. Create an Application and API key. When you first log into the FusionAuth dashboard, you will see a page like this:
 
-{% include _image.html src="/assets/img/blogs/initial-dashboard.png" alt="FusionAuth Dashboard" class="full" figure=false %}
+**Step 1**, download and Install FusionAuth, see the _Install FusionAuth_ section on the [home page](/).
 
-In the "Missing Application" panel, click the "Setup" button.
+**Step 2**, follow the [Setup Wizard](/docs/v1/tech/tutorials/setup-wizard) tutorial until you get to the Complete Setup section, and then return here.
 
-{% include _image.html src="/assets/img/blogs/create-app.png" alt="Create Application" class="full" figure=false %}
+**Step 3**, you should now be at the FusionAuth dashboard, next we need to Create an Application and API key. Below is an example screenshot of what you should expect. Complete the `Missing Application` and `Missing API Key` setup steps. 
 
-Give your application a name. The ID will be auto-generated. Also, create at least one role named `user`. Then, choose the `API Keys` link in the sidebar.
+{% include _image.html src="/assets/img/blogs/complete-setup.png" alt="FusionAuth Dashboard" class="full" figure=false %}
 
-{% include _image.html src="/assets/img/blogs/api-key-page.png" alt="API Key Page" class="full" figure=false %}
+Once you click **Setup** on the **Missing Application** task on the dashboard, you'll be taken to the **Add Application** panel. 
 
-Just click the + in the upper right.
+{% include _image.html src="/assets/img/blogs/add-application.png" alt="Create Application" class="full" figure=false %}
 
-{% include _image.html src="/assets/img/blogs/create-api-key.png" alt="Create API Key" class="full" figure=false %}
+Enter your application name, leave the Id field blank as it will be auto-generated. Add at least one role named `user` by clicking on the `Add Role` button while on the `Roles` tab. Click the blue save icon in the top right to add the application. To complete the next task select `API Keys` from the left navigation sidebar.
 
-The API key will be auto-generated. You do not need to change any of the endpoint settings. Click the save icon in the upper right. Now, if you go back to the main Dashboard, you should see a screen like this since we haven't done anything with email settings:
+{% include _image.html src="/assets/img/blogs/api-keys.png" alt="API Key Page" class="full" figure=false %}
 
-{% include _image.html src="/assets/img/blogs/dashboard-after.png" alt="Create API Key" class="full" figure=false %}
+On the API Keys page you will see a listing of all API keys, if you've just installed FusionAuth there will not yet be any API keys. Click the green plus (+) icon in the upper right to add an API key.
+
+{% include _image.html src="/assets/img/blogs/add-api-key.png" alt="Create API Key" class="full" figure=false %}
+
+The value in the `Key` field will be auto-generated. You do not need to change any of the endpoint settings, we will be creating a super user key for this example which means the key will have access to all APIs. Click the save icon in the upper right. 
+
+Now, navigate back to the dashboard, by clicking on **Dashboard** in the left navigation sidebar. You will now be on the dashboard and you should see a screen like this since we haven't done anything with email settings:
+
+{% include _image.html src="/assets/img/blogs/complete-setup-only-email.png" alt="Create API Key" class="full" figure=false %}
+
+FusionAuth is now installed and configured, we'll now move onto code!
 
 ## Create a Node.js application with FusionAuth support
-Use the steps below to initialize your project and add the fusionauth-node-client and express libraries to it.
+Use the steps below to initialize your project in your home directory and add the `fusionauth-node-client` and `express` libraries.
 
-1. Create a directory: `mkdir tutorial; cd tutorial`
-1. `run npm init`
-1. `run npm install express --save`
-1. `run npm install fusionauth-node-client --save`
+```sh
+cd ~
+mkdir tutorial; cd tutorial
+npm init
+npm install express --save
+npm install fusionauth-node-client --save
+```
 
-As a first test to ensure that you can connect to your FusionAuth service, create a test.js file, replacing the first parameter in the FusionAuthClient constructor `[your application ID here]` with a valid API key from your FusionAuth environment. Obviously, change the email address with a valid user in your FusionAuth environment:
+As a first test to ensure that you can connect to your FusionAuth service, create a `test.js` file, replacing the first parameter in the FusionAuthClient constructor `[your API Key here]` with a valid API key from your FusionAuth environment. Change the email address `user@example.com` with a valid user in your FusionAuth environment, if you just installed FusionAuth there may only be a single user which will be the email address used to complete the Setup Wizard.
 
 ```js
 const {FusionAuthClient} = require('fusionauth-node-client');
 const client = new FusionAuthClient(
-    '[your application ID here]',
+    '[your API Key here]',
     'http://localhost:9011'
 );
 
@@ -66,7 +77,7 @@ function handleResponse (clientResponse) {
 }
 ```
 
-Run that with `node test.js`. You should get back a valid JSON response that looks something like this (obviously, with different values) :
+Run this code by calling `node test.js`. You should get back a valid JSON response that looks something like this :
 
 ```js
 {
@@ -100,9 +111,11 @@ Run that with `node test.js`. You should get back a valid JSON response that loo
 }
 ```
 
-Having verified you can connect to your FusionAuth service and retrieve a valid user, we can move on to building an Express application.
+If you received a JSON response body with a user object as you expected, you have now verified you can connect to your FusionAuth service and retrieve a valid user, we can move on to building an Express application.
 
-```
+To begin, install the` express-session` package.
+ 
+```sh
 npm install express-session --save
 ```
 
@@ -212,7 +225,7 @@ app.use(session({
 
 Note the `secret` field. This is used to verify the JavaScript Web Token (JWT). We will talk a little more about that when we look at the console output for the `/login handler`. If we were to implement JWT, we would use a real secret. The secret can be defined either in your Application dashboard or the System-wide settings. By default, when you create a new application, no secret is defined and the system-wide configuration is used which is defined in the **System -> Settings** dashboard panel, as illustrate here:
 
-{% include _image.html src="/assets/img/blogs/json-settings.png" alt="System Settings" class="full" figure=false %}
+{% include _image.html src="/assets/img/blogs/system-jwt-settings.png" alt="System Settings" class="full" figure=false %}
 
 We then define the four endpoints this server will respond to: `/`, `/logout`, `/login`, and `/profile`, along with the code that executes (the "handler") for each endpoint..
 
