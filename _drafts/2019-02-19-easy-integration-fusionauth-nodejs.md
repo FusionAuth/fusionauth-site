@@ -13,36 +13,36 @@ image: blogs/node-and-fusionauth-example-tiny.jpg
 ---
 There are a variety of strategies for authentication in Node.js apps, but none provide the security, features and complete user management that come with FusionAuth. In this tutorial we'll start with simple Express application and show you how to add FusionAuth to register and authenticate users.
 <!--more-->
-We'll assume that you are using a unix command-line application like Power Shell on Windows or Terminal on macOS or a standard terminal on Linux. You will also need curl or some means of creating `GET` and `POST` requests to your localhost. I like REST clients such as [Insomnia](https://insomnia.rest/ "Get Insomnia") or [Postman](https://www.getpostman.com/ "Get Postman"). Let's get coding!
+We'll assume that you are using a unix command-line application like Power Shell on Windows, Terminal on macOS, or a standard terminal on Linux. You will also need *curl* or some means of creating `GET` and `POST` requests to your localhost. I like REST clients such as [Insomnia](https://insomnia.rest/ "Get Insomnia") or [Postman](https://www.getpostman.com/ "Get Postman"). Let's get coding!
 
 
-## Install and set up FusionAuth
+## Install and Set Up FusionAuth
 
-To begin, download and Install FusionAuth, see the _Install FusionAuth_ section on the [home page](/). Next, follow the [Setup Wizard](/docs/v1/tech/tutorials/setup-wizard) tutorial until you get to the Complete Setup section, and then return here.
+To begin, download and Install FusionAuth. See the **Install FusionAuth** section on the [home page](/) for the instructions for each platform. Next, follow the [Setup Wizard](/docs/v1/tech/tutorials/setup-wizard) tutorial until you get to the **Complete Setup** section, and then return here.
 
-Once you have completed the Setup Wizard you should now be at the FusionAuth dashboard, next we need to Create an Application and API key. Below is an example screenshot of what you should expect. Complete the **Missing Application** and **Missing API Key** setup steps. 
+Once you have completed the Setup Wizard you should now be at the FusionAuth dashboard. Now we need to create an application and an API key. Below is an example screenshot of what you should expect. Complete the **Missing Application** and **Missing API Key** setup steps.
 
 {% include _image.html src="/assets/img/blogs/complete-setup.png" alt="FusionAuth Dashboard" class="full" figure=false %}
 
-Once you click **Setup** on the **Missing Application** task on the dashboard, you'll be taken to the **Add Application** panel. 
+Once you click **Setup** on the **Missing Application** task on the dashboard, you'll be taken to the **Add Application** panel.
 
 {% include _image.html src="/assets/img/blogs/add-application.png" alt="Create Application" class="full" figure=false %}
 
-Enter your application name, leave the Id field blank as it will be auto-generated. Add at least one role named `user` by clicking on the `Add Role` button while on the `Roles` tab. Click the blue save icon in the top right to add the application. To complete the next task select `API Keys` from the left navigation sidebar.
+Enter your application name, leaving the **Id** field blank as it will be auto-generated. Add at least one role named `user` by clicking on the **Add Role** button while on the **Roles** tab. Click the blue save icon in the top right to add the application. To complete the next task select **API Keys** from the left navigation sidebar.
 
 {% include _image.html src="/assets/img/blogs/api-keys.png" alt="API Key Page" class="full" figure=false %}
 
-On the API Keys page you will see a listing of all API keys, if you've just installed FusionAuth there will not yet be any API keys. Click the green plus (+) icon in the upper right to add an API key.
+On the API Keys page you will see a listing of all API keys. If you've just installed FusionAuth there will not be any API keys yet. Click the green plus (+) icon in the upper right to add an API key.
 
 {% include _image.html src="/assets/img/blogs/add-api-key.png" alt="Create API Key" class="full" figure=false %}
 
-The value in the `Key` field will be auto-generated. You do not need to change any of the endpoint settings, we will be creating a super user key for this example which means the key will have access to all APIs. Click the save icon in the upper right. 
+The value in the **Key** field will be auto-generated. You do not need to change any of the endpoint settings—we will be creating a super user key for this example which means the key will have access to all APIs. Click the save icon in the upper right.
 
-Now, navigate back to the dashboard, by clicking on **Dashboard** in the left navigation sidebar. You will now be on the dashboard and you should see a screen like this since we haven't done anything with email settings:
+Now, navigate back to the dashboard by clicking on **Dashboard** in the left navigation sidebar. You should see a screen like this since we haven't done anything with email settings.
 
 {% include _image.html src="/assets/img/blogs/complete-setup-only-email.png" alt="Create API Key" class="full" figure=false %}
 
-FusionAuth is now installed and configured, we'll now move onto code!
+Congratulations! FusionAuth is now installed and configured. Now we'll move onto code!
 
 ## Create a Node.js application with FusionAuth support
 Use the steps below to initialize your project in your home directory and add the `fusionauth-node-client` and `express` libraries.
@@ -55,7 +55,7 @@ npm install express --save
 npm install fusionauth-node-client --save
 ```
 
-As a first test to ensure that you can connect to your FusionAuth service, create a `test.js` file, replacing the first parameter in the FusionAuthClient constructor `[your API Key here]` with a valid API key from your FusionAuth environment. Change the email address `user@example.com` with a valid user in your FusionAuth environment, if you just installed FusionAuth there may only be a single user which will be the email address used to complete the Setup Wizard.
+As a first test to ensure that you can connect to your FusionAuth service, create a `test.js` file, replacing the first parameter in the FusionAuthClient constructor `[your API Key here]` with a valid API key from your FusionAuth environment. Replace the email address `user@example.com` with a valid user in your FusionAuth environment. If you just installed FusionAuth there may only be a single user which will be the email address used to complete the Setup Wizard.
 
 ```js
 const {FusionAuthClient} = require('fusionauth-node-client');
@@ -75,7 +75,7 @@ function handleResponse (clientResponse) {
 }
 ```
 
-Run this code by calling `node test.js`. You should get back a valid JSON response that looks something like this :
+Run this code by calling `node test.js`. You should get back a valid JSON response that looks something like this:
 
 ```js
 {
@@ -109,15 +109,15 @@ Run this code by calling `node test.js`. You should get back a valid JSON respon
 }
 ```
 
-If you received a JSON response body with a user object as you expected, you have now verified you can connect to your FusionAuth service and retrieve a valid user, we can move on to building an Express application.
+If you received a JSON response body with a user object as you expected, you have now verified you can connect to your FusionAuth service and retrieve a valid user. We can move on to building an Express application.
 
 To begin, install the` express-session` package.
- 
+
 ```sh
 npm install express-session --save
 ```
 
-And then create a simple `index.js`. This Express application handles user login, logout, and preventing access the `/profile` route if the user is not logged in. In a real world application, we would have this server behind an HTTPS connection and we would probably use POST instead of GET. Note, change `[your API Key here]` with your valid API key and change `[your Application Id here]` to your application Id.
+And then create a simple `index.js`. This Express application handles user login, logout, and prevents access to the `/profile` route if the user is not logged in. In a real world application, we would have this server behind an HTTPS connection and we would probably use POST instead of GET. **NOTE:** Replace `[your API Key here]` with your valid API Key and replace `[your Application Id here]` with your Application Id.
 
 ```js
 const express = require('express');
@@ -193,9 +193,9 @@ app.listen(3000, function() {
 });
 ```
 
-Let's break down the above code into smaller parts. 
- 
-After all the import statements, we have the standard Express invocation, `var app = express();` which creates our Express application. Next, we create the FusionAuth client, but with your API key, and then define the `applicationId`. Then we initialize the data we will look for when a client attempts to access a resource:
+Let's break down the above code into smaller parts.
+
+After all the import statements, we have the standard Express invocation, `var app = express();` which creates our Express application. Next, we create the FusionAuth client with your API key, and then define the `applicationId`. Then we initialize the data we will look for when a client attempts to access a resource.
 
 ```js
 const {FusionAuthClient} = require('fusionauth-node-client');
@@ -211,7 +211,7 @@ const data = {
 };
 ```
 
-Then we setup the initial data we will store in our session:
+Next we set up the initial data we will store in our session.  
 
 ```js
 app.use(session({
@@ -221,21 +221,21 @@ app.use(session({
 }));
 ```
 
-Note the `secret` field. This is used to verify the JSON Web Token (JWT). We will talk a little more about that when we look at the console output for the `/login handler`. If we were to implement JWT, we would use a real secret. The secret can be defined either in your Application configuration or the System-wide settings. By default, when you create a new application, no secret is defined and the system-wide configuration is used which is defined in the **Settings -> System** panel, as illustrate here:
+Note the `secret` field. This is used to verify the JSON Web Token (JWT). We will talk a little more about that when we look at the console output for the `/login handler`. If we were to implement JWT, we would use a real secret. The secret can be defined either in your Application configuration or the system-wide settings. By default, when you create a new application, no secret is defined and the system-wide configuration is used which is defined in the **Settings -> System** panel, as shown here.
 
 {% include _image.html src="/assets/img/blogs/system-jwt-settings.png" alt="System Settings" class="full" figure=false %}
 
-We then define the four endpoints this server will respond to: `/`, `/logout`, `/login`, and `/profile`, along with the code that executes (the "handler") for each endpoint..
+We then define the four endpoints this server will respond to: `/`, `/logout`, `/login`, and `/profile`, along with the code that executes (the "handler") for each endpoint.
 
-+ The root endpoint, `/` simply responds with **Hello World!**.
++ The root endpoint, `/` responds with **Hello World!**.
 
 + `/logout` simply destroys the session.
 
-+ `/login` first checks to see if we already have a user associated with the session. If no user is on the session, it pulls the values of `user` and `password` from the `query` object on the Express `req` object. It then calls `client.login(obj)` with an object containing the `loginId`, `password`, and `applicationId`. `client.login()` returns a Promise object. We can chain that Promise using `.then()` upon success, and catch any exceptions using the `.catch()`.
++ `/login` first checks to see if we already have a user associated with the session. If no user is on the session, it pulls the values of `user` and `password` from the `query` object on the Express `req` object. It then calls `client.login(obj)` with an object containing the `loginId`, `password`, and `applicationId`. `client.login()` and returns a Promise object. We can chain that Promise using `.then()` upon success, and catch any exceptions using the `.catch()`.
 
-The final route is `/profile`. This route handler simply checks to see if we have a user object. If not, we respond with `Login required`. If we have a user, we just respond with `Profile`. In a real world application, we would grab some profile information associated with this user from some database, fill out a template, and return HTML to the browser.
++ The final route is `/profile`. This route handler simply checks to see if we have a user object. If not, we respond with `Login required`. If we have a user, we just respond with `Profile`. In a real world application, we would grab some profile information associated with this user from the database, fill out a template, and return HTML to the browser.
 
-Now, simply run the application:
+Now, simply run the application.
 
 ```
 node index.js
@@ -245,7 +245,7 @@ Once the server is up and running, open your browser and go to [http://localhost
 
 Now go to [http://localhost:3000/login?user=user@example.com&password=password](http://localhost:3000/login?user=user@example.com&password=password) replacing the user and password with valid credentials. Upon a successful login, you will be re-routed to `/profile`.
 
-Let's take a look at what a FusionAuth response looks like. Notice the output of your server running in your terminal. We dump the contents of the response from FusionAuth at this line of the `/login` handler:
+Let's take a look at what a FusionAuth response looks like. Notice the output of your server running in your terminal. We dump the contents of the response from FusionAuth at this line of the `/login` handler.
 
 ```js
 console.log(JSON.stringify(clientResponse.successResponse, null, 8))
@@ -286,9 +286,9 @@ Your terminal output should contain something like this, obviously with differen
 }
 ```
 
-The response contains two values: `token` and `user`. The `token` is a JSON Web Token (JWT) and the `user` is our logged in user. 
+The response contains two values: `token` and `user`. The `token` is a JSON Web Token (JWT) and the `user` is our logged in user.
 
-If you like, you can take the value of the `token` and plug it in at [jwt.io](https://jwt.io "Jump to JWT.io"). The decoded data should look like this (with different values, of course):
+If you like, you can take the value of the `token` and plug it in at [jwt.io](https://jwt.io "Jump to JWT.io"). The decoded data should look like this with your unique values:
 
 ```js
 {
@@ -308,7 +308,7 @@ Finally, [http://localhost:3000/logout](http://localhost:3000/logout) should log
 
 ## User Registration
 
-For this next step, we will be adding a new route to handle registration to our application. 
+For this next step, we will be adding a new route to handle registration to our application.
 
 Since user registration can take quite a few options, we will encode the request in a JSON object and POST to our application. Registration can be done as a two-step process (create the user, then create the registration) or as a single step (create the user and registration). We will do the single step for the sake of simplicity in this tutorial.
 
@@ -339,11 +339,11 @@ app.post('/register', function(req, res){
 });
 ```
 
-In this tutorial, we're not incorporating proper error handling. and we are not checking to see if we have a logged in user. These are things you would want to handle in a production application. 
+In this tutorial, we're not incorporating proper error handling, and we are not checking to see if we have a logged in user. These are things you would want to handle in a production application.
 
 Note that we pass `null` as the first parameter in the `client.register()` call. This tells FusionAuth to generate a UUID for this user. You can optionally create your own UUID and pass it in place of null.
 
-Restart the server, and POST to the register route, using `cURL`, or your favorite REST client. An example using curl (replace `[Your Application Id]` with your real `applicationId`):
+Restart the server, and POST to the register route, using `cURL`, or your favorite REST client. Here's an example using curl (replace `[Your Application Id]` with your real `applicationId`):
 
 ```js
 curl -X POST \
@@ -401,7 +401,7 @@ Since we just send back whatever response FusionAuth sends, you should see a suc
 }
 ```
 
-To see an error response, simply re-submit the exact same registration request. You should get two errors: duplicate email address error and duplicate username error:
+To see an error response, simply re-submit the exact same registration request. You should get two errors: `duplicate email address error` and `duplicate username error`.
 
 ```js
 {
