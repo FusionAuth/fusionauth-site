@@ -11,9 +11,9 @@ tags:
 - programming
 image: blogs/node-and-fusionauth-example-tiny.jpg
 ---
-There are a variety of strategies for authentication in Node.js apps, but none provide the security, features and complete user management that come with FusionAuth. In this tutorial we'll start with simple Express application and show you how to add FusionAuth to register and authenticate users.
+There are a variety of strategies for authentication in Node.js apps, but none provide the security, features and complete user management that come with FusionAuth. In this tutorial we'll start with a simple Express application and show you how to add FusionAuth to register and authenticate users.
 <!--more-->
-We'll assume that you are using a unix command-line application like Power Shell on Windows, Terminal on macOS, or a standard terminal on Linux. You will also need *curl* or some means of creating `GET` and `POST` requests to your localhost. I like REST clients such as [Insomnia](https://insomnia.rest/ "Get Insomnia") or [Postman](https://www.getpostman.com/ "Get Postman"). Let's get coding!
+We'll assume that you are using a unix command-line application like Power Shell on Windows, Terminal on macOS, or a standard terminal on Linux. You will also need **cURL** or some means of creating `GET` and `POST` requests to your localhost. I like REST clients such as [Insomnia](https://insomnia.rest/ "Get Insomnia") or [Postman](https://www.getpostman.com/ "Get Postman"). Let's get coding!
 
 
 ## Install and Set Up FusionAuth
@@ -221,19 +221,19 @@ app.use(session({
 }));
 ```
 
-Note the `secret` field. This is used to verify the JSON Web Token (JWT). We will talk a little more about that when we look at the console output for the `/login handler`. If we were to implement JWT, we would use a real secret. The secret can be defined either in your Application configuration or the system-wide settings. By default, when you create a new application, no secret is defined and the system-wide configuration is used which is defined in the **Settings -> System** panel, as shown here.
+Note the `secret` field. This is used to verify the JSON Web Token (JWT). We will talk a little more about that when we look at the console output for the `/login handler`. If we were to implement JWT, we would use a real secret. The secret can be defined either in your Application configuration or the system-wide settings. By default, when you create a new application, no secret is defined and the system-wide configuration is used which is defined in the **Settings -> System** panel, as shown here:
 
 {% include _image.html src="/assets/img/blogs/system-jwt-settings.png" alt="System Settings" class="full" figure=false %}
 
 We then define the four endpoints this server will respond to: `/`, `/logout`, `/login`, and `/profile`, along with the code that executes (the "handler") for each endpoint.
 
-+ The root endpoint, `/` responds with **Hello World!**.
++ The root endpoint, `/` responds with **Hello World!**
 
 + `/logout` simply destroys the session.
 
 + `/login` first checks to see if we already have a user associated with the session. If no user is on the session, it pulls the values of `user` and `password` from the `query` object on the Express `req` object. It then calls `client.login(obj)` with an object containing the `loginId`, `password`, and `applicationId`. `client.login()` and returns a Promise object. We can chain that Promise using `.then()` upon success, and catch any exceptions using the `.catch()`.
 
-+ The final route is `/profile`. This route handler simply checks to see if we have a user object. If not, we respond with `Login required`. If we have a user, we just respond with `Profile`. In a real world application, we would grab some profile information associated with this user from the database, fill out a template, and return HTML to the browser.
++ The final route is `/profile`. This route handler simply checks to see if we have a user object. If not, we respond with **Login required**. If we have a user, we just respond with **Profile**. In a real world application, we would grab some profile information associated with this user from the database, fill out a template, and return HTML to the browser.
 
 Now, simply run the application.
 
@@ -343,7 +343,7 @@ In this tutorial, we're not incorporating proper error handling, and we are not 
 
 Note that we pass `null` as the first parameter in the `client.register()` call. This tells FusionAuth to generate a UUID for this user. You can optionally create your own UUID and pass it in place of null.
 
-Restart the server, and POST to the register route, using `cURL`, or your favorite REST client. Here's an example using curl (replace `[Your Application Id]` with your real `applicationId`):
+Restart the server, and POST to the register route, using `cURL`, or your favorite REST client. Here's an example using cURL (replace `[Your Application Id]` with your real `applicationId`):
 
 ```js
 curl -X POST \
