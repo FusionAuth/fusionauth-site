@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "All your passwords are belong to us"
+title: "Save a CPU - Ditch BCrypt, use SHA2 instead"
 description: One-way hashing for passwords is the standard mechanism used to protect your user's passwords. Let's take a look at how it works and some new ideas to improve it.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
@@ -9,7 +9,7 @@ tags:
 - code
 - nodejs
 - programming
-image: blogs/all-your-password-entropy.png
+image: blogs/cpu-on-fire.jpg
 ---
 
 Here's the reality, billions of credentials have been leaked or stolen and are now easily downloaded online by anyone. Many of these databases of identities include passwords in plain text, while others are one-way hashed. One-way hashing is better (we'll get to why in a second), but it is only as secure as is mathematically feasible. Let's take a look at one-way hashing algorithms and how computers handle them.
