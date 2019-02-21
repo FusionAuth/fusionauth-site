@@ -18,7 +18,7 @@ Here's the reality, billions of credentials have been leaked or stolen and are n
 
 ## Hashing
 
-A hash by definition is a function that can map data of an arbitrary size to data of a fixed size. MD5 is a hashing algorithm that uses various bit-wise operations on any number of bytes to produce a 128-bit hash. The algorithm was designed specifically so that going from a hash back to the original bytes is impossible. Developers use an MD5 hash so that instead of storing a plain text password, they instead only store the hash. When a user is authenticated, the plain text password they type into the login form is hashed, and because the algorithm will always produce the same hash result given the same input, comparing this hash to the hash in the database tells us the password is correct.
+A hash by definition is a function that can map data of an arbitrary size to data of a fixed size. SHA2 is a hashing algorithm that uses various bit-wise operations on any number of bytes to produce a 128-bit hash. The algorithm was designed specifically so that going from a hash back to the original bytes is impossible. Developers use an SHA2 hash so that instead of storing a plain text password, they instead only store the hash. When a user is authenticated, the plain text password they type into the login form is hashed, and because the algorithm will always produce the same hash result given the same input, comparing this hash to the hash in the database tells us the password is correct.
 
 ## Cracking Passwords
 
@@ -28,10 +28,10 @@ While one-way hashing means we aren't storing plain text passwords, it is still 
 
 The first is called a lookup table, or sometimes referred to as a rainbow table. This method builds a massive lookup table that maps hashes to plain text passwords. The table is built by simply hashing every possible password combination and storing it in some type of database or data-structure that allows for quick lookups.
 
-Here's an example of a lookup table for MD5 hashed passwords:
+Here's an example of a lookup table for SHA2 hashed passwords:
 
 ```yaml
-md5_hash                           password
+sha2_hash                          password
 -------------------------------------------
 f447b20a7fcbf53a5d5be013ea0b15af   123456
 e007dbd0826e61b58888b43cae982e76   brooncosfan123
@@ -42,7 +42,7 @@ e007dbd0826e61b58888b43cae982e76   brooncosfan123
 cc922b223c0cc1e0c9f15841720ded92   xboxjunkie42
 ```
 
-Using a lookup table, all the attacker needs to know is the MD5 hash of the password and they can see if it exists in the table. For example, let's assume for a moment that Netflix stores your password using an MD5 hash. If Netflix is breached, their user database is likely now available to anyone with a good internet connection and a torrent client. Even a mediocre hacker now only needs to lookup the MD5 hash assoicated with your Netflix account to see if it exists in their lookup table. This will reveal nearly instantly what your plain text password is for Netflix. Now, this hacker can log in to your Netflix account and binge watch all four seasons of Fuller House ("how rude!"). And he can also try this password on Hulu and HBO Go to see if you used the same email address and password for those accounts as well.
+Using a lookup table, all the attacker needs to know is the SHA2 hash of the password and they can see if it exists in the table. For example, let's assume for a moment that Netflix stores your password using an SHA2 hash. If Netflix is breached, their user database is likely now available to anyone with a good internet connection and a torrent client. Even a mediocre hacker now only needs to lookup the SHA2 hash assoicated with your Netflix account to see if it exists in their lookup table. This will reveal nearly instantly what your plain text password is for Netflix. Now, this hacker can log in to your Netflix account and binge watch all four seasons of Fuller House ("how rude!"). And he can also try this password on Hulu and HBO Go to see if you used the same email address and password for those accounts as well.
 
 {% include _image.html src="/assets/img/blogs/salt.png" alt="Salt" class="float-right ml-3" style="width: 250px;" figure=false %}
 
@@ -52,12 +52,12 @@ Here's an example of a salt and the resulting combination of the password and th
 
 ```kotlin
 // Bad, no salt. Very bland.
-md5("password") // 286755fad04869ca523320acce0dc6a4
+sha2("password") // 286755fad04869ca523320acce0dc6a4
 
 // Better, add a salt.
 salt = ";L'-2!;+=#/5B)40/o-okOw8//3a"
 toHash = ";L'-2!;+=#/5B)40/o-okOw8//3apassword"
-md5(toHash) // 297187885d405be6b25bda1b5cb13896
+sha2(toHash) // 297187885d405be6b25bda1b5cb13896
 ```
 
 Now that we have added the salt, the "password" that we actually generated the hash from was the String `;L'-2!;+=#/5B)40/o-okOw8//3apassword`. This String is long, complex and contains a lot of random characters. Therefore, it is nearly impossible that the hacker that created the lookup table would have generated the hash for the String `;L'-2!;+=#/5B)40/o-okOw8//3apassword`. 
@@ -96,8 +96,8 @@ public class PasswordCrack {
         fillArrayHashAndCheck(ca, index + 1, salt, hashFromDatabase);
       } else {
         String password = salt + new String(ca);
-        String md5Hex = DigestUtils.md5Hex(password).toUpperCase();
-        if (md5Hex.equals(hashFromDatabase)) {
+        String sha2Hex = DigestUtils.sha2Hex(password).toUpperCase();
+        if (sha2Hex.equals(hashFromDatabase)) {
           System.out.println("plain text password is [" + password + "]");
           System.exit(0);
         }
@@ -117,7 +117,7 @@ Let's bust out our TI-85 calculators and see if we can figure out how long this 
 possiblePasswords = 100^8 + 100^7 + 100^6
 ```
 
-The result of this expression is equal to `10,101,000,000,000,000`. This is quite a large number, north of 10 quadrillion to be a little more precise, but what does it actually mean when it comes to my program running? This depends on the speed of the computer I'm running on and how long it takes my computer to execute the MD5 algorithm. The algorithm is the key component here because the rest of the program is extremely fast at just creating the passwords.
+The result of this expression is equal to `10,101,000,000,000,000`. This is quite a large number, north of 10 quadrillion to be a little more precise, but what does it actually mean when it comes to my program running? This depends on the speed of the computer I'm running on and how long it takes my computer to execute the SHA2 algorithm. The algorithm is the key component here because the rest of the program is extremely fast at just creating the passwords.
 
 Here's where things get dicey. If you run a quick Google search for ["fastest bitcoin rig"](http://lmgtfy.com/?q=fastest+bitcoin+rig) you'll see that these machines are rated in terms of the number of hashes they can perform per second. The bigger ones can be rated as high as `44 TH/s`. That means it can generate 44 tera-hashes per second or `44,000,000,000,000`.
 
@@ -192,18 +192,18 @@ numberOfDays = numberOfHours / 24 = 116,909,722 or 116.9 million
 numberOfYears = numberOfDays / 365 = 320,300
 ```
 
-Not bad. By slowing down the hash computation, we have increased the time from 4 minutes using our Bitcoin rig to 320,300 years. In this comparision you can see the practical difference between using MD5 and BCrypt. BCrypt is purpose built to be extremely slow in comparison to MD5 and other more traditional hashing algorithms.
+Not bad. By slowing down the hash computation, we have increased the time from 4 minutes using our Bitcoin rig to 320,300 years. In this comparision you can see the practical difference between using SHA2 and BCrypt. BCrypt is purpose built to be extremely slow in comparison to SHA2 and other more traditional hashing algorithms.
 
 And here lies the debate that the security industry has been having for years:
 
-**Do we allow users to use short passwords and put the burden on the computer to generate hashes as slowly as reasonably still secure? Or do we force users to use long passwords and just use a fast hashing algorithm like MD5 or SHA512?**
+**Do we allow users to use short passwords and put the burden on the computer to generate hashes as slowly as reasonably still secure? Or do we force users to use long passwords and just use a fast hashing algorithm like SHA2 or SHA512?**
 
 [Some in the industry have argued that enough is enough with consuming massive amounts of CPU and GPU cycles simply computing hashes for passwords](https://blog.benpri.me/blog/2019/01/13/why-you-shouldnt-be-using-bcrypt-and-scrypt/). By forcing users to use long passwords, we get back a ton of computing power and can reduce costs by shutting off the 42 servers we have to run to keep up with login volumes.
 
 Others claim that this is a bad idea for a variety of reasons including:
 
 * Humans don't like change
-* The risk of simple algorithms like MD5 or SHA is still too high
+* The risk of simple algorithms like SHA2 is still too high
 * Simple algorithms might be currently vulnerable to attacks or new attacks might be discovered in the future
 
 At the time of this writing, there are still numerous simple algorithms that have not been attacked, meaning that no one has figured out a way to reduce the need to compute every possible hash. Therefore, it is still a safe assertion that using a simple algorithm on a long password is secure. This leaves the only reason not to force users to use long passwords is for the first reason mentioned above, "humans don't like change". In reality, many users will change and some will already be using long passwords.
@@ -230,7 +230,7 @@ Of course this is just the tip of the iceberg, we could perform a lot of analysi
 Let's just re-iterate our math from above one more time.
 
 ```text
-// Passwords of length 16 using MD5
+// Passwords of length 16 using SHA2
 totalYears to generate all passwords = 71,917,808,219 or 71.9 billion years
 
 // Passwords of length 8 using BCrypt
