@@ -245,4 +245,4 @@ Food for thought, we can hash approximately 20 passwords per second on a Amazon 
 
 Stayed tuned for an upcoming blog post where we walk through the real world performance numbers for 100 million users with passwords of varying length.
 
-If you'd like to discuss on this feature, comment below or visit the FusionAuth GitHub issue for it and upvote or comment. **NEED TO MAKE GITHUB ISSUE to link to**
+If you'd like to discuss on this feature, comment below or visit the FusionAuth GitHub issue for it and upvote or comment. [Feature: Entropy based password hashing](https://github.com/FusionAuth/fusionauth-issues/issues/85)
