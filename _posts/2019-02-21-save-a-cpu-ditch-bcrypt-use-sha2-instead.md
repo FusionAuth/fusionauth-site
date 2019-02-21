@@ -245,4 +245,6 @@ Food for thought, we can hash approximately 20 passwords per second on a Amazon 
 
 Stayed tuned for an upcoming blog post where we walk through the real world performance numbers for 100 million users with passwords of varying length.
 
+FusionAuth defaults to `PBKDF2` with `24,000` iterations as our default password hashing scheme, we also support BCrypt and many other algorithms to enable migrations from legacy systems. We continue to research new techniques to reduce CPU overhead while maintaining the highest standards in password storage.   
+ 
 If you'd like to discuss on this feature, comment below or visit the FusionAuth GitHub issue for it and upvote or comment. [Feature: Entropy based password hashing](https://github.com/FusionAuth/fusionauth-issues/issues/85)
