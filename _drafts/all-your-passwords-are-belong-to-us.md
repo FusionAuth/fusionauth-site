@@ -18,7 +18,7 @@ Here's the reality, billions of credentials have been leaked or stolen and are n
 
 ## Hashing
 
-A hash by definition is a function that can map data of an arbitrary size to data of a fixed size. SHA2 is a hashing algorithm that uses various bit-wise operations on any number of bytes to produce a 128-bit hash. The algorithm was designed specifically so that going from a hash back to the original bytes is impossible. Developers use an SHA2 hash so that instead of storing a plain text password, they instead only store the hash. When a user is authenticated, the plain text password they type into the login form is hashed, and because the algorithm will always produce the same hash result given the same input, comparing this hash to the hash in the database tells us the password is correct.
+A hash by definition is a function that can map data of an arbitrary size to data of a fixed size. SHA2 is a hashing algorithm that uses various bit-wise operations on any number of bytes to produce a fixed sized hash. For example, the SHA-256 algorithm produces a 256 bit result. The algorithm was designed specifically so that going from a hash back to the original bytes is infeasible. Developers use an SHA2 hash so that instead of storing a plain text password, they instead only store the hash. When a user is authenticated, the plain text password they type into the login form is hashed, and because the algorithm will always produce the same hash result given the same input, comparing this hash to the hash in the database tells us the password is correct.
 
 ## Cracking Passwords
 
