@@ -31,15 +31,15 @@ The first is called a lookup table, or sometimes referred to as a rainbow table.
 Here's an example of a lookup table for SHA2 hashed passwords:
 
 ```yaml
-sha2_hash                          password
--------------------------------------------
-f447b20a7fcbf53a5d5be013ea0b15af   123456
-e007dbd0826e61b58888b43cae982e76   brooncosfan123
-951a44f847eed2750383257e4a7938eb   Letmein
-7fc91c4065011b63b4bdfda7dec03225   newenglandclamchowder
-8300e225fd26a73949c56d0f2cebde9b   opensesame
-286755fad04869ca523320acce0dc6a4   password
-cc922b223c0cc1e0c9f15841720ded92   xboxjunkie42
+sha2_hash                                                          password
+-----------------------------------------------------------------------------------------
+e150a1ec81e8e93e1eae2c3a77e66ec6dbd6a3b460f89c1d08aecf422ee401a0   123456
+e5d316bfd85b606e728017e9b6532e400f5f03e49a61bc9ef59ec2233e41015a   broncosfan123
+561acac680e997e22634a224df2c0931cf80b9f7c60102a4e12e059f87558232   Letmein
+bdc511ea9b88c90b75c3ebeeb990e4e7c813ee0d5716ab0431aa94e9d2b018d6   newenglandclamchowder
+9515e65f46cb737cd8c191db2fd80bbd05686e5992b241e8ad7727510b7142e6   opensesame
+6b3a55e0261b0304143f805a24924d0c1c44524821305f31d9277843b8a10f4e   password
+c194ead20ad91d30c927a34e8c800cb9a13a7e445a3ffc77fed14176edc3c08f   xboxjunkie42
 ```
 
 Using a lookup table, all the attacker needs to know is the SHA2 hash of the password and they can see if it exists in the table. For example, let's assume for a moment that Netflix stores your password using an SHA2 hash. If Netflix is breached, their user database is likely now available to anyone with a good internet connection and a torrent client. Even a mediocre hacker now only needs to lookup the SHA2 hash assoicated with your Netflix account to see if it exists in their lookup table. This will reveal nearly instantly what your plain text password is for Netflix. Now, this hacker can log in to your Netflix account and binge watch all four seasons of Fuller House ("how rude!"). And he can also try this password on Hulu and HBO Go to see if you used the same email address and password for those accounts as well.
@@ -52,12 +52,12 @@ Here's an example of a salt and the resulting combination of the password and th
 
 ```kotlin
 // Bad, no salt. Very bland.
-sha2("password") // 286755fad04869ca523320acce0dc6a4
+sha2("password") // 6b3a55e0261b0304143f805a24924d0c1c44524821305f31d9277843b8a10f4e
 
 // Better, add a salt.
 salt = ";L'-2!;+=#/5B)40/o-okOw8//3a"
 toHash = ";L'-2!;+=#/5B)40/o-okOw8//3apassword"
-sha2(toHash) // 297187885d405be6b25bda1b5cb13896
+sha2(toHash) // f534e6bf84a638112e07e69861927ab624c0217c0655e4d3be07659bcf6c1c07
 ```
 
 Now that we have added the salt, the "password" that we actually generated the hash from was the String `;L'-2!;+=#/5B)40/o-okOw8//3apassword`. This String is long, complex and contains a lot of random characters. Therefore, it is nearly impossible that the hacker that created the lookup table would have generated the hash for the String `;L'-2!;+=#/5B)40/o-okOw8//3apassword`. 
