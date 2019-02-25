@@ -13,10 +13,10 @@ image: blogs/got-users.jpg
 ---
 ## FusionAuth User Registration Hits 100,000,000 in Load Test
 
-Did you know that each time you log into Facebook, check your email or fire up Candy Crush, a software engineer has thought about user registration and authentication. Hopefully she has thought a lot about it. For example, what happens if Call of Duty goes offline for maintenance and then six million users try to log back in at the same time? It could take days for users to get back online if peak loads aren’t planned for.
+Did you know that each time you log into Facebook, check your email or fire up Fortnite, a software engineer has thought about user registration and authentication. Hopefully she has thought a lot about it. For example, what happens if Call of Duty goes offline for maintenance and then six million users try to log back in at the same time? It could take days for users to get back online if peak loads aren’t planned for.
 <!--more-->
 
-Our sister product CleanSpeak filters billions of messages in any given month, so when we started developing FusionAuth a few years ago we spent a lot of time thinking about scale and performance.
+Over the past ten years we've been building a real time text filter called CleanSpeak. CleanSpeak filters billions of messages in any given month. With this experience, when we started developing FusionAuth a few years ago we spent a lot of time thinking about scale and performance.
 
 One way we design for performance is by running load tests during our development cycles to ensure our database indexes are optimized and to confirm we don’t have any poor performing code paths. By stressing our software we are able to measure its response and determine behavior.
 
