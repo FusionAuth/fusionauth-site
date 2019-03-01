@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Getting Started with Email Templates In FusionAuth
+title: Getting Started with Email Templates in FusionAuth
 description: Emails should represent your brand, and FusionAuth's email templates help you do that with ease.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
@@ -15,14 +15,14 @@ image: blogs/email-templates.png
 
 The email templates in FusionAuth can be customized allowing you to present a consistent brand across all customer touch points. In this post, we show you how to set up the email templates to be ready to use FusionAuth's integrated email features.
 <!--more-->
-FusionAuth ships with three templates to support standard workflows.
+FusionAuth deploys with three templates to support standard workflows.
 - Forgot Password
 - Setup Password
 - Verify Email
 
-You should customize these templates with your branding, but at a minimum, you will need to make minor edits prior to using them in production. To enable emails, you will need to modify the URL used in the template to be publicly accessible.
+You should customize these templates with your branding, but at a minimum, you will need to make minor edits prior to using them in production. To enable emails, you need to modify the URL used in the template to be publicly accessible.
 
-**NOTE:** Email features require that the SMTP setup has been completed. Review your FusionAuth dashboard, if you see a box titled _Email Settings_ you will need to complete that task first. View the [Using the FusionAuth Setup Wizard tutorial](/blog/2018/03/16/using-the-setup-wizard) to see how to complete the SMTP configuration.
+**NOTE:** Email features require that the SMTP setup has been completed. Review your FusionAuth dashboard. If you see a box titled _Email Settings_ you will need to complete that task first. View the [Using the FusionAuth Setup Wizard tutorial](/blog/2018/03/16/using-the-setup-wizard) to see how to complete the SMTP configuration.
 
 {% include _image.html src="/assets/img/blogs/email-templates-setup-smtp.png" alt="Email Templates in FusionAuth Setup" class="full" figure=false %}
 
@@ -30,11 +30,11 @@ You should customize these templates with your branding, but at a minimum, you w
 
 Once your SMTP configuration is complete, navigate to the **Settings** option in the left side menu, then select **Email Templates.** This will take you to the Email Template page. Here you will see the three default Email templates provided by FusionAuth.
 
-In addition to the template name, you will see the unique ID of the template, this will be used when using the email APIs during your integration. For each template you may select **Edit, View,** or **Delete** from the provided row actions. Selecting the **View** action is helpful to preview how the template will render. **Delete** will permanently remove an email template and this action cannot be undone. You will be prevented from completing the **Delete** operation if the template in use by the FusionAuth configuration. To create a new template, you may click on the green **Add** button in the top right corner.
+In addition to the template name, you will see the unique ID of the template. This will be used when using the email APIs during your integration. For each template you may select **Edit, View,** or **Delete** from the provided row actions. Selecting the **View** action is helpful to preview how the template will render. **Delete** will permanently remove an email template and this action cannot be undone. You will be prevented from completing the **Delete** operation if the template is in use by the FusionAuth configuration. To create a new template, click on the green **Add** button in the top right corner.
 
 ## Edit Email Verification
 
-Next, we will take a deeper look at the provided Email Verification template. We will modify this template to prepare it for use in our production application. To begin, click the blue **Edit** icon for the Email Verification template, this action will take you to the Edit Email Template page.
+Next, we will take a deeper look at the provided Email Verification template. We will modify this template to prepare it for use in our production application. To begin, click the blue **Edit** icon for the Email Verification template. This action will take you to the Edit Email Template page.
 
 Below is a screenshot of the Edit Email Template page.
 
@@ -47,7 +47,7 @@ On the top section labeled Base Information you will see the field labeled **Id
 
 **Options**
 
-Once the Base Information has been modified to your liking we will move to the bottom section labeled Options. Here you have access to edit the HTML and Text versions of the templates.
+Once the Base Information has been modified to your liking, move to the bottom section labeled Options. Here you can edit the HTML and Text versions of the templates.
 
 The URL in the default template is configured to use **localhost** which will not work properly for your production instance. You will need to modify the HTML and Text body to reflect the publicly available FusionAuth URL. There is a preview button in the bottom right that will allow you to review how the email body will look prior to saving the template changes.
 
@@ -81,7 +81,7 @@ https://login.piedpiper.com/email/verify/${verificationId}
 
 **Localization**
 
-The last tab on the bottom section of the page is labeled Localization. Using Email Template localization allow you to communicate with your users in their preferred language which makes for a better user experience.
+The last tab on the bottom section of the page is labeled **Localization**. Using Email Template localization allow you to communicate with your users in their preferred language which makes for a better user experience.
 
 
 {% include _image.html src="/assets/img/blogs/email-templates-add-localization.png  " alt="Email Templates in FusionAuth Localization" class="full" figure=false %}

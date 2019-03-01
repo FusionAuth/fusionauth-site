@@ -8,17 +8,17 @@ categories: blog
 tags:
 - user registration
 - load test
-- call of duty
+- Fortnite
 image: blogs/got-users.jpg
 ---
 ## FusionAuth User Registration Hits 100,000,000 in Load Test
 
-Did you know that each time you log into Facebook, check your email or fire up Candy Crush, a software engineer has thought about user registration and authentication. Hopefully she has thought a lot about it. For example, what happens if Call of Duty goes offline for maintenance and then six million users try to log back in at the same time? It could take days for users to get back online if peak loads aren’t planned for.
+Did you know that each time you log into Facebook, check your email or fire up Fortnite, a software engineer has thought about user registration and authentication. Hopefully she has thought a lot about it. For example, what happens if Call of Duty goes offline for maintenance and then six million users try to log back in at the same time? It could take days for users to get back online if peak loads aren’t planned for.
 <!--more-->
 
-Our sister product CleanSpeak filters billions of messages in any given month, so when we started developing FusionAuth a few years ago we spent a lot of time thinking about scale and performance.
+Over the past ten years we've been building a real time text filter called CleanSpeak. CleanSpeak filters billions of messages in any given month. With this experience, when we started developing FusionAuth we spent a lot of time thinking about scale and performance.
 
-One way we design for performance is by running load tests during our development cycles to ensure our database indexes are optimized and to confirm we don’t have any poor performing code paths. By stressing our software we are able to measure its response and determine behavior.
+One way we design for performance is by running load tests during our development cycles. This way we ensure our database indexes are optimized and to confirm we don’t have any poor performing code paths. By stressing our software we are able to measure its response and determine behavior.
 
 Our load tests are run on very modest hardware and stock database configurations so that our metrics are not an unrealistic best case result, but rather the minimum you can obtain when running on bare metal. Our test system is nearly 10 years old with only an upgraded disk drive. Here are the system specifications:
 - Dell PowerEdge 1950 (2007)
@@ -29,7 +29,7 @@ Our load tests are run on very modest hardware and stock database configurations
 
 ## The Results
 
-To date we’ve registered 100 million users without any significant reduction in performance. We’re running about 400 new user registrations per second, roughly 1.4 million user registrations per hour. Once a user is registered subsequent logins are much faster at about 1000 per second which comes out to about 3.6 million per hour.
+To date we’ve registered 100 million users without any significant reduction in performance. We’re running about 400 new user registrations per second, roughly 1.4 million user registrations per hour. Once a user is registered, subsequent logins are much faster at about 1000 per second which comes out to about 3.6 million per hour.
 
 The latest [census data](https://www.census.gov/quickfacts/ "Jump to Census Data site") we have shows that the US population is approximately 327 million as of 2018. 23% of that total population is under 18 years of age. This works out to be about 73 million people under the age of 18 living in this country.
 
