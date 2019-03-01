@@ -7,7 +7,7 @@ image: blogs/auth0-and-fusionauth-tale-of-two-solutions.png
 excerpt_separator: <!--more-->
 ---
 
-We’ve seen a lot of news lately about identity solutions like Auth0 and FusionAuth and hope that trend will continue. Auth0 and FusionAuth both provide advanced customer identity and access management (CIAM) and it is exciting to see a company that we respect recognized by the wider community. Strangely, when I say this at the CIAM events we attend I get a few curious looks. Why would we want them to be recognized? Shouldn’t we want FusionAuth to get the attention?
+We’ve seen a lot of news lately about Authentication as a Service platforms like Auth0 and FusionAuth and hope that trend will continue. Auth0 and FusionAuth both provide advanced customer identity and access management (CIAM) and it is exciting to see a company that we respect recognized by the wider community. Strangely, when I say this at the CIAM events we attend I get a few curious looks. Why would we want them to be recognized? Shouldn’t we want FusionAuth to get the attention?
 <!--more-->
 
 ## Why the Attention is Good for Auth0 and FusionAuth
@@ -22,6 +22,7 @@ The fact is, Auth0 and FusionAuth are similar in a lot of ways. We both have the
 We also share more advanced features that make a difference in the usability and security of an identity platform. Any large or soon-to-be-large applications need to manage their users, not just provide sign-in like social media solutions. Auth0 and FusionAuth provide:
 * Multi-Factor Authentication
 * On-Premise and Private Cloud Deployments
+* Full support for Authentication as a Service (AaaS)
 * User Search and User Management Interfaces
 
 And then we both go farther to provide the extras that keep customer accounts secure such as:
@@ -36,7 +37,6 @@ Auth0 and FusionAuth share many essential elements of a customer identity manage
 [{% include _image.html src="/assets/img/blogs/auth0-fusionauth-compare-sample.png" alt="Auth0 and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Download the Auth0 and FusionAuth Feature Comparison")
 
 ### Free for Unlimited Users
-
 One of the biggest differences between Auth0 and FusionAuth is cost. FusionAuth is free for unlimited users. No strings, gimmicks, or tricks. No cost increases when you hit a certain Monthly Active User threshold. Much like a database or a web server, secure authentication is so essential that developers should be able to implement it quickly and easily without cost concerns. And unlike the free options from other vendors, we don’t feature-cripple or user-limit FusionAuth. You get the full unrestricted platform with every feature and benefit.
 
 ### Single-Tenant Security
