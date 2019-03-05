@@ -33,7 +33,7 @@ Learn more about [single- and multi-tenant solutions](/blog/2018/12/03/single-te
 
 ### Maintenance and Support
 
-Identity management systems require constant security evaluation and maintenance to stay up-to-date as technology and threats evolve. FusionAuth has a team of security and identity experts that continually challenge our system with the newest hacker strategies and exploits. If vulnerabilities are found, security updates and patches are released immediately to eliminate potential threats. In contrast, issues found in Keycloak are announced to the community, and if addressed and resolved, included in the next scheduled release. The [Keycloak support policy](https://www.keycloak.org/support.html) clearly states that they do not issue patch releases, the following is a quote from th linked policy.
+Identity management systems require constant security evaluation and maintenance to stay up-to-date as technology and threats evolve. FusionAuth has a team of security and identity experts that continually challenge our system with the newest hacker strategies and exploits. If vulnerabilities are found, security updates and patches are released immediately to eliminate potential threats. In contrast, issues found in Keycloak are announced to the community, and if addressed and resolved, included in the next scheduled release. The [Keycloak support policy](https://www.keycloak.org/support.html) clearly states that they do not issue patch releases. Here's a quote directly from policy:
 
 {:.text}
 > Think of Keycloak as bleeding edge with quick releases, unpatched, and limited community support...
@@ -57,7 +57,7 @@ Interested in how FusionAuth compares to other solutions?
 - [Auth0](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Auth0 and FusionAuth")
 - [Cognito](/blog/2018/09/18/amazon-cognito-and-fusionauth-comparison "Amazon Cognito and FusionAuth")
 - [Firebase](/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison "Firebase and FusionAuth")
-- [Keycloak](/blog/2018/10/12/keycloak-fusionauth-comparison "Keycloak and FusionAuth")
+- [Keycloak](/blog/2019/03/06/keycloak-fusionauth-comparison "Keycloak and FusionAuth")
 - [Ping Identity](/blog/2018/10/08/quick-comparison-ping-identity-and-fusionauth "Ping Identity and FusionAuth")
 - [Okta](/blog/2018/10/16/8-things-to-know-about-okta-and-fusionauth "Okta and FusionAuth")
 - [OneLogin](/blog/2018/10/12/onelogin-and-fusionauth "OneLogin and FusionAuth")
