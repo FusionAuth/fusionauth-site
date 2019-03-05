@@ -10,14 +10,14 @@ tags:
 image: blogs/keycloak-fusionauth-comparison.jpg
 ---
 
-Keycloak and FusionAuth are CIAM platforms designed to register, login and manage users in modern applications. They eliminate the risk and costly development and maintenance time required to build an in-house solution. Keycloak and FusionAuth share many features, but also have important differences. Use this information to compare the two and determine which matches your needs.
+Keycloak and FusionAuth are CIAM platforms designed to register, login and manage users in modern applications. They eliminate the risk, costly development and maintenance time required to build an in-house solution. Keycloak and FusionAuth share many features, but also have important differences. Use this information to compare the two and determine which matches your needs.
 
 <!--more-->
 
 ## What Keycloak and FusionAuth Have In Common
 
 ### Essential CIAM Features
-Keycloak and FusionAuth both have the essential tools of modern identity management including secure login and registration, multi-factor authentication (MFA), single sign-on (SSO) across multiple applications, and customizable communication templates. Both also take advantage of OAuth tokens & API key management providing secure access across web and mobile applications. These are standard features of any CIAM platform but are often insecurely implemented in custom-built solutions.
+Keycloak and FusionAuth both have the essential tools of modern identity management including secure login and registration, multi-factor authentication (MFA), single sign-on (SSO) across multiple applications, and customizable communication templates. Both also take advantage of OAuth2 & API key management providing secure access across web and mobile applications. These are standard features of any CIAM platform but are often insecurely implemented in custom-built solutions.
 
 ### Cost: Both Are Free
 Every company needs to control their costs, even for essential components like identity management. Fortunately, both Keycloak and FusionAuth are free. Our models are slightly different, but we both offer our full platforms with no restrictions, licenses, or barriers regardless of how many users you have. Other popular SaaS ‘solutions’ charge you more as your monthly active users increase, often jumping to substantially higher pricing tiers just as your app starts getting traction and adding significant numbers of users.
@@ -27,13 +27,16 @@ Both Keycloak and FusionAuth are single-tenant solutions that install on-premise
 
 Learn more about [single- and multi-tenant solutions](/blog/2018/12/03/single-tenant-vs-multi-tenant) and [GDPR requirements](/blog/2019/01/29/white-paper-developers-guide-gdpr) in these whitepapers.
 
-## How Active Directory and FusionAuth Are Different
+## How Keycloak and FusionAuth Are Different
 
 [{% include _image.html src="/assets/img/blogs/keycloak-fusionauth-comparison-sample.png" alt="Keycloak and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-keycloak.pdf "Download the Keycloak and FusionAuth Feature Comparison")
 
 ### Maintenance and Support
 
-Identity management systems require constant security evaluation and maintenance to stay up-to-date as technology and threats evolve. FusionAuth has a team of security and identity experts that continually challenge our system with the newest hacker strategies and exploits. If vulnerabilities are found, security updates and patches are released immediately to eliminate potential threats. In contrast, issues found in Keycloak are announced to the community, and if addressed and resolved, included in the next scheduled release.
+Identity management systems require constant security evaluation and maintenance to stay up-to-date as technology and threats evolve. FusionAuth has a team of security and identity experts that continually challenge our system with the newest hacker strategies and exploits. If vulnerabilities are found, security updates and patches are released immediately to eliminate potential threats. In contrast, issues found in Keycloak are announced to the community, and if addressed and resolved, included in the next scheduled release. The [Keycloak support policy](https://www.keycloak.org/support.html) clearly states that they do not issue patch releases, the following is a quote from th linked policy.
+
+{:.text}
+> Think of Keycloak as bleeding edge with quick releases, unpatched, and limited community support...
 
 Keycloak and FusionAuth also have very different support models. FusionAuth has several options ranging from migration assistance to 365/24/7 email, chat, and phone support. We can also host and manage your FusionAuth instance for full-time system monitoring and maintenance. Keycloak is a Red Hat open-source project and [per their documentation](https://www.keycloak.org/support.html "Jump to Keycloak documentation") do not provide any support. Keycloak is never patched, and they warn that new releases may break backward compatibility. Support is only possible if you purchase and migrate to RH-SSO and buy a subscription to a JBoss Middleware product. As of this writing, cost and compatibility details are only available by contacting Red Hat sales.
 
