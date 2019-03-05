@@ -28,7 +28,7 @@ The FusionAuth API was designed with a similar conceptual framework and provides
 - Identity security for passwords, hashing, and storage
 - Consent management and history storage
 
-For more information download our [**Developer’s Guide to the GDPR**](/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation. If you have additional questions on the challenges of identity management and the GDRP, please [contact us](/contact "Contact Us").
+For more information download our [**Developer’s Guide to the GDPR**](/blog/2019/01/29/white-paper-developers-guide-gdpr "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation. If you have additional questions on the challenges of identity management and the GDRP, please [contact us](/contact "Contact Us").
 
 ## Learn More About FusionAuth
 
