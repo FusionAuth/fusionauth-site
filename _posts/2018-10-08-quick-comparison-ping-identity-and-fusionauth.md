@@ -24,7 +24,7 @@ While Ping Identity and FusionAuth share these benefits, they differ in several 
 
 ## How Ping Identity and FusionAuth Are Different
 
-[{% include _image.html src="/assets/img/blogs/pingidentity-fusionauth-compare-sample.png" alt="Ping Identity and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-ping-identity.pdf "Download the Ping Identity and FusionAuth Feature Comparison")
+[{% include _image.html src="/assets/img/blogs/pingidentity-fusionauth-compare-sample.png" alt="Ping Identity and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-ping-identity.pdf "Download the Ping Identity and FusionAuth Feature Comparison")
 
 ### Free for Unlimited Users
 One of the biggest differences between Ping Identity and FusionAuth is cost. FusionAuth is free for unlimited users. No strings, gimmicks, or tricks. No cost increases when you hit a certain Monthly Active User threshold. Much like a database or a web server, secure authentication is so essential that developers should be able to implement it quickly and easily without cost concerns. And unlike the free options from other vendors, we don’t feature-cripple or user-limit FusionAuth. You get the full unrestricted platform with every feature and benefit.
@@ -39,13 +39,13 @@ A big difference between Ping Identity and FusionAuth is that both of FusionAuth
 
 Single-tenant solutions like FusionAuth also allow for easier compliance with complex regulatory restrictions in many industries and countries. Germany’s Bundesdatenschutzgesetz, Australia’s Privacy Principles, Canada’s PIPEDA, and most recently the European Union’s GDPR all place different restrictions on how a customer’s personal data can be utilized and transmitted. FusionAuth provides companies with the expanded control required to comply with laws and regulations in their specific region or industry.
 
-For more details on the benefits and pitfalls of single- and multi-tenant solutions read this [whitepaper by our friends at Inversoft](https://www.inversoft.com/resource/single-tenant-vs-multi-tenant "Read more about single- and multi-tenant identity solutions").
+For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/blog/2018/12/03/single-tenant-vs-multi-tenant "Read more about single- and multi-tenant identity solutions").
 
 ### Configurable Password Encryption
 
 Every application has different security requirements. Some need to be HIPAA compliant, while others can be less stringent. FusionAuth lets you pick the level of security you need, and adjust it quickly as your needs or threats evolve, including using different password schemas for different groups of users. This can be a completely transparent process without any downtime or customer friction.
 
-To see this in action, [read about how we migrated DataStax](https://www.inversoft.com/resource/datastax-case-study "Read about DataStax migration") from their previous solution.
+To see this in action, [read about how we migrated DataStax](/resources/datastax-case-study "Read about DataStax migration") from their previous solution.
 
 ### Enterprise Identity Unification (EIU)
 
@@ -53,7 +53,7 @@ Another way Ping Identity and FusionAuth differ is how they can handle complex b
 
 FusionAuth allows a parent company to create unique internal tenants to isolate distinct datasets while still providing a single user management system for the overall organization. It gives the administrators incremental control over how and when the information is merged, and can even engage the users to manage, filter, and unify their own profile data.
 
-If you would like more information on how FusionAuth enables effective EIU across multiple identity management systems, [contact us](https://fusionauth.io/contact "Contact us today!").
+If you would like more information on how FusionAuth enables effective EIU across multiple identity management systems, [contact us](/contact "Contact us today!").
 
 ### Custom Feature Development
 
@@ -61,12 +61,12 @@ Another difference between Ping Identity and FusionAuth is our size and flexibil
 
 FusionAuth is a small, bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, StrategyCorp, Deutsche Bank and IBM. If you have a specific challenge for managing users that we don’t already cover, we’ll work with you for a solution. This is an added benefit to having a single-tenant solution: your system can be customized to fit your specific requirements and specifications.
 
-To see more details on how Ping Identity and FusionAuth stack up, [download this feature comparison](https://fusionauth.io/resources/fusionauth-vs-ping-identity.pdf "Ping Identity and FusionAuth Feature Comparison") and please [contact us](https://fusionauth.io/contact "Contact Us") if you have any questions.
+To see more details on how Ping Identity and FusionAuth stack up, [download this feature comparison](/resources/fusionauth-vs-ping-identity.pdf "Ping Identity and FusionAuth Feature Comparison") and please [contact us](/contact "Contact Us") if you have any questions.
 
-[Download the Ping Identity and FusionAuth Feature Comparison](https://fusionauth.io/resources/fusionauth-vs-ping-identity.pdf "Ping Identity and FusionAuth Feature Comparison"){: .btn .btn-primary}
+[Download the Ping Identity and FusionAuth Feature Comparison](/resources/fusionauth-vs-ping-identity.pdf "Ping Identity and FusionAuth Feature Comparison"){: .btn .btn-primary}
 
 ## Learn More About FusionAuth
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](https://fusionauth.io "FusionAuth Home") about FusionAuth and download it today.
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](/ "FusionAuth Home") about FusionAuth and download it today.
 
 ### Additional Comparisons
 
@@ -75,6 +75,7 @@ Interested in how FusionAuth compares to other solutions?
 - [Auth0](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Auth0 and FusionAuth")
 - [Cognito](/blog/2018/09/18/amazon-cognito-and-fusionauth-comparison "Amazon Cognito and FusionAuth")
 - [Firebase](/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison "Firebase and FusionAuth")
+- [Keycloak](/blog/2019/03/06/keycloak-fusionauth-comparison "Keycloak and FusionAuth")
 - [Ping Identity](/blog/2018/10/08/quick-comparison-ping-identity-and-fusionauth "Ping Identity and FusionAuth")
 - [Okta](/blog/2018/10/16/8-things-to-know-about-okta-and-fusionauth "Okta and FusionAuth")
 - [OneLogin](/blog/2018/10/12/onelogin-and-fusionauth "OneLogin and FusionAuth")

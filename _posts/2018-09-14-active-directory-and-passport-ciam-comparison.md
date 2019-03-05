@@ -42,7 +42,7 @@ With today’s internet, customers can come from anywhere in the world, but many
 
 Not every application has the same security requirements. Some need to be HIPAA compliant, while others can be less stringent. We let you pick the level of security you need, and adjust it as quickly as your needs or threats evolve. We also allow you to use different password schemas for different groups of users, making it possible to consolidate multiple identity management systems into one efficient platform. This can be a completely transparent process without any downtime or customer friction.
 
-For more details, [read about how we migrated DataStax](https://www.inversoft.com/resource/datastax-case-study "Read about DataStax migration") from their previous solution.
+For more details, [read about how we migrated DataStax](/resources/datastax-case-study "Read about DataStax migration") from their previous solution.
 
 ### Enterprise Identity Unification (EIU)
 
@@ -50,7 +50,7 @@ Another way Active Directory and FusionAuth differ is how they can handle comple
 
 FusionAuth allows a parent company to create unique tenants to isolate distinct datasets while still providing a single user management system for the overall organization. It gives the administrators incremental control over how and when the information is merged, and can even engage the users to manage, filter, and unify their own profile data.
 
-If you would like more information on how FusionAuth enables effective EIU across multiple identity management systems, [contact us](https://fusionauth.io/contact "Contact us today!").
+If you would like more information on how FusionAuth enables effective EIU across multiple identity management systems, [contact us](/contact "Contact us today!").
 
 ### The Features You Need in a CIAM
 
@@ -58,12 +58,12 @@ It’s no secret that Active Directory is an established solution that is firmly
 
 FusionAuth is a small, bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, StrategyCorp, Deutsche Bank and IBM. If you have a specific challenge for managing users that we don’t already cover, we’ll work with you for a solution. This is an added benefit to having a single-tenant solution: your system can be customized to fit your specific requirements and specifications.
 
-To see more details on how Active Directory and FusionAuth stack up, [download this feature comparison](https://fusionauth.io/resources/fusionauth-vs-active-directory.pdf "Active Directory and FusionAuth Feature Comparison") and please [contact us](https://fusionauth.io/contact "Contact Us") if you have any questions.
+To see more details on how Active Directory and FusionAuth stack up, [download this feature comparison](/resources/fusionauth-vs-active-directory.pdf "Active Directory and FusionAuth Feature Comparison") and please [contact us](/contact "Contact Us") if you have any questions.
 
-[Download the Active Directory and FusionAuth Feature Comparison](https://fusionauth.io/resources/fusionauth-vs-active-directory.pdf "Active Directory and FusionAuth Feature Comparison"){: .btn .btn-primary}
+[Download the Active Directory and FusionAuth Feature Comparison](/resources/fusionauth-vs-active-directory.pdf "Active Directory and FusionAuth Feature Comparison"){: .btn .btn-primary}
 
 ## Learn More About FusionAuth
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](https://fusionauth.io "FusionAuth Home") about FusionAuth and download it today.
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](/ "FusionAuth Home") about FusionAuth and download it today.
 
 ### Additional Comparisons
 
@@ -72,6 +72,7 @@ Interested in how FusionAuth compares to other solutions?
 - [Auth0](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Auth0 and FusionAuth")
 - [Cognito](/blog/2018/09/18/amazon-cognito-and-fusionauth-comparison "Amazon Cognito and FusionAuth")
 - [Firebase](/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison "Firebase and FusionAuth")
+- [Keycloak](/blog/2019/03/06/keycloak-fusionauth-comparison "Keycloak and FusionAuth")
 - [Ping Identity](/blog/2018/10/08/quick-comparison-ping-identity-and-fusionauth "Ping Identity and FusionAuth")
 - [Okta](/blog/2018/10/16/8-things-to-know-about-okta-and-fusionauth "Okta and FusionAuth")
 - [OneLogin](/blog/2018/10/12/onelogin-and-fusionauth "OneLogin and FusionAuth")

@@ -34,13 +34,13 @@ Auth0 and FusionAuth share many essential elements of a customer identity manage
 
 ## How Auth0 and FusionAuth Are Different
 
-[{% include _image.html src="/assets/img/blogs/auth0-fusionauth-compare-sample.png" alt="Auth0 and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Download the Auth0 and FusionAuth Feature Comparison")
+[{% include _image.html src="/assets/img/blogs/auth0-fusionauth-compare-sample.png" alt="Auth0 and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-auth0.pdf "Download the Auth0 and FusionAuth Feature Comparison")
 
 ### Free for Unlimited Users
 One of the biggest differences between Auth0 and FusionAuth is cost. FusionAuth is free for unlimited users. No strings, gimmicks, or tricks. No cost increases when you hit a certain Monthly Active User threshold. Much like a database or a web server, secure authentication is so essential that developers should be able to implement it quickly and easily without cost concerns. And unlike the free options from other vendors, we don’t feature-cripple or user-limit FusionAuth. You get the full unrestricted platform with every feature and benefit.
 
 ### Single-Tenant Security
-We mentioned above that Auth0 and FusionAuth both have on-premise and cloud options. Our difference is both our local and cloud options deliver true data isolation as *single-tenant solutions*. This eliminates the possibility of data leakage between unrelated companies, whether accidentally or through hacker activity. For additional security, customers can implement a firewall at any layer, further protecting their data from unauthorized access. With the substantial increase in the number and sophistication of hacking, phishing and spoofing attacks, we felt it was the best choice. Additionally, FusionAuth’s single-tenant architecture also allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany’s Bundesdatenschutzgesetz, Australia’s Privacy Principles, Canada’s PIPEDA, and the European Union’s GDPR all place different restrictions on how a user’s personal data can be used and transmitted. FusionAuth provides the expanded control that companies require to comply with laws and regulations in their specific region. For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this recent whitepaper](https://www.inversoft.com/resource/single-tenant-vs-multi-tenant "Inversoft's Single- vs. Multi-Tenant Paper") by the software development experts at Inversoft.
+We mentioned above that Auth0 and FusionAuth both have on-premise and cloud options. Our difference is both our local and cloud options deliver true data isolation as *single-tenant solutions*. This eliminates the possibility of data leakage between unrelated companies, whether accidentally or through hacker activity. For additional security, customers can implement a firewall at any layer, further protecting their data from unauthorized access. With the substantial increase in the number and sophistication of hacking, phishing and spoofing attacks, we felt it was the best choice. Additionally, FusionAuth’s single-tenant architecture also allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany’s Bundesdatenschutzgesetz, Australia’s Privacy Principles, Canada’s PIPEDA, and the European Union’s GDPR all place different restrictions on how a user’s personal data can be used and transmitted. FusionAuth provides the expanded control that companies require to comply with laws and regulations in their specific region. For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this recent whitepaper](/blog/2018/12/03/single-tenant-vs-multi-tenant "Single- vs. Multi-Tenant Paper").
 
 ### Localization
 Every company doing business through the internet today has a storefront open to customers from around the globe. While having a vast pool of potential customers is a benefit, many companies struggle to deliver their products and services to the wide range of languages they encounter. FusionAuth was designed to allow you to easily communicate with your customers in the language they prefer. You can create customized HTML and text email templates for the languages you support, and easily add additional options as your community grows.
@@ -56,12 +56,12 @@ Another difference between Auth0 and FusionAuth is our size and flexibility. Aut
 
 FusionAuth is a small, bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, StrategyCorp, Deutsche Bank and IBM.
 
-To see more details on how Auth0 and FusionAuth stack up, [download this feature comparison](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison") and please [contact us](https://fusionauth.io/contact "Contact Us") if you have any questions.
+To see more details on how Auth0 and FusionAuth stack up, [download this feature comparison](/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison") and please [contact us](/contact "Contact Us") if you have any questions.
 
-[Download the Auth0 and FusionAuth Feature Comparison](https://fusionauth.io/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison"){: .btn .btn-primary}
+[Download the Auth0 and FusionAuth Feature Comparison](/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison"){: .btn .btn-primary}
 
 ## Learn More About FusionAuth
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](https://fusionauth.io "FusionAuth Home") about FusionAuth and download it today.
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](/ "FusionAuth Home") about FusionAuth and download it today.
 
 ### Additional Comparisons
 
@@ -70,6 +70,7 @@ Interested in how FusionAuth compares to other solutions?
 - [Auth0](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Auth0 and FusionAuth")
 - [Cognito](/blog/2018/09/18/amazon-cognito-and-fusionauth-comparison "Amazon Cognito and FusionAuth")
 - [Firebase](/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison "Firebase and FusionAuth")
+- [Keycloak](/blog/2019/03/06/keycloak-fusionauth-comparison "Keycloak and FusionAuth")
 - [Ping Identity](/blog/2018/10/08/quick-comparison-ping-identity-and-fusionauth "Ping Identity and FusionAuth")
 - [Okta](/blog/2018/10/16/8-things-to-know-about-okta-and-fusionauth "Okta and FusionAuth")
 - [OneLogin](/blog/2018/10/12/onelogin-and-fusionauth "OneLogin and FusionAuth")
