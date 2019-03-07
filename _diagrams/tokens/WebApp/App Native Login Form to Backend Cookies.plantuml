@@ -1,0 +1,42 @@
+@startuml
+  !include ../_config.plantuml
+  !include ../_participants.plantuml
+  !include ../_intro.plantuml
+  !include _initialize.plantuml
+
+  == Login (inside WebApp) ==
+  Browser->Store : GET /login
+  Store->Browser : (Login form HTML)
+  Browser->Store : POST /login
+  Store->FusionAuth : POST /api/login
+  FusionAuth->Store : (User, Refresh Token and JWT)
+  Store->Browser : 302 Location: /shopping-cart\n[Refresh Token and JWT HttpOnly w/ domain: Store.Example.com]
+
+  !include _shopping-cart-refresh-jwt-load.plantuml
+
+  !include _shopping-cart-refresh-jwt-refresh.plantuml
+
+  !include _shopping-cart-refresh-jwt-relogin.plantuml
+
+  ||50||
+  note over Browser, Hacker #purple;line:white : <color white>SSO login to forums - not provided by FusionAuth for this workflow</color>
+  ||50||
+
+  !include _forums-initialize.plantuml
+
+  == Login (inside SPA) ==
+  Browser->Forums : GET /login
+  Forums->Browser : (Login form HTML)
+  Browser->Forums : POST /login
+  Forums->FusionAuth : POST /api/login
+  FusionAuth->Forums : (User, Refresh Token and JWT)
+  Forums->Browser : 302 Location: /posts\n[Refresh Token and JWT HttpOnly w/ domain: Forums.Example.com]
+
+  !include _forums-refresh-jwt-load.plantuml
+
+  !include ../_attack-vectors.plantuml
+
+  !include _stolen-refresh-token-refresh-jwt.plantuml
+  
+  !include _stolen-jwt-refresh-jwt.plantuml
+@enduml

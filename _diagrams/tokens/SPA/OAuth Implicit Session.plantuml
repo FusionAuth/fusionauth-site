@@ -1,0 +1,61 @@
+@startuml
+  !include ../_config.plantuml
+  !include ../_participants.plantuml
+  !include ../_intro.plantuml
+  !include _initialize.plantuml
+
+  == Login (browser navigates away from SPA) ==
+  Browser->FusionAuth : GET /oauth2/authorize {response_type=token}
+  FusionAuth->Browser : (Login form HTML)
+  Browser->FusionAuth : POST /oauth2/authorize (response_type=token)
+  FusionAuth->Browser : 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->Store : GET {redirect_uri w/o JWT in URI}
+  Store->Browser : (SPA HTML, CSS & JavaScript)
+
+  == Start session ==
+  Browser->Store : AJAX POST /api/start-session\n(JWT from redirect_uri)
+  Store->Store : Optionally store JWT in session
+  Store->Browser : [SessionId HttpOnly w/ domain: Store.Example.com]
+
+  !include _shopping-cart-session-load.plantuml
+
+  !include ../_session-expires.plantuml
+
+  == Shopping cart load ==
+  Browser->Store : AJAX GET /api/load-shopping-cart\n[SessionId HttpOnly w/ domain: Store.Example.com]
+  Store->Browser : <color red>401 Not Authorized</color>
+
+  == Automatic re-login (since session exists) ==
+  Browser->FusionAuth : GET /oauth2/authorize {response_type=token}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  FusionAuth->Browser : 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->Store : GET {redirect_uri w/o JWT in URI}
+  Store->Browser : (SPA HTML, CSS & JavaScript)
+
+  == Start session ==
+  Browser->Store : AJAX POST /api/start-session\n(JWT from redirect_uri)
+  Store->Store : Optionally store JWT in session
+  Store->Browser : [SessionId HttpOnly w/ domain: Store.Example.com]
+
+  !include_many _shopping-cart-session-load.plantuml
+
+  !include ../_sso.plantuml
+
+  !include _forums-initialize.plantuml
+  
+  == Login (browser navigates away from SPA but auto-logs-in since the session exists) ==
+  Browser->FusionAuth : GET /oauth2/authorize {response_type=token}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  FusionAuth->Browser : 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->Forums : GET {redirect_uri w/o JWT in URI}
+  Forums->Browser : (SPA HTML, CSS & JavaScript)
+
+  == Start session ==
+  Browser->Forums : AJAX POST /api/start-session\n(JWT from redirect_uri)
+  Forums->Forums : Optionally store JWT in session
+  Forums->Browser : [SessionId HttpOnly w/ domain: Forums.Example.com]
+
+  !include _forums-session-load.plantuml
+
+  !include ../_attack-vectors.plantuml
+
+  !include _stolen-session-id.plantuml
+@enduml

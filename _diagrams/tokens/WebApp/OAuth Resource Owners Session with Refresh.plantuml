@@ -1,0 +1,40 @@
+@startuml
+  !include ../_config.plantuml
+  !include ../_participants.plantuml
+  !include ../_intro.plantuml
+  !include _initialize.plantuml
+
+  == Login (inside SPA) ==
+  Browser->Store : GET /login
+  Store->Browser : (Login form HTML)
+  Browser->Store : POST /login
+  Store->FusionAuth : POST /oauth2/token\n(grant_type=password)
+  FusionAuth->Store : (Refresh Token and JWT)
+  Store->Store : Create session and store User in it
+  Store->Browser : 302 Location: /shopping-cart\n[SesionId and Refresh token HttpOnly w/ domain: Store.Example.com]
+
+  !include _shopping-cart-session-refresh-load.plantuml
+
+  !include _shopping-cart-session-refresh-refresh.plantuml
+
+  !include _shopping-cart-session-refresh-relogin.plantuml
+
+  !include ../_sso-not-provided.plantuml
+
+  !include _forums-initialize.plantuml
+
+  == Login (inside SPA) ==
+  Browser->Forums : GET /login
+  Forums->Browser : (Login form HTML)
+  Browser->Forums : POST /login
+  Forums->FusionAuth : POST /oauth2/token\n(grant_type=password)
+  FusionAuth->Forums : (Refresh Token and JWT)
+  Forums->Forums : Create session and store User in it
+  Forums->Browser : 302 Location: /posts\n[SessionId and Refresh Token HttpOnly w/ domain: Forums.Example.com]
+
+  !include _forums-session-refresh-load.plantuml
+
+  !include ../_attack-vectors.plantuml
+
+  !include _stolen-session-id.plantuml
+@enduml

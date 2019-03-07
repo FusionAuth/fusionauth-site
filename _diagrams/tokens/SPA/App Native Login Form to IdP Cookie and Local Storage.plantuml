@@ -1,0 +1,61 @@
+@startuml
+  !include ../_config.plantuml
+  !include ../_participants.plantuml
+  !include ../_intro.plantuml
+  !include _initialize.plantuml
+
+  == Login (inside SPA) ==
+  Browser->Browser : Render login form
+  Browser->FusionAuth : AJAX POST /api/login
+  FusionAuth->Browser : (JWT)\n[Refresh token HttpOnly w/ domain: login.fusionauth.io]
+
+  == Local storage drop ==
+  Browser->Browser : Move JWT from response body to local storage
+
+  !include _shopping-cart-jwtLocalStorage-load.plantuml
+
+  !include ../_jwt-expires.plantuml
+
+  == Token refresh ==
+  Browser->FusionAuth : AJAX POST /api/jwt/refresh\n[Refresh token HttpOnly w/ domain login.fusionauth.io]
+  FusionAuth->Browser : (JWT)
+
+  == Local storage drop ==
+  Browser->Browser : Move JWT from response body to local storage
+
+  !include_many _shopping-cart-jwtLocalStorage-load.plantuml
+
+  !include ../_refresh-token-expires.plantuml
+
+  == Re-login ==
+  Browser->FusionAuth : AJAX POST /api/jwt/refresh\n[Refresh token w/ domain login.fusionauth.io]
+  FusionAuth-[#red]>Browser : <color red>404 Missing</color>
+  Browser->Browser : Login same as above
+
+  !include ../_sso-not-provided.plantuml
+
+  !include _forums-initialize.plantuml
+
+  == Login (inside SPA) ==
+  Browser->Browser : Render login form
+  Browser->FusionAuth : AJAX POST /api/login\n[Refresh token HttpOnly w/ domain: login.fusionauth.io - <color red>FOR WRONG APP</color>]
+  FusionAuth->Browser : (JWT)\n[New Refresh token HttpOnly w/ domain: login.fusionauth.io]
+  Browser->Browser : <color red>Refresh token cookie from Store gets</color>\n<color red>clobbered by refresh token for Forums</color>
+
+  == Local storage drop ==
+  Browser->Browser : Move JWT from response body to local storage
+
+  !include _forums-jwtLocalStorage-load.plantuml
+
+  !include ../_attack-vectors.plantuml
+
+  == Stolen refresh token ==
+  Hacker->FusionAuth : POST /api/jwt/refresh\n[Refresh token w/ domain login.fusionauth.io]
+  FusionAuth->Hacker : (JWT)
+  Hacker->Store : GET /api/load-shopping-cart\n(JWT from response body)
+  Store->Hacker : (Shopping cart contents)
+
+  == Stolen JWT ==
+  Hacker->Store : GET /api/load-shopping-cart\n(JWT)
+  Store->Hacker : (Shopping cart contents)
+@enduml
