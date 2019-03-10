@@ -13,14 +13,21 @@ sitemap:
                 <div class="row">
                     <div class="col">
                         <div class="block-heading">
-                            <h2 class="text-info">Share FusionAuth - Bryan</h2>
+                            <h2 class="text-info">Share from Bryan</h2>
                         </div>
                         <div>
+
                         <h2>FusionAuth</h2>
                         <ul>
 <li><a href="mailto:?subject=About%20FusionAuth&amp;body=FusionAuth%20-%20Free%20for%20Unlimited%20Users%20-%20https://fusionauth.io">by email</a> - - - - <a href="sms:&amp;body=From%20Bryan%20Giese%20-%20FusionAuth%20-%20Free%20for%20Unlimited%20Users%20-%20https://fusionauth.io">by text</a></li>
 </ul>
-<h2>Write for Us</h2>
+
+
+                        <h2>CleanSpeak</h2>
+                        <ul>
+<li><a href="mailto:?subject=About%20CleanSpeak&amp;body=CleanSpeak%20-%20Premier%20Profanity%20Filtering%20-%20https://cleanspeak.com">by email</a> - - - - <a href="sms:&amp;body=From%20Bryan%20Giese%20-%20CleanSpeak%20-%20Premier%20Profanity%20Filtering%20and%20Moderation%20-%20https://cleanspeak.com">by text</a></li>
+</ul>
+<h2>Write for FusionAuth</h2>
 <ul>
 <li><a href="mailto:?subject=Write%20for%20FusionAuth&amp;body=Write%20for%20FusionAuth-%20https://fusionauth.io/write-for-fusionauth">by email</a> - - - - <a href="sms:&amp;body=From%20Bryan%20Giese%20-%20Write%20for%20FusionAuth-%20https://fusionauth.io/write-for-fusionauth">by text</a></li>
 </ul>
