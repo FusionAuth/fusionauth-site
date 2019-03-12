@@ -84,7 +84,7 @@ def build_blog_post_layout(html_doc, script_directory)
   main.at_css(".post-body-content").content = "\n{% if page.markdown == 1 %}\n  {{ content | markdownify }}\n{% else %}\n  {{ content }}\n{% endif %}"
   main.at_css(".post-image")["style"] = "background-image: url('/assets/img/{{ page.image }}');"
   File.open("#{script_directory}/_layouts/blog-post.html", "w", :encoding => "UTF-8") do |f|
-    f.puts("<!doctype html>\n<html>\n{% include _head.html %}\n<body>\n{% include _navigation.html %}\n")
+    f.puts("<!doctype html>\n<html lang=\"en\">\n{% include _head.html %}\n<body>\n{% include _navigation.html %}\n")
     f.puts(main.to_s)
     f.puts("{% include _footer.html %}\n</body>\n</html>")
   end
