@@ -48,7 +48,7 @@ FusionAuth is designed to be the most flexible and secure Customer Identity and 
 
 - [https://spod.cx/blog/emailing_passwords_bad_idea.shtml](https://spod.cx/blog/emailing_passwords_bad_idea.shtml "Jump to Spod.cx article")
 - [http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in](http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in "Jump to Plaintext Offenders post")
-- [**Developer’s Guide to the GDPR**](/blog/2018/03/23/white-paper-developers-guide-gdpr.html "Get the Developer's Guide to the GDPR")
+- [**Developer’s Guide to the GDPR**](/blog/2019/01/29/white-paper-developers-guide-gdpr "Get the Developer's Guide to the GDPR")
 
 <!--
 - Technology
