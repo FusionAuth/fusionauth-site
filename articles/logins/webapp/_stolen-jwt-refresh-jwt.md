@@ -1,0 +1,2 @@
+1. This is an attack vector where the attacker has stolen the user's JWT. Here, the attack requests the user's shopping cart with the stolen JWT.
+1. The application backend verifies the JWT and then uses the JWT to identify the user. Once the user is identified, the backend looks up the user's shopping cart from the database (or similar location). Finally, the application backend returns the user's shopping cart as HTML, CSS & JavaScript to the attacker=

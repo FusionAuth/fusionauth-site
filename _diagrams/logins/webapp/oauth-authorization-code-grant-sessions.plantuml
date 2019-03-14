@@ -1,0 +1,40 @@
+@startuml
+  !include ../_config.plantuml
+  !include ../_participants.plantuml
+  !include ../_intro.plantuml
+  !include _initialize.plantuml
+
+  == Login (browser navigates away from WebApp) ==
+  Browser->FusionAuth : GET /oauth2/authorize {response_type=code}
+  FusionAuth->Browser : (Login form HTML)
+  Browser->FusionAuth : POST /oauth2/authorize\n(response_type=code)
+  FusionAuth->Browser : 302 Location: {redirect_uri w/ code}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->Store : GET {redirect_uri w/ code}
+  Store->FusionAuth : POST /oauth2/token\n(code, client_secret)
+  FusionAuth->Store : 200 Ok\n(Refresh token and JWT - ignored)
+  Store->Browser : 302 Location: /shopping-cart\n[SessionId HttpOnly w/ domain: Store.Example.com]
+
+  !include _shopping-cart-session-load.plantuml
+
+  !include _shopping-cart-session-relogin.plantuml
+
+  !include ../_session-expires.plantuml
+
+  !include ../_sso.plantuml
+
+  !include _forums-initialize.plantuml
+  
+  == Login (browser navigates away from WebApp but auto-logs-in since the session exists) ==
+  Browser->FusionAuth : GET /oauth2/authorize {response_type=code}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  FusionAuth->Browser : 302 Location: {redirect_uri w/ code}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->Forums : GET {redirect_uri w/ code}
+  Forums->FusionAuth : POST /oauth2/token\n(code, client_secret)
+  FusionAuth->Forums : 200 Ok\n(Refresh token and JWT - ignored)
+  Forums->Browser : 302 Location: /posts\n[SessionId HttpOnly w/ domain: Store.Example.com]
+
+  !include _forums-session-load.plantuml
+
+  !include ../_attack-vectors.plantuml
+
+  !include _stolen-session-id.plantuml
+@enduml

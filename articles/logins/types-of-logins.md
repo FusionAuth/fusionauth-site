@@ -28,15 +28,15 @@ There are only two HTTP methods supported by the browser in this style of applic
 
 Here are the options for providing login to traditional webapps. 
 
-* [Native login form to the application backend using JWTs and refresh tokens stored in cookies](webapp-native-login-form-to-application-backend-jwts-refresh-tokens-cookies)
-* [Native login form to the application backend using sessions](webapp-native-login-form-to-application-backend-sessions)
-* [Native login form to the application backend using sessions plus refresh tokens stored in cookies](webapp-native-login-form-to-application-backend-sessions-refresh-tokens-cookies)
-* [(RECOMMENDED) OAuth 2 authorization code grant using JWTs and refresh tokens stored in cookies](webapp-oauth-authorization-code-grant-jwts-refresh-tokens-cookies)
-* [(RECOMMENDED) OAuth 2 authorization code grant using sessions](webapp-oauth-authorization-code-grant-sessions)
-* [OAuth 2 authorization code grant using sessions plus refresh tokens stored in cookies](webapp-oauth-authorization-code-grant-sessions-refresh-tokens-cookies)
-* [OAuth 2 resource owners grant using JWTs and refresh tokens stored in cookies](webapp-oauth-resource-owners-grant-jwts-refresh-tokens-cookies)
-* [OAuth 2 resource owners grant using sessions](webapp-oauth-resource-owners-grant-sessions)
-* [OAuth 2 resource owners grant using sessions plus refresh tokens stored in cookies](webapp-oauth-resource-owners-grant-sessions-refresh-tokens-cookies)
+* [Native login form to the application backend using JWTs and refresh tokens stored in cookies](webapp/native-login-form-to-application-backend-jwts-refresh-tokens-cookies)
+* [Native login form to the application backend using sessions](webapp/native-login-form-to-application-backend-sessions)
+* [Native login form to the application backend using sessions plus refresh tokens stored in cookies](webapp/native-login-form-to-application-backend-sessions-refresh-tokens-cookies)
+* [(RECOMMENDED) OAuth 2 authorization code grant using JWTs and refresh tokens stored in cookies](webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies)
+* [(RECOMMENDED) OAuth 2 authorization code grant using sessions](webapp/oauth-authorization-code-grant-sessions)
+* [OAuth 2 authorization code grant using sessions plus refresh tokens stored in cookies](webapp/oauth-authorization-code-grant-sessions-refresh-tokens-cookies)
+* [OAuth 2 resource owners grant using JWTs and refresh tokens stored in cookies](webapp/oauth-resource-owners-grant-jwts-refresh-tokens-cookies)
+* [OAuth 2 resource owners grant using sessions](webapp/oauth-resource-owners-grant-sessions)
+* [OAuth 2 resource owners grant using sessions plus refresh tokens stored in cookies](webapp/oauth-resource-owners-grant-sessions-refresh-tokens-cookies)
 
 ## Single-page application authentication
 
@@ -52,20 +52,20 @@ Since the browser is using `XMLHttpRequest`, it can invoke all of the standard H
 
 Here are the options for providing login to SPAs. 
 
-* [Native login form to the application backend using JWTs and refresh tokens stored in cookies](spa-native-login-form-to-application-backend-jwts-refresh-tokens-cookies)
-* [Native login form to the application backend using sessions](spa-native-login-form-to-application-backend-sessions)
-* [Native login form to the application backend using sessions plus refresh tokens stored in cookies](spa-native-login-form-to-application-backend-sessions-refresh-tokens-cookies)
-* [Native login form to FusionAuth using JWTs stored in local storage and refresh tokens stored in cookies](spa-native-login-form-to-fusionauth-jwts-local-storage-refresh-tokens-cookies)
-* [Native login form to FusionAuth using JWTs and refresh tokens stored in cookies](spa-native-login-form-to-fusionauth-jwts-refresh-tokens-cookies)
-* [(RECOMMENDED) OAuth 2 authorization code grant using tokens stored in cookies](spa-oauth-authorization-code-grant-jwts-refresh-tokens-cookies)
-* [(RECOMMENDED) OAuth 2 authorization code grant using sessions](spa-oauth-authorization-code-grant-sessions)
-* [OAuth 2 authorization code grant using sessions plus refresh tokens stored in cookies](spa-oauth-authorization-code-grant-sessions-refresh-tokens-cookies)
-* [OAuth implicit grant using JWTs and refresh tokens stored in cookies](spa-oauth-implicit-grant-jwts-refresh-tokens-cookies)
-* [OAuth implicit grant using JWTs stored in local storage and refresh tokens stored in cookies](spa-oauth-implicit-grant-jwts-local-storage-refresh-tokens-cookies)
-* [OAuth implicit grant using sessions](spa-oauth-implicit-grant-sessions)
-* [OAuth 2 resource owners grant using JWTs and refresh tokens stored in cookies](spa-oauth-resource-owners-grant-jwts-refresh-tokens-cookies)
-* [OAuth 2 resource owners grant using sessions](spa-oauth-resource-owners-grant-sessions)
-* [OAuth 2 resource owners grant using sessions plus refresh tokens stored in cookies](spa-oauth-resource-owners-grant-sessions-refresh-tokens-cookies)
+* [Native login form to the application backend using JWTs and refresh tokens stored in cookies](spa/native-login-form-to-application-backend-jwts-refresh-tokens-cookies)
+* [Native login form to the application backend using sessions](spa/native-login-form-to-application-backend-sessions)
+* [Native login form to the application backend using sessions plus refresh tokens stored in cookies](spa/native-login-form-to-application-backend-sessions-refresh-tokens-cookies)
+* [Native login form to FusionAuth using JWTs stored in local storage and refresh tokens stored in cookies](spa/native-login-form-to-fusionauth-jwts-local-storage-refresh-tokens-cookies)
+* [Native login form to FusionAuth using JWTs and refresh tokens stored in cookies](spa/native-login-form-to-fusionauth-jwts-refresh-tokens-cookies)
+* [(RECOMMENDED) OAuth 2 authorization code grant using tokens stored in cookies](spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies)
+* [(RECOMMENDED) OAuth 2 authorization code grant using sessions](spa/oauth-authorization-code-grant-sessions)
+* [OAuth 2 authorization code grant using sessions plus refresh tokens stored in cookies](spa/oauth-authorization-code-grant-sessions-refresh-tokens-cookies)
+* [OAuth implicit grant using JWTs and refresh tokens stored in cookies](spa/oauth-implicit-grant-jwts-refresh-tokens-cookies)
+* [OAuth implicit grant using JWTs stored in local storage and refresh tokens stored in cookies](spa/oauth-implicit-grant-jwts-local-storage-refresh-tokens-cookies)
+* [OAuth implicit grant using sessions](spa/oauth-implicit-grant-sessions)
+* [OAuth 2 resource owners grant using JWTs and refresh tokens stored in cookies](spa/oauth-resource-owners-grant-jwts-refresh-tokens-cookies)
+* [OAuth 2 resource owners grant using sessions](spa/oauth-resource-owners-grant-sessions)
+* [OAuth 2 resource owners grant using sessions plus refresh tokens stored in cookies](spa/oauth-resource-owners-grant-sessions-refresh-tokens-cookies)
 
 In is important to note that while we recommend OAuth for SPAs, it will cause the browser to close the SPA and navigate to the OAuth provider. Once the OAuth workflow is complete, the browser will retrieve and start the SPA again. This process might seem somewhat heavy, but the SPA should be cached in the browser making the second startup process much faster.
 
@@ -77,6 +77,6 @@ Native applications often call APIs to handle user interactions and input. For e
 
 Here are the options for providing login to native mobile applications. 
 
-* [(RECOMMENDED) Native login form to the application backend using JWTs and refresh tokens](mobile-native-login-form-to-application-backend-jwts-refresh-tokens)
-* [Native login form to FusionAuth using JWTs and refresh tokens](mobile-native-login-form-to-fusionauth-jwts-refresh-tokens)
-* [OAuth 2 resource owners grant using JWTs and refresh tokens](mobile-oauth-resource-owners-grant-jwts-refresh-tokens)
+* [(RECOMMENDED) Native login form to the application backend using JWTs and refresh tokens](mobile/native-login-form-to-application-backend-jwts-refresh-tokens)
+* [Native login form to FusionAuth using JWTs and refresh tokens](mobile/native-login-form-to-fusionauth-jwts-refresh-tokens)
+* [OAuth 2 resource owners grant using JWTs and refresh tokens](mobile/oauth-resource-owners-grant-jwts-refresh-tokens)

@@ -1,0 +1,3 @@
+1. The browser requests the user's shopping cart from the application backend and includes the session cookie
+1. The application backend looks up the server-side session associated with the session cookie and extends the expiration date
+1. The application backend loads the User object (or JWT) from the server-side session. The backend then looks up the user's shopping cart from the database (or similar location). Finally, the application backend returns the user's shopping cart as HTML, CSS & JavaScript that the browser will render

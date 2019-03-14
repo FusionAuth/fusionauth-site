@@ -1,0 +1,60 @@
+@startuml
+  !include ../_config.plantuml
+  !include ../_participants.plantuml
+  !include ../_intro.plantuml
+
+  note over Browser, Hacker : In this example FusionAuth is located at Example.com/login or Login.Example.com and returns cookies in its parent domain.
+
+  !include _initialize.plantuml
+
+  == Login (inside SPA) ==
+  Browser->Browser : Render login form
+  Browser->FusionAuth : AJAX POST /api/login
+  FusionAuth->Browser : [Refresh token and JWT HttpOnly w/ domain: Example.com]
+
+  == Shopping cart load ==
+  Browser->Store : AJAX GET /api/load-shopping-cart\n[Refresh token and JWT HttpOnly w/ domain: Example.com]
+  Store->Browser : (Shopping cart contents)
+
+  !include ../_jwt-expires.plantuml
+  
+  == Refresh JWT ==
+  Browser->FusionAuth : AJAX POST /api/jwt/refresh\n[Refresh token and JWT HttpOnly w/ domain Example.com]
+  FusionAuth->Browser : [JWT HttpOnly w/ domain: Example.com]
+
+  == Shopping cart load ==
+  Browser->Store : AJAX GET /api/load-shopping-cart\n[Refresh token and JWT HttpOnly w/ domain: Example.com]
+  Store->Browser : (Shopping cart contents)
+
+  == Re-login (inside SPA) ==
+  note over Browser, Browser #EB8C52;line:white : <color white><b>Refresh token expires</b></color>
+  Browser->FusionAuth : AJAX POST /api/jwt/refresh\n[Refresh token and JWT HttpOnly w/ domain Example.com]
+  FusionAuth-[#EB8C52]>Browser : <color #EB8C52>404 Missing</color>
+  Browser->Browser : Login same as above
+
+  !include ../_sso-not-provided.plantuml
+
+  !include _forums-initialize.plantuml
+
+  == Login (inside SPA) ==
+  Browser->Browser : Render login form
+  Browser->FusionAuth : AJAX POST /api/login\n[Refresh token and JWT HttpOnly w/ domain: Example.com - <color #EB8C52>FOR WRONG APP</color>]
+  FusionAuth->Browser : [New Refresh token and JWT HttpOnly w/ domain: Example.com]
+  Browser->Browser : <color #EB8C52>Refresh token and JWT cookies from Store gets</color>\n<color #EB8C52>clobbered by Refresh token and JWT for Forums</color>
+
+  == Forums load ==
+  Browser->Forums : AJAX GET /api/load-posts\n[Refresh token and JWT HttpOnly w/ domain: Example.com]
+  Forums->Browser : (Forum posts)
+
+  !include ../_attack-vectors.plantuml
+
+  == Stolen Refresh token ==
+  Hacker->FusionAuth : POST /api/jwt/refresh\n[Refresh token HttpOnly w/ domain Example.com]
+  FusionAuth->Hacker : [JWT HttpOnly w/ domain: Example.com]
+  Hacker->Store : GET /api/load-shopping-cart\n[Refresh token and JWT HttpOnly w/ domain: Example.com]
+  Store->Hacker : (Shopping cart contents)
+
+  == Stolen JWT ==
+  Hacker->Store : GET /api/load-shopping-cart\n[JWT HttpOnly w/ domain: Example.com]
+  Store->Hacker : (Shopping cart contents)
+@enduml

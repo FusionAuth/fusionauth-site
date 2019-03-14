@@ -1,0 +1,3 @@
+1. A while later, the user's server-side session expires and the user clicks on their shopping cart again. The browser will request the shopping cart from the application backend and will send the session cookie to the application backend
+1. The application backend attempts to load the server-side session associated with session cookie and realizes it is expired. The backend then returns a redirect to the browser that will send the user to the login page
+1. The user can log in the same way they did in steps 5-8

@@ -1,0 +1,4 @@
+1. This is an attack vector where the attacker has stolen the user's refresh token. Here, the attacker requests the user's shopping cart with the stolen refresh token and an invalid JWT
+1. The application backend will verify the JWT and realizes it is invalid. Since the browser also sent across the refresh token, the application backend calls the JWT refresh API in FusionAuth with the refresh token
+1. FusionAuth looks up the refresh token and returns a new JWT
+1. The application backend uses the JWT to look up the user's shopping cart. It will then respond to the attacker with the user's shopping cart HTML, CSS & JavaScript. It also includes the new JWT as a cookie that attacker can now use
