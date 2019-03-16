@@ -1,8 +1,8 @@
 ---
 layout: article
-title: Webapp native login to backend 
+title: Single-page application OAuth login using resource owner's grant 
 subtitle: Using sessions and refresh tokens 
-description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions plus refresh tokens in cookies
+description: An explanation of single-page application login using a native login form that submits to the application backend and uses server-side sessions plus refresh tokens in cookies
 image: articles/logins.png
 ---
 
@@ -21,7 +21,7 @@ image: articles/logins.png
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/webapp/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.plantuml %}
+{% plantuml _diagrams/logins/spa/oauth-resource-owners-grant-sessions-refresh-tokens-cookies.plantuml %}
 
 ## Explanation
 

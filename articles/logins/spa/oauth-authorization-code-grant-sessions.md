@@ -1,13 +1,13 @@
 ---
 layout: article
-title: Webapp OAuth login using resource owner's grant
+title: Single-page application OAuth login using authorization code grant 
 subtitle: Using sessions 
-description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions
+description: An explanation of single-page application login using FusionAuth OAuth interface with the authorization code grant and uses server-side sessions
 image: articles/logins.png
 ---
 
 {% capture intro %}
-{% include_relative _native-intro.md %}
+{% include_relative _oauth-intro.md %}
 {% endcapture %}
 {{ intro | markdownify }}
 
@@ -21,7 +21,7 @@ image: articles/logins.png
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/webapp/oauth-resource-owners-grant-sessions.plantuml %}
+{% plantuml _diagrams/logins/spa/oauth-authorization-code-grant-sessions.plantuml %}
 
 ## Explanation
 

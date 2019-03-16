@@ -1,15 +1,15 @@
 ---
 layout: article
-title: OAuth resource owner's grant
+title: Webapp OAuth login using resource owner's grant
 subtitle: Using sessions and refresh tokens 
 description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions plus refresh tokens in cookies
 image: articles/logins.png
 ---
 
-{% capture native_intro %}
+{% capture intro %}
 {% include_relative _native-intro.md %}
 {% endcapture %}
-{{ native_intro | markdownify }}
+{{ intro | markdownify }}
 
 ## Diagram
 

@@ -6,10 +6,10 @@ description: An explanation of webapp login using a native login form that submi
 image: articles/logins.png
 ---
 
-{% capture native_intro %}
+{% capture intro %}
 {% include_relative _native-intro.md %}
 {% endcapture %}
-{{ native_intro | markdownify }}
+{{ intro | markdownify }}
 
 ## Diagram
 

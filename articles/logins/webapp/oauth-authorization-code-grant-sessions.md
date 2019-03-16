@@ -1,15 +1,15 @@
 ---
 layout: article
-title: OAuth authorization code grant 
+title: Webapp OAuth login using authorization code grant 
 subtitle: Using sessions 
-description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions
+description: An explanation of webapp login using FusionAuth OAuth interface with the authorization code grant and uses server-side sessions
 image: articles/logins.png
 ---
 
-{% capture native_intro %}
+{% capture intro %}
 {% include_relative _oauth-intro.md %}
 {% endcapture %}
-{{ native_intro | markdownify }}
+{{ intro | markdownify }}
 
 ## Diagram
 
