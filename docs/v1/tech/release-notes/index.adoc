@@ -15,12 +15,18 @@ Hide stuff inside these lines
 == Version 1.5.0
 _Pending Release_
 
+== Changed
+* Removed `/oauth2/token` from the CORS configuration. This change will cause the CORS filter to reject a `POST` request to the `/oauth2/token` endpoint when the request originates in JavaScript from a different domain. This will effectively prohibit the use of the OAuth2 Password grant from JavaScript.
+* The `device` parameter is no longer required on the link:../apis/login[Login API] or the link:../oauth/endpoints#authorize[Authorized] endpoint in order to receive a Refresh Token. If the `device` parameter is provided it will be ignored.
+* Correct the link:../apis/jwt#refresh-a-jwt[Refresh API] response body to match the documentation. If you are currently consuming the JSON body of this API using the `POST` method, you will need to update your integration to match the documented response body.
+
 === New
 * Support for the OAuth2 Implicit Grant
 * Grants may be enabled or disabled per application
 * Change Password API can be called using a JWT. This provides additional support for the Change Password workflow in a single page web application. See the Change Password API for additional details.
 * The Change Password API in some cases will return a One Time password (OTP). This password may then be exchanged for a new JWT and a Refresh Token on the Login API. This allows for a more seamless user experience when performing a change password workflow. See the Change Password and Login API for additional details.
-
+* The link:../apis/login[Login API] can now be restricted to require an API key. The default for new applications will require authentication which can be disabled. Existing applications will not require authentication via API to preserve the existing behavior. The Login API may also be restricted from return Refresh Tokens are allowing an existing Refresh Token be used to refresh an Access Token. These settings will be configurable per Application, see the Application API for additional details, or the `Security` tab in the Application configuration in the UI.
+* The `c_hash` and `at_hash` will be added to the `id_token` payload for the appropriate grants.
 
 === Enhancement
 * Better ECDSA private and public key validation to ensure the algorithm selected by the user matches the provided key.
@@ -36,6 +42,9 @@ _Pending Release_
 * The Action user action on the Manage User panel was opening the Comment dialog instead of the Action user dialog
 * When a user has 2FA enabled and a password change is required during login, the 2FA will now occur before the change password workflow
 * When more than one tenant exists, the Forgot Password link on the FusionAuth login page will not function properly.
+* The Logout API may not always delete the `access_token` and `refresh_token` cookies if they exist on the browser.
+* The `id_token` will be signed with the `client_secret` when `HS256`, `HS384` or `HS512` is selected as the signing algorithm. This is necessary for compliance with https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation[OpenID Connect Core 3.1.3.7 ID Token Validation]. This fixes GitHub issue https://github.com/FusionAuth/fusionauth-issues/issues/57[GitHub Issue #57], thanks for https://github.com/Garogat[@Garogat] for reporting this issue. If you encounter this issue prior to this version, copy the Client Secret found in the UI on the `OAuth` tab of your Application configuration into the HMAC secret on the `JWT` configuration tab.
+* The link:../apis/login[Login API] will now return a `400` with an error JSON response body if the `applicationId` parameter does not belong to any configured applications. Previous to this release, this was treated the same as if the User was not registered to the requested application.
 
 [role=release-note]
 
