@@ -7,7 +7,7 @@ image: articles/logins.png
 ---
 
 {% capture intro %}
-{% include_relative _native-intro.md %}
+{% include_relative _native-fusionauth-intro.md %}
 {% endcapture %}
 {{ intro | markdownify }}
 

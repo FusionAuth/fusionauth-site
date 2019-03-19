@@ -39,6 +39,10 @@ image: articles/logins.png
 {% endcapture %}
 {{ steps | markdownify }}
 
+## Security indications
+
+This workflow is one of the more secure methods of authenticating users. One downside is that the application backend will be consuming passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
+
 ## APIs used
 
 Here are the FusionAuth APIs used in this example:

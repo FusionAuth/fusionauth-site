@@ -1,13 +1,13 @@
 ---
 layout: article
-title: Single-page application native login to FusionAuth 
+title: Mobile native login to backend 
 subtitle: Using JWTs and refresh tokens 
-description: An explanation of single-page application login using a native login form that submits directly to FusionAuth and uses server-side sessions plus refresh tokens in cookies
+description: An explanation of mobile application login using a native login form that submits to the application backend and uses JWTs and refresh tokens
 image: articles/logins.png
 ---
 
 {% capture intro %}
-{% include_relative _native-fusionauth-intro.md %}
+{% include_relative _native-intro.md %}
 {% endcapture %}
 {{ intro | markdownify }}
 
@@ -21,7 +21,7 @@ image: articles/logins.png
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/spa/native-login-form-to-fusionauth-same-domain-jwts-refresh-tokens-cookies.plantuml %}
+{% plantuml _diagrams/logins/mobile/native-login-form-to-application-backend.plantuml %}
 
 ## Explanation
 

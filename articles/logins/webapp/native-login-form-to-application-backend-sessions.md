@@ -27,17 +27,21 @@ image: articles/logins.png
 
 {% capture steps %}
 {% include_relative _native-login-store.md %}
-1. The application backend receives the 200 from FusionAuth and creates a server-side session and stores the User object (or JWT) in it
-1. The application backend returns a redirect to the browser instructing it to navigate to the user's shopping cart. The id for the server-side session is written back to the browser in a HTTP cookie. This cookie is HttpOnly, which prevents JavaScript from accessing them, making it less vulnerable to theft. Additionally, all requests from the browser to the application backend will include this cookie so that the backend can retrieve the User object from the server-side session 
+{% include_relative _create-session.md %}
+1. The application backend returns a redirect to the browser instructing it to navigate to the user's shopping cart. The id for the server-side session is written back to the browser in an HTTP cookie. This cookie is HttpOnly, which prevents JavaScript from accessing them, making it less vulnerable to theft. Additionally, all requests from the browser to the application backend will include this cookie so that the backend can retrieve the User object from the server-side session 
 {% include_relative _shopping-cart-session-load.md %}
 {% include_relative _shopping-cart-session-relogin.md %}
 {% include_relative _native-login-forums.md %}
-1. The application backend receives the 200 from FusionAuth and creates a server-side session and stores the User object (or JWT) in it
-1. The application backend returns a redirect to the browser instructing it to navigate to the user's forum posts. The id for the server-side session is written back to the browser in a HTTP cookie. This cookie is HttpOnly, which prevents JavaScript from accessing them, making it less vulnerable to theft. Additionally, all requests from the browser to the application backend will include this cookie so that the backend can retrieve the User object from the server-side session 
+{% include_relative _create-session.md %}
+1. The application backend returns a redirect to the browser instructing it to navigate to the user's forum posts. The id for the server-side session is written back to the browser in an HTTP cookie. This cookie is HttpOnly, which prevents JavaScript from accessing them, making it less vulnerable to theft. Additionally, all requests from the browser to the application backend will include this cookie so that the backend can retrieve the User object from the server-side session 
 {% include_relative _forums-session-load.md %}
 {% include_relative _stolen-session-id.md %}
 {% endcapture %}
 {{ steps | markdownify }}
+
+## Security indications
+
+This workflow is one of the more secure methods of authenticating users. One downside is that the application backend will be consuming passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
 
 ## APIs used
 

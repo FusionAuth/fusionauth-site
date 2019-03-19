@@ -25,7 +25,21 @@ image: articles/logins.png
 
 ## Explanation
 
-Coming soon
+{% capture steps %}
+{% include_relative _native-login-store.md %}
+{% include_relative _create-session.md %}
+1. The application backend returns a redirect to the browser instructing it to navigate to the user's shopping cart. The id for the server-side session is written back to the browser in an HTTP cookie. The refresh token from FusionAuth is also written back to the browser in an HTTP cookie. These cookies are HttpOnly, which prevents JavaScript from accessing them, making them less vulnerable to theft. Additionally, all requests from the browser to the application backend will include these cookies so that the backend can retrieve the User object from the server-side session and refresh their session if it expires 
+{% include_relative _shopping-cart-session-refresh-load.md %}
+{% include_relative _shopping-cart-session-refresh-refresh.md %}
+{% include_relative _shopping-cart-session-refresh-relogin.md %}
+{% include_relative _native-login-forums.md %}
+{% include_relative _create-session.md %}
+1. The application backend returns a redirect to the browser instructing it to navigate to the user's forum posts. The id for the server-side session is written back to the browser in an HTTP cookie. The refresh token from FusionAuth is also written back to the browser in an HTTP cookie. These cookies are HttpOnly, which prevents JavaScript from accessing them, making them less vulnerable to theft. Additionally, all requests from the browser to the application backend will include these cookies so that the backend can retrieve the User object from the server-side session and refresh their session if it expires
+{% include_relative _forums-session-refresh-load.md %}
+{% include_relative _stolen-session-refresh-token.md %}
+{% include_relative _stolen-session-id.md %}
+{% endcapture %}
+{{ steps | markdownify }}
 
 ## APIs used
 
