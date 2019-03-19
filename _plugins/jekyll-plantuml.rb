@@ -38,17 +38,19 @@ module Jekyll
       end
 
       slash_index = @source.rindex("/")
-      dot_index = @source.rindex(".")
       output_path = "assets/img/" + @source[1, slash_index - 1] # The name includes _diagrams, so I just strip off the underscore
-      output_dir = File.join(site.source, output_path)
+      output_dir = File.join(site.source, "_generated", output_path)
+      dot_index = @source.rindex(".")
       file_name = @source[slash_index + 1, dot_index - slash_index - 1] + ".svg"
+
+      # Delete any existing files
       output = File.join(output_dir, file_name)
       if File.exist?(output)
         File.delete(output)
       end
 
       system("java -Djava.awt.headless=true -jar _plugins/plantuml.1.2019.2.jar -tsvg -nometadata -o #{output_dir} #{diagram}")
-      site.static_files << Jekyll::StaticFile.new(site, site.source, output_path, file_name)
+      site.static_files << Jekyll::StaticFile.new(site, "#{site.source}/_generated", output_path, file_name)
       "<figure class='mw-100 mx-auto mb-4 text-center'>
         <img src='#{site.baseurl}/#{output_path}/#{file_name}' alt='Sequence diagram for the workflow'/>
         <figcaption class='figure-caption'>Sequence diagram for the workflow</figcaption>
