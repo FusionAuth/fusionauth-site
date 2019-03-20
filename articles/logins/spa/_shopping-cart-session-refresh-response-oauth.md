@@ -1,0 +1,5 @@
+1. The application backend returns a redirect back to the single-page application. The id for the server-side session is written back to the browser in an HTTP cookie. The refresh token from FusionAuth is also written back to the browser in an HTTP cookie. These cookies are HttpOnly, which prevents JavaScript from accessing them, making them less vulnerable to theft. Additionally, all requests from the browser to the application backend will include these cookies so that the backend can retrieve the User object from the server-side session and refresh their session if it expires
+1. The browser requests the shopping cart single-page application from the application backend
+1. The application backend responds with the HTML, CSS & JavaScript of the application
+1. The browser loads the application and as part of the initialization process, it makes a request to the application backend to see if the user is logged in 
+1. The application backend responds with a 200 and the User object (usually in JSON) 
