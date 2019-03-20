@@ -10,20 +10,20 @@ tags:
 image: blogs/jwt-knuckle-bump.jpg
 ---
 
-Let's talk about JWTs (JSON Web Tokens). JWTs are becoming more and more ubiquitous. CIAM providers everywhere are pushing JWTs as the silver bullet for everything. JWTs are pretty cool, but let's talk about some of the downsides of JWTs and other solutions you might consider.
+Let's talk about JWTs (JSON Web Tokens, pronounced "jot"). JWTs are becoming more and more ubiquitous. Customer identity and access management (CIAM) providers everywhere are pushing JWTs as the silver bullet for everything. JWTs are pretty cool, but let's talk about some of the downsides of JWTs and other solutions you might consider.
 <!--more-->
 
 The way I usually describe JWTs is that they are portable units of identity. That means they contain identity information as JSON and can be passed around to services and applications. Any service or application can verify a JWT itself. The service/application receiving a JWT doesn’t need to ask the identity provider that generated the JWT if it is valid. Once a JWT is verified, the service or application can use the data inside it to take action on behalf of the user.
 
-Here's a diagram that illustrates how the identity provider creates a JWT and a service can use the JWT without calling back to the identity provider:
+Here's a diagram that illustrates how the identity provider creates a JWT and how a service can use the JWT without calling back to the identity provider: (yes that is a Palm Pilot in the diagram)
 
-{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-1.png" alt="JWT example" class=" img-thumbnail mr-md-4" figure=false %}
+{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-1.png" alt="JWT example" class="full img-thumbnail mr-md-4" figure=false %}
 
 When you contrast this with an opaque token, you'll see why so many developers are using JWTs. Opaque tokens are just a large string of characters that don't contain any data. A token must be verified by asking the identity provider if it is still valid and returning the user data the service needs.
 
-Here's a diagram that illustrates how the identity provider is called to verify the token and fetch the user data:
+Here's a diagram that illustrates how the identity provider is called to verify the opaque token and fetch the user data:
 
-{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-2-1.png" alt="Opaque token example" class="img-thumbnail mr-md-4" figure=false %}
+{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-2-1.png" alt="Opaque token example" class="full img-thumbnail mr-md-4" figure=false %}
 
 This method of verifying and exchanging tokens can be very "chatty" and it also requires a method of persisting and loading the tokens inside the identity provider. JWTs on the other hand don’t require any persistence or logic in the identity provider since they are portable.
 
@@ -70,10 +70,10 @@ Instead of using JWTs or opaque tokens, you always have the option of using sess
 When a user logs in, the user object is stored in the session and the server sends back a session cookie that contains the session id. Each subsequent request to the server includes the session cookie. The server uses the session cookie to load the user object out of the session Hash. The user object is then used to identify the user making the request. Here are two diagrams that illustrate this concept:
 
 ### Login
-{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-3-1.png" alt="login example for sessions" class="img-thumbnail mr-md-4" figure=false %}
+{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-3-1.png" alt="login example for sessions" class="full img-thumbnail mr-md-4" figure=false %}
 
 ### Second request
-{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-4-2.png" alt="API call with session example" class="img-thumbnail mr-md-4" figure=false %}
+{% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-4-2.png" alt="API call with session example" class="full img-thumbnail mr-md-4" figure=false %}
 
 
 If you have a smaller application that uses a single backend, sessions work well. Once you start scaling or using microservices, sessions can be more challenging. Larger architectures require load-balancing and session pinning, where each client is pinned to the specific server where their session is stored. Session replication or a distributed cache might be needed to ensure fault tolerance or allow for zero-downtime upgrades. Even with this added complexity, sessions might still be a good option.
