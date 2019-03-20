@@ -25,12 +25,28 @@ image: articles/logins.png
 
 ## Explanation
 
-Coming soon
+{% capture steps %}
+{% include_relative _oauth-password-login-store.md %}
+{% include_relative _shopping-cart-refresh-jwt-redirect.md %}
+{% include_relative _shopping-cart-refresh-jwt-load.md %}
+{% include_relative _shopping-cart-refresh-jwt-refresh.md %}
+{% include_relative _shopping-cart-refresh-jwt-relogin.md %}
+{% include_relative _oauth-password-login-forums.md %}
+{% include_relative _forums-refresh-jwt-redirect.md %}
+{% include_relative _forums-refresh-jwt-load.md %}
+{% include_relative _stolen-refresh-token-refresh-jwt.md %}
+{% include_relative _stolen-jwt-refresh-jwt.md %}
+{% endcapture %}
+{{ steps | markdownify }}
+
+## Security considerations
+
+This workflow is one of the more secure methods of authenticating users. One downside is that the application backend receives passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
 
 ## APIs used
 
 Here are the FusionAuth APIs used in this example:
 
-* [/api/login](/docs/v1/tech/apis/login#authenticate-a-user)
+* [/oauth2/token (grant)](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)
 * [/api/jwt/refresh](/docs/v1/tech/apis/jwt#refresh-a-jwt)
-* [/oauth2/token](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)
+* [/oauth2/token (refresh)](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)

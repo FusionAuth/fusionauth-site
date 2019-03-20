@@ -27,12 +27,12 @@ image: articles/logins.png
 
 {% capture steps %}
 {% include_relative _native-login-store.md %}
-1. The application backend receives the 200 and returns a redirect to the browser instructing it to navigate to the user's shopping cart. During this step, the JWT and refresh token are written out as HTTP cookies. These cookies are HttpOnly, which prevents JavaScript from accessing them, making them less vulnerable to theft. Additionally, all requests from the browser to the application backend will include the cookies so that the backend can retrieve and use them 
+{% include_relative _shopping-cart-refresh-jwt-redirect.md %}
 {% include_relative _shopping-cart-refresh-jwt-load.md %}
 {% include_relative _shopping-cart-refresh-jwt-refresh.md %}
 {% include_relative _shopping-cart-refresh-jwt-relogin.md %}
 {% include_relative _native-login-forums.md %}
-1. The application backend receives the 200 and returns a redirect to the browser instructing it to navigate to the user's posts in the forum. During this step, the JWT and refresh token are written out as HTTP cookies. These cookies are HttpOnly, which prevents JavaScript from accessing them, making them less vulnerable to theft. Additionally, all requests from the browser to the application backend will include the cookies so that the backend can retrieve and use them 
+{% include_relative _forums-refresh-jwt-redirect.md %}
 {% include_relative _forums-refresh-jwt-load.md %}
 {% include_relative _stolen-refresh-token-refresh-jwt.md %}
 {% include_relative _stolen-jwt-refresh-jwt.md %}
@@ -41,7 +41,7 @@ image: articles/logins.png
 
 ## Security considerations
 
-This workflow is one of the more secure methods of authenticating users. One downside is that the application backend will be consuming passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
+This workflow is one of the more secure methods of authenticating users. One downside is that the application backend receives passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
 
 ## APIs used
 

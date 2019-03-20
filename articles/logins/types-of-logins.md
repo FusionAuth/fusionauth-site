@@ -68,13 +68,13 @@ Here are the options for providing login to SPAs.
 * [OAuth 2 resource owners grant using sessions](spa/oauth-resource-owners-grant-sessions)
 * [OAuth 2 resource owners grant using sessions plus refresh tokens stored in cookies](spa/oauth-resource-owners-grant-sessions-refresh-tokens-cookies)
 
-In is important to note that while we recommend OAuth for SPAs, it will cause the browser to close the SPA and navigate to the OAuth provider. Once the OAuth workflow is complete, the browser will retrieve and start the SPA again. This process might seem somewhat heavy, but the SPA should be cached in the browser making the second startup process much faster.
+In is important to note that while we recommend OAuth for SPAs, it causes the browser to close the SPA and navigate to the OAuth provider. Once the OAuth workflow is complete, the browser retrieves and start the SPA again. This process might seem somewhat heavy, but the SPA should be cached in the browser making the second startup process much faster.
 
 ## Native mobile application authentication
 
-Native mobile applications are usually installed via a store and installed on the mobile device (phone, tablet, etc). These applications are started by clicking the icon on the device. The device operating system then starts the application. Once the application is started, it will render its user interface. 
+Native mobile applications are usually installed via a store and installed on the mobile device (phone, tablet, etc). These applications are started by clicking the icon on the device. The device operating system then starts the application. Once the application is started, it renders its user interface. 
 
-Native applications often call APIs to handle user interactions and input. For example, if a use clicks a button or submits a form, the application might call an API on the server. This API might be called via HTTP or some other type of protocol. Often, native applications will use various libraries for making API calls simpler.
+Native applications often call APIs to handle user interactions and input. For example, if a use clicks a button or submits a form, the application might call an API on the server. This API might be called via HTTP or some other type of protocol. Often, native applications use various libraries for making API calls simpler.
 
 Here are the options for providing login to native mobile applications. 
 

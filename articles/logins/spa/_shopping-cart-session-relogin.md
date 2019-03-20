@@ -1,0 +1,3 @@
+1. A while later, the user's server-side session expires and the user clicks on their shopping cart again. The browser requests the shopping cart from the application backend via AJAX and sends the session cookie to the application backend
+1. The application backend attempts to load the server-side session associated with session cookie and realizes it is expired. The backend then returns a 401 indicating that the user is no longer logged in
+1. At this point, the application can allow the user can log in the same way they did above

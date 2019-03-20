@@ -25,7 +25,23 @@ image: articles/logins.png
 
 ## Explanation
 
-Coming soon
+{% capture steps %}
+{% include_relative _native-login-store.md %}
+{% include_relative _create-session.md %}
+{% include_relative _shopping-cart-session-response.md %}
+{% include_relative _shopping-cart-session-load.md %}
+{% include_relative _shopping-cart-session-relogin.md %}
+{% include_relative _native-login-forums.md %}
+{% include_relative _create-session.md %}
+{% include_relative _forums-session-response.md %}
+{% include_relative _forums-session-load.md %}
+{% include_relative _stolen-session-id.md %}
+{% endcapture %}
+{{ steps | markdownify }}
+
+## Security considerations
+
+This workflow is one of the more secure methods of authenticating users. One downside is that the application backend receives passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
 
 ## APIs used
 
