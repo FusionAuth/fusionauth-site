@@ -1,8 +1,8 @@
 ---
 layout: article
-title: Webapp OAuth login using resource owner's grant
-subtitle: Using sessions and refresh tokens 
-description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions plus refresh tokens in cookies
+title: Webapp OAuth login using resource owner password credentials grant
+subtitle: Using sessions 
+description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions
 image: articles/logins.png
 ---
 
@@ -21,22 +21,20 @@ image: articles/logins.png
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/webapp/oauth-resource-owners-grant-sessions-refresh-tokens-cookies.plantuml %}
+{% plantuml _diagrams/logins/webapp/oauth-resource-owners-grant-sessions.plantuml %}
 
 ## Explanation
 
 {% capture steps %}
 {% include_relative _oauth-password-login-store.md %}
 {% include_relative _create-session.md %}
-{% include_relative _shopping-cart-session-refresh-redirect.md %}
-{% include_relative _shopping-cart-session-refresh-load.md %}
-{% include_relative _shopping-cart-session-refresh-refresh.md %}
-{% include_relative _shopping-cart-session-refresh-relogin.md %}
+{% include_relative _shopping-cart-session-redirect.md %}
+{% include_relative _shopping-cart-session-load.md %}
+{% include_relative _shopping-cart-session-relogin.md %}
 {% include_relative _oauth-password-login-forums.md %}
 {% include_relative _create-session.md %}
-{% include_relative _forums-session-refresh-redirect.md %}
-{% include_relative _forums-session-refresh-load.md %}
-{% include_relative _stolen-session-refresh-token.md %}
+{% include_relative _forums-session-redirect.md %}
+{% include_relative _forums-session-load.md %}
 {% include_relative _stolen-session-id.md %}
 {% endcapture %}
 {{ steps | markdownify }}
@@ -49,6 +47,4 @@ This workflow is one of the more secure methods of authenticating users. One dow
 
 Here are the FusionAuth APIs used in this example:
 
-* [/oauth2/token (grant)](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)
-* [/api/jwt/refresh](/docs/v1/tech/apis/jwt#refresh-a-jwt)
-* [/oauth2/token](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)
+* [/oauth2/token](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)

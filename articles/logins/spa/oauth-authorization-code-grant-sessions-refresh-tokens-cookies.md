@@ -43,7 +43,7 @@ image: articles/logins.png
 
 ## Security considerations
 
-This the safest and most feature rich login workflow in FusionAuth. It has the benefit that passwords are only ever provided directly to FusionAuth. It also has the benefit of full SSO capabilities when the user is automatically logged into the forum application by FusionAuth. Also, the session and refresh tokens are HttpOnly cookies that are domain locked to the application backend that needs them. Plus, the User object (or JWT) is secured on the server inside a server-side session.
+This is one the safest and most feature rich login workflow in FusionAuth. It has the benefit that passwords are only provided directly to FusionAuth. It also has the benefit of full SSO capabilities when the user is automatically logged into the forum application by FusionAuth. Also, the session and refresh tokens are HttpOnly cookies that are domain locked to the application backend that needs them. Plus, the User object (or JWT) is secured on the server inside a server-side session.
 
 ## APIs used
 

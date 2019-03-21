@@ -1,0 +1,2 @@
+1. The browser loads the application and as part of the initialization process, it makes a request to the application backend to see if the user is logged in 
+1. The application backend responds with a 404 indicating the user is not logged in

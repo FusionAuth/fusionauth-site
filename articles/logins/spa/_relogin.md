@@ -1,0 +1,1 @@
+1. At this point, the application can allow the user to log in the same way they did above

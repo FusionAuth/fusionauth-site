@@ -1,8 +1,8 @@
 ---
 layout: article
-title: Single-page application native login to backend
-subtitle: Using JWTs and refresh tokens
-description: An explanation of single-page application login using a native login form that submits to the application backend and uses JWTs and refresh tokens in cookies
+title: Webapp OAuth login using resource owner password credentials grant 
+subtitle: Using JWTs and refresh tokens 
+description: An explanation of webapp login using a native login form that submits to the application backend and uses JWTs and refresh tokens in cookies
 image: articles/logins.png
 ---
 
@@ -21,24 +21,18 @@ image: articles/logins.png
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/spa/native-login-form-to-application-backend-jwts-refresh-tokens-cookies.plantuml %}
+{% plantuml _diagrams/logins/webapp/oauth-resource-owners-grant-jwts-refresh-tokens-cookies.plantuml %}
 
 ## Explanation
 
 {% capture steps %}
-{% include_relative _shopping-cart-initialize.md %}
-{% include_relative _check-user.md %}
-{% include_relative _render-login-form.md %}
-{% include_relative _call-backend-login-api.md %}
-{% include_relative _shopping-cart-refresh-jwt-response.md %}
+{% include_relative _oauth-password-login-store.md %}
+{% include_relative _shopping-cart-refresh-jwt-redirect.md %}
 {% include_relative _shopping-cart-refresh-jwt-load.md %}
 {% include_relative _shopping-cart-refresh-jwt-refresh.md %}
 {% include_relative _shopping-cart-refresh-jwt-relogin.md %}
-{% include_relative _forums-initialize-no-sso.md %}
-{% include_relative _check-user.md %}
-{% include_relative _render-login-form.md %}
-{% include_relative _call-backend-login-api.md %}
-{% include_relative _forums-refresh-jwt-response.md %}
+{% include_relative _oauth-password-login-forums.md %}
+{% include_relative _forums-refresh-jwt-redirect.md %}
 {% include_relative _forums-refresh-jwt-load.md %}
 {% include_relative _stolen-refresh-token-refresh-jwt.md %}
 {% include_relative _stolen-jwt-refresh-jwt.md %}
@@ -53,6 +47,6 @@ This workflow is one of the more secure methods of authenticating users. One dow
 
 Here are the FusionAuth APIs used in this example:
 
-* [/api/login](/docs/v1/tech/apis/login#authenticate-a-user)
+* [/oauth2/token (grant)](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)
 * [/api/jwt/refresh](/docs/v1/tech/apis/jwt#refresh-a-jwt)
-* [/oauth2/token](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)
+* [/oauth2/token (refresh)](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)

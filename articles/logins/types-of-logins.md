@@ -34,9 +34,9 @@ Here are the options for providing login to traditional webapps.
 * [(RECOMMENDED) OAuth 2 authorization code grant using JWTs and refresh tokens stored in cookies](webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies)
 * [(RECOMMENDED) OAuth 2 authorization code grant using sessions](webapp/oauth-authorization-code-grant-sessions)
 * [OAuth 2 authorization code grant using sessions plus refresh tokens stored in cookies](webapp/oauth-authorization-code-grant-sessions-refresh-tokens-cookies)
-* [OAuth 2 resource owners grant using JWTs and refresh tokens stored in cookies](webapp/oauth-resource-owners-grant-jwts-refresh-tokens-cookies)
-* [OAuth 2 resource owners grant using sessions](webapp/oauth-resource-owners-grant-sessions)
-* [OAuth 2 resource owners grant using sessions plus refresh tokens stored in cookies](webapp/oauth-resource-owners-grant-sessions-refresh-tokens-cookies)
+* [OAuth 2 resource owner password credentials grant using JWTs and refresh tokens stored in cookies](webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies)
+* [OAuth 2 resource owner password credentials grant using sessions](webapp/oauth-resource-owner-password-credentials-grant-sessions)
+* [OAuth 2 resource owner password credentials grant using sessions plus refresh tokens stored in cookies](webapp/oauth-resource-owner-password-credentials-grant-sessions-refresh-tokens-cookies)
 
 ## Single-page application authentication
 
@@ -64,9 +64,9 @@ Here are the options for providing login to SPAs.
 * [OAuth 2 implicit grant using JWTs stored in cookies](spa/oauth-implicit-grant-jwts-cookies)
 * [OAuth 2 implicit grant using JWTs stored in local storage](spa/oauth-implicit-grant-jwts-local-storage)
 * [OAuth 2 implicit grant using sessions](spa/oauth-implicit-grant-sessions)
-* [OAuth 2 resource owners grant using JWTs and refresh tokens stored in cookies](spa/oauth-resource-owners-grant-jwts-refresh-tokens-cookies)
-* [OAuth 2 resource owners grant using sessions](spa/oauth-resource-owners-grant-sessions)
-* [OAuth 2 resource owners grant using sessions plus refresh tokens stored in cookies](spa/oauth-resource-owners-grant-sessions-refresh-tokens-cookies)
+* [OAuth 2 resource owner password credentials grant using JWTs and refresh tokens stored in cookies](spa/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies)
+* [OAuth 2 resource owner password credentials grant using sessions](spa/oauth-resource-owner-password-credentials-grant-sessions)
+* [OAuth 2 resource owner password credentials grant using sessions plus refresh tokens stored in cookies](spa/oauth-resource-owner-password-credentials-grant-sessions-refresh-tokens-cookies)
 
 In is important to note that while we recommend OAuth for SPAs, it causes the browser to close the SPA and navigate to the OAuth provider. Once the OAuth workflow is complete, the browser retrieves and start the SPA again. This process might seem somewhat heavy, but the SPA should be cached in the browser making the second startup process much faster.
 
@@ -80,4 +80,4 @@ Here are the options for providing login to native mobile applications.
 
 * [(RECOMMENDED) Native login form to the application backend using JWTs and refresh tokens](mobile/native-login-form-to-application-backend-jwts-refresh-tokens)
 * [Native login form to FusionAuth using JWTs and refresh tokens](mobile/native-login-form-to-fusionauth-jwts-refresh-tokens)
-* [OAuth 2 resource owners grant using JWTs and refresh tokens](mobile/oauth-resource-owners-grant-jwts-refresh-tokens)
+* [OAuth 2 resource owner password credentials grant using JWTs and refresh tokens](mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens)

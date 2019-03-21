@@ -1,2 +1,2 @@
-1. The browser requests the user's forum posts from the application backend via AJAX and includes the JWT and refresh token cookies
+1. The browser requests the user's forum posts from the application backend via AJAX and includes the JWT cookie
 1. The application backend verifies the JWT and then uses the JWT to identify the user. Once the user is identified, the backend looks up the user's forum posts from the database (or similar location). Finally, the application backend returns the user's forum posts that the browser renders (usually as JSON)

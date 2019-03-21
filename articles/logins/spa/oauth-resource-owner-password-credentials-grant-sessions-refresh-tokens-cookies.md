@@ -1,6 +1,6 @@
 ---
 layout: article
-title: Single-page application native login to backend 
+title: Single-page application OAuth login using resource owner password credentials grant 
 subtitle: Using sessions and refresh tokens 
 description: An explanation of single-page application login using a native login form that submits to the application backend and uses server-side sessions plus refresh tokens in cookies
 image: articles/logins.png
@@ -21,7 +21,7 @@ image: articles/logins.png
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/spa/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.plantuml %}
+{% plantuml _diagrams/logins/spa/oauth-resource-owners-grant-sessions-refresh-tokens-cookies.plantuml %}
 
 ## Explanation
 
@@ -29,16 +29,16 @@ image: articles/logins.png
 {% include_relative _shopping-cart-initialize.md %}
 {% include_relative _check-user.md %}
 {% include_relative _render-login-form.md %}
-{% include_relative _call-backend-login-api.md %}
+{% include_relative _call-backend-login-api-oauth.md %}
 {% include_relative _create-session.md %}
 {% include_relative _shopping-cart-session-refresh-response.md %}
 {% include_relative _shopping-cart-session-refresh-load.md %}
 {% include_relative _shopping-cart-session-refresh-refresh.md %}
 {% include_relative _shopping-cart-session-refresh-relogin.md %}
-{% include_relative _forums-initialize-no-sso.md %}
+{% include_relative _forums-initialize-sso.md %}
 {% include_relative _check-user.md %}
 {% include_relative _render-login-form.md %}
-{% include_relative _call-backend-login-api.md %}
+{% include_relative _call-backend-login-api-oauth.md %}
 {% include_relative _create-session.md %}
 {% include_relative _forums-session-refresh-response.md %}
 {% include_relative _forums-session-refresh-load.md %}
@@ -55,6 +55,6 @@ This workflow is one of the more secure methods of authenticating users. One dow
 
 Here are the FusionAuth APIs used in this example:
 
-* [/api/login](/docs/v1/tech/apis/login#authenticate-a-user)
+* [/oauth2/token (grant)](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)
 * [/api/jwt/refresh](/docs/v1/tech/apis/jwt#refresh-a-jwt)
 * [/oauth2/token](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)

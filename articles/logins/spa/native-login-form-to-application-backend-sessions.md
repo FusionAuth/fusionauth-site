@@ -26,12 +26,18 @@ image: articles/logins.png
 ## Explanation
 
 {% capture steps %}
-{% include_relative _native-login-store.md %}
+{% include_relative _shopping-cart-initialize.md %}
+{% include_relative _check-user.md %}
+{% include_relative _render-login-form.md %}
+{% include_relative _call-backend-login-api.md %}
 {% include_relative _create-session.md %}
 {% include_relative _shopping-cart-session-response.md %}
 {% include_relative _shopping-cart-session-load.md %}
 {% include_relative _shopping-cart-session-relogin.md %}
-{% include_relative _native-login-forums.md %}
+{% include_relative _forums-initialize-no-sso.md %}
+{% include_relative _check-user.md %}
+{% include_relative _render-login-form.md %}
+{% include_relative _call-backend-login-api.md %}
 {% include_relative _create-session.md %}
 {% include_relative _forums-session-response.md %}
 {% include_relative _forums-session-load.md %}
@@ -42,6 +48,8 @@ image: articles/logins.png
 ## Security considerations
 
 This workflow is one of the more secure methods of authenticating users. One downside is that the application backend receives passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
+
+Additionally, this workflow requires that the user login each time their session expires. If this is the preferred behavior, than this workflow might be a good fit. 
 
 ## APIs used
 
