@@ -78,6 +78,8 @@ Native applications often call APIs to handle user interactions and input. For e
 
 Here are the options for providing login to native mobile applications. 
 
-* [(RECOMMENDED) Native login form to the application backend using JWTs and refresh tokens](mobile/native-login-form-to-application-backend-jwts-refresh-tokens)
-* [Native login form to FusionAuth using JWTs and refresh tokens](mobile/native-login-form-to-fusionauth-jwts-refresh-tokens)
+* [Native login form to the application backend using JWTs and refresh tokens](mobile/native-login-form-to-application-backend-jwts-refresh-tokens)
+* [(RECOMMENDED) Native login form to FusionAuth using JWTs and refresh tokens](mobile/native-login-form-to-fusionauth-jwts-refresh-tokens)
 * [OAuth 2 resource owner password credentials grant using JWTs and refresh tokens](mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens)
+
+**IMPLEMENTATION NOTE**: Some experts recommend that native applications (including mobile apps) use OAuth's authorization code grant. This method works fine with FusionAuth, but is not listed in this section because it is covered complete in the SPA and Webapp sections above. The only difference is that at the end of the OAuth workflow, the native application pulls the JWT and refresh tokens from the web-view.

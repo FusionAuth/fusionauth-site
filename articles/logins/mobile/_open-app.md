@@ -1,0 +1,1 @@
+1. The user opens the application. The application initializes itself and then renders its login form

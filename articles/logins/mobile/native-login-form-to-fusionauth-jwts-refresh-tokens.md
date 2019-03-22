@@ -1,6 +1,6 @@
 ---
 layout: article
-title: Mobile native login to backend 
+title: Mobile login to FusionAuth 
 subtitle: Using JWTs and refresh tokens 
 description: An explanation of mobile application login using a native login form that submits directly to FusionAuth and uses JWTs and refresh tokens
 image: articles/logins.png
@@ -25,7 +25,20 @@ image: articles/logins.png
 
 ## Explanation
 
-Coming soon
+{% capture steps %}
+{% include_relative _open-app.md %}
+{% include_relative _call-fusionauth-login-api.md %}
+{% include_relative _shopping-cart-refresh-jwt-load.md %}
+{% include_relative _shopping-cart-refresh-jwt-refresh.md %}
+{% include_relative _shopping-cart-refresh-jwt-relogin.md %}
+{% include_relative _stolen-refresh-token.md %}
+{% include_relative _stolen-jwt.md %}
+{% endcapture %}
+{{ steps | markdownify }}
+
+## Security considerations
+
+This workflow is one of the more secure methods of authenticating users. It uses a JWT and refresh token that are securely store on the mobile device. It has the benefit that passwords are only provided directly to FusionAuth.
 
 ## APIs used
 
