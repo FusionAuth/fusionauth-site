@@ -29,15 +29,23 @@ end
 File.open(output_file, "w", :encoding => "UTF-8") do |f|
 
   # Write the header
-  f.puts("Date,Pulls,Stars\n")
+  f.puts("Date,Total,Today,Stars\n")
+
+  yesterday = 0
+  today = 0
 
   # Write each day sorted
   totals.sort.to_h.each do |date, total|
-    f.puts("#{date},#{total},#{stars[date]}")
+    today = total.to_i - yesterday
+    yesterday = total.to_i
+    if today == total.to_i
+      today = 0
+    end
+    f.puts("#{date},#{total},#{today},#{stars[date]}")
   end
 
-  f.puts("Color,#47B050,#FFFF00")
-  f.puts("Type,area,stackedarea,line")
-  f.puts("Total,#{total_count},#{star_count}")
+  f.puts("Color,#fb8314,#3BAE5A,#8314fb")
+  f.puts("Type,line,area,line")
+  f.puts("Total,#{total_count},#{today},#{star_count}")
 
 end
