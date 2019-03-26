@@ -26,6 +26,8 @@ include::_jwt_algorithm.adoc[]
 
 Required when `enabled` is set to `true`.
 
+When an HMAC algorithm is used such as `HS256`, `HS384` or `HS512`, the OAuth `client_secret` will be used as the signing secret.
+
 |[field]#application.jwtConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`#
 |Indicates if this application is using the JWT configuration defined here or the global JWT configuration defined by the System Configuration. If this is `false` the signing algorithm configured in the System Configuration will be used. If `true` the signing algorithm defined in this application will be used.
 
@@ -44,15 +46,33 @@ Required when `enabled` is set to `true` and `algorithm` is set to an `RSA` or `
 
 Required when `enabled` is set to `true`.
 
-|[field]#application.jwtConfiguration.secret# [type]#[String]# [optional]#Optional#
+|[field]#application.jwtConfiguration.secret# [type]#[String]# [optional]#Optional# [deprecated]#Deprecated#
 |The secret used when an `HMAC` based signing algorithm has been selected. This secret is used to sign and verify JWTs.
 
 Required when `enabled` is set to `true` and `algorithm` is set to an `HMAC` based value.
+
+&nbsp;
+[deprecated]#Removed in version 1.5.0# In version 1.5.0 and beyond, when selecting an `HMAC` algorithm, the `client_secret` from the OAuth configuration will be used to sign and verify the JWTs.
 
 |[field]#application.jwtConfiguration.timeToLiveInSeconds# [type]#[Integer]# [optional]#Optional#
 |The length of time in seconds the JWT will live before it is expired and no longer valid.
 
 Required when `enabled` is set to `true`.
+
+|[field]#application.loginConfiguration.allowTokenRefresh# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available Since 1.5.0#
+|Indicates if a JWT may be refreshed using a Refresh Token for this application. This configuration is separate from issuing new Refresh Tokens which is controlled by the `generateRefreshTokens` parameter. This configuration indicates specifically if an existing Refresh Token may be used to request a new JWT using the link:jwt#refresh-a-jwt[Refresh API].
+
+If you do not intend to use the Login API, and instead will only be using the OAuth endpoints, you may leave this set to `false` to ensure Refresh Tokens cannot be used outside of the Refresh Token Grant.
+
+|[field]#application.loginConfiguration.generateRefreshTokens# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available Since 1.5.0#
+|Indicates if a Refresh Token should be issued from the Login API.
+
+If you do not intend to use the Login API, and instead will only be using the OAuth endpoints, you may leave this set to `false` to ensure Refresh Tokens will not be issued outside of the OAuth grants.
+
+|[field]#application.loginConfiguration.requireAuthentication# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `true`# [since]#Available Since 1.5.0#
+|Indicates if the Login API should require an API key. If you set this value to `false` and your FusionAuth API is on a public network, anyone may attempt to use the Login API.
+
+If you do not intend to use the Login API, or will only be calling this API from a secure backend server, setting this value to `true` in order to require an API key is preferred.
 
 |[field]#application.name# [type]#[String]# [required]#Required#
 |The name of the Application.
@@ -66,14 +86,24 @@ Required when `enabled` is set to `true`.
 |[field]#application.oauthConfiguration.clientSecret# [type]#[String]# [optional]#Optional#
 |The OAuth 2.0 client secret. If you leave this blank during a POST, a secure secret will be generated for you. If you leave this blank during PUT, the previous value will be maintained. For both POST and PUT you can provide a value and it will be stored.
 
+|[field]#application.oauthConfiguration.enabledGrants# [type]#[Array<String>]# [optional]#Optional# [since]#Available Since 1.5.0#
+|The enabled grants for this application. In order to utilize a particular grant with the OAuth 2.0 endpoints you must have enabled the grant.
+
+Supported values include:
+
+* `authorization_code`
+* `implicit`
+* `password`
+* `refresh_token`
+
 |[field]#application.oauthConfiguration.generateRefreshTokens# [type]#[boolean]# [optional]#Optional# [default]#Defaults to `true`# [since]#Available Since 1.3.0#
-|Determines if the OAuth 2.0 Token endpoint will generate a refresh token or not. This flag needs to be true, the scope needs to include `offline_access` and a device identifier needs to be supplied for FusionAuth to generate a refresh token.
+|Determines if the OAuth 2.0 Token endpoint will generate a refresh token when the `offline_access` scope is requested.
 
 |[field]#application.oauthConfiguration.logoutURL# [type]#[String]# [optional]#Optional#
 |The logout URL for the Application. FusionAuth will redirect to this URL after the user logs out of OAuth.
 
 |[field]#application.oauthConfiguration.requireClientAuthentication# [type]#[boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available Since 1.3.0#
-|Determines if the OAuth 2.0 Token endpoint requires client authentication. If this is enabled, the client must pass in the `client_id` and `client_secret` using Basic Authorization where the `client_id` is the username and `client_secret` is the password.
+|Determines if the OAuth 2.0 Token endpoint requires client authentication. If this is enabled, the client must provide client credentials when using the Token endpoint. The `client_id` and `client_secret` may be provided using a Basic Authorization HTTP header, or by sending these parameters in the request body using POST data.
 
 |[field]#application.registrationConfiguration.birthDate.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available Since 1.4.0#
 |Determines if the `birthDate` field will be included on the registration form.
