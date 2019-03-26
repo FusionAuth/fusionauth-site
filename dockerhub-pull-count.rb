@@ -44,7 +44,7 @@ File.open(output_file, "w", :encoding => "UTF-8") do |f|
     f.puts("#{date},#{total},#{today},#{stars[date]}")
   end
 
-  f.puts("Color,#fb8314,#3BAE5A,#8314fb")
+  f.puts("Color,#fb8314,#3BAE5A,#148cfb")
   f.puts("Type,area,area,line")
   f.puts("Total,#{total_count},#{today},#{star_count}")
 
