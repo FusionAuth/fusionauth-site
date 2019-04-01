@@ -866,6 +866,14 @@ link:authentication#jwt-authentication[icon:id-badge[role=green]] Changes a User
 Available Since Version 1.5.0
 ====
 
+This API will use a JWT as authentication. See link:authentication#jwt-authentication[JWT Authentication] for examples of how you can send the JWT to FusionAuth.
+
+A common use case for using this API with a JWT will be if you want to allow the user to change their own password. Specifically if you are attempting to perform this request in a frontend  browser that cannot store an API key.
+
+Because changing a User's password will revoke all existing refresh tokens if you allow the user to change their password they will need to re-authenticate to stay logged into your application if you are utilizing JWTs and Refresh Tokens.
+
+For this reason, this API will return a `oneTimePassword` that is intended to be used programatically after a Change Password request completes to keep the user logged in and provide a better user experience. A successful login will return you a new access token (JWT) and a refresh token. This will allow you to make the change password workflow seamless to the user.
+
 [.endpoint]
 .URI
 --
@@ -881,6 +889,11 @@ Available Since Version 1.5.0
 
 |[field]#password# [type]#[String]# [required]#Required#
 |The User's new password.
+
+|[field]#refreshToken# [type]#[String]# [optional]#Optional#
+|The user's existing refresh token. If you have access to your current refresh token, it can be provided in the request body using this parameter. If the `refresh_token` cookie also exists and is present on the request it will take precedence over this parameter.
+
+This parameter is used to determine if the `oneTimePassword` that is returned from this API will be eligible to request a refresh token when used by the Login API. If this parameter is not provided and no cookie is found on the request, a refresh token will not be provided on the Login response when using the returned `oneTimePassword`.
 |===
 
 [source,json]
