@@ -55,4 +55,4 @@ Here are the FusionAuth APIs used in this example:
 
 * [/oauth2/token](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)
 
-[_View All Types_](/articles/logins/types-of-logins)
+[_View All Types_](/articles/logins/types-of-logins-authentication-workflows)

@@ -49,4 +49,4 @@ Here are the FusionAuth APIs used in this example:
 
 * [/api/login](/docs/v1/tech/apis/login#authenticate-a-user)
 
-[_View All Types_](/articles/logins/types-of-logins)
+[_View All Types_](/articles/logins/types-of-logins-authentication-workflows)
