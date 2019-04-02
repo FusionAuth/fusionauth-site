@@ -1,9 +1,9 @@
 ---
 layout: article
-title: Webapp native login to backend 
-subtitle: Using sessions 
+title: Webapp native login to backend
+subtitle: Using sessions
 description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions
-image: articles/logins.png
+image: articles/login-types-share-image.jpg
 ---
 
 {% capture intro %}
@@ -48,3 +48,5 @@ This workflow is one of the more secure methods of authenticating users. One dow
 Here are the FusionAuth APIs used in this example:
 
 * [/api/login](/docs/v1/tech/apis/login#authenticate-a-user)
+
+[_View All Types_](/articles/logins/types-of-logins)

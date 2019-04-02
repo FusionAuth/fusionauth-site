@@ -1,9 +1,9 @@
 ---
 layout: article
 title: Webapp OAuth login using resource owner password credentials grant
-subtitle: Using sessions 
+subtitle: Using sessions
 description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions
-image: articles/logins.png
+image: login-types-share-image.jpg
 ---
 
 {% capture intro %}
@@ -48,3 +48,5 @@ This workflow is one of the more secure methods of authenticating users. One dow
 Here are the FusionAuth APIs used in this example:
 
 * [/oauth2/token](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)
+
+[_View All Types_](/articles/logins/types-of-logins)

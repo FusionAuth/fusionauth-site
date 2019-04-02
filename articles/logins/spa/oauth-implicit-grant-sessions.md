@@ -1,9 +1,9 @@
 ---
 layout: article
-title: Single-page application OAuth login using implicit grant 
-subtitle: Using sessions 
+title: Single-page application OAuth login using implicit grant
+subtitle: Using sessions
 description: An explanation of single-page application login using FusionAuth OAuth interface with the implicit grant and uses server-side sessions
-image: articles/logins.png
+image: articles/login-types-share-image.jpg
 ---
 
 {% capture intro %}
@@ -50,10 +50,13 @@ This workflow is less secure than other workflows because the JWT is available t
 
 This workflow might still be a good solution for some applications. Developers should just weigh the risks associated with JWTs accessible to JavaScript versus the other workflows we have documented.
 
-Additionally, since this workflow does not use refresh tokens (and cannot use refresh tokens according to the specification). Therefore, when the user's session expires, they will need to log into the application again. This could be an automatic login, but it still requires the browser to take the user to the FusionAuth OAuth interface. 
+Additionally, since this workflow does not use refresh tokens (and cannot use refresh tokens according to the specification). Therefore, when the user's session expires, they will need to log into the application again. This could be an automatic login, but it still requires the browser to take the user to the FusionAuth OAuth interface.
 
 ## APIs used
 
 Here are the FusionAuth APIs used in this example:
 
 * [/oauth2/authorize](/docs/v1/tech/oauth/endpoints#authorize)
+
+
+[_View All Types_](/articles/logins/types-of-logins)

@@ -1,9 +1,9 @@
 ---
 layout: article
-title: Single-page application native login to FusionAuth 
-subtitle: Using JWTs and refresh tokens 
+title: Single-page application native login to FusionAuth
+subtitle: Using JWTs and refresh tokens
 description: An explanation of single-page application login using a native login form that submits directly to FusionAuth and uses server-side sessions plus refresh tokens in cookies
-image: articles/logins.png
+image: articles/login-types-share-image.jpg
 ---
 
 {% capture intro %}
@@ -49,7 +49,7 @@ image: articles/logins.png
 
 ## Security considerations
 
-This workflow is more secure than the other workflows that call FusionAuth directly because the JWT and refresh token are both stored in HttpOnly cookies. The downside of this workflow is that there are no built in SSO capabilities provided by FusionAuth. It forces the developer to build out an SSO solution themselves. 
+This workflow is more secure than the other workflows that call FusionAuth directly because the JWT and refresh token are both stored in HttpOnly cookies. The downside of this workflow is that there are no built in SSO capabilities provided by FusionAuth. It forces the developer to build out an SSO solution themselves.
 
 Additionally, this workflow requires that FusionAuth be deployed at the top-level domain for the entire organization or that a proxy be used to rewrite the cookies that FusionAuth sends back as part of the Login API so that they are in the correct domain.  
 
@@ -60,3 +60,5 @@ Here are the FusionAuth APIs used in this example:
 * [/api/login](/docs/v1/tech/apis/login#authenticate-a-user)
 * [/api/jwt/refresh](/docs/v1/tech/apis/jwt#refresh-a-jwt)
 * [/oauth2/token](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)
+
+[_View All Types_](/articles/logins/types-of-logins)

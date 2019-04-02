@@ -1,9 +1,9 @@
 ---
 layout: article
-title: Webapp OAuth login using authorization code grant 
-subtitle: Using sessions and refresh tokens 
+title: Webapp OAuth login using authorization code grant
+subtitle: Using sessions and refresh tokens
 description: An explanation of webapp login using FusionAuth OAuth interface with the authorization code grant and uses server-side sessions plus refresh tokens in cookies
-image: articles/logins.png
+image: articles/login-types-share-image.jpg
 ---
 
 {% capture intro %}
@@ -52,3 +52,5 @@ Here are the FusionAuth APIs used in this example:
 * [/oauth2/authorize](/docs/v1/tech/oauth/endpoints#authorize)
 * [/api/jwt/refresh](/docs/v1/tech/apis/jwt#refresh-a-jwt)
 * [/oauth2/token](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)
+
+[_View All Types_](/articles/logins/types-of-logins)

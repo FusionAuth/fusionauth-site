@@ -1,9 +1,9 @@
 ---
 layout: article
-title: Single-page application OAuth login using authorization code grant 
-subtitle: Using sessions 
+title: Single-page application OAuth login using authorization code grant
+subtitle: Using sessions
 description: An explanation of single-page application login using FusionAuth OAuth interface with the authorization code grant and uses server-side sessions
-image: articles/logins.png
+image: articles/login-types-share-image.jpg
 ---
 
 {% capture intro %}
@@ -48,3 +48,5 @@ This a safe and feature rich login workflow in FusionAuth. It has the benefit th
 Here are the FusionAuth APIs used in this example:
 
 * [/oauth2/authorize](/docs/v1/tech/oauth/endpoints#authorize)
+
+[_View All Types_](/articles/logins/types-of-logins)
