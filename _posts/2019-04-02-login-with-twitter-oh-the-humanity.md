@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: What they don't tell you about Logging in with Twitter
-description: FusionAuth makes logging in with Twitter easy
+title: "Login with Twitter - Oh, the Humanity!"
+description: Twitter doesn't make it easy to build an OAuthv1 login. FusionAuth does.
 author: Daniel DeGroff
 excerpt_separator: "<!--more-->"
 categories: blog
@@ -21,11 +21,11 @@ TL;DR See source code on [Gist](https://gist.github.com/robotdan/33f5834399b6b30
 ## Sifting through the disaster that is Twitter login
 
 If you have ever built out a Twitter login integration you've likely read through the [Twitter documentation](https://developer.twitter.com/en/docs/twitter-for-websites/log-in-with-twitter/guides/implementing-sign-in-with-twitter.html
-). 
+).
 
 If you can navigate their documentation, you get a gold star. This task is not for the faint of heart. The most difficult part of making the OAuth v1 requests is building the required signature. The Twitter documentation does little to make this a simpler process.
 
-Here is the summary provided by Twitter on how to build a [signed request](https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature.html). 
+Here is the summary provided by Twitter on how to build a [signed request](https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature.html).
 
 {:.text}
 > These values need to be encoded into a single string which will be used later on. The process to build the string is very specific:
@@ -46,7 +46,7 @@ With that said, to make my life easier, and hopefully some other fellow Java dev
 
 ## Gather your Keys
 
-Start by logging into Twitter and navigating the Twitter developer console. Once you're there, navigate to the `Keys and tokens` tab of the application you're integrating. Here you will find a few key pieces of information that you'll need to sign the request. 
+Start by logging into Twitter and navigating the Twitter developer console. Once you're there, navigate to the `Keys and tokens` tab of the application you're integrating. Here you will find a few key pieces of information that you'll need to sign the request.
 
 
 {% include _image.html src="/assets/img/docs/twitter-keys-tokens.png" alt="Twitter Consumer API Keys" class="full" figure=false %}
@@ -54,12 +54,12 @@ Start by logging into Twitter and navigating the Twitter developer console. Once
 Make note of the two values in the `Consumer API Keys` section, they are suffixed with the labels `API key` and `API secret key`. Once you are in the OAuth v1 world, we'll be using the `API key` value for the consumer key and the `API secret key` value for the consumer secret.
 
 
-In the above Twitter configuration screenshot we have an `API key` value of `T62nvXkMrZyTeRYK2vBmGiFUq` and an `API secret key` value of `gikDkNsIS7Xpc1eFtgt38lnZFBarywiOtEyyUBGZ3x2fj6d3gz`. We'll use those values in the next section to build an example `Authorization` header. 
+In the above Twitter configuration screenshot we have an `API key` value of `T62nvXkMrZyTeRYK2vBmGiFUq` and an `API secret key` value of `gikDkNsIS7Xpc1eFtgt38lnZFBarywiOtEyyUBGZ3x2fj6d3gz`. We'll use those values in the next section to build an example `Authorization` header.
 
 ## Example code
 
-Here is a Java example of building the `Authorization` header value for a `POST` request to the Twitter `request_token` endpoint. This is the first endpoint you will use which is required to obtain a Request Token. 
- 
+Here is a Java example of building the `Authorization` header value for a `POST` request to the Twitter `request_token` endpoint. This is the first endpoint you will use which is required to obtain a Request Token.
+
 ```java
 String authorization = new OAuth1AuthorizationHeaderBuilder()
             .withMethod("POST")
@@ -79,7 +79,7 @@ Authorization: OAuth oauth_callback="https%3A%2F%2Flogin.piedpiper.com%2Fcallbac
                      oauth_timestamp="1554175774",
                      oauth_signature_method="HMAC-SHA1",
                      oauth_version="1.0",
-                     oauth_signature="tYJE4EV0ZoXYX6jsAfQuQvLpjOA%3D" 
+                     oauth_signature="tYJE4EV0ZoXYX6jsAfQuQvLpjOA%3D"
 ```
 
 It is as simple as that, now for each request you make to Twitter as part of the OAuth v1 authentication workflow, you simply need to build the `Authorization` header using the `OAuth1AuthorizationHeaderBuilder` class.
