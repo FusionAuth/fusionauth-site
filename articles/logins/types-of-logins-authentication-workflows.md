@@ -42,7 +42,7 @@ Here are the options for providing login to traditional webapps.
 
 ## Single-page application authentication
 
-Single-page web applications (SPA sometimes pronounced spa or S-P-A) use a single reuqest and response to download the application. Sometimes the entire application is retrieved on the initial request and other times only part of the application is retrieved. This initial retrieve consists of HTML, CSS and JavaScript that comprise the application.
+Single-page web applications (SPA sometimes pronounced spa or S-P-A) use a single request and response to download the application. Sometimes the entire application is retrieved on the initial request and other times only part of the application is retrieved. This initial retrieve consists of HTML, CSS and JavaScript that comprise the application.
 
 <img src="/assets/img/articles/login-type-xmlhttprequest.png" alt="" class="float-right img-fluid" />
 
