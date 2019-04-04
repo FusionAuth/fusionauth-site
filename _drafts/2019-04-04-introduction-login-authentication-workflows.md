@@ -17,7 +17,7 @@ So you are building an application and you need login and authentication for you
 
 ## Basic Application Types
 
-The type of login and authentication workflows that are best depend a lot on your application. Is it a web app served through a browser, or is it built specifically for a device? This will make a big difference in how the app can authenticate users. Here are three of the most common application types and a brief description of each. Are there more application types? Of course there are, and there are many ways to blend between these basic types, too. Understanding these basics will help guide your decisions when defining the most effective authentication workflows for you.
+The type of login and authentication workflows that are best depend a lot on your application. Is it a web app served through a browser or is it built specifically for a device? This will make a big difference in how the app can authenticate users. Here are three of the most common application types and a brief description of each. Understanding these basics will help guide your decisions when defining the best authentication workflows for you.
 
 **Traditional web application**<br>
 Simply put, these are applications that load a web page in a browser. They make a request to a server that returns a page based on the URL. When the user clicks a link, button or submits a form, the browser makes a new request and the server returns a new page with a different URL. A traditional web application has multiple pages that deliver the user’s information and experience.
@@ -26,16 +26,17 @@ Simply put, these are applications that load a web page in a browser. They make 
 Single-page applications (SPAs) are similar to traditional web applications, but they load a single URL to the browser and dynamically update what is displayed as the user interacts with it. Many modern web applications are built this way to provide a more immediate and reactive experience that users appreciate.
 
 **Native mobile application**<br>
-Unlike traditional and single-page applications, native mobile applications aren’t viewed in a browser. They are downloaded from a store (or installed from some other type of media) and are run on the operating system of the device they are on. The apps from the Apple Store or Google Play are native apps and run on phones, tablets, or desktop devices.
+Unlike traditional web and single-page applications, native mobile applications aren’t viewed in a browser. They are downloaded from a store (or installed from some other type of media) and are run on the operating system of the device they are on. The apps from the Apple Store or Google Play are native apps and run on phones, tablets, or desktop devices.
 
 ## Login and Authentication Workflows
 
-<img src="/assets/img/articles/login-type-xmlhttprequest.png" alt="" class="float-left img-fluid" /> Understanding the application type is important because it puts controls on the methods used to authenticate users and the workflows that you will need to build. Traditional apps can only use the two HTTP methods `GET` and `POST` that are supported by browsers. Single-page apps have more flexibility by using the `XMLHttpRequest` functionality of the browser's JavaScript, so they can invoke all of the standard HTTP methods including `GET`, `POST`, `PUT`, and `DELETE`. Native applications usually call APIs to handle user interaction and input and take advantage of various libraries and protocols that manage user access.
+{% include _image.html src="/assets/img/articles/login-type-xmlhttprequest.png" alt="XMLHttpRequest example" class="float-left" figure=false %}
 
+Understanding the application type is important because it puts controls on the methods used to authenticate users and the workflows that you will need to build. Traditional apps can only use the two HTTP methods `GET` and `POST` that are supported by browsers. Single-page apps have more flexibility by using the `XMLHttpRequest` functionality of the browser's JavaScript, so they can invoke all of the standard HTTP methods including `GET`, `POST`, `PUT`, and `DELETE`. Native applications usually call APIs to handle user interaction and input and take advantage of various libraries and protocols that manage user access.
 
-Once you choose your application type, you can plan out the specific authentication workflows that will work best for your app. Think through your authentication scenarios and understand what you’ll need from the beginning-it sucks to have to come back and rework it all later. Trust me.
+Once you choose your application type, you can plan out the specific authentication workflows that will work best for your app. Think through your authentication scenarios and understand what you’ll need from the beginning. It sucks to have to come back and rework it all later. Trust me.
 
-<img src="/assets/img/articles/diagram-example.svg" alt="" class="float-right mb-3 ml-3 img-fluid" />
+{% include _image.html src="/assets/img/articles/diagram-example.svg" alt="Example diagram" class="full float-right mb-3 ml-3" figure=true %}
 
 To take the next step and go into detail on specific authentication workflows, read **FusionAuth’s** [Types of Logins and Authentication Workflows](/articles/logins/types-of-logins-authentication-workflows). This resource is designed to help you architect and design an effective authentication system for an application. It doesn’t list every possible option, but gives the most common and recommended authentication workflows used by a majority of developers.
 
