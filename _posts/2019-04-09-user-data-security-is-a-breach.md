@@ -14,7 +14,7 @@ If you follow us on Twitter (if you don't, you can [fix that now](http://bit.ly/
 
 <!--more-->
 
-[{% include _image.html src="/assets/img/blogs/guide-userdata-inline.png" alt="Guide to User Data Security" class="float-right" figure=false style="width:400px;" %}](/resources/guide-to-user-data-security)
+[{% include _image.html src="/assets/img/blogs/guide-userdata-inline.png" alt="Guide to User Data Security" class="float-righ img-fluid md-4" figure=false %}](/resources/guide-to-user-data-security)
 
 There is a lot you can do to stop cyber breaches and protect your user data. To get you started we’ve put together this [Guide to User Data Security](/resources/guide-to-user-data-security) with a GitHub project that contains a set of scripts you can execute. Should you execute them without knowing exactly what they do? Hell no. Read the guide and understand the points, and then review the scripts. Internet Safety 101 says always check it out for yourself. Read on for an overview of data security, and check out the guide for the deep details, scripts, and strategies to keep your data safe.
 
