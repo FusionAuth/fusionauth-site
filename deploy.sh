@@ -14,7 +14,7 @@ cd /var/git/fusionauth-site
 git pull
 
 # Update dependencies
-# bundle update
+bundle install --path .bundle
 
 # Prevent dirty builds
 bundle exec jekyll clean
