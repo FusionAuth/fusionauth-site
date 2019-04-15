@@ -402,3 +402,12 @@ Conclusion
 ----------
 
 That's all it takes! When you get set up, send us a link to your site. We'd love to see how you integrated FusionAuth with your Spring application. If you have any questions or comments, let us know in the comments below or [contact us](https://fusionauth.io/contact).
+
+Addendum
+----
+
+A user on github [pointed out](https://github.com/FusionAuth/fusionauth-spring-security-example/issues/1) that if both the example and fusionauth are running on localhost (regardless of port), they will
+share their cookie name and will cause some errors that look like CSRF failures. There are currently two solutions, the first
+is to simply run either the example or fusionauth on its own domain (even if its just a hosts alias), and the second is
+to set `server.servlet.session.cookie.name=SPRINGJSESSIONID` in the spring configuration file. This will force each application
+to use its own cookie name and prevent the conflict.
