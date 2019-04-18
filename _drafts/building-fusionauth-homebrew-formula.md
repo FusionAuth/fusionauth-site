@@ -37,6 +37,7 @@ See the whole process in action in this quick video.
 <div class="embed-responsive embed-responsive-21by9">
   <video autoplay loop class="embed-responsive-item" controls muted="true">
     <source src="https://s3.us-east-2.amazonaws.com/io.fusionauth/resources/brew.webm">
+    <source src="https://s3.us-east-2.amazonaws.com/io.fusionauth/resources/brew.mp4">
     Your browser does not support the video tag.
   </video>
 </div>
