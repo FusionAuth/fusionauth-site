@@ -34,10 +34,12 @@ brew services start fusionauth-app
 How's that for fast and simple? Now you can dive in and start using the API. If this is your first time, you'll need to go through [the Setup Wizard](/blog/2019/02/05/using-the-setup-wizard), and then you'll be good to create users, applications and roles. For specific details, read through our [detailed documentation](/docs/v1/tech/), and let us know if you have any questions on [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") or [Github](https://github.com/FusionAuth/fusionauth-issues "Jump to Github").  
 
 See the whole process in action in this quick video.
-<video autoplay loop>
-  <source src="https://s3.us-east-2.amazonaws.com/io.fusionauth/resources/brew.webm">
-  Your browser does not support the video tag.
-</video>
+<div class="embed-responsive embed-responsive-21by9">
+  <video autoplay loop class="embed-responsive-item">
+    <source src="https://s3.us-east-2.amazonaws.com/io.fusionauth/resources/brew.webm">
+    Your browser does not support the video tag.
+  </video>
+</div>
 
 ## How We Built the Homebrew Formula
 
