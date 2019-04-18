@@ -68,24 +68,25 @@ After working though the minor issues, I ended up with a solid Homebrew formula 
 
 Below I have included the code used to create our formula and what every piece of it does.
 
-### The Basics (Terminology)
+### Terminology
 
-A Brew Formula is a ruby script that contains well-known methods and fields for getting anything installed.
+Brew has it's own terminology that is helpful to understand before coding. 
+
+**Brew Formula:** A ruby script that contains well-known methods and fields for getting anything installed.
  
-A Brew Bottle is a snapshot of a formulas final state that can be laid down quickly and easily without any actual install steps.
-(With the exception of post install steps)
+**Brew Bottle:** A snapshot of a formula's final state that can be laid down quickly and easily without any actual install steps with the exception of post install steps. You can think of a bottle as a pre-built formula, similar to a `.deb` package vs build from source. (.i.e. Formula)
 
-A Brew Cask is a macos application. It is usually defined by its .app extension and is usually entirely self contained. These are
-used when an application doesn't have a simple formula for installing something and the application already has a mac app
-artifact/distributable. 
+**Brew Cask:** A macOS application which is usually defined by its `.app` extension and entirely self contained. A cask is used used when an application doesn't have a simple formula for installing something and already has a macOS app. Think of Adobe Photoshop, or other macOS desktop applications.
 
-A Brew Tap is a source for getting formulas. By default the shorthand is <org>/<tap> which equates to a github repo under <org>/homebrew-<tap>
-that has a folder inside called Formula which then contains any number of ruby files, each of which is an installable formula.
+**Brew Tap:** A source for getting formulas. By default the shorthand is `<org>/<tap>` which equates to a github repo under `<org>/homebrew-<tap>` that has a folder inside called `Formula` which contains any number of ruby files, each of which is an installable formula. A rough equivalent would be a `ppa` or `apt` repo.
 
-### Extending the Formula
+### The Formula Parts
 
-This is the most basic state for a formula which contains meta data for description, homepage, and a download url. The url is also
-associated with a sha256 for added security. This is where our formula started.
+In this next section I'll break down each part of the forumula in more detail so you can better understand how to build your own. 
+
+#### Extending the Formula
+
+This is the most basic state for a formula which contains meta data for description, homepage, and a download url. The url is also associated with a `sha256` hash for added security. This is where our formula started.
 
 ```ruby
 class FusionauthApp < Formula
@@ -104,22 +105,13 @@ class FusionauthApp < Formula
 end
 ```
 
-### Install
+#### Install
 
-When it came time to create the install script we use the formulas built in file utils on well-known [locations](https://github.com/Homebrew/brew/blob/master/docs/Formula-Cookbook.md#variables-for-directory-locations)
-which can install anything that was inside of your download archive. Everything inside of the install function is done relative
-do a temporary location called the `buildpath` and your job is to do any work you need to do and install the finished result to
-the prefix.
+When it came time to create the install script we use the formulas built in file utils on well-known [locations](https://github.com/Homebrew/brew/blob/master/docs/Formula-Cookbook.md#variables-for-directory-locations) which can install anything inside of your download archive. Everything inside of the install function is done relative do a temporary location called the `buildpath` and your job is to do any work you need to do and install the finished result to the prefix.
 
-In our case fusionauth ships ready to go and we just need to move things into the prefix. We start by moving our bin dir to
-the prefix sbin directory. We don't want the default commands exposed to the users path because it would be confusing to have
-a `startup.sh` and a `shutdown.sh` exposed to a users terminal. Instead I created an alias to start and stop as my last step and
-put that alias file in the bin dir (which will be exposed to the users path)
+In our case FusionAuth ships ready to go and we just need to move things into the prefix. We start by moving our `bin` dir to the prefix `sbin` directory. We don't want the default commands exposed to the users path because it would be confusing to have a `startup.sh` and a `shutdown.sh` exposed to a users terminal. Instead I created an alias to start and stop as my last step and put that alias file in the `bin` dir which will be exposed to the users path.
 
-Then we install the bulk of our project to its on directory in the prefix and then do a bunch of symlinking to some of the other
-brew directories to make sure the files in those symlinks get persisted between installs/updates. (When a brew formula is updated,
-all of its files are deleted except for the ones put in `etc` or `var`). We do the symlinking because our startup scripts
-expects our java, logs, and config to be in specific directories relative to its own location.
+Next I install the bulk of our project to its own directory in the prefix and then do a bunch of sym-linking to some of the other Brew directories. This is done to make sure the files in those sym-links get persisted between upgrades. WWhen a brew formula is updated, all of the files are deleted except for the ones put in `etc` or `var`. I do the sym-linking because the startup scripts expects `java`, `logs`, and `config` to be in specific directories relative to its own location.
 
 ```ruby
 def install
@@ -149,21 +141,13 @@ def install
 end
 ```
 
-### Post Install
+#### Post Install
 
-After install is complete you can also do any post install tasks you like. For `fusionauth-app` I didn't do any special tasks
-in post install so mine was empty.
+After install is complete you can do any post install tasks you like. For `fusionauth-app` I didn't do any special tasks in post install so mine was empty.
 
-A useful note though: I ran into brew trying to relink and move the modules that are shipped with elasticsearch. It would eventually
-fail to do so (fortunately) but print out a nasty error. This error would display for any user and might be confusing. To "fix" this
-issue I read on github that it is recommended to remove any offending dylibs, relink, or just bypass brew by pushing them to the
-`post_install` phase which is how search avoids the error/warning. Search will tar up the modules directory and delete it, then post
-install will un`tar` it so that brew will leave the files alone. The alternative is to delete all of the elasticsearch modules which
-felt like a worse solution.
+**Pro tip:** Brew tries to relink and move the modules that are shipped with Elasticsearch. Fortunately Brew would eventually fail but a nasty error would be printed to the console. This error would display for any user which may cause confusion. To "fix" this issue I read on GitHub that it is recommended to remove any offending dylibs, relink, or just bypass Brew by pushing them to the `post_install` phase. The is how the `fusionauth-search` Formula avoids the error. The Forumula will tar up the modules directory and delete it, then post install will un`tar` it so that brew will leave the files alone. The alternative is to delete all of the elasticsearch modules which felt like a worse solution.
 
-Also, to anyone that decides to repeat this process. Keep in mind that `post_install` is run from your prefix directory, your
-original `buildpath` is already gone so be sure you store your files in the `prefix` so you still have access to them by the time
-post_install is getting executed.
+Also, to anyone that decides to repeat this process. Keep in mind that `post_install` is run from your prefix directory, your original `buildpath` is already gone so be sure you store your files in the `prefix` so you still have access to them by the time post_install is getting executed.
 
 ```ruby
 def post_install
@@ -173,10 +157,9 @@ def post_install
 end
 ```
 
-### Caveats
+#### Caveats
 
-Caveats is usually meant for problems that might exist now because of a limitation in brew or something incompatible
-with macos, etc. Another use for this is to let people know as they install something where the logs and config are located.
+Caveats is usually meant for problems that might exist now because of a limitation in brew or something incompatible with macos, etc. Another use for this is to let people know as they install something where the logs and config are located.
 
 This message is always displayed to the user during install and can also be retrieved via `brew info`.
 
@@ -198,11 +181,9 @@ Logs:   /usr/local/var/log/fusionauth/fusionauth-app.log
 Config: /usr/local/etc/fusionauth/fusionauth.properties
 ```
 
-### The PLIST!
+#### The PLIST!
 
-If you would like your application to run as a service then you will want/need to include a plist as well. Brew will automatically
-install this where it needs to go if you define a method called plist. I build the one used in fusionauth by referencing
-this link: http://www.manpagez.com/man/5/launchd.plist/.
+If you would like your application to run as a service then you will want/need to include a plist as well. Brew will automatically install this where it needs to go if you define a method called plist. I build the one used in fusionauth by referencing this link: http://www.manpagez.com/man/5/launchd.plist/.
 
 This will execute the required command to start our app and uses macs launchd so it will manage state and shutdown automatically.
 
@@ -244,7 +225,7 @@ def plist; <<~EOS
 end
 ```
 
-### Bonus
+#### Bonus
 
 If you don't want to have your application bottled because it is already fast or prebuilt then you can include
 
@@ -252,8 +233,7 @@ If you don't want to have your application bottled because it is already fast or
 bottle :unneeded
 ```
 
-If you have a something in your bin dir for starting up as an alternative to using `brew services` you can include
-the following. (The string is the command they should use)
+If you have a something in your bin dir for starting up as an alternative to using `brew services` you can include the following. (The string is the command they should use)
 
 ```ruby
 plist_options :manual => "fusionauth start"
