@@ -35,7 +35,7 @@ How's that for fast and simple? Now you can dive in and start using the API. If 
 
 See the whole process in action in this quick video.
 <div class="embed-responsive embed-responsive-21by9">
-  <video autoplay loop class="embed-responsive-item">
+  <video autoplay loop class="embed-responsive-item" controls muted="true">
     <source src="https://s3.us-east-2.amazonaws.com/io.fusionauth/resources/brew.webm">
     Your browser does not support the video tag.
   </video>
