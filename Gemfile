@@ -26,6 +26,7 @@ group :jekyll_plugins do
 end
 
 # For the docs
+gem "asciidoctor", "1.5.8"
 gem "haml", "4.0.7"
 gem "thread_safe", "0.3.6"
 gem "tilt", "2.0.9"
