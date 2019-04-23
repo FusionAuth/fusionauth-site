@@ -1,0 +1,144 @@
+---
+layout: doc
+title: SAML v2
+description: An overview of the SAML identity provider capabilities of FusionAuth
+---
+
+== Overview
+
+SAML is an XML based authentication protocol developed and released in 2005. While OpenID Connect is the newest single sign-on solution, many backends and applications still rely solely on SAML. FusionAuth provides both a SAML identity provider interface as well as a SAML service provider interface. If you are unfamiliar with these SAML terms, they are defined as follows:
+
+* Identity provider - the entity that is performing the authentication of a user. Essentially, this is the thing that is providing the login page.
+* Service provider - the entity that needs a user to login with an identity provider in order to provide some service. Essentially, this is the app the user wants to use.
+
+As a concrete example, you might have an app called `Payroll Zen` that manages your companies payroll. This app requires that employees who have access to use it login in using your companies Active Directory. In this case, `Payroll Zen` is the service provider and Active Directory is the identity provider.
+
+This document covers the configuration for FusionAuth's SAML v2 identity provider. If you are looking for instructions to setup FusionAuth as a SAML v2 service provider (i.e. you want to allow user's to log into either FusionAuth's UI or your applications via SAML), consult the documentation under link:../identity-providers/samlv2[SAML v2 Identity Provider].
+
+It should also be noted that FusionAuth's SAML identity provider uses the OAuth workflow under the hoods. When a service provider starts a SAML workflow by sending a SAML request to FusionAuth, FusionAuth will forward the browser to its own OAuth UI. This is an important concept if you are interested in using FusionAuth's OAuth theme support to customize the look and feel of your SAML identity provider.
+
+== Configure SAML identity provider
+
+In order to configure FusionAuth to act as a SAML identity provider, you need to specify the SAML configure for an Application. This will allow FusionAuth to present a SAML login page that will allow users to login for that application. In this case, FusionAuth will consume SAML requests from the application and return SAML responses to the application after the user logs in.
+
+The SAML configuration is under the SAML tab on the Application form. In the screenshot below, you can see that we are configuring SAML for the Pied Piper application:
+
+image::samlv2-application.png[Application SAML v2 Configuration,width=1200,role=shadowed]
+
+[cols="3a,7a"]
+[.api]
+.SAML v2 Form Fields
+|===
+|Issuer [required]#Required#
+|This is the issuer string that the service provider will send inside the SAML request to FusionAuth. FusionAuth uses this issuer to lookup the correct application in order to start the SAML login process.
+
+|Audience [optional]#Optional#
+|Some service providers require a different audience in the SAML response than the issuer set above. If you are configuring a service provider that has a different audience requirement, enter the audience name here. If this isn't specified, FusionAuth will set the audience to the same string as the `issuer`.
+
+|Callback URL (ACS) [required]#Required#
+|This is the location that FusionAuth will return the browser to after the usr logs in. The SAML specification refers to this as the Assertion Consumer Service or ACS. We call it Callback URL because many service providers use a similar term.
+
+|Logout URL [optional]#Optional#
+|The URL used to perform the `302` redirect as the response from the `/samlv2/logout` endpoint. If this value is omitted, the globally configured logout URL will be used. See the `Logout URL` under the `OAuth` tab of the System Settings.
+
+|Signing key [required]#Required#
+|In order to properly sign the SAML responses, FusionAuth requires a key pair from KeyMaster. You can either select an existing key here or select the top option to have FusionAuth generate a key pair to use.
+
+|XML signature canonicalization method [required]#Required#
+|This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML response. This method is also used when FusionAuth creates a message digest in the SAML response. This option is usually the first thing to change if a service provider is rejecting the SAML response from FusionAuth. Many service providers are not compliant with the full XML signature specification and require a fixed canonicalization method. Your best bet is to try all four values until the login works.
+
+|Response populate lambda [optional]#Optional#
+|This optionally specifies a lambda that FusionAuth will invoke prior to sending the SAML response to the service provider. This allows you to write a lambda that can populate additional information into the SAML response. In most cases, your lambda will add additional `Attribute`s to the response.
+
+|Debug enabled [optional]#Optional#
+|Many service providers are not compliant with the SAML and XML signing specifications. This makes it very challenging to get them working with FusionAuth. If you are running into issues, you can toggle this setting to instruct FusionAuth to log debugging information the the Event Log (which is accessible via the System > Event Log menu).
+|===
+
+=== Lambdas
+
+In order to handle complex integrations with service providers, you can specify a lambda to be used by the FusionAuth SAML identity provider. This lambda will be invoked prior to the SAML response being sent back to the service provider. The lambda is passed three variables in order:
+
+* samlResponse - which is the SAML Response object
+* user - which is the FusionAuth User object
+* registration - which is the FusionAuth UserRegistration object
+
+The two FusionAuth objects are well documented here in the link:../apis/users[Users API documentation]. The SAML response object mimics the format of the XML document, but is designed to be much simpler to use than dealing with the DOM object model. Here is a list of the fields you have access to manipulate in the SAML response:
+
+[cols="3a,7a"]
+[.api]
+.SAML Response Fields
+|===
+|samlResponse.assertion.attributes [type]#[Map<String, List<String>>]#
+|A map of the attributes of the user. This is sometimes call the claims of the user. Since SAML attributes can be multi-valued, you will need to wrap single values in Arrays like this:
+
+[source,javascript]
+----
+samlResponse.assertion.attributes['firstName'] = [user.firstName];
+----
+
+|samlResponse.assertion.conditions.audiences [type]#[List<String>]#
+|A list of the audiences for this SAML response. By default, the `issuer` or `audience` from the form are used.
+
+|samlResponse.assertion.conditions.notBefore [type]#[Long]#
+|The instant that this assertion starts being valid. This is the number of milliseconds since Epoch UTC.
+
+|samlResponse.assertion.conditions.notOnOrAfter [type]#[Long]#
+|The instant that this assertion stops being valid. This is the number of milliseconds since Epoch UTC.
+
+|samlResponse.assertion.issuer [type]#[String]#
+|The issuer of this SAML assertion. This defaults to the `issuser` from the form.
+
+|samlResponse.assertion.subject.nameID.format [type]#[String]#
+|The `NameID` format for the id of the subject (user). FusionAuth uses the `emailaddress` format specified by the SAML specifications. It is not recommended that you change this unless you know what you are doing.
+
+|samlResponse.assertion.subject.nameID.id [type]#[String]#
+|The `NameID` id of the subject (user). This defaults to the user's email address. It is not recommended that you change this unless you know what you are doing.
+
+|samlResponse.assertion.subject.confirmation.inResponseTo [type]#[String]#
+|This is the ID from the SAML request. It is not recommended that you change this unless you know what you are doing.
+
+|samlResponse.assertion.subject.confirmation.method [type]#[String]#
+|The confirmation method FusionAuth uses for the subject (user). This default to `Bearer`. It is not recommended that you change this unless you know what you are doing.
+
+|samlResponse.assertion.subject.confirmation.notBefore [type]#[Long]#
+|The instant that this assertion's subject starts being valid. This is the number of milliseconds since Epoch UTC.
+
+|samlResponse.assertion.subject.confirmation.notOnOrAfter [type]#[Long]#
+|The instant that this assertion's subject stops being valid. This is the number of milliseconds since Epoch UTC.
+
+|samlResponse.assertion.subject.confirmation.recipient [type]#[String]#
+|The recipient of the subject. This defaults to the callback URL (ACS).
+
+|samlResponse.destination [type]#[String]#
+|The destination of the SAML response. This defaults to the callback URL (ACS).
+
+|samlResponse.id [type]#[String]#
+|A unique identifier for the SAML response that is generated by FusionAuth.
+
+|samlResponse.inResponseTo [type]#[String]#
+|This is the ID from the SAML request. It is not recommended that you change this unless you know what you are doing.
+
+|samlResponse.issueInstant [type]#[Long]#
+|The instant that this assertion was created. This is the number of milliseconds since Epoch UTC.
+
+|samlResponse.issuer [type]#[String]#
+|This is the issuer of the SAML response. This defaults to the name of this FusionAuth deployment.
+
+|samlResponse.status.code [type]#[String]#
+|The status code of the SAML response. Whenever the lambda is called, this will always be `Success`.
+
+|samlResponse.status.message [type]#[String]#
+|The status message of the SAML response. Whenever the lambda is called, this will always be `null`.
+|===
+
+=== Endpoints
+
+Once you have configured the SAML identity provider for an application, you will need to copy and paste a number of URLs to the service provider or send the metadata XML file to the service provider. The URLs for all of these items can be found by clicking on the view icon from the application list page.
+
+image::applications-list-view.png[View icon on the Application listing page,width=1200,role=shadowed]
+
+Once you click the view icon, the dialog will pop up. Under the heading **Integration Information**, you will see all of the SAML endpoint URLs that the service provider will need. These include the login URL, logout URL and metadata URL. If the service provider needs a metadata XML file, you can copy and paste the metadata URL from this dialog into a new browser tab and then save the contents of that webpage into a new file named `metadata.xml`. Some browser will force the name of the file to be `metadata.xhtml` and you will have to rename it before sending it to the service provider.
+
+Here is what the view dialog looks like and the SAML information you will need:
+
+image::applications-list-view-dialog.png[View dialog on the Application listing page,width=1200,role=shadowed]
