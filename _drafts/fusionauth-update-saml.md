@@ -10,29 +10,43 @@ tags:
 image: blogs/fusionauth-1-6-saml-lambda.png
 ---
 
-If you haven't seen it [on Github](https://github.com/FusionAuth/fusionauth-issues/issues/ "Jump to Github") yet, we are always taking feedback and suggestions on what our clients need from FusionAuth. This week we are releasing version 1.6 and stoked to deliver it to you. We've got a few new features and some minor fixes for issues discovered by our community of users on [Stackoverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and Github. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes/#version-1-6-0) for the full details.
+If you haven't seen it [on Github](https://github.com/FusionAuth/fusionauth-issues/issues/ "Jump to Github") yet, we are always taking feedback and suggestions on what our clients need from FusionAuth. This week we are releasing version 1.6 and are stoked to deliver it to you. We've got a few new features and some minor fixes for issues discovered by our community of users on [Stackoverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and Github. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes/#version-1-6-0) for the full details.
 
 <!--more-->
 
-## New Feature - SAMLv2 IdP Support
+## New - SAML v2 
 
-Recently we received several specific requests to support SAML, and at first we were a little resistant. As [Scott Barden](https://github.com/scopendo) asks in the feature request discussion "Isn't this skating to where the puck has already been?" We know there are better options than SAML and want to encourage devs to move to more modern solutions. Even Azure Active Directory appears to be dropping their SAML support in new versions. So why'd we do it?
+We have hesitated to support SAML in FusionAuth for a while because better solutions exist. However, SAML has been at the top of the most requested features on GitHub. So while we strongly encourage developers to use OpenID Connect instead of using SAML, when discussing if FusionAuth should add SAML support, one of our FusionAuth users summed it up well in this quote.
 
-The truth is SAML isn't going anywhere anytime soon. G Suite uses it for custom apps, and there are many IT groups that have older Active Directory instances that either don't support OIDC yet, or the team only knows SAML and they aren't changing. No problem, we understand.
+{:.text}
+> Isn't this skating to where the puck has already been? 
+> <br>
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; --- Scott Barden
 
-**Bottom line:** Even though it's (IMHO) old and broken, SAML will be around for a while so we will support it. For everyone that needs it, we have it for you. If you don't, ignore it and learn about our other updates below. **NOTE:** The SAML specification is complex and not all SAML v2 Service Providers are specification compliant (this is another reason we resisted it). Make sure you test your implementation thoroughly. If you run into problems open a GitHub issue and we will try to help.
+We tend to agree with Scott. SAML can be difficult to implement correctly, many still use SHA-1 hashing which is [broken](https://security.stackexchange.com/questions/204379/sha1-signature-in-a-saml-request/204395) to say the least. So while we don't condone the use of SAML, it isn't going anywhere anytime soon. G Suite uses it for custom apps, and there are many IT groups that have older Active Directory instances that either don't support OIDC yet, or the team only knows SAML and they aren't changing. No problem, we understand.
+
+Our SAML support in this release allows FusionAuth to act as both the SAML Identity Provider and the SAML Service Provider.
+ - [Configuring FusionAuth to act as the IdP](https://fusionauth.io/docs/v1/tech/samlv2/overview) 
+ - [Configure FusionAuth Service Provider connecting to a third party SAML IdP](https://fusionauth.io/docs/v1/tech/identity-providers/samlv2) 
+
+To summarize, while we would prefer you do not use SAML, if you must, we have made it available.  If you don't, ignore it and learn about our other updates below. **NOTE:** The SAML specification is complex and we have found that many SAML v2 Service Providers are not specification compliant. This is to say that you should test your implementation thoroughly and if you run into problems open a GitHub issue and we will try to help.
 
 ## More New Hotness
 
-### Lambda Support
-Lambdas are user defined JavaScript functions executed at runtime to perform various functions. We had several requests for this feature on Github, and have worked through the most common use cases. In this release, Lambdas can be used to customize the claims returned in a JWT, reconcile a SAML v2 response or an OpenID Connect response when using these Identity Providers. See the [Lambda API](https://fusionauth.io/docs/v1/tech/lambdas/overview) and the new Lambda settings in the UI **Settings > Lambdas**, and let us know if you would like additional use cases that we don't currently cover.
+The following features while they may not be headlining the release, they play a large supporting role. 
+
+### Lambdas
+Lambdas are user defined JavaScript functions executed at runtime to perform various functions. We had several requests for this feature on Github, and have worked through the most common use cases. In this release, Lambdas can be used to customize the claims returned in a JWT or SAML response, reconcile a SAML v2 response or an OpenID Connect response when using these Identity Providers. See the [Lambda API](https://fusionauth.io/docs/v1/tech/lambdas/overview) and the new Lambda settings in the UI **Settings > Lambdas**, and let us know if you identify additional use cases.
 
 ### Event Log
 We've added a new event log designed to assist developers while debugging integrations. You'll find it in the UI under **System > Event Log**. It includes SMTP Transport errors, Lambda execution exceptions, Lambda debug output, SAML IdP integration errors and more! Check it out and let us know how we can make it better for you.
 
+We think this will really reduce the pain of integrating with third party identity providers and coding lambdas.
+
 ### Duplicate Email Templates
-[Davidmw](https://github.com/davidmw) was the first to ask if we could make it easy to duplicate existing email templates as the basis for a new template, so he gets the credit. Version 1.6 adds the ability to duplicate any existing template with a click so you can customize it further as needed. No more starting from scratch on each new email!
-{% include _image.html src="/assets/img/duplicate-email-template-view.png" alt="Duplicate Email Template Example" class="img-fluid full mb-4" figure=false %}
+
+This feature while small, the time savings may be large. [@Davidmw](https://github.com/davidmw) was the first to ask if we could make it easy to duplicate existing email templates as the basis for a new template, so he gets the credit. Version 1.6 adds the ability to duplicate any existing template with a click so you can customize it further as needed. No more starting from scratch on each new email! You'll see a duplicate bottom in the action column next time you view email templates. Thanks for the suggestion!
+{% include _image.html src="/assets/img/blogs/duplicate-email-template-view.png" alt="Duplicate Email Template Example" class="img-fluid full mb-4" figure=false %}
 
 ## Fixes & Updates
 
