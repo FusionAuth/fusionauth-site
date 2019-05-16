@@ -9,12 +9,14 @@ fi
 
 set -e
 
+export GEM_HOME=/var/git/fusionauth-site/.gems
+
 cd /var/git/fusionauth-site
 
 git pull
 
 # Update dependencies
-bundle install --path .bundle
+bundle install
 
 # Prevent dirty builds
 bundle exec jekyll clean
