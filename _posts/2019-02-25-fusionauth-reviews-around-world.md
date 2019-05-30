@@ -28,8 +28,10 @@ And one of our favorites:
 _Mirza F._
 
 ## More FusionAuth Reviews
-If you are looking for more FusionAuth reviews, here are a few links to get you started. And we’d love it if you could add a review, like, upvote or comment on any of these sites!
+If you are looking for more FusionAuth reviews, here are a few links to get you started. And we’d love it if you could add a review, like, share, upvote or comment on any of these sites!
 
+- [Enterprise Security Magazine - Top 10 IAM Solutions and Product of the Year 2019](https://identity-and-access-management-solutions.enterprisesecuritymag.com/vendors/fusionauth/2019)
+- [CompareCamp - User Experience Award and Rising Star 2019](http://comparecamp.com/fusionauth-review-pricing-pros-cons-features/)
 - [Top CIAM Vendors to Watch in 2019](https://solutionsreview.com/identity-management/solutions-review-presents-the-top-ciam-vendors-to-watch-in-2019/)
 - [Top 14 IAM Vendors 2019](https://solutionsreview.com/identity-management/top-14-iam-vendors-to-watch-in-2019/)   
 - [Capterra](https://www.capterra.com/p/182987/FusionAuth/)
@@ -42,6 +44,6 @@ If you are looking for more FusionAuth reviews, here are a few links to get you 
 
 ## Learn More About FusionAuth
 
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, passwordless login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
