@@ -53,8 +53,8 @@ We test and update FusionAuth constantly to ensure that we are providing you wit
 
 ## FusionAuth's Recent Awards
 Speaking of improving, FusionAuth recently received a few awards and certificates from the identity and access management industry. If you haven’t seen them, take a moment to read what we’ve been able to achieve in the last few months.
-- [FusionAuth Snags Product of the Year](https://fusionauth.io/blog/2019/06/17/iam-product-of-the-year')
-- [FusionAuth Recognized with Rising Star and Great User Experience Award](https://fusionauth.io/blog/2019/05/30/fusionauth-recognized-industry-distinctions-comparecamp)
+- [FusionAuth Snags Product of the Year](/blog/2019/06/17/iam-product-of-the-year')
+- [FusionAuth Recognized with Rising Star and Great User Experience Award](/blog/2019/05/30/fusionauth-recognized-industry-distinctions-comparecamp)
 
 ## Learn More About FusionAuth
 
