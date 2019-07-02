@@ -31,6 +31,7 @@ _Mirza F._
 If you are looking for more FusionAuth reviews, here are a few links to get you started. And we’d love it if you could add a review, like, share, upvote or comment on any of these sites!
 
 - [Enterprise Security Magazine - Top 10 IAM Solutions and Product of the Year 2019](https://identity-and-access-management-solutions.enterprisesecuritymag.com/vendors/fusionauth/2019)
+- [The 15 Top CIAM Providers of 2019](https://solutionsreview.com/identity-management/the-15-top-ciam-providers-of-2019/)
 - [CompareCamp - User Experience Award and Rising Star 2019](http://comparecamp.com/fusionauth-review-pricing-pros-cons-features/)
 - [Top CIAM Vendors to Watch in 2019](https://solutionsreview.com/identity-management/solutions-review-presents-the-top-ciam-vendors-to-watch-in-2019/)
 - [Top 14 IAM Vendors 2019](https://solutionsreview.com/identity-management/top-14-iam-vendors-to-watch-in-2019/)   
