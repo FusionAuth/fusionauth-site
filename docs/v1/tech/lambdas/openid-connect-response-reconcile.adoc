@@ -1,9 +1,56 @@
 ---
 layout: doc
-title: OpenID Connect Response Reconcile
+title: OpenID Connect Reconcile
 description: An overview of the OpenID Connect Response Reconcile lambda
 ---
 
-== Overview
+:sectnumlevels: 0
 
-Coming soon
+== OpenID Connect Reconcile lambda
+
+When an OpenID Connect identity provider is used to complete a federated login request FusionAuth will use well known OpenID Connect claims to reconcile user.
+
+It is common that the claims returned from the Userinfo endpoint during an OpenID Connect login request will contain custom claims defined by your identity provider. In order to utilize these custom claims you may wish to use a lambda assist FusionAuth during the login request to reconcile these claims to the FusionAuth user.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement. If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+[source,javascript]
+----
+function reconcile(user, registration, jwt) {
+  // Lambda code goes here
+}
+----
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+* `user` - the FusionAuth User object
+* `registration` - the FusionAuth UserRegistration object
+* `jwt` - the JSON payload returned from the OpenID Connect Userinfo endpoint
+
+The two FusionAuth objects are well documented here in the link:../apis/users[User API] and link:../apis/registrations[Registration API] documentation. The JWT object that contains the payload from the Userinfo endpoint may contain well known OpenID Connect registered claims as well as any custom claims defined by the identity provider.
+
+
+== Example lambda
+
+Here is an example of a simple Lambda that assists FusionAuth to reconcile the User from a successful GitHub login request.
+
+[source,javascript]
+----
+function reconcile(user, registration, jwt) {
+  // This is an example lambda function reconcile the GitHub login
+
+  // Set GitHub Avatar URL to the FusionAuth imageURL
+  user.imageUrl = jwt.avatar_url;
+
+  // Update the registration username to the GitHub short name
+  registration.username = jwt.login;
+
+  // Store the company and location returned from GitHub in custom user data.
+  user.data = user.data || {};
+  user.data.company = jwt.company;
+  user.data.location = jwt.location;
+
+  // Create an event log of type 'Debug' when the lambda has Debug enabled
+  console.debug('FusionAuth reconciled a User from GitHub and I helped!');
+}
+----
