@@ -6,13 +6,17 @@ description: APIs for authenticating users (logging them in) or tracking an SSO 
 
 == Overview
 
-This page contains the APIs that are used to authenticate and track user logins.
+The following APIs are used to authenticate and track user logins.
 
 * <<Authenticate a User>>
 * <<Complete Two Factor Authentication>>
 * <<Update Login Instant>>
 * <<Logout a User>>
 
+The following APIs allow you to search and export historical login records.
+
+* <<Search Login Records>>
+* <<Export Login Records>>
 
 == Authenticate a User
 
@@ -432,3 +436,235 @@ This API does not return a JSON response body.
 |500
 |There was an internal error. A stack trace is provided and logged in the FusionAuth log files.
 |===
+
+== Search Login Records
+
+[NOTE.since]
+====
+Available Since Version 1.7.0
+====
+
+This API allows you to search and paginate through the Login Records.
+
+=== Request
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Searches for Login Records given search criteria
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/system/login-record/search``?applicationId=\{applicationId\}&start=\{start\}&end=\{end\}&userId=\{userId\}``#
+--
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
+|The unique Id of the Application used to narrow the search results to logins for a particular application.
+
+|[field]#end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
+|The number of results to return from the search.
+
+|[field]#retrieveTotal# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
+
+|[field]#start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#
+|The offset into the total results. In order to paginate the results, increment this value by the [field]#numberOfResults# for subsequent requests.
+
+|[field]#userId# [type]#[String]# [optional]#Optional#
+|The unique Id of the User used to narrow the search results to login records for a particular user.
+|===
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Searches for Login Records given search criteria
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/system/login-record/search#
+--
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#retrieveTotal# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
+
+|[field]#search.applicationId# [type]#[UUID]# [optional]#Optional#
+|The unique Id of the Application used to narrow the search results to logins for a particular application.
+
+|[field]#search.end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#search.numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
+|The number of results to return from the search.
+
+|[field]#search.start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#search.startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#
+|The offset into the total results. In order to paginate the results, increment this value by the [field]#numberOfResults# for subsequent requests.
+
+|[field]#search.userId# [type]#[UUID]# [optional]#Optional#
+|The unique Id of the User used to narrow the search results to login records for a particular user.
+|===
+
+=== Response
+
+The response for this API will contain all login records matching the search criteria in paginated format.
+
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#logins# [type]#[Array]#
+|The list of Login Records returned by the search.
+
+|[field]#logins``[x]``.applicationId# [type]#[UUID]#
+|The unique Id of the application.
+
+|[field]#logins``[x]``.applicationName# [type]#[String]#
+|The name of the application. Because the application name may be modified after the login event occurred, only the [field]#applicationId# should be considered immutable for historical purposes when identifying the application.
+
+|[field]#logins``[x]``.loginId# [type]#[String]#
+|The email or username of the user. Because email or username may be modified after the login event occurred, only the [field]#userId# and the should be considered immutable for historical purposes when identifying the user.
+
+|[field]#logins``[x]``.instant# [type]#[Long]#
+|The link:../reference/data-types#instants[instant] when the login occurred.
+
+|[field]#logins``[x]``.ipAddress# [type]#[String]#
+|The recorded IP address for this login record.
+
+|[field]#logins``[x]``.userId# [type]#[UUID]#
+|The unique Id of the user.
+
+|[field]#total# [type]#[Long]#
+|The total number of login records available. This will only be provided in the response when [field]#retrieveTotal# was set to `true` on the request.
+|===
+
+[source,json]
+.Example JSON Response
+----
+include::docs/src/json/login-records/search/response.json[]
+----
+
+== Export Login Records
+
+[NOTE.since]
+====
+Available Since Version 1.7.0
+====
+
+This API is used to export Login Records, the response will be a compressed zip archive.
+
+=== Request
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Export the Login Records matching the criteria
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/system/login-record/export``?applicationId=\{applicationId\}&start=\{start\}&end=\{end\}&userId=\{userId\}``#
+--
+
+When calling the API using a `GET` request you will send the export criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
+|The unique Id of the Application used to reduce the export result to logins for a particular application.
+
+|[field]#dateTimeSecondsFormat# [type]#[String]#  [optional]#Optional# [default]#defaults to **[see description]**#
+|The format string used to format the date and time columns in the export result.
+
+When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[DateTimeFormatter patterns] for additional examples.
+
+|[field]#end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#userId# [type]#[UUID]# [optional]#Optional#
+|The unique Id of the User used to reduce the export result to logins for a particular user.
+
+|[field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**.#
+|The link:../reference/data-types#time-zone[time zone] used to adjust the stored UTC time in the export result.
+
+For example:
+
+[block-quote]#`America/Denver` or `US/Mountain`#
+
+&nbsp;
+
+When this parameter is omitted the configured default report time zone will be used. See [field]#reportTimezone# in the link:../apis/system[System Configuration API].
+|===
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Export the Login Records matching the criteria
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/system/login-record/export#
+--
+
+When calling the API using a `POST` request you will send the export criteria in a JSON request body.
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#criteria.applicationId# [type]#[UUID]# [optional]#Optional#
+|The unique Id of the Application used to reduce the export result to logins for a particular application.
+
+|[field]#criteria.end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to include in the export.
+
+|[field]#criteria.start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to include in the export.
+
+|[field]#criteria.userId# [type]#[UUID]# [optional]#Optional#
+|The unique Id of the User used to reduce the export result to logins for a particular user.
+
+|[field]#dateTimeSecondsFormat# [type]#[String]#  [optional]#Optional# [default]#defaults to **[see description]**#
+|The format string used to format the date and time columns in the export result.
+
+When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[DateTimeFormatter patterns] for additional examples.
+
+|[field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**#
+|The link:../reference/data-types#time-zone[time zone] used to adjust the stored UTC time in the export result.
+
+For example:
+
+[block-quote]#`America/Denver` or `US/Mountain`#
+
+&nbsp;
+
+When this parameter is omitted the configured default report time zone will be used. See [field]#reportTimezone# in the link:../apis/system[System Configuration API].
+|===
+
+=== Response
+
+The response for this API will contain a compressed zip of the audit logs.
+
+:success_code: 200
+:success_message: pass:normal[The request was successful. The response will be a compressed archive byte stream with a `Content-Type` of `application/zip`.]
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+:success_code!:
+:success_message!:
