@@ -1,0 +1,202 @@
+---
+layout: doc
+title: Event Logs
+description: The APIs for searching the event logs
+---
+
+== Overview
+
+[NOTE.since]
+====
+This API has been available since 1.6.0
+====
+
+The Event Log contains messages that are not easy to convey to user at runtime - logs and errors from asynchronous code execution.  These messages include:
+
+* SMTP transport errors
+* Lambda execution exceptions
+* Lambda execution console logs
+* SAML IdP integration errors and debug
+* Webhook event errors
+* Runtime exceptions due to email template rendering issues
+
+This page contains the APIs that are used to retrieve Event Logs. Here are the APIs:
+
+* <<Retrieve an Event Log>>
+* <<Search Event Logs>>
+
+== Retrieve an Event Log
+
+=== Request
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve an Event Log by Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/system/event-log/`\{logId\}`#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#logId# [type]#[Long]# [required]#Required#
+|The unique Id of the Event Log to retrieve.
+|===
+
+=== Response
+
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#eventLog.id# [type]#[Long]#
+|The event Log unique Id.
+
+|[field]#eventLog.insertInstant# [type]#[Long]#
+|The link:../reference/data-types#instants[instant] when the Event Log was created.
+
+|[field]#eventLog.message# [type]#[String]#
+|The message of the event Log.
+
+|[field]#eventLog.type# [type]#[String]#
+|The type of the Event Log.  Possible values are:
+
+* `Information`
+* `Debug`
+* `Error`
+|===
+
+[source,json]
+.Example JSON Response
+----
+include::docs/src/json/event-logs/response.json[]
+----
+
+== Search Event Logs
+
+=== Request
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Searches the Event Logs using the given search criteria
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/system/event-log/search``?message=\{message\}&start=\{start\}&end=\{end\}&type=\{type\}``#
+--
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#message# [type]#[String]# [optional]#Optional#
+|The string to search in the Event Log message for. This can contain wildcards using the asterisk or percent characters (* or %).
+
+|[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
+|The number of results to return from the search.
+
+|[field]#orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `insert_instant DESC`#
+|The database column to order the search results on plus the order direction.
+
+The columns you can use for this are:
+
+* `insert_instant` - the link:../reference/data-types#instant[instant] when the Event Log was created
+* `insert_user` - the user that create the Event Log
+* `message` - the message of the Event Log
+
+For example, to order the results by the insert instant in a descending order, the value would be provided as `insert_instant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+
+|[field]#start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#
+|The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+|===
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Searches the Event Logs using the given search criteria
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/system/event-log/search#
+--
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#search.end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#search.message# [type]#[String]# [optional]#Optional#
+|The string to search in the Event Log message for. This can contain wildcards using the asterisk or percent characters (* or %).
+
+|[field]#search.numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
+|The number of results to return from the search.
+
+|[field]#search.orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `insert_instant DESC`#
+|The database column to order the search results on plus the order direction.
+
+The columns you can use for this are:
+
+* `insert_instant` - the link:../reference/data-types#instant[instant] when the Event Log was created
+* `insert_user` - the user that create the Event Log
+* `message` - the message of the Event Log
+
+For example, to order the results by the insert instant in a descending order, the value would be provided as `insert_instant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+
+|[field]#search.start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#search.startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#
+|The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+|===
+
+=== Response
+
+The response for this API contains the Event Logs matching the search criteria in paginated format.
+
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#eventLogs# [type]#[Array]#
+|The list of Event Logs returned by the search.
+
+|[field]#eventLogs``[x]``.id# [type]#[Long]#
+|The Event Log unique Id.
+
+|[field]#eventLogs``[x]``.insertInstant# [type]#[Long]#
+|The link:../reference/data-types#instants[instant] when the Event Log was created.
+
+|[field]#eventLogs``[x]``.message# [type]#[String]#
+|The message of the Event Log.
+
+|[field]#eventLogs``[x]``.type# [type]#[String]#
+|The type of the Event Log.  Possible values are:
+
+* `Information`
+* `Debug`
+* `Error`
+
+|[field]#total# [type]#[Integer]#
+|The total number of Event Logs in the search. This can help with pagination.
+|===
+
+[source,json]
+.Example JSON Response
+----
+include::docs/src/json/event-logs/search-response.json[]
+----

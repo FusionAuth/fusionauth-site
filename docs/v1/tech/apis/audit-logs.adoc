@@ -11,6 +11,7 @@ This page contains the APIs that are used to manage the Audit Log. Here are the 
 * <<Add an Entry to the Audit Log>>
 * <<Retrieve an Audit Log>>
 * <<Search the Audit Log>>
+* <<Export Audit Logs>>
 
 
 == Add an Entry to the Audit Log
@@ -71,7 +72,7 @@ link:authentication#api-key-authentication[icon:lock[role=red]] Retrieve an Audi
 [.endpoint]
 .URI
 --
-[method]#GET# [uri]#/api/audit-log/`\{logId\}`#
+[method]#GET# [uri]#/api/system/audit-log/`\{logId\}`#
 --
 
 [cols="3a,7a"]
@@ -132,12 +133,58 @@ link:authentication#api-key-authentication[icon:lock[role=red]] Searches the Aud
 [.endpoint]
 .URI
 --
-[method]#GET# [uri]#/api/system/audit-log``?search.message=\{message\}&search.start=\{start\}&search.end=\{end\}&search.user=\{user\}``#
+[method]#GET# [uri]#/api/system/audit-log/search``?message=\{message\}&start=\{start\}&end=\{end\}&user=\{user\}``#
 --
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
 
 [cols="3a,7a"]
 [.api]
 .Request Parameters
+|===
+|[field]#end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#message# [type]#[String]# [optional]#Optional#
+|The string to search in the Audit Log message for. This can contain wildcards using the asterisk or percent characters (* or %).
+
+|[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
+|The number of results to return from the search.
+
+|[field]#orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `insert_instant DESC`#
+|The database column to order the search results on plus the order direction.
+
+The columns you can use for this are:
+
+* `insert_instant` - the link:../reference/data-types#instant[instant] when the Audit Log was created
+* `insert_user` - the user that create the Audit Log
+* `message` - the message of the Audit Log
+
+For example, to order the results by the insert instant in a descending order, the value would be provided as `insert_instant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+
+|[field]#start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#
+|The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+
+|[field]#user# [type]#[String]# [optional]#Optional#
+|The string to search in the Audit Log user for. This can contain wildcards using the asterisk or percent characters (* or %).
+|===
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Searches the Audit Logs using the given search criteria
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/system/audit-log/search#
+--
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+[cols="3a,7a"]
+[.api]
+.Request Body
 |===
 |[field]#search.end# [type]#[Long]# [optional]#Optional#
 |The end link:../reference/data-types#instants[instant] of the date/time range to search within.
@@ -145,7 +192,7 @@ link:authentication#api-key-authentication[icon:lock[role=red]] Searches the Aud
 |[field]#search.message# [type]#[String]# [optional]#Optional#
 |The string to search in the Audit Log message for. This can contain wildcards using the asterisk or percent characters (* or %).
 
-|[field]#search.numberOfResults# [type]#[Integer]# [optional]#Optional#
+|[field]#search.numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
 |The number of results to return from the search.
 
 |[field]#search.orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `insert_instant DESC`#
@@ -162,7 +209,7 @@ For example, to order the results by the insert instant in a descending order, t
 |[field]#search.start# [type]#[Long]# [optional]#Optional#
 |The start link:../reference/data-types#instants[instant] of the date/time range to search within.
 
-|[field]#search.startRow# [type]#[Integer]# [optional]#Optional#
+|[field]#search.startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#
 |The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
 
 |[field]#search.user# [type]#[String]# [optional]#Optional#
@@ -171,7 +218,7 @@ For example, to order the results by the insert instant in a descending order, t
 
 === Response
 
-The response for this API contains the list of audit information for the Audit Log that was created.
+The response for this API contains the Audit Logs matching the search criteria in paginated format.
 
 include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 
@@ -215,3 +262,111 @@ include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 ----
 include::docs/src/json/audit-logs/search-response.json[]
 ----
+
+== Export Audit Logs
+
+[NOTE.since]
+====
+Available Since Version 1.7.0
+====
+
+This API is used to export the Audit Logs, the response will be a compressed zip archive.
+
+=== Request
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Export the Audit Logs matching the criteria
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/system/audit-log/export``?message=\{message\}&start=\{start\}&end=\{end\}&user=\{user\}``#
+--
+
+When calling the API using a `GET` request you will send the export criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#dateTimeSecondsFormat# [type]#[String]#  [optional]#Optional# [default]#defaults to **[see description]**#
+|The format string used to format the date and time columns in the export result.
+
+When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[DateTimeFormatter patterns] for additional examples.
+
+|[field]#end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#message# [type]#[String]# [optional]#Optional#
+|The string to search in the Audit Log message for. This can contain wildcards using the asterisk or percent characters (* or %).
+
+|[field]#start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to search within.
+
+|[field]#user# [type]#[String]# [optional]#Optional#
+|The string to search in the Audit Log user for. This can contain wildcards using the asterisk or percent characters (* or %).
+
+|[field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**#
+|The link:../reference/data-types#time-zone[time zone] used to adjust the stored UTC time in the export result.
+
+For example:
+
+[block-quote]#`America/Denver` or `US/Mountain`#
+
+&nbsp;
+
+When this parameter is omitted the configured default report time zone will be used. See [field]#reportTimezone# in the link:../apis/system[System Configuration API].
+|===
+
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Export the Audit Logs matching the criteria
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/system/audit-log/export#
+--
+
+When calling the API using a `POST` request you will send the export criteria in a JSON request body.
+
+[cols="3a,7a"]
+[.api]
+.Request Body
+|===
+|[field]#criteria.end# [type]#[Long]# [optional]#Optional#
+|The end link:../reference/data-types#instants[instant] of the date/time range to include in the export.
+
+|[field]#criteria.message# [type]#[String]# [optional]#Optional#
+|The string to search in the Audit Log message for. This can contain wildcards using the asterisk or percent characters (* or %).
+
+|[field]#criteria.start# [type]#[Long]# [optional]#Optional#
+|The start link:../reference/data-types#instants[instant] of the date/time range to include in the export.
+
+|[field]#criteria.user# [type]#[String]# [optional]#Optional#
+|The string to search in the Audit Log user for. This can contain wildcards using the asterisk or percent characters (* or %).
+
+|[field]#dateTimeSecondsFormat# [type]#[String]#  [optional]#Optional# [default]#defaults to **[see description]**#
+|The format string used to format the date and time columns in the export result.
+
+When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[DateTimeFormatter patterns] for additional examples.
+
+|[field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**#
+|The link:../reference/data-types#time-zone[time zone] used to adjust the stored UTC time in the export result.
+
+For example:
+
+[block-quote]#`America/Denver` or `US/Mountain`#
+
+&nbsp;
+
+When this parameter is omitted the configured default report time zone will be used. See [field]#reportTimezone# in the link:../apis/system[System Configuration API].
+|===
+
+=== Response
+
+The response for this API will contain a compressed zip of the audit logs.
+
+:success_code: 200
+:success_message: pass:normal[The request was successful. The response will be a compressed archive byte stream with a `Content-Type` of `application/zip`.]
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+:success_code!:
+:success_message!:
