@@ -70,6 +70,7 @@ Interested in how FusionAuth compares to other solutions?
 - [Auth0](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Auth0 and FusionAuth")
 - [Cognito](/blog/2018/09/18/amazon-cognito-and-fusionauth-comparison "Amazon Cognito and FusionAuth")
 - [Firebase](/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison "Firebase and FusionAuth")
+- [Gluu](/blog/2019/07/12/gluu-fusionauth-compare-identity-management "Gluu and FusionAuth")
 - [Keycloak](/blog/2019/03/06/keycloak-fusionauth-comparison "Keycloak and FusionAuth")
 - [Ping Identity](/blog/2018/10/08/quick-comparison-ping-identity-and-fusionauth "Ping Identity and FusionAuth")
 - [Okta](/blog/2018/10/16/8-things-to-know-about-okta-and-fusionauth "Okta and FusionAuth")
