@@ -8,9 +8,14 @@ description: Login using a OpenID Connect Identity Provider
 
 == Overview
 
-Adding a Login button for a third-party OpenID Connect provider to FusionAuth is simple. This guide will walk you through the steps necessary to enable an OpenID Connect  login provider.
+Adding a Login button for a third-party OpenID Connect provider to FusionAuth is simple. This guide will walk you through the steps necessary to enable an OpenID Connect login provider.
 
 * <<Create an OpenID Connect Identity Provider>>
+
+{empty} +
+
+We also provide a specific example for using OpenID Connect with Microsoft Azure Active Directory. If you'd like us to provide additional examples, please open a request on https://github.com/FusionAuth/fusionauth-site/issues[GitHub].
+
 * <<Configure OpenID Connect with Azure Active Directory>>
 
 {empty} +
@@ -120,6 +125,8 @@ These configured domains will be used by the link:../apis/identity-providers/ove
 FusionAuth's OpenID Connect flow currently only supports link:https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-overview[Azure Active Directory v1.0].
 
 link:https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-overview[Azure Active Directory v2.0] returns inconsistent claims from the UserInfo endpoint depending on the type of Microsoft account the end-user has.  See link:https://github.com/MicrosoftDocs/azure-docs/issues/28317[this open issue] for reference.
+
+The email address is required to be returned on the Userinfo endpoint, without this identity claim FusionAuth cannot complete login. Currently the https://graph.microsoft.com/oidc/userinfo endpoint does not necessarily return the email address of the user even when requesting the `openid` and `email` scopes. These scopes do provide the `email` claim in the returned `access_token` and `id_token` but are omitted from the Userinfo response.
 ====
 
 Once you have completed this configuration you will be able to enable an OpenID Connect "Login with Azure AD" button for one or more FusionAuth Applications.  See link:https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app[Azure's Register An App Quickstart Guide] as an additional reference.
@@ -138,7 +145,7 @@ Here we have configured our application `Redirect URI`.  This will need to be th
 
 image::azure-openid-connect-client-id.png[Azure AD Client ID and Tenant ID,width=1200,role=shadowed]
 
-Once the application has been created, note the `Application (client) ID` and the `Directory (tenant) ID`.  These will be used respectively as the `Client Id` value and to construct the `Issuer` value in your FusionAuth OpenID Connect Identity Providers configuration.
+Once the application has been created, note the `Application (client) ID` and the `Directory (tenant) ID`.  These will be used respectively as the [field]#Client Id# value and to construct the [field]#Issuer# value in your FusionAuth OpenID Connect Identity Providers configuration.
 
 === Create a New Azure Active Directory Application Secret
 
@@ -146,13 +153,13 @@ Navigate to [breadcrumb]#Azure Active Directory# icon:chevron-right[role=breadcr
 
 image::azure-openid-connect-client-secret.png[Azure AD Client Secret,width=1200,role=shadowed]
 
-Note the `VALUE` of the created client secret.  This will be used as the "Client secret" value in your FusionAuth OpenID Connect Identity Providers configuration.
+Note the `VALUE` of the created client secret.  This will be used as the [field]#Client secret# value in your FusionAuth OpenID Connect Identity Providers configuration.
 
 === Configure a New FusionAuth OpenID Connect Identity Provider
 
 To create an Azure AD Identity Provider navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `OpenID Connect` from the dialog.
 
-This will take you to the `Add OpenID Connect` panel, and you'll fill out the required fields.  `Client Id`, `Client secret`, and `Redirect URL` values reference the previously noted Azure AD Application's `Application (client) ID`, client secret `VALUE`, and `Redirect URI` respectively.
+This will take you to the `Add OpenID Connect` panel, and you'll fill out the required fields.  [field]#Client Id# and [field]#Client secret# values reference the previously noted Azure AD Application's `Application (client) ID`, client secret `VALUE`. The [field]#Redirect URL# is read only and generated for you based upon the URL of FusionAuth, this value should match the one you configured in your Azure application.
 
 Azure AD has implemented a well-known configuration endpoint, FusionAuth will be able to discover the necessary endpoints when you provide the URL `https://login.microsoftonline.com/{tenantId}` to the provider in the `Issuer` field, where `{tenantId}` is the `Directory (tenant) ID` previously noted while creating our Azure AD Application.
 
