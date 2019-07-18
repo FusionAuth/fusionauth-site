@@ -17,6 +17,12 @@ Adding a Login button for a third-party OpenID Connect provider to FusionAuth is
 We also provide a specific example for using OpenID Connect with Microsoft Azure Active Directory. If you'd like us to provide additional examples, please open a request on https://github.com/FusionAuth/fusionauth-site/issues[GitHub].
 
 * <<Configure OpenID Connect with Azure Active Directory>>
+* <<Configure OpenID Connect with GitHub>>
+* <<Configure OpenID Connect with Discord>>
+
+{empty} +
+
+We also provide a specific example for using OpenID Connect with Microsoft Azure Active Directory. If you'd like us to provide additional examples, please open a request on https://github.com/FusionAuth/fusionauth-site/issues[GitHub].
 
 {empty} +
 
@@ -42,10 +48,6 @@ For example, when a new user attempts to log into `Pied Piper` using PiedPiper, 
 If you do not wish to automatically provision a user for this Application when logging in with PiedPiper, leave `Create registration` off and you will need to manually register a user for this application before they may complete login with this provider.
 
 That's it, now the `Login with PiedPiper` button will show up on the login page.
-
-////
-TODO update screenshot - two new fields, lambda and callback read only field, etc, and shorter domain textarea
-////
 
 image::identity-provider-openid-connect-add.png[Add OpenID Connect,width=1200,role=shadowed]
 
@@ -129,7 +131,7 @@ link:https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-overview
 The email address is required to be returned on the Userinfo endpoint, without this identity claim FusionAuth cannot complete login. Currently the https://graph.microsoft.com/oidc/userinfo endpoint does not necessarily return the email address of the user even when requesting the `openid` and `email` scopes. These scopes do provide the `email` claim in the returned `access_token` and `id_token` but are omitted from the Userinfo response.
 ====
 
-Once you have completed this configuration you will be able to enable an OpenID Connect "Login with Azure AD" button for one or more FusionAuth Applications.  See link:https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app[Azure's Register An App Quickstart Guide] as an additional reference.
+Once you have completed this configuration you may enable an OpenID Connect "Login with Azure AD" button for one or more FusionAuth Applications.  See link:https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app[Azure - Register An App Quickstart Guide] as an additional reference.
 
 image::azure-openid-connect-login.png[Login with Azure AD,width=1200,role=shadowed]
 
@@ -141,7 +143,7 @@ Once logged in, navigate to [breadcrumb]#Azure Active Directory# icon:chevron-ri
 
 image::azure-openid-connect-register-application.png[Register a new Azure AD Application,width=1200,role=shadowed]
 
-Here we have configured our application `Redirect URI`.  This will need to be the same as the `Redirect URL` value you specify in your FusionAuth OpenID Connect Identity Providers configuration.
+Here we have configured our application `Redirect URI`.  If FusionAuth is running at `https://local.fusionauth.io`, this value should be `https://local.fusionauth.io/oauth2/callback`.
 
 image::azure-openid-connect-client-id.png[Azure AD Client ID and Tenant ID,width=1200,role=shadowed]
 
@@ -157,14 +159,107 @@ Note the `VALUE` of the created client secret.  This will be used as the [field]
 
 === Configure a New FusionAuth OpenID Connect Identity Provider
 
-To create an Azure AD Identity Provider navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `OpenID Connect` from the dialog.
+To create an Azure AD Identity Provider return to FusionAuth and navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `OpenID Connect` from the dialog.
 
 This will take you to the `Add OpenID Connect` panel, and you'll fill out the required fields.  [field]#Client Id# and [field]#Client secret# values reference the previously noted Azure AD Application's `Application (client) ID`, client secret `VALUE`. The [field]#Redirect URL# is read only and generated for you based upon the URL of FusionAuth, this value should match the one you configured in your Azure application.
 
 Azure AD has implemented a well-known configuration endpoint, FusionAuth will be able to discover the necessary endpoints when you provide the URL `https://login.microsoftonline.com/{tenantId}` to the provider in the `Issuer` field, where `{tenantId}` is the `Directory (tenant) ID` previously noted while creating our Azure AD Application.
+
+You will need to specify `openid` as a [field]#Scope# for your application.
 
 In the following screenshot you will see that we have enabled this login provider for the `Hooli` application and enabled `Create registration`.
 
 That's it, now the `Login with Azure AD` button will show up on the login page of our `Hooli` application.
 
 image::azure-openid-connect-configuration.png[FusionAuth Azure AD IdP Configuration,width=1200,role=shadowed]
+
+== Configure OpenID Connect with GitHub
+
+[NOTE]
+====
+GitHub user's must have a public email address configured for their account in order for this login flow to succeed.
+====
+
+Once you have completed this configuration you may enable an OpenID Connect "Login with GitHub" button for one or more FusionAuth Applications. See link:https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/[GitHub - Creating an OAuth App] for an additional reference.
+
+image::github-openid-connect-login.png[Login with GitHub,width=1200,role=shadowed]
+
+=== Register a GitHub OAuth2 Application
+
+You will first need to login to link:https://github.com/[GitHub].
+
+Once logged in, navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Developer settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#OAuth Apps# icon:chevron-right[role=breadcrumb] [breadcrumb]#Register a new application# to create a new GitHub OAuth Application.
+
+image::github-openid-connect-register-application.png[Register a new GitHub OAuth Application,width=1200,role=shadowed]
+
+Here we have configured our application `Authorization callback URL`.  If FusionAuth is running at `https://local.fusionauth.io`, this value should be `https://local.fusionauth.io/oauth2/callback`.
+
+image::github-openid-connect-client-id-secret.png[GitHub Client ID and Secret,width=1200,role=shadowed]
+
+Once the application has been created, note the `Client ID` and the `Client Secret`.  These will be used respectively as the [field]#Client Id# value and the [field]#Client secret# value in your FusionAuth OpenID Connect Identity Providers configuration.
+
+=== Configure a New FusionAuth OpenID Connect Identity Provider
+
+To create a GitHub Identity Provider return to FusionAuth and navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `OpenID Connect` from the dialog.
+
+This will take you to the `Add OpenID Connect` panel, and you'll fill out the required fields.  [field]#Client Id# and [field]#Client secret# values reference the previously noted GitHub OAuth Application's `Client ID` and `Client Secret`. The [field]#Redirect URL# is read only and generated for you based upon the URL of FusionAuth, this value should match the one you configured in your GitHub application.
+
+GitHub has not implemented a well-known configuration endpoint, so you will need to disable the [field]#Discover endpoints# field and specify the endpoints manually.  The values for these fields are:
+
+* `Authorization endpoint` - `https://github.com/login/oauth/authorize`
+* `Token endpoint` - `https://github.com/login/oauth/access_token`
+* `Userinfo endpoint` - `https://api.github.com/user`
+
+You will need to specify `user:email` as a [field]#Scope# for your application.
+
+In the following screenshot you will see that we have enabled this login provider for the `Aviato` application and enabled [field]#Create registration#.
+
+GitHub does not implement OpenID Connect to spec. In order to pull in some additional data for populating the user profile (GitHub shortname, Image URL, etc.) you can enable a [field]#Reconcile lambda#.  See link:../lambdas/openid-connect-response-reconcile[this example lambda] which is based on the GitHub use case.  This is optional.
+
+That's it, now the `Login with GitHub` button will show up on the login page of our `Aviato` application.
+
+image::github-openid-connect-configuration.png[FusionAuth GitHub IdP Configuration,width=1200,role=shadowed]
+
+== Configure OpenID Connect with Discord
+
+Once you have completed this configuration you may enable an OpenID Connect "Login with Discord" button for one or more FusionAuth Applications. See link:https://discordapp.com/developers/docs/topics/oauth2/[Discord - OAuth2] for an additional reference.
+
+image::discord-openid-connect-login.png[Login with Discord,width=1200,role=shadowed]
+
+=== Register a Discord OAuth2 Application
+
+You will first need to login to link:https://discordapp.com/developers/applications/[Discord].
+
+Once logged in, navigate to link:https://discordapp.com/developers/applications/[https://discordapp.com/developers/applications/] and create a new application.
+
+image::discord-openid-connect-client-id-secret.png[Discord Client ID and Secret,width=1200,role=shadowed]
+
+Once the application has been created, note the `CLIENT ID` and the `CLIENT SECRET`.  These will be used respectively as the [field]#Client Id# value and the [field]#Client secret# value in your FusionAuth OpenID Connect Identity Providers configuration.
+
+Now navigate to [breadcrumb]#Selected App# icon:chevron-right[role=breadcrumb] [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#OAuth2# icon:chevron-right[role=breadcrumb] in the navigation pane on the left side of the screen to configure OAuth2 for your Discord app.
+
+image::discord-openid-connect-register-application.png[Register a new Discord OAuth Application,width=1200,role=shadowed]
+
+Here we have configured a `REDIRECT` for our application.  If FusionAuth is running at `https://local.fusionauth.io`, this value should be `https://local.fusionauth.io/oauth2/callback`.
+
+=== Configure a New FusionAuth OpenID Connect Identity Provider
+
+To create a Discord Identity Provider return to FusionAuth and  navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `OpenID Connect` from the dialog.
+
+This will take you to the `Add OpenID Connect` panel, and you'll fill out the required fields.  [field]#Client Id# and [field]#Client secret# values reference the previously noted Discord Application's `CLIENT ID` and `CLIENT SECRET`. The [field]#Redirect URL# is read only and generated for you based upon the URL of FusionAuth, this value should match the one you configured in your Discord application.
+
+Discord has not implemented a well-known configuration endpoint, so you will need to disable the [field]#Discover endpoints# field and specify the endpoints manually.  The values for these fields are:
+
+* `Authorization endpoint` - `https://discordapp.com/api/oauth2/authorize`
+* `Token endpoint` - `https://discordapp.com/api/oauth2/token`
+* `Userinfo endpoint` - `https://discordapp.com/api/users/@me`
+
+You will need to specify the scopes `identify email` in the [field]#Scope# field for your application.
+
+In the following screenshot you will see that we have enabled this login provider for the `SeeFood` application and enabled [field]#Create registration#.
+
+Discord does not implement OpenID Connect to spec. In order to pull in some additional data for populating the user profile (Discord username, Avatar URL, etc.) you can enable a [field]#Reconcile lambda#.  Reference link:../lambdas/openid-connect-response-reconcile[this example lambda] to specify your own lambda.  This is optional.
+
+That's it, now the `Login with Discord` button will show up on the login page of our `SeeFood` application.
+
+image::discord-openid-connect-configuration.png[FusionAuth Discord IdP Configuration,width=1200,role=shadowed]
