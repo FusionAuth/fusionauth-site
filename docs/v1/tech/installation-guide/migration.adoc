@@ -6,13 +6,20 @@ description: Step by step instructions and information to assist you in migratio
 
 == Overview
 
-If you are currently an Inversoft Passport customer and looking to move to FusionAuth you have come to the right place. Here you'll find important information on API changes, database upgrade procedures, etc.
+[NOTE]
+====
+If you are still using Passport, please click here for the +++<a href="/docs/passport/" rel="nofollow" target="_blank">Passport Documentation+++.
+====
 
-We have attempted to build an exhaustive list of changes you will need to be aware of, but please do plan to test your migration and ask for assistance from the FusionAuth team during your migration.
+If you are currently an Inversoft Passport customer and looking to move to FusionAuth you have come to the right place. Here you'll find important information on API changes, database upgrade procedures, etc. We have attempted to build an exhaustive list of changes you will need to be aware of, but please do plan to test your migration and ask for assistance from the FusionAuth team during your migration.
 
-++++
-If you are still using Passport, please use the <a href="/docs/passport/" rel="nofollow" target="_blank">Passport Documentation</a>.
-++++
+The following sections are provided for you to review prior to upgrading to FusionAuth.
+
+* <<Naming Changes>>
+* <<License Changes>>
+* <<Breaking Changes>>
+* <<Database Migration>>
+* <<Migration Summary>>
 
 == Naming Changes
 
@@ -142,7 +149,8 @@ CREATE TABLE instance (
   COLLATE utf8mb4_bin;
 
 -- Insert instance
-INSERT INTO instance(id) VALUES (random_bytes(16));
+INSERT INTO instance(id)
+  VALUES (random_bytes(16));
 
 -- Rename the forgot password
 ALTER TABLE system_configuration
@@ -151,18 +159,16 @@ ALTER TABLE tenants
   CHANGE COLUMN forgot_email_templates_id forgot_password_email_templates_id BINARY(16) NULL;
 
 -- Delete the system_configuration columns (verify_email and verify_email_when_changed didn't make it through and need to be manually updated)
-UPDATE system_configuration SET data = CONCAT(
-  SUBSTRING(data, 1, LENGTH(data) - 1),
-  ',"data":{},"emailConfiguration":',
-  SUBSTRING(COALESCE(email_configuration, '{}'), 1, LENGTH(email_configuration) - 1),
-  ',"verifyEmail":',
-  IF(verify_email, 'true', 'false'),
-  ',"verifyEmailWhenChanged":',
-  IF(verify_email_when_changed, 'true', 'false'),
-  '},"passwordValidationRules":',
-  COALESCE(password_validation_rules, '{}'),
-  '}'
-  );
+UPDATE system_configuration
+SET data = JSON_INSERT(data, '$.data', CAST('{}' AS JSON));
+UPDATE system_configuration
+SET data = JSON_INSERT(data, '$.emailConfiguration', CAST(email_configuration AS JSON));
+UPDATE system_configuration
+SET data = JSON_INSERT(data, '$.emailConfiguration.verifyEmail', IF(verify_email = 1, TRUE, FALSE) IS TRUE);
+UPDATE system_configuration
+SET data = JSON_INSERT(data, '$.emailConfiguration.verifyEmailWhenChanged', IF(verify_email_when_changed = 1, TRUE, FALSE) IS TRUE);
+UPDATE system_configuration
+SET data = JSON_INSERT(data, '$.passwordValidationRules', CAST(password_validation_rules AS JSON));
 ALTER TABLE system_configuration
   DROP COLUMN email_configuration,
   DROP COLUMN password_expiration_days,
@@ -180,49 +186,51 @@ ALTER TABLE users
   DROP COLUMN parental_consent_type;
 
 -- Clean up application (two cases because some old Applications might have a data column with the value '{}' only)
-UPDATE applications SET data = CONCAT(
-  SUBSTRING(data, 1, LENGTH(data) - 1),
-  ',"cleanSpeakConfiguration":',
-  COALESCE(clean_speak_configuration, '{}'),
-  ',"data":{},"oauthConfiguration":',
-  COALESCE(oauth_configuration, '{}'),
-  '}'
-  ) WHERE data != '{}';
-UPDATE applications SET data = CONCAT(
-  '{"cleanSpeakConfiguration":',
-  COALESCE(clean_speak_configuration, '{}'),
-  ',"data":{},"oauthConfiguration":',
-  COALESCE(oauth_configuration, '{}'),
-  '}'
-  ) WHERE data = '{}';
+UPDATE applications
+SET data = JSON_INSERT(data, '$.data', CAST('{}' AS JSON));
+UPDATE applications
+SET data = JSON_INSERT(data, '$.cleanSpeakConfiguration', CAST(clean_speak_configuration AS JSON));
+UPDATE applications
+SET data = JSON_INSERT(data, '$.oauthConfiguration', CAST(oauth_configuration AS JSON));
 ALTER TABLE applications
   DROP COLUMN clean_speak_configuration,
   DROP COLUMN oauth_configuration;
 
 -- Fix the data column for audit_logs
-UPDATE audit_logs SET data = CONCAT('{"data"', SUBSTRING(data, 14)) WHERE data LIKE '{"attributes"%';
+UPDATE audit_logs
+SET data = JSON_REMOVE(JSON_INSERT(data, '$.data', CAST(COALESCE(JSON_EXTRACT(data, '$.attributes'), '{}') AS JSON)), '$.attributes');
 
 -- Fix the data column for groups
-UPDATE groups SET data = CONCAT('{"data"', SUBSTRING(data, 14)) WHERE data LIKE '{"attributes"%';
+UPDATE groups
+SET data = JSON_REMOVE(JSON_INSERT(data, '$.data', CAST(COALESCE(JSON_EXTRACT(data, '$.attributes'), '{}') AS JSON)), '$.attributes');
 
 -- Fix the data column for group_members
-UPDATE group_members SET data = CONCAT('{"data"', SUBSTRING(data, 14)) WHERE data LIKE '{"attributes"%';
+UPDATE group_members
+SET data = JSON_REMOVE(JSON_INSERT(data, '$.data', CAST(COALESCE(JSON_EXTRACT(data, '$.attributes'), '{}') AS JSON)), '$.attributes');
 
 -- Fix the data column for users
-UPDATE users SET data = CONCAT('{"data"', SUBSTRING(data, 14)) WHERE data LIKE '{"attributes"%';
+UPDATE users
+SET data = JSON_REMOVE(JSON_INSERT(data, '$.data', CAST(COALESCE(JSON_EXTRACT(data, '$.attributes'), '{}') AS JSON)), '$.attributes');
 
 -- Fix the data column for user_registrations
-UPDATE user_registrations SET data = CONCAT('{"data"', SUBSTRING(data, 14)) WHERE data LIKE '{"attributes"%';
+UPDATE user_registrations
+SET data = JSON_REMOVE(JSON_INSERT(data, '$.data', CAST(COALESCE(JSON_EXTRACT(data, '$.attributes'), '{}') AS JSON)), '$.attributes');
 
 -- Fix the data column for tenants
-UPDATE tenants SET data = REPLACE(data, '"emailConfiguration":{"enabled":true}', '"emailConfiguration":{"enabled":true');
-UPDATE tenants SET data = REPLACE(data, '"emailConfiguration":{"enabled":false}', '"emailConfiguration":{"enabled":false');
-UPDATE tenants SET data = CONCAT(data, '}');
+UPDATE tenants
+SET data = JSON_REMOVE(JSON_INSERT(data, '$.data', CAST(COALESCE(JSON_EXTRACT(data, '$.attributes'), '{}') AS JSON)), '$.attributes');
+UPDATE tenants
+SET data = JSON_INSERT(data, '$.emailConfiguration.verifyEmail', COALESCE(JSON_EXTRACT(data, '$.verifyEmail'), FALSE));
+UPDATE tenants
+SET data = JSON_INSERT(data, '$.emailConfiguration.verifyEmailWhenChanged', COALESCE(JSON_EXTRACT(data, '$.verifyEmailWhenChanged'), FALSE));
 
 -- Fix the internal API key
-DELETE FROM authentication_keys WHERE id LIKE '__internal_%' AND meta_data LIKE '%"cacheReloader"%';
-INSERT INTO authentication_keys(id, permissions, meta_data, tenants_id) VALUES (concat('__internal_', replace(to_base64(random_bytes(64)), '\n', '')),
-                                                                                '{"endpoints": {"/api/cache/reload": ["POST"]}}', '{"attributes": {"internalCacheReloader": "true"}}', NULL);
+DELETE
+  FROM authentication_keys
+  WHERE id LIKE '__internal_%' AND meta_data LIKE '%"cacheReloader"%';
+INSERT INTO authentication_keys(id, permissions, meta_data, tenants_id)
+  VALUES (concat('__internal_', replace(to_base64(random_bytes(64)), '\n', '')),
+          '{"endpoints": {"/api/cache/reload": ["POST"]}}', '{"attributes": {"internalCacheReloader": "true"}}', NULL);
 
 ```
 
@@ -246,7 +254,7 @@ CREATE TABLE instance (
 
 -- Insert instance
 INSERT INTO instance(id)
-VALUES (md5(random() :: text || clock_timestamp() :: text) :: uuid);
+  VALUES (md5(random() :: TEXT || clock_timestamp() :: TEXT) :: UUID);
 
 -- Rename the forgot password
 ALTER TABLE system_configuration
@@ -256,17 +264,16 @@ ALTER TABLE tenants
 
 -- Delete the system_configuration columns
 -- Delete the system_configuration columns (verify_email and verify_email_when_changed didn't make it through and need to be manually updated)
-UPDATE system_configuration SET data =
-  SUBSTR(data, 1, LENGTH(data) - 1) ||
-  ',"data":{},"emailConfiguration":' ||
-  SUBSTR(COALESCE(email_configuration, '{}'), 1, LENGTH(email_configuration) - 1) ||
-  ',"verifyEmail":' ||
-  CASE WHEN verify_email=true THEN 'true' ELSE 'false' END ||
-  ',"verifyEmailWhenChanged":' ||
-  CASE WHEN verify_email_when_changed=true THEN 'true' ELSE 'false' END ||
-  '},"passwordValidationRules":' ||
-  COALESCE(password_validation_rules, '{}') ||
-  '}';
+UPDATE system_configuration
+SET data = JSONB_SET(data::JSONB, '{data}', '{}', TRUE);
+UPDATE system_configuration
+SET data = JSONB_SET(data::JSONB, '{emailConfiguration}', email_configuration::JSONB, TRUE);
+UPDATE system_configuration
+SET data = JSONB_SET(data::JSONB, '{emailConfiguration,verifyEmail}', TO_JSONB(verify_email), TRUE);
+UPDATE system_configuration
+SET data = JSONB_SET(data::JSONB, '{emailConfiguration,verifyEmailWhenChanged}', TO_JSONB(verify_email_when_changed), TRUE);
+UPDATE system_configuration
+SET data = JSONB_SET(data::JSONB, '{passwordValidationRules}', password_validation_rules::JSONB, TRUE);
 ALTER TABLE system_configuration
   DROP COLUMN email_configuration,
   DROP COLUMN password_expiration_days,
@@ -284,45 +291,72 @@ ALTER TABLE users
   DROP COLUMN parental_consent_type;
 
 -- Clean up application (two cases because some old Applications might have a data column with the value '{}' only)
-UPDATE applications SET data =
-  SUBSTR(data, 1, LENGTH(data) - 1) ||
-  ',"cleanSpeakConfiguration":' ||
-  COALESCE(clean_speak_configuration, '{}') ||
-  ',"data":{},"oauthConfiguration":' ||
-  COALESCE(oauth_configuration, '{}') ||
-  '}' WHERE data != '{}';
-UPDATE applications SET data =
-  '{"cleanSpeakConfiguration":' ||
-  COALESCE(clean_speak_configuration, '{}') ||
-  ',"data":{},"oauthConfiguration":' ||
-  COALESCE(oauth_configuration, '{}') ||
-  '}' WHERE data = '{}';
+UPDATE applications
+SET data = JSONB_SET(data::JSONB, '{data}', '{}', TRUE);
+UPDATE applications
+SET data = JSONB_SET(data::JSONB, '{cleanSpeakConfiguration}', COALESCE(clean_speak_configuration, '{}')::JSONB, TRUE);
+UPDATE applications
+SET data = JSONB_SET(data::JSONB, '{oauthConfiguration}', COALESCE(oauth_configuration, '{}')::JSONB, TRUE);
 ALTER TABLE applications
   DROP COLUMN clean_speak_configuration,
   DROP COLUMN oauth_configuration;
 
 -- Fix the data column for audit_logs
-UPDATE audit_logs SET data = '{"data"' || SUBSTR(data, 14) WHERE data LIKE '{"attributes"%';
+UPDATE audit_logs
+SET data = JSONB_SET(data::JSONB, '{data}', COALESCE(data::JSONB -> 'attributes', '{}')::JSONB, TRUE) - 'attributes';
 
 -- Fix the data column for groups
-UPDATE groups SET data = '{"data"' || SUBSTR(data, 14) WHERE data LIKE '{"attributes"%';
+UPDATE groups
+SET data = JSONB_SET(data::JSONB, '{data}', COALESCE(data::JSONB -> 'attributes', '{}')::JSONB, TRUE) - 'attributes';
 
 -- Fix the data column for group_members
-UPDATE group_members SET data = '{"data"' || SUBSTR(data, 14) WHERE data LIKE '{"attributes"%';
+UPDATE group_members
+SET data = JSONB_SET(data::JSONB, '{data}', COALESCE(data::JSONB -> 'attributes', '{}')::JSONB, TRUE) - 'attributes';
 
 -- Fix the data column for users
-UPDATE users SET data = '{"data"' || SUBSTR(data, 14) WHERE data LIKE '{"attributes"%';
+UPDATE users
+SET data = JSONB_SET(data::JSONB, '{data}', COALESCE(data::JSONB -> 'attributes', '{}')::JSONB, TRUE) - 'attributes';
 
 -- Fix the data column for user_registrations
-UPDATE user_registrations SET data = '{"data"' || SUBSTR(data, 14) WHERE data LIKE '{"attributes"%';
+UPDATE user_registrations
+SET data = JSONB_SET(data::JSONB, '{data}', COALESCE(data::JSONB -> 'attributes', '{}')::JSONB, TRUE) - 'attributes';
 
 -- Fix the data column for tenants
-UPDATE tenants SET data = REPLACE(data, '"emailConfiguration":{"enabled":true}', '"emailConfiguration":{"enabled":true');
-UPDATE tenants SET data = REPLACE(data, '"emailConfiguration":{"enabled":false}', '"emailConfiguration":{"enabled":false');
-UPDATE tenants SET data = data || '}';
+UPDATE tenants
+SET data = JSONB_SET(data::JSONB, '{data}', COALESCE(data::JSONB -> 'data' -> 'attributes', '{}')::JSONB, TRUE) #- '{data,attributes}';
+UPDATE tenants
+SET data = JSONB_SET(data::JSONB, '{emailConfiguration,verifyEmail}', COALESCE(data::JSONB -> 'verifyEmail', TO_JSONB(FALSE)), TRUE);
+UPDATE tenants
+SET data = JSONB_SET(data::JSONB, '{emailConfiguration,verifyEmailWhenChanged}', COALESCE(data::JSONB -> 'verifyEmailWhenChanged', TO_JSONB(FALSE)), TRUE);
 
 -- Fix the internal API key
-DELETE FROM authentication_keys WHERE id LIKE '__internal_%' AND meta_data LIKE '%"cacheReloader"%';
-INSERT INTO authentication_keys(id, permissions, meta_data, tenants_id) VALUES ('__internal_' || replace(encode(md5(random()::text || clock_timestamp()::text)::bytea || md5(random()::text || clock_timestamp()::text)::bytea, 'base64'), E'\n', ''),
-                                                                                '{"endpoints": {"/api/cache/reload": ["POST"]}}', '{"attributes": {"internalCacheReloader": "true"}}', NULL);
+DELETE
+  FROM authentication_keys
+  WHERE id LIKE '__internal_%' AND meta_data LIKE '%"cacheReloader"%';
+INSERT INTO authentication_keys(id, permissions, meta_data, tenants_id)
+  VALUES ('__internal_' || replace(
+      encode(md5(random()::TEXT || clock_timestamp()::TEXT)::BYTEA || md5(random()::TEXT || clock_timestamp()::TEXT)::BYTEA, 'base64'),
+      E'\n', ''), '{"endpoints": {"/api/cache/reload": ["POST"]}}', '{"attributes": {"internalCacheReloader": "true"}}', NULL);
 ```
+
+== Migration Summary
+
+The following is a summary of the steps required to migration to FusionAuth and is provided as a guidelines to assist you in performing the migration steps in the correct order.
+
+1. Review all documented changes in this guide
+1. Make a backup of your database
+1. Upgrade Passport to the latest version.
+1. Install the latest version of FusionAuth
+1. Review and migrate settings from `passport.properties` to `fusionauth.properties`. You may have other settings that require migration in addition to the following.
+ - `database.url`
+ - `database.username`
+ - `database.password`
+ - `passport-search-engine.memory` is now `fusionauth-search.memory`
+ - `passport-backend.memory` is now `fusionauth-app.memory`
+1. Run the SQL migration found above
+1. Start FusionAuth and bring up the UI and complete maintenance mode, you will be prompted to do the following steps:
+ - Upgrade the db schema
+ - Create search index
+1. Once logged into FusionAuth rebuild the Elasticsearch index
+ - Navigate to [breadcrumb]#System# icon:chevron-right[role=breadcrumb] [breadcrumb]#Reindex#.
+1. Review your configuration in FusionAuth for accuracy.
