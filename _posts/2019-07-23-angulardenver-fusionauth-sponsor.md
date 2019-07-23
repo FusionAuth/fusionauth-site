@@ -20,9 +20,9 @@ With a combination of two days of focused sessions and an optional two days of i
 - **Angular Fundamentals** – with [Kevin Schuchard](https://twitter.com/KevinSchuchard) and [Anthony Jones](https://twitter.com/anthonyjones519)
 - **NgRx: A Reactive State of Mind** – with [Mike Ryan](https://twitter.com/MikeRyanDev) and [Brandon Roberts](https://twitter.com/brandontroberts)
 - **RxJS Level UP: Essentials in Reactive Programming** – with [Michael Hladky](https://twitter.com/Michael_Hladky) and [Jan-Niklas Wortmann](https://twitter.com/niklas_wortmann)
-- Angular Architecture – with [Dan Wahlin](https://twitter.com/DanWahlin)
-- ngGirls-Denver – with [Robert Willemelis](https://twitter.com/robertSPD)
-- Unit Testing Like a Boss – with [Joe Eames](https://twitter.com/josepheames)
+- **Angular Architecture** – with [Dan Wahlin](https://twitter.com/DanWahlin)
+- **ngGirls-Denver** – with [Robert Willemelis](https://twitter.com/robertSPD)
+- **Unit Testing Like a Boss** – with [Joe Eames](https://twitter.com/josepheames)
 
 Angular experts from around the world start presenting on August 1 and cover concepts, tools, and strategies for building effective and efficient Angular applications. Visit the [conference site](https://angulardenver.com "Jump to AngularDenver site") for the full speaker list, session details, and daily schedule.
 
