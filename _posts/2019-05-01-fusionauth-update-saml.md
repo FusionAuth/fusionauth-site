@@ -27,7 +27,7 @@ We tend to agree with Scott. SAML can be difficult to implement correctly, and m
 
 Our SAML support in this release allows FusionAuth to act as both the SAML Identity Provider and the SAML Service Provider.
  - [Configure FusionAuth to act as the IdP](/docs/v1/tech/samlv2/overview)
- - [Configure FusionAuth Service Provider connecting to a third party SAML IdP](/docs/v1/tech/identity-providers/samlv2)
+ - [Configure FusionAuth Service Provider connecting to a third party SAML IdP](/docs/v1/tech/identity-providers/samlv2/overview)
 
 To summarize, while we would prefer you do not use SAML, if you must, we have made it available.  If you don't, ignore it and learn about our other updates below. **NOTE:** The SAML specification is complex and we have found that many SAML v2 Service Providers are not specification compliant. This is to say that you should test your implementation thoroughly and if you run into problems open a GitHub issue and we will try to help.
 

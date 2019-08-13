@@ -1,0 +1,51 @@
+---
+layout: doc
+title: Discord OpenID Connect
+description: Login using Discord as an OpenID Connect Identity Provider
+---
+
+:sectnumlevels: 0
+
+== Configure OpenID Connect with Discord
+
+Once you have completed this configuration you may enable an OpenID Connect "Login with Discord" button for one or more FusionAuth Applications. See link:https://discordapp.com/developers/docs/topics/oauth2/[Discord - OAuth2] for an additional reference.
+
+image::discord-openid-connect-login.png[Login with Discord,width=1200,role=shadowed]
+
+=== Register a Discord OAuth2 Application
+
+You will first need to login to link:https://discordapp.com/developers/applications/[Discord].
+
+Once logged in, navigate to link:https://discordapp.com/developers/applications/[https://discordapp.com/developers/applications/] and create a new application.
+
+image::discord-openid-connect-client-id-secret.png[Discord Client ID and Secret,width=1200,role=shadowed]
+
+Once the application has been created, note the `CLIENT ID` and the `CLIENT SECRET`.  These will be used respectively as the [field]#Client Id# value and the [field]#Client secret# value in your FusionAuth OpenID Connect Identity Providers configuration.
+
+Now navigate to [breadcrumb]#Selected App# icon:chevron-right[role=breadcrumb] [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#OAuth2# icon:chevron-right[role=breadcrumb] in the navigation pane on the left side of the screen to configure OAuth2 for your Discord app.
+
+image::discord-openid-connect-register-application.png[Register a new Discord OAuth Application,width=1200,role=shadowed]
+
+Here we have configured a `REDIRECT` for our application.  If FusionAuth is running at `https://local.fusionauth.io`, this value should be `https://local.fusionauth.io/oauth2/callback`.
+
+=== Configure a New FusionAuth OpenID Connect Identity Provider
+
+To create a Discord Identity Provider return to FusionAuth and  navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#Identity Providers# and click `Add provider` and select `OpenID Connect` from the dialog.
+
+This will take you to the `Add OpenID Connect` panel, and you'll fill out the required fields.  [field]#Client Id# and [field]#Client secret# values reference the previously noted Discord Application's `CLIENT ID` and `CLIENT SECRET`. The [field]#Redirect URL# is read only and generated for you based upon the URL of FusionAuth, this value should match the one you configured in your Discord application.
+
+Discord has not implemented a well-known configuration endpoint, so you will need to disable the [field]#Discover endpoints# field and specify the endpoints manually.  The values for these fields are:
+
+* `Authorization endpoint` - `https://discordapp.com/api/oauth2/authorize`
+* `Token endpoint` - `https://discordapp.com/api/oauth2/token`
+* `Userinfo endpoint` - `https://discordapp.com/api/users/@me`
+
+You will need to specify the scopes `identify email` in the [field]#Scope# field for your application.
+
+In the following screenshot you will see that we have enabled this login provider for the `SeeFood` application and enabled [field]#Create registration#.
+
+Discord does not implement OpenID Connect to spec. In order to pull in some additional data for populating the user profile (Discord username, Avatar URL, etc.) you can enable a [field]#Reconcile lambda#.  Reference link:../../lambdas/openid-connect-response-reconcile[this example lambda] to specify your own lambda.  This is optional.
+
+That's it, now the `Login with Discord` button will show up on the login page of our `SeeFood` application.
+
+image::discord-openid-connect-configuration.png[FusionAuth Discord IdP Configuration,width=1200,role=shadowed]
