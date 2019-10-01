@@ -10,6 +10,7 @@ fi
 set -e
 
 export GEM_HOME=/var/git/fusionauth-site/.gems
+export JEKYLL_ENV=production
 
 cd /var/git/fusionauth-site
 

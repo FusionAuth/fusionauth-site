@@ -3,11 +3,26 @@
  */
 
 
-project(group: "com.fusionauth", name: "fusionauth-site", version: "1.0.0", licenses: ["ApacheV2_0"]) {
+project(group: "io.fusionauth", name: "fusionauth-site", version: "2.0.0", licenses: ["ApacheV2_0"]) {
   workflow {
     standard()
   }
+
+  publishWorkflow {
+    subversion(repository: "http://svn.inversoft.org/savant")
+  }
+
+  publications {
+    main {
+      publication(name: project.name, type: "css", file: "_site/assets/css/fusionauth.css")
+      publication(name: project.name, type: "zip", file: "build/fusionauth-scss.zip")
+    }
+  }
 }
+
+release = loadPlugin(id: "org.savantbuild.plugin:release-git:1.0.0")
+dependency = loadPlugin(id: "org.savantbuild.plugin:dependency:1.0.2")
+file = loadPlugin(id: "org.savantbuild.plugin:file:1.0.2")
 
 target(name: "optimize-images", description: "Uses ImageOptim to reduce image sizes (currently PNGs only)") {
   new File("assets/img").traverse(maxDepth: 0) {
@@ -54,33 +69,52 @@ target(name: "push", description: "Push the site to fusionauth.io") {
   proc.waitFor()
 }
 
-target(name: "build", description: "builds the project") {
+target(name: "pre-install", description: "Gets any dependencies required to build") {
   if (!cleanExecute(['bundle', 'install'])) {
     fail("Unable to run 'bundle install' for FusionAuth Site. Are you certain you have Jekyll installed?")
   }
 
-  if (switches.has("drafts")) {
-    cleanExecute(["bundle", "exec", "jekyll", "clean", "build", "--drafts"])
-  } else {
-    cleanExecute(["bundle", "exec", "jekyll", "clean", "build"])
+  if (!cleanExecute(['npm', 'install'])) {
+    fail("Unable to run 'npm install' for FusionAuth Site. Are you certain you have npm/node installed?")
   }
-
 }
 
-target(name: "clean", description: "cleans the project") {
-  if (!cleanExecute(['bundle', 'install'])) {
-    fail("Unable to run 'bundle install' for FusionAuth Site. Are you certain you have Jekyll installed?")
-  }
+target(name: "compile", description: "builds the project", dependsOn: ["pre-install"]) {
+  if (switches.has("drafts")) {
+    cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts"])
 
+  } else {
+    cleanExecute(["bundle", "exec", "jekyll", "build"])
+  }
+}
+
+target(name: "clean", description: "cleans the project", dependsOn: ["pre-install"]) {
   cleanExecute(["bundle", "exec", "jekyll", "clean"])
 }
 
-target(name: "serve", description: "Serve the project") {
-  if (!cleanExecute(['bundle', 'install'])) {
-    fail("Unable to run 'bundle install' for FusionAuth Site. Are you certain you have Jekyll installed?")
+target(name: "serve", description: "Serve the project", dependsOn: ["pre-install"]) {
+  cleanExecute(["bundle", "exec", "jekyll", "serve", "--drafts", "--incremental", "-o"])
+}
+
+target(name: "int", description: "Releases a local integration build of the project", dependsOn: ["compile"]) {
+  file.copy(to: "build/scss") {
+    fileSet(dir: "site/_sass", includePatterns: [~/.+\.scss/])
   }
 
-  cleanExecute(["bundle", "exec", "jekyll", "serve", "--drafts", "--incremental", "-o"])
+  file.rename {
+    fileSet(dir: "build/scss")
+    filter(token: "_", value: "") // Remove the underscores
+  }
+
+  file.zip(file: "build/fusionauth-scss.zip") {
+    fileSet(dir: "build/scss")
+  }
+
+  dependency.integrate()
+}
+
+target(name: "release", description: "Releases a full version of the project", dependsOn: ["int"]) {
+  release.release()
 }
 
 boolean cleanExecute(List<String> args) {
