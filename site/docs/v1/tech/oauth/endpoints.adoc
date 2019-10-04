@@ -35,7 +35,7 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 [.endpoint]
 .URI
 --
-[method]#GET# [uri]#/oauth2/authorize``?client_id=\{client_id\}&redirect_uri=\{redirect_uri\}&response_type=code``#
+[method]#GET# [uri]#/oauth2/authorize``?client_id=\{client_id\}&redirect_uri=\{redirect_uri\}&response_type=code&tenantId=\{tenantId\}``#
 --
 
 [cols="3a,7a"]
@@ -113,11 +113,64 @@ The following is an example HTTP 302 redirect, line breaks added to improve read
 HTTP/1.1 302 Found
 Location: https://piedpiper.com/callback?
            code=pU2DHOWjSCVh6NJKi1ClhBYNKfuqbZVT
+           &locale=fr
            &state=abc123
            &userState=Authenticated
 ----
 
 &nbsp;
+
+[cols="3a,7a"]
+[.api]
+.Redirect Parameters
+|===
+|[field]#code# [type]#[String]#
+|The authorization code.
+
+|[field]#locale# [type]#[String]#
+|The the user's preferred locale.  This parameter will be omitted if the user has not set a preferred locale.
+
+|[field]#state# [type]#[String]#
+|The state that was provided on the Authorization request.  This parameter will be omitted if the #[field]state# request parameter was not provided.
+
+|[field]#userState# [type]#[String]#
+|The FusionAuth user state.
+
+The possible values are:
+
+* `Authenticated` - The user is successfully authenticated for the requested application.
+* `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Error Redirect Parameters
+|===
+|[field]#error# [type]#[String]#
+|The OAuth error response type.
+
+The possible values are:
+
+* `invalid_request`
+* `unauthorized_client`
+
+|[field]#error_description# [type]#[String]#
+|The human-readable OAuth error description.
+
+|[field]#error_reason# [type]#[String]#
+|The OAuth error reason.
+
+The possible values are:
+
+* `grant_type_disabled`
+* `invalid_origin`
+* `invalid_pkce_code_challenge_method`
+* `invalid_pkce_code_challenge`
+* `missing_redirect_uri`
+
+|[field]#state# [type]#[String]#
+|The state that was provided on the Authorization request.
+|===
 
 === Implicit Grant Request
 
@@ -126,7 +179,7 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
 [.endpoint]
 .URI
 --
-[method]#GET# [uri]#/oauth2/authorize``?client_id=\{client_id\}&redirect_uri=\{redirect_uri\}&response_type=token%20id_token``#
+[method]#GET# [uri]#/oauth2/authorize``?client_id=\{client_id\}&redirect_uri=\{redirect_uri\}&response_type=token%20id_token&tenantId=\{tenantId\}``#
 --
 
 [cols="3a,7a"]
@@ -163,6 +216,9 @@ Available scopes:
 
 |[field]#state# [type]#[String]# [optional]#Optional#
 |The optional state parameter, this is generally used as a Cross Site Request Forgery (CSRF) token. Any value provided in this field will be returned on a successful redirect. See https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification for additional information on how this parameter may be utilized.
+
+|[field]#tenantId# [type]#[UUID]# [required]#Required#  [since]#Available Since 1.8.0#
+|The unique Tenant Id.
 |===
 
 === Response
@@ -200,14 +256,78 @@ HTTP/1.1 302 Found
 Location: https://piedpiper.com/callback#
            access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo
            &expires_in=3599
-           &token_type=Bearer
            &id_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo
+           &locale=fr
            &scope=openid
            &state=abc123
+           &token_type=Bearer
            &userState=Authenticated
 ----
 
 &nbsp;
+
+[cols="3a,7a"]
+[.api]
+.Redirect Parameters
+|===
+|[field]#access_token# [type]#[String]#
+|The access token.  This request parameter will be omitted if an access token was not requested in the [field]#response_type# request parameter.
+
+|[field]#expires_in# [type]#[String]#
+|The number of seconds the access token will remain active.  This request parameter will be omitted if an access token was not requested in the [field]#response_type# request parameter.
+
+|[field]#id_token# [type]#[String]#
+|The id token.
+
+|[field]#locale# [type]#[String]#
+|The the user's preferred locale.  This parameter will be omitted if the user has not set a preferred locale.
+
+|[field]#state# [type]#[String]#
+|The state that was provided on the Authorization request.  This parameter will be omitted if the #[field]state# request parameter was not provided.
+
+|[field]#token_type# [type]#[String]#
+|The token type.  The value will be `Bearer` if an access token was requested in the [field]#response_type# request parameter, this request parameter will otherwise be omitted.
+
+|[field]#userState# [type]#[String]#
+|The FusionAuth user state.
+
+The possible values are:
+
+* `Authenticated` - The user is successfully authenticated for the requested application.
+* `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Error Redirect Parameters
+|===
+|[field]#error# [type]#[String]#
+|The OAuth error response type.
+
+The possible values are:
+
+* `invalid_request`
+* `unauthorized_client`
+* `unsupported_response_type`
+
+|[field]#error_description# [type]#[String]#
+|The human-readable OAuth error description.
+
+|[field]#error_reason# [type]#[String]#
+|The OAuth error reason.
+
+The possible values are:
+
+* `grant_type_disabled`
+* `invalid_origin`
+* `invalid_pkce_code_challenge_method`
+* `invalid_pkce_code_challenge`
+* `missing_redirect_uri`
+* `missing_response_type`
+
+|[field]#state# [type]#[String]#
+|The state that was provided on the Authorization request.
+|===
 
 == Logout
 
@@ -222,7 +342,7 @@ Log the User out
 [.endpoint]
 .URI
 --
-[method]#GET# [uri]#/oauth2/logout``?client_id=\{client_id\}``#
+[method]#GET# [uri]#/oauth2/logout``?client_id=\{client_id\}&tenantId=\{tenantId\}``#
 --
 
 [cols="3a,7a"]
