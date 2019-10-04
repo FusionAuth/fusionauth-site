@@ -18,6 +18,7 @@ git pull
 
 # Update dependencies
 bundle install
+npm install
 
 # Prevent dirty builds
 bundle exec jekyll clean
