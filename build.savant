@@ -24,51 +24,6 @@ release = loadPlugin(id: "org.savantbuild.plugin:release-git:1.0.0")
 dependency = loadPlugin(id: "org.savantbuild.plugin:dependency:1.0.2")
 file = loadPlugin(id: "org.savantbuild.plugin:file:1.0.2")
 
-target(name: "optimize-images", description: "Uses ImageOptim to reduce image sizes (currently PNGs only)") {
-  new File("assets/img").traverse(maxDepth: 0) {
-    if (it.getName().endsWith(".png")) {
-      output.infoln "  --> Optimizing : " + it.getName()
-      def process = new ProcessBuilder("/Applications/ImageOptim.app/Contents/MacOS/ImageOptim", it.getCanonicalPath())
-          .inheritIO()
-          .start()
-      process.consumeProcessOutput(System.out, System.err)
-      process.waitFor()
-      if (process.exitValue() != 0) {
-        fail("Unable to optimize images, are you sure you have ImageOptim installed? \n https://imageoptim.com/command-line.html")
-      }
-    }
-  }
-}
-
-target(name: "push", description: "Push the site to fusionauth.io") {
-  // Skip checking Git if we are forced to do so (use the force Luke)
-  if (!switches.has("force")) {
-    output.infoln("Checking git")
-    proc = new ProcessBuilder("git", "diff-index", "--quiet", "origin/master", "--")
-        .inheritIO()
-        .start()
-    proc.waitFor()
-
-    if (proc.exitValue() != 0) {
-      output.infoln("You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
-      exit 1
-    }
-  }
-
-  // Allow the command line switch --user to specify a different user on the SSH command
-  def host = "fusionauth.io"
-  if (switches.has("user")) {
-    host = switches.values("user")[0] + "@" + host
-  }
-
-
-  output.infoln("Deploying...")
-  proc = new ProcessBuilder("ssh", "-t", host, "sudo -H -u www-data -g www-data /var/git/fusionauth-site/deploy.sh")
-      .inheritIO()
-      .start()
-  proc.waitFor()
-}
-
 target(name: "pre-install", description: "Gets any dependencies required to build") {
   if (!cleanExecute(['bundle', 'install'])) {
     fail("Unable to run 'bundle install' for FusionAuth Site. Are you certain you have Jekyll installed?")
@@ -77,6 +32,10 @@ target(name: "pre-install", description: "Gets any dependencies required to buil
   if (!cleanExecute(['npm', 'install'])) {
     fail("Unable to run 'npm install' for FusionAuth Site. Are you certain you have npm/node installed?")
   }
+}
+
+target(name: "clean", description: "cleans the project", dependsOn: ["pre-install"]) {
+  cleanExecute(["bundle", "exec", "jekyll", "clean"])
 }
 
 target(name: "compile", description: "builds the project", dependsOn: ["pre-install"]) {
@@ -88,12 +47,12 @@ target(name: "compile", description: "builds the project", dependsOn: ["pre-inst
   }
 }
 
-target(name: "clean", description: "cleans the project", dependsOn: ["pre-install"]) {
-  cleanExecute(["bundle", "exec", "jekyll", "clean"])
+target(name: "serve", description: "Build and watch the project", dependsOn: ["pre-install"]) {
+  cleanExecute(["bundle", "exec", "jekyll", "serve", "--drafts", "--incremental", "-o"])
 }
 
-target(name: "serve", description: "Serve the project", dependsOn: ["pre-install"]) {
-  cleanExecute(["bundle", "exec", "jekyll", "serve", "--drafts", "--incremental", "-o"])
+target(name: "watch", description: "Build and watch the project", dependsOn: ["pre-install"]) {
+  cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts", "--incremental", "--watch"])
 }
 
 target(name: "int", description: "Releases a local integration build of the project", dependsOn: ["compile"]) {
@@ -115,6 +74,26 @@ target(name: "int", description: "Releases a local integration build of the proj
 
 target(name: "release", description: "Releases a full version of the project", dependsOn: ["int"]) {
   release.release()
+}
+
+target(name: "push", description: "Push the site to fusionauth.io") {
+  // Skip checking Git if we are forced to do so (use the force Luke)
+  if (!switches.has("force")) {
+    output.infoln("Checking git")
+    if (!cleanExecute(["git", "diff-index", "--quiet", "origin/master", "--"])) {
+      output.infoln("You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
+      exit 1
+    }
+  }
+
+  // Allow the command line switch --user to specify a different user on the SSH command
+  def host = "fusionauth.io"
+  if (switches.has("user")) {
+    host = switches.values("user")[0] + "@" + host
+  }
+
+  output.infoln("Deploying...")
+  cleanExecute(["ssh", "-t", host, "sudo -H -u www-data -g www-data /var/git/fusionauth-site/deploy.sh"])
 }
 
 boolean cleanExecute(List<String> args) {
