@@ -15,6 +15,12 @@ set appWidth to 1080
 #set appHeight to 1100
 #set appWidth to 900
 
+tell application "System Events"
+	tell appearance preferences
+		set dark mode to not dark mode
+	end tell
+end tell
+
 tell application "Finder"
 	set screenResolution to bounds of window of desktop
 end tell
