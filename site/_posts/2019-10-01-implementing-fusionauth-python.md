@@ -9,16 +9,16 @@ tags:
 image: blogs/python-fusionauth-introduction.png
 ---
 
-Welcome to our FusionAuth Python Library introduction tutorial! Today we will take a tour of the FusionAuth-Client Library for Python and get to know the basics of FusionAuth. This step-by-step guide will walk you from FusionAuth setup to building your first functional Python application with FusionAuth and then retrieving user profile information.
+Welcome to our FusionAuth Python Library introduction tutorial! Today we will take a tour of the FusionAuth-Client Library for Python and get to know the basics of FusionAuth. This step-by-step guide will walk you through FusionAuth setup to building your first functional Python application with FusionAuth and then retrieving user profile information.
 
 <!--more-->
 
-Our goal is to demonstrate the basics of FusionAuth and let you verify your API credentials before diving into functional Python FusionAuth-Client web applications using Python frameworks and micro frameworks like Django and Flask. Of course if you’re already familiar with FusionAuth and have these libraries and dependencies installed, you can go ahead and skip to the next section [Deactivating, Reactivating, and Deleting A FusionAuth User in Python TODO NEED LINK](/TODO-NEEDLINK)!
+Our goal is to demonstrate the basics of FusionAuth and let you verify your API credentials before diving into functional Python FusionAuth-Client web applications using Python frameworks and micro frameworks like Django and Flask. Of course if you’re already familiar with FusionAuth and have these libraries and dependencies installed, you can go ahead and skip to the next section [Deactivating, Reactivating, and Deleting A FusionAuth User in Python](/blog/2019/10/08/deactivating-reactivating-deleting-user-fusionauth-python)!
 
 ## What We'll Cover
 
 1. Installing FusionAuth and Initializing Services
-1. Configuring FusionAuth, Creating an Application, API Key
+1. Configuring FusionAuth, Creating an Application and API Key
 1. Creating a new User through the FusionAuth Admin UI
 1. Registering a User to an Application through the FusionAuth Admin UI
 1. Installing Python PIP Package Manager
@@ -56,7 +56,7 @@ sh -c "curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-instal
 
 Upon successful installation, you should see, **Installation is complete. Time for tacos.**
 
-For other [Fast Path install scripts](/docs/v1/tech/installation-guide/fast-path) and methods of installation, check out our [installation guide](/docs/v1/tech/installation-guide/).
+_For other [Fast Path install scripts](/docs/v1/tech/installation-guide/fast-path) and methods of installation, check out our [installation guide](/docs/v1/tech/installation-guide/)._
 
 Now, let’s start FusionAuth Search and App services:
 
@@ -126,7 +126,7 @@ Next, we’ll need a test user registered with FusionAuth. Go to **Users** in th
 
 {% include _image.html src="/assets/img/blogs/add-user-button.png" alt="Add user" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
-Our user’s Username and Password are the same for this example. Fill out as many details as you can about your test user. For now, since we’re using a dummy email account, we will deselect the “**Send email to setup password**” toggle switch, and turn off two-factor authentication.
+Our user’s Username and Password are the same for this example. Fill out as many details as you want about your test user. For now, since we’re using a dummy email account, we will deselect the “**Send email to setup password**” toggle switch, and turn off two-factor authentication.
 
 {% include _image.html src="/assets/img/blogs/add-user-toggle-screen.png" alt="Add User Screen" class="img-fluid full mb-4" figure=false %}
 
@@ -150,7 +150,7 @@ This will take you to a page that looks something like this:
 
 From here, we will want to select our test application, “**pythonapp**”. We will match the username with the same username as our sample user’s email address. If our application had user roles defined, we could assign them to this user. We can also define the user’s Timezone and set Language preferences.
 
-Once you’re done, hit save. Now that we are finished setting up our user, it’s time to finish configuring the rest of our testing environment.
+Once you’re done, hit **Save**. Now that we are finished setting up our user, it’s time to finish configuring the rest of our testing environment.
 
 ## Installing Python PIP Package Manager
 
@@ -173,7 +173,7 @@ $ sudo apt-get update
 $ sudo apt-get install python
 ```
 
-For installing on other platforms, visit [https://www.python.org/downloads/](https://www.python.org/downloads/).
+_For installing on other platforms, visit [https://www.python.org/downloads/](https://www.python.org/downloads/)._
 
 Now, let’s install the Python PIP Package manager. PIP will allow us to quickly install individual Python packaged libraries, or libraries as defined by an application’s `requirements.txt` file.
 
@@ -183,7 +183,7 @@ Now, let’s install the Python PIP Package manager. PIP will allow us to quickl
 $ sudo apt-get install python-pip
 ```
 
-For installing on other platforms, visit: [https://pip.pypa.io/en/stable/installing/](https://pip.pypa.io/en/stable/installing/).
+_For installing on other platforms, visit: [https://pip.pypa.io/en/stable/installing/](https://pip.pypa.io/en/stable/installing/)._
 
 To verify the installation, we will want to run:
 
@@ -209,13 +209,13 @@ We are now ready to install a virtual environment for Python.
 
 With Python and PIP installed successfully, let’s install VENV, the Virtual Environment for Python. First of all, what is VENV? VENV allows us to install multiple Python environments for testing and running our web applications. In practice, it’s good to use because it separates each app’s environment from our system’s site directories. VENV gives each virtual environment access to their own Python binaries, matching the Python binary on the host server, while at the same time allowing each environment to have its very own set of Python packages installed within its dedicated site directory.  
 
-Let’s go ahead and install VENV. For Ubuntu/Debian:
+Let’s go ahead and install VENV For Ubuntu/Debian:
 
 ```bash
 $ sudo apt-get install python3-venv -y
 ```
 
-For installing VENV on other platforms, visit: [https://docs.python.org/3/library/venv.html](https://docs.python.org/3/library/venv.html).
+_For installing VENV on other platforms, visit: [https://docs.python.org/3/library/venv.html](https://docs.python.org/3/library/venv.html)._
 
 With VENV installed successfully, we are now ready to create a virtual environment for our FusionAuth application.
 
@@ -357,8 +357,32 @@ Now, the moment we’ve been waiting for. Execute the test file we just created.
 
 If successful, our application should return a client response like this:
 
-```
-{'user': {'id': '36ca6fa1-a3e0-4de9-abd5-ed6855ea3b50', 'firstName': 'Terry', 'active': True, 'passwordLastUpdateInstant': 1569515253001, 'usernameStatus': 'ACTIVE', 'twoFactorDelivery': 'None', 'timezone': 'America/New_York', 'birthDate': '1980-01-01', 'preferredLanguages': ['en'], 'verified': True, 'tenantId': '31626131-3938-6231-3634-663636656635', 'username': 'terry@example.com', 'mobilePhone': '4245551212', 'passwordChangeRequired': False, 'fullName': 'Terry Example', 'insertInstant': 1569515252886, 'lastName': 'Example', 'twoFactorEnabled': False, 'email': 'terry@example.com'}}
+```json
+{
+  "user": {
+    "id": "36ca6fa1-a3e0-4de9-abd5-ed6855ea3b50",
+    "firstName": "Terry",
+    "active": True,
+    "passwordLastUpdateInstant": 1569515253001,
+    "usernameStatus": "ACTIVE",
+    "twoFactorDelivery": "None",
+    "timezone": "America/New_York",
+    "birthDate": "1980-01-01",
+    "preferredLanguages": [
+      "en"
+      ],
+    "verified": True,
+    "tenantId": "31626131-3938-6231-3634-663636656635",
+    "username": "terry@example.com",
+    "mobilePhone": "4245551212",
+    "passwordChangeRequired": False,
+    "fullName": "Terry Example",
+    "insertInstant": 1569515252886,
+    "lastName": "Example",
+    "twoFactorEnabled": False,
+    "email": "terry@example.com"
+    }
+}
 ```
 
 Congrats, you’ve just created your first Python application with the FusionAuth-Client Library!
@@ -421,7 +445,7 @@ user_registration_request = {
 }
 ```
 
-Finally, let’s specify our client_response.
+Finally, let’s specify our `client_response`.
 
 ```python
 client_response = client.register(None, user_registration_request)
@@ -489,8 +513,32 @@ Change directories to your folder containing `user.py` and execute it with:
 
 If successful, you should see a response that looks something like this:
 
-```
-{'user': {'email': 'jerry@example.com', 'birthDate': '1980-01-01', 'twoFactorEnabled': False, 'firstName': 'Jerry', 'verified': True, 'insertInstant': 1570505646491, 'id': 'bc86c596-9b50-4325-b520-8c070e3794b3', 'username': 'jerryexample', 'tenantId': '31626131-3938-6231-3634-663636656635', 'lastName': 'Example', 'twoFactorDelivery': 'None', 'usernameStatus': 'ACTIVE', 'passwordLastUpdateInstant': 1570505646565, 'active': True, 'passwordChangeRequired': False}, 'registration': {'applicationId': '55e36f88-f3ba-4423-8b70-80232c7de8ad', 'id': 'ef7655d5-f4b4-4c9e-a777-ce48da59add3', 'usernameStatus': 'ACTIVE', 'roles': ['community_helper', 'user'], 'verified': True, 'insertInstant': 1570505649123}}
+```json
+{
+  "user": {
+    "id": "36ca6fa1-a3e0-4de9-abd5-ed6855ea3b50",
+    "firstName": "Terry",
+    "active": true,
+    "passwordLastUpdateInstant": 1569515253001,
+    "usernameStatus": "ACTIVE",
+    "twoFactorDelivery": "None",
+    "timezone": "America/New_York",
+    "birthDate": "1980-01-01",
+    "preferredLanguages": [
+      "en"
+    ],
+    "verified": true,
+    "tenantId": "31626131-3938-6231-3634-663636656635",
+    "username": "terry@example.com",
+    "mobilePhone": "4245551212",
+    "passwordChangeRequired": false,
+    "fullName": "Terry Example",
+    "insertInstant": 1569515252886,
+    "lastName": "Example",
+    "twoFactorEnabled": false,
+    "email": "terry@example.com"
+  }
+}
 ```
 
 Navigate to **Users** in the FusionAuth UI. You should now see a new user created and registered to an application!
@@ -555,14 +603,14 @@ Then, change directories to your fusionapps folder and try again:
 (venv) $ python test.py
 ```
 
-TODO - NEED CALLOUT BOX
+### Other Errors?
 Didn’t find your error here? Visit [https://fusionauth.io/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/troubleshooting/](/docs/v1/tech/troubleshooting/) for more troubleshooting suggestions. You can also ask a question on [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth) or open an issue on [Github](https://github.com/FusionAuth/fusionauth-issues/issues/new/choose). As always, if you have a support contract, feel free to [contact FusionAuth support](mailto:support@fusionauth.io).
 
 ## Summary
 
 Hopefully your first test application was a success! We covered how to install and setup FusionAuth, Python, and the FusionAuth-Client Library for Python. We explored code examples, wrote, and executed a Python application in the Python Virtual Environment (venv) for retrieving user profile information from FusionAuth, and we covered how to create Applications and API Keys. We also looked at creating a User and registering them to an application with Python!
 
-Now that we’ve covered some of the basics, let’s move on to some code examples for actions we can perform using the FusionAuth-Client Python Library which will allow us to work with registered users within FusionAuth! **Next: [Deactivating, Reactivating, and Deleting A FusionAuth User in Python TODO-NEEDLINK ](/TODO-NEEDLINK)**
+Now that we’ve covered some of the basics, let’s move on to some code examples for actions we can perform using the FusionAuth-Client Python Library which will allow us to work with registered users within FusionAuth! **Next: [Deactivating, Reactivating, and Deleting A FusionAuth User in Python](/blog/2019/10/08/deactivating-reactivating-deleting-user-fusionauth-python)**
 
 ## Learn More About FusionAuth
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users. [Find out more](/ "FusionAuth Home") about FusionAuth and download it today.

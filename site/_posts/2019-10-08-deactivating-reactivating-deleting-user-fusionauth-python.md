@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: "Deactivating, Reactivating, and Deleting A FusionAuth User in Python"
-description: "This is a step-by-step guide to building your first functional Python application and retrieving user profile information with FusionAuth."
+description: "This is a step-by-step guide to deactivate, reactivate, or delete a user within your applications using API calls from the FusionAuth-Client Python library."
 author: Amy Martin
 excerpt_separator: "<!--more-->"
 categories: blog
@@ -9,14 +9,9 @@ tags:
 image: blogs/python-fusionauth-deactivate.png
 ---
 
-Did you know that you can deactivate, reactivate, or delete a user within your applications using API calls from the FusionAuth-Client Python library? These tools are great for data conscious organizations, executing your organization’s data handling compliance policies (i.e. - GDPR requests), and fast user management for developers using FusionAuth. This tutorial will give us a chance to explore more of the FusionAuth-Client Library for Python while learning about these three valuable API calls.
+Did you know that you can deactivate, reactivate, or delete a user within your applications using API calls from the FusionAuth-Client Python library? These tools are great for data conscious organizations, executing your organization’s data handling compliance policies (_[Learn more about GDPR data compliance here](/blog/2019/01/29/white-paper-developers-guide-gdpr)_), and fast user management for developers using FusionAuth. This tutorial will give us a chance to explore more of the FusionAuth-Client Library for Python while learning about these three valuable API calls.
 
 <!--more-->
-
-TODO - Callout box
-### Developer's Guide to the GDPR
-“Data privacy must be designed into the development of business processes for products and services. This means data privacy needs to be incorporated into the requirements and scope of all business processes in an application.” [Learn more](/blog/2019/03/19/is-fusionauth-gdpr-compliant) about features that keep FusionAuth identity servers GDPR compliant, and check out our [Developer’s Guide to The GDPR](/blog/2019/01/29/white-paper-developers-guide-gdpr)!
-
 
 ## Here’s what we’ll cover:
 1. Introduction to FusionAuth User Management in Python
@@ -29,11 +24,11 @@ TODO - Callout box
 1. Summary
 
 ## What you’ll need:
-- [FusionAuth - Download now](/downloads)
+- [FusionAuth - Download now](/download)
 - [FusionAuth-Client Python Library](/docs/v1/tech/client-libraries/python)
 - [Python](https://www.python.org/downloads/) (this tutorial uses Python 3.5.2)
 - [Python PIP Package Manager](https://pypi.org/project/pip/)
-- Python3 VENV Virtual Environment
+- [Python3 VENV Virtual Environment Package](https://docs.python.org/3/library/venv.html)
 - Text Editor or [Favorite Python IDE](https://atom.io/)
 - Terminal Access (this tutorial uses Ubuntu 16.04.6 LTS)
 - Web Browser (for accessing FusionAuth UI)
@@ -41,7 +36,7 @@ TODO - Callout box
 
 ## Introduction to FusionAuth User Management in Python
 
-Today we will be exploring three FusionAuth-Client functions: `deactivate_user`, `reactivate_user`, and `delete_user` with code examples in Python. By the end of this tutorial, you should be familiar with these three client API calls and how we can use them to manage users in web applications. This tutorial is part of an introduction to the Fusion-Auth Client for Python series. If you missed our first tutorial, [From Setup to First App - TODO NEED LINK](/TODO-NEEDLINK), it’s a great starting point for first-time FusionAuth users. We definitely recommend that you check it out.
+Today we will be exploring three FusionAuth-Client functions: `deactivate_user`, `reactivate_user`, and `delete_user` with code examples in Python. By the end of this tutorial, you should be familiar with these three client API calls and how we can use them to manage users in web applications. This tutorial is part of an introduction to the Fusion-Auth Client for Python series. If you missed our first tutorial, [From Setup to First App](/blog/2019/10/01/implementing-fusionauth-python), it’s a great starting point for first-time FusionAuth users. We definitely recommend that you check it out.
 
 ## Verifying Server Applications, Libraries, and Dependencies
 
@@ -80,9 +75,11 @@ Change directories to your preferred test application directory, and let’s get
 
 ## Obtaining a Test User Account ID
 
-For this tutorial, we’ll first need a test `user ID` already registered with FusionAuth. In a web browser, let’s go to **Users** in the FusionAuth UI.
+For this tutorial, we’ll first need a test `user ID` that is registered with FusionAuth.
 
-**IMPORTANT:** If your FusionAuth server only has one admin user listed, you should definitely use a separate test user account for this tutorial. You can either setup or pick a separate test user, and under actions, navigate to **Manage**, which should look like this.
+**IMPORTANT:** If your FusionAuth server only has one admin user listed, you should definitely use a separate test user account for this tutorial. Create a new one before you continue.
+
+In a web browser, let’s go to **Users** in the FusionAuth UI. Select a test user, and under Actions, navigate to **Manage**, which should look like this.
 
 {% include _image.html src="/assets/img/blogs/action-manage-button.png" alt="Manage user" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
@@ -155,9 +152,9 @@ from fusionauth.fusionauth_client import FusionAuthClient
 client = FusionAuthClient('YOUR-OWN-API-KEY', 'http://localhost:9011')
 ```
 
-Now let’s call our `reactivate_user` function. Be sure to grab the user ID from FusionAuth under **Users**. (If you don’t have it, pick a test user and under **Actions**, navigate to **Manage**. The user ID will be displayed under the user’s email address.)
+Now let’s call our `reactivate_user` function. Use the same user ID as you did in the previous example.
 
-Now, let’s add the `reactivate_user` function to our application. Be sure to replace the reactivate_user client argument of `YOUR-USER-ID` with your own selected userID.
+Add the `reactivate_user` function to our application. Be sure to replace the `reactivate_user` client argument of `YOUR-USER-ID` with your own selected userID.
 
 ```python
 # Reactivate A User
@@ -170,8 +167,42 @@ else:
 
 Save and execute the `reactivate.py` application on your server. Upon success, you’ll get a client response that should look something like this, displaying the user’s profile information:
 
-```
-{'user': {'fullName': 'Terry Example', 'firstName': 'Terry', 'twoFactorEnabled': False, 'lastLoginInstant': 1570201693585, 'birthDate': '1980-01-01', 'preferredLanguages': ['en'], 'mobilePhone': '4245555555', 'insertInstant': 1570120644496, 'tenantId': '31626131-3938-6231-3634-663636656635', 'timezone': 'Pacific/Honolulu', 'id': '4e0f2af0-33a2-4001-8631-0f8225e65f1c', 'email': 'terry@example.com', 'active': True, 'registrations': [{'id': 'd449fca4-1a75-4967-ab19-5a55f8fe9507', 'lastLoginInstant': 1570201693585, 'timezone': 'Pacific/Honolulu', 'usernameStatus': 'ACTIVE', 'verified': True, 'applicationId': '55e36f88-f3ba-4423-8b70-80232c7de8ad', 'insertInstant': 1570145686702, 'username': 'terry@example.com'}], 'twoFactorDelivery': 'None', 'verified': True, 'passwordChangeRequired': False, 'usernameStatus': 'ACTIVE', 'passwordLastUpdateInstant': 1570200258584, 'lastName': 'Example', 'username': 'terry@example.com'}}
+```bash
+{
+  'user': {
+    'fullName': 'Terry Example',
+    'firstName': 'Terry',
+    'twoFactorEnabled': False,
+    'lastLoginInstant': 1570201693585,
+    'birthDate': '1980-01-01',
+    'preferredLanguages': [
+      'en'
+    ],
+    'mobilePhone': '4245555555',
+    'insertInstant': 1570120644496,
+    'tenantId': '31626131-3938-6231-3634-663636656635',
+    'timezone': 'Pacific/Honolulu',
+    'id': '4e0f2af0-33a2-4001-8631-0f8225e65f1c',
+    'email': 'terry@example.com',
+    'active': True,
+    'registrations': [{
+      'id': 'd449fca4-1a75-4967-ab19-5a55f8fe9507',
+      'lastLoginInstant': 1570201693585,
+      'timezone': 'Pacific/Honolulu',
+      'usernameStatus': 'ACTIVE',
+      'verified': True,
+      'applicationId': '55e36f88-f3ba-4423-8b70-80232c7de8ad',
+      'insertInstant': 1570145686702,
+      'username': 'terry@example.com'}],
+    'twoFactorDelivery': 'None',
+    'verified': True,
+    'passwordChangeRequired': False,
+    'usernameStatus': 'ACTIVE',
+    'passwordLastUpdateInstant': 1570200258584,
+    'lastName': 'Example',
+    'username': 'terry@example.com'
+  }
+}
 ```
 
 Refresh the **Users** page in your browser and you’ll now notice that the lock icon has disappeared beside our test user and the account has been reactivated.
