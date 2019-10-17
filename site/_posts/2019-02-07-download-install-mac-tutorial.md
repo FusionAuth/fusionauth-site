@@ -90,7 +90,7 @@ The last step is to start up FusionAuth.
 
 ## Complete the FusionAuth Setup
 
-Next you will complete the setup using the browser. Open your browser to the address of FusionAuth, in our example we'll be using `http://localhost:9011`. You should find FusionAuth in maintenance mode, complete the search and database configuration and then you will be prompted to create an admin account and then be logged into FusionAuth.
+Next you will complete the setup using the browser. Open your browser to the address of FusionAuth, in our example we'll be using `\http://localhost:9011`. You should find FusionAuth in maintenance mode, complete the search and database configuration and then you will be prompted to create an admin account and then be logged into FusionAuth.
 
 If you'd like to see additional information on these next steps, review the following installation guides and tutorials.
 

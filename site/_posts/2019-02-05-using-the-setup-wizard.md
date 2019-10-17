@@ -20,7 +20,7 @@ The FusionAuth Setup Wizard is designed to make setting up FusionAuth a simple p
 
 Once these are complete, you are able to call the API and start managing users.
 <!--more-->
-To use the FusionAuth Setup Wizard, you will need to access the FusionAuth backend. If FusionAuth is hosting your instance in our private cloud, the URL will been provided to you already. If you have installed FusionAuth on your own system, you will need to know the IP address or hostname where it has been installed. For example, to access FusionAuth on localhost, you would use the following URL `http://localhost:9011`.
+To use the FusionAuth Setup Wizard, you will need to access the FusionAuth backend. If FusionAuth is hosting your instance in our private cloud, the URL will been provided to you already. If you have installed FusionAuth on your own system, you will need to know the IP address or hostname where it has been installed. For example, to access FusionAuth on localhost, you would use the following URL `\http://localhost:9011`.
 
 ## The FusionAuth Setup Wizard: Create an Admin User
 
