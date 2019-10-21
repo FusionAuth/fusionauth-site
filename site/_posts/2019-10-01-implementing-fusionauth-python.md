@@ -6,7 +6,7 @@ author: Amy Martin
 excerpt_separator: "<!--more-->"
 categories: blog
 tags:
-image: blogs/python-fusionauth-introduction.png
+image: blogs/introduction-fusionauth-python2.jpg
 ---
 
 Welcome to our FusionAuth Python Library introduction tutorial! Today we will take a tour of the FusionAuth-Client Library for Python and get to know the basics of FusionAuth. This step-by-step guide will walk you through FusionAuth setup to building your first functional Python application with FusionAuth and then retrieving user profile information.
