@@ -16,7 +16,7 @@ Getting everything setup
 ------------------------
 
 1. [Download and Install FusionAuth](/)
-2. [Create an Application](/docs/v1/tech/tutorials/create-an-application)
+2. [Create an Application](/docs/v1/tech/users/applications)
    1. While you are creating an application, create two roles `user` and `admin` (you can create others if you like)
    2. Add a valid redirect URL to your OAuth configuration. For our example we will use `http://localhost:8081/login`.
    3. Click save (blue icon at the top right)
