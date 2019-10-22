@@ -6,7 +6,7 @@ description: A description of each of the OAuth endpoints provided by FusionAuth
 
 == Overview
 
-In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], the following endpoints are provided.
+In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749] and https://tools.ietf.org/html/rfc8628[OAuth 2.0 IETF RFC 8628] the following endpoints are provided.
 
 * <<Authorize>>
  ** <<Authorization Code Grant Request>>
@@ -15,8 +15,10 @@ In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], the 
 * <<Token>>
  ** <<Complete the Authorization Code Grant Request>>
  ** <<Resource Owner Password Credentials Grant Request>>
- ** <<Device Authorization Grant Request>>
+ ** <<Complete the Device Authorization Grant Request>>
  ** <<Refresh Token Grant Request>>
+* <<Device Authorize>>
+* <<Device Validate>>
 * <<Introspect>>
 
 In support of http://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect], the following endpoints are provided:
@@ -24,6 +26,12 @@ In support of http://openid.net/specs/openid-connect-core-1_0.html[OpenID Connec
 * <<Userinfo>>
 * <<JSON Web Key Set (JWKS)>>
 * <<OpenID Configuration>>
+
+Error responses to the OAuth endpoints are described in the following sections.
+
+* <<OAuthError>>
+ ** <<JSON Response Errors>>
+ ** <<Redirect Parameter Errors>>
 
 == Authorize
 
@@ -76,13 +84,16 @@ configuration. See Applications in the FusionAuth User Guide for additional info
 Available scopes:
 
 * `openid` - This scope is used to request an `id_token` be returned in the response
-* `offline_access` - This scope scope is used to request a `refresh_token` be returned in the response
+* `offline_access` - This scope is used to request a `refresh_token` be returned in the response
 
 |[field]#state# [type]#[String]# [optional]#Optional#
 |The optional state parameter, this is generally used as a Cross Site Request Forgery (CSRF) token. Any value provided in this field will be returned on a successful redirect. See https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification for additional information on how this parameter may be utilized.
 
 |[field]#tenantId# [type]#[UUID]# [required]#Required#  [since]#Available Since 1.8.0#
 |The unique Tenant Id used for applying the proper theme.
+
+|[field]#user_code# [type]#[String]# [optional]#Optional# [since]#Available Since 1.11.0#
+|The end-user verification code.  This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
 |===
 
 === Response
@@ -99,8 +110,8 @@ Available scopes:
 |The requested user is already logged in, the request will redirect to the location specified in the `redirect_uri` on the request.
 
 |400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON
-is covered in the OAuthError section of the API documentation.
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors or errors on the redirect URI. The error responses
+are covered in the link:#oautherror[OAuthError section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -146,36 +157,6 @@ The possible values are:
 
 * `Authenticated` - The user is successfully authenticated for the requested application.
 * `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
-|===
-
-[cols="3a,7a"]
-[.api]
-.Error Redirect Parameters
-|===
-|[field]#error# [type]#[String]#
-|The OAuth error response type.
-
-The possible values are:
-
-* `invalid_request`
-* `unauthorized_client`
-
-|[field]#error_description# [type]#[String]#
-|The human-readable OAuth error description.
-
-|[field]#error_reason# [type]#[String]#
-|The OAuth error reason.
-
-The possible values are:
-
-* `grant_type_disabled`
-* `invalid_origin`
-* `invalid_pkce_code_challenge_method`
-* `invalid_pkce_code_challenge`
-* `missing_redirect_uri`
-
-|[field]#state# [type]#[String]#
-|The state that was provided on the Authorization request.
 |===
 
 === Implicit Grant Request
@@ -225,6 +206,9 @@ Available scopes:
 
 |[field]#tenantId# [type]#[UUID]# [required]#Required#  [since]#Available Since 1.8.0#
 |The unique Tenant Id.
+
+|[field]#user_code# [type]#[String]# [optional]#Optional# [since]#Available Since 1.11.0#
+|The end-user verification code.  This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
 |===
 
 === Response
@@ -241,8 +225,8 @@ Available scopes:
 |The requested user is already logged in, the request will redirect to the location specified in the `redirect_uri` on the request.
 
 |400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON
-is covered in the OAuthError section of the API documentation.
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors or errors on the redirect URI. The error responses
+are covered in the link:./error[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -303,38 +287,6 @@ The possible values are:
 * `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
 |===
 
-[cols="3a,7a"]
-[.api]
-.Error Redirect Parameters
-|===
-|[field]#error# [type]#[String]#
-|The OAuth error response type.
-
-The possible values are:
-
-* `invalid_request`
-* `unauthorized_client`
-* `unsupported_response_type`
-
-|[field]#error_description# [type]#[String]#
-|The human-readable OAuth error description.
-
-|[field]#error_reason# [type]#[String]#
-|The OAuth error reason.
-
-The possible values are:
-
-* `grant_type_disabled`
-* `invalid_origin`
-* `invalid_pkce_code_challenge_method`
-* `invalid_pkce_code_challenge`
-* `missing_redirect_uri`
-* `missing_response_type`
-
-|[field]#state# [type]#[String]#
-|The state that was provided on the Authorization request.
-|===
-
 == Logout
 
 This endpoint provides a mechanism to invalidate the user's session held by FusionAuth, this effectively logs the user out of FusionAuth.
@@ -390,7 +342,7 @@ Only used if `client_id` is not provided.
 
 |400
 |The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is
-covered in the OAuthError section of the API documentation.
+covered in the link:./error[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -496,6 +448,9 @@ Available grant types:
 
 * `openid` - This scope is used to request an `id_token` be returned in the response
 * `offline_access` - This scope scope is used to request a `refresh_token` be returned in the response
+
+|[field]#user_code# [type]#[String]# [optional]#Optional# [since]#Available Since 1.11.0#
+|The end-user verification code.  This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
 |===
 
 [source,options="wrap"]
@@ -509,7 +464,7 @@ Content-Length: 436
 client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=password&loginId=bishop%piedpiper.com&password=Setec+Astronomy
 ----
 
-=== Device Authorization Grant Request
+=== Complete the Device Authorization Grant Request
 [NOTE.since]
 ====
 This API has been available since 1.11.0
@@ -557,7 +512,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&device_code=GmRhmhcxhwAzkoEqiMEg_
 
 === Response
 
-The following response applies to the <<Authorization Code Grant Request>>, <<Refresh Token Grant Request>> and the <<Device Authorization Grant Request>> examples.
+The following response applies to the <<Complete the Authorization Code Grant Request>>, <<Refresh Token Grant Request>> and the <<Complete the Device Authorization Grant Request>> examples.
 
 [cols="1a,9a"]
 .Response Codes
@@ -568,7 +523,7 @@ The following response applies to the <<Authorization Code Grant Request>>, <<Re
 |The request was successful.
 
 |400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the OAuthError section of the API documentation.
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:./error[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -675,7 +630,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=refresh_token&refresh_
 |The request was successful.
 
 |400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the OAuthError section of the API documentation.
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:./error[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -717,6 +672,147 @@ This field will be returned in the response when `openid` scope was requested du
   "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
 }
 ----
+
+== Device Authorize
+[NOTE.since]
+====
+This API has been available since 1.11.0
+====
+
+This is an implementation of the Device Authorization endpoint as defined by the https://tools.ietf.org/html/rfc8628#section-3.1[IETF RFC 8628 Section 3.1].
+
+To begin the Device Authorization Grant you will make a request to the Device Authorization endpoint from the device.
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/device_authorize#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [required]#Required#
+|The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+
+|[field]#scope# [type]#[String]# [optional]#Optional#
+|This parameter may contain multiple scopes space separated. For example, the value of `openid offline_access` provides two scopes on the request.
+
+Available scopes:
+
+* `openid` - This scope is used to request an `id_token` be returned in the response
+* `offline_access` - This scope is used to request a `refresh_token` be returned in the eventual <<Token>> response.
+|===
+
+[source]
+.Example HTTP Request
+----
+POST /oauth2/device_authorize HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wzg&scope=offline_access
+----
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuthError section] of the API documentation.
+
+|500
+|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
+
+|503
+|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#device_code# [type]#[String]#
+|The device verification code.
+
+|[field]#expires_in# [type]#[Integer]#
+|The lifetime in seconds of the "device_code" and "user_code".
+
+|[field]#interval# [type]#[Integer]#
+|The minimum amount of time in seconds that the client should wait between polling requests to the token endpoint.
+
+|[field]#user_code# [type]#[String]#
+|The end-user verification code.
+
+|[field]#verification_uri# [type]#[String]#
+|The end-user verification URI on the authorization server.
+
+|[field]#verification_uri_complete# [type]#[String]#
+|A verification URI that includes the "user_code".
+|===
+
+[source,json]
+.Example JSON Response
+----
+{
+  "device_code": "e6f_lF1rG_yroI0DxeQB5OrLDKU18lrDhFXeQqIKAjg",
+  "expires_in": 600,
+  "interval": 5,
+  "user_code": "FBGLLF",
+  "verification_uri": "https://piedpiper.com/device",
+  "verification_uri_complete": "https://piedpiper.com/device?user_code=FBGLLF"
+}
+----
+
+== Device Validate
+[NOTE.since]
+====
+This API has been available since 1.11.0
+====
+
+This endpoint validates the end-user provided [field]#user_code# from the user-interaction of the Device Authorization Grant.
+
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/oauth2/device/validate``?user_code=\{user_code\}``#
+--
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#user_code# [type]#[String]# [optional]#Required#
+|The end-user verification code.
+|===
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. No response body will be returned on successful validation.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuthError section] of the API documentation.
+
+|500
+|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
+
+|503
+|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+|===
 
 == Introspect
 
@@ -765,7 +861,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&token=eyJhbGciOiJIUzI1NiIsInR5cCI
 
 |400
 |The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is
-covered in the OAuthError section of the API documentation.
+covered in the link:./error[OAuth Error section] of the API documentation.
 
 |401
 |The token provided in the request was not issued for the `client_id` provided on the request.
@@ -907,7 +1003,7 @@ Example header:
 
 |400
 |The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is
-covered in the OAuthError section of the API documentation.
+covered in the link:./error[OAuth Error section] of the API documentation.
 
 |401
 |The `Authorization` header containing the access token is missing or malformed.
@@ -1036,3 +1132,184 @@ The response for this request should always return a `200` with a JSON body.
 ----
 include::docs/src/json/openid/configuration/response.json[]
 ----
+
+== OAuthError
+Errors are either returned in a JSON response body, or as redirect parameters depending on expected response type.
+
+=== JSON Response Errors
+When an error is returned from an OAuth endpoint as a JSON body the following structure can be expected in the response.
+
+[source,json]
+.Example OAuth Error JSON Response
+----
+{
+  "error": "invalid_request",
+  "error_description": "The user code provided is not valid.",
+  "error_reason": "invalid_user_code"
+}
+----
+
+[cols="3a,7a"]
+[.api]
+.Response Body
+|===
+|[field]#error# [type]#[String]#
+|The OAuth error response type.
+
+The possible values are:
+
+* `authorization_pending`
+* `change_password_required`
+* `expired_token`
+* `invalid_grant`
+* `invalid_request`
+* `invalid_scope`
+* `invalid_token`
+* `server_error`
+* `two_factor_required`
+* `unauthorized_client`
+* `unsupported_grant_type`
+* `unsupported_response_type`
+
+|[field]#error_description# [type]#[String]#
+|The human-readable OAuth error description.
+
+|[field]#error_reason# [type]#[String]#
+|The OAuth error reason.
+
+The possible values are:
+
+* `access_token_expired`
+* `access_token_failed_processing`
+* `access_token_malformed`
+* `access_token_unavailable_for_processing`
+* `auth_code_not_found`
+* `client_authentication_missing`
+* `client_id_mismatch`
+* `grant_type_disabled`
+* `invalid_additional_client_id`
+* `invalid_client_authentication_scheme`
+* `invalid_client_authentication`
+* `invalid_client_id`
+* `invalid_device_code`
+* `invalid_grant_type`
+* `invalid_id_token_hint`
+* `invalid_origin`
+* `invalid_pkce_code_challenge_method`
+* `invalid_pkce_code_challenge`
+* `invalid_pkce_code_verifier`
+* `invalid_post_logout_redirect_uri`
+* `invalid_redirect_uri`
+* `invalid_response_mode`
+* `invalid_response_type`
+* `invalid_user_code`
+* `invalid_user_credentials`
+* `login_prevented`
+* `missing_client_id`
+* `missing_code`
+* `missing_device_code`
+* `missing_grant_type`
+* `missing_redirect_uri`
+* `missing_refresh_token`
+* `missing_response_type`
+* `missing_tenantId`
+* `missing_token`
+* `missing_user_code`
+* `missing_verification_uri`
+* `refresh_token_not_found`
+* `unknown`
+* `user_expired`
+* `user_locked`
+* `user_not_found`
+|===
+
+=== Redirect Parameter Errors
+When an error is returned from an OAuth endpoint as a redirect, the errors are put on the redirect as query parameters.
+
+[source]
+.Example OAuth Error HTTP Redirect Response
+----
+HTTP/1.1 302 Found
+Location: https://piedpiper.com/callback?
+           error=unsupported_response_type
+           &error_reason=invalid_response_type
+           &error_description=Parameter+response_type+must+be+set+to+code+or+token.
+           &state=bEF7UItzlhNvE31Rf0_axShomu_vU30tMeJcqMZ9LfA0
+----
+
+[cols="3a,7a"]
+[.api]
+.Error Redirect Parameters
+|===
+|[field]#error# [type]#[String]#
+|The OAuth error response type.
+
+The possible values are:
+
+* `authorization_pending`
+* `change_password_required`
+* `expired_token`
+* `invalid_grant`
+* `invalid_request`
+* `invalid_scope`
+* `invalid_token`
+* `server_error`
+* `two_factor_required`
+* `unauthorized_client`
+* `unsupported_grant_type`
+* `unsupported_response_type`
+
+|[field]#error_description# [type]#[String]#
+|The human-readable OAuth error description.
+
+|[field]#error_reason# [type]#[String]#
+|The OAuth error reason.
+
+The possible values are:
+
+* `access_token_expired`
+* `access_token_failed_processing`
+* `access_token_malformed`
+* `access_token_unavailable_for_processing`
+* `auth_code_not_found`
+* `client_authentication_missing`
+* `client_id_mismatch`
+* `grant_type_disabled`
+* `invalid_additional_client_id`
+* `invalid_client_authentication_scheme`
+* `invalid_client_authentication`
+* `invalid_client_id`
+* `invalid_device_code`
+* `invalid_grant_type`
+* `invalid_id_token_hint`
+* `invalid_origin`
+* `invalid_pkce_code_challenge_method`
+* `invalid_pkce_code_challenge`
+* `invalid_pkce_code_verifier`
+* `invalid_post_logout_redirect_uri`
+* `invalid_redirect_uri`
+* `invalid_response_mode`
+* `invalid_response_type`
+* `invalid_user_code`
+* `invalid_user_credentials`
+* `login_prevented`
+* `missing_client_id`
+* `missing_code`
+* `missing_device_code`
+* `missing_grant_type`
+* `missing_redirect_uri`
+* `missing_refresh_token`
+* `missing_response_type`
+* `missing_tenantId`
+* `missing_token`
+* `missing_user_code`
+* `missing_verification_uri`
+* `refresh_token_not_found`
+* `unknown`
+* `user_expired`
+* `user_locked`
+* `user_not_found`
+
+|[field]#state# [type]#[String]#
+|The state that was provided on the Authorization request.
+|===
