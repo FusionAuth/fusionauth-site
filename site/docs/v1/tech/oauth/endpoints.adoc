@@ -15,6 +15,7 @@ In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], the 
 * <<Token>>
  ** <<Complete the Authorization Code Grant Request>>
  ** <<Resource Owner Password Credentials Grant Request>>
+ ** <<Device Authorization Grant Request>>
  ** <<Refresh Token Grant Request>>
 * <<Introspect>>
 
@@ -43,7 +44,7 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 .Request Parameters
 |===
 |[field]#client_id# [type]#[String]# [required]#Required#
-|The unique client identifier. The client Id is the Id of the FusionAuth Application in which you you are attempting to authenticate.
+|The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 
 |[field]#code_challenge# [type]#[String]# [optional]#Optional# [since]#Available Since 1.8.0#
 |The `code_challenge` parameter as described in the https://tools.ietf.org/html/rfc7636[Proof Key for Code Exchange by OAuth Public Clients (PKCE)] specification. When this parameter is provided during the Authorization request, a corresponding [field]#code_verifier# parameter is required on the subsequent `POST` to the `/oauth2/token` endpoint.
@@ -60,6 +61,11 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 |[field]#redirect_uri# [type]#[String]# [required]#Required#
 |The URI to redirect to upon a successful request. This URI must have been configured previously in the FusionAuth Application OAuth
 configuration. See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
+
+|[field]#response_mode# [type]#[String]# [optional]#Optional# [since]#Available Since 1.11.0#
+|Determines how the result parameters are to be returned. Valid values are `form_post`, `fragment`, and `query`.
+
+`query` can only be used with a `response_type` of `code`.
 
 |[field]#response_type# [type]#[String]# [required]#Required#
 |The requested response type. For the Authorization Code Grant, this value must be set to `code`.
@@ -503,9 +509,55 @@ Content-Length: 436
 client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=password&loginId=bishop%piedpiper.com&password=Setec+Astronomy
 ----
 
+=== Device Authorization Grant Request
+[NOTE.since]
+====
+This API has been available since 1.11.0
+====
+This is the Device Access Token Request portion of the https://tools.ietf.org/html/rfc8628#section-3.4[Device Authorization Grant Specification].
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/token#
+--
+
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
+[cols="3a,7a"]
+[.api]
+.Request Parameters
+|===
+|[field]#client_id# [type]#[String]# [optional]#Optional#
+|The unique client identifier. The client Id is the Id of the FusionAuth Application in which you you are attempting to authenticate.
+
+This parameter is optional when the `Authorization` header is provided. When the `Authorization` header is not provided, this parameter is then required.
+
+|[field]#client_secret# [type]#[String]# [optional]#Optional#
+|The client secret. This value may optionally be provided in the request body instead of the `Authorization` header documented above.
+
+|[field]#device_code# [type]#[String]# [required]#Required#
+|
+
+|[field]#grant_type# [type]#[String]# [required]#Required#
+|The grant type to be used. This value must be set to `urn:ietf:params:oauth:grant-type:device_code`
+
+|===
+
+[source,options="wrap"]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 166
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&device_code=GmRhmhcxhwAzkoEqiMEg_DnyEysNkuNhszIySk9eS&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code
+----
+
 === Response
 
-The following response applies to both the <<Authorization Code Grant Request>> and the <<Refresh Token Grant Request>> examples.
+The following response applies to the <<Authorization Code Grant Request>>, <<Refresh Token Grant Request>> and the <<Device Authorization Grant Request>> examples.
 
 [cols="1a,9a"]
 .Response Codes
