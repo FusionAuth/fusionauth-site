@@ -17,7 +17,7 @@ In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749] and h
  ** <<Resource Owner Password Credentials Grant Request>>
  ** <<Complete the Device Authorization Grant Request>>
  ** <<Refresh Token Grant Request>>
-* <<Device Authorize>>
+* <<Device>>
 * <<Device Validate>>
 * <<Introspect>>
 
@@ -71,9 +71,17 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 configuration. See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
 
 |[field]#response_mode# [type]#[String]# [optional]#Optional# [since]#Available Since 1.11.0#
-|Determines how the result parameters are to be returned. Valid values are `form_post`, `fragment`, and `query`.
+|Determines how the result parameters are to be returned to the caller. When this parameter is not provided the default response mode will be used based upon the [field]#response_type# field.
 
-`query` can only be used with a `response_type` of `code`.
+The default when the [field]#response_type# is set to `code` is `query`, the default when the [field]#response_type# is set to `token`, `token id_token` or `id_token` is `fragment`.
+
+The possible values are:
+
+* `form_post`
+* `fragment`
+* `query` - This response mode can only be used when the [field]#response_type# is set to `code`.
+
+In general, you only need to provide this parameter when you wish to use the `form_post` response mode.
 
 |[field]#response_type# [type]#[String]# [required]#Required#
 |The requested response type. For the Authorization Code Grant, this value must be set to `code`.
@@ -179,6 +187,19 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
 |[field]#redirect_uri# [type]#[String]# [required]#Required#
 |The URI to redirect to upon a successful request. This URI must have been configured previously in the FusionAuth Application OAuth
 configuration. See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
+
+|[field]#response_mode# [type]#[String]# [optional]#Optional# [since]#Available Since 1.11.0#
+|Determines how the result parameters are to be returned to the caller. When this parameter is not provided the default response mode will be used based upon the [field]#response_type# field.
+
+The default when the [field]#response_type# is set to `code` is `query`, the default when the [field]#response_type# is set to `token`, `token id_token` or `id_token` is `fragment`.
+
+The possible values are:
+
+* `form_post`
+* `fragment`
+* `query` - This response mode can only be used when the [field]#response_type# is set to `code`.
+
+In general, you only need to provide this parameter when you wish to use the `form_post` response mode.
 
 |[field]#response_type# [type]#[String]# [required]#Required#
 |The requested response type, this value determines which tokens will be returned in the redirect URL.
@@ -673,15 +694,13 @@ This field will be returned in the response when `openid` scope was requested du
 }
 ----
 
-== Device Authorize
+== Device
 [NOTE.since]
 ====
-This API has been available since 1.11.0
+This endpoint been available since 1.11.0
 ====
 
-This is an implementation of the Device Authorization endpoint as defined by the https://tools.ietf.org/html/rfc8628#section-3.1[IETF RFC 8628 Section 3.1].
-
-To begin the Device Authorization Grant you will make a request to the Device Authorization endpoint from the device.
+This is an implementation of the Device Authorization endpoint as defined by the https://tools.ietf.org/html/rfc8628#section-3.1[IETF RFC 8628 Section 3.1]. To begin the Device Authorization Grant you will make a request to the Device Authorization endpoint from the device.
 
 [.endpoint]
 .URI
@@ -713,7 +732,7 @@ Host: piedpiper.fusionauth.io
 Content-Type: application/x-www-form-urlencoded
 Accept: */*
 Content-Length: 436
-client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wzg&scope=offline_access
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&scope=offline_access
 ----
 
 === Response
@@ -744,19 +763,19 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&code=+WYT3XemV4f81ghHi4V+RyNwvATD
 |The device verification code.
 
 |[field]#expires_in# [type]#[Integer]#
-|The lifetime in seconds of the "device_code" and "user_code".
+|The number of seconds the [field]#device_code# and [field]#user_code# tokens returned in the response will remain active.
 
 |[field]#interval# [type]#[Integer]#
 |The minimum amount of time in seconds that the client should wait between polling requests to the token endpoint.
 
 |[field]#user_code# [type]#[String]#
-|The end-user verification code.
+|The end-user verification code. This value will generally be displayed on the device for the user to read and enter into an activation form.
 
 |[field]#verification_uri# [type]#[String]#
-|The end-user verification URI on the authorization server.
+|The end-user verification URI on the authorization server. This value will generally be displayed on the device to instruct the user where to navigate in order to find the form where they may enter the provided [field]#user_code#.
 
 |[field]#verification_uri_complete# [type]#[String]#
-|A verification URI that includes the "user_code".
+|A verification URI that includes the [field]#user_code#. This is the same value as returned in the [field]#verification_uri# with the [field]#user_code# appended as as request parameter. This can be used to build a QR code or provide a clickable link that may pre-populate a form with the [field]#user_code#.
 |===
 
 [source,json]
@@ -775,10 +794,10 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&code=+WYT3XemV4f81ghHi4V+RyNwvATD
 == Device Validate
 [NOTE.since]
 ====
-This API has been available since 1.11.0
+This endpoint has been available since 1.11.0
 ====
 
-This endpoint validates the end-user provided [field]#user_code# from the user-interaction of the Device Authorization Grant.
+This endpoint validates the end-user provided [field]#user_code# from the user-interaction of the Device Authorization Grant. If you build your own activation form you should validate the user provided code prior to beginning the Authorization grant. If you choose to redirect to the FusionAuth provided form `/oauth2/device` then it is not necessary for you to validate the [field]#user_code#.
 
 [.endpoint]
 .URI
@@ -790,7 +809,7 @@ This endpoint validates the end-user provided [field]#user_code# from the user-i
 [.api]
 .Request Parameters
 |===
-|[field]#user_code# [type]#[String]# [optional]#Required#
+|[field]#user_code# [type]#[String]# [required]#Required#
 |The end-user verification code.
 |===
 
