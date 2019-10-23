@@ -35,7 +35,7 @@ We don't blame you if you didn't read that entire specification. So we read it f
 When you initiate the login flow on a device, that device calls out to the Authorization Server (FusionAuth) which responds with a very short code and a URL.
 These are displayed on the screen and the user is instructed to browse to that URL with another device (smartphone, tablet, computer) and enter the code.
 The user will then need to log into the account for which they're trying to connect the device to. It will be much easier this time since they're on a device with a more friendly input.
-Once the login is successful, then the device is also instantly logged in, since it's been asking the Authorization Server this whole time.
+Once the login is successful, then the original device is also instantly logged in, since it's been asking the Authorization Server this whole time.
 
 We at FusionAuth are providing this functionality for our media customer, and ultimately for all of our customers, released in version 1.11.0.
 
@@ -45,7 +45,7 @@ The Oauth configuration for an Application has a new Grant Type of `Device Code`
 Also required is the `Device Verification URL`. This is the URL that will be displayed to the end user where they will enter their short code.
 
 Next, the Advanced Configuration for a Tenant also has some new configuration. The `Device Grant User Code` generator is where you can specify what that short code looks like. It can be all numbers, all alpha, or both.
-You can also specify how long you want this code to be. We've taken the liberty to remove 'zero', 'one', and vowels from the possible characters to help remove issues with characters that look similar, and to naughty words from accidentally being generated.
+You can also specify how long you want this code to be. We've taken the liberty to remove 'zero', 'one', and vowels from the possible characters to help remove issues with characters that look similar, and to eliminate naughty words from accidentally being generated.
 The `Device Grant Code` duration is the time in seconds that the code will remain valid. To reduce brute force hacking the code can't be valid forever, but this value is configurable for your needs.
 
 The app that is installed on the device will call our new `/oauth2/device_authorize` endpoint. This will respond with:
