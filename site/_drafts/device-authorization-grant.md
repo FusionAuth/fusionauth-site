@@ -37,7 +37,8 @@ These are displayed on the screen and the user is instructed to browse to that U
 The user will then need to log into the account for which they're trying to connect the device to. It will be much easier this time since they're on a device with a more friendly input.
 Once the login is successful, then the original device is also instantly logged in, since it's been asking the Authorization Server this whole time.
 
-We at FusionAuth are providing this functionality for our media customer, and ultimately for all of our customers, released in version 1.11.0.
+Our customer has a need for exactly that. To enable their users to log into their app on a variety of set-top boxes, using an easy and intuitive mechanism, in order to access media from their account.
+We at FusionAuth are providing this functionality for our customer, and ultimately for all of our customers, released in version 1.11.0.
 
 ## What it looks like in FusionAuth
 Some new configuration has been added in the FusionAuth admin site, as well as the API, to support this.
