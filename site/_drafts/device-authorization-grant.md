@@ -72,7 +72,7 @@ If the customer has their own page, it will simply need to call `oauth2/device/v
 That's it! The rest of the logic added to our existing `/oauth2/token` and `/oauth2/authorize` endpoints will handle the checking and validating of the `device_code` and `user_code`, including their expiration.
 
 ## Play with it
-Read the new tutorial that explains how to implement this in more detail.
+Read the [new tutorial](/docs/v1/tech/oauth/overview#example-device-authorization-grant) that explains how to implement this in more detail.
 
 Check out the updated API docs which lay out changes and additions to the [Oauth2 API](/docs/v1/tech/oauth/endpoints).
 

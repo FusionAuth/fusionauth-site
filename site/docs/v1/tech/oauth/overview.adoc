@@ -286,7 +286,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=refresh_token&refresh_
 ----
 
 == Example Device Authorization Grant
-This example contains screenshots of our link:https://github.com/FusionAuth/fusionauth-deviceGrant-example[Device Grant Example] which may be a useful code reference during implementation.
+This example contains screenshots of our link:https://github.com/FusionAuth/fusionauth-device-grant-example[Device Grant Example] which may be a useful code reference during implementation.
 
 === Device Authorization Grant Configuration
 In order to leverage FusionAuth for the Device Authorization Grant, the Device Grant must be enabled and the Device Verification URL must be set.
@@ -294,7 +294,7 @@ See the <<Configure Application OAuth Settings>> section above.
 
 FusionAuth requires that the Device Verification URL be a page that you control within your application so that a required Tenant Id is provided throughout the grant flow.
 While you may host your own form on this page, FusionAuth provides a themed OAuth device template that may be redirected to from your application to complete the user-interaction portion of the Device Authorization Grant as a convenience.
-This template is located at `/oauth2/device`.  On submit of the OAuth device template the end-user is prompted to authenticate using the Authorization Grant flow.
+This template is located at `/oauth2/device`. With the required request parameters being `client_id` and `tenantId`. On submit of the OAuth device template the end-user is prompted to authenticate using the Authorization Grant flow.
 This will redirect to the configured OAuth [field]#redirect_uri# per the typical Authorization Grant flow.
 The Device Authorization Grant will be considered approved when the Authorization Grant [field]#code# has been exchanged for a token.
 
@@ -306,7 +306,7 @@ TODO - screenshot Tenant duration and generator configuration
 
 
 === Initiate the Device Authorization Grant flow
-In order to initiate the Device Authorization Grant flow, make a request from the device to the link:endpoints#device-authorize[Device Authorize endpoint].
+In order to initiate the Device Authorization Grant flow, make a request from the device to the link:endpoints#device[Device Authorize endpoint], which is also discoverable via the link:endpoints#openid-configuration[OpenID Configuration].
 This request may be made with the optional [field]#scope# field with a value of `offline_access` if you would like a refresh token provided on the eventual link:endpoints#complete-the-device-authorization-grant-request[`/oauth2/token` endpoint] return.
 This request will return a JSON response with values necessary to fulfill the remainder of the grant flow.
 
@@ -336,8 +336,6 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&scope=offline_access
 }
 ----
 
-image::oauth-device-display-code.png[OAuth Device Example - Display Code,width=1200,role=shadowed]
-
 === Poll Token endpoint
 Upon receiving a response from the Device Authorize endpoint the device may begin polling the link:endpoints#complete-the-device-authorization-grant-request[Token endpoint] with the [field]#device_code# at the requested [field]#interval# in seconds returned in the response.
 Requests to the link:endpoints#complete-the-device-authorization-grant-request[Token endpoint] will return an error stating that authorization is pending, until the end-user approves the request, at which point an access token will be returned.
@@ -354,17 +352,38 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&device_code=e6f_lF1rG_yroI0DxeQB5
 ----
 
 [source,json]
-.Example JSON Error Response
+.Example pending JSON Error Response
 ----
 {
   "error": "authorization_pending",
   "error_description": "The authorization request is still pending"
 }
 ----
+[source,json]
+.Example expired JSON Error Response
+----
+{
+  "error": "expired_token",
+  "error_description": "The device_code has expired, and the device authorization session has concluded."
+}
+----
+[source,json]
+.Example invalid JSON Error Response
+----
+{
+  "error": "invalid_request",
+  "error_reason": "invalid_device_code",
+  "error_description": "The request has an invalid parameter: device_code"
+}
+----
 
 === User-interaction
 Upon receiving a response from the Device Authorize endpoint the device may display to the end-user the [field]#user_code# and a prompt to navigate to the [field]#verification_uri#.
 The [field]#verification_uri_complete# is provided as a convenience so that the device may display a QR code used to navigate the end-user to the user-interaction page with a pre-populated [field]#user_code# in the form.
+
+image::oauth-device-display-code.png[OAuth Device Example - Display Code,width=1200,role=shadowed]
+
+The user should then navigate to the displayed URL, and enter the activation code.
 
 image::oauth-device-user-interaction.png[OAuth Device Example - User Interaction,width=1200,role=shadowed]
 
