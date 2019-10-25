@@ -44,6 +44,7 @@ We at FusionAuth are providing this functionality for our customer, and ultimate
 Some new configuration has been added in the FusionAuth admin site, as well as the API, to support this.
 The Oauth configuration for an Application has a new Grant Type of `Device`, which enables the Device Authorization Grant workflow in FusionAuth.
 Also required for the grant is the `Device Verification URL`. This is the URL that will be displayed to the end user where they will enter their short code.
+Ideally, this is a very short, branded URL.
 
 The Advanced Configuration for a Tenant also has some new configuration. The `Device Grant User Code` generator is where you can specify what that short code looks like. It can be all numbers, all alpha, both, or encoded bytes (however, we don't recommend using encoded byte codes for interactive work-flows).
 We've taken the liberty to remove 'zero', 'one', and vowels from the possible characters to help remove issues with characters that look similar, and to eliminate naughty words from accidentally being generated.  You can also specify how long you want this code to be. 
