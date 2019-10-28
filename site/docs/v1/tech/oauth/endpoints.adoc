@@ -16,7 +16,6 @@ In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749] and h
  ** <<Complete the Authorization Code Grant Request>>
  ** <<Resource Owner Password Credentials Grant Request>>
  ** <<Complete the Device Authorization Grant Request>>
- ** <<Approve the Device Authorization Grant Request>>
  ** <<Refresh Token Grant Request>>
 * <<Device>>
 * <<Device Validate>>
@@ -592,111 +591,6 @@ This field will be returned in the response when `offline_access` scope was requ
 }
 ----
 
-=== Approve the Device Authorization Grant Request
-[NOTE.since]
-====
-This API has been available since 1.11.0
-====
-This is an optional means of the Device Activation approval, if only a refresh token is available. Otherwise you can use the <<Authorization Code Grant Request>> with the user_code.
-
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/oauth2/token#
---
-
-include::docs/v1/tech/oauth/_authorization-header.adoc[]
-
-[cols="3a,7a"]
-[.api]
-.Request Parameters
-|===
-|[field]#client_id# [type]#[String]# [optional]#Optional#
-|The unique client identifier. The client Id is the Id of the FusionAuth Application in which you you are attempting to authenticate.
-
-This parameter is optional when the `Authorization` header is provided. When the `Authorization` header is not provided, this parameter is then required. Prior to version `1.3.1` this parameter was always required.
-
-|[field]#client_secret# [type]#[String]# [optional]#Optional#
-|The client secret. This value may optionally be provided in the request body instead of the `Authorization` header documented above.
-
-|[field]#grant_type# [type]#[String]# [required]#Required#
-|The grant type to be used. This value must be set to `refresh_token`
-
-|[field]#refresh_token# [type]#[String]# [required]#Required#
-|The refresh token that you would like to use to exchange for an access token.
-
-|[field]#scope# [type]#[String]# [optional]#Optional#
-|This parameter is optional and if omitted, the same scope requested during the authorization request will be used. If provided the scopes must match those requested during the initial authorization request.
-
-|[field]#user_code# [type]#[String]# [required]#Required#
-|The end-user verification code. This code is required if using this endpoint to approve the Device Authorization.
-|===
-
-[source,options="wrap"]
-.Example HTTP Request
-----
-POST /oauth2/token HTTP/1.1
-Host: piedpiper.fusionauth.io
-Content-Type: application/x-www-form-urlencoded
-Accept: */*
-Content-Length: 436
-client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=refresh_token&refresh_token=ze9fi6Y9sMSf3yWp3aaO2w7AMav2MFdiMIi2GObrAi-i3248oo0jTQ
-----
-
-=== Response
-
-[cols="1a,9a"]
-.Response Codes
-|===
-|Code |Description
-
-|200
-|The request was successful.
-
-|400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:./error[OAuth Error section] of the API documentation.
-
-|500
-|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
-
-|503
-|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
-|===
-
-[cols="3a,7a"]
-[.api]
-.Response Body
-|===
-|[field]#access_token# [type]#[String]#
-|The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4]
-
-|[field]#expires_in# [type]#[Integer]#
-|The time in seconds the token will expire from the time the response was generated.
-
-|[field]#id_token# [type]#[String]#
-|The OpenID Id Token. This token is represented as a JSON Web Token (JWT).
-
-This field will be returned in the response when `openid` scope was requested during the initial authentication request when the refresh token was generated.
-
-|[field]#token_type# [type]#[String]#
-|The token type as defined by https://tools.ietf.org/html/rfc6749#section-7.1[RFC 6749 Section 7.1]. This value will always be `Bearer`.
-
-|[field]#userId# [type]#[String]#
-|The unique Id of the user that has been authenticated. This user Id may be used to retrieve the entire user object using the /api/user API.
-|===
-
-[source,json]
-.Example JSON Response
-----
-{
-  "access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
-  "expires_in" : 3600,
-  "id_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
-  "token_type" : "Bearer",
-  "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
-}
-----
-
 === Refresh Token Grant Request
 
 Refresh Token Grant : Exchange a Refresh Token for an Access Token
@@ -731,6 +625,9 @@ This parameter is optional when the `Authorization` header is provided. When the
 
 |[field]#scope# [type]#[String]# [optional]#Optional#
 |This parameter is optional and if omitted, the same scope requested during the authorization request will be used. If provided the scopes must match those requested during the initial authorization request.
+
+|[field]#user_code# [type]#[String]# [optional]#Optional# [since]#Available Since 1.11.0#
+|The end-user verification code. This code is required if using this endpoint to approve the Device Authorization.
 |===
 
 [source,options="wrap"]
