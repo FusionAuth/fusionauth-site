@@ -42,31 +42,55 @@ In general, that's the whole flow. Pretty simple, right? If you are integrating 
 Recently, one of our clients had this exact need, and asked us if we could add it to the FusionAuth platform. They wanted their users to be able to log into their app on a variety of set-top boxes in order to access media from their account. It needed to be an easy and intuitive mechanism so users didn't get frustrated and abandon the process. Of course we said yes, and are happy to announce that we are releasing this powerful feature in version 1.11.0.
 
 ### OAuth Configuration Grant Type
-To accomplish this, we added new configuration options in the API and the FusionAuth admin site. First, the OAuth configuration for an Application has a new Grant Type of `Device`, which enables the Device Authorization Grant workflow in FusionAuth. We also added a `Device Verification URL` which is required for the grant. This is the URL that will be displayed to the end user where they will enter their short code. Ideally, this is a very short, branded URL.
+To accomplish this, we added new configuration options available in the FusionAuth UI and the API. First, the OAuth configuration for an Application has a new Grant Type of `Device`, which enables the Device Authorization Grant workflow in FusionAuth. We also added a `Device Verification URL` which is required for the grant. This is the URL that will be displayed to the end user where they will enter their short code. Ideally, this is a very short, branded URL.
 
 ### Device Grant User Code
-We also added new configuration to Advanced Configuration for a Tenant. The `Device Grant User Code` generator is where you can specify what the short code that the user receives looks like. It can be all numbers, all alpha, both, or encoded bytes. (We don't recommend using encoded byte codes for interactive work-flows, but you can do it.)
-We've taken the liberty to remove 'zero', 'one', and vowels from the possible characters to help eliminate issues with characters that look similar, and to prevent profanity from accidentally being generated. You can also specify how long you want this code to be.
-The `Device Grant Code` duration is the time in seconds that the code will remain valid. To reduce brute force hacking the code can't be valid forever, but this value is configurable for your needs.
+We also added new configuration to Advanced Configuration for a Tenant. The `Device Grant User Code` generator is where you can specify what the short code that the user receives looks like. It can be all numbers, all alphabetical, both, or secure encoded bytes. While we don't recommend using the encoded byte generator for user interactive work-flows, if you want to punish your users by forcing them to type in a long sequence of characters we won't stop you.
+We've taken the liberty to remove `0`, `1` and the vowels `A`, `E`, `I`, `O`, and `U`  from the possible characters to help eliminate characters that look like digits such as `1` and `I` and to prevent profanity from accidentally being generated. 
+
+In addition you can also specify the length of the code to be generated. This configuration lets you adjust the balance between security and usability. 
+
+Lastly, you will find the `Device Grant Code` duration configuration. This is the time in seconds that the code will remain valid. To reduce brute force hacking attempts the duration should be as short while providing a good user experience. The default duration is 5 minutes which is generally adequate for a user to complete the login procedure on a home computer or a mobile device. 
 
 ### How It Works
-The app that is installed on the device will call our new `/oauth2/device_authorize` endpoint to initiate the flow. This will respond with:
+The app that is installed on the set top device will make a request to the `/oauth2/device_authorize` endpoint to initiate the flow. This endpoint will response with the following fields in a JSON format:
+- `device_code` - This is a unique code that is tied to the `user_code`; the device uses this to poll FusionAuth.
+- `expires_in` - Defines how long until the code is no longer valid.
+- `interval` - Defines the minimum amount of time in seconds to wait between polling requests to FusionAuth.
 - `user_code` - The short code that the user will be prompted to enter.
 - `verification_uri` - The URL the user will be asked to browse to in order to enter the code.
 - `verification_uri_complete` - The same URL but has the `user_code` appended onto it. This let's you do cool things like generate a QR Code so the user can simply scan it and not even have to enter the code.
-- `device_code` - This is a unique code that is tied to the `user_code`; the device uses this to poll FusionAuth.
-- `expires_in` - Defines how long until the code is no longer valid.
-- `interval` - Defines how often the device should poll FusionAuth.
 
-Once the device has all of this information and displays the URL and Code to the user, it starts repeatedly making calls to the FusionAuth `/oauth2/token` endpoint.
-There are a few different errors that it may receive back:
-- `authorization_pending` - This is the normal one that just means the user hasn't entered their code yet, so the device should keep trying.
-- `slow_down` - The device is calling FusionAuth too fast, it should slow down a little bit.
-- `access_denied` - The user denied the authorization request, the device should stop trying.
-- `expired_token` - The code has expired, the device should stop trying and possibly ask to restart everything.
+Below is an example JSON response from this endpoint:
 
-While the device is busy asking "Are we there yet?", the user should be browsing to the URL displayed to them on their screen. This can be a simple form hosted by the client, or it can be redirected to our pre-built and themeable `oauth2/device` page.
-If the customer has their own page, it will simply need to call `oauth2/device/validate` in order to validate the code entered by the user. If the code is good, then call `oauth2/authorize`.
+```json
+{
+  "device_code": "e6f_lF1rG_yroI0DxeQB5OrLDKU18lrDhFXeQqIKAjg",
+  "expires_in": 600,
+  "interval": 5,
+  "user_code": "FBGLLF",
+  "verification_uri": "https://piedpiper.com/device",
+  "verification_uri_complete": "https://piedpiper.com/device?user_code=FBGLLF"
+}
+```
+
+Once the device has all of this information and displays the URL and Code to the user, it starts repeatedly making calls to the FusionAuth `/oauth2/token` endpoint to wait for the user to complete the authentication procedure.  There are a few different errors that it may receive back:
+
+- `authorization_pending` - This is the normal one that just means the user hasn't entered their code yet, so the device should keep trying
+- `slow_down` - The device is calling FusionAuth too fast, it should slow down
+- `access_denied` - The user denied the authorization request, the device should stop trying and indicate the device has not been connected
+- `expired_token` - The code has expired, the device should stop trying and ask the user to retry
+
+Each of these errors will come back in a JSON response body, for example here is a JSON response that will be returned until the user completes the authentication procedure:
+
+```json
+{
+  "error" : "authorization_pending",
+  "error_description" : "The authorization request is still pending"
+}
+```
+
+While the device is busy asking "Are we there yet?", the user should be browsing to the URL displayed to them on their screen. This can be a simple form hosted by the client, or it can be redirected to our pre-built and FusionAuth themeable `/oauth2/device` page. If the customer has their own page, it will simply need to call `/oauth2/device/validate` in order to validate the code entered by the user. If the code is good, then a redirect to `/oauth2/authorize` will allow the workflow to proceed.
 
 After the user has entered their code and logged in, then the call will succeed and return the `access_token` and optional `refresh_token`. The device has what it needs and is done at this point.
 
