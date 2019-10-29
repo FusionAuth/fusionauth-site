@@ -21,7 +21,7 @@ FusionAuth 1.4 was just released and is available for [direct download](/downloa
 <img src="/assets/img/blogs/register-form.png" alt="Register User" class="float-right mb-3 ml-3" style="width: 225px;"/>
 It’s easier than ever for users to set up a new account or register for new applications. We now give you the option to enable self-service registration for any one of your applications. This eliminates the need to build detailed registration forms and is perfect for when you want users up and running quickly.
 
-You can start super simple and just collect an email and password, and optionally ask for their name and phone number. This new form can also be customized using our theme feature. See our [Theme Tutorial](/docs/v1/tech/tutorials/login-theme) for additional information. Get started by navigating to your FusionAuth application (`Settings -> Applications`) to `Edit` an application. Under `Options`, click on the `Registration` tab. Here you'll find the Self-service Registration configuration.
+You can start super simple and just collect an email and password, and optionally ask for their name and phone number. This new form can also be customized using our theme feature. See our [Theme Tutorial](/docs/v1/tech/themes/overview) for additional information. Get started by navigating to your FusionAuth application (`Settings -> Applications`) to `Edit` an application. Under `Options`, click on the `Registration` tab. Here you'll find the Self-service Registration configuration.
 
 
 
