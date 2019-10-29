@@ -19,7 +19,7 @@ _Pending Release_
 
 === Changes
 * Remove the `sid` and the `iss` request parameters on the URL provided by `post_logout_redirect_uri`. This feature was added in version `1.10.0` and because the redirect URL may be a previously configured Logout URL or a URL provided by the `post_logout_redirect_uri` we were always adding these additional request parameters to the URL. This change will rwemove them from the redirect URL and they will only be added to the URLs used to build the iframes in the logout template.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/332[GitHub Issue #322], thanks to https://github.com/davidmw[@davidmw] for the feedback!
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/332[GitHub Issue #332], thanks to https://github.com/davidmw[@davidmw] for the feedback!
 * In support of the OAuth Device Grant feature, the following theme changes have been made.
 ** New themed template `OAuth device`. This template has been added to each of your existing themes. As part of your migration please review this template to ensure it matches your intended style.
 * The following theme messages were added. Until these values have been translated they will be rendered in English. At your earliest convenience you will want to add these new keys to your existing themes. You may wish to review the community provided translations which may already contain these new messages. https://github.com/FusionAuth/fusionauth-localization
@@ -55,12 +55,27 @@ userCode=Enter your user code
 </blockquote>
 ++++
 
+* An update has been made to the `[@link]` macro in the Helpers template. If you intend to utilize the Device Grant you will need to add the missing parameters to your macro or copy the updated macro and usage from the default FusionAuth theme. The `user_code` request parameter has been added to this macro.
+
+
 === New
 * link:../oauth/endpoints#device-authorize[Device Authorization Grant]
+** This satisfies https://github.com/FusionAuth/fusionauth-issues/issues/320[GitHub Issue #320] - OAuth2 Device Authorization Grant
 ** This grant type is commonly used to connect a set top box application to a user account. For example when you connect your HBO NOW Roku application to your account you are prompted with a 6 digit code on the TV screen and instructed to open a web browser to https://hbonow.com/tvcode[hbonow.com/tvcode] to complete the sign-in process. This process is using the OAuth Device Grant or a variation of this workflow.
 * Support for the `response_mode` request parameter during the Authorization Code grant and the Implicit grant workflows.
 ** This will provide support for `response_mode=form_post`
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/159[GitHub Issue #159], thanks to https://github.com/bertiehub[@bertiehub] for requesting.
+* An additional API is available in support of Passwordles Login to allow additional flexibility with third party integrations.
+** See https://github.com/FusionAuth/fusionauth-issues/issues/175[GitHub Issue #175]
+** This feature will be available in 3 steps, Start, Send and Complete. Currently the Send API generates a code and sends it to the user, and then a Login API completes the request. The change is backwards compatible, but a Start action will be provided so you may skip the Send and collect the code and send it to the user using a third party system.
+** See the Passwordless API documentation for additional information.
+
+=== Preview
+* The `PATCH` HTTP method is available on some APIs in a developer preview. This is not yet documented and should only be used in development. The following APIs support the `PATCH` method, more to come.
+** `/api/application`
+** `/api/user`
+** `/api/user/registration`
+** This is in support of https://github.com/FusionAuth/fusionauth-issues/issues/121[GitHub Issue #121 - Support HTTP method PATCH].
 
 === Fixed
 * Return a `400` status code with a JSON response body on the Import API when a FK constraint causes the import to fail
@@ -71,9 +86,14 @@ userCode=Enter your user code
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/322[GitHub Issue #322], thanks to https://github.com/pawpro[@pawpro] for letting us know!
 * An error is incorrectly displayed on the Forgot Password form even when the code is valid
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/330[GitHub Issue #330], thanks to https://github.com/JesperWe[@JesperWe] for reporting the issue!
+* When a large number of tenants exist such as 3-5k, an exception may be thrown during a key cache reload request
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/326[GitHub Issue #326], thanks to https://github.com/johnmaia[@johnmaia] for reporting!
+* When using the `id_token_hint` on the Logout endpoint, if the token was issued to a user that is not registered for the application it will not contain the `applicationId` claim. This claim was being used to resolve the `client_id` required to complete logout. An alternative strategy is now used so that an `id_token` issued to a user that is registered, or not registered will work as expected when provided on the Logout endpoint.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/350[GitHub Issue #350], thanks to https://github.com/paulspencerwilliams[@paulspencerwilliams] for taking the time to let us know!
 
 === Enhancement
 * Front-channel logout was made more flexible
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/324[GitHub Issue #324]
 ** A new attribute `Logout behavior` was added to the [breadcrumb]#Application# icon:chevron-right[role=breadcrumb] [breadcrumb]#Oauth# configuration
 *** `Redirect only` - legacy behavior of only logging out of SSO and redirecting to either the registered logout URL in the application or the `post_logout_redirect_uri`.
 *** `All applications` - performs a front channel logout of all registered applications in the tenant. Optionally, the themable `Oauth logout` page can be modified to only logout of those applications the user is registered for.
