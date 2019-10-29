@@ -1,12 +1,12 @@
 ---
 layout: blog-post
-title: "How To: OAuth Device Authorization for Roku, AppleTV, and XBox"
+title: "How-To: OAuth Device Authorization for Roku, AppleTV, and XBox"
 description: "How To: OAuth Device Authorization for Roku, AppleTV, and XBox and others. FusionAuth's 1.11.0 update makes it simple."
 author: Matthew Altman & Trevor Smith
 excerpt_separator: "<!--more-->"
 categories: blog
 tags:
-- FusionAuth 
+- FusionAuth
 - identity
 - device
 image: blogs/oauth-device-authorization-grants2.png
