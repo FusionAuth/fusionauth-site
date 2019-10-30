@@ -11,7 +11,9 @@ video::_ro3jH5Xkgo[youtube,width=560,height=315]
 
 == Overview
 
-FusionAuth provides the ability to theme the OAuth v2 login pages plus all of the support pages for login. Here is a list of all of the pages that can be themed using this feature:
+FusionAuth provides the ability to theme the OAuth v2 login pages plus all of the support pages for login. Any user of the FusionAuth admin application with either the `admin` or `theme_manager` roles may view, edit, update, and delete Themes.
+
+Here is a list of all of the pages that can be themed using this feature:
 
 * `/email/complete`
 **  This page is used after a user has verified their email address by clicking the URL in the email. After FusionAuth has updated their user object to indicate that their email was verified, the browser is redirected to this page.
@@ -21,12 +23,22 @@ FusionAuth provides the ability to theme the OAuth v2 login pages plus all of th
 ** This page is rendered when a user clicks the URL from the verification email and the `verificationId` has expired. FusionAuth expires `verificationId` after a period of time (which is configurable). If the user has a URL from the verification email that has expired, this page will be rendered and the error will be displayed to the user.
 * `/oauth2/authorize`
 ** This is the main login page for FusionAuth and is used for all interactive OAuth and OpenID Connect workflows.
+* `/oauth2/child-registration-not-allowed`
+** This page contains a form where a child must provide their parent's email address to ask their parent to create an account for them in a Consent workflow.
+* `/oauth2/child-registration-not-allowed-complete`
+** This page is rendered is rendered after a child provides their parent's email address for parental consent in a Consent workflow.
+* `/oauth2/complete-registration`
+** This page contains a form that is used for users that have accounts but might be missing required fields.
+* `/oauth2/device`
+** This page contains a form for accepting an end user's short code for the interactive portion of the OAuth Device Authorization Grant workflow.
 * `/oauth2/error`
 ** This page is used if the user starts or is in the middle of the OAuth workflow and any type of error occurs. This could be caused by the user messing with the URL or internally some type of information wasn't passed between the OAuth endpoints correctly. For example, if you are federating login to an external IdP and that IdP does not properly echo the `state` parameter, FusionAuth's OAuth workflow will break and this page will be displayed.
 * `/oauth2/logout`
 ** This page is used if the user initiates a logout. This page causes the user to be logged out of all associated applications via a front-channel mechanism before being redirected.
 * `/oauth2/passwordless`
 ** This page is rendered when the user starts the passwordless login workflow. The page renders the form where the user types in their email address.
+* `/oauth2/register`
+** This page is used to register the user for the application.
 * `/oauth2/two-factor`
 ** This page is used if the user has two-factor authentication enabled and they need to type in their code again. FusionAuth will properly handle the SMS or authenticator app processing on the back end. This page contains the form that the user will put their code into.
 * `/password/change`
@@ -311,14 +323,38 @@ No page specific variables.
 |The timezone that the user is in. This is normally guessed by the timezone JavaScript library (or something similar) and then stored in a hidden input field on the login form.
 |===
 
+=== `/oauth2/child-registration-not-allowed`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#parentEmail# [type]#[String]#
+|The parent's email address provided in the input field of the form.
+.
+|===
+
+=== `/oauth2/child-registration-not-allowed-complete`
+
+No page specific variables.
+
 === `/oauth2/device`
 
 [cols="3a,7a"]
 [.api]
 .Variables
 |===
+|[field]#client_id# [type]#[String]#
+|The OAuth v2.0 `client_id` parameter. This is synonymous with FusionAuth's Application Id.
+
 |[field]#activationComplete# [type]#[Boolean]#
 |Whether or not the Device Authorization Grant flow has been completed.
+
+|[field]#code# [type]#[String]#
+|A authorization code on the redirect returned from an interactive login.
+
+|[field]#interactive_user_code# [type]#[String]#
+|The user code provided by the user in the form.
 
 |[field]#userCodeLength# [type]#[int]#
 |The length of the interactive user code.
@@ -348,6 +384,68 @@ No page specific variables.
 
 |[field]#redirectURL# [type]#[String]#
 |The URL to be redirected to after the front-channel logouts occur.
+|===
+
+=== `/oauth2/passwordless`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#client_id# [type]#[String]#
+|The OAuth v2.0 `client_id` parameter. This is synonymous with FusionAuth's Application Id.
+
+|[field]#redirect_uri# [type]#[String]#
+|The OAuth v2.0 `redirect_uri` parameter. This is the URI that FusionAuth will redirect the user to once they have successfully logged in.
+
+|[field]#response_type# [type]#[String]#
+|The OAuth v2.0 `response_type` parameter.
+
+|[field]#scope# [type]#[String]#
+|The OAuth v2.0 `scope` parameter.
+
+|[field]#state# [type]#[String]#
+|The OAuth v2.0 `state` parameter.
+
+|[field]#timezone# [type]#[String]#
+|The timezone that the user is in. This is normally guessed by the timezone JavaScript library (or something similar) and then stored in a hidden input field on the login form.
+|===
+
+=== `/oauth2/register`
+
+[cols="3a,7a"]
+[.api]
+.Variables
+|===
+|[field]#collectBirthDate# [type]#[Boolean]#
+|Whether or not to collect a birth date for a Consent workflow.
+
+|[field]#hideBirthDate# [type]#[Boolean]#
+|Whether or not to render a hidden field for passing along the birthdate in the form.
+
+|[field]#parentEmailRequired# [type]#[Boolean]#
+|Whether or not a parent's email address is required for a Consent Workflow.
+
+|[field]#passwordValidationRules# [type]#[Object]#
+|An object that contains the password validation rules. The object fields are defined below.
+
+|[field]#passwordValidationRules.maxLength# [type]#[int]#
+|The maximum length of a password.
+
+|[field]#passwordValidationRules.minLength# [type]#[int]#
+|The minimum length of a password.
+
+|[field]#passwordValidationRules.rememberPreviousPasswords.count# [type]#[Object]#
+|The number of previous passwords the user is not allowed to re-use.
+
+|[field]#passwordValidationRules.requireMixedCase# [type]#[Boolean]#
+|Whether or not the user must use upper and lower-cased letter.
+
+|[field]#passwordValidationRules.requireNonAlpha# [type]#[Boolean]#
+|Whether or not the user must use at least one non-alphabetic character in their password.
+
+|[field]#passwordValidationRules.requireNumber# [type]#[Boolean]#
+|Whether or not the user must use at least one numeric character in their password.
 |===
 
 === `/oauth2/two-factor`
@@ -397,31 +495,6 @@ No page specific variables.
 
 |[field]#userCanReceivePush# [type]#[Boolean]#
 |Whether or not the user is capable of receiving push notifications for two-factor. This means that the user has a mobile phone number.
-|===
-
-=== `/oauth2/passwordless`
-
-[cols="3a,7a"]
-[.api]
-.Variables
-|===
-|[field]#client_id# [type]#[String]#
-|The OAuth v2.0 `client_id` parameter. This is synonymous with FusionAuth's Application Id.
-
-|[field]#redirect_uri# [type]#[String]#
-|The OAuth v2.0 `redirect_uri` parameter. This is the URI that FusionAuth will redirect the user to once they have successfully logged in.
-
-|[field]#response_type# [type]#[String]#
-|The OAuth v2.0 `response_type` parameter.
-
-|[field]#scope# [type]#[String]#
-|The OAuth v2.0 `scope` parameter.
-
-|[field]#state# [type]#[String]#
-|The OAuth v2.0 `state` parameter.
-
-|[field]#timezone# [type]#[String]#
-|The timezone that the user is in. This is normally guessed by the timezone JavaScript library (or something similar) and then stored in a hidden input field on the login form.
 |===
 
 === `/password/change`
