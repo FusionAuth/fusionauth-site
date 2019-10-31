@@ -50,7 +50,7 @@ We've taken the liberty to remove `0`, `1` and the vowels `A`, `E`, `I`, `O`, an
 
 In addition you can also specify the length of the code to be generated. This configuration lets you adjust the balance between security and usability. 
 
-Lastly, you will find the `Device Grant Code` duration configuration. This is the time in seconds that the code will remain valid. To reduce brute force hacking attempts the duration should be as short while providing a good user experience. The default duration is 5 minutes which is generally adequate for a user to complete the login procedure on a home computer or a mobile device. 
+Lastly, you will find the `Device Grant Code` duration configuration. This is the time in seconds that the code will remain valid. To reduce brute force hacking attempts the duration should be as short as possible while providing a good user experience. The default duration is 5 minutes which is generally adequate for a user to complete the login procedure on a home computer or a mobile device. 
 
 ### How It Works
 The app that is installed on the set top device will make a request to the `/oauth2/device_authorize` endpoint to initiate the flow. This endpoint will response with the following fields in a JSON format:
