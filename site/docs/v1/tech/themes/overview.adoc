@@ -3,62 +3,135 @@ layout: doc
 title: Themes
 description: Learn how to theme and the FusionAuth login pages (including forgot password, two-factor authentication and others)
 ---
-== Video
-
-In addition to this guide, we put together a video that illustrates how you can use FusionAuth's login theme templates to make FusionAuth look like StackOverflow.
-
-video::_ro3jH5Xkgo[youtube,width=560,height=315]
 
 == Overview
 
-FusionAuth provides the ability to theme the OAuth v2 login pages plus all of the support pages for login. Any user of the FusionAuth admin application with either the `admin` or `theme_manager` roles may view, edit, update, and delete Themes.
+FusionAuth themes allow you to customize the OAuth2 / OpenID Connect login pages and other user workflows such as forgot password. In FusionAuth you may create one to many themes and assign a theme per tenant so that you can customize the user experience for different users.
 
-Here is a list of all of the pages that can be themed using this feature:
+In this guide you will find a video demonstration, a list of each template available to you and some example code.
 
-* `/email/complete`
-**  This page is used after a user has verified their email address by clicking the URL in the email. After FusionAuth has updated their user object to indicate that their email was verified, the browser is redirected to this page.
-* `/email/send`
-** This page is used after a user has asked for the verification email to be resent. This can happen if the URL in the email expired and the user clicked it. In this case, the user can provide their email address again and FusionAuth will resend the email. After the user submits their email and FusionAuth re-sends a verification email to them, the browser is redirected to this page.
-* `/email/verify`
-** This page is rendered when a user clicks the URL from the verification email and the `verificationId` has expired. FusionAuth expires `verificationId` after a period of time (which is configurable). If the user has a URL from the verification email that has expired, this page will be rendered and the error will be displayed to the user.
-* `/oauth2/authorize`
-** This is the main login page for FusionAuth and is used for all interactive OAuth and OpenID Connect workflows.
-* `/oauth2/child-registration-not-allowed`
-** This page contains a form where a child must provide their parent's email address to ask their parent to create an account for them in a Consent workflow.
-* `/oauth2/child-registration-not-allowed-complete`
-** This page is rendered is rendered after a child provides their parent's email address for parental consent in a Consent workflow.
-* `/oauth2/complete-registration`
-** This page contains a form that is used for users that have accounts but might be missing required fields.
-* `/oauth2/device`
-** This page contains a form for accepting an end user's short code for the interactive portion of the OAuth Device Authorization Grant workflow.
-* `/oauth2/error`
-** This page is used if the user starts or is in the middle of the OAuth workflow and any type of error occurs. This could be caused by the user messing with the URL or internally some type of information wasn't passed between the OAuth endpoints correctly. For example, if you are federating login to an external IdP and that IdP does not properly echo the `state` parameter, FusionAuth's OAuth workflow will break and this page will be displayed.
-* `/oauth2/logout`
-** This page is used if the user initiates a logout. This page causes the user to be logged out of all associated applications via a front-channel mechanism before being redirected.
-* `/oauth2/passwordless`
-** This page is rendered when the user starts the passwordless login workflow. The page renders the form where the user types in their email address.
-* `/oauth2/register`
-** This page is used to register the user for the application.
-* `/oauth2/two-factor`
-** This page is used if the user has two-factor authentication enabled and they need to type in their code again. FusionAuth will properly handle the SMS or authenticator app processing on the back end. This page contains the form that the user will put their code into.
-* `/password/change`
-** This page is used if the user is required to change their password or if they have requested a password reset. This page contains the form that allows the user to provide a new password.
-* `/password/complete`
-** This page is used after the user has successfully updated their password (or reset it). This page should instruct the user that their password was updated and that they need to login again.
-* `/password/forgot`
-** This page is used when a user starts the forgot password workflow. This page renders the form where the user types in their email address.
-* `/password/sent`
-** This page is used when a user has submitted the forgot password form with their email. FusionAuth does not indicate back to the user if their email address was valid in order to prevent malicious activity that could reveal valid email addresses. Therefore, this page should indicate to the user that if their email was valid, they will receive an email shortly with a link to reset their password.
-* `/registration/complete`
-** This page is used after a user has verified their email address for a specific application (i.e. a user registration) by clicking the URL in the email. After FusionAuth has updated their registration object to indicate that their email was verified, the browser is redirected to this page.
-* `/registration/send`
-** This page is used after a user has asked for the application specific verification email to be resent. This can happen if the URL in the email expired and the user clicked it. In this case, the user can provide their email address again and FusionAuth will resend the email. After the user submits their email and FusionAuth re-sends a verification email to them, the browser is redirected to this page.
-* `/registration/verify`
-** This page is used when a user clicks the URL from the application specific verification email and the `verificationId` has expired. FusionAuth expires `verificationId` after a period of time (which is configurable). If the user has a URL from the verification email that has expired, this page will be rendered and the error will be displayed to the user.
+* <<Example Video>>
+* <<Create a Theme>>
+* <<Example Code>>
+* <<Template Variables>>
+* <<Handling Failures>>
 
-== FreeMarker
+== Example Video
 
-All of the FusionAuth login templates are written in https://freemarker.apache.org[FreeMarker]. FreeMarker provides a very rich template language that will allow you to customize the pages and helpers to suit your needs. You can also define new macros and fuctions to assist you further.
+To demonstrate what is possible with the FusionAuth feature we have created a video that illustrates how to make FusionAuth look like StackOverflow.
+
+video::_ro3jH5Xkgo[youtube,width=560,height=315]
+
+== Create a Theme
+
+FusionAuth provides the ability to create and manage themes in the UI as well as a link:../apis/theme[Theme API] if you prefer to manage themes programatically. Any user of the FusionAuth role of `admin` or `theme_manager` may view, edit, update, and delete Themes.
+
+All of the FusionAuth login templates are written in https://freemarker.apache.org[FreeMarker]. FreeMarker provides a very rich template language that will allow you to customize the pages and helpers to suit your needs. You can also define new macros and function to assist you further.
+
+Below is an example screenshot of the Add Theme panel with each template described below.
+
+image::create-theme.png[Create a Theme,width=1200,role=shadowed]
+
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Id [optional]#Optional#
+|An optional UUID. When this value is omitted a unique Id will be generated automatically.
+
+|Name [required]#Required#
+|A unique name to identity the theme. This name is for display purposes only and it can be modified later if desired.
+|===
+
+[cols="3a,7a"]
+[.api]
+.Templates
+|===
+|Stylesheet (CSS) [optional]#Optional#
+|This CSS stylesheet may be used to style the themed pages.
+
+.{nbsp} +
+
+This CSS will be included in the `head` tag in the Helpers `head` macro. You may also choose to include other remote stylesheets by using the `<style>` tag within the `head` macro.
+
+```
+<style>
+  ${theme.stylesheet()}
+</style>
+```
+
+|Messages [optional]#Optional#
+|This section allows you to add additional localized messages to your theme. When creating an additional locale it is not required that all messages are defined for each language. If a message key is not defined for the specified locale, the value from the default bundles will be used.
+
+If you intend to localize your login templates, you may find our community contributed and maintained messages in our GitHub repository.
+https://github.com/FusionAuth/fusionauth-localization
+
+|Helpers [required]#Required#
+|This template contains all of the main helper macros to define the `head`, `body` and `footer`. To begin theming FusionAuth you'll want to start with this template as it will affect all other templates.
+
+See <<Helpers>> section below for additional information.
+
+|Email verification complete [required]#Required# [uri]#/email/complete#
+|This page is used after a user has verified their email address by clicking the URL in the email. After FusionAuth has updated their user object to indicate that their email was verified, the browser is redirected to this page.
+
+|Email verification re-send [required]#Required# [uri]#/email/send#
+|This page is used after a user has asked for the verification email to be resent. This can happen if the URL in the email expired and the user clicked it. In this case, the user can provide their email address again and FusionAuth will resend the email. After the user submits their email and FusionAuth re-sends a verification email to them, the browser is redirected to this page.
+
+|Email verification [required]#Required# [uri]#/email/verify#
+|This page is rendered when a user clicks the URL from the verification email and the `verificationId` has expired. FusionAuth expires `verificationId` after a period of time (which is configurable). If the user has a URL from the verification email that has expired, this page will be rendered and the error will be displayed to the user.
+
+|OAuth authorize [required]#Required# [uri]#/oauth2/authorize#
+|This is the main login page for FusionAuth and is used for all interactive OAuth2 and OpenID Connect workflows.
+
+|OAuth child registration not allowed [required]#Required# [uri]#/oauth2/child-registration-not-allowed#
+|This page contains a form where a child must provide their parent's email address to ask their parent to create an account for them in a Consent workflow.
+
+|OAuth child registration not allowed complete [required]#Required# [uri]#/oauth2/child-registration-not-allowed-complete#
+|This page is rendered is rendered after a child provides their parent's email address for parental consent in a Consent workflow.
+
+|OAuth complete registration [required]#Required# [uri]#/oauth2/complete-registration#
+|This page contains a form that is used for users that have accounts but might be missing required fields.
+
+|OAuth device [required]#Required# [uri]#/oauth2/device#
+|This page contains a form for accepting an end user's short code for the interactive portion of the OAuth Device Authorization Grant workflow.
+
+|OAuth error [required]#Required# [uri]#/oauth2/error#
+|This page is used if the user starts or is in the middle of the OAuth workflow and any type of error occurs. This could be caused by the user messing with the URL or internally some type of information wasn't passed between the OAuth endpoints correctly. For example, if you are federating login to an external IdP and that IdP does not properly echo the `state` parameter, FusionAuth's OAuth workflow will break and this page will be displayed.
+
+|OAuth logout [required]#Required# [uri]#/oauth2/logout#
+|This page is used if the user initiates a logout. This page causes the user to be logged out of all associated applications via a front-channel mechanism before being redirected.
+
+|OAuth passwordless [required]#Required# [uri]#/oauth2/passwordless#
+|This page is rendered when the user starts the passwordless login workflow. The page renders the form where the user types in their email address.
+
+|OAuth register [required]#Required# [uri]#/oauth2/register#
+|This page is used to register the user for the application.
+
+|OAuth two-factor [required]#Required# [uri]#/oauth2/two-factor#
+|This page is used if the user has two-factor authentication enabled and they need to type in their code again. FusionAuth will properly handle the SMS or authenticator app processing on the back end. This page contains the form that the user will put their code into.
+
+|OAuth Change password form [required]#Required# [uri]#/password/change#
+|This page is used if the user is required to change their password or if they have requested a password reset. This page contains the form that allows the user to provide a new password.
+
+|OAuth password password complete [required]#Required# [uri]#/password/complete#
+|This page is used after the user has successfully updated their password (or reset it). This page should instruct the user that their password was updated and that they need to login again.
+
+|Forgot password [required]#Required# [uri]#/password/forgot#
+|This page is used when a user starts the forgot password workflow. This page renders the form where the user types in their email address.
+
+|Forgot password sent [required]#Required# [uri]#/password/sent#
+|This page is used when a user has submitted the forgot password form with their email. FusionAuth does not indicate back to the user if their email address was valid in order to prevent malicious activity that could reveal valid email addresses. Therefore, this page should indicate to the user that if their email was valid, they will receive an email shortly with a link to reset their password.
+
+|Verify registration complete [required]#Required# [uri]#/registration/complete#
+|his page is used after a user has verified their email address for a specific application (i.e. a user registration) by clicking the URL in the email. After FusionAuth has updated their registration object to indicate that their email was verified, the browser is redirected to this page.
+
+|Verify registration send [required]#Required# [uri]#/registration/send#
+|This page is used after a user has asked for the application specific verification email to be resent. This can happen if the URL in the email expired and the user clicked it. In this case, the user can provide their email address again and FusionAuth will resend the email. After the user submits their email and FusionAuth re-sends a verification email to them, the browser is redirected to this page.
+
+|Verify registration [required]#Required# [uri]#/registration/verify#
+|This page is used when a user clicks the URL from the application specific verification email and the `verificationId` has expired. FusionAuth expires `verificationId` after a period of time (which is configurable). If the user has a URL from the verification email that has expired, this page will be rendered and the error will be displayed to the user.
+|===
+
 
 == Helpers
 
@@ -192,7 +265,9 @@ The `_helpers.ftl` template also provides a couple of macros that help render fo
 * `button`
 ** This macro renders a button that can be used to submit a form. The FusionAuth version of this macro includes an icon and the button text.
 
-== Example of Customizing the Authorize Page
+== Example Code
+
+=== Example of Customizing the Authorize Page
 
 Now that you have a good overview of all the templates, macros and helpers, here is an example of customizing the Authorize page.
 
@@ -233,7 +308,7 @@ Let's assume you want to change the header and footer across all of the pages in
 
 Once you make these changes, they will take effect on all of the pages listed above.
 
-== Variables
+== Template Variables
 
 Each template has different variables that are available to it. These variables can be used in the template to help with rendering the HTML. There are also a couple of common variables that are available in all of the pages. The common variables and the page specific variables are all listed below:
 
@@ -251,7 +326,9 @@ Each template has different variables that are available to it. These variables 
 |A map of field messages (usually errors) that were generated during the processing of the request. The key into the map is the name of the form field and the value is a list that contains the errors for that form field.
 
 |[field]#request# [type]#[HttpServletRequest]#
-|The HttpServletRequest object that is part of the Java Servlet specification. You can find the JavaDoc for this object available here: https://docs.oracle.com/javaee/6/api/javax/servlet/http/HttpServletRequest.html
+|The HttpServletRequest object that is part of the Java Servlet specification.
+
+You can find the JavaDoc for this object available here: https://docs.oracle.com/javaee/6/api/javax/servlet/http/HttpServletRequest.html
 |===
 
 === `/email/complete`
