@@ -28,7 +28,7 @@ end
 
 # For the docs
 gem "asciidoctor", "1.5.8"
-gem "haml", "4.0.7"
+gem "haml", "5.0.0"
 gem "thread_safe", "0.3.6"
 gem "tilt", "2.0.9"
 gem "pygments.rb", "1.2.1"
