@@ -269,12 +269,12 @@ include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
 :webhook_event!:
 
 == Bulk Delete Users
-This API is used to delete multiple users in a single request.
+This API is used to deactivate or delete multiple users in a single request.
 
 === Request
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red]] Deactivate Users
+link:authentication#api-key-authentication[icon:lock[role=red]] Deactivate Users by User Id
 [.endpoint]
 .URI
 --
@@ -282,22 +282,44 @@ link:authentication#api-key-authentication[icon:lock[role=red]] Deactivate Users
 --
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red]] Permanently Delete Users
+link:authentication#api-key-authentication[icon:lock[role=red]] Deactivate Users by Search Query
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/bulk``?searchQuery=\{searchQuery\}&dryRun=false``#
+--
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Permanently Delete Users by User Id
 [.endpoint]
 .URI
 --
 [method]#DELETE# [uri]#/api/user/bulk``?userId=\{userId\}&userId=\{userId\}&hardDelete=true``#
 --
 
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Permanently Delete Users by Search Query
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/bulk``?searchQuery=\{searchQuery\}&hardDelete=true&dryRun=false``#
+--
+
 [cols="3a,7a"]
 [.api]
 .Request Parameters
 |===
-|[field]#userId# [type]#[UUID]# [required]#Required#
-|The Id of the User to delete. Repeat this parameter for each user to be deleted.
+|[field]#dryRun# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
+|To preview the user Ids to be deleted by the request without applying the requested action set this value to `true`.
 
 |[field]#hardDelete# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
 |To Permanently delete a user from FusionAuth set this value to `true`. Once a user has been permanently deleted, the action cannot be undone. When this value is set to `false` the user is marked as inactive and the user will be unable log into FusionAuth. This action may be undone by reactivating the user.
+
+|[field]#queryString# [type]#[String]# [optional]#Optional#
+|The Elasticsearch query string that used to search for Users to be deleted. This parameter is required when the [field]#userId# parameter is not provided.
+
+|[field]#userId# [type]#[UUID]# [optional]#Optional#
+|The Id of the User to delete. Repeat this parameter for each user to be deleted. This parameter is required when the [field]#queryString# parameter is not provided.  When both the [field]#userId# and [field]#queryString# parameters are provided, the [field]#userId# value will be honored.
 |===
 
 [.api-authentication]
@@ -313,13 +335,19 @@ include::docs/v1/tech/apis/_user-bulk-delete-request-body.adoc[]
 
 === Response
 
-This API does not return a JSON response body.
+The response for this API contains the information for the Users that were affected by the request.
 
+:success_code: 200
+:success_message: pass:normal[The request was successful. The response will contain a JSON body.]
 :never_missing:
 :webhook_event:
 include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
 :webhook_event!:
 :never_missing!:
+:success_code!:
+:success_message!:
+
+include::docs/v1/tech/apis/_user-bulk-delete-response-body.adoc[]
 
 == Reactivate a User
 
