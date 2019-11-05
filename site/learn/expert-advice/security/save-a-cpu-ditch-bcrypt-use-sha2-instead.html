@@ -1,0 +1,329 @@
+---
+layout: advice
+title: "Save a CPU - Ditch BCrypt, use SHA2 instead"
+description: "One-way hashing for passwords is the standard mechanism used to protect your user's passwords. Let's take a look at how it works and some new ideas to improve it."
+image: fusionauth-share-image.jpg
+header_dark: true
+categories:
+- security
+---
+
+<section>
+  <div class="container">
+    <div class="row">
+      <article class="col-12 col-lg-9">
+        <div class="">
+          <div class="pt-5 ">
+            <p><a href="/learn/expert-advice">Expert Advice</a> > <a href="/learn/expert-advice/security/">Security</a></p>
+          </div>
+          <h1>Save a CPU - Ditch BCrypt, use SHA2 instead</h1>
+          <p>Brian Pontarelli</p>
+          <i class="fal fa-star text-primary mb-3"></i>
+          <i class="fal fa-star text-primary mb-3"></i>
+          <i class="fal fa-star text-primary mb-3"></i>
+          <i class="fal fa-star text-primary mb-3"></i>
+          <i class="fal fa-star text-primary mb-3"></i>
+        </div>
+        <div class="embed-responsive embed-responsive-2by1">
+          <div class="embed-responsive-item text-center">
+            <img class="post-image" src="/assets/img/blogs/cpu-on-fire.jpg">
+          </div>
+        </div>
+      </article>
+      <article class="col-12 col-lg-9">
+        <div class="post-body mt-5">
+          <div class="post-body-content">
+
+            <p>Here’s the reality, billions of credentials have been leaked or stolen and are now easily downloaded online by anyone. Many of these databases of identities include passwords in plain text, while others are one-way hashed. One-way hashing is better (we’ll get to why in a second), but it is only as secure as is mathematically feasible. Let’s take a look at one-way hashing algorithms and how computers handle them.</p>
+
+<!--more-->
+
+<h2 id="hashing">Hashing</h2>
+
+<p>A hash by definition is a function that can map data of an arbitrary size to data of a fixed size. SHA2 is a hashing algorithm that uses various bit-wise operations on any number of bytes to produce a fixed sized hash. For example, the SHA-256 algorithm produces a 256 bit result. The algorithm was designed specifically so that going from a hash back to the original bytes is infeasible. Developers use an SHA2 hash so that instead of storing a plain text password, they instead only store the hash. When a user is authenticated, the plain text password they type into the login form is hashed, and because the algorithm will always produce the same hash result given the same input, comparing this hash to the hash in the database tells us the password is correct.</p>
+
+<h2 id="cracking-passwords">Cracking Passwords</h2>
+
+<p>While one-way hashing means we aren’t storing plain text passwords, it is still possible to determine the original plain text password from a hash. Next, we’ll outline the two most common approaches of reversing a hash.</p>
+
+<h3 id="lookup-tables">Lookup Tables</h3>
+
+<p>The first is called a lookup table, or sometimes referred to as a rainbow table. This method builds a massive lookup table that maps hashes to plain text passwords. The table is built by simply hashing every possible password combination and storing it in some type of database or data-structure that allows for quick lookups.</p>
+
+<p>Here’s an example of a lookup table for SHA2 hashed passwords:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">sha2_hash                                                          password</span>
+<span class="s">-----------------------------------------------------------------------------------------</span>
+<span class="s">e150a1ec81e8e93e1eae2c3a77e66ec6dbd6a3b460f89c1d08aecf422ee401a0   </span><span class="m">123456</span>
+<span class="s">e5d316bfd85b606e728017e9b6532e400f5f03e49a61bc9ef59ec2233e41015a   broncosfan123</span>
+<span class="s">561acac680e997e22634a224df2c0931cf80b9f7c60102a4e12e059f87558232   Letmein</span>
+<span class="s">bdc511ea9b88c90b75c3ebeeb990e4e7c813ee0d5716ab0431aa94e9d2b018d6   newenglandclamchowder</span>
+<span class="s">9515e65f46cb737cd8c191db2fd80bbd05686e5992b241e8ad7727510b7142e6   opensesame</span>
+<span class="s">6b3a55e0261b0304143f805a24924d0c1c44524821305f31d9277843b8a10f4e   password</span>
+<span class="s">c194ead20ad91d30c927a34e8c800cb9a13a7e445a3ffc77fed14176edc3c08f   xboxjunkie42</span>
+</code></pre></div></div>
+
+<p>Using a lookup table, all the attacker needs to know is the SHA2 hash of the password and they can see if it exists in the table. For example, let’s assume for a moment that Netflix stores your password using an SHA2 hash. If Netflix is breached, their user database is likely now available to anyone with a good internet connection and a torrent client. Even a mediocre hacker now only needs to lookup the SHA2 hash assoicated with your Netflix account to see if it exists in their lookup table. This will reveal nearly instantly what your plain text password is for Netflix. Now, this hacker can log in to your Netflix account and binge watch all four seasons of Fuller House (“how rude!”). And he can also try this password on Hulu and HBO Go to see if you used the same email address and password for those accounts as well.</p>
+
+<p><img src="/assets/img/blogs/salt.png" alt="Salt" class="float-right ml-3" style="width: 250px;" /></p>
+
+<p>The best way to protect against this type of attack is to use what is called a <strong>salt</strong>. A salt is simply a bunch of random characters that you prepend to the password before it is hashed. Each password should have a different salt, which means that a lookup table is unlikely to have an entry for the combination of the salt and the password. This makes salts an ideal defense against lookup tables.</p>
+
+<p>Here’s an example of a salt and the resulting combination of the password and the salt which is then hashed:</p>
+
+<div class="language-kotlin highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Bad, no salt. Very bland.</span>
+<span class="n">sha2</span><span class="p">(</span><span class="s">"password"</span><span class="p">)</span> <span class="c1">// 6b3a55e0261b0304143f805a24924d0c1c44524821305f31d9277843b8a10f4e</span>
+
+<span class="c1">// Better, add a salt.</span>
+<span class="n">salt</span> <span class="p">=</span> <span class="s">";L'-2!;+=#/5B)40/o-okOw8//3a"</span>
+<span class="n">toHash</span> <span class="p">=</span> <span class="s">";L'-2!;+=#/5B)40/o-okOw8//3apassword"</span>
+<span class="n">sha2</span><span class="p">(</span><span class="n">toHash</span><span class="p">)</span> <span class="c1">// f534e6bf84a638112e07e69861927ab624c0217c0655e4d3be07659bcf6c1c07</span>
+</code></pre></div></div>
+
+<p>Now that we have added the salt, the “password” that we actually generated the hash from was the String <code class="highlighter-rouge">;L'-2!;+=#/5B)40/o-okOw8//3apassword</code>. This String is long, complex and contains a lot of random characters. Therefore, it is nearly impossible that the hacker that created the lookup table would have generated the hash for the String <code class="highlighter-rouge">;L'-2!;+=#/5B)40/o-okOw8//3apassword</code>.</p>
+
+<h3 id="brute-force">Brute Force</h3>
+
+<p><img src="/assets/img/blogs/hulk.png" alt="Brute Force" class="float-left mb-3 mr-3" style="width: 150px;" /></p>
+
+<p>The second method that attackers use to crack passwords is called brute force cracking. This means that the attacker writes a computer program that can generate all possible combinations of characters that can be used for a password and then computes the hash for each combination. This program can also take a salt if the password was hashed with a salt. The attacker then runs the program until it generates a hash that is the same as the hash from the database. Here’s a simple Java program for cracking passwords. I left out some detail to keep the code short (such as all the possible password characters), but you get the idea.</p>
+
+<p><br />
+<br /></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">org.apache.commons.codec.digest.DigestUtils</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">PasswordCrack</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">char</span><span class="o">[]</span> <span class="no">PASSWORD_CHARACTERS</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="o">[]</span> <span class="o">{</span><span class="sc">'a'</span><span class="o">,</span> <span class="sc">'b'</span><span class="o">,</span> <span class="sc">'c'</span><span class="o">,</span> <span class="sc">'d'</span><span class="o">};</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">...</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nc">String</span> <span class="n">salt</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+    <span class="nc">String</span> <span class="n">hashFromDatabase</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">].</span><span class="na">toUpperCase</span><span class="o">();</span>
+
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">6</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+      <span class="kt">char</span><span class="o">[]</span> <span class="n">ca</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+
+      <span class="n">fillArrayHashAndCheck</span><span class="o">(</span><span class="n">ca</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">salt</span><span class="o">,</span> <span class="n">hashFromDatabase</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">fillArrayHashAndCheck</span><span class="o">(</span><span class="kt">char</span><span class="o">[]</span> <span class="n">ca</span><span class="o">,</span> <span class="kt">int</span> <span class="n">index</span><span class="o">,</span> <span class="nc">String</span> <span class="n">salt</span><span class="o">,</span> <span class="nc">String</span> <span class="n">hashFromDatabase</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="no">PASSWORD_CHARACTERS</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+      <span class="n">ca</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="no">PASSWORD_CHARACTERS</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+
+      <span class="k">if</span> <span class="o">(</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">ca</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">fillArrayHashAndCheck</span><span class="o">(</span><span class="n">ca</span><span class="o">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="o">,</span> <span class="n">salt</span><span class="o">,</span> <span class="n">hashFromDatabase</span><span class="o">);</span>
+      <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="nc">String</span> <span class="n">password</span> <span class="o">=</span> <span class="n">salt</span> <span class="o">+</span> <span class="k">new</span> <span class="nc">String</span><span class="o">(</span><span class="n">ca</span><span class="o">);</span>
+        <span class="nc">String</span> <span class="n">sha2Hex</span> <span class="o">=</span> <span class="nc">DigestUtils</span><span class="o">.</span><span class="na">sha2Hex</span><span class="o">(</span><span class="n">password</span><span class="o">).</span><span class="na">toUpperCase</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">sha2Hex</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">hashFromDatabase</span><span class="o">))</span> <span class="o">{</span>
+          <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"plain text password is ["</span> <span class="o">+</span> <span class="n">password</span> <span class="o">+</span> <span class="s">"]"</span><span class="o">);</span>
+          <span class="nc">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>This program will generate all the possible passwords with lengths between 6 and 8 characters and then hash each one until it finds a match. This type of brute-force hacking takes time because of the number of possible combinations.</p>
+
+<h2 id="password-complexity-vs-computational-power">Password complexity vs. computational power</h2>
+
+<p>Let’s bust out our TI-85 calculators and see if we can figure out how long this program will take to run. For this example we will assume the passwords can only contain ASCII characters (uppercase, lowercase, digits, punctuation). This set is roughly 100 characters (I rounded up to make the math easier to read). If we know that there are at least 6 characters and at most 8 characters in a password, then all the possible combinations can be represented by this expression:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>possiblePasswords = 100^8 + 100^7 + 100^6
+</code></pre></div></div>
+
+<p>The result of this expression is equal to <code class="highlighter-rouge">10,101,000,000,000,000</code>. This is quite a large number, north of 10 quadrillion to be a little more precise, but what does it actually mean when it comes to my program running? This depends on the speed of the computer I’m running on and how long it takes my computer to execute the SHA2 algorithm. The algorithm is the key component here because the rest of the program is extremely fast at just creating the passwords.</p>
+
+<p>Here’s where things get dicey. If you run a quick Google search for <a href="http://lmgtfy.com/?q=fastest+bitcoin+rig">“fastest bitcoin rig”</a> you’ll see that these machines are rated in terms of the number of hashes they can perform per second. The bigger ones can be rated as high as <code class="highlighter-rouge">44 TH/s</code>. That means it can generate 44 tera-hashes per second or <code class="highlighter-rouge">44,000,000,000,000</code>.</p>
+
+<p>Now, if we divide the total number of passwords by the number of hashes we can generate per second, we are left with the total time it takes a Bitcoin rig to generate the hashes for all possible passwords. In our example above, this equates to:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bitcoinRig = 4.4e13
+possiblePasswords = 100^8 + 100^7 + 100^6 = 1.0101e16
+
+numberOfSeconds = possiblePasswords / bitcoinRig = ~230
+numberOfMinutes = numberOfSeconds / 60 = ~4
+</code></pre></div></div>
+
+<p>This means that using this example Bitcoin rig, we could generate all the hashes for a password between 6 and 8 characters in length in roughly 4 minutes. Feeling nervous yet? Let’s add one additional character and see long it takes to hash all possible passwords between 6 and 9 characters.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bitcoinRig = 4.4e13
+possiblePasswords = 100^9 + 100^8 + 100^7 + 100^6 = 1.010101E18
+
+numberOfSeconds = possiblePasswords / bitcoinRig = 22,956
+numberOfMinutes = numberOfSeconds / 60 = ~383
+numberOfHours = numberOfMinutes / 60 = ~6
+</code></pre></div></div>
+
+<p>By adding one additional character to the potential length of the password we increased the total compute time from 4 minutes to 6 hours. This is nearing a 100x increase in computational time to use the brute force strategy. You probably can see where this is going—to defeat the brute force strategy, you simply need to make it improbable to calculate all possible password combinations.</p>
+
+<p>Let’s get crazy and make a jump to 16 characters:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bitcoinRig = 4.4e13
+possiblePasswords = 100^16 + 100^15 ... 100^7 + 100^6 = 1e32
+
+numberOfSeconds = possiblePasswords / bitcoinRig = 2.27e18
+numberOfMinutes = numberOfSeconds / 60 = 3.78e16
+numberOfHours = numberOfMinutes / 60 = 630,000,000,000,000 or 630 trillion
+numberOfDays = numberOfHours / 24 = 26,250,000,000,000 or 26.25 trillion days
+numberOfYears = numberOfDays / 365 = 71,917,808,219 or 71.9 billion years
+</code></pre></div></div>
+
+<p>To boil down our results, if we take these expressions and simplify them, we can build an equation that solves for any length password.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>numberOfSeconds = 100^lengthOfPassword / computeSpeed
+</code></pre></div></div>
+
+<p>This equation shows that as the password length increases, the number of seconds to brute-force attack the password also increases since the computer’s speed to execute the hashing algorithm is a fixed divisor. The increase in password complexity (length and possible characters) is called <strong>entropy</strong>. As the entropy increases, the time required to brute-force attack a password also increases.</p>
+
+<h2 id="what-does-all-this-math-mean">What does all this math mean?</h2>
+
+<p>Great question. Here’s the answer:</p>
+
+<blockquote class="tight">
+  <p>If you allow the use of short passwords, which makes them easy to remember, you need to decrease the value of <code class="highlighter-rouge">computeSpeed</code> in order to maintain a level of security.</p>
+
+  <p>If you require longer randomized passwords, such as those created by a password generator, you don’t need to change anything because the value of <code class="highlighter-rouge">computeSpeed</code> becomes much less relevant.</p>
+</blockquote>
+
+<p>Let’s assume we are going to allow users to select short passwords. This means that we need to decrease the <code class="highlighter-rouge">computeSpeed</code> value which means we need to slow down the computation of the hash. How do we accomplish that?</p>
+
+<p>The way that the security industry has been solving this problem is by continuing to increase the algorithmic complexity, which in turn causes the computer to spend more time generating one-way hashes. Examples of these algorithms include BCrypt, SCrypt, PBKDF2, and others. These algorithms are specifically designed to cause the CPU/GPU of the computer to take an excessive amount of time generating a single hash.</p>
+
+<p>If we can reduce the <code class="highlighter-rouge">computeSpeed</code> value from <code class="highlighter-rouge">4.4e13</code> to something much smaller such as <code class="highlighter-rouge">1,000</code>, our compute time for passwords between 6 and 8 characters long become much better. In other words, if we can slow down the computer so it takes longer for each hash it has to generate, we can increase the length of time it will take to calculate all of the possible passwords.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>computeSpeed = 1e3
+possiblePasswords = 100^8 + 100^7 + 100^6 = 1.0101e16
+
+numberOfSeconds = possiblePasswords / computeSpeed = 10,101,000,000,000 or 10.1 trillion
+numberOfMinutes = numberOfSeconds / 60 = 168,350,000,000 or 168.35 billion
+numberOfHours = numberOfMinutes / 60 = 2,805,833,333 or 2.8 billion
+numberOfDays = numberOfHours / 24 = 116,909,722 or 116.9 million
+numberOfYears = numberOfDays / 365 = 320,300
+</code></pre></div></div>
+
+<p>Not bad. By slowing down the hash computation, we have increased the time from 4 minutes using our Bitcoin rig to 320,300 years. In this comparision you can see the practical difference between using SHA2 and BCrypt. BCrypt is purpose built to be extremely slow in comparison to SHA2 and other more traditional hashing algorithms.</p>
+
+<p>And here lies the debate that the security industry has been having for years:</p>
+
+<p><strong>Do we allow users to use short passwords and put the burden on the computer to generate hashes as slowly as reasonably still secure? Or do we force users to use long passwords and just use a fast hashing algorithm like SHA2 or SHA512?</strong></p>
+
+<p><a href="https://blog.benpri.me/blog/2019/01/13/why-you-shouldnt-be-using-bcrypt-and-scrypt/">Some in the industry have argued that enough is enough with consuming massive amounts of CPU and GPU cycles simply computing hashes for passwords</a>. By forcing users to use long passwords, we get back a ton of computing power and can reduce costs by shutting off the 42 servers we have to run to keep up with login volumes.</p>
+
+<p>Others claim that this is a bad idea for a variety of reasons including:</p>
+
+<ul>
+  <li>Humans don’t like change</li>
+  <li>The risk of simple algorithms like SHA2 is still too high</li>
+  <li>Simple algorithms might be currently vulnerable to attacks or new attacks might be discovered in the future</li>
+</ul>
+
+<p>At the time of this writing, there are still numerous simple algorithms that have not been attacked, meaning that no one has figured out a way to reduce the need to compute every possible hash. Therefore, it is still a safe assertion that using a simple algorithm on a long password is secure. This leaves the only reason not to force users to use long passwords is for the first reason mentioned above, “humans don’t like change”. In reality, many users will change and some will already be using long passwords.</p>
+
+<h2 id="our-new-idea-lets-split-the-difference">Our new idea: Let’s split the difference</h2>
+
+<p>As the provider of an identity management solution, we understand both sides of this debate. We also have a strong desire to maintain security while reducing the cost to hash passwords at scale. Here is an idea we’ve been debating and hacking on at the office. What if we dynamically changed the algorithm that FusionAuth used to hash passwords based on the length (and possibly complexity) of the password? Could this reduce the average CPU/GPU consumption by enough to make a difference?</p>
+
+<p>Here’s some super simple example code for an algorithm that selects the hashing scheme based on password length alone:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">PasswordHasher</span> <span class="n">hasher</span><span class="o">;</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">password</span><span class="o">.</span><span class="na">length</span><span class="o">()</span> <span class="o">&gt;=</span> <span class="mi">14</span><span class="o">)</span> <span class="o">{</span>
+  <span class="n">hasher</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">SHA512PasswordHasher</span><span class="o">();</span>
+<span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+  <span class="n">hasher</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">BCryptPasswordHasher</span><span class="o">();</span>
+<span class="o">}</span>
+
+<span class="nc">String</span> <span class="n">hashedPassword</span> <span class="o">=</span> <span class="n">hasher</span><span class="o">.</span><span class="na">hash</span><span class="o">(</span><span class="n">password</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>Of course this is just the tip of the iceberg, we could perform a lot of analysis on a password and calculate the entropy based upon other factors. This would allow us to select a hash that maintains a high level of security while reducing the CPU cost as much as possible.</p>
+
+<p>Let’s just re-iterate our math from above one more time.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Passwords of length 16 using SHA2
+totalYears to generate all passwords = 71,917,808,219 or 71.9 billion years
+
+// Passwords of length 8 using BCrypt
+totalYears to generate all passwords = 320,300 years
+</code></pre></div></div>
+
+<p>The interesting fact here is that the length of the password dictates the level of security more than the algorithm.</p>
+
+<p>We think this idea has merit. As more people start using password managers with password generators, or letting the browser generate a unique password on your behalf, we could dynamically select a hash that could significantly reduce the CPU/GPU utilization.</p>
+
+<p>Food for thought, we can hash approximately 20 passwords per second on a Amazon EC2 instance of type <code class="highlighter-rouge">t2.medium</code> using PBKDF2. If you’re Pokémon Go trying to authenticate half of the known world so they can catch Charizard, how many EC2 instances do you think it would require to handle their load? There is a real business case for changing the way the industry thinks about secure password hashing.</p>
+
+<p>Stayed tuned for an upcoming blog post where we walk through the real world performance numbers for 100 million users with passwords of varying length.</p>
+
+<p>FusionAuth defaults to <code class="highlighter-rouge">PBKDF2</code> with <code class="highlighter-rouge">24,000</code> iterations as the default password hashing scheme. BCrypt and several other algorithms are supported to enable password migrations. We continue to research new techniques to reduce CPU overhead while maintaining the highest standards in secure password storage.</p>
+
+<p>If you’d like to discuss on this feature, comment below or visit the FusionAuth GitHub issue for it and upvote or comment. <a href="https://github.com/FusionAuth/fusionauth-issues/issues/85">Feature: Entropy based password hashing</a></p>
+
+          </div>
+
+<div class="text-center mt-5 mb-5 py-5">
+  <hr>
+    <div class="mt-5 mb-5">
+      <p>How helpful was this article? Click a star to rate.</p>
+      <i class="fal fa-star text-primary mb-3"></i>
+      <i class="fal fa-star text-primary mb-3"></i>
+      <i class="fal fa-star text-primary mb-3"></i>
+      <i class="fal fa-star text-primary mb-3"></i>
+      <i class="fal fa-star text-primary mb-3"></i>
+    </div>
+  <hr>
+</div>
+
+<!-- comments -->
+          <div class="post-body-comments">
+            <div class="just-comments" data-apikey="edc7b4a8-97ce-47ba-9e21-0477407197ef"></div>
+            <script async src="https://just-comments.com/w.js"></script>
+          </div>
+        </div>
+      </article>
+
+
+      <!-- side bar -->
+      <div class="col-12 col-lg-3">
+        <div class="mt-5">
+          <div class="p-4 border">
+            <h2>Related Articles</h2>
+
+            <a class="d-block mt-3 mb-3 link-dark" href="/blog/2019/10/29/oauth-device-authorization-roku-appletv-xbox">How-To: OAuth Device Authorization for Roku, AppleTV, and XBox</a>
+
+            <a class="d-block mt-3 mb-3 link-dark" href="/blog/2019/10/09/build-fusionauth-python-login-web-app-flask">Title</a>
+
+            <a class="d-block mt-3 mb-3 link-dark" href="/blog/2019/10/08/deactivating-reactivating-deleting-user-fusionauth-python">Deactivating, Reactivating, and Deleting A FusionAuth User in Python</a>
+
+            <a class="d-block mt-3 mb-3 link-dark" href="/blog/2019/10/02/storing-user-data">Storing User Data in FusionAuth</a>
+
+          </div>
+          <div class="mt-4 mb-4 bg-secondary p-4 text-center text-white">
+            <img class="w-100" src="/assets/img/fusionauth-logo-white-orange.svg">
+            <p class="mt-4 text-light">
+              FusionAuth provides authentication, authorization, and user management for every app: deploy anywhere, integrate with anything, in minutes.
+            </p>
+            <a class="btn btn-lg btn-primary text-uppercase mt-3 mb-4">Get Started for Free</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="bg-secondary pt-6 pb-6">
+  <div class="container text-center text-white">
+    <h2 class="text-white h1">FusionAuth is Auth Built for &lt;devs&gt;</h2>
+    <p class="h5 text-white mt-4">Description API really cool get it here now. </p>
+    <a href="/" class="btn btn-primary btn-lg mt-4 mb-4">Learn More</a>
+    <h4 class="text-light mb-4">We got this. Go build the cool stuff.</h4>
+    <img src="/assets/img/fusionauth-logo-white-orange.svg" alt="FusionAuth Logo" class="m-auto mt-4 mb-4" style="max-width: 250px">
+  </div>
+</section>
+
+{% include macros/subscribe.html %}

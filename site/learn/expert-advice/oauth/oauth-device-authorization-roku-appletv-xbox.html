@@ -1,0 +1,207 @@
+---
+layout: advice
+title: OAuth Interesting idea
+description: TODO Add description.
+image: fusionauth-share-image.jpg
+header_dark: true
+categories:
+- oauth
+- saml
+---
+
+<section>
+  <div class="container">
+    <div class="row">
+      <article class="col-12 col-lg-9">
+        <div class="">
+          <div class="pt-5 ">
+            <p><a href="/learn/expert-advice">Expert Advice</a> > <a href="/learn/expert-advice/oauth/">OAuth</a></p>
+          </div>
+          <h1>How-To: OAuth Device Authorization for Roku, AppleTV, and XBox</h1>
+          <p>Matthew Altman & Trevor Smith</p>
+          <i class="fal fa-star text-primary mb-3"></i>
+          <i class="fal fa-star text-primary mb-3"></i>
+          <i class="fal fa-star text-primary mb-3"></i>
+          <i class="fal fa-star text-primary mb-3"></i>
+          <i class="fal fa-star text-primary mb-3"></i>
+        </div>
+        <div class="embed-responsive embed-responsive-2by1">
+          <div class="embed-responsive-item text-center">
+            <img class="post-image" src="/assets/img/blogs/oauth-device-authorization-grants2.png">
+          </div>
+        </div>
+      </article>
+      <article class="col-12 col-lg-9">
+        <div class="post-body mt-5">
+          <div class="post-body-content">
+
+            <p>If you have a modern entertainment device like a Roku, AppleTV, XBox, Playstation, etc., there’s a good chance that at some point you will want to connect to one or more subscription services like Netflix, Amazon, Pandora, or HBO. In theory it should be easy. It’s your device and your service, so just turn it on and go right? Sadly, no. We’ve gone through it, and the reality is it’s not the best way to start off an evening of relaxation. Depending on the device and the service, you’re almost guaranteed to hit a broad range of usability issues. TV remotes and game controllers were never designed to handle the kind of text input that is frequently used to get everything connected. We were recently asked by one of our clients, a large media provider, to provide a solution to this problem and OAuth Device Authorization Grants were the key to it all.</p>
+
+<!--more-->
+
+<p><img src="/assets/img/blogs/roku_remote.png" alt="" class="img-fluid float-right mr-md-5" style="" /></p>
+
+<h2 id="the-problem">The Problem</h2>
+<p>We login to accounts all the time using our phones and computers. We know how to do that. It shouldn’t be that difficult on another device, right? The problem is Internet connected boxes like XBox and AppleTV don’t have a readily available keyboard or tap input system. Suddenly usability becomes a big issue. Fumbling your way through a virtual keyboard to enter your username and password using a D-pad on a game controller or the arrow keys on a remote control can be a nightmare. And since most services ask you to enter very long, complex keycodes with all sorts of special characters and mixed-case letters, it’s highly likely you will accidentally enter it wrong and have to start all over again.
+<br /><br /><br /></p>
+
+<h2 id="the-solution">The Solution</h2>
+<p>In order to address this issue there is a proposed standard for the <a href="https://tools.ietf.org/html/rfc8628">Oauth2 Device Authorization Grant</a>.</p>
+
+<p><img src="/assets/img/blogs/roku_activate.png" alt="" class="img-fluid mb-4 mt-2 mx-auto d-block" style="" /></p>
+
+<p>There’s twenty pages of details there, so we don’t blame you if you didn’t read the entire specification. We read it, and here’s the short of it. (For this example, we are trying to connect our Roku device to a Netflix subscription.)</p>
+
+<ul>
+<li>When you initiate the login flow on the Roku, the Roku calls out to an Authorization Server.</li>
+<li>The Authorization Server responds with a very short code and a URL.</li>
+<li>The short code and URL are displayed on the Roku screen.</li>
+<li>The user is instructed to browse to that URL with another device like a smartphone and enter the code.</li>
+<li>The user then needs to use the smartphone to login to their Roku account. It should be much easier this time since they’re on their smartphone with a more friendly input.</li>
+<li>Once the login is successful, then the Roku is instantly logged in since it’s been asking the Authorization Server periodically if the user has completed authentication and has been approved.</li>
+</ul>
+
+<p>In general, that’s the whole flow. Pretty simple, right? If you are integrating this into your application, make sure you understand all the details of the specification. It provides useful details on items like security and usability that will give your users a more secure and easy-to-follow experience.</p>
+
+<h2 id="what-it-looks-like-in-fusionauth">What It Looks Like in FusionAuth</h2>
+<p>Recently, one of our clients had this exact need, and asked us if we could add it to the FusionAuth platform. They wanted their users to be able to log into their app on a variety of set-top boxes in order to access media from their account. It needed to be an easy and intuitive mechanism so users didn’t get frustrated and abandon the process. Of course we said yes, and are happy to announce that we are releasing this powerful feature in version 1.11.0.</p>
+
+<h3 id="oauth-configuration-grant-type">OAuth Configuration Grant Type</h3>
+<p>To accomplish this, we added new configuration options available in the FusionAuth UI and the API. First, the OAuth configuration for an Application has a new Grant Type of <code class="highlighter-rouge">Device</code>, which enables the Device Authorization Grant workflow in FusionAuth. We also added a <code class="highlighter-rouge">Device Verification URL</code> which is required for the grant. This is the URL that will be displayed to the end user where they will enter their short code. Ideally, this is a very short, branded URL.</p>
+
+<h3 id="device-grant-user-code">Device Grant User Code</h3>
+<p>We also added new configuration to Advanced Configuration for a Tenant. The <code class="highlighter-rouge">Device Grant User Code</code> generator is where you can specify what the short code that the user receives looks like. It can be all numbers, all alphabetical, both, or secure encoded bytes. While we don’t recommend using the encoded byte generator for user interactive work-flows, if you want to punish your users by forcing them to type in a long sequence of characters we won’t stop you.
+We’ve taken the liberty to remove <code class="highlighter-rouge">0</code>, <code class="highlighter-rouge">1</code> and the vowels <code class="highlighter-rouge">A</code>, <code class="highlighter-rouge">E</code>, <code class="highlighter-rouge">I</code>, <code class="highlighter-rouge">O</code>, and <code class="highlighter-rouge">U</code>  from the possible characters to help eliminate characters that look like digits such as <code class="highlighter-rouge">1</code> and <code class="highlighter-rouge">I</code> and to prevent profanity from accidentally being generated.</p>
+
+<p>In addition you can also specify the length of the code to be generated. This configuration lets you adjust the balance between security and usability.</p>
+
+<p>Lastly, you will find the <code class="highlighter-rouge">Device Grant Code</code> duration configuration. This is the time in seconds that the code will remain valid. To reduce brute force hacking attempts the duration should be as short as possible while providing a good user experience. The default duration is 5 minutes which is generally adequate for a user to complete the login procedure on a home computer or a mobile device.</p>
+
+<h3 id="how-it-works">How It Works</h3>
+<p>The app that is installed on the set top device will make a request to the <code class="highlighter-rouge">/oauth2/device_authorize</code> endpoint to initiate the flow. This endpoint will response with the following fields in a JSON format:</p>
+<ul>
+<li><code class="highlighter-rouge">device_code</code> - This is a unique code that is tied to the <code class="highlighter-rouge">user_code</code>; the device uses this to poll FusionAuth.</li>
+<li><code class="highlighter-rouge">expires_in</code> - Defines how long until the code is no longer valid.</li>
+<li><code class="highlighter-rouge">interval</code> - Defines the minimum amount of time in seconds to wait between polling requests to FusionAuth.</li>
+<li><code class="highlighter-rouge">user_code</code> - The short code that the user will be prompted to enter.</li>
+<li><code class="highlighter-rouge">verification_uri</code> - The URL the user will be asked to browse to in order to enter the code.</li>
+<li><code class="highlighter-rouge">verification_uri_complete</code> - The same URL but has the <code class="highlighter-rouge">user_code</code> appended onto it. This let’s you do cool things like generate a QR Code so the user can simply scan it and not even have to enter the code.</li>
+</ul>
+
+<p>Below is an example JSON response from this endpoint:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+</span><span class="nl">"device_code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"e6f_lF1rG_yroI0DxeQB5OrLDKU18lrDhFXeQqIKAjg"</span><span class="p">,</span><span class="w">
+</span><span class="nl">"expires_in"</span><span class="p">:</span><span class="w"> </span><span class="mi">600</span><span class="p">,</span><span class="w">
+</span><span class="nl">"interval"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w">
+</span><span class="nl">"user_code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FBGLLF"</span><span class="p">,</span><span class="w">
+</span><span class="nl">"verification_uri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://piedpiper.com/device"</span><span class="p">,</span><span class="w">
+</span><span class="nl">"verification_uri_complete"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://piedpiper.com/device?user_code=FBGLLF"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Once the device has all of this information and displays the URL and Code to the user, it starts repeatedly making calls to the FusionAuth <code class="highlighter-rouge">/oauth2/token</code> endpoint to wait for the user to complete the authentication procedure.  There are a few different errors that it may receive back:</p>
+
+<ul>
+<li><code class="highlighter-rouge">authorization_pending</code> - This is the normal one that just means the user hasn’t entered their code yet, so the device should keep trying</li>
+<li><code class="highlighter-rouge">slow_down</code> - The device is calling FusionAuth too fast, it should slow down</li>
+<li><code class="highlighter-rouge">access_denied</code> - The user denied the authorization request, the device should stop trying and indicate the device has not been connected</li>
+<li><code class="highlighter-rouge">expired_token</code> - The code has expired, the device should stop trying and ask the user to retry</li>
+</ul>
+
+<p>Each of these errors will come back in a JSON response body, for example here is a JSON response that will be returned until the user completes the authentication procedure:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+</span><span class="nl">"error"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"authorization_pending"</span><span class="p">,</span><span class="w">
+</span><span class="nl">"error_description"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"The authorization request is still pending"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>While the device is busy asking “Are we there yet?”, the user should be browsing to the URL displayed to them on their screen. This can be a simple form hosted by the client, or it can be redirected to our pre-built and FusionAuth themeable <code class="highlighter-rouge">/oauth2/device</code> page. If the customer has their own page, it will simply need to call <code class="highlighter-rouge">/oauth2/device/validate</code> in order to validate the code entered by the user. If the code is good, then a redirect to <code class="highlighter-rouge">/oauth2/authorize</code> will allow the workflow to proceed.</p>
+
+<p>After the user has entered their code and logged in, then the call will succeed and return the <code class="highlighter-rouge">access_token</code> and optional <code class="highlighter-rouge">refresh_token</code>. The device has what it needs and is done at this point.</p>
+
+<p>That’s it! The rest of the logic added to our existing <code class="highlighter-rouge">/oauth2/token</code> and <code class="highlighter-rouge">/oauth2/authorize</code> endpoints will handle the checking and validating of the <code class="highlighter-rouge">device_code</code> and <code class="highlighter-rouge">user_code</code>, including their expiration.</p>
+
+<h2 id="try-it-yourself">Try It Yourself</h2>
+<p>We’re excited to offer this new feature in FusionAuth, and hope you take the time to try it out for yourself. For more information:</p>
+<ul>
+<li>Read this <a href="/docs/v1/tech/oauth/overview#example-device-authorization-grant">tutorial</a> that explains how to implement this with specific code examples.</li>
+<li>Check out the updated API docs which lay out changes and additions to the <a href="/docs/v1/tech/oauth/endpoints">Oauth2 API</a>.</li>
+<li>Download <a href="https://github.com/FusionAuth/fusionauth-device-grant-example">fusionauth-device-grant-example</a> which is a toy example app that represents the device side of the workflow. With it and <a href="/">FusionAuth</a> you can have a complete working example of the Device Authorization Grant.</li>
+</ul>
+
+<h2 id="fusionauth-is-always-improving">FusionAuth Is Always Improving</h2>
+<p>We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know either at <a href="https://github.com/FusionAuth/fusionauth-issues" title="Jump to GitHub">GitHub</a> or <a href="https://stackoverflow.com/questions/tagged/fusionauth" title="Jump to StackOverflow">StackOverflow</a> and we’ll take a look.</p>
+
+<h2 id="learn-more-about-fusionauth">Learn More About FusionAuth</h2>
+<p>FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, passwordless login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.</p>
+
+<p><a href="/" title="FusionAuth Home" class="btn btn-primary">Learn More</a></p>
+
+
+          </div>
+
+<div class="text-center mt-5 mb-5 py-5">
+  <hr>
+    <div class="mt-5 mb-5">
+      <p>How helpful was this article? Click a star to rate.</p>
+      <i class="fal fa-star text-primary mb-3"></i>
+      <i class="fal fa-star text-primary mb-3"></i>
+      <i class="fal fa-star text-primary mb-3"></i>
+      <i class="fal fa-star text-primary mb-3"></i>
+      <i class="fal fa-star text-primary mb-3"></i>
+    </div>
+  <hr>
+</div>
+
+<!-- comments -->
+          <div class="post-body-comments">
+            <div class="just-comments" data-apikey="edc7b4a8-97ce-47ba-9e21-0477407197ef"></div>
+            <script async src="https://just-comments.com/w.js"></script>
+          </div>
+        </div>
+      </article>
+
+
+      <!-- side bar -->
+      <div class="col-12 col-lg-3">
+        <div class="mt-5">
+          <div class="p-4 border">
+            <h2>Related Articles</h2>
+
+            <a class="d-block mt-3 mb-3 link-dark" href="/blog/2019/10/29/oauth-device-authorization-roku-appletv-xbox">How-To: OAuth Device Authorization for Roku, AppleTV, and XBox</a>
+
+            <a class="d-block mt-3 mb-3 link-dark" href="/blog/2019/10/09/build-fusionauth-python-login-web-app-flask">Title</a>
+
+            <a class="d-block mt-3 mb-3 link-dark" href="/blog/2019/10/08/deactivating-reactivating-deleting-user-fusionauth-python">Deactivating, Reactivating, and Deleting A FusionAuth User in Python</a>
+
+            <a class="d-block mt-3 mb-3 link-dark" href="/blog/2019/10/02/storing-user-data">Storing User Data in FusionAuth</a>
+
+          </div>
+          <div class="mt-4 mb-4 bg-secondary p-4 text-center text-white">
+            <img class="w-100" src="/assets/img/fusionauth-logo-white-orange.svg">
+            <p class="mt-4 text-light">
+              FusionAuth provides authentication, authorization, and user management for every app: deploy anywhere, integrate with anything, in minutes.
+            </p>
+            <a class="btn btn-lg btn-primary text-uppercase mt-3 mb-4">Get Started for Free</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="bg-secondary pt-6 pb-6">
+  <div class="container text-center text-white">
+    <h2 class="text-white h1">FusionAuth is Auth Built for &lt;devs&gt;</h2>
+    <p class="h5 text-white mt-4">FusionAuth gives devs complete flexibility with minimal implementation effort. Use our Fast Path install to get started in minutes.</p>
+    <a href="/" class="btn btn-primary btn-lg mt-4 mb-4">Learn More</a>
+    <h4 class="text-light mb-4">We got this. Go build the cool stuff.</h4>
+    <img src="/assets/img/fusionauth-logo-white-orange.svg" alt="FusionAuth Logo" class="m-auto mt-4 mb-4" style="max-width: 250px">
+  </div>
+</section>
+
+{% include macros/subscribe.html %}

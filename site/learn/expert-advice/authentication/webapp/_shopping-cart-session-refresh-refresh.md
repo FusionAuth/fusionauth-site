@@ -1,0 +1,5 @@
+1. A while later, the user's session expires and the user clicks on their shopping cart again. The browser requests the shopping cart from the application backend and sends the session id and refresh token cookies to the application backend
+1. The application backend attempts to load the server-side session associated with session cookie and realizes it is expired. Since the browser also sent across the refresh token, the application backend calls the JWT refresh API in FusionAuth with the refresh token
+1. FusionAuth looks up the refresh token and returns a new JWT
+1. The application backend receives the 200 from FusionAuth and creates a server-side session and stores the User object (or JWT) in it
+1. The application backend responds with the user's shopping cart HTML, CSS & JavaScript that the browser renders. It also includes the new session id as a cookie that replaces the old session id in the browser

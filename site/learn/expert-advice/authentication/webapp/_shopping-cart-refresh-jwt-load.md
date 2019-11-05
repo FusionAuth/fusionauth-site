@@ -1,0 +1,2 @@
+1. The browser requests the user's shopping cart from the application backend and includes the JWT and refresh token cookies
+1. The application backend verifies the JWT and then uses the JWT to identify the user. Once the user is identified, the backend looks up the user's shopping cart from the database (or similar location). Finally, the application backend returns the user's shopping cart as HTML, CSS & JavaScript that the browser renders

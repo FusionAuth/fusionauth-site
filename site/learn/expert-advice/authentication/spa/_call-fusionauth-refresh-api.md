@@ -1,0 +1,2 @@
+1. The application recognizes that the JWT has expired and makes a request directly to the JWT refresh API in FusionAuth. This request includes the refresh token cookie
+1. FusionAuth looks up the refresh token and returns a new JWT (either in the body or as an HttpOnly cookie depending on the workflow)

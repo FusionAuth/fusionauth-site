@@ -1,0 +1,2 @@
+1. The user inputs their credentials and clicks the submit button. The browser AJAX `POST`s the form data directly to the Login API in FusionAuth
+1. FusionAuth returns a 200 status code stating that the credentials were okay. It also returns a JWT in JSON and a refresh token cookie with the domain of the FusionAuth server (which could be different than the application backend)
