@@ -5,7 +5,11 @@ description: How to use and revoke JWTs for effective and efficient authorizatio
 author: Brian Pontarelli
 categories: tokens
 header_dark: true
-image: blogs/revoking-jwts.jpg
+image: articles/revoking-jwts.jpg
+related:
+- title: Let's talk about JWTs baby!
+  url: /learn/expert-advice/tokens/lets-talk-about-jwts-baby  
+
 ---
 I have been talking with developers about JSON Web Tokens (JWTs) recently and a one question keeps coming up: "How do I revoke a JWT?"
 

@@ -4,8 +4,16 @@ title: Guide to <br/> User Data Security
 subtitle: by Brian Pontarelli
 description: Protect your user data with this step-by-step guide to secure your servers and applications.
 header_dark: true
-image: resources/guide/guide-to-user-data-security.png
+image: articles/guide-to-user-data-security-2.jpg
+related:
+- title: Password Compliance Checklist
+  url: /learn/expert-advice/security/password-security-compliance-checklist
+- title: Save a CPU—Ditch Bcrypt, Use SHA2 Instead
+  url: /learn/expert-advice/security/save-a-cpu-ditch-bcrypt-use-sha2-instead
 ---
+<div class="card text-secondary mb-4">
+  {% include guide/_toc.html %}
+</div>
 
 ## 1. Overview {#overview}
 
@@ -73,7 +81,7 @@ In order to illustrate our thinking around server security, we need to cover wha
 
 Now that we know what type of servers and applications we will be securing, let's take a look at the server architecture for a simple example of a fictional "To-do Application" and the server architecture we recommend you use for your applications.
 
-{% include _image.html src="/assets/img/resources/guide/server-architecture.png" alt="Server architecture" class="w-md-50 mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/server-architecture.png" alt="Server architecture" class="img-fluid text-center" figure=false %}
 
 In general, you will want to separate your Database Server from your Application Server. While securing two servers instead of one does require additional work, it will give you the flexibility to control access to each server separately. This also means that if a breach does occur, the hacker will have a couple more hoops to jump through in order to gain access to your user data (we'll discuss this later).
 
@@ -1259,7 +1267,7 @@ This value is then hashed with an algorithm like Bcrypt or PBKDF2. The result mi
 
 The second part of password security is using a complex hashing algorithm. As engineers, we are trained that performance is good. Things that run faster are better because the end-user doesn't have to wait. This is not the case for passwords. Instead, we actually want our password hashing algorithm to be as slow and complex as tolerable.
 
-{% include _image.html src="/assets/img/resources/guide/bitcoin-mining-farm.jpg" alt="Bitcoin Farm" class="img-thumbnail float-right ml-md-4" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/bitcoin-mining-farm.jpg" alt="Bitcoin Farm" class="img-thumbnail img-fluid" figure=false %}
 
 The reason that slow algorithms are better is that it takes the computer time to generate the hash. This time makes brute-force attacks nearly impossible. Here's why.
 

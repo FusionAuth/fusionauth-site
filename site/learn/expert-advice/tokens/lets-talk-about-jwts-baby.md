@@ -6,6 +6,9 @@ author: Brian Pontarelli
 categories: tokens
 header_dark: true
 image: blogs/jwt-knuckle-bump.jpg
+related:
+- title: Revoking JWTs
+  url: /learn/expert-advice/tokens/revoking-jwts  
 ---
 
 

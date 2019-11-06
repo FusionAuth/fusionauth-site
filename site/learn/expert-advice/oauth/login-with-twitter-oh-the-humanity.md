@@ -6,14 +6,15 @@ author: Daniel DeGroff
 categories: oauth
 header_dark: true
 image: articles/login-with-twitter-2.png
+related:
+- title: "How-To: OAuth Device Authorization"
+  url: /learn/expert-advice/oauth/oauth-device-authorization-roku-appletv-xbox
 ---
 When we built out our social login support in FusionAuth we were forced to navigate the harrowing path to signing our OAuth v1 requests to Twitter.
 
 If you've ever done this in Java, you may know there isn't a great option off the shelf to make this easy, or if there is I was unable to find it. Since we had to do some heavy lifting, we decided to share our work with the Java community.
 
 TL;DR See source code on [Gist](https://gist.github.com/robotdan/33f5834399b6b30fea2ae59e87823e1d).
-
-<!--more-->
 
 ## Sifting through the disaster that is Twitter login
 

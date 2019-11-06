@@ -4,7 +4,14 @@ title: "Password Security Compliance Checklist"
 description: "This is a checklist of leading password recommendations designed to strengthen your company’s password security policy, meet compliance standards and minimize the risk of data theft."
 author: Bryan Giese
 categories: security
+header_dark: true
 image: blogs/password-security-checklist.png
+related:
+- title: Guide to User Data Security
+  url: /learn/expert-advice/security/guide-to-user-data-security
+- title: Save a CPU—Ditch Bcrypt, Use SHA2 Instead
+  url: /learn/expert-advice/security/save-a-cpu-ditch-bcrypt-use-sha2-instead
+
 ---
 
 Right or wrong, usernames and passwords have been a critical component of website and application security for years. However, weak passwords can result in a costly data breach if compromised. To help ensure stronger password security, leading organizations have published clear criteria to discourage users from selecting easy to guess passwords. We have assembled those criteria into one checklist of key password recommendations to help you evaluate and improve your own password policies.

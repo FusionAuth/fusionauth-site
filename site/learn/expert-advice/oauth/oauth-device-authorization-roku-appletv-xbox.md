@@ -6,6 +6,10 @@ image: blogs/oauth-device-authorization-grants2.png
 author: Matthew Altman & Trevor Smith
 header_dark: true
 categories: oauth
+related:
+- title: Login with Twitter - Oh, the Humanity!
+  url: /learn/expert-advice/oauth/login-with-twitter-oh-the-humanity
+
 ---
 
 If you have a modern entertainment device like a Roku, AppleTV, XBox, Playstation, etc., there's a good chance that at some point you will want to connect to one or more subscription services like Netflix, Amazon, Pandora, or HBO. In theory it should be easy. It's your device and your service, so just turn it on and go right? Sadly, no. We've gone through it, and the reality is it's not the best way to start off an evening of relaxation. Depending on the device and the service, you're almost guaranteed to hit a broad range of usability issues. TV remotes and game controllers were never designed to handle the kind of text input that is frequently used to get everything connected. We were recently asked by one of our clients, a large media provider, to provide a solution to this problem and OAuth Device Authorization Grants were the key to it all.  
