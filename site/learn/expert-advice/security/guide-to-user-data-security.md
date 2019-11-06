@@ -1,5 +1,5 @@
 ---
-layout: guide-advice
+layout: advice
 title: Guide to <br/> User Data Security
 subtitle: by Brian Pontarelli
 description: Protect your user data with this step-by-step guide to secure your servers and applications.
@@ -89,13 +89,13 @@ Our examples will use two Linode 1024 instances hosted in California. Here are t
 
 #### Step 1: Select the server type
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-1.png" alt="Linode setup select server type" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-1.png" alt="Linode setup select server type" class="img-fluid text-center" figure=false %}
 
 #### Step 2: Deploy the Linux Operating System
 
 In this step, be sure to select a long and secure root password. Later you will disable root passwords, but for the initial process you need to ensure the server is secure.
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-2.png" alt="Linode setup select operating system" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-2.png" alt="Linode setup select operating system" class="img-fluid text-center" figure=false %}
 
 <div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>
@@ -108,19 +108,19 @@ Prevent direct access when it isn't required
 
 You need to give both servers a private IP address that is not world accessible, but is accessible between Linode servers. This setting is on the Remote Access page.
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-3.png" alt="Linode setup private IP" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-3.png" alt="Linode setup private IP" class="img-fluid text-center" figure=false %}
 
 Once you click the `Add a Private IP` button, you will be presented with this screen that allows you to create a private IP for the server.
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-4.png" alt="Linode setup private IP form" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-4.png" alt="Linode setup private IP form" class="img-fluid text-center" figure=false %}
 
 After you add a private IP address, your configuration should look like this:
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-5.png" alt="Linode setup private IP assigned" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-5.png" alt="Linode setup private IP assigned" class="img-fluid text-center" figure=false %}
 
 Before the private IP address will take effect, you need to enable the "Auto-configure Networking" setting. From the Dashboard click the "Edit" link to the right of your configuration at the top of the page. This will take you to the configuration options. At the bottom, enable the "Auto-configure networking setting". This option looks like this:
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-6.png" alt="Linode setup automatic networking" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-6.png" alt="Linode setup automatic networking" class="img-fluid text-center" figure=false %}
 
 Then click "Save Changes".
 
@@ -128,7 +128,7 @@ Then click "Save Changes".
 
 Now, boot your Linode server by clicking the Boot button on the details page:
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-7.png" alt="Linode setup boot server" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/linode-setup-7.png" alt="Linode setup boot server" class="img-fluid text-center" figure=false %}
 
 Both servers should now be running. The next step of the process is to lock down remote access to the servers and secure passwords and user accounts. You will need to perform all of these steps on each server to ensure they both are secure. There are numerous guides available to help you secure Linux servers, but we will cover the most common steps we use at FusionAuth.
 
@@ -816,7 +816,7 @@ end
 
 You must configure the Pushover and Slack variables defined at the top of the file for the integrations to work properly. For the Pushover integration, create a Pushover account and a Pushover application. The Pushover application creation looks like this:
 
-{% include _image.html src="/assets/img/resources/guide/pushover-setup.png" alt="Pushover setup" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/pushover-setup.png" alt="Pushover setup" class="img-fluid text-center" figure=false %}
 
 Give your Pushover application a name, description and URL. Select "Script" from the Type select box.
 
@@ -1317,7 +1317,7 @@ It is interesting to note that the PBKDF2 algorithm takes the salt as a paramete
 
 SQL injection is an application level vulnerability that is caused when an application builds SQL queries (or any type of database query) directly from user input. The XKCD comic strip illustrates this principle:
 
-{% include _image.html src="/assets/img/resources/guide/sql-injection.png" alt="SQL Injection" class="mw-100 mx-auto mb-4 text-center" figure=true %}
+{% include _image.html src="/assets/img/resources/guide/sql-injection.png" alt="SQL Injection" class="img-fluid text-center" figure=false %}
 
 <div class="card float-md-right callout ml-md-3 mb-3 h-auto">
 <div class="card-header bg-info text-white">GUIDELINE</div>

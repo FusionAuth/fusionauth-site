@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: OAuth Interesting idea
-description: TODO Add description.
+title: "How-To: OAuth Device Authorization for Roku, AppleTV, and XBox"
+description: "How To: OAuth Device Authorization for Roku, AppleTV, and XBox and others."
 image: blogs/oauth-device-authorization-grants2.png
 author: Matthew Altman & Trevor Smith
 header_dark: true
@@ -39,11 +39,11 @@ To accomplish this, we added new configuration options available in the FusionAu
 
 ### Device Grant User Code
 We also added new configuration to Advanced Configuration for a Tenant. The `Device Grant User Code` generator is where you can specify what the short code that the user receives looks like. It can be all numbers, all alphabetical, both, or secure encoded bytes. While we don't recommend using the encoded byte generator for user interactive work-flows, if you want to punish your users by forcing them to type in a long sequence of characters we won't stop you.
-We've taken the liberty to remove `0`, `1` and the vowels `A`, `E`, `I`, `O`, and `U`  from the possible characters to help eliminate characters that look like digits such as `1` and `I` and to prevent profanity from accidentally being generated. 
+We've taken the liberty to remove `0`, `1` and the vowels `A`, `E`, `I`, `O`, and `U`  from the possible characters to help eliminate characters that look like digits such as `1` and `I` and to prevent profanity from accidentally being generated.
 
-In addition you can also specify the length of the code to be generated. This configuration lets you adjust the balance between security and usability. 
+In addition you can also specify the length of the code to be generated. This configuration lets you adjust the balance between security and usability.
 
-Lastly, you will find the `Device Grant Code` duration configuration. This is the time in seconds that the code will remain valid. To reduce brute force hacking attempts the duration should be as short as possible while providing a good user experience. The default duration is 5 minutes which is generally adequate for a user to complete the login procedure on a home computer or a mobile device. 
+Lastly, you will find the `Device Grant Code` duration configuration. This is the time in seconds that the code will remain valid. To reduce brute force hacking attempts the duration should be as short as possible while providing a good user experience. The default duration is 5 minutes which is generally adequate for a user to complete the login procedure on a home computer or a mobile device.
 
 ### How It Works
 The app that is installed on the set top device will make a request to the `/oauth2/device_authorize` endpoint to initiate the flow. This endpoint will response with the following fields in a JSON format:

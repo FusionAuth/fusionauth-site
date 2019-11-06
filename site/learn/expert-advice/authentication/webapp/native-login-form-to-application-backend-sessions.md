@@ -1,8 +1,9 @@
 ---
-layout: article
+layout: advice
 title: Webapp native login to backend
 subtitle: Using sessions
 description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions
+header_dark: true
 image: articles/login-types-share-image.jpg
 ---
 

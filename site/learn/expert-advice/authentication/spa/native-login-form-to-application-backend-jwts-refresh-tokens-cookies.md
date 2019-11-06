@@ -1,8 +1,9 @@
 ---
-layout: article
+layout: advice
 title: Single-page application native login to backend
 subtitle: Using JWTs and refresh tokens
 description: An explanation of single-page application login using a native login form that submits to the application backend and uses JWTs and refresh tokens in cookies
+header_dark: true
 image: articles/login-types-share-image.jpg
 ---
 

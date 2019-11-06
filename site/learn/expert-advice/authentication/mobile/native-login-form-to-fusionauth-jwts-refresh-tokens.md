@@ -1,8 +1,9 @@
 ---
-layout: article
+layout: advice
 title: Mobile login to FusionAuth
 subtitle: Using JWTs and refresh tokens
 description: An explanation of mobile application login using a native login form that submits directly to FusionAuth and uses JWTs and refresh tokens
+header_dark: true
 image: articles/login-types-share-image.jpg
 ---
 

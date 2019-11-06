@@ -1,8 +1,9 @@
 ---
-layout: article
+layout: advice
 title: Webapp native login to backend
 subtitle: Using sessions and refresh tokens
 description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions plus refresh tokens in cookies
+header_dark: true
 image: articles/login-types-share-image.jpg
 ---
 
