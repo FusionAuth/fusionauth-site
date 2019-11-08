@@ -1,13 +1,13 @@
 To do for Expert Advice
 ====
-* [ ] Category Icons
-  - [ ] Authentication: Key
-  - [ ] ciam
-  - [ ] Core Identity - Different term?:
-  - [ ] OAuth: logo,
-  - [ ] security: shield, lock, user shield,
-  - [ ] Tokens:
-  - [ ] dev tools:
+* [X] Category Icons (look at removing shadow)
+  - [X] Authentication: Key,  
+  - [X] ciam: user class
+  - [X] Core Identity - Different term? (Basics): layer-group
+  - [X] OAuth: logo, passport
+  - [X] security: shield, lock, user shield, lock-alt
+  - [X] Tokens: address-card
+  - [X] dev tools: laptop-code
 * [ ] Related Articles Functionality
 * [ ] Active nav states for categories
 * [ ] Dynamic Breadcrumbs
@@ -23,6 +23,9 @@ To do for Expert Advice
 * [ ] Guide to user data
   - [ ] Isn't properly responsive on mobile - not sure why.
   - [ ] TOC in the guide is under the image currently - thoughts? - could possible put as accordion in top right sidebar? Left side bar made all 3 columns tight, can discuss.
+* [ ] Make expert page pop/interesting Bryan
+* [ ] Consistent article graphics
+* [ ] Replace blue in Features graphics
 
 Main site
 * [ ] Reconfigure main page nav for Expert Advice
