@@ -3,9 +3,9 @@ layout: advice
 title: "Let's talk about JWTs baby!"
 description: "The pros and cons of JWTs and why you should (or shouldn't) use them."
 author: Brian Pontarelli
-categories: tokens
 header_dark: true
 image: blogs/jwt-knuckle-bump.jpg
+category: Tokens
 related:
 - title: Revoking JWTs
   url: /learn/expert-advice/tokens/revoking-jwts  

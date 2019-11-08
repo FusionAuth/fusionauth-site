@@ -6,6 +6,7 @@ author: Daniel DeGroff
 categories: oauth
 header_dark: true
 image: articles/login-with-twitter-2.png
+category: OAuth
 related:
 - title: "How-To: OAuth Device Authorization"
   url: /learn/expert-advice/oauth/oauth-device-authorization-roku-appletv-xbox

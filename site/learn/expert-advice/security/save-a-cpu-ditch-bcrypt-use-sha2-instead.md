@@ -3,9 +3,9 @@ layout: advice
 title: "Save a CPU - Ditch BCrypt, Use SHA2 Instead"
 description: "One-way hashing for passwords is the standard mechanism used to protect your user's passwords. Let's take a look at how it works and some new ideas to improve it."
 author: Brian Pontarelli
-categories: security
 header_dark: true 
 image: articles/save-a-cpu.png
+category: Security
 related:
 - title: Guide to User Data Security
   url: /learn/expert-advice/security/guide-to-user-data-security

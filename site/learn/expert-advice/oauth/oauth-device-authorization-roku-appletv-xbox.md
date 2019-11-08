@@ -5,7 +5,7 @@ description: "How To: OAuth Device Authorization for Roku, AppleTV, and XBox and
 image: blogs/oauth-device-authorization-grants2.png
 author: Matthew Altman & Trevor Smith
 header_dark: true
-categories: oauth
+category: OAuth
 related:
 - title: Login with Twitter - Oh, the Humanity!
   url: /learn/expert-advice/oauth/login-with-twitter-oh-the-humanity

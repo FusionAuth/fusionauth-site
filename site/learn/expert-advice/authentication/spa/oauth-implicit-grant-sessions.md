@@ -5,6 +5,7 @@ subtitle: Using sessions
 description: An explanation of single-page application login using FusionAuth OAuth interface with the implicit grant and uses server-side sessions
 header_dark: true
 image: articles/login-types-share-image.jpg
+category: Authentication
 ---
 
 {% capture intro %}

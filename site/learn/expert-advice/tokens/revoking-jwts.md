@@ -3,9 +3,9 @@ layout: advice
 title: Revoking JWTs
 description: How to use and revoke JWTs for effective and efficient authorization management.
 author: Brian Pontarelli
-categories: tokens
 header_dark: true
 image: articles/revoking-jwts.jpg
+category: Tokens
 related:
 - title: Let's talk about JWTs baby!
   url: /learn/expert-advice/tokens/lets-talk-about-jwts-baby  

@@ -4,6 +4,7 @@ title: Types of Logins and Authentication Workflows
 description: A detailed explanation of the numerous types of login/authentication supported and recommended by FusionAuth
 header_dark: true
 image: articles/login-types-share-image.jpg
+category: Authentication
 ---
 
 The landscape of applications today is broad. Similarly, the methods of authentication used is similarly varied. FusionAuth provides a range of options for authentication for every type of application. This section of the website is dedicated to many of the login methods supported and recommended by FusionAuth.

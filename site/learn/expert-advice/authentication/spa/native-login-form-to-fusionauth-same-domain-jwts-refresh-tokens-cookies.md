@@ -5,6 +5,7 @@ subtitle: Using JWTs and refresh tokens
 description: An explanation of single-page application login using a native login form that submits directly to FusionAuth and uses server-side sessions plus refresh tokens in cookies
 header_dark: true
 image: articles/login-types-share-image.jpg
+category: Authentication
 ---
 
 {% capture intro %}

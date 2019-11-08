@@ -5,6 +5,7 @@ subtitle: Using JWTs and refresh tokens
 description: An explanation of mobile application login using a native login form that submits to the application backend and uses JWTs and refresh tokens
 header_dark: true
 image: articles/login-types-share-image.jpg
+category: Authentication
 ---
 
 {% capture intro %}

@@ -3,9 +3,9 @@ layout: advice
 title: "Password Security Compliance Checklist"
 description: "This is a checklist of leading password recommendations designed to strengthen your company’s password security policy, meet compliance standards and minimize the risk of data theft."
 author: Bryan Giese
-categories: security
 header_dark: true
 image: blogs/password-security-checklist.png
+category: Security
 related:
 - title: Guide to User Data Security
   url: /learn/expert-advice/security/guide-to-user-data-security

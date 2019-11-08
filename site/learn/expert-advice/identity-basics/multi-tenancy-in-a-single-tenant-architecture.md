@@ -2,9 +2,9 @@
 layout: advice
 title: Multi-tenancy in a Single-tenant Architecture
 author: Daniel DeGroff
-categories: core
 header_dark: true
 image: articles/multi-tenancy-2.png
+category: Identity Basics
 ---
 
 While FusionAuth is fundamentally a single-tenant solution, we do support multiple tenants within a single-tenant instance. In this post I'll outline a few of the common use cases we solve with our tenancy feature.
