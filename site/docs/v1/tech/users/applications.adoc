@@ -14,27 +14,169 @@ When you use one of the OAuth2 / OpenID Connect authorization grants you will pr
 
 The `applicationId` and `client_id` can be considered synonymous, both concepts leverage the same "Id" value.
 
-== Create an Application
+== Add an Application
 
-Before you start your integration with FusionAuth you need to setup at least one Application. Applications are the way that FusionAuth manages
-registrations of a user. If you haven't read the link:../getting-started/[Overview] section yet, it describes the relationship
-between **Users** and **Applications**. An Application in FusionAuth represents an authenticated resource.
-
-Click on [breadcrumb]#Applications# from the main menu to add an application. At a minimum, you must provide a [field]#Name# for the Application and the [field]#Tenant# it belongs to.
+Before you start your integration with FusionAuth you need to setup at least one Application. Click on [breadcrumb]#Applications# from the left navigation to begin.
 
 image::create-application.png[Create an Application,width=1200,role=shadowed]
 
-== Application Configuration
+[cols="3a,7a"]
+[.api]
+.Form Fields
+|===
+|Id [optional]#Optional#
+|An optional UUID. When this value is omitted a unique Id will be generated automatically.
+
+|Name [required]#Required#
+|The name of the application. This value is for display purposes only and can be changed at any time.
+
+|Tenant [required]#Required#
+|The tenant in which to create this application.
+
+This field is only displayed once multiple tenants exist in FusionAuth. When only a single tenant exists the application will always be created in the default tenant.
+|===
 
 === Roles
-You can optionally define roles for your Application at the time of creation.
 
-image::create-application-with-roles.png[Create an Application with Roles,width=1200,role=shadowed]
+The Roles tab will only be available on the Add Application form. To manage roles after the Application has been created you will use the Manage Roles action.
 
-Protected resources in an application can be managed by User roles.  Your application can define authorization rules based on a user's roles.
+[cols="3a,7a"]
+[.api]
+.Table columns
+|===
+|Name [required]#Required#
+|The name of the role. This value should be short and descriptive. Roles can only be crated and deleted, only the role description may be modified.
 
-A role with "Default" enabled will apply this role to all new users registered to this application.  A role with "Super Role" enabled will mark this role as a super role in API responses for the application.
+|Default [optional]#Optional#
+|One or more roles may be marked as default. A default role will be automatically added to new user registrations when no roles are explicitly provided on the API request.
 
-Once an application has been created, roles may be added, updated, and deleted through the "Manage Roles" interface.  This interface can be found by clicking the "Manage Roles" button on the [breadcrumb]#Applications# menu.
+|Super Role [optional]#Optional#
+|A role may be optionally marked as a super user role. This indicator is just a marker to indicate to you that this role encompasses all other roles. It has not affect on the usage of the role.
 
-image::manage-roles-button.png[Manage Roles Button,width=1200,role=shadowed]
+|Description [optional]#Optional#
+|An optional description to better describe the intended use of this role.
+|===
+
+To manage Application Roles after you have added an Application, click the icon:user[role=purple inline ui-button] Manage Roles button on the index page.
+
+image::applications.png[Applications,width=1200,role=shadowed bottom-cropped]
+
+=== OAuth
+
+The OAuth tab allows you to configure the OAuth2 and OpenID Connect settings specific to this Application.
+
+image::application-oauth.png[Application OAuth configuration,width=1200,role=shadowed top-cropped]
+
+
+[cols="3a,7a"]
+[.api]
+.Table columns
+|===
+|Client Id [read-only]#Read-only#
+|The read only client Id for this application. The client Id is used by OAuth2 / OpenID Connect to authenticate the grant request.
+
+|Client secret [read-only]#Read-only#
+|The read only client secret used for client authentication. When you enable Require authentication, this client secret will be required to obtain an access token from the Token endpoint.
+
+You may optionally regenerate the client secret if you think the secret has been compromised.
+
+|Require authentication [required]#Required#
+|When enabled access to the Token endpoint will require the use of the `client_secret` parameter. In most cases you will not want to disable this setting.
+
+There may be scenarios where you have a requirement to make a request to the Token endpoint where you cannot safely secure a client secret. In these scenarios you may need to disable client authentication.
+
+|Generate refresh tokens [required]#Required#
+|When enabled, FusionAuth will return a refresh token when the `offline_access` scope has been requested. When this setting is disabled refresh tokens will not be generated even if the `offline_access` scope is requested.
+
+|Authorized redirect URLs  [optional]#Optional#
+|In order to utilize grants that require a browser redirect using the `redirect_uri` parameter, the URLs need to be added to this list. URLs that are not authorized may not be utilized in the `redirect_uri`.
+
+|Authorized request origin URLs  [optional]#Optional#
+|This optional configuration allows you to restrict the origin of an OAuth2 / OpenID Connect grant request. If no origins are registered for this application, all origins are allowed.
+
+By default FusionAuth will add the `X-Frame-Deny` HTTP response header to the login pages to keep these pages from being rendered in an IFRAME. If the request comes from an authorized origin, FusionAuth will not add this header to the response. If you wish to load FusionAuth login pages in an IFRAME you will need to add the request origin to this configuration.
+
+|Logout URL [optional]#Optional#
+|The optional logout URL for this application. When provided this logout URL should handle the logout of a user in your application.
+
+If you need to end an HTTP session, or delete cookies to logout a user from your application, these operations should be handled by this URL. When the `/oauth2/logout` endpoint is utilized, each Logout URL registered for applications in this tenant will be called within an IFRAME to complete the SSO logout.
+
+If the OAuth2 logout endpoint is used with this Client Id this configured Logout URL will be also utilized as the redirect URL if the `post_logout_redirect_uri` parameter was not provided.
+
+If this application has not defined a Logout URL, the value configured at the Tenant level will be utilized. If no Logout URL has been configured a redirect to `/` will occur. A specific redirect URL may also be provided by using the `post_logout_redirect_uri` request parameter.
+
+See the link:../oauth/endpoints#logout[Logout endpoint] for more information.
+
+|Logout behavior [required]#Required#
+|This selector allows you to modify the behavior when using the link:../oauth/endpoints#logout[Logout endpoint] with this Client Id.
+
+* All applications - This is the default behavior. Logout out of the FusionAuth SSO, call each registered Logout URLs for the entire tenant and then redirect to the Logout URL registered for this application.
+* Redirect only - Do not call each registered Logout URL in the tenant, instead logout out of the FusionAuth SSO and then only redirect to the Logout URL registered for this application.
+
+See the link:../oauth/endpoints#logout[Logout endpoint] for more information.
+
+|Enabled grants [optional]#Optional#
+|The enabled OAuth2 grants. If a grant is not enabled and a client requests this grant during authentication an error will be returned to the caller indicating the grant is not enabled.
+
+* Authorization Code
+* Device
+* Implicit
+* Password
+* Refresh Token
+
+See The link:../oauth/overview[OAuth 2.0 & OpenID Connect Overview] for additional information on each of these grants.
+|===
+
+When you enable the `Device` grant you will be shown one additional configuration field.
+
+image::application-oauth-device-url.png[Application OAuth configuration Device URL,width=1200,role=shadowed top-cropped]
+
+[cols="3a,7a"]
+[.api]
+.Table columns
+|===
+|Device verification URL [required]#Required#
+|The URL to be returned during the Device Authorization request to be displayed to the end user. This URL will be where the end user navigates in order to complete the device authentication workflow.
+
+Required when the `Device` grant has been enabled.
+|===
+
+=== Webhooks
+
+The Webhooks tab allows you to select one or more webhooks to be used for this Application. In this example screenshot no webhooks are configured.
+
+image::application-webhooks-none.png[No Application Webhooks,width=1200,role=shadowed bottom-cropped top-cropped]
+
+This example screenshot shows one Application specific webhook selected.
+
+image::application-webhooks-selected.png[Application Webhooks Selected,width=1200,role=shadowed bottom-cropped top-cropped]
+
+=== CleanSpeak
+
+image::application-cleanspeak.png[No Application Webhooks,width=1200,role=shadowed bottom-cropped top-cropped]
+
+=== JWT
+
+image::application-jwt-disabled.png[Application JWT disabled,width=1200,role=shadowed bottom-cropped top-cropped]
+
+image::application-jwt-enabled.png[Application JWT enabled,width=1200,role=shadowed top-cropped]
+
+=== SAML
+
+image::application-saml-disabled.png[Application SAML,width=1200,role=shadowed bottom-cropped top-cropped]
+
+image::application-saml-enabled.png[Application SAML disabled,width=1200,role=shadowed top-cropped]
+
+
+=== Registration
+
+image::application-registration.png[Application Registration,width=1200,role=shadowed top-cropped]
+
+image::application-registration-self-service.png[Application Self Service Registration,width=1200,role=shadowed top-cropped]
+
+
+=== Security
+
+image::application-security.png[Application Security,width=1200,role=shadowed top-cropped]
+
+
