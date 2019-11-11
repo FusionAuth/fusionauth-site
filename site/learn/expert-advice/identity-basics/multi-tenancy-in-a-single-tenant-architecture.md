@@ -3,7 +3,7 @@ layout: advice
 title: Multi-tenancy in a Single-tenant Architecture
 author: Daniel DeGroff
 header_dark: true
-image: articles/multi-tenancy-2.png
+image: advice/multi-tenant-in-single-tenant-article.png
 category: Identity Basics
 ---
 
@@ -13,6 +13,8 @@ While FusionAuth is fundamentally a single-tenant solution, we do support multip
 * [Dev, Stage and Prod](#dev-stage-prod)
 
 {: .mt-5}
+
+{% include _image.html src="/assets/img/articles/multi-tenancy-2.png" alt="Multi-tenant Screen" class="img-fluid" figure=false %}
 
 
 ## White labeled Identity        {#white-label}
