@@ -1,22 +1,23 @@
 ---
 layout: advice
-title: Types of Logins and Authentication Workflows
-description: A detailed explanation of the numerous types of login/authentication supported and recommended by FusionAuth
+title: Login and Authentication Workflows
+description: A detailed explanation of the various types of login & authentication workflows used by applications.
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
+author: Brian Pontarelli
 ---
 
-The landscape of applications today is broad. Similarly, the methods of authentication used is similarly varied. FusionAuth provides a range of options for authentication for every type of application. This section of the website is dedicated to many of the login methods supported and recommended by FusionAuth.
+The landscape of applications today is broad. Similarly, the methods of authentication used is similarly varied. This section covers some of the login and authentication workflows used by applications today. These examples use FusionAuth as the IdP (identity provider), but any IdP could be used. You can use these articles to help architect and design the authentication system for your application.
 
-Keep in mind that this list is not exhaustive. FusionAuth is capable of many other forms of login and purposefully does not support others for security reasons. You can use these articles to help architect and design the authentication system for your application.
+Keep in mind that this list is not exhaustive. Most IdPs, including FusionAuth, are capable of other forms of login. Also, there are many login workflows that we do not cover here due to security concerns with those methods.
 
-Also, these articles do not discuss the pros and cons of the different types of applications and which might be best for your needs. They focus entirely on authentication for applications. There are many articles available that cover different application types and why you should choose one over the other.
+Also, these articles do not discuss the pros and cons of the different types of applications and which might be best for your needs. They focus entirely on authentication for applications. There are many articles available that cover different application types and why you should choose one over the other (such as the decision to use a native mobile application versus a responsive web application).
 
 ## Definitions
 
-* **Native login form** - this is a form built directly into the application rather then an external login form like OAuth
-* **Application backend** - this is the backend of the application, not FusionAuth
+* **Native login form** - this is a form built directly into the application rather then leveraging an external login form such as OAuth
+* **Application backend** - this is the backend of the application, not the IdP (i.e. not FusionAuth)
 
 ## Traditional web application authentication
 
@@ -90,4 +91,4 @@ Here are the options for providing login to native mobile applications.
 * [(RECOMMENDED) Native login form to FusionAuth using JWTs and refresh tokens](mobile/native-login-form-to-fusionauth-jwts-refresh-tokens)
 * [OAuth 2 resource owner password credentials grant using JWTs and refresh tokens](mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens)
 
-**IMPLEMENTATION NOTE**: Some experts recommend that native applications (including mobile apps) use OAuth's authorization code grant. This method works fine with FusionAuth, but is not listed in this section because it is covered complete in the SPA and Webapp sections above. The only difference is that at the end of the OAuth workflow, the native application pulls the JWT and refresh tokens from the web-view.
+**IMPLEMENTATION NOTE**: Some experts recommend that native applications (including mobile apps) use OAuth's authorization code grant. This method works fine with many IdPs, including FusionAuth, but is not listed in this section because it is covered in the SPA and Webapp sections above. The only difference is that at the end of the OAuth workflow, the native application pulls the JWT and refresh tokens from the web-view.

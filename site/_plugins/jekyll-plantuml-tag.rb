@@ -21,7 +21,7 @@ module Jekyll
       file_name = @source[slash_index + 1, dot_index - slash_index - 1] + ".svg"
 
       "<figure class='mw-100 mx-auto mb-4 text-center'>
-        <img src='#{site.baseurl}/#{output_path}/#{file_name}' alt='Sequence diagram for the workflow'/>
+        <img src='#{site.baseurl}/#{output_path}/#{file_name}' class='img-fluid' alt='Sequence diagram for the workflow'/>
         <figcaption class='figure-caption'>Sequence diagram for the workflow</figcaption>
       </figure>"
     end
