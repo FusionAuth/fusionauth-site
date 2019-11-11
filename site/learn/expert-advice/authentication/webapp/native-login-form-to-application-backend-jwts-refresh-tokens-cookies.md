@@ -4,7 +4,7 @@ title: Webapp native login to backend
 subtitle: Using JWTs and refresh tokens
 description: An explanation of webapp login using a native login form that submits to the application backend and uses JWTs and refresh tokens in cookies
 header_dark: true
-image: articles/login-types-share-image.jpg
+image: advice/types-of-logins-article.png
 category: Authentication
 ---
 

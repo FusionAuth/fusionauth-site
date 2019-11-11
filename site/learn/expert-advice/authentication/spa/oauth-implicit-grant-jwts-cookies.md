@@ -4,7 +4,7 @@ title: Single-page application OAuth login using implicit grant
 subtitle: Using JWTs in cookies
 description: An explanation of single-page application login using FusionAuth OAuth interface with the implicit grant and uses JWTs in cookies
 header_dark: true
-image: articles/login-types-share-image.jpg
+image: advice/types-of-logins-article.png
 category: Authentication
 ---
 

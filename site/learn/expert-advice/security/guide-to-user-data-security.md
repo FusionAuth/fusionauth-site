@@ -4,7 +4,7 @@ title: Guide to <br/> User Data Security
 subtitle: by Brian Pontarelli
 description: Protect your user data with this step-by-step guide to secure your servers and applications.
 header_dark: true
-image: articles/guide-to-user-data-security-2.jpg
+image: advice/guide-user-data-security-article.png
 category: Security
 related:
 - title: Password Compliance Checklist

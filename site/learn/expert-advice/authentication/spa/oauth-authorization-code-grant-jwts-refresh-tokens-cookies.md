@@ -4,7 +4,7 @@ title: Single-page application OAuth login using authorization code grant
 subtitle: Using JWTs and refresh tokens
 description: An explanation of single-page application login using FusionAuth OAuth interface with the authorization code grant and uses JWTs and refresh tokens in cookies
 header_dark: true
-image: articles/login-types-share-image.jpg
+image: advice/types-of-logins-article.png
 category: Authentication
 ---
 

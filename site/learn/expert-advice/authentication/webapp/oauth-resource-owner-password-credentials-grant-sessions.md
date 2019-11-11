@@ -4,7 +4,7 @@ title: Webapp OAuth login using resource owner password credentials grant
 subtitle: Using sessions
 description: An explanation of webapp login using a native login form that submits to the application backend and uses server-side sessions
 header_dark: true
-image: login-types-share-image.jpg
+image: advice/types-of-logins-article.png
 category: Authentication
 ---
 
