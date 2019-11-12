@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: "Login with Twitter - Oh, the Humanity!"
-description: Twitter doesn't make it easy to build an OAuthv1 login. FusionAuth does.
+title: "Login with Twitter using OAuth v1 and Java"
+description: "Twitter doesn't make it easy to build an OAuth v1 login with Java. Here's how we did it for FusionAuth."
 author: Daniel DeGroff
 categories: oauth
 header_dark: true
@@ -11,11 +11,9 @@ related:
 - title: "How-To: OAuth Device Authorization"
   url: /learn/expert-advice/oauth/oauth-device-authorization-roku-appletv-xbox
 ---
-When we built out our social login support in FusionAuth we were forced to navigate the harrowing path to signing our OAuth v1 requests to Twitter.
+If you've ever had to navigate the harrowing path of signing OAuth v1 requests to Twitter in Java, you may know there isn't a great off-the-shelf option to make this easy. We were forced to do it when we built out our social login support in FusionAuth and it took some heavy lifting. Here's what we did. We hope by sharing this with the Java community, it will save someone else the pain of having to struggle through Twitter's archaic implementation.
 
-If you've ever done this in Java, you may know there isn't a great option off the shelf to make this easy, or if there is I was unable to find it. Since we had to do some heavy lifting, we decided to share our work with the Java community.
-
-TL;DR See source code on [Gist](https://gist.github.com/robotdan/33f5834399b6b30fea2ae59e87823e1d).
+**TL;DR See source code on [Gist](https://gist.github.com/robotdan/33f5834399b6b30fea2ae59e87823e1d).**
 
 ## Sifting through the disaster that is Twitter login
 
@@ -39,7 +37,7 @@ Here is the summary provided by Twitter on how to build a [signed request](https
 
 The first time I read this, I threw up in my mouth. I then went and read the OAuth Core 1.0 specification to ensure I understood the procedure. If you're interested, go read [section 9](https://oauth.net/core/1.0a/#signing_process) of [OAuth Core 1.0 Revision A](https://oauth.net/core/1.0a/)
 
-In summary, it is easy to see why the OAuth v1 specification was deprecated in favor of OAuth 2.0 which relies upon a secure transport (TLS) instead of requiring cumbersome signing strategies.
+In summary, it is easy to see why the OAuth v1 specification was deprecated in favor of OAuth 2.0. OAuth 2.0 relies upon a secure transport (TLS) instead of requiring cumbersome signing strategies.
 
 With that said, to make my life easier, and hopefully some other fellow Java developers, I wrote an OAuth v1 signature builder that I could use to sign my requests to Twitter.
 
@@ -93,12 +91,6 @@ Now for the source code.
 
 ## Learn More About FusionAuth
 
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
+FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, social logins, SSO, MFA, data search, user management and more for every app, every framework.
 
 [Find out more about FusionAuth](https://fusionauth.io/ "FusionAuth Home") and download it today.
-
-<!--
-- Technology
-- Products
-- FusionAuth
--->
