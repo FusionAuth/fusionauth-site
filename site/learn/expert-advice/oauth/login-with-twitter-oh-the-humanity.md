@@ -5,7 +5,7 @@ description: Twitter doesn't make it easy to build an OAuthv1 login. FusionAuth 
 author: Daniel DeGroff
 categories: oauth
 header_dark: true
-image: articles/login-with-twitter-2.png
+image: advice/login-with-twitter-article.png
 category: OAuth
 related:
 - title: "How-To: OAuth Device Authorization"

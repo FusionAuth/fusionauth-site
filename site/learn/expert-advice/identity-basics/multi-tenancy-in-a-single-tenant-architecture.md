@@ -3,7 +3,7 @@ layout: advice
 title: Multi-tenancy in a Single-tenant Architecture
 author: Daniel DeGroff
 header_dark: true
-image: advice/multi-tenant-in-single-tenant-article.png
+image: advice/multi-in-single-article.png
 category: Identity Basics
 ---
 

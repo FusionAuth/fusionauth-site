@@ -2,7 +2,7 @@
 layout: advice
 title: "How-To: OAuth Device Authorization for Roku, AppleTV, and XBox"
 description: "How To: OAuth Device Authorization for Roku, AppleTV, and XBox and others."
-image: blogs/oauth-device-authorization-grants2.png
+image: advice/oauth-device-authorization-article.png
 author: Matthew Altman & Trevor Smith
 header_dark: true
 category: OAuth
