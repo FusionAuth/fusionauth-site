@@ -1,13 +1,107 @@
 ---
 layout: advice
-title: Multi-tenancy in a Single-tenant Architecture
+title: "Multi-Tenant vs. Single-Tenant IDaaS Solutions"
+description: "Choosing between multi-tenant and single-tenant IDaaS solutions comes
+down to an organization's business objectives and requirements. Which trade-offs are you willing to make?"
 author: Daniel DeGroff
 header_dark: true
 image: advice/multi-in-single-article.png
 category: Identity Basics
 ---
 
-While FusionAuth is fundamentally a single-tenant solution, we do support multiple tenants within a single-tenant instance. In this post I'll outline a few of the common use cases we solve with our tenancy feature.
+The last few years has brought an explosion of IDaaS (Identity as a Service) solutions giving developers a wide range of choices for how they manage their users' registrations, logins, and identity. It makes sense—identity and access management is a critical component of every application, but building, testing, and maintaining a secure in-house solution can take weeks or months of senior developer hours. You don't build your own database, so why build a complete identity solution? And just like databases, there are many identity solutions to fit the different requirements of every application.
+
+One important factor to consider when comparing identity platforms is whether you need a multi-tenant or single-tenant solution. The choice is completely dependent on your business objectives and requirements. Regulatory compliance, security, data management, and upgrade control are important considerations that will ultimately define the most effective solution for your company. Which trade-offs are you willing and able to make? Read some of the most important considerations below, or [download our whitepaper](/resources/fusionauth-single-tenant-vs-multi-tenant.pdf "Single-Tenant vs. Multi-Tenant Whitepaper") for the details and real-world examples.
+
+## Multi-Tenant
+
+Simply put, multi-tenant is an architecture where multiple companies store their data within the same infrastructure. The entire system can span multiple servers and data centers, but most commonly data is co-mingled in a single database.
+
+### Benefits
+**Cost reduction** - One of the big drivers of multi-tenant IDaaS solutions is cost. The sharing of infrastructure and resources across many companies significantly reduces the overhead of the service provider, and as a result, lowers the costs imposed on customers.
+
+**Automatic upgrades** - Multi-tenant systems ensure that software updates, including security patches, are rolled out to all customers simultaneously. This standardizes software versions utilized by customers and eliminates version control issues.
+
+**Instant on-boarding** - In most cases, new customers can be setup by creating a new logical tenant. No new servers are provisioned and software installation is not required, which makes this process instantaneous.
+
+### Drawbacks
+**Performance** - One tenant’s heavy use or load spike may impact the quality of service provided to other tenants. In addition, when software or hardware issues are found on a multi-tenant database, it can cause an outage for all customers.
+
+**Security risk** - If a hacker gains access to one tenant’s data, they can access data from every tenant because all data resides in a single database. This is an important consideration because every tenant is relying on the security practices of the weakest tenant.
+
+**Single point of failure** - If the multi-tenant system goes down (and they do regardless of what salespeople will tell you), EVERYONE goes down. Then all tenants sit and wait until the cause is determined and fixed.
+
+## Single-Tenant
+In a single-tenant architecture each company, or tenant, has their own instance, separate from any other customer. With a single-tenant solution the risk of another business accidentally receiving another customer's user data is eliminated.
+
+### Benefits
+**Enhanced security** -
+Single-tenancy delivers true data isolation resulting in
+maximum privacy and enhanced security. The possibility of
+data leakage between tenants, whether accidentally or
+through sabotage, is removed making this architecture a
+popular choice for large enterprises. To increase security,
+customers can implement a firewall at any layer to protect
+data. For example, the identity provider APIs can be
+located behind a firewall while the OAuth login system
+resides in the public facing network.
+
+**Regulatory compliance** -
+Enforcing regulatory requirements is easier due to
+complete control of the environment. If your company
+policy does not allow data to be transmitted outside of
+your country (i.e. German Data Regulations or GDPR
+regulations) a multi-tenant solution needs to be specifically
+designed for this. A single-tenant solution makes this as
+simple as installing the software on a server in Germany.
+Similarly, compliance with regulations such as PCI, HIPAA
+and SOC2 is simplified because data is secured, encrypted
+and protected separately for each tenant.
+
+**Customization** -
+With a single-tenant architecture, the software environment
+can be customized to meet customer’s business needs;
+robust plugins can be installed to maximize personalization
+without limitation.
+
+**Upgrade control** -
+Customers have decision authority over the upgrade cycle.
+Customers can choose what updates they want to install and
+when. This adds flexibility for scheduling maintenance
+windows and downtime without impacting others.
+
+**Data recovery** -
+Data extraction is an important consideration that is often
+overlooked. If a service is acquired or shutdown it’s wise to
+consider how you will retrieve your data in advance; it is
+easier to export data from an isolated, single-tenant cloud.
+
+## Drawbacks
+**Cost** -
+Since this is not a shared infrastructure, customers have to
+pay the cost of the entire system (hardware and software).
+However, with the rise of low-cost hosting providers like
+AWS and Azure, single-tenant solution platforms can have very affordable [pricing options](/pricing "FusionAuth Pricing").
+
+**Provisioning** -
+To set up new customers, servers must be provisioned and
+the software must be installed on each server. This process
+has been made simpler through the use of APIs provided by
+hosting providers and tools such as Docker, Kubernetes, and Chef.
+
+## Conclusion
+There are benefits and drawbacks to both single-tenant and
+multi-tenant systems. Ultimately, a company must decide
+what is most important to their business and what can be
+sacrificed. Is cost a primary driver? Does your industry vertical have
+unique regulatory constraints? Is security critical for the type
+of data you are storing? Take the time to explicitly define your specific requirements, and then select the solution that best fits your needs.
+
+For additional information on multi-tenant and single-tenant solutions, [download our whitepaper here](/resources/fusionauth-single-tenant-vs-multi-tenant.pdf "Single-Tenant vs. Multi-Tenant Whitepaper") and please [contact us](https://fusionauth.io/contact "Contact Us") if you have any questions or comments.
+
+## FusionAuth: Multi-Tenant within a Single-Tenant Instance
+
+While FusionAuth is fundamentally a single-tenant solution, we also support multiple tenants within a single-tenant instance. Here are a few of the common use cases we solve with our tenancy feature.
 
 * [White labeled Identity](#white-label)
 * [Dev, Stage and Prod](#dev-stage-prod)
@@ -17,7 +111,7 @@ While FusionAuth is fundamentally a single-tenant solution, we do support multip
 {% include _image.html src="/assets/img/articles/multi-tenancy-2.png" alt="Multi-tenant Screen" class="img-fluid" figure=false %}
 
 
-## White labeled Identity        {#white-label}
+## White Labeled Identity        {#white-label}
 
 {% include _image.html src="/assets/img/blogs/white-label.png" alt="white Label Tag" class="float-right" style="width: 250px;" figure=false %}
 
