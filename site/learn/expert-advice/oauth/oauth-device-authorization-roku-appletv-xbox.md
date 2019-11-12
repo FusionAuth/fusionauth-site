@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: "How-To: OAuth Device Authorization for Roku, AppleTV, and XBox"
-description: "How To: OAuth Device Authorization for Roku, AppleTV, and XBox and others."
+title: "OAuth Device Authorization for Roku, AppleTV, and XBox"
+description: "How to implement OAuth Device Authorization for Roku, AppleTV, and XBox and other devices."
 image: advice/oauth-device-authorization-article.png
 author: Matthew Altman & Trevor Smith
 header_dark: true
@@ -16,22 +16,30 @@ If you have a modern entertainment device like a Roku, AppleTV, XBox, Playstatio
 
 {% include _image.html src="/assets/img/blogs/roku_remote.png" class="img-fluid float-right mr-md-5" figure=false %}
 ## The Problem
-We login to accounts all the time using our phones and computers. We know how to do that. It shouldn't be that difficult on another device, right? The problem is Internet connected boxes like XBox and AppleTV don't have a readily available keyboard or tap input system. Suddenly usability becomes a big issue. Fumbling your way through a virtual keyboard to enter your username and password using a D-pad on a game controller or the arrow keys on a remote control can be a nightmare. And since most services ask you to enter very long, complex keycodes with all sorts of special characters and mixed-case letters, it's highly likely you will accidentally enter it wrong and have to start all over again.
+We login to accounts all the time using our phones and computers, so it shouldn't be that difficult on another device, right? The problem is Internet connected boxes like XBox and AppleTV don't have a built-in keyboard or tap input system. Suddenly usability becomes a big issue. Fumbling your way through a virtual keyboard to enter your username and password using a D-pad on a game controller or the arrow keys on a remote control can be a nightmare. And since most services ask you to enter very long, complex keycodes with all sorts of special characters and mixed-case letters, it's highly likely you will accidentally enter it wrong and have to start all over again.
 <br/><br/><br/>
 
 ## The Solution
-In order to address this issue there is a proposed standard for the [Oauth2 Device Authorization Grant](https://tools.ietf.org/html/rfc8628).
+In order to address this issue there is a proposed standard for the [Oauth2 Device Authorization Grant](https://tools.ietf.org/html/rfc8628) that is effective as long as the device and user meet some basic requirements:
+
+1. The device is connected to the Internet.
+1. The device is able to make outbound HTTPS requests.
+1. The device is able to provide the user with a URI and code sequence.
+1. The user has a secondary device like a personal computer, tablet, or smartphone from which they can process the request.
 
 {% include _image.html src="/assets/img/blogs/roku_activate.png" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
-There's twenty pages of details there, so we don't blame you if you didn't read the entire specification. We read it, and here's the short of it. (For this example, we are trying to connect our Roku device to a Netflix subscription.)
+There's twenty pages of details in the spec, so we distilled it down for you. For this example, we are trying to connect our Roku device to a Netflix subscription.
 
-- When you initiate the login flow on the Roku, the Roku calls out to an Authorization Server.
+- A user initiates the login flow on the Roku.
+- The Roku calls out to an Authorization Server.
 - The Authorization Server responds with a very short code and a URL.
-- The short code and URL are displayed on the Roku screen.
-- The user is instructed to browse to that URL with another device like a smartphone and enter the code.
-- The user then needs to use the smartphone to login to their Roku account. It should be much easier this time since they're on their smartphone with a more friendly input.
-- Once the login is successful, then the Roku is instantly logged in since it's been asking the Authorization Server periodically if the user has completed authentication and has been approved.
+- The short code and URL are displayed on the screen connected to the Roku.
+- The user is instructed to browse to that URL with another device like a smartphone.
+- The user enters the the code they were provided on the screen.
+- The user then uses the smartphone to login to their Roku account. It should be much easier this time since they're on their smartphone with a more friendly input.
+- During this time, the Roku is repeatedly asking the Authorization Server if the user has been authenticated and approved.
+- Once the account login is successful, the Roku is instantly logged in.
 
 In general, that's the whole flow. Pretty simple, right? If you are integrating this into your application, make sure you understand all the details of the specification. It provides useful details on items like security and usability that will give your users a more secure and easy-to-follow experience.
 
