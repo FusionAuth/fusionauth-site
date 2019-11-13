@@ -39,7 +39,7 @@ It's this 5 to 10 minute window that freaks everyone out. So, how do we fix it?
 
 One way is leveraging a distributed event system that notifies services when refresh tokens have been revoked. The IdP broadcasts an event when a refresh token is revoked and other backends/services listen for the event. When an event is received the backends/services update a local cache that maintains a set of users whose refresh tokens have been revoked. This cache is checked whenever a JWT is verified to determine if the JWT should be revoked or not. This is all based on the duration of JWTs and expiration instant of individual JWTs.
 
-### FusionAuth
+### Example: Revoking JWTs in FusionAuth
 
 To illustrate this, I'm going to use [FusionAuth](https://fusionauth.io/)'s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
 

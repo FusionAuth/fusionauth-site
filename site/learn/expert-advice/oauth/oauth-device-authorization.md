@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: "OAuth Device Authorization for Roku, AppleTV, and XBox"
-description: "How to implement OAuth Device Authorization for Roku, AppleTV, and XBox and other devices."
+title: "OAuth Device Authorization"
+description: "How to implement OAuth Device Authorization for set-top devices like Roku, AppleTV, and XBox and more."
 image: advice/oauth-device-authorization-article.png
 author: Matthew Altman & Trevor Smith
 header_dark: true
