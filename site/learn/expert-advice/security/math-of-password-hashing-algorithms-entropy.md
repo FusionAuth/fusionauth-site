@@ -247,3 +247,5 @@ Stayed tuned for an upcoming blog post where we walk through the real world perf
 FusionAuth defaults to `PBKDF2` with `24,000` iterations as the default password hashing scheme. BCrypt and several other algorithms are supported to enable password migrations. We continue to research new techniques to reduce CPU overhead while maintaining the highest standards in secure password storage.
 
 If you'd like to discuss on this feature, comment below or visit the FusionAuth GitHub issue for it and upvote or comment. [Feature: Entropy based password hashing](https://github.com/FusionAuth/fusionauth-issues/issues/85)
+
+{% include _advice-get-started.html intro="If you are looking for a solution lets you manage and configure password hashing algorithms, FusionAuth has you covered." %}

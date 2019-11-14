@@ -140,8 +140,4 @@ This solution works well even in large systems with numerous backends. It requir
 
 If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing JWTManager implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Node clients both have a JWTManager you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a Github issue and we will write one for you.
 
-## Learn More About FusionAuth
-
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available. We provide registration, login, SSO, code based MFA, brute force login detection, password hashing, forgot password & email templates, data search, social login, user management and more, 100% free for unlimited users.
-
-[Find out more about FusionAuth](https://fusionauth.io/) and download it today.
+{% include _advice-get-started.html intro="If you are looking for a solution that provides support for events and Webhooks that can be used to implement this revocation strategy, FusionAuth has you covered." %}

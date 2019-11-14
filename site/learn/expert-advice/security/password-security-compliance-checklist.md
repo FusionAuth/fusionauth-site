@@ -9,8 +9,8 @@ category: Security
 related:
 - title: Guide to User Data Security
   url: /learn/expert-advice/security/guide-to-user-data-security
-
 ---
+
 Right or wrong, usernames and passwords have been a critical component of website and application security for years. However, weak passwords can result in a costly data breach if compromised. To help ensure stronger password security, leading like the National Institute for Standards and Technology have published clear criteria to discourage users from selecting easy to guess passwords. We have assembled those criteria into one checklist of key password recommendations to help you evaluate and improve your own password policies, and to help initiate critical conversations with your engineering, security, and governance teams.
 
 ## Legally Required Password Constraints
@@ -66,8 +66,4 @@ Updated in 2019, NIST produces guidelines to help federal agencies meet the requ
 
 Password security is a vital part of compliance and helps organizations protect user data and maintain customer trust. While these password requirements won't eliminate all your password issues, they will go a long way to make your system more secure from the most common hacking attacks. Be sure your identity solution has built-in capabilities to help you stay up-to-date with frequently changing password compliance requirements. It will help strengthen password security, keep your customer information secure, and keep your business thriving.
 
-## Learn More About FusionAuth
-
-FusionAuth provides extensive control of password constraints allowing you to quickly comply with password industry guidelines. It is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, passwordless login, social login, SSO, MFA, data search, social login, user management and more.
-
-[Learn more about FusionAuth](/ "FusionAuth Home"){: .btn .btn-primary}
+{% include _advice-get-started.html intro="If you are looking for a solution that covers all of these password regulations, FusionAuth has you covered." %}

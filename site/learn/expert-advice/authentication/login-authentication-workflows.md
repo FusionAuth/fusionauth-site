@@ -92,3 +92,5 @@ Here are the options for providing login to native mobile applications.
 * [OAuth 2 resource owner password credentials grant using JWTs and refresh tokens](mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens)
 
 **IMPLEMENTATION NOTE**: Some experts recommend that native applications (including mobile apps) use OAuth's authorization code grant. This method works fine with many IdPs, including FusionAuth, but is not listed in this section because it is covered in the SPA and Webapp sections above. The only difference is that at the end of the OAuth workflow, the native application pulls the JWT and refresh tokens from the web-view.
+
+{% include _advice-get-started.html %}

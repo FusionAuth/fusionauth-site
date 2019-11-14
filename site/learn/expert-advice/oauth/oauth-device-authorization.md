@@ -110,7 +110,4 @@ We're excited to offer this new feature in FusionAuth, and hope you take the tim
 ## FusionAuth Is Always Improving
 We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know either at [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub") or [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and we’ll take a look.
 
-## Learn More About FusionAuth
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, passwordless login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
-
-[Learn More](/ "FusionAuth Home"){: .btn .btn-primary}
+{% include _advice-get-started.html intro="If you are looking for a solution that provides full support for OAuth Device Authorization, FusionAuth has you covered." %}

@@ -1748,3 +1748,5 @@ In addition to the experience and knowledge of our development team, we used add
 * <https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Token_Based_Mitigation>
 * <https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS>
 * <https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy>
+
+{% include _advice-get-started.html intro="If you are looking for a managed identity solution that is secured using these principles, FusionAuth has you covered." %}
