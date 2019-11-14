@@ -1,0 +1,68 @@
+== Making an API request using a Tenant Id
+
+Some resources in FusionAuth are scoped to Tenants such as Users, Groups and Applications. When more than one tenant exists these APIs will require a tenant Id to ensure the request is not ambiguous.
+
+For example, once more than one tenant exists, you may no longer retrieve a user by email address without specifying the Tenant Id because an email address is not unique across all tenants. In many cases FusionAuth can detect the intended Tenant Id by inferring this value from other unique identifiers. For example, if you update a User by unique Id the Tenant Id is not required because the User Id is unique across all tenants and FusionAuth can resolve the Tenant Id on your behalf.
+
+When a request may be ambiguous without the Tenant Id such as described above with the email address, or if you want to scope a request to single tenant for security purposes you will need to use one of the following methods to add the Tenant Id to the request.
+
+In order to make API requests to FusionAuth for a particular Tenant you will need to provide the `tenantId`.
+
+There are two supported methods to provide the tenant Id to FusionAuth during the API request. The first is by using
+an HTTP header, and the other is using an API key that has been assigned to a specific tenant.
+
+=== Using an HTTP Header
+
+.HTTP Header example
+--
+The following example demonstrates an API request to an API endpoint requiring `tenantId`, using the 'X-FusionAuth-TenantId' HTTP header and a bearer token scoped to all tenants.
+[source,bash]
+----
+curl -v -X POST \
+    -H 'Authorization: bf69486b-4733-4470-a592-f1bfce7af580' \
+    -H 'X-FusionAuth-TenantId: 6c9e9669-9670-4f85-9f16-8396c2206f7f' \
+    -H 'Content-Type: application/json' \
+    -d '{"group": {"name": "Admin"}}' \
+    "http://localhost:9011/api/group"
+----
+--
+
+=== Using an API key
+
+You may optionally create an API key that is scoped to a particular tenant. To create an API key  navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb] [breadcrumb]#API Keys#.
+
+Similar to the example screenshot above where we created a new API key, in this example we have selected the `Pied Piper` tenant for this API key. Only Users, Groups and Applications belonging to the `Pied Piper` tenant will be visible to this API.
+
+image::create-tenant-api-key.png[Create a Tenant API Key,width=1200,role=shadowed bottom-cropped top-cropped]
+
+.HTTP Authorization Header example
+--
+The following example demonstrates an API request to an API endpoint requiring `tenantId`, using the tenant-scoped API key.
+[source,bash]
+----
+curl -X POST \
+    -H 'Authorization: oa06-d9uxCHTorBOkVdh_QzsX_iEEYARGv8udnMMLJ8' \
+    -H 'Content-Type: application/json' \
+    -d '{"group": {"name": "Admin"}}' \
+    "http://localhost:9011/api/group"
+----
+--
+
+=== Tenant Errors
+
+If you make an API request when the Tenant Id is required, you will receive a `400` response code with the following response body.
+
+[source,json]
+.Tenant Required Error
+----
+{
+  "generalErrors" : [ {
+    "code" : "[TenantIdRequired]",
+    "message" : "A Tenant Id is required to complete this request. To complete this request, you may assign a Tenant to your API key, or add the X-FusionAuth-TenantId HTTP request header with the Tenant Id."
+  } ]
+}
+----
+
+
+It is also possible that you could make a request to retrieve a User or Application by Id and while the request may be valid, if the Tenant Id provided is not the one in which the User or Application exists, the API will return an error indicating the object could not be found by returning a `404` status code, or some sort of validation error.
+

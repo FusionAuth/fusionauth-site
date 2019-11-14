@@ -80,12 +80,12 @@ image::application-oauth.png[Application OAuth configuration,width=1200,role=sha
 
 You may optionally regenerate the client secret if you think the secret has been compromised.
 
-|Require authentication [required]#Required#
+|Require authentication [optional]#Optional#
 |When enabled access to the Token endpoint will require the use of the `client_secret` parameter. In most cases you will not want to disable this setting.
 
 There may be scenarios where you have a requirement to make a request to the Token endpoint where you cannot safely secure a client secret. In these scenarios you may need to disable client authentication.
 
-|Generate refresh tokens [required]#Required#
+|Generate refresh tokens [optional]#Optional#
 |When enabled, FusionAuth will return a refresh token when the `offline_access` scope has been requested. When this setting is disabled refresh tokens will not be generated even if the `offline_access` scope is requested.
 
 |Authorized redirect URLs  [optional]#Optional#
@@ -107,7 +107,7 @@ If this application has not defined a Logout URL, the value configured at the Te
 
 See the link:../oauth/endpoints#logout[Logout endpoint] for more information.
 
-|Logout behavior [required]#Required#
+|Logout behavior [optional]#Optional#
 |This selector allows you to modify the behavior when using the link:../oauth/endpoints#logout[Logout endpoint] with this Client Id.
 
 * All applications - This is the default behavior. Logout out of the FusionAuth SSO, call each registered Logout URLs for the entire tenant and then redirect to the Logout URL registered for this application.
@@ -143,40 +143,206 @@ Required when the `Device` grant has been enabled.
 
 === Webhooks
 
-The Webhooks tab allows you to select one or more webhooks to be used for this Application. In this example screenshot no webhooks are configured.
+The Webhooks tab allows you to select one or more webhooks to be used for this Application. In this example screenshot either not webhooks have been configured, or no application specific webhooks are configured.
+
+In most cases you will not need to configure this panel. Only a few specific events are considered application specific, and when a webhook is configured to be application specific, only those events will be sent to the webhook.
+
+In a future release this configuration tab will be removed.
 
 image::application-webhooks-none.png[No Application Webhooks,width=1200,role=shadowed bottom-cropped top-cropped]
 
-This example screenshot shows one Application specific webhook selected.
+This example screenshot shows one Application specific webhook selected. This option will be visible if at least one webhook is configured as application specific.
 
 image::application-webhooks-selected.png[Application Webhooks Selected,width=1200,role=shadowed bottom-cropped top-cropped]
 
 === CleanSpeak
 
+The CleanSpeak configuration panel allows you to optionally configure username filtering through the use of a CleanSpeak integration. See link:../integrations/cleanspeak[CleanSpeak Integration] for additional configuration details.
+
+The use of this feature requires a licensed instanced of CleanSpeak. See https://www.cleanspeak.com for additional information.
+
 image::application-cleanspeak.png[No Application Webhooks,width=1200,role=shadowed bottom-cropped top-cropped]
 
 === JWT
 
+The JWT configuration allow you to provide application specific JWT configuration. When this panel is left in the default state as in shown in this screenshot without the enable toggle turned on, the JWT configuration provided by the Tenant will be utilized.
+
 image::application-jwt-disabled.png[Application JWT disabled,width=1200,role=shadowed bottom-cropped top-cropped]
+
+[cols="3a,7a"]
+[.api]
+.JWT Settings disabled
+|===
+|Enable [required]#Required#
+|When enabled you may configure Application specific JWT configuration including signing keys, durations, etc.
+
+|Access token populate lambda [optional]#Optional#
+|The lambda to be invoked during the generation of an Access Token (JWT) when a user authenticates against this Application.
+
+|Id token populate lambda [optional]#Optional#
+|The lambda to be invoked during the generation of an Id Token (JWT) when a user authenticates against this Application.
+|===
+
+Once you have enabled JWT configuration for this Application you will be provided with additional configuration options.
 
 image::application-jwt-enabled.png[Application JWT enabled,width=1200,role=shadowed top-cropped]
 
+[cols="3a,7a"]
+[.api]
+.JWT Settings enabled
+|===
+|Issuer [read-only]#Read-only#
+|The issuer used when building the Access Token and Id Token in the `iss` claim. This value is displayed for read-only purposes, it can be modified in the Tenant configuration.
+
+|Refresh token duration [required]#Required#
+|The duration in minutes the refresh token will be valid after creation. After this time has passed the refresh token will no longer be able to be used to receive a new Access Token (JWT).
+
+|JWT duration [required]#Required#
+|The duration in seconds a JWT will be valid after creation. After this time has passed the JWT will expire and can no longer be used.
+
+|Access token signing key [optional]#Optional#
+|The signing key used to sign the Access Token (JWT) when a user authenticates against this Application. When this value is not selected the default selection will cause FusionAuth to generate a new key pair and assign it to this configuration.
+
+|Id token signing key [optional]#Optional#
+|The signing key used to sign the Id Token (JWT) when a user authenticates against this Application. When this value is not selected the default selection will cause FusionAuth to generate a new key pair and assign it to this configuration.
+|===
+
 === SAML
+
+The SAML configuration allows you to reveal FusionAuth as a SAML v2 Identity Provider (IdP).
 
 image::application-saml-disabled.png[Application SAML,width=1200,role=shadowed bottom-cropped top-cropped]
 
+[cols="3a,7a"]
+[.api]
+.SAML Settings disabled
+|===
+|Enabled [required]#Required#
+|When enabled you may configure FusionAuth to reveal this application as a SAML v2 Identity Provider (IdP).
+|===
+
+Once you have enabled SAML for this Application you will be provided with additional configurations options.
+
 image::application-saml-enabled.png[Application SAML disabled,width=1200,role=shadowed top-cropped]
+
+[cols="3a,7a"]
+[.api]
+.SAML Settings enabled
+|===
+|Issuer [required]#Required#
+|
+
+|Audience [optional]#Optional#
+|
+
+|Callback URL (ACS) [required]#Required#
+|
+
+|Logout URL [optional]#Optional#
+|
+
+|Signing key [optional]#Optional#
+|The signing key used to sign the SAML request. When this value is not selected the default selection will cause FusionAuth to generate a new key pair and assign it to this configuration.
+
+|XML signature canonicalization method [optional]#Optional#
+|
+
+|Response populate lambda [optional]#Optional#
+|
+
+|Debug enabled [optional]#Optional#
+|
+|===
 
 
 === Registration
 
+The registrations configuration allows you to provided Application specific registration configuration. Primarily registration verification and self service registration options.
+
 image::application-registration.png[Application Registration,width=1200,role=shadowed top-cropped]
+
+[cols="3a,7a"]
+[.api]
+.Registration settings
+|===
+|Verify registrations [optional]#Optional#
+|When enabled a registration can be verified using an email workflow. This is very similar to the email verification process but instead it allows you to send an email to an end user for them to confirm they registered for the application.
+
+|Verification template [required]#Required#
+|The email template to be used when sending the Registration Verification email to the end user. This field is required when [field]#Verify registrations# field toggle has been enabled.
+|===
 
 image::application-registration-self-service.png[Application Self Service Registration,width=1200,role=shadowed top-cropped]
 
+[cols="3a,7a"]
+[.api]
+.Self service registration
+|===
+|Enabled [optional]#Optional#
+|
+
+|Confirm password [optional]#Optional#
+|Toggle this field if you want FusionAuth to require a password confirmation when setting a new password during registration.
+
+|Login type [optional]#Optional#
+|This field indicates if the email address or username should be collected as the user's unique identifier.
+
+|Registration fields [optional]#Optional#
+|The optional fields to be displayed on the registration form.
+
+{nbsp} +
+{nbsp} +
+
+[cols="1,2"]
+[.nested]
+!===
+! Column ! Description
+
+![field]#Field# [read-only]#Read-only#
+!The user attribute that can be shown on the registration form.
+
+![field]#Enabled# [optional]#Optional#
+!When enabled this field will be shown on the registration form.
+
+
+![field]#Required# [optional]#Optional#
+!When enabled this field will be set as required and the user will be unable to complete registration unless the field is provided.
+
+!===
+
+|===
 
 === Security
 
 image::application-security.png[Application Security,width=1200,role=shadowed top-cropped]
 
 
+[cols="3a,7a"]
+[.api]
+.Login API Settings
+|===
+|Require an API key [optional]#Optional#
+|
+
+|Generate refresh tokens [optional]#Optional#
+|
+
+|Allow token refresh [optional]#Optional#
+|
+|===
+
+[cols="3a,7a"]
+[.api]
+.Passwordless Login
+|===
+|Enabled [optional]#Optional#
+|
+|===
+
+[cols="3a,7a"]
+[.api]
+.Authentication Tokens
+|===
+|Enabled [optional]#Optional#
+|
+|===
