@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: "Save a CPU - Ditch BCrypt, Use SHA2 Instead"
-description: "One-way hashing for passwords is the standard mechanism used to protect your user's passwords. Let's take a look at how it works and some new ideas to improve it."
+title: "The Math of Password Hashing Algorithms and Entropy"
+description: "Long passwords and one-way password hashing are standard strategies used to increase security and protect your user's passwords. Let's take a look at how they work and some new ideas to improve it."
 author: Brian Pontarelli
 header_dark: true
 image: advice/save-a-cpu-article.png
@@ -247,3 +247,5 @@ Stayed tuned for an upcoming blog post where we walk through the real world perf
 FusionAuth defaults to `PBKDF2` with `24,000` iterations as the default password hashing scheme. BCrypt and several other algorithms are supported to enable password migrations. We continue to research new techniques to reduce CPU overhead while maintaining the highest standards in secure password storage.
 
 If you'd like to discuss on this feature, comment below or visit the FusionAuth GitHub issue for it and upvote or comment. [Feature: Entropy based password hashing](https://github.com/FusionAuth/fusionauth-issues/issues/85)
+
+{% include _advice-get-started.html intro="If you are looking for a solution lets you manage and configure password hashing algorithms, FusionAuth has you covered." %}

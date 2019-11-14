@@ -81,8 +81,4 @@ If you have a smaller application that uses a single backend, sessions work well
 
 I hope this brief overview of JWTs and Sessions has been helpful in shedding some light on these technologies that are used to identity and manage users. Either of these solutions will work in nearly any application. The choice generally comes down to your needs and the languages and frameworks you are using.
 
-## Learn More About FusionAuth
-
-FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, social login, user management and more, 100% free for unlimited users.
-
-[Find out more about FusionAuth](/ "FusionAuth Home") and download it today.
+{% include _advice-get-started.html intro="If you are looking for a solution that provides full JWT support, including OpenID Connect, FusionAuth has you covered." %}
