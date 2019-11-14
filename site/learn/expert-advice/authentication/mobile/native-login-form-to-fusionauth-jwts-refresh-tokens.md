@@ -23,7 +23,7 @@ category: Authentication
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/mobile/native-login-form-to-fusionauth.plantuml %}
+{% plantuml _diagrams/learn/expert-advice/authentication/mobile/native-login-form-to-fusionauth.plantuml %}
 
 ## Explanation
 

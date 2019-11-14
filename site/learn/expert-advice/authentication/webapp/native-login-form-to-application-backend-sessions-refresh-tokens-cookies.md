@@ -23,7 +23,7 @@ category: Authentication
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/webapp/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.plantuml %}
+{% plantuml _diagrams/learn/expert-advice/authentication/webapp/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.plantuml %}
 
 ## Explanation
 

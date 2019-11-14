@@ -1,2 +1,0 @@
-1. The application recognizes that the JWT has expired and makes a request directly to the JWT refresh API in FusionAuth. This request includes the refresh token cookie
-1. Since the refresh token has expired, FusionAuth returns a 404 status code

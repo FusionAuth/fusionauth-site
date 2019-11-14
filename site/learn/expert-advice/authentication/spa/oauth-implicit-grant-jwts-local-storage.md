@@ -23,7 +23,7 @@ category: Authentication
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/spa/oauth-implicit-grant-jwts-local-storage.plantuml %}
+{% plantuml _diagrams/learn/expert-advice/authentication/spa/oauth-implicit-grant-jwts-local-storage.plantuml %}
 
 ## Explanation
 

@@ -6,11 +6,6 @@ author: Brian Pontarelli
 header_dark: true
 image: advice/save-a-cpu-article.png
 category: Security
-related:
-- title: Guide to User Data Security
-  url: /learn/expert-advice/security/guide-to-user-data-security
-- title: Password Compliance Checklist
-  url: /learn/expert-advice/security/password-security-compliance-checklist
 ---
 
 Here's the reality, billions of credentials have been leaked or stolen and are now easily downloaded online by anyone. Many of these databases of identities include passwords in plain text, while others are one-way hashed. One-way hashing is better (we'll get to why in a second), but it is only as secure as is mathematically feasible. Let's take a look at one-way hashing algorithms and how computers handle them.
@@ -41,7 +36,7 @@ bdc511ea9b88c90b75c3ebeeb990e4e7c813ee0d5716ab0431aa94e9d2b018d6   newenglandcla
 c194ead20ad91d30c927a34e8c800cb9a13a7e445a3ffc77fed14176edc3c08f   xboxjunkie42
 ```
 
-Using a lookup table, all the attacker needs to know is the SHA2 hash of the password and they can see if it exists in the table. For example, let's assume for a moment that Netflix stores your password using an SHA2 hash. If Netflix is breached, their user database is likely now available to anyone with a good internet connection and a torrent client. Even a mediocre hacker now only needs to lookup the SHA2 hash assoicated with your Netflix account to see if it exists in their lookup table. This will reveal nearly instantly what your plain text password is for Netflix. Now, this hacker can log in to your Netflix account and binge watch all four seasons of Fuller House ("how rude!"). And he can also try this password on Hulu and HBO Go to see if you used the same email address and password for those accounts as well.
+Using a lookup table, all the attacker needs to know is the SHA2 hash of the password and they can see if it exists in the table. For example, let's assume for a moment that Netflix stores your password using an SHA2 hash. If Netflix is breached, their user database is likely now available to anyone with a good internet connection and a torrent client. Even a mediocre hacker now only needs to lookup the SHA2 hash associated with your Netflix account to see if it exists in their lookup table. This will reveal nearly instantly what your plain text password is for Netflix. Now, this hacker can log in to your Netflix account and binge watch all four seasons of Fuller House ("how rude!"). And he can also try this password on Hulu and HBO Go to see if you used the same email address and password for those accounts as well.
 
 {% include _image.html src="/assets/img/blogs/salt.png" alt="Salt" class="float-right ml-3" style="width: 250px;" figure=false %}
 
@@ -65,7 +60,7 @@ Now that we have added the salt, the "password" that we actually generated the h
 
 {% include _image.html src="/assets/img/blogs/hulk.png" alt="Brute Force" class="float-left mb-3 mr-3" style="width: 150px;" figure=false %}
 
-The second method that attackers use to crack passwords is called brute force cracking. This means that the attacker writes a computer program that can generate all possible combinations of characters that can be used for a password and then computes the hash for each combination. This program can also take a salt if the password was hashed with a salt. The attacker then runs the program until it generates a hash that is the same as the hash from the database. Here's a simple Java program for cracking passwords. I left out some detail to keep the code short (such as all the possible password characters), but you get the idea.
+The second method that attackers use to crack passwords is called brute force cracking. This means that the attacker writes a computer program that can generate all possible combinations of characters that can be used for a password and then computes the hash for each combination. This program can also take a salt if the password was hashed with a salt. The attacker then runs the program until it generates a hash that is the same as the hash from the database. Here's a simple Java program for cracking passwords. We left out some detail to keep the code short (such as all the possible password characters), but you get the idea.
 
 <br>
 <br>
@@ -110,13 +105,13 @@ This program will generate all the possible passwords with lengths between 6 and
 
 ## Password complexity vs. computational power
 
-Let's bust out our TI-85 calculators and see if we can figure out how long this program will take to run. For this example we will assume the passwords can only contain ASCII characters (uppercase, lowercase, digits, punctuation). This set is roughly 100 characters (I rounded up to make the math easier to read). If we know that there are at least 6 characters and at most 8 characters in a password, then all the possible combinations can be represented by this expression:
+Let's bust out our TI-85 calculators and see if we can figure out how long this program will take to run. For this example we will assume the passwords can only contain ASCII characters (uppercase, lowercase, digits, punctuation). This set is roughly 100 characters (this is rounded up to make the math easier to read). If we know that there are at least 6 characters and at most 8 characters in a password, then all the possible combinations can be represented by this expression:
 
 ```
 possiblePasswords = 100^8 + 100^7 + 100^6
 ```
 
-The result of this expression is equal to `10,101,000,000,000,000`. This is quite a large number, north of 10 quadrillion to be a little more precise, but what does it actually mean when it comes to my program running? This depends on the speed of the computer I'm running on and how long it takes my computer to execute the SHA2 algorithm. The algorithm is the key component here because the rest of the program is extremely fast at just creating the passwords.
+The result of this expression is equal to `10,101,000,000,000,000`. This is quite a large number, North of 10 quadrillion to be a little more precise, but what does it actually mean when it comes to our cracking program? This depends on the speed of the computer the cracking program is running on and how long it takes the computer to execute the SHA2 algorithm. The algorithm is the key component here because the rest of the program is extremely fast at creating the passwords.
 
 Here's where things get dicey. If you run a quick Google search for ["fastest bitcoin rig"](http://lmgtfy.com/?q=fastest+bitcoin+rig) you'll see that these machines are rated in terms of the number of hashes they can perform per second. The bigger ones can be rated as high as `44 TH/s`. That means it can generate 44 tera-hashes per second or `44,000,000,000,000`.
 
@@ -141,8 +136,7 @@ numberOfMinutes = numberOfSeconds / 60 = ~383
 numberOfHours = numberOfMinutes / 60 = ~6
 ```
 
-By adding one additional character to the potential length of the password we increased the total compute time from 4 minutes to 6 hours. This is nearing a 100x increase in computational time to use the brute force strategy. You probably can see where this is going—to defeat the brute force strategy, you simply need to make it improbable to calculate all possible password combinations.
-
+By adding one additional character to the potential length of the password we increased the total compute time from 4 minutes to 6 hours. This is nearing a 100x increase in computational time to use the brute force strategy. You probably can see where this is going. To defeat the brute force strategy, you simply need to make it improbable to calculate all possible password combinations.
 
 Let's get crazy and make a jump to 16 characters:
 
@@ -197,7 +191,7 @@ And here lies the debate that the security industry has been having for years:
 
 **Do we allow users to use short passwords and put the burden on the computer to generate hashes as slowly as reasonably still secure? Or do we force users to use long passwords and just use a fast hashing algorithm like SHA2 or SHA512?**
 
-[Some in the industry have argued that enough is enough with consuming massive amounts of CPU and GPU cycles simply computing hashes for passwords](https://blog.benpri.me/blog/2019/01/13/why-you-shouldnt-be-using-bcrypt-and-scrypt/). By forcing users to use long passwords, we get back a ton of computing power and can reduce costs by shutting off the 42 servers we have to run to keep up with login volumes.
+[Some in the industry have argued that enough is enough with consuming massive amounts of CPU and GPU cycles simply computing hashes for passwords](https://blog.benpri.me/blog/2019/01/13/why-you-shouldnt-be-using-bcrypt-and-scrypt/). By forcing users to use long passwords, we get back a lot of computing power and can reduce costs by shutting off the 42 servers we have to run to keep up with login volumes.
 
 Others claim that this is a bad idea for a variety of reasons including:
 
@@ -205,47 +199,10 @@ Others claim that this is a bad idea for a variety of reasons including:
 * The risk of simple algorithms like SHA2 is still too high
 * Simple algorithms might be currently vulnerable to attacks or new attacks might be discovered in the future
 
-At the time of this writing, there are still numerous simple algorithms that have not been attacked, meaning that no one has figured out a way to reduce the need to compute every possible hash. Therefore, it is still a safe assertion that using a simple algorithm on a long password is secure. This leaves the only reason not to force users to use long passwords is for the first reason mentioned above, "humans don't like change". In reality, many users will change and some will already be using long passwords.
+At the time of this writing, there are still numerous simple algorithms that have not been attacked, meaning that no one has figured out a way to reduce the need to compute every possible hash. Therefore, it is still a safe assertion that using a simple algorithm on a long password is secure.
 
-## Our new idea: Let's split the difference
+## How FusionAuth does it
 
-As the provider of an identity management solution, we understand both sides of this debate. We also have a strong desire to maintain security while reducing the cost to hash passwords at scale. Here is an idea we've been debating and hacking on at the office. What if we dynamically changed the algorithm that FusionAuth used to hash passwords based on the length (and possibly complexity) of the password? Could this reduce the average CPU/GPU consumption by enough to make a difference?
-
-Here's some super simple example code for an algorithm that selects the hashing scheme based on password length alone:
-
-```java
-PasswordHasher hasher;
-if (password.length() >= 14) {
-  hasher = new SHA512PasswordHasher();
-} else {
-  hasher = new BCryptPasswordHasher();
-}
-
-String hashedPassword = hasher.hash(password);
-```
-
-Of course this is just the tip of the iceberg, we could perform a lot of analysis on a password and calculate the entropy based upon other factors. This would allow us to select a hash that maintains a high level of security while reducing the CPU cost as much as possible.
-
-Let's just re-iterate our math from above one more time.
-
-```text
-// Passwords of length 16 using SHA2
-totalYears to generate all passwords = 71,917,808,219 or 71.9 billion years
-
-// Passwords of length 8 using BCrypt
-totalYears to generate all passwords = 320,300 years
-```
-
-The interesting fact here is that the length of the password dictates the level of security more than the algorithm.
-
-We think this idea has merit. As more people start using password managers with password generators, or letting the browser generate a unique password on your behalf, we could dynamically select a hash that could significantly reduce the CPU/GPU utilization.
-
-Food for thought, we can hash approximately 20 passwords per second on a Amazon EC2 instance of type `t2.medium` using PBKDF2. If you're Pokémon Go trying to authenticate half of the known world so they can catch Charizard, how many EC2 instances do you think it would require to handle their load? There is a real business case for changing the way the industry thinks about secure password hashing.
-
-Stayed tuned for an upcoming blog post where we walk through the real world performance numbers for 100 million users with passwords of varying length.
-
-FusionAuth defaults to `PBKDF2` with `24,000` iterations as the default password hashing scheme. BCrypt and several other algorithms are supported to enable password migrations. We continue to research new techniques to reduce CPU overhead while maintaining the highest standards in secure password storage.
-
-If you'd like to discuss on this feature, comment below or visit the FusionAuth GitHub issue for it and upvote or comment. [Feature: Entropy based password hashing](https://github.com/FusionAuth/fusionauth-issues/issues/85)
+FusionAuth defaults to `PBKDF2` with `24,000` iterations as the default password hashing scheme. This algorithm is quite complex and with the high number of iterations, it is sufficiently slow such that long and short passwords are challenging to brute force attack. Fusionauth also allow you to change the default algorithm as well as upgrade the algorithm for a user when they log in. This allows you to upgrade your applications password security over time.
 
 {% include _advice-get-started.html intro="If you are looking for a solution lets you manage and configure password hashing algorithms, FusionAuth has you covered." %}

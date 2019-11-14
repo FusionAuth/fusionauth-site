@@ -1,0 +1,30 @@
+@startuml
+  !include ../../../_config.plantuml
+
+  participant Roku
+  participant "Browser on Smartphone"
+  participant FusionAuth
+  participant "App Backend"
+
+  autonumber
+
+  Roku->Roku : Open Nerd Stuff on Demand app
+  Roku->FusionAuth : GET /oauth2/device_authorize
+  FusionAuth->Roku : URL and code to display
+  Roku->Roku : Display URL and code on TV
+  Roku-->FusionAuth : GET /oauth2/token (polling every 2-5 seconds)
+  FusionAuth-->Roku : "Not completed yet"
+  "Browser on Smartphone"->"App Backend" : GET https://nsod.tv/activate\n
+  "App Backend"->"Browser on Smartphone" : 302 redirect to /oauth2/device
+  "Browser on Smartphone"->FusionAuth : GET /oauth2/device
+  FusionAuth->"Browser on Smartphone" : HTML & CSS for start\npage that collects code
+  "Browser on Smartphone"->FusionAuth : POST /oauth/device w/ code
+  FusionAuth->"Browser on Smartphone" : 302 redirect to /oauth/authorize
+  note over "Browser on Smartphone", FusionAuth
+  	User logs in via standard
+  	OAuth v2 Authorization Code Grant
+  end note
+  FusionAuth->"Browser on Smartphone" : 302 redirect to /oauth/device\nwith <i>activationComplete</i> set to true
+  Roku-->FusionAuth : GET /oauth2/token (polling every 2-5 seconds)
+  FusionAuth-->Roku : Success!\nAn <i>access_token</i> and <i>refresh_token</i> are returned
+@enduml

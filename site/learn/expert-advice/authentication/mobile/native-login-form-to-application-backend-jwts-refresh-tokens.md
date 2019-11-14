@@ -23,7 +23,7 @@ category: Authentication
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/mobile/native-login-form-to-application-backend.plantuml %}
+{% plantuml _diagrams/learn/expert-advice/authentication/mobile/native-login-form-to-application-backend.plantuml %}
 
 ## Explanation
 

@@ -23,7 +23,7 @@ category: Authentication
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.plantuml %}
+{% plantuml _diagrams/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.plantuml %}
 
 ## Explanation
 

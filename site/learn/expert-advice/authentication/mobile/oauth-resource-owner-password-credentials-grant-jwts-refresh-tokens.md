@@ -23,7 +23,7 @@ category: Authentication
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/mobile/oauth-resource-owners-grant.plantuml %}
+{% plantuml _diagrams/learn/expert-advice/authentication/mobile/oauth-resource-owners-grant.plantuml %}
 
 ## Explanation
 

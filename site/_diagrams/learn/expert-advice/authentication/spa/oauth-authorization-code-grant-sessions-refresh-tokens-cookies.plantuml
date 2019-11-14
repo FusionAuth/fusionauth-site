@@ -1,0 +1,52 @@
+@startuml
+  !include ../../../../_config.plantuml
+  !include ../_participants.plantuml
+  !include ../_intro.plantuml
+  !include _initialize.plantuml
+
+  == Login (browser navigates away from SPA) ==
+  Browser->FusionAuth : GET /oauth2/authorize {response_type=code}
+  FusionAuth->Browser : (Login form HTML)
+  Browser->FusionAuth : POST /oauth2/authorize\n(response_type=code)
+  FusionAuth->Browser : 302 Location: {redirect_uri w/ code}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->Store : GET {redirect_uri w/ code}
+  Store->FusionAuth : POST /oauth2/token\n(code, client_secret)
+  FusionAuth->Store : 200 Ok\n(Refresh token and JWT)
+  Store->Store : Create new session
+  Store->Browser : 302 Location: /\n[SessionId and Refresh token HttpOnly w/ domain: Store.Example.com]
+  Browser->Store : GET /
+  Store->Browser : (SPA HTML, CSS & JavaScript)
+  Browser->Store : AJAX GET /api/user\n[SessionId and Refresh token HttpOnly w/ domain: Store.Example.com]
+  Store->Browser : 200 Ok\n(User)
+
+  !include _shopping-cart-session-refresh-load.plantuml
+
+  !include _shopping-cart-session-refresh-refresh.plantuml
+
+  !include _shopping-cart-session-refresh-relogin.plantuml
+
+  !include ../_sso.plantuml
+
+  !include _forums-initialize.plantuml
+  
+  == Login (browser navigates away from SPA but auto-logs-in since the session exists) ==
+  Browser->FusionAuth : GET /oauth2/authorize {response_type=code}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  FusionAuth->Browser : 302 Location: {redirect_uri w/ code}\n[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->Forums : GET {redirect_uri w/ code}
+  Forums->FusionAuth : POST /oauth2/token\n(code, client_secret)
+  FusionAuth->Forums : 200 Ok\n(Refresh token and JWT)
+  Forums->Forums : Create session and store User in it
+  Forums->Browser : 302 Location: /\n[SessionId HttpOnly w/ domain: Store.Example.com]
+  Browser->Forums : GET /
+  Forums->Browser : (SPA HTML, CSS & JavaScript)
+  Browser->Forums : AJAX GET /api/user\n[SessionId HttpOnly w/ domain: Store.Example.com]
+  Forums->Browser : 200 Ok\n(User)
+
+  !include _forums-session-refresh-load.plantuml
+
+  !include ../_attack-vectors.plantuml
+
+  !include _stolen-session-refresh-token.plantuml
+
+  !include _stolen-session-id.plantuml
+@enduml

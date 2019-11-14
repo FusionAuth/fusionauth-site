@@ -1,2 +1,0 @@
-1. The application calls the cookie drop API in the application backend and sends it the JWT in the request body
-1. The application backend responds with a 200 and an HttpOnly cookie that contains the JWT

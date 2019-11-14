@@ -23,7 +23,7 @@ category: Authentication
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/spa/oauth-authorization-code-grant-sessions.plantuml %}
+{% plantuml _diagrams/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-sessions.plantuml %}
 
 ## Explanation
 

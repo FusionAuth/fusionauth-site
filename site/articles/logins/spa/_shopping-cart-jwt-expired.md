@@ -1,2 +1,0 @@
-1. A while later, the user's JWT expires and the user clicks on their shopping cart again. The browser requests the user's shopping cart via AJAX from the application backend and includes the JWT cookie
-1. The application backend responds with a 401, indicating that the JWT has expired

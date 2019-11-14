@@ -23,7 +23,7 @@ category: Authentication
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/logins/spa/oauth-resource-owners-grant-jwts-refresh-tokens-cookies.plantuml %}
+{% plantuml _diagrams/learn/expert-advice/authentication/spa/oauth-resource-owners-grant-jwts-refresh-tokens-cookies.plantuml %}
 
 ## Explanation
 
