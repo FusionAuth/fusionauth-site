@@ -1,20 +1,18 @@
 ---
 layout: advice
-title: "Let's talk about JWTs baby!"
+title: "Pros and Cons of JWTs"
 description: "The pros and cons of JWTs and why you should (or shouldn't) use them."
 author: Brian Pontarelli
 header_dark: true
-image: advice/lets-talk-about-jwts-article.png
+image: advice/pros-and-cons-of-jwts-article.png
 category: Tokens
-related:
-- title: Revoking JWTs
-  url: /learn/expert-advice/tokens/revoking-jwts  
 ---
 
+This article provides an analysis of JWTs (JSON Web Tokens, pronounced "jot") from how they are used to pros and cons of using JWTs in your application. 
 
-Let's talk about JWTs (JSON Web Tokens, pronounced "jot"). JWTs are becoming more and more ubiquitous. Customer identity and access management (CIAM) providers everywhere are pushing JWTs as the silver bullet for everything. JWTs are pretty cool, but let's talk about some of the downsides of JWTs and other solutions you might consider.
+JWTs are becoming more and more ubiquitous. Customer identity and access management (CIAM) providers everywhere are pushing JWTs as the silver bullet for everything. JWTs are pretty cool, but let's talk about some of the downsides of JWTs and other solutions you might consider.
 
-The way I usually describe JWTs is that they are portable units of identity. That means they contain identity information as JSON and can be passed around to services and applications. Any service or application can verify a JWT itself. The service/application receiving a JWT doesn’t need to ask the identity provider that generated the JWT if it is valid. Once a JWT is verified, the service or application can use the data inside it to take action on behalf of the user.
+One way to describe JWTs is that they are portable units of identity. That means they contain identity information as JSON and can be passed around to services and applications. Any service or application can verify a JWT itself. The service/application receiving a JWT doesn’t need to ask the identity provider that generated the JWT if it is valid. Once a JWT is verified, the service or application can use the data inside it to take action on behalf of the user.
 
 Here's a diagram that illustrates how the identity provider creates a JWT and how a service can use the JWT without calling back to the identity provider: (yes that is a Palm Pilot in the diagram)
 
@@ -42,9 +40,9 @@ Since JWTs are cryptographically signed, they require a cryptographic algorithm 
 
 On a quad-core MacBook Pro, about 200 JWTs can be created and signed per second using RSA public-private key signing. This number drops dramatically on virtualized hardware like Amazon EC2s. HMAC signing is much faster but lacks the same flexibility and security characteristics. Specifically, if the identity provider uses HMAC to sign a JWT, then all services that want to verify the JWT must have the HMAC secret. This means that all the services can now create and sign JWTs as well. This makes the JWTs less portable (specifically to public services) and less secure.
 
-To give you an idea of the performance characteristics of JWTs and the cryptographic algorithms used, our team ran some tests on a quad-core MacBook. Here are some of the metrics and timings we recorded for JWTs:
+To give you an idea of the performance characteristics of JWTs and the cryptographic algorithms used, we ran some tests on a quad-core MacBook. Here are some of the metrics and timings we recorded for JWTs:
 
-Metric | | Timing
+Metric | | Timing {:.table}
 --- | | ---
 JSON Serialization + Base64 Encoding | | 400,000/s
 JSON Serialization + Base64 Encoding + HMAC Signing | | 150,000/s
@@ -54,6 +52,7 @@ Base64 Decoding + JSON Parsing + HMAC Verification | | 130,000/s
 Base64 Decoding + JSON Parsing + RSA Verification | | 6,000/s
 
 <br>
+
 ## JWTs aren’t easily revocable
 
 This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTS](/blog/2019/01/31/revoking-jwts/ "Learn about Revoking JWTs") and also watch the IBM webinar where I presented our solution here (when FusionAuth was still called Passport): [Learn how to revoke JSON Web Tokens](https://developer.ibm.com/tv/learn-how-to-revoke-json-web-tokens/ "Jump to IBM Developer site").

@@ -38,11 +38,11 @@ Once you choose your application type, you can plan out the specific authenticat
 
 {% include _image.html src="/assets/img/articles/diagram-example.svg" alt="Example diagram" class="full float-right mb-3 ml-3" figure=true %}
 
-To take the next step and go into detail on specific authentication workflows, read **FusionAuth’s** [Types of Logins and Authentication Workflows](/articles/logins/types-of-logins-authentication-workflows). This resource is designed to help you architect and design an effective authentication system for an application. It doesn’t list every possible option, but gives the most common and recommended authentication workflows used by a majority of developers.
+To take the next step and go into detail on specific authentication workflows, read **FusionAuth’s** [Login and Authentication Workflows](/learn/expert-advice/authentication/login-authentication-workflows). This resource is designed to help you architect and design an effective authentication system for an application. It doesn’t list every possible option, but gives the most common and recommended authentication workflows used by a majority of developers.
 
 Each workflow diagram details the authentication workflows for a user visiting a store and forum for the same company. In the store the user is required to login to view their shopping cart. In the forum they must login to view forum posts. We also provide examples of **common attack vectors** that hackers could use if portions of the system are compromised. These cases might be theoretical or based on known exploits such as XSS (cross-site scripting). We hope you find it useful.
 
-[Types of Logins and Authentication Workflows](/articles/logins/types-of-logins-authentication-workflows "Jump to Types of Logins and Authentication Workflows"){: .btn .btn-primary}
+[Login and Authentication Workflows](/learn/expert-advice/authentication/login-authentication-workflows "Jump to Types of Logins and Authentication Workflows"){: .btn .btn-primary}
 
 ## Learn More About FusionAuth
 

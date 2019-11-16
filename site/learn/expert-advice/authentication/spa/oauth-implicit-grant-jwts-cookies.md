@@ -61,4 +61,4 @@ Here are the FusionAuth APIs used in this example:
 * [/oauth2/authorize](/docs/v1/tech/oauth/endpoints#authorize)
 
 
-[_View All Types_](/articles/logins/types-of-logins-authentication-workflows)
+[_View All Types_](/learn/expert-advice/authentication/login-authentication-workflows)

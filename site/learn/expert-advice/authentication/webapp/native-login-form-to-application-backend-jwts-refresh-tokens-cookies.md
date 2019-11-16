@@ -53,4 +53,4 @@ Here are the FusionAuth APIs used in this example:
 * [/api/jwt/refresh](/docs/v1/tech/apis/jwt#refresh-a-jwt)
 * [/oauth2/token](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)
 
-[_View All Types_](/articles/logins/types-of-logins-authentication-workflows)
+[_View All Types_](/learn/expert-advice/authentication/login-authentication-workflows)
