@@ -1,7 +1,7 @@
 ---
 layout: advice
 title: "Password Security Compliance Checklist"
-description: "Use this combined checklist of leading password recommendations to strengthen your company’s password security policy, meet compliance standards, and minimize the risk of data theft."
+description: "Use this combined checklist of leading password recommendations to strengthen your company's password security policy, meet compliance standards, and minimize the risk of data theft."
 author: Bryan Giese
 header_dark: true
 image: advice/password-security-checklist-article.png
@@ -15,7 +15,7 @@ Right or wrong, usernames and passwords have been a critical component of websit
 
 ## Legally Required Password Constraints
 
-According to [Verizon’s Data Breach Investigations Report](https://enterprise.verizon.com/resources/reports/dbir/ "Jump to Verizon's site"), 81% of hacking-related breaches took advantage of stolen and/or weak passwords. Financial, healthcare, and public sector organizations accounted for half of those breaches. With over four billion credentials stolen in 2019 and the [impact of a data breach averaging $3.86 million](https://www.forbes.com/sites/niallmccarthy/2018/07/13/the-average-cost-of-a-data-breach-is-highest-in-the-u-s-infographic/ "Jump to Forbes article") per incident, password strength has emerged as an effective strategy to benefit overall security. In fact, many organizations are required by law to enforce strict password constraints and requirements. These password requirements are based on extensive study of the mathematical principles of password entropy and are proven to construct stronger passwords. They combine a variety of strategies including:
+According to [Verizon's Data Breach Investigations Report](https://enterprise.verizon.com/resources/reports/dbir/ "Jump to Verizon's site"), 81% of hacking-related breaches took advantage of stolen and/or weak passwords. Financial, healthcare, and public sector organizations accounted for half of those breaches. With over four billion credentials stolen in 2019 and the [impact of a data breach averaging $3.86 million](https://www.forbes.com/sites/niallmccarthy/2018/07/13/the-average-cost-of-a-data-breach-is-highest-in-the-u-s-infographic/ "Jump to Forbes article") per incident, password strength has emerged as an effective strategy to benefit overall security. In fact, many organizations are required by law to enforce strict password constraints and requirements. These password requirements are based on extensive study of the mathematical principles of password entropy and are proven to construct stronger passwords. They combine a variety of strategies including:
 
 - Minimum and maximum character counts
 - Uppercase and lowercase letter requirements

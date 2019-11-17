@@ -16,15 +16,15 @@ image: blogs/storing-user-data.jpg
 
 Storing user data in FusionAuth is not difficult and can save data essential to a user's experience. This article will walk you through the basic steps of storing and retrieving user data in FusionAuth.
 
-To get started, clone or download the [FusionAuth example template](https://github.com/FusionAuth/passport-example-template "Jump to GitHub") from GitHub. If you want to follow along with this how to, you’ll need to have node and npm installed on your machine. (It should work with older versions, but we used node v8.9.4 and npm 5.6.0 which are the current stable releases at the time of writing.)
+To get started, clone or download the [FusionAuth example template](https://github.com/FusionAuth/passport-example-template "Jump to GitHub") from GitHub. If you want to follow along with this how to, you'll need to have node and npm installed on your machine. (It should work with older versions, but we used node v8.9.4 and npm 5.6.0 which are the current stable releases at the time of writing.)
 <!--more-->
 NEED TO UPDATE SECTION FOR FUSIONAUTH PROCESS - install no sandbox
-If you don’t yet have a FusionAuth account, <a href="/try-passport">you should create one</a>. You can sign up for free 14 day trial without a credit card here:</p>
+If you don't yet have a FusionAuth account, <a href="/try-passport">you should create one</a>. You can sign up for free 14 day trial without a credit card here:</p>
 <p style="text-align: center;"><a class="orange-button-material small w-button" href="/try-passport">TRY PASSPORT</a></p>
 
 ## Using the FusionAuth Sandbox
 
-For this example, we are going to use the FusionAuth sandbox as our backend. If you’d rather install and run the backend on your development machine, <a href="/docs/1.x/tech/installation-guide/passport-backend">follow these installation instructions</a>.
+For this example, we are going to use the FusionAuth sandbox as our backend. If you'd rather install and run the backend on your development machine, <a href="/docs/1.x/tech/installation-guide/passport-backend">follow these installation instructions</a>.
 
 First, open the file ``` fusionauth-example-template/server/config/config.json ``` in a text editor, and edit the line below.
 
@@ -38,7 +38,7 @@ to:
 "backendUrl": "http://localhost:9011",
 ```
 
-That’s the URL for the sandbox API endpoint. This config change tells the app to use the sandbox for the backend.
+That's the URL for the sandbox API endpoint. This config change tells the app to use the sandbox for the backend.
 
 ## Configure the Backend
 
@@ -49,9 +49,9 @@ username: admin@fusionauth.io
 password: password
 ```
 
-Once you have logged in, go to **Settings → API Keys** and check to see if an API key exists for the **Id** “4ed5eb32-0a97-40eb-a6d7-cca1f9fa3a0c”. Because the sandbox is a shared environment, it may already exist.
+Once you have logged in, go to **Settings → API Keys** and check to see if an API key exists for the **Id** "4ed5eb32-0a97-40eb-a6d7-cca1f9fa3a0c". Because the sandbox is a shared environment, it may already exist.
 
-If it’s not listed, you should add it by clicking green “+” button at the top of the page. Use the ```apiKey``` listed in the ```config.json``` file we edited earlier.
+If it's not listed, you should add it by clicking green "+" button at the top of the page. Use the ```apiKey``` listed in the ```config.json``` file we edited earlier.
 
 ## Setting Up The App (Installing Node Modules)
 
@@ -89,11 +89,11 @@ Unable to retrieve JWT Public Key. Status code from FusionAuth was [undefined]. 
 
 If you see this message, you need to do one more bit of configuration:
 - Log into the FusionAuth sandbox.
-- Go to **Settings → Application** and locate the application named “Example Application” with the Id “4ed5eb32-0a97-40eb-a6d7-cca1f9fa3a0c”.
+- Go to **Settings → Application** and locate the application named "Example Application" with the Id "4ed5eb32-0a97-40eb-a6d7-cca1f9fa3a0c".
 - Click the **Edit** button in the **Action** column.
 - In the **Options** section, click the **JWT** tab.
 - Enable JWT.
-- Choose “**RSA using SHA-256**” from the **Signing algorithm** dropdown menu. (Any of the RSA options will work.)
+- Choose "**RSA using SHA-256**" from the **Signing algorithm** dropdown menu. (Any of the RSA options will work.)
 - Click the blue button with the arrow icon to generate your RSA keys.
 - Click the save button at the top of the page.
 
@@ -111,10 +111,10 @@ Go to [http://localhost:3000/](http://localhost:3000/ "Localhost"). You should s
 
 ## Register a New User
 
-- In your browser, click the link “**Sign up here.**”
+- In your browser, click the link "**Sign up here.**"
 - Fill out the sign up form.
 
-Because the sandbox is a shared environment, other people can see info about the users you create. For example, the email address of the registered user is shown on the dashboard. You may want to use a testing email address like “test@test.com”.
+Because the sandbox is a shared environment, other people can see info about the users you create. For example, the email address of the registered user is shown on the dashboard. You may want to use a testing email address like "test@test.com".
 
 Once you have registered a user, you will see the following page.
 
@@ -124,7 +124,7 @@ Congratulations! You have a sample app running that is using FusionAuth to manag
 
 ## Modifying the App to Store User Data
 
-Now that we have the app running, we can modify it to start storing data about our users. In our sample app, we are going to modify the the file ```HelloWorld.jsx``` in the ```/react/src/``` components directory. This react component verifies that the user is logged in and displays the message “You have successfully authenticated and are logged into your application.”
+Now that we have the app running, we can modify it to start storing data about our users. In our sample app, we are going to modify the the file ```HelloWorld.jsx``` in the ```/react/src/``` components directory. This react component verifies that the user is logged in and displays the message "You have successfully authenticated and are logged into your application."
 
 
 In the HelloWorld component, this is handled by the render function on line 46:
@@ -194,15 +194,15 @@ button.button {
 }
 ```
 
-In a production app, you’d probably want this code somewhere else, but adding it to ```index.css``` is fine for our demo.
+In a production app, you'd probably want this code somewhere else, but adding it to ```index.css``` is fine for our demo.
 
 Now the page looks like this:
 
 **NEED IMAGE FusionAuth Buttons Styled**
 
-## Retrieving the User’s Registration
+## Retrieving the User's Registration
 
-We are going to store the user’s choice of plan with their registration. FusionAuth supports single sign on. You can have multiple applications and your users can sign into each using the same credentials. The association between the user and the application is stored as a registration. So it makes sense to store application specific data with the registration for that app.
+We are going to store the user's choice of plan with their registration. FusionAuth supports single sign on. You can have multiple applications and your users can sign into each using the same credentials. The association between the user and the application is stored as a registration. So it makes sense to store application specific data with the registration for that app.
 
 We are going to use these to API endpoints, [retrieve user registration](https://fusionauth.io/docs/1.x/tech/apis/registrations#retrieve-a-user-registration "Jump to FusionAuth Docs") and [update user registration](https://fusionauth.io/docs/1.x/tech/apis/registrations#update-a-user-registration "Jump to FusionAuth Docs"). (If you wanted, you could store the data under their user. In which case you user the [retrieve user](https://fusionauth.io/docs/1.x/tech/apis/users#retrieve-a-user "Jump to FusionAuth Docs") and [update user](https://fusionauth.io/docs/1.x/tech/apis/users#update-a-user "Jump to FusionAuth Docs") endpoints.)
 
@@ -215,7 +215,7 @@ this.state = {
    userId: JSON.parse(localStorage.user).id
 };
 ```
-On successful login, the app is storing data about the user in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage "Jump to Mozilla Docs"). This line adds the user’s ID to the [state of this component](https://reactjs.org/docs/faq-state.html "Jump to ReactJS Docs"). This allows us easy access to the user ID, which we will use for both the API calls we’ll make.
+On successful login, the app is storing data about the user in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage "Jump to Mozilla Docs"). This line adds the user's ID to the [state of this component](https://reactjs.org/docs/faq-state.html "Jump to ReactJS Docs"). This allows us easy access to the user ID, which we will use for both the API calls we'll make.
 
 We are going to add a similar bit of code to the ```load``` function. In the ```configuration``` function called at the bottom of ```load```, add this line: ```this.setState({config: config});```. The modified code looks like this:
 
@@ -258,9 +258,9 @@ retrieveReg() {
 }
 ```
 
-We’re using [window.fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API "Jump to Mozilla Docs") to handle AJAX requests. This is supported only by newer browsers, so it wouldn’t be a good choice for a production app, but it simpler and easier read than ```XMLHttpRequest```. (The rest of example template app uses XMLHttpRequest which is a solid choice, but pretty low-level and verbose.)
+We're using [window.fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API "Jump to Mozilla Docs") to handle AJAX requests. This is supported only by newer browsers, so it wouldn't be a good choice for a production app, but it simpler and easier read than ```XMLHttpRequest```. (The rest of example template app uses XMLHttpRequest which is a solid choice, but pretty low-level and verbose.)
 
-React is a view library, it doesn’t provide any AJAX or networking support. It doesn’t have any opinions about how to handle this either, leaving developers free to choose. If you don’t want to use XMLHttpRequest you many want a library to help with this. One popular option is good old [jQuery.ajax](https://api.jquery.com/jQuery.ajax/ "Jump to jQuery site"). It gets used a lot because people are familiar with it. There is a [polyfill for fetch](https://github.com/github/fetch "Jump to GitHub"), providing support for older browsers. There is [Superagent](https://visionmedia.github.io/superagent/ "Jump to GitHub"), a callback-based library with a concise syntax. [Axios](https://github.com/mzabriskie/axios "Jump to GitHub") is a popular library, that uses promises instead of callbacks. For this demo, we are just going to use ```window.fetch```, so if you are coding along, keep in made that this will only work in newer browsers, unless you use the polyfill.
+React is a view library, it doesn't provide any AJAX or networking support. It doesn't have any opinions about how to handle this either, leaving developers free to choose. If you don't want to use XMLHttpRequest you many want a library to help with this. One popular option is good old [jQuery.ajax](https://api.jquery.com/jQuery.ajax/ "Jump to jQuery site"). It gets used a lot because people are familiar with it. There is a [polyfill for fetch](https://github.com/github/fetch "Jump to GitHub"), providing support for older browsers. There is [Superagent](https://visionmedia.github.io/superagent/ "Jump to GitHub"), a callback-based library with a concise syntax. [Axios](https://github.com/mzabriskie/axios "Jump to GitHub") is a popular library, that uses promises instead of callbacks. For this demo, we are just going to use ```window.fetch```, so if you are coding along, keep in made that this will only work in newer browsers, unless you use the polyfill.
 
 Back to the code, the call we are making is:
 
@@ -270,7 +270,7 @@ window.fetch(this.state.config.backend.url + '/api/fusionauth/registration/' + t
 
 Which resolves to a URL like ```http://localhost:8080/api/fusionauth/registration/f9c61843-c22a-410e-bd75-79d0dcb58c6a``` where that long GUID on the end is the user ID.
 
-The call is to the “other half” of the app, running in the ```/server``` directory.
+The call is to the "other half" of the app, running in the ```/server``` directory.
 
 The other interesting part of the code is this section:
 
@@ -288,7 +288,7 @@ The other interesting part of the code is this section:
 ```
 This takes the JSON returned by the call and looks to see if a plan is already stored. We are going to store this at ```registration.data.attributes.plan```. By convention, FusionAuth recommends storing app specific data at ```registration.data.attributes```.
 
-This code isn’t doing anything with errors, other than adding a flag to component’s state.
+This code isn't doing anything with errors, other than adding a flag to component's state.
 
 We need to make two more alterations to ```HelloWorld.jsx``` before we are ready to move on. Near the top of the file, in the ```constructor``` we need to define our function with this line:
 
@@ -358,9 +358,9 @@ If you go back to the browser and refresh the page, the 404 error in the console
 }
 ```
 
-## Updating the User’s Registration
+## Updating the User's Registration
 
-Now we are ready to add a function that stores the selected plan in the user’s registration. Add the following function to ```HelloWorld.jsx```.
+Now we are ready to add a function that stores the selected plan in the user's registration. Add the following function to ```HelloWorld.jsx```.
 
 ```js
 
@@ -442,7 +442,7 @@ This route responds to the PUT method and it takes two parameters, the user ID a
 
 After, you restart the Express app, the new route will be available.
 
-If you refresh your browser, the buttons will now function and the plan will be saved in the user’s registration for this app. If you uncomment the line ```console.log('Success:', response)``` in the ```update``` function, you can see the JSON returned by the API:
+If you refresh your browser, the buttons will now function and the plan will be saved in the user's registration for this app. If you uncomment the line ```console.log('Success:', response)``` in the ```update``` function, you can see the JSON returned by the API:
 
 ```js
 {
@@ -465,7 +465,7 @@ If you refresh your browser, the buttons will now function and the plan will be 
 
 ## Wrapping Up
 
-This is a pretty simple example, storing just the plan name, but we hope it demonstrates how easy it is to store user data in FusionAuth. In a game application, you could use this to store high scores or player progress through the game. In a shopping site or app, you could store the user’s purchase history or other data that can be used to customize their experience.
+This is a pretty simple example, storing just the plan name, but we hope it demonstrates how easy it is to store user data in FusionAuth. In a game application, you could use this to store high scores or player progress through the game. In a shopping site or app, you could store the user's purchase history or other data that can be used to customize their experience.
 
 
 ## Learn More About FusionAuth

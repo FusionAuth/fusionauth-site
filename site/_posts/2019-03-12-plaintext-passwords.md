@@ -19,7 +19,7 @@ Believe it or not there are still companies emailing users with plaintext passwo
 
 [CU Boulder](http://plaintextoffenders.com/post/140680242967/mycuboulderedu-university-seriously-a-premier "Jump to article about CU Boulder's Passwords"), a premier university, still emails their passwords in plaintext. Regardless of how complex a password is, if it is stored or emailed in plaintext, that password is easily accessible to anyone and security is compromised at a glance.
 
-Bottom line. Do not store or email your passwords in plaintext. It’s a horrible idea. Here’s why:
+Bottom line. Do not store or email your passwords in plaintext. It's a horrible idea. Here's why:
 
 ## Storing plaintext passwords
 - If the database is compromised, the hacker now has access to everyone's password. That means people who use the same password across sites are in jeopardy of having their bank accounts drained or their identities stolen.
@@ -47,8 +47,8 @@ FusionAuth is designed to be the most flexible and secure Customer Identity and 
 ## Additional Resources
 
 - [https://spod.cx/blog/emailing_passwords_bad_idea.shtml](https://spod.cx/blog/emailing_passwords_bad_idea.shtml "Jump to Spod.cx article")
-- [http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in](http://plaintextoffenders.com/post/7006690494/whats-so-wrong-about-sending-a-new-password-in "Jump to Plaintext Offenders post")
-- [**Developer’s Guide to the GDPR**](/blog/2019/01/29/white-paper-developers-guide-gdpr "Get the Developer's Guide to the GDPR")
+- [http://plaintextoffenders.com](http://plaintextoffenders.com "Jump to Plaintext Offenders")
+- [**Developer's Guide to the GDPR**](/learn/expert-advice/ciam/developers-guide-to-gdpr "Developer's Guide to the GDPR")
 
 <!--
 - Technology

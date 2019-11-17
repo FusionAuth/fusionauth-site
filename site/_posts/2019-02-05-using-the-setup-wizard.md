@@ -26,7 +26,7 @@ To use the FusionAuth Setup Wizard, you will need to access the FusionAuth backe
 
 In order to complete the FusionAuth Setup Wizard, you will be prompted to create the first admin user for the FusionAuth Application. If needed, you can add additional admin users at a later time.
 
-If you instead are being prompted by the FusionAuth Maintenance Mode, please complete that setup first and then return to this step. See the Maintenance Mode section in the [FusionAuth App Installation Guide](/docs/v1/tech/installation-guide/fusionauth-app/).
+If you instead are being prompted by the FusionAuth Maintenance Mode, please complete that setup first and then return to this step. See the Maintenance Mode section in the [FusionAuth App Installation Guide](/docs/v1/tech/installation-guide/fusionauth-app).
 
 {% include _image.html src="/assets/img/blogs/setup-wizard-create-admin.png" alt="Create Admin User" class="full" figure=false %}
 

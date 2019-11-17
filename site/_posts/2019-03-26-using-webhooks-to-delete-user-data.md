@@ -15,13 +15,13 @@ tags:
 image: blogs/using-webhooks-in-fusionauth.jpg
 ---
 
-If your inbox looks anything like mine, you've seen hundreds of messages from companies updating their privacy policies and terms of service. This is mainly due to the European Union's [General Data Protection Regulation](/blog/2019/01/29/white-paper-developers-guide-gdpr "Download the Developer's Guide to the GDPR") or GDPR, which went into effect on May 25, 2018. The GDPR grants a set of “digital rights” to EU citizens, including a “right to erasure.” Basically, this means a user can request that their data be deleted, and there can be substantial fines if a company is not able to honor these requests.
+If your inbox looks anything like mine, you've seen hundreds of messages from companies updating their privacy policies and terms of service. This is mainly due to the European Union's [General Data Protection Regulation](/learn/expert-advice/ciam/developers-guide-to-gdpr "Download the Developer's Guide to the GDPR") or GDPR, which went into effect on May 25, 2018. The GDPR grants a set of "digital rights" to EU citizens, including a "right to erasure." Basically, this means a user can request that their data be deleted, and there can be substantial fines if a company is not able to honor these requests.
 
-In this post, we’ll show how to set up webhooks in FusionAuth to delete all of a user’s data when they delete their account. In FusionAuth, webhooks are used to subscribe or listen to events in the system, so we’ll create a webhook that listens to the `user.delete` event.
+In this post, we'll show how to set up webhooks in FusionAuth to delete all of a user's data when they delete their account. In FusionAuth, webhooks are used to subscribe or listen to events in the system, so we'll create a webhook that listens to the `user.delete` event.
 <!--more-->
 ## What is a Webhook?
 
-In case you are not familiar with webhooks in FusionAuth and other platforms, they are an effective component of interactive user experiences on websites and applications. In the most basic terms, webhooks are simple event notifications that send a message to the application that something happened. Upon receiving that message, the application can react. It may trigger a change in the user’s interface, or it can initiate more complex processes within the application. The options are endless and developers are taking advantage of this technique to make more engaging experiences. For more information, there’s a useful [introduction to webhooks here](https://webhooks.pbworks.com/w/page/13385124/FrontPage "Learn more about Webhooks").
+In case you are not familiar with webhooks in FusionAuth and other platforms, they are an effective component of interactive user experiences on websites and applications. In the most basic terms, webhooks are simple event notifications that send a message to the application that something happened. Upon receiving that message, the application can react. It may trigger a change in the user's interface, or it can initiate more complex processes within the application. The options are endless and developers are taking advantage of this technique to make more engaging experiences. For more information, there's a useful [introduction to webhooks here](https://webhooks.pbworks.com/w/page/13385124/FrontPage "Learn more about Webhooks").
 
 ## Creating Webhooks in FusionAuth
 There are two ways to create webhooks in FusionAuth. The first is to use the FusionAuth UI and it is pretty straight-forward. The second is to programatically create a Webhook using the [Webhook API](/docs/v1/tech/apis/webhooks).  
@@ -136,11 +136,11 @@ router.route('/fusionauth').post((req, res) => {
 
 This code sets up a route to handle the URL for our webhook. The first bit of code checks that the `Authorization` header contains the correct API key. (This key would be stored in the Express app.)
 
-The line `savedItems.deleteAll(request.event.user.id)` is a call to delete the user’s data. Once the data has been deleted, our webhook will respond with a status code of `200`. With the webhook attached, FusionAuth will wait to delete the user until it gets a success code back from the webhook. By deleting the user’s saved data in response to the `user.delete` event we are in effect keeping our application database in sync with the FusionAuth user database.
+The line `savedItems.deleteAll(request.event.user.id)` is a call to delete the user's data. Once the data has been deleted, our webhook will respond with a status code of `200`. With the webhook attached, FusionAuth will wait to delete the user until it gets a success code back from the webhook. By deleting the user's saved data in response to the `user.delete` event we are in effect keeping our application database in sync with the FusionAuth user database.
 
 ## Wrapping Up
 
-This post shows the power and simplicity of using webhooks in FusionAuth. By subscribing to events, your application can easily respond to changes in user data. This publish and subscribe pattern is a core feature of FusionAuth’s architecture. If you have any questions or problems, let us know on [GitHub](https://github.com/FusionAuth/fusionauth-issues/issues "Jump to GitHub") and we’ll be happy to help.
+This post shows the power and simplicity of using webhooks in FusionAuth. By subscribing to events, your application can easily respond to changes in user data. This publish and subscribe pattern is a core feature of FusionAuth's architecture. If you have any questions or problems, let us know on [GitHub](https://github.com/FusionAuth/fusionauth-issues/issues "Jump to GitHub") and we'll be happy to help.
 
 ## Learn More About FusionAuth
 

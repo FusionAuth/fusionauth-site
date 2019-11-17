@@ -49,9 +49,9 @@ Most of this process is simple and standard for anyone that has built web applic
 > 2. Sort the list of parameters alphabetically [1] by encoded key [2].
 > 3. For each key/value pair:
 > 4. Append the encoded key to the output string.
-> 5. Append the ‘=’ character to the output string.
+> 5. Append the '=' character to the output string.
 > 6. Append the encoded value to the output string.
-> 7. If there are more key/value pairs remaining, append a ‘&’ character to the output string.
+> 7. If there are more key/value pairs remaining, append a '&' character to the output string.
 
 This process is called canonicalization and is used by any process that needs a repeatable process for generating signatures. XML signing uses a similar process as well. However, this process can be difficult to understand and implement.
 

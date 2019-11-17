@@ -7,7 +7,7 @@ image: blogs/okta-and-fusionauth-8-things.png
 excerpt_separator: <!--more-->
 ---
 
-If you have been paying attention to news in the software industry, you’ve probably seen more than a few articles about the ‘steady growth’ and ‘expanding market’ for identity and access management platforms. This should be no surprise. Every year thousands of new applications for desktop, mobile, IoT and beyond are released to the market, and every one of them needs to register and manage their customers. With so many business opportunities, of course there are a variety of solutions available. Okta and FusionAuth are two popular solutions, although they have different perspectives that make a big difference in what they provide.
+If you have been paying attention to news in the software industry, you've probably seen more than a few articles about the 'steady growth' and 'expanding market' for identity and access management platforms. This should be no surprise. Every year thousands of new applications for desktop, mobile, IoT and beyond are released to the market, and every one of them needs to register and manage their customers. With so many business opportunities, of course there are a variety of solutions available. Okta and FusionAuth are two popular solutions, although they have different perspectives that make a big difference in what they provide.
 <!--more-->
 
 Okta is clearly a massive organization backed with over a quarter of a billion in investor funding. They have a complex cloud-based solution that has connections, sockets, and integrations for thousands of other systems. This is worth the money for entrenched, slow-moving companies with multiple levels of legacy infrastructure to coordinate. FusionAuth takes a different approach providing a streamlined platform that is designed to scale up as needed without adding in unnecessary overhead. This contrast in perspective explains the differences between Okta and FusionAuth, although they do have many features in common.
@@ -20,7 +20,7 @@ Okta and FusionAuth both take advantage of OAuth tokens & API key management pro
 ### 2. Full-Featured Identity Tools
 Okta and FusionAuth both provide the essential tools that modern identity management requires including multi-factor authentication (MFA), single sign-on (SSO) across multiple applications, customizable communication templates, and localization support. Both also provide user reports and native segmentation options that go far beyond basic registration tools.
 
-This is a tremendous benefit over spending the time and money to develop a custom authorization system which can take months or more of advanced developer effort. A ‘roll your own’ solution also requires constant evaluation and maintenance as technology and security threats evolve, shifting valuable developer resources away from core application features that serve generate revenue.
+This is a tremendous benefit over spending the time and money to develop a custom authorization system which can take months or more of advanced developer effort. A 'roll your own' solution also requires constant evaluation and maintenance as technology and security threats evolve, shifting valuable developer resources away from core application features that serve generate revenue.
 
 Despite their similarities, Okta and FusionAuth differ in ways that can be vital to an organization and how they need to manage their infrastructure and their users.  
 
@@ -29,10 +29,10 @@ Despite their similarities, Okta and FusionAuth differ in ways that can be vital
 [{% include _image.html src="/assets/img/blogs/okta-fusionauth-compare-sample.png" alt="Download the Okta and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-okta.pdf "Download the Okta and FusionAuth Feature Comparison")
 
 ### 3. Single-Tenant Security
-A big difference between Okta and FusionAuth is Okta is a multi-tenant ‘built in the cloud’ service. FusionAuth can install anywhere and delivers true data isolation as *single-tenant solution*. This eliminates the possibility of data leakage between unrelated companies, whether accidentally or through data breaches. It also eliminates the risk of another company’s poor security practices allowing access to your customer’s data. FusionAuth also enables customers to implement a firewall at any layer, further protecting their data from unauthorized access.
+A big difference between Okta and FusionAuth is Okta is a multi-tenant 'built in the cloud' service. FusionAuth can install anywhere and delivers true data isolation as *single-tenant solution*. This eliminates the possibility of data leakage between unrelated companies, whether accidentally or through data breaches. It also eliminates the risk of another company's poor security practices allowing access to your customer's data. FusionAuth also enables customers to implement a firewall at any layer, further protecting their data from unauthorized access.
 
 ### 4. Data Policy Compliance
-FusionAuth’s single-tenant architecture also allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany’s Bundesdatenschutzgesetz, Australia’s Privacy Principles, Canada’s PIPEDA, and the European Union’s GDPR all place different restrictions on how a user’s personal data can be used and transmitted. FusionAuth provides the expanded control for companies required to comply with laws and regulations in their specific region.
+FusionAuth's single-tenant architecture also allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and the European Union's GDPR all place different restrictions on how a user's personal data can be used and transmitted. FusionAuth provides the expanded control for companies required to comply with laws and regulations in their specific region.
 For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/blog/2018/12/03/single-tenant-vs-multi-tenant).
 
 ### 5. Configurable Password Encryption and Brute-Force Protection
@@ -44,7 +44,7 @@ FusionAuth is also able to detect brute-force attack attempts and can block the 
 User reports have been in every slide presentation and corporate board meeting since the first bit of software hit the internet. From day one FusionAuth gives you the most requested reports like daily/monthly active users, logins and registrations without any additional configuration or setup.
 
 ### 7. Enterprise Identity Unification (EIU)
-Another way Okta and FusionAuth differ is how they can handle complex bulk merger challenges. In today’s fast-moving business world, companies merge with or acquire partners and competitors every day. It’s a difficult challenge to combine and manage the unique databases of users that each company brings into the system. This is the realm of EIU and presents many complex issues such as duplicate users, incomplete or conflicting data, and varying password schemas.
+Another way Okta and FusionAuth differ is how they can handle complex bulk merger challenges. In today's fast-moving business world, companies merge with or acquire partners and competitors every day. It's a difficult challenge to combine and manage the unique databases of users that each company brings into the system. This is the realm of EIU and presents many complex issues such as duplicate users, incomplete or conflicting data, and varying password schemas.
 FusionAuth allows a parent company to create unique tenants to isolate distinct datasets while still providing a single user management system for the overall organization. It gives the administrators incremental control over how and when the information is merged, and can even engage the users to manage, filter, and unify their own profile data.
 
 If you would like more information on how FusionAuth enables effective EIU across multiple identity management systems, [contact us](/contact).
@@ -52,9 +52,9 @@ If you would like more information on how FusionAuth enables effective EIU acros
 ### 8. Custom Feature Development
 Another difference between Okta and FusionAuth is our size and flexibility. There is no doubt that Okta is a huge corporation that works with large organizations around the world. At their size, it is difficult to get custom features or functionality unless they can serve their all Okta customers. Smaller companies with unique or non-standard needs will find it difficult to get any type of custom feature implemented.
 
-FusionAuth is a small, bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, StrategyCorp, Deutsche Bank and IBM. If you have a specific challenge for managing users that we don’t already cover, we’ll work with you for a solution. This is an added benefit to having a single-tenant solution: your system can be customized to fit your specific requirements and specifications.
+FusionAuth is a small, bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, StrategyCorp, Deutsche Bank and IBM. If you have a specific challenge for managing users that we don't already cover, we'll work with you for a solution. This is an added benefit to having a single-tenant solution: your system can be customized to fit your specific requirements and specifications.
 
-These are eight of the similarities and differences between Okta and FusionAuth. [Download this feature comparison](/resources/fusionauth-vs-okta.pdf "Okta and FusionAuth Feature Comparison") for a point-by-point evaluation, and please [contact](/contact) us if you have any questions or would like a quick demo. We’d love to provide a CIAM solution so your team can focus on your revenue-generating features.
+These are eight of the similarities and differences between Okta and FusionAuth. [Download this feature comparison](/resources/fusionauth-vs-okta.pdf "Okta and FusionAuth Feature Comparison") for a point-by-point evaluation, and please [contact](/contact) us if you have any questions or would like a quick demo. We'd love to provide a CIAM solution so your team can focus on your revenue-generating features.
 
 [Download the Okta and FusionAuth Feature Comparison](/resources/fusionauth-vs-okta.pdf "Okta and FusionAuth Feature Comparison"){: .btn .btn-primary}
 
@@ -69,7 +69,7 @@ Interested in how FusionAuth compares to other solutions?
 - [Auth0](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Auth0 and FusionAuth")
 - [Cognito](/blog/2018/09/18/amazon-cognito-and-fusionauth-comparison "Amazon Cognito and FusionAuth")
 - [Firebase](/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison "Firebase and FusionAuth")
-- [Gluu](/blog/2019/07/16/gluu-fusionauth-compare-identity-management "Gluu and FusionAuth")
+- [Gluu](/blog/2019/07/16/gluu-fusionauth-compare-identity-management-solutions "Gluu and FusionAuth")
 - [Keycloak](/blog/2019/03/06/keycloak-fusionauth-comparison "Keycloak and FusionAuth")
 - [Ping Identity](/blog/2018/10/08/quick-comparison-ping-identity-and-fusionauth "Ping Identity and FusionAuth")
 - [Okta](/blog/2018/10/16/8-things-to-know-about-okta-and-fusionauth "Okta and FusionAuth")

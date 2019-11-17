@@ -41,13 +41,13 @@ FusionAuth may also be run on Linux, in a Docker container or a Kubernetes clust
 
 ## Download and Install FusionAuth
 
-Start by heading to the [Download](/downloads) page.
+Start by heading to the [Download](/download) page.
 
 FusionAuth is comprised of two web services, the FusionAuth application (`fusionauth-app`) and FusionAuth search engine (`fusionauth-search`). The FusionAuth App bundle provides access to the API and the web-based user interface. The FusionAuth search engine is required by FusionAuth and provides full-text search uses Elasticsearch. While you may optionally use an existing Elasticsearch instance if it meets the minimum requirements, for this example  we will be installing Elasticsearch by way of the `fusionauth-search` package.
 
 If you'd like to read additional information on the different packages found on the Download page, see the [Packages](/docs/v1/tech/installation-guide/packages) section of the installation guide.
 
-We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/downloads) page click on the file you'd like to download and select a download location. We will refer to your download location as `FUSIONAUTH_HOME`, in this example we'll use `~/fusionauth`.
+We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/download) page click on the file you'd like to download and select a download location. We will refer to your download location as `FUSIONAUTH_HOME`, in this example we'll use `~/fusionauth`.
 
 If you're a command line person, feel free to use `wget` if that is your preference, see `wget` example below.
 

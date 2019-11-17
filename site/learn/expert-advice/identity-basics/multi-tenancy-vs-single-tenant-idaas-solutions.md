@@ -26,9 +26,9 @@ Simply put, multi-tenant is an architecture where multiple companies store their
 **Instant on-boarding** - In most cases, new customers can be setup by creating a new logical tenant. No new servers are provisioned and software installation is not required, which makes this process instantaneous.
 
 ### Drawbacks
-**Performance** - One tenant’s heavy use or load spike may impact the quality of service provided to other tenants. In addition, when software or hardware issues are found on a multi-tenant database, it can cause an outage for all customers.
+**Performance** - One tenant's heavy use or load spike may impact the quality of service provided to other tenants. In addition, when software or hardware issues are found on a multi-tenant database, it can cause an outage for all customers.
 
-**Security risk** - If a hacker gains access to one tenant’s data, they can access data from every tenant because all data resides in a single database. This is an important consideration because every tenant is relying on the security practices of the weakest tenant. According to InfoWorld, "System vulnerabilities have become a bigger problem with the advent of multi-tenancy in cloud computing. Organizations share memory, databases, and other resources in close proximity to one another, creating new attack surfaces."
+**Security risk** - If a hacker gains access to one tenant's data, they can access data from every tenant because all data resides in a single database. This is an important consideration because every tenant is relying on the security practices of the weakest tenant. According to InfoWorld, "System vulnerabilities have become a bigger problem with the advent of multi-tenancy in cloud computing. Organizations share memory, databases, and other resources in close proximity to one another, creating new attack surfaces."
 
 **Single point of failure** - If the multi-tenant system goes down (and they do regardless of what salespeople will tell you), EVERYONE goes down. Then all tenants sit and wait until the cause is determined and fixed.
 
@@ -44,11 +44,11 @@ In a single-tenant architecture each company, or tenant, has their own instance,
 
 **Regulatory compliance** - Enforcing regulatory requirements is easier due to complete control of the environment. If your company policy does not allow data to be transmitted outside of your country (i.e. German Data Regulations or GDPR regulations) a multi-tenant solution needs to be specifically designed for this. A single-tenant solution makes this as simple as installing the software on a server in Germany. Similarly, compliance with regulations such as PCI, HIPAA and SOC2 is simplified because data is secured, encrypted and protected separately for each tenant.
 
-**Customization** - With a single-tenant architecture, the software environment can be customized to meet customer’s business needs; robust plugins can be installed to maximize personalization without limitation.
+**Customization** - With a single-tenant architecture, the software environment can be customized to meet customer's business needs; robust plugins can be installed to maximize personalization without limitation.
 
 **Upgrade control** - Customers have decision authority over the upgrade cycle. Customers can choose what updates they want to install and when. This adds flexibility for scheduling maintenance windows and downtime without impacting others.
 
-**Data recovery** - Data extraction is an important consideration that is often overlooked. If a service is acquired or shutdown it’s wise to consider how you will retrieve your data in advance; it is easier to export data from an isolated, single-tenant cloud.
+**Data recovery** - Data extraction is an important consideration that is often overlooked. If a service is acquired or shutdown it's wise to consider how you will retrieve your data in advance; it is easier to export data from an isolated, single-tenant cloud.
 
 ### Drawbacks
 **Cost** - Since this is not a shared infrastructure, customers have to pay the cost of the entire system (hardware and software). However, with the rise of low-cost hosting providers like AWS and Azure, single-tenant solution platforms can have very affordable [pricing options](/pricing "FusionAuth Pricing"). In light of of these considerations technology advisors TechTarget stated their support of single-tenant solutions: "Concerns over security in multi-tenant environments have led to many organizations choosing to switch to single-tenant infrastructure as a service to mitigate the risks of co-located data. Despite the extra cost, this is a sensible and advisable solution."

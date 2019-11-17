@@ -22,7 +22,7 @@ FusionAuth deploys with three templates to support standard workflows.
 
 You should customize these templates with your branding, but at a minimum, you will need to make minor edits prior to using them in production. To enable emails, you need to modify the URL used in the template to be publicly accessible.
 
-**NOTE:** Email features require that the SMTP setup has been completed. Review your FusionAuth dashboard. If you see a box titled _Email Settings_ you will need to complete that task first. View the [Using the FusionAuth Setup Wizard tutorial](/blog/2018/03/16/using-the-setup-wizard) to see how to complete the SMTP configuration.
+**NOTE:** Email features require that the SMTP setup has been completed. Review your FusionAuth dashboard. If you see a box titled _Email Settings_ you will need to complete that task first. View the [Using the FusionAuth Setup Wizard tutorial](/blog/2019/02/05/using-the-setup-wizard) to see how to complete the SMTP configuration.
 
 {% include _image.html src="/assets/img/blogs/email-templates-setup-smtp.png" alt="Email Templates in FusionAuth Setup" class="full" figure=false %}
 

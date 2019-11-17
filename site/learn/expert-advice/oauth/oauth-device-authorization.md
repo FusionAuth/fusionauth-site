@@ -125,6 +125,6 @@ We're excited to offer this new feature in FusionAuth, and hope you take the tim
 
 ## FusionAuth is Always Improving
 
-We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know either at [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub") or [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and we’ll take a look.
+We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know either at [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub") or [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and we'll take a look.
 
 {% include _advice-get-started.html intro="If you are looking for a solution that provides full support for OAuth Device Authorization, FusionAuth has you covered." %}

@@ -16,7 +16,7 @@ If you are an Angular developer or looking to add it to your skillset, get to Co
 
 ## AngularDenver Sessions and Workshops
 
-With a combination of two days of focused sessions and an optional two days of in-depth workshops the conference provides whatever level of information developers are looking for. This year’s workshops start on July 30 and cover topics from beginner to expert.
+With a combination of two days of focused sessions and an optional two days of in-depth workshops the conference provides whatever level of information developers are looking for. This year's workshops start on July 30 and cover topics from beginner to expert.
 - **Angular Fundamentals** – with [Kevin Schuchard](https://twitter.com/KevinSchuchard) and [Anthony Jones](https://twitter.com/anthonyjones519)
 - **NgRx: A Reactive State of Mind** – with [Mike Ryan](https://twitter.com/MikeRyanDev) and [Brandon Roberts](https://twitter.com/brandontroberts)
 - **RxJS Level UP: Essentials in Reactive Programming** – with [Michael Hladky](https://twitter.com/Michael_Hladky) and [Jan-Niklas Wortmann](https://twitter.com/niklas_wortmann)

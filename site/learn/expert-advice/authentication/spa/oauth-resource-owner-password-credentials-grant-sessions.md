@@ -55,6 +55,6 @@ This workflow is one of the more secure methods of authenticating users. One dow
 
 Here are the FusionAuth APIs used in this example:
 
-* [/oauth2/token](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)
+* [/oauth2/token](/docs/v1/tech/oauth/endpoints#resource-owner-password-credentials-grant-request)
 
 [_View All Types_](/learn/expert-advice/authentication/login-authentication-workflows)

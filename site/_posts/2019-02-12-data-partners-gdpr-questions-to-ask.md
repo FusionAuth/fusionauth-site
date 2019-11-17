@@ -14,7 +14,7 @@ tags:
 image: blogs/gdpr-data-partners-questions.jpg
 ---
 
-By now, you should be fully aware of the [GDPR’s data requirements](/blog/2019/01/29/white-paper-developers-guide-gdpr "Get the Developer's Guide to the GDPR") for your own application, but have you talked with your data partners? If your application takes advantage of third-party tools and components to add functionality or track user information, they need to be compliant as well. The new regulations state that data privacy needs to be maintained throughout the entire lifecycle of an application, through every data controller and processor. Take the time to ask your data partners how they ensure GDPR compliance, including their security framework and how they manage data.
+By now, you should be fully aware of the [GDPR's data requirements](/learn/expert-advice/ciam/developers-guide-to-gdpr "Get the Developer's Guide to the GDPR") for your own application, but have you talked with your data partners? If your application takes advantage of third-party tools and components to add functionality or track user information, they need to be compliant as well. The new regulations state that data privacy needs to be maintained throughout the entire lifecycle of an application, through every data controller and processor. Take the time to ask your data partners how they ensure GDPR compliance, including their security framework and how they manage data.
 
 <!--more-->
 If your data partners do not have a clearly defined and documented data strategy, you could be exposing your company to substantial risk. Here are a few questions to get the discussion started:
@@ -31,7 +31,7 @@ When user data is integrated with their system, is new data personally identifia
 
 This is vital since your company will need to notify your users within 72 hours. Your provider should be able to notify you so you can comply.
 
-### Q: How do they comply with your users’ right of access and erasure?
+### Q: How do they comply with your users' right of access and erasure?
 
 How will your company coordinate efforts so users can view their data and request data erasure?
 
@@ -47,7 +47,7 @@ This is a basic question to begin with. They should have a diverse set of requir
 
 Modern standard hash algorithms like SHA-3, Bcrypt, PBKDF2 and Scrypt are designed to make brute force attacks much more difficult. If they are using standard MD5, run.
 
-### Q: How difficult is it to increase their hash’s intensity for new users? Existing users?
+### Q: How difficult is it to increase their hash's intensity for new users? Existing users?
 
 Hackers will always develop more sophisticated techniques, and computer processing power is always increasing. Will their system be able to adjust to protect against evolving attacks?
 
@@ -59,8 +59,8 @@ Limiting direct access to the database is a first line of defense against exploi
 
 Using a variety of authentication credentials within the system creates an added layer of security and limits what can be done if a hacker gains access.
 
-## Learn More: Developer’s Guide to the GDPR
+## Learn More: Developer's Guide to the GDPR
 
-The GDPR is sure to bring changes to the way developers plan applications and manage partners. It doesn’t restrict the types of applications and experiences developers can build, but it does place the need for data privacy ahead of the business needs of the company. To learn more about the GDPR and how it will impact developers' responsibilities, download our [**Developer’s Guide to the GDPR**](/blog/2019/01/29/white-paper-developers-guide-gdpr "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation.
+The GDPR is sure to bring changes to the way developers plan applications and manage partners. It doesn't restrict the types of applications and experiences developers can build, but it does place the need for data privacy ahead of the business needs of the company. To learn more about the GDPR and how it will impact developers' responsibilities, download our [**Developer's Guide to the GDPR**](/learn/expert-advice/ciam/developers-guide-to-gdpr "Get the Developer's Guide to the GDPR"). It covers the essential information developers need to understand to stay compliant and avoid steep fines possible under the regulation.
 
-[Get the Guide](/blog/2019/01/29/white-paper-developers-guide-gdpr){: .btn .btn-primary}
+[Get the Guide](/learn/expert-advice/ciam/developers-guide-to-gdpr){: .btn .btn-primary}

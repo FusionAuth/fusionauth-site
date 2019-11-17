@@ -10,7 +10,7 @@ tags:
 image: blogs/fusionauth-1-5-passwordless.png
 ---
 
-Logging in without a password? In what fantasy land can that be secure?!? The fact is it can be much more secure than traditional passwords, and is now supported in our newest release. FusionAuth 1.5 is now available for [direct download](/downloads),  [FastPath one-line install](/docs/v1/tech/installation-guide/fast-path), [Homebrew](/docs/v1/tech/installation-guide/homebrew) or [Docker](/docs/v1/tech/installation-guide/docker). It includes new features, a few changes, and minor fixes for issues discovered by QA testers and our growing community of users. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes/#version-1-5-0) for the full details.
+Logging in without a password? In what fantasy land can that be secure?!? The fact is it can be much more secure than traditional passwords, and is now supported in our newest release. FusionAuth 1.5 is now available for [direct download](/download),  [FastPath one-line install](/docs/v1/tech/installation-guide/fast-path), [Homebrew](/docs/v1/tech/installation-guide/homebrew) or [Docker](/docs/v1/tech/installation-guide/docker). It includes new features, a few changes, and minor fixes for issues discovered by QA testers and our growing community of users. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes/#version-1-5-0) for the full details.
 
 <!--more-->
 
@@ -54,7 +54,7 @@ While we are pretty excited about passwordless login, the FusionAuth 1.5 release
 
 
 ## FusionAuth Is Always Improving
-We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know either at [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub") or [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and we’ll take a look.
+We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know either at [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub") or [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and we'll take a look.
 
 ## Learn More About FusionAuth
 

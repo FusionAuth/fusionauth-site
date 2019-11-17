@@ -46,7 +46,7 @@ This workflow is a secure methods of authenticating users. It uses a JWT and ref
 
 Here are the FusionAuth APIs used in this example:
 
-* [/oauth2/token (grant)](/docs/v1/tech/oauth/endpoints#resource-owner-credentials-grant-request)
+* [/oauth2/token (grant)](/docs/v1/tech/oauth/endpoints#resource-owner-password-credentials-grant-request)
 * [/api/jwt/refresh](/docs/v1/tech/apis/jwt#refresh-a-jwt)
 * [/oauth2/token (refresh)](/docs/v1/tech/oauth/endpoints#refresh-token-grant-request)
 

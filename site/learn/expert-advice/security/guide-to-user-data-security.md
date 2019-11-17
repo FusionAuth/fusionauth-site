@@ -65,7 +65,7 @@ The first step to securing user data is to secure the servers you will be runnin
 <div class="card-header bg-info text-white">CORE GUIDELINES</div>
 <div class="card-body" markdown="1">
 * Use the least privilege possible
-* Prevent direct access when it isn’t required
+* Prevent direct access when it isn't required
 * Automate security checks and constraints
 * Send notifications for all activity
 * Identify users that can access the server

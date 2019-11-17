@@ -243,10 +243,6 @@ Once brew installs the plist file in the correct location, it can use the file w
 brew services start fusionauth-app
 ```
 
-Our plist was built using the examples and information located here:
-
-[http://www.manpagez.com/man/5/launchd.plist/](http://www.manpagez.com/man/5/launchd.plist/ "Jump to Manpagez")
-
 #### Additional Details
 
 If you don't want to have your application bottled by brew, then you can include this field in your Ruby formula class:

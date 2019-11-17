@@ -43,7 +43,7 @@ FusionAuth may also be run in a Docker container or a Kubernetes cluster, review
 
 ## Download and Install FusionAuth
 
-Start by heading to the [Download](/downloads) page. In this example we are installing onto Ubuntu Linux, so we will download the Debian packages.
+Start by heading to the [Download](/download) page. In this example we are installing onto Ubuntu Linux, so we will download the Debian packages.
 
 FusionAuth is comprised of two web services, the FusionAuth application (`fusionauth-app`) and FusionAuth search engine (`fusionauth-search`). The FusionAuth App bundle provides access to the API and the web-based user interface. The FusionAuth search engine is required by FusionAuth and provides full-text search uses Elasticsearch. While you may optionally use an existing Elasticsearch instance if it meets the minimum requirements, for this example  we will be installing Elasticsearch by way of the `fusionauth-search` package.
 
@@ -55,7 +55,7 @@ sudo apt-get install wget
 
 You may also download the packages via a browser and transfer them to the target system if you do not have `wget` and are unable to install it. If you want to find some additional information on what packages you'll be downloading, see the [Packages](/docs/v1/tech/installation-guide/packages) section of the installation guide.
 
-We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/downloads) page right-click on the file and copy the destination to your clipboard. Then, paste it at the end of your `wget` command. Repeat this for both bundles, see the example commands below.
+We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/download) page right-click on the file and copy the destination to your clipboard. Then, paste it at the end of your `wget` command. Repeat this for both bundles, see the example commands below.
 
 ```
 wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.3.1/fusionauth-app_1.3.1-1_all.deb

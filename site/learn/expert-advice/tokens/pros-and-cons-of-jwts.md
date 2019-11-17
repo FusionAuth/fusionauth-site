@@ -12,7 +12,7 @@ This article provides an analysis of JWTs (JSON Web Tokens, pronounced "jot") fr
 
 JWTs are becoming more and more ubiquitous. Customer identity and access management (CIAM) providers everywhere are pushing JWTs as the silver bullet for everything. JWTs are pretty cool, but let's talk about some of the downsides of JWTs and other solutions you might consider.
 
-One way to describe JWTs is that they are portable units of identity. That means they contain identity information as JSON and can be passed around to services and applications. Any service or application can verify a JWT itself. The service/application receiving a JWT doesn’t need to ask the identity provider that generated the JWT if it is valid. Once a JWT is verified, the service or application can use the data inside it to take action on behalf of the user.
+One way to describe JWTs is that they are portable units of identity. That means they contain identity information as JSON and can be passed around to services and applications. Any service or application can verify a JWT itself. The service/application receiving a JWT doesn't need to ask the identity provider that generated the JWT if it is valid. Once a JWT is verified, the service or application can use the data inside it to take action on behalf of the user.
 
 Here's a diagram that illustrates how the identity provider creates a JWT and how a service can use the JWT without calling back to the identity provider: (yes that is a Palm Pilot in the diagram)
 
@@ -24,7 +24,7 @@ Here's a diagram that illustrates how the identity provider is called to verify 
 
 {% include _image.html src="/assets/img/blogs/Lets-talk-about-JWTs-Diagram-2-1.png" alt="Opaque token example" class="img-fluid" figure=false %}
 
-This method of verifying and exchanging tokens can be very "chatty" and it also requires a method of persisting and loading the tokens inside the identity provider. JWTs on the other hand don’t require any persistence or logic in the identity provider since they are portable.
+This method of verifying and exchanging tokens can be very "chatty" and it also requires a method of persisting and loading the tokens inside the identity provider. JWTs on the other hand don't require any persistence or logic in the identity provider since they are portable.
 
 There are a couple of things you should consider when deciding to use JWTs. Let's look at a few of the main ones.
 
@@ -53,9 +53,9 @@ Base64 Decoding + JSON Parsing + RSA Verification | | 6,000/s
 
 <br>
 
-## JWTs aren’t easily revocable
+## JWTs aren't easily revocable
 
-This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTS](/blog/2019/01/31/revoking-jwts/ "Learn about Revoking JWTs") and also watch the IBM webinar where I presented our solution here (when FusionAuth was still called Passport): [Learn how to revoke JSON Web Tokens](https://developer.ibm.com/tv/learn-how-to-revoke-json-web-tokens/ "Jump to IBM Developer site").
+This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTS](revoking-jwts "Learn about Revoking JWTs") and also watch the IBM webinar where I presented our solution here (when FusionAuth was still called Passport): [Learn how to revoke JSON Web Tokens](https://developer.ibm.com/tv/learn-how-to-revoke-json-web-tokens/ "Jump to IBM Developer site").
 
 ## JWTs have exploits
 
