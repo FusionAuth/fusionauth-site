@@ -1713,7 +1713,7 @@ In addition to the experience and knowledge of our development team, we used add
 * <http://www.howtogeek.com/177621/the-beginners-guide-to-iptables-the-linux-firewall/>
 * <http://serverfault.com/questions/373871/dont-understand-00-iptable-syntax>
 * <http://serverfault.com/questions/157375/reject-vs-drop-when-using-iptables>
-* <http://www.thegeekstuff.com/2011/01/iptables-fundamentals/>
+* <https://www.thegeekstuff.com/2011/01/iptables-fundamentals/>
 
 **Two-Factor Authentication**
 

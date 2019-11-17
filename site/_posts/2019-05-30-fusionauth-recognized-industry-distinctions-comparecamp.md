@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "FusionAuth Identity & Access Management Solution Is Recognized with Industry Distinctions from Leading SaaS Review Platform"
-description: "FusionAuth received the 2019 Great User Experience and Rising Star Awards"
+title: FusionAuth Identity & Access Management Solution Is Recognized with Industry Distinctions from Leading SaaS Review Platform
+description: FusionAuth received the 2019 Great User Experience and Rising Star Awards
 author: Bryan Giese
 excerpt_separator: "<!--more-->"
 categories: blog

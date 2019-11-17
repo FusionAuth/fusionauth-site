@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "DataStax's Switch to FusionAuth - A Case Study"
-description: "DataStax needed a powerful identity solution FAST. FusionAuth was there to help."
+title: DataStax's Switch to FusionAuth - A Case Study
+description: DataStax needed a powerful identity solution FAST. FusionAuth was there to help.
 author: Bryan Giese
 excerpt_separator: "<!--more-->"
 categories: blog

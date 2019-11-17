@@ -1,16 +1,16 @@
 ---
 layout: advice
-title: "Developer's Guide to GDPR"
-description: ""
+title: Developer's Guide to GDPR
+description: A complete guide for developers to ensure their applications are GDPR compliant.
 author: Brian Pontarelli
 header_dark: true
-image: advice/pros-and-cons-of-jwts-article.png
+image: advice/developers-guide-to-gdpr-article.png
 category: CIAM
 ---
 
 ## The who, what, when, where, and why of the GDPR for developers
 
-The General Data Protection Regulation (GDPR) was adopted by the European Parliament in 2016 and is designed to address consumers' concerns about the collection and use of their personal data. It is a binding regulation for all members of the European Union (EU) and replaces the 1995 Data Protection Directive1. More complete than the previous directive, the GDPR unifies the complex web of data protection regulations throughout the EU and introduces severe penalties for companies fail to comply.
+The General Data Protection Regulation (GDPR) was adopted by the European Parliament in 2016 and is designed to address consumers' concerns about the collection and use of their personal data. It is a binding regulation for all members of the European Union (EU) and replaces the 1995 Data Protection Directive. More complete than the previous directive, the GDPR unifies the complex web of data protection regulations throughout the EU and introduces severe penalties for companies fail to comply.
 
 For developers, the GDPR provides a framework of requirements that will impact the business processes and architectural roadmaps for any application. In short, it codifies a set of "user's digital rights" and will have a dramatic impact how applications collect, store and utilize information they obtain about their audience. In the following pages we will outline the basic tenets of the GDPR and clarify how they will impact a developer's role in application development.
 
@@ -169,24 +169,24 @@ Is FusionAuth GDPR-compliant? Of course. We've been preparing our clients for th
 
 General Data Protection Regulation Text
 
-* Official Text of the General Data Protection Regulation - https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=uriserv:OJ.L_.2016.119.01.0001.01.ENG&toc=OJ:L:2016:119:FULL
-* GDPR Text - Neatly Arranged - https://gdpr-info.eu
-* Wikipedia Summary of the GDPR - https://en.wikipedia.org/wiki/General_Data_Protection_Regulation
-* Are We Covered by the EU GDPR? A Warning for U.S.-Only Businesses - https://www.lockelord.com/newsandevents/publications/2017/12/are-we-covered 
-* Size of European Union Population - https://europa.eu/european-union/about-eu/figures/living_en
-* These Countries Have the Most Well Traveled Citizens - https://www.cntraveler.com/gallery/these-countries-have-the-most-well-traveled-citizens
-* Countries Whose Citizens Travel the Most - https://www.worldatlas.com/articles/countries-whose-citizens-travel-the-most.html
-* Role of Data Protection Officer - https://gdpr-info.eu/art-38-gdpr/
-* Introduction to Developing Privacy-friendly Systems and Services - https://www.enisa.europa.eu/publications/privacy-and-data-protection-by-design
+* [Official Text of the General Data Protection Regulation](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=uriserv:OJ.L_.2016.119.01.0001.01.ENG&toc=OJ:L:2016:119:FULL)
+* [GDPR Text - Neatly Arranged](https://gdpr-info.eu)
+* [Wikipedia Summary of the GDPR](https://en.wikipedia.org/wiki/General_Data_Protection_Regulation)
+* [Are We Covered by the EU GDPR? A Warning for U.S.-Only Businesses](https://www.lockelord.com/newsandevents/publications/2017/12/are-we-covered)
+* [Size of European Union Population](https://europa.eu/european-union/about-eu/figures/living_en)
+* [These Countries Have the Most Well Traveled Citizens](https://www.cntraveler.com/gallery/these-countries-have-the-most-well-traveled-citizens)
+* [Countries Whose Citizens Travel the Most](https://www.worldatlas.com/articles/countries-whose-citizens-travel-the-most.html)
+* [Role of Data Protection Officer](https://gdpr-info.eu/art-38-gdpr/)
+* [Introduction to Developing Privacy-friendly Systems and Services](https://www.enisa.europa.eu/publications/privacy-and-data-protection-by-design)
 
 ## Additional Information
 
-* General Data Protection Regulation (GDPR) requirements, deadlines and facts - https://www.csoonline.com/article/3202771/general-data-protection-regulation-gdpr-requirements-deadlines-and-facts.html
-* What is GDPR? The need-to-know guide - https://www.wired.co.uk/article/what-is-gdpr-uk-eu-legislation-compliance-summary-fines-2018
-* What is GDPR? Everything you need to know about the new general data protection regulations - https://www.zdnet.com/article/gdpr-an-executive-guide-to-what-you-need-to-know/
-* What You Need to Start Doing Now to Be Ready for GDPR - http://www.adweek.com/digital/what-you-need-to-start-doing-now-to-be-ready-for-gdpr/
-* How Will the GDPR Impact Third-Party Lead Generation? - https://www.cmswire.com/digital-marketing/how-will-the-gdpr-impact-third-party-lead-generation/
-* The Media Agency's Guide To GDPR And EPrivacy - https://adexchanger.com/agencies/media-agencys-guide-gdpr-eprivacy/
-* MarTech Today's Guide to GDPR — The General Data Protection Regulation - https://martechtoday.com/guide/gdpr-the-general-data-protection-regulation
+* [General Data Protection Regulation (GDPR) requirements, deadlines and facts](https://www.csoonline.com/article/3202771/general-data-protection-regulation-gdpr-requirements-deadlines-and-facts.html)
+* [What is GDPR? The need-to-know guide](https://www.wired.co.uk/article/what-is-gdpr-uk-eu-legislation-compliance-summary-fines-2018)
+* [What is GDPR? Everything you need to know about the new general data protection regulations](https://www.zdnet.com/article/gdpr-an-executive-guide-to-what-you-need-to-know/)
+* [What You Need to Start Doing Now to Be Ready for GDPR](http://www.adweek.com/digital/what-you-need-to-start-doing-now-to-be-ready-for-gdpr/)
+* [How Will the GDPR Impact Third-Party Lead Generation?](https://www.cmswire.com/digital-marketing/how-will-the-gdpr-impact-third-party-lead-generation/)
+* [The Media Agency's Guide To GDPR And EPrivacy](https://adexchanger.com/agencies/media-agencys-guide-gdpr-eprivacy/)
+* [MarTech Today's Guide to GDPR — The General Data Protection Regulation](https://martechtoday.com/guide/gdpr-the-general-data-protection-regulation)
 
 {% include _advice-get-started.html intro="If you are looking for a GDPR compliant solution, FusionAuth has you covered." %}

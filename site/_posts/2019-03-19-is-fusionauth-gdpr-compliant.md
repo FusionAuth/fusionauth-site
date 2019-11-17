@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Is FusionAuth GDPR Compliant?"
+title: Is FusionAuth GDPR Compliant?
 description: FusionAuth is one of the few GDPR compliant identity and authentication solutions available.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"

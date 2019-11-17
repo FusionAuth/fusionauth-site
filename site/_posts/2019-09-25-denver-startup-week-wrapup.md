@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "Denver Startup Week Wrap Up"
-description: "Denver Startup Week is the largest free startup event anywhere. Get details on the 2019 events."
+title: Denver Startup Week Wrap Up
+description: Denver Startup Week is the largest free startup event anywhere. Get details on the 2019 events.
 author: Bryan Giese
 excerpt_separator: "<!--more-->"
 categories: blog

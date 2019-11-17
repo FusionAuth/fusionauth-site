@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Active Directory and FusionAuth CIAM Comparison"
+title: Active Directory and FusionAuth CIAM Comparison
 author: Bryan Giese
 categories: blog
 image: blogs/active-directory-and-fusionauth-comparison.jpg

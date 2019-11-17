@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Easy Integration of FusionAuth and Node.js"
+title: Easy Integration of FusionAuth and Node.js
 description: Integrating FusionAuth into a Node.js application is straightforward. Just follow these steps and you'll be up and running in no time.
 author: Tom Vilot
 excerpt_separator: "<!--more-->"

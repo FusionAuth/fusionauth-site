@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Data Partners And The GDPR: Questions To Ask"
+title: Data Partners And The GDPR - Questions To Ask
 description: Here are the questions you should ask your data partners to make sure they, and you, are GDPR compliant.
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"

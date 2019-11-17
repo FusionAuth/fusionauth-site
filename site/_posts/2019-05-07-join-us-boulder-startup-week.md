@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "Join us for Boulder Startup Week"
-description: "Boulder Startup Week is one of the best events for developers, founders, startups and VC entrepreneurs. Join us!"
+title: Join us for Boulder Startup Week
+description: Boulder Startup Week is one of the best events for developers, founders, startups and VC entrepreneurs. Join us!
 author: Bryan Giese
 excerpt_separator: "<!--more-->"
 categories: blog

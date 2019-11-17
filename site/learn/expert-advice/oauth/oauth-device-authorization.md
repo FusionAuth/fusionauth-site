@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: "OAuth Device Authorization"
-description: "How to implement OAuth Device Authorization for set-top devices like Roku, AppleTV, and XBox and more."
+title: OAuth Device Authorization
+description: How to implement OAuth Device Authorization for set-top devices like Roku, AppleTV, and XBox and more.
 image: advice/oauth-device-authorization-article.png
 author: Matthew Altman & Trevor Smith
 header_dark: true
@@ -119,7 +119,7 @@ After the user has entered their code and logged in, the call that the Nerd Stuf
 
 We're excited to offer this new feature in FusionAuth, and hope you take the time to try it out for yourself. For more information:
 
-- Read this [tutorial](/docs/v1/tech/oauth/overview#example-device-authorization-grant) that explains how to implement this with specific code examples.
+- Read this [tutorial](/docs/v1/tech/oauth/#example-device-authorization-grant) that explains how to implement this with specific code examples.
 - Check out the updated API docs which lay out changes and additions to the [Oauth2 API](/docs/v1/tech/oauth/endpoints).
 - Download [fusionauth-device-grant-example](https://github.com/FusionAuth/fusionauth-device-grant-example) which is a toy example app that represents the device side of the workflow. With it and [FusionAuth](/) you can have a complete working example of the Device Authorization Grant.
 

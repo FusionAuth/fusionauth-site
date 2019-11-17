@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "Keycloak and FusionAuth Comparison"
-description: "Keycloak and FusionAuth Comparison"
+title: Keycloak and FusionAuth Comparison
+description: Keycloak and FusionAuth Comparison
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
 categories: blog

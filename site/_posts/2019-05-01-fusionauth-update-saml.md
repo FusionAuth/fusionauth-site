@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "FusionAuth 1.6 Adds SAML Support and More"
+title: FusionAuth 1.6 Adds SAML Support and More
 description: FusionAuth 1.6 adds SAML support, Lambdas and much more in this new release. Download and upgrade now!
 author: Daniel DeGroff
 excerpt_separator: "<!--more-->"
@@ -26,8 +26,8 @@ We have hesitated to support SAML for a while because better solutions exist. Ho
 We tend to agree with Scott. SAML can be difficult to implement correctly, and many still use SHA-1 hashing which is [broken](https://security.stackexchange.com/questions/204379/sha1-signature-in-a-saml-request/204395) to say the least. So while we don't condone the use of SAML and strongly encourage devs to use OpenID Connect instead, we accept SAML isn't going anywhere anytime soon. G Suite uses it for custom apps, and there are many IT groups that have older Active Directory instances that either don't support OIDC yet, or the team only knows SAML and they aren't changing. No problem, we understand.
 
 Our SAML support in this release allows FusionAuth to act as both the SAML Identity Provider and the SAML Service Provider.
- - [Configure FusionAuth to act as the IdP](/docs/v1/tech/samlv2/overview)
- - [Configure FusionAuth Service Provider connecting to a third party SAML IdP](/docs/v1/tech/identity-providers/samlv2/overview)
+ - [Configure FusionAuth to act as the IdP](/docs/v1/tech/samlv2/)
+ - [Configure FusionAuth Service Provider connecting to a third party SAML IdP](/docs/v1/tech/identity-providers/samlv2/)
 
 To summarize, while we would prefer you do not use SAML, if you must, we have made it available.  If you don't, ignore it and learn about our other updates below. **NOTE:** The SAML specification is complex and we have found that many SAML v2 Service Providers are not specification compliant. This is to say that you should test your implementation thoroughly and if you run into problems open a GitHub issue and we will try to help.
 
@@ -36,7 +36,7 @@ To summarize, while we would prefer you do not use SAML, if you must, we have ma
 The following features don't headline this release, but they play a large supporting role.
 
 ### Lambdas
-Lambdas are user defined JavaScript functions executed at runtime to perform various functions. We had several requests for this feature on Github, and have worked through the most common use cases. In this release, Lambdas can be used to customize the claims returned in a JWT or SAML response, reconcile a SAML v2 response or an OpenID Connect response when using these Identity Providers. See the [Lambda API](/docs/v1/tech/lambdas/overview) and the new Lambda settings in the UI **Settings > Lambdas**, and let us know if you identify additional use cases.
+Lambdas are user defined JavaScript functions executed at runtime to perform various functions. We had several requests for this feature on Github, and have worked through the most common use cases. In this release, Lambdas can be used to customize the claims returned in a JWT or SAML response, reconcile a SAML v2 response or an OpenID Connect response when using these Identity Providers. See the [Lambda API](/docs/v1/tech/lambdas/) and the new Lambda settings in the UI **Settings > Lambdas**, and let us know if you identify additional use cases.
 
 ### Event Log
 We've added a new event log designed to assist developers while debugging integrations. You'll find it in the UI under **System > Event Log**. It includes SMTP Transport errors, Lambda execution exceptions, Lambda debug output, SAML IdP integration errors and more! Check it out and let us know how we can make it better for you.

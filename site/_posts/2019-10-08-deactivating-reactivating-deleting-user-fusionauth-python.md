@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "Deactivating, Reactivating, and Deleting A FusionAuth User in Python"
-description: "This is a step-by-step guide to deactivate, reactivate, or delete a user within your applications using API calls from the FusionAuth-Client Python library."
+title: Deactivating, Reactivating, and Deleting A FusionAuth User in Python
+description: This is a step-by-step guide to deactivate, reactivate, or delete a user within your applications using API calls from the FusionAuth-Client Python library.
 author: Amy Martin
 excerpt_separator: "<!--more-->"
 categories: blog

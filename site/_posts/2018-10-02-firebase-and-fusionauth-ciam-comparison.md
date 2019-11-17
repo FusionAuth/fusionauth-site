@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Firebase and FusionAuth CIAM Comparison"
+title: Firebase and FusionAuth CIAM Comparison
 author: Bryan Giese
 categories: blog
 image: blogs/firebase-and-fusionauth-comparison.jpg

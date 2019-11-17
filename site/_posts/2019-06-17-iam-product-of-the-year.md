@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "FusionAuth Snags Identity and Access Management Product of the Year"
-description: "FusionAuth was awarded Identity and Access Management Product of the Year by Enterprise Security Magazine"
+title: FusionAuth Snags Identity and Access Management Product of the Year
+description: FusionAuth was awarded Identity and Access Management Product of the Year by Enterprise Security Magazine
 author: Bryan Giese
 excerpt_separator: "<!--more-->"
 categories: blog

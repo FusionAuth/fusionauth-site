@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Auth0 and FusionAuth: A Tale of Two Solutions"
+title: Auth0 and FusionAuth - A Tale of Two Solutions
 author: Bryan Giese
 categories: blog
 image: blogs/auth0-and-fusionauth-tale-of-two-solutions.png

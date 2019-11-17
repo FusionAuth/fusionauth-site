@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Like your avatar? You can keep it."
+title: Like your avatar? You can keep it.
 description: FusionAuth can take advantage of your existing Gravatar account. No problem.
 author: Daniel DeGroff
 excerpt_separator: "<!--more-->"

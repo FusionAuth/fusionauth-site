@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "Title"
-description: "Description."
+title: Title
+description: Description.
 author: Amy Martin
 excerpt_separator: "<!--more-->"
 categories: blog

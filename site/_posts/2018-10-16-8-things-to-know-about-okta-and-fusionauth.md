@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "8 Things to Know About Okta And FusionAuth"
+title: 8 Things to Know About Okta And FusionAuth
 author: Bryan Giese
 categories: blog
 image: blogs/okta-and-fusionauth-8-things.png

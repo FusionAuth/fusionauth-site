@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Amazon Cognito and FusionAuth Comparison"
+title: Amazon Cognito and FusionAuth Comparison
 author: Bryan Giese
 categories: blog
 image: blogs/amazon-cognito-and-fusionauth-comparison.jpg

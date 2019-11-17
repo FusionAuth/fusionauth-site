@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: "Password Security Compliance Checklist"
-description: "Use this combined checklist of leading password recommendations to strengthen your company's password security policy, meet compliance standards, and minimize the risk of data theft."
+title: Password Security Compliance Checklist
+description: Use this combined checklist of leading password recommendations to strengthen your company's password security policy, meet compliance standards, and minimize the risk of data theft.
 author: Bryan Giese
 header_dark: true
 image: advice/password-security-checklist-article.png

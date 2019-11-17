@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "AngularDenver is Next Week!"
-description: "AngularDenver is Colorado's best Angular conference. Join us for all 4 days of technical goodness."
+title: AngularDenver is Next Week!
+description: AngularDenver is Colorado's best Angular conference. Join us for all 4 days of technical goodness.
 author: Bryan Giese
 excerpt_separator: "<!--more-->"
 categories: blog

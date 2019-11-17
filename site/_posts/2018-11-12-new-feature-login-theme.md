@@ -12,7 +12,7 @@ We are excited to announce an awesome new feature for FusionAuth. We call it `Lo
 
 We put together a complete tutorial in our docs as well as a deep dive video. This video shows you step-by-step how to replicate [StackOverflow's login page](https://stackoverflow.com/users/login) in FusionAuth.
 
-Here's the location of the tutorial: [https://fusionauth.io/docs/v1/tech/themes/overview](/docs/v1/tech/themes/overview)
+Here's the location of the tutorial: [https://fusionauth.io/docs/v1/tech/themes/](/docs/v1/tech/themes/)
 
 And the YouTube video:
 

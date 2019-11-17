@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Easy Integration of Spring and FusionAuth"
+title: Easy Integration of Spring and FusionAuth
 author: Tyler Scott
 categories: blog
 image: blogs/spring-and-fusionauth-example.jpg
@@ -60,7 +60,7 @@ Getting everything setup
     4. Next, Spring exchanges the auth code for an access token by calling the FusionAuth `token` endpoint (https://fusionauth.io/docs/v1/tech/oauth/endpoints#token). FusionAuth returns an id token, which is a JWT. While we could use the JWT directly or hand it to Spring Security to validate the signature and use the data inside the JWT, our example is instead going to use a different OpenID Connect integration.
     5. Finally, our filter takes over and we call the `userinfo` endpoint (https://fusionauth.io/docs/v1/tech/oauth/endpoints#userinfo) to exchange the access token (JWT) for a User object. The User object that the `userinfo` endpoint returns is a valid OpenID Connect User object. We load this information into an instance of the `io.fusionauth.security.FusionAuthUserDetails` object from our library, which is the class that powers the `@PreAuthorize` annotation methods. This is accessible via `SpringContextHolder.getContext().getAuthentication().getPrincipal()`. Note that a lot of this is happening automatically for you and you don't need to specifically write code to manage the OAuth workflow.
 
-    You can read more on the FusionAuth OAuth workflow here: https://fusionauth.io/docs/v1/tech/oauth/overview
+    You can read more on the FusionAuth OAuth workflow here: https://fusionauth.io/docs/v1/tech/oauth/
 
     __Spring Security annotations__
 

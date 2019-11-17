@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "A Quick Comparison Of Ping Identity And FusionAuth"
+title: A Quick Comparison Of Ping Identity And FusionAuth
 author: Bryan Giese
 categories: blog
 image: blogs/ping-identity-and-fusionauth-comparison.jpg
