@@ -30,11 +30,3 @@ bundle exec jekyll build
 rm -rf /var/www/fusionauth.io
 mv _site /var/www/fusionauth.io
 chown www-data:www-data /var/www/fusionauth.io
-
-# Setup the cron jobs
-cp dockerhub-pull-count.rb /etc/cron.hourly/dockerhub-pull-count
-chmod 744 /etc/cron.hourly/dockerhub-pull-count
-cp download-counts.rb /etc/cron.hourly/download-counts
-chmod 744 /etc/cron.hourly/download-counts
-cp resource-download-counts.rb /etc/cron.hourly/resource-download-counts
-chmod 744 /etc/cron.hourly/resource-download-counts
