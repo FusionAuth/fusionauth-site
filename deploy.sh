@@ -26,9 +26,10 @@ bundle exec jekyll clean
 # Build the site
 bundle exec jekyll build
 
-# Copy to the Apache dir
-cp -R _site/* /var/www/fusionauth.io
-cp _site/.* /var/www/fusionauth.io
+# Move to the Apache dir
+rm -rf /var/www/fusionauth.io
+mv _site /var/www/fusionauth.io
+chown www-data:www-data /var/www/fusionauth.io
 
 # Setup the cron jobs
 cp dockerhub-pull-count.rb /etc/cron.daily/dockerhub-pull-count
