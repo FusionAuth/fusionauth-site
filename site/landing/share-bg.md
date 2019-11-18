@@ -2,7 +2,7 @@
 layout: landing-page
 title: Home
 description: FusionAuth is a web-scale identity (CIAM) platform. And the best part is that it's completely free.
-image: fusionauth-share-image.jpg
+image: fusionauth-share-image.png
 header_dark: true
 
 sitemap:
