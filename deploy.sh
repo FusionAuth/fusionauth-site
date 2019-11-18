@@ -23,7 +23,17 @@ npm install
 # Prevent dirty builds
 bundle exec jekyll clean
 
+# Build the site
 bundle exec jekyll build
 
+# Copy to the Apache dir
 cp -R _site/* /var/www/fusionauth.io
 cp _site/.* /var/www/fusionauth.io
+
+# Setup the cron jobs
+cp dockerhub-pull-count.rb /etc/cron.daily/dockerhub-pull-count
+chmod +x /etc/cron.daily/dockerhub-pull-count
+cp download-counts.rb /etc/cron.daily/download-counts
+chmod +x /etc/cron.daily/download-counts
+cp resource-download-counts.rb /etc/cron.daily/resource-download-counts
+chmod +x /etc/cron.daily/resource-download-counts
