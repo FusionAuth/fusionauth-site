@@ -32,9 +32,9 @@ mv _site /var/www/fusionauth.io
 chown www-data:www-data /var/www/fusionauth.io
 
 # Setup the cron jobs
-cp dockerhub-pull-count.rb /etc/cron.daily/dockerhub-pull-count
-chmod +x /etc/cron.daily/dockerhub-pull-count
-cp download-counts.rb /etc/cron.daily/download-counts
-chmod +x /etc/cron.daily/download-counts
-cp resource-download-counts.rb /etc/cron.daily/resource-download-counts
-chmod +x /etc/cron.daily/resource-download-counts
+cp dockerhub-pull-count.rb /etc/cron.hourly/dockerhub-pull-count
+chmod 744 /etc/cron.hourly/dockerhub-pull-count
+cp download-counts.rb /etc/cron.hourly/download-counts
+chmod 744 /etc/cron.hourly/download-counts
+cp resource-download-counts.rb /etc/cron.hourly/resource-download-counts
+chmod 744 /etc/cron.hourly/resource-download-counts
