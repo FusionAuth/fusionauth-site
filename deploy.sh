@@ -26,3 +26,4 @@ bundle exec jekyll clean
 bundle exec jekyll build
 
 cp -R _site/* /var/www/fusionauth.io
+cp _site/.* /var/www/fusionauth.io
