@@ -9,7 +9,7 @@ tags:
 - release notes
 image: blogs/fusionauth-1-7-consent-family-model.png
 ---
-Summer is here and so is FusionAuth 1.7! This release adds sophisticated Consent Management and Family Relationship Models that simplify obtaining and tracking individual and parental consent choices. There are also a few changes and minor fixes in this release for issues discovered by QA testers and our community of users on [Stackoverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to Stackoverflow") and [Github](https://github.com/FusionAuth/fusionauth-issues/issues/ "Jump to Github"). Get an overview of the consent management and family relationship models below, and visit the [release notes and documentation](/docs/v1/tech/release-notes/#version-1-7-0) for full details.
+Summer is here and so is FusionAuth 1.7! This release adds sophisticated Consent Management and Family Relationship Models that simplify obtaining and tracking individual and parental consent choices. There are also a few changes and minor fixes in this release for issues discovered by QA testers and our community of users on [Stackoverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to Stackoverflow") and [Github](https://github.com/FusionAuth/fusionauth-issues/issues/ "Jump to Github"). Get an overview of the consent management and family relationship models below, and visit the [release notes and documentation](/docs/v1/tech/release-notes#version-1-7-0) for full details.
 <!--more-->
 
 ## What's New: Consent Management
@@ -33,7 +33,7 @@ When dealing with families, older identity platforms are most often built to sup
 - **Unlimited Children** - Families can be large, so of course one family can have any number of children.
 - **Children in Multiple Families** - One of the most important elements of this update is that children can exist in multiple families. This allows FusionAuth to manage relationships that span multiple homes with complex parenting responsibilities.
 
-This is a brief overview of our Family and Consent APIs. For more details, visit the [release notes and API documentation](/docs/v1/tech/release-notes/#version-1-7-0).  
+This is a brief overview of our Family and Consent APIs. For more details, visit the [release notes and API documentation](/docs/v1/tech/release-notes#version-1-7-0).  
 
 
 ## Additional Updates & Fixes

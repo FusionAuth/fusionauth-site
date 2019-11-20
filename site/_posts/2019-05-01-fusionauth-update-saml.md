@@ -10,7 +10,7 @@ tags:
 image: blogs/fusionauth-1-6-saml-lambda.png
 ---
 
-If you haven't seen it [on Github](https://github.com/FusionAuth/fusionauth-issues/issues/ "Jump to Github") yet, we are always taking feedback and suggestions on what our clients need from FusionAuth. This week we are releasing Version 1.6 and are stoked to deliver it to you. We've added a few new features and made some minor fixes for issues discovered by our community of users on [Stackoverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and Github. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes/#version-1-6-0) for the full details.
+If you haven't seen it [on Github](https://github.com/FusionAuth/fusionauth-issues/issues/ "Jump to Github") yet, we are always taking feedback and suggestions on what our clients need from FusionAuth. This week we are releasing Version 1.6 and are stoked to deliver it to you. We've added a few new features and made some minor fixes for issues discovered by our community of users on [Stackoverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and Github. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes#version-1-6-0) for the full details.
 
 <!--more-->
 
@@ -50,7 +50,7 @@ This feature might seem small, but the time savings could be quite large. [@Davi
 
 ## Fixes & Updates
 
-The FusionAuth 1.6 release has additional updates and fixes that you should know about. The details are in the [release notes](/docs/v1/tech/release-notes/#version-1-6-0) but here are a few.
+The FusionAuth 1.6 release has additional updates and fixes that you should know about. The details are in the [release notes](/docs/v1/tech/release-notes#version-1-6-0) but here are a few.
 - There is a database schema change and an upgrade is required. You will be prompted to upgrade the database by maintenance mode.
 - We fixed an issue with [Passwordless login](/blog/2019/03/28/fusionauth-passwordless) if no email template is configured or if Passwordless login is disabled.
 - If you are using the Implicit Grant and you have Self Service Registration enabled for the same application, the redirect after the registration check will assume you are using the Authorization Code grant. Thanks to [@Whiskerch](https://github.com/whiskerch) for reporting this issue in GitHub Issue [#102](https://github.com/FusionAuth/fusionauth-issues/issues/102).

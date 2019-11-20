@@ -1,0 +1,224 @@
+---
+layout: doc
+title: 5-minute guide to to setup and integrate with FusionAuth
+description: This guide will walk you through the steps required to setup FusionAuth for logging users into your application
+---
+
+:sectnumlevels: 0
+
+== Requirements
+
+This guide assumes that you have installed either a MySQL or PostgreSQL database and have a super username and password for the database that is able to create schemas and databases. If you do not have a database installed, follow the instructions in our link:/docs/v1/tech/installation-guide/database[Database Installation Guide] to install a database.
+
+== Overview
+
+Here are the steps that we need to take to setup FusionAuth as a login provider (also known as an identity provider) for your application:
+
+. Install FusionAuth
+. Start FusionAuth
+. Complete Maintenance Mode and the Setup Wizard
+. Create an Application and configure the OAuth settings
+. Copy the OAuth login URL and add it to your application
+. Grant the user permissions to your application
+. Write a route (controller, action, etc) in your backend application that completes the login
+. Return the access and refresh tokens to the browser (or app)
+
+These six steps are the standard integration with an OAuth identity provider. These also work for OpenID Connect. Since FusionAuth supports both, we'll use OpenID Connect since it is the modern standard. Let's get into the details of each step
+
+== Install FusionAuth
+
+FusionAuth is simple to setup on your laptop, desktop or any server. You can also purchase a basic hosting plan on the FusionAuth Cloud platform here: https://fusionauth.io/pricing
+
+Our installation guide covers all of the different methods you can use to install FusionAuth including Docker, Homebrew, Debain packages and our quick start script. You can follow any of the methods in the link:/docs/v1/tech/installation-guide/[installation guide here]. For this guide, we'll use the Fast Path installation process using one of the commands below.
+
+include::docs/v1/tech/installation-guide/_fast-path-install.adoc[]
+
+Once the Fast Path installer completes, we will see this output on the console:
+
+[source,title=Fast Path install complete]
+----
+Downloading zip packages
+######################################################################## 100.0%
+######################################################################## 100.0%
+Installing packages
+
+Install is complete. Time for tacos.
+
+ 1. To start FusionAuth run the following command
+    /Users/bpontarelli/dev/example/fusionauth/bin/startup.sh
+
+ 2. To begin, access FusionAuth by opening a browser to http://localhost:9011
+
+ 3. If you're looking for documentation, open your browser and navigate to https://fusionauth.io/docs
+
+Thank you have a nice day.
+----
+
+== Start FusionAuth
+
+The next step is to start FusionAuth using the command that the Fast Path installer created. This script is called `startup.sh` and we can execute it from the installation directory like this:
+
+[source,shell script,title=Startup script]
+----
+$ fusionauth/bin/startup.sh
+----
+
+This will start both the `fusionauth-search` and `fusionauth-app` components, which are both required to use FusionAuth.
+
+== Complete Maintenance Mode and the Setup Wizard
+
+After we have FusionAuth installed and running, we can open our browser to http://localhost:9011. This is the default address for FusionAuth when running locally. This will bring up FusionAuth, which should be sitting in Maintenance Mode and ready to be configured. FusionAuth enters Maintenance Mode any time the database or the Elasticsearch engine is not accessible or is not properly setup. In our case, FusionAuth likely was able to connect to both of these, but neither was ready to be used. Here's how the Maintenance Mode screen should look:
+
+image::5-minute-setup-guide/maintenance-mode-database.png[Maintenance Mode Database,width=900,role=shadowed]
+
+Here we will need to provide the super user credentials for our database along with the name of the host of the database is running on if it isn't running locally. We can also select between MySQL and PostgreSQL and change the database port if needed. For our example, we will be using PostgreSQL on the standard port with a super username of `postgres` and a password of `password`. We can also change the username and password that will be created as the primary database account that FusionAuth will access. The reason that FusionAuth uses a separate username and password to connect to the database during normal operation is that if we encounter a breach of the FusionAuth configuration file and an attacker knows our database username and password, then the attacker will only have access to the FusionAuth database. This is helpful if we are using a single database server for multiple applications and databases. This is known as least privilege and FusionAuth tries to use this principle whenever possible.
+
+Once we click the **Submit** button, we will be taken to the next step of Maintenance Mode. This step is where the FusionAuth Search component is configured. Our Fast Path install and startup script automatically start the `fusionauth-search` component, which is a standard version of Elasticsearch. Since FusionAuth is able to connect to this search engine, all that is needed is to create the indexes inside it. This page looks like this:
+
+image::5-minute-setup-guide/maintenance-mode-search.png[Maintenance Mode Search,width=900,role=shadowed bottom-cropped]
+
+Clicking the **Submit** button here will cause FusionAuth to exit Maintenance Mode and begin starting up. We'll see an interstitial page that looks like this:
+
+image::5-minute-setup-guide/interstitial.png[Interstitial,width=900,role=shadowed bottom-cropped]
+
+Once FusionAuth starts up successfully, we will be taken to the Setup Wizard. This is where we will create the administrator account for FusionAuth and accept the license. We can also sign up for the FusionAuth newsletter, which is a great way to stay up-to-date on FusionAuth releases and new features. We never pitch you, hard-sell or sell your information, so feel free to sign up. Here's what the Setup Wizard page looks like:
+
+image::5-minute-setup-guide/setup-wizard.png[Setup Wizard,width=900,role=shadowed]
+
+Clicking **Submit** here will complete the Setup Wizard and log us into the FusionAuth admin UI.
+
+== Create an Application and configure the OAuth settings
+
+Once we arrive in the FusionAuth admin UI, the first thing we need to do is create an Application. An Application is something that a user can log into. This is the application we are building or that we are migrating to use FusionAuth. We'll click the `Application` menu option on the left side of the page or the **Setup** button in the box at the top of the page.
+
+image::5-minute-setup-guide/dashboard-applications.png[Dashboard to Applications,width=900,role=shadowed]
+
+This will take us to the listing page for Applications. Next, we'll click the green plus button (the add button) at the top of the page:
+
+image::5-minute-setup-guide/application-listing.png[Application Listing,width=900,role=shadowed bottom-cropped]
+
+On the Application form, we'll need to provide an name for our Application (only used for display purposes) and a couple of items on the OAuth tab. We'll start with a simple setup that allows existing users to log into your application. Therefore, we won't need to define any roles or registration configuration. If we click on the OAuth tab, we'll see these options:
+
+image::5-minute-setup-guide/application-form.png[Application Form,width=900,role=shadowed]
+
+Most of the defaults will work, but we also need to provide these items:
+
+* An authorized redirect URL. This is the route/controller in our application's backend that will complete the OAuth workflow. In our example, we set this to `http://localhost:8080/oauth-redirect`. We'll show some Node.js example code below for this route.
+* Optionally, we can specify a valid Logout URL. This is where the user will be redirected to after they are logged out of FusionAuth's OAuth front-end our application.
+* We need to ensure that the Authorization Code grant is selected in the `Enabled Grants`.
+
+Once we have all of this configured, we'll click the Blue save button at the top of the page.
+
+== Copy the OAuth login URL and add it to your application
+
+Once the Application has been created, we'll be back on the listing page. From here, we can click the green View button for our new Application. This will open a dialog that contains information about the Application, including the full URL for the OAuth login page. We'll copy this URL and paste it into our application's HTML as a link for the user to login. Most applications have a link that says, "Login" or "My Account" for this action.
+
+Here's how the view dialog looks:
+
+image::5-minute-setup-guide/application-view.png[Application View Dialog,width=900,role=shadowed]
+
+We can add this URL as a link to our Node.js example application in the main template. Here's how our Pug template looks:
+
+[source,pug,title=Pug Template]
+----
+extends layout
+
+block content
+  h1= title
+  a (href='http://localhost:9011/oauth2/authorize?client_id=48cf2492-508d-4644-95eb-3741618821a4&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect') Login
+  p Welcome to #{title}
+----
+
+== Grant the user permissions to your application
+
+Next, we need to grant the user we created in the Setup Wizard permissions to log into our new Application. This can be done from the User management section of the FusionAuth admin UI. By clicking the **Users** link in the navigation, we'll be taken to the main user search. Since we only have one user in FusionAuth at the moment, we'll just click on that user:
+
+image::5-minute-setup-guide/user-search.png[User Search,width=900,role=shadowed bottom-cropped]
+
+Once we are in this user's account, we'll click the **Add Registratio** button. This will take us to a page that will allow us to add a registration for this user to the new Application. Here's what this looks like:
+
+image::5-minute-setup-guide/registration-add-form.png[Registration Add Form,width=900,role=shadowed bottom-cropped]
+
+For this example, we don't need to provide any additional information for the registration, so we can just click the save button at the top. Now the user is setup so that they can log into the application. Keep in mind that in most cases, the process of creating a registration is done when the user signs up for our application. Therefore, the process we just used is normally not required in order for users to log in. However, this process can be used for applications that are closed systems such as internal applications for your company. In these cases, users will be manually granted permissions to each application by an administrator.
+
+== Write a route (controller, action, etc) in your backend application that completes the login
+
+Before we test the login, let's write the route/controller in our application's backend that will complete the OAuth workflow. After a user logs into FusionAuth's OAuth front-end successfully, their browser will be redirected to the URL we provided in the configuration step above. This redirect will contain a query parameter called `code` that contains the OAuth authorization code from FusionAuth. Our route/controller will use this `code` parameter to call back to FusionAuth to exchange the code for an access and a refresh token.
+
+In order to complete this process, we'll be using the FusionAuth node.js client library along with Express and Pug templates. Here's how our `package.json` file looks:
+
+[source,json,title=package.json]
+----
+{
+  "name": "fusionauth-node-example",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "@fusionauth/node-client": "1.11.0",
+    "http-errors": "~1.6.3",
+    "morgan": "~1.9.1",
+    "node-sass-middleware": "0.11.0",
+    "pug": "2.0.0-beta11"
+  }
+}
+----
+
+Next, we'll add a route that will respond to the path we configured above of `/oauth-redirect`. This route will pull the `code` parameter from the request and exchange it for an access token. In order to call the function on the FusionAuth client, we will also need the `client_id` and the `client_secret` from our Application configuration above. These are required so that our application can prove it is the correct application the user is logging into. Here's the Node.js code for the route:
+
+[source,javascript,title=Node.js Route]
+----
+/* OAuth return from FusionAuth */
+router.get('/oauth-redirect', function (req, res, next) {
+  const accessToken = client.exchangeOAuthCodeForAccessToken(req.query.code,
+                                                             '48cf2492-508d-4644-95eb-3741618821a4',
+                                                             'NQqi2h2Hlb1OGYoXc3p_nvGgD1o7rPBk4Os27FUUJUA',
+                                                             'http://localhost:3000/oauth-redirect');
+});
+----
+
+== Return the access and refresh tokens to the browser (or app)
+
+The final step is to add some code to our route that will return the `access_token` and `refresh_token` from FusionAuth as cookies to the browser and then redirect the now logged in user back to the homepage. Here is the final route for our Node.js backend:
+
+[source,javascript,title=Node.js Route Complete]
+----
+/* OAuth return from FusionAuth */
+router.get('/oauth-redirect', function (req, res, next) {
+  const accessToken = client.exchangeOAuthCodeForAccessToken(req.query.code,
+                                                             'ae1eeb2a-c693-4a29-b45b-34c3a397f7da',
+                                                             '035vpBDcy0-HyB5dpZkUPw49_xzH0AhCz5kOR9EAnf0',
+                                                             'http://localhost:3000/oauth-redirect');
+  res.cookie('access_token', accessToken.access_token, {httpOnly: true});
+  res.cookie('refresh_token', accessToken.refresh_token, {httpOnly: true});
+  res.redirect(302, '/');
+});
+----
+
+This code assumes that the rest of our application will use the cookie values we sent back to the browser to determine if the user is logged in and manage their account. If we need additional information about the user, we can also use the `id_token` from FusionAuth. This token is a JWT (JSON Web Token) that contains additional user information. If we use this method, then our backend must validate the JWT. This process is out of the scope of this guide, but covered in our link:/docs/v1/tech/tutorials/json-web-tokens[JWT documentation].
+
+We can also use the `access_token` to call the link:/docs/v1/tech/apis/users#retrieve-a-user[Retrieve User API] or to call the link:/docs/v1/tech/oauth/endpoints#userinfo[OpenID Connect Userinfo API] to retrieve the user information as well.
+
+Now that everything is written, let's test the workflow. We can fire up the Node.js backend using this command:
+
+[source,shell script,title=Node.js Command]
+----
+$ npm start
+----
+
+If we open our application in the browser and click the `Login` link, this will take us to FusionAuth's OAuth login page. From here, we can log in with the account we created.
+
+== Next steps
+
+From here, you can begin creating a registration page in your application or using FusionAuth's registration tool. You can also start working with FusionAuth Themes to make the login pages look like your brand. If you want to use FusionAuth's forgot password system, you will need to configure an SMTP server. Here are some links to additional documents that will help you continue your integration with FusionAuth.
+
+* link:/docs/v1/tech/themes/[Themes]
+* link:/docs/v1/tech/email-templates/[Emails]
+* link:/docs/v1/tech/oauth/[Additional OAuth documentation]
+* link:/docs/v1/tech/tutorials/two-factor/[Setting up Two-Factor]
+* link:/docs/v1/tech/apis/registrations[Registration API]
