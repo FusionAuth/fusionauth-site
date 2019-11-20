@@ -49,7 +49,7 @@ sitemap:
 
 <h3>Guide to User Data Security</h3>
 <ul>
-<li><a class="btn btn-primary text-lowercase" href="mailto:?subject=FusionAuth:%20Guide%20to%20User%20Data%20Security&amp;body=Guide%20to%20User%20Data%20Security-%20https://fusionauth.io/resources/guide-to-user-data-security">by email</a> - - - - <a class="btn btn-primary text-lowercase" href="sms:&amp;body=From%20Bryan%20Giese%20-%20Guide%20to%20User%20Data%20Security-%20https://fusionauth.io/resources/guide-to-user-data-security">by text</a></li>
+<li><a class="btn btn-primary text-lowercase" href="mailto:?subject=FusionAuth:%20Guide%20to%20User%20Data%20Security&amp;body=Guide%20to%20User%20Data%20Security-%20https://fusionauth.io/learn/expert-advice/security/guide-to-user-data-security">by email</a> - - - - <a class="btn btn-primary text-lowercase" href="sms:&amp;body=From%20Bryan%20Giese%20-%20Guide%20to%20User%20Data%20Security-%20https://fusionauth.io/learn/expert-advice/security/guide-to-user-data-security">by text</a></li>
 </ul>
 </div>
 
