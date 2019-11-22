@@ -48,15 +48,54 @@ icon: user-secret
     border-radius: .25rem;
     transition: border-color 0.15s ease-in-out,box-shadow 0.15s ease-in-out;
   }
+
+  .CodeMirror .cm-jwt-header {
+    color: green;
+  }
+
+  .CodeMirror .cm-jwt-payload {
+    color: blue;
+  }
+
+  .CodeMirror .cm-jwt-signature {
+    color: brown;
+  }
+
+  #header-textarea + .CodeMirror pre {
+    color: green !important;
+  }
+
+  #payload-textarea + .CodeMirror pre {
+    color: blue !important;
+  }
 </style>
 
 <script type="text/javascript">
-  // TODO Make a mode for encoded-jwt that will highlight parts 1, 2 and 3
-  //CodeMirror.defineSimpleMode("encoded-jwt", {
-  //  start: [
-  //    {regex: /.*/, token: "variable"}
-  //  ]
-  //});
+  CodeMirror.defineMode("encoded-jwt", function() {
+    return {
+      token: function(stream, state) {
+        if (stream.eatWhile(/[^.]/)) {
+          if (state.position === 'header') {
+            state.position = 'payload';
+            return 'jwt-header';
+          } else if (state.position === 'payload') {
+            state.position = 'signature';
+            return 'jwt-payload';
+          } else {
+            return 'jwt-signature';
+          }
+        }
+
+        stream.next();
+        return null;
+      },
+      startState: function() {
+        return {
+          position : 'header'
+        };
+      }
+    };
+  });
 
   Prime.Document.onReady(function() {
     new JWTDecoder();
@@ -73,18 +112,19 @@ icon: user-secret
     this.encoedEditor = CodeMirror.fromTextArea(this.encoded.domElement, {
       autofocus: true,
       lineNumbers: true,
-      lineWrapping: true
-      //,
-      //mode: 'encoded-jwt'
+      lineWrapping: true,
+      viewportMargin: 100,
+      mode: 'encoded-jwt'
     });
-
+    this.encoedEditor.setSize(null, 50);
     this.encoedEditor.on('keyup', this._handleKeyUp);
 
     this.jwtHeaderEditor = CodeMirror.fromTextArea(this.jwtHeader.domElement, {
       autofocus: false,
       lineNumbers: true,
       lineWrapping: false,
-      viewportMargin: 100
+      viewportMargin: 100,
+      mode: 'javascript'
     });
     this.jwtHeaderEditor.setSize(null, 80);
 
@@ -92,7 +132,8 @@ icon: user-secret
       autofocus: false,
       lineNumbers: true,
       lineWrapping: false,
-      viewportMargin: 100
+      viewportMargin: 100,
+      mode: 'javascript'
     });
     this.jwtBodyEditor.setSize(null, 120);
   };
@@ -101,15 +142,26 @@ icon: user-secret
   JWTDecoder.prototype = {
     _handleKeyUp: function() {
       try {
+        this.encoedEditor.setSize(null, this.encoded.getNextSibling().queryFirst('.CodeMirror-sizer').getOuterHeight() + 5);
         var s = this.encoedEditor.getValue().split('.');
         if (s.length > 0) {
           var header = JSON.parse(window.atob(s[0]));
           this.jwtHeaderEditor.setValue(JSON.stringify(header, null, 2));
+          try {
+            this.jwtHeaderEditor.setSize(null, this.jwtHeader.getNextSibling().queryFirst('.CodeMirror-sizer').getOuterHeight() + 5);
+          } catch (error) {
+            // Ignore
+          }
         }
 
         if (s.length > 1) {
           var body = JSON.parse(window.atob(s[1]));
           this.jwtBodyEditor.setValue(JSON.stringify(body, null, 2));
+          try {
+            this.jwtBodyEditor.setSize(null, this.jwtBody.getNextSibling().queryFirst('.CodeMirror-sizer').getOuterHeight() + 5);
+          } catch (error) {
+            // Ignore
+          }
         }
       } catch (error) {
         // Ignore
