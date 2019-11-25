@@ -157,10 +157,10 @@ In order to complete this process, we'll be using the FusionAuth node.js client 
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
-    "@fusionauth/node-client": "1.11.0",
+    "express-session": "1.17.0",
+    "@fusionauth/node-client": "1.12.0",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
     "node-sass-middleware": "0.11.0",
@@ -175,34 +175,36 @@ Next, we'll add a route that will respond to the path we configured above of `/o
 ----
 /* OAuth return from FusionAuth */
 router.get('/oauth-redirect', function (req, res, next) {
-  const accessToken = client.exchangeOAuthCodeForAccessToken(req.query.code,
-                                                             '48cf2492-508d-4644-95eb-3741618821a4',
-                                                             'NQqi2h2Hlb1OGYoXc3p_nvGgD1o7rPBk4Os27FUUJUA',
-                                                             'http://localhost:3000/oauth-redirect');
+  client.exchangeOAuthCodeForAccessToken(req.query.code,
+                                         '48cf2492-508d-4644-95eb-3741618821a4',
+                                         'NQqi2h2Hlb1OGYoXc3p_nvGgD1o7rPBk4Os27FUUJUA',
+                                         'http://localhost:3000/oauth-redirect');
 });
 ----
 
 == Return the access and refresh tokens to the browser (or app)
 
-The final step is to add some code to our route that will return the `access_token` and `refresh_token` from FusionAuth as cookies to the browser and then redirect the now logged in user back to the homepage. Here is the final route for our Node.js backend:
+The final step is to add some code to our route that will retrieve the User object from FusionAuth using the `access_token` we retrieved in the previous step. Once we have the User object, we will store it in a server side session so that it can be used in other parts of the application. We can also store the `access_token` from FusionAuth as a cookie if our application would rather push the state to the browser. In either case, the last step we take is to redirect the user back to the homepage. Here's the complete code for exchanging the token, retrieving the user and storing it in the session:
 
 [source,javascript,title=Node.js Route Complete]
 ----
 /* OAuth return from FusionAuth */
 router.get('/oauth-redirect', function (req, res, next) {
-  const accessToken = client.exchangeOAuthCodeForAccessToken(req.query.code,
-                                                             'ae1eeb2a-c693-4a29-b45b-34c3a397f7da',
-                                                             '035vpBDcy0-HyB5dpZkUPw49_xzH0AhCz5kOR9EAnf0',
-                                                             'http://localhost:3000/oauth-redirect');
-  res.cookie('access_token', accessToken.access_token, {httpOnly: true});
-  res.cookie('refresh_token', accessToken.refresh_token, {httpOnly: true});
-  res.redirect(302, '/');
+  client.exchangeOAuthCodeForAccessToken(req.query.code,
+                                         '48cf2492-508d-4644-95eb-3741618821a4',
+                                         'NQqi2h2Hlb1OGYoXc3p_nvGgD1o7rPBk4Os27FUUJUA',
+                                         'http://localhost:3000/oauth-redirect')
+      .then((response) => {
+        return client.retrieveUserUsingJWT(response.successResponse.access_token);
+      })
+      .then((response) => {
+        req.session.user = response.successResponse.user;
+      })
+      .then(() => {
+        res.redirect(302, '/');
+      });
 });
 ----
-
-This code assumes that the rest of our application will use the cookie values we sent back to the browser to determine if the user is logged in and manage their account. If we need additional information about the user, we can also use the `id_token` from FusionAuth. This token is a JWT (JSON Web Token) that contains additional user information. If we use this method, then our backend must validate the JWT. This process is out of the scope of this guide, but covered in our link:/docs/v1/tech/tutorials/json-web-tokens[JWT documentation].
-
-We can also use the `access_token` to call the link:/docs/v1/tech/apis/users#retrieve-a-user[Retrieve User API] or to call the link:/docs/v1/tech/oauth/endpoints#userinfo[OpenID Connect Userinfo API] to retrieve the user information as well.
 
 Now that everything is written, let's test the workflow. We can fire up the Node.js backend using this command:
 
