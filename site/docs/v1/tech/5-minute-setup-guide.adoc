@@ -21,7 +21,7 @@ Here are the steps that we need to take to setup FusionAuth as a login provider 
 . Copy the OAuth login URL and add it to your application
 . Grant the user permissions to your application
 . Write a route (controller, action, etc) in your backend application that completes the login
-. Return the access and refresh tokens to the browser (or app)
+. Store the user object in the session
 
 These steps are the standard integration with an OAuth identity provider. These also work for OpenID Connect. Since FusionAuth supports both, we'll use OpenID Connect since it is the modern standard. Let's get into the details of each step
 
@@ -60,10 +60,10 @@ The next step is to start FusionAuth using the command that the Fast Path instal
 
 [source,shell script,title=Startup script]
 ----
-$ fusionauth/bin/startup.sh
+fusionauth/bin/startup.sh
 ----
 
-This will start both the `fusionauth-search` and `fusionauth-app` components, which are both required to use FusionAuth.
+This will start both the `fusionauth-search` and `fusionauth-app` components, which are both required to use FusionAuth. If you are on Windows, you'll need to use the `startup.bat` file instead.
 
 == Complete Maintenance Mode and the Setup Wizard
 
@@ -129,6 +129,17 @@ block content
   p Welcome to #{title}
 ----
 
+**NOTE**: The URL above does not include the `scope=offline_access` parameter. This is required in order for FusionAuth to return a refresh token when calling the Token API (covered below). If you want a refresh token, you'll need to add this parameter to the URL as well as enable it in the FusionAuth Application configuration page.
+
+If you are using raw HTML, here's an anchor tag that will start the OAuth workflow the same as the Pug template above:
+
+[source,html,title=HTML Snippet]
+----
+<a href="http://localhost:9011/oauth2/authorize?client_id=48cf2492-508d-4644-95eb-3741618821a4&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect">Login</a>
+----
+
+Just drop this anchor tag into your HTML page and it will take the user to FusionAuth to login.
+
 == Grant the user permissions to your application
 
 Next, we need to grant the user we created in the Setup Wizard permissions to log into our new Application. This can be done from the User management section of the FusionAuth admin UI. By clicking the **Users** link in the navigation, we'll be taken to the main user search. Since we only have one user in FusionAuth at the moment, we'll just click on that user:
@@ -182,7 +193,7 @@ router.get('/oauth-redirect', function (req, res, next) {
 });
 ----
 
-== Return the access and refresh tokens to the browser (or app)
+== Store the user object in the session
 
 The final step is to add some code to our route that will retrieve the User object from FusionAuth using the `access_token` we retrieved in the previous step. Once we have the User object, we will store it in a server side session so that it can be used in other parts of the application. We can also store the `access_token` from FusionAuth as a cookie if our application would rather push the state to the browser. In either case, the last step we take is to redirect the user back to the homepage. Here's the complete code for exchanging the token, retrieving the user and storing it in the session:
 
@@ -210,10 +221,28 @@ Now that everything is written, let's test the workflow. We can fire up the Node
 
 [source,shell script,title=Node.js Command]
 ----
-$ npm start
+npm start
 ----
 
 If we open our application in the browser and click the `Login` link, this will take us to FusionAuth's OAuth login page. From here, we can log in with the account we created.
+
+If you prefer to use cookies rather than server-side sessions, you can change the code for your route to this code:
+
+[source,javascript,title=Node.js Route Complete]
+----
+/* OAuth return from FusionAuth */
+client.exchangeOAuthCodeForAccessToken(req.query.code,
+                                     '48cf2492-508d-4644-95eb-3741618821a4',
+                                     'NQqi2h2Hlb1OGYoXc3p_nvGgD1o7rPBk4Os27FUUJUA',
+                                     'http://localhost:3000/oauth-redirect')
+  .then((response) => {
+    res.cookie('access_token', response.successResponse.access_token, {httpOnly: true});
+    res.cookie('refresh_token', response.successResponse.refresh_token, {httpOnly: true});
+    res.redirect(302, '/');
+  });
+----
+
+This code works well if you are building a single-page application (SPA) or any other type of application that uses cookies rather than server-side sessions.
 
 == Next steps
 
