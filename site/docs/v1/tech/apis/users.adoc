@@ -285,11 +285,19 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Deactiv
 --
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Deactivate Users by Search Query
+link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Deactivate Users by Search Query String
 [.endpoint]
 .URI
 --
-[method]#DELETE# [uri]#/api/user/bulk``?searchQuery=\{searchQuery\}&dryRun=false``#
+[method]#DELETE# [uri]#/api/user/bulk``?queryString=\{queryString}&dryRun=false``#
+--
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Deactivate Users by Raw JSON Search Query
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/bulk``?query=\{query\}&dryRun=false``#
 --
 
 [.api-authentication]
@@ -301,11 +309,19 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Permane
 --
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Permanently Delete Users by Search Query
+link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Permanently Delete Users by Search Query String
 [.endpoint]
 .URI
 --
-[method]#DELETE# [uri]#/api/user/bulk``?searchQuery=\{searchQuery\}&hardDelete=true&dryRun=false``#
+[method]#DELETE# [uri]#/api/user/bulk``?queryString=\{queryString\}&hardDelete=true&dryRun=false``#
+--
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Permanently Delete Users by Raw JSON Search Query
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/bulk``?query=\{query\}&hardDelete=true&dryRun=false``#
 --
 
 [cols="3a,7a"]
@@ -318,11 +334,16 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Permane
 |[field]#hardDelete# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
 |To Permanently delete a user from FusionAuth set this value to `true`. Once a user has been permanently deleted, the action cannot be undone. When this value is set to `false` the user is marked as inactive and the user will be unable log into FusionAuth. This action may be undone by reactivating the user.
 
-|[field]#queryString# [type]#[String]# [optional]#Optional#
-|The Elasticsearch query string that used to search for Users to be deleted. This parameter is required when the [field]#userId# parameter is not provided.
+|[field]#query# [type]#[String]# [optional]#Optional# [since]#Available Since 1.13.0#
+|The raw JSON Elasticsearch query that is used to search for Users. This parameter is required when the [field]#queryString# or [field]#userId# parameters are not provided.
+
+It is necessary to use the [field]#query# parameter when querying against `registrations` in order to achieve expected results, as this field is defined as a link:https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html[nested datatype] in the ElasticSearch mapping.
+
+|[field]#queryString# [type]#[String]# [optional]#Optional# [since]#Available Since 1.13.0#
+|The Elasticsearch query string that is used to search for Users to be deleted. This parameter is required when the [field]#query# or [field]#userId# parameters are not provided.
 
 |[field]#userId# [type]#[UUID]# [optional]#Optional#
-|The Id of the User to delete. Repeat this parameter for each user to be deleted. This parameter is required when the [field]#queryString# parameter is not provided.  When both the [field]#userId# and [field]#queryString# parameters are provided, the [field]#userId# value will be honored.
+|The Id of the User to delete. Repeat this parameter for each user to be deleted. This parameter is required when the [field]#query# or [field]#queryString# parameters are not provided.
 |===
 
 [.api-authentication]
@@ -334,7 +355,6 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Bulk de
 --
 
 include::docs/v1/tech/apis/_user-bulk-delete-request-body.adoc[]
-
 
 === Response
 
@@ -439,20 +459,33 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Search 
 [method]#GET# [uri]#/api/user/search``?queryString=\{queryString\}&sortFields[0].name=\{name\}&sortFields[0].order=\{order\}``#
 --
 
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red]] Search for Users by a raw JSON query
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user/search``?query=\{query\}``#
+--
+
 [cols="3a,7a"]
 [.api]
 .Request Parameters
 |===
 |[field]#ids# [type]#[UUID]# [optional]#Optional#
-|A User Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Users. Using this parameter is mutually exclusive with the `queryString` and is not paginated or sorted using the `sortFields`.
+|A User Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Users. Using this parameter is mutually exclusive with the [field]#query# and [field]#queryString# fields and is not paginated or sorted using the `sortFields`.
 
 Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
 
 |[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
 |The number of search results to return. Used for pagination.
 
+|[field]#query# [type]#[String]# [optional]#Optional# [since]#Available Since 1.13.0#
+|The raw JSON Elasticsearch query that is used to search for Users. Using this parameter is mutually exclusive with the [field]#search.ids# and [field]#search.queryString# fields.
+
+It is necessary to use the [field]#search.query# parameter when querying against `registrations` in order to achieve expected results, as this field is defined as a link:https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html[nested datatype] in the ElasticSearch mapping.
+
 |[field]#queryString# [type]#[String]# [optional]#Optional#
-|The Elasticsearch query string that used to search for Users.
+|The Elasticsearch query string that used to search for Users. Using this parameter is mutually exclusive with the [field]#ids# and [field]#query# fields.
 
 |[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to 0#
 |The start row within the search results to return. Used for pagination.
@@ -474,8 +507,15 @@ Due to how the search index is structured not all fields on the user are sortabl
 * `birthDate`
 * `email`
 * `fullName`
+* `id`
 * `insertInstant`
+* `lastLoginInstant`
 * `login`
+* `registrations.applicationId`
+* `registrations.id`
+* `registrations.insertInstant`
+* `registrations.lastLoginInstant`
+* `registrations.roles`
 * `tenantId`
 * `username`
 
