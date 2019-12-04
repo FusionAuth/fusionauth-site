@@ -128,6 +128,7 @@ icon: user-secret
       mode: 'javascript'
     });
     this.jwtHeaderEditor.setSize(null, 80);
+    this.jwtHeaderEditor.on('keyup', this._handleJSONKeyUp);
 
     this.jwtBodyEditor = CodeMirror.fromTextArea(this.jwtBody.domElement, {
       autofocus: false,
@@ -137,10 +138,44 @@ icon: user-secret
       mode: 'javascript'
     });
     this.jwtBodyEditor.setSize(null, 120);
+    this.jwtBodyEditor.on('keyup', this._handleJSONKeyUp);
   };
 
   JWTDecoder.constructor = JWTDecoder;
   JWTDecoder.prototype = {
+    _handleJSONKeyUp: function() {
+      var current = this.encoedEditor.getValue().split('.');
+      // Do each part separately so that if we exception we can continue
+
+      try {
+        var headValue = this.jwtHeaderEditor.getValue();
+        if (headValue === '') {
+          current[0] = headValue;
+        } else {
+          var headStringified = JSON.stringify(JSON.parse(headValue));
+          current[0] = window.btoa(headStringified).replace(/=/g, '');
+        }
+      } catch (error) {
+        console.info(error);
+        // Ignore
+      }
+
+      try {
+        var bodyValue = this.jwtBodyEditor.getValue();
+        if (bodyValue === '') {
+          current[1] = bodyValue;
+        } else {
+          var bodyStringified = JSON.stringify(JSON.parse(bodyValue));
+          current[1] = window.btoa(bodyStringified).replace(/=/g, '');
+        }
+      } catch (error) {
+        console.info(error);
+        // Ignore
+      }
+
+      this.encoedEditor.setValue(current.join('.'));
+    },
+
     _handleKeyUp: function() {
       try {
         this.encoedEditor.setSize(null, this.encoded.getNextSibling().queryFirst('.CodeMirror-sizer').getOuterHeight() + 5);
