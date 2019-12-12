@@ -15,7 +15,8 @@ Hide stuff inside these lines
 == Version 1.13.0
 _Pending Release_
 
-[role=release-note]
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
 
 === New
 * Delete users who have not verified their email address after a specified duration
@@ -25,30 +26,73 @@ _Pending Release_
 ** Configurable with the [field]#application.registrationDeletePolicy.unverified.enabled# and [field]#application.registrationDeletePolicy.unverified.numberOfDaysToRetain# fields
 ** Addresses https://github.com/FusionAuth/fusionauth-issues/issues/360[GitHub Issue #360]
 
+=== Fixed
+* The newly supported `PATCH` HTTP method cannot be selected from the API key endpoint security settings. This means that you need to allow all methods in order to utilize the `PATCH` method. This has been resolved.
+
 === Enhancement
 * `DELETE /api/user/bulk` takes `queryString` and `query` parameters to search for users to delete by ElasticSearch query string and raw JSON query, and a `dryRun` parameter to preview the affected users.  See the link:/docs/v1/tech/apis/users#bulk-delete-users[User Bulk Delete API documentation].
 ** Addresses https://github.com/FusionAuth/fusionauth-issues/issues/361[GitHub Issue #361]
 * `POST /api/user/search` and `GET /api/user/search` take a `query` parameter to search for users by an ElasticSearch raw JSON query.  See the link:/docs/v1/tech/apis/users#search-for-users[User Search API documentation].
 ** Addresses https://github.com/FusionAuth/fusionauth-issues/issues/361[GitHub Issue #361]
 * `/api/user/search` takes new `sortFields` for sorting search results.  See the link:/docs/v1/tech/apis/users#search-for-users[User Search API documentation].
+* The Webhook URL is no longer constrained to 191 characters. Prior to this version, this URL was considered unique and the length was constrained due to indexing limitations. The URL is no longer required to be unique and it is up to the user to limit duplicate webhooks.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/386[GitHub Issue #386], and thanks to https://github.com/davidmw[@davidmw] for bringing this issue to our attention. Long URLs for everyone!
+
+[role=release-note]
 
 == Version 1.12.0
-_Pending Release_
+_December 8th, 2019_
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Changes
+
+* In support of the OAuth Device Grant feature released in 1.11.0, a second template was added to separate the completion state.
+** New themed template `OAuth device complete`. Starting with version 1.12.0, templates will no longer be automatically migrated into an existing theme. We believe this is a safer choice overall. Instead your theme will be marked as requiring upgrade when viewed in the UI. You will be prompted to complete the missing templates when you edit and you will be provided with the option to copy in the default template as a starting point.
+** If FusionAuth attempts to render the missing template you will be prompted with a message indicating your theme needs to be upgraded. In generally this should happen when you are using a new feature and thus should occur at development time. Whenever a new template is added, it is recommended to edit and verify your theme right away after upgrade to ensure a smooth migration.
+* In support of the HYPR integration, a new template was added that will be used when waiting for the external HYPR authentication to complete.
+** New themed template 'OAuth2 wait`. Starting with version 1.12.0, templates will no longer be automatically migrated into an existing theme. We believe this is a safer choice overall. Instead your theme will be marked as requiring upgrade when viewed in the UI. You will be prompted to complete the missing templates when you edit and you will be provided with the option to copy in the default template as a starting point.
+* The following theme messages were added. Until these values have been translated they will be rendered in English. At your earliest convenience you will want to add these new keys to your existing themes. You may wish to review the community provided translations which may already contain these new messages. https://github.com/FusionAuth/fusionauth-localization
+
+++++
+<blockquote>
+<pre class="pygments highlight">
+<code>
+wait-title=Complete login on your external device
+waiting=Waiting
+
+[ExternalAuthenticationExpired]=Your external authentication request has expired, please re-attempt authentication.
+</code>
+</pre>
+</blockquote>
+++++
+
 
 === New
-* Actions added to [breadcrumb]#Users# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Manage#
-** `Send password reset`
-** `Resend email verification`
-** [breadcrumb]#Registrations# `Resend verification`
-** Addresses https://github.com/FusionAuth/fusionauth-issues/issues/351[GitHub Issue #351], thanks to https://github.com/nicholasbutlin[@nicholasbutlin] for the suggestion!
+* Support HYPR IdP native integration. HYPR brings passwordless and biometric options to FusionAuth.
+** See the HYPR Identity Provider for additional details
+* Administrative actions added to [breadcrumb]#Users# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Manage# panel.
+** **Send password reset** always available from the drop down menu.
+*** Addresses https://github.com/FusionAuth/fusionauth-issues/issues/351[GitHub Issue #351], thanks to https://github.com/nicholasbutlin[@nicholasbutlin] for the suggestion!
+** **Resend email verification** available when the user's email is not yet verified from the drop down menu.
+** **Resend verification** available as a new row button in the **Registrations** tab when a registration is not verified.
 
 === Fixed
 * Modifying user actions with multi tenants returns a missing tenant error.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/328[GitHub Issue #328], thanks to https://github.com/AlvMF1[@AlvMF1] for reporting the issue!
+* The link:/docs/v1/tech/apis/jwt#validate-a-jwt[JWT Validate] endpoint returns the wrong precision for `iat` and `exp` claims.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/347[GitHub Issue #347], thanks to https://github.com/uncledent[@uncledent] for reporting and providing detailed information.
+* When using the one time password returned from the Change Password API when a Refresh Token was provided during the change request a Refresh Token is not returned from the Login API.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/382[GitHub Issue #382], thanks to to https://github.com/colingm[@colingm] for reporting the issue.
+* A "null" Origin header is allowed in the w3 spec, and when this occurs it may cause an exception when validating authorized origins.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/379[GitHub Issue #379], thanks to https://github.com/karice[@karice] for reporting and excellent assist!
+* Better handling on the Start Passwordless API when a user does not exist
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/377[GitHub Issue #377], thanks to https://github.com/smoorsausje[@smoorsausje] for reporting!
 
 === Enhancement
-* `DELETE /api/user/` with `hardDelete=true` will disassociate any UserActions created by the deleted user by removing them from the Actioning User.
-* The following apis now support `PATCH`. Addresses https://github.com/FusionAuth/fusionauth-issues/issues/121[GitHub Issue #121]
+* The User Delete API will no longer delete User Actions taken by the user. Instead the API will now disassociate any UserActions created by the deleted user by removing them from the Actioning User. In this scenario, a user will remain in an Action taken by a user that has now been deleted.
+* A User Action may be applied to a user in a different tenant than the User taking the action. Prior to this release, using the admin UI to take an actioon on a user in a different tenant may fail.
+* The following apis now support the `PATCH` HTTP method. This enhancement completes https://github.com/FusionAuth/fusionauth-issues/issues/121[GitHub Issue #121].
 ** `/api/application`
 ** `/api/application/role`
 ** `/api/consent`
@@ -66,6 +110,11 @@ _Pending Release_
 ** `/api/user/consent`
 ** `/api/user/registration`
 ** `/api/webhook`
+* The FusionAuth client libraries now also support the PATCH method.
+* When an encoded JWT is accepted in the Authorization header, FusionAuth will now accept the token in the `Bearer` or the `JWT` schema.
+* When you begin an external login such as Facebook, Google or Twitter an in progress indicator will be added to the login panel to indicate to the user that a request is in progress.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/331[GitHub Issue #331], thanks to https://github.com/davidmw[@davidmw] for the suggestion!
+** If you are using a theme and want to take advantage of this indicator, you can compare the stock OAuth2 Authorize template, look for the note in the top JavaScript section.
 
 [role=release-note]
 
