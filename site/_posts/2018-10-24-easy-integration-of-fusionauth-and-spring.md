@@ -211,7 +211,7 @@ Registration
 
 In our example application we also handle basic registration of a user. This is completely optional but your users will need to be registered somehow in order to have access and be granted roles in your application. You could use the FusionAuth web interface to manually add all of your users. Or you could allow users to register themselves. This choice depends on the needs of your application. If you would like to allow users to register themselves, use the steps below to add this capability to your application.
 
-1. [Create](https://fusionauth.io/docs/v1/tech/tutorials/create-an-api-key) and then copy your FusionAuth API key and your application id into `application.properties`. Also update the base url to be the location of your FusionAuth instance.
+1. [Create](/docs/v1/tech/users/applications) and then copy your FusionAuth API key and your application id into `application.properties`. Also update the base url to be the location of your FusionAuth instance.
 
    ```properties
    # API
