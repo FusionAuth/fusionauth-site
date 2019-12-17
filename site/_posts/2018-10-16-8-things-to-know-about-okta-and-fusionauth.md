@@ -2,6 +2,7 @@
 layout: blog-post
 title: 8 Things to Know About Okta And FusionAuth
 author: Bryan Giese
+description: Compare FusionAuth and Okta for your identity and access management solution.
 categories: blog
 image: blogs/okta-and-fusionauth-8-things.png
 excerpt_separator: <!--more-->

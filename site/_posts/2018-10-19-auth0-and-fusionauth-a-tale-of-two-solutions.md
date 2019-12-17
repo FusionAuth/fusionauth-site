@@ -2,6 +2,7 @@
 layout: blog-post
 title: Auth0 and FusionAuth - A Tale of Two Solutions
 author: Bryan Giese
+description: Compare FusionAuth and Auth0 for your identity and access management solution.
 categories: blog
 image: blogs/auth0-and-fusionauth-tale-of-two-solutions.png
 excerpt_separator: <!--more-->

@@ -2,6 +2,7 @@
 layout: blog-post
 title: Active Directory and FusionAuth CIAM Comparison
 author: Bryan Giese
+description: Compare FusionAuth and Active Directory for your identity and access management solution.
 categories: blog
 image: blogs/active-directory-and-fusionauth-comparison.jpg
 excerpt_separator: <!--more-->

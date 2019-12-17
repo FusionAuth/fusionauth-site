@@ -3,6 +3,7 @@ layout: blog-post
 title: Keycloak and FusionAuth Comparison
 description: Keycloak and FusionAuth Comparison
 author: Brian Pontarelli
+description: Compare FusionAuth and Keycloak for your identity and access management solution.
 excerpt_separator: "<!--more-->"
 categories: blog
 tags:

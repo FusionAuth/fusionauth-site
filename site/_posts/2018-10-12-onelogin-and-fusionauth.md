@@ -2,6 +2,7 @@
 layout: blog-post
 title: OneLogin and FusionAuth - Different Enough To Make A Difference
 author: Bryan Giese
+description: Compare FusionAuth and OneLogin for your identity and access management solution.
 categories: blog
 image: blogs/onelogin-and-fusionauth-comparison.jpg
 excerpt_separator: <!--more-->

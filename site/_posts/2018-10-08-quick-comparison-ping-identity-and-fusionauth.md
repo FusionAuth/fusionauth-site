@@ -2,6 +2,7 @@
 layout: blog-post
 title: A Quick Comparison Of Ping Identity And FusionAuth
 author: Bryan Giese
+description: Compare FusionAuth and Ping Identity for your identity and access management solution.
 categories: blog
 image: blogs/ping-identity-and-fusionauth-comparison.jpg
 excerpt_separator: <!--more-->
