@@ -15,7 +15,7 @@ On December 17th we had the first of what will be many Open Office Hours here at
 
 If you missed the this first one, **FusionAuth's Open Office Hours** are free sessions where you can ask us anything you want about identity, authentication and authorization. Of course we can talk about FusionAuth, but we're ready to answer anything about OAuth, OpenID Connect, SAML, RBAC, ABAC, ACLs, security, JWTs, whatever. We'll be doing these every month throughout 2020, so keep watch on our site and social feeds for the sign-up links.
 
-Here's a quick list of what we covered this month:
+## Here's a quick list of what we covered this month:
 - Plans as Nashorn is deprecated in Java 11
 - OAuth default settings
 - OAuth and SAML workflows
