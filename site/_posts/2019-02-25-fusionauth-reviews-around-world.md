@@ -36,7 +36,7 @@ If you are looking for more FusionAuth reviews, here are a few links to get you 
 - [Top CIAM Vendors to Watch in 2019](https://solutionsreview.com/identity-management/solutions-review-presents-the-top-ciam-vendors-to-watch-in-2019/)
 - [Top 14 IAM Vendors 2019](https://solutionsreview.com/identity-management/top-14-iam-vendors-to-watch-in-2019/)   
 - [Capterra](https://www.capterra.com/p/182987/FusionAuth/)
-- [Fit Small Business - Single Sign On Software](https://fitsmallbusiness.com/reviews/single-sign-on-software-reviews/)
+- [Fit Small Business - Single Sign On Software](https://fitsmallbusiness.com/reviews/single-sign-on-software-reviews/){:rel="nofollow"}
 - [Product Hunt](https://www.producthunt.com/posts/fusionauth)
 - [Alternativeto.net](https://alternativeto.net/software/fusionauth/?license=opensource)
 - [SteemHunt](https://steemhunt.com/@smyle/fusionauth-auth-built-for-devs-free-for-unlimited-users)
