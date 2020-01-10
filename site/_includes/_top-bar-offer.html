@@ -3,9 +3,8 @@
   <span style="font-size: 0.9rem;">
    {{ site.data.top-bar-offer.offer-text }}
   </span>
-  <a class="btn btn-sm shadow-none bg-white text-primary pl-3 pr-2 ml-2 text-capitalize" href="{{ site.data.top-bar-offer.link }}">
-    {{ site.data.top-bar-offer.link-text }}
-    &nbsp;
+  <a id="top-bar-offer-button" class="btn btn-sm shadow-none bg-white text-primary pl-3 pr-2 ml-2 text-capitalize" href="{{ site.data.top-bar-offer.link }}">
+    {{ site.data.top-bar-offer.link-text }} &nbsp;
     <i aria-hidden="true" class="fas fa-arrow-right"></i>
   </a>
   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -18,15 +17,32 @@
   var date = new Date();
   date.setDate(new Date("{{ date }}").getDate() + 1);
 
-  // You have to use jQuery to capture 'closed.bs.alert', so lame.
-  // https://stackoverflow.com/questions/24211185/twitter-bootstrap-why-do-modal-events-work-in-jquery-but-not-in-pure-js
-  $('#top-bar-offer').on('closed.bs.alert', function () {
-    document.cookie = 'fusionauth.offer=dismissed; path=/; Expires=' + date.toString() + ';';
-  });
+  var today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to the beginning of the day.
 
-  // Show the alert if it has not been dismissed
-  var cookie = ("; " + document.cookie).split("; fusionauth.offer=").pop().split(";").shift();
-  if (cookie === '') {
-    document.getElementById('top-bar-offer').removeAttribute('hidden');
+  var setCookie = function(date) {
+    document.cookie = 'fusionauth.offer=hide; path=/; Expires=' + date.toString() + ';';
+  };
+
+  // If the date is in the past, skip the event binding etc, and just don't show anything.
+  if (today < date) {
+    // You have to use jQuery to capture 'closed.bs.alert', so lame.
+    // https://stackoverflow.com/questions/24211185/twitter-bootstrap-why-do-modal-events-work-in-jquery-but-not-in-pure-js
+    $('#top-bar-offer').on('closed.bs.alert', function () {
+      setCookie(date);
+    });
+
+    // Show the alert if it has not been dismissed
+    var cookie = ("; " + document.cookie).split("; fusionauth.offer=").pop().split(";").shift();
+    if (cookie === '') {
+      document.getElementById('top-bar-offer').removeAttribute('hidden');
+    }
+
+    // Set the cookie on click as well so we don't bother them.
+    var button = document.getElementById('top-bar-offer-button');
+    button.addEventListener('click', function() {
+      alert('foo');
+      setCookie(date);
+    });
   }
 </script>
