@@ -10,12 +10,15 @@ FusionAuth Kickstart is super easy and if you can do it with an API, you can do 
 
 The kickstart file is a collection of one or more API keys and a list of API requests. You can call `POST`, `PUT` or `PATCH` on any API that you like and each request will be executed in order using the primary API key defined in the bootstrap file.
 
+To kickstart FusionAuth, set an environment variable named `FUSIONAUTH_KICKSTART` that points to your kickstart file.
+
+Kickstart will only run if no API keys, users or tenants exist, so you can safely leave this environment variable configured even after the system has been configured.
 
 == Getting Started
 
 Let's work from simple to complex, each example will introduce a new feature so you can learn how to best build and leverage the options available to you as you build out your kickstart file.
 
-The examples found here, as well as community contributed examples may also be found on GitHub in the FusionAuth Kickstart repository.
+The examples found here, as well as community contributed examples may also be found on GitHub in the FusionAuth Kickstart repository. If you think you've got a cool kickstart, please submit a PR, your example may really help the community.
 * https://github.com/FusionAuth/fusionauth-kickstart-examples
 
 === The API key
@@ -65,10 +68,10 @@ Here is the same example as above, but instead of hard coding the API key, we ar
 {
   "variables":{
     "apiKey": "4737ea8520bd454caabb7cb3d36e14bc1832c0d3f70a4189b82598670f11b1bd",
-    "description": "My first API Key!"
   }
   "apiKeys": [{
-    "key": "#{apiKey}"
+    "key": "#{apiKey}",
+    "description": "My first API Key!"
   }]
 }
 ```
@@ -216,6 +219,169 @@ In this example we will modify the restricted API key example from above to furt
 
 === Modify the default Tenant Id
 
+FusionAuth generates the Id for the default tenant when the database schema is first created. For development and production environments it may be helpful to have a known tenantId for consistency across environments.
+
+You may modify the default Tenant Id in your kickstart file by setting a special variable. In this example we have set the default Tenant Id to `30663132-6464-6665-3032-326466613934`. This value must be a valid UUID.
+
+The value resolved when using the `FUSIONAUTH_TENANT_ID` variable will reflect this change.
+
+```json
+{
+  "variables":{
+    "defaultTenantId": "30663132-6464-6665-3032-326466613934"
+  }
+}
+```
+
+=== Set your Support Id
+
+If you have a paid support contract you will be provided with a Support Id. If you would like to set this value during kickstart you will set the value in a top level field called `supportId`.
+
+In this example I have a support Id of `eb7244dc-5d8e-40cd-a005-70b116fbda31.`
+```json
+{
+  "supportId": "eb7244dc-5d8e-40cd-a005-70b116fbda31"
+}
+```
+
+
 === Include Text files
 
+When making API requests to create an Email template or request which may have lengthy values, it may be helpful to separate these values into separate files. The directories shown here are just examples, and you can use your own convention.
+
+To include a file in your kickstart definition use the `@{fileName}` syntax where the `fileName` is a relative path from your kickstart file.
+
+For example, consider the following directory structure:
+
+```
+|- kickstart.json
+|- emails
+   |- setup-password.html
+   |- setup-password.txt
+```
+
+
+In this example we are creating an Email template and reading in the values for the text and html values from files in a sub-directory named emails. Reading files in like this allows you to format your emails nicely and Kickstart will handle the necessary JSON escaping to complete the API request.
+
+```json
+{
+  "variables":{
+    "apiKey": "#{ENV.FUSIONAUTH_API_KEY}"
+  },
+  "apiKeys": [{
+    "key": "${apiKey}"
+  }],
+  "requests": [ {
+    "method": "POST",
+    "url": "/api/email/template/0502df1e-4010-4b43-b571-d423fce978b2",
+    "body": {
+      "emailTemplate": {
+        "defaultFromName": "No Reply",
+        "defaultSubject": "Setup your password",
+        "defaultHtmlTemplate": "@{emails/setup-password.html}",
+        "defaultTextTemplate": "@{emails/setup-password.txt}",
+        "fromEmail": "no-replay@piedpiper.com",
+        "name": "Setup Password"
+      }
+    }
+  } ]
+}
+```
+
 === Include JSON files
+
+If you're making a lot of API requests, or simply want to manage each API request body separately it may be helpful to read in external JSON files. The directories shown here are just examples, and you can use your own convention.
+
+To include a JSON file in your kickstart definition use the `&{fileName}` syntax where the `fileName` is a relative path from your kickstart file.
+
+For example, consider the following directory structure:
+
+```
+|- kickstart.json
+|- emails
+   |- setup-password.html
+   |- setup-password.txt
+|- json
+   |- setup-password.json
+```
+
+Here are the contents of the `json/setup-password.json` file, you'll see that in this example we are still reading in the values for `defaultHtmlTemplate` and `defaultTextTemplate`.
+
+```json
+{
+  "emailTemplate": {
+    "defaultFromName": "No Reply",
+    "defaultSubject": "Setup your password",
+    "defaultHtmlTemplate": "@{emails/setup-password.html}",
+    "defaultTextTemplate": "@{emails/setup-password.txt}",
+    "fromEmail": "no-replay@piedpiper.com",
+    "name": "Setup Password"
+  }
+}
+```
+
+We will replicate the previous example but the entire JSON body of the request will move to `setup-password.json`.
+
+```json
+{
+  "variables":{
+    "apiKey": "#{ENV.FUSIONAUTH_API_KEY}"
+  },
+  "apiKeys": [{
+    "key": "${apiKey}"
+  }],
+  "requests": [ {
+    "method": "POST",
+    "url": "/api/email/template/0502df1e-4010-4b43-b571-d423fce978b2",
+    "body": "&{json/setup-password.json}"
+  } ]
+}
+```
+
+You may also include an entire request using this pattern, consider the following directory structure:
+
+```
+|- kickstart.json
+|- emails
+   |- setup-password.html
+   |- setup-password.txt
+|- json
+   |- setup-password.json
+|- requests
+   |- setup-password.json
+```
+
+Here are the contents of the `requests/setup-password.json` file.
+
+```json
+{
+"method": "POST",
+  "url": "/api/email/template/0502df1e-4010-4b43-b571-d423fce978b2",
+  "body":{
+    "emailTemplate": {
+      "defaultFromName": "No Reply",
+      "defaultSubject": "Setup your password",
+      "defaultHtmlTemplate": "@{emails/setup-password.html}",
+      "defaultTextTemplate": "@{emails/setup-password.txt}",
+      "fromEmail": "no-replay@piedpiper.com",
+      "name": "Setup Password"
+    }
+  }
+}
+```
+
+And the usage in the kickstart file:
+
+```json
+{
+  "variables":{
+    "apiKey": "#{ENV.FUSIONAUTH_API_KEY}"
+  },
+  "apiKeys": [{
+    "key": "${apiKey}"
+  }],
+  "requests": [
+    "&{requests/setup-password.json}"
+  ]
+}
+```
