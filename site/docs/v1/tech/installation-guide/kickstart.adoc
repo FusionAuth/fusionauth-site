@@ -18,36 +18,58 @@ Let's work from simple to complex, each example will introduce a new feature so 
 The examples found here, as well as community contributed examples may also be found on GitHub in the FusionAuth Kickstart repository.
 * https://github.com/FusionAuth/fusionauth-kickstart-examples
 
-=== The Shortest
+=== The API key
 
 Here is the simplest kickstart file you can use, it simply adds a single API key and that's it. This may be useful if you intend to complete the rest of your setup by calling APIs in your own application or development setup script.
 
 ```json
 {
   "apiKeys": [{
-      "key": "4737ea8520bd454caabb7cb3d36e14bc1832c0d3f70a4189b82598670f11b1bd"
-  }],
-  "requests": [
-  ]
+    "key": "4737ea8520bd454caabb7cb3d36e14bc1832c0d3f70a4189b82598670f11b1bd"
+  }]
+}
+```
+
+==== Scoping an API key
+
+The first API key you specify has to have authority to all tenants and all endpoints. If you want to create subsequent API keys these can optionally be scoped to a Tenant and have restrictions on which endpoints they can call.
+
+In this example we still have the first API key because it must have authority to all endpoints, and we will create a second API key that is restricted.
+
+```json
+{
+ "apiKeys": [{
+   "key": "4737ea8520bd454caabb7cb3d36e14bc1832c0d3f70a4189b82598670f11b1bd"
+ },
+ {
+   "key": "0ad00c5f140c43f8bc2a155dd0edf3b7d61f5dd4011843d8a28475a0d812c033",
+   "description": "Restricted API key - only for Retrieve User",
+   "permissions": {
+     "endpoints": {
+       "/api/user": ["GET"]
+     }
+   }
+ }]
 }
 ```
 
 === Using Variables
 
-You may find yourself repeating yourself when you build your kickstart file, nobody likes to type the same value over and over. Use variables to help you when you find yourself typing the same value over and over.
+You may find yourself repeating yourself when you build your kickstart file, nobody likes to type the same value over and over. Use variables to help you reduce repetition.
 
-Here is the same example as above, but instead of hard coding the API key, we are using a variable which can be re-used. This example is not particularly helpful, we've only moved the value from the `apiKeys` section to the `variables` section, but using variables may come in handy.
+To use a variable, define the key and value in the `variables` section of the kickstart file and then access that value anywhere outside of the `variables` section using the `#{foo}` notation where `foo` is the name of the variable.
+
+Here is the same example as above, but instead of hard coding the API key, we are using a variable which can be re-used. This example is not particularly helpful, we've only moved the value from the `apiKeys` section to the `variables` section, but using variables may come in handy as you'll see in the next few examples.
 
 ```json
 {
   "variables":{
-    "apiKey": "4737ea8520bd454caabb7cb3d36e14bc1832c0d3f70a4189b82598670f11b1bd"
+    "apiKey": "4737ea8520bd454caabb7cb3d36e14bc1832c0d3f70a4189b82598670f11b1bd",
+    "description": "My first API Key!"
   }
   "apiKeys": [{
-      "key": "${apiKey}"
-  }],
-  "requests": [
-  ]
+    "key": "#{apiKey}"
+  }]
 }
 ```
 
@@ -55,19 +77,145 @@ Here is the same example as above, but instead of hard coding the API key, we ar
 
 It is reasonable to think you may not want to hard code a password or API key in the kickstart file which could get checked into Git. You can use environment variables which should make this a bit easier for you.
 
-To use an environment variable in your kickstart file, use the `variables` object, an environment variable can only be used in a variable definition while once defined any variable can be used anywhere else in kickstart file.
+To use an environment variable prefix the name of the environment variable with `ENV.`.
 
 Here is the same example as above, but instead of hard coding the API key, we are picking it up from an environment variable. Here we will resolve the value of the API key in the environment variable named `FUSIONAUTH_API_KEY`. This value will be set into the variable `apiKey` and then when the API key is constructed the value of the API key will be resolved to the `apiKey` variable value.
 
 ```json
 {
   "variables":{
-    "apiKey": "${ENV.FUSIONAUTH_API_KEY}"
+    "apiKey": "#{ENV.FUSIONAUTH_API_KEY}"
   }
   "apiKeys": [{
-      "key": "${apiKey}"
-  }],
-  "requests": [
-  ]
+    "key": "${apiKey}"
+  }]
 }
 ```
+
+=== Adding API Requests
+
+Now comes the interesting part, once you have defined at least one API key, you can define one to many API requests that will be executed in order using the primary API key. You may call any API you like, you are only limited to the `POST`, `PUT` and `PATCH` HTTP methods.
+
+Here is an example of creating a FusionAuth admin user using the `requests` object array. This example is using the link:/docs/v1/tech/apis/registrations[Registration API] to create the User and registration in a single request.
+
+You'll notice we are using a special variable that we did not define in the `variables` object. This is one of two reserved variables provided for your convenience.
+
+* `FUSIONAUTH_APPLICATION_ID` - The Id of the FusionAuth application
+* `FUSIONAUTH_TENANT_ID` - The Id of the default Tenant which is where the FusionAuth application resides
+
+```json
+{
+  "variables":{
+    "apiKey": "#{ENV.FUSIONAUTH_API_KEY}",
+    "adminPassword": "#{ENV.FUSIONAUTH_ADMIN_PASSWORD}"
+  },
+  "apiKeys": [{
+    "key": "${apiKey}"
+  }],
+  "requests": [{
+    "method": "POST",
+    "url": "/api/user/registration",
+    "body": {
+      "user": {
+        "email": "monica@piedpiper.com",
+        "password": "#{adminPassword}",
+        "data": {
+          "Company": "PiedPiper"
+        }
+      },
+      "registration": {
+        "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+        "roles": [
+          "admin"
+        ]
+      }
+    }
+  }]
+}
+```
+
+==== Tenants
+
+If you don't create a tenant using the Tenant API in your kickstart file then you're all set. If you do find yourself creating more than one tenant then you will need to specify the Tenant Id on the API requests.
+
+There is a top level property in the request called `tenantId` and you simply set that value to indicate which Tenant you wish to use.
+
+In this example, we'll create a new application and we'll do it in a second tenant that we create. Because I need to know the `tenantId` I am generating a new UUID using the `#{UUID()}` variable value and assigning it to `secondTenantId`. Now I can re-use this value to create the tenant, and to make the Create Application API request.
+
+This kickstart will create a second tenant named `Aviato` which will contain a single application named `My Cool Application`.
+
+```json
+{
+  "variables": {
+    "apiKey": "#{ENV.FUSIONAUTH_API_KEY}",
+    "adminPassword": "#{ENV.FUSIONAUTH_ADMIN_PASSWORD}",
+    "secondTenantId": "#{UUID()}"
+  },
+  "apiKeys": [{
+    "key": "${apiKey}"
+  }],
+  "requests": [{
+    "method": "POST",
+    "url": "/api/tenant/#{secondTenantId}",
+    "body": {
+      "tenant": {
+        "name": "Aviato"
+      }
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/application",
+    "tenantId": "#{secondTenantId}",
+    "body": {
+      "application": {
+        "name": "My Cool Application"
+      }
+    }
+  }]
+}
+```
+
+==== Tenants API Keys
+
+An API key may also be configured to be restricted to a single tenant. To do this, add the `tenantId` to the API key configuration.
+
+In this example we will modify the restricted API key example from above to further limit it for use with one tenant.
+
+```json
+{
+  "variables": {
+    "secondTenantId": "#{UUID()}"
+  },
+  "apiKeys": [{
+    "key": "4737ea8520bd454caabb7cb3d36e14bc1832c0d3f70a4189b82598670f11b1bd"
+  },
+  {
+    "key": "0ad00c5f140c43f8bc2a155dd0edf3b7d61f5dd4011843d8a28475a0d812c033",
+    "description": "Restricted API key - only for Retrieve User in Aviato",
+    "permissions": {
+      "endpoints": {
+        "/api/user": ["GET"]
+      }
+    },
+    "tenantId": "#{secondTenantId}"
+  }],
+  "requests": [{
+    "method": "POST",
+    "url": "/api/tenant/#{secondTenantId}",
+    "body": {
+      "tenant": {
+        "name": "Aviato"
+      }
+    }
+  }]
+}
+```
+
+== Advanced Concepts
+
+=== Modify the default Tenant Id
+
+=== Include Text files
+
+=== Include JSON files
