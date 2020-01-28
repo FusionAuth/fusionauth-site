@@ -27,7 +27,10 @@ FusionAuth.Account.Offer = function(date) {
     }
 
     // Set the cookie on click as well so we don't bother them.
-    document.getElementById('top-bar-offer-button').addEventListener('click', this._setCookie);
+    var offerButton = document.getElementById('top-bar-offer-button');
+    if (Prime.Utils.isDefined(offerButton)) {
+      offerButton.addEventListener('click', this._setCookie);
+    }
   }
 };
 
