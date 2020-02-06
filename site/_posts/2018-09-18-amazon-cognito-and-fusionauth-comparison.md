@@ -35,7 +35,7 @@ A big difference between Cognito and FusionAuth is both of FusionAuth's local an
 
 FusionAuth's single-tenant architecture also allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and most recently the European Union's GDPR all place different restrictions on how a user's personal data can be used and transmitted. FusionAuth provides the expanded control for companies required to comply with laws and regulations in their specific region.
 
-For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/blog/2018/12/03/single-tenant-vs-multi-tenant "Learn more about single- and multi-tenant identity solutions.").
+For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions "Learn more about single- and multi-tenant identity solutions.").
 
 ### Localization
 

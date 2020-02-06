@@ -23,7 +23,7 @@ First, to provide a necessary option to SaaS platforms, both Gluu and FusionAuth
 
 An additional benefit of a single-tenant solution is the higher degree of control over application and user data, allowing for easier compliance with complex regulatory restrictions. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and most recently the European Union's GDPR all place different restrictions on how a customer's personal data can be utilized and transmitted. Gluu and FusionAuth provide the expanded control required for data flow control and management necessary in many industries and countries.
 
-For additional details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/blog/2018/12/03/single-tenant-vs-multi-tenant).
+For additional details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions).
 
 ### Common Authentication Standards
 It is essential for any identity platform to support current standards in order to integrate with the variety of protocols used across the web. Both Gluu and FusionAuth support OAuth, OpenID Connect, SAML and other common protocols for secure user registration and authentication. Support for frequently requested social logins such as Google, Facebook, and Twitter is included, although Gluu requires an additional 3rd party component.

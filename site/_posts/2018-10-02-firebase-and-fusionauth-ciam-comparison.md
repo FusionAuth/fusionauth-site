@@ -31,7 +31,7 @@ One of the biggest differences between Firebase and FusionAuth is cost. FusionAu
 
 ### FusionAuth is Single Tenant
 
-The most distinct difference between authentication with Firebase and FusionAuth is that FusionAuth is a single-tenant solution, not a SaaS platform. You can read more details about this in our [comparison to Auth0 here](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Read our comparison to Auth0"), or in this [whitepaper about the difference between single- and multi-tenant platforms](/blog/2018/12/03/single-tenant-vs-multi-tenant "Read more about single- and multi-tenant identity solutions").
+The most distinct difference between authentication with Firebase and FusionAuth is that FusionAuth is a single-tenant solution, not a SaaS platform. You can read more details about this in our [comparison to Auth0 here](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Read our comparison to Auth0"), or in this [whitepaper about the difference between single- and multi-tenant platforms](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions "Read more about single- and multi-tenant identity solutions").
 
 ### Email Customization
 

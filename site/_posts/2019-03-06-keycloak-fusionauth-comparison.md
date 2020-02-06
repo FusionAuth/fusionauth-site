@@ -26,7 +26,7 @@ Every company needs to control their costs, even for essential components like i
 ### Single-Tenant and On-Prem
 Both Keycloak and FusionAuth are single-tenant solutions that install on-premises or in private clouds to isolate and protect user data. This also allows for easier compliance with complex regulatory restrictions enforced by many industries and countries. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and most recently the European Union's GDPR all place different restrictions on how a customer's personal data can be utilized and transmitted. Keycloak and FusionAuth provide the expanded control required to comply with specific laws and regulations.
 
-Learn more about [single- and multi-tenant solutions](/blog/2018/12/03/single-tenant-vs-multi-tenant) and [GDPR requirements](/learn/expert-advice/ciam/developers-guide-to-gdpr) in these whitepapers.
+Learn more about [single- and multi-tenant solutions](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions) and [GDPR requirements](/learn/expert-advice/ciam/developers-guide-to-gdpr) in these whitepapers.
 
 ## How Keycloak and FusionAuth Are Different
 

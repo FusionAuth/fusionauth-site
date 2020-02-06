@@ -34,7 +34,7 @@ A big difference between Okta and FusionAuth is Okta is a multi-tenant 'built in
 
 ### 4. Data Policy Compliance
 FusionAuth's single-tenant architecture also allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and the European Union's GDPR all place different restrictions on how a user's personal data can be used and transmitted. FusionAuth provides the expanded control for companies required to comply with laws and regulations in their specific region.
-For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/blog/2018/12/03/single-tenant-vs-multi-tenant).
+For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions).
 
 ### 5. Configurable Password Encryption and Brute-Force Protection
 Every application has different security requirements. Some need to be HIPAA compliant, while others can be less stringent. FusionAuth lets you pick the level of security you need, and adjust it as quickly as your needs or threats evolve. We also allow you to use different password schemas for different groups of users, making it possible to consolidate multiple identity management systems into one efficient platform. This can be a completely transparent process without any downtime or customer friction. For more details, [read about how we migrated DataStax](/resources/datastax-case-study) from their previous solution.

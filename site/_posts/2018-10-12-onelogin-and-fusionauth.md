@@ -41,7 +41,7 @@ Another difference between OneLogin and FusionAuth is that both of FusionAuth's 
 
 FusionAuth's single-tenant architecture allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and most recently the European Union's GDPR all place different restrictions on how a user's personal data can be used and transmitted. FusionAuth provides the expanded control for companies required to comply with laws and regulations in their specific region.
 
-For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/blog/2018/12/03/single-tenant-vs-multi-tenant "Read more about single- and multi-tenant identity solutions").
+For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions "Read more about single- and multi-tenant identity solutions").
 
 ### Configurable Password Encryption
 Every application has different security requirements. Some need to be HIPAA compliant, while others can be less stringent. We let you pick the level of security you need, and adjust it as quickly as your needs or threats evolve, including using different password schemas for different groups of users. This can be a completely transparent process without any downtime or customer friction.

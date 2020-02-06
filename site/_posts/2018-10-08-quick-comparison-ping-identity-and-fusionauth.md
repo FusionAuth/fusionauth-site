@@ -40,7 +40,7 @@ A big difference between Ping Identity and FusionAuth is that both of FusionAuth
 
 Single-tenant solutions like FusionAuth also allow for easier compliance with complex regulatory restrictions in many industries and countries. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and most recently the European Union's GDPR all place different restrictions on how a customer's personal data can be utilized and transmitted. FusionAuth provides companies with the expanded control required to comply with laws and regulations in their specific region or industry.
 
-For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/blog/2018/12/03/single-tenant-vs-multi-tenant "Read more about single- and multi-tenant identity solutions").
+For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this whitepaper](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions "Read more about single- and multi-tenant identity solutions").
 
 ### Configurable Password Encryption
 

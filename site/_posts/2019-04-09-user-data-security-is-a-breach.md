@@ -14,9 +14,9 @@ If you follow us on Twitter (if you don't, you can [fix that now](http://bit.ly/
 
 <!--more-->
 
-[{% include _image.html src="/assets/img/blogs/guide-userdata-inline.png" alt="Guide to User Data Security" class="float-right img-fluid mb-4" figure=false %}](/resources/guide-to-user-data-security)
+[{% include _image.html src="/assets/img/blogs/guide-userdata-inline.png" alt="Guide to User Data Security" class="float-right img-fluid mb-4" figure=false %}](/learn/expert-advice/security/guide-to-user-data-security)
 
-There is a lot you can do to stop cyber breaches and protect your user data. To get you started we've put together this [Guide to User Data Security](/resources/guide-to-user-data-security) with a GitHub project that contains a set of scripts you can execute. Should you execute them without knowing exactly what they do? Hell no. Read the guide and understand the points, and then review the scripts. Internet Safety 101 says always check it out for yourself. Read on for an overview of data security, and check out the guide for the deep details, scripts, and strategies to keep your data safe.
+There is a lot you can do to stop cyber breaches and protect your user data. To get you started we've put together this [Guide to User Data Security](/learn/expert-advice/security/guide-to-user-data-security) with a GitHub project that contains a set of scripts you can execute. Should you execute them without knowing exactly what they do? Hell no. Read the guide and understand the points, and then review the scripts. Internet Safety 101 says always check it out for yourself. Read on for an overview of data security, and check out the guide for the deep details, scripts, and strategies to keep your data safe.
 
 ## Data Security Is Complex
 
@@ -29,7 +29,7 @@ The reason data security is difficult is threats come from a wide range of sourc
 - Software attacks that invade the sites, tools, and applications that allow us to communicate and interact
 - Social engineering and phishing attacks that focus on the most easily targeted access point of all—the people using the system
 
-And it gets worse. What if you had to worry about the locks on your neighbor's doors? With the explosion of cloud-based and multi-tenant services, security teams need to think about how their systems can be compromised by [sharing multi-tenant resources](https://threatpost.com/delta-sears-breaches-blamed-on-malware-attack-against-a-third-party-chat-service/131023/ "Jump to Threatpost site"). (For more information, [read our whitepaper about single and multi-tenant systems.](https://fusionauth.io/blog/2018/12/03/single-tenant-vs-multi-tenant)) This is just the beginning of the challenges security teams face. Hackers are leveraging advances in processing power and computer AI technology to build an ever evolving set of exploits and attacks.
+And it gets worse. What if you had to worry about the locks on your neighbor's doors? With the explosion of cloud-based and multi-tenant services, security teams need to think about how their systems can be compromised by [sharing multi-tenant resources](https://threatpost.com/delta-sears-breaches-blamed-on-malware-attack-against-a-third-party-chat-service/131023/ "Jump to Threatpost site"). (For more information, [read our whitepaper about single and multi-tenant systems.](https://fusionauth.io/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions)) This is just the beginning of the challenges security teams face. Hackers are leveraging advances in processing power and computer AI technology to build an ever evolving set of exploits and attacks.
 
 ## Data Security Is A Full Time Job
 
@@ -39,7 +39,7 @@ The point of all this is that system security and data privacy are a full-time j
 
 ## Make Data Security a Priority
 
-There is no question that data security and privacy will continue to be a prominent issue, and companies need to address it now. Security has moved from a "we'll get to that eventually" feature to a "we need to do this from the beginning" priority, and must be skillfully factored into designs, projects and timelines. Make sure your team understands [the complexity of security needs](/challenges-of-ciam) and plans to continue revising the system to keep up with evolving exploits. If you decide to leverage third-party providers and partners, ask them how they address security issues and stay current. If their system fails you can lose your reputation or possibly your business.
+There is no question that data security and privacy will continue to be a prominent issue, and companies need to address it now. Security has moved from a "we'll get to that eventually" feature to a "we need to do this from the beginning" priority, and must be skillfully factored into designs, projects and timelines. Make sure your team understands [the complexity of security needs](/learn/expert-advice/ciam/challenges-of-ciam) and plans to continue revising the system to keep up with evolving exploits. If you decide to leverage third-party providers and partners, ask them how they address security issues and stay current. If their system fails you can lose your reputation or possibly your business.
 
 ## Where Do We Start?  
 
@@ -55,7 +55,7 @@ One (obviously self-serving) solution to this front-line risk is FusionAuth, our
 
 If you aren't already a security expert, don't worry. The guide below is for the software developer, architect or system administrator who doesn't want to spend a lifetime wading through cryptographic algorithms and complicated explanations of arcane system administration topics. We have taken everything we have learned through the years about server and application security and distilled it into this clear, detailed guide. This is not the sum of all things that could be or have been said about software security, but if you implement each of the concepts in this guide the security of your user data is off to a great start.
 
-[Read FusionAuth's Guide to User Data Security](/resources/guide-to-user-data-security){: .btn .btn-primary}
+[Read FusionAuth's Guide to User Data Security](/learn/expert-advice/security/guide-to-user-data-security){: .btn .btn-primary}
 
 ## Learn More About FusionAuth
 
