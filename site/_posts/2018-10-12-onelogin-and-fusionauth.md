@@ -70,7 +70,7 @@ FusionAuth is designed to be the most flexible and secure Customer Identity and 
 ### Additional Comparisons
 
 Interested in how FusionAuth compares to other solutions?
-- [Active Directory](/blog/2018/09/14/active-directory-and-passport-ciam-comparison "Active Directory and FusionAuth")
+- [Active Directory](/blog/2018/09/14/active-directory-and-fusionauth-ciam-comparison "Active Directory and FusionAuth")
 - [Auth0](/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions "Auth0 and FusionAuth")
 - [Cognito](/blog/2018/09/18/amazon-cognito-and-fusionauth-comparison "Amazon Cognito and FusionAuth")
 - [Firebase](/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison "Firebase and FusionAuth")
