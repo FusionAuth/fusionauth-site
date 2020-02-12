@@ -24,6 +24,8 @@ This API is used to issue a new access token (JWT) using an existing access toke
 This API provides the single signon mechanism for access tokens. For example you have an access token for application A and you need an access
 token for application B. You may use this API to request an access token to application B with the authorized token to application A. The returned access token will have the same expiration of the one provided.
 
+This API will use a JWT as authentication. See link:authentication#jwt-authentication[JWT Authentication] for examples of how you can send the JWT to FusionAuth.
+
 === Request
 
 [.api-authentication]
@@ -31,7 +33,7 @@ link:authentication#jwt-authentication[icon:id-badge[role=green,type=far]] Issue
 [.endpoint]
 .URI
 --
-[method]#GET# [uri]#/api/jwt/issue``?applicationId=\{applicationId\}``#
+[method]#GET# [uri]#/api/jwt/issue``?applicationId=\{applicationId\}&refreshToken=\{refreshToken\}``#
 --
 
 [cols="3a,7a"]
@@ -40,7 +42,26 @@ link:authentication#jwt-authentication[icon:id-badge[role=green,type=far]] Issue
 |===
 |[field]#applicationId# [type]#[UUID]# [required]#Required#
 |The Id of the application for which authorization is being requested.
+
+|[field]#refreshToken# [type]#[String]# [optional]#Optional#
+|An existing refresh token used to request a refresh token in addition to a JWT in the response. If the cookie `refresh_token` is also on the request it will take precedence over this value.
+
+The target application represented by the [field]#applicationid# request parameter must have refresh tokens enabled in order to receive a refresh token in the response.
 |===
+
+[cols="3a,7a"]
+[.api]
+.Request Cookies
+|===
+|[field]#refresh_token# [type]#[String]# [optional]#Optional#
+|The refresh token to be used to exchange for a refresh token in the application represented by the [field]#applicationid# request parameter.
+|===
+
+[source,shell]
+.Example HTTP Request using cookie
+----
+include::docs/src/requests/jwt/issue-get-request.http[]
+----
 
 === Response
 
@@ -60,6 +81,9 @@ include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 |===
 |[field]#token# [type]#[String]#
 |The encoded access token.
+
+|[field]#refreshToken# [type]#[String]#
+|The refresh token. This value will only be returned if a valid non-expired refresh token was provided on the request. The returned refresh token will share the same creation time as the original refresh token in regards to how the token expiration is calculated.
 |===
 
 [source,json]
