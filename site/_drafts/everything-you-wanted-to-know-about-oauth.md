@@ -2,7 +2,7 @@
 layout: advice
 title: Everything You Wanted to Know About OAuth
 description: TODO
-image: TODO
+image: advice/everything-about-oauth.png
 author: Matt Boisseau
 header_dark: true
 category: OAuth
@@ -116,6 +116,9 @@ If you want to get up and running ASAP, check out FusionAuth's [5-Minute Setup G
 
 The specifics vary based on your OAuth provider-of-choice and the individual requirements of your app.
 In general, the OAuth flow follows the above 4 step-process; in short, you'll need to:
+<!-- BG- Should all endpoints used below be defined in this section? userinfo, device authorize, introspect are not. do endpoints need to be clarified?-->
+
+<!-- BG- Do we need to say that anyone can set up an OAuth provider to verify their own users? It's not a central id for the world, just an app or set of apps that verify against it.-->
 
 1. **Registration.**
 
@@ -147,7 +150,7 @@ In general, the OAuth flow follows the above 4 step-process; in short, you'll ne
 
 	The only reason you didn't go straight to making API requests for the user's data is because the API wants an `access_token.`
 	Now that you have one, you can request away.
-	
+
 	When you send an `access_token` to the API, it can in turn send it to your OAuth provider for verification: "is this legit?"
 	Once the API is satisfied, it will send you the user's data.
 
@@ -198,6 +201,7 @@ This is often referred to as M2M (machine to machine) interaction.
 You'll be needing **Client Credentials Flow**.
 
 # 3. Choosing an OAuth Flow
+<!-- BG-  Wonder if it would be useful to have graphics or pages for each flow that shows data received and data returned. Next buttons to go from step to step. just an idea. -->
 
 ## 3.1. Code Flow
 
@@ -268,6 +272,7 @@ That doesn't mean you don't need it; it just means there's a bit more to learn.
 ## 4.1. OpenID Connect
 
 The standard for authentication in OAuth is OpenID Connect (OIDC).
+<!-- BG-  not sure what an authentication layer here means and how different than OAuth.-->
 
 OIDC is an authentication layer built on top of OAuth 2.0.
 If your OAuth provider is OIDC certified, you can get an `id_token` along with your `code`.
@@ -344,7 +349,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	client_secret=_UctTBl5PG89-vCwrOo0FqYLywnUC4hSjx927sLjuzM&
 	code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wzg&
@@ -445,7 +450,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	code_verifier=zfLfZKs05SjlQOJv&
 	code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wzg&
@@ -491,7 +496,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/device_authorize HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	scope=openid%20profile%20email
 	```
@@ -542,7 +547,7 @@ The `interval` parameter from step 2 tells you how long to wait between requests
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	device_code=e6f_lF1rG_yroI0DxeQB5OrLDKU18lrDhFXeQqIKAjg&
 	grant_type=device_code
@@ -596,7 +601,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	client_secret=_UctTBl5PG89-vCwrOo0FqYLywnUC4hSjx927sLjuzM&
 	grant_type=client_credentials&
@@ -648,7 +653,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	client_secret=_UctTBl5PG89-vCwrOo0FqYLywnUC4hSjx927sLjuzM&
 	grant_type=password&
@@ -833,3 +838,13 @@ HMACSHA256(
 | resource server (RS)      | API used to access user's data                                                                                     |
 | state                     | random string sent with authorization request and returned with authorization code, used to verify the transaction |
 | token exchange            | exchange of client id/secret and authorization code for access token                                               |
+
+<!-- BG-  Is it inaccurate to have a biometric or hardware key in the graphic-->
+<!-- BG-  Are you planning diagrams at the beginning of each flow? -->
+<!-- BG-  Do we want to show implicit grants if not a good choice? Strong warning? Any reasons should use it? At all? -->
+<!-- BG-  Section 7 - authN and authZ - never mentioned before, but now in the glossary? Why? -->
+<!-- BG-  Are there places we can link out to the login workflows article in here? Crosslinking is good. -->
+<!-- BG-  I suspect we could submit each of the flows as different articles to Dzone, hacker noon, medium, and other pubs. -->
+<!-- BG-  Without graphics, the rendered page of this article seems more like a lot of summary bullets than an 'everything' doc. I could be wrong though, this could be a perfect concise summary.  -->
+<!-- BG-  Is there room in here for common misconceptions? What people usually get wrong, common pitfalls -->
+<!-- BG-  Is there anything we can say about the coming changes/cleanup in Oauth 2.1? Even to summarize or allude to direction? --> 
