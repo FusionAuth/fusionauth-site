@@ -117,8 +117,10 @@ If you want to get up and running ASAP, check out FusionAuth's [5-Minute Setup G
 The specifics vary based on your OAuth provider-of-choice and the individual requirements of your app.
 In general, the OAuth flow follows the above 4 step-process; in short, you'll need to:
 <!-- BG- Should all endpoints used below be defined in this section? userinfo, device authorize, introspect are not. do endpoints need to be clarified?-->
+<!-- MB	2020-02-14 Good point. I don't think this is the right section, but we're missing that info in general.-->
 
 <!-- BG- Do we need to say that anyone can set up an OAuth provider to verify their own users? It's not a central id for the world, just an app or set of apps that verify against it.-->
+<!-- MB	2020-02-14 Our target audience for this article is those who will be using a provider. I personally think it's less confusing to just say "pick a provider," but I'm open to more discussion on the topic.-->
 
 1. **Registration.**
 
@@ -202,6 +204,7 @@ You'll be needing **Client Credentials Flow**.
 
 # 3. Choosing an OAuth Flow
 <!-- BG-  Wonder if it would be useful to have graphics or pages for each flow that shows data received and data returned. Next buttons to go from step to step. just an idea. -->
+<!-- MB	2020-02-14 I definitely want flowcharts for the step-by-steps below. I worry that it would be overwhelming in this section. If we can figure out some clever minimal graphics for each flow, that would be great. Not sure what you mean by "next buttons."-->
 
 ## 3.1. Code Flow
 
@@ -273,6 +276,7 @@ That doesn't mean you don't need it; it just means there's a bit more to learn.
 
 The standard for authentication in OAuth is OpenID Connect (OIDC).
 <!-- BG-  not sure what an authentication layer here means and how different than OAuth.-->
+<!-- MB	2020-02-14 See above section under §4. OAuth = authorization. OIDC adds authentication. I didn't want to get too in the weeds about OIDC specifics--do you think more detail would help here?-->
 
 OIDC is an authentication layer built on top of OAuth 2.0.
 If your OAuth provider is OIDC certified, you can get an `id_token` along with your `code`.
@@ -840,11 +844,30 @@ HMACSHA256(
 | token exchange            | exchange of client id/secret and authorization code for access token                                               |
 
 <!-- BG-  Is it inaccurate to have a biometric or hardware key in the graphic-->
+<!-- MB	2020-02-14 OAuth/OIDC don't specify any specific authentication method. What graphic are you referring to here?-->
+
 <!-- BG-  Are you planning diagrams at the beginning of each flow? -->
+<!-- MB	2020-02-14 Absolutely. I think it's hard to follow otherwise. Ideally, these diagrams have numbers corresponding to the numbered steps.-->
+
 <!-- BG-  Do we want to show implicit grants if not a good choice? Strong warning? Any reasons should use it? At all? -->
+<!-- MB	2020-02-14	I thought the same about omitting it, but Brian said that people will be wanting to know about it. Strong warning is my preference in that case. Would love "warning" admonitions, but they are sadly unavailable in markdown.-->
+
 <!-- BG-  Section 7 - authN and authZ - never mentioned before, but now in the glossary? Why? -->
+<!-- MB	2020-02-14	They're common shorthand for authentication and authorization. They appear in the official OIDC spec. I imagine the following use case: see "authN" -> go to your favorite OAuth guide (this one) -> crtl+f "authN"-->
+
 <!-- BG-  Are there places we can link out to the login workflows article in here? Crosslinking is good. -->
+<!-- MB	2020-02-14	Agreed on crosslinking. Ideally, almost every topic here would have another, more detailed article on the FA site.-->
+
 <!-- BG-  I suspect we could submit each of the flows as different articles to Dzone, hacker noon, medium, and other pubs. -->
+<!-- MB	2020-02-14	See above comment. I think the more detailed crosslink articles would be more suitable for this? I definitely think we should go for it, either way.-->
+
 <!-- BG-  Without graphics, the rendered page of this article seems more like a lot of summary bullets than an 'everything' doc. I could be wrong though, this could be a perfect concise summary.  -->
+<!-- MB	2020-02-14	I try not to be wordy if I can help it. Maybe I'm projecting, but I have very little patience when browsing something like this. Overly brief is a common point of feedback for my work, so I don't doubt that it could use a bit of fluffing--can you note any specific sections that seem too brief?-->
+
 <!-- BG-  Is there room in here for common misconceptions? What people usually get wrong, common pitfalls -->
-<!-- BG-  Is there anything we can say about the coming changes/cleanup in Oauth 2.1? Even to summarize or allude to direction? --> 
+<!-- MB	2020-02-14	Great idea. Definitely adding this.-->
+
+<!-- BG-  Is there anything we can say about the coming changes/cleanup in Oauth 2.1? Even to summarize or allude to direction? -->
+<!-- MB	2020-02-14	In the spirit of a "living doc," I omitted this section for now. Could add a short section with a "watch this space" kind of attitude.-->
+
+<!-- MB	2020-02-14 Do you want me to go through and add sketchy versions of the graphics I think are necessary throughout? Then you can just focus on making sure they're brand-accurate and properly formatted? Or I could just give textual descriptions if you prefer.-->
