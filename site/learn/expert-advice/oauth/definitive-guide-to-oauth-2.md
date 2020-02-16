@@ -137,6 +137,33 @@ third-party, but is just a part of the application (like a separate microservice
 
 ## 1.3. How Do I Use OAuth?
 
+**COMMENT (BP): I feel like this is the main section of the article and it doesn't explain the concepts enough or in an approachable way. It sorta says that they will be used later. If we are going to provide a guide, then we should be explaining everything up front in simple terms. Then we can get into details later, but only once the reader fully understands what OAuth is. As an example, we don't really explain that the user is going to code a "Login" link from their App to the OAuth Provider. That's a huge piece. There are no code examples here that would illustrate what that looks like or means. I sorta feel like this is divided into a very light explanation section followed by very technical integration section. It feels less like a Guide and more like a reference or a specification. Shouldn't this be more like a walk-through? Like if you were going to build an application, how would you integrate OAuth with it.**
+
+**COMMENT (BP): From Slack**
+
+```
+I’m not convinced the reader will know what we are talking about. For example, in Section 1.3, the steps are really more like this:
+
+1. Pick an OAuth Provider
+2. Install it and get it running
+3. Register your Application with it (in FusionAuth, you create an Application). This produces the client_id and client_secret
+4. Determine how to send users from your Application to the OAuth Provider (usually via a login link and we should show code here)
+5. The user Authenticates with the OAuth Provider (this is key, but not part of the spec and we need to explain why)
+6. The user grants your Application permission (this step is optional actually. I think we need to explain that there are two types of OAuth integrations, a “internal” and a “third-party”. Most of our customers will be using “internal”. In this case, the user doesn’t need to grant permissions to the Application because the OAuth Provider is managed by the same developers that are building the Application. Therefore, once the user logs into the OAuth Provider, the permissions are implicitly granted)
+7. The OAuth Provider sends the user back to your Application along with a code. (this is super key because it is where redirect_uri comes into play but we don’t really discuss how important that piece is)
+8. The browser makes a GET request to the redirect_uri and this calls your Application backend.
+9. The Application backend takes the code from the URL parameters and exchanges it for an access_token . This process requires the secret we got from the OAuth Provider in step 3.
+10. The Application backend can now store the access_token in a session or push it back to the browser as a cookie or put it in the database or whatever it needs. This is also very important because it is how the user will be identified by the Application for the rest of their session or for a very long time. We also could explain refresh tokens here and in step 9.
+11. Finally, the Browser (via AJAX) or the Applicaiton Backend can now call APIs as the user with the access_token. 
+
+We can skip the OIDC extensions here and add them in a separate section. These include the id_token and the new APIs.
+
+Overall, I think the information in the article is good, but the approach might leave a lot of readers confused. It seems like we need a “story”.
+
+“Your a developer and want to use OAuth instead of building your own login system. How do you do that step-by-step? Once you have the core idea, we can explore variations and extensions.”
+```
+
+
 If you're here, it's likely that you're interested in using OAuth in your own app.
 If you want to get up and running ASAP, check out FusionAuth's [5-Minute Setup Guide].
 
@@ -150,15 +177,19 @@ When setting up a local OAuth provider and integrating your application with it,
 <!-- BG- Do we need to say that anyone can set up an OAuth provider to verify their own users? It's not a central id for the world, just an app or set of apps that verify against it.-->
 <!-- MB	2020-02-14 Our target audience for this article is those who will be using a provider. I personally think it's less confusing to just say "pick a provider," but I'm open to more discussion on the topic.-->
 
-1. **Registration.**
+1. **Register your Application.**
 
+    **COMMENT (BP): Need to let the reader know that this is a configuration/setup step**
+    
 	After you pick an OAuth provider (like FusionAuth) and install it, you'll need to configure the OAuth settings. Each OAuth provider is different, but 
-	the end result is you'll they'll ask for some basic details about your app.
+	the end result is the provider will ask for some basic details about your app.
 
-	You'll get two important pieces of identification: a `client_id` and `client_secret`.
-	These are basically your app's username and password.
+	After you register your application with the OAuth Provider, it will produce two items you will use for the integration in the following steps: a `client_id` and `client_secret`.
+	These are basically your app's username and password and will be used later to ensure that only your application is able to communicate with the OAuth Provider.
 
-	You'll also pick a `redirect_uri`; the next step takes users away from your app, so your OAuth provider needs to know how to get them back.
+    **COMMENT (BP): This needs more explanation because it is super pivotal to understand what redirect URIs are, how they are configured with the OAuth Provider, why they must be defined (security), how they are sent on the login link, etc.**
+    
+	You'll also register a `redirect_uri`; the next step takes users away from your app, so your OAuth provider needs to know how to get them back.
 
 1. **Authorization.**
 
