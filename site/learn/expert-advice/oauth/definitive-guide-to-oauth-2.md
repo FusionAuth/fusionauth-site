@@ -55,7 +55,15 @@ Start with the basics or jump right to the info you need.
 
 # 1. The Basics
 
+**COMMENT (BP): Let's avoid empty sections like this**
+
 ## 1.1. What is OAuth?
+
+**COMMENT (BP): Make your voice more personal. Here's an example:**
+```
+Before we dig into the details about OAuth, let's break down the name OAuth into it's pieces
+and describe each one:
+```
 
 **OAuth** is an **O**pen standard for **Auth**orization.
 
@@ -68,36 +76,47 @@ A standard is basically the set of rules that the industry has agreed is best.
 
 **Open** means that the standard is publicly available and open for modification.
 You can read the OAuth 2.0 specification [here][RFC6749].
-That document defines what OAuth is (along with a healthy ecosystem of recommended tweaks).
+The specification defines what OAuth is and how it is implemented and used (along with a healthy ecosystem of recommended tweaks).
+
+**COMMENT (BP): Technically this partially correct. OAuth is a set of guidelines for how an application can ask ask a user for permission to various things like their data, resources or to take actions on their behalf. This permission is granted by the user through an authorization server. That server might be an identity provider or some other system that is the authoritative source of truth for that user**
 
 So, what is OAuth?
 It's an ever-evolving set of guidelines for creating apps that can request permission from users.
 
 ## 1.2. How Does OAuth Work?
 
-Imagine fictional compression app Pied Piper wants to let users compress files straight from Google Drive.
+Imagine a fictional compression app, named Pied Piper, wants to let users compress their files in Google Drive.
 
-Before OAuth, a common "solution" would be for Pied Piper to take each user's Google username and password.
-Pied Piper could then log into Google Drive *as the users*, and grab those files.
-If your first thought is, "I don't want to give my Google password to random apps," then you already understand why OAuth is an improvement.
+Before OAuth, a common "solution" was for Pied Piper to collect each user's Google username and password.
+Pied Piper could then log into Google Drive *as the users*, and grab the files to compress. And it doesn't stop there.
+If Pied Piper wanted to later compress more files when the user was asleep, it would need to store the user's Google username and password somewhere
+so that it could use it later. The username and password would have to be stored in plain-text in order for Pied Piper to use it in the future.
+If your first thought is, "I don't want to give my Google password to random apps," and your second thought is, "they are storing my username and password
+in plain text," then you already understand why OAuth is a huge improvement.
 
-With OAuth, Pied Piper can ask a trusted OAuth provider (like FusionAuth) to get consent from the user and from Google Drive.
+With OAuth, Pied Piper can ask a trusted OAuth provider to get permission from the user to access their resources (i.e. files in their Google Drive).
 
-In a bit more detail:
+**COMMENT (BP): You mentioned FusionAuth in this section, but I think it is going to be really confusing. Let's mention FusionAuth later and use Google here**
 
-1. **Pied Piper registers with FusionAuth.**
+Here's the OAuth process of the user granting permissions to Pied Piper in a bit more detail:
 
-	Most apps don't handle their own authorization; they use an OAuth provider, like FusionAuth.
-	OAuth providers have put in a lot of work to make this easy for you.
+**COMMENT (BP): Diagram needed??**
+
+1. **Pied Piper registers with Google.**
+
+	Most apps don't handle their own authorization; they use an OAuth provider, like Google.
+	OAuth providers have put in a lot of work to make this easy for you (**COMMENT (BP): who is "you" in this case? Should this be "developers"**.
 	Users' trust in your OAuth provider is trust you don't have to establish on your own.
 
-1. **Pied Piper asks FusionAuth to get consent from the user.**
+1. **Pied Piper asks Google to get consent from the user.**
 
+    **COMMENT (BP): FusionAuth doesn't have pop-ups and most providers are moving away from them. I might talk about directing them to the OAuth Providers UI. From there, they might need to login, but they might also be already logged in. After they authenticate, they are asked for permission**
+    
 	When the app wants to access a user's data, it needs to ask for permission.
 	The app redirects the user to its OAuth provider; this takes the familiar form of a popup asking the user to click "Allow."
 	If the user does click "Allow", the OAuth provider gives the app a **Grant**, which is a receipt for the user's consent.
 
-1. **Pied Piper "logs in" with FusionAuth**
+1. **Pied Piper "logs in" with Google** **COMMENT (BP): I'd avoid using "logs in" here**
 
 	The app needs to prove that it got consent and that it is who it says it is.
 	The app presents the **Grant** to the OAuth provider, as well as its **Secret**.
@@ -109,17 +128,32 @@ In a bit more detail:
 	When the app makes an API call, it also sends the **Access Token**; the resource server can verify the token's authenticity with the same OAuth provider that issued it.
 	If the **Access Token** is legit and hasn't expired, the resource server will send back the data requested in the API call.
 
+This workflow is a standard way for applications to integrate with third-party OAuth providers like Google. Usually this is necessary if the application wants
+to call APIs of the third-party as the user. Our example calls the Google Drive API as the user in order to access the user's files. However, it could also be that the OAuth provider is not a
+third-party, but is just a part of the application (like a separate microservice). This case uses the same workflow, but the last step is not used. Instead, the
+**Access Token** is used by the application to call its own APIs.
+
+**COMMENT (BP): Do we need a diagram of the "Local OAuth Provider" to distinguish it from the "Third-Party Provider"? Or perhaps we break this into 2 sections. One for third-party OAuth and one for local OAuth. Then we could describe the local one in more detail.**
+
 ## 1.3. How Do I Use OAuth?
 
-If you're here, it's pretty likely that you're interested in using OAuth in your own app.
+If you're here, it's likely that you're interested in using OAuth in your own app.
 If you want to get up and running ASAP, check out FusionAuth's [5-Minute Setup Guide].
 
-The specifics vary based on your OAuth provider-of-choice and the individual requirements of your app.
-In general, the OAuth flow follows the above 4 step-process; in short, you'll need to:
+We'll assume that you are interested in leveraging OAuth to log users into your application and the OAuth provider will be a local identity provider. 
+That is to say that the identity provider is used mainly for authentication rather than the Google example from above where the application wanted access to Google APIs as well. 
+When setting up a local OAuth provider and integrating your application with it, the steps are as follows:
+
+<!-- BG- Should all endpoints used below be defined in this section? userinfo, device authorize, introspect are not. do endpoints need to be clarified?-->
+<!-- MB	2020-02-14 Good point. I don't think this is the right section, but we're missing that info in general.-->
+
+<!-- BG- Do we need to say that anyone can set up an OAuth provider to verify their own users? It's not a central id for the world, just an app or set of apps that verify against it.-->
+<!-- MB	2020-02-14 Our target audience for this article is those who will be using a provider. I personally think it's less confusing to just say "pick a provider," but I'm open to more discussion on the topic.-->
 
 1. **Registration.**
 
-	After you pick an OAuth provider (like FusionAuth), they'll ask for some basic details about your app.
+	After you pick an OAuth provider (like FusionAuth) and install it, you'll need to configure the OAuth settings. Each OAuth provider is different, but 
+	the end result is you'll they'll ask for some basic details about your app.
 
 	You'll get two important pieces of identification: a `client_id` and `client_secret`.
 	These are basically your app's username and password.
@@ -147,7 +181,7 @@ In general, the OAuth flow follows the above 4 step-process; in short, you'll ne
 
 	The only reason you didn't go straight to making API requests for the user's data is because the API wants an `access_token.`
 	Now that you have one, you can request away.
-	
+
 	When you send an `access_token` to the API, it can in turn send it to your OAuth provider for verification: "is this legit?"
 	Once the API is satisfied, it will send you the user's data.
 
@@ -198,6 +232,8 @@ This is often referred to as M2M (machine to machine) interaction.
 You'll be needing **Client Credentials Flow**.
 
 # 3. Choosing an OAuth Flow
+<!-- BG-  Wonder if it would be useful to have graphics or pages for each flow that shows data received and data returned. Next buttons to go from step to step. just an idea. -->
+<!-- MB	2020-02-14 I definitely want flowcharts for the step-by-steps below. I worry that it would be overwhelming in this section. If we can figure out some clever minimal graphics for each flow, that would be great. Not sure what you mean by "next buttons."-->
 
 ## 3.1. Code Flow
 
@@ -268,6 +304,8 @@ That doesn't mean you don't need it; it just means there's a bit more to learn.
 ## 4.1. OpenID Connect
 
 The standard for authentication in OAuth is OpenID Connect (OIDC).
+<!-- BG-  not sure what an authentication layer here means and how different than OAuth.-->
+<!-- MB	2020-02-14 See above section under §4. OAuth = authorization. OIDC adds authentication. I didn't want to get too in the weeds about OIDC specifics--do you think more detail would help here?-->
 
 OIDC is an authentication layer built on top of OAuth 2.0.
 If your OAuth provider is OIDC certified, you can get an `id_token` along with your `code`.
@@ -344,7 +382,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	client_secret=_UctTBl5PG89-vCwrOo0FqYLywnUC4hSjx927sLjuzM&
 	code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wzg&
@@ -445,7 +483,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	code_verifier=zfLfZKs05SjlQOJv&
 	code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wzg&
@@ -491,7 +529,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/device_authorize HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	scope=openid%20profile%20email
 	```
@@ -542,7 +580,7 @@ The `interval` parameter from step 2 tells you how long to wait between requests
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	device_code=e6f_lF1rG_yroI0DxeQB5OrLDKU18lrDhFXeQqIKAjg&
 	grant_type=device_code
@@ -596,7 +634,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	client_secret=_UctTBl5PG89-vCwrOo0FqYLywnUC4hSjx927sLjuzM&
 	grant_type=client_credentials&
@@ -648,7 +686,7 @@ You'll need to include the following parameters:
 	```
 	POST /oauth2/token HTTP/1.1
 	Host: oauth-provider.com
-	
+
 	client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&
 	client_secret=_UctTBl5PG89-vCwrOo0FqYLywnUC4hSjx927sLjuzM&
 	grant_type=password&
@@ -833,3 +871,32 @@ HMACSHA256(
 | resource server (RS)      | API used to access user's data                                                                                     |
 | state                     | random string sent with authorization request and returned with authorization code, used to verify the transaction |
 | token exchange            | exchange of client id/secret and authorization code for access token                                               |
+
+<!-- BG-  Is it inaccurate to have a biometric or hardware key in the graphic-->
+<!-- MB	2020-02-14 OAuth/OIDC don't specify any specific authentication method. What graphic are you referring to here?-->
+
+<!-- BG-  Are you planning diagrams at the beginning of each flow? -->
+<!-- MB	2020-02-14 Absolutely. I think it's hard to follow otherwise. Ideally, these diagrams have numbers corresponding to the numbered steps.-->
+
+<!-- BG-  Do we want to show implicit grants if not a good choice? Strong warning? Any reasons should use it? At all? -->
+<!-- MB	2020-02-14	I thought the same about omitting it, but Brian said that people will be wanting to know about it. Strong warning is my preference in that case. Would love "warning" admonitions, but they are sadly unavailable in markdown.-->
+
+<!-- BG-  Section 7 - authN and authZ - never mentioned before, but now in the glossary? Why? -->
+<!-- MB	2020-02-14	They're common shorthand for authentication and authorization. They appear in the official OIDC spec. I imagine the following use case: see "authN" -> go to your favorite OAuth guide (this one) -> crtl+f "authN"-->
+
+<!-- BG-  Are there places we can link out to the login workflows article in here? Crosslinking is good. -->
+<!-- MB	2020-02-14	Agreed on crosslinking. Ideally, almost every topic here would have another, more detailed article on the FA site.-->
+
+<!-- BG-  I suspect we could submit each of the flows as different articles to Dzone, hacker noon, medium, and other pubs. -->
+<!-- MB	2020-02-14	See above comment. I think the more detailed crosslink articles would be more suitable for this? I definitely think we should go for it, either way.-->
+
+<!-- BG-  Without graphics, the rendered page of this article seems more like a lot of summary bullets than an 'everything' doc. I could be wrong though, this could be a perfect concise summary.  -->
+<!-- MB	2020-02-14	I try not to be wordy if I can help it. Maybe I'm projecting, but I have very little patience when browsing something like this. Overly brief is a common point of feedback for my work, so I don't doubt that it could use a bit of fluffing--can you note any specific sections that seem too brief?-->
+
+<!-- BG-  Is there room in here for common misconceptions? What people usually get wrong, common pitfalls -->
+<!-- MB	2020-02-14	Great idea. Definitely adding this.-->
+
+<!-- BG-  Is there anything we can say about the coming changes/cleanup in Oauth 2.1? Even to summarize or allude to direction? -->
+<!-- MB	2020-02-14	In the spirit of a "living doc," I omitted this section for now. Could add a short section with a "watch this space" kind of attitude.-->
+
+<!-- MB	2020-02-14 Do you want me to go through and add sketchy versions of the graphics I think are necessary throughout? Then you can just focus on making sure they're brand-accurate and properly formatted? Or I could just give textual descriptions if you prefer.-->
