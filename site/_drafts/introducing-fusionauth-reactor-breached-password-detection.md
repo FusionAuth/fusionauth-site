@@ -13,7 +13,7 @@ We said we would be cranking on new features and we meant it. Version 1.15.0 is 
 
 <!--more-->
 {% include _image.html src="/assets/img/blogs/fusionauth-reactor-header-2x.png" alt="FusionAuth Reactor heading" class="img-fluid w-100 w-xl-50 w-l-50 w-md-75 mt-2" figure=false %}
-Built from a fire-forged, vibranium-authenticatium alloy, FusionAuth Reactor is a suite of new features that extend FusionAuth's core functionality. The first feature is now available for any paid Edition of FusionAuth (more about this below).
+Built from a fire-forged, vibranium-authenticatium alloy, FusionAuth Reactor is a suite of new features that extends FusionAuth's core functionality. The first feature is now available for any paid Edition of FusionAuth (more about this below).
 
 ### Up First: Breached Password Detection
 The first feature available as part of Reactor is **Breached Password Detection**. We collected hundreds of millions of compromised usernames and passwords from numerous breached databases. FusionAuth can now check passwords to ensure that they don’t exist in any of these databases.
