@@ -30,11 +30,6 @@ sitemap:
 
 <div class="ml-4 pl-4 border-left">
 
-<h3>Definitive Guide to OAuth **NEED LINK**</h3>
-<ul>
-<li><a class="btn btn-primary text-lowercase" href="mailto:?subject=FusionAuth:%20Definitive%20Guide%20to%20OAuth&body=Definitive%20Guide%20to%20OAuth%20-%20https://fusionauth.io/NEEDLINK">by email</a> - - - - <a class="btn btn-primary text-lowercase" href="sms:?body=From%20Matt%20Boisseau%20-%20Definitive%20Guide%20to%20OAuth-%20https://fusionauth.io/NEEDLINK">by text</a></li>
-</ul>
-
 
 <h3>Login and Authorization Workflows</h3>
 <ul>
