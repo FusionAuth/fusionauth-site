@@ -37,7 +37,7 @@ FusionAuth.Account.Offer = function(date) {
 FusionAuth.Account.Offer.constructor = FusionAuth.Account.Offer;
 FusionAuth.Account.Offer.prototype = {
   _setCookie: function() {
-    document.cookie = 'fusionauth.offer=hide; path=/; Expires=' + this.date.toString() + ';';
+    document.cookie = 'fusionauth.offer=hide; path=/; Expires=' + this.date.toUTCString() + ';';
   }
 };
 
