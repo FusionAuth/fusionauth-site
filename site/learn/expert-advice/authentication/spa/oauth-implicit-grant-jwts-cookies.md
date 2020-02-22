@@ -6,6 +6,8 @@ description: An explanation of single-page application login using FusionAuth OA
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 {% capture intro %}

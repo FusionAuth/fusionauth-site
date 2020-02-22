@@ -7,9 +7,8 @@ categories: oauth
 header_dark: true
 image: advice/login-with-twitter-article.png
 category: OAuth
-related:
-- title: "How-To: OAuth Device Authorization"
-  url: /learn/expert-advice/oauth/oauth-device-authorization-roku-appletv-xbox
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 If you've ever had to navigate the harrowing path of signing OAuth v1 requests to Twitter, you'll likely commiserate with the difficulty of implementing this algorithm correctly. In many languages, there aren't great off-the-shelf option to make this easy either. Building out a social login with Twitter requires a lot of heavy lifting to get right. 

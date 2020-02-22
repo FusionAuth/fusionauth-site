@@ -6,6 +6,8 @@ author: Brian Pontarelli
 header_dark: true
 image: advice/save-a-cpu-article.png
 category: Security
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 Here's the reality, billions of credentials have been leaked or stolen and are now easily downloaded online by anyone. Many of these databases of identities include passwords in plain text, while others are one-way hashed. One-way hashing is better (we'll get to why in a second), but it is only as secure as is mathematically feasible. Let's take a look at one-way hashing algorithms and how computers handle them.

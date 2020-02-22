@@ -6,6 +6,8 @@ image: advice/oauth-device-authorization-article.png
 author: Matthew Altman & Trevor Smith
 header_dark: true
 category: OAuth
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 If you have a modern entertainment device like a Roku, AppleTV, XBox, Playstation, etc., there's a good chance that at some point you will connect it to subscription services such as Netflix, Amazon, Pandora, or HBO. In theory it should be easy. It's your device and you've already purchased a subscription to the service. So, just turn it on and go right? Sadly, no. 

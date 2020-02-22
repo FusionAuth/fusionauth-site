@@ -6,6 +6,8 @@ author: Brian Pontarelli
 header_dark: true
 image: advice/developers-guide-to-gdpr-article.png
 category: CIAM
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 ## The who, what, when, where, and why of the GDPR for developers

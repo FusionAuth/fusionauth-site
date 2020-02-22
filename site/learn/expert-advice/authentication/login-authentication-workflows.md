@@ -6,6 +6,8 @@ header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
 author: Brian Pontarelli
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 The landscape of applications today is broad. Similarly, the methods of authentication used is similarly varied. This section covers some of the login and authentication workflows used by applications today. These examples use FusionAuth as the IdP (identity provider), but any IdP could be used. You can use these articles to help architect and design the authentication system for your application.

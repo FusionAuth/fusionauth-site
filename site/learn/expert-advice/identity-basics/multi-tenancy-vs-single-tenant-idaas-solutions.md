@@ -6,6 +6,8 @@ author: Daniel DeGroff
 header_dark: true
 image: advice/multi-in-single-article.png
 category: Identity Basics
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 The last few years have brought an explosion of IDaaS (Identity as a Service) solutions giving developers a wide range of choices for how they manage their users' registrations, logins, and identity. It makes sense. Identity and access management are critical components of many applications, but building, testing, and maintaining a secure in-house solution can take weeks or months of senior developer hours. You don't build your own database, so why build a custom identity solution? And just like databases, there are many identity solutions to fit the different requirements of every application.

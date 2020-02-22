@@ -6,6 +6,8 @@ image: advice/everything-about-oauth.png
 author: Matt Boisseau
 header_dark: true
 category: OAuth
+date: 2020-02-29
+dateModified: 2020-02-29
 ---
 
 <!-- links -->

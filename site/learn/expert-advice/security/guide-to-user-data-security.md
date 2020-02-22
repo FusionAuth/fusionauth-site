@@ -7,12 +7,10 @@ header_dark: true
 image: advice/guide-user-data-security-article.png
 author: Brian Pontarelli
 category: Security
-related:
-- title: Password Compliance Checklist
-  url: /learn/expert-advice/security/password-security-compliance-checklist
-- title: Save a CPU—Ditch Bcrypt, Use SHA2 Instead
-  url: /learn/expert-advice/security/save-a-cpu-ditch-bcrypt-use-sha2-instead
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
+
 <div class="card text-secondary mb-4">
   {% include guide/_toc.html %}
 </div>

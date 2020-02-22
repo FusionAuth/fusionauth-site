@@ -7,10 +7,10 @@ header_dark: true
 image: advice/revoking-jwts-article.png
 category: Tokens
 related:
-- title: Let's talk about JWTs baby!
-  url: /learn/expert-advice/tokens/lets-talk-about-jwts-baby  
-
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
+
 I have been talking with developers about JSON Web Tokens (JWTs) recently and a one question keeps coming up: "How do I revoke a JWT?"
 
 If you poke around online, you'll find that the most common answers are:

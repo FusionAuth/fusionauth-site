@@ -6,6 +6,8 @@ author: Brian Pontarelli
 header_dark: true
 image: advice/pros-and-cons-of-jwts-article.png
 category: Tokens
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 This article provides an analysis of JWTs (JSON Web Tokens, pronounced "jot") from how they are used to pros and cons of using JWTs in your application. 

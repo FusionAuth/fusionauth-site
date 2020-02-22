@@ -6,9 +6,8 @@ author: Bryan Giese
 header_dark: true
 image: advice/password-security-checklist-article.png
 category: Security
-related:
-- title: Guide to User Data Security
-  url: /learn/expert-advice/security/guide-to-user-data-security
+date: 2019-11-04
+dateModified: 2019-11-04
 ---
 
 Right or wrong, usernames and passwords have been a critical component of website and application security for years. However, weak passwords can result in a costly data breach if compromised. To help ensure stronger password security, leading organizations like the National Institute for Standards and Technology have published clear criteria to discourage users from selecting easy to guess passwords. We have assembled those criteria into one checklist of key password recommendations to help you evaluate and improve your own password policies, and to help initiate critical conversations with your engineering, security, and governance teams.
