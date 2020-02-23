@@ -49,7 +49,7 @@ While we are pretty excited about passwordless login, the FusionAuth 1.5 release
 - When using the Change Password workflow the user will be automatically logged in upon completing the change password required during login.
 - We improved the Two Factor Login API to provide additional support and ease of use in a single page web application.
 - We adjusted the workflow when a user has 2FA enabled and a password change is required during login. Now the 2FA will occur before the change password workflow.
-- The `id_token` is now signed with the `client_secret` when `HS256`, `HS384` or `HS512` is selected as the signing algorithm. This is necessary for compliance with OpenID Connect Core 3.1.3.7 ID Token Validation. This fixes [Github Issue #57](https://github.com/FusionAuth/fusionauth-issues/issues/57 "Jump to GitHub"). Thanks to [Garogat](https://github.com/Garogat) for reporting this issue.
+- The `id_token` is now signed with the `client_secret` when `HS256`, `HS384` or `HS512` is selected as the signing algorithm. This is necessary for compliance with OpenID Connect Core 3.1.3.7 ID Token Validation. This fixes [Github Issue #57](https://github.com/FusionAuth/fusionauth-issues/issues/57 "Jump to GitHub"). Thanks to [anbraten](https://github.com/anbraten) for reporting this issue.
 - A change to the Docker build for permissions reduced the overall FusionAuth app image by ~200 MB.
 
 
