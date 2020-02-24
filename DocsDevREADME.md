@@ -17,7 +17,7 @@ set appWidth to 1080
 
 tell application "System Events"
 	tell appearance preferences
-		set dark mode to not dark mode
+		set dark mode to false
 	end tell
 end tell
 
