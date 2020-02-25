@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Stop Storing My Password in Plaintext
-description: DO NOT store passwords in plaintext! Here's why it's a big deal that you should already know.
+title: Stop Storing My Plaintext Password
+description: DO NOT store passwords in plaintext! Learn how to protect your organizations passwords from potential hacking threats
 author: Brian Pontarelli
 excerpt_separator: "<!--more-->"
 categories: blog

@@ -6,6 +6,7 @@ description: An explanation of single-page application login using a native logi
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
+author: Brian Pontarelli
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
@@ -25,7 +26,7 @@ dateModified: 2019-11-04
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/learn/expert-advice/authentication/spa/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.plantuml %}
+{% plantuml source: _diagrams/learn/expert-advice/authentication/spa/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.plantuml, alt: "Single page application native login with server-side sessions and refresh tokens diagram" %}
 
 ## Explanation
 

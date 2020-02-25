@@ -6,6 +6,7 @@ description: An explanation of webapp login using FusionAuth OAuth interface wit
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
+author: Brian Pontarelli
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
@@ -25,7 +26,7 @@ dateModified: 2019-11-04
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.plantuml %}
+{% plantuml source: _diagrams/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.plantuml, alt: "Web application OAuth 2 Authorization Code Grant with JWTs and refresh tokens in cookies diagram" %}
 
 ## Explanation
 

@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title:  Download counts from Google Cloud Storage
-description: Getting download counts from Google Cloud Storage using access logs and a Ruby script
+title:  Download File Counts from Google Cloud Storage
+description: Getting download file counts from Google Cloud Storage using access logs and a Ruby script
 author: Brian Pontarelli
 categories: blog
 image: blogs/download-count.png
@@ -69,13 +69,13 @@ end
 _`download-counts.rb`_
 {: .mt-0 .text-right}
 
-The first part of the script downloads all of the files that conform to a specific pattern from our access log storage bucket and stores them in the `/tmp/fusionauth-access-logs` directory.
+The first part of the script downloads all of the Google Cloud Storage files that conform to a specific pattern from our access log storage bucket and stores them in the `/tmp/fusionauth-access-logs` directory.
 
 Next, I iterate over each access log file and determine the date of the file. The date is in the file name, so I extract it using a regular expression. This gives me the date as a string in the for `YYYYMMDD`. This date string becomes the key into a hash where I store the counts for that day. Notice that my hash is initialized using a default value of `0`. In Ruby, the default value will be returned for any hash position that is not defined. This makes it simple to do counting without checking for missing hash keys. 
 
 Then for each file, I read each line of the file and determine if the line is a download or not. I do this using another regular expression based on the file name I'm looking for. In this case, the files I'm interested in are the bundles for the `fusionauth-app` package. My expression ensures that the ZIP, DEB or RPM package is in the name as well. If the line matches, I increment the count for that date.
 
-As you can see I'm also filtering out downloads using an IP whitelist and a regular expression, we do a lot of testing and I don't want to those to count towards our final metric. This part of the script may or may not be useful to everyone.
+As you can see I'm also filtering out downloads using an IP whitelist and a regular expression, we do a lot of testing and I don't want those to count towards our final metric. This part of the script may or may not be useful to everyone.
 
 Finally, I write out the header row and the counts out to a CSV file. The CSV file I'm writing to is accessible at this URL: [https://fusionauth.io/collateral/download-count.csv](https://fusionauth.io/collateral/download-count.csv).
 

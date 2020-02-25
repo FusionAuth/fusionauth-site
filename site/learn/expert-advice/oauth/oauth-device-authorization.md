@@ -33,7 +33,7 @@ In order to address this issue there is a proposed standard for the [Oauth2 Devi
 
 The specification is quite long and involved. To make life simpler, we distilled it down for you. For this example, we will connect a Roku device to a fictitious subscription called Nerd Stuff on Demand. We'll also be using FusionAuth for our identity provider, but this solution works with any identity provider that has implemented this OAuth workflow. Here is a sequence diagram that illustrates the process.
 
-{% plantuml _diagrams/learn/expert-advice/oauth/oauth-device-authorization-workflow.plantuml %}
+{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-device-authorization-workflow.plantuml, alt: Diagram %}
 
 Let's go over the steps in quickly as well.
 

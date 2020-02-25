@@ -6,6 +6,7 @@ description: An explanation of single-page application login using FusionAuth OA
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
+author: Brian Pontarelli
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
@@ -25,7 +26,7 @@ dateModified: 2019-11-04
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/learn/expert-advice/authentication/spa/oauth-implicit-grant-jwts-local-storage.plantuml %}
+{% plantuml source: _diagrams/learn/expert-advice/authentication/spa/oauth-implicit-grant-jwts-local-storage.plantuml, alt: "Single page application OAuth 2 Implicit Grant with JWTs in local storage diagram" %}
 
 ## Explanation
 

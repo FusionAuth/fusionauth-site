@@ -2,10 +2,11 @@
 layout: advice
 title: Single-page application native login to backend
 subtitle: Using sessions
-description: An explanation of single-page application login using a native login form that submits to the application backend and uses server-side sessions
+description: A backend code explanation and example of single-page application login using a native login form that submits to the application backend and uses server-side sessions
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
+author: Brian Pontarelli
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
@@ -25,7 +26,7 @@ dateModified: 2019-11-04
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/learn/expert-advice/authentication/spa/native-login-form-to-application-backend-sessions.plantuml %}
+{% plantuml source: _diagrams/learn/expert-advice/authentication/spa/native-login-form-to-application-backend-sessions.plantuml, alt: "Single page application native login with server-side sessions diagram" %}
 
 ## Explanation
 
@@ -51,7 +52,7 @@ dateModified: 2019-11-04
 
 ## Security considerations
 
-This workflow is one of the more secure methods of authenticating users. One downside is that the application backend receives passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
+This workflow example is one of the more secure methods of authenticating users. One downside is that the application backend receives passwords from the browser. While this isn't an issue if TLS is used and the passwords are not stored by the application backend, developers that do not want to be part of the password chain of responsibility should consider other workflows.
 
 Additionally, this workflow requires that the user login each time their session expires. If this is the preferred behavior, than this workflow might be a good fit.
 

@@ -6,6 +6,7 @@ description: An explanation of single-page application login using a native logi
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
+author: Brian Pontarelli
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
@@ -25,7 +26,7 @@ dateModified: 2019-11-04
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/learn/expert-advice/authentication/spa/oauth-resource-owners-grant-sessions.plantuml %}
+{% plantuml source: _diagrams/learn/expert-advice/authentication/spa/oauth-resource-owners-grant-sessions.plantuml, alt: "Single page application OAuth 2 Resource Owners Grant with server-side sessions diagram" %}
 
 ## Explanation
 

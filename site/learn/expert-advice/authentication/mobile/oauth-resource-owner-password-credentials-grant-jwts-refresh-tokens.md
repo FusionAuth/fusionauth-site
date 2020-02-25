@@ -6,6 +6,7 @@ description: An explanation of mobile application login using a native login for
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
+author: Brian Pontarelli
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
@@ -25,7 +26,7 @@ dateModified: 2019-11-04
 [] --> indicate cookies
 ```
 
-{% plantuml _diagrams/learn/expert-advice/authentication/mobile/oauth-resource-owners-grant.plantuml %}
+{% plantuml source: _diagrams/learn/expert-advice/authentication/mobile/oauth-resource-owners-grant.plantuml, alt: "Mobile application OAuth 2 Resource Owners Grant diagram" %}
 
 ## Explanation
 
