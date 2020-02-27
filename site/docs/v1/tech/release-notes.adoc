@@ -17,17 +17,37 @@ _Pending Release_
 
 include::docs/v1/tech/__database-migration-warning.adoc[]
 
+=== Changes
+* The External JWT Identity Provider now manages keys used for token verification in the Key Master. All keys have been migrated to Key Master, and going forward all keys can be managed through the Key Master.
+* Prior to this version the OpenID Connect IdP would send the client secret using the `client_secret_basic` and the `client_secret_post` method. This was done for compatibility with providers that did not utilize the `client_secret_basic` method. Now this configuration is now provided and only the configured client authentication method will be used.
+
 === Fixed
-* On systems running MySQL, the `1.15.0` migration fails on a `DELIMITER` command and causes the instance table to have a null `license_id`.  If you have previously connected your support contract Id with your instance and upgraded to a previous `1.15.x` version, you will need to reconnect your license Id in the Reactor tab.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/482[GitHub Issue #482], thanks to https://github.com/nulian[@nulian] for reporting!
-* Missing some validation on /oauth2/passwordless endpoint
+* Using the JWT Refresh API with a JWT issued from one tenant for a user in another tenant. This error was causing an exception instead of the proper validation error being returned to the caller. A `404` will now properly be returned when this scenario occurs.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/399[GitHub Issue #399], thanks to https://github.com/johnmaia[@johnmaia] for helping us track it down.
+* Missing API validation on the `/oauth2/passwordless` endpoint. A `500` was returned instead of the correct validation errors.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/450[GitHub Issue #450], thanks to https://github.com/GraafG[@GraafG] for reporting.
-* CancelAction method in NETCore client returning field error
+* On systems running MySQL, the SQL migration for `1.15.0` on the `DELIMITER` command and causes the instance table to have a null `license_id`.  If you have previously connected your support contract Id with your instance and upgraded to a previous `1.15.x` version, you will need to reconnect your license Id in the Reactor tab. This issue was introduced in version 1.15.0.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/482[GitHub Issue #482], thanks to https://github.com/nulian[@nulian] for reporting!
+* The `CancelAction` method in the .NETCore client returning field error due to incorrect method definition.
 ** Resolves https://github.com/FusionAuth/fusionauth-netcore-client/issues/11[GitHub Issue #11], thanks to https://github.com/minjup[@minjup] for reporting.
-* OpenID Connect IdP client authentication method is now configurable as `client_secret_basic`, `client_secret_post`, or `none` and will authenticate solely with the configured method. See the https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication[OIDC spec concerning Client Authentication] for more information.
-** The `1.15.3` database migration configures the client authentication method to `client_secret_basic` for identity provider configurations with a `client_secret`, and `none` for those without a `client_secret`.  You will need to enable `client_secret_post` for your integration to remain compatible with an IdP supporting that method.  Discord is a known IdP that requires the `client_secret_post` client authentication method.
+* The OpenID Connect IdP client authentication method is now configurable as `client_secret_basic`, `client_secret_post`, or `none` and will authenticate solely with the configured method. See the https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication[OIDC spec concerning Client Authentication] for more information.
+** The `1.15.3` database migration configures the client authentication method to `client_secret_basic` for identity provider configurations with a client secret defined, and `none` for those without a client secret defined. If your OpenID Connect provider requires `client_secret_post` you will need to update your configuration to ensure the integration continues to function properly.  Discord is one of the known IdPs that requires the `client_secret_post` client authentication method.
 ** See the link:/docs/v1/tech/apis/identity-providers/openid-connect[OpenID Connect Identity Providers] APIs, the link:/docs/v1/tech/identity-providers/openid-connect[OpenID Connect Identity Provider Overview] and the link:/docs/v1/tech/identity-providers/openid-connect/discord[Discord OIDC integration tutorial] for more detail.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/445[GitHub Issue #445], thanks to https://github.com/ovrdoz[@ovrdoz] for reporting.
+* When you have enabled Self Service Registration and Registration Verification FusionAuth will fail to send the email to the end user during this workflow.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/496[GitHub Issue #496], thanks to our great Slack community for letting us know and assisting with debug.
+* If a Two Factor Trust has been established with a particular browser through the user of a cookie, it was not being honored during the Passwordless Email workflow and the user would be prompted for the Two Factor challenge during each login attempt.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/495[GitHub Issue #495], thanks to our great Slack community for reporting!
+* When using managed domains with the OpenID Connect or SAML v2 Identity Provider configurations the callback to FusionAuth may fail with an error.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/488[GitHub Issue #488], thanks to https://github.com/sedough[@sedough] for reporting.
+* When a stylesheet in your theme contains `>` the new HTML escaping strategy introduced in version X causes this value in the CSS to be incorrectly escaped. If you encounter this problem in your current them, update the usage of the stylesheet to `${theme.stylesheet()?no_esc}` instead of the previous usage of `${theme.stylesheet()}`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/489[GitHub Issue #489], thanks to https://github.com/snmed[@snmed] for reporting.
+* Fix a Kickstart bug, when a variable is used in the very first API key the replacement was not honored.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/493[GitHub Issue #493], thanks to https://github.com/tst-dhudlow[@tst-dhudlow] for reporting!
+
+=== Enhancements
+* When the External JWT Identity Provider does not have any managed domains defined, allow a JWT from any domain to be reconciled. This change makes this IdP configuration more consistent with our IdP configurations that allow for managed domains.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/491[GitHub Issue #491]
 
 [role=release-note]
 
