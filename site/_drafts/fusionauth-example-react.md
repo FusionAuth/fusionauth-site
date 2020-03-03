@@ -26,13 +26,13 @@ In addition to React, we'll use a NodeJS backend. One major benefit of using a b
 If you're in-the-know on OAuth stuff, you're probably aware that some people use PKCE (or the rightfully deprecated Implicit Flow) to get around the Client Secret constraint. We're sticking to Authorization Code Flow, because setting up a server is really just the easiest solution for most cases. Don't know what any of that means? Don't worry about it—you don't need to know anything about OAuth to follow this example. What do you need to know? Well, this example app will be much easier to follow if you have at least some knowledge of:
 
 - React
-	- components
-	- state and props
-	- binding
+  - components
+  - state and props
+  - binding
 - NodeJS/Express
-	- packages and modules
-	- routing
-	- HTTP requests (like `GET` and `POST`)
+  - packages and modules
+  - routing
+  - HTTP requests (like `GET` and `POST`)
 
 The general idea of this app is that the Express server acts as a middleman between the React client and FusionAuth. The React client will make requests to the Express server, which will make requests to FusionAuth before sending information back to the React client. Other than FusionAuth's login form, the user will only ever see React-rendered pages.
 
@@ -40,7 +40,7 @@ Conceptually, our app will look like this:
 
 ```
 React client <-> Express server <-> FusionAuth
-(mostly UI)      (our code)         (pre-made auth)
+(mostly UI)    (our code)     (pre-made auth)
 ```
 
 Literally, it might look something like this:
@@ -56,12 +56,12 @@ If you want to peek at the source code for the exact app pictured above, you can
 Want to skip ahead or pick up where you left off?
 
 1. [Connecting React and Express](#1-connecting-react-and-express)
-	- [Redirecting](#redirecting)
-	- [Fetching User Info From Express](#fetching-user-info-from-express)
+  - [Redirecting](#redirecting)
+  - [Fetching User Info From Express](#fetching-user-info-from-express)
 1. [Logging In](#2-logging-in)
-	- [Redirecting to FusionAuth](#redirecting-to-fusionauth)
-	- [Code Exchange](#code-exchange)
-	- [Introspect and Registration](#introspect-and-registration)
+  - [Redirecting to FusionAuth](#redirecting-to-fusionauth)
+  - [Code Exchange](#code-exchange)
+  - [Introspect and Registration](#introspect-and-registration)
 1. [Logging Out](#3-logging-out)
 1. [Changing User Info](#4-changing-user-info)
 1. [What Next?](#5-what-next)
@@ -152,17 +152,17 @@ Finally, we need some constants across both Node apps. Most of these are just co
 ```js
 module.exports = {
 
-	// FusionAuth info (copied from the FusionAuth admin panel)
-	clientID: '5603c20d-3e32-4971-b7eb-8e9f023fc524',
-	clientSecret: 'viCMOPW73hlUVyE4ja_sOdL5rGEU4GuVFY_yuy8rJ7A',
-	redirectURI: 'http://localhost:9000/oauth-redirect',
-	applicationID: '5603c20d-3e32-4971-b7eb-8e9f023fc524',
-	apiKey: 'gojIS0unvaFpHKXzCIjz95DtbSmLZFBS4cQYT8Our7g',
+  // FusionAuth info (copied from the FusionAuth admin panel)
+  clientID: '5603c20d-3e32-4971-b7eb-8e9f023fc524',
+  clientSecret: 'viCMOPW73hlUVyE4ja_sOdL5rGEU4GuVFY_yuy8rJ7A',
+  redirectURI: 'http://localhost:9000/oauth-redirect',
+  applicationID: '5603c20d-3e32-4971-b7eb-8e9f023fc524',
+  apiKey: 'gojIS0unvaFpHKXzCIjz95DtbSmLZFBS4cQYT8Our7g',
 
-	// ports
-	clientPort: 8080,
-	serverPort: 9000,
-	fusionAuthPort: 9011
+  // ports
+  clientPort: 8080,
+  serverPort: 9000,
+  fusionAuthPort: 9011
 };
 ```
 
@@ -222,7 +222,7 @@ const router = express.Router();
 const config = require('../../config');
 
 router.get('/', (req, res) => {
-	res.redirect(`http://localhost:${config.clientPort}`);
+  res.redirect(`http://localhost:${config.clientPort}`);
 });
 
 module.exports = router;
@@ -265,8 +265,8 @@ But doing that every time sucks. [DRY](https://en.wikipedia.org/wiki/Don%27t_rep
 
 // use routes
 let routes = [
-	'_',
-	'user'
+  '_',
+  'user'
 ];
 routes.forEach(route => app.use(`/${route.replace(/^_$/, '')}`, require(`./routes/${route}`)));
 
@@ -283,17 +283,17 @@ A real token will look something like this:
 
 ```json
 "token": {
-	"active": true,
-	"applicationId": "5603c20d-3e32-4971-b7eb-8e9f023fc524",
-	"aud": "5603c20d-3e32-4971-b7eb-8e9f023fc524",
-	"authenticationType": "PASSWORD",
-	"email": "matt@fusionauth.io",
-	"email_verified": true,
-	"exp": 1583266119,
-	"iat": 1583266109,
-	"iss": "acme.com",
-	"roles": [],
-	"sub": "22c78afe-c412-4061-bfb5-9bb5fa43b596"
+  "active": true,
+  "applicationId": "5603c20d-3e32-4971-b7eb-8e9f023fc524",
+  "aud": "5603c20d-3e32-4971-b7eb-8e9f023fc524",
+  "authenticationType": "PASSWORD",
+  "email": "matt@fusionauth.io",
+  "email_verified": true,
+  "exp": 1583266119,
+  "iat": 1583266109,
+  "iss": "acme.com",
+  "roles": [],
+  "sub": "22c78afe-c412-4061-bfb5-9bb5fa43b596"
 }
 ```
 
@@ -313,11 +313,11 @@ const router = express.Router();
 const config = require('../../config');
 
 router.get('/', (req, res) => {
-	res.send({
-		token: {
-			email: 'test@test.com`
-		}
-	});
+  res.send({
+    token: {
+      email: 'test@test.com'
+    }
+  });
 });
 
 module.exports = router;
@@ -333,7 +333,7 @@ So, we'll set `body` to an empty object, and pass it to any component that needs
 
 `client/app/index.js`
 
-```js
+```jsx
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
@@ -344,22 +344,22 @@ const config = require('../../config');
 
 class App extends React.Component {
 
-	constructor(props) {
-		super(props);
-		this.state = {
-			body: {} // this is the body from /user
-		};
-	}
+  constructor(props) {
+    super(props);
+    this.state = {
+      body: {} // this is the body from /user
+    };
+  }
 
-	render() {
-		return (
-			<div id='App'>
-				<header>
-					<Greeting body={this.props.body}/>
-				</header>
-			</div>
-		);
-	}
+  render() {
+    return (
+      <div id='App'>
+        <header>
+          <Greeting body={this.props.body}/>
+        </header>
+      </div>
+    );
+  }
 }
 
 ReactDOM.render(<App/>, document.querySelector('#Container'));
@@ -387,25 +387,25 @@ client
 
 `client/components/Greeting.js`
 
-```js
+```jsx
 import React from 'react';
 
 export default class Greeting extends React.Component {
 
-	constructor(props) {
-		super(props);
-	}
+  constructor(props) {
+    super(props);
+  }
 
-	render() {
+  render() {
 
-		let message = (this.props.body.token)
-			? `Hi, ${this.props.body.token.email}!`
-			: "You're not logged in.";
+    let message = (this.props.body.token)
+      ? `Hi, ${this.props.body.token.email}!`
+      : "You're not logged in.";
 
-		return (
-			<span>{message}</span>
-		);
-	}
+    return (
+      <span>{message}</span>
+    );
+  }
 }
 ```
 
@@ -418,16 +418,16 @@ Load up the React client. It should say `You're not logged in.`, because there's
 
 componentDidMount() {
 
-	// make the request to /user
-	fetch(`http://localhost:${config.serverPort}/user`)
+  // make the request to /user
+  fetch(`http://localhost:${config.serverPort}/user`)
 
-		// convert the response to usable JSON
-		.then(response => response.json())
+    // convert the response to usable JSON
+    .then(response => response.json())
 
-		// update this.state.body
-		.then(response => this.setState({
-			body: response
-		}));
+    // update this.state.body
+    .then(response => this.setState({
+      body: response
+    }));
 }
 
 ...
@@ -445,8 +445,8 @@ const config = require('../config');
 // configure Express app
 const app = express();
 app.use(cors({
-	origin: true,
-	credentials: true
+  origin: true,
+  credentials: true
 }));
 
 ...
@@ -484,9 +484,9 @@ Remember to add every new route to the route map:
 
 // use routes
 let routes = [
-	'_',
-	'login',
-	'user'
+  '_',
+  'login',
+  'user'
 ];
 
 ...
@@ -502,7 +502,7 @@ const router = express.Router();
 const config = require('../../config');
 
 router.get('/', (req, res) => {
-	res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code`);
+  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code`);
 });
 
 module.exports = router;
@@ -529,29 +529,29 @@ client
 
 `client/app/components/LogInOut.js`
 
-```js
+```jsx
 import React from 'react';
 
 export default class LogInOut extends React.Component {
 
-	constructor(props) {
-		super(props);
-	}
+  constructor(props) {
+    super(props);
+  }
 
-	render() {
+  render() {
 
-		let message = (this.props.body.token)
-			? 'sign out'
-			: 'sign in';
+    let message = (this.props.body.token)
+      ? 'sign out'
+      : 'sign in';
 
-		let path = (this.props.body.token)
-			? '/logout'
-			: '/login';
+    let path = (this.props.body.token)
+      ? '/logout'
+      : '/login';
 
-		return (
-			<a href={this.props.uri + path}>{message}</a>
-		);
-	}
+    return (
+      <a href={this.props.uri + path}>{message}</a>
+    );
+  }
 }
 ```
 
@@ -563,9 +563,9 @@ Note that the `/login` link won't be visible if a user is logged in. We can disa
 ...
 
 res.send({
-	// token: {
-	// 	email: 'test@test.com`
-	// }
+  // token: {
+  //   email: 'test@test.com`
+  // }
 });
 
 ...
@@ -592,10 +592,10 @@ server
 
 // use routes
 let routes = [
-	'_',
-	'login',
-	'oauth-callback'
-	'user'
+  '_',
+  'login',
+  'oauth-callback'
+  'user'
 ];
 
 ...
@@ -621,22 +621,22 @@ const config = require('../../config');
 
 router.get('/', (req, res) => {
 
-	request(
+  request(
 
-		// POST request to /token endpoint
-		{
-			// use POST method
-			// target /token
-			// set request header
-			// add parameters
-		},
+    // POST request to /token endpoint
+    {
+      // use POST method
+      // target /token
+      // set request header
+      // add parameters
+    },
 
-		// callback
-		(error, response, body) => {
-			// save token to session
-			// redirect to root
-		}
-	);
+    // callback
+    (error, response, body) => {
+      // save token to session
+      // redirect to root
+    }
+  );
 });
 
 module.exports = router;
@@ -651,18 +651,18 @@ The POST request looks like this:
 
 // POST request to /token endpoint
 {
-	method: 'POST',
-	uri: `http://localhost:${config.fusionAuthPort}/oauth2/token`,
-	headers: {
-		'Content-Type': 'application/json'
-	},
-	qs: {
-		'client_id': config.clientID,
-		'client_secret': config.clientSecret,
-		'code': req.query.code,
-		'grant_type': 'authorization_code',
-		'redirect_uri': config.redirectURI
-	}
+  method: 'POST',
+  uri: `http://localhost:${config.fusionAuthPort}/oauth2/token`,
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  qs: {
+    'client_id': config.clientID,
+    'client_secret': config.clientSecret,
+    'code': req.query.code,
+    'grant_type': 'authorization_code',
+    'redirect_uri': config.redirectURI
+  }
 },
 
 ...
@@ -680,11 +680,11 @@ The callback occurs after FusionAuth gets our request and replies. We're expecti
 // callback
 (error, response, body) => {
 
-	// save token to session
-	req.session.token = JSON.parse(body).access_token;
+  // save token to session
+  req.session.token = JSON.parse(body).access_token;
 
-	// redirect to root
-	res.redirect('/');
+  // redirect to root
+  res.redirect('/');
 }
 
 ...
@@ -704,14 +704,14 @@ const config = require('../config');
 // configure Express app
 const app = express();
 app.use(session({
-	secret: '1234567890',
-	resave: false,
-	saveUninitialized: false,
-	cookie: {
-		secure: 'auto',
-		httpOnly: true,
-		maxAge: 3600000
-	}
+  secret: '1234567890',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: 'auto',
+    httpOnly: true,
+    maxAge: 3600000
+  }
 }));
 
 ...
@@ -737,44 +737,44 @@ const config = require('../../config');
 
 router.get('/', (req, res) => {
 
-	// token in session -> get user data and send it back to the react app
-	if (req.session.token) {
+  // token in session -> get user data and send it back to the react app
+  if (req.session.token) {
 
-		request(
+    request(
 
-			// POST request to /introspect endpoint
-			{},
+      // POST request to /introspect endpoint
+      {},
 
-			// callback
-			(error, response, body) => {
+      // callback
+      (error, response, body) => {
 
-				// valid token -> get more user data and send it back to the react app
-				if (/* token is active */) {
+        // valid token -> get more user data and send it back to the react app
+        if (/* token is active */) {
 
-					request(
+          request(
 
-						// GET request to /registration endpoint
-						{},
-			
-						// callback
-						(error, response, body) => {
-							// send bodies from both requests
-						}
-					);
-				}
+            // GET request to /registration endpoint
+            {},
+      
+            // callback
+            (error, response, body) => {
+              // send bodies from both requests
+            }
+          );
+        }
 
-				// expired token -> send nothing 
-				else {
-					res.send({});
-				}
-			}
-		);
-	}
+        // expired token -> send nothing 
+        else {
+          res.send({});
+        }
+      }
+    );
+  }
 
-	// no token -> send nothing
-	else {
-		res.send({});
-	}
+  // no token -> send nothing
+  else {
+    res.send({});
+  }
 });
 
 module.exports = router;
@@ -789,15 +789,15 @@ module.exports = router;
 
 // POST request to /introspect endpoint
 {
-	method: 'POST',
-	uri: `http://localhost:${config.fusionAuthPort}/oauth2/introspect`,
-	headers: {
-		'Content-Type': 'application/json'
-	},
-	qs: {
-		'client_id': config.clientID,
-		'token': req.session.token
-	}
+  method: 'POST',
+  uri: `http://localhost:${config.fusionAuthPort}/oauth2/introspect`,
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  qs: {
+    'client_id': config.clientID,
+    'token': req.session.token
+  }
 },
 
 ...
@@ -815,31 +815,31 @@ Note that `/registration` doesn't actually require an Access Token—this specif
 // callback
 (error, response, body) => {
 
-	let introspectResponse = JSON.parse(body);
+  let introspectResponse = JSON.parse(body);
 
-	// valid token -> get more user data and send it back to the react app
-	if (introspectResponse.active) {
+  // valid token -> get more user data and send it back to the react app
+  if (introspectResponse.active) {
 
-		request(
+    request(
 
-			// GET request to /registration endpoint
-			{
-				method: 'GET',
-				uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/${introspectResponse.sub}/${config.applicationID}`,
-				headers: {
-					'Authorization': config.apiKey
-				}
-			},
+      // GET request to /registration endpoint
+      {
+        method: 'GET',
+        uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/${introspectResponse.sub}/${config.applicationID}`,
+        headers: {
+          'Authorization': config.apiKey
+        }
+      },
 
-			// callback
-			(error, response, body) => {}
-		);
-	}
+      // callback
+      (error, response, body) => {}
+    );
+  }
 
-	// expired token -> send nothing 
-	else {
-		res.send({});
-	}
+  // expired token -> send nothing 
+  else {
+    res.send({});
+  }
 }
 
 ...
@@ -855,14 +855,14 @@ Finally, in the second callback, we'll parse the body returned from `/registrati
 // callback
 (error, response, body) => {
 
-	let registrationResponse = JSON.parse(body);
+  let registrationResponse = JSON.parse(body);
 
-	res.send({
-		token: {
-			...introspectResponse,
-		},
-		...registrationResponse
-	});
+  res.send({
+    token: {
+      ...introspectResponse,
+    },
+    ...registrationResponse
+  });
 }
 
 ...
@@ -896,11 +896,11 @@ server
 
 // use routes
 let routes = [
-	'_',
-	'login',
-	'logout',
-	'oauth-callback'
-	'user'
+  '_',
+  'login',
+  'logout',
+  'oauth-callback'
+  'user'
 ];
 
 ...
@@ -926,26 +926,26 @@ const config = require('../../config');
 
 router.get('/', (req, res) => {
 
-	request(
+  request(
 
-		// GET request to /logout endpoint
-		{
-			method: 'GET',
-			uri: `http://localhost:${config.fusionAuthPort}/oauth2/logout`,
-			qs: `client_id=${config.clientID}`
-		},
+    // GET request to /logout endpoint
+    {
+      method: 'GET',
+      uri: `http://localhost:${config.fusionAuthPort}/oauth2/logout`,
+      qs: `client_id=${config.clientID}`
+    },
 
-		// callback
-		(error, response, body) => {
+    // callback
+    (error, response, body) => {
 
-			// clear cookie and session (otherwise, FusionAuth will remember the user)
-			res.clearCookie('JSESSIONID');
-			req.session.destroy();
+      // clear cookie and session (otherwise, FusionAuth will remember the user)
+      res.clearCookie('JSESSIONID');
+      req.session.destroy();
 
-			// redirect to root
-			res.redirect('/');
-		}
-	);
+      // redirect to root
+      res.redirect('/');
+    }
+  );
 });
 
 module.exports = router;
@@ -984,12 +984,12 @@ server
 
 // use routes
 let routes = [
-	'_',
-	'login',
-	'logout',
-	'oauth-callback',
-	'set-user-data'
-	'user'
+  '_',
+  'login',
+  'logout',
+  'oauth-callback',
+  'set-user-data'
+  'user'
 ];
 
 ...
@@ -1007,25 +1007,25 @@ const config = require('../../config');
 
 router.get('/', (req, res) => {
 
-	request(
+  request(
 
-		// PATCH request to /registration endpoint
-		{
-			method: 'PATCH',
-			uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/${req.query.userID}/${config.applicationID}`,
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': config.apiKey
-			},
-			body: JSON.stringify({
-				'registration': {
-					'data': {
-						'userData': req.query.userData
-					}
-				}
-			})
-		}
-	);
+    // PATCH request to /registration endpoint
+    {
+      method: 'PATCH',
+      uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/${req.query.userID}/${config.applicationID}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': config.apiKey
+      },
+      body: JSON.stringify({
+        'registration': {
+          'data': {
+            'userData': req.query.userData
+          }
+        }
+      })
+    }
+  );
 });
 
 module.exports = router;
@@ -1041,33 +1041,33 @@ We'll add a `<textarea>` to the React client for editing `registration.data.user
 
 `client/app/index.js`
 
-```js
+```jsx
 ...
 
 constructor(props) {
-	
-	...
+  
+  ...
 
-	this.handleTextInput = this.handleTextInput.bind(this);
+  this.handleTextInput = this.handleTextInput.bind(this);
 }
 
 handleTextInput(event) {
-	// update this.state.body.registration.data.userData
-	// save the change in FusionAuth
+  // update this.state.body.registration.data.userData
+  // save the change in FusionAuth
 }
 
 render() {
-	return (
-		<div id='App'>
-			<header>
-				<Greeting body={this.state.body}/>
-				<LogInOut body={this.state.body} uri={`http://localhost:${config.serverPort}`}/>
-			</header>
-			<main>
-				<UserData body={this.state.body} handleTextInput={this.handleTextInput}/>
-			</main>
-		</div>
-	);
+  return (
+    <div id='App'>
+      <header>
+        <Greeting body={this.state.body}/>
+        <LogInOut body={this.state.body} uri={`http://localhost:${config.serverPort}`}/>
+      </header>
+      <main>
+        <UserData body={this.state.body} handleTextInput={this.handleTextInput}/>
+      </main>
+    </div>
+  );
 }
 
 ...
@@ -1082,15 +1082,15 @@ The method itself is pretty simple; `event.target.value` will be the contents of
 
 handleTextInput(event) {
 
-	// update this.state.body.registration.data.userData
-	let body = this.state.body;
-	body.registration.data = { userData: event.target.value };
-	this.setState({
-		body: body
-	});
+  // update this.state.body.registration.data.userData
+  let body = this.state.body;
+  body.registration.data = { userData: event.target.value };
+  this.setState({
+    body: body
+  });
 
-	// save the change in FusionAuth
-	fetch(`http://localhost:${config.serverPort}/set-user-data?userData=${event.target.value}&userID=${this.state.body.token.sub}`);
+  // save the change in FusionAuth
+  fetch(`http://localhost:${config.serverPort}/set-user-data?userData=${event.target.value}&userID=${this.state.body.token.sub}`);
 }
 
 ...
@@ -1112,32 +1112,32 @@ client
 
 `client/app/components/UserData.js`
 
-```js
+```jsx
 import React from 'react';
 
 export default class LogInOut extends React.Component {
 
-	constructor(props) {
-		super(props);
-	}
+  constructor(props) {
+    super(props);
+  }
 
-	render() {
+  render() {
 
-		// placeholder text for the textarea
-		let placeholder = 'Anything you type in here will be saved to your FusionAuth user data.';
+    // placeholder text for the textarea
+    let placeholder = 'Anything you type in here will be saved to your FusionAuth user data.';
 
-		// textarea (locked if user not logged in)
-		let input = (this.props.body.token)
-			? <textarea placeholder={placeholder} onChange={this.props.handleTextInput}></textarea>
-			: <textarea placeholder={placeholder} readOnly></textarea>;
+    // textarea (locked if user not logged in)
+    let input = (this.props.body.token)
+      ? <textarea placeholder={placeholder} onChange={this.props.handleTextInput}></textarea>
+      : <textarea placeholder={placeholder} readOnly></textarea>;
 
-		// JSX return
-		return (
-			<div id='UserData'>
-				{input}
-			</div>
-		);
-	}
+    // JSX return
+    return (
+      <div id='UserData'>
+        {input}
+      </div>
+    );
+  }
 }
 ```
 
@@ -1154,13 +1154,13 @@ However, it's a good idea to set the `<textarea>`'s `defaultValue` to the `userD
 
 // the user's data.userData (or an empty string if uninitialized)
 let userData = (this.props.body.registration && this.props.body.registration.data)
-	? this.props.body.registration.data.userData
-	: '';
+  ? this.props.body.registration.data.userData
+  : '';
 
 // textarea (locked if user not logged in)
 let input = (this.props.body.token)
-	? <textarea placeholder={placeholder} onChange={this.props.handleTextInput} defaultValue={userData}></textarea>
-	: <textarea placeholder={placeholder} readOnly></textarea>;
+  ? <textarea placeholder={placeholder} onChange={this.props.handleTextInput} defaultValue={userData}></textarea>
+  : <textarea placeholder={placeholder} readOnly></textarea>;
 
 ...
 ```
