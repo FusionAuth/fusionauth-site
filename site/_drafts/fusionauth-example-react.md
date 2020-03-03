@@ -1,5 +1,7 @@
 # How to Implement FusionAuth in React
 
+## What We'll Make
+
 In this article, we'll walk step-by-step through implementing FusionAuth in a React app.
 
 The app we create will be able to:
@@ -11,11 +13,30 @@ The app we create will be able to:
 
 In addition to React, we'll use a NodeJS backend. One major benefit of using a backend server is that we can safely store and use a Client Secret, which means we can implement Authorization Code Flow; this is preferred over Implicit for security and over PKCE for simplicity. Don't know what any of that means? Don't worry about it—you don't need to know anything about security or OAuth, because FusionAuth handles the entire login process.
 
+The general idea of this app is that the Express server acts as the middleman between the React client and FusionAuth. The React client will make requests to the Express server, which will make requests to FusionAuth before sending information back to the React client. Other than FusionAuth's login form, the user will only ever see React-rendered pages.
+
+```
+React client <-> Express server <-> FusionAuth
+```
+
 The app will look something like this:
 
 ![](../assets/img/advice/fusionauth-example-react/app-finished.png)
 
 If you want to follow along with the source code or use it as a jumping-off point for your app, you can grab it from [its GitHub respository](https://github.com/FusionAuth/fusionauth-example-react).
+
+## Prerequisites
+
+This example app will be much easier to follow if you have at least some knowledge of:
+
+- React
+	- components
+	- state and props
+	- binding
+- NodeJS/Express
+	- packages and modules
+	- routing
+	- HTTP requests (like `GET` and `POST`)
 
 ## Contents
 
