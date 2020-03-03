@@ -1125,4 +1125,17 @@ let input = (this.props.body.token)
 
 ## 5. What Next?
 
-TODO
+So your React app can log in, log out, and modify user data—what next?
+
+You'll probably want to let users [register from the app itself](https://fusionauth.io/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined), instead of manually adding them via the admin panel.  
+Maybe you want to [change how the FusionAuth login form looks](https://fusionauth.io/docs/v1/tech/apis/themes).  
+For extra security, you can [enable and send two-factor codes](https://fusionauth.io/docs/v1/tech/apis/two-factor).  
+You can even let users log in via a third-party, like [Facebook](https://fusionauth.io/docs/v1/tech/apis/identity-providers/facebook) or [Google](https://fusionauth.io/docs/v1/tech/apis/identity-providers/google).
+
+In all of these cases, remember what you learned from this example:
+
+1. create a new route in Express
+1. make a request to the relevant FusionAuth endpoint (including any parameters listed in the docs) and send data to React with `res.send`
+1. use `fetch` to call your Express routes from React, and save the response using `setState`
+
+Check out the [FusionAuth APIs](https://fusionauth.io/docs/v1/tech/apis/) for even more options.
