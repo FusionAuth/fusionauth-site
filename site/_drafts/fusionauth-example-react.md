@@ -31,7 +31,7 @@ React client <-> Express server <-> FusionAuth
 
 The app will look something like this:
 
-![](../assets/img/advice/fusionauth-example-react/app-finished.png)
+{% include _image.html src="/assets/img/advice/fusionauth-example-react/app-finished.png" class="img-fluid" figure=false %}
 
 If you want to follow along with the source code or use it as a jumping-off point for your app, you can grab it from [its GitHub respository](https://github.com/FusionAuth/fusionauth-example-react).
 
@@ -85,7 +85,7 @@ Check out the [Download FusionAuth page](https://fusionauth.io/download) for oth
 
 #### New Application
 
-![](../assets/img/advice/fusionauth-example-react/admin-edit-application.png)
+{% include _image.html src="/assets/img/advice/fusionauth-example-react/admin-edit-application.png" class="img-fluid" figure=false %}
 
 Once FusionAuth is running (by default at http://localhost:9011), create a new Application. The only configuration you need to change is `Authorized redirect URLs` in the `OAuth` tab. Because our Express server will be running on `localhost:9000`, we'll set this to `localhost:9000/oauth-redirect`. Click on `Save` to finish the configuration.
 
@@ -93,7 +93,7 @@ Once FusionAuth is running (by default at http://localhost:9011), create a new A
 
 A login feature isn't very useful with zero users. It's possible to register users from your app, but we'll manually add a user for this example. Select `Users` from the menu; you should see your own account; it's already registered to FusionAuth, which is why you can use it to log into the admin panel.
 
-![](../assets/img/advice/fusionauth-example-react/admin-manage-user.png)
+{% include _image.html src="/assets/img/advice/fusionauth-example-react/admin-manage-user.png" class="img-fluid" figure=false %}
 
 Select `Manage` and go to the `Registrations` tab. Click on `Add Registration` and then `Save` to add yourself as a user.
 
@@ -1130,7 +1130,7 @@ export default class LogInOut extends React.Component {
 
 `userData` can be inspected in the FusionAuth admin panel:
 
-![](../assets/img/advice/fusionauth-example-react/admin-user-data.png)
+{% include _image.html src="/assets/img/advice/fusionauth-example-react/admin-user-data.png" class="img-fluid" figure=false %}
 
 However, it's a good idea to set the `<textarea>`'s `defaultValue` to the `userData`. This has two advantages: first, it allows us to inspect `userData` and confirm that it's maintained; second, it allows the user to edit the `userData`, rather than overwrite it each time.
 
