@@ -1,4 +1,14 @@
-# How to Implement FusionAuth in React
+---
+layout: advice
+title: How to Implement FusionAuth in React
+description: FusionAuth makes it easy to add login and user data to your React app.
+header_dark: true
+image: TODO
+category: example
+author: Matt Boisseau
+date: 2020-03-03
+dateModified: 2020-03-03
+---
 
 ## What We'll Make
 
