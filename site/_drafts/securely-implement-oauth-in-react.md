@@ -1,18 +1,16 @@
 ---
 layout: advice
-title: How to Implement FusionAuth in React
-description: FusionAuth makes it easy to add login and user data to your React app.
+title: How to Securely Implement OAuth in React
+description: This post describes how to securely implement OAuth in a React application using the Authorization Code Grant (with FusionAuth as the IdP).
 header_dark: true
-image: TODO
-category: example
+image: blogs/oauth-react-fusionauth.png
+category: blog
 author: Matt Boisseau
 date: 2020-03-03
 dateModified: 2020-03-03
 ---
 
-## What We'll Make
-
-In this article, we'll walk step-by-step through implementing FusionAuth in a React app.
+In this post, we'll walk step-by-step through implementing the OAuth Authorization Code Grant in a React app. This is the most secure way to implement OAuth and often overlooked for single-page applications that use technologies like React. We'll use FusionAuth as the IdP and also show you how to configure FusionAuth for this workflow. 
 
 Our app will be able to:
 
@@ -88,19 +86,21 @@ Once FusionAuth is running (by default at [localhost:9011](http://localhost:9011
 
 {% include _image.html src="/assets/img/advice/fusionauth-example-react/admin-edit-application.png" class="img-fluid" figure=false alt="FusionAuth application edit page" %}
 
-A login feature isn't very useful with zero users. It's possible to register users from your app, but we'll manually add a user for this example. Select `Users` from the menu. You should see your own account; it's already registered to FusionAuth, which is why you can use it to log into the admin panel.
+A login feature isn't very useful with zero users. It's possible to register users from your app or using FusionAuth's self-service registration feature, but we'll manually add a user for this example. Select `Users` from the menu. You should see your own account; it's already registered to FusionAuth, which is why you can use it to log into the admin panel.
 
 {% include _image.html src="/assets/img/advice/fusionauth-example-react/admin-manage-user.png" class="img-fluid" figure=false %}
 
 Select `Manage` and go to the `Registrations` tab. Click on `Add Registration`, pick your new application, and then `Save` to register yourself.
 
-FusionAuth configuration: DONE. Leave this tab open, though; we'll be copy/pasting some key values out of it in a minute.
+FusionAuth configuration: **DONE**. 
+
+Leave this tab open, though; we'll be copy/pasting some key values out of it in a minute.
 
 ### Directory Structure
 
-The last step before digging into some JavaScript is creating the skeleton of our Express server and React client. These will be completely separate Node apps; they only communicate via HTTP requests.
+The last step before digging into some JavaScript is creating the skeleton of our Express server and React client. These will be completely separate Node apps and they will communicate over HTTP using standard browser requests and API calls via AJAX.
 
-You can choose to organize and name your files however you see fit; just keep in mind that this article will probably be easier to follow if you just do what I do.
+You can choose to organize and name your files however you see fit. Just keep in mind that this article will probably be easier to follow if you follow my setup.
 
 My project looks like this:
 
@@ -139,11 +139,11 @@ npm install cors express express-session request
 
 Wait, what are those other things you just installed?
 
-- `cors` lets us make cross-origin requests without annoying errors telling us we're not allowed
-- `express-session` helps us save data to session storage
+- `cors` lets us make cross-origin requests without annoying errors telling us we're not allowed to
+- `express-session` helps us save data in a server-side session
 - `request` makes formatting HTTP requests totally painless (and neatly organized)
 
-It's hard mode without these packages, but you do you.
+It's _hard_ mode without these packages, but you do you.
 
 ### Config
 
@@ -166,7 +166,11 @@ module.exports = {
 };
 ```
 
-The FusionAuth info above will not match your application. I copied it out of my own FusionAuth admin panel. Seriously, this is the only code in the whole article you can't just copy/paste. (Also, if you're doing that, just [clone the GitHub repo](https://github.com/FusionAuth/fusionauth-example-react) with everything already in it. You'll still have to change this config file, though. No way around that.)
+The FusionAuth info above will not match your application. I copied it out of my own FusionAuth admin panel. Seriously, this is the only code in the whole article you can't just copy/paste. You'll need to copy these values from your running FusionAuth instance. The best way to find all these values is to click the **BRIAN EDITED TO HERE** 
+
+
+
+(Also, if you're doing that, just [clone the GitHub repo](https://github.com/FusionAuth/fusionauth-example-react) with everything already in it. You'll still have to change this config file, though. No way around that.)
 
 Alright, we're ready to start coding! Keep FusionAuth and React running. You'll need to restart Express every time you make a change.
 
