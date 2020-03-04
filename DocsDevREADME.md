@@ -1,3 +1,5 @@
+## Sizing Window for Screenshots
+
 When adding screenshots to the documentation, use a normalized browser window size. The following apple Script may be used to build a consistent browser window.
 
 ```appleScript
@@ -61,6 +63,16 @@ tell application theApp
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
 ```
+
+## Formatting Screenshots
+
+Use `CMD + shift + 4 + space` to get the drop-shadow style screenshots.
+
+Crop top/bottom if necessary. (Don't crop sides.)
+
+If highlighting sections of the screenshot, use editor in Mac image preview. Drag rectangle around subject. Use third thinnest line weight and solid red outline.
+
+Use https://tinypng.com/ to compress images.
 
 Converting terminalizer gifs to videos
 ----
