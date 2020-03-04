@@ -36,7 +36,7 @@ Understanding the application type is important because it puts controls on the 
 
 Once you choose your application type, you can plan out the specific authentication workflows that will work best for your app. Think through your authentication scenarios and understand what you'll need from the beginning. It sucks to have to come back and rework it all later. Trust me.
 
-{% include _image.html src="/assets/img/articles/diagram-example.svg" alt="Example diagram" class="full float-right mb-3 ml-3" figure=true %}
+{% include _image.html src="/assets/img/articles/diagram-example.svg" alt="Example diagram" class="img-fluid" figure=true %}
 
 To take the next step and go into detail on specific authentication workflows, read **FusionAuth's** [Login and Authentication Workflows](/learn/expert-advice/authentication/login-authentication-workflows). This resource is designed to help you architect and design an effective authentication system for an application. It doesn't list every possible option, but gives the most common and recommended authentication workflows used by a majority of developers.
 
