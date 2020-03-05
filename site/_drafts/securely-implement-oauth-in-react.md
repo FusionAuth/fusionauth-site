@@ -760,11 +760,11 @@ app.use(session({
 
 Remember that our React app looks for a `token` in `/user`. The Access Token isn't human-readable, but we can pass it through FusionAuth's `/introspect` to get JSON data out of it. We can get even more user-specific info from `/registration`.
 
-If there's a `token` in session storage, we'll call `/introspect` to get info out of the `token`. Part of that info is the boolean `active`, which is `false` if the Access Token has expired. If it's still good, we'll call `/registration` and return the bodies from both requests.
+If there's a `token` in session storage, we'll call `/introspect` to get info out of that `token`. Part of its info is the boolean `active`, which is `true` until the Access Token expires. (You can configure how long Access Tokens live in the FusionAuth admin panel.) If it's still good, we'll call `/registration` and return the bodies from both requests.
 
-If there's no `token` in session storage, or if the `token` is expired, we'll return an empty object. Remember that an empty `body` tell the React client that no user is logged in.
+If there's no `token` in session storage, or if the `token` is expired, we'll return an empty object. Remember that our React components use the existence of `this.props.body.token` to determine whether a user is logged in, so an empty `body` means there's no active user.
 
-Here's the skeleton of `/user`:
+Here's the skeleton of our new-and-improved `/user`:
 
 ```js
 const express = require('express');
@@ -819,7 +819,7 @@ module.exports = router;
 {: .legend}
 `File: server/routes/user.js`
 
-`/introspect` requires our Client ID and the Access Token:
+`/introspect` requires our Client ID and, of course, the Access Token we want to decode:
 
 ```js
 ...
@@ -842,9 +842,9 @@ module.exports = router;
 {: .legend}
 `File: server/routes/user.js`
 
-In the callback from the `/introspect` request, we'll parse the body into usable JSON and check that `active` value. If it's good, we'll make the `/registration` request, which requires a User ID (`sub` in OAuth jargon) and our Application ID.
+In the callback from the `/introspect` request, we'll parse the body into usable JSON and check that `active` value. If it's good, we'll go ahead and make the `/registration` request, which requires a User ID (`sub` in OAuth jargon) and our Application ID—we need both, because one user can have different data in each FusionAuth application.
 
-Note that `/registration` doesn't actually require an Access Token—this specific data can be accessed for a logged-out user, because it is public information. It's up to the design of your app whether or not you want to check for an active Access Token before calling `/registration`.
+Note that this step doesn't actually require an Access Token—the data from `/registration` can be accessed for a logged-out user. You could use this endpoint to show info on a user's profile or other public page. For that reason, you shouldn't use registration to store a user's protected resources.
 
 ```js
 ...
@@ -909,7 +909,7 @@ Finally, in the second callback, we'll parse the body returned from `/registrati
 
 Now, go through the login process, and you should see "Welcome, [your email address]!".
 
-So, that's login sorted. Next, we'll tackle logout.
+So, that's login sorted. The next thing you'll probably want to tackle is logout.
 
 ---
 
@@ -948,7 +948,7 @@ let routes = [
 Our `/logout` route will wipe the user's saved login by deleting:
 
 - FusionAuth's session for that user
-- our Express server's session (and the `token`)
+- our Express server's session (and the `token` we store there)
 - a browser cookie that remember the user
 
 The first of these is done by making a request to FusionAuth's `/logout` endpoint. The others are done locally with `res.clearCookie` and `req.session.destroy`.
@@ -990,15 +990,15 @@ module.exports = router;
 {: .legend}
 `File: server/routes/logout.js`
 
-Try it out. Note that session data will be wiped whenever you restart the Express server, but the other information will remain.
+Try it out. You can watch cookies in your browser's developer tools to see it working.
 
-Next, we'll show how you can modify a user's registration data from your app.
+Next, we'll show how you can modify a user's registration data from your app (the same data we grab from `/registration`).
 
 ---
 
 ## 4. Changing User Info
 
-We can modify everything about a user's registration (such as their username and assigned roles) directly by making requests that same `/registration` endpoint. The only difference is that we'll use `PUT` or `PATCH` to send information instead of receive information.
+We can modify everything about a user's registration (such as their username and assigned roles) by making requests the same `/registration` endpoint from `/user`. The only difference is that we'll use `PUT` or `PATCH` to _send_ information instead of _receive_ information.
 
 ### Setting User Data from Express
 
@@ -1034,7 +1034,7 @@ let routes = [
 {: .legend}
 `File: server/index.js`
 
-In this route, we'll send the `registration` JSON object back to FusionAuth (as opposed to getting `registration` from FusionAuth). If we use `PATCH` instead of `PUT`, we can send only the parts we want to update, instead of the entire `registration` object.
+In this route, we'll send the `registration` JSON object back to FusionAuth. If we use `PATCH` instead of `PUT`, we can send only the parts we want to update, instead of the entire `registration` object.
 
 ```js
 const express = require('express');
@@ -1072,7 +1072,7 @@ module.exports = router;
 
 Here, we update `registration.data`, which is an empty object FusionAuth provides for storing arbitrary data related to a user.
 
-Note that we use `req.query` to assign the User ID and the value of `registration.data.userData`. This allows us to easily send information from our React client by including it in the URI.
+Note that we use `req.query` to assign the User ID and the value of `registration.data.userData`. This allows us to easily send information from our React client by including it as a query parameter in the URI.
 
 ### Setting User Data from React
 
@@ -1202,6 +1202,7 @@ let input = (this.props.body.token)
 {: .legend}
 `File: client/app/components/UserData.js`
 
+Type in whatever you want and watch the value change. You can log in and out as much as you want, and FusionAuth will maintain the user's data.
 
 ---
 
