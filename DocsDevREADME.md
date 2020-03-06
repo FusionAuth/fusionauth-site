@@ -42,6 +42,29 @@ end tell
 When you need to build a screenshot for the blog, here's some code for that:
 
 ```appleScript
+# config
+set myApp to "Safari" # the app you need a screenshot of
+set xAxis to 2000     # anywhere on your monitor that works for you
+set yAxis to -500     # anywhere on your monitor that works for you
+set appHeight to 1020 # don't change - this is the standard size for our screenshots
+set appWidth to 1220  # don't change - this is the standard size for our screenshots
+
+# resize app
+tell application myApp
+	activate
+	reopen
+	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
+end tell
+
+# set light mode
+tell application "System Events"
+	tell appearance preferences
+		set dark mode to false
+	end tell
+end tell
+```
+
+<!-- ```appleScript
 set theApp to "Safari"
 
 # UI screens
@@ -62,17 +85,17 @@ tell application theApp
 	set yAxis to 360
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
-```
+``` -->
 
-## Formatting Screenshots
+## Screenshot Standards
 
-Use `CMD + shift + 4 + space` to get the drop-shadow style screenshots.
-
-Crop top/bottom if necessary. (Don't crop sides.)
-
-If highlighting sections of the screenshot, use editor in Mac image preview. Drag rectangle around subject. Use third thinnest line weight and solid red outline.
-
-Use https://tinypng.com/ to compress images.
+- use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
+- crop top/bottom if necessary (don't crop sides)
+- highlight sections using image preview editor
+	- highlights should be red rectangle with line weight 5
+- to compress images:
+	1. resize to width of 1600
+	2. use https://tinypng.com/ to compress images
 
 Converting terminalizer gifs to videos
 ----
