@@ -1,8 +1,8 @@
 ---
-layout: advice
+layout: blog-post
 title: How to Securely Implement OAuth in React
 description: This post describes how to securely implement OAuth in a React application using the Authorization Code Grant (with FusionAuth as the IdP).
-header_dark: true
+header_dark: false
 image: blogs/oauth-react-fusionauth.png
 category: blog
 author: Matt Boisseau
@@ -21,7 +21,9 @@ Our app will be able to:
 
 In addition to React, we'll use a NodeJS backend. One major benefit of using a backend server is that we can safely store and use a Client Secret, which is the most secure way to integrate OAuth 2.0 Authorization Code Flow with our React app.
 
-If you're in-the-know on OAuth stuff, you're probably aware that some people use PKCE (or the rightfully deprecated Implicit Flow) to get around the Client Secret constraint. We're sticking to Authorization Code Flow, because setting up a server is really the most secure solution for most cases and quite simple once you know how. Don't know what any of that means? Don't worry about it — you don't need to know anything about OAuth to follow this example. What do you need to know? Well, this example app will be much easier to follow if you have at least some knowledge of:
+If you're in-the-know on OAuth stuff, you're probably aware that some people use PKCE (or the rightfully deprecated Implicit Flow) to get around the Client Secret constraint. We're sticking to Authorization Code Flow, because setting up a server is the most secure solution for the majority of cases and quite simple once you know how. Don't know what any of that means? Don't worry about it — you don't need to know anything about OAuth to follow this example. 
+
+What do you need to know? Well, this example app will be much easier to follow if you have at least some knowledge of:
 
 - React
 	- components
@@ -48,6 +50,8 @@ Literally, it might look something like this:
 (Although, you're on your own for CSS.)
 
 If you want to peek at the source code for the exact app pictured above, you can grab it from [its GitHub respository](https://github.com/FusionAuth/fusionauth-example-react). You can follow along with that code or use it as a jumping-off point for your app.
+
+Also, we put together a [complete workflow diagram for the Authorization Code Grant with a single-page application](/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-sessions) that can help further explain how this process works. You can review that workflow to get a better understanding of how SPAs can leverage OAuth.
 
 ## Contents
 
@@ -158,7 +162,7 @@ Finally, we need some constants across both Node apps:
 ```js
 module.exports = {
 
-  // FusionAuth info (copied from the FusionAuth admin panel)
+  // OAuth information plus some FusionAuth info that is needed (copied from the FusionAuth admin panel)
   clientID: '5f651593-cc27-4f81-a6f8-7a9a68300cf6',
   clientSecret: 'EEOFEsMk2rRjBvEpkCecT5I7ICMGctpLBIiSo5uSzoQ',
   redirectURI: 'http://localhost:9000/oauth-callback',
@@ -174,25 +178,25 @@ module.exports = {
 {: .legend}
 `File: config.js`
 
-Saving things this way saves us from a lot of `CMD-F` pain when changing things, especially if we're re-using this example as the base of a new FusionAuth app.
+Saving things this way saves us from a lot of `CMD-F` pain when changing things, especially if we're re-using this example as the base of a new single-page app.
 
-The FusionAuth info above will not match your application. I copied it out of my own FusionAuth admin panel. Seriously, this is the only code in the whole article you can't just copy/paste. The best place to find your values is this `View` button in the Applications page:
+The OAuth and FusionAuth configuration above will not match your application. I copied it out of my FusionAuth admin panel. This is the only code in the whole article you can't just copy/paste, seriously. The best place to find your values is this `View` button in the Applications page:
 
 {% include _image.html src="/assets/img/blogs/fusionauth-example-react/admin-view-application.png" class="img-fluid" figure=false %}
 
-(Also, if you do want to copy/paste everything, just [clone the GitHub repo](https://github.com/FusionAuth/fusionauth-example-react) with everything already in it. You'll still have to change this config file, though. No way around that.)
+(Also, if you do want to copy/paste everything, just [clone the GitHub repo](https://github.com/FusionAuth/fusionauth-example-react) with everything already in it. You'll still have to change this config file, though. No way around that).
 
-Alright, we're ready to start coding! Keep FusionAuth and React running. You'll need to restart Express every time you make a change.
+Alright, we're ready to start coding! You can keep FusionAuth and React running, but you'll need to restart Node/Express every time you make a change.
 
 ---
 
 ## 1. Connecting React and Express
 
-First, we'll show how to exchange info between React and Express. Remember that we're using Express as a middleman between React and FusionAuth, so most of what we do here will be making calls up and down that stack.
+First, let's look at how to exchange info between React and Express. Remember that we're using Express as a middleman between React and FusionAuth, so most of what we do here will be making calls up and down that stack.
 
 ### Redirecting
 
-The heart of an Express app is your `index.js`. That's what we title the heart of most apps, including React, so keep that in mind as you join me in constantly opening the wrong one.
+The heart of an Express app is your `index.js`. That's what we title the heart of most apps. The React side of our application wll also have an `index.js` file, so keep that in mind as you will likely have the same headache I do of constantly opening the wrong one.
 
 ```
 server
@@ -219,7 +223,7 @@ app.listen(config.serverPort, () => console.log(`FusionAuth example app listenin
 {: .legend}
 `File: server/index.js`
 
-When a user goes to (or is redirected to) the `/` route, the code in `_.js` will execute. (I wish we could name the file `.js`, but that's just not an option, because `require` doesn't include the filetype, which turns poor, elegant `.js` into an empty string.) This root path is great for serving the single page of a single page application. Because React is running on its own separate Node instance, we'll just use `/` to redirect to `localhost:8080/`.
+When a user goes to (or is redirected to) the `/` route, the code in `_.js` will execute (I wish we could name the file `.js`, but that's just not an option, because `require` doesn't include the filetype, which turns poor, elegant `.js` into an empty string). This root path is great for serving the single page of a single page application. Since React is running on its own separate Node instance, we'll just use `/` to redirect to `localhost:8080/`.
 
 ```
 server
@@ -243,7 +247,7 @@ module.exports = router;
 `File: server/routes/_.js`
 
 
-Try it out—navigate to [localhost:9000](http://localhost:9000). You should land on [localhost:8080](http://localhost:8080). Now, from anywhere else in our Express server, we can easily serve the React client with `res.redirect('/')`.
+Try it out: Navigate to [localhost:9000](http://localhost:9000) and you should land on [localhost:8080](http://localhost:8080). Now, from anywhere else in our Express server, we can easily serve the React client with `res.redirect('/')`.
 
 ### Adding New Routes
 
@@ -257,7 +261,7 @@ server
 └─index.js
 ```
 
-Whenever we create a new route, we need to add it to the route map:
+Whenever we create a new route, we need to add it to the route map back in `index.js`:
 
 ```js
 ...
@@ -289,6 +293,13 @@ routes.forEach(route => app.use(`/${route.replace(/^_$/, '')}`, require(`./route
 `File: server/index.js`
 
 It's not the prettiest function, because we have to replace `'_'` with `''` to cover the only case in which the route path won't match the file path (`_.js` strikes again!), but it will save us a ton of time, because it works in every Express app.
+
+
+---
+
+# This is out of place and should come after you have explained almost everything about the React App and the OAuth process
+
+---
 
 ### Fetching User Info From Express
 
