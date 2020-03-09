@@ -21,7 +21,7 @@ Our app will be able to:
 
 In addition to React, we'll use a NodeJS backend. One major benefit of using a backend server is that we can safely store and use a Client Secret, which is the most secure way to integrate OAuth 2.0 Authorization Code Flow with our React app.
 
-If you're in-the-know on OAuth stuff, you're probably aware that some people use PKCE (or the rightfully deprecated Implicit Flow) to get around the Client Secret constraint. We're sticking to Authorization Code Flow, because setting up a server is the most secure solution for the majority of cases and quite simple once you know how. Don't know what any of that means? Don't worry about it — you don't need to know anything about OAuth to follow this example. 
+If you're in-the-know on OAuth, you're probably aware that some people use PKCE or the rightfully deprecated Implicit Flow to get around the Client Secret constraint. We're sticking to Authorization Code Flow, because setting up a server is the most secure solution for the majority of cases and quite simple once you know how. Don't know what any of that means? Don't worry about it — you don't need to know anything about OAuth to follow this example. 
 
 What do you need to know? Well, this example app will be much easier to follow if you have at least some knowledge of:
 
@@ -138,10 +138,6 @@ It's hard-mode without these packages, but you do you.
 
 ---
 
-**BRIAN EDITED TO HERE**
-
----
-
 Finally, we need some constants across both Node apps:
 
 ```js
@@ -177,7 +173,7 @@ Alright, we're ready to start coding! You can keep FusionAuth and React running,
 
 ## 1. Working Between React and Express
 
-User sign-in is one of the key features of FusionAuth. (Isn't that why you're following this example?) Let's see how it works.
+The first step to getting our application working is to setup the communication between our React front-end and our Node/Express backend. The best way to start is to setup our React front-end.
 
 ### Changing Content for the Logged-In User
 
@@ -224,7 +220,7 @@ If you need a refresher on React basics, check out the [official docs](https://r
 
 Load up `localhost:8080` to make sure React is working as expected.
 
-Now, we're going to want to show different stuff based on whether or not a user is logged in. For example, a greeting that says `Welcome, dinesh@fusionauth.io` is only going to make sense if the user `dinesh@fusionauth.io` is logged in.
+Now, we're going to want to show different things based on whether or not a user is logged in. For example, a greeting that says `Welcome, dinesh@fusionauth.io` is only going to make sense if the user `dinesh@fusionauth.io` is logged in.
 
 In a bit, we're going to get information about the current user (like their email address) by sending a request to our Express server. For now, we'll just pretend a user is logged in and set the user's email address in `state`.
 
@@ -307,9 +303,9 @@ Next, we'll set `state` based on a call to our server.
 
 ### Getting User Info From the Express Server
 
-To make a call to a server, we first need to get one up and running.
+To make a call to a server, we first need to get our server up and running.
 
-The heart of an Express app is your `index.js`. That's what we title the heart of most apps. The React side of our application wll also have an `index.js` file, so keep that in mind as you will likely have the same headache I do of constantly opening the wrong one.
+The heart of an Express app is your `index.js`. The React side of our application will also have an `index.js` file, so keep that in mind as you will likely have the same headache I do of constantly opening the wrong one.
 
 ```
 server
@@ -336,7 +332,7 @@ app.listen(config.serverPort, () => console.log(`FusionAuth example app listenin
 {: .legend}
 `File: server/index.js`
 
-When our React client sends a request to `localhost:9000/user`, it will get a response based on whatever we send back in `server/routes/user.js`. So, we can move the pretend user email from `state` to here, like this:
+When our React client sends a request to `localhost:9000/user`, it will get a response based on whatever we send back in `server/routes/user.js`. So, we can move the pretend user email from React's `state` to the server code, like this:
 
 ```js
 const express = require('express');
@@ -345,7 +341,7 @@ const config = require('../../config');
 
 router.get('/', (req, res) => {
   res.send({
-    token: {
+    user: {
       email: 'dinesh@fusionauth.io'
     }
   });
@@ -356,7 +352,7 @@ module.exports = router;
 {: .legend}
 `File: server/routes/user.js`
 
-Note that I've wrapped `email` in a `token` object. That's because an Access Token is ultimately what we'll get back from FusionAuth when a user actually logs in. `email` is one of the token's included values, so we'll be good to go if we set it up like this ahead of time.
+Note that I've wrapped `email` in a `user` object. That's because the User object is ultimately what we'll get back from FusionAuth when a user actually logs in. The `email` property is one of the User's included values (also known as claims), so we'll be good to go if we set it up like this ahead of time.
 
 Of course, we'll need to tweak the React app:
 
@@ -389,8 +385,8 @@ render() {
 ```jsx
 ...
 
-let message = (this.props.body.token)
-  ? `Hi, ${this.props.body.token.email}!`
+let message = (this.props.body.user)
+  ? `Hi, ${this.props.body.user.email}!`
   : "You're not logged in.";
 
 ...
@@ -398,12 +394,12 @@ let message = (this.props.body.token)
 {: .legend}
 `File: client/components/greeting.js`
 
-Note that we're now using the existence of `token` to determine whether or not a user is logged in. We can use this for every future component: send `body`, check for `token`, use the values inside `token`.
+Note that we're now using the existence of `user` to determine whether or not a user is logged in. We can use this for every future component: send `body`, check for `user`, use the values inside `user`.
 
-Remember, a _real_ Access Token sent from FusionAuth will have more than just an email address. It will look something like this:
+Remember, a _real_ User object returned from FusionAuth will have more properties than just an email address. It will look something like this:
 
 ```json
-"token": {
+{
   "active": true,
   "applicationId": "5f651593-cc27-4f81-a6f8-7a9a68300cf6",
   "aud": "5f651593-cc27-4f81-a6f8-7a9a68300cf6",
@@ -418,7 +414,7 @@ Remember, a _real_ Access Token sent from FusionAuth will have more than just an
 }
 ```
 
-In the next section, we'll replace our fake `token` with a real one. Before we do that, let's set up our React app to `fetch` the `token` from `/user` whenever the page loads (or "when the component mounts" in React lingo):
+In the next section, we'll replace our fake `user` with a real one. Before we do that, let's set up our React app to `fetch` the `user` from `/user` whenever the page loads (or "when the component mounts" in React lingo):
 
 
 ```js
@@ -464,11 +460,11 @@ app.use(cors({
 
 Boom. Goodbye, annoying CORS error.
 
-The React page should look just like when you were "logged in" after writing an email address in `state`. However, we're now getting that email from our Express server. You can simulate logging out by commenting out the `token`:
+The React page should now look like you are "logged in" since our Express server is sending back our fake User object. You can simulate logging out by commenting out the `user` in the Express code like this:
 
 ```js
 res.send({
-  // token: {
+  // user: {
   //   email: 'dinesh@fusionauth.io'
   // }
 });
@@ -476,7 +472,7 @@ res.send({
 {: .legend}
 `File: server/routes/user.js`
 
-Next, we'll replace that fake `token` with a real one from FusionAuth—our React client will indirectly retrieve the information from FusionAuth by using Express as a middleman.
+Next, we'll replace that fake `user` with a real one from FusionAuth. Our React client will indirectly retrieve the information from FusionAuth by using Express as a middleman.
 
 ---
 
@@ -486,7 +482,7 @@ User sign-in is one of the key features of FusionAuth. (Isn't that why you're fo
 
 ### Redirecting to FusionAuth
 
-First thing's fist: we need a "log in" button in the React client:
+First thing's first: we need a "log in" button in the React client:
 
 ```
 client
@@ -497,7 +493,7 @@ client
   └─index.js
 ```
 
-Just like we did in `Greeting`, we'll use `this.props.body.token` to determine whether or not the user is logged in. We can use this to make a link to either `localhost:9000/login` or `localhost:9000/logout`, the former of which we'll set up in just a second.
+Just like we did in `Greeting`, we'll use `this.props.body.user` to determine whether or not the user is logged in. We can use this to make a link to either `localhost:9000/login` or `localhost:9000/logout`, the former of which we'll set up in just a second.
 
 ```jsx
 import React from 'react';
@@ -510,11 +506,11 @@ export default class LogInOut extends React.Component {
 
   render() {
 
-    let message = (this.props.body.token)
+    let message = (this.props.body.user)
       ? 'sign out'
       : 'sign in';
 
-    let path = (this.props.body.token)
+    let path = (this.props.body.user)
       ? '/logout'
       : '/login';
 
@@ -527,9 +523,9 @@ export default class LogInOut extends React.Component {
 {: .legend}
 `File: client/app/components/LogInOut.js`
 
-Why is this a normal `<a>` link when we used a `fetch` request for `/user`? Because this is the single time our users will actually be redirected away from the React client—they need to get to the FusionAuth login page.
+You might be wondering why I'm using a normal `<a>` link here instead of a `fetch` request for `/user`? In order to leverage FusionAuth's OAuth with the Authorization Code Grant, we have to redirect the browser over to FusionAuth. While you might want to avoid redirecting away from the React app, this workflow adds a lot of security and also provides an ideal separation of concerns. Plus, you can style the FusionAuth login page to look like your application, which means the user won't realize they've been redirected.
 
-We could write a link directly to FusionAuth, but I think it's cleaner to go through the Express app. Remember the structure we detailed earlier:
+We could write a link directly to FusionAuth, but I think it's cleaner to go through the Express app because the FusionAuth OAuth workflow requires a somewhat complex URL to start. Remember the structure we detailed earlier:
 
 ```React <-> Express <-> FusionAuth```
 
@@ -613,7 +609,7 @@ app.use('/oauth-callback', require('./routes/oauth-callback'));
 `File: server/index.js`
 
 
-`/oauth-callback` will receive an Authorization Code from FusionAuth. Follow that `/login` link—you can see the `code` in the URL:
+`/oauth-callback` will receive an Authorization Code from FusionAuth as a URL parameter during the redirect. If you inspect your browsers location, you'll see there is a `code` parameter in the URL:
 
 ```
 http://localhost:9000/oauth-callback?code=14CJG_fDl31E5U-1VHOBedsLESZQr3sgt63BcVrGoTU&locale=en_US&userState=Authenticated
@@ -680,12 +676,12 @@ The POST request for the Code Exchange looks like this:
 {: .legend}
 `File: server/routes/oauth-callback.js`
 
-The most important parts of the request are the `uri` (which is where the request will get sent to) and the `qs` (which is the set of parameters FusionAuth expects). You can check the FA docs to see what every endpoint expects to be sent, but here's the gist of this batch:
+The most important parts of the request are the `uri` (which is where the request will get sent to) and the `qs` (which is the set of parameters FusionAuth expects). You can check the FA docs to see what every endpoint expects to be sent, but here's the gist of this request:
 
 - `client_id` and `client_secret` identify and authenticate our app, like a username and password
 - `code` is the Authorization Code we got from FusionAuth
 - `grant_type` tells FusionAuth we're using the Authorization Code Flow
-- `redirect_uri` in this case is the URL we're making the request from (`http://localhost:9000/oauth-redirect`)
+- `redirect_uri` in this case is the URL we're making the request from (`http://localhost:9000/oauth-callback`)
 
 The callback occurs after FusionAuth gets our request and responds. We're expecting to receive an `access_token`, which will come through in that `body` argument. We'll save the `access_token` to session storage and redirect back to the React client.
 
@@ -699,7 +695,7 @@ The callback occurs after FusionAuth gets our request and responds. We're expect
   req.session.token = JSON.parse(body).access_token;
 
   // redirect to root
-  res.redirect(`localhost:${config.clientPort}`);
+  res.redirect(`http://localhost:${config.clientPort}`);
 }
 
 ...
@@ -707,7 +703,7 @@ The callback occurs after FusionAuth gets our request and responds. We're expect
 {: .legend}
 `File: server/routes/user.js`
 
-We're almost done! The only thing holding us back is that session storage isn't actually set up yet—we need to configure `express-session`. The following settings work great for local testing, but you'll probably want to check the [`express-session` docs](https://www.npmjs.com/package/express-session) before moving to production.
+We're almost done! The only thing left is to setup the server-side session storage to our Access Token. In order to setup sessions, we need to configure `express-session`. The following settings work great for local testing, but you'll probably want to check the [`express-session` docs](https://www.npmjs.com/package/express-session) before moving to production.
 
 ```js
 const express = require('express');
@@ -735,11 +731,11 @@ app.use(session({
 
 ### Introspect and Registration
 
-Remember that our React app looks for a `token` in `/user`. The Access Token isn't human-readable, but we can pass it through FusionAuth's `/introspect` to get JSON data out of it. We can get even more user-specific info from `/registration`.
+Remember that our React app looks for a `user` in `/user`. The Access Token isn't human-readable, but we can pass it to FusionAuth's `/introspect` endpoint to get a User object (as JSON) from it. We can get additional user-specific info from `/registration` as well.
 
-If there's a `token` in session storage, we'll call `/introspect` to get info out of that `token`. Part of its info is the boolean `active`, which is `true` until the Access Token expires. (You can configure how long Access Tokens live in the FusionAuth admin panel.) If it's still good, we'll call `/registration` and return the bodies from both requests.
+If there's a `token` in session storage, we'll call `/introspect` to get info out of that `token`. Part of the info returned from `/introspect` is the boolean property `active`, which is `true` until the Access Token expires (you can configure how long Access Tokens live in the FusionAuth admin panel). If the token is still good, we'll call `/registration` and return the JSON from both requests.
 
-If there's no `token` in session storage, or if the `token` is expired, we'll return an empty object. Remember that our React components use the existence of `this.props.body.token` to determine whether a user is logged in, so an empty `body` means there's no active user.
+If there's no `token` in session storage, or if the `token` has expired, we'll return an empty object. Remember that our React components use the existence of `this.props.body.user` to determine whether a user is logged in, so an empty `body` means there's no active user.
 
 Here's the skeleton of our new-and-improved `/user`:
 
@@ -872,7 +868,7 @@ Finally, in the second callback, we'll parse the body returned from `/registrati
   let registrationResponse = JSON.parse(body);
 
   res.send({
-    token: {
+    user: {
       ...introspectResponse,
     },
     ...registrationResponse
@@ -922,7 +918,7 @@ Our `/logout` route will wipe the user's saved login by deleting:
 
 - FusionAuth's session for that user
 - our Express server's session (and the `token` we store there)
-- a browser cookie that remember the user
+- a browser cookie that remembers the user
 
 The first of these is done by making a request to FusionAuth's `/logout` endpoint. The others are done locally with `res.clearCookie` and `req.session.destroy`.
 
@@ -1096,7 +1092,7 @@ handleTextInput(event) {
   });
 
   // save the change in FusionAuth
-  fetch(`http://localhost:${config.serverPort}/set-user-data?userData=${event.target.value}&userID=${this.state.body.token.sub}`);
+  fetch(`http://localhost:${config.serverPort}/set-user-data?userData=${event.target.value}&userID=${this.state.body.user.sub}`);
 }
 
 ...
@@ -1131,7 +1127,7 @@ export default class LogInOut extends React.Component {
     let placeholder = 'Anything you type in here will be saved to your FusionAuth user data.';
 
     // textarea (locked if user not logged in)
-    let input = (this.props.body.token)
+    let input = (this.props.body.user)
       ? <textarea placeholder={placeholder} onChange={this.props.handleTextInput}></textarea>
       : <textarea placeholder={placeholder} readOnly></textarea>;
 
@@ -1162,7 +1158,7 @@ let userData = (this.props.body.registration && this.props.body.registration.dat
   : '';
 
 // textarea (locked if user not logged in)
-let input = (this.props.body.token)
+let input = (this.props.body.user)
   ? <textarea placeholder={placeholder} onChange={this.props.handleTextInput} defaultValue={userData}></textarea>
   : <textarea placeholder={placeholder} readOnly></textarea>;
 
