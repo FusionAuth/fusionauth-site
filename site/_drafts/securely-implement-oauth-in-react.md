@@ -6,8 +6,8 @@ header_dark: false
 image: blogs/oauth-react-fusionauth.png
 category: blog
 author: Matt Boisseau
-date: 2020-03-03
-dateModified: 2020-03-03
+date: 2020-03-09
+dateModified: 2020-03-09
 ---
 
 In this post, we'll walk step-by-step through implementing the OAuth Authorization Code Grant in a React app. This is the most secure way to implement OAuth and often overlooked for single-page applications that use technologies like React. We'll use FusionAuth as the IdP and also show you how to configure FusionAuth for this workflow. 
@@ -40,7 +40,7 @@ Conceptually, our app will look like this:
 
 ```
 React client <-> Express server <-> FusionAuth
-(mostly UI)    (our code)     (pre-made auth)
+(mostly UI)      (our code)         (pre-made auth)
 ```
 
 Literally, it might look something like this:
@@ -52,21 +52,6 @@ Literally, it might look something like this:
 If you want to peek at the source code for the exact app pictured above, you can grab it from [its GitHub respository](https://github.com/FusionAuth/fusionauth-example-react). You can follow along with that code or use it as a jumping-off point for your app.
 
 Also, we put together a [complete workflow diagram for the Authorization Code Grant with a single-page application](/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-sessions) that can help further explain how this process works. You can review that workflow to get a better understanding of how SPAs can leverage OAuth.
-
-## Contents
-
-Want to skip ahead or pick up where you left off?
-
-1. [Connecting React and Express](#1-connecting-react-and-express)
-	- [Redirecting](#redirecting)
-	- [Fetching User Info From Express](#fetching-user-info-from-express)
-1. [Logging In](#2-logging-in)
-	- [Redirecting to FusionAuth](#redirecting-to-fusionauth)
-	- [Code Exchange](#code-exchange)
-	- [Introspect and Registration](#introspect-and-registration)
-1. [Logging Out](#3-logging-out)
-1. [Changing User Info](#4-changing-user-info)
-1. [What Next?](#5-what-next)
 
 ---
 
@@ -190,11 +175,139 @@ Alright, we're ready to start coding! You can keep FusionAuth and React running,
 
 ---
 
-## 1. Connecting React and Express
+## 1. Working Between React and Express
 
-First, let's look at how to exchange info between React and Express. Remember that we're using Express as a middleman between React and FusionAuth, so most of what we do here will be making calls up and down that stack.
+User sign-in is one of the key features of FusionAuth. (Isn't that why you're following this example?) Let's see how it works.
 
-### Redirecting
+### Changing Content for the Logged-In User
+
+We'll start with a pretty standard React app:
+
+```
+client
+└─app
+  └─index.js*
+```
+
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+
+const config = require('../../config');
+
+class App extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+    };
+  }
+
+  render() {
+    return (
+      <div id='App'>
+        <header>
+          <h1>FusionAuth Example: React</h1>
+        </header>
+      </div>
+    );
+  }
+}
+
+ReactDOM.render(<App/>, document.querySelector('#Container'));
+```
+{: .legend}
+`File: client/index.js`
+
+If you need a refresher on React basics, check out the [official docs](https://reactjs.org/docs/getting-started.html).
+
+Load up `localhost:8080` to make sure React is working as expected.
+
+Now, we're going to want to show different stuff based on whether or not a user is logged in. For example, a greeting that says `Welcome, dinesh@fusionauth.io` is only going to make sense if the user `dinesh@fusionauth.io` is logged in.
+
+In a bit, we're going to get information about the current user (like their email address) by sending a request to our Express server. For now, we'll just pretend a user is logged in and set the user's email address in `state`.
+
+```
+client
+└─app
+  ├─components
+  │ └─Greeting.js*
+  └─index.js
+```
+
+```jsx
+...
+
+import Greeting from './components/Greeting.js';
+
+class App extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      email: 'dinesh@fusionauth.io'
+    };
+  }
+
+  render() {
+    return (
+      <div id='App'>
+        <header>
+          <h1>FusionAuth Example: React</h1>
+          <Greeting email={this.state.email}/>
+        </header>
+      </div>
+    );
+  }
+}
+
+...
+```
+{: .legend}
+`File: client/index.js`
+
+The logic in `<Greeting>` doesn't need to be complicated: Is there an email address? Then there's a user logged in. Otherwise, there's not.
+
+```jsx
+import React from 'react';
+
+export default class Greeting extends React.Component {
+
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+
+    let message = (this.props.email)
+      ? `Hi, ${this.props.email}!`
+      : "You're not logged in.";
+
+    return (
+      <span>{message}</span>
+    );
+  }
+}
+```
+{: .legend}
+`File: client/components/greeting.js`
+
+Try it out. Load up `localhost:8080` and you should see `Welcome, dinesh@fusionauth.io` (or whatever email address you typed in `state`). Comment out the `email` object to simulate logging out:
+
+```jsx
+this.state = {
+  // email: 'dinesh@fusionauth.io'
+};
+```
+{: .legend}
+`File: client/index.js`
+
+Next, we'll set `state` based on a call to our server.
+
+### Getting User Info From the Express Server
+
+To make a call to a server, we first need to get one up and running.
 
 The heart of an Express app is your `index.js`. That's what we title the heart of most apps. The React side of our application wll also have an `index.js` file, so keep that in mind as you will likely have the same headache I do of constantly opening the wrong one.
 
@@ -205,7 +318,7 @@ server
 
 The following Express index is pretty standard, so I'm not going to go too deep on how it works; the [official Express docs](https://expressjs.com/en/starter/hello-world.html) do a better job of explaining it than I would, anyway.
 
-We'll initialize `app`, set up a `/` route (the root route), and start the server on `localhost:9000`:
+We'll initialize `app`, set up a `/user` route (for our React client to get user info from), and start the server on `localhost:9000`:
 
 ```js
 const express = require('express');
@@ -215,7 +328,7 @@ const config = require('../config');
 const app = express();
 
 // use routes
-app.use(`/`, require(`./routes/_`));
+app.use('/user', require('./routes/user'));
 
 // start server
 app.listen(config.serverPort, () => console.log(`FusionAuth example app listening on port ${config.serverPort}.`));
@@ -223,14 +336,7 @@ app.listen(config.serverPort, () => console.log(`FusionAuth example app listenin
 {: .legend}
 `File: server/index.js`
 
-When a user goes to (or is redirected to) the `/` route, the code in `_.js` will execute (I wish we could name the file `.js`, but that's just not an option, because `require` doesn't include the filetype, which turns poor, elegant `.js` into an empty string). This root path is great for serving the single page of a single page application. Since React is running on its own separate Node instance, we'll just use `/` to redirect to `localhost:8080/`.
-
-```
-server
-├─routes
-│ └─_.js*
-└─index.js
-```
+When our React client sends a request to `localhost:9000/user`, it will get a response based on whatever we send back in `server/routes/user.js`. So, we can move the pretend user email from `state` to here, like this:
 
 ```js
 const express = require('express');
@@ -238,74 +344,63 @@ const router = express.Router();
 const config = require('../../config');
 
 router.get('/', (req, res) => {
-  res.redirect(`http://localhost:${config.clientPort}`);
+  res.send({
+    token: {
+      email: 'dinesh@fusionauth.io'
+    }
+  });
 });
 
 module.exports = router;
 ```
 {: .legend}
-`File: server/routes/_.js`
+`File: server/routes/user.js`
 
+Note that I've wrapped `email` in a `token` object. That's because an Access Token is ultimately what we'll get back from FusionAuth when a user actually logs in. `email` is one of the token's included values, so we'll be good to go if we set it up like this ahead of time.
 
-Try it out: Navigate to [localhost:9000](http://localhost:9000) and you should land on [localhost:8080](http://localhost:8080). Now, from anywhere else in our Express server, we can easily serve the React client with `res.redirect('/')`.
+Of course, we'll need to tweak the React app:
 
-### Adding New Routes
-
-Next, we'll set up the `/user` route to return info about the currently logged in user.
-
-```
-server
-├─routes
-│ ├─_.js
-│ └─user.js*
-└─index.js
-```
-
-Whenever we create a new route, we need to add it to the route map back in `index.js`:
-
-```js
+```jsx
 ...
 
-// use routes
-app.use(`/`, require(`./routes/_`));
-app.use(`/user`, require(`./routes/user`));
+constructor(props) {
+  super(props);
+  this.state = {
+    body: {} // this is the body from /user
+  };
+}
 
-...
-```
-{: .legend}
-`File: server/index.js`
-
-But doing that every time sucks. [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) and all that. Luckily, these follow a simple pattern, so we can make the process of adding new routes a lot easier with `Array.forEach`:
-
-```js
-...
-
-// use routes
-let routes = [
-  '_',
-  'user'
-];
-routes.forEach(route => app.use(`/${route.replace(/^_$/, '')}`, require(`./routes/${route}`)));
+render() {
+  return (
+    <div id='App'>
+      <header>
+        <h1>FusionAuth Example: React</h1>
+        <Greeting body={this.state.body}/>
+      </header>
+    </div>
+  );
+}
 
 ...
 ```
 {: .legend}
-`File: server/index.js`
+`File: client/index.js`
 
-It's not the prettiest function, because we have to replace `'_'` with `''` to cover the only case in which the route path won't match the file path (`_.js` strikes again!), but it will save us a ton of time, because it works in every Express app.
+```jsx
+...
 
+let message = (this.props.body.token)
+  ? `Hi, ${this.props.body.token.email}!`
+  : "You're not logged in.";
 
----
+...
+```
+{: .legend}
+`File: client/components/greeting.js`
 
-# This is out of place and should come after you have explained almost everything about the React App and the OAuth process
+Note that we're now using the existence of `token` to determine whether or not a user is logged in. We can use this for every future component: send `body`, check for `token`, use the values inside `token`.
 
----
-
-### Fetching User Info From Express
-
-Our React client will make a request to `/user` to get information about the user. The most important info is the Access Token, which is what we use to determine if a user is logged in or not. In OAuth, an Access Token is like a temporary keycard that allows us to access the user's resources.
-
-A real token will look something like this:
+Remember, a _real_ Access Token sent from FusionAuth will have more than just an email address. It will look something like this:
 
 ```json
 "token": {
@@ -323,126 +418,7 @@ A real token will look something like this:
 }
 ```
 
-Well, actually, it looks more like this until we decode it:
-
-```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-```
-
-That thing is a JSON Web Token, or JWT. Fortunately, FusionAuth can decode it for us. More on that later. For now, we'll just send some fake info to stand in for an Access Token. A decoded token will include info about the user, like their email address. We're going to display the user's email address, anyway (like "Welcome, dinesh@fusionauth.io!"), so that's what we'll throw in:
-
-```js
-const express = require('express');
-const router = express.Router();
-const config = require('../../config');
-
-router.get('/', (req, res) => {
-  res.send({
-    token: {
-      email: 'test@test.com'
-    }
-  });
-});
-
-module.exports = router;
-```
-{: .legend}
-`File: server/routes/user.js`
-
-Try navigating to [localhost:9000/user](http://localhost:9000/user). You'll see the `token` printed out in the browser, because that's what `res.send` does when you navigate to its route. Instead of rendering `token`, we want to use it in our React client; if we make a request to `/user`, `res.send` will give us `token` as a response.
-
-Let's move to React and get ready to receive that data.
-
-```
-client
-└─app
-  └─index.js*
-```
-
-A good way to keep things organized in our React client is to save everything returned by FusionAuth in one state parameter. Below, you can see I've named it `body`, because an HTTP request returns a body, and we're making an HTTP request to get this info.
-
-The simple logic goes like this: if `this.state.body.token` exists, there's a user logged in; otherwise, there isn't a user logged in.
-
-So, we'll set `this.state.body` to an empty object, and pass it to any component that needs it.
-
-```jsx
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-
-import Greeting from './components/Greeting.js';
-
-const config = require('../../config');
-
-class App extends React.Component {
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      body: {} // this is the body from /user
-    };
-  }
-
-  render() {
-    return (
-      <div id='App'>
-        <header>
-          <Greeting body={this.props.body}/>
-        </header>
-      </div>
-    );
-  }
-}
-
-ReactDOM.render(<App/>, document.querySelector('#Container'));
-```
-{: .legend}
-`File: client/app/index.js`
-
-
-If you want to see the entire `body`, like when we navigated directly to `/user`, throw this in your JSX:
-
-```jsx
-<pre>{JSON.stringify(this.state.body, null, '\t')}</pre>
-```
-
-This renders `body` as a JSON object, which is useful for understanding the data FusionAuth returns, but it's not really something you'd want to show to users.
-
-In the `Greeting` component, we can use the existence of `this.props.body.token` to display either a welcome message or a prompt to log in.
-
-```
-client
-└─app
-  ├─components
-  │ └─Greeting.js*
-  └─index.js
-```
-
-```jsx
-import React from 'react';
-
-export default class Greeting extends React.Component {
-
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-
-    let message = (this.props.body.token)
-      ? `Hi, ${this.props.body.token.email}!`
-      : "You're not logged in.";
-
-    return (
-      <span>{message}</span>
-    );
-  }
-}
-```
-{: .legend}
-`File: client/components/Greeting.js`
-
-Load up the React client (remember, you can find it at [localhost:9000](http://localhost:9000) or [:3000](http://localhost:3000)). It should say `You're not logged in.`, because there's no `token` in `this.state.body`. We'll get the `token` from `/user` in a `fetch` request whenever the page loads (or "when the component mounts" in React lingo):
+In the next section, we'll replace our fake `token` with a real one. Before we do that, let's set up our React app to `fetch` the `token` from `/user` whenever the page loads (or "when the component mounts" in React lingo):
 
 
 ```js
@@ -488,7 +464,17 @@ app.use(cors({
 
 Boom. Goodbye, annoying CORS error.
 
-The `Greeting` should read, `Welcome, test@test.com!`, because there is a `token` in `this.state.body`. This is the basic way any React client can utilize information from an Express app.
+The React page should look just like when you were "logged in" after writing an email address in `state`. However, we're now getting that email from our Express server. You can simulate logging out by commenting out the `token`:
+
+```js
+res.send({
+  // token: {
+  //   email: 'dinesh@fusionauth.io'
+  // }
+});
+```
+{: .legend}
+`File: server/routes/user.js`
 
 Next, we'll replace that fake `token` with a real one from FusionAuth—our React client will indirectly retrieve the information from FusionAuth by using Express as a middleman.
 
@@ -500,66 +486,7 @@ User sign-in is one of the key features of FusionAuth. (Isn't that why you're fo
 
 ### Redirecting to FusionAuth
 
-We'll write our request to FusionAuth in `/login`, so that we only have to redirect any time we want to have a user sign in.
-
-```
-server
-├─routes
-│ ├─_.js
-│ ├─login.js*
-│ └─user.js
-└─index.js
-```
-
-Remember to add every new route to the route map:
-
-```js
-...
-
-// use routes
-let routes = [
-  '_',
-  'login',
-  'user'
-];
-
-...
-```
-{: .legend}
-`File: server/index.js`
-
-
-When a user goes to `/login`, we actually want to redirect them off of the Express sever and onto FusionAuth's login page. Remember, we installed FusionAuth so that we don't have to handle the login process at all!
-
-```js
-const express = require('express');
-const router = express.Router();
-const config = require('../../config');
-
-router.get('/', (req, res) => {
-  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code`);
-});
-
-module.exports = router;
-```
-{: .legend}
-`File: server/routes/login.js`
-
-If that URI looks a bit messy, it's because of the attached query parameters, which FusionAuth needs to process our request:
-
-- `client_id` tells FusionAuth which app is making the request
-- `redirct_uri` tells FusionAuth where to redirect the user to after login
-- `response_type` tells FusionAuth which OAuth flow we're using (Authorization Code in this example)
-
-This is all standard OAuth flow.
-
-Try navigating to [localhost:9000/login](http://localhost:9000/login). You should see a FusionAuth login form:
-
-{% include _image.html src="/assets/img/blogs/fusionauth-example-react/app-login.png" class="img-fluid" figure=false %}
-
-When you successfully authenticate, you'll just see `Cannot GET /oauth-callback`, because `/oauth-callback` doesn't exist, yet. What's `/oauth-callback`? Remember, we added that as an `Authorized redirect URL` in the FusionAuth admin panel and as our `redirectURI` in `config.js`; it's where FusionAuth redirects to after authentication.
-
-Before we add `/oauth-callback`, let's add a link to `/login` in the React client:
+First thing's fist: we need a "log in" button in the React client:
 
 ```
 client
@@ -570,7 +497,7 @@ client
   └─index.js
 ```
 
-Just like we did in `Greeting`, we'll use `this.props.body.token` to determine whether or not the user is logged in.
+Just like we did in `Greeting`, we'll use `this.props.body.token` to determine whether or not the user is logged in. We can use this to make a link to either `localhost:9000/login` or `localhost:9000/logout`, the former of which we'll set up in just a second.
 
 ```jsx
 import React from 'react';
@@ -600,21 +527,63 @@ export default class LogInOut extends React.Component {
 {: .legend}
 `File: client/app/components/LogInOut.js`
 
-Note that the `/login` link won't be visible if a user is logged in. We can disable that fake token to "log out."
+Why is this a normal `<a>` link when we used a `fetch` request for `/user`? Because this is the single time our users will actually be redirected away from the React client—they need to get to the FusionAuth login page.
+
+We could write a link directly to FusionAuth, but I think it's cleaner to go through the Express app. Remember the structure we detailed earlier:
+
+```React <-> Express <-> FusionAuth```
+
+```
+server
+├─routes
+│ ├─login.js*
+│ └─user.js
+└─index.js
+```
+
+Whenever we add a new route, we need to let `server/index.js` know, just like we did with `/user`:
 
 ```js
 ...
 
-res.send({
-  // token: {
-  //   email: 'test@test.com`
-  // }
-});
+// use routes
+app.use('/user', require('./routes/user'));
+app.use('/login', require('./routes/login'));
 
 ...
 ```
 {: .legend}
-`File: server/routes/user.js`
+`File: server/index.js`
+
+When a user goes to `/login`, we actually want to redirect them off of the Express sever and onto FusionAuth's login page. Remember, we installed FusionAuth so that we don't have to handle the login process at all!
+
+```js
+const express = require('express');
+const router = express.Router();
+const config = require('../../config');
+
+router.get('/', (req, res) => {
+  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code`);
+});
+
+module.exports = router;
+```
+{: .legend}
+`File: server/routes/login.js`
+
+If that URI looks a bit messy, it's because of the attached query parameters, which FusionAuth needs to process our request:
+
+- `client_id` tells FusionAuth which app is making the request
+- `redirct_uri` tells FusionAuth where to redirect the user to after login
+- `response_type` tells FusionAuth which OAuth flow we're using (Authorization Code in this example)
+
+This is all standard OAuth flow.
+
+Try navigating to `localhost:9000/login`. You should see a FusionAuth login form:
+
+{% include _image.html src="/assets/img/blogs/fusionauth-example-react/app-login.png" class="img-fluid" figure=false %}
+
+When you successfully authenticate, you'll just see `Cannot GET /oauth-callback`, because `/oauth-callback` doesn't exist, yet. What's `/oauth-callback`? Remember, we added that as an `Authorized redirect URL` in the FusionAuth admin panel and as our `redirectURI` in `config.js`; it's where FusionAuth redirects to after authentication.
 
 ### Code Exchange
 
@@ -623,7 +592,6 @@ Alright, time to add the `/oauth-callback` route:
 ```
 server
 ├─routes
-│ ├─_.js
 │ ├─login.js
 │ ├─oauth-callback.js*
 │ └─user.js
@@ -633,13 +601,11 @@ server
 ```js
 ...
 
+
 // use routes
-let routes = [
-  '_',
-  'login',
-  'oauth-callback'
-  'user'
-];
+app.use('/user', require('./routes/user'));
+app.use('/login', require('./routes/login'));
+app.use('/oauth-callback', require('./routes/oauth-callback'));
 
 ...
 ```
@@ -733,7 +699,7 @@ The callback occurs after FusionAuth gets our request and responds. We're expect
   req.session.token = JSON.parse(body).access_token;
 
   // redirect to root
-  res.redirect('/');
+  res.redirect(`localhost:${config.clientPort}`);
 }
 
 ...
@@ -931,7 +897,6 @@ Just like `/login`, we'll create a `/logout` route to make logging out easily ac
 ```
 server
 ├─routes
-│ ├─_.js
 │ ├─login.js
 │ ├─logout.js*
 │ ├─oauth-callback.js
@@ -943,13 +908,10 @@ server
 ...
 
 // use routes
-let routes = [
-  '_',
-  'login',
-  'logout',
-  'oauth-callback'
-  'user'
-];
+app.use('/user', require('./routes/user'));
+app.use('/login', require('./routes/login'));
+app.use('/oauth-callback', require('./routes/oauth-callback'));
+app.use('/logout', require('./routes/logout'));
 
 ...
 ```
@@ -991,7 +953,7 @@ router.get('/', (req, res) => {
       req.session.destroy();
 
       // redirect to root
-      res.redirect('/');
+      res.redirect(`localhost:${config.clientPort}`);;
     }
   );
 });
@@ -1018,7 +980,6 @@ The last route we'll make for this example is `/set-user-data`:
 ```
 server
 ├─routes
-│ ├─_.js
 │ ├─login.js
 │ ├─logout.js
 │ ├─oauth-callback.js
@@ -1031,14 +992,11 @@ server
 ...
 
 // use routes
-let routes = [
-  '_',
-  'login',
-  'logout',
-  'oauth-callback',
-  'set-user-data'
-  'user'
-];
+app.use('/user', require('./routes/user'));
+app.use('/login', require('./routes/login'));
+app.use('/oauth-callback', require('./routes/oauth-callback'));
+app.use('/logout', require('./routes/logout'));
+app.use('/set-user-data', require('./routes/set-user-data'));
 
 ...
 ```
