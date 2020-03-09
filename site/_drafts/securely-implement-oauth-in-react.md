@@ -926,7 +926,7 @@ Our `/logout` route will wipe the user's saved login by deleting:
 
 The first of these is done by making a request to FusionAuth's `/logout` endpoint. The others are done locally with `res.clearCookie` and `req.session.destroy`.
 
-After cleaning up, we'll redirect to `/`, and everything will be completely reset.
+After cleaning up, we'll redirect to the React app, and everything will be completely reset.
 
 ```js
 const express = require('express');
