@@ -1,21 +1,17 @@
 ## Sizing Window for Screenshots
 
-When adding screenshots to the documentation, use a normalized browser window size. The following apple Script may be used to build a consistent browser window.
+When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent browser window.
 
 ```appleScript
 set theApp to "Safari"
 
-# UI screens
-set appHeight to 1100
-set appWidth to 1080
+# Most UI screenshots should be taken at this size
+set appHeight to 1020
+set appWidth to 1220
 
-# Wider UI screens
-#set appHeight to 1100
+# Wider UI screens only if needed
+#set appHeight to 1020
 #set appWidth to 1550
-
-# Maintenance Mode Screens
-#set appHeight to 1100
-#set appWidth to 900
 
 tell application "System Events"
 	tell appearance preferences
@@ -38,64 +34,15 @@ tell application theApp
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
 ```
-
-When you need to build a screenshot for the blog, here's some code for that:
-
-```appleScript
-# config
-set myApp to "Safari" # the app you need a screenshot of
-set xAxis to 2000     # anywhere on your monitor that works for you
-set yAxis to -500     # anywhere on your monitor that works for you
-set appHeight to 1020 # don't change - this is the standard size for our screenshots
-set appWidth to 1220  # don't change - this is the standard size for our screenshots
-
-# resize app
-tell application myApp
-	activate
-	reopen
-	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
-end tell
-
-# set light mode
-tell application "System Events"
-	tell appearance preferences
-		set dark mode to false
-	end tell
-end tell
-```
-
-<!-- ```appleScript
-set theApp to "Safari"
-
-# UI screens
-set appHeight to 1020
-set appWidth to 1220
-
-tell application "Finder"
-	set screenResolution to bounds of window of desktop
-end tell
-
-set screenWidth to item 3 of screenResolution
-set screenHeight to item 4 of screenResolution
-
-tell application theApp
-	activate
-	reopen
-	set xAxis to 640
-	set yAxis to 360
-	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
-end tell
-``` -->
-
 ## Screenshot Standards
 
 - use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - crop top/bottom if necessary (don't crop sides)
 - highlight sections using image preview editor
 	- highlights should be red rectangle with line weight 5
-- to compress images:
-	1. resize to width of 1600
-	2. use https://tinypng.com/ to compress images
+- to size and compress images without losing too much quality, follow these steps:
+	1. resize to width of 1600 in Preview.app
+	2. use https://tinypng.com/ to compress the image
 
 Converting terminalizer gifs to videos
 ----
