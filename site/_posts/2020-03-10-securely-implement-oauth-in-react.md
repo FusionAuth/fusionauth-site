@@ -595,7 +595,7 @@ module.exports = router;
 If that URI looks a bit messy, it's because of the additional query parameters, which FusionAuth needs to process our request:
 
 - `client_id` tells FusionAuth which app is making the request
-- `redirct_uri` tells FusionAuth where to redirect the user to after login
+- `redirect_uri` tells FusionAuth where to redirect the user to after login
 - `response_type` tells FusionAuth which OAuth flow we're using (Authorization Code in this example)
 
 This is all standard OAuth flow but it is a little verbose.
