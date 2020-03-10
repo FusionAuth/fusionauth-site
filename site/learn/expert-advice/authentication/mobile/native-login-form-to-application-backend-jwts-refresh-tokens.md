@@ -1,8 +1,7 @@
 ---
 layout: advice
-title: Mobile login to backend
-subtitle: Using JWTs and refresh tokens
-description: An explanation of mobile application login using a native login form that submits to the application backend and uses JWTs and refresh tokens
+title: Mobile login to backend with JWTs and refresh tokens
+description: An explanation of mobile application login using a native login form that submits to the application backend with JWTs and refresh tokens
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication

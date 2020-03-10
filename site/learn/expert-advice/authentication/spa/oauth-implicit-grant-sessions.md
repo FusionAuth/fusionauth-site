@@ -1,8 +1,7 @@
 ---
 layout: advice
-title: Single-page application OAuth login using implicit grant
-subtitle: Using sessions
-description: An explanation of single-page application login using FusionAuth OAuth interface with the implicit grant and uses server-side sessions
+title: Single-page application OAuth login using implicit grant with session
+description: An explanation of single-page application login using FusionAuth OAuth interface with the implicit grant with server-side sessions
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication

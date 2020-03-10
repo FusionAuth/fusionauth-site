@@ -1,8 +1,7 @@
 ---
 layout: advice
-title: Single-page application OAuth login using resource owner password credentials grant
-subtitle: Using sessions and refresh tokens
-description: An explanation of single-page application login using a native login form that submits to the application backend and uses server-side sessions plus refresh tokens in cookies
+title: Single-page application OAuth login using resource owner password credentials grant with sessions and refresh tokens
+description: An explanation of single-page application login using a native login form that submits to the application backend (with server-side sessions plus refresh tokens in cookies) which calls FusionAuth's Resource Owner's Password Grant
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication

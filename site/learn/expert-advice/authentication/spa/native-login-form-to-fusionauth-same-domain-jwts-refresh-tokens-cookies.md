@@ -1,8 +1,7 @@
 ---
 layout: advice
-title: Single-page application native login to FusionAuth
-subtitle: Using JWTs and refresh tokens
-description: An explanation of single-page application login using a native login form that submits directly to FusionAuth and uses server-side sessions plus refresh tokens in cookies
+title: Single-page application native login to FusionAuth (same domain) with JWTs and refresh tokens
+description: An explanation of single-page application login using a native login form that submits directly to FusionAuth on the same domain with server-side sessions with refresh tokens in cookies
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication

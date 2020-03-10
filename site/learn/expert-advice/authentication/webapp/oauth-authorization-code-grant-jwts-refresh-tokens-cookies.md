@@ -1,8 +1,7 @@
 ---
 layout: advice
-title: Webapp OAuth login using authorization code grant
-subtitle: Using JWTs and refresh tokens
-description: An explanation of webapp login using FusionAuth OAuth interface with the authorization code grant and uses JWTs and refresh tokens in cookies
+title: Webapp OAuth login using authorization code grant with JWTs and refresh tokens
+description: An explanation of webapp login using FusionAuth OAuth interface with the authorization code grant with JWTs and refresh tokens in cookies
 header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
