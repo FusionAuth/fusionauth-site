@@ -18,7 +18,7 @@ git pull
 
 # Update dependencies
 bundle install
-npm install
+npm ci
 
 # Prevent dirty builds
 bundle exec jekyll clean
