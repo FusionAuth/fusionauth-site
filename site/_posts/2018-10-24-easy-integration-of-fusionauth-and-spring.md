@@ -11,7 +11,7 @@ excerpt_separator: <!--more-->
 Making a Spring application with FusionAuth is easy. Follow the steps below and in about an hour you'll have FusionAuth providing user login and authorization for your application. Or you can be up and running in just a few minutes by using our example app.
 <!--more-->
 
-Don't want to read? [Jump to the example](https://github.com/FusionAuth/fusionauth-spring-security-example).
+Don't want to read? [Jump to the example](https://github.com/FusionAuth/fusionauth-example-spring-security).
 
 Getting everything setup
 ------------------------
@@ -39,7 +39,7 @@ Getting everything setup
     fusionAuth.redirectUri=http://localhost:8081/login
     ```
 
-4. Setup a basic Spring application and include the FusionAuth Spring Security library in your Maven POM file. (see a full example [pom.xml](https://github.com/FusionAuth/fusionauth-spring-security-example/blob/master/pom.xml))
+4. Setup a basic Spring application and include the FusionAuth Spring Security library in your Maven POM file. (see a full example [pom.xml](https://github.com/FusionAuth/fusionauth-example-spring-security/blob/master/pom.xml))
 
     ```xml
     <dependency>
@@ -380,7 +380,7 @@ In our example application we also handle basic registration of a user. This is 
         }
         ```
 
-        A couple notes: The registration API will require that new users log back into the application after they register so that they can get a valid token and User object. You will want to register an [exception handler](https://github.com/FusionAuth/fusionauth-spring-security-example/blob/master/src/main/java/io/fusionauth/controller/ExceptionHandlers.java) for the `RegistrationException`; without this, your errors will show up as 500 exceptions.
+        A couple notes: The registration API will require that new users log back into the application after they register so that they can get a valid token and User object. You will want to register an [exception handler](https://github.com/FusionAuth/fusionauth-example-spring-security/blob/master/src/main/java/io/fusionauth/controller/ExceptionHandlers.java) for the `RegistrationException`; without this, your errors will show up as 500 exceptions.
 
 
 Automatic Login
@@ -407,7 +407,7 @@ That's all it takes! When you get set up, send us a link to your site. We'd love
 Addendum
 ----
 
-A user on github [pointed out](https://github.com/FusionAuth/fusionauth-spring-security-example/issues/1) that if both the example and fusionauth are running on localhost (regardless of port), they will
+A user on github [pointed out](https://github.com/FusionAuth/fusionauth-example-spring-security/issues/1) that if both the example and fusionauth are running on localhost (regardless of port), they will
 share their cookie name and will cause some errors that look like CSRF failures. There are currently two solutions, the first
 is to simply run either the example or fusionauth on its own domain (even if its just a hosts alias), and the second is
 to set `server.servlet.session.cookie.name=SPRINGJSESSIONID` in the spring configuration file. This will force each application

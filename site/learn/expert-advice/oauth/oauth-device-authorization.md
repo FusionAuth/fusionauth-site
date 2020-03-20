@@ -123,7 +123,7 @@ We're excited to offer this new feature in FusionAuth, and hope you take the tim
 
 - Read this [tutorial](/docs/v1/tech/oauth/#example-device-authorization-grant) that explains how to implement this with specific code examples.
 - Check out the updated API docs which lay out changes and additions to the [Oauth2 API](/docs/v1/tech/oauth/endpoints).
-- Download [fusionauth-device-grant-example](https://github.com/FusionAuth/fusionauth-device-grant-example) which is a toy example app that represents the device side of the workflow. With it and [FusionAuth](/) you can have a complete working example of the Device Authorization Grant.
+- Download [fusionauth-example-device-grant](https://github.com/FusionAuth/fusionauth-example-device-grant) which is a toy example app that represents the device side of the workflow. With it and [FusionAuth](/) you can have a complete working example of the Device Authorization Grant.
 
 ## FusionAuth is Always Improving
 
