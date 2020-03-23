@@ -109,7 +109,7 @@ Updated in 2019, NIST produces guidelines to help federal agencies meet the requ
 <input type="checkbox" name="20"/> Minimum of 6 characters when set by a system or service
 </label>
 <label class="d-block">
-<input type="checkbox" name="21"/> Maximum length of 64 characters
+<input type="checkbox" name="21"/> Maximum length no less than 64 characters (higher maximums are okay) 
 </label>
 <label class="d-block">
 <input type="checkbox" name="22"/> Support all ASCII characters (including space)
@@ -118,7 +118,22 @@ Updated in 2019, NIST produces guidelines to help federal agencies meet the requ
 <input type="checkbox" name="23"/> No mandatory password changes
 </label>
 <label class="d-block">
-<input type="checkbox" name="24"/> No special characters requirement
+<input type="checkbox" name="24"/> No special character requirement
+</label>
+<label class="d-block">
+<input type="checkbox" name="25"/> Passwords checked against known breached lists
+</label>
+<label class="d-block">
+<input type="checkbox" name="26"/> Passwords checked against common dictionaries
+</label>
+<label class="d-block">
+<input type="checkbox" name="27"/> No truncation of passwords during processing
+</label>
+<label class="d-block">
+<input type="checkbox" name="28"/> No password hints
+</label>
+<label class="d-block">
+<input type="checkbox" name="28"/> No recovery questions (i.e. mother's maiden name)
 </label>
 
 ## Conclusion
