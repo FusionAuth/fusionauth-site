@@ -3,11 +3,9 @@ layout: blog-post
 title: User Data Security is a Breach
 description: User data security includes hardware, software, and human challenges. Use this guide with code examples to secure your system from hacks and exploits.
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- security
 image: blogs/user-data-security-is-a-breach.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 If you follow us on Twitter (if you don't, you can [fix that now](http://bit.ly/2WOcw7D)) you'll see that we post about data security breaches hitting the internet community. We don't do it to be malicious or gloat about their failures, but to increase awareness beyond the core community of security professionals. We deal with security every day so we know that keeping data secure is a complex challenge. Few people are well-versed in its many facets and subtleties, and it can be difficult to stay informed of the current trends and risks. We hear all the time "See? You can't stop cyber breaches." Fortunately, that's a load of crap.

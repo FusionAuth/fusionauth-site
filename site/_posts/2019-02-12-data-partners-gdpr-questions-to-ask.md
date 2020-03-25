@@ -3,20 +3,15 @@ layout: blog-post
 title: Data Partners And The GDPR - Questions To Ask
 description: Here are the questions you should ask your data partners to make sure they, and you, are GDPR compliant.
 author: Brian Pontarelli
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- CIAM
-- resources
-- identity
-- gdpr
-- white Paper
 image: blogs/gdpr-data-partners-questions.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 By now, you should be fully aware of the [GDPR's data requirements](/learn/expert-advice/ciam/developers-guide-to-gdpr "Get the Developer's Guide to the GDPR") for your own application, but have you talked with your data partners? If your application takes advantage of third-party tools and components to add functionality or track user information, they need to be compliant as well. The new regulations state that data privacy needs to be maintained throughout the entire lifecycle of an application, through every data controller and processor. Take the time to ask your data partners how they ensure GDPR compliance, including their security framework and how they manage data.
 
 <!--more-->
+
 If your data partners do not have a clearly defined and documented data strategy, you could be exposing your company to substantial risk. Here are a few questions to get the discussion started:
 
 ### Q: Where are their servers and computers physically located? Can you choose a location?

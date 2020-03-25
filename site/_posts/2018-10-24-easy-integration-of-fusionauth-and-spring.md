@@ -3,18 +3,18 @@ layout: blog-post
 title: Easy Integration of Spring and FusionAuth
 author: Tyler Scott
 description: Making a Spring application with FusionAuth is easy, just follow these simple steps.
-categories: blog
 image: blogs/spring-and-fusionauth-example.jpg
-excerpt_separator: <!--more-->
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Making a Spring application with FusionAuth is easy. Follow the steps below and in about an hour you'll have FusionAuth providing user login and authorization for your application. Or you can be up and running in just a few minutes by using our example app.
+
 <!--more-->
 
 Don't want to read? [Jump to the example](https://github.com/FusionAuth/fusionauth-example-spring-security).
 
-Getting everything setup
-------------------------
+## Getting everything setup
 
 1. [Download and Install FusionAuth](/)
 2. [Create an Application](/docs/v1/tech/users/applications)
@@ -207,8 +207,7 @@ Getting everything setup
 
 That's it. Controllers that are public will be accessible without logging in and restricted controls will require that the user login first. The `/login` URI in our application will manage the entire OAuth workflow between Spring Security and FusionAuth.
 
-Registration
-------------
+## Registration
 
 In our example application we also handle basic registration of a user. This is completely optional but your users will need to be registered somehow in order to have access and be granted roles in your application. You could use the FusionAuth web interface to manually add all of your users. Or you could allow users to register themselves. This choice depends on the needs of your application. If you would like to allow users to register themselves, use the steps below to add this capability to your application.
 
@@ -383,8 +382,7 @@ In our example application we also handle basic registration of a user. This is 
         A couple notes: The registration API will require that new users log back into the application after they register so that they can get a valid token and User object. You will want to register an [exception handler](https://github.com/FusionAuth/fusionauth-example-spring-security/blob/master/src/main/java/io/fusionauth/controller/ExceptionHandlers.java) for the `RegistrationException`; without this, your errors will show up as 500 exceptions.
 
 
-Automatic Login
----------------
+## Automatic Login
 
 Say you wanted to have the user automatically log in if they reach an authenticated access point. Well that is pretty easy, just use this variation of the security config.
 
@@ -399,13 +397,11 @@ http.addFilterAfter(new OAuth2ClientContextFilter(), AbstractPreAuthenticatedPro
     .permitAll();
 ```
 
-Conclusion
-----------
+## Conclusion
 
 That's all it takes! When you get set up, send us a link to your site. We'd love to see how you integrated FusionAuth with your Spring application. If you have any questions or comments, let us know in the comments below or [contact us](https://fusionauth.io/contact).
 
-Addendum
-----
+## Addendum
 
 A user on github [pointed out](https://github.com/FusionAuth/fusionauth-example-spring-security/issues/1) that if both the example and fusionauth are running on localhost (regardless of port), they will
 share their cookie name and will cause some errors that look like CSRF failures. There are currently two solutions, the first

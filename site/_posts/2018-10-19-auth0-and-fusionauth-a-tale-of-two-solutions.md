@@ -1,14 +1,15 @@
 ---
 layout: blog-post
 title: Auth0 and FusionAuth - A Tale of Two Solutions
-author: Bryan Giese
 description: Compare FusionAuth and Auth0 for your identity and access management solution.
-categories: blog
+author: Bryan Giese
 image: blogs/auth0-and-fusionauth-tale-of-two-solutions.png
-excerpt_separator: <!--more-->
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 We've seen a lot of news lately about Authentication as a Service platforms like Auth0 and FusionAuth and hope that trend will continue. Auth0 and FusionAuth both provide advanced customer identity and access management (CIAM) and it is exciting to see a company that we respect recognized by the wider community. Strangely, when I say this at the CIAM events we attend I get a few curious looks. Why would we want them to be recognized? Shouldn't we want FusionAuth to get the attention?
+
 <!--more-->
 
 ## Why the Attention is Good for Auth0 and FusionAuth

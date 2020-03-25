@@ -3,18 +3,13 @@ layout: blog-post
 title: Stop Storing My Plaintext Password
 description: DO NOT store passwords in plaintext! Learn how to protect your organizations passwords from potential hacking threats
 author: Brian Pontarelli
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- Security
-- Best Practices
-- plaintext password
-- multifactor authentication
-- encryption
 image: blogs/plain-text-offender-cu.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Believe it or not there are still companies emailing users with plaintext passwords. Worse yet, some systems are storing plaintext passwords in the database. Storing or emailing plaintext passwords can increase security vulnerabilities by as much as 10x. Just freaking stop!
+
 <!--more--> 
 
 [CU Boulder](http://plaintextoffenders.com/post/140680242967/mycuboulderedu-university-seriously-a-premier "Jump to article about CU Boulder's Passwords"), a premier university, still emails their passwords in plaintext. Regardless of how complex a password is, if it is stored or emailed in plaintext, that password is easily accessible to anyone and security is compromised at a glance.

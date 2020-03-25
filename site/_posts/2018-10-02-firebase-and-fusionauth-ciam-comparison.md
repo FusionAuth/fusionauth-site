@@ -1,14 +1,15 @@
 ---
 layout: blog-post
 title: Firebase and FusionAuth CIAM Comparison
-author: Bryan Giese
 description: Compare FusionAuth and Firebase for your identity and access management solution.
-categories: blog
+author: Bryan Giese
 image: blogs/firebase-and-fusionauth-comparison.jpg
-excerpt_separator: <!--more-->
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 As we talk to and win new clients, we learn about the other identity management platforms that are available today. One of the more interesting discoveries is that Firebase and FusionAuth are coming up as comparable products. While they are both called identity management solutions, the truth is that Firebase and FusionAuth are very different products designed with a substantially different set of features. As true CIAM solutions, they really don't compare.
+
 <!--more-->
 
 ## What Firebase and FusionAuth Have In Common

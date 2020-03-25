@@ -3,11 +3,14 @@ layout: blog-post
 title: The FusionAuth website - How we do it
 description: How we built the FusionAuth website using BootstrapStudio, Jekyll, JustComments and other tools
 author: Brian Pontarelli
-categories: blog
 image: blogs/fusionauth-website.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
-We recently launched the FusionAuth website, so I thought it would be fun to write a blog post about how we build the site. We use a combination of a couple of tools, some scriptage, and Jekyll. If you want to check out our source, this website is stored as a public repository in Github here: [https://github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site). 
+We recently launched the FusionAuth website, so I thought it would be fun to write a blog post about how we build the site. We use a combination of a couple of tools, some scriptage, and Jekyll. If you want to check out our source, this website is stored as a public repository in Github here: [https://github.com/FusionAuth/fusionauth-site](https://github.com/FusionAuth/fusionauth-site).
+
+<!--more--> 
 
 Here's how it all comes together:
 

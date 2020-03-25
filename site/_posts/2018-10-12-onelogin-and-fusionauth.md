@@ -1,14 +1,15 @@
 ---
 layout: blog-post
 title: OneLogin and FusionAuth - Different Enough To Make A Difference
-author: Bryan Giese
 description: Compare FusionAuth and OneLogin for your identity and access management solution.
-categories: blog
+author: Bryan Giese
 image: blogs/onelogin-and-fusionauth-comparison.jpg
-excerpt_separator: <!--more-->
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 If you have any type of application, site or service, you already know that secure customer identity and access management (CIAM) is vital to register, authenticate, and manage your users. OneLogin and FusionAuth both have powerful identity solutions, but the way they approach the challenge makes their platforms very different. Understanding their unique perspectives can help clarify which one is a better match for your company's needs.
+
 <!--more-->
 
 For example, you may have seen OneLogin talking about their recent integrations that leverage blockchain technology. This is exciting news for the identity management community, and we look forward to seeing if it will it be a mass-market hit, a niche-industry toolkit, or simply a bright flash in the identity management news cycle. A large corporation like OneLogin backed with millions in investor funding can take a risk with emerging technology like this, and work out how it fits into their product portfolio at a later time.

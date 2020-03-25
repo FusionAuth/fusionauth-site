@@ -3,11 +3,9 @@ layout: blog-post
 title: FusionAuth 1.5 Adds Passwordless Login
 description: FusionAuth 1.5 adds passwordless login and more. Download and upgrade now!
 author: Daniel DeGroff
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- release notes
 image: blogs/fusionauth-1-5-passwordless.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Logging in without a password? In what fantasy land can that be secure?!? The fact is it can be much more secure than traditional passwords, and is now supported in our newest release. FusionAuth 1.5 is now available for [direct download](/download),  [FastPath one-line install](/docs/v1/tech/installation-guide/fast-path), [Homebrew](/docs/v1/tech/installation-guide/homebrew) or [Docker](/docs/v1/tech/installation-guide/docker). It includes new features, a few changes, and minor fixes for issues discovered by QA testers and our growing community of users. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes#version-1-5-0) for the full details.

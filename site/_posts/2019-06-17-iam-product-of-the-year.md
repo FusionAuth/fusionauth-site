@@ -3,11 +3,9 @@ layout: blog-post
 title: FusionAuth Snags Identity and Access Management Product of the Year
 description: FusionAuth was awarded Identity and Access Management Product of the Year by Enterprise Security Magazine
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- awards
 image: blogs/enterprise-security-mag-award.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 We've got some exciting news: FusionAuth was awarded **Identity and Access Management Product of the Year** by Enterprise Security Magazine. When we found out, we were stunned. At first they notified us we were included in their **Top 10 Identity and Access Management Solution Providers** and that was exciting enough. Every year they identify a group of ten companies they consider to be at the forefront of IAM that are disrupting the marketplace.<!--more--> We were stoked just to be considered for this select group, let alone be included in the top ten. A few weeks later we found that we had been named **IAM Product of the Year**. Wow. Keep in mind, only a few days earlier we were awarded a [**Rising Star Award**](/blog/2019/05/30/fusionauth-recognized-industry-distinctions-comparecamp) and [**Great User Experience Certificate**](/blog/2019/05/30/fusionauth-recognized-industry-distinctions-comparecamp), so this additional recognition was completely unexpected. We are thankful to be receiving this attention from the IAM community.

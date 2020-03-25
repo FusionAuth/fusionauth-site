@@ -3,14 +3,14 @@ layout: blog-post
 title: FusionAuth Identity & Access Management Solution Is Recognized with Industry Distinctions from Leading SaaS Review Platform
 description: FusionAuth received the 2019 Great User Experience and Rising Star Awards
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- awards
 image: blogs/comparecamp-awards.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 CompareCamp, a B2B and B2C technology review site, recently awarded [FusionAuth](http://comparecamp.com/fusionauth-review-pricing-pros-cons-features/ "Jump to CompareCamp site") the **2019 Great User Experience** and **Rising Star Awards**. This is a huge accomplishment. We created FusionAuth to provide a free, powerful customer identity access management (CIAM) platform for every app in every size organization. <!--more-->Powered by our core API, the intuitive user interface allows developers and administrators to quickly integrate authorization and authentication and take advantage of the benefits FusionAuth brings to the table. We appreciate the recognition of our efforts.
+
+<!--more-->
 
 Since launch, [FusionAuth](/) has been [repeatedly recognized](/blog/2019/02/25/fusionauth-reviews-around-world) as a highly scalable identity management platform that can be tailored to meet the needs of every application. In its [CompareCamp review](http://comparecamp.com/fusionauth-review-pricing-pros-cons-features/ "Jump to CompareCamp site"), FusionAuth is described as comprehensive identity and access management software that offers quick and easy installation and robust control over role-based access and permissions, segmentation, search, and more. From development proof-of-concepts and startup companies to global businesses with millions of users and locations, FusionAuth is built to cover all the bases.
 

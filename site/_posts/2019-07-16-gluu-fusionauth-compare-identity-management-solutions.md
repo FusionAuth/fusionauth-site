@@ -3,11 +3,9 @@ layout: blog-post
 title: Gluu and FusionAuth - Compare Identity Management Solutions
 description: Compare the features and capability of Gluu and FusionAuth Identity Management Solutions
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- comparison
 image: blogs/gluu-fusionauth-comparison-main.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Gluu and FusionAuth are powerful identity management solutions designed to eliminate the costly development and maintenance time required to build an in-house system. While they share some features, they have important differences. Use this information to compare Gluu and FusionAuth and determine which best matches your requirements.

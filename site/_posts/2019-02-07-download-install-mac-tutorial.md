@@ -3,18 +3,15 @@ layout: blog-post
 title: Download and Install FusionAuth - macOS
 description: Download and install FusionAuth on macOS with these easy steps.
 author: Brian Pontarelli
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- FusionAuth
-- code
-- Identity Management
-- tutorial
-- video
 image: blogs/macos-install.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
+
 Designed to save developer time and effort, there are only a few simple steps to download and install FusionAuth in your test or production environment. The following tutorial will explain how to install FusionAuth on your Macbook and be up and running in just a few minutes. This is one aspect that makes FusionAuth unique. Most existing identity technologies have a complex hierarchy of realms, principals, and distinguished names that restricts where they can be installed and requires extensive configuration. FusionAuth will install and run on a wide variety of systems including:
+
 <!--more-->
+
 - Linux - all distributions (64-bit)
 - macOS 10.8 (Mountain Lion) or newer
 - Windows Server 2012 R2 (64-bit) w/ Windows Management Framework 5.0 or newer

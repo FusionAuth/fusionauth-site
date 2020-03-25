@@ -1,14 +1,11 @@
 ---
 layout: blog-post
 title: Keycloak and FusionAuth Comparison
-description: Keycloak and FusionAuth Comparison
-author: Brian Pontarelli
 description: Compare FusionAuth and Keycloak for your identity and access management solution.
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- comparison
+author: Brian Pontarelli
 image: blogs/keycloak-fusionauth-comparison.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Keycloak and FusionAuth are CIAM platforms designed to register, login and manage users in modern applications. They eliminate the risk, costly development and maintenance time required to build an in-house solution. Keycloak and FusionAuth share many features, but also have important differences. Use this information to compare the two and determine which matches your needs.

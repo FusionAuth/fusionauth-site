@@ -3,16 +3,15 @@ layout: blog-post
 title: Easy Integration of FusionAuth and Node.js
 description: Integrating FusionAuth into a Node.js application is straightforward. Just follow these steps and you'll be up and running in no time.
 author: Tom Vilot
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- code
-- nodejs
-- programming
 image: blogs/node-and-fusionauth-example-tiny.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
+
 There are a variety of strategies for authentication in Node.js apps, but none provide the security, features and complete user management that come with FusionAuth. In this tutorial we'll start with a simple Express application and show you how to add FusionAuth to register and authenticate users.
+
 <!--more-->
+
 We'll assume that you are using a unix command-line application like Power Shell on Windows, Terminal on macOS, or a standard terminal on Linux. You will also need **cURL** or some means of creating `GET` and `POST` requests to your localhost. I like REST clients such as [Insomnia](https://insomnia.rest/ "Get Insomnia") or [Postman](https://www.getpostman.com/ "Get Postman"). Let's get coding!
 
 

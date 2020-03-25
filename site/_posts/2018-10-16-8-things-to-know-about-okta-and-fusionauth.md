@@ -1,14 +1,15 @@
 ---
 layout: blog-post
 title: 8 Things to Know About Okta And FusionAuth
-author: Bryan Giese
 description: Compare FusionAuth and Okta for your identity and access management solution.
-categories: blog
+author: Bryan Giese
 image: blogs/okta-and-fusionauth-8-things.png
-excerpt_separator: <!--more-->
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 If you have been paying attention to news in the software industry, you've probably seen more than a few articles about the 'steady growth' and 'expanding market' for identity and access management platforms. This should be no surprise. Every year thousands of new applications for desktop, mobile, IoT and beyond are released to the market, and every one of them needs to register and manage their customers. With so many business opportunities, of course there are a variety of solutions available. Okta and FusionAuth are two popular solutions, although they have different perspectives that make a big difference in what they provide.
+
 <!--more-->
 
 Okta is clearly a massive organization backed with over a quarter of a billion in investor funding. They have a complex cloud-based solution that has connections, sockets, and integrations for thousands of other systems. This is worth the money for entrenched, slow-moving companies with multiple levels of legacy infrastructure to coordinate. FusionAuth takes a different approach providing a streamlined platform that is designed to scale up as needed without adding in unnecessary overhead. This contrast in perspective explains the differences between Okta and FusionAuth, although they do have many features in common.

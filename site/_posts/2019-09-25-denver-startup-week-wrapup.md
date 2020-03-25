@@ -3,10 +3,9 @@ layout: blog-post
 title: Denver Startup Week Wrap Up
 description: Denver Startup Week is the largest free startup event anywhere. Get details on the 2019 events.
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
 image: blogs/denver-startup-week.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 [Denver Startup Week](https://www.denverstartupweek.com) is the largest free startup event on the planet, attracting more attention and growing larger every year. This year was no exception with a record 20,000+ people participating in more than 350 sessions hosted in venues and offices across the city. It's clear that Denver has assembled a powerful mix of tech expertise, entrepreneurs, and funding channels into a fertile incubator for innovative startups.  

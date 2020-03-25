@@ -3,20 +3,15 @@ layout: blog-post
 title: Is FusionAuth GDPR Compliant?
 description: FusionAuth is one of the few GDPR compliant identity and authentication solutions available.
 author: Brian Pontarelli
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- FusionAuth
-- CIAM
-- white paper
-- resources
-- identity
-- gdpr
 image: blogs/gdpr-is-fusionauth-gdpr-compliant.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
+
 It's been about a year since the [General Data Protection Regulation (GDPR)](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=uriserv:OJ.L_.2016.119.01.0001.01.ENG&toc=OJ:L:2016:119:FULL "Jump to GDPR site") became fully enforceable. Are you compliant yet? We started making FusionAuth GDPR compliant as soon as the regulation was adopted, although to be honest, there wasn't a lot we needed to do. We fully agree with these regulations and feel they provide effective guidelines that any application should follow with their users' personal data. If you are trying to catch up with the GDPR news, [read our Developer's Guide to the GDPR here](/learn/expert-advice/ciam/developers-guide-to-gdpr "Get the Developer's Guide to the GDPR") and you'll have a good idea of what you should be aware of. Our developers have been working with these concepts for years now, so it was exciting to see our caution around user data validated.
 
 <!--more-->
+
 ## Why Is FusionAuth GDPR Compliant?
 
 It's simple. We understand that Customer Identity and Access Management (CIAM) is a necessary component, but it's not the core value of your application. It's much like the front door to a brick and mortar store. It doesn't make money, but if it's weak and insecure it increases your risk of losing everything you've built. You don't build the locks for your front door, so why ask your team to focus on user management? [FusionAuth](/ "FusionAuth Home") is designed to allow your team to focus on developing your application's core value proposition, not building and maintaining a user access management system.

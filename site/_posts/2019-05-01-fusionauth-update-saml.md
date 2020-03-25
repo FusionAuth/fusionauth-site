@@ -3,11 +3,9 @@ layout: blog-post
 title: FusionAuth 1.6 Adds SAML Support and More
 description: FusionAuth 1.6 adds SAML support, Lambdas and much more in this new release. Download and upgrade now!
 author: Daniel DeGroff
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- release notes
 image: blogs/fusionauth-1-6-saml-lambda.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 If you haven't seen it [on Github](https://github.com/FusionAuth/fusionauth-issues/issues/ "Jump to Github") yet, we are always taking feedback and suggestions on what our clients need from FusionAuth. This week we are releasing Version 1.6 and are stoked to deliver it to you. We've added a few new features and made some minor fixes for issues discovered by our community of users on [Stackoverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and Github. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes#version-1-6-0) for the full details.

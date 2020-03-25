@@ -3,11 +3,14 @@ layout: blog-post
 title:  Download File Counts from Google Cloud Storage
 description: Getting download file counts from Google Cloud Storage using access logs and a Ruby script
 author: Brian Pontarelli
-categories: blog
 image: blogs/download-count.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Watching real-time Google Analytics is fun but it wasn't telling us how many people are downloading FusionAuth. Since we are using download count to measure if people are finding FusionAuth and the website is making it easy for them to download and play around with it, I wanted to display our download count on the dashboard we have in the office.
+
+<!--more-->
 
 We are storing the FusionAuth downloads in Google Cloud Storage currently and Google doesn't have a simple way retrieve a file's download count. Even if they had this, it might not be accessible from an API that would hook up to [https://cyfe.com](https://cyfe.com) (the system we are using for our dashboard). No problem! I'll just write a little script that downloads the Google Cloud Storage access logs and then extracts the download count.
 

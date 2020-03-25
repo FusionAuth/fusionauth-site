@@ -3,12 +3,9 @@ layout: blog-post
 title: Introduction to Login and Authentication Workflows
 description: Introduction to application types, login and authentication workflows. Start here to learn how to architect and design an effective authentication system.
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- FusionAuth
-- authentication workflows
 image: blogs/types-logins-authentication-workflows.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 So you are building an application and you need login and authentication for your users. No problem! Just build a form so the user can submit a username and password and you are good to go, right? We all wish it was this simple. The fact is, there are many different application types and as many different types of authentication methods. Which is best?

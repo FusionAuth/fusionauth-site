@@ -3,19 +3,17 @@ layout: blog-post
 title: Getting Started with Email Templates in FusionAuth
 description: Emails should represent your brand, and FusionAuth's email templates help you do that with ease.
 author: Brian Pontarelli
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- FusionAuth
-- tutorial
-- video
-- setup
 image: blogs/email-templates.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 The email templates in FusionAuth can be customized allowing you to present a consistent brand across all customer touch points. In this post, we show you how to set up the email templates to be ready to use FusionAuth's integrated email features.
+
 <!--more-->
+
 FusionAuth deploys with three templates to support standard workflows.
+
 - Forgot Password
 - Setup Password
 - Verify Email

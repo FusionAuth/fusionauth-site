@@ -1,14 +1,15 @@
 ---
 layout: blog-post
 title: Active Directory and FusionAuth CIAM Comparison
-author: Bryan Giese
 description: Compare FusionAuth and Active Directory for your identity and access management solution.
-categories: blog
+author: Bryan Giese
 image: blogs/active-directory-and-fusionauth-comparison.jpg
-excerpt_separator: <!--more-->
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Active Directory and FusionAuth CIAM often come up together in conversations about identity solutions for modern web-enabled applications. While they fall under the umbrella of "identity management solutions," the truth is that Active Directory and FusionAuth have a substantially different set of features. Active Directory was originally developed for centralized domain management within Windows networks with hundreds of users. Over time they layered additional identity-focused services on the core hierarchical structure.
+
 <!--more-->
 
 In contrast, FusionAuth was designed from day-one as a user management solution for applications with thousands to millions of customers. This shift in focus is a significant difference between an Identity & Access Management (IAM) solution and a Customer Identity & Access Management (CIAM) solution.

@@ -1,15 +1,17 @@
 ---
 layout: blog-post
 title: Amazon Cognito and FusionAuth Comparison
-author: Bryan Giese
 description: Compare FusionAuth and Amazon Cognito for your identity and access management solution.
-categories: blog
+author: Bryan Giese
 image: blogs/amazon-cognito-and-fusionauth-comparison.jpg
-excerpt_separator: <!--more-->
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Identity management is a hot topic lately—stories about cyber breaches, industrial-scale data mining and the EU's GDPR all connect back to a company's identity system eventually. Too often those stories gloss over that fact that many of these data protection failures were avoidable if companies implemented more effective customer identity and access management (CIAM) solutions. Two popular solutions, Amazon Cognito and FusionAuth approach the problem from different perspectives.
+
 <!--more-->
+
 Cognito is part of the Amazon Web Services family and provides a registration and login tool that connects your user data to the wider Amazon data processing and advertising network. FusionAuth takes a different approach with a full-service platform that gives you control of your own users and data. This contrast in perspective explains many of the differences between Amazon Cognito and FusionAuth.
 
 ## What Cognito and FusionAuth Have In Common

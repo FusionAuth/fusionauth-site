@@ -3,22 +3,18 @@ layout: blog-post
 title: Using Webhooks In FusionAuth To Delete User Data
 description: Use FusionAuth's webhooks to ensure that you can delete all a user's data when they request it. GDPR compliance has never been easier.
 author: John Philips
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- API
-- FusionAuth
-- user data
-- Identity Management
-- CIAM
-- tutorial
 image: blogs/using-webhooks-in-fusionauth.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 If your inbox looks anything like mine, you've seen hundreds of messages from companies updating their privacy policies and terms of service. This is mainly due to the European Union's [General Data Protection Regulation](/learn/expert-advice/ciam/developers-guide-to-gdpr "Download the Developer's Guide to the GDPR") or GDPR, which went into effect on May 25, 2018. The GDPR grants a set of "digital rights" to EU citizens, including a "right to erasure." Basically, this means a user can request that their data be deleted, and there can be substantial fines if a company is not able to honor these requests.
 
-In this post, we'll show how to set up webhooks in FusionAuth to delete all of a user's data when they delete their account. In FusionAuth, webhooks are used to subscribe or listen to events in the system, so we'll create a webhook that listens to the `user.delete` event.
 <!--more-->
+
+In this post, we'll show how to set up webhooks in FusionAuth to delete all of a user's data when they delete their account. In FusionAuth, webhooks are used to subscribe or listen to events in the system, so we'll create a webhook that listens to the `user.delete` event.
+
+
 ## What is a Webhook?
 
 In case you are not familiar with webhooks in FusionAuth and other platforms, they are an effective component of interactive user experiences on websites and applications. In the most basic terms, webhooks are simple event notifications that send a message to the application that something happened. Upon receiving that message, the application can react. It may trigger a change in the user's interface, or it can initiate more complex processes within the application. The options are endless and developers are taking advantage of this technique to make more engaging experiences. For more information, there's a useful [introduction to webhooks here](https://webhooks.pbworks.com/w/page/13385124/FrontPage "Learn more about Webhooks").

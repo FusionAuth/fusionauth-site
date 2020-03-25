@@ -3,17 +3,13 @@ layout: blog-post
 title: Building the FusionAuth Homebrew Formula
 description: FusionAuth easily installs through Homebrew. Here's how we built the Homebrew formula.
 author: Tyler Scott
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- FusionAuth
-- code
-- brew
-- homebrew
 image: blogs/homebrew-install.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Do you want to install FusionAuth but want to use Homebrew instead of Docker or using a boring zip file? No problem. Our goal is to be the fastest and easiest authentication platform to deploy, wherever and whenever you want. We have a Homebrew formula that will get you up and running in minutes. In this post I'll show you how it works and provide details on how we pulled it together.
+
 <!--more-->
 
 ## Installing Via Brew

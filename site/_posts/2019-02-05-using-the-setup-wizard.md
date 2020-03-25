@@ -3,23 +3,22 @@ layout: blog-post
 title: Using the FusionAuth Setup Wizard
 description: The FusionAuth Setup Wizard makes setting up FusionAuth a simple step-by-step process.
 author: Brian Pontarelli
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- Login
-- FusionAuth
-- tutorial
-- video
 image: blogs/setup-wizard-create-admin.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
+
 The FusionAuth Setup Wizard is designed to make setting up FusionAuth a simple process so you can get back to working on the core features of your application. The step-by-step process only takes a few minutes to prepare FusionAuth to integrate with your application. The basic steps are:
+
+<!--more-->
+
 - Creating the initial admin user
 - Creating an application
 - Creating an API key
 - Configuring the SMTP server
 
 Once these are complete, you are able to call the API and start managing users.
-<!--more-->
+
 To use the FusionAuth Setup Wizard, you will need to access the FusionAuth backend. If FusionAuth is hosting your instance in our private cloud, the URL will been provided to you already. If you have installed FusionAuth on your own system, you will need to know the IP address or hostname where it has been installed. For example, to access FusionAuth on localhost, you would use the following URL `\http://localhost:9011`.
 
 ## The FusionAuth Setup Wizard: Create an Admin User

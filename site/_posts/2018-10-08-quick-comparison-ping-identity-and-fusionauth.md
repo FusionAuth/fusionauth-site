@@ -1,14 +1,15 @@
 ---
 layout: blog-post
 title: A Quick Comparison Of Ping Identity And FusionAuth
-author: Bryan Giese
 description: Compare FusionAuth and Ping Identity for your identity and access management solution.
-categories: blog
+author: Bryan Giese
 image: blogs/ping-identity-and-fusionauth-comparison.jpg
-excerpt_separator: <!--more-->
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Ping Identity and FusionAuth are two customer identity and access management solutions that have received a lot of attention recently. They share many features, but since they are designed to solve different challenges, they have important differences. Use this information to compare the two solutions and determine which has the features that match your company's needs.
+
 <!--more-->
 
 ## What Ping Identity and FusionAuth Have In Common

@@ -3,11 +3,13 @@ layout: blog-post
 title: New Feature - Social Login for Facebook, Google, Twitter & More
 description: It's easy to enable social logins like Facebook, Google, Twitter and OpenID Connect with FusionAuth.
 author: Bryan Giese
-categories: blog
 image: blogs/identity-providers-screen.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 You need social? We got social. Our newest update to FusionAuth makes it simple to enable social logins like Facebook, Twitter, and Google for all your applications. You can also connect and configure any generic OpenID Connect-based identity providers with simple configuration steps. On successful registration, we call the provider API to retrieve and store user information so you have an up-to-date user record.
+
 <!--more-->
 
 {% include _image.html src="/assets/img/blogs/social-login-signin-screen.png" alt="Social Login Screen" class="float-left img-thumbnail mr-md-4" style="max-width: 200px;" figure=false %}

@@ -3,17 +3,15 @@ layout: blog-post
 title: Got Users? How About 100 Million of Them?
 description: FusionAuth can handle hundreds of millions of users easily, because you might need to.
 author: Daniel DeGroff
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- user registration
-- load test
-- Fortnite
 image: blogs/got-users.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
+
 ## FusionAuth User Registration Hits 100,000,000 in Load Test
 
 Did you know that each time you log into Facebook, check your email or fire up Fortnite, a software engineer has thought about user registration and authentication. Hopefully she has thought a lot about it. For example, what happens if Call of Duty goes offline for maintenance and then six million users try to log back in at the same time? It could take days for users to get back online if peak loads aren't planned for.
+
 <!--more-->
 
 Over the past ten years we've been building a real time text filter called CleanSpeak. CleanSpeak filters billions of messages in any given month. With this experience, when we started developing FusionAuth we spent a lot of time thinking about scale and performance.

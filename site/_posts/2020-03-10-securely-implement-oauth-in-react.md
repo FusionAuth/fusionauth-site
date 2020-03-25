@@ -2,15 +2,15 @@
 layout: blog-post
 title: How to Securely Implement OAuth in React
 description: This post describes how to securely implement OAuth in a React application using the Authorization Code Grant (with FusionAuth as the IdP).
-header_dark: false
+author: Matt Boisseau
+excerpt_separator: "<!--more-->"
 image: blogs/oauth-react-fusionauth.png
 category: blog
-author: Matt Boisseau
-date: 2020-03-10
-dateModified: 2020-03-10
 ---
 
 In this post, we'll walk step-by-step through implementing the OAuth Authorization Code Grant in a React app. This is the most secure way to implement OAuth and often overlooked for single-page applications that use technologies like React. We'll use FusionAuth as the IdP and also show you how to configure FusionAuth for this workflow. 
+
+<!--more-->
 
 Our app will be able to:
 

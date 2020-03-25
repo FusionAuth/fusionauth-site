@@ -3,13 +3,13 @@ layout: blog-post
 title: FusionAuth Reviews from Around the World
 description: One-way hashing for passwords is the standard mechanism used to protect your user's passwords. Let's take a look at how it works and some new ideas to improve it.
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
 image: blogs/fit-small-business-map2.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 It's been only a few months since we launched FusionAuth and the reviews are coming in from all over. So far, developers are loving it! What's not to love? We designed FusionAuth to deploy in seconds, integrate with any codebase, and run anywhere on any platform.
+
 <!--more-->
 
 While we knew we built a solution developers needed, we didn't expect to cover so much of the planet so quickly. Since September 1 we have had over 40,000 downloads from companies and developers on six continents and in almost every timezone. Take a look at this map of where FusionAuth is being used.

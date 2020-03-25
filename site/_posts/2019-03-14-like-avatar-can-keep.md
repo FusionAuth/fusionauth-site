@@ -3,18 +3,13 @@ layout: blog-post
 title: Like your avatar? You can keep it.
 description: FusionAuth can take advantage of your existing Gravatar account. No problem.
 author: Daniel DeGroff
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- code
-- gravatar
-- java
-- avatar
-- programming
 image: blogs/keep-avatar.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
-Did you know that you can now bring your avatar with you when you log into FusionAuth?
-[Gravatar](https://en.gravatar.com/ "Jump to Gravatar site") provides users with a globally recognized avatar. If you already have a Gravatar account then you don't need to do anything else, we've taken care of everything. For those without a Gravatar account you'll still see a randomly generated Gravatar. Everyone wins.
+
+Did you know that you can now bring your avatar with you when you log into FusionAuth? [Gravatar](https://en.gravatar.com/ "Jump to Gravatar site") provides users with a globally recognized avatar. If you already have a Gravatar account then you don't need to do anything else, we've taken care of everything. For those without a Gravatar account you'll still see a randomly generated Gravatar. Everyone wins.
+
 <!--more-->
 
 Gravatar simply allow you to take your avatar everywhere you go. You create an account, register one or more email addresses and everywhere you use that email address that also supports Gravatar-boom, your avatar shows up.

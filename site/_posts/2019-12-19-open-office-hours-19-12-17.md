@@ -3,10 +3,9 @@ layout: blog-post
 title: Open Office Hours To Ask Anything About Identity, Authorization, and Authentication
 description: Every month, ask the FusionAuth experts anything about identity, authorization, and authentication.
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
 image: blogs/open-office-webinar-01.png
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 On December 17th we had the first of what will be many Open Office Hours here at FusionAuth and we are damn happy with how it went. The first time out of the gate for anything always brings risks of glitches but everything went down as smooth as a fine whiskey. Check out the video and summary below to see and hear for yourself.

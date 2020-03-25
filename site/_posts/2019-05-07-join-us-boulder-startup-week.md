@@ -3,15 +3,14 @@ layout: blog-post
 title: Join us for Boulder Startup Week
 description: Boulder Startup Week is one of the best events for developers, founders, startups and VC entrepreneurs. Join us!
 author: Bryan Giese
-excerpt_separator: "<!--more-->"
-categories: blog
-tags:
-- events
 image: blogs/boulder-startup-week.jpg
+category: blog
+excerpt_separator: "<!--more-->"
 ---
 
 Do you have the incredible skills to start your own business and be successful? The heros at [Boulder Startup Week](https://boulderstartupweek.com/ "Jump to Boulder Startup Week site") (BSW) can show you how you can do it without becoming a green rage monster in the process. This year BSW—the original startup week event—is celebrating ten years of bringing together the marvels of the technology, business and entrepreneur communities. FusionAuth is proud to be one of the many presenters, volunteers and sponsors that bring this event to life. <!--more-->We'll be sharing what we've learned about startups and tech challenges, and even giving attendees a chance to win a Nintendo Switch prize bundle! We hope to see you there. Here are some of the places we'll be:
 
+<!--more-->
 
 ## Monday's DevTools Session
 We start off the week on a panel of distinguished developers discussing how to launch, scale and manage custom developer tools. Join us and representatives of CircleCI, HashiCorp, Workday, Backstop, and Drud Technology to learn about the possibilities and pitfalls of building tools that developers need to succeed.  We'll even buy you lunch! [Get all the details here](https://sched.co/NNY7).
