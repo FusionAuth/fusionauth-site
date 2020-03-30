@@ -34,15 +34,16 @@ tell application theApp
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
 ```
+
 ## Screenshot Standards
 
-- use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
-- crop top/bottom if necessary (don't crop sides)
-- highlight sections using image preview editor
-	- highlights should be red rectangle with line weight 5
-- to size and compress images without losing too much quality, follow these steps:
-	1. resize to width of 1600 in Preview.app
-	2. use https://tinypng.com/ to compress the image
+- Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
+- Crop top/bottom if necessary (don't crop sides)
+- Highlight sections using image preview editor
+	- Highlights should be red rectangle with line weight 5
+- To size and compress images without losing too much quality, follow these steps:
+	1. Resize to width of 1600 in Preview.app
+	2. Use https://tinypng.com/ to compress the image
 
 Converting terminalizer gifs to videos
 ----
