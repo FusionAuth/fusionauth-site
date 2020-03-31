@@ -559,7 +559,7 @@ Finally, add a login link to `src/app/home/home.component.html`. Replace the exi
 
 ```html
 <div *ngIf="user['email'] != null">
-  Hello {{user['email']}}
+  Hello {{ "{{user['email']" }}}}
 </div>
 <div *ngIf="user['email'] == null">
   <a href='http://localhost:3000/login'>Log me in</a>
@@ -627,7 +627,7 @@ Let's change the Angular application and add a link to allow a user to sign out.
 ```html
 ...
 <div *ngIf="user['email'] != null">
-  Hello {{user['email']}}
+  Hello {{ "{{user['email']" }}}}
 <br/><a href='http://localhost:3000/logout'>Log me out</a>
 </div>
 ...
@@ -849,7 +849,7 @@ Now let's look at the html component:
     <h2>You submitted the following:</h2>
     <div>
       <div>User Data</div>
-      <div>{{ model.userdata }}</div>
+      <div>{{ "{{model.userdata" }}}}</div>
     </div>
     <br>
     <button (click)="submitted=false">Edit</button>
@@ -863,9 +863,9 @@ Finally, let's add this into our home component, updating the div we display for
 
 ```html
 <div *ngIf="user['email'] != null">
-  Hello {{user['email']}}
+  Hello {{ "{{user['email']" }}}}
   <br/>
-  <app-user-data-form userdata='{{user["registration"]["data"]["userData"]}}'></app-user-data-form>
+  <app-user-data-form userdata="{{ "{{user['registration']['data']['userData']" }}}}"></app-user-data-form>
   <br/>
   <a href='http://localhost:3000/logout'>Log me out</a>
 </div>
