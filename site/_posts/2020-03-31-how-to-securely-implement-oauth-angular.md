@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-In this post, we'll walk through setting up an Angular app to securely authenticate with an OAuth2 server. We'll use a proxy server between the Angular application and the OAuth server, in order to use the authorization code grant (rather than the insecure implicit grant). 
+In this post, we'll walk through setting up an Angular app to securely authenticate with an OAuth2 server. We'll use a proxy server between the Angular application and the OAuth server, in order to use the authorization code grant (rather than the [insecure implicit grant](https://medium.com/oauth-2/why-you-should-stop-using-the-oauth-implicit-grant-2436ced1c926)). 
 
 <!--more-->
 
@@ -24,7 +24,7 @@ You need to have the following software installed before you begin:
 - node 12.x (other versions of Node may work, but have not been tested)
 - npm (comes with recent versions of node)
 
-You'll also want to make sure your system meets the memory, storage and CPU requirements for FusionAuth.
+You'll also want to make sure your system meets the [memory, storage and CPU requirements](https://fusionauth.io/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
 
 ## Architecture
 This application has three main components. All of these will run locally.
@@ -47,7 +47,7 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-Check out the Download FusionAuth page for other installation options (rpm, deb, etc) if you don't have Docker installed.
+Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options (rpm, deb, etc) if you don't have Docker installed.
 
 After you sign in as a FusionAuth administrator, create a new application. I named mine 'Secure Angular', and will refer to this throughout the tutorial.
 
@@ -90,7 +90,7 @@ $ npm install -g @angular/cli
 
 At the time of writing, that command installs Angular 9.0.6.
 
-Create an Angular application. (However, if you want to grab all the tutorial code at once rather than step through it, clone the GitHub repository.)
+Create an Angular application. (However, if you want to grab all the tutorial code at once rather than step through it, clone [the GitHub repository](https://github.com/FusionAuth/fusionauth-example-angular).)
 
 ```shell
 $ ng new secure-angular
@@ -316,7 +316,7 @@ module.exports = {
 };
 ```
 
-We'll continue to add to this config.js file as we build out the complete application. Anything that will vary between environments (for example, development, staging, and production) should be put in this file. Note that while config.js is checked into the example application code repository, for any production grade application, this file contains secrets and should not be in version control. 
+We'll continue to add to this config.js file as we build out the complete application. Anything that will vary between environments (for example, development, staging, and production) should be put in this file. Note that while config.js is checked into the [example application code repository](https://github.com/FusionAuth/fusionauth-example-angular), for any production grade application, this file contains secrets and should not be in version control. 
 
 Next create an index.js file in the server directory:
 
@@ -339,7 +339,7 @@ app.use('/user', require('./routes/user'));
 app.listen(config.serverPort, () => console.log(`FusionAuth example app listening on port ${config.serverPort}.`));
 ```
 
-We're using the cors middleware so that our Angular application will have permission to access this server from the browser without any cross domain issues. We also set up one route: `/user`
+We're using the [cors middleware](https://www.npmjs.com/package/cors) so that our Angular application will have permission to access this server from the browser without any cross domain issues. We also set up one route: `/user`
 
 We need to create a file at server/routes/user.js to service that route.
 
@@ -380,7 +380,7 @@ Now, let's add the ability to authenticate against the FusionAuth identity serve
 
 The first thing we want to do is provide a link to sign in. We're going to proxy through the express server in order to keep our architecture clean. Then we'll show the sign in link only to users who are not signed in. Once a user is, we'll display their email address.
 
-Note that we send the user directly to FusionAuth to sign in. We could have instead built the screen in the express server, but FusionAuth allows you to style your login page however you'd like. In addition, if you build the login page in express, you technically would not be following the OAuth2 flow.
+Note that we send the user directly to FusionAuth to sign in. We could have instead built the screen in the express server, but FusionAuth allows you to [style your login page](https://fusionauth.io/docs/v1/tech/themes/) however you'd like. In addition, if you build the login page in express, you technically would not be following the OAuth2 flow.
 
 FusionAuth also needs to know where to send the user after successful authentication, so let's add that to our config.js. Let's also add the application ID, client ID and other OAuth secrets that we saved off in a text file when we configured our FusionAuth API:
 
@@ -404,7 +404,7 @@ module.exports = {
 
 Except for the ports and the `redirectURI`, your values should be different for all the keys.
 
-We need to enable sessions for the express server because that is where we'll capture the access_token after authentication. We'll then use that for any interaction with protected resources and to identify the user.
+We need to enable [sessions](https://www.npmjs.com/package/express-session) for the express server because that is where we'll capture the access_token after authentication. We'll then use that for any interaction with protected resources and to identify the user.
 
 Add the following lines to your `index.js`, anywhere before the routes definition:
 
@@ -547,7 +547,7 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-If we have a token, we'll get user information, including their email address, via the userinfo endpoint. We'll also retrieve more information from the registration endpoint and return both to our Angular application. If all we want is the data available from the userinfo endpoint, we don't need to make that second API call.
+If we have a token, we'll get user information, including their email address, via the userinfo endpoint. We'll also retrieve more information from the registration endpoint and return both to our Angular application. If all we want is the data available from the [userinfo endpoint](https://fusionauth.io/docs/v1/tech/oauth/endpoints#userinfo), we don't need to make that second API call.
 
 Restart your express server by going to the terminal where it is running, hitting control-C and then running
 
@@ -616,7 +616,7 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-This route destroys the express session and then sends the user to FusionAuth to a crafted URL which invalidates the session via the logout endpoint. Again, restart your express server by going to the terminal where it is running, hitting control-C and then running
+This route destroys the express session and then sends the user to FusionAuth to a crafted URL which invalidates the session via the [logout endpoint](https://fusionauth.io/docs/v1/tech/oauth/endpoints#logout). Again, restart your express server by going to the terminal where it is running, hitting control-C and then running
 
 ```shell
 $ npm run server
@@ -711,7 +711,7 @@ $ npm run server
 
 Now, let's create a separate Angular component to allow the user to update their data and call this express endpoint. 
 
-Since we're going to be working with forms, update our `src/app/app.module.ts` file to add the needed supporting modules. We'll be using template driven forms for this tutorial. Add 
+Since we're going to be working with forms, update our `src/app/app.module.ts` file to add the needed supporting modules. We'll be using [template driven forms](https://angular.io/guide/forms#template-driven-forms) for this tutorial. Add 
 
 ```typescript
 import { FormsModule }   from '@angular/forms'; 
@@ -825,9 +825,9 @@ export class UserDataFormComponent {
 }
 ```
 
-We inject the `userDataService` into this code so we can make service calls. We have a submitted member variable that we'll use in our html to either show an input field or display read only data. We must call `subscribe()` when we `POST`ing to our service, otherwise the HTTP call won't be made. 
+We inject the `userDataService` into this code so we can make service calls. We have a submitted member variable that we'll use in our html to either show an input field or display read only data. We [must call `subscribe()`](https://angular.io/guide/http#always-subscribe) when we `POST`ing to our service, otherwise the HTTP call won't be made. 
 
-The userdata field can be set from outside the component, which is why it has a `@Input` decorator. We set it because the parent component is already retrieving the data (from the `/user` endpoint) so we'll want that to be the default value displayed (the 'user data' default string is there just in case the network call fails).
+The userdata field can be set from outside the component, which is why it has a [`@Input` decorator](https://angular.io/api/core/Input). We set it because the parent component is already retrieving the data (from the `/user` endpoint) so we'll want that to be the default value displayed (the 'user data' default string is there just in case the network call fails).
 
 Now let's look at the html component:
 
@@ -900,6 +900,6 @@ Congratulations! You now have a working Angular application which uses OAuth2 to
 
 To take it further, consider these enhancements:
 - Validate the user's input when they are adding in user data. Perhaps you want to make sure they add no more than 200 characters?
-- Set up express to store the sessions across server restarts so you don't have to login every time a new release is deployed. (Hint, use a different store).
+- Set up express to store the sessions across server restarts so you don't have to login every time a new release is deployed. (Hint, [use a different store](https://www.npmjs.com/package/express-session#compatible-session-stores)).
 - Move the sensitive values from `config.js` to environment variables.
 
