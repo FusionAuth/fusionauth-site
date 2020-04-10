@@ -8,19 +8,21 @@ description: Learn how to write and manage email templates
 
 == Overview
 
-Email templates are utilized by FusionAuth to send a Forgot Password request, and other built in workflows. You may also create your own
-email templates and send them to Users via the link:../apis/emails#send-an-email[Send Email] API.
+FusionAuth will use email templates to send a Forgot Password request, and other built in workflows. You may also create your own
+email templates and send them to Users via the link:/docs/v1/tech/apis/emails#send-an-email[Send Email] API.
 
-== Email Templates
+&nbsp;
 
-FusionAuth ships with three templates to support Forgot Password, Setup Password and Verify Email workflows. You will need to modify these
-templates prior to using them in production.
+* <<Managing Templates>>
+* <<Templates & Replacement Variables>>
 
-Apart from modifying them to be more cosmetically pleasing or to match your brand, you will need to ensure the URL used in the template is
-correct. You will need to ensure the URL is publicly accessible.
+== Managing Templates
 
-When you first log into FusionAuth and navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Email Templates# you
-will see the following seven templates.
+FusionAuth ships with several templates to support Forgot Password, Setup Password, Verify Email and other workflows. You will want to modify these templates prior to using them in production.
+
+Apart from modifying them to be more cosmetically pleasing or to match your brand, you will need to ensure the URL used in the template is correct. You will need to ensure the URL is publicly accessible.
+
+When you first log into FusionAuth and navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Email Templates# you will see the following templates.
 
 image::stock-email-templates.png[Stock Email Templates,width=1200,role=shadowed]
 
@@ -30,24 +32,20 @@ image::stock-verify-email-template.png[Stock Verify Email Template,width=1200,ro
 
 At a minimum, you will need to update this URL to a publicly accessible URL that can reach FusionAuth.
 
-If you will be handling Email Verification yourself, you will need to update this URL to be that of your own. You will notice the one
-replacement variable in this template named `${verificationId}`. See the Replacement Variables section below for additional detail, but these
-variables will be replaced when the template is rendered.
+If you will be handling Email Verification yourself, you will need to update this URL to be that of your own. You will notice the one replacement variable in this template named `${verificationId}`. See the Replacement Variables section below for additional detail, but these variables will be replaced when the template is rendered.
 
 [cols="3a,7a"]
 [.api]
 .Base Information
 |===
 |Id
-|The unique Id of the email template. The template Id may not be changed and will be used to interact with the template when using the
-Email APIs.
+|The unique Id of the email template. The template Id may not be changed and will be used to interact with the template when using the Email APIs.
 
 |Name [required]#Required#
 |The name of the template. This value is for display purposes only and can be changed at any time.
 
 |Default Subject [required]#Required#
-|The default subject of the email. The default value will be used unless a localized version is found to be a better match based upon
-the User's preferred locales.
+|The default subject of the email. The default value will be used unless a localized version is found to be a better match based upon the User's preferred locales.
 
 This field supports replacement variables.
 
@@ -55,8 +53,7 @@ This field supports replacement variables.
 |The from email address used to send this template.
 
 |Default from Name [optional]#Optional#
-|The default from name of the email. The default value will be used unless a localized version is found to be a better match based upon
-the User's preferred locales.
+|The default from name of the email. The default value will be used unless a localized version is found to be a better match based upon the User's preferred locales.
 
 This field supports replacement variables.
 
@@ -65,16 +62,11 @@ This field supports replacement variables.
 
 == Templates & Replacement Variables
 
-The email template body, subject and from name fields support replacement variables. This means place holders can be inserted and the value
-will be calculated at the time the email template is rendered and sent to a user.
+The email template body, subject and from name fields support replacement variables. This means place holders can be inserted and the value will be calculated at the time the email template is rendered and sent to a user.
 
-Each template will contain the User object as returned on the Retrieve User API. This means you can utilize any value found on the User object
-such as email, first name, last name, etc.
+Most template will contain the User object as returned on the Retrieve User API. This means you can utilize any value found on the User object such as email, first name, last name, etc.
 
-In addition to the User object, the templates used for Email Verification, Forgot Password and Setup Password will also contain an identifier
-that will be used to complete the request.
-
-Below you will find each stock template that FusionAuth ships for reference.
+Below you will find each stock template that FusionAuth ships for reference. The available replacement values will be outlined below for each template.
 
 * <<Breached Password>>
 * <<Change Password>>
@@ -96,7 +88,8 @@ Below you will find each stock template that FusionAuth ships for reference.
 == Breached Password
 
 .HTML
-```text
+[source,text]
+----
 <p>This password was found in the list of vulnerable passwords, and is no longer secure.</p>
 
 <p>In order to secure your account, it is recommended to change your password at your earliest convenience.</p>
@@ -108,10 +101,11 @@ Below you will find each stock template that FusionAuth ships for reference.
 </a>
 
 - FusionAuth Admin
-```
+----
 
 .Text
-```text
+[source,text]
+----
 This password was found in the list of vulnerable passwords, and is no longer secure.
 
 In order to secure your account, it is recommended to change your password at your earliest convenience.
@@ -121,14 +115,22 @@ Follow this link to change your password.
 http://localhost:9011/password/forgot?email=${user.email}&tenantId=${user.tenantId}
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
 .Replacement variables
 |===
-| breachResult
-|
+| breachResult.loginIds
+| The breach result matching loginIds. This is an array of zero or more email addresses or usernames found in the breach result matching this user. A length of zero means only the password was matched.
+
+| breachResult.match
+| The breach result match type determined by the FusionAuth Reactor. Possible values include:
+
+* `ExactMatch` The User's loginId and password were found exactly as entered.
+* `SubAddressMatch` The User's loginId and password were matched, but the email address was a sub-address match. For example `joe+test@example.com` is a sub-address match for `joe@example.com`.
+* `PasswordOnly` Only the password found, the loginId and password combination were not matched.
+* `CommonPassword` The User's password was found to be one of the most commonly known breached passwords.
 
 | user
 | The User object.
@@ -143,7 +145,8 @@ http://localhost:9011/password/forgot?email=${user.email}&tenantId=${user.tenant
 == Change Password
 
 .HTML
-```text
+[source,text]
+----
 [#setting url_escaping_charset="UTF-8"]
 To change your password click on the following link.
 <p>
@@ -154,10 +157,11 @@ To change your password click on the following link.
 </p>
 - FusionAuth Admin
 
-```
+----
 
 .Text
-```text
+[source,text]
+----
 [#setting url_escaping_charset="UTF-8"]
 To change your password click on the following link.
 
@@ -168,14 +172,14 @@ To change your password click on the following link.
 ${url}
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
 .Replacement variables
 |===
 | changePasswordId
-| The Change Password Id intended to be used by the link:../apis/users#verify-a-users-email[Verify Email] API.
+| The Change Password Id intended to be used by the link:/docs/v1/tech/apis/users#verify-a-users-email[Verify Email] API.
 
 | state
 | If the `state` was provided during the Forgot Password request, it will be available to you in the email template.
@@ -193,22 +197,24 @@ ${url}
 == Confirm Child
 
 .HTML
-```text
+[source,text]
+----
 Your child has created an account with us and you need to confirm them before they are added to your family. Click the link below to confirm your child's account.
 <p>
   <a href="http://example.com/family/confirm-child">http://example.com/family/confirm-child</a>
 </p>
 - FusionAuth Admin
-```
+----
 
 .Text
-```text
+[source,text]
+----
 Your child has created an account with us and you need to confirm them before they are added to your family. Click the link below to confirm your child's account.
 
 http://example.com/family/confirm-child
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
@@ -228,22 +234,25 @@ http://example.com/family/confirm-child
 == COPPA Email Plus Notice
 
 .HTML
-```text
+[source,text]
+----
 A while ago, you granted your child consent in our system. This email is a second notice of this consent as required by law and also to remind to that you can revoke this consent at anytime on our website or by clicking the link below:
 <p>
   <a href="http://example.com/consent/manage">http://example.com/consent/manage</a>
 </p>
+
 - FusionAuth Admin
-```
+----
 
 .Text
-```text
+[source,text]
+----
 A while ago, you granted your child consent in our system. This email is a second notice of this consent as required by law and also to remind to that you can revoke this consent at anytime on our website or by clicking the link below:
 
 http://example.com/consent/manage
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
@@ -260,22 +269,24 @@ http://example.com/consent/manage
 == COPPA Notice
 
 .HTML
-```text
+[source,text]
+----
 You recently granted your child consent in our system. This email is to notify you of this consent. If you did not grant this consent or wish to revoke this consent, click the link below:
 <p>
   <a href="http://example.com/consent/manage">http://example.com/consent/manage</a>
 </p>
 - FusionAuth Admin
-```
+----
 
 .Text
-```text
+[source,text]
+----
 You recently granted your child consent in our system. This email is to notify you of this consent. If you did not grant this consent or wish to revoke this consent, click the link below:
 
 http://example.com/consent/manage
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
@@ -292,7 +303,8 @@ http://example.com/consent/manage
 == Email Verification
 
 .HTML
-```text
+[source,text]
+----
 [#if user.verified]
 Pro tip, your email has already been verified, but feel free to complete the verification process to verify your verification of your email address.
 [/#if]
@@ -305,10 +317,11 @@ To complete your email verification click on the following link.
 </p>
 
 - FusionAuth Admin
-```
+----
 
 .Text
-```text
+[source,text]
+----
 [#if user.verified]
 Pro tip, your email has already been verified, but feel free to complete the verification process to verify your verification of your email address.
 [/#if]
@@ -318,7 +331,7 @@ To complete your email verification click on the following link.
 http://localhost:9011/email/verify/${verificationId}?tenantId=${user.tenantId}
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
@@ -328,7 +341,7 @@ http://localhost:9011/email/verify/${verificationId}?tenantId=${user.tenantId}
 | The User object.
 
 | verificationId
-| The verification Id intended to be used by the link:../apis/users#verify-a-users-email[Verify Email] API.
+| The verification Id intended to be used by the link:/docs/v1/tech/apis/users#verify-a-users-email[Verify Email] API.
 |===
 
 // ====================================
@@ -338,21 +351,25 @@ http://localhost:9011/email/verify/${verificationId}?tenantId=${user.tenantId}
 == Parent Registration
 
 .HTML
-```text
+[source,text]
+----
 Your child has created an account with us and needs you to create an account and verify them. You can sign up using the link below:
 <p>
   <a href="http://example.com/family/confirm-child">http://example.com/family/confirm-child</a>
 </p>
 - FusionAuth Admin
-```
+----
 
 .Text
-```text
+[source,text]
+----
 Your child has created an account with us and needs you to create an account and verify them. You can sign up using the link below:
 
 http://example.com/family/confirm-child
 
 - FusionAuth Admin
+----
+
 
 [cols="3a,7a"]
 [.api]
@@ -362,16 +379,15 @@ http://example.com/family/confirm-child
 | The User object.
 |===
 
-
 // ====================================
 // Passwordless Login Templates
 // ====================================
 
-
 == Passwordless Login
 
 .HTML
-```text
+[source,text]
+----
 [#setting url_escaping_charset="UTF-8"]
 You have requested to log into FusionAuth using this email address. If you do not recognize this request please ignore this email.
 <p>
@@ -381,10 +397,13 @@ You have requested to log into FusionAuth using this email address. If you do no
   <a href="${url}">${url}</a>
 </p>
 - FusionAuth Admin
-```
+
+[source]
+----
 
 .Text
-```text
+[source,text]
+----
 [#setting url_escaping_charset="UTF-8"]
 You have requested to log into FusionAuth using this email address. If you do not recognize this request please ignore this email.
 
@@ -395,14 +414,14 @@ You have requested to log into FusionAuth using this email address. If you do no
 ${url}
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
 .Replacement variables
 |===
 | code
-| The verification Id intended to be used by the link:../apis/users#verify-a-users-email[Verify Email] API.
+| The verification Id intended to be used by thelink:/docs/v1/tech/apis/users#verify-a-users-email[Verify Email] API.
 
 | state
 | If the `state` was provided when the Passwordless request was initiated, it will be available to you in the email template.
@@ -420,7 +439,8 @@ ${url}
 == Registration Verification
 
 .HTML
-```text
+[source,text]
+----
 [#if registration.verified]
 Pro tip, your registration has already been verified, but feel free to complete the verification process to verify your verification of your registration.
 [/#if]
@@ -432,10 +452,11 @@ To complete your registration verification click on the following link.
   </a>
 </p>
 - FusionAuth Admin
-```
+----
 
 .Text
-```text
+[source,text]
+----
 [#if registration.verified]
 Pro tip, your registration has already been verified, but feel free to complete the verification process to verify your verification of your registration.
 [/#if]
@@ -445,7 +466,7 @@ To complete your registration verification click on the following link.
 http://localhost:9011/registration/verify/${verificationId}?tenantId=${user.tenantId}
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
@@ -458,7 +479,7 @@ http://localhost:9011/registration/verify/${verificationId}?tenantId=${user.tena
 |
 
 | verificationId
-| The verification Id intended to be used by the link:../apis/users#verify-a-users-email[Verify Email] API.
+| The verification Id intended to be used by the link:/docs/v1/tech/apis/users#verify-a-users-email[Verify Email] API.
 |===
 
 
@@ -470,7 +491,8 @@ http://localhost:9011/registration/verify/${verificationId}?tenantId=${user.tena
 == Setup Password
 
 .HTML
-```text
+[source,text]
+----
 Your account has been created and you must setup a password. Click on the following link to setup your password.
 <p>
   <a href="http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}">
@@ -478,16 +500,17 @@ Your account has been created and you must setup a password. Click on the follow
   </a>
 </p>
 - FusionAuth Admin
-```
+----
 
 .Text
-```text
+[source,text]
+----
 Your account has been created and you must setup a password. Click on the following link to setup your password.
 
 http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}
 
 - FusionAuth Admin
-```
+----
 
 [cols="3a,7a"]
 [.api]
@@ -497,7 +520,7 @@ http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenant
 | The User object.
 
 | changePasswordId
-| The change password Id intended to be used by the link:../apis/users#verify-a-users-email[Verify Email] API.
+| The change password Id intended to be used by the link:/docs/v1/tech/apis/users#verify-a-users-email[Verify Email] API.
 |===
 
 
@@ -548,7 +571,7 @@ https://piedpiper.fusionauth.io/email/verify/YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjo
 
 == Custom Replacement Variables
 
-In addition to the variables mentioned in the previous section, when defining your own email templates to be used by the link:../apis/emails#send-an-email[Send Email] API
+In addition to the variables mentioned in the previous section, when defining your own email templates to be used by the link:/docs/v1/tech/apis/emails#send-an-email[Send Email] API
 custom data may be provided on the API request to be used in the email template.
 
 On Send Email API request the contents of the `requestData` field will be made available to you when the template is rendered.
