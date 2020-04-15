@@ -29,6 +29,55 @@ ES_JAVA_OPTS=-Xms256m -Xmx256m
 FUSIONAUTH_MEMORY=256M
 ```
 
+The following is an example `docker-compose.yml` file configuring FusionAuth using the database for the user search engine:
+```yaml
+version: '3'
+
+services:
+  db:
+    image: postgres:9.6
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - 54320:5432
+    networks:
+      - db
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  fusionauth:
+    image: fusionauth/fusionauth-app:latest
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+      DATABASE_ROOT_USER: ${POSTGRES_USER}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      FUSIONAUTH_MEMORY: ${FUSIONAUTH_MEMORY}
+      FUSIONAUTH_SEARCH_ENGINE_TYPE: database
+      FUSIONAUTH_URL: http://fusionauth:9011
+    networks:
+     - db
+    restart: unless-stopped
+    ports:
+      - 9011:9011
+    volumes:
+      - fa_config:/usr/local/fusionauth/config
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  db_data:
+  fa_config:
+```
+
+The following is an example `docker-compose.yml` file configuring FusionAuth using Elasticsearch for the user search engine:
 ```yaml
 version: '3'
 
@@ -48,10 +97,11 @@ services:
       - db_data:/var/lib/postgresql/data
 
   search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.1
     environment:
       - cluster.name=fusionauth
       - bootstrap.memory_lock=true
+      - discovery.type=single-node
       - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
     ports:
       - 9200:9200
@@ -78,6 +128,7 @@ services:
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       FUSIONAUTH_MEMORY: ${FUSIONAUTH_MEMORY}
+      FUSIONAUTH_SEARCH_ENGINE_TYPE: elasticsearch
       FUSIONAUTH_SEARCH_SERVERS: http://search:9200
       FUSIONAUTH_URL: http://fusionauth:9011
     networks:
@@ -110,9 +161,13 @@ At a minimum, you wil need to either set the `POSTGRES_PASSWORD` environment var
 
 === Search Service
 
-We currently are only supporting Elasticsearch 6.3.1, do not modify the image value. Let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
+We currently support Elasticsearch versions 6.3.x - 7.6.x, do not modify the image value to a version outside of this range. Let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
 
-If you would like to add additional search nodes, simply copy and paste the service section named `search1` and create as many as you'd like naming them `search2`, `search3` for example. Each will require a named volume, you may increment the name of the volume as well, for example `es_data1`, `es_data2`, `es_data3`, etc.
+If you would like to add additional search nodes, simply copy and paste the service section named `search` and create as many as you'd like naming them `search2`, `search3` for example. Each will require a named volume, you may increment the name of the volume as well, for example `es_data1`, `es_data2`, `es_data3`, etc.
+
+////
+TODO - 1.16.0 - In order to configure multiple nodes in v7.6.x, what do we need to modify the `discovery.type` value to, and what do we set `cluster.initial_master_nodes` to?
+////
 
 === FusionAuth Service
 
@@ -121,9 +176,10 @@ All of the environment variables are options, if not provided a default will be 
 
 * `DATABASE_URL`
 * `DATABASE_ROOT_USER`
-* `FUSIONAUTH_SEARCH_SERVERS`
 
-These three variables when configured correctly will allow FusionAuth to silently configure itself and go directly to the setup wizard. If they are omitted, FusionAuth will start up in Maintenance mode and require you to interactively configure the database and search engine.
+If `FUSIONAUTH_SEARCH_ENGINE_TYPE` is set to `elasticsearch` you will also need to provide the `FUSIONAUTH_SEARCH_SERVERS` environment variable in order to bypass maintenance mode.
+
+When configured correctly these variables will allow FusionAuth to silently configure itself and go directly to the setup wizard. If they are omitted, FusionAuth will start up in Maintenance mode and require you to interactively configure the database and search engine.
 
 ==== Configuration
 Review the following environment variables to customize your deployment.
@@ -180,10 +236,18 @@ Setting this environment variable will override the `fusionauth-app.additional-j
 
 Setting this environment variable will override the `fusionauth-app.memory` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
 
-|FUSIONAUTH_SEARCH_SERVERS [optional]#Optional# [default]#defaults to `http://localhost:9021`#
-|A comma separated listed of URLs to connect to one or more search servers.
+|FUSIONAUTH_SEARCH_ENGINE_TYPE [optional]#Optional# [defaults]#defaults to `database`#
+|The search engine type.  Possible values are:
 
-Setting this environment variable will override the `fusionauth-app.search-servers` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
+* `database`
+* `elasticsearch`
+
+Setting this environment variable will override the `fusionauth-app.search-engine-type` property in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
+
+|FUSIONAUTH_SEARCH_SERVERS [optional]#Optional# [default]#defaults to `http://localhost:9021`#
+|A comma separated list of URLs to connect to one or more search servers.
+
+Setting this environment variable will override the `fusionauth-app.search-servers` property in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
 
 |FUSIONAUTH_URL [optional]#Optional# [since]#Available Since 1.4.0#
 |The URL that that can be used to communicate with other FusionAuth nodes. Generally this should be a non-routable URL such as a site local address. If you have more than one FusionAuth nodes running this address would be a backplane site-local address. This value will be automatically set if not configured to a site local address if it exists, or it will fall back to a localhost address. When running in a container based environment such as Docker or Kubernetes, this should be set to allow the container to communicate with other FusionAuth containers.
@@ -195,7 +259,7 @@ Setting this environment variable will override the `fusionauth-app.url` in the 
 
 Elasticsearch has a few runtime requirements that may not be met by default on your host platform. Please review the Elasticsearch Docker production mode guide for more information.
 
-* https://www.elastic.co/guide/en/elasticsearch/reference/6.3/docker.html#docker-cli-run-prod-mode
+* https://www.elastic.co/guide/en/elasticsearch/reference/7.6/docker.html#docker-cli-run-prod-mode
 
 For example if startup is failing and you see the following in the logs, you will need to increase `vm.max_map_count` on your host VM.
 
@@ -211,22 +275,10 @@ For example if startup is failing and you see the following in the logs, you wil
 
 == Docker Images
 
-If you want to build your from our base images, the following Docker images are available.
+If you want to build your own image starting with our base image, the following Docker image is available.
 
 === FusionAuth App
 
 ```
 docker pull fusionauth/fusionauth-app
 ```
-
-=== FusionAuth Search
-The FusionAuth Search image is provided for convenience, you may also choose to use any ElasticSearch container or service running at version 6.3.
-
-```
-docker pull fusionauth/fusionauth-search
-```
-
-
-
-
-
