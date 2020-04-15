@@ -295,6 +295,11 @@ include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
 == Bulk Delete Users
 This API is used to deactivate or delete multiple users in a single request.
 
+[NOTE]
+====
+This API has some limitations when FusionAuth is configured to use the database as the user search engine.  These limitations are noted on the impacted request parameters below.
+====
+
 === Request
 
 [.api-authentication]
@@ -360,8 +365,24 @@ link:authentication#api-key-authentication[icon:lock[role=red]] Permanently Dele
 
 It is necessary to use the [field]#query# parameter when querying against `registrations` in order to achieve expected results, as this field is defined as a link:https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html[nested datatype] in the ElasticSearch mapping.
 
+[note]#Database search engine#
+This parameter is not compatible with the database search engine, it may only be used when Elasticsearch is configured as the user search engine.
+
 |[field]#queryString# [type]#[String]# [optional]#Optional# [since]#Available Since 1.13.0#
 |The Elasticsearch query string that is used to search for Users to be deleted. The [field]#userId#, [field]#query#, and [field]#queryString#  parameters are mutually exclusive, they are listed here in order of precedence.
+
+[note]#Database search engine#
+The Elasticsearch query string DSL is not supported for the database search engine.  Database search limits effective queries to single search terms that may match the following fields on the User:
+
+* `first_name`
+* `last_name`
+* `full_name`
+* `email`
+* `username`
+
+The following is an example bulk delete request with a `queryString` value that is compatible with the database search engine:
+
+``DELETE /api/user/bulk?queryString=jared%40fusionauth.io``
 
 |[field]#userId# [type]#[UUID]# [optional]#Optional#
 |The Id of the User to delete. Repeat this parameter for each user to be deleted. The [field]#userId#, [field]#query#, and [field]#queryString#  parameters are mutually exclusive, they are listed here in order of precedence.
@@ -462,6 +483,11 @@ include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 
 This API is used to search for Users. This API may be called using the `GET` or `POST` HTTP methods, examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will will provide the same search results given the same query parameters.
 
+[NOTE]
+====
+This API has some limitations when FusionAuth is configured to use the database as the user search engine.  These limitations are noted on the impacted request parameters below.
+====
+
 === Request
 
 [.api-authentication]
@@ -513,14 +539,33 @@ Using this parameter will not hit the Elasticsearch index, instead it will cause
 
 It is necessary to use the [field]#search.query# parameter when querying against `registrations` in order to achieve expected results, as this field is defined as a link:https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html[nested datatype] in the ElasticSearch mapping.
 
+[note]#Database search engine#
+This parameter is not compatible with the database search engine, it may only be used when Elasticsearch is configured as the user search engine.
+
 |[field]#queryString# [type]#[String]# [optional]#Optional#
-|The Elasticsearch query string that used to search for Users. Using this parameter is mutually exclusive with the [field]#ids# and [field]#query# fields.
+|The Elasticsearch query string that is used to search for Users. Using this parameter is mutually exclusive with the [field]#ids# and [field]#query# fields.
+
+[note]#Database search engine#
+The Elasticsearch query string DSL is not supported for the database search engine.  Database search limits effective queries to single search terms that may match the following fields on the User:
+
+* `first_name`
+* `last_name`
+* `full_name`
+* `email`
+* `username`
+
+The following is an example search request with a `queryString` value that is compatible with the database search engine:
+
+``GET /api/user/search?queryString=jared%40fusionauth.io``
 
 |[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to 0#
 |The start row within the search results to return. Used for pagination.
 
 |[field]#sortFields# [type]#[Array]# [optional]#Optional#
 |An array of sort fields used to sort the result. The order the sort fields are provided will be maintained in the sorted output.
+
+[note]#Database search engine#
+This parameter has no effect when the database is configured as the user search engine.
 
 |[field]#sortFields``[x]``.missing# [type]#[String]# [optional]#Optional# [default]#defaults to `_last`#
 |The value to substitute if this field is not defined. Two special values may be used:
