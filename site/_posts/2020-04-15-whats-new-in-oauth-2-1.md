@@ -1,12 +1,14 @@
 ---
 layout: blog-post
-title: How to securely implement OAuth in Angular 
+title: What's new in OAuth 2.1?
 description: A detailed overview of securely integrating an Angular application with an OAuth provider using the OAuth Authorization Code Grant  
 author: Dan Moore
 image: blogs/fusionauth-example-angular/oauth-angular-fusionauth.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
+
+asdfsa
 
 In this post, we'll walk through setting up an Angular app to securely authenticate with an OAuth2 server. We'll use a proxy server between the Angular application and the OAuth server, in order to use the authorization code grant (rather than the [insecure implicit grant](https://medium.com/oauth-2/why-you-should-stop-using-the-oauth-implicit-grant-2436ced1c926)). 
 
