@@ -12,7 +12,7 @@ Hey look! OAuth is getting spiffed up a bit. The original OAuth 2.0 specificatio
 
 <!--more-->
 
-This post assumes you are a developer or have other technical experience. It also assumes you are somewhat familiar with OAuth and the terms used in the various RFCs. If you’d like an introduction to OAuth and why you’d consider using it, [Wikipedia is a good place to start](https://en.wikipedia.org/wiki/OAuth). This post discusses proposed changes to OAuth that might affect you if you are using OAuth in your application or if you implement the OAuth specification. 
+This post assumes you are a developer or have similar technical experience. It also assumes you are familiar with OAuth and the terms used in the various RFCs. If you’d like an introduction to OAuth and why you’d consider using it, [Wikipedia is a good place to start](https://en.wikipedia.org/wiki/OAuth). This post discusses proposed changes to OAuth that might affect you if you are using OAuth in your application or if you implement the OAuth specification. 
 
 ## Why OAuth 2.1?
 
@@ -82,7 +82,9 @@ In this case, the only allowed value is `http://localhost:3000/oauth-callback` b
 
 Now, it would sure be convenient to support wildcards in this redirect URI list. At FusionAuth, we hear this request from folks who want to simplify their development or CI environments. Every time a new server is spun up, the redirect URI configuration must be updated to include the new URI. 
 
-For example, if a CI system builds an application for every feature branch, it might have the hostname `dans-sample-application-1551.herokuapp.com`, if the feature branch was a fix for bug #1551. If I wanted to login using the Authorization Code grant, I’d have to update the redirect URI settings for my OAuth server to include that specific redirect URI: `https://dans-sample-application-1551.herokuapp.com/oauth-callback`. And then when the next feature branch build happend, say for bug #1552, I’d have to add `https://dans-sample-application-1552.herokuapp.com/oauth-callback` and so on. Obviously it’d be easier to set the redirect URI to a wildcard value like `https://dans-sample-application-*.herokuapp.com/oauth-callback`; in an ideal world any URL matching that pattern would be acceptable to the OAuth server. Of course, if you are using FusionAuth, you can [update your application configuration as part of the CI build process](https://fusionauth.io/docs/v1/tech/apis/applications#update-an-application) as an alternative. 
+For example, if a CI system builds an application for every feature branch, it might have the hostname `dans-sample-application-1551.herokuapp.com`, if the feature branch was a fix for bug #1551. If I wanted to login using the Authorization Code grant, I’d have to update the redirect URI settings for my OAuth server to include that specific redirect URI: `https://dans-sample-application-1551.herokuapp.com/oauth-callback`. 
+
+And then when the next feature branch build happend, say for bug #1552, I’d have to add `https://dans-sample-application-1552.herokuapp.com/oauth-callback` and so on. Obviously it’d be easier to set the redirect URI to a wildcard value like `https://dans-sample-application-*.herokuapp.com/oauth-callback`; in an ideal world any URL matching that pattern would be acceptable to the OAuth server. Of course, if you are using FusionAuth, you can [update your application configuration as part of the CI build process](https://fusionauth.io/docs/v1/tech/apis/applications#update-an-application) as an alternative. 
 
 An additional use case for a wild card redirect URI is when the redirect URI needs dynamic parameters useful to the final destination page, like `trackingparam=123&specialoffer=abc`. These may be appended to the redirect URL before the OAuth process began. A URL with dynamic parameters won't match any of the configured redirect URIs, and so the redirect fails.
 
@@ -164,8 +166,3 @@ Please note that this specification is under active discussion on the OAuth mail
 
 Beyond this draft RFC, which is going to consolidate security best practices but leave most of OAuth 2.0 untouched, there’s also an OAuth3 working group, [reimagining the protocol from the ground up](https://oauth.net/3/). The OAuth3 specification is further from release than the OAuth 2.1 specification.
 
-
-todo
-- what about image of application config
-- what about image
-- other urls from brian
