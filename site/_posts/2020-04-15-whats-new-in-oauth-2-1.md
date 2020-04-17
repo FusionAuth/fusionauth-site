@@ -61,7 +61,7 @@ Whew, that's a lot of jargon. We'll examine each of these in turn. But before we
 
 * A client is a piece of code that the user is interacting with; browsers, native apps or single page applications are all clients. 
 * An OAuth server implements OAuth specifications and has or can obtain information about which resources are available to clients--in the RFCs this is called an Authorization Server, but this is also called an Identity Provider. Most users call it "the place I login". 
-* A store is a server which doesn’t have any authentication functionality, but knows how to delegate to an OAuth server. It has a client id which allows the OAuth server to identify it. This is usually an application server of some kind.
+* An application server doesn’t have any authentication functionality, but knows how to delegate to an OAuth server. It has a client id which allows the OAuth server to identify it. 
 
 ### The Authorization Code grant and PKCE
 
@@ -111,7 +111,7 @@ From my perspective this means that the omission of this grant in the final RFC 
 
 > The Resource Owner Password Credentials grant is omitted from this specification as per Section 2.4 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-This grant was added to the OAuth2.0 specification with an eye toward making migration to OAuth compliant servers easier. In this grant, the store receives the username and password (or other credentials) and passes it on to the OAuth server. Here’s [an article breaking down each step of the Resource Owner Password Credentials grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies). This grant is often used for mobile applications. While this grant made it easier to integrate with OAuth with minimal application change, it breaks the delegation pattern and makes the OAuth flow less secure. No longer can you leave the work of securing your user’s credentials and data up to the OAuth server so you can focus on building your own app. Now you must ensure that your application backend is just as secure, since it will be sent the username and passwords as well. 
+This grant was added to the OAuth2.0 specification with an eye toward making migration to OAuth compliant servers easier. In this grant, the application server receives the username and password (or other credentials) and passes it on to the OAuth server. Here’s [an article breaking down each step of the Resource Owner Password Credentials grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies). This grant is often used for mobile applications. While this grant made it easier to integrate with OAuth with minimal application change, it breaks the delegation pattern and makes the OAuth flow less secure. No longer can you leave the work of securing your user’s credentials and data up to the OAuth server so you can focus on building your own app. Now you must ensure that your application backend is just as secure, since it will be sent the username and passwords as well. 
 
 
 Unlike the Implicit grant, the "OAuth 2.0 Security Best Current Practices" document requires that this grant no longer be allowed: 
@@ -178,3 +178,4 @@ todo
 - consider params
 - what about image of application config
 - what about image
+- read the whole past
