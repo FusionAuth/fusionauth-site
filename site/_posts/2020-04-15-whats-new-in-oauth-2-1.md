@@ -69,7 +69,7 @@ Whew, that's a lot of jargon. We'll examine each of these in turn. But before we
 
 Wow, that's a mouthful. Let’s break that down. The Authorization Code grant is one of common OAuth grants and is the most secure. If flow charts are your jam, here’s [a post explaining the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-sessions).
 
-The [Proof Key for Code Exchange (PKCE) RFC](https://tools.ietf.org/html/rfc7636) was published in 2015 and extends the authorization code grant flow to protect from an attack if part of the authorization flow happens over a non TLS connection, for example, between components of a native application. The request could also be modified if TLS has a vulnerability or if router firmware has been compromised and is spoofing DNS or downgrading from TLS to HTTP. PKCE requires an additional one time code to be sent to the OAuth server. This is used to validate the request has not been intercepted or modified. 
+The [Proof Key for Code Exchange (PKCE) RFC](https://tools.ietf.org/html/rfc7636) was published in 2015 and extends the Authorization Code grant to protect from an attack if part of the authorization flow happens over a non TLS connection, for example, between components of a native application. The request could also be modified if TLS has a vulnerability or if router firmware has been compromised and is spoofing DNS or downgrading from TLS to HTTP. PKCE requires an additional one time code to be sent to the OAuth server. This is used to validate the request has not been intercepted or modified. 
 
 
 The OAuth 2.1 draft specification requires that the PKCE challenge must be used with every authorization code grant, protecting against the authorization code being hijacked by an attacker.
@@ -84,7 +84,7 @@ Some OAuth grants, notably the Authorization Code grant, use a redirect URI to d
 
 In this case, the only allowed value is `http://localhost:3000/oauth-callback` but you have configure multiple values. The client application specifies which one of these the user who is signing in should be redirected to.
 
-It would be convenient to support wildcards in this redirect URI list. At FusionAuth, we hear this request from clients who want to simplify their development or CI environments. Every time a new server is spun up, the redirect URI configuration must be updated to include the new URI. Additionally, the redirect URI sometimes may have additional dynamic parameters useful to the final redirect resource, like `trackingparam=123&specialoffer=abc`, appended to the URL before the OAuth flow began. A URL with dynamic parameters doesn't match any of the configured redirect URIs, and so the redirect fails.
+It would be convenient to support wildcards in this redirect URI list. At FusionAuth, we hear this request from clients who want to simplify their development or CI environments. Every time a new server is spun up, the redirect URI configuration must be updated to include the new URI. Additionally, the redirect URI sometimes may have additional dynamic parameters useful to the final redirect resource, like `trackingparam=123&specialoffer=abc`, appended to the URL before the OAuth process began. A URL with dynamic parameters doesn't match any of the configured redirect URIs, and so the redirect fails.
 
 For example, if a CI system built an application for every feature branch, it might have the hostname dans-sample-application-1551.herokuapp.com, for a fix for bug #1551. If I wanted to make sure that I could login, I’d have to update the redirect URI settings for my OAuth server to include a specific redirect URI: `https://dans-sample-application-1551.herokuapp.com/oauth-callback`. And then the next build, for bug #1552, I’d have to add `https://dans-sample-application-1552.herokuapp.com/oauth-callback` and so forth. Obviously it’d be easier to use something like `https://dans-sample-application-*.herokuapp.com/oauth-callback` as the value, which lowers the tedium (of course, if you are using FusionAuth, you can [update your application configuration as part of the CI build process](https://fusionauth.io/docs/v1/tech/apis/applications#update-an-application)).  XXX maybe use the params example
 
@@ -94,7 +94,7 @@ However, not using an exact string comparison for the redirect URI before redire
 
 > The Implicit grant ("response_type=token") is omitted from this specification as per Section 2.1.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-The implicit grant flow is inherently insecure when used in a single page application (SPA). If you use this flow, you’ll be insecure. You’ll get an access token that is either in the URL fragment, and accessible to any JavaScript running on the page, or is stored in localstorage and is therefore accessible to any JavaScript running on the page, or is in a non HttpOnly cookie, and therefore accessible to any JavaScript running on the page.[g][h] (Is there an echo in here?) In all cases, an attacker gaining an access token is allowed to, well, access resources as the end user. 
+The Implicit grant is inherently insecure when used in a single page application (SPA). If you use this grant, your access token is exposed. You’ll get an access token that is either in the URL fragment, and accessible to any JavaScript running on the page, or is stored in localstorage and is therefore accessible to any JavaScript running on the page, or is in a non HttpOnly cookie, and therefore accessible to any JavaScript running on the page.[g][h] (Is there an echo in here?) In all cases, an attacker gaining an access token is allowed to, well, access resources as the end user. 
 
 
 Access tokens are not one time use, and can live from minutes to days depending on your server configuration, so if stolen, the resources they protect are no longer secure. You may think "well, I don’t have any malicious JavaScript on my site". Have you audited all your code, and its dependencies, and their dependencies, and their dependencies? (There’s that echo again.) Do you audit all your code automatically? Extensive dependency trees can cause issues: someone took over an [open source library](https://snyk.io/blog/malicious-code-found-in-npm-package-event-stream/) and added malicious code that was downloaded millions of times. 
@@ -105,7 +105,7 @@ The draft specification omits the Implicit grant. The "OAuth 2.0 Security Best C
 
 > In order to avoid these issues, clients SHOULD NOT use the implicit grant (response type "token") … unless the  unless access token injection in the authorization response is prevented and the aforementioned token leakage vectors are [mitigated] 
 
-From my perspective this means that the omission of this grant in the final RFC is still not a done deal. However, if the final version of the OAuth 2.1 spec omits the Implicit grant, a compliant OAuth 2.1 server will not support this flow. If you use this grant in your application, you’ll have to replace it with a different one if you want to be compliant with OAuth 2.1. May we suggest the Authorization Code grant? 
+From my perspective this means that the omission of this grant in the final RFC is still not a done deal. However, if the final version of the OAuth 2.1 spec omits the Implicit grant, a compliant OAuth 2.1 server will not support it. If you use this grant in your application, you’ll have to replace it with a different one if you want to be compliant with OAuth 2.1. May we suggest the Authorization Code grant? 
 
 ### The Resource Owner Password Credentials grant is removed
 
@@ -124,7 +124,7 @@ It’s a good bet that this grant is going to be omitted in the final RFC. If yo
 
 > Bearer token usage omits the use of bearer tokens in the query string of URIs as per Section 4.3.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-Bearer tokens, also known as access tokens, allow access to protected resources and therefore must be secured. These days, most tokens are JWTs. Clients store them securely and then use them to make API calls back to the application server. The Application server then uses the token to identify the user that is calling the API. When first defined in [RFC 6750](https://tools.ietf.org/html/rfc6750), such tokens were allowed in headers, POST bodies or query strings. The draft OAuth 2.1 spec prohibits the bearer token from being sent in a query string. This is a particular issue with the Implicit grant flow, which is omitted from the OAuth 2.1 specification.
+Bearer tokens, also known as access tokens, allow access to protected resources and therefore must be secured. These days, most tokens are JWTs. Clients store them securely and then use them to make API calls back to the application server. The Application server then uses the token to identify the user that is calling the API. When first defined in [RFC 6750](https://tools.ietf.org/html/rfc6750), such tokens were allowed in headers, POST bodies or query strings. The draft OAuth 2.1 spec prohibits the bearer token from being sent in a query string. This is a particular issue with the Implicit grant, which is omitted from the OAuth 2.1 specification.
 
 A query string and, more generally, any data in the URL, is never private. JavaScript executing on a page can access it. A URL or components thereof may be captured in server log files, caches, or browser history. In general if you want to pass information privately over the internet, use TLS and put the sensitive information in a POST body or HTTP header.
 
@@ -173,11 +173,10 @@ Please note that this specification is under active discussion on the OAuth mail
 Beyond this draft RFC, which is going to consolidate best practices but leave most of OAuth2.0 untouched, there’s also an OAuth3 working group, [reimagining the protocol from the ground up](https://oauth.net/3/). The OAuth3 specification is further from release than the OAuth2.1 specification.
 
 
-
-
 todo
 - check for 'store' usage, think about replacing that
 - remove the word 'flow' where possible
 - make sure all grants are capitalized
 - consider params
-- what about image?
+- what about image of application config
+- what about image
