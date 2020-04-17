@@ -63,16 +63,16 @@ Whew, that's a lot of jargon. We'll examine each of these in turn. But before we
 * An OAuth server implements OAuth specifications and has or can obtain information about which resources are available to clients--in the RFCs this is called an Authorization Server, but this is also called an Identity Provider. Most users call it "the place I login". 
 * A store is a server which doesn’t have any authentication functionality, but knows how to delegate to an OAuth server. It has a client id which allows the OAuth server to identify it. This is usually an application server of some kind.
 
-### Authorization code grant and PKCE
+### The Authorization Code grant and PKCE
 
 > The authorization code grant is extended with the functionality from PKCE ([RFC7636](https://tools.ietf.org/html/rfc7636)) such that the only method of using the authorization code grant according to this specification requires the addition of the PKCE mechanism
 
-Wow, that's a mouthful. Let’s break that down. The Authorization Code grant is one of common OAuth grants and is the most secure. If flow charts are your jam, here’s [a post explaining the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-sessions).
+Wow, that's a mouthful. Let’s break that down. The Authorization Code grant is one of most common OAuth grants and is the most secure. If flow charts are your jam, here’s [a post explaining the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-sessions).
 
 The [Proof Key for Code Exchange (PKCE) RFC](https://tools.ietf.org/html/rfc7636) was published in 2015 and extends the Authorization Code grant to protect from an attack if part of the authorization flow happens over a non TLS connection, for example, between components of a native application. The request could also be modified if TLS has a vulnerability or if router firmware has been compromised and is spoofing DNS or downgrading from TLS to HTTP. PKCE requires an additional one time code to be sent to the OAuth server. This is used to validate the request has not been intercepted or modified. 
 
 
-The OAuth 2.1 draft specification requires that the PKCE challenge must be used with every authorization code grant, protecting against the authorization code being hijacked by an attacker.
+The OAuth 2.1 draft specification requires that the PKCE challenge must be used with every Authorization Code grant, protecting against the authorization code being hijacked by an attacker.
 
 ### Redirect URIs must be compared using exact string matching
 
@@ -99,7 +99,7 @@ The Implicit grant is inherently insecure when used in a single page application
 
 Access tokens are not one time use, and can live from minutes to days depending on your server configuration, so if stolen, the resources they protect are no longer secure. You may think "well, I don’t have any malicious JavaScript on my site". Have you audited all your code, and its dependencies, and their dependencies, and their dependencies? (There’s that echo again.) Do you audit all your code automatically? Extensive dependency trees can cause issues: someone took over an [open source library](https://snyk.io/blog/malicious-code-found-in-npm-package-event-stream/) and added malicious code that was downloaded millions of times. 
 
-Here’s an [article about the least insecure way to use the implicit grant for an SPA](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-implicit-grant-jwts-cookies). This solves the issue by redirecting to the SPA after setting an HttpOnly cookie. In the end it basically recreates the Authorization Code grant, illustrating how the Implicit grant can't be made secure.
+Here’s an [article about the least insecure way to use the Implicit grant for an SPA](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-implicit-grant-jwts-cookies). This solves the issue by redirecting to the SPA after setting an HttpOnly cookie. In the end it basically recreates the Authorization Code grant, illustrating how the Implicit grant can't be made secure.
 
 The draft specification omits the Implicit grant. The "OAuth 2.0 Security Best Current Practices" document, however, stops short of prohibiting the Implicit grant, stating instead: 
 
@@ -118,7 +118,7 @@ Unlike the Implicit grant, the "OAuth 2.0 Security Best Current Practices" docum
 
 > The resource owner password credentials grant MUST NOT be used. 
 
-It’s a good bet that this grant is going to be omitted in the final RFC. If you have a mobile application using this grant, you can either update the client to use an Authorization Code grant using PKCE or keep using your OAuth2.0 compliant system.
+So it’s a good bet that this grant is going to be omitted in the final RFC. If you have a mobile application using this grant, you can either update the client to use an Authorization Code grant using PKCE or keep using your OAuth2.0 compliant system.
 
 ### No bearer tokens in the query string
 
@@ -157,7 +157,7 @@ Well no. As of right now, there’s nothing stamped "OAuth 2.1." And the draft s
 When writing a client application, avoid the Implicit grant and the Resource Owner Password Credentials grant. However, as these are part of the OAuth 2.0 specification, they are currently supported by FusionAuth.
 
 Some steps to make sure your OAuth server (or your own server, if you run your own OAuth server) is taking:
-* Using PKCE whenever you use the authorization code grant. ([FusionAuth highly recommends using PKCE.](https://fusionauth.io/docs/v1/tech/oauth/#example-authorization-code-grant))
+* Using PKCE whenever you use the Authorization Code grant. ([FusionAuth highly recommends using PKCE.](https://fusionauth.io/docs/v1/tech/oauth/#example-authorization-code-grant))
 * Make sure that your redirect URIs are compared using exact string matches, not wildcarded. (FusionAuth has you covered: ["URLs that are not authorized [configured in the application] may not be utilized in the redirect_uri"](https://fusionauth.io/docs/v1/tech/core-concepts/applications#oauth).)
 * Make sure bearer tokens are never present in the query string. (FusionAuth doesn’t support access tokens in any grant except the Implict Grant. But you shouldn’t be using that anyway.)
 * Limit your refresh tokens to make sure they are not abused. (FusionAuth forces refresh tokens be tied to the client to which the refresh token was sent, but doesn’t, as of now, follow the cryptographic signing behavior outlined in the OAuth 2.1 draft.)
@@ -175,8 +175,6 @@ Beyond this draft RFC, which is going to consolidate best practices but leave mo
 
 todo
 - check for 'store' usage, think about replacing that
-- remove the word 'flow' where possible
-- make sure all grants are capitalized
 - consider params
 - what about image of application config
 - what about image
