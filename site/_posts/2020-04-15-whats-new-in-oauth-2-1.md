@@ -1,907 +1,183 @@
 ---
 layout: blog-post
 title: What's new in OAuth 2.1?
-description: A detailed overview of securely integrating an Angular application with an OAuth provider using the OAuth Authorization Code Grant  
+description: A draft of the OAuth 2.1 specification was recently released. What's coming down the pike?
 author: Dan Moore
 image: blogs/fusionauth-example-angular/oauth-angular-fusionauth.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-asdfsa
-
-In this post, we'll walk through setting up an Angular app to securely authenticate with an OAuth2 server. We'll use a proxy server between the Angular application and the OAuth server, in order to use the authorization code grant (rather than the [insecure implicit grant](https://medium.com/oauth-2/why-you-should-stop-using-the-oauth-implicit-grant-2436ced1c926)). 
+OAuth is getting spiffed up a bit. The original OAuth 2.0 specification was released in October 2012 as [RFC 6749](https://tools.ietf.org/html/rfc6749). It replaced OAuth 1.0, released in April 2010. There have been some additions over the years. A new OAuth specification has been proposed and is currently under discussion. It was most recently updated on March 8, 2020. If approved, [OAuth 2.1](https://tools.ietf.org/html/draft-parecki-oauth-v2-1-01) will obsolete certain parts of Oauth 2.0 and mandate additional security best practices. The rest of the OAuth 2.0 specification will be retained. 
 
 <!--more-->
 
-At the end of this tutorial, you will have a working Angular application which allows a user to sign in, sign out and view and update profile data. 
+This post assumes you are a developer or have other technical experience. It also assumes you are somewhat familiar with OAuth and the terms used. If you’d like an introduction to OAuth and why you’d consider using it, [Wikipedia is a good place to start](https://en.wikipedia.org/wiki/OAuth). This post discusses proposed changes to OAuth that might affect you if you are using OAuth in your application or if you implement the OAuth specification. 
 
-We'll be using the following software versions:
-- Angular 9.0.6
-- Express 4
-- FusionAuth 1.15.5
+## Why OAuth 2.1?
 
-You need to have the following software installed before you begin:
-- Docker (optional, but preferred for installing FusionAuth)
-- node 12.x (other versions of Node may work, but have not been tested)
-- npm (comes with recent versions of node)
+It's been a long time sincce OAuth 2.0 was released. A consolidation point release was in order. As outlined in a [blog post](https://aaronparecki.com/2019/12/12/21/its-time-for-oauth-2-dot-1) by Aaron Parecki, one of the authors of the OAuth 2.1 draft specification: 
 
-You'll also want to make sure your system meets the [memory, storage and CPU requirements](https://fusionauth.io/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
+> My main goal with OAuth 2.1 is to capture the current best practices in OAuth 2.0 as well as its well-established extensions under a single name. That also means specifically that this effort will not define any new behavior itself, it is just to capture behavior defined in other specs. It also won’t include anything considered experimental or still in progress.
 
-## Architecture
-This application has three main components. All of these will run locally.
+So, this is not a teardown and scrape of OAuth 2.0. Instead, OAuth 2.1 consolidates the changes and tweaks to OAuth 2.0 that have been made over the past eight years, with a focus on increasing the security of OAuth servers. It establishes the best practices and can serve as a reference document. From the [ongoing mailing list discussion](https://mailarchive.ietf.org/arch/msg/oauth/Ne4Q9erPP7SpC5051sSy6XnLDv0/): "By design, [OAuth 2.1] does not introduce any new features to what already exists in the OAuth 2.0 specifications being replaced." Many of the new draft specification details are drawn from the [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14) document.
 
-The first is the Angular app, which provides the user interface. It is a single page application, with different data displayed when a user is signed in and signed out. This application will be at `http://localhost:4200/` and will be accessed by a browser.
+However, in the name of security best practices, some of the more problematic grants will be removed.
 
-The second part of the application is a lightweight express middleware server. This proxies requests from the Angular app to FusionAuth, our OAuth2 and identity server. Using express keeps sensitive configuration values safe--if we embedded them directly in the Angular app, an attacker could extract them. This server also executes business logic, such as verifying that a user is active in FusionAuth before allowing their information to be retrieved. This server is executed by Node and is at `http://localhost:3000/`. It will be accessed by Angular components.
+At the end of the day, the goal is to have a single document detailing how to best implement and use OAuth, as both a client and a server. No longer will implementers have to hunt across multiple RFCs and documents to understand how a specified behavior is implemented or should be used.
 
-Finally, there's the FusionAuth OAuth2 and identity server, which is a standalone application accessible at `http://localhost:9011`. This will be accessed by you, during configuration, and by the express server when data is retrieved or stored. 
 
-## Setting up FusionAuth
+## I use OAuth in my application, what does OAuth 2.1 mean to me?
 
-FusionAuth will be our OAuth2 and identity server for this tutorial. All user data will be persisted there. OAuth2 is the current standard for identity. Using a central identity server like FusionAuth means we can manage users across any number of custom or off the shelf applications in one place.
+Don’t panic. 
 
-If you don't already have FusionAuth installed, we recommend the Docker Compose option for the quickest setup:
+As mentioned above, the discussion process around this specification is ongoing. A draft RFC was posted to the IETF mailing list in mid March. As of the time of writing, the revision and discussion is still actively occurring. 
 
-```shell
-curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
-```
+So, the short answer is "no one knows". 
 
-Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options (rpm, deb, etc) if you don't have Docker installed.
+The long answer is "truly, no one knows. It does seem like we’re early in the process, though." 
 
-After you sign in as a FusionAuth administrator, create a new application. I named mine 'Secure Angular', and will refer to this throughout the tutorial.
+Even after OAuth 2.1 is released, it will likely be some time before it is widely implemented. Omitted grants may be supported with warnings forever. The exact changes to the specification are still up in the air, the release of the RFC is even further in the future and when it is released, you can still continue to use an OAuth 2.0 server if that serves your needs. 
 
-Click the OAuth tab and set the following application settings:
-- Set `Authorized redirect URLs` to: `http://localhost:3000/oauth-callback` 
-  - This is the express server URL which will handle processing the FusionAuth callback.
-- Set `Logout URL` to: `http://localhost:4200`
-  - This is the URL where the FusionAuth server will send us after logout.
+That said, the biggest impact on people who use OAuth servers is likely to be updating clients if they use one of the removed grants: the Implicit grant or Resource Owner Password Credentials grant. 
 
-Click `Save`.
+## What is changing?
 
-Then click the green magnifying glass in the list view for your newly created application. Find these configuration parameters and copy them to a text file, we'll use them later:
+The draft RFC has added a section which outlines the major changes between OAuth 2.0 and OAuth 2.1. There may be other changes not captured there, however. There are six main changes: 
 
-- Application ID (also called just 'Id')
-- Client ID
-- Client Secret
+> The authorization code grant is extended with the functionality from PKCE ([RFC7636](https://tools.ietf.org/html/rfc7636)) such that the only method of using the authorization code grant according to this specification requires the addition of the PKCE mechanism
 
-If you edit your new application, your application settings should look like this:
+> Redirect URIs must be compared using exact string matching as per Section 4.1.3 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-angular/admin-application-configuration.png" alt="Application configuration" class="img-fluid" figure=false %}
+> The Implicit grant ("response_type=token") is omitted from this specification as per Section 2.1.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
+> The Resource Owner Password Credentials grant is omitted from this specification as per Section 2.4 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-Next, add a user. This is the account you'll use to authenticate from the Angular application.
+> Bearer token usage omits the use of bearer tokens in the query string of URIs as per Section 4.3.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-The email address doesn't have to be valid because we're not going to send any emails to the user. I used `angularuser@example.com`.  Uncheck `Send email to setup password` so you can set their password in the admin screen. Add the user to the application you just created, by clicking the `Add registration` button and selecting `Secure Angular`. Leave everything else as the default values and click the save icon.
+> Refresh tokens must either be sender-constrained or one-time use as per Section 4.12.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-Next, add an API key. This will be used for updating and reading user information. Operations using the API key are not part of the OAuth standard, but are included to showcase other capabilities of FusionAuth. This API key needs to be kept secret and thus will not be used outside of the express middleware.
+Whew, that's a lot of jargon. We'll examine each of these in turn. But before we do, let’s define a few terms that will be used further on.
 
-Navigate to `Settings` then `API keys` and add a new API key. Give it a name such as `For Secure Angular app`. Copy the value of the key to the same text file where you saved the Application ID, Client ID and Client Secret. Scroll down and enable `GET` and `PATCH` for the `/api/user/registration` Endpoint. No other permissions are needed for this tutorial.
+* A client is a piece of code that the user is interacting with; browsers, native apps or single page applications are all clients. 
+* An OAuth server implements OAuth specifications and has or can obtain information about which resources are available to clients--in the RFCs this is called an Authorization Server, but this is also called an Identity Provider. Most users call it "the place I login". 
+* A store is a server which doesn’t have any authentication functionality, but knows how to delegate to an OAuth server. It has a client id which allows the OAuth server to identify it. This is usually an application server of some kind.
 
-Now FusionAuth is set up and ready to roll. Next, let's set up a basic Angular application.
+### Authorization code grant and PKCE
 
-## Basic Angular application
+> The authorization code grant is extended with the functionality from PKCE ([RFC7636](https://tools.ietf.org/html/rfc7636)) such that the only method of using the authorization code grant according to this specification requires the addition of the PKCE mechanism
 
-If you don't have the angular-cli tool installed, install it now:
+Wow, that's a mouthful. Let’s break that down. The Authorization Code grant is one of common OAuth grants and is the most secure. If flow charts are your jam, here’s [a post explaining the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-sessions).
 
-```shell
-$ npm install -g @angular/cli
-```
+The [Proof Key for Code Exchange (PKCE) RFC](https://tools.ietf.org/html/rfc7636) was published in 2015 and extends the authorization code grant flow to protect from an attack if part of the authorization flow happens over a non TLS connection, for example, between components of a native application. The request could also be modified if TLS has a vulnerability or if router firmware has been compromised and is spoofing DNS or downgrading from TLS to HTTP. PKCE requires an additional one time code to be sent to the OAuth server. This is used to validate the request has not been intercepted or modified. 
 
-At the time of writing, that command installs Angular 9.0.6.
 
-Create an Angular application. (However, if you want to grab all the tutorial code at once rather than step through it, clone [the GitHub repository](https://github.com/FusionAuth/fusionauth-example-angular).)
+The OAuth 2.1 draft specification requires that the PKCE challenge must be used with every authorization code grant, protecting against the authorization code being hijacked by an attacker.
 
-```shell
-$ ng new secure-angular
-```
+### Redirect URIs must be compared using exact string matching
 
-You can accept all defaults for the new application.
+> Redirect URIs must be compared using exact string matching as per Section 4.1.3 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-If you open a new terminal window and run 
+Some OAuth grants, notably the Authorization Code grant, use a redirect URI to determine where to send the client after success. For example, here’s a FusionAuth screen where this is configured (it is the "Authorized redirect URLs"):
 
-```shell
-$ ng serve 
-```
+{% include _image.html src="/assets/img/blogs/whats-new-in-oauth-2-1/admin-application-configuration.png" alt="Application configuration" class="img-fluid" figure=false %}
 
-You should be able to visit `http://localhost:4200` in your browser and see a default screen. Now, let's clean up the default application and make it a bit simpler.
+In this case, the only allowed value is `http://localhost:3000/oauth-callback` but you have configure multiple values. The client application specifies which one of these the user who is signing in should be redirected to.
 
-Edit `src/app/app.component.html` and delete everything, and replace it with:
+It would be convenient to support wildcards in this redirect URI list. At FusionAuth, we hear this request from clients who want to simplify their development or CI environments. Every time a new server is spun up, the redirect URI configuration must be updated to include the new URI. Additionally, the redirect URI sometimes may have additional dynamic parameters useful to the final redirect resource, like `trackingparam=123&specialoffer=abc`, appended to the URL before the OAuth flow began. A URL with dynamic parameters doesn't match any of the configured redirect URIs, and so the redirect fails.
 
-```html
-<h1>
-My Secure Angular Application
-</h1>
-<router-outlet></router-outlet>
-```
-
-Next, create a home component:
-
-```shell
-$ ng g component home
-```
-
-Make the home component the default route:
-
-Edit or create `src/app/app-routing.module.ts` and add the following lines:
-
-```typescript
-import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
-import { HomeComponent } from './home/home.component';
-
-const routes: Routes = [
-  { path: '', redirectTo: 'home', pathMatch: 'full'},
-  { path: 'home', component: HomeComponent },
-];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }
-```
-
-Make sure you import the AppRouting module in `src/app/app.module.ts`, which should look like this:
-
-```typescript
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
-
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { HomeComponent } from './home/home.component';
-
-@NgModule({
-  declarations: [
-    AppComponent,
-    HomeComponent
-  ],
-  imports: [
-    AppRoutingModule,
-    BrowserModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
-```
-
-Restart your Angular server by going to the terminal where you ran `ng serve` and stopping it with a control-C, then restarting:
-
-```shell
-$ ng serve
-```
-
-You should now see a screen like this when you visit `http://localhost:4200/`
-
-We have a basic application up and running. Next, let's display some fake user information, pulled from the express middleware server. 
-
-## Bring in the Services
-
-As mentioned in the architecture overview, a basic express server will sit between the Angular application and the identity server. At first this information will be hardcoded and not pulled from the identity server, but eventually we'll pull the data from FusionAuth. 
-
-The first step to access remote services from Angular is to add the HttpClient module into our application, that is, into the src/app/app.module.ts file. Here's how that file will look after doing so:
-
-```typescript
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
-
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { HomeComponent } from './home/home.component';
-import { HttpClientModule } from '@angular/common/http';
-
-@NgModule({
-  declarations: [
-    AppComponent,
-    HomeComponent
-  ],
-  imports: [
-    AppRoutingModule,
-    BrowserModule,
-    HttpClientModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
-```
-
-This module allows us to make http requests from our code. Then we want to generate a service and inject it into our HomeComponent so we can display some remote data.
-
-```shell
-$ ng g service user
-```
-
-Add this code to src/app/user.service.ts
-
-```typescript
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { throwError } from 'rxjs';
-import { retry, catchError } from 'rxjs/operators';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class UserService {
-  private SERVER_URL = "http://localhost:3000/user";
-
-  constructor(private httpClient: HttpClient) { }
-
-  handleError(error: HttpErrorResponse) {
-    let errorMessage = 'Unknown error!';
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-    }
-    window.alert(errorMessage);
-    return throwError(errorMessage);
-  }
-
-  public get() {
-    return this.httpClient.get(this.SERVER_URL, {withCredentials: true}).pipe(catchError(this.handleError));
-  }
-}
-```
-
-This service sets up a call to the API at `http://localhost:3000`; it allows whatever code calls get() to actually make the API call. It also provides error handling if there are any issues retrieving the data. 
-
-Now, the previously created HomeComponent must be able to access this service, so we need to make sure to inject it. We need to import the UserService to our HomeComponent class, add a parameter to the constructor and then, on initialization of the component, call out to the service and store the data it returns.
-
-Update `src/app/home/home.component.ts` to look like this:
-
-```typescript
-import { Component, OnInit } from '@angular/core';
-import { UserService } from '../user.service';
-
-@Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
-})
-export class HomeComponent implements OnInit {
-  user = {`email`:`test@example.com`}
-  constructor(private userService: UserService) { }
-
-  ngOnInit(): void {
-    this.userService.get().subscribe((data: any) => {
-      console.log(data);
-      this.user = data;
-    });
-  }
-}
-```
+For example, if a CI system built an application for every feature branch, it might have the hostname dans-sample-application-1551.herokuapp.com, for a fix for bug #1551. If I wanted to make sure that I could login, I’d have to update the redirect URI settings for my OAuth server to include a specific redirect URI: `https://dans-sample-application-1551.herokuapp.com/oauth-callback`. And then the next build, for bug #1552, I’d have to add `https://dans-sample-application-1552.herokuapp.com/oauth-callback` and so forth. Obviously it’d be easier to use something like `https://dans-sample-application-*.herokuapp.com/oauth-callback` as the value, which lowers the tedium (of course, if you are using FusionAuth, you can [update your application configuration as part of the CI build process](https://fusionauth.io/docs/v1/tech/apis/applications#update-an-application)).  XXX maybe use the params example
 
-Let's also modify the `src/app/home/home.component.html` to display the user variable.
+However, not using an exact string comparison for the redirect URI before redirecting is a security risk. If the redirect URI matching is more flexible, an attacker could redirect a user to an open redirect server controlled by them, and then on to a malicious destination; OWASP discusses the [perils of such open redirect servers](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html#dangerous-url-redirects). While this would require compromising the request, using an exact match for redirect URI reduces risk.
 
-```html
-<p>home works!</p>
-User: {{ "{{user.email" }}}}
-```
+### The Implicit grant is removed
 
-Finally, create the express server to provide the data. Again, right now it will be fake data, but eventually it will pull from our OAuth2 server.
+> The Implicit grant ("response_type=token") is omitted from this specification as per Section 2.1.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-First, install our needed libraries:
+The implicit grant flow is inherently insecure when used in a single page application (SPA). If you use this flow, you’ll be insecure. You’ll get an access token that is either in the URL fragment, and accessible to any JavaScript running on the page, or is stored in localstorage and is therefore accessible to any JavaScript running on the page, or is in a non HttpOnly cookie, and therefore accessible to any JavaScript running on the page.[g][h] (Is there an echo in here?) In all cases, an attacker gaining an access token is allowed to, well, access resources as the end user. 
 
-```shell
-$ npm install cors express express-session request
-```
 
-Add this line to package.json under the `scripts` key:
+Access tokens are not one time use, and can live from minutes to days depending on your server configuration, so if stolen, the resources they protect are no longer secure. You may think "well, I don’t have any malicious JavaScript on my site". Have you audited all your code, and its dependencies, and their dependencies, and their dependencies? (There’s that echo again.) Do you audit all your code automatically? Extensive dependency trees can cause issues: someone took over an [open source library](https://snyk.io/blog/malicious-code-found-in-npm-package-event-stream/) and added malicious code that was downloaded millions of times. 
 
-```json
+Here’s an [article about the least insecure way to use the implicit grant for an SPA](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-implicit-grant-jwts-cookies). This solves the issue by redirecting to the SPA after setting an HttpOnly cookie. In the end it basically recreates the Authorization Code grant, illustrating how the Implicit grant can't be made secure.
 
-"server": "node server/index.js",
-```
+The draft specification omits the Implicit grant. The "OAuth 2.0 Security Best Current Practices" document, however, stops short of prohibiting the Implicit grant, stating instead: 
 
-This will let us start our server by running `npm run server`.
+> In order to avoid these issues, clients SHOULD NOT use the implicit grant (response type "token") … unless the  unless access token injection in the authorization response is prevented and the aforementioned token leakage vectors are [mitigated] 
 
-Make a directory for our server:
+From my perspective this means that the omission of this grant in the final RFC is still not a done deal. However, if the final version of the OAuth 2.1 spec omits the Implicit grant, a compliant OAuth 2.1 server will not support this flow. If you use this grant in your application, you’ll have to replace it with a different one if you want to be compliant with OAuth 2.1. May we suggest the Authorization Code grant? 
 
-```shell
-$ mkdir server
-```
+### The Resource Owner Password Credentials grant is removed
 
-Create a `config.js` file in the server directory, and add our ports to it:
+> The Resource Owner Password Credentials grant is omitted from this specification as per Section 2.4 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-```javascript
-module.exports = {
-  // ports
-  clientPort: 4200,
-  serverPort: 3000,
-  fusionAuthPort: 9011
-};
-```
+This grant was added to the OAuth2.0 specification with an eye toward making migration to OAuth compliant servers easier. In this grant, the store receives the username and password (or other credentials) and passes it on to the OAuth server. Here’s [an article breaking down each step of the Resource Owner Password Credentials grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies). This grant is often used for mobile applications. While this grant made it easier to integrate with OAuth with minimal application change, it breaks the delegation pattern and makes the OAuth flow less secure. No longer can you leave the work of securing your user’s credentials and data up to the OAuth server so you can focus on building your own app. Now you must ensure that your application backend is just as secure, since it will be sent the username and passwords as well. 
 
-We'll continue to add to this config.js file as we build out the complete application. Anything that will vary between environments (for example, development, staging, and production) should be put in this file. Note that while config.js is checked into the [example application code repository](https://github.com/FusionAuth/fusionauth-example-angular), for any production grade application, this file contains secrets and should not be in version control. 
 
-Next create an index.js file in the server directory:
+Unlike the Implicit grant, the "OAuth 2.0 Security Best Current Practices" document requires that this grant no longer be allowed: 
 
-```typescript
-const express = require('express');
-const session = require('express-session');
-const cors = require('cors');
-const config = require('./config');
+> The resource owner password credentials grant MUST NOT be used. 
 
-const app = express();
-app.use(express.json());
+It’s a good bet that this grant is going to be omitted in the final RFC. If you have a mobile application using this grant, you can either update the client to use an Authorization Code grant using PKCE or keep using your OAuth2.0 compliant system.
 
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+### No bearer tokens in the query string
 
-app.use('/user', require('./routes/user'));
+> Bearer token usage omits the use of bearer tokens in the query string of URIs as per Section 4.3.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-app.listen(config.serverPort, () => console.log(`FusionAuth example app listening on port ${config.serverPort}.`));
-```
+Bearer tokens, also known as access tokens, allow access to protected resources and therefore must be secured. These days, most tokens are JWTs. Clients store them securely and then use them to make API calls back to the application server. The Application server then uses the token to identify the user that is calling the API. When first defined in [RFC 6750](https://tools.ietf.org/html/rfc6750), such tokens were allowed in headers, POST bodies or query strings. The draft OAuth 2.1 spec prohibits the bearer token from being sent in a query string. This is a particular issue with the Implicit grant flow, which is omitted from the OAuth 2.1 specification.
 
-We're using the [cors middleware](https://www.npmjs.com/package/cors) so that our Angular application will have permission to access this server from the browser without any cross domain issues. We also set up one route: `/user`
+A query string and, more generally, any data in the URL, is never private. JavaScript executing on a page can access it. A URL or components thereof may be captured in server log files, caches, or browser history. In general if you want to pass information privately over the internet, use TLS and put the sensitive information in a POST body or HTTP header.
 
-We need to create a file at server/routes/user.js to service that route.
+### Limiting refresh tokens 
 
-```typescript
-const express = require('express');
-const router = express.Router();
-const request = require('request');
-const config = require('../config');
+> Refresh tokens must either be sender-constrained or one-time use as per Section 4.12.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-router.get('/', (req, res) => {
-  res.send({
-    "email" : "angularuser@example.com"
-  });
-});
+[Refresh tokens](https://tools.ietf.org/html/rfc6749#section-6) allow a client to retrieve new access tokens without reauthentication. This is helpful if you need access to a resource for longer than an access token might provide, or if you need infrequent access (such as being logged into your email for months or years). As such, they are typically longer lived than access tokens. Therefore you should take twice as much care when it comes to securing a refresh token. 
 
-module.exports = router;
-```
 
-You can see the fake data we're sending back.
+If they are acquired by an attacker, the attacker can create access tokens at will. Obviously at that point the resource which the access tokens protect will no longer be secure. As an example of how to secure refresh tokens, here’s [a post that uses the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens securely using HttpOnly cookies and a limited cookie domain. Incidentally, never share your refresh tokens between different devices.
 
-Open another terminal window and start the server:
+The OAuth 2.1 draft specification provides two options for refresh tokens: they can be one time use or tied to the sender with a cryptographic binding. 
 
-```shell
-$ npm run server
-```
+One time use means that after a refresh token (call it refresh token A) is used to retrieve an access token, it becomes invalid. Of course, the OAuth server can also send a new refresh token (call it refresh token B) along with the access token. In this case, once the newly delivered access token expires, the client can request another access token using that refresh token B, and so on and so on. The change to single use refresh tokens may require changing client code to store the new refresh token.
 
-You should see this line at the bottom of your screen if your server is up and running correctly:
+The other recommended option is to ensure the OAuth server cryptographically binds the refresh token to the client. The options mentioned in the the "OAuth 2.0 Security Best Current Practices" document are [OAuth token binding](https://www.ietf.org/archive/id/draft-ietf-oauth-token-binding-08.txt) or Mutual TLS authentication [RFC 8705](https://tools.ietf.org/html/rfc8705). This binding ensures the request came from the client to which the refresh token was issued. 
 
-```
-FusionAuth example app listening on port 3000.
-```
+To sum up, the OAuth 2.1 spec has changes to ensure your refresh tokens are protected by requiring them to one time use or by requiring cryptographic proof of the client they are associated with. 
 
-Every time we make a change to the express server, we'll have to restart it. Now, when we visit our Angular application in the browser, we should see the email drawn from the express server.
-
-Now, let's add the ability to authenticate against the FusionAuth identity server.
+## What’s unchanged?
 
-## Sign in
-
-The first thing we want to do is provide a link to sign in. We're going to proxy through the express server in order to keep our architecture clean. Then we'll show the sign in link only to users who are not signed in. Once a user is, we'll display their email address.
-
-Note that we send the user directly to FusionAuth to sign in. We could have instead built the screen in the express server, but FusionAuth allows you to [style your login page](https://fusionauth.io/docs/v1/tech/themes/) however you'd like. In addition, if you build the login page in express, you technically would not be following the OAuth2 flow.
-
-FusionAuth also needs to know where to send the user after successful authentication, so let's add that to our config.js. Let's also add the application ID, client ID and other OAuth secrets that we saved off in a text file when we configured our FusionAuth API:
-
-```javascript
-module.exports = {
 
-  clientID: 'ca4c52d5-be47-442e-8487-3b4fde8af4bb',
-  clientSecret: 'ia_YAKiWwdBTXRSbh5x3TiEPykj8o3WV78uFHFhWA_8',
-  redirectURI: 'http://localhost:3000/oauth-callback',
-  applicationID: 'ca4c52d5-be47-442e-8487-3b4fde8af4bb',
+These are the major changes in the proposed OAuth 2.1 RFC. The OAuth 2.1 spec is built on the foundation of the OAuth 2.0 spec and, except as noted, inherits all behavior not explicitly omitted or changed. For example, the Client Credentials grant, often used for server to server authentication, continues to be available in the draft OAuth 2.1 specification.
 
-  // our FusionAuth api key
-  apiKey: 'hBfNosIjQQ64InDdKC7XlTCtJitq23nwlNp2rQfDMBU',
+## Can you use OAuth 2.1 right now?
 
-  //ports
-  clientPort: 4200,
-  serverPort: 3000,
-  fusionAuthPort: 9011
-};
-```
-
-Except for the ports and the `redirectURI`, your values should be different for all the keys.
-
-We need to enable [sessions](https://www.npmjs.com/package/express-session) for the express server because that is where we'll capture the access_token after authentication. We'll then use that for any interaction with protected resources and to identify the user.
-
-Add the following lines to your `index.js`, anywhere before the routes definition:
-
-```javascript
-// configure sessions
-app.use(session(
-  {
-    secret: '1234567890',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: 'auto',
-      httpOnly: true,
-      maxAge: 3600000
-    }
-  })
-);
-```
-
-Next, add the login and oauth-callback routes to `index.js`:
-
-```javascript
-app.use('/login', require('./routes/login'));
-app.use('/oauth-callback', require('./routes/oauth-callback'));
-```
-
-And a corresponding routes/login.js file
-
-```javascript
-const express = require('express');
-const router = express.Router();
-const config = require('../config');
-
-router.get('/', (req, res) => {
-  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code`);
-});
-
-module.exports = router;
-```
-
-As mentioned above, this is a proxy. We could also put the code directly into the Angular html component if we wanted (no secrets are in that URL, after all), but this is a bit cleaner.
-
-Let's also add the `routes/oauth-callback.js` file:
-
-```javascript
-const express = require('express');
-const router = express.Router();
-const request = require('request');
-const config = require('../config');
-
-router.get('/', (req, res) => {
-  request(
-    // POST request to /token endpoint
-    {
-      method: 'POST',
-      uri: `http://localhost:${config.fusionAuthPort}/oauth2/token`,
-      form: {
-        'client_id': config.clientID,
-        'client_secret': config.clientSecret,
-        'code': req.query.code,
-        'grant_type': 'authorization_code',
-        'redirect_uri': config.redirectURI
-      }
-    },
-
-    // callback
-    (error, response, body) => {
-      // save token to session
-      req.session.token = JSON.parse(body).access_token;
-
-      // redirect to the Angular app
-      res.redirect(`http://localhost:${config.clientPort}`);
-    }
-  );
-});
-
-module.exports = router;
-```
-
-This is a bit more complicated. When a user successfully signs into FusionAuth, we receive a code. But what we really want is the `access_token`, which allows us to call protected resources. We'll call an endpoint in the FusionAuth server to get the token. This `access_token` is what we save off to the session, and will use in future requests. 
-
-Note that this file illustrates the key difference between the authorization grant code OAuth2 flow and the implicit grant flow. In the implicit grant flow, the `access_token` is returned directly to the client, exposing it to anyone with who can hijack the client. 
-
-We also need to update the `routes/user.js` file to pull the user information from FusionAuth, rather than sending fake data.
-
-```javascript
-const express = require('express');
-const router = express.Router();
-const request = require('request');
-const config = require('../config');
-
-router.get('/', (req, res) => {
-  // token in session -> get user data and send it back to the Angular app
-  if (req.session.token) {
-    request(
-      {
-        method: 'GET',
-        uri: `http://localhost:${config.fusionAuthPort}/oauth2/userinfo`,
-        headers: {
-          'Authorization': 'Bearer ' + req.session.token
-        }
-      },
-
-      // callback
-      (error, response, body) => {
-        let userInfoResponse = JSON.parse(body);
-
-        // valid token -> get more user data and send it back to the Angular app
-        request(
-          // GET request to /registration endpoint
-          {
-            method: 'GET',
-            uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/${userInfoResponse.sub}/${config.applicationID}`,
-            json: true,
-            headers: {
-              'Authorization': config.apiKey
-            }
-          },
-
-          // callback
-          (error, response, body) => {
-            res.send(
-              {
-                ...userInfoResponse,
-                ...body // body is results from the registration endpoint:w
-              }
-            );
-          }
-        );
-      }
-    );
-  }
-
-  // no token -> send nothing
-  else {
-    res.send({});
-  }
-});
-
-module.exports = router;
-```
-
-If we have a token, we'll get user information, including their email address, via the userinfo endpoint. We'll also retrieve more information from the registration endpoint and return both to our Angular application. If all we want is the data available from the [userinfo endpoint](https://fusionauth.io/docs/v1/tech/oauth/endpoints#userinfo), we don't need to make that second API call.
-
-Restart your express server by going to the terminal where it is running, hitting control-C and then running
-
-```shell
-$ npm run server
-```
-
-Finally, add a login link to `src/app/home/home.component.html`. Replace the existing file with this:
-
-```html
-<div *ngIf="user['email'] != null">
-  Hello {{ "{{user['email']" }}}}
-</div>
-<div *ngIf="user['email'] == null">
-  <a href='http://localhost:3000/login'>Log me in</a>
-</div>
-```
-
-You can also change the user variable initialization statement in `src/app/home/home.component.ts` from
-
-```typescript
-user = {'email':'test@example.com'}
-```
-  
-To
-
-```typescript
-user = {}
-```
-
-This will avoid a flickering 'hello' message that might otherwise appear while the user data is being loaded.
-
-Now you can click the 'login' link and are redirected to the FusionAuth login screen. After entering the correct username and password (created when you set up FusionAuth), you arrive back at the home screen, with your email address displayed.
-
-## Sign out
-The next logical step is to enable signing out of the application. Both the express server and FusionAuth have sessions for any successful authentication, so there are two actions required to fully sign out:
-
-- Delete the session in the express server
-- Invalidate the session in FusionAuth
-
-Of course, the user has to initiate signing out, so we need to add a logout link to the Angular application. Let's modify the express server first.
-
-Add the logout route to `server/index.js`:
-
-```javascript
-// ...
-app.use('/logout', require('./routes/logout'));
-// ...
-```
-
-Then add the route handler at server/routes/logout.js
-
-```javascript
-const express = require('express');
-const router = express.Router();
-const config = require('../config');
-
-router.get('/', (req, res) => {
-  // delete the session
-  req.session.destroy();
-
-  // end FusionAuth session
-  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/logout?client_id=${config.clientID}`);
-});
-
-module.exports = router;
-```
-
-This route destroys the express session and then sends the user to FusionAuth to a crafted URL which invalidates the session via the [logout endpoint](https://fusionauth.io/docs/v1/tech/oauth/endpoints#logout). Again, restart your express server by going to the terminal where it is running, hitting control-C and then running
-
-```shell
-$ npm run server
-```
-
-Let's change the Angular application and add a link to allow a user to sign out. Add it below the Hello message in src/app/home/home.component.html, because it only makes senses to sign out if you are already authenticated:
-
-```html
-...
-<div *ngIf="user['email'] != null">
-  Hello {{ "{{user['email']" }}}}
-<br/><a href='http://localhost:3000/logout'>Log me out</a>
-</div>
-...
-```
-
-Visit `http://localhost:4200` and sign in (note that you were logged out because you restarted the express server). You should be able to sign in and sign out at will.
-
-If all you are looking for is Angular and OAuth2 authentication, this tutorial is complete. However, we're also going to add and update user data. FusionAuth can store a number of user attributes that are not part of the OAuth specification, but useful for real world systems.
- 
-## Storing and Reading User Data
-
-FusionAuth has the ability to store data about users. One field called, aptly enough, `data`, can be used for any kind of textual data. We're going to write to and read from that field.
-
-First, we're going to create an express route to write the field for a signed in user. Then we're going to create an angular component which lets the user modify the field, and finally we'll allow the user to see and modify the data when the user is logged in.
-
-Add the express route to `server/index.js`:
-
-```javascript
-app.use('/set-user-data', require('./routes/set-user-data'));
-```
-
-And create a `server/routes/set-user-data.js` file:
-
-```javascript
-const express = require('express');
-const router = express.Router();
-const request = require('request');
-const config = require('../config');
-
-router.post('/', (req, res) => {
-  // fetch the user using the token in the session so that we have their ID
-  request(
-    {
-      method: 'GET',
-      uri: `http://localhost:${config.fusionAuthPort}/oauth2/userinfo`,
-      headers: {
-        'Authorization': 'Bearer ' + req.session.token
-      }
-    },
-
-    // callback
-    (error, response, body) => {
-      let userInfoResponse = JSON.parse(body);
-      request(
-        // PATCH request to /registration endpoint
-        {
-          method: 'PATCH',
-          uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/${userInfoResponse.sub}/${config.applicationID}`,
-          headers: {
-            'Authorization': config.apiKey
-          },
-          json: true,
-          body: {
-            'registration': {
-              'data': req.body
-            }
-          }
-        },
-        (err2, response2, body2) => {
-          if (err2) {
-            console.log(err2);
-          }
-        }
-      );
-    }
-  );
-});
-
-module.exports = router;
-```
-
-We call the userinfo endpoint to get the user id (the value of the sub parameter) and then make a `PATCH` HTTP call to the endpoint (so we only update the fields we send, rather than all the data).
-
-You might wonder why we only add a route to write the user data. What about reading it? Well, we already added that when we updated the user route to pull data from FusionAuth after login. It was both empty and hidden.
-
-Restart your express server by going to the terminal where it is running, hitting control-C and then running:
-
-```shell
-$ npm run server
-```
-
-Now, let's create a separate Angular component to allow the user to update their data and call this express endpoint. 
-
-Since we're going to be working with forms, update our `src/app/app.module.ts` file to add the needed supporting modules. We'll be using [template driven forms](https://angular.io/guide/forms#template-driven-forms) for this tutorial. Add 
-
-```typescript
-import { FormsModule }   from '@angular/forms'; 
-```
-
-to the import section and `FormsModule` to the imports array. 
-
-Then we need to create a class
-
-```shell
-$ ng generate class UserData
-```
-
-Add a single member variable, so `src/app/user-data.ts` looks like this:
-
-```typescript
-export class UserData {
-  constructor(public userdata: string) {  }
-}
-```
-
-Next, we want to generate a service which we'll use to access the express endpoint we added:
-
-```shell
-$ ng g service userData
-```
-
-Replace the generated `src/app/user-data.service.ts` with
-
-```typescript
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import {  throwError } from 'rxjs';
-import { retry, catchError } from 'rxjs/operators';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class UserDataService {
-
-  private SERVER_URL = "http://localhost:3000/set-user-data";
-
-  constructor(private httpClient: HttpClient) { }
-
-  handleError(error: HttpErrorResponse) {
-    console.log("handle error");
-    let errorMessage = 'Unknown error!';
-    if (error.error instanceof ErrorEvent) {
-      // Client-side errors
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      // Server-side errors
-      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-    }
-    window.alert(errorMessage);
-    return throwError(errorMessage);
-  }
-
-  public post(body: String){
-    const httpOptions = {
-      withCredentials: true,
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json' 
-      })
-    };
-    return this.httpClient.post(this.SERVER_URL, body, httpOptions).pipe(catchError(this.handleError));
-  }
-}
-```
-
-This is very similar to the user service we created to retrieve the user data. However, we have a different endpoint and HTTP method (we are using `POST` here). Make sure the Content-Type header is set to `application/json`, otherwise express won't parse the body correctly.
-
-Now we need to create the user data form component, which will use the data object and the service we just created.
-
-```shell
-$ ng generate component UserDataForm
-```
-
-Replace the contents of `src/app/user-data-form/user-data-form.component.ts` with
-
-```typescript
-import { Component, Input } from '@angular/core';
-import { UserData }	from '../user-data';
-import { UserDataService } from '../user-data.service';
-
-@Component({
-  selector: 'app-user-data-form',
-  templateUrl: './user-data-form.component.html',
-  styleUrls: ['./user-data-form.component.css']
-})
-
-export class UserDataFormComponent {
-
-  @Input() userdata: string;
-  model = new UserData('user data');
-  constructor(private userDataService: UserDataService) { }
-
-  submitted = false;
-
-  onSubmit() {
-    this.submitted = true;
-    let userdata = this.model.userdata;
-    let body = JSON.stringify( { userData: userdata });
-    console.log(body);
-    return this.userDataService.post(body).subscribe();
-  }
-
-  ngOnInit(): void {
-    this.model = new UserData(this.userdata);
-  }
-}
-```
-
-We inject the `userDataService` into this code so we can make service calls. We have a submitted member variable that we'll use in our html to either show an input field or display read only data. We [must call `subscribe()`](https://angular.io/guide/http#always-subscribe) when we `POST`ing to our service, otherwise the HTTP call won't be made. 
-
-The userdata field can be set from outside the component, which is why it has a [`@Input` decorator](https://angular.io/api/core/Input). We set it because the parent component is already retrieving the data (from the `/user` endpoint) so we'll want that to be the default value displayed (the 'user data' default string is there just in case the network call fails).
-
-Now let's look at the html component:
-
-```html
-<div>
-  <div [hidden]="submitted">
-    <h1>User Data Form</h1>
-    <form (ngSubmit)="onSubmit()" #userDataForm="ngForm">
-      <div>
-        <label for="userdata">User data</label>
-        <input type="text" id="userdata" [(ngModel)]="model.userdata" name="userdata">
-      </div>
-
-      <button type="submit">Submit</button>
-    </form>
-  </div>
-
-  <div [hidden]="!submitted">
-    <h2>You submitted the following:</h2>
-    <div>
-      <div>User Data</div>
-      <div>{{ "{{model.userdata" }}}}</div>
-    </div>
-    <br>
-    <button (click)="submitted=false">Edit</button>
-  </div>
-</div>
-```
-
-The first div is displayed when the component isn't submitted, and the second is displayed when the form has been submitted: we show the user's input. We also use the ngModel attribute to tie the input field value to the appropriate model member variable.
-
-Finally, let's add this into our home component, updating the div we display for a logged in user to:
-
-```html
-<div *ngIf="user['email'] != null">
-  Hello {{ "{{user['email']" }}}}
-  <br/>
-  <app-user-data-form userdata="{{ "{{user['registration']['data']['userData']" }}}}"></app-user-data-form>
-  <br/>
-  <a href='http://localhost:3000/logout'>Log me out</a>
-</div>
-...
-```
-
-Because we are reaching deep into the user object in the html, we need to set a sane default in `src/app/home/home.component.ts`. Update `ngOnInit` to:
-
-```typescript
-ngOnInit(): void {
-  this.userService.get().subscribe((data: any) => {
-    console.log(data);
-
-    // sane default for user data
-    data.registration.data = data.registration.data || {};
-    this.user = data;
-  });
-}
-// ...
-```
-
-Now you are able to sign in and update your data field. If you sign in using a different browser, you will see your updated user data field.
-
-And you can see it in the back end of the FusionAuth user admin screen:
-
-{% include _image.html src="/assets/img/blogs/fusionauth-example-angular/admin-user-data.png" alt="User data in the FusionAuth admin UI" class="img-fluid" figure=false %}
-
-
-## Next steps
-
-Congratulations! You now have a working Angular application which uses OAuth2 to authenticate your users in a secure fashion. In addition, you can update an attribute of the user in your FusionAuth identity store.
-
-To take it further, consider these enhancements:
-- Validate the user's input when they are adding in user data. Perhaps you want to make sure they add no more than 200 characters?
-- Set up express to store the sessions across server restarts so you don't have to login every time a new release is deployed. (Hint, [use a different store](https://www.npmjs.com/package/express-session#compatible-session-stores)).
-- Move the sensitive values from `config.js` to environment variables.
+Well no. As of right now, there’s nothing stamped "OAuth 2.1." And the draft spec isn’t finalized. But if you follow best practices around security, you can reap the benefits of this consolidated draft, and prepare yourself for when it is released. FusionAuth has an eye toward the future and already has support for many of these changes.
 
+When writing a client application, avoid the Implicit grant and the Resource Owner Password Credentials grant. However, as these are part of the OAuth 2.0 specification, they are currently supported by FusionAuth.
+
+Some steps to make sure your OAuth server (or your own server, if you run your own OAuth server) is taking:
+* Using PKCE whenever you use the authorization code grant. ([FusionAuth highly recommends using PKCE.](https://fusionauth.io/docs/v1/tech/oauth/#example-authorization-code-grant))
+* Make sure that your redirect URIs are compared using exact string matches, not wildcarded. (FusionAuth has you covered: ["URLs that are not authorized [configured in the application] may not be utilized in the redirect_uri"](https://fusionauth.io/docs/v1/tech/core-concepts/applications#oauth).)
+* Make sure bearer tokens are never present in the query string. (FusionAuth doesn’t support access tokens in any grant except the Implict Grant. But you shouldn’t be using that anyway.)
+* Limit your refresh tokens to make sure they are not abused. (FusionAuth forces refresh tokens be tied to the client to which the refresh token was sent, but doesn’t, as of now, follow the cryptographic signing behavior outlined in the OAuth 2.1 draft.)
+
+
+## Future directions
+
+> It's tough to make predictions, especially about the future." - Yogi Berra
+
+
+Please note that this specification is under active discussion on the OAuth mailing list. If you are interested in following or influencing this RFC, review the [discussion archives](https://mailarchive.ietf.org/arch/browse/oauth/) and/or [join the mailing list](https://www.ietf.org/mailman/listinfo/oauth). 
+
+Beyond this draft RFC, which is going to consolidate best practices but leave most of OAuth2.0 untouched, there’s also an OAuth3 working group, [reimagining the protocol from the ground up](https://oauth.net/3/). The OAuth3 specification is further from release than the OAuth2.1 specification.
+
+
+
+
+todo
+- check for 'store' usage, think about replacing that
+- remove the word 'flow' where possible
+- make sure all grants are capitalized
+- consider params
+- what about image?
