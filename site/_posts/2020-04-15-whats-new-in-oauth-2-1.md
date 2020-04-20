@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-Hey, look! 
+Hey look! OAuth is getting spiffed up a bit. The original OAuth 2.0 specification was released in October 2012 as [RFC 6749](https://tools.ietf.org/html/rfc6749). It replaced OAuth 1.0, released in April 2010. There have been some extensions over the years. A new OAuth specification has been proposed and is currently under discussion. As of this blog post's writing, the specification was most recently updated on March 8, 2020. If approved, [OAuth 2.1](https://tools.ietf.org/html/draft-parecki-oauth-v2-1-01) will obsolete certain parts of Oauth 2.0 and mandate additional security best practices. The rest of the OAuth 2.0 specification will be retained. 
 
 <!--more-->
 
