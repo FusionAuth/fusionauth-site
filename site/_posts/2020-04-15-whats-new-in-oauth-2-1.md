@@ -124,7 +124,7 @@ So it’s a good bet that this grant is going to be omitted in the final RFC. If
 
 Bearer tokens, also known as access tokens, allow access to protected resources and therefore must be secured. These days, most tokens are JWTs. Clients store them securely and then use them to make API calls back to the application server. The Application server then uses the token to identify the user calling the API. When first defined in [RFC 6750](https://tools.ietf.org/html/rfc6750), such tokens were allowed in headers, POST bodies or query strings. The draft OAuth 2.1 spec prohibits the bearer token from being sent in a query string. This is a particular issue with the Implicit grant (which is omitted from the OAuth 2.1 specification).
 
-A query string and, more generally, any data in the URL, is never private. JavaScript executing on a page can access it. A URL or components thereof may be captured in server log files, caches, or browser history. In general if you want to pass information privately over the internet, use TLS and put the sensitive information in a POST body or HTTP header.
+A query string and, more generally, any data in the URL, is never private. JavaScript executing on a page can access it. A URL or components thereof may be captured in server log files, caches, or browser history. In general, if you want to pass information privately over the internet, use TLS and put the sensitive information in a POST body or HTTP header.
 
 ### Limiting refresh tokens 
 
@@ -132,15 +132,15 @@ A query string and, more generally, any data in the URL, is never private. JavaS
 
 [Refresh tokens](https://tools.ietf.org/html/rfc6749#section-6) allow a client to retrieve new access tokens without reauthentication. This is helpful if you need access to a resource for longer than an access token live, or if you need infrequent access (such as being logged into your email for months or years). As such, they are typically longer lived than access tokens. Therefore you should take twice as much care when it comes to securing a refresh token. 
 
-If they are acquired by an attacker, the attacker can create access tokens at will. Obviously at that point the resource which the access tokens protect will no longer be secure. As an example of how to secure refresh tokens, here’s a [post using the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens securely using HttpOnly cookies and a limited cookie domain. Incidentally, never share your refresh tokens between different devices.
+If they are acquired by an attacker, the attacker can create access tokens at will. Obviously at that point, the resource which the access tokens protect will no longer be secure. As an example of how to secure refresh tokens, here’s a [post using the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens securely using HttpOnly cookies and a limited cookie domain. Incidentally, never share your refresh tokens between different devices.
 
-The OAuth 2.1 draft specification provides two options for refresh tokens: they can be one time use or tied to the sender with a cryptographic binding. 
+The OAuth 2.1 draft specification provides two options for refresh tokens: they can be one-time use or tied to the sender with a cryptographic binding. 
 
-One time use means that after a refresh token (call it refresh token A) is used to retrieve an access token, it becomes invalid. Of course, the OAuth server can send a new refresh token (call it refresh token B) along with the requested access token. In this case, once the newly delivered access token expires, the client can request another access token using refresh token B, receive the new access token and a new refresh token C, and so on and so on. The change to one time use refresh tokens may require changing client code to store the new refresh token on every refresh.
+One time use means that after a refresh token (call it refresh token A) is used to retrieve an access token, it becomes invalid. Of course, the OAuth server can send a new refresh token (call it refresh token B) along with the requested access token. In this case, once the newly delivered access token expires, the client can request another access token using refresh token B, receive the new access token and a new refresh token C, and so on and so on. The change to one-time use refresh tokens may require changing client code to store the new refresh token on every refresh.
 
-The other recommended option is to ensure the OAuth server cryptographically binds the refresh token to the client. The options mentioned in the the "OAuth 2.0 Security Best Current Practices" document are [OAuth token binding](https://www.ietf.org/archive/id/draft-ietf-oauth-token-binding-08.txt) or Mutual TLS authentication [RFC 8705](https://tools.ietf.org/html/rfc8705). This binding ensures the request came from the client to which the refresh token was issued. 
+The other recommended option is to ensure the OAuth server cryptographically binds the refresh token to the client. The options mentioned in the "OAuth 2.0 Security Best Current Practices" document are [OAuth token binding](https://www.ietf.org/archive/id/draft-ietf-oauth-token-binding-08.txt) or Mutual TLS authentication [RFC 8705](https://tools.ietf.org/html/rfc8705). This binding ensures the request came from the client to which the refresh token was issued. 
 
-To sum up, the OAuth 2.1 spec requires an OAuth server protect refresh tokens by requiring them to either be one time use or by using cryptographic proof of client association. 
+To sum up, the OAuth 2.1 spec requires an OAuth server protect refresh tokens by requiring them to either be one-time use or by using cryptographic proof of client association. 
 
 ## What’s unchanged?
 
@@ -155,7 +155,7 @@ When writing a client application, avoid the Implicit grant and the Resource Own
 Make sure your OAuth server is doing to following:
 * Using PKCE whenever you use the Authorization Code grant. ([FusionAuth highly recommends using PKCE.](https://fusionauth.io/docs/v1/tech/oauth/#example-authorization-code-grant))
 * Make sure that your redirect URIs are compared using exact string matches, not wildcard or substring matching. (FusionAuth has you covered: ["URLs that are not authorized [configured in the application] may not be utilized in the redirect_uri"](https://fusionauth.io/docs/v1/tech/core-concepts/applications#oauth).)
-* Make sure bearer tokens are never present in the query string. (FusionAuth doesn’t support access tokens in the query string other than in the Implict Grant. But you shouldn’t be using that anyway.)
+* Make sure bearer tokens are never present in the query string. (FusionAuth doesn’t support access tokens in the query string other than in the Implicit Grant. But you shouldn’t be using that anyway.)
 * Limit your refresh tokens to make sure they are not abused. (FusionAuth forces refresh tokens be tied to the client to which the refresh token was sent, but doesn’t, as of now, follow the cryptographic signing behavior outlined in the OAuth 2.1 draft.)
 
 ## Future directions
