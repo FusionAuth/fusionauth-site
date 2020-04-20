@@ -58,7 +58,7 @@ Whew, that's a lot of jargon. We'll examine each of these in turn. But before we
 
 * A `client` is a piece of code that the user is interacting with; browsers, native apps or single-page applications are all clients. 
 * An `OAuth server` implements OAuth specifications and has or can obtain information about which resources are available to clients--in the RFCs this is called an Authorization Server, but this is also known as an Identity Provider. Most users call it "the place I log in". 
-* An `application server` doesn’t have any authentication functionality but knows how to delegate to an OAuth server. It has a client id that allows the OAuth server to identify it. 
+* An `application server` doesn’t have any authentication functionality but knows how to delegate to an OAuth server. It has a client id which allows the OAuth server to identify it. 
 
 ### The Authorization Code grant and PKCE
 
