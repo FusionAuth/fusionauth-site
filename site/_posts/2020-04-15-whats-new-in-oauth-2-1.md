@@ -28,7 +28,7 @@ At the end of the day, the goal is to have a single document detailing how to be
 
 Don’t panic. 
 
-As mentioned above, the discussion process around this specification is ongoing. A draft RFC was posted to the IETF mailing list in mid March. As of the time of writing, the revision and discussion is still actively occurring. 
+As mentioned above, the discussion process around this specification is ongoing. A draft RFC was posted to the IETF mailing list in mid-March. As of the time of writing, the revision and discussion are still actively occurring. 
 
 You may ask, when will it be available? The short answer is "no one knows". 
 
@@ -165,4 +165,3 @@ Make sure your OAuth server is doing to following:
 Please note that this specification is under active discussion on the OAuth mailing list. If you are interested in following or influencing this RFC, review the [discussion archives](https://mailarchive.ietf.org/arch/browse/oauth/) and/or [join the mailing list](https://www.ietf.org/mailman/listinfo/oauth). 
 
 Beyond this draft RFC, which is going to consolidate security best practices but leave most of OAuth 2.0 untouched, there’s also an OAuth3 working group, [reimagining the protocol from the ground up](https://oauth.net/3/). The OAuth3 specification is further from release than the OAuth 2.1 specification.
-
