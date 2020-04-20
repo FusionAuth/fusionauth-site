@@ -104,7 +104,7 @@ The OAuth 2.1 draft specification omits the Implicit grant. The "OAuth 2.0 Secur
 
 > In order to avoid these issues, clients SHOULD NOT use the implicit grant (response type "token") … unless the  unless access token injection in the authorization response is prevented and the aforementioned token leakage vectors are [mitigated] 
 
-From my perspective this means that the omission of this grant in the final RFC is still not a done deal. However, if the final version of the OAuth 2.1 spec omits the Implicit grant, a compliant OAuth 2.1 server will not support it. If you use this grant in your application, you’ll have to replace it with a different one if you want to be compliant with OAuth 2.1. May we suggest the Authorization Code grant? 
+From my perspective, this means that the omission of this grant in the final RFC is still not a done deal. However, if the final version of the OAuth 2.1 spec omits the Implicit grant, a compliant OAuth 2.1 server will not support it. If you use this grant in your application, you’ll have to replace it with a different one if you want to be compliant with OAuth 2.1. May we suggest the Authorization Code grant? 
 
 ### The Resource Owner Password Credentials grant is removed
 
