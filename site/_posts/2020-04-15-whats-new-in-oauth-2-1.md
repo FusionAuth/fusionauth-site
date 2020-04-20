@@ -34,7 +34,7 @@ You may ask, when will it be available? The short answer is "no one knows".
 
 The long answer is "truly, no one knows. It does seem like we’re early in the process, though." 
 
-Even after OAuth 2.1 is released, it will likely be some time before it is widely implemented. Omitted grants may be supported with warnings forever. The exact changes to the specification are still up in the air, the release of the RFC is even further in the future and when it is released, you can still continue to use an OAuth 2.0 server if that serves your needs. 
+Even after OAuth 2.1 is released, it will likely be some time before it is widely implemented. Omitted grants may be supported with warnings forever. The exact changes to the specification are still up in the air, the release of the RFC is even further in the future and when it is released, you can continue to use an OAuth 2.0 server if that serves your needs. 
 
 That said, when this is released the biggest impact on people who use OAuth for authentication or authorization in their applications will be planning on how to handle the removed grants: the Implicit grant or Resource Owner Password Credentials grant. 
 
