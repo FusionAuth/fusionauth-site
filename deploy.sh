@@ -2,7 +2,7 @@
 
 # Note: if you make changes to this file, you will have to run sb push twice because the first execution will run the old version.
 
-if [[ ! "$(hostname)" = "fusionauth" ]]; then
+if [[ ! "$(hostname)" = "www-1" ]]; then
   echo "You are only supposed to run this on fusionauth.io, run sb push instead."
   exit 0
 fi
