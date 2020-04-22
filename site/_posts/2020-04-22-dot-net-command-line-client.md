@@ -8,24 +8,27 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-In this post, we'll build a command line client application for FusionAuth with C# and the .NET core libraries. We'll set up FusionAuth and then add a user to an application from the command line interface (cli) too.
+In this post, we'll build a command line client for FusionAuth with C# and the .NET Core libraries. We'll set up FusionAuth and then add a user to an application from the command line interface (CLI) tool we've built.
 
 <!--more-->
 
-At the end of this tutorial, you will have a working .NET core application which will allow you to add users one at a time to your FusionAuth user database. 
+At the end of this tutorial, you will have a working .NET Core application which will allow you to add users to your FusionAuth user database. 
 
-This might be a useful tool if you had customer service folks comfortable with the CLI that were adding users or other information to a FusionAuth identity server.
+This would be a useful tool if you had customer service folks, who were comfortable with the CLI, and needed to add users or otherwise update user information in the FusionAuth identity server.
 
-In a later tutorial we will use the Authorization Code grant to protect pages in an ASP.NET web application. But for now we'll only be adding users. 
+In the second part of this tutorial, we will use the Authorization Code grant to protect pages in an ASP.NET web application. But for now we'll only be adding users. 
 
 ## Prerequisites
 
 We'll be using the following software versions:
-- .NET core 3.1.201
+- .NET Core 3.1.201
 - FusionAuth 1.15.5
+
+I built this tutorial on Windows but .NET Core is cross platform.
 
 You need to have the following software installed before you begin:
 - Docker (optional, but preferred for installing FusionAuth)
+- .NET Core ([download it here if needed](https://dotnet.microsoft.com/download))
 
 You'll also want to double check to make sure your system meets the [memory, storage and CPU requirements](https://fusionauth.io/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
 
@@ -33,17 +36,17 @@ You'll also want to double check to make sure your system meets the [memory, sto
 
 This application has two main components. 
 
-The first is the .NET core cli tool. This will accept a few arguments and call the FusionAuth APIs to create a user. After doing this, you will be able to see the user in the FusionAuth UI.
+The first is the .NET Core CLI tool. This will create a user by calling the FusionAuth APIs. 
 
-And then there is the FusionAuth and identity server, which is a standalone application accessible at `http://localhost:9011`. This will be accessed by you, during configuration and via API calls.
+And then there is the FusionAuth identity server, which is a standalone application accessible at `http://localhost:9011`. This will be accessed by you, during configuration and also via API calls.
 
 ## APIs and client libraries
 
-FusionAuth has a [full featured and well documented API](https://fusionauth.io/docs/v1/tech/apis/) which allows you do create and manage users, applications, and groups. Using this API allows you to extend FusionAuth for purposes never contemplated by the FusionAuth team. You can also integrate it with other data sources and pieces of software that are unknown to us. If your software can speak JSON and reach FusionAuth over a network connection, you can integrate the two.
+FusionAuth has a [full featured and well documented API](https://fusionauth.io/docs/v1/tech/apis/) which allows you to create and manage users, applications, and groups. Using this API allows you to extend FusionAuth for purposes never contemplated by the FusionAuth team. You can also integrate it with other data sources and pieces of software unknown to us. If your software can speak JSON and reach FusionAuth over a network connection, you can integrate.
 
-However, we realize that not everyone wants to write raw JSON. (Wimps.) This is why we have created [client libraries](https://fusionauth.io/docs/v1/tech/client-libraries/) to make using the API a snap. These are all available under the Apache 2.0 license, so can be embedded in your applications as you see fit.
+However, we realize that not everyone wants to write raw JSON. (Wimps.) This is why we have created [client libraries](https://fusionauth.io/docs/v1/tech/client-libraries/) to make using the API a snap. These are available under the Apache 2.0 license and  can be embedded in your applications as you see fit.
 
-In this application, I'll be using the [.NET Core client library](https://fusionauth.io/docs/v1/tech/client-libraries/netcore).
+In this post, I'll be using the [.NET Core client library](https://fusionauth.io/docs/v1/tech/client-libraries/netcore).
 
 ## Setting up FusionAuth
 
@@ -57,28 +60,29 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-Now FusionAuth should be running at http://localhost:9011.
+Now FusionAuth should be running at `http://localhost:9011`.
 
 Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options (rpm, deb, etc) if you don't have Docker installed.
 
-Sign in as a FusionAuth administrator and create a new application. I creatively named mine 'dotnetcore', and will refer to this application throughout the tutorial. No need to tweak any defaults, but do note the "Id", which we'll use later. Mine is `b1981847-0609-44ba-a377-989966f6e704`.
-
+Sign in as a FusionAuth administrator and create a new application. I creatively named mine 'dotnetcore', and will refer to this application throughout the tutorial. No need to tweak any defaults, but do note the "Id", which we'll use later. 
 
 {% include _image.html src="/assets/img/blogs/dot-net-command-line-client/create-application.png" alt="The application in FusionAuth after it has been created" class="img-fluid" figure=false %}
 
-Then go to the APIs section. We'll need to create an API key for our cli tool. Go to Settings and then "API Keys" in the UI. Create a new key, and set the permissions. Following the principle of least privilege, we'll allow POSTs to `/api/user` and `/api/user/registration` and nothing else. 
+Then go to the APIs section. We'll need to create an API key for our CLI client. Head to "Settings" and then to "API Keys" in the UI. Create a new key, and set the permissions. 
 
-Note the key value (it looks something like `J9NXRWmkLVqt2hLc670s-i5iWzdPpgT_uXLuJcnMaFO`), we'll need it later.
+Following the principle of least privilege, we'll allow POSTs to `/api/user` and `/api/user/registration` and nothing else. These privileges will let the owner of this key create users and user registrations.
 
-## Write the command line client
+Note the key value (it looks something like `J9NXRWmkLVqt2hLc670s-i5iWzdPpgT_uXLuJcnMaFO`), as we'll need it later.
 
-This cli client will take a user's email, password and favorite color values and create a user in FusionAuth.
+## The command line client
 
-The full source code is [available](https://github.com/FusionAuth/fusionauth-dotnetcore-example). You can just download it and skip ahead to 'Running the command line client' if you'd like. I won't mind.
+This CLI tool will take a user's email, password and favorite color values and create a user in FusionAuth.
+
+The [full source code is of course available](https://github.com/FusionAuth/fusionauth-dotnetcore-example). You can download it and skip ahead to 'Running the command line client' if you'd like. I won't mind.
 
 ### Set up the project
 
-Set up a .NET core console project like so:
+Set up a .NET Core console project like so:
 
 ```
 dotnet new console --output usermanager
@@ -97,7 +101,11 @@ dotnet add package JSON.Net # for debugging
 dotnet add package FusionAuth.Client # for our client access
 ```
 
-Now we write the program. Here's the full listing. 
+This will update our `usermanager.csproj` file with needed dependencies.
+
+### The code
+
+Now we need to write the program to interact with the APIs. Here's the full source code. 
 
 ```
 using System;
@@ -191,9 +199,9 @@ namespace usermanager
 
 ``` 
 
-I'm not going to go over every line, but will highlight a few interesting pieces.
+I'm not going to review every line, but will highlight a few interesting points.
 
-These are configuration values. We hardcode some of these, but the API key we pull from the environment (checking in API keys being a big no-no). Make sure you update these to point to the correct FusionAuth URL and the application you created. The `tenantId` is optional unless you have more than one tenant, but it's good practice to pass it along.
+Near the top are are configuration values. We hardcode some of these, but the API key we pull from the environment (checking in API keys being a big no-no). Make sure you update these values to point to the correct FusionAuth URL and the application you created in the UI. The `tenantId` is optional, unless you have more than one tenant, but it's good practice to use it.
 ```
 ...
         private static readonly string apiKey = Environment.GetEnvironmentVariable("fusionauth_api_key");
@@ -204,8 +212,7 @@ These are configuration values. We hardcode some of these, but the API key we pu
 ...
 ```
 
-
-We build the user object first. This contains basic user information. The password will encrypted using the tenant default encryption settings.
+We build the user request object first. This inclues basic information, such as the email and password. The password will encrypted at rest using the tenant default encryption settings. If this weren't a tutorial, you'd also be connecting to FusionAuth over TLS, encrypting the password in transit.
 
 ```
 ...
@@ -214,7 +221,7 @@ We build the user object first. This contains basic user information. The passwo
 ...
 ```
 
-If we successfully create the user, we'll then create the registration. Otherwise we punt and complain to the person running the client.
+If we successfully create the user, we'll then create the registration; more on that below. Otherwise we punt and complain to the person running the client.
 
 ```
 ...
@@ -225,12 +232,11 @@ If we successfully create the user, we'll then create the registration. Otherwis
 		if (registrationResponse.WasSuccessful()) {
                     Console.WriteLine("created user with email: "+user.email);
 		} 
-...
-            }
+            } 
 ...
 ```
 
-We can store arbitrary key value pairs in the data field.
+We can store arbitrary key value pairs in the data field. This lets us associate any application specific values with our users.
 
 ```
 ...
@@ -240,7 +246,7 @@ We can store arbitrary key value pairs in the data field.
 ...
 ```
 
-A bit more about the registration. The registration field is what ties the user to the application. [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications) are simply something a user can login to. Each user can be associated with zero to many applications. See [this forum post for more information](https://fusionauth.io/community/forum/topic/5/can-you-limit-a-user-s-login-authentication-access-to-applications-within-a-single-tenant). 
+A bit more about the registration. The registration field is what ties the user to the application you created. [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications) are simply something a user can log in to. Each user can be associated with zero to many applications. See [this forum post for more information](https://fusionauth.io/community/forum/topic/5/can-you-limit-a-user-s-login-authentication-access-to-applications-within-a-single-tenant). 
 
 ```
 ...
@@ -258,7 +264,7 @@ A bit more about the registration. The registration field is what ties the user 
 ...
 ```
 
-A note about the API choice. We used the "Create a User" API in this post. This API works well for creating one user at a time; this is what a user onboarding tool might use. However, if you want to import a large number of users into FusionAuth, you'll want to explore the [Bulk Import API](https://fusionauth.io/docs/v1/tech/apis/users#import-users). Actually, you can do one better and just read the ["Migrate Users" tutorial](https://fusionauth.io/docs/v1/tech/tutorials/migrate-users) which will walk you through how to, well, migrate to FusionAuth.
+A note about the API choice. We used the "Create a User" API in this tutorial. This API works well for creating one user at a time; this is what an onboarding tool might use. However, if you want to import a large number of users into FusionAuth, you'll want to explore the [Bulk Import API](https://fusionauth.io/docs/v1/tech/apis/users#import-users). Actually, you can do one better and just read the ["Migrate Users" tutorial](https://fusionauth.io/docs/v1/tech/tutorials/migrate-users) which will walk you through how to, well, migrate users to FusionAuth.
 
 ## Running the command line client
 
@@ -283,13 +289,14 @@ failed with status 400
 {"statusCode":400,"errorResponse":{"fieldErrors":{"user.email":[{"code":"[duplicate]user.email","message":"A User with email = [newuser2@example.com] already exists."}]}}}
 ```
 
-If you look at the "Users" section of the FusionAuth UI, you will see "newuser2@example.com". If you view the user, they are registered in the "dotnetcore" application.
+If you look at the "Users" section of the FusionAuth UI, you will see "newuser2@example.com". If you view that user, you can see they are associated with the "dotnetcore" application.
 
 {% include _image.html src="/assets/img/blogs/dot-net-command-line-client/user-in-registration.png" alt="The user in FusionAuth after they have been created" class="img-fluid" figure=false %}
 
-If you want to build an executable to distribute to any user or server with the .NET core runtime available, just run `dotnet build` and you'll see `usermanager.exe` at `bin/Debug/netcoreapp3.1/usermanager.exe`.
+If you want to build an executable to distribute to any user or server with the .NET Core runtime available, run `dotnet build` and you'll see an executable at `bin/Debug/netcoreapp3.1/usermanager.exe`.
 
 ## Conclusion
 
-APIs are great, client libraries are even better. Even though the team at FusionAuth is good, they haven't anticipated all of your user management needs. That's why they've built out over ten client libraries that are available in the most popular languages.
+While APIs are great, client libraries are even better. Even though the team at FusionAuth is good, they haven't anticipated all of your user management needs. That's why they've built out over ten client libraries available for the most popular languages.
 
+Right now poor newuser2@example.com can't do much. As promised, in a future post, we'll create a web application that they can log in to.
