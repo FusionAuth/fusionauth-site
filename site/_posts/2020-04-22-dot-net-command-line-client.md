@@ -201,7 +201,7 @@ namespace usermanager
 
 I'm not going to review every line, but will highlight a few interesting points.
 
-Near the top are are configuration values. We hardcode some of these, but the API key we pull from the environment (checking in API keys being a big no-no). Make sure you update these values to point to the correct FusionAuth URL and the application you created in the UI. The `tenantId` is optional, unless you have more than one tenant, but it's good practice to use it.
+Near the top are configuration values. We hardcode some of these, but the API key we pull from the environment (checking in API keys being a big no-no). Make sure you update these values to point to the correct FusionAuth URL and the application you created in the UI. The `tenantId` is optional, unless you have more than one tenant, but it's good practice to use it.
 ```
 ...
         private static readonly string apiKey = Environment.GetEnvironmentVariable("fusionauth_api_key");
@@ -212,7 +212,7 @@ Near the top are are configuration values. We hardcode some of these, but the AP
 ...
 ```
 
-We build the user request object first. This inclues basic information, such as the email and password. The password will encrypted at rest using the tenant default encryption settings. If this weren't a tutorial, you'd also be connecting to FusionAuth over TLS, encrypting the password in transit.
+We build the user request object first. This inclues basic information, such as the email and password. The password will be encrypted at rest using the tenant default encryption settings. If this weren't a tutorial, you'd also be connecting to FusionAuth over TLS, encrypting the password in transit.
 
 ```
 ...
