@@ -63,7 +63,8 @@ Check out the [Download FusionAuth page](https://fusionauth.io/download) for oth
 
 Sign in as a FusionAuth administrator and create a new application. I creatively named mine 'dotnetcore', and will refer to this application throughout the tutorial. No need to tweak any defaults, but do note the "Id", which we'll use later. Mine is `b1981847-0609-44ba-a377-989966f6e704`.
 
-TBD Image of creating the dotnetcore application.
+
+{% include _image.html src="/assets/img/blogs/dot-net-command-line-client/create-application.png" alt="The application in FusionAuth after it has been created" class="img-fluid" figure=false %}
 
 Then go to the APIs section. We'll need to create an API key for our cli tool. Go to Settings and then "API Keys" in the UI. Create a new key, and set the permissions. Following the principle of least privilege, we'll allow POSTs to `/api/user` and `/api/user/registration` and nothing else. 
 
@@ -284,7 +285,7 @@ failed with status 400
 
 If you look at the "Users" section of the FusionAuth UI, you will see "newuser2@example.com". If you view the user, they are registered in the "dotnetcore" application.
 
-Image of user TBD
+{% include _image.html src="/assets/img/blogs/dot-net-command-line-client/user-in-registration.png" alt="The user in FusionAuth after they have been created" class="img-fluid" figure=false %}
 
 If you want to build an executable to distribute to any user or server with the .NET core runtime available, just run `dotnet build` and you'll see `usermanager.exe` at `bin/Debug/netcoreapp3.1/usermanager.exe`.
 
