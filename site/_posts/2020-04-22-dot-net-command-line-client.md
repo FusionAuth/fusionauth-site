@@ -16,7 +16,7 @@ At the end of this tutorial, you will have a working .NET Core application which
 
 This would be a useful tool if you had customer service folks, who were comfortable with the CLI, and needed to add users or otherwise update user information in the FusionAuth identity server.
 
-In the second part of this tutorial, we will use the Authorization Code grant to protect pages in an ASP.NET web application. But for now we'll only be adding users. 
+In the second part of this tutorial, we will use the Authorization Code grant to protect pages in an ASP.NET web application. But for now, we'll only be adding users. 
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ We'll be using the following software versions:
 - .NET Core 3.1.201
 - FusionAuth 1.15.5
 
-I built this tutorial on Windows but .NET Core is cross platform.
+I built this tutorial on Windows but .NET Core is cross-platform.
 
 You need to have the following software installed before you begin:
 - Docker (optional, but preferred for installing FusionAuth)
@@ -199,7 +199,7 @@ namespace usermanager
 
 ``` 
 
-I'm not going to review every line, but will highlight a few interesting points.
+I'm not going to review every line but will highlight a few interesting points.
 
 Near the top are configuration values. We hardcode some of these, but the API key we pull from the environment (checking in API keys being a big no-no). Make sure you update these values to point to the correct FusionAuth URL and the application you created in the UI. The `tenantId` is optional, unless you have more than one tenant, but it's good practice to use it.
 ```
