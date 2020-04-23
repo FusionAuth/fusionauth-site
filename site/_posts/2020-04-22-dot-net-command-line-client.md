@@ -42,7 +42,7 @@ And then there is the FusionAuth identity server, which is a standalone applicat
 
 ## APIs and client libraries
 
-FusionAuth has a [full featured and well documented API](https://fusionauth.io/docs/v1/tech/apis/) which allows you to create and manage users, applications, and groups. Using this API allows you to extend FusionAuth for purposes never contemplated by the FusionAuth team. You can also integrate it with other data sources and pieces of software unknown to us. If your software can speak JSON and reach FusionAuth over a network connection, you can integrate.
+FusionAuth has a [full-featured and well-documented API](https://fusionauth.io/docs/v1/tech/apis/) which allows you to create and manage users, applications, and groups. Using this API allows you to extend FusionAuth for purposes never contemplated by the FusionAuth team. You can also integrate it with other data sources and pieces of software unknown to us. If your software can speak JSON and reach FusionAuth over a network connection, you can integrate.
 
 However, we realize that not everyone wants to write raw JSON. (Wimps.) This is why we have created [client libraries](https://fusionauth.io/docs/v1/tech/client-libraries/) to make using the API a snap. These are available under the Apache 2.0 license and  can be embedded in your applications as you see fit.
 
@@ -212,7 +212,7 @@ Near the top are configuration values. We hardcode some of these, but the API ke
 ...
 ```
 
-We build the user request object first. This inclues basic information, such as the email and password. The password will be encrypted at rest using the tenant default encryption settings. If this weren't a tutorial, you'd also be connecting to FusionAuth over TLS, encrypting the password in transit.
+We build the user request object first. This includes basic information, such as the email and password. The password will be encrypted at rest using the tenant default encryption settings. If this weren't a tutorial, you'd also be connecting to FusionAuth over TLS, encrypting the password in transit.
 
 ```
 ...
