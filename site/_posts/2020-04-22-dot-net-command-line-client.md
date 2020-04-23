@@ -293,7 +293,7 @@ If you look at the "Users" section of the FusionAuth UI, you will see "newuser2@
 
 {% include _image.html src="/assets/img/blogs/dot-net-command-line-client/user-in-registration.png" alt="The user in FusionAuth after they have been created" class="img-fluid" figure=false %}
 
-If you want to build an executable to distribute to any user or server with the .NET Core runtime available, run `dotnet build` and you'll see an executable at `bin/Debug/netcoreapp3.1/usermanager.exe`.
+If you want to build an executable to distribute to any user or server with the .NET Core runtime available, run `dotnet build` and you'll see an executable at `bin/Debug/netcoreapp3.1/usermanager.exe`. You can also look at the various [deployment options](https://docs.microsoft.com/en-us/dotnet/core/deploying/).
 
 ## Conclusion
 
