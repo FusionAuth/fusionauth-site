@@ -260,7 +260,7 @@ public class FusionJava {
 
 ## Reactivating a user
 
-Next, to reactivate the user we'd deactivated (perhaps they cleaned up their act), let's use the `reactivateUser` method and provide the ID of the user as its parameter. 
+Next, to reactivate the user we just deactivated (perhaps they cleaned up their act), let's use the `reactivateUser` method and provide the ID of the user as its parameter. 
 
 Here is the code:
 
@@ -437,7 +437,7 @@ public class FusionJava {
 
 ## Reactivating an application
 
-To reactivate the application we'd deactivated, let's use the `reactivateApplication` method and provide the ID of the application as its parameter. 
+To reactivate the application we just deactivated, let's use the `reactivateApplication` method and provide the ID of the application as its parameter. 
 
 Here is the code:
 
