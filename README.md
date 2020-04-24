@@ -40,3 +40,15 @@ sb serve
 ```
 
 For more information on the Savant build tool, checkout [savantbuild.org](http://savantbuild.org/).
+
+## Deploying
+
+This section is only useful if you have access to the FusionAuth web server(s).
+
+Only master is ever released. You should work on a feature branch so that nothing is inadverantly released, but you must merge to master before you release. Master on every project should always be completely clean and able to be released at anytime.
+
+After master contains what you want to release, there is a Savant build target called push. When you run `sb push` it will pull master, re-build and updates the website.
+
+If your user is different on the webserver than on your localhost, you'll want to use the --user switch:
+
+`sb push --user=yourremoteusername`
