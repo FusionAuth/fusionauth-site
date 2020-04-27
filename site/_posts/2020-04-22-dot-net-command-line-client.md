@@ -1,9 +1,9 @@
 ---
 layout: blog-post
-title: Creating a user in FusionAuth with a dot net cli
-description: How do you use the API in FusionAuth to create a user?
+title: Creating a user in FusionAuth with a .NET core CLI client
+description: Use the FusionAuth APIs to create a user using .NET Core?
 author: Dan Moore
-image: blogs/whats-new-in-oauth-2-1/whats-new-with-oauth-2-1.png
+image: blogs/dot-net-command-line-client/creating-user-cli-client.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
