@@ -78,7 +78,7 @@ Note the key value (it looks something like `J9NXRWmkLVqt2hLc670s-i5iWzdPpgT_uXL
 
 This CLI tool will take a user's email, password and favorite color values and create a user in FusionAuth.
 
-The [full source code is of course available](https://github.com/FusionAuth/fusionauth-dotnetcore-example). You can download it and skip ahead to 'Running the command line client' if you'd like. I won't mind.
+The [full source code is of course available](https://github.com/FusionAuth/fusionauth-example-netcore). You can download it and skip ahead to 'Running the command line client' if you'd like. I won't mind.
 
 ### Set up the project
 
