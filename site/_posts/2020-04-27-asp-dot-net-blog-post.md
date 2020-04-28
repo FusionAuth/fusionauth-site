@@ -300,12 +300,6 @@ Here we configure the cookie, including setting the cookie name.
                 .AddCookie("cookie", options =>
                 {
                     options.Cookie.Name = "mycookie";
-
-                    options.Events.OnSigningOut = async e =>
-                    {
-                        await e.HttpContext.RevokeUserRefreshTokenAsync(); //XXX do we need
-                    };
-                })
 ...
 ```
 
@@ -338,7 +332,7 @@ Turn on authentication for our application:
 ...
 ```
 
-For debugging, we add `IdentityModelEventSource.ShowPII = true;`, which you can see at the very end of `Configure` method. This makes it easier to see errors in the OAuth flow. But for production you should remove it.
+For debugging, we add `IdentityModelEventSource.ShowPII = true;`, which you can see at the very end of `Configure` method. This makes it easier to see [errors in the OAuth flow](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII). But for production you should remove it.
 
 ```csharp
 ...
@@ -381,55 +375,84 @@ You can view the code in this state by looking at the `add-authentication` branc
 
 ## Enable logging out
 
-Awesome, now you can login if you have an user. However, right now there's no way to sign out. The cookie is being stored in a session variable
+Awesome, now you can login if you have an user. However, right now there's no way to sign out. The cookie is being stored in a session variable and we want to both logout of our ASP.NET Core session and the FusionAuth session.
 
+We need to add a logout page, remove the session cookie, and the redirect to the FusionAuth logout URL. FusionAuth will destroy its session and then redirect back to our previously configured Logout URL.
 
-Go further:
-protect more pages
+Here's what the `Logout.cshtml.cs` file looks like:
 
+```csharp
+namespace SampleApp.Pages
+{
+    public class LogoutModel : PageModel
+    {
+        private readonly ILogger<LogoutModel> _logger;
+        private readonly IConfiguration _configuration;
 
+        public LogoutModel(ILogger<LogoutModel> logger, IConfiguration configuration)
+        {
+            _logger = logger;
+            _configuration = configuration;
+        }
 
-Edit 
+        public IActionResult OnGet()
+        {
+              SignOut("cookie", "oidc");
+              var host = _configuration["SampleApp:Authority"];
+              var cookieName = _configuration["SampleApp:CookieName"];
 
-* fusionauth should already be configured. point back to prev post.
-make a few changes
-jwts
-generate cert with correct values pic
-SecurityTokenSignatureKeyNotFoundException/ certain algos
+              var clientId = _configuration["SampleApp:ClientId"];
+              var url = host + "/oauth2/logout?client_id="+clientId;
+              Response.Cookies.Delete(cookieName);
+              return Redirect(url);
+        }
+    }
+}
+```
 
-* create a new ASP.NET Core webapp.
-branch setup-application
+`OnGet` is the interesting method. Here we signout of our providers, then we delete the cookie and send the user to the FusionAuth logout endpoint. An alternative would be to have an HTTP client in this class call that logout endpoint instead of the redirect.
 
-dotnet new webapp -o SampleApp
-cd SampleApp
+Don't forget to add it to the navigation, if the user is signed in:
 
- dotnet publish -r win-x64
+```html
+@if (User.Identity.IsAuthenticated)
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-page="/Logout">Logout</a>
+    </li>
+}
+```
 
-https://docs.microsoft.com/en-us/dotnet/core/deploying/
+You also need to update the `appsettings.json` file with the new cookie name. Since we're now using it in two places, extracting it will make for a more maintainable application.
 
-publish and run
- bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
+```json
+...
+   "SampleApp" : {
+       "Authority" : "http://localhost:9011",
+       "CookieName" : "sampleappcookie",
+       "ClientId" : "4420013f-bc5e-4d5a-9f94-f4b64ad5107c"
+    }
+...
+```
 
-* disable https
+And finally, we need to change the `Startup.cs` file to use the new cookie name from the configuration:
 
+```csharp
+...
+.AddCookie("cookie", options =>
+{
+    options.Cookie.Name = Configuration["SampleApp:CookieName"];
+})
+...
+```
 
-* add a separate, secure page
-* configure login stuff
-make sure to update yoru appsettings.json
-* show that it works (use newuser2@example.com)
+Great! Now you can both sign in and sign out of your application.
 
-logout
-2nd post
+(You can view the code in this state by looking at the `add-logout` branch.)
 
-Add in 
-* the lambda to get favorite color
-* and pkce
+## Next steps
 
-References
+In the next blog post we're going to extend this example just a little further. We'll enable PKCE and add a custom claim using a [FusionAuth lambda](https://fusionauth.io/docs/v1/tech/lambdas/). 
 
-https://github.com/IdentityModel/IdentityModel.AspNetCore
-https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/Supported-Algorithms
-https://docs.microsoft.com/en-us/dotnet/api/microsoft.identitymodel.logging.identitymodeleventsource?view=azure-dotnet
-https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII
+If you want to explore this example further, you could add more pages, both protected and not. You could also add users to roles and protect certain content based on the user role.
 
-https://docs.microsoft.com/en-us/aspnet/core/fundamentals/?view=aspnetcore-3.1&tabs=linux
