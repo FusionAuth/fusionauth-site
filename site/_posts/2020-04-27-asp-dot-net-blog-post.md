@@ -305,7 +305,8 @@ Here we configure the cookie, including setting the cookie name.
 
 Finally we configure our previously referenced configuration provider. You could have multiple different providers if you liked. 
 
-We pull configuration options from either `appsettings.json` or the environment (for the client secret).  These are values you previously noted when you were setting up FusionAuth. (We'll add them to `appsettings.json` later.)
+We pull configuration options from either `appsettings.json` or the environment (for the client secret).  These are values you previously noted when you were setting up FusionAuth. (We'll add them to `appsettings.json` later.) We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant.
+
 ```csharp
 ...
                 .AddOpenIdConnect("oidc", options =>
