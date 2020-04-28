@@ -84,7 +84,7 @@ We'll also want to add a page to be secured. Add `Secure.cshtml` and `Secure.csh
 <p>TBD</p>
 ```
 
-```
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
