@@ -451,7 +451,7 @@ Great! Now you can both sign in and sign out of your application.
 
 ## Next steps
 
-In the next blog post we're going to extend this example just a little further. We'll enable PKCE and add a custom claim using a [FusionAuth lambda](https://fusionauth.io/docs/v1/tech/lambdas/). 
+In the next blog post we're going to extend this example just a little further. We'll add add a user to a role and add a custom claim using a [FusionAuth lambda](https://fusionauth.io/docs/v1/tech/lambdas/). 
 
-If you want to explore this example further, you could add more pages, both protected and not. You could also add users to roles and protect certain content based on the user role.
+If you want to explore this example further, you could add more pages, both protected and not. You could also retrieve user information via an API call and displaying their first name.
 
