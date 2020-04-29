@@ -364,11 +364,15 @@ Note that the client secret is not captured in this version controlled file. Ins
 dotnet publish -r win-x64 && SampleApp__ClientSecret=H4... bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
 ```
 
-Once you've updated these files, you can publish and start the application. You should be able to log in with the user you previously created and see their claims (essentially information known about the user by FusionAuth). 
+Once you've updated these files, you can publish and start the application. You should be able to log in with the user you previously created and see their claims by going to `http://localhost:5000` and clicking on the "Secure" link in the navigation.
 
-TBD screencap of login
+You'll be prompted to login. You can [theme the login screen of FusionAuth](https://fusionauth.io/docs/v1/tech/themes/) should you choose, but this is the default display.
 
-Note, you can [theme the login screen of FusionAuth](https://fusionauth.io/docs/v1/tech/themes/) should you choose.
+{% include _image.html src="/assets/img/blogs/authorization-code-grant-asp-net/login-asp-dot-net-example.png" alt="The login screen in FusionAuth." class="img-fluid" figure=false %}
+
+After you've signed in with the credentials of the user, you'll end up at the "Secure" page. The claims displayed are data from FusionAuth that has been encoded in the JWT for use by your application.
+
+{% include _image.html src="/assets/img/blogs/authorization-code-grant-asp-net//successful-login-secure-page-display.png" alt="The secure page." class="img-fluid" figure=false %}
 
 You can view the code in this state by looking at the `add-authentication` branch.
 
