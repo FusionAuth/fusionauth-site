@@ -20,7 +20,7 @@ Let's navigate to the FusionAuth administration console and add a role to the ap
 
 TBD image adding roles
 
-Then we want to add a group. We'll call this the "ASP.NET Core User" group, and associate the "User" role with it.
+Then we want to add a group. We'll call this the "ASP.NET Core User" group, and associate the user role with it.
 
 TBD image adding group
 
@@ -44,7 +44,7 @@ Since the role and other claims are encoded in the JWT, which is stored a cookie
 
 You can add in custom claims based on user data, the time of day or anything else. In FusionAuth, you add this data to a JWT with a [lambda](https://fusionauth.io/docs/v1/tech/lambdas/jwt-populate). This is JavaScript function which receives the JWT object before it is signed and can modify it. Remember way back when we [created the user](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client) and specified their favorite color as a command line option? Well, we're going to send that information down to the ASP.NET Core web application so that it can display that very valuable data.
 
-A lambda is flexible and can pull from user or registration data. You can modify the token by removing attributes, though there are some that are immutable. Here's the lambda:
+A lambda is flexible and can pull from user or registration data. You can modify the token by removing attributes also, though there are some that are immutable. Here's the lambda:
 
 ```javascript
 function populate(jwt, user, registration) {
@@ -52,7 +52,7 @@ function populate(jwt, user, registration) {
 }
 ```
 
-To create it, we're going to use the FusionAuth API, rather than the administration console. I just felt it had been too long since I `curl`ed something. Create an api key, allowing full access to the Lambda API. Allow the holder of this key to patch the application resource. We'll need the latter to configure our FusionAuth application to use our lambda.
+To create it, we're going to use the FusionAuth API, rather than the administration console. I just felt it had been too long since I `curl`ed something. Create an API key called "Lambda management" allowing full access to the Lambda API. Allow the holder of this key to patch the application resource as well. We'll need the latter to configure our FusionAuth application to use our lambda.
 
 TBD Image of creating an API key
 
@@ -62,7 +62,7 @@ Here's the shell script which creates the lambda and associate it with the "dotn
 AUTH_HEADER=YOUR_API_KEY_HERE
 APPLICATION_ID=YOUR_APP_ID_HERE
 
-lambda_output=`curl -s -XPOST -H "Authorization: $AUTH_HEADER" -H"Content-Type: application/json" http://localhost:9011/api/lambda -d '{ "lambda" : {"body" : "function populate(jwt, user, registration) { jwt.favoriteColor = user.data.favoriteColor; }", "name": "exposeColor", "type" : "JWTPopulate" } }'`
+lambda_output=`curl -s -XPOST -H "Authorization: $AUTH_HEADER" -H"Content-Type: application/json" http://localhost:9011/api/lambda -d '{ "lambda" : {"body" : "function populate(jwt, user, registration) { jwt.favoriteColor = user.data.favoriteColor; }", "name": "addFavoriteColor", "type" : "JWTPopulate" } }'`
 
 lambda_id=`echo $lambda_output|sed -r 's/.*"id":"([^"]*)".*/\1/g'`
 application_patch='{"application" : {"lambdaConfiguration" : { "accessTokenPopulateId" : "'$lambda_id'", "idTokenPopulateId" : "'$lambda_id'" } } }'
