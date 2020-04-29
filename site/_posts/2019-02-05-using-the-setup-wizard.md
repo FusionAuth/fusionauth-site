@@ -27,17 +27,17 @@ In order to complete the FusionAuth Setup Wizard, you will be prompted to create
 
 If you instead are being prompted by the FusionAuth Maintenance Mode, please complete that setup first and then return to this step. See the Maintenance Mode section in the [FusionAuth App Installation Guide](/docs/v1/tech/installation-guide/fusionauth-app).
 
-{% include _image.html src="/assets/img/blogs/setup-wizard-create-admin.png" alt="Create Admin User" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/setup-wizard-create-admin.png" alt="Create Admin User" class="full" figure=false %}
 
 The fields that are required are marked with a red asterisk. Type in an email and password that will be used to log into the FusionAuth management interface. The password must be at least 8 characters in length to pass validation. Before you click the Submit button you must accept the FusionAuth license, do so by clicking on the toggle .  You may optionally opt-in to receive FusionAuth technical announcements. Click submit to complete this form and you will be logged into FusionAuth and be shown the Dashboard which will contain the three remaining items to be configured.
 
-{% include _image.html src="/assets/img/blogs/setup-complete-dashboard.png" alt="Complete Setup Dashboard" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/setup-complete-dashboard.png" alt="Complete Setup Dashboard" class="full" figure=false %}
 
 ## Add Application
 
 The next step is to add an application. Select the blue Setup button to begin your first application and proceed to the Add Application form.
 
-{% include _image.html src="/assets/img/blogs/setup-create-application.png" alt="Add Application" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/setup-create-application.png" alt="Add Application" class="full" figure=false %}
 
 A FusionAuth Application represents an authenticated resource. Think of it as something that users will log into. Required fields are marked with a red asterisk. Start by giving your application a name in the name field. We suggest that in most cases you use the name of your application. Next, you will create roles to represent authority levels in your application. If you're integrating FusionAuth into an existing application, you probably already know what your roles are, such as "admin", "user", or "manager". To add additional roles, click on the Add Role button and enter the name of the role. A description is not required but can be used to let others know what the role represents. If you are not sure at this stage, it is easy to add and modify existing roles after the Application has been created. Click the blue save button when you have completed the form.
 
@@ -47,7 +47,7 @@ To return the dashboard select Dashboard from the menu on the left.
 
 The next step is to add an API key so you may begin your integration and make authenticated API requests. Select the blue Add button in the Missing API Key box to continue to the Add API Key page.
 
-{% include _image.html src="/assets/img/blogs/setup-create-api-key.png" alt="Add API Key" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/setup-create-api-key.png" alt="Add API Key" class="full" figure=false %}
 
 As before, required fields are marked with a red asterisk. You will notice that FusionAuth has already created a unique API Key and pre-filled the Key field. You may use this generated key, or you can change it to something else if you prefer. For more effective and robust security, API keys should be long and difficult to guess. If you are going to create your own API key, be thoughtful about what you choose–once an API has been created, the key value cannot be changed. Again, the description is optional but is helpful to document the purpose or intended use of this API key.
 
@@ -59,7 +59,7 @@ To return the dashboard select Dashboard from the menu on the left.
 
 The final item to complete is the SMTP server configuration. This step is not required to use FusionAuth, but is recommended since without it FusionAuth will be unable to send email. This means features such as Setup Password and Forgot Password will not function. Click the blue Setup button in the Email Setting box and you will see the System Settings page.
 
-{% include _image.html src="/assets/img/blogs/setup-smtp-server-config.png" alt="SMTP Configuration" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/setup-smtp-server-config.png" alt="SMTP Configuration" class="full" figure=false %}
 
 The Email tab should already be selected. Start by toggling the Email settings "Enabled" button and the SMTP server configuration will become visible. As always, required fields are marked with a red asterisk. Complete the form by entering the SMTP host, port and username and password credentials if required. Generally these details will be provided by your SMTP service provider or IT department. Click the blue save button when you have completed the form and select Dashboard from the menu on the left.
 

@@ -24,7 +24,7 @@ While these solutions have similar core capabilities, don't think that Active Di
 
 ## How Active Directory and FusionAuth Are Different
 
-[{% include _image.html src="/assets/img/blogs/active-directory-fusionauth-compare-sample.png" alt="Active Directory and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-active-directory.pdf "Download the Active Directory and FusionAuth Feature Comparison")
+[{% include _image.liquid src="/assets/img/blogs/active-directory-fusionauth-compare-sample.png" alt="Active Directory and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-active-directory.pdf "Download the Active Directory and FusionAuth Feature Comparison")
 
 ### Free for Unlimited Users
 

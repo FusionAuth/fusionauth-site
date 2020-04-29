@@ -12,7 +12,7 @@ We said we would be cranking on new features and we meant it. Version 1.15.0 is 
 
 <!--more-->
 
-{% include _image.html src="/assets/img/blogs/fusionauth-reactor-header-2x.png" alt="FusionAuth Reactor heading" class="img-fluid w-100 w-xl-50 w-l-50 w-md-75 mt-2" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-reactor-header-2x.png" alt="FusionAuth Reactor heading" class="img-fluid w-100 w-xl-50 w-l-50 w-md-75 mt-2" figure=false %}
 Built from a fire-forged, vibranium-authenticatium alloy, [FusionAuth Reactor](/features/reactor) is a suite of new features that extends FusionAuth's core functionality. The first feature is now available for any paid Edition of FusionAuth (more about this below).
 
 ### Up First: Breached Password Detection
@@ -35,7 +35,7 @@ By activating this feature and combining it with our already powerful password c
 ### More Reactor Components on Tap
 Stay tuned for more details on the upcoming [Reactor features](/features/reactor). Also, if you have [an idea you'd like to see added to FusionAuth, jump over to GitHub](https://github.com/FusionAuth/fusionauth-issues/issues) and let us know about it. We're always adding in new features suggested by our active user and developer community.
 
-{% include _image.html src="/assets/img/blogs/fusionauth-editions-header-2x.png" alt="FusionAuth Editions heading" class="img-fluid w-100 w-xl-50 w-l-50 w-md-75 mt-2" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-editions-header-2x.png" alt="FusionAuth Editions heading" class="img-fluid w-100 w-xl-50 w-l-50 w-md-75 mt-2" figure=false %}
 With the addition of FusionAuth Reactor, we've renamed our Support packages to **FusionAuth Editions**. Our new Editions will now include the premium features of Reactor as well as support for FusionAuth. Don’t worry though, FusionAuth still has a Community Edition that will always be free.
 
 With the new FusionAuth Editions, you will get instant access to all of the Reactor features as well as access to FusionAuth support. Whether need a few questions answered or you need 24x7x365 access to the FusionAuth dev team, there is an Edition that has you covered.

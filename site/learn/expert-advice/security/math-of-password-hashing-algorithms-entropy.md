@@ -3,7 +3,6 @@ layout: advice
 title: The Math of Password Hashing Algorithms and Entropy
 description: Long passwords and one-way password hashing are standard strategies used to increase security and protect your user's passwords. Let's take a look at how they work and some new ideas to improve it.
 author: Brian Pontarelli
-header_dark: true
 image: advice/save-a-cpu-article.png
 category: Security
 date: 2019-11-04
@@ -40,7 +39,7 @@ c194ead20ad91d30c927a34e8c800cb9a13a7e445a3ffc77fed14176edc3c08f   xboxjunkie42
 
 Using a lookup table, all the attacker needs to know is the SHA2 hash of the password and they can see if it exists in the table. For example, let's assume for a moment that Netflix stores your password using an SHA2 hash. If Netflix is breached, their user database is likely now available to anyone with a good internet connection and a torrent client. Even a mediocre hacker now only needs to lookup the SHA2 hash associated with your Netflix account to see if it exists in their lookup table. This will reveal nearly instantly what your plain text password is for Netflix. Now, this hacker can log in to your Netflix account and binge watch all four seasons of Fuller House ("how rude!"). And he can also try this password on Hulu and HBO Go to see if you used the same email address and password for those accounts as well.
 
-{% include _image.html src="/assets/img/blogs/salt.png" alt="Salt" class="float-right ml-3" style="width: 250px;" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/salt.png" alt="Salt" class="float-right ml-3" style="width: 250px;" figure=false %}
 
 The best way to protect against this type of attack is to use what is called a **salt**. A salt is simply a bunch of random characters that you prepend to the password before it is hashed. Each password should have a different salt, which means that a lookup table is unlikely to have an entry for the combination of the salt and the password. This makes salts an ideal defense against lookup tables.
 
@@ -60,7 +59,7 @@ Now that we have added the salt, the "password" that we actually generated the h
 
 ### Brute Force
 
-{% include _image.html src="/assets/img/blogs/hulk.png" alt="Brute Force" class="float-left mb-3 mr-3" style="width: 150px;" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/hulk.png" alt="Brute Force" class="float-left mb-3 mr-3" style="width: 150px;" figure=false %}
 
 The second method that attackers use to crack passwords is called brute force cracking. This means that the attacker writes a computer program that can generate all possible combinations of characters that can be used for a password and then computes the hash for each combination. This program can also take a salt if the password was hashed with a salt. The attacker then runs the program until it generates a hash that is the same as the hash from the database. Here's a simple Java program for cracking passwords. We left out some detail to keep the code short (such as all the possible password characters), but you get the idea.
 
@@ -207,4 +206,4 @@ At the time of this writing, there are still numerous simple algorithms that hav
 
 FusionAuth defaults to `PBKDF2` with `24,000` iterations as the default password hashing scheme. This algorithm is quite complex and with the high number of iterations, it is sufficiently slow such that long and short passwords are challenging to brute force attack. Fusionauth also allow you to change the default algorithm as well as upgrade the algorithm for a user when they log in. This allows you to upgrade your applications password security over time.
 
-{% include _advice-get-started.html intro="If you are looking for a solution lets you manage and configure password hashing algorithms, FusionAuth has you covered." %}
+{% include _advice-get-started.liquid intro="If you are looking for a solution lets you manage and configure password hashing algorithms, FusionAuth has you covered." %}

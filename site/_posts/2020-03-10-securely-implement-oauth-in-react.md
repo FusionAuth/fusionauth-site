@@ -45,7 +45,7 @@ React client <-> Express server <-> FusionAuth
 
 Literally, it might look something like this:
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-react/app-finished.png" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/app-finished.png" class="img-fluid" figure=false %}
 
 (Although, you're on your own for CSS.)
 
@@ -73,13 +73,13 @@ docker-compose up
 
 Once FusionAuth is running (by default at [localhost:9011](http://localhost:9011)), create a new Application. The only configurations you need to change are `Authorized redirect URLs` and `Logout URL` on the `OAuth` tab. These are basically links used by FusionAuth during the only two times we redirect off our app entirely: login and logout. After a user logs in, FusionAuth will redirect them back to our app on one of the `Authorized Redirect URLs`. After a user logs out, FusionAuth will redirect them to the `Logout URL`.
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-react/admin-edit-application.png" class="img-fluid" figure=false alt="FusionAuth application edit page" %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-edit-application.png" class="img-fluid" figure=false alt="FusionAuth application edit page" %}
 
 We'll talk later about why we use these particular URLs. For now, enter `http://localhost:9000/oauth-callback` for the `Authorized Redirect URL` (a point on our Express server) and `http://localhost:8080` for the `Logout URL` (the only endpoint on our single page React client). Click the blue `Save` button in the top-right to finish the configuration.
 
 A login feature isn't very useful with zero users. It's possible to register users from your app or using FusionAuth's self-service registration feature, but we'll manually add a user for this example. Select `Users` from the menu. You should see your own account; it's already registered to FusionAuth, which is why you can use it to log into the admin panel.
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-react/admin-manage-user.png" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-manage-user.png" class="img-fluid" figure=false %}
 
 Select `Manage` and go to the `Registrations` tab. Click on `Add Registration`, pick your new application, and then `Save` to register yourself.
 
@@ -164,7 +164,7 @@ Storing configuration this way saves us from a lot of `CMD-F` pain when changing
 
 The OAuth and FusionAuth configuration above will not match your application. I copied it out of my FusionAuth admin panel. This is the only code in the whole article you can't just copy/paste, seriously. The best place to find your values is this `View` button in the Applications page:
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-react/admin-view-application.png" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-view-application.png" class="img-fluid" figure=false %}
 
 (Also, if you do want to copy/paste everything, just [clone the GitHub repo](https://github.com/FusionAuth/fusionauth-example-react) with everything already in it. You'll still have to change this config file, though. No way around that).
 
@@ -602,7 +602,7 @@ This is all standard OAuth flow but it is a little verbose.
 
 Try navigating to `localhost:9000/login`. You should see a FusionAuth login form:
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-react/app-login.png" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/app-login.png" class="img-fluid" figure=false %}
 
 When you successfully authenticate, you'll just see `Cannot GET /oauth-callback`, because `/oauth-callback` doesn't exist, yet. Remember, we added that as an `Authorized redirect URL` in the FusionAuth admin panel and as our `redirectURI` in `config.js`. This is the location that where FusionAuth redirects the browser back to after authentication in order to complete the OAuth workflow.
 
@@ -1084,7 +1084,7 @@ export default class LogInOut extends React.Component {
 
 Once everything is hooked up, you can test it out by typing something into the `<textarea>` in the React app and then verifying that the data is updated in FusionAuth. The user data is displayed in FusionAuth on the Manage page for the user under the `User data` tab:
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-react/admin-user-data.png" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-user-data.png" class="img-fluid" figure=false %}
 
 However, it's a good idea to set the `<textarea>`'s `defaultValue` to the `userData`. This has two advantages: first, it allows us to inspect `userData` and confirm that it's maintained; second, it allows the user to edit the `userData`, rather than overwrite it each time.
 

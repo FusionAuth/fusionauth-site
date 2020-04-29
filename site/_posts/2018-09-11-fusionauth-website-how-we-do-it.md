@@ -16,7 +16,7 @@ Here's how it all comes together:
 
 ## Bootstrap Studio
 
-{% include _image.html src="/assets/img/blogs/bootstrap-studio.png" alt="Bootstrap Studio screenshot" class="img-thumbnail float-left mr-md-4" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/bootstrap-studio.png" alt="Bootstrap Studio screenshot" class="img-thumbnail float-left mr-md-4" figure=true %}
 
 I'm personally a big fan of frameworks and while Bootstrap 4 has a couple of things that I'm not a huge fan of, namely their use of padding instead of margin in grid layout, lack of control for fluid snap points, and some of their widgets like add-ons. However, overall Bootstrap is a solid framework. The biggest hurdle is finding an awesome designer that can code Bootstrap - can you say Unicorn? This isn't as much of a hurdle as it once was though. There are now a bunch of decent tools to help designers design and developers tweak. We landed on Bootstrap Studio. It works pretty well, but it still requires quite a bit of knowledge about CSS and HTML. Bryan Giese, our faithful CMO, was able to get the base design busted out and then Daniel and I "bootstrap-ified" it.
 
@@ -111,9 +111,9 @@ def build_blog_post_layout(html_doc, script_directory)
   main.at_css(".post-body-content").content = "\n{% if page.markdown == 1 %}\n  {{ content | markdownify }}\n{% else %}\n  {{ content }}\n{% endif %}"
   main.at_css(".post-image")["style"] = "background-image: url('/assets/img/blogs/{{ page.image }}');"
   File.open("#{script_directory}/_layouts/blog-post.html", "w", :encoding => "UTF-8") do |f|
-    f.puts("<!doctype html>\n<html>\n{% include _head.html %}\n<body>\n{% include _navigation.html %}\n")
+    f.puts("<!DOCTYPE html>\n<html>\n{% include _head.liquid %}\n<body>\n{% include _navigation.liquid %}\n")
     f.puts(main.to_s)
-    f.puts("{% include _footer.html %}\n</body>\n</html>")
+    f.puts("{% include _footer.liquid %}\n</body>\n</html>")
   end
 end
 
@@ -127,7 +127,7 @@ def build_blog_post_list_layout(html_doc, script_directory)
   main.at_css(".post-title").content = "{{ post.title }}"
   main.at_css(".post-author").content = "{{ post.author }}"
   main.at_css(".post-date").content = "{{ post.date | date_to_string: \"ordinal\", \"US\" }}"
-  main.at_css("nav").content = "{% include _pagination.html %}"
+  main.at_css("nav").content = "{% include _pagination.liquid %}"
   main.at_css(".post-link")["href"] = "{{post.url}}"
   main.at_css(".post-image img")["src"] = "/assets/img/blogs/{{post.image}}"
   body = main.at_css(".post-body-content")

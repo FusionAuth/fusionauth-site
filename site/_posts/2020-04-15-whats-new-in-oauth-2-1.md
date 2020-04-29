@@ -76,7 +76,7 @@ The OAuth 2.1 draft specification requires that the PKCE challenge must be used 
 
 Some OAuth grants, notably the Authorization Code grant, use a redirect URI to determine where to send the client after success. For example, here’s a FusionAuth screen where the allowed redirect URIs are configured (it is the "Authorized redirect URLs" setting):
 
-{% include _image.html src="/assets/img/blogs/whats-new-in-oauth-2-1/admin-application-configuration.png" alt="Application configuration" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/whats-new-in-oauth-2-1/admin-application-configuration.png" alt="Application configuration" class="img-fluid" figure=false %}
 
 In this case, the only allowed value is `http://localhost:3000/oauth-callback` but you can configure multiple values. The client specifies which one of these the user who is signing in should be redirected to.
 

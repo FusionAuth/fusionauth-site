@@ -44,7 +44,7 @@ We think this will really reduce the pain of integrating with third party identi
 ### Duplicate Email Templates
 
 This feature might seem small, but the time savings could be quite large. [@Davidmw](https://github.com/davidmw) was the first to ask if we could make it easy to duplicate existing email templates as the basis for a new template, so he gets the credit. Version 1.6 adds the ability to duplicate any existing template with a click so you can customize it further as needed. No more starting from scratch on each new email! You'll see a duplicate button in the action column the next time you view email templates. Thanks for the suggestion!
-{% include _image.html src="/assets/img/blogs/duplicate-email-template-view.png" alt="Duplicate Email Template Example" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/duplicate-email-template-view.png" alt="Duplicate Email Template Example" class="img-fluid full mb-4" figure=false %}
 
 ## Fixes & Updates
 

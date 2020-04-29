@@ -27,7 +27,7 @@ Learn more about [single- and multi-tenant solutions](/learn/expert-advice/ident
 
 ## How Keycloak and FusionAuth Are Different
 
-[{% include _image.html src="/assets/img/blogs/keycloak-fusionauth-comparison-sample.png" alt="Keycloak and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-keycloak.pdf "Download the Keycloak and FusionAuth Feature Comparison")
+[{% include _image.liquid src="/assets/img/blogs/keycloak-fusionauth-comparison-sample.png" alt="Keycloak and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-keycloak.pdf "Download the Keycloak and FusionAuth Feature Comparison")
 
 ### Maintenance and Support
 

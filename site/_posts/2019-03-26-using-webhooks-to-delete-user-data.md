@@ -24,11 +24,11 @@ There are two ways to create webhooks in FusionAuth. The first is to use the Fus
 
 We will be using the FusionAuth UI to create our webhook. Once you have logged into the FusionAuth UI, navigate to **Settings → Webhook**. In the following screenshot we are adding a new Webhook and have only subscribed to `user.delete` event. This means that FusionAuth will only send the `user.delete` event to this webhook. The URL in the screenshot will be different on your system, in this example we will be sending the event to the `fusionauth` endpoint at `https://piedpiper.com`.
 
-{% include _image.html src="/assets/img/blogs/webhooks-add-enable-delete-event.png" alt="Add Webhook" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/webhooks-add-enable-delete-event.png" alt="Add Webhook" class="full" figure=false %}
 
 Once you have created your webhook, you will want to ensure the event is enabled and verify the transaction setting is acceptable for your implementation. To complete this step, navigate to **Settings → System** and click on the `Webhooks` tab. On this tab you will be able to enable the `user.delete` event and optionally modify the transaction setting. The default setting is `No Webhooks are required to succeed`. This default setting means that FusionAuth will send the event but if the endpoint does not respond with a `200` or the endpoint is not available for some reason, FusionAuth will proceed with the User delete.
 
-{% include _image.html src="/assets/img/blogs/webhooks-system-configuration-enable-delete.png" alt="Enable event" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/webhooks-system-configuration-enable-delete.png" alt="Enable event" class="full" figure=false %}
 
 
 For the purpose of this example, we are deleting user data and we want to be sure this is complete before we remove the User from FusionAuth. For this reason we will modify the default Transaction setting to `All the Webhooks must succeed`. This setting means that all webhooks subscribed to the `user.delete` event must receive the message and respond with a `200` status code. If any of the configured webhooks do not respond with a `200` status code, FusionAuth will fail the user delete.
