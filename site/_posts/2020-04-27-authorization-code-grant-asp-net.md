@@ -22,14 +22,14 @@ First, we're going to create a new signing key. There's a list of [supported alg
 
 To generate the key, go to "Settings" then to "Key Master". In the upper right hand corner, click on the dropdown next to "Import Public Key" and choose "Generate RSA". Use a descriptive name like "For dotnetcore" and leave the rest of defaults and click "Submit". 
 
-TBD aspdotnet-add-key-screen
+TBD aspdotnet-add-key-screen aspnet-keybpair
 
 Next, we'll be modifying the previously created "dotnetcore"' application settings. Edit that application, then go to the OAuth tab. Make the following changes:
 
 * Add an Authorized Redirect URL of `http://localhost:5000/signin-oidc`. 
 * Add a Logout URL of `http://localhost:5000`. 
 
-The web application we are going to build is going to be on port 5000, and the `signin-oidc` is an endpoint provided by the authentication library. We're setting things up so that the Authorization Code grant will work. Write down the `Client ID` and `Client Secret`, as we'll need that information later. When you are done configuring this section, the OAuth tab of your application should look like this:
+The web application we are going to build is going to be on port 5000, and `signin-oidc` is an endpoint provided by the authentication library. We're setting things up so that the Authorization Code grant will work. Write down the `Client ID` and `Client Secret`, as we'll need that information later. When you are done configuring this section, the OAuth tab of your application should look like this:
 
 TBD aspdotnet-oauth-screen.png
 
