@@ -42,9 +42,9 @@ As a reminder, here's how we can start the application (again [full source code]
 dotnet publish -r win-x64 && SampleApp__ClientSecret=H4... bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
 ```
 
-We are passed the roles, as you can see below:
+We are passed the role, as you can see below:
 
-TBD  Image showing role.
+{% include _image.html src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-roles-only-roles-highlighted.png" alt="The secure page after a user has been associated with a role." class="img-fluid" figure=false %}
 
 These roles are encoded in the JWT stored in the cookie, so if you change a group's roles, you'll need to wait for the JWT to be refreshed for your modifications to be reflected.
 
@@ -98,6 +98,7 @@ Rather than running a script, you could create the lambda using the administrati
 
 Now if you go to `http://localhost:5000` and sign out and sign in, you should see a screen something like this. 
 
+{% include _image.html src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-favcolor-highlighted.png" alt="The secure page after a the lambda makes the favoriteColor claim available." class="img-fluid" figure=false %}
 TBD Screenshot
 
 Within the application, you could display the user's favorite color. You could also make functionality available or hidden based on the user's role.
