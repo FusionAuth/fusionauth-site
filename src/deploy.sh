@@ -9,7 +9,6 @@ fi
 
 set -e
 
-export GEM_HOME=/var/git/fusionauth-site/.gems
 export JEKYLL_ENV=production
 
 cd /var/git/fusionauth-site
@@ -18,7 +17,6 @@ git pull
 
 # Update dependencies
 bundle install
-npm ci
 
 # Prevent dirty builds
 bundle exec jekyll clean
