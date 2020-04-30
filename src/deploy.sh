@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+PATH=~/.rbenv/bin:$PATH
+
+eval "$(rbenv init -)"
+
 # Note: if you make changes to this file, you will have to run sb push twice because the first execution will run the old version.
 
 if [[ ! "$(hostname)" = "www-1" ]]; then
