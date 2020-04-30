@@ -1,14 +1,14 @@
 ---
 layout: blog-post
-title: What's your favorite color? Sharing custom OAuth claims with FusionAuth
-description: We'll configure FusionAuth and extend the ASP.NET Core web application to display additional claims from a JWT.
+title: Sharing custom OAuth claims with an ASP.NET Core app
+description: We'll configure FusionAuth and extend the ASP.NET Core web application to display role and custom claims from a JWT.
 author: Dan Moore
 image: blogs/whats-new-in-oauth-2-1/whats-new-with-oauth-2-1.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-Previously, we used ASP.NET Core to [build a web application](TBD) with a single protected page. Let's extend the application to display the role of the user in FusionAuth as well as a custom claim. We're going to create a group, assign a role to that group and then place our user in that group. We'll also explore modifying our JavaScript Web Token (JWT) by using a lambda. Finally, we'll display all the claims on the "Secure" page.
+Previously, we used ASP.NET Core to [build a web application](TBD) with a single protected page. Let's extend the application to display the role of the user in FusionAuth as well as a custom claim. We're going to create a group, assign a role to that group and then place our user in that group. We'll also explore modifying our JavaScript Web Token (JWT) by using a lambda to expose the user's favorite color. Finally, we'll display all the claims on the "Secure" page.
 
 <!--more-->
 
