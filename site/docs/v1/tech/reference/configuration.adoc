@@ -8,7 +8,27 @@ description: A complete list of the configuration options in the fusionauth.prop
 == Configuration Reference
 
 Much of the FusionAuth configuration is performed in the UI. Some additional advanced configuration is provided through a configuration file.
-You may modify this file in order to change your configuration, FusionAuth will need to be restarted to pick up changes to this configuration.
+Additionally, some of these properties may be overridden a related environment variable.
+Updates to the properties file or environment variables require FusionAuth to be restarted to pick up these configuration changes.
+
+This page describes the advanced configuration of FusionAuth.
+
+  * link:#silent-configuration[Silent Configuration]
+  * link:#properties[Properties]
+  * link:#environment-variables[Environment Variables]
+
+==== Silent Configuration
+All of the environment variables are options, if not provided a default will be utilized. If you wish to perform a silent configuration which means you will not stop in maintenance mode to configure the database or search engine, you must provide the following environment variables:
+
+* `DATABASE_URL`
+* `DATABASE_ROOT_USER`
+
+If `FUSIONAUTH_SEARCH_ENGINE_TYPE` is set to `elasticsearch` you will also need to provide the `FUSIONAUTH_SEARCH_SERVERS` environment variable in order to bypass maintenance mode.
+
+When configured correctly these variables will allow FusionAuth to silently configure itself and go directly to the setup wizard. If they are omitted, FusionAuth will start up in Maintenance mode and require you to interactively configure the database and search engine.
+
+==== Properties
+
 Assuming you installed in the default locations, the configuration file may be found in the following directory. If you have installed in an
 alternate location the path to this file will be different.
 
@@ -24,29 +44,25 @@ alternate location the path to this file will be different.
 \fusionauth\config\fusionauth.properties
 ----
 
-This table contains all of the configuration options available in the `fusionauth.properties` file.
-
-==== Properties
+The following table contains all of the configuration options available in the `fusionauth.properties` file.
 
 [.api]
 [field]#database.url# [type]#[String]#::
-The JDBC connection URL to your database. The following are example values.
-+
-    * Example MySQL URL: `database.url=jdbc:mysql://localhost:3306/fusionauth?serverTimezone=UTC`
-    * Example PostgreSQL URL: `database.url=jdbc:postgresql://localhost:5432/fusionauth`
-+
-If you are using MySQL, you must include the `serverTimezone=UTC` parameter in the URL. The `?` character is the same as a standard URL parameter, so if you have additional parameters, you should only have a single `?` and parameters should be separated by `&`.
+include::docs/v1/tech/reference/_property-database-url.adoc[]
 
 [field]#database.username# [type]#[String]#::
-The username used to connect to the database.
+include::docs/v1/tech/reference/_property-database-username.adoc[]
 
 [field]#database.password# [type]#[String]#::
-The password used to connect to the database.
+include::docs/v1/tech/reference/_property-database-password.adoc[]
 
 [field]#database.mysql.enforce-utf8mb4# [type]#[String]# [default]#defaults to `true`#::
 When set to `true` and using MySQL, full 4 byte unique configuration is enforced at startup.
 +
 If this validation is not desired or not it is not possible to modify your MySQL configuration so satisfy the validation, disable this check by setting this value to `false`.
+
+[field]#fusionauth.runtime-mode# [type]#[String]# [default]#defaults to `development`# [since]#Available Since 1.16.0#::
+include::docs/v1/tech/reference/_property-runtime-mode.adoc[]
 
 [field]#fusionauth-search.transport-port# [type]#[Integer]# [default]#defaults to `9020`#::
 The port that the search engine will use for optimized TCP communications instead of HTTP communications. This port is used internally by the search engine to communicate between clustered nodes.
@@ -92,28 +108,29 @@ FusionAuth Search on the same server this configuration value will need to be pr
 [field]#fusionauth-search.data-directory# [type]#[String (Path)]#::
 The location on disk where FusionAuth Search will store its data. This value is defaulted if not specified and generally should not be modified.
 
+[field]#fusionauth-app.cookie-same-site-policy# [type]#[String]# [since]#Available Since 1.16.0#::
+The value to use in the Same-Site cookie attribute for cookies set by FusionAuth.  Possible values are:
++
+  * `None`
+  * `Lax`
+  * `Strict`
+
 [field]#fusionauth-app.public-url# [type]#[String]# [deprecated]#Deprecated#::
 The FusionAuth App URL that is used to communicate with other FusionAuth nodes. This value is defaulted if not specified to use a localhost address or a site local if available. Unless you have multiple FusionAuth nodes the generated value should always work. You may need to manually specify this value if you have multiple FusionAuth nodes and the only way the nodes can communicate is on a public network.
 +
 Once available use `fusionauth-app.url` instead.
 
+[field]#fusionauth-app.reindex-batch-size# [type]#[Integer]# [default]#defaults to `1000`#::
+The number of users to process per batch for a reindex operation.
+
+[field]#fusionauth-app.reindex-thread-count# [type]#[Integer]# [default]#defaults to `2`#::
+The number of threads to process batches of users on for a reindex operation.
+
 [field]#fusionauth-app.search-engine-type# [type]#[String]# [default]#defaults to `database`# [since]#Available Since 1.16.0#::
-The search engine type.  The possible values are:
-+
-  * `database`
-  * `elasticsearch`
-+
-When configuring the search engine type to `elasticsearch`, you must configure the [field]#fusionauth-app.search-servers# property as well.
+include::docs/v1/tech/reference/_property-search-engine-type.adoc[]
 
 [field]#fusionauth-app.search-servers# [type]#[String]# [default]#defaults to `http://localhost:9021`#::
-A comma separated list of URLS that will be used by FusionAuth to connect to the search engine. The port specified on the URL should be the Search Engine HTTP port. (see `fusionauth-search.http-port`) It is not recommended to ever run the FusionAuth Search open to the public internet.
-+
-Generally this should be the same list provided by `fusionauth-search.servers` except this list will be a list of URLs and this value is utilized by the FusionAuth webservice. If this property is not defined it will be generated based upon the value of `fusionauth-search.servers`.
-+
-The following is an example of a configuration for two separate search engines, one running on localhost and the other is on a remote system.
-+
-[quote]
-`fusionauth-app.search-servers=http://localhost:9021,http://search2.example.com:9021`
+include::docs/v1/tech/reference/_property-search-servers.adoc[]
 
 [field]#fusionauth-app.management-port# [type]#[Integer]# [default]#defaults to `9010`#::
 The port number used for internal Tomcat administration.
@@ -134,5 +151,47 @@ include::docs/v1/tech/reference/_property-memory.adoc[]
 include::docs/v1/tech/reference/_property-additional-jvm-args.adoc[]
 
 [field]#fusionauth-app.url# [type]#[String]# [since]#Available Since 1.4.0#::
-The FusionAuth App URL that is used to communicate with other FusionAuth nodes. This value is defaulted if not specified to use a localhost address or a site local if available. Unless you have multiple FusionAuth nodes the generated value should always work. You may need to manually specify this value if you have multiple FusionAuth nodes and the only way the nodes can communicate is on a public network.
+include::docs/v1/tech/reference/_property-url.adoc[]
 
+==== Environment Variables
+
+Environment variables specified with an [note]#overrides# tag below will override the related property defined in the `fusionauth.properties` configuration file.
+These environment variables will be honored when they are provided to an environment running the `fusionauth-app` package.
+
+[.api]
+[field]#DATABASE_URL# [overrides]#overrides `database.url`# [optional]#Optional#::
+include::docs/v1/tech/reference/_property-database-url.adoc[]
+
+[field]#DATABASE_ROOT_USER# [optional]#Optional#::
+The database root user that is used to create the FusionAuth schema and FusionAuth user.
++
+Once FusionAuth is configured and running this value is no longer used and is never persisted.
+
+[field]#DATABASE_ROOT_PASSWORD# [optional]#Optional#::
+The database root password that is used to create the FusionAuth schema and FusionAuth user. It is recommended to leave the value of this variable empty as it is shown in the example. Using this configuration, the value will be picked up from the host environment. To use the value in this way, be sure to set this named environment value before calling `docker-compose up`.
++
+Once FusionAuth is configured and running this value is no longer used and is never persisted.
+
+[field]#DATABASE_USER# [overrides]#overrides `database.username`# [optional]#Optional# [default]#Defaults to `fusionauth`#::
+include::docs/v1/tech/reference/_property-database-username.adoc[]
+
+[field]#DATABASE_PASSWORD# [overrides]#overrides `database.password`# [optional]#Optional# [default]#Defaults to `fusionauth`#::
+include::docs/v1/tech/reference/_property-database-password.adoc[]
+
+[field]#FUSIONAUTH_ADDITIONAL_JAVA_ARGS# [overrides]#overrides `fusionauth-app.additional-java-args`# [optional]#Optional#::
+include::docs/v1/tech/reference/_property-additional-jvm-args.adoc[]
+
+[field]#FUSIONAUTH_MEMORY# [overrides]#overrides `fusionauth-app.memory`# [optional]#Optional# [default]#defaults to `256M`#::
+include::docs/v1/tech/reference/_property-memory.adoc[]
+
+[field]#FUSIONAUTH_RUNTIME_MODE# [overrides]#overrides `fusionauth.runtime-mode`# [optional]#Optional# [default]#defaults to `development`# [since]#Available Since 1.16.0#::
+include::docs/v1/tech/reference/_property-runtime-mode.adoc[]
+
+[field]#FUSIONAUTH_SEARCH_ENGINE_TYPE# [overrides]#overrides `fusionauth-app.search-engine-type`# [optional]#Optional# [defaults]#defaults to `database`#::
+include::docs/v1/tech/reference/_property-search-engine-type.adoc[]
+
+[field]#FUSIONAUTH_SEARCH_SERVERS# [overrides]#overrides `fusionauth-app.search-servers`# [optional]#Optional# [default]#defaults to `http://localhost:9021`#::
+include::docs/v1/tech/reference/_property-search-servers.adoc[]
+
+[field]#FUSIONAUTH_URL# [overrides]#overrides `fusionauth-app.url`# [optional]#Optional# [since]#Available Since 1.4.0#::
+include::docs/v1/tech/reference/_property-url.adoc[]
