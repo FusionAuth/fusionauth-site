@@ -12,7 +12,7 @@ Previously, we used ASP.NET Core to [build a web application](TBD) with a single
 
 <!--more-->
 
-If you haven't yet, please set up FusionAuth and the web application as specified in the [previous post](TBD)
+If you haven't yet, please set up FusionAuth and the web application as specified in the [previous post](TBD).
 
 ## Setting up roles and groups
 
@@ -38,11 +38,11 @@ If you head to `http://localhost:5000` and click on the "Secure" page, you'll se
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-roles-only-roles-highlighted.png" alt="The secure page after a user has been associated with a role." class="img-fluid" figure=false %}
 
-Since the role and other claims are encoded in the JWT, which is stored a cookie, whenever you change any user data in FusionAuth, you'll need log out and log in as that user to see the changes reflected in the ASP.NET Core application.
+Since the role and other claims are encoded in the JWT, which is stored in a cookie, whenever you change any user data in FusionAuth, you'll need log out and log in as that user to see the changes reflected in the ASP.NET Core application.
 
 ## Adding custom claims
 
-You can add in custom claims based on user data, the time of day or anything else. In FusionAuth, you add this data to a JWT with a [lambda](https://fusionauth.io/docs/v1/tech/lambdas/jwt-populate). This is JavaScript function which receives the JWT object before it is signed and can modify it. Remember way back when we [created the user](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client) and specified their favorite color as a command line option? Well, we're going to send that information down to the ASP.NET Core web application so that it can display that very valuable data.
+You can add in custom claims based on user data, the time of day or anything else. In FusionAuth, you add this data to a JWT with a [lambda](https://fusionauth.io/docs/v1/tech/lambdas/jwt-populate). This is a JavaScript function which receives the JWT object before it is signed and can modify it. Remember way back when we [created the user](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client) and specified their favorite color as a command line option? Well, we're going to send that information down to the ASP.NET Core web application so that it can display that very valuable data.
 
 A lambda is flexible and can pull from user or registration data. You can modify the token by removing attributes also, though there are some that are immutable. Here's the lambda:
 
@@ -56,7 +56,7 @@ To create it, we're going to use the FusionAuth API, rather than the administrat
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-lambda-management-api-key.png" alt="The API key with lambda and application permissions." class="img-fluid" figure=false %}
 
-Here's the shell script which creates the lambda and associate it with the "dotnetcore" application. You should update the `AUTH_HEADER` environment variable to the value of the API key we just created. And update `APPLICATION_ID` to the id of the "dotnetcore" application. We make one call to create our lambda, and another call to configure the application to use the newy created lambda.
+Here's the shell script which creates the lambda and associates it with the "dotnetcore" application. You must update the `AUTH_HEADER` environment variable to the value of the API key we just created. Also, please update `APPLICATION_ID` to the id of the "dotnetcore" application. This script calls one API to create our lambda, and another to configure the application to use it.
 
 ```shell
 AUTH_HEADER=YOUR_API_KEY_HERE
@@ -70,15 +70,15 @@ application_patch='{"application" : {"lambdaConfiguration" : { "accessTokenPopul
 output=`curl -s -XPATCH -H "Authorization: $AUTH_HEADER" -H"Content-Type: application/json" http://localhost:9011/api/application/$APPLICATION_ID -d "$application_patch"`
 ```
 
-After running this command, log in to the admin user interface and see that the lambda has been created.
+After running this shell script, log in to the admin user interface and see that the lambda exists:
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-lambda-created.png" alt="The Lambda created by the API call." class="img-fluid" figure=false %}
 
-And that it has been assigned to run when JWTs are created for your application.
+And that it has been assigned to run when JWTs are created for your application:
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-application-has-lambda.png" alt="The 'dotnetcore' application now calls the lambda when generating a JWT." class="img-fluid" figure=false %}
 
-Of course, as implied above, rather than running a script, you could create the lambda using the administration user interface and then associate it with your application. I think that running it from a script shows the power of the FusionAuth API--everything you can do in the admin interface you can do via the API.
+Of course, as implied above, rather than running a script, you could create the lambda using the administration user interface. Then you'd associate it with your application. I think that doing this lambda setup via a shell script shows the power of the FusionAuth API. Everything you can do in the admin interface you can automate using the API.
 
 ## Viewing custom claims 
 
@@ -86,8 +86,10 @@ Now if you head to `http://localhost:5000`, you should see something like this:
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-favcolor-highlighted.png" alt="The secure page after a the lambda makes the favoriteColor claim available." class="img-fluid" figure=false %}
 
-Of course, this isn't much use. In a real world application you might display the user's favorite color or customize their display. Roles could determine hidden or displayed functionality.
+Of course, this isn't much use. 
+
+In a real world application you'd do more than display these claims. You might customize a user's display based on their favorite color. A user's role could gate functionality or information.
 
 ## Conclusion
 
-This post is the end of our journey intergrating FusionAuth with .NET Core and ASP.NET Core. Offloading your user management concerns to a user identity management solution such as FusionAuth frees you to focus on the features and business logic of your application.
+This post is the end of our journey integrating FusionAuth and ASP.NET Core. Offloading your user management concerns to a identity management solution such as FusionAuth frees you to focus on the features and business logic of your application.
