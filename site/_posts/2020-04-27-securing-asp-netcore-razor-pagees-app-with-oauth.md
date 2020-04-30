@@ -127,7 +127,7 @@ If you are looking at the GitHub repository, you can see the application at this
 
 We've added a page, but it sure isn't secure ... yet. Let's do that next.
 
-## Enable logging in
+## Login
 
 It's always smart to leverage existing libraries as they are likely to be more secure and better handle edge cases. We're going to add two new libraries to our application. Make sure you're in the `SampleApp` directory and run these commands to add them.
 
@@ -370,7 +370,7 @@ After you've signed in, you'll end up at the "Secure" page and will see all clai
 
 You can see the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-net-core/tree/add-authentication).
 
-## Enable logging out
+## Logout
 
 Awesome, now you can log in if you have an user. However, right now there's no way to log out. The JWT is stored in a session cookie. When we're ready to leave, we want to log out of our ASP.NET Core session and of the FusionAuth session. So, we need to add a logout page, remove the session cookie, and the redirect to the FusionAuth Logout URL. FusionAuth will destroy its session and then redirect back to the configured Logout URL. We'll add a Logout page to do all of this.
 
