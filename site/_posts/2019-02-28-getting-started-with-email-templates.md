@@ -22,7 +22,7 @@ You should customize these templates with your branding, but at a minimum, you w
 
 **NOTE:** Email features require that the SMTP setup has been completed. Review your FusionAuth dashboard. If you see a box titled _Email Settings_ you will need to complete that task first. View the [Using the FusionAuth Setup Wizard tutorial](/blog/2019/02/05/using-the-setup-wizard) to see how to complete the SMTP configuration.
 
-{% include _image.html src="/assets/img/blogs/email-templates-setup-smtp.png" alt="Email Templates in FusionAuth Setup" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/email-templates-setup-smtp.png" alt="Email Templates in FusionAuth Setup" class="full" figure=false %}
 
 ## Default Email Templates in FusionAuth
 
@@ -36,7 +36,7 @@ Next, we will take a deeper look at the provided Email Verification template. We
 
 Below is a screenshot of the Edit Email Template page.
 
-{% include _image.html src="/assets/img/blogs/email-template-edit-email-verification.png" alt="Email Templates in FusionAuth Edit Templates" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/email-template-edit-email-verification.png" alt="Email Templates in FusionAuth Edit Templates" class="full" figure=false %}
 
 
 **Base Information**
@@ -82,7 +82,7 @@ https://login.piedpiper.com/email/verify/${verificationId}
 The last tab on the bottom section of the page is labeled **Localization**. Using Email Template localization allow you to communicate with your users in their preferred language which makes for a better user experience.
 
 
-{% include _image.html src="/assets/img/blogs/email-templates-add-localization.png  " alt="Email Templates in FusionAuth Localization" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/email-templates-add-localization.png  " alt="Email Templates in FusionAuth Localization" class="full" figure=false %}
 
 
 In the  above example screenshot, we have added a localized value for the email subject in the Spanish language. When this email template is sent to a user with a preferred language of Spanish, this localized subject will be used instead of *Email Verification* which is defined at the top level of the template. You can create customized HTML and text versions for the localized template. If you leave this blank, FusionAuth with use the HTML you created on the Edit page.

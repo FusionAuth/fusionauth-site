@@ -80,13 +80,13 @@ For this tutorial, we'll first need a test `user ID` that is registered with Fus
 
 In a web browser, let's go to **Users** in the FusionAuth UI. Select a test user, and under Actions, navigate to **Manage**, which should look like this.
 
-{% include _image.html src="/assets/img/blogs/action-manage-button.png" alt="Manage user" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/action-manage-button.png" alt="Manage user" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 On the **Manage User** page in the FusionAuth UI, you'll see the user ID located directly under the user's Email address. In this instance, it's `4e0f2af0-33a2-4001-8631-0f8225e65f1c`.
 
 Copy it into a text editor and set it off to the side. We'll be using it in a moment and throughout the rest of the tutorial.
 
-{% include _image.html src="/assets/img/blogs/terry-test-account.png" alt="Terry test user info" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/terry-test-account.png" alt="Terry test user info" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 ## How to Deactivate a User with FusionAuth-Client
 
@@ -136,7 +136,7 @@ Save the program to your server, make sure that `venv` is running, and execute t
 
 Now, let's head on over to a web browser, and browse to **Users** so that we can check out our user. You should notice that the account associated with the UserID we provided is now locked. It will look something like this:
 
-{% include _image.html src="/assets/img/blogs/terry-example-locked.png" alt="Terry is now locked" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/terry-example-locked.png" alt="Terry is now locked" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 If your application was successful, congratulations! Continue on with user reactivation. If not, check your steps or review the error codes below.
 
@@ -206,13 +206,13 @@ Save and execute the `reactivate.py` application on your server. Upon success, y
 
 Refresh the **Users** page in your browser and you'll now notice that the lock icon has disappeared beside our test user and the account has been reactivated.
 
-{% include _image.html src="/assets/img/blogs/terry-example-unlocked.png" alt="Terry is now unlocked" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/terry-example-unlocked.png" alt="Terry is now unlocked" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 ## How to Delete A User With FusionAuth-Client
 
 For our next trick, we will be deleting a test user from the server. If you filled out a lot of profile information on your regular test user, you might want to create an empty test user for this tutorial. Just be sure to grab their UserID from the **Actions-->Manage** section of FusionAuth.
 
-{% include _image.html src="/assets/img/blogs/delete-test-user.png" alt="A user to delete" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/delete-test-user.png" alt="A user to delete" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 Pop open your Python editor, and create a new file called `deleteuser.py`. Add the FusionAuth_client Library, Your API key, and your server info.
 
@@ -257,7 +257,7 @@ What if your app didn't quite work? Here's a list of error codes that your app o
 
 If you see a message like, "_Error - FusionAuth encountered an error while processing your request. If the problem persists, contact FusionAuth support for assistance_" you may just need to restart FusionAuth Search.
 
-{% include _image.html src="/assets/img/blogs/error-message-screen.png" alt="Error Message Screen" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/error-message-screen.png" alt="Error Message Screen" class="img-fluid full mb-4" figure=false %}
 
 To restart FusionAuth Search service type
 

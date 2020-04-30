@@ -21,25 +21,25 @@ To begin, download and Install FusionAuth. See the **Install FusionAuth** sectio
 
 Once you have completed the Setup Wizard you should now be at the FusionAuth dashboard. Now we need to create an application and an API key. Below is an example screenshot of what you should expect. Complete the **Missing Application** and **Missing API Key** setup steps.
 
-{% include _image.html src="/assets/img/blogs/complete-setup.png" alt="FusionAuth Dashboard" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/complete-setup.png" alt="FusionAuth Dashboard" class="full" figure=false %}
 
 Once you click **Setup** on the **Missing Application** task on the dashboard, you'll be taken to the **Add Application** panel.
 
-{% include _image.html src="/assets/img/blogs/add-application.png" alt="Create Application" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/add-application.png" alt="Create Application" class="full" figure=false %}
 
 Enter your application name, leaving the **Id** field blank as it will be auto-generated. Add at least one role named `user` by clicking on the **Add Role** button while on the **Roles** tab. Click the blue save icon in the top right to add the application. To complete the next task select **API Keys** from the left navigation sidebar.
 
-{% include _image.html src="/assets/img/blogs/api-keys.png" alt="API Key Page" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/api-keys.png" alt="API Key Page" class="full" figure=false %}
 
 On the API Keys page you will see a listing of all API keys. If you've just installed FusionAuth there will not be any API keys yet. Click the green plus (+) icon in the upper right to add an API key.
 
-{% include _image.html src="/assets/img/blogs/add-api-key.png" alt="Create API Key" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/add-api-key.png" alt="Create API Key" class="full" figure=false %}
 
 The value in the **Key** field will be auto-generated. You do not need to change any of the endpoint settings—we will be creating a super user key for this example which means the key will have access to all APIs. Click the save icon in the upper right.
 
 Now, navigate back to the dashboard by clicking on **Dashboard** in the left navigation sidebar. You should see a screen like this since we haven't done anything with email settings.
 
-{% include _image.html src="/assets/img/blogs/complete-setup-only-email.png" alt="Create API Key" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/complete-setup-only-email.png" alt="Create API Key" class="full" figure=false %}
 
 Congratulations! FusionAuth is now installed and configured. Now we'll move onto code!
 
@@ -222,7 +222,7 @@ app.use(session({
 
 Note the `secret` field. This is used to verify the JSON Web Token (JWT). We will talk a little more about that when we look at the console output for the `/login handler`. If we were to implement JWT, we would use a real secret. The secret can be defined either in your Application configuration or the system-wide settings. By default, when you create a new application, no secret is defined and the system-wide configuration is used which is defined in the **Settings -> System** panel, as shown here:
 
-{% include _image.html src="/assets/img/blogs/system-jwt-settings.png" alt="System Settings" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/system-jwt-settings.png" alt="System Settings" class="full" figure=false %}
 
 We then define the four endpoints this server will respond to: `/`, `/logout`, `/login`, and `/profile`, along with the code that executes (the "handler") for each endpoint.
 

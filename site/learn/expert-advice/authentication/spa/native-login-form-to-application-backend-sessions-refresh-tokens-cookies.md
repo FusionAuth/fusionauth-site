@@ -2,7 +2,6 @@
 layout: advice
 title: Single-page application native login to backend with sessions and refresh tokens
 description: An explanation of single-page application login using a native login form that submits to the application backend with server-side sessions plus refresh tokens in cookies
-header_dark: true
 image: advice/types-of-logins-article.png
 category: Authentication
 author: Brian Pontarelli
