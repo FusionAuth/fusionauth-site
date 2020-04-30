@@ -40,7 +40,7 @@ Click the blue "Save" icon to save all the settings you just configured. We're d
 
 ## Set up a basic ASP.NET Razor Pages application
 
-Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-net-core) available if you want to download it and take a look.
+Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore) available if you want to download it and take a look.
 
 First, let's create a new web application using the `dotnet` CLI and go to that directory:
 
@@ -123,7 +123,7 @@ Don't forget to add a navigation element to `Pages/Shared/_Layout.cshtml` after 
 
 Hit `control-C` to exit the application. Then republish it and start it up again. Visit `http://localhost:5000` and view your new page: click on "Secure".
 
-If you are looking at the GitHub repository, you can see the application at this point by looking at the [`setup-application` branch](https://github.com/FusionAuth/fusionauth-example-asp-net-core/tree/setup-application).
+If you are looking at the GitHub repository, you can see the application at this point by looking at the [`setup-application` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/setup-application).
 
 We've added a page, but it sure isn't secure ... yet. Let's do that next.
 
@@ -368,7 +368,7 @@ After you've signed in, you'll end up at the "Secure" page and will see all clai
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net//successful-login-secure-page-display.png" alt="The secure page." class="img-fluid" figure=false %}
 
-You can see the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-net-core/tree/add-authentication).
+You can see the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-authentication).
 
 ## Logout
 
@@ -443,7 +443,7 @@ Finally, we need to change the `Startup.cs` file to use the new cookie name.
 
 Great! Now you can both sign in and sign out of your application.
 
-(If you are interested, you can see the application's current code by looking at the [`add-logout` branch](https://github.com/FusionAuth/fusionauth-example-asp-net-core/tree/add-logout).
+(If you are interested, you can see the application's current code by looking at the [`add-logout` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-logout).
 
 ## Next steps
 
