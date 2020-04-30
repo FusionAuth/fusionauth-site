@@ -27,13 +27,13 @@ Unlike traditional web and single-page applications, native mobile applications 
 
 ## Login and Authentication Workflows
 
-{% include _image.html src="/assets/img/articles/login-type-xmlhttprequest.png" alt="XMLHttpRequest example" class="float-left" figure=false %}
+{% include _image.liquid src="/assets/img/advice/login-type-xmlhttprequest.png" alt="XMLHttpRequest example" class="float-left" figure=false %}
 
 Understanding the application type is important because it puts controls on the methods used to authenticate users and the workflows that you will need to build. Traditional apps can only use the two HTTP methods `GET` and `POST` that are supported by browsers. Single-page apps have more flexibility by using the `XMLHttpRequest` functionality of the browser's JavaScript, so they can invoke all of the standard HTTP methods including `GET`, `POST`, `PUT`, and `DELETE`. Native applications usually call APIs to handle user interaction and input and take advantage of various libraries and protocols that manage user access.
 
 Once you choose your application type, you can plan out the specific authentication workflows that will work best for your app. Think through your authentication scenarios and understand what you'll need from the beginning. It sucks to have to come back and rework it all later. Trust me.
 
-{% include _image.html src="/assets/img/articles/diagram-example.svg" alt="Example diagram" class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/advice/diagram-example.svg" alt="Example diagram" class="img-fluid" figure=true %}
 
 To take the next step and go into detail on specific authentication workflows, read **FusionAuth's** [Login and Authentication Workflows](/learn/expert-advice/authentication/login-authentication-workflows). This resource is designed to help you architect and design an effective authentication system for an application. It doesn't list every possible option, but gives the most common and recommended authentication workflows used by a majority of developers.
 

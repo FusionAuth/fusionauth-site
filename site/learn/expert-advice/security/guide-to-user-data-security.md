@@ -3,7 +3,6 @@ layout: advice
 title: Guide to User Data Security
 subtitle: by Brian Pontarelli
 description: Protect your user data with this step-by-step guide to secure your servers and applications.
-header_dark: true
 image: advice/guide-user-data-security-article.png
 author: Brian Pontarelli
 category: Security
@@ -11,8 +10,49 @@ date: 2019-11-04
 dateModified: 2019-11-04
 ---
 
-<div class="card text-secondary mb-4">
-  {% include guide/_toc.html %}
+<div class="toc collapsible">
+  <header>
+    <h2>Table of Contents</h2>
+    <a href="#" class="collapse-button"><i class="fas fa-chevron-circle-up fa-2x"></i></a>
+  </header>
+  <div class="collapsible-content">
+    <ol class="numbered">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#tldr">tl;dr</a></li>
+      <li><a href="#server-security">Server Security</a>
+        <ol class="numbered">
+          <li><a href="#server-architecture">Server Architecture</a></li>
+          <li><a href="#provisioning">Provisioning</a></li>
+          <li><a href="#logging-in-first-time">Logging in the First Time</a></li>
+          <li><a href="#securing-passwords">Securing Passwords</a></li>
+          <li><a href="#locking-sudo">Locking Sudo</a></li>
+          <li><a href="#setup-ordinary-user-account">Setup Ordinary User Account</a></li>
+          <li><a href="#locking-remote-access">Locking Remote Access</a></li>
+          <li><a href="#ssh-agents">SSH Agents</a></li>
+          <li><a href="#locking-root-account">Locking the Root Account</a></li>
+          <li><a href="#two-factor-authentication">Two-Factor Authentication</a></li>
+          <li><a href="#firewalling">Firewalling</a></li>
+          <li><a href="#intrusion-detection">Intrusion Detection</a></li>
+          <li><a href="#database-server-specific-security">Database Server Specific Security</a></li>
+        </ol>
+      </li>
+      <li><a href="#application-security">Application Security</a>
+        <ol class="numbered">
+          <li><a href="#application-user">Application User</a></li>
+          <li><a href="#ssl">SSL</a></li>
+          <li><a href="#password-security">Password Security</a></li>
+          <li><a href="#sql-injection">SQL Injections</a></li>
+          <li><a href="#configuration">Configuration</a></li>
+          <li><a href="#database-security">Database Security</a></li>
+          <li><a href="#user-data-hacks">User Data Hacks</a></li>
+          <li><a href="#cross-site-request-forgery">Cross-Site Request Forgery</a></li>
+          <li><a href="#social-hacks">Social Hacks</a></li>
+        </ol>
+      </li>
+      <li><a href="#summary">Summary</a></li>
+      <li><a href="#references">References</a></li>
+    </ol>
+  </div>
 </div>
 
 ## 1. Overview {#overview}
@@ -59,9 +99,9 @@ We've also had a number of questions regarding which parts of this guide are not
 
 The first step to securing user data is to secure the servers you will be running your applications and/or databases on. The process of securing servers centers on a couple of core guidelines.
 
-<div class="card callout mb-3 h-auto">
-<div class="card-header bg-info text-white">CORE GUIDELINES</div>
-<div class="card-body" markdown="1">
+<div class="guideline">
+<header>CORE GUIDELINES</header>
+<div class="body" markdown="1">
 * Use the least privilege possible
 * Prevent direct access when it isn't required
 * Automate security checks and constraints
@@ -81,7 +121,7 @@ In order to illustrate our thinking around server security, we need to cover wha
 
 Now that we know what type of servers and applications we will be securing, let's take a look at the server architecture for a simple example of a fictional "To-do Application" and the server architecture we recommend you use for your applications.
 
-{% include _image.html src="/assets/img/resources/guide/server-architecture.png" alt="Server architecture" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/server-architecture.png" alt="Server architecture" class="img-fluid text-center" figure=false %}
 
 In general, you will want to separate your Database Server from your Application Server. While securing two servers instead of one does require additional work, it will give you the flexibility to control access to each server separately. This also means that if a breach does occur, the hacker will have a couple more hoops to jump through in order to gain access to your user data (we'll discuss this later).
 
@@ -97,17 +137,17 @@ Our examples will use two Linode 1024 instances hosted in California. Here are t
 
 #### Step 1: Select the server type
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-1.png" alt="Linode setup select server type" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-1.png" alt="Linode setup select server type" class="img-fluid text-center" figure=false %}
 
 #### Step 2: Deploy the Linux Operating System
 
 In this step, be sure to select a long and secure root password. Later you will disable root passwords, but for the initial process you need to ensure the server is secure.
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-2.png" alt="Linode setup select operating system" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-2.png" alt="Linode setup select operating system" class="img-fluid text-center" figure=false %}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Prevent direct access when it isn't required
 </div>
 </div>
@@ -116,19 +156,19 @@ Prevent direct access when it isn't required
 
 You need to give both servers a private IP address that is not world accessible, but is accessible between Linode servers. This setting is on the Remote Access page.
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-3.png" alt="Linode setup private IP" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-3.png" alt="Linode setup private IP" class="img-fluid text-center" figure=false %}
 
 Once you click the `Add a Private IP` button, you will be presented with this screen that allows you to create a private IP for the server.
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-4.png" alt="Linode setup private IP form" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-4.png" alt="Linode setup private IP form" class="img-fluid text-center" figure=false %}
 
 After you add a private IP address, your configuration should look like this:
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-5.png" alt="Linode setup private IP assigned" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-5.png" alt="Linode setup private IP assigned" class="img-fluid text-center" figure=false %}
 
 Before the private IP address will take effect, you need to enable the "Auto-configure Networking" setting. From the Dashboard click the "Edit" link to the right of your configuration at the top of the page. This will take you to the configuration options. At the bottom, enable the "Auto-configure networking setting". This option looks like this:
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-6.png" alt="Linode setup automatic networking" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-6.png" alt="Linode setup automatic networking" class="img-fluid text-center" figure=false %}
 
 Then click "Save Changes".
 
@@ -136,7 +176,7 @@ Then click "Save Changes".
 
 Now, boot your Linode server by clicking the Boot button on the details page:
 
-{% include _image.html src="/assets/img/resources/guide/linode-setup-7.png" alt="Linode setup boot server" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-7.png" alt="Linode setup boot server" class="img-fluid text-center" figure=false %}
 
 Both servers should now be running. The next step of the process is to lock down remote access to the servers and secure passwords and user accounts. You will need to perform all of these steps on each server to ensure they both are secure. There are numerous guides available to help you secure Linux servers, but we will cover the most common steps we use at FusionAuth.
 
@@ -154,9 +194,9 @@ You can leave this terminal window open while you configure the server. This mak
 
 ### 3.4. Securing Passwords {#securing-passwords}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Automate security checks and constraints
 </div>
 </div>
@@ -229,9 +269,9 @@ You will want to remove the `"NOPASSWD":` part of the line.
 
 ### 3.6. Setup Ordinary User Account {#setup-ordinary-user-account}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Identify users that can access the server
 </div>
 </div>
@@ -362,9 +402,9 @@ You can also add an alias for the SSH command to automatically add the `-A` opti
 
 ### 3.9. Locking the Root Account {#locking-root-account}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Prevent direct access when it isn't required
 </div>
 </div>
@@ -377,9 +417,9 @@ $ usermod -p '*' root
 
 ### 3.10. Two-Factor Authentication {#two-factor-authentication}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Identify users that can access to the server
 </div>
 </div>
@@ -445,9 +485,9 @@ If you install the two-factor authentication as described above and a user doesn
 
 ### 3.11. Firewalling {#firewalling}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Prevent direct access when it isn't required
 </div>
 </div>
@@ -718,9 +758,9 @@ Both are challenging feats and it is likely the hacker will be discovered well b
 
 ### 3.12. Intrusion Detection {#intrusion-detection}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Send notifications for all activity
 </div>
 </div>
@@ -748,7 +788,7 @@ The last step to configuring Monit is to edit the file `/etc/monit/monitrc`. Add
 
 ```config
 set mailserver smtp.sendgrid.net port 587 username "<sendgrid-username>" password "<sendgrid-password>" using tlsv12
-set alert brian@fusionauth.io not on { instance, action }
+set alert  jared@piedpiper.com not on { instance, action }
 ```
 
 The second line tells Monit to email me whenever alerts happen, but to ignore alerts I created manually. This will reduce spamming your inbox if you choose to use Monit for other tasks such as process watching and restarting.
@@ -824,7 +864,7 @@ end
 
 You must configure the Pushover and Slack variables defined at the top of the file for the integrations to work properly. For the Pushover integration, create a Pushover account and a Pushover application. The Pushover application creation looks like this:
 
-{% include _image.html src="/assets/img/resources/guide/pushover-setup.png" alt="Pushover setup" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/pushover-setup.png" alt="Pushover setup" class="img-fluid text-center" figure=false %}
 
 Give your Pushover application a name, description and URL. Select "Script" from the Type select box.
 
@@ -872,9 +912,9 @@ By default, MySQL only listens on the loopback interface. Change this configurat
 bind-address = 192.168.142.213
 ```
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Prevent direct access when it isn't required
 </div>
 </div>
@@ -910,9 +950,9 @@ If the MySQL user's line doesn't end in `"/bin/false"`, you can edit this file m
 
 #### 3.11.2. Backups
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Automate security checks and constraints
 </div>
 </div>
@@ -1014,9 +1054,9 @@ Now that your servers are nicely secured, let's take a look at securing the appl
 
 Application Security centers around a set of guidelines:
 
-<div class="card callout mb-3 h-auto">
-<div class="card-header bg-info text-white">CORE GUIDELINES</div>
-<div class="card-body" markdown="1">
+<div class="guideline">
+<header>CORE GUIDELINES</header>
+<div class="body" markdown="1">
 * Use the least privilege possible
 * Encrypt all communications
 * Automate security checks and constraints
@@ -1029,9 +1069,9 @@ This section will cover the different aspects of securing an application.
 
 ### 4.1. Application User {#application-user}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Use the least privilege possible
 </div>
 </div>
@@ -1062,9 +1102,9 @@ sudo -u application nodejs /usr/local/application/app.js
 
 The first level of defense for any application is to use SSL for all network traffic to the web server. Without SSL encryption, a hacker could intercept network traffic in and out of the server and store it. Since this network traffic would contain usernames, passwords and other user data this would generally be the same level of breach as a hacker gaining access to the user database.
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Encrypt all communications
 </div>
 </div>
@@ -1144,9 +1184,9 @@ You can also another CA like GoDaddy if you prefer. We don't cover the process o
 
 ### 4.3. Password Security {#password-security}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Automate security checks and constraints
 </div>
 </div>
@@ -1210,7 +1250,7 @@ In addition to password validation, you should never store passwords in plain-te
 Before we get to hashing of passwords, let's take a quick look at some code and SQL that handles login. This is important to avoid SQL injection and other attacks that could compromise your application. Applications should always load the identity information from the database into memory using **ONLY** the unique identifier. Here's an example select statement:
 
 ```sql
-SELECT login, password FROM users WHERE login = 'brian@fusionauth.io';
+SELECT login, password FROM users WHERE login = ' jared@piedpiper.com';
 ```
 
 Once you have to identity information in memory, you can take the password that the user provided on the login form, hash it, and then compare it with the value from the database. Here's some example code:
@@ -1267,7 +1307,7 @@ This value is then hashed with an algorithm like Bcrypt or PBKDF2. The result mi
 
 The second part of password security is using a complex hashing algorithm. As engineers, we are trained that performance is good. Things that run faster are better because the end-user doesn't have to wait. This is not the case for passwords. Instead, we actually want our password hashing algorithm to be as slow and complex as tolerable.
 
-{% include _image.html src="/assets/img/resources/guide/bitcoin-mining-farm.jpg" alt="Bitcoin Farm" class="img-thumbnail img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/bitcoin-mining-farm.jpg" alt="Bitcoin Farm" class="img-thumbnail img-fluid" figure=false %}
 
 The reason that slow algorithms are better is that it takes the computer time to generate the hash. This time makes brute-force attacks nearly impossible. Here's why.
 
@@ -1325,11 +1365,11 @@ It is interesting to note that the PBKDF2 algorithm takes the salt as a paramete
 
 SQL injection is an application level vulnerability that is caused when an application builds SQL queries (or any type of database query) directly from user input. The XKCD comic strip illustrates this principle:
 
-{% include _image.html src="/assets/img/resources/guide/sql-injection.png" alt="SQL Injection" class="img-fluid text-center" figure=false %}
+{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/sql-injection.png" alt="SQL Injection" class="img-fluid text-center" figure=false %}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Cleanse user input
 </div>
 </div>
@@ -1404,9 +1444,9 @@ It is a good idea to centralize all of your database logic into a single module 
 
 ### 4.5. Configuration {#configuration}
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Keep it on the server
 </div>
 </div>
@@ -1451,9 +1491,9 @@ All sensitive configuration should be locked down in a similar manner. This incl
 
 We talked about securing the database at the server level in the previous section. Here we will cover securing the database at the application level. Since most applications connect to a database, these connections must be secured.
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Use the least privilege possible
 </div>
 </div>
@@ -1475,9 +1515,9 @@ Most modern applications use a combination of server-side code and client-side c
 
 After a user logs in, the application will need the user id in order to look up additional data for the user as well as ensure the user has the correct permissions to take actions. This user id will also be used when the user modifies, creates or deletes their data.
 
-<div class="card float-md-right callout ml-md-3 mb-3 h-auto">
-<div class="card-header bg-info text-white">GUIDELINE</div>
-<div class="card-body">
+<div class="floating guideline">
+<header>GUIDELINE</header>
+<div class="body">
 Keep it on the server
 </div>
 </div>
@@ -1747,4 +1787,4 @@ In addition to the experience and knowledge of our development team, we used add
 * <https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS>
 * <https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy>
 
-{% include _advice-get-started.html intro="If you are looking for a managed identity solution that is secured using these principles, FusionAuth has you covered." %}
+{% include _advice-get-started.liquid intro="If you are looking for a managed identity solution that is secured using these principles, FusionAuth has you covered." %}

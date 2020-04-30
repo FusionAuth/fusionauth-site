@@ -11,67 +11,65 @@ When using the OAuth2 and OpenID Connect authentication grants you'll be dealing
 == Access Token
 The access token is an opaque token per the OAuth2 specification. In the FusionAuth implementation the access token is a JSON Web Token (JWT).
 
-[cols="3a,7a"]
+==== Access Token Claims
+
 [.api]
-.Access Token Claims
-|===
-|[field]#applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the User has been authenticated. A JWT can only represent authorization to a single Application.
-
+[field]#applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the User has been authenticated. A JWT can only represent authorization to a single Application.
++
 This claim is only present if the User has a registration to the Application.
++
+To obtain a JWT for another Application you must either authenticate again with a different `applicationId` using the link:../apis/login#authenticate-a-user[Authentication] API or utilize the link:../apis/jwt#issue-a-jwt[Issue a JWT] API to exchange a valid JWT for another.
 
-To obtain a JWT for another Application you must either authenticate again with a different `applicationId` using the link:../apis/login#authenticate-a-user[Authentication]
-API or utilize the link:../apis/jwt#issue-a-jwt[Issue a JWT] API to exchange a valid JWT for another.
-
-|[field]#aud# [type]#[String]#
-|The audience the JWT is intended for. This registered claim is defined by https://tools.ietf.org/html/rfc7519#section-4.1.3[RFC 7519 Section 4.1.3]
-
+[field]#aud# [type]#[String]#::
+The audience the JWT is intended for. This registered claim is defined by https://tools.ietf.org/html/rfc7519#section-4.1.3[RFC 7519 Section 4.1.3]
++
 This claim will be equal to the `client_id`.
 
-|[field]#authenticationType# [type]#[String]#
-|The method used to authenticate the User which resulted in this JWT being generated. The possible values are:
+[field]#authenticationType# [type]#[String]#::
+The method used to authenticate the User which resulted in this JWT being generated. The possible values are:
++
+    * `APPLICATION_TOKEN` - The User was authenticated using an link:../tutorials/application-authentication-tokens[Application Authentication Token].
+    * `FEDERATED_JWT` - The User was authenticated using a JWT from an external Identity Provider.
+    * `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
+    * `ONE_TIME_PASSWORD` The User was authenticated using a one time password. &nbsp; [since]#Available Since 1.5.0#
+    * `PASSWORD` - The User was authenticated using a loginId and password combination.
+    * `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; [since]#Available Since 1.5.0#
+    * `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
+    * `FACEBOOK` - The User was authenticated using Facebook. &nbsp; [since]#Available Since 1.1.0#
+    * `GOOGLE` - The User was authenticated using Google. [since]#Available Since 1.1.0#
+    * `TWITTER` - The User was authenticated using Twitter. [since]#Available Since 1.1.0#
+    * `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. [since]#Available Since 1.1.0#
+    * `SAMLv2` - The User was authenticated using an external SAMLv2 provider. [since]#Available Since 1.6.0#
+    * `HYPR` - The User was authenticated using HYPR provider. [since]#Available Since 1.12.0#
 
-* `APPLICATION_TOKEN` - The User was authenticated using an link:../tutorials/application-authentication-tokens[Application Authentication Token].
-* `FEDERATED_JWT` - The User was authenticated using a JWT from an external Identity Provider.
-* `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
-* `ONE_TIME_PASSWORD` The User was authenticated using a one time password. &nbsp; [since]#Available Since 1.5.0#
-* `PASSWORD` - The User was authenticated using a loginId and password combination.
-* `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; [since]#Available Since 1.5.0#
-* `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
-* `FACEBOOK` - The User was authenticated using Facebook. &nbsp; [since]#Available Since 1.1.0#
-* `GOOGLE` - The User was authenticated using Google. [since]#Available Since 1.1.0#
-* `TWITTER` - The User was authenticated using Twitter. [since]#Available Since 1.1.0#
-* `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. [since]#Available Since 1.1.0#
-* `SAMLv2` - The User was authenticated using an external SAMLv2 provider. [since]#Available Since 1.6.0#
-* `HYPR` - The User was authenticated using HYPR provider. [since]#Available Since 1.12.0#
+[field]#email# [type]#[String]#::
+The email address of the User whose claims are represented by this JWT.
 
-|[field]#email# [type]#[String]#
-|The email address of the User whose claims are represented by this JWT.
+[field]#email_verified# [type]#[Boolean]#::
+The OpenId Connect claim indicating if the User's email has been verified.
 
-|[field]#email_verified# [type]#[Boolean]#
-|The OpenId Connect claim indicating if the User's email has been verified.
-
-|[field]#exp# [type]#[Long]#
-|The expiration instant of the JWT expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
+[field]#exp# [type]#[Long]#::
+The expiration instant of the JWT expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
 https://tools.ietf.org/html/rfc7519#section-4.1.4[RFC 7519 Section 4.1.4]
 
-|[field]#iat# [type]#[Long]#
-|The instant that the JWT was issued expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
+[field]#iat# [type]#[Long]#::
+The instant that the JWT was issued expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
 https://tools.ietf.org/html/rfc7519#section-4.1.6[RFC 7519 Section 4.1.6]
 
-|[field]#iss# [type]#[String]#
-|The issuer of the JWT. For FusionAuth, this is always the value defined in the global JWT configuration. This registered claim is defined by
+[field]#iss# [type]#[String]#::
+The issuer of the JWT. For FusionAuth, this is always the value defined in the global JWT configuration. This registered claim is defined by
 https://tools.ietf.org/html/rfc7519#section-4.1.1[RFC 7519 Section 4.1.1]
 
-|[field]#preferred_username# [type]#[String]# [since]#Available Since 1.5.0#
-|The username of the User who claims are represented by this JWT.
+[field]#preferred_username# [type]#[String]# [since]#Available Since 1.5.0#::
+The username of the User who claims are represented by this JWT.
 
-|[field]#roles# [type]#[Array<String>]#
-|The roles assigned to the User in the authenticated Application. This claim is only present if the User has a registration to the Application.
+[field]#roles# [type]#[Array<String>]#::
+The roles assigned to the User in the authenticated Application. This claim is only present if the User has a registration to the Application.
 
-|[field]#sub# [type]#[UUID]#
-|The subject of the access token. This value is equal to the User's unique Id in FusionAuth. This registered claim is defined by https://tools.ietf.org/html/rfc7519#section-4.1.2[RFC 7519 Section 4.1.2]
-|===
+[field]#sub# [type]#[UUID]#::
+The subject of the access token. This value is equal to the User's unique Id in FusionAuth. This registered claim is defined by https://tools.ietf.org/html/rfc7519#section-4.1.2[RFC 7519 Section 4.1.2]
+
 
 
 == Id Token
@@ -79,76 +77,74 @@ The Id Token is part of the OpenID Connect specification. The Id Token is a JSON
 
 The Id Token may be returned as part of an Authentication request when the `openid` scope is requested.
 
-[cols="3a,7a"]
+==== Id Token Claims
+
 [.api]
-.Id Token Claims
-|===
-|[field]#applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the User has been authenticated. A JWT can only represent authorization to a single Application.
-
+[field]#applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the User has been authenticated. A JWT can only represent authorization to a single Application.
++
 This claim is only present if the User has a registration to the Application.
++
+To obtain a JWT for another Application you must either authenticate again with a different `applicationId` using the link:../apis/login#authenticate-a-user[Authentication] API or utilize the link:../apis/jwt#issue-a-jwt[Issue a JWT] API to exchange a valid JWT for another.
 
-To obtain a JWT for another Application you must either authenticate again with a different `applicationId` using the link:../apis/login#authenticate-a-user[Authentication]
-API or utilize the link:../apis/jwt#issue-a-jwt[Issue a JWT] API to exchange a valid JWT for another.
+[field]#at_hash# [type]#[String]# [since]#Available Since 1.5.0#::
+The Access Token hash value. As defined by the https://openid.net/specs/openid-connect-core-1_0.html#CodeIDToken[3.1.3.6 of the OpenID Connect Core specification] this value is a base64 encoded hash of the access token.
 
-|[field]#at_hash# [type]#[String]# [since]#Available Since 1.5.0#
-|The Access Token hash value. As defined by the https://openid.net/specs/openid-connect-core-1_0.html#CodeIDToken[3.1.3.6 of the OpenID Connect Core specification] this value is a base64 encoded hash of the access token.
-
-|[field]#aud# [type]#[String]#
-|The audience the JWT is intended for. This registered claim is defined by https://tools.ietf.org/html/rfc7519#section-4.1.3[RFC 7519 Section 4.1.3]
-
+[field]#aud# [type]#[String]#::
+The audience the JWT is intended for. This registered claim is defined by https://tools.ietf.org/html/rfc7519#section-4.1.3[RFC 7519 Section 4.1.3]
++
 This claim will be equal to the `client_id`.
 
-|[field]#authenticationType# [type]#[String]#
-|The method used to authenticate the User which resulted in this JWT being generated. The possible values are:
+[field]#authenticationType# [type]#[String]#::
+The method used to authenticate the User which resulted in this JWT being generated. The possible values are:
++
+    * `APPLICATION_TOKEN` - The User was authenticated using an link:../tutorials/application-authentication-tokens[Application Authentication Token].
+    * `FEDERATED_JWT` - The User was authenticated using a JWT from an external Identity Provider.
+    * `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
+    * `ONE_TIME_PASSWORD` The User was authenticated using a one time password. &nbsp; [since]#Available Since 1.5.0#
+    * `PASSWORD` - The User was authenticated using a loginId and password combination.
+    * `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; [since]#Available Since 1.5.0#
+    * `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
+    * `FACEBOOK` - The User was authenticated using Facebook. &nbsp; [since]#Available Since 1.1.0#
+    * `GOOGLE` - The User was authenticated using Google. [since]#Available Since 1.1.0#
+    * `TWITTER` - The User was authenticated using Twitter. [since]#Available Since 1.1.0#
+    * `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. [since]#Available Since 1.1.0#
+    * `SAMLv2` - The User was authenticated using an external SAMLv2 provider. [since]#Available Since 1.6.0#
+    * `HYPR` - The User was authenticated using HYPR provider. [since]#Available Since 1.12.0#
 
-* `APPLICATION_TOKEN` - The User was authenticated using an link:../tutorials/application-authentication-tokens[Application Authentication Token].
-* `FEDERATED_JWT` - The User was authenticated using a JWT from an external Identity Provider.
-* `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
-* `ONE_TIME_PASSWORD` The User was authenticated using a one time password. &nbsp; [since]#Available Since 1.5.0#
-* `PASSWORD` - The User was authenticated using a loginId and password combination.
-* `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; [since]#Available Since 1.5.0#
-* `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
-* `FACEBOOK` - The User was authenticated using Facebook. &nbsp; [since]#Available Since 1.1.0#
-* `GOOGLE` - The User was authenticated using Google. [since]#Available Since 1.1.0#
-* `TWITTER` - The User was authenticated using Twitter. [since]#Available Since 1.1.0#
-* `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. [since]#Available Since 1.1.0#
-* `SAMLv2` - The User was authenticated using an external SAMLv2 provider. [since]#Available Since 1.6.0#
-* `HYPR` - The User was authenticated using HYPR provider. [since]#Available Since 1.12.0#
+[field]#c_hash# [type]#[String]# [since]#Available Since 1.5.0#::
+The Access Token hash value. As defined by the https://openid.net/specs/openid-connect-core-1_0.html#HybridIDToken[3.3.2.11 of the OpenID Connect Core specification] this value is a base64 encoded hash of the authorization code.
 
-|[field]#c_hash# [type]#[String]# [since]#Available Since 1.5.0#
-|The Access Token hash value. As defined by the https://openid.net/specs/openid-connect-core-1_0.html#HybridIDToken[3.3.2.11 of the OpenID Connect Core specification] this value is a base64 encoded hash of the authorization code.
+[field]#email# [type]#[String]#::
+The email address of the User whose claims are represented by this JWT.
 
-|[field]#email# [type]#[String]#
-|The email address of the User whose claims are represented by this JWT.
+[field]#email_verified# [type]#[Boolean]#::
+The OpenId Connect claim indicating if the User's email has been verified.
 
-|[field]#email_verified# [type]#[Boolean]#
-|The OpenId Connect claim indicating if the User's email has been verified.
-
-|[field]#exp# [type]#[Long]#
-|The expiration instant of the JWT expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
+[field]#exp# [type]#[Long]#::
+The expiration instant of the JWT expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
 https://tools.ietf.org/html/rfc7519#section-4.1.4[RFC 7519 Section 4.1.4]
 
-|[field]#iat# [type]#[Long]#
-|The instant that the JWT was issued expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
+[field]#iat# [type]#[Long]#::
+The instant that the JWT was issued expressed as UNIX time which is the number of seconds since Epoch. This registered claim is defined by
 https://tools.ietf.org/html/rfc7519#section-4.1.6[RFC 7519 Section 4.1.6]
 
-|[field]#iss# [type]#[String]#
-|The issuer of the JWT. For FusionAuth, this is always the value defined in the global JWT configuration. This registered claim is defined by
+[field]#iss# [type]#[String]#::
+The issuer of the JWT. For FusionAuth, this is always the value defined in the global JWT configuration. This registered claim is defined by
 https://tools.ietf.org/html/rfc7519#section-4.1.1[RFC 7519 Section 4.1.1]
 
-|[field]#nonce# [type]#[String]# [since]#Available Since 1.5.0#
-|
+[field]#nonce# [type]#[String]# [since]#Available Since 1.5.0#::
 
-|[field]#preferred_username# [type]#[String]# [since]#Available Since 1.5.0#
-|The username of the User who claims are represented by this JWT.
 
-|[field]#roles# [type]#[Array<String>]#
-|The roles assigned to the User in the authenticated Application. This claim is only present if the User has a registration to the Application.
+[field]#preferred_username# [type]#[String]# [since]#Available Since 1.5.0#::
+The username of the User who claims are represented by this JWT.
 
-|[field]#sub# [type]#[UUID]#
-|The subject of the access token. This value is equal to the User's unique Id in FusionAuth. This registered claim is defined by https://tools.ietf.org/html/rfc7519#section-4.1.2[RFC 7519 Section 4.1.2]
-|===
+[field]#roles# [type]#[Array<String>]#::
+The roles assigned to the User in the authenticated Application. This claim is only present if the User has a registration to the Application.
+
+[field]#sub# [type]#[UUID]#::
+The subject of the access token. This value is equal to the User's unique Id in FusionAuth. This registered claim is defined by https://tools.ietf.org/html/rfc7519#section-4.1.2[RFC 7519 Section 4.1.2]
+
 
 
 
@@ -157,4 +153,4 @@ The refresh token is an opaque token that is used to "refresh", or obtain a new 
 
 To request a refresh token during authentication you must provide the `offline_access` scope. The refresh token is not supported by the Implicit Grant, so if you provide the `offline_access` scope during an Implicit Grant workflow it will be ignored.
 
-If you request the `offline_access` scope and an Refresh Token is not returned, ensure that the FusionAuth application has been configured to generate refresh tokens. Ensure `Generate refresh tokens` is enabled in your application settings. See [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Applications# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#OAuth#. This setting will cause a Refresh Token to be returned when the `offline_access` scope is requested. You will also want to ensure the `Refresh Token` grant is enabled which allows the use of the Refresh Token to be exchanged for a new Access Token.
+If you request the `offline_access` scope and an Refresh Token is not returned, ensure that the FusionAuth application has been configured to generate refresh tokens. Ensure `Generate refresh tokens` is enabled in your application settings. See [breadcrumb]#Settings -> Applications -> OAuth#. This setting will cause a Refresh Token to be returned when the `offline_access` scope is requested. You will also want to ensure the `Refresh Token` grant is enabled which allows the use of the Refresh Token to be exchanged for a new Access Token.

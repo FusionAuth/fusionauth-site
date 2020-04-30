@@ -4,7 +4,6 @@ title: OAuth Device Authorization
 description: How to implement OAuth Device Authorization for set-top devices like Roku, AppleTV, and XBox and more.
 image: advice/oauth-device-authorization-article.png
 author: Matthew Altman & Trevor Smith
-header_dark: true
 category: OAuth
 date: 2019-11-04
 dateModified: 2019-11-04
@@ -14,7 +13,7 @@ If you have a modern entertainment device like a Roku, AppleTV, XBox, Playstatio
 
 We've all gone through it, and the reality is it's not the best way to start off an evening of relaxation. Depending on the device and the service, you're almost guaranteed to hit a broad range of usability issues. Most of these services require you to log into your account and this means typing in your username and password. TV remotes and game controllers were never designed to handle this kind of text input. However, there is a simpler and standard way to accomplish this task. It's called the OAuth Device Authorization Grant and we will cover it here.  
 
-{% include _image.html src="/assets/img/blogs/roku_remote.png" class="img-fluid float-right mr-md-5" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/roku_remote.png" class="img-fluid float-right mr-md-5" figure=false %}
 ## The Problem
 
 We login to accounts all the time using our phones and computers, so it shouldn't be that difficult on another device, right? The problem is Internet connected boxes like XBox and AppleTV don't have a built-in keyboard or tap input system. Suddenly, usability becomes a big issue. Fumbling your way through an on-screen keyboard to enter your username and password using a D-pad on a game controller or the arrow keys on a remote control can be a nightmare. And since most services ask you to enter very long, complex keycodes with all sorts of special characters and mixed-case letters, it's highly likely you will accidentally enter it wrong and have to start all over again.
@@ -29,7 +28,7 @@ In order to address this issue there is a proposed standard for the [Oauth2 Devi
 1. The device is able to display to the user a URL and code sequence
 1. The user has a secondary device like a personal computer, tablet, or smartphone from which they can process the request
 
-{% include _image.html src="/assets/img/blogs/roku_activate.png" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/roku_activate.png" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 The specification is quite long and involved. To make life simpler, we distilled it down for you. For this example, we will connect a Roku device to a fictitious subscription called Nerd Stuff on Demand. We'll also be using FusionAuth for our identity provider, but this solution works with any identity provider that has implemented this OAuth workflow. Here is a sequence diagram that illustrates the process.
 
@@ -63,7 +62,7 @@ Let's continue to break this down into more details so that you can see how the 
 
 The first piece of this workflow is when the app on the device requests a URL and a code. In FusionAuth, the code is generated using the `Device Grant User Code` generator. 
 
-{% include _image.html src="/assets/img/advice/device-code-type.png" alt="Device Code Type" class="mw-100" %}
+{% include _image.liquid src="/assets/img/advice/device-code-type.png" alt="Device Code Type" class="mw-100" %}
 
 The configuration for this component can modified to change the length and content of the codes. For example, you can specify that the code be all numbers, all alphabetical, both, or secure encoded bytes. In addition, you can also specify the length of the code to be generated. This option lets you adjust the balance between security and usability. While we don't recommend using the encoded-byte generator (which essentially generates a large hash) for user-interactive workflows, if you want to punish your users by forcing them to type in a long sequence of characters, we won't stop you.
 
@@ -71,7 +70,7 @@ Additionally, the FusionAuth code generator removes the numbers `0`, `1` and the
 
 Lastly, you will find the `Device Grant Code` duration configuration. This is the time in seconds that the code will remain valid. To reduce brute force hacking attempts, the duration should be as short as possible while still providing a good user experience. The default duration is 5 minutes, which is generally adequate for a user to complete the login procedure on a home computer or a mobile device.
 
-{% include _image.html src="/assets/img/advice/device-code-duration.png" alt="Device Code Duration" class="mw-100" %}
+{% include _image.liquid src="/assets/img/advice/device-code-duration.png" alt="Device Code Duration" class="mw-100" %}
 
 ### How It Works
 
@@ -129,4 +128,4 @@ We're excited to offer this new feature in FusionAuth, and hope you take the tim
 
 We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know either at [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub") or [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and we'll take a look.
 
-{% include _advice-get-started.html intro="If you are looking for a solution that provides full support for OAuth Device Authorization, FusionAuth has you covered." %}
+{% include _advice-get-started.liquid intro="If you are looking for a solution that provides full support for OAuth Device Authorization, FusionAuth has you covered." %}

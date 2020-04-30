@@ -198,7 +198,7 @@ Lastly, we incorporated error handling to let us see any errors encountered duri
 
 If we run the `index.php` file and navigate to our FusionAuth UI, we can see that the user has been registered successfully under the users' section.
 
-{% include _image.html src="/assets/img/blogs/php-blog-user.png" alt="Successful user registration" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/php-blog-user.png" alt="Successful user registration" class="img-fluid" figure=false %}
 
 On the other hand, if we try posting the same registration request again, we get a series of **duplicate** errors on the web browser, showing that the user already exists. Logging such [API errors](https://fusionauth.io/docs/v1/tech/apis/errors) can assist you in debugging when integrating FusionAuth with PHP.
 
