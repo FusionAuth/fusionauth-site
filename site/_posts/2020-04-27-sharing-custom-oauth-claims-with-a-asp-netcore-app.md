@@ -28,19 +28,19 @@ Finally, we need to add our user to our group. Navigate to the "newuser2@example
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-add-user-to-group.png" alt="Adding our user to a group in a FusionAuth application." class="img-fluid" figure=false %}
 
-Let's login and see what we see as this new user on the "Secure" page. As a reminder, here's how we can start the ASP.NET Core application (again [full source code](https://github.com/FusionAuth/fusionauth-example-asp-net-core) available here).
+Let's login. As a reminder, here's how we can start the ASP.NET Core application (again [full source code](https://github.com/FusionAuth/fusionauth-example-asp-net-core) available here).
 
 ```shell
 dotnet publish -r win-x64 && SampleApp__ClientSecret=H4... bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
 ```
 
-The role is present in the JWT, as you can see below:
+If you head to `http://localhost:5000` and click on the "Secure" page, you'll see the claims. If you were previously signed in, you may need to sign out and sign in again. The role is present in the JWT, as you can see below:
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-roles-only-roles-highlighted.png" alt="The secure page after a user has been associated with a role." class="img-fluid" figure=false %}
 
-Since the role and other claims are encoded in the JWT, which is stored a cookie, if you change a group's roles, you'll need log out and log in to see the changes.
+Since the role and other claims are encoded in the JWT, which is stored a cookie, whenever you change any user data in FusionAuth, you'll need log out and log in as that user to see the changes reflected in the ASP.NET Core application.
 
-## Adding in custom claims
+## Adding custom claims
 
 You can add in custom claims based on user data, the time of day or anything else. In FusionAuth, you add this data to a JWT with a [lambda](https://fusionauth.io/docs/v1/tech/lambdas/jwt-populate). This is JavaScript function which receives the JWT object before it is signed and can modify it. Remember way back when we [created the user](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client) and specified their favorite color as a command line option? Well, we're going to send that information down to the ASP.NET Core web application so that it can display that very valuable data.
 
@@ -80,13 +80,13 @@ And that it has been assigned to run when JWTs are created for your application.
 
 Of course, as implied above, rather than running a script, you could create the lambda using the administration user interface and then associate it with your application. I think that running it from a script shows the power of the FusionAuth API--everything you can do in the admin interface you can do via the API.
 
-## Looking at custom claims in the web app
+## Viewing custom claims 
 
-Now if you go to `http://localhost:5000`, and sign out and sign in, you should see a screen something like this:
+Now if you head to `http://localhost:5000`, you should see something like this:
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-favcolor-highlighted.png" alt="The secure page after a the lambda makes the favoriteColor claim available." class="img-fluid" figure=false %}
 
-In a real world application you might display the user's favorite color. You could also display or hide information or functionality based on the user's role.
+Of course, this isn't much use. In a real world application you might display the user's favorite color or customize their display. Roles could determine hidden or displayed functionality.
 
 ## Conclusion
 
