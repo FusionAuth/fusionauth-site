@@ -28,7 +28,7 @@ Finally, we need to add our user to our group. Navigate to the "newuser2@example
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-add-user-to-group.png" alt="Adding our user to a group in a FusionAuth application." class="img-fluid" figure=false %}
 
-Let's login. As a reminder, here's how we can start the ASP.NET Core application (again [full source code](https://github.com/FusionAuth/fusionauth-example-asp-net-core) available here).
+Let's login. As a reminder, here's how we can start the ASP.NET Core application (again [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore) available here).
 
 ```shell
 dotnet publish -r win-x64 && SampleApp__ClientSecret=H4... bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
