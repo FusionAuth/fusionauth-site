@@ -21,7 +21,7 @@ We are going to make a few changes to the FusionAuth configuration to allow inte
 First, we're going to create a new signing key. There's a list of [supported algorithms](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/Supported-Algorithms) that work with the open source identity project we're using, but currently [symmetric algorithms are not supported](https://github.com/IdentityModel/IdentityModel.AspNetCore/issues/102)--I love the honesty of the library maintainer: "Don't use symmetric keys is the easy answer." Using the default HMAC key resulted in a `SecurityTokenSignatureKeyNotFoundException` and there was no easy way to change the `SignatureProvider`. Luckily, FusionAuth supports [different key types](https://fusionauth.io/docs/v1/tech/apis/keys#generate-a-key), so let's generate an asymmetric key to use to sign our JavaScript Web Tokens (JWTs). 
 
 To generate the key, go to "Settings" then to "Key Master". In the upper right hand corner, click on the dropdown next to "Import Public Key" and choose "Generate RSA". Use a descriptive name like "For dotnetcore" and leave the rest of defaults and click "Submit". 
-{% include _image.html src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-keypair.png" alt="A new RSA keypair in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-keypair.png" alt="A new RSA keypair in FusionAuth." class="img-fluid" figure=false %}
 
 Next, we'll be modifying the previously created "dotnetcore"' application settings. Edit that application, then go to the OAuth tab. Make the following changes:
 
@@ -30,11 +30,11 @@ Next, we'll be modifying the previously created "dotnetcore"' application settin
 
 The web application we are going to build is going to be on port 5000, and `signin-oidc` is an endpoint provided by the authentication library. We're setting things up so that the Authorization Code grant will work. Write down the `Client ID` and `Client Secret`, as we'll need that information later. When you are done configuring this section, the OAuth tab of your application should look like this:
 
-{% include _image.html src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-oauth-setup-screen.png" alt="The OAuth settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-oauth-setup-screen.png" alt="The OAuth settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
 Next, go to the JWT tab. We need to enable JSON Web Token signing and tell FusionAuth to use the previously generated RSA keypair. Update the "Access token signing key" and "Id token signing key" to point to that keypair. When you are done, the JWT tab should look like this:
 
-{% include _image.html src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-jwt-screen.png" alt="The JWT settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-jwt-screen.png" alt="The JWT settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
 Click the blue "Save" icon to save all the settings you just configured. We're done with FusionAuth. (Unless you need to add a user, in which case, go to the "Users" section and add one. Make sure to add them to the "dotnetcore" application by creating the appropriate user registration.)
 
@@ -362,11 +362,11 @@ dotnet publish -r win-x64 && SampleApp__ClientSecret=H4... bin/Debug/netcoreapp3
 
 Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see thei claims. Go to `http://localhost:5000` and click on the "Secure" page. You'll be prompted to log in at a basic screen. You can [theme the login screen of FusionAuth](https://fusionauth.io/docs/v1/tech/themes/) should you choose.
 
-{% include _image.html src="/assets/img/blogs/authorization-code-grant-asp-net/login-asp-dot-net-example.png" alt="The login screen in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/login-asp-dot-net-example.png" alt="The login screen in FusionAuth." class="img-fluid" figure=false %}
 
 After you've signed in, you'll end up at the "Secure" page and will see all claims encoded in the JWT.
 
-{% include _image.html src="/assets/img/blogs/authorization-code-grant-asp-net//successful-login-secure-page-display.png" alt="The secure page." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net//successful-login-secure-page-display.png" alt="The secure page." class="img-fluid" figure=false %}
 
 You can see the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-net-core/tree/add-authentication).
 
