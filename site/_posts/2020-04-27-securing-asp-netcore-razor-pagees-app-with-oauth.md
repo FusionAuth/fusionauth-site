@@ -40,7 +40,7 @@ Click the blue "Save" icon to save all the settings you just configured. We're d
 
 ## Set up a basic ASP.NET Razor Pages application
 
-Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only be available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-net-core) available if you want to download it and take a look.
+Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-net-core) available if you want to download it and take a look.
 
 First, let's create a new web application using the `dotnet` CLI and go to that directory:
 
@@ -354,13 +354,13 @@ As promised, here's our `appsettings.json` file. We need to add our entire `Samp
 }
 ```
 
-Wait, where's the client secret? This file in under version control and we don't put secrets under version control. Instead, the client secret is provided on the command line via an environment variable. This change means the correct way to publish and start the web application is now (where you replace `H4...` with the client secret value):
+Wait, where's the client secret? This file is in git, but we should not put secrets under version control. Instead, the client secret is provided on the command line via an environment variable. This change means the correct way to publish and start the web application is now (where you replace `H4...` with the client secret value):
 
 ```shell
 dotnet publish -r win-x64 && SampleApp__ClientSecret=H4... bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
 ```
 
-Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see thei claims. Go to `http://localhost:5000` and click on the "Secure" page. You'll be prompted to log in at a basic screen. You can [theme the login screen of FusionAuth](https://fusionauth.io/docs/v1/tech/themes/) should you choose.
+Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the "Secure" page. You'll be prompted to log in at a basic screen. You can [theme the login screen of FusionAuth](https://fusionauth.io/docs/v1/tech/themes/) should you choose.
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/login-asp-dot-net-example.png" alt="The login screen in FusionAuth." class="img-fluid" figure=false %}
 
@@ -372,7 +372,7 @@ You can see the application at this stage of development by looking at the [`add
 
 ## Logout
 
-Awesome, now you can log in if you have an user. However, right now there's no way to log out. The JWT is stored in a session cookie. When we're ready to leave, we want to log out of our ASP.NET Core session and of the FusionAuth session. So, we need to add a logout page, remove the session cookie, and the redirect to the FusionAuth Logout URL. FusionAuth will destroy its session and then redirect back to the configured Logout URL. We'll add a Logout page to do all of this.
+Awesome, now you can log in with valid user credentials. However, right now there's no way to log out. The JWT is stored in a session cookie. When we're ready to leave, we want to log out of our ASP.NET Core session and of the FusionAuth session. So, we need to add a logout page, remove the session cookie, and redirect to the FusionAuth Logout URL. FusionAuth will destroy its session and then redirect back to the configured Logout URL. We'll add a Logout page to do all of this.
 
 Here's what the `Logout.cshtml.cs` class looks like:
 
@@ -443,9 +443,12 @@ Finally, we need to change the `Startup.cs` file to use the new cookie name.
 
 Great! Now you can both sign in and sign out of your application.
 
-(If you are interestined, you can see the application now by looking at the [`add-logout` branch](https://github.com/FusionAuth/fusionauth-example-asp-net-core/tree/add-logout).
+(If you are interested, you can see the application's current code by looking at the [`add-logout` branch](https://github.com/FusionAuth/fusionauth-example-asp-net-core/tree/add-logout).
 
 ## Next steps
 
-If you want to extend this example, add more pages, or limit a page to a certain user. You could also welcome users with their first name by retrieving user information via an API call, using the [FusionAuth .NET Core client library](https://fusionauth.io/docs/v1/tech/client-libraries/netcore).
+If you want to explore more, you can add more pages to the application, limit a page to a certain user, or customize the FusionAuth login page theme.
 
+You could also welcome users with their first name by retrieving user information via an API call, using the [FusionAuth .NET Core client library](https://fusionauth.io/docs/v1/tech/client-libraries/netcore).
+
+For the next post in this .NET Core series, we'll be associating a user with a role and creating a custom claim in the JWT.
