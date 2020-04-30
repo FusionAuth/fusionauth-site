@@ -17,7 +17,7 @@ We start off the week on a panel of distinguished developers discussing how to l
 
 If you can't make the session, you can find us later in the evening for the [New to Boulder Dinner](https://sched.co/NNhe) at the [Trident Cafe](https://www.tridentcafe.com/) or at the [BSW Opening Party](https://sched.co/O6Gk) at Galvanize Boulder.
 
-[{% include _image.html src="/assets/img/blogs/cropped-IGNITE-boulder-logo-dark.png" alt="Ignite Boulder" class="float-right img-fluid mb-4" figure=false %}](https://igniteboulder.com)
+[{% include _image.liquid src="/assets/img/blogs/cropped-IGNITE-boulder-logo-dark.png" alt="Ignite Boulder" class="float-right img-fluid mb-4" figure=false %}](https://igniteboulder.com)
 
 ## Wednesday at Ignite Boulder
 Wednesday brings us to the largest Ignite event in the world, [Ignite Boulder](https://igniteboulder.com/). Started in 2008, Ignite Boulder has sold out 36 times and promises presentations that inspire, entertain, and educate viewers on just about any topic imaginable. We'll be sponsoring the event and providing the first round (or two) of drinks, so make sure you get there early. We'll have more chances to enter to win that Nintendo Switch available, so look for the FusionAuth team and we'll get you set up.

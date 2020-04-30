@@ -14,7 +14,7 @@ It's been only a few months since we launched FusionAuth and the reviews are com
 
 While we knew we built a solution developers needed, we didn't expect to cover so much of the planet so quickly. Since September 1 we have had over 40,000 downloads from companies and developers on six continents and in almost every timezone. Take a look at this map of where FusionAuth is being used.
 
-{% include _image.html src="/assets/img/blogs/fusionauth-world-coverage.jpg" alt="FusionAuth Dashboard" class="full" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-world-coverage.jpg" alt="FusionAuth Dashboard" class="full" figure=false %}
 
 
 Those dots aren't individual instances by the way, those are cities, so each dot represents many instances. FusionAuth gets shared and recommended through developer groups fast, so when one company starts using it, we see more interest from the region. It's even more exciting when we get comments like:

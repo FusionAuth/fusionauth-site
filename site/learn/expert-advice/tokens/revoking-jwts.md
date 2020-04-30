@@ -3,7 +3,6 @@ layout: advice
 title: Revoking JWTs & JWT Expiration
 description: How to use and revoke JWTs for effective and efficient authorization management. Examples, diagrams & more.
 author: Brian Pontarelli
-header_dark: true
 image: advice/revoking-jwts-article.png
 category: Tokens
 related:
@@ -23,7 +22,7 @@ There is not a simple solution because JWTs are designed to be portable, decoupl
 
 Here's a diagram that illustrates this architecture:
 
-{% include _image.html src="/assets/img/blogs/jwt-revoke_350.png" alt="Revoking JWTs" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/jwt-revoke_350.png" alt="Revoking JWTs" class="img-fluid" figure=false %}
 
 The Todo Backend in the diagram can use the JWT and the public key to verify the JWT and then pull the user's id (in this case the subject) out of the JWT. The Todo Backend can then use the user's id to perform operations on that user's data. However, because the Todo Backend isn't verifying the JWT with the IdP, it has no idea if an administrator has logged into the IdP and locked or deleted that user's account.
 
@@ -132,7 +131,7 @@ router.get('/todo', function(req, res, next) {
 ```
 And finally we configure our Webhook in FusionAuth:
 
-{% include _image.html src="/assets/img/blogs/webhooks-2019.jpg" alt="Set up a webhook in FusionAuth" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/webhooks-2019.jpg" alt="Set up a webhook in FusionAuth" class="img-fluid" figure=false %}
 
 We can now revoke a user's refresh token and FusionAuth will broadcast the event to our Webhook. The Webhook then updates the JWTManager which will cause JWTs for that user to be revoked.
 
@@ -140,4 +139,4 @@ This solution works well even in large systems with numerous backends. It requir
 
 If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing JWTManager implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Node clients both have a JWTManager you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a Github issue and we will write one for you.
 
-{% include _advice-get-started.html intro="If you are looking for a solution that provides support for events and Webhooks that can be used to implement this revocation strategy, FusionAuth has you covered." %}
+{% include _advice-get-started.liquid intro="If you are looking for a solution that provides support for events and Webhooks that can be used to implement this revocation strategy, FusionAuth has you covered." %}
