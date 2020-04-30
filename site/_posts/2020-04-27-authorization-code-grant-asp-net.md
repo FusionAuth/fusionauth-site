@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Authenticate using the Authorization Code grant, OIDC and ASP.NET Core
-description: We'll build a small web application using ASP.NET Core and control access using FusionAuth and the Authorization Code grant.
+title: Securing a ASP.NET Core Razor Pages application using the Authorization Code grant
+description: We'll build a web application using ASP.NET Core and control page access using FusionAuth and the Authorization Code grant.
 author: Dan Moore
 image: blogs/whats-new-in-oauth-2-1/whats-new-with-oauth-2-1.png
 category: blog
