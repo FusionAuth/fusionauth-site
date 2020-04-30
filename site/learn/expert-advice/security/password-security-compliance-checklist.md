@@ -3,7 +3,6 @@ layout: advice
 title: Password Security Compliance Checklist
 description: Use this combined checklist of leading password recommendations to strengthen your company's password security policy, meet compliance standards, and minimize the risk of data theft.
 author: Bryan Giese
-header_dark: true
 image: advice/password-security-checklist-article.png
 category: Security
 date: 2019-11-04
@@ -140,7 +139,7 @@ Updated in 2019, NIST produces guidelines to help federal agencies meet the requ
 
 Password security is a vital part of compliance and helps organizations protect user data and maintain customer trust. While these password requirements won't eliminate all your password issues, they will go a long way to make your system more secure from the most common hacking attacks. Be sure your identity solution has built-in capabilities to help you stay up-to-date with frequently changing password compliance requirements. It will help strengthen password security, keep your customer information secure, and keep your business thriving.
 
-{% include _advice-get-started.html intro="If you are looking for a solution that covers all of these password regulations, FusionAuth has you covered." %}
+{% include _advice-get-started.liquid intro="If you are looking for a solution that covers all of these password regulations, FusionAuth has you covered." %}
 
 <script type="text/javascript">
 Prime.Document.onReady(function() {

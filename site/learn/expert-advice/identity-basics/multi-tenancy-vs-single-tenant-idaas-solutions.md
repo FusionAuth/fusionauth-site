@@ -3,7 +3,6 @@ layout: advice
 title: Multi-Tenant vs. Single-Tenant IDaaS Solutions
 description: Choosing between multi-tenant and single-tenant IDaaS solutions comes down to an organization's business objectives and requirements. Which trade-offs are you willing to make?
 author: Daniel DeGroff
-header_dark: true
 image: advice/multi-in-single-article.png
 category: Identity Basics
 date: 2019-11-04
@@ -16,7 +15,7 @@ One important factor to consider when comparing identity platforms is whether yo
 
 ## Multi-Tenant
 
-{% include _image.html src="/assets/img/advice/multi-tenant-diagram.png" alt="Multi-tenant solutions" class="float-right img-fluid mb-3" style="width: 308px;" figure=false %}
+{% include _image.liquid src="/assets/img/advice/multi-tenant-diagram.png" alt="Multi-tenant solutions" class="float-right img-fluid mb-3" style="width: 308px;" figure=false %}
 
 Simply put, multi-tenant is an architecture where multiple companies store their data within the same infrastructure. The entire system can span multiple servers and data centers, but most commonly data is co-mingled in a single database. The tenants are logically isolated, but physically integrated.
 
@@ -37,7 +36,7 @@ Simply put, multi-tenant is an architecture where multiple companies store their
 **Cross-tenant data leaks** - In a multi-tenant system, simple programming errors can lead to the data from one tenant leaking into other tenants. This is specifically true for APIs. This not only poses a security risk, but it also be a legal issue since many new data privacy regulations specifically state that cross-tenant data leaks should be prohibited.
 
 ## Single-Tenant
-{% include _image.html src="/assets/img/advice/single-tenant-diagram.png" alt="Single-tenant solutions" class="float-right img-fluid mb-3" style="width: 500px;" figure=false %}
+{% include _image.liquid src="/assets/img/advice/single-tenant-diagram.png" alt="Single-tenant solutions" class="float-right img-fluid mb-3" style="width: 500px;" figure=false %}
 
 In a single-tenant architecture each company, or tenant, has their own instance, separate from any other customer. With a single-tenant solution the risk of another business accidentally receiving another customer's user data is eliminated.
 
@@ -66,7 +65,7 @@ The descriptions above outline multi-tenant and single-tenant solutions at the h
 
 ## White Labeled Identity        {#white-label}
 
-{% include _image.html src="/assets/img/blogs/white-label.png" alt="white Label Tag" class="float-right" style="width: 250px;" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/white-label.png" alt="white Label Tag" class="float-right" style="width: 250px;" figure=false %}
 
 The proliferation of powerful cloud platforms has made Software as a Service (SaaS) solutions common for all sizes and types of businesses. Functionally, this is simply a multi-tenant architecture: they have many clients using a single instance of their platform.
 
@@ -76,7 +75,7 @@ Joe uses two different websites, `funnymugs.com` and `chucknorrisjokes.com`. Bot
 
 Joe will be very (unpleasantly) surprised if he changes his password on `chucknorrisjokes.com` and magically his password is updated on `funnymugs.com`. This diagram illustrates why this unexpected password change occurs when Acme Corp. is storing single user objects.
 
-{% include _image.html src="/assets/img/blogs/password-change-tenants.png" alt="Password Change" class="img-thumbnail img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/password-change-tenants.png" alt="Password Change" class="img-thumbnail img-fluid" figure=false %}
 
 This would be a poor user experience and not ideal for Acme Corp. While both users are technically Joe, he is not aware of this nuance in the method that Acme Corp. built their platform.
 
@@ -84,7 +83,7 @@ In most cases we want a user to be considered unique by their email address. You
 
 This is a one to many Applications model. A single user can register or be granted permissions to multiple Applications. This is also where single sign-on comes into play. You login once and then you can access each Application without the need to log into each one separately.
 
-{% include _image.html src="/assets/img/blogs/password-change-multi-tenant.png" alt="Password Change w/ Tenants" class="img-thumbnail img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/password-change-multi-tenant.png" alt="Password Change w/ Tenants" class="img-thumbnail img-fluid" figure=false %}
 
 However, as you just saw with Acme Corp., when the platform is opaque to the end user and there is only a single identity for a single email address, surprising side-effects start to occur. In this case, what Acme Corp. needs is a way to partition each of their clients into their own namespace. This is one of the main reasons to use multiple tenants within a single instance.
 
@@ -93,7 +92,7 @@ In this case a tenant is simply a namespace where Applications, Groups and Users
 
 ## Dev, Stage and Prod      {#dev-stage-prod}
 
-{% include _image.html src="/assets/img/blogs/dilbert-project.png" alt="Dilbert Project" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/dilbert-project.png" alt="Dilbert Project" class="img-fluid" figure=false %}
 
 For this use case, we don't have multiple clients, but instead we have a single production environment.
 
@@ -136,4 +135,4 @@ There are benefits and drawbacks to both single-tenant and multi-tenant systems.
 
 If you have additional questions on multi-tenant and single-tenant solutions, please [contact us](https://fusionauth.io/contact "Contact Us").
 
-{% include _advice-get-started.html intro="If you are looking for a single-tenant identity solution that supports multiple logical tenants, FusionAuth has you covered." %}
+{% include _advice-get-started.liquid intro="If you are looking for a single-tenant identity solution that supports multiple logical tenants, FusionAuth has you covered." %}

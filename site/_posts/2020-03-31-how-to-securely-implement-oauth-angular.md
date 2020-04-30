@@ -67,7 +67,7 @@ Then click the green magnifying glass in the list view for your newly created ap
 
 If you edit your new application, your application settings should look like this:
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-angular/admin-application-configuration.png" alt="Application configuration" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-angular/admin-application-configuration.png" alt="Application configuration" class="img-fluid" figure=false %}
 
 
 Next, add a user. This is the account you'll use to authenticate from the Angular application.
@@ -891,7 +891,7 @@ Now you are able to sign in and update your data field. If you sign in using a d
 
 And you can see it in the back end of the FusionAuth user admin screen:
 
-{% include _image.html src="/assets/img/blogs/fusionauth-example-angular/admin-user-data.png" alt="User data in the FusionAuth admin UI" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-angular/admin-user-data.png" alt="User data in the FusionAuth admin UI" class="img-fluid" figure=false %}
 
 
 ## Next steps

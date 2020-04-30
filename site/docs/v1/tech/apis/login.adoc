@@ -25,63 +25,58 @@ The Login API is used authenticate a user in FusionAuth. The issuer of the One T
 
 === Request
 
-By default, this API will require authentication when called with an [field]#applicationId#. Authentication may be disabled per Application, see [field]#application.loginConfiguration.requireAuthentication# in the link:../apis/applications[Application API] or navigate to [breadcrumb]#Applications# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Edit# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Security# in the user interface.
+By default, this API will require authentication when called with an [field]#applicationId#. Authentication may be disabled per Application, see [field]#application.loginConfiguration.requireAuthentication# in the link:../apis/applications[Application API] or navigate to [breadcrumb]#Applications -> Edit -> Security# in the user interface.
 
 
 Prior to version `1.5.0` this API did not accept an API key and never required authentication.
 
 [.api-authentication]
-link:authentication#no-authentication-required[icon:unlock-alt[role=green,type=far]] link:authentication#no-authentication-required[icon:lock[role=red,type=far]] Authenticate a User
+link:authentication#no-authentication-required[icon:unlock[role=green,type=fas]] link:authentication#no-authentication-required[icon:lock[role=red,type=fas]] Authenticate a User
 [.endpoint]
 .URI
 --
 [method]#POST# [uri]#/api/login#
 --
 
-[cols="3a,7a"]
+==== Request Headers
+
 [.api]
-.Request Headers
-|===
-|[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#
-|The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#::
+The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
 generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
 if available, the request body value will take precedence.
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.adoc[]
-|===
 
-[cols="3a,7a"]
-[.api]
-.Request Cookies
-|===
-|[field]#fusionauth.trust# [type]#[String]# [optional]#Optional#
-|The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled. When this cookie exists on the request it will take precedence over the [field]#twoFactorTrustId# if provided in the request body.
-|===
+==== Request Cookies
 
-[cols="3a,7a"]
 [.api]
-.Request Body
-|===
-|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
-|The Id of the Application the user is to be logged into. If this parameter is omitted the user will still be authenticated but a login
+[field]#fusionauth.trust# [type]#[String]# [optional]#Optional#::
+The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled. When this cookie exists on the request it will take precedence over the [field]#twoFactorTrustId# if provided in the request body.
+
+==== Request Body
+
+[.api]
+[field]#applicationId# [type]#[UUID]# [optional]#Optional#::
+The Id of the Application the user is to be logged into. If this parameter is omitted the user will still be authenticated but a login
 count will not be recorded for an Application.
 
-|[field]#ipAddress# [type]#[String]# [optional]#Optional#
-|The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+[field]#ipAddress# [type]#[String]# [optional]#Optional#::
+The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
 the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
 be stored in the User login history.
 
-|[field]#loginId# [type]#[String]# [required]#Required#
-|The login identifier of the user. The login identifier can be either the [field]#email# or the [field]#username#.
+[field]#loginId# [type]#[String]# [required]#Required#::
+The login identifier of the user. The login identifier can be either the [field]#email# or the [field]#username#.
 
-|[field]#metaData.device.description# [type]#[String]# [optional]#Optional#
-|A human readable description of the device used during login. This meta data is used to describe the refresh token that may be generated for this login request.
+[field]#metaData.device.description# [type]#[String]# [optional]#Optional#::
+A human readable description of the device used during login. This meta data is used to describe the refresh token that may be generated for this login request.
 
-|[field]#metaData.device.name# [type]#[String]# [optional]#Optional#
-|A human readable name of the device used during login.  This meta data is used to describe the refresh token that may be generated for this login request.
+[field]#metaData.device.name# [type]#[String]# [optional]#Optional#::
+A human readable name of the device used during login.  This meta data is used to describe the refresh token that may be generated for this login request.
 
-|[field]#metaData.device.type# [type]#[String]# [optional]#Optional#
-|The type of device used during login. The following types may be specified:
-
+[field]#metaData.device.type# [type]#[String]# [optional]#Optional#::
+The type of device used during login. The following types may be specified:
++
 * `BROWSER`
 * `DESKTOP`
 * `LAPTOP`
@@ -91,20 +86,19 @@ be stored in the User login history.
 * `TABLET`
 * `TV`
 * `UNKNOWN`
-
++
 This meta data is used to describe the refresh token that may be generated for this login request.
 
-|[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
-|When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` or `refreshToken` fields, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
-
+[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
+When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` or `refreshToken` fields, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
++
 This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
 
-|[field]#password# [type]#[String]# [required]#Required#
-|The user's password or an Application specific link:../tutorials/application-authentication-tokens[Authentication Token].
+[field]#password# [type]#[String]# [required]#Required#::
+The user's password or an Application specific link:../tutorials/application-authentication-tokens[Authentication Token].
 
-|[field]#twoFactorTrustId# [type]#[String]# [optional]#Optional#
-|The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled.
-|===
+[field]#twoFactorTrustId# [type]#[String]# [optional]#Optional#::
+The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled.
 
 [source,json]
 .Example Request JSON
@@ -124,17 +118,15 @@ include::docs/v1/tech/apis/_login-response-codes.adoc[]
 include::docs/v1/tech/apis/_user-response-body.adoc[]
 :login_response!:
 
-[cols="3a,7a"]
-[.api]
-.Response Cookies
-|===
-|[field]#access_token# [type]#[String]#
-|The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+==== Response Cookies
 
-|[field]#refresh_token# [type]#[String]#
-|The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the JWT
+[.api]
+[field]#access_token# [type]#[String]#::
+The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+
+[field]#refresh_token# [type]#[String]#::
+The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the JWT
 configuration for the application or the global JWT configuration.
-|===
 
 == Authenticate a User with a one time password
 
@@ -142,53 +134,50 @@ This API is used to login using a One Time Password that has been returned from 
 
 === Request
 
-By default, this API will require authentication when called with an [field]#applicationId#. Authentication may be disabled per Application, see [field]#application.loginConfiguration.requireAuthentication# in the link:../apis/applications[Application API] or navigate to [breadcrumb]#Applications# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Edit# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Security# in the user interface.
+By default, this API will require authentication when called with an [field]#applicationId#. Authentication may be disabled per Application, see [field]#application.loginConfiguration.requireAuthentication# in the link:../apis/applications[Application API] or navigate to [breadcrumb]#Applications -> Edit -> Security# in the user interface.
 
 
 [.api-authentication]
-link:authentication#no-authentication-required[icon:unlock-alt[role=green,type=far]] link:authentication#no-authentication-required[icon:lock[role=red,type=far]] Authenticate a User
+link:authentication#no-authentication-required[icon:unlock[role=green,type=fas]] link:authentication#no-authentication-required[icon:lock[role=red,type=fas]] Authenticate a User
 [.endpoint]
 .URI
 --
 [method]#POST# [uri]#/api/login#
 --
 
-[cols="3a,7a"]
+==== Request Headers
+
 [.api]
-.Request Headers
-|===
-|[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#
-|The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#::
+The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
 generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
 if available, the request body value will take precedence.
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.adoc[]
-|===
 
-[cols="3a,7a"]
+==== Request Body
+
 [.api]
-.Request Body
-|===
-|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
-|The Id of the Application the user is to be logged into. If this parameter is omitted the user will still be authenticated but a login
+[field]#applicationId# [type]#[UUID]# [optional]#Optional#::
+The Id of the Application the user is to be logged into. If this parameter is omitted the user will still be authenticated but a login
 count will not be recorded for an Application.
 
-|[field]#ipAddress# [type]#[String]# [optional]#Optional#
-|The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+[field]#ipAddress# [type]#[String]# [optional]#Optional#::
+The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
 the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
 be stored in the User login history.
 
-|[field]#oneTimePassword# [type]#[String]# [required]#Required#
-|The one time password returned by the Change Password API. This value takes the place of the [field]#loginId# and the [field]#password# fields.
+[field]#oneTimePassword# [type]#[String]# [required]#Required#::
+The one time password returned by the Change Password API. This value takes the place of the [field]#loginId# and the [field]#password# fields.
 
-|[field]#metaData.device.description# [type]#[String]# [optional]#Optional#
-|A human readable description of the device used during login. This meta data is used to describe the refresh token that may be generated for this login request.
+[field]#metaData.device.description# [type]#[String]# [optional]#Optional#::
+A human readable description of the device used during login. This meta data is used to describe the refresh token that may be generated for this login request.
 
-|[field]#metaData.device.name# [type]#[String]# [optional]#Optional#
-|A human readable name of the device used during login.  This meta data is used to describe the refresh token that may be generated for this login request.
+[field]#metaData.device.name# [type]#[String]# [optional]#Optional#::
+A human readable name of the device used during login.  This meta data is used to describe the refresh token that may be generated for this login request.
 
-|[field]#metaData.device.type# [type]#[String]# [optional]#Optional#
-|The type of device used during login. The following types may be specified:
-
+[field]#metaData.device.type# [type]#[String]# [optional]#Optional#::
+The type of device used during login. The following types may be specified:
++
 * `BROWSER`
 * `DESKTOP`
 * `LAPTOP`
@@ -198,17 +187,16 @@ be stored in the User login history.
 * `TABLET`
 * `TV`
 * `UNKNOWN`
-
++
 This meta data is used to describe the refresh token that may be generated for this login request.
 
-|[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
-|When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` or `refreshToken` fields, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
-
+[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
+When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` or `refreshToken` fields, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
++
 This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
 
-|[field]#twoFactorTrustId# [type]#[String]# [optional]#Optional#
-|The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled.
-|===
+[field]#twoFactorTrustId# [type]#[String]# [optional]#Optional#::
+The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled.
 
 [source,json]
 .Example Request JSON
@@ -228,17 +216,15 @@ include::docs/v1/tech/apis/_login-response-codes.adoc[]
 include::docs/v1/tech/apis/_user-response-body.adoc[]
 :login_response!:
 
-[cols="3a,7a"]
-[.api]
-.Response Cookies
-|===
-|[field]#access_token# [type]#[String]#
-|The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+==== Response Cookies
 
-|[field]#refresh_token# [type]#[String]#
-|The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the JWT
+[.api]
+[field]#access_token# [type]#[String]#::
+The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+
+[field]#refresh_token# [type]#[String]#::
+The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the JWT
 configuration for the application or the global JWT configuration.
-|===
 
 == Complete Two Factor Authentication
 
@@ -249,52 +235,49 @@ The Two Factor Login API is used to complete the authentication process when a `
 Complete a login request when a User has Two Factor authentication enabled.
 
 [.api-authentication]
-link:authentication#no-authentication-required[icon:unlock-alt[role=green,type=far]] Complete a Two Factor Login
+link:authentication#no-authentication-required[icon:unlock[role=green,type=fas]] Complete a Two Factor Login
 [.endpoint]
 .URI
 --
 [method]#POST# [uri]#/api/two-factor/login#
 --
 
-[cols="3a,7a"]
+==== Request Headers
+
 [.api]
-.Request Headers
-|===
-|[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#
-|The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#::
+The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
 generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
 if available, the request body value will take precedence.
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.adoc[]
-|===
 
-[cols="3a,7a"]
+==== Request Body
+
 [.api]
-.Request Body
-|===
-|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
-|The Id of the Application the user is to be logged into. If this parameter is omitted the user will still be authenticated but a login
+[field]#applicationId# [type]#[UUID]# [optional]#Optional#::
+The Id of the Application the user is to be logged into. If this parameter is omitted the user will still be authenticated but a login
 count will not be recorded for an Application.
 
-|[field]#code# [type]#[String]# [required]#Required#
-|The time based one time use password, also called a Two Factor verification code.
+[field]#code# [type]#[String]# [required]#Required#::
+The time based one time use password, also called a Two Factor verification code.
 
-|[field]#ipAddress# [type]#[String]# [optional]#Optional#
-|The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address
+[field]#ipAddress# [type]#[String]# [optional]#Optional#::
+The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address
 of the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address
 will be stored in the User login history.
 
-|[field]#metaData.device.description# [type]#[String]# [optional]#Optional#
-|A human readable description of the device represented by the `device` parameter.
+[field]#metaData.device.description# [type]#[String]# [optional]#Optional#::
+A human readable description of the device represented by the `device` parameter.
 
-|[field]#metaData.device.lastAccessedAddress# [type]#[String]# [optional]#Optional#
-|The IP address of this login request.
+[field]#metaData.device.lastAccessedAddress# [type]#[String]# [optional]#Optional#::
+The IP address of this login request.
 
-|[field]#metaData.device.name# [type]#[String]# [optional]#Optional#
-|A human readable name of the device represented by the `device` parameter.
+[field]#metaData.device.name# [type]#[String]# [optional]#Optional#::
+A human readable name of the device represented by the `device` parameter.
 
-|[field]#metaData.device.type# [type]#[String]# [optional]#Optional#
-|The type of device represented by the `device` parameter. The following types may be specified:
-
+[field]#metaData.device.type# [type]#[String]# [optional]#Optional#::
+The type of device represented by the `device` parameter. The following types may be specified:
++
 * `BROWSER`
 * `DESKTOP`
 * `LAPTOP`
@@ -305,22 +288,20 @@ will be stored in the User login history.
 * `TV`
 * `UNKNOWN`
 
-|[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
-|When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field,
+[field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
+When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field,
 and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
 
-|[field]#trustComputer# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
-|When this value is set to true the response will contain a Two Factor Trust identifier. This can be used on subsequent Login requests to
+[field]#trustComputer# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
+When this value is set to true the response will contain a Two Factor Trust identifier. This can be used on subsequent Login requests to
 allow the Two Factor challenge to be bypassed.
 
-|[field]#twoFactorId# [type]#[String]# [required]#Required#
-|The two factor Id generated and returned in the response body during the initial authentication attempt.
-
-The default duration of this identifier is 5 minutes. This means that you have 5 minutes to complete the request to this API after
-calling the Login API. Once the identifier has expired you will need to call the Login API again to restart the process.
-
+[field]#twoFactorId# [type]#[String]# [required]#Required#::
+The two factor Id generated and returned in the response body during the initial authentication attempt.
++
+The default duration of this identifier is 5 minutes. This means that you have 5 minutes to complete the request to this API after calling the Login API. Once the identifier has expired you will need to call the Login API again to restart the process.
++
 This duration can be modified using the System Configuration API or in the FusionAuth UI.
-|===
 
 [source,json]
 .Example Request JSON
@@ -396,21 +377,19 @@ include::docs/v1/tech/apis/_user-response-body.adoc[]
 :login_response!:
 :two_factor_login_response!:
 
-[cols="3a,7a"]
-[.api]
-.Response Cookies
-|===
-|[field]#access_token# [type]#[String]#
-|The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+==== Response Cookies
 
-|[field]#refresh_token# [type]#[String]#
-|The refresh token. This cookie is written in the response as an HTTP Only persistent cookie. The cookie expiration is configured in the
+[.api]
+[field]#access_token# [type]#[String]#::
+The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+
+[field]#refresh_token# [type]#[String]#::
+The refresh token. This cookie is written in the response as an HTTP Only persistent cookie. The cookie expiration is configured in the
 JWT configuration for the application or the global JWT configuration.
 
-|[field]#fusionauth.trust# [type]#[String]#
-|The Two Factor Trust identifier. This value is returned when `trustComputer` was set to `true` on the request. This value can be used by
+[field]#fusionauth.trust# [type]#[String]#::
+The Two Factor Trust identifier. This value is returned when `trustComputer` was set to `true` on the request. This value can be used by
  subsequent login requests to bypass the Two Factor challenge. This cookie is written in the response as an HTTP Only persistent cookie.
-|===
 
 == Update Login Instant
 
@@ -421,42 +400,38 @@ application where they no longer have a session. This helps correctly track logi
 === Request
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Update the login instant for a given User and Application
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Update the login instant for a given User and Application
 [.endpoint]
 .URI
 --
 [method]#PUT# [uri]#/api/login/``\{userId\}/\{applicationId\}?ipAddress=\{ipAddress\}``#
 --
 
-[cols="3a,7a"]
+==== Request Headers
+
 [.api]
-.Request Headers
-|===
-|[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#
-|The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#::
+The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
 generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
 if available, the request body value will take precedence.
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.adoc[]
-|===
 
-[cols="3a,7a"]
+==== Request Parameters
+
 [.api]
-.Request Parameters
-|===
-|[field]#userId# [type]#[UUID]# [required]#Required#
-|The Id of the user logging in.
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The Id of the user logging in.
 
-|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
-|The Id of the Application the user is logging into. If this parameter is omitted the user will still be authenticated but a login count will not be recorded for an Application.
+[field]#applicationId# [type]#[UUID]# [optional]#Optional#::
+The Id of the Application the user is logging into. If this parameter is omitted the user will still be authenticated but a login count will not be recorded for an Application.
 
-|[field]#ipAddress# [type]#[String]# [optional]#Optional#
-|The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+[field]#ipAddress# [type]#[String]# [optional]#Optional#::
+The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
 the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
 be stored in the User login history.
-|===
 
 [.api-authentication]
-link:authentication#jwt-authentication[icon:id-badge[role=green,type=far]] Update the login instant for a given User and Application using a JWT
+link:authentication#jwt-authentication[icon:id-badge[role=green,type=fas]] Update the login instant for a given User and Application using a JWT
 [.endpoint]
 .URI
 --
@@ -465,15 +440,13 @@ link:authentication#jwt-authentication[icon:id-badge[role=green,type=far]] Updat
 
 The `userId` is not required on the request. The `userId` and `applicationId` values will be retrieved from the identity claims in the JWT payload.
 
-[cols="3a,7a"]
+==== Request Parameters
+
 [.api]
-.Request Parameters
-|===
-|[field]#ipAddress# [type]#[String]# [optional]#Optional#
-|The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+[field]#ipAddress# [type]#[String]# [optional]#Optional#::
+The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
 the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
 be stored in the User login history.
-|===
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
@@ -518,36 +491,32 @@ The refresh token is only revoked if the request contains the `refresh_token` co
 === Request
 
 [.api-authentication]
-link:authentication#no-authentication-required[icon:unlock-alt[role=green,type=far]] Remove the `access_token` and `refresh_token` cookies if they exist on the client.
+link:authentication#no-authentication-required[icon:unlock[role=green,type=fas]] Remove the `access_token` and `refresh_token` cookies if they exist on the client.
 [.endpoint]
 .URI
 --
 [method]#POST# [uri]#/api/logout``?global=\{global\}&refreshToken=\{refreshToken\}``#
 --
 
-[cols="3a,7a"]
-[.api]
-.Request Cookies
-|===
-|[field]#access_token# [type]#[String]# [optional]#Optional#
-|The access token cookie. When this cookie available in the request it will be deleted from the client.
+==== Request Cookies
 
-|[field]#refresh_token# [type]#[String]# [optional]#Optional#
-|The refresh token cookie. When this cookie available in the request it will be deleted from the client and revoked in FusionAuth.
-|===
+[.api]
+[field]#access_token# [type]#[String]# [optional]#Optional#::
+The access token cookie. When this cookie available in the request it will be deleted from the client.
+
+[field]#refresh_token# [type]#[String]# [optional]#Optional#::
+The refresh token cookie. When this cookie available in the request it will be deleted from the client and revoked in FusionAuth.
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
-[cols="3a,7a"]
-[.api]
-.Request Parameters
-|===
-|[field]#global# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
-|When this value is set to true all of the refresh tokens issued to the owner of the provided refresh token will be revoked. If no refresh token is provided on the request no refresh tokens will be revoked.
+==== Request Parameters
 
-|[field]#refreshToken# [type]#[String]# [optional]#Optional#
-|The `refresh_token` as a request parameter instead of coming in via a cookie. If provided this takes precedence over the cookie.
-|===
+[.api]
+[field]#global# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
+When this value is set to true all of the refresh tokens issued to the owner of the provided refresh token will be revoked. If no refresh token is provided on the request no refresh tokens will be revoked.
+
+[field]#refreshToken# [type]#[String]# [optional]#Optional#::
+The `refresh_token` as a request parameter instead of coming in via a cookie. If provided this takes precedence over the cookie.
 
 === Response
 
@@ -577,7 +546,7 @@ This API allows you to search and paginate through the Login Records.
 === Request
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Searches for Login Records given search criteria
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Searches for Login Records given search criteria
 [.endpoint]
 .URI
 --
@@ -586,34 +555,32 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Searche
 
 When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
 
-[cols="3a,7a"]
+==== Request Parameters
+
 [.api]
-.Request Parameters
-|===
-|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
-|The unique Id of the Application used to narrow the search results to logins for a particular application.
+[field]#applicationId# [type]#[UUID]# [optional]#Optional#::
+The unique Id of the Application used to narrow the search results to logins for a particular application.
 
-|[field]#end# [type]#[Long]# [optional]#Optional#
-|The end link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
+[field]#end# [type]#[Long]# [optional]#Optional#::
+The end link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
 
-|[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
-|The number of results to return from the search.
+[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+The number of results to return from the search.
 
-|[field]#retrieveTotal# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
-|Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
+[field]#retrieveTotal# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
+Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
 
-|[field]#start# [type]#[Long]# [optional]#Optional#
-|The start link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
+[field]#start# [type]#[Long]# [optional]#Optional#::
+The start link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
 
-|[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#
-|The offset into the total results. In order to paginate the results, increment this value by the [field]#numberOfResults# for subsequent requests.
+[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#::
+The offset into the total results. In order to paginate the results, increment this value by the [field]#numberOfResults# for subsequent requests.
 
-|[field]#userId# [type]#[String]# [optional]#Optional#
-|The unique Id of the User used to narrow the search results to login records for a particular user.
-|===
+[field]#userId# [type]#[String]# [optional]#Optional#::
+The unique Id of the User used to narrow the search results to login records for a particular user.
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Searches for Login Records given search criteria
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Searches for Login Records given search criteria
 [.endpoint]
 .URI
 --
@@ -622,31 +589,29 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Searche
 
 When calling the API using a `POST` request you will send the search criteria in a JSON request body.
 
-[cols="3a,7a"]
+==== Request Body
+
 [.api]
-.Request Body
-|===
-|[field]#retrieveTotal# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#
-|Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
+[field]#retrieveTotal# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
+Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
 
-|[field]#search.applicationId# [type]#[UUID]# [optional]#Optional#
-|The unique Id of the Application used to narrow the search results to logins for a particular application.
+[field]#search.applicationId# [type]#[UUID]# [optional]#Optional#::
+The unique Id of the Application used to narrow the search results to logins for a particular application.
 
-|[field]#search.end# [type]#[Long]# [optional]#Optional#
-|The end link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
+[field]#search.end# [type]#[Long]# [optional]#Optional#::
+The end link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
 
-|[field]#search.numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#
-|The number of results to return from the search.
+[field]#search.numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+The number of results to return from the search.
 
-|[field]#search.start# [type]#[Long]# [optional]#Optional#
-|The start link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
+[field]#search.start# [type]#[Long]# [optional]#Optional#::
+The start link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
 
-|[field]#search.startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#
-|The offset into the total results. In order to paginate the results, increment this value by the [field]#numberOfResults# for subsequent requests.
+[field]#search.startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#::
+The offset into the total results. In order to paginate the results, increment this value by the [field]#numberOfResults# for subsequent requests.
 
-|[field]#search.userId# [type]#[UUID]# [optional]#Optional#
-|The unique Id of the User used to narrow the search results to login records for a particular user.
-|===
+[field]#search.userId# [type]#[UUID]# [optional]#Optional#::
+The unique Id of the User used to narrow the search results to login records for a particular user.
 
 === Response
 
@@ -654,34 +619,32 @@ The response for this API will contain all login records matching the search cri
 
 include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 
-[cols="3a,7a"]
+==== Response Body
+
 [.api]
-.Response Body
-|===
-|[field]#logins# [type]#[Array]#
-|The list of Login Records returned by the search.
+[field]#logins# [type]#[Array]#::
+The list of Login Records returned by the search.
 
-|[field]#logins``[x]``.applicationId# [type]#[UUID]#
-|The unique Id of the application.
+[field]#logins``[x]``.applicationId# [type]#[UUID]#::
+The unique Id of the application.
 
-|[field]#logins``[x]``.applicationName# [type]#[String]#
-|The name of the application. Because the application name may be modified after the login event occurred, only the [field]#applicationId# should be considered immutable for historical purposes when identifying the application.
+[field]#logins``[x]``.applicationName# [type]#[String]#::
+The name of the application. Because the application name may be modified after the login event occurred, only the [field]#applicationId# should be considered immutable for historical purposes when identifying the application.
 
-|[field]#logins``[x]``.loginId# [type]#[String]#
-|The email or username of the user. Because email or username may be modified after the login event occurred, only the [field]#userId# and the should be considered immutable for historical purposes when identifying the user.
+[field]#logins``[x]``.loginId# [type]#[String]#::
+The email or username of the user. Because email or username may be modified after the login event occurred, only the [field]#userId# and the should be considered immutable for historical purposes when identifying the user.
 
-|[field]#logins``[x]``.instant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] when the login occurred.
+[field]#logins``[x]``.instant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] when the login occurred.
 
-|[field]#logins``[x]``.ipAddress# [type]#[String]#
-|The recorded IP address for this login record.
+[field]#logins``[x]``.ipAddress# [type]#[String]#::
+The recorded IP address for this login record.
 
-|[field]#logins``[x]``.userId# [type]#[UUID]#
-|The unique Id of the user.
+[field]#logins``[x]``.userId# [type]#[UUID]#::
+The unique Id of the user.
 
-|[field]#total# [type]#[Long]#
-|The total number of login records available. This will only be provided in the response when [field]#retrieveTotal# was set to `true` on the request.
-|===
+[field]#total# [type]#[Long]#::
+The total number of login records available. This will only be provided in the response when [field]#retrieveTotal# was set to `true` on the request.
 
 [source,json]
 .Example JSON Response
@@ -701,7 +664,7 @@ This API is used to export Login Records, the response will be a compressed zip 
 === Request
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Export the Login Records matching the criteria
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Export the Login Records matching the criteria
 [.endpoint]
 .URI
 --
@@ -711,41 +674,40 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Export 
 When calling the API using a `GET` request you will send the export criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
 
 
-[cols="3a,7a"]
+==== Request Parameters
+
 [.api]
-.Request Parameters
-|===
-|[field]#applicationId# [type]#[UUID]# [optional]#Optional#
-|The unique Id of the Application used to reduce the export result to logins for a particular application.
+[field]#applicationId# [type]#[UUID]# [optional]#Optional#::
+The unique Id of the Application used to reduce the export result to logins for a particular application.
 
-|[field]#dateTimeSecondsFormat# [type]#[String]#  [optional]#Optional# [default]#defaults to **[see description]**#
-|The format string used to format the date and time columns in the export result.
-
+[field]#dateTimeSecondsFormat# [type]#[String]#  [optional]#Optional# [default]#defaults to **[see description]**#::
+The format string used to format the date and time columns in the export result.
++
 When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[DateTimeFormatter patterns] for additional examples.
 
-|[field]#end# [type]#[Long]# [optional]#Optional#
-|The end link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
+[field]#end# [type]#[Long]# [optional]#Optional#::
+The end link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
 
-|[field]#start# [type]#[Long]# [optional]#Optional#
-|The start link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
+[field]#start# [type]#[Long]# [optional]#Optional#::
+The start link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to search within.
 
-|[field]#userId# [type]#[UUID]# [optional]#Optional#
-|The unique Id of the User used to reduce the export result to logins for a particular user.
+[field]#userId# [type]#[UUID]# [optional]#Optional#::
+The unique Id of the User used to reduce the export result to logins for a particular user.
 
-|[field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**.#
-|The link:/docs/v1/tech/reference/data-types#time-zone[time zone] used to adjust the stored UTC time in the export result.
-
+[field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**.#::
+The link:/docs/v1/tech/reference/data-types#time-zone[time zone] used to adjust the stored UTC time in the export result.
++
 For example:
-
-[block-quote]#`America/Denver` or `US/Mountain`#
-
++
+[quote]
+`America/Denver` or `US/Mountain`
++
 &nbsp;
-
++
 When this parameter is omitted the configured default report time zone will be used. See [field]#reportTimezone# in the link:../apis/system[System Configuration API].
-|===
 
 [.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Export the Login Records matching the criteria
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Export the Login Records matching the criteria
 [.endpoint]
 .URI
 --
@@ -754,38 +716,37 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=far]] Export 
 
 When calling the API using a `POST` request you will send the export criteria in a JSON request body.
 
-[cols="3a,7a"]
+==== Request Body
+
 [.api]
-.Request Body
-|===
-|[field]#criteria.applicationId# [type]#[UUID]# [optional]#Optional#
-|The unique Id of the Application used to reduce the export result to logins for a particular application.
+[field]#criteria.applicationId# [type]#[UUID]# [optional]#Optional#::
+The unique Id of the Application used to reduce the export result to logins for a particular application.
 
-|[field]#criteria.end# [type]#[Long]# [optional]#Optional#
-|The end link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to include in the export.
+[field]#criteria.end# [type]#[Long]# [optional]#Optional#::
+The end link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to include in the export.
 
-|[field]#criteria.start# [type]#[Long]# [optional]#Optional#
-|The start link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to include in the export.
+[field]#criteria.start# [type]#[Long]# [optional]#Optional#::
+The start link:/docs/v1/tech/reference/data-types#instants[instant] of the date/time range to include in the export.
 
-|[field]#criteria.userId# [type]#[UUID]# [optional]#Optional#
-|The unique Id of the User used to reduce the export result to logins for a particular user.
+[field]#criteria.userId# [type]#[UUID]# [optional]#Optional#::
+The unique Id of the User used to reduce the export result to logins for a particular user.
 
-|[field]#dateTimeSecondsFormat# [type]#[String]#  [optional]#Optional# [default]#defaults to **[see description]**#
-|The format string used to format the date and time columns in the export result.
-
+[field]#dateTimeSecondsFormat# [type]#[String]#  [optional]#Optional# [default]#defaults to **[see description]**#::
+The format string used to format the date and time columns in the export result.
++
 When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[DateTimeFormatter patterns] for additional examples.
 
-|[field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**#
-|The link:/docs/v1/tech/reference/data-types#time-zone[time zone] used to adjust the stored UTC time in the export result.
-
+[field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**#::
+The link:/docs/v1/tech/reference/data-types#time-zone[time zone] used to adjust the stored UTC time in the export result.
++
 For example:
-
-[block-quote]#`America/Denver` or `US/Mountain`#
-
++
+[quote]
+`America/Denver` or `US/Mountain`
++
 &nbsp;
-
++
 When this parameter is omitted the configured default report time zone will be used. See [field]#reportTimezone# in the link:../apis/system[System Configuration API].
-|===
 
 === Response
 
