@@ -204,28 +204,28 @@ I'm not going to review every line but will highlight a few interesting points.
 Near the top are configuration values. We hardcode some of these, but the API key we pull from the environment (checking in API keys being a big no-no). Make sure you update these values to point to the correct FusionAuth URL and the application you created in the UI. The `tenantId` is optional, unless you have more than one tenant, but it's good practice to use it.
 
 ```csharp
-...
+// ...
         private static readonly string apiKey = Environment.GetEnvironmentVariable("fusionauth_api_key");
         private static readonly string fusionauthURL = "http://localhost:9011";
 
 	private static readonly string tenantId = "66636432-3932-3836-6630-656464383862";
 	private static readonly string applicationId = "4243b56f-0b45-4882-aa23-ac75eea22d22";
-...
+// ...
 ```
 
 We build the user request object first. This includes basic information, such as the email and password. The password will be encrypted at rest using the tenant default encryption settings. If this weren't a tutorial, you'd also be connecting to FusionAuth over TLS, encrypting the password in transit.
 
 ```csharp
-...
+// ...
 	    var userRequest = buildUserRequest(email, password, favoriteColor);
             var response = client.CreateUser(null, userRequest);
-...
+// ...
 ```
 
 If we successfully create the user, we'll then create the registration; more on that below. Otherwise we punt and complain to the person running the client.
 
 ```csharp
-...
+// ...
             if (response.WasSuccessful())
             {
                 var user = response.successResponse.user;
@@ -234,23 +234,23 @@ If we successfully create the user, we'll then create the registration; more on 
                     Console.WriteLine("created user with email: "+user.email);
 		} 
             } 
-...
+// ...
 ```
 
 We can store arbitrary key value pairs in the data field. This lets us associate any application specific values with our users.
 
 ```csharp
-...
+// ...
 	    Dictionary<string, object> data = new Dictionary<string, object>();
 	    data.Add("favoriteColor", favoriteColor);
 	    userToCreate.data = data;
-...
+// ...
 ```
 
 A bit more about the registration. The registration field is what ties the user to the application you created. [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications) are simply something a user can log in to. Each user can be associated with zero to many applications. See [this forum post for more information](https://fusionauth.io/community/forum/topic/5/can-you-limit-a-user-s-login-authentication-access-to-applications-within-a-single-tenant). 
 
 ```csharp
-...
+// ...
         static ClientResponse<RegistrationResponse> register(FusionAuthSyncClient client, User user)
         {
 	    RegistrationRequest registrationRequest = new RegistrationRequest();
@@ -262,7 +262,7 @@ A bit more about the registration. The registration field is what ties the user 
 	    registrationRequest.registration = registration;
             return client.Register(user.id, registrationRequest);
         }
-...
+// ...
 ```
 
 A note about the API choice. We used the "Create a User" API in this tutorial. This API works well for creating one user at a time; this is what an onboarding tool might use. However, if you want to import a large number of users into FusionAuth, you'll want to explore the [Bulk Import API](https://fusionauth.io/docs/v1/tech/apis/users#import-users). Actually, you can do one better and just read the ["Migrate Users" tutorial](https://fusionauth.io/docs/v1/tech/tutorials/migrate-users) which will walk you through how to, well, migrate users to FusionAuth.
