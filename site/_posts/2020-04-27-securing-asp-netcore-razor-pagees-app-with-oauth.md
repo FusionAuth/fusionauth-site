@@ -143,24 +143,24 @@ We specify version `1.0.0-rc.4.1` for the [IdentityModel](https://github.com/Ide
 We need to protect our "Secure" page. We do this using the [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) on the backing class. From `Secure.cshtml.cs`:
 
 ```csharp
-...
+// ...
 namespace SampleApp.Pages
 {
     [Authorize]
     public class SecureModel : PageModel
     {
-...
+// ...
 ```
 
 We could also have added a `RazorPagesOptions` to our `Startup.cs` file, specifying which pages should be protected by an authorization call. This would be a good choice if we wanted everything centralized. Depending on the needs and size of your application, one of these choices might be better than the other.
 
 ```csharp
-...
+// ...
 services.AddRazorPages().AddRazorPagesOptions(options =>
                  {
                      options.Conventions.AuthorizePage("/Secure");
                  });
-...
+// ...
 ```
 
 We'll also display the claims contained in the JWT that FusionAuth creates upon authentication. Here `Secure.cshtml` iterates over the claims; update that file to include the text after and including `Claims`. A claim is essentially the information the authentication server has shared about a subject in the JWT.
@@ -279,28 +279,28 @@ namespace SampleApp
 
 Let's go through some of the more interesting parts. First, we're setting up our authentication including the scheme and challenge method. We'll be using cookies to store our authentication information and "oidc" for our authentication provider, which is defined further below.
 ```csharp
-...
+// ...
             services.AddAuthentication(options =>
             {
                 options.DefaultScheme = "cookie";
                 options.DefaultChallengeScheme = "oidc";
             })
-...
+// ...
 ```
 
 Here we configure the cookie, including setting the cookie name:
 ```csharp
-...
+// ...
                 .AddCookie("cookie", options =>
                 {
                     options.Cookie.Name = "mycookie";
-...
+// ...
 ```
 
 Finally we set up our previously referenced authentication provider, `"oidc"`. You could have multiple providers. We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to fully configure this provider. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant. PKCE is turned on by default. We pull configuration information like our client id from either `appsettings.json` or the environment.  These are the values you saved off when you were configuring FusionAuth. (We'll add them to `appsettings.json` a bit later.) We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to configure our provider. Since we want to use the Authorization Code grant, we set `ResponseType = "code"`. PKCE is turned on by default, so we're ready for [OAuth 2.1](https://fusionauth.io/blog/2020/04/15/whats-new-in-oauth-2-1).
 
 ```csharp
-...
+// ...
                 .AddOpenIdConnect("oidc", options =>
                 {
                     options.Authority = Configuration["SampleApp:Authority"];
@@ -311,18 +311,15 @@ Finally we set up our previously referenced authentication provider, `"oidc"`. Y
                     options.ResponseType = "code";
                     options.RequireHttpsMetadata = false;
                 });
-...
+// ...
 ```
-
-```csharp
-...
 
 We also need to turn on authentication for our application:
 
 ```csharp
-...
+// ...
             app.UseAuthentication();
-...
+// ...
 ```
 
 Wait, I thought we were preventing users from accessing certain pages? Isn't that authorization, not authentication? When we first set up the application, we didn't have any authentication scheme configured. And, in this case, we're actually prohibiting access to any anonymous user, so any authenticated user is authorized.
@@ -330,9 +327,9 @@ Wait, I thought we were preventing users from accessing certain pages? Isn't tha
 For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of `Configure` method. This makes it easier to see [errors in the OAuth flow](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII). But for production code, please remove it.
 
 ```csharp
-...
+// ...
             IdentityModelEventSource.ShowPII = true;
-...
+// ...
 ```
 
 As promised, here's our `appsettings.json` file. We need to add our entire `SampleApp` object so that the code above can be configured correctly. Authority is just the location of the user identity server, in this case FusionAuth.
@@ -433,12 +430,12 @@ You also need to update the `appsettings.json` file with the cookie name setting
 Finally, we need to change the `Startup.cs` file to use the new cookie name.
 
 ```csharp
-...
+// ...
 .AddCookie("cookie", options =>
 {
     options.Cookie.Name = Configuration["SampleApp:CookieName"];
 })
-...
+// ...
 ```
 
 Great! Now you can both sign in and sign out of your application.
