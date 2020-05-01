@@ -49,7 +49,7 @@ dotnet new webapp -o SampleApp
 cd SampleApp
 ```
 
-To see the results, we publish this application and run it. There are [multiple ways of deploying an application](https://docs.microsoft.com/en-us/dotnet/core/deploying/), but I chose publishing to ensure my deployment process was repeatable. In this tutorial I'll be building a standalone Windows 64-bit executable, but with the same codebase you can also build a macOS or Linux program. Here's the command to publish a standalone executable I could deploy behind a proxy like nginx:
+To see the results, we publish this application and run it. There are [multiple ways of deploying an application](https://docs.microsoft.com/en-us/dotnet/core/deploying/), but I chose publishing to ensure my deployment process was repeatable. In this tutorial, I'll be building a standalone Windows 64-bit executable, but with the same codebase you can also build a macOS or Linux program. Here's the command to publish a standalone executable I could deploy behind a proxy like nginx:
 
 ```shell
 dotnet publish -r win-x64
@@ -138,7 +138,7 @@ dotnet add package IdentityModel.AspNetCore -v 1.0.0-rc.4.1
 
 You'll note that unlike the [command line tool](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client), we aren't using FusionAuth client packages. We'll be protecting this page using standard OAuth and so there's no need for any FusionAuth specific API calls. While I'll be highlighting FusionAuth, you could run this code against any OAuth2 compliant server. 
 
-We specify version `1.0.0-rc.4.1` for the [IdentityModel](https://github.com/IdentityModel/IdentityModel.AspNetCore/) package because it hasn't been released just yet. This package makes integrating with standards based OAuth servers a snap, so we'll overlook it being not quite released.
+We specify version `1.0.0-rc.4.1` for the [IdentityModel](https://github.com/IdentityModel/IdentityModel.AspNetCore/) package because it hasn't been released just yet. This package makes integrating with standards-based OAuth servers a snap, so we'll overlook it being not quite released.
 
 We need to protect our "Secure" page. We do this using the [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) on the backing class. From `Secure.cshtml.cs`:
 
@@ -297,7 +297,7 @@ Here we configure the cookie, including setting the cookie name:
 // ...
 ```
 
-Finally we set up our previously referenced authentication provider, `"oidc"`. You could have multiple providers. We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to fully configure this provider. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant. PKCE is turned on by default. We pull configuration information like our client id from either `appsettings.json` or the environment.  These are the values you saved off when you were configuring FusionAuth. (We'll add them to `appsettings.json` a bit later.) We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to configure our provider. Since we want to use the Authorization Code grant, we set `ResponseType = "code"`. PKCE is turned on by default, so we're ready for [OAuth 2.1](https://fusionauth.io/blog/2020/04/15/whats-new-in-oauth-2-1).
+Finally, we set up our previously referenced authentication provider, `"oidc"`. You could have multiple providers. We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to fully configure this provider. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant. PKCE is turned on by default. We pull configuration information like our client id from either `appsettings.json` or the environment.  These are the values you saved off when you were configuring FusionAuth. (We'll add them to `appsettings.json` a bit later.) We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to configure our provider. Since we want to use the Authorization Code grant, we set `ResponseType = "code"`. PKCE is turned on by default, so we're ready for [OAuth 2.1](https://fusionauth.io/blog/2020/04/15/whats-new-in-oauth-2-1).
 
 ```csharp
 // ...
