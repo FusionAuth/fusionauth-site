@@ -280,20 +280,20 @@ namespace SampleApp
 Let's go through some of the more interesting parts. First, we're setting up our authentication including the scheme and challenge method. We'll be using cookies to store our authentication information and "oidc" for our authentication provider, which is defined further below.
 ```csharp
 // ...
-            services.AddAuthentication(options =>
-            {
-                options.DefaultScheme = "cookie";
-                options.DefaultChallengeScheme = "oidc";
-            })
+services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "cookie";
+    options.DefaultChallengeScheme = "oidc";
+})
 // ...
 ```
 
 Here we configure the cookie, including setting the cookie name:
 ```csharp
 // ...
-                .AddCookie("cookie", options =>
-                {
-                    options.Cookie.Name = "mycookie";
+.AddCookie("cookie", options =>
+{
+    options.Cookie.Name = "mycookie";
 // ...
 ```
 
@@ -301,16 +301,16 @@ Finally, we set up our previously referenced authentication provider, `"oidc"`. 
 
 ```csharp
 // ...
-                .AddOpenIdConnect("oidc", options =>
-                {
-                    options.Authority = Configuration["SampleApp:Authority"];
+.AddOpenIdConnect("oidc", options =>
+{
+    options.Authority = Configuration["SampleApp:Authority"];
 
-                    options.ClientId = Configuration["SampleApp:ClientId"];
-                    options.ClientSecret = Configuration["SampleApp:ClientSecret"];
+    options.ClientId = Configuration["SampleApp:ClientId"];
+    options.ClientSecret = Configuration["SampleApp:ClientSecret"];
 
-                    options.ResponseType = "code";
-                    options.RequireHttpsMetadata = false;
-                });
+    options.ResponseType = "code";
+    options.RequireHttpsMetadata = false;
+});
 // ...
 ```
 
@@ -318,7 +318,7 @@ We also need to turn on authentication for our application:
 
 ```csharp
 // ...
-            app.UseAuthentication();
+app.UseAuthentication();
 // ...
 ```
 
@@ -328,7 +328,7 @@ For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of
 
 ```csharp
 // ...
-            IdentityModelEventSource.ShowPII = true;
+IdentityModelEventSource.ShowPII = true;
 // ...
 ```
 
@@ -357,7 +357,7 @@ Wait, where's the client secret? This file is in git, but we should not put secr
 dotnet publish -r win-x64 && SampleApp__ClientSecret=H4... bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
 ```
 
-Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the "Secure" page. You'll be prompted to log in at a basic screen. You can [theme the login screen of FusionAuth](https://fusionauth.io/docs/v1/tech/themes/) should you choose.
+Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the "Secure" page. You'll be prompted to log in using FusionAuth's default login page. You can [theme the login screen of FusionAuth](https://fusionauth.io/docs/v1/tech/themes/) if you want to make the login page look like your company's brand.
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/login-asp-dot-net-example.png" alt="The login screen in FusionAuth." class="img-fluid" figure=false %}
 
@@ -365,11 +365,11 @@ After you've signed in, you'll end up at the "Secure" page and will see all clai
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net//successful-login-secure-page-display.png" alt="The secure page." class="img-fluid" figure=false %}
 
-You can see the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-authentication).
+You can see the source of the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-authentication).
 
 ## Logout
 
-Awesome, now you can log in with valid user credentials. However, right now there's no way to log out. The JWT is stored in a session cookie. When we're ready to leave, we want to log out of our ASP.NET Core session and of the FusionAuth session. So, we need to add a logout page, remove the session cookie, and redirect to the FusionAuth Logout URL. FusionAuth will destroy its session and then redirect back to the configured Logout URL. We'll add a Logout page to do all of this.
+Awesome, now you can log in with valid user credentials. However, right now there's no way to log out. The JWT is stored in a session cookie. When we're ready to leave, we want to log out of our ASP.NET Core session and of the FusionAuth session. So, we need to add a logout page, remove the session cookie, and redirect to the FusionAuth OAuth logout endpoint. FusionAuth will destroy its session and then redirect back to the configured `Logout URL`. We'll add a Logout page to do all of this.
 
 Here's what the `Logout.cshtml.cs` class looks like:
 
@@ -402,7 +402,7 @@ namespace SampleApp.Pages
 }
 ```
 
-`OnGet` is the important method. Here we sign out using a method of our authentication library, delete the JWT cookie and send the user to the FusionAuth logout endpoint. An alternative would be to have an HTTP client in this class call that logout endpoint instead of sending the browser there. Don't forget to add the `Logout` page to the navigation, but only if the user is signed in:
+`OnGet` is the important method. Here we sign out using a method of our authentication library, delete the JWT cookie and send the user to the FusionAuth OAuth logout endpoint. Don't forget to add the `Logout` page to the navigation, but only if the user is signed in:
 
 ```html
 ...
@@ -415,16 +415,18 @@ namespace SampleApp.Pages
 ...
 ```
 
-You also need to update the `appsettings.json` file with the cookie name setting. Since we're now using referencing the cookie in two places, pulling it out to the `appsettings.json` file will make for a more maintainable application.
+You also need to update the `appsettings.json` file with the cookie name setting. Since we're now referencing the cookie in two places, pulling it out to the `appsettings.json` file will make for a more maintainable application.
 
 ```json
-...
-   "SampleApp" : {
-       "Authority" : "http://localhost:9011",
-       "CookieName" : "sampleappcookie",
-       "ClientId" : "4420013f-bc5e-4d5a-9f94-f4b64ad5107c"
-    }
-...
+{
+  ...
+  "SampleApp" : {
+    "Authority" : "http://localhost:9011",
+    "CookieName" : "mycookie",
+    "ClientId" : "4420013f-bc5e-4d5a-9f94-f4b64ad5107c"
+  },
+  ...
+}
 ```
 
 Finally, we need to change the `Startup.cs` file to use the new cookie name.
@@ -448,4 +450,4 @@ If you want to explore more, you can add more pages to the application, limit a 
 
 You could also welcome users with their first name by retrieving user information via an API call, using the [FusionAuth .NET Core client library](https://fusionauth.io/docs/v1/tech/client-libraries/netcore).
 
-For the next post in this .NET Core series, we'll be associating a user with a role and creating a custom claim in the JWT.
+For the next post in this .NET Core series, we'll be associating a user with a role and creating a custom claim in the JWT, so stay tuned!
