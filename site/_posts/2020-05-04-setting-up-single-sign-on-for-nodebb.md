@@ -41,6 +41,7 @@ You want to set up a "logout redirect URL" so that when a user logs out, they ar
 This is what it should look like when you've set up your FusionAuth application.
 
 TBD image with application set up
+{% include _image.liquid src="/assets/img/blogs/dot-net-command-line-client/create-application.png" alt="The application in FusionAuth after it has been created" class="img-fluid" figure=false %}
 
 Next, let's create a user. If this weren't a walkthrough, you'd have registration built out in your todo app, but I'm not going to build your entire todo app for you!
 
@@ -70,7 +71,7 @@ Just [head over there](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oi
 
 You should now be able to log in with the user you created in FusionAuth. Click on the 'login' link from the nodebb home page and then click the icon under "Alternative Logins".
 
-TBD two logins link
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/twologins.png" alt="The login screen when SSO has first been enabled." class="img-fluid" figure=false %}
 
 Success! You should now see a normal nodebb homepage where they can interact with the others on the forum.
 
@@ -84,11 +85,11 @@ If you do leave local login turned on, your users will see both options when the
 
 If on the other hand you disallow local logins, when you click on the login link, you are directed straight to the SSO server page.
 
-TBD one login link
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/onelogin.png" alt="The login screen after local login has been disabled." class="img-fluid" figure=false %}
 
 Note that turning off local registration doesn't mean that people can't modify their profile. They absolutely can.
 
-TBD image of registration with fornodebb
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/editprofile.png" alt="A user editing their profile." class="img-fluid" figure=false %}
 
 Essentially, customer username and password information are kept in the identity server, and everything else is stored in nodebb.
 
@@ -104,7 +105,7 @@ TBD admin screen to lock
 
 And here's what the end user would see if they tried to log in:
 
-TBD image of locked account
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/lockedaccount.png" alt="The login screen for a user whose account has been locked." class="img-fluid" figure=false %}
 
 You can unlock them at any point, either using the admin console or the [FusionAuth API](https://fusionauth.io/docs/v1/tech/apis/users#reactivate-a-user).
 
@@ -124,8 +125,6 @@ Then we need to update the plugin with the correct "Roles claim". Sign in as an 
 
 Update the plugin configuration have the "Roles claim" be `roles` and restart nodebb.
 
-TBD picture of adding admin role claim
-
 ### Self registration
 
 For this post, we'll enable self registration. This will allow someone who isn't a todo app user to sign up for the forum. There they can ask their task management questions; hopefully the community will be welcoming and enthusiastic enough that they'll buy your todo app. 
@@ -136,7 +135,8 @@ TBD self registration image of application
 
 Then they'll see a registration prompt on the login page: "Don't have an account? Create an account".
 
-TBD registration form
+
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/user-registration.png" alt="The registration screen when self registration has been enabled." class="img-fluid" figure=false %}
 
 ## Conclusion
 
