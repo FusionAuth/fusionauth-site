@@ -73,21 +73,21 @@ You should now be able to log in with the user you created in FusionAuth. Click 
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/twologins.png" alt="The login screen when SSO has first been enabled." class="img-fluid" figure=false %}
 
-Success! You should now see a normal nodebb homepage where they can interact with the others on the forum.
+Enter the username and password for the user you created when configuring FusionAuth. Success! You should now see the nodebb homepage.
 
 ## Disallowing local login
 
-The next question is, should you [turn off local login and registration](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc#additional-configuration)?  Doing so means that all user authentication will be routed through your SSO server. 
+Now, should you [turn off local login](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc#additional-configuration)?  Doing so means that all user authentication will be routed through your SSO server. 
 
-It depends on your use case. If you have existing users in your forum, you might want to allow them to continue to use the username and password they are familiar with. But if you're starting with a fresh installation, I can't think of any reason to leave local login enabled. In either case, you should turn off local registration.
+It depends on your use case. If you have existing users in your forum, you might want to allow them to continue to use the username and password they are familiar with. But if you're starting with a fresh installation, I can't think of any reason to leave local login enabled. If you do leave local login turned on, your users will see both options when the click the 'login' link, as we did above.
 
-If you do leave local login turned on, your users will see both options when the click the 'login' link, as we did above.
+In either case, you should [turn off local registration](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc#additional-configuration) as the whole point of this exercise is to keep a master user list in one location.
 
-If on the other hand you disallow local logins, when you click on the login link, you are directed straight to the SSO server page.
+If, on the other hand, you disallow local logins, when you click on the login link, you are directed straight to the SSO server page as seen below (this should look familiar, as you saw it when you signed in above after clicking the image under "Alternate Logins"):
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/onelogin.png" alt="The login screen after local login has been disabled." class="img-fluid" figure=false %}
 
-Note that turning off local registration doesn't mean that people can't modify their profile. They absolutely can.
+This is a better user experience, so turning off local login is recommended. Note that turning off local login and registration doesn't mean that people can't modify their profile. They absolutely can, as you can see from this nodebb profile edit screen.
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/editprofile.png" alt="A user editing their profile." class="img-fluid" figure=false %}
 
@@ -95,19 +95,19 @@ Essentially, customer username and password information are kept in the identity
 
 ## FusionAuth features
 
-The above should work with almost any SSO server. Below I'm going to cover features that aren't entirely part of the OIDC standard, but are important for actually managing an application. If you are using a different identity managment server, you should find analogs to the features below.
+The steps above should work with any compliant SSO identity provider. Now we're going to cover features that aren't entirely part of the OIDC standard, but are needed for managing an application. If you are using a different identity managment server, you should find analogs to the features outlined below.
 
 ### User management
 
-If you lock the user account in the the SSO server, they won't be able to login. Here's how you would lock the account in FusionAuth:
+If you lock the user account in the the SSO server, they won't be able to login. This is helpful in a forum setting if a user is not being a good community member. In FusionAuth, you'd navigate to the users screen and then click on the "Lock" icon:
 
 TBD admin screen to lock
 
-And here's what the end user would see if they tried to log in:
+And here's what the locked user would see when they tried to log in:
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/lockedaccount.png" alt="The login screen for a user whose account has been locked." class="img-fluid" figure=false %}
 
-You can unlock them at any point, either using the admin console or the [FusionAuth API](https://fusionauth.io/docs/v1/tech/apis/users#reactivate-a-user).
+Of course, people can change. So you can unlock them at any point, either using the admin console or the [FusionAuth API](https://fusionauth.io/docs/v1/tech/apis/users#reactivate-a-user).
 
 ### Admin users
 
@@ -125,9 +125,11 @@ Then we need to update the plugin with the correct "Roles claim". Sign in as an 
 
 Update the plugin configuration have the "Roles claim" be `roles` and restart nodebb.
 
+Now you can log in with this user and view and edit the administrative pages.
+
 ### Self registration
 
-For this post, we'll enable self registration. This will allow someone who isn't a todo app user to sign up for the forum. There they can ask their task management questions; hopefully the community will be welcoming and enthusiastic enough that they'll buy your todo app. 
+You may want to allow self registration against the SSO server. This will allow someone who isn't a todo app user to sign up for the forum. There they can ask their task management questions; hopefully the community will be welcoming and enthusiastic enough that they'll buy your todo app. 
 
 You can enable this by going to the "Registration" tab of your application in FusionAuth. 
 
@@ -135,10 +137,13 @@ TBD self registration image of application
 
 Then they'll see a registration prompt on the login page: "Don't have an account? Create an account".
 
-
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/user-registration.png" alt="The registration screen when self registration has been enabled." class="img-fluid" figure=false %}
+
+After they've created the account, they'll be logged in.
 
 ## Conclusion
 
-nodebb is a powerful forum. If you want to add a community aspect to your application, you can allow users to post on the forum. Using an SSO server such as FusionAuth will allow your users to hvae the same username and password as they do for your main application. This centralized user management will make both your life and your users' lives easier.
+nodebb is a powerful piece of forum software. Standing up a forum lets your users communicate with each other and can be a powerful mechanism for knowledge sharing and community building. 
+
+Using an SSO server such as FusionAuth lets your users have only one set of login credentials. It also allows you to control access to your applications from one screen. Centralized user management will make both your life and your users' lives easier.
 
