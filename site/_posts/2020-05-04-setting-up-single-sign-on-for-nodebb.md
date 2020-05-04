@@ -75,6 +75,8 @@ You should now be able to log in with the user you created in FusionAuth. Click 
 
 Enter the username and password for the user you created when configuring FusionAuth. Success! You should now see the nodebb homepage.
 
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/afterlogin.png" alt="The nodebb home page after successful login." class="img-fluid" figure=false %}
+
 ## Disallowing local login
 
 Now, should you [turn off local login](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc#additional-configuration)?  Doing so means that all user authentication will be routed through your SSO server. 
