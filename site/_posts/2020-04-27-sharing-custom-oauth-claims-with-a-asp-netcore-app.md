@@ -38,11 +38,11 @@ If you head to `http://localhost:5000` and click on the "Secure" page, you'll se
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-roles-only-roles-highlighted.png" alt="The secure page after a user has been associated with a role." class="img-fluid" figure=false %}
 
-Since the role and other claims are encoded in the JWT, which is stored in a cookie, whenever you change any user data in FusionAuth, you'll need log out and log in as that user to see the changes reflected in the ASP.NET Core application.
+Since the role and other claims are encoded in the JWT, which is stored in a cookie, whenever you change any user data in FusionAuth, you'll need to log out and log in as that user to see the changes reflected in the ASP.NET Core application.
 
 ## Adding custom claims
 
-You can add in custom claims based on user data, the time of day or anything else. In FusionAuth, you add this data to a JWT with a [lambda](https://fusionauth.io/docs/v1/tech/lambdas/jwt-populate). This is a JavaScript function which receives the JWT object before it is signed and can modify it. Remember way back when we [created the user](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client) and specified their favorite color as a command line option? Well, we're going to send that information down to the ASP.NET Core web application so that it can display that very valuable data.
+You can add claims based on user data, the time of day or anything else. In FusionAuth, you add this data to a JWT with a [lambda](https://fusionauth.io/docs/v1/tech/lambdas/jwt-populate). This is a JavaScript function that receives the JWT object before it is signed and can modify it. Remember way back when we [created the user](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client) and specified their favorite color as a command line option? Well, we're going to send that information down to the ASP.NET Core web application so that it can display that very valuable data.
 
 A lambda is flexible and can pull from user or registration data. You can modify the token by removing attributes also, though there are some that are immutable. Here's the lambda:
 
@@ -88,8 +88,8 @@ Now if you head to `http://localhost:5000`, you should see something like this:
 
 Of course, this isn't much use. 
 
-In a real world application you'd do more than display these claims. You might customize a user's display based on their favorite color. A user's role could gate functionality or information.
+In a real-world application you'd do more than display these claims. You might customize a user's display based on their favorite color. A user's role could gate functionality or information.
 
 ## Conclusion
 
-This post is the end of our journey integrating FusionAuth and ASP.NET Core. Offloading your user management concerns to a identity management solution such as FusionAuth frees you to focus on the features and business logic of your application.
+This post is the end of our journey integrating FusionAuth and ASP.NET Core. Offloading your user management concerns to an identity management solution such as FusionAuth frees you to focus on the features and business logic of your application.
