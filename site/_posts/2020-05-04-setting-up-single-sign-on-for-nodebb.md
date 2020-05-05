@@ -40,18 +40,17 @@ You want to set up a "logout redirect URL" so that when a user logs out, they ar
 
 This is what it should look like when you've set up your FusionAuth application.
 
-TBD image with application set up
-{% include _image.liquid src="/assets/img/blogs/dot-net-command-line-client/create-application.png" alt="The application in FusionAuth after it has been created" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/application-creation.png" alt="The configured application screen." class="img-fluid" figure=false %}
 
 Next, let's create a user. If this weren't a walkthrough, you'd have registration built out in your todo app, but I'm not going to build your entire todo app for you!
 
 Go to "Users" and add a user--I'm going to add "fornodebb@example.com". 
 
-TBD image with user
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/user-creation.png" alt="Creating a user in FusionAuth." class="img-fluid" figure=false %}
 
 Then associate them with the nodebb application by creating a registration. When you're done, it should look like this:
 
-TBD image with registriaon
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/adding-user-registration.png" alt="Associating a user with the nodebb application." class="img-fluid" figure=false %}
 
 Phew. We're all done with setting up our FusionAuth OIDC server. One final reminder that all these instructions are FusionAuth specific but your user identity amanagement service of choice should have analogous configuration.
 
@@ -105,7 +104,7 @@ The steps above should work with any compliant SSO identity provider. Now we're 
 
 If you lock the user account in the the SSO server, they won't be able to login. This is helpful in a forum setting if a user is not being a good community member. In FusionAuth, you'd navigate to the users screen and then click on the "Lock" icon (you'll be warned that a locked user can't login):
 
-TBD admin screen to lock
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/lock-user-from-list.png" alt="The user list screen where you can lock a user account." class="img-fluid" figure=false %}
 
 And here's what the locked user would see when they tried to log in:
 
@@ -119,11 +118,11 @@ If you want to have your admin users use the SSO server as well, you need to do 
 
 We'll need to go back to the application in FusionAuth. We'll want to add an admin role for this application. Associating this role with a user or a group is how they'll have access to the admin functionality of nodebb.
 
-TBD adding admin role.
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/setting-up-admin-role.png" alt="Adding the admin role to the nodebb application." class="img-fluid" figure=false %}
 
-Then add the admin role to the user you created, from the user edit page. This role will be passed on to nodebb, allowing this user access to the nodebb admin screens. When you are done, the role should be shown on the user's page:
+Then give the user you created the admin role, from the user edit page. This role will be passed to nodebb. That will allow this user access to the nodebb admin screens. When you are done, the role should be shown on the user's page:
 
-TBD admin role shown
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/user-with-admin-role.png" alt="The user is associated with the admin role." class="img-fluid" figure=false %}
 
 Then we need to update the plugin with the correct "Roles claim". Sign in as an admin to nodebb. If you disabled local login, you may need to go directly to the local login screen by adding `/login?local=1` to your nodebb base URL, like `http://localhost:4567/login?local=1`.
 
@@ -137,7 +136,7 @@ You may want to allow self registration against the SSO server. This will allow 
 
 You can enable this by going to the "Registration" tab of your application in FusionAuth. Enable self service registration, but leave the other fields with the default values.
 
-TBD self registration image of application
+{% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/enabling-self-registration.png" alt="The application screen with self registration enabled." class="img-fluid" figure=false %}
 
 Then they'll see a registration prompt on the login page: "Don't have an account? Create an account".
 
