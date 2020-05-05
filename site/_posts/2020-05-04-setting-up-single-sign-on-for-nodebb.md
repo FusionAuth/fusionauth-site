@@ -8,9 +8,11 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-nodebb is a modern supported forum software package that has many plugins and a great user experience. In this post, we'll show you how to set up single sign on (SSO) for your nodebb forum.
+nodebb is a modern well supported forum software package with many plugins and a great user experience. In this post, we'll show you how to set up single sign on (SSO) for your nodebb forum.
 
 <!--more-->
+
+## The dream
 
 Imagine you build out an application. Let's say you are building the world's best todo tracking application. Everyone loves it and it grows wildly popular. Users are adding tasks and checking them off with abandon. Your customers clamor for a place to share all their task management tips. 
 
@@ -26,11 +28,13 @@ Before you start, you need a working nodebb server ([installation instructions h
 
 You'll also need an OIDC compliant identity server. In this post, I'll be using FusionAuth as my identity provider ([here's the five minute setup guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide)), but the nodebb configuration will be much the same with any OIDC compliant server. FusionAuth will live at `http://local.fusionauth.io`.
 
-(Wait, what if you aren't using an OIDC compliant identity management system? Well, FusionAuth is free for unlimited users and here's [migration instructions](https://fusionauth.io/docs/v1/tech/tutorials/migrate-users).)
+(Wait, what if you aren't using an OIDC compliant identity management system as your SSO server? Well, FusionAuth is free for unlimited users and here's [migration instructions](https://fusionauth.io/docs/v1/tech/tutorials/migrate-users).)
 
 ## Setting up the SSO server
 
-First, create an application in FusionAuth. I'm going to call mine, creatively, "nodebb". After you save the application, edit it again, as we'll need to record a couple of configuration variables. Go to the "OAuth" tab. 
+First, create an application in FusionAuth. I'm going to call mine, creatively, "nodebb". Note that you can create as many applications as you want. If you were really building out "The Dream", you'd also want a 'todo app' application. Users have the same username and password for both applications, but may not be able to log in to both. (Being able to log in is controlled by registrations, which we'll cover below.)
+
+After you save the application, edit it again, as we'll need to record a couple of configuration variables. Go to the "OAuth" tab. 
 
 The client id and client secret are tied to the FusionAuth application. These look like `fe4b813b-e2ec-49c8-b27f-40af5e271792` and and `Qz6PKsagXv13ipiHb4TZ9ii5Q9n_YcFAD-R0D5RKkqo` respectively.. Save them off to a text file, as you'll use them later.
 
@@ -42,13 +46,13 @@ This is what it should look like when you've set up your FusionAuth application.
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/application-creation.png" alt="The configured application screen." class="img-fluid" figure=false %}
 
-Next, let's create a user. If this weren't a walkthrough, you'd have registration built out in your todo app, but I'm not going to build your entire todo app for you!
-
-Go to "Users" and add a user--I'm going to add "fornodebb@example.com". 
+Next, let's create a user. If this weren't a walkthrough, you'd have a way for a user to register in the todo app, but I'm not going to build the entire app for you! Go to "Users" and add a user--I'm going to add "fornodebb@example.com". 
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/user-creation.png" alt="Creating a user in FusionAuth." class="img-fluid" figure=false %}
 
-Then associate them with the nodebb application by creating a registration. When you're done, it should look like this:
+Then associate them with the nodebb application by creating a FusoinAuth registration. Again, if you had the todo app FusionAuth application created, you might add a FusionAuth registration for that application as well. 
+
+When you're done, the user edit screen should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/adding-user-registration.png" alt="Associating a user with the nodebb application." class="img-fluid" figure=false %}
 
@@ -58,15 +62,16 @@ Now, let's set up nodebb.
 
 ## Configuring nodebb for SSO
 
-First login as the nodebb admin and install the [fusionauth-oidc plugin](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc). Again, even though the name says FusionAuth, that's just because we maintain it. (It has a BSD license.) It should work with any OIDC compatible identity management server.
+Now we're ready to allow our todo users to login with an account from our SSO server. First, log in as the nodebb admin and install the [fusionauth-oidc plugin](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc). Again, even though the name says FusionAuth, that's just because we maintain it. 
 
-I had to rebuild and restart the nodebb server when I installed the plugin.
+It should work with any OIDC compatible identity management server.
 
 The [install and configuration instructions](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc) on the GitHub project are good, so I'm not going to walk you through each step. 
 
-However, I will say that you need to:
-* set the client secret and id to the values you noted from the FusionAuth application screen.
-* set the discovery URL to the FusionAuth location which is `http://local.fusionauth.io` for this post.
+However, I will say that:
+* I had to rebuild and restart the nodebb server when I installed the plugin.
+* you need to set the client secret and id to the values you noted from the FusionAuth application screen.
+* you have to set the discovery URL to the FusionAuth location which is `http://local.fusionauth.io` for this post.
 
 Just [head over there](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc) and come back when you're done.
 
@@ -84,7 +89,7 @@ Now, should you [turn off local login](https://github.com/FusionAuth/nodebb-plug
 
 It depends on your use case. If you have existing users in your forum, you might want to allow them to continue to use the username and password they are familiar with. But if you're starting with a fresh installation, I can't think of any reason to leave local login enabled. If you do leave local login turned on, your users will see both options when the click the 'login' link, as we did above.
 
-In either case, you should [turn off local registration](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc#additional-configuration) as the whole point of this exercise is to keep a master user list in one location.
+In either case, you should [turn off local registration](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc#additional-configuration) as the whole point of this exercise is to have all user data stored in your SSO server, not in nodebb.
 
 If, on the other hand, you disallow local logins, when you click on the login link, you are directed straight to the SSO server page as seen below (this should look familiar, as you saw it when you signed in above after clicking the image under "Alternate Logins"):
 
@@ -102,7 +107,7 @@ The steps above should work with any compliant SSO identity provider. Now we're 
 
 ### User management
 
-If you lock the user account in the the SSO server, they won't be able to login. This is helpful in a forum setting if a user is not being a good community member. In FusionAuth, you'd navigate to the users screen and then click on the "Lock" icon (you'll be warned that a locked user can't login):
+If you lock the user account in the SSO server, the user won't be able to login. This is helpful when managing a forum; if a user is not being a good community member you can disable their account either temporarily or permanently. In FusionAuth, you'd navigate to the users screen and then click on the "Lock" icon (you'll be warned that a locked user can't login):
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/lock-user-from-list.png" alt="The user list screen where you can lock a user account." class="img-fluid" figure=false %}
 
@@ -110,39 +115,37 @@ And here's what the locked user would see when they tried to log in:
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/lockedaccount.png" alt="The login screen for a user whose account has been locked." class="img-fluid" figure=false %}
 
-Of course, people can change. So you can unlock them at any point, either using the admin console or the [FusionAuth API](https://fusionauth.io/docs/v1/tech/apis/users#reactivate-a-user).
+Of course, people can change. So you can unlock an account at any point, either using the admin console as we did above, or with the [FusionAuth API](https://fusionauth.io/docs/v1/tech/apis/users#reactivate-a-user).
 
 ### Admin users
 
-If you want to have your admin users use the SSO server as well, you need to do a bit more configuration. If you do this, you can grant administrative privileges to multiple applications from the SSO server and have one single place to go when someone joins or leaves your organization.
+If you want to have your admin users use the SSO server as well, you need to do a bit more configuration. With these settings, you can grant administrative privileges to one or more applications from the SSO server and have a single place to update user information when someone joins or leaves your organization.
 
-We'll need to go back to the application in FusionAuth. We'll want to add an admin role for this application. Associating this role with a user or a group is how they'll have access to the admin functionality of nodebb.
+We'll need to return to the application in FusionAuth. We'll add an admin role for this application. 
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/setting-up-admin-role.png" alt="Adding the admin role to the nodebb application." class="img-fluid" figure=false %}
 
-Then give the user you created the admin role, from the user edit page. This role will be passed to nodebb. That will allow this user access to the nodebb admin screens. When you are done, the role should be shown on the user's page:
+For this tutorial, we'll associate the user you previously created with the admin role. We do this on the user edit page. This role will be passed to nodebb. That will allow this user access to the nodebb admin screens. When you are done, the role should be shown on the user's page:
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/user-with-admin-role.png" alt="The user is associated with the admin role." class="img-fluid" figure=false %}
 
-Then we need to update the plugin with the correct "Roles claim". Sign in as an admin to nodebb. If you disabled local login, you may need to go directly to the local login screen by adding `/login?local=1` to your nodebb base URL, like `http://localhost:4567/login?local=1`.
+We also need to update the plugin with the correct "Roles claim". Sign in as an admin to nodebb. If you disabled local login already, you may need to use a special login path; you can always go directly to the local login screen by adding `/login?local=1` to your nodebb base URL: `http://localhost:4567/login?local=1`.
 
-Update the plugin configuration have the "Roles claim" be `roles` and restart nodebb.
-
-Now you can log in with this user and view admin pages.
+Update the plugin configuration have the "Roles claim" be `roles` and restart nodebb. Now you can log in to nodebb with this user, or any other with the admin role, and view forum admin pages. They'll also be able to move topics, edit posts and do all the other tasks needed to keep your todo app forum users happy.
 
 ### Self registration
 
-You may want to allow self registration against the SSO server. This will allow someone who isn't a todo app user to sign up for the forum. There they can ask their task management questions; hopefully the community will be welcoming and enthusiastic enough that they'll buy your todo app. 
+You may want to allow registration with the SSO server. This will allow someone who isn't a todo app user to sign up for the forum. There they can ask their task management questions; hopefully the community will be welcoming and enthusiastic enough that they'll buy your todo app. 
 
-You can enable this by going to the "Registration" tab of your application in FusionAuth. Enable self service registration, but leave the other fields with the default values.
+You can enable this by going to the "Registration" tab of your application in FusionAuth. Enable "Self service registration", but leave the other fields with the default values.
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/enabling-self-registration.png" alt="The application screen with self registration enabled." class="img-fluid" figure=false %}
 
-Then they'll see a registration prompt on the login page: "Don't have an account? Create an account".
+Then they'll see a registration prompt on the login page: "Don't have an account? Create an account". When the click on this, they'll be prompted to register, as you can see below:
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/user-registration.png" alt="The registration screen when self registration has been enabled." class="img-fluid" figure=false %}
 
-After they create the account, they'll be logged in.
+After they create an account, they'll be logged in. At this point, they'd only have an account in the nodebb application, not in the todo app application.
 
 ## Conclusion
 
