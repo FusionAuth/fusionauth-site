@@ -42,7 +42,7 @@ The client id and client secret are used by FusionAuth to identify the applicati
 
 We also need to set up an "authorized redirect URL". This will look like `https://HOSTNAME/auth/fusionauth-oidc/callback` where `HOSTNAME` is the location of your nodebb server. Since I'm running nodebb locally, this value is `http://localhost:4567/auth/fusionauth-oidc/callback`.
 
-You want to set up a "logout redirect URL"; when a user logs out, they should sent back to the nodebb app homepage. I set mine to this: `http://localhost:4567/`
+You want to set up a "logout redirect URL"; when a user logs out, they should be sent back to the nodebb app homepage. I set mine to this: `http://localhost:4567/`
 
 This is what the "OAuth" tab should look like when you've set up FusionAuth.
 
@@ -52,13 +52,13 @@ Next, let's create a user. If this weren't a walkthrough, you'd have a way for a
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/user-creation.png" alt="Creating a user in FusionAuth." class="img-fluid" figure=false %}
 
-Then associate the new user with the nodebb application by creating a FusoinAuth user registration. Again, if you had the todo app FusionAuth application set up, you might add a user registration for that application as well. 
+Then associate the new user with the nodebb application by creating a FusionAuth user registration. Again, if you had the todo app FusionAuth application set up, you might add a user registration for that application as well. 
 
 When you're done, the user edit screen should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/adding-user-registration.png" alt="Associating a user with the nodebb application." class="img-fluid" figure=false %}
 
-Phew. We're all done with setting up our FusionAuth OIDC server. One final reminder that all these instructions are FusionAuth specific but your user identity amanagement system of choice should have analogous configuration options.
+Phew. We're all done with setting up our FusionAuth OIDC server. One final reminder that all these instructions are FusionAuth specific but your user identity management system of choice should have analogous configuration options.
 
 Now, let's set up nodebb. 
 
@@ -89,7 +89,7 @@ Now, should you [turn off local login](https://github.com/FusionAuth/nodebb-plug
 
 It depends on your use case. If you already have a forum with existing users, you might want to allow them to continue to use the username and password they are familiar with to sign in. 
 
-But if you're starting with a fresh nodebb installation, I can't think of any reason to leave local login enabled. If you do leave local login turned on, your users will see both options when the click the "login" link, as shown above.
+But if you're starting with a fresh nodebb installation, I can't think of any reason to leave local login enabled. If you do leave local login turned on, your users will see both options when they click the "login" link, as shown above.
 
 In either case, you should [turn off local registration](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc#additional-configuration) because the whole point of this post is to have all user data stored in your SSO server, not in nodebb.
 
@@ -105,7 +105,7 @@ Essentially, customer username and password information are kept in the identity
 
 ## FusionAuth features
 
-The steps above should work with any compliant SSO identity provider. Now we're going to cover features that aren't entirely part of the OIDC standard, but are useful for managing users. If you are using a different identity managment server, there should be analogs for the features outlined below.
+The steps above should work with any compliant SSO identity provider. Now we're going to cover features that aren't entirely part of the OIDC standard, but are useful for managing users. If you are using a different identity management server, there should be analogs for the features outlined below.
 
 ### User management
 
@@ -153,5 +153,5 @@ After a user creates an account, they'll be logged in. At this point, they'd onl
 
 nodebb is a powerful piece of forum software. Standing up a forum lets your users communicate with each other and can be a powerful mechanism for knowledge sharing, search engine optimization and community building.
 
-Using an SSO server such as FusionAuth lets your users minimize the number of usernames and passwords they must manage. It also allows you to control access to your applications from one screen, also known as "The Dream". Using a single sing on server for centralized user management will make both your life and your users' lives easier.
+Using an SSO server such as FusionAuth lets your users minimize the number of usernames and passwords they must manage. It also allows you to control access to your applications from one screen, also known as "The Dream". Using a single sign on server for centralized user management will make both your life and your users' lives easier.
 
