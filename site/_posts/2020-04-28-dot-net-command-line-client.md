@@ -302,4 +302,4 @@ While APIs are great, client libraries are even better. Even though the team at 
 
 Right now poor newuser2@example.com can't do much. As promised, in a future post, we'll create a web application that they can log in to.
 
-Update 5/6: You can now read [about the web application](https://fusionauth.io/blog/2020/05/06/securing-asp-netcore-razor-pagees-app-with-oauth).
+Update 5/6: You can now read [about the web application](https://fusionauth.io/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth).
