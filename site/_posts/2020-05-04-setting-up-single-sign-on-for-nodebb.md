@@ -149,6 +149,12 @@ After this change, users will see a registration prompt on the login page: "Don'
 
 After a user creates an account, they'll be logged in. At this point, they'd only have the ability to log in to nodebb.
 
+### Theming the pages
+
+You may have noticed that the login and logout pages didn't look like the nodebb pages. FusionAuth gives you the ability to theme your login, logout and other authentication pages. This involves changing templates which you can access via the admin screen. 
+
+The [FusionAuth theme documentation](https://fusionauth.io/docs/v1/tech/themes/) outlines the templates and gives an example of customizing the login page.
+
 ## Conclusion
 
 nodebb is a powerful piece of forum software. Standing up a forum lets your users communicate with each other and can be a powerful mechanism for knowledge sharing, search engine optimization and community building.
