@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Securing a ASP.NET Core Razor Pages app with OAuth
+title: Securing an ASP.NET Core Razor Pages app with OAuth
 description: We'll build a web application using ASP.NET Core and control page access using FusionAuth and the Authorization Code grant.
 author: Dan Moore
 image: blogs/authorization-code-grant-asp-net/securing-asp-net-app-oauth.png
