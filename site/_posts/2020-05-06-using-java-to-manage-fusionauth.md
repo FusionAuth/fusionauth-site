@@ -67,7 +67,7 @@ We'll use [version 1.16.0](https://mvnrepository.com/artifact/io.fusionauth/fusi
 </dependency>
 ```
 
-You can also download all the code from [the GitHub repository](https://github.com/FusionAuth/fusionauth-example-java).
+You can also download all the code from [the GitHub repository](https://github.com/FusionAuth/fusionauth-example-java)--note that if you do that you'll need to update some of the ids.
 
 ## Creating an application 
 
@@ -460,6 +460,10 @@ public class DeactivateUser {
 }
 ```
 
+Here's how the user will look in the admin interface when they've been deactivated:
+
+{% include _image.liquid src="/assets/img/blogs/java-client-example/user-deactivated.png" alt="The new user has been deactivated." class="img-fluid" figure=false %}
+
 ## Reactivating a user
 
 Next, to reactivate the user we just deactivated (perhaps they paid their bill and are now itching to add some todos), let's use the `reactivateUser` method and provide the ID of the user as its parameter. 
@@ -505,10 +509,6 @@ public class ReactivateUser {
 ```
 
 If you run the above code, and the request is successful, it'll reactivate the user and output their profile information on the console. 
-
-Here's how the user will look in the admin interface:
-
-{% include _image.liquid src="/assets/img/blogs/java-client-example/user-deactivated.png" alt="The new user has been deactivated." class="img-fluid" figure=false %}
 
 ## Deleting a user
 
