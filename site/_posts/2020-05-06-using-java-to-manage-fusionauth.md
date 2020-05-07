@@ -57,7 +57,7 @@ Shall we?
 ## Setting up the Maven dependency
 
 To set up the dependencies needed for this project, let's create a Maven utility project and add the FusionAuth Java client library to the pom.xml file. 
-We'll use [version 1.16.0](https://mvnrepository.com/artifact/io.fusionauth/fusionauth-java-client/1.16.0) of the FusionAuth Maven dependency (but remember to use the version that corresponds to your deployed version of FusionAuth):
+We'll use [version 1.15.4](https://mvnrepository.com/artifact/io.fusionauth/fusionauth-java-client/1.15.4) of the FusionAuth Maven dependency:
 
 ```xml
 <dependency>
@@ -692,7 +692,7 @@ To this end, you've seen how it is easy to integrate FusionAuth with Java using 
 
 Of course, we've just scratched the surface of the things you can achieve with the FusionAuth Java client. You can head over to [the documentation](https://github.com/FusionAuth/fusionauth-java-client) and discover its other awesome capabilities. 
 
-Next steps you might want to take to further explore:
+Next steps you might want to take to further explore the FusionAuth Java client library:
 
 * add a user to a group
 * retrieve all the users in a group
