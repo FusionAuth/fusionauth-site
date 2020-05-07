@@ -8,13 +8,13 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth allows developers to simplify authentication, authorization, and user management tasks in their applications. One of the greatest benefits of this innovative identity solution is that it can be integrated with any programming language, platform, or anything else.
-
-So, if your preferred language is [Python](https://fusionauth.io/blog/2019/10/01/implementing-fusionauth-python), [Node.js](https://fusionauth.io/blog/2019/02/19/easy-integration-fusionauth-nodejs), [PHP](https://fusionauth.io/blog/2020/03/26/how-to-integrate-fusionauth-with-php), or anything else, you can use FusionAuth to take your authentication capabilities to the next level.
-
 In this tutorial, we’re going to illustrate how to use Java to accomplish various tasks with FusionAuth, programmatically. More so, to speed up our development time, we’ll use the FusionAuth Java client library, which comes with already-built methods that we’ll use instead of building things from scratch. 
 
 <!--more-->
+
+FusionAuth allows developers to simplify authentication, authorization, and user management tasks in their applications. One of the greatest benefits of this innovative identity solution is that it can be integrated with any programming language, platform, or anything else.
+
+So, if your preferred language is [Python](https://fusionauth.io/blog/2019/10/01/implementing-fusionauth-python), [Node.js](https://fusionauth.io/blog/2019/02/19/easy-integration-fusionauth-nodejs), [PHP](https://fusionauth.io/blog/2020/03/26/how-to-integrate-fusionauth-with-php), or anything else, you can use FusionAuth to take your authentication capabilities to the next level.
 
 ## What we'll cover
 
@@ -67,7 +67,7 @@ We'll use [version 1.16.0](https://mvnrepository.com/artifact/io.fusionauth/fusi
 </dependency>
 ```
 
-You can download all the code from [the GitHub repository](https://github.com/FusionAuth/fusionauth-example-java).
+You can also download all the code from [the GitHub repository](https://github.com/FusionAuth/fusionauth-example-java).
 
 ## Creating an application 
 
@@ -147,7 +147,7 @@ Also, if we run the code again, we get the following error, indicating that the 
   "fieldErrors" : {
 	"application.name" : [ {
   	"code" : "[duplicate]application.name",
-  	"message" : "An Application with name = [FusionJavaApp] already exists."
+  	"message" : "An Application with name = [Todo] already exists."
 	} ]
   },
   "generalErrors" : [ ]
