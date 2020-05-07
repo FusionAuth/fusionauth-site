@@ -35,7 +35,7 @@ By offering free versions both Gluu and FusionAuth are providing an important op
 
 ## How Gluu and FusionAuth Are Different
 
-[{% include _image.html src="/assets/img/blogs/gluu-fusionauth-comparison.png" alt="Gluu and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4 mt-md-4 mb-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-gluu.pdf "Download the Gluu and FusionAuth Feature Comparison")
+[{% include _image.liquid src="/assets/img/blogs/gluu-fusionauth-comparison.png" alt="Gluu and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4 mt-md-4 mb-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-gluu.pdf "Download the Gluu and FusionAuth Feature Comparison")
 
 ### All Features From Day One
 Up above, we said that Gluu and FusionAuth both can be downloaded and deployed for free, and that is true. But there is an important difference: Gluu Server CE is a subset of the complete platform's features–you will need to upgrade to their [VIP or Enterprise packages](https://www.gluu.org/pricing#vip "Jump to Gluu site") to unlock additional high availability functionality, two-factor authentication features, and vulnerability notifications.

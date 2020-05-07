@@ -24,6 +24,7 @@ These are the events that FusionAuth generates that can be optionally consumed b
 * <<User Registration Delete>> - when a user registration is deleted
 * <<User Registration Verified>> - when a user completes registration verification
 * <<JWT Public Key Update>> - when a JWT RSA Public / Private keypair used for signing may have been updated.
+* <<JWT Refresh>> - when an access token is refreshed using a refresh token
 * <<JWT Refresh Token Revoke>> - when a refresh token (or multiple tokens) are revoked
 
 
@@ -39,83 +40,82 @@ A temporal action is one that has a start time and and a duration, when a phase 
 user.action
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.action# [type]#[String]#
-|This parameter specifies the name of the action that is occurring.
+[field]#event.action# [type]#[String]#::
+This parameter specifies the name of the action that is occurring.
 
-|[field]#event.actionId# [type]#[UUID]#
-|This parameter specifies the unique Id of the action that is occurring.
+[field]#event.actionId# [type]#[UUID]#::
+This parameter specifies the unique Id of the action that is occurring.
 
-|[field]#event.actioneeUserId# [type]#[UUID]#
-|This parameter specifies the unique identifier of the user the action is being performed on.
+[field]#event.actioneeUserId# [type]#[UUID]#::
+This parameter specifies the unique identifier of the user the action is being performed on.
 
-|[field]#event.actionerUserId# [type]#[UUID]#
-|This parameter specifies the Id of the User that performed the action that resulted in the notification being sent. If the action was initiated by FusionAuth this value will not be provided.
+[field]#event.actionerUserId# [type]#[UUID]#::
+This parameter specifies the Id of the User that performed the action that resulted in the notification being sent. If the action was initiated by FusionAuth this value will not be provided.
 
-|[field]#event.applicationIds# [type]#[Array<UUID>]#
-|This parameter if provided specifies the scope of the User Action. When an Action is scoped to one or more Applications the Application Ids will be provided in this parameter.
+[field]#event.applicationIds# [type]#[Array<UUID>]#::
+This parameter if provided specifies the scope of the User Action. When an Action is scoped to one or more Applications the Application Ids will be provided in this parameter.
 
-|[field]#event.comment# [type]#[String]#
-|An optional comment left to possibly indicate why the action was taken, modified or canceled.
+[field]#event.comment# [type]#[String]#::
+An optional comment left to possibly indicate why the action was taken, modified or canceled.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.email# [type]#[Object]#
-|When the action is configured to send the email in the event body, FusionAuth will render the email and provide the result in the event body. This can be used to send an email through a third party provider. See Example POST body below for fields.
+[field]#event.email# [type]#[Object]#::
+When the action is configured to send the email in the event body, FusionAuth will render the email and provide the result in the event body. This can be used to send an email through a third party provider. See Example POST body below for fields.
 
-|[field]#event.emailedUser# [type]#[Boolean]#
-|This parameter will indicate if FusionAuth has already sent an email to the user as a result of this event. When `true` an email was sent to the user, and if `false` an email was not sent to the user.
+[field]#event.emailedUser# [type]#[Boolean]#::
+This parameter will indicate if FusionAuth has already sent an email to the user as a result of this event. When `true` an email was sent to the user, and if `false` an email was not sent to the user.
 
-|[field]#event.expiry# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the action will expire, if the action expires.
+[field]#event.expiry# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the action will expire, if the action expires.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.localizedAction# [type]#[String]#
-|This parameter specifies the localized version of the [field]#action# field, based on the user's preferred languages.
+[field]#event.localizedAction# [type]#[String]#::
+This parameter specifies the localized version of the [field]#action# field, based on the user's preferred languages.
 
-|[field]#event.localizedDuration# [type]#[String]#
-|The duration of the action in a human readable format that is localized based on the user's preferred languages.
+[field]#event.localizedDuration# [type]#[String]#::
+The duration of the action in a human readable format that is localized based on the user's preferred languages.
 
-|[field]#event.localizedOption# [type]#[String]#
-|This parameter specifies the localized version of the [field]#option# field, based on the user's preferred languages.
+[field]#event.localizedOption# [type]#[String]#::
+This parameter specifies the localized version of the [field]#option# field, based on the user's preferred languages.
 
-|[field]#event.localizedReason# [type]#[String]#
-|This parameter specifies the localized reason of the [field]#reason# field, based on the user's preferred languages.
+[field]#event.localizedReason# [type]#[String]#::
+This parameter specifies the localized reason of the [field]#reason# field, based on the user's preferred languages.
 
-|[field]#event.notifyUser# [type]#[Boolean]#
-|This parameter specifies whether the user should be notified. FusionAuth will only set this value based upon the event configuration, it is simply an indicator to the event consumer to notify the user.
+[field]#event.notifyUser# [type]#[Boolean]#::
+This parameter specifies whether the user should be notified. FusionAuth will only set this value based upon the event configuration, it is simply an indicator to the event consumer to notify the user.
 
-|[field]#event.option# [type]#[String]#
-|An optional value to provide additional context to the Action. This value is free form and defined by the User Action.
+[field]#event.option# [type]#[String]#::
+An optional value to provide additional context to the Action. This value is free form and defined by the User Action.
 
-|[field]#event.phase# [type]#[Boolean]#
-|If the Action is temporal, this parameter will be provided to indicate the current phase of the action. The following are the possible Action states:
-
-* `start` - The event has started.
-* `modify` - The event has been modified.
-* `cancel` - The event has been canceled, the `end` phase will not be reached.
-* `end` - The event has ended.
-
+[field]#event.phase# [type]#[Boolean]#::
+If the Action is temporal, this parameter will be provided to indicate the current phase of the action. The following are the possible Action states:
++
+    * `start` - The event has started.
+    * `modify` - The event has been modified.
+    * `cancel` - The event has been canceled, the `end` phase will not be reached.
+    * `end` - The event has ended.
++
 When the action is started by an admin, the phase will be "start". If an admin changes the duration of the action, the phase will be "modify". If an admin cancels an action it will be "cancel" or the action expires, the phase will be "end". If the action is key-based, the phase will be "start".
 
-|[field]#event.reason# [type]#[String]#
-|The reason the admin selected. Reasons may be configured in the FusionAuth UI, navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#User Actions# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Reasons#. This value will be omitted when no reasons are selected (or configured).
+[field]#event.reason# [type]#[String]#::
+The reason the admin selected. Reasons may be configured in the FusionAuth UI, navigate to [breadcrumb]#Settings -> User Actions -> Reasons#. This value will be omitted when no reasons are selected (or configured).
 
-|[field]#event.reasonCode# [type]#[String]#
-|The reason code the admin selected. Reasons may be configured in the FusionAuth UI, navigate to [breadcrumb]#Settings# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#User Actions# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Reasons#. This value will be omitted when no reasons are selected (or configured).
+[field]#event.reasonCode# [type]#[String]#::
+The reason code the admin selected. Reasons may be configured in the FusionAuth UI, navigate to [breadcrumb]#Settings -> User Actions -> Reasons#. This value will be omitted when no reasons are selected (or configured).
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.action`.
-|===
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.action`.
+
 
 [source,json]
 .Example Event JSON
@@ -133,25 +133,24 @@ This event is generated when multiple users are created. The JSON includes each 
 user.bulk.create
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.bulk.create`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.bulk.create`.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.users# [type]#[Array<Object>]#
-|The users that have been created. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.users# [type]#[Array<Object>]#::
+The users that have been created. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -171,25 +170,24 @@ This event is generated when a single user is created. The JSON includes the Use
 user.create
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.create`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.create`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that has been created. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that has been created. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -209,28 +207,27 @@ This event is generated when a user is updated. The event will include the befor
 user.update
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.original# [type]#[Object]#
-|The user before the update occurred, this is the old version of the user. See the link:../apis/users[Users API] for property definitions and example JSON.
+[field]#event.original# [type]#[Object]#::
+The user before the update occurred, this is the old version of the user. See the link:../apis/users[Users API] for property definitions and example JSON.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.update`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.update`.
 
-|[field]#event.user# [type]#[Object]#
-|The user after the update, this is the new version of the user. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user after the update, this is the new version of the user. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 
 === Event JSON
@@ -252,25 +249,24 @@ user.deactivate
 ----
 
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.deactivate`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.deactivate`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that has been deactivated. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that has been deactivated. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 
 === Event JSON
@@ -291,25 +287,24 @@ This event is generated when user is re-activated, a re-activated user is one th
 user.reactivate
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.reactivate`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.reactivate`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that has been re-activated. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that has been re-activated. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 
 === Event JSON
@@ -330,25 +325,24 @@ This event is generated when a user is deleted.
 user.delete
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.delete`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.delete`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that has been deleted. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that has been deleted. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -373,25 +367,24 @@ This event is generated when a user verifies their email address.
 user.email.verified
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.email.verified`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.email.verified`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that has verified their email address. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that has verified their email address. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -416,31 +409,30 @@ This event is generated when a user completes a successful login.
 user.login.success
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the user has requested login. If the login request omits the [field]#applicationid# or the user is not registered for the requested [field]#applicationId# this value will not be returned in the event.
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the user has requested login. If the login request omits the [field]#applicationid# or the user is not registered for the requested [field]#applicationId# this value will not be returned in the event.
 
-|[field]#event.authenticationType# [type]#[String]#
-|The type of authentication used in the login request.
+[field]#event.authenticationType# [type]#[String]#::
+The type of authentication used in the login request.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.login.success`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.login.success`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that completed the login request. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that completed the login request. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -465,31 +457,30 @@ This event is generated when a user login request fails due to invalid credentia
 user.login.failed
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the user has requested login. If the login request omits the [field]#applicationid# or the user is not registered for the requested [field]#applicationId# this value will not be returned in the event.
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the user has requested login. If the login request omits the [field]#applicationid# or the user is not registered for the requested [field]#applicationId# this value will not be returned in the event.
 
-|[field]#event.authenticationType# [type]#[String]#
-|The type of authentication used in the login request.
+[field]#event.authenticationType# [type]#[String]#::
+The type of authentication used in the login request.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.login.failed`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.login.failed`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that failed the login request. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that failed the login request. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -514,25 +505,24 @@ This event is generated when Reactor detects a user is using a vulnerable, or br
 user.password.breach
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.password.breach`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.password.breach`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that failed the login request. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that failed the login request. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -557,31 +547,30 @@ This event is generated when a user registration is created.
 user.registration.create
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the user has now been registered.
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the user has now been registered.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.registration# [type]#[Object]#
-|The user registration that has been created. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
+[field]#event.registration# [type]#[Object]#::
+The user registration that has been created. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.registration.create`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.registration.create`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that owns the new registration. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that owns the new registration. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -606,34 +595,33 @@ This event is generated when a user registration has been updated.
 user.registration.update
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the user registration has been updated.
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the user registration has been updated.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.original# [type]#[Object]#
-|The original registration prior to being updated. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
+[field]#event.original# [type]#[Object]#::
+The original registration prior to being updated. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
 
-|[field]#event.registration# [type]#[Object]#
-|The user registration that has been updated. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
+[field]#event.registration# [type]#[Object]#::
+The user registration that has been updated. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.registration.update`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.registration.update`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that owns the registration being updated. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that owns the registration being updated. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 
 === Event JSON
@@ -659,31 +647,30 @@ This event is generated when a user registration has been deleted.
 user.registration.delete
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the user's registration has been deleted.
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the user's registration has been deleted.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.registration# [type]#[Object]#
-|The user registration that has been deleted. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
+[field]#event.registration# [type]#[Object]#::
+The user registration that has been deleted. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.registration.delete`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.registration.delete`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that owns the registration being deleted. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that owns the registration being deleted. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -708,31 +695,30 @@ This event is generated when a user registration has been verified.
 user.registration.verified
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the user registration has been updated.
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the user registration has been updated.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.registration# [type]#[Object]#
-|The user registration that has been verified. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
+[field]#event.registration# [type]#[Object]#::
+The user registration that has been verified. See the link:../apis/registrations[Registration API] for property definitions and example JSON.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `user.registration.verified`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `user.registration.verified`.
 
-|[field]#event.user# [type]#[Object]#
-|The user that owns the registration being updated. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]#::
+The user that owns the registration being updated. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 === Event JSON
 
@@ -753,25 +739,24 @@ This event is generated when a public key configuration used to sign a JSON web 
 jwt.public-key.update
 ----
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationIds# [type]#[List<UUID>]#
-|A list of Application Ids that may have been affected by a configuration change in which affect the public key used to sign JWTs.
+[field]#event.applicationIds# [type]#[List<UUID>]#::
+A list of Application Ids that may have been affected by a configuration change in which affect the public key used to sign JWTs.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `jwt.public-key.update`.
-|===
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `jwt.public-key.update`.
+
 
 === Event JSON
 
@@ -779,6 +764,57 @@ jwt.public-key.update
 .Example Event JSON
 ----
 include::docs/src/json/events/jwt-public-key-update.json[]
+----
+
+== JWT Refresh
+
+[NOTE.since]
+====
+This event has been available since 1.16.0
+====
+
+This event is generated when an access token is refreshed using a refresh token. This event is initiated from both the link:../oauth/endpoints#refresh-token-grant-request[OAuth2 Refresh Token Grant], and the link:../apis/jwt#refresh-a-jwt[Refresh a JWT API].
+
+[source,shell]
+.Event type
+----
+jwt.refresh
+----
+
+==== Event Body
+
+[.api]
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the token provides access.
+
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+
+[field]#event.original# [type]#[String]#::
+The original encoded access token which was provided on the JWT refresh request.  This field will be omitted if the [field]#token# parameter was not provided on the initiating request.
+
+[field]#event.refreshToken# [type]#[String]#::
+The refresh token which was provided on the JWT refresh request, used in refreshing the JWT.
+
+[field]#event.token# [type]#[String]#::
+The new encoded access token.
+
+[field]#event.tenantId# [type]#[UUID]#::
+The unique tenant identifier.
+
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `jwt.refresh`.
+
+
+=== Event JSON
+
+[source,json]
+.Example Event JSON
+----
+include::docs/src/json/events/jwt-refresh.json[]
 ----
 
 == JWT Refresh Token Revoke
@@ -801,38 +837,37 @@ jwt.refresh-token.revoke
 
 This example JSON would reflect a scenario where a single refresh token is revoked for a single user for a single application.
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationId# [type]#[UUID]#
-|The unique Id of the Application for which the refresh token have been revoked.
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which the refresh token have been revoked.
 
-|[field]#event.applicationTimeToLiveInSeconds# [type]#[Map<UUID, Integer>]#
-|A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
-
+[field]#event.applicationTimeToLiveInSeconds# [type]#[Map<UUID, Integer>]#::
+A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
++
 If you take the [field]#createInstant# of this event and add the number of seconds for a specific application TTL you come up with an instant in time where you should consider all access tokens issued before this time invalid. This is because the access token will have been issued on or before the instant the refresh token was revoked.
-
++
 This map will contain a single entry for the application represented by the [field]#applicationId# field.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `jwt.refresh-token.revoke`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `jwt.refresh-token.revoke`.
 
-|[field]#event.userId# [type]#[UUID]#
-|The unique Id of the User for which a refresh token has been revoked.
+[field]#event.userId# [type]#[UUID]#::
+The unique Id of the User for which a refresh token has been revoked.
 
-|[field]#event.user# [type]#[Object]# [since]#Available Since 1.8.0#
-|The user for which a refresh token has been revoked. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]# [since]#Available Since 1.8.0#::
+The user for which a refresh token has been revoked. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 [source,json]
 .Example Event JSON
@@ -844,35 +879,34 @@ include::docs/src/json/events/jwt-refresh-token-revoke-user.json[]
 
 This example JSON would reflect a scenario where all refresh tokens owned by a single user are revoked.
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationTimeToLiveInSeconds# [type]#[Map<UUID, Integer>]#
-|A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
-
+[field]#event.applicationTimeToLiveInSeconds# [type]#[Map<UUID, Integer>]#::
+A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
++
 If you take the [field]#createInstant# of this event and add the number of seconds for a specific application TTL you come up with an instant in time where you should consider all access tokens issued before this time invalid. This is because the access token will have been issued on or before the instant the refresh token was revoked.
-
++
 This map will contain an entry for each application for which the user has a refresh token.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `jwt.refresh-token.revoke`.
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `jwt.refresh-token.revoke`.
 
-|[field]#event.userId# [type]#[UUID]#
-|The unique Id of the User for which all refresh tokens have been revoked.
+[field]#event.userId# [type]#[UUID]#::
+The unique Id of the User for which all refresh tokens have been revoked.
 
-|[field]#event.user# [type]#[Object]# [since]#Available Since 1.8.0#
-|The user for which a refresh token has been revoked. See the link:../apis/users[Users API] for property definitions and example JSON.
-|===
+[field]#event.user# [type]#[Object]# [since]#Available Since 1.8.0#::
+The user for which a refresh token has been revoked. See the link:../apis/users[Users API] for property definitions and example JSON.
+
 
 [source,json]
 .Example Event JSON
@@ -884,30 +918,29 @@ include::docs/src/json/events/jwt-refresh-token-revoke-all-user.json[]
 
 This example JSON would reflect a scenario where all refresh tokens issued for a specific application are revoked.
 
-[cols="3a,7a"]
+==== Event Body
+
 [.api]
-.Event Body
-|===
-|[field]#event.applicationId# [type]#[UUID]#
-|The unique Id of the Application for which all of the refresh tokens have been revoked.
+[field]#event.applicationId# [type]#[UUID]#::
+The unique Id of the Application for which all of the refresh tokens have been revoked.
 
-|[field]#event.applicationTimeToLiveInSeconds# [type]#[Map<UUID, Integer>]#
-|A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
-
+[field]#event.applicationTimeToLiveInSeconds# [type]#[Map<UUID, Integer>]#::
+A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
++
 If you take the [field]#createInstant# of this event and add the number of seconds for a specific application TTL you come up with an instant in time where you should consider all access tokens issued before this time invalid. This is because the access token will have been issued on or before the instant the refresh token was revoked.
 
-|[field]#event.createInstant# [type]#[Long]#
-|The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
+[field]#event.createInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] that the event was generated.
 
-|[field]#event.id# [type]#[UUID]#
-|The event unique Id. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+[field]#event.id# [type]#[UUID]#::
+The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
 
-|[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#
-|The unique tenant identifier. This value may not be returned if not applicable.
+[field]#event.tenantId# [type]#[UUID]# [since]#Available Since 1.8.0#::
+The unique tenant identifier. This value may not be returned if not applicable.
 
-|[field]#event.type# [type]#[String]#
-|The event type, this value will always be `jwt.refresh-token.revoke`.
-|===
+[field]#event.type# [type]#[String]#::
+The event type, this value will always be `jwt.refresh-token.revoke`.
+
 
 [source,json]
 .Example Event JSON

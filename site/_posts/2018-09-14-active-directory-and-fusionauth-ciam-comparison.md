@@ -24,11 +24,11 @@ While these solutions have similar core capabilities, don't think that Active Di
 
 ## How Active Directory and FusionAuth Are Different
 
-[{% include _image.html src="/assets/img/blogs/active-directory-fusionauth-compare-sample.png" alt="Active Directory and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-active-directory.pdf "Download the Active Directory and FusionAuth Feature Comparison")
+[{% include _image.liquid src="/assets/img/blogs/active-directory-fusionauth-compare-sample.png" alt="Active Directory and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-active-directory.pdf "Download the Active Directory and FusionAuth Feature Comparison")
 
 ### Free for Unlimited Users
 
-One of the biggest differences between OneLogin and FusionAuth is cost. FusionAuth is free for unlimited users. No strings, gimmicks, or tricks. No cost increases when you hit a certain Monthly Active User threshold. Much like a database or a web server, secure authentication is so essential that developers should be able to implement it quickly and easily without cost concerns. And unlike the free options from other vendors, we don't feature-cripple or user-limit FusionAuth. You get the full unrestricted platform with every feature and benefit.
+One of the biggest differences between Active Directory and FusionAuth is cost. FusionAuth is free for unlimited users. No strings, gimmicks, or tricks. No cost increases when you hit a certain Monthly Active User threshold. Much like a database or a web server, secure authentication is so essential that developers should be able to implement it quickly and easily without cost concerns. And unlike the free options from other vendors, we don't feature-cripple or user-limit FusionAuth. You get the full unrestricted platform with every feature and benefit.
 
 ### Email Customization
 

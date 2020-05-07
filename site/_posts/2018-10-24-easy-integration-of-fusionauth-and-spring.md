@@ -17,7 +17,7 @@ Don't want to read? [Jump to the example](https://github.com/FusionAuth/fusionau
 ## Getting everything setup
 
 1. [Download and Install FusionAuth](/)
-2. [Create an Application](/docs/v1/tech/users/applications)
+2. [Create an Application](/docs/v1/tech/core-concepts/applications)
    1. While you are creating an application, create two roles `user` and `admin` (you can create others if you like)
    2. Add a valid redirect URL to your OAuth configuration. For our example we will use `http://localhost:8081/login`.
    3. Click save (blue icon at the top right)
@@ -211,7 +211,7 @@ That's it. Controllers that are public will be accessible without logging in and
 
 In our example application we also handle basic registration of a user. This is completely optional but your users will need to be registered somehow in order to have access and be granted roles in your application. You could use the FusionAuth web interface to manually add all of your users. Or you could allow users to register themselves. This choice depends on the needs of your application. If you would like to allow users to register themselves, use the steps below to add this capability to your application.
 
-1. [Create](/docs/v1/tech/users/applications) and then copy your FusionAuth API key and your application id into `application.properties`. Also update the base url to be the location of your FusionAuth instance.
+1. [Create](/docs/v1/tech/core-concepts/applications) and then copy your FusionAuth API key and your application id into `application.properties`. Also update the base url to be the location of your FusionAuth instance.
 
    ```properties
    # API

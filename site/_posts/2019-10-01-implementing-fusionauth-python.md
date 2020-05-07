@@ -81,19 +81,19 @@ Once you've completed installation and first time configuration, we will want to
 
 There will be an application that has already been created named "FusionAuth" by default and have very few customizable settings relative to our other applications. This is the FusionAuth administration application that you are currently logged into.
 
-{% include _image.html src="/assets/img/blogs/edit-application-screen.png" alt="Edit Application Screen" class="img-fluid full mt-2 mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/edit-application-screen.png" alt="Edit Application Screen" class="img-fluid full mt-2 mb-4" figure=false %}
 
 If you click the edit icon on the "**FusionAuth**" application, you can see this application only has the option to toggle JWT on or off, or set Access and ID tokens to populate a lambda. For now, we will leave this as it is and hit **Save**.
 
-{% include _image.html src="/assets/img/blogs/save-icon.png" alt="Save" class="img-fluid mb-4 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/save-icon.png" alt="Save" class="img-fluid mb-4 mx-auto d-block" figure=false %}
 
 We want to create a separate app for our Python application to utilize, so let's go ahead and do that now. Select the green plus sign at the top right of the page to add an App.
 
-{% include _image.html src="/assets/img/blogs/add-button.png" alt="Add" class="img-fluid mt-2 mb-4 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/add-button.png" alt="Add" class="img-fluid mt-2 mb-4 mx-auto d-block" figure=false %}
 
 You should come to a page that looks like this:
 
-{% include _image.html src="/assets/img/blogs/add-application-screen.png" alt="Add Application Screen" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/add-application-screen.png" alt="Add Application Screen" class="img-fluid full mb-4" figure=false %}
 
 
 Give your application a name. We will call ours "**pythonapp**". The name is just for us to recognize our app in the FusionAuth UI and is for display purposes only. An Application ID will be specified automatically on **Save**.
@@ -101,11 +101,11 @@ Give your application a name. We will call ours "**pythonapp**". The name is jus
 
 At this point, you can explore the many application settings FusionAuth has to offer as there are lots more options than the FusionAuth default application. We will not need to change or add anything else to the app at this time. When you're ready, hit **Save**.
 
-{% include _image.html src="/assets/img/blogs/save-icon.png" alt="Save" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/save-icon.png" alt="Save" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 Once the Application is saved, FusionAuth assigns an App ID. In this example, our App ID is `55e36f88-f3ba-4423-8b70-80232c7de8ad`.
 
-{% include _image.html src="/assets/img/blogs/applications-screen.png" alt="Applications Screen" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/applications-screen.png" alt="Applications Screen" class="img-fluid full mb-4" figure=false %}
 
 We are now ready to create an API Key!
 
@@ -113,21 +113,21 @@ We are now ready to create an API Key!
 
 Next let's set up an API Key. It's fast and only takes a moment. Navigate to the API area under **Settings-->API Keys**. Then, select the add API Key button which will be a green plus sign at the top right area of the page.
 
-{% include _image.html src="/assets/img/blogs/add-button.png" alt="Add" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/add-button.png" alt="Add" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 A new API key will be automatically populated. Since we will want to make this API Key a "Superuser" we will leave the **Endpoints** untoggled. This means that our API should be good for all "Get," "Post," "Put," and "Delete," actions we specify with our app. You can optionally give this API Key a description, then hit **Save**.
 
-{% include _image.html src="/assets/img/blogs/save-icon.png" alt="Save" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/save-icon.png" alt="Save" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 ## Adding a User
 
 Next, we'll need a test user registered with FusionAuth. Go to **Users** in the dashboard. Click on the green **Add User** button at the top right of the page.
 
-{% include _image.html src="/assets/img/blogs/add-user-button.png" alt="Add user" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/add-user-button.png" alt="Add user" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 Our user's Username and Password are the same for this example. Fill out as many details as you want about your test user. For now, since we're using a dummy email account, we will deselect the "**Send email to setup password**" toggle switch, and turn off two-factor authentication.
 
-{% include _image.html src="/assets/img/blogs/add-user-toggle-screen.png" alt="Add User Screen" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/add-user-toggle-screen.png" alt="Add User Screen" class="img-fluid full mb-4" figure=false %}
 
 We will be using this Username, `terry@example.com` in our test code. When finished, select **Save**.
 
@@ -137,15 +137,15 @@ At this point, we will go ahead and register our test user with the application 
 
 In the User's menu, beside our test user, select "**Manage**" .
 
-{% include _image.html src="/assets/img/blogs/action-manage-button.png" alt="Manage user" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/action-manage-button.png" alt="Manage user" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
 
 On the following **Manage User** page, you'll see a button that says, "**Add registration**."
 
-{% include _image.html src="/assets/img/blogs/manage-user-add-registration-screen.png" alt="Manage User Add Registration Screen" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/manage-user-add-registration-screen.png" alt="Manage User Add Registration Screen" class="img-fluid full mb-4" figure=false %}
 
 This will take you to a page that looks something like this:
 
-{% include _image.html src="/assets/img/blogs/add-user-registration-screen.png" alt="Add User Registration Screen" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/add-user-registration-screen.png" alt="Add User Registration Screen" class="img-fluid full mb-4" figure=false %}
 
 From here, we will want to select our test application, "**pythonapp**". We will match the username with the same username as our sample user's email address. If our application had user roles defined, we could assign them to this user. We can also define the user's Timezone and set Language preferences.
 
@@ -542,7 +542,7 @@ If successful, you should see a response that looks something like this:
 
 Navigate to **Users** in the FusionAuth UI. You should now see a new user created and registered to an application!
 
-{% include _image.html src="/assets/img/blogs/manage-user-screen.png" alt="Manage User Screen" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/manage-user-screen.png" alt="Manage User Screen" class="img-fluid full mb-4" figure=false %}
 
 
 ## Troubleshooting Common Errors
@@ -563,7 +563,7 @@ What if your app(s) didn't quite work? Here's a list of common error codes that 
 
 If you see a message like, "Error - FusionAuth encountered an error while processing your request. If the problem persists, contact FusionAuth support for assistance," you may just need to restart FusionAuth Search.
 
-{% include _image.html src="/assets/img/blogs/error-message-screen.png" alt="Error Message Screen" class="img-fluid full mb-4" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/error-message-screen.png" alt="Error Message Screen" class="img-fluid full mb-4" figure=false %}
 
 
 To restart FusionAuth Search service type
