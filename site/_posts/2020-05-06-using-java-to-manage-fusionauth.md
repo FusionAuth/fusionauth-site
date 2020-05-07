@@ -136,7 +136,7 @@ Finally, we handle any errors experienced when creating the application on Fusio
 
 If we run the above code, and go to the FusionAuth UI, we see that the todo application has been created successfully:
 
-TBD add application image TODO
+{% include _image.liquid src="/assets/img/blogs/java-client-example/create-application.png" alt="The new application has been created." class="img-fluid" figure=false %}
 
 Notice from the image above that the application’s ID has been created for us. We’ll use this ID in the subsequent sections of this tutorial. 
 
@@ -218,7 +218,7 @@ Also, we did not specify the ID of the user. This will allow FusionAuth to creat
 
 If we run the above code, and go to the FusionAuth UI, we see that the user has been created successfully:
 
-TBD image of user
+{% include _image.liquid src="/assets/img/blogs/java-client-example/user-created.png" alt="The new user has been created." class="img-fluid" figure=false %}
 
 Notice from the image above that the user’s ID has been created for us. We’ll use this ID in the subsequent sections of this tutorial. Also, the user has been registered to the todo application we created earlier. 
 
@@ -248,7 +248,7 @@ public class RetrieveUserInfo {
         FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
                 ApplicationProperties.getFusionAuthURL());
 
-        UUID userId = UUID.fromString("c7f91df7-ed89-410b-87e7-a2b7ade9bf98");
+        UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
 
         // Using the returned ClientResponse object
         ClientResponse<UserResponse, Errors> response = client.retrieveUser(userId);
@@ -444,7 +444,7 @@ public class DeactivateUser {
         FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
                 ApplicationProperties.getFusionAuthURL());
 
-        UUID userId = UUID.fromString("c7f91df7-ed89-410b-87e7-a2b7ade9bf98");
+        UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
 
         // Using the returned ClientResponse object
         ClientResponse<Void, Errors> response = client.deactivateUser(userId);
@@ -486,7 +486,7 @@ public class ReactivateUser {
         FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
                 ApplicationProperties.getFusionAuthURL());
 
-        UUID userId = UUID.fromString("c7f91df7-ed89-410b-87e7-a2b7ade9bf98");
+        UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
 
         // Using the returned ClientResponse object
         ClientResponse<UserResponse, Errors> response = client.reactivateUser(userId);
@@ -508,7 +508,7 @@ If you run the above code, and the request is successful, it'll reactivate the u
 
 Here's how the user will look in the admin interface:
 
-TBD deactivated user in the admin section.
+{% include _image.liquid src="/assets/img/blogs/java-client-example/user-deactivated.png" alt="The new user has been deactivated." class="img-fluid" figure=false %}
 
 ## Deleting a user
 
@@ -536,7 +536,7 @@ public class DeleteUser {
         FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
                 ApplicationProperties.getFusionAuthURL());
 
-        UUID userId = UUID.fromString("c7f91df7-ed89-410b-87e7-a2b7ade9bf98");
+        UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
 
         // Using the returned ClientResponse object
         ClientResponse<Void, Errors> response = client.deleteUser(userId);
