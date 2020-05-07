@@ -63,9 +63,12 @@ We'll use [version 1.16.0](https://mvnrepository.com/artifact/io.fusionauth/fusi
 <dependency>
     <groupId>io.fusionauth</groupId>
     <artifactId>fusionauth-java-client</artifactId>
-    <version>1.16.0</version>
+    <version>1.15.4</version>
 </dependency>
 ```
+
+You can download all the code from [the GitHub repository](https://github.com/FusionAuth/fusionauth-example-java).
+
 ## Creating an application 
 
 In FusionAuth, an [application](https://fusionauth.io/docs/v1/tech/core-concepts/applications) refers to a place where a user can log into. Before you begin integrating authentication capabilities with FusionAuth, you’ll need to create at least one application. 
@@ -81,42 +84,42 @@ That’s a simple way of consuming the FusionAuth REST API. Isn't it?
 Here is the code for using the createApplication method to create an application in FusionAuth:
 
 ```java
-mport com.inversoft.error.Errors;
+package io.fusionauth.example;
+
+import com.inversoft.error.Errors;
 import io.fusionauth.client.FusionAuthClient;
 import io.fusionauth.domain.Application;
 import io.fusionauth.domain.api.ApplicationRequest;
 import io.fusionauth.domain.api.ApplicationResponse;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJavaTutorial {
+public class CreateApplication {
 
-    public static void main(String[] args) {    
-   	 
-            String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-            
-            String fusionauthURL = "http://localhost:9011";    
-                    
-            //Initiating the client
-            FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);
-            
-            //Initiating the application and providing registration details
-            Application app = new Application();
-            
-            app.name = "FusionJavaApp";
-            
-            //Creating the request object
-            ApplicationRequest request = new ApplicationRequest(app, null);
-            
-            //Using the returned ClientResponse object
-            ClientResponse<ApplicationResponse, Errors> response = client.createApplication(null, request);            	 
-               
-            if (response.wasSuccessful()) {                   	 
-                System.out.println("Registration successful");
-                
-            }else {
-                //Handling errors
-                System.out.println(response.errorResponse);
-            }
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
+        // Initiating the application and providing registration details
+        Application app = new Application();
+
+        app.name = "Todo";
+
+        // Creating the request object
+        ApplicationRequest request = new ApplicationRequest(app, null);
+
+        // Using the returned ClientResponse object
+        ClientResponse<ApplicationResponse, Errors> response = client.createApplication(null, request);
+
+        if (response.wasSuccessful()) {
+            System.out.println("Application creation successful");
+        } else {
+            // Handling errors
+            System.out.println(response.exception);
+        }
     }
 
 }
@@ -160,7 +163,9 @@ To do this, we’ll use the `register` method, which comes with the Java client 
 
 Here is the code for creating a user:
 
-```
+```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import com.inversoft.error.Errors;
 import io.fusionauth.client.FusionAuthClient;
@@ -170,40 +175,39 @@ import io.fusionauth.domain.api.user.RegistrationRequest;
 import io.fusionauth.domain.api.user.RegistrationResponse;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJavaTutorial {
+public class CreateUser {
 
-	public static void main(String[] args) {    
-   	 
-            String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-   	 
-    	    String fusionauthURL = "http://localhost:9011";    
-           	 
-    	    //Initiating the client
-    	    FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);
-   	     
-    	    //Initiating the user and providing registration details   	 
-    	    User javauser = new User();
-    	    javauser.email = "fusionjava@example.com";
-    	    javauser.password = "mypassword101";
-   	     
-    	    //Initiating user registration and creating request object
-    	    UserRegistration userreg = new UserRegistration();   	 
-    	    userreg.applicationId = UUID.fromString("1aae68ac-d4d3-4e96-b24c-c9478a309673");
-   	     
-    	    RegistrationRequest request = new RegistrationRequest(javauser, userreg);   	 
-   	     
-    	    //Using the returned ClientResponse object
-    	    ClientResponse<RegistrationResponse, Errors> response = client.register(null, request);           	 
-      	     
-    	    if (response.wasSuccessful()) {                   	 
-        	    System.out.println("Registration successful");
-       	 
-    	    }else {
-        	    //Handling errors
-        	    System.out.println(response.errorResponse);
-    	    }
-   }
-    
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
+        // Initiating the user and providing registration details
+        User javauser = new User();
+        javauser.email = "fusionjava@example.com";
+        javauser.password = "mypassword101";
+
+        // Initiating user registration and creating request object
+        UserRegistration userreg = new UserRegistration();
+        userreg.applicationId = UUID.fromString("1aae68ac-d4d3-4e96-b24c-c9478a309673");
+
+        RegistrationRequest request = new RegistrationRequest(javauser, userreg);
+
+        // Using the returned ClientResponse object
+        ClientResponse<RegistrationResponse, Errors> response = client.register(null, request);
+
+        if (response.wasSuccessful()) {
+            System.out.println("Registration successful");
+
+        } else {
+            // Handling errors
+            System.out.println(response.errorResponse);
+        }
+    }
+
 }
 ```
 
@@ -226,37 +230,37 @@ If you check the method definition, you’ll find that it only requires the `use
 So, we just need to provide the `userId` and we’ll get the specified user’s profile details. Here is the code for using the `retrieveUser` method to retrieve a user’s registered information:
 
 ```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import com.inversoft.error.Errors;
 import io.fusionauth.client.FusionAuthClient;
 import io.fusionauth.domain.api.UserResponse;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJava {
+public class RetrieveUserInfo {
 
-    public static void main(String[] args) {    
-        
-        String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-        
-        String fusionauthURL = "http://localhost:9011";
-        
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
         UUID userId = UUID.fromString("c7f91df7-ed89-410b-87e7-a2b7ade9bf98");
-        
-        //Initiating the client
-        FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-        
-        //Using the returned ClientResponse object
-        ClientResponse<UserResponse, Errors> response = client.retrieveUser(userId);        
-           
+
+        // Using the returned ClientResponse object
+        ClientResponse<UserResponse, Errors> response = client.retrieveUser(userId);
+
         if (response.wasSuccessful()) {
-            //Outputting the user's profile details
-            System.out.println(response.successResponse.user);     
-            
-            
+            // Outputting the user's profile details
+            System.out.println(response.successResponse.user);
+
         } else {
-            //Handling errors
+            // Handling errors
             System.out.println(response.errorResponse);
-            
+
         }
     }
 }
@@ -334,6 +338,8 @@ We’ll use the user we created earlier in this tutorial.
 Here is the code:
 
 ```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import com.inversoft.error.Errors;
 import io.fusionauth.client.FusionAuthClient;
@@ -341,31 +347,31 @@ import io.fusionauth.domain.api.LoginRequest;
 import io.fusionauth.domain.api.LoginResponse;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJavaTutorial {
+public class UserLogin {
 
-	public static void main(String[] args) {    
-   	 
-    	String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-   	 
-    	String fusionauthURL = "http://localhost:9011";    
-           	 
-    	//Initiating the client
-    	FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-    	UUID appId = UUID.fromString("1aae68ac-d4d3-4e96-b24c-c9478a309673");
-    	//Creating the request object
-    	LoginRequest request = new LoginRequest(appId,"fusionjava@example.com", "mypassword101" );
-   	 
-    	//Using the returned object
-    	ClientResponse<LoginResponse, Errors> response = client.login(request);               	 
-      	 
-    	if (response.wasSuccessful()) {                   	 
-        	System.out.println("Login successful");
-       	 
-    	}else {
-        	//Handling errors
-        	System.out.println(response.errorResponse);
-    	}
-	}
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
+        UUID appId = UUID.fromString("1aae68ac-d4d3-4e96-b24c-c9478a309673");
+        // Creating the request object
+        LoginRequest request = new LoginRequest(appId, "fusionjava@example.com", "mypassword101");
+
+        // Using the returned object
+        ClientResponse<LoginResponse, Errors> response = client.login(request);
+
+        if (response.wasSuccessful()) {
+            System.out.println("Login successful");
+
+        } else {
+            // Handling errors
+            System.out.println(response.errorResponse);
+        }
+    }
 
 }
 ```
@@ -379,34 +385,35 @@ So, we'll use the `ChangePasswordRequest` class to create a `request` object, wh
 Here is the code:
 
 ```java
+package io.fusionauth.example;
+
 import com.inversoft.error.Errors;
 import io.fusionauth.client.FusionAuthClient;
 import io.fusionauth.domain.api.user.ChangePasswordRequest;
 
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJava {
+public class ChangePassword {
 
-    public static void main(String[] args) {    
-        
-        String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-        
-        String fusionauthURL = "http://localhost:9011";    
-                
-        //Initiating the client
-        FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-        
-        //Creating the request object
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
+        // Creating the request object
         ChangePasswordRequest request = new ChangePasswordRequest("fusionjava@gmail.com", "xxxxxxxxxx", "xxxxxxxxxx");
-        
-        //Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.changePasswordByIdentity(request);                    
-           
-        if (response.wasSuccessful()) {                        
+
+        // Using the returned ClientResponse object
+        ClientResponse<Void, Errors> response = client.changePasswordByIdentity(request);
+
+        if (response.wasSuccessful()) {
             System.out.println("Password change successful");
-            
+
         } else {
-            //Handling errors
+            // Handling errors
             System.out.println(response.errorResponse);
         }
     }
@@ -420,32 +427,33 @@ To deactivate a user, we'll use the `deactivateUser` method. We'll provide the u
 Here is the code:
 
 ```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import com.inversoft.error.Errors;
 import io.fusionauth.client.FusionAuthClient;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJava {
+public class DeactivateUser {
 
-    public static void main(String[] args) {    
-        
-        String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-        
-        String fusionauthURL = "http://localhost:9011";
-        
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
         UUID userId = UUID.fromString("c7f91df7-ed89-410b-87e7-a2b7ade9bf98");
-        
-        //Initiating the client
-        FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-        
-        //Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.deactivateUser(userId);        
-           
-        if (response.wasSuccessful()) {            
-            System.out.println("User deactivated successfully");             
-            
+
+        // Using the returned ClientResponse object
+        ClientResponse<Void, Errors> response = client.deactivateUser(userId);
+
+        if (response.wasSuccessful()) {
+            System.out.println("User deactivated successfully");
+
         } else {
-            //Handling errors
+            // Handling errors
             System.out.println(response.errorResponse);
         }
     }
@@ -459,6 +467,8 @@ Next, to reactivate the user we just deactivated (perhaps they paid their bill a
 Here is the code:
 
 ```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import com.inversoft.error.Errors;
 import io.fusionauth.client.FusionAuthClient;
@@ -466,28 +476,27 @@ import io.fusionauth.domain.api.UserResponse;
 
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJava {
+public class ReactivateUser {
 
-    public static void main(String[] args) {    
-        
-        String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-        
-        String fusionauthURL = "http://localhost:9011";
-        
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
         UUID userId = UUID.fromString("c7f91df7-ed89-410b-87e7-a2b7ade9bf98");
-        
-        //Initiating the client
-        FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-        
-        //Using the returned ClientResponse object
-        ClientResponse<UserResponse, Errors> response = client.reactivateUser(userId);        
-           
+
+        // Using the returned ClientResponse object
+        ClientResponse<UserResponse, Errors> response = client.reactivateUser(userId);
+
         if (response.wasSuccessful()) {
-        //Outputting the user's profile details            
-            System.out.println(response.successResponse.user);             
-            
+            // Outputting the user's profile details
+            System.out.println(response.successResponse.user);
+
         } else {
-            //Handling errors
+            // Handling errors
             System.out.println(response.errorResponse);
         }
     }
@@ -510,32 +519,33 @@ Remember that this method *permanently* deletes all the user information from yo
 Here is the code:
 
 ```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import com.inversoft.error.Errors;
 import io.fusionauth.client.FusionAuthClient;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJava {
+public class DeleteUser {
 
-    public static void main(String[] args) {    
-        
-        String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-        
-        String fusionauthURL = "http://localhost:9011";
-        
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
         UUID userId = UUID.fromString("c7f91df7-ed89-410b-87e7-a2b7ade9bf98");
-        
-        //Initiating the client
-        FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-        
-        //Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.deleteUser(userId);        
-           
-        if (response.wasSuccessful()) {            
-            System.out.println(response.successResponse);             
-            
+
+        // Using the returned ClientResponse object
+        ClientResponse<Void, Errors> response = client.deleteUser(userId);
+
+        if (response.wasSuccessful()) {
+            System.out.println(response.successResponse);
+
         } else {
-            //Handling errors
+            // Handling errors
             System.out.println(response.errorResponse);
         }
     }
@@ -551,33 +561,34 @@ To deactivate an application, we'll use the `deactivateApplication` method and p
 Here is the code:
 
 ```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import io.fusionauth.client.FusionAuthClient;
 import com.inversoft.error.Errors;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJava {
+public class DeactivateApplication {
 
-    public static void main(String[] args) {    
-        
-        String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-        
-        String fusionauthURL = "http://localhost:9011";
-        
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
         UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
-        
-        //Initiating the client
-        FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-        
-        //Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.deactivateApplication(appId);        
-           
-        if (response.wasSuccessful()) {    
-            
-            System.out.println("Application deactivated successfully");         
-            
+
+        // Using the returned ClientResponse object
+        ClientResponse<Void, Errors> response = client.deactivateApplication(appId);
+
+        if (response.wasSuccessful()) {
+
+            System.out.println("Application deactivated successfully");
+
         } else {
-            //Handling errors
+            // Handling errors
             System.out.println(response.errorResponse);
         }
     }
@@ -591,6 +602,8 @@ To reactivate the application we just deactivated, because the system maintenanc
 Here is the code:
 
 ```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import io.fusionauth.client.FusionAuthClient;
 import io.fusionauth.domain.api.ApplicationResponse;
@@ -598,28 +611,27 @@ import io.fusionauth.domain.api.ApplicationResponse;
 import com.inversoft.error.Errors;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJava {
+public class ReactivateApplication {
 
-    public static void main(String[] args) {    
-        
-        String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-        
-        String fusionauthURL = "http://localhost:9011";
-        
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
         UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
-        
-        //Initiating the client
-        FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-        
-        //Using the returned ClientResponse object
-        ClientResponse<ApplicationResponse, Errors> response = client.reactivateApplication(appId);        
-           
-        if (response.wasSuccessful()) {    
-            //Outputting the application's details
-            System.out.println(response.successResponse.application);        
-            
+
+        // Using the returned ClientResponse object
+        ClientResponse<ApplicationResponse, Errors> response = client.reactivateApplication(appId);
+
+        if (response.wasSuccessful()) {
+            // Outputting the application's details
+            System.out.println(response.successResponse.application);
+
         } else {
-            //Handling errors
+            // Handling errors
             System.out.println(response.errorResponse);
         }
     }
@@ -637,35 +649,35 @@ Remember that this method permanently deletes the application from FusionAuth. S
 Here is the code:
 
 ```java
+package io.fusionauth.example;
+
 import java.util.UUID;
 import io.fusionauth.client.FusionAuthClient;
-import io.fusionauth.domain.api.ApplicationResponse;
 
 import com.inversoft.error.Errors;
 import com.inversoft.rest.ClientResponse;
 
-public class FusionJava {
+public class DeleteApplication {
 
-    public static void main(String[] args) {    
-        
-        String apiKey = "Z77y_yshOSAIfF3sd370Ns6m4VkKcAOqFpyyzSGfnF4";
-        
-        String fusionauthURL = "http://localhost:9011";
-        
+    public static void main(String[] args) {
+
+        ApplicationProperties.setupProperties();
+
+        // Initiating the client
+        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+                ApplicationProperties.getFusionAuthURL());
+
         UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
-        
-        //Initiating the client
-        FusionAuthClient client = new FusionAuthClient(apiKey, fusionauthURL);    
-        
-        //Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.deleteApplication(appId);        
-           
-        if (response.wasSuccessful()) {    
-            //Outputting the application's details
-            System.out.println(response.successResponse);        
-            
-        }else {
-            //Handling errors
+
+        // Using the returned ClientResponse object
+        ClientResponse<Void, Errors> response = client.deleteApplication(appId);
+
+        if (response.wasSuccessful()) {
+            // Outputting the application's details
+            System.out.println(response.successResponse);
+
+        } else {
+            // Handling errors
             System.out.println(response.errorResponse);
         }
     }
