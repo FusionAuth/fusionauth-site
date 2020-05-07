@@ -69,6 +69,48 @@ We'll use [version 1.15.4](https://mvnrepository.com/artifact/io.fusionauth/fusi
 
 You can also download all the code from [the GitHub repository](https://github.com/FusionAuth/fusionauth-example-java)--note that if you do that you'll need to update some of the ids.
 
+## Setup
+
+The API key and location of the FusionAuth server are stored in a properties file called [`application.properties`](https://github.com/FusionAuth/fusionauth-example-java/blob/master/src/main/resources/application.properties). Many Java application environments provide secrets management, but for this tutorial, we'll just load the properties file into a class. Make sure you update your `application.properties` file with the correct values.
+
+```java
+package io.fusionauth.example;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+public class ApplicationProperties {
+
+    private static String apiKey;
+    private static String fusionAuthURL;
+
+    public static String getApiKey() {
+        return apiKey;
+    }
+
+    public static String getFusionAuthURL() {
+        return fusionAuthURL;
+    }
+
+    public static void setupProperties() {
+        try (InputStream input = ApplicationProperties.class.getResourceAsStream("/application.properties")) {
+
+            Properties prop = new Properties();
+
+            // load a properties file
+            prop.load(input);
+            fusionAuthURL = prop.getProperty("fusionAuthURL");
+            apiKey = prop.getProperty("apiKey");
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
+```
+
+
 ## Creating an application 
 
 In FusionAuth, an [application](https://fusionauth.io/docs/v1/tech/core-concepts/applications) refers to a place where a user can log into. Before you begin integrating authentication capabilities with FusionAuth, you’ll need to create at least one application. 
@@ -80,6 +122,7 @@ So, we’ll start by using the FusionAuth Java client to create an application. 
 If you go to [this GitHub page](https://github.com/FusionAuth/fusionauth-java-client/blob/master/src/main/java/io/fusionauth/client/FusionAuthClient.java), you can see the various methods alongside their definitions. For example, to create an application, we’ll use the `createApplication` method. If you check the method definition, you’ll find that it only requires two parameters: the ID of the application and the request object that contains all the information used for creating the application. 
 
 That’s a simple way of consuming the FusionAuth REST API. Isn't it?
+
 
 Here is the code for using the createApplication method to create an application in FusionAuth:
 
