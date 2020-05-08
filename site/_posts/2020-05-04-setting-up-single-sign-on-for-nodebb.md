@@ -70,8 +70,8 @@ The [install and configuration instructions](https://github.com/FusionAuth/nodeb
 
 However, I will say that:
 * I had to rebuild and restart the nodebb server when I installed the plugin.
-* you need to set the client secret and client id to the values you noted from the FusionAuth application screen.
-* you have to set the discovery URL to the FusionAuth discovery URL which is `http://local.fusionauth.io` for me, and you if you installed nodebb locally on that port.
+* You need to set the client secret and client id to the values you noted from the FusionAuth application screen.
+* You have to set the discovery URL to the FusionAuth discovery URL which is `http://local.fusionauth.io` for me, and you if you installed nodebb locally on that port.
 
 Okay. Just [head over there](https://github.com/FusionAuth/nodebb-plugin-fusionauth-oidc) and come back when you're done.
 
