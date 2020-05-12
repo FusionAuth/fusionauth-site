@@ -3,7 +3,7 @@ layout: blog-post
 title: Setting up single sign on for nodebb 
 description: Using OIDC, we'll set up single sign on for a nodebb forum.
 author: Dan Moore
-image: blogs/dot-net-command-line-client/creating-user-cli-client.png
+image: blogs/nodebb-single-sign-on/fusionauth-tutorial-sso-nodebb.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
