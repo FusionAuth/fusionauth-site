@@ -300,4 +300,5 @@ If you want to build an executable to distribute to any user or server with the 
 
 While APIs are great, client libraries are even better. Even though the team at FusionAuth is good, they haven't anticipated all of your user management needs. That's why they've built out over ten client libraries available for the most popular languages.
 
-Right now poor newuser2@example.com can't do much. As promised, in a future post, we'll create a web application that they can log in to.
+Right now poor newuser2@example.com can't do much. Next, we'll [create a web application](https://fusionauth.io/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth) that they can log in to.
+

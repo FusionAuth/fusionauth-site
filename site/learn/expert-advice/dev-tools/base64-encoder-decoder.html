@@ -1,0 +1,93 @@
+---
+layout: advice-dev-tool
+title: Base64 Encoder & Decoder
+description: Base64 Encode and Decode strings with no ads!
+author: Daniel DeGroff
+category: Dev Tools
+icon: brackets-curly
+date: 2020-05-09
+---
+
+<div>
+  <form id="url-encoder-form" class="full">
+    <div class="form-row">
+      <label for="url_safe">URL safe</label>
+      <label class="toggle">
+        <input type="checkbox" id="url_safe" name="url_safe" value="true"><span class="rail"></span><span class="pin"></span>
+      </label>
+    </div>
+    <div class="form-row">
+      <label for="without_padding">Without padding</label>
+      <label class="toggle">
+        <input type="checkbox" id="without_padding" name="without_padding" value="true"><span class="rail"></span><span class="pin"></span>
+      </label>
+    </div>
+    <div class="form-row">
+      <label for="decoded-textarea">Unencoded text</label>
+      <textarea id="decoded-textarea" rows="5" autofocus style="resize: vertical;" placeholder="Type or paste text something to encode"></textarea>
+      <sub>Type or paste a text into the text area above and the text will be base64 <strong>Encoded</strong> as you type</sub>
+    </div>
+    <div class="form-row">
+      <label for="encoded-textarea">Base64 encoded text</label>
+      <textarea class="form-control" id="encoded-textarea" rows="5" style="resize: vertical;" placeholder="Type or paste something to decode"></textarea>
+      <sub>Type or paste base64 encoded text into the text area above and the text will be base64 <strong>Decoded</strong> as you type</sub>
+    </div>
+  </form>
+</div>
+
+<script type="text/javascript">
+  Prime.Document.onReady(function() {
+    new Base64EncoderDecoder();
+  });
+
+  var Base64EncoderDecoder = function() {
+    Prime.Utils.bindAll(this);
+    Prime.Document.queryById('decoded-textarea').addEventListener('keyup', this._handleKeyUp);
+    Prime.Document.queryById('encoded-textarea').addEventListener('keyup', this._handleKeyUp);
+    this.urlSafe = Prime.Document.queryById('url_safe');
+    this.withoutPadding = Prime.Document.queryById('without_padding');
+  };
+
+  Base64EncoderDecoder.constructor = Base64EncoderDecoder;
+  Base64EncoderDecoder.prototype = {
+    decode: function(s) {
+      console.info(s);
+      return atob(s);
+    },
+
+    encode: function(s) {
+      return btoa(s);
+    },
+
+    urlSafeDecode: function(s) {
+      return this.decode(s.replace(/-/g, '+')
+                            .replace(/_/g, '\\'));
+    },
+
+    urlSafeEncode: function(s) {
+      return this.encode(s)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
+    },
+
+    _handleKeyUp: function(event) {
+      var target = new Prime.Document.Element(event.target);
+      var encoding = target.getId().startsWith('decoded');
+
+      var src = Prime.Document.queryById(encoding ? 'decoded-textarea' : 'encoded-textarea');
+      var dst = Prime.Document.queryById(encoding ? 'encoded-textarea' : 'decoded-textarea');
+      var s = src.getValue();
+
+      if (encoding) {
+        var encoded = this.urlSafe.isChecked() ? this.urlSafeEncode(s) : this.encode(s);
+        if (this.withoutPadding.isChecked()) {
+          encoded = encoded.replace(/=+$/, '');
+        }
+
+        dst.setValue(encoded);
+      } else {
+        dst.setValue(this.urlSafe.isChecked() ? this.urlSafeDecode(s) : this.decode(s));
+      }
+    }
+  };
+</script>
