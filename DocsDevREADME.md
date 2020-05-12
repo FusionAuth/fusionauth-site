@@ -5,6 +5,11 @@ Here are some guidelines to follow when writing documentation.
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing. 
 - Use `Id` instead of `ID` when describing a unique identifier
 - Don't use complex breadcrumbs styling. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`
+
+
+### Proper names
+- macOS
+- Elasticsearch
  
 
 ## Sizing Window for Screenshots

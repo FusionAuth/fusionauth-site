@@ -8,13 +8,17 @@ description: The FusionAuth Typescript Client library allows you to call FusionA
 
 == Typescript Client Library
 
-The Typescript client library allows you to integrate FusionAuth with your Typescript application.
+The Typescript client library allows you to integrate FusionAuth with your JavaScript application.
 
-Source Code:
+Regardless of the fact that this is written in TypeScript, this client supports both NodeJS and Browser environments without requiring that your application is also written in typescript.
+
+=== Installing
+
+==== Source Code:
 
 * https://github.com/FusionAuth/fusionauth-typescript-client
 
-NPM Package:
+==== NPM Package:
 
 * https://www.npmjs.com/package/@fusionauth/typescript-client
 
@@ -24,25 +28,72 @@ To install the FusionAuth Typescript Client package run:
 $ npm install @fusionauth/typescript-client
 ```
 
+==== Browser bundle:
+
+We also release a prebundled version of the client for the browser on our github releases page. This version can be simply included as an html `<script>` and `FusionAuthClient` will be available to any scripts on the page.
+
+* https://github.com/FusionAuth/fusionauth-typescript-client/releases
+
+=== Examples
+
 [NOTE]
 ====
 Please note that if you will be using this client library in front end code such as a web browser you will not have a secure way to store an API key. You may optionally pass a value of `null` for the API key parameter and still make API requests that do not require an API key.
 ====
 
-The following code assumes FusionAuth is running on `\http://localhost:9011` and uses an API key `6b87a398-39f2-4692-927b-13188a81a9a3`, you will need to supply your own API key, and if you are not running FusionAuth locally, your host parameter may be different.
+The following examples assumes FusionAuth is running on `\http://localhost:9011` and uses an API key `bf69486b-4733-4470-a592-f1bfce7af580`, you will need to supply your own API key, and if you are not running FusionAuth locally, your host parameter may be different.
 
-Here is an example of using the `retrieveUserByEmail` method to retrieve a User by an email address.
+The following examples all use `retrieveUserByEmail` as a basic use case of FusionAuth. Additionally, while the examples are written in TypeScript, this does not prevent you from using raw JavaScript instead in your own application.
+
+==== NodeJS
 
 [source,typescript]
 ----
 import {FusionAuthClient} from 'FusionAuthClient'
-const client = new FusionAuthClient('6b87a398-39f2-4692-927b-13188a81a9a3', 'http://localhost:9011');
+const client = new FusionAuthClient('bf69486b-4733-4470-a592-f1bfce7af580', 'https://local.fusionauth.io');
 
-// Retrieve User by Email Address
 client.retrieveUserByEmail('user@example.com')
-       .then(handleResponse);
-
-function handleResponse (clientResponse) {
-  console.info(JSON.stringify(clientResponse.successResponse.user, null, 2));
-}
+      .then(clientResponse => {
+        console.log("User:", JSON.stringify(clientResponse.response.user, null, 2));
+      }).catch(console.error);
 ----
+
+You can also find this example's link:https://github.com/FusionAuth/fusionauth-typescript-client/tree/master/examples/node-example[source code] in the link:https://github.com/FusionAuth/fusionauth-typescript-client[typescript repo].
+
+==== Browser
+
+In the browser, all of the exported objects are under the namespace FusionAuth to prevent polluting the global namespace.
+
+[source,html]
+----
+<script src="fusionauth-typescript-client.min.js"></script>
+<script>
+const client = new FusionAuth.FusionAuthClient('bf69486b-4733-4470-a592-f1bfce7af580', 'https://local.fusionauth.io');
+
+client.retrieveUserByEmail('user@example.com')
+      .then(clientResponse => {
+        console.log("User:", JSON.stringify(clientResponse.response.user, null, 2));
+      }).catch(console.error);
+</script>
+----
+
+You can also find this example's link:https://github.com/FusionAuth/fusionauth-typescript-client/tree/master/examples/browser-example[source code] in the link:https://github.com/FusionAuth/fusionauth-typescript-client[typescript repo].
+
+==== Hybrid
+
+You can write the hybrid exactly the same as the NodeJS example (but keep in mind that API keys will be exported so it is not recommended to use API keys at all). The key difference in this case is the build script. Instead of just using `tsc` to compile and running nodejs on the resulting javascript, you will instead use a tool like `browserify` or `webpack` to build your script. This example uses `browserify` for simplicity.
+
+We can easily build a hybrid project using one of two commands, each associated with the target
+
+[source,bash]
+----
+# Compile for nodejs
+tsc
+
+# Compile for browser
+npm run build-browser
+# AKA
+npx browserify example.ts --debug -p tsify -t browserify-shim -o dist/example-browser.js
+----
+
+You can also find this example's link:https://github.com/FusionAuth/fusionauth-typescript-client/tree/master/examples/hybrid-example[source code] in the link:https://github.com/FusionAuth/fusionauth-typescript-client[typescript repo].
