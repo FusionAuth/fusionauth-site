@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Setting up single sign on for nodebb 
+title: Setting up single sign-on for nodebb 
 description: Using OIDC, we'll set up single sign on for a nodebb forum.
 author: Dan Moore
 image: blogs/nodebb-single-sign-on/fusionauth-tutorial-sso-nodebb.png
@@ -10,7 +10,7 @@ excerpt_separator: "<!--more-->"
 
 nodebb is a modern well supported forum software package. It has many plugins and provides a great user experience. Unlike hosted forums, you can run this on your own domain, which has UX and SEO benefits. 
 
-In this post, we'll show you how to set up single sign on (SSO) for your nodebb forum.
+In this post, we'll show you how to set up single sign-on (SSO) for your nodebb forum.
 
 <!--more-->
 
@@ -20,7 +20,7 @@ Imagine you build out an application. Let's say you are building the world's bes
 
 Enter nodebb. You download and install it. The forum works great! Then you notice that every one of your users now must sign up for another username and password. Boo. 
 
-Luckily, you planned ahead and used an identity management system with OpenID Connect (OIDC) support. You realize you can set up nodebb to use this existing system to provide SSO to your users. All your todo app users will be able to log in and post in your forum with the same username and password they use for your app. Ah, the glory of single sign on. 
+Luckily, you planned ahead and used an identity management system with OpenID Connect (OIDC) support. You realize you can set up nodebb to use this existing system to provide SSO to your users. All your todo app users will be able to log in and post in your forum with the same username and password they use for your app. Ah, the glory of single sign-on. 
 
 Let's see how you can achieve this dream.
 
@@ -34,7 +34,7 @@ You'll also need an OIDC server. In this post, I'll be using FusionAuth as my id
 
 ## Setting up the SSO server
 
-First, create an application in FusionAuth. I'm going to call mine, creatively, "nodebb". Note that you can create as many applications as you want. If you were really building out "The Dream", you'd also have a 'todo app' FusionAuth application, but for the purposes of this tutorial we'll only set up the nodebb FusionAuth config. Users will have the same username and password for all applications, but may not be able to access every one of them. (Access is controlled by user registrations, which we'll cover below.)
+First, create an application in FusionAuth. I'm going to call mine, creatively, "nodebb". Note that you can create as many applications as you want. If you were really building out "The Dream", you'd also have a 'todo app' FusionAuth application, but for this tutorial we'll only set up the nodebb FusionAuth config. Users will have the same username and password for all applications, but may not be able to access every one of them. (Access is controlled by user registrations, which we'll cover below.)
 
 After you save the application, edit it again, as we'll need to record a couple of configuration variables. Start at the "OAuth" tab. 
 
@@ -105,11 +105,11 @@ Essentially, customer username and password information are kept in the identity
 
 ## FusionAuth features
 
-The steps above should work with any compliant SSO identity provider. Now we're going to cover features that aren't entirely part of the OIDC standard, but are useful for managing users. If you are using a different identity management server, there should be analogs for the features outlined below.
+The steps above should work with any compliant SSO identity provider. Now we're going to cover features that aren't entirely part of the OIDC standard but are useful for managing users. If you are using a different identity management server, there should be analogs for the features outlined below.
 
 ### User management
 
-If you lock the user account in the SSO server, the user won't be able to login. This is helpful when managing a forum; if a user is not being a good community member you can disable their account either temporarily or permanently. In FusionAuth, you'd navigate to the users list and then click on the "Lock" icon (you'll be warned that a locked user can't login):
+If you lock the user account in the SSO server, the user won't be able to log in. This is helpful when managing a forum; if a user is not being a good community member you can disable their account either temporarily or permanently. In FusionAuth, you'd navigate to the list of users and click on the "Lock" icon (you'll be warned that a locked user can't login):
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/lock-user-from-list.png" alt="The user list screen where you can lock a user account." class="img-fluid" figure=false %}
 
@@ -117,7 +117,7 @@ And here's what the locked out user would see when they tried to log in:
 
 {% include _image.liquid src="/assets/img/blogs/nodebb-single-sign-on/lockedaccount.png" alt="The login screen for a user whose account has been locked." class="img-fluid" figure=false %}
 
-Of course, people can change. So an admin can unlock an account anytime, either using the FusionAuth admin console, or with the [FusionAuth API](https://fusionauth.io/docs/v1/tech/apis/users#reactivate-a-user).
+Of course, people can change. So an admin can unlock an account anytime, either using the FusionAuth admin console or with the [FusionAuth API](https://fusionauth.io/docs/v1/tech/apis/users#reactivate-a-user).
 
 ### Admin users
 
@@ -133,7 +133,7 @@ Next, we'll associate the user you previously created with the admin role. We do
 
 We also need to update the plugin with the correct "Roles claim". Sign in as an admin to nodebb. (If you disabled local login already, you may need to use a special login path; you can always go directly to the local login screen by adding `/login?local=1` to your nodebb base URL: `http://localhost:4567/login?local=1`.)
 
-Update the plugin configuration; set the "Roles claim" be `roles` and restart nodebb. Now you can log in to nodebb with this user, or any other with the admin role in FusionAuth, and view forum admin pages. Admin users will be able to move topics, edit posts and perform all the other tasks needed to keep your todo app forum users happy.
+Update the plugin configuration; set the "Roles claim" be `roles` and restart nodebb. Now you can log in to nodebb with this user, or any other with the admin role in FusionAuth and view forum admin pages. Admin users will be able to move topics, edit posts and perform all the other tasks needed to keep your todo app forum users happy.
 
 ### Self registration
 
@@ -151,13 +151,13 @@ After a user creates an account, they'll be logged in. At this point, they'd onl
 
 ### Theming the pages
 
-You may have noticed that the login and logout pages didn't look like the nodebb pages. FusionAuth gives you the ability to theme your login, logout and other authentication pages. This involves changing templates which you can access via the admin screen. 
+You may have noticed that the login and logout pages didn't look like the nodebb pages. FusionAuth gives you the ability to theme your login, logout, and other authentication pages. This involves changing templates which you can access via the admin screen. 
 
 The [FusionAuth theme documentation](https://fusionauth.io/docs/v1/tech/themes/) outlines the templates and gives an example of customizing the login page.
 
 ## Conclusion
 
-nodebb is a powerful piece of forum software. Standing up a forum lets your users communicate with each other and can be a powerful mechanism for knowledge sharing, search engine optimization and community building.
+nodebb is a powerful piece of forum software. Standing up a forum lets your users communicate with each other and can be a powerful mechanism for knowledge sharing, search engine optimization, and community building.
 
-Using an SSO server such as FusionAuth lets your users minimize the number of usernames and passwords they must manage. It also allows you to control access to your applications from one screen, also known as "The Dream". Using a single sign on server for centralized user management will make both your life and your users' lives easier.
+Using an SSO server such as FusionAuth lets your users minimize the number of usernames and passwords they must manage. It also allows you to control access to your applications from one screen, also known as "The Dream". Using a single sign-on server for centralized user management will make both your life and your users' lives easier.
 
