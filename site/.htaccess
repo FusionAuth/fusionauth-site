@@ -34,5 +34,11 @@ RedirectMatch permanent "^/anywhere$" "/"
 # HTTP2 is enabled on the AWS Application load balancer, for some reason Safari on macOS is showing NSPOSIX 100 errors - this seems to be the fix for now.
 Header unset Upgrade
 
-# Add CORS header for account.fusionauth.io
-Header set Access-Control-Allow-Origin "https://account.fusionauth.io"
+# Add CORS header for account.fusionauth.io and login.fusionauth.io for the following file types: .json, .ttf, .eot, .wof, .woff2
+<FilesMatch "\.(json|ttf|otf|eot|woff|woff2)$">
+  <IfModule mod_headers.c>
+    SetEnvIf Origin "http(s)?://(account.fusionauth.io|login.fusionauth.io)$" AccessControlAllowOrigin=$0
+    Header set Access-Control-Allow-Origin %{AccessControlAllowOrigin}e env=AccessControlAllowOrigin
+    Header merge Vary Origin
+  </IfModule>
+</FilesMatch>
