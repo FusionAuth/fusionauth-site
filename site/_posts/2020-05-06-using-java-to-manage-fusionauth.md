@@ -112,7 +112,7 @@ public class ApplicationProperties {
 
 In FusionAuth, an [application](https://fusionauth.io/docs/v1/tech/core-concepts/applications) refers to a place where a user can log into. Before you begin integrating authentication capabilities with FusionAuth, you’ll need to create at least one application. 
 
-For example, if you want to manage the activities of users accessing your Todo application, you can create an application in FusionAuth and use it to register users’, manage users’ roles, monitor users’ activities, and more. 
+For example, if you want to manage the activities of users accessing your Todo application, you can create an application in FusionAuth and use it to register users, manage users' roles, monitor users' activities, and more. 
 
 So, we’ll start by using the FusionAuth Java client to create an application. As earlier mentioned, the Java library comes with already-built methods that allow for easy integration of the FusionAuth REST API in Java environments.
 
@@ -162,11 +162,11 @@ public class CreateApplication {
 
 As you can see from the code above, when instantiating the FusionAuth client, we specified the API key and the web address that points to our running FusionAuth server. You will need to provide your own unique values for these parameters.
 
-Then, we created an variable named `app` that is an instance of the `Application` class, and set the name of the application. We then passed this object to the constructor of the `ApplicationRequest` class. 
+Then, we created an variable named `app` that is an instance of the `Application` class and set the name of the application. We then passed this object to the constructor of the `ApplicationRequest` class. 
 
 Notice that the Java client returns a `ClientResponse` object that contains everything that happened while communicating with the FusionAuth server.
 
-Also, we passed the value of the first parameter of the `createApplication` method as `null`. This will allow FusionAuth to generate for us a secure random UUID for the newly created application. 
+Also, we passed the value of the first parameter of the `createApplication` method as `null`. This will allow FusionAuth to generate a secure random UUID for the newly created application. 
 
 Finally, we handle any errors experienced when creating the application on FusionAuth. 
 
@@ -355,7 +355,7 @@ This would be useful for displaying on their profile page in the Todo applicatio
 
 Let’s say we want to use the FusionAuth Java client to log in the user we created. We'd do this if we wanted to log a user in from our own application, rather than using [FusionAuth's OAuth capabilities](https://fusionauth.io/docs/v1/tech/oauth/) and the Authorization Code grant. You might do this if you were building a command line tool to add Todos or a mobile application.
 
-We can do this by using the `login` method. This method allows us to login a user programmatically using their stored credentials. We’ll also provide the ID of our Todo application. 
+We can do this by using the `login` method. This method allows us to log in a user programmatically using their stored credentials. We’ll also provide the ID of our Todo application. 
 
 To log the user in, we’ll use the `LoginRequest` class. It’s this object which we’ll pass as an argument to the `login` method.  The `LoginRequest` class requires three string parameters: the ID of the application (as UUID), the user’s email/username, and their password. We’ll use the credentials we created earlier in this tutorial along with the ID of our Todo application. 
 
@@ -443,7 +443,7 @@ public class ChangePassword {
 
 ## Deactivating a user
 
-To deactivate a user, we'll use the `deactivateUser` method. We'll provide the ID of the user we are deactivating to this method. Deactivation means they cannot login, which might happen if the credit card they used to sign up for the Todo app was declined.
+To deactivate a user, we'll use the `deactivateUser` method. We'll provide the ID of the user we are deactivating to this method. Deactivation means they cannot log in, which might happen if the credit card they used to sign up for the Todo app was declined.
 
 Here is the code:
 
@@ -570,7 +570,7 @@ If you run the above code, and the request is successful, you'll get a response 
 
 ## Deactivating an application
 
-To deactivate an application, we'll use the `deactivateApplication` method and provide the ID of the application as its parameter. This disables the application, but does not delete all the data. You might do this if you need to disable logins for all users due for system maintenance.
+To deactivate an application, we'll use the `deactivateApplication` method and provide the ID of the application as its parameter. This disables the application but does not delete all the data. You might do this if you need to disable logins for all users due for system maintenance.
 
 Here is the code:
 
