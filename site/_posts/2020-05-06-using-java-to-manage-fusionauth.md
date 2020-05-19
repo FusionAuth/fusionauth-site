@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we’re going to illustrate how to use Java to accomplish various tasks with FusionAuth, programmatically. More so, to speed up our development time, we’ll use the FusionAuth Java client library, which comes with already-built methods that we’ll use instead of building things from scratch. 
+In this tutorial, we’re going to illustrate how to use Java to accomplish various tasks with FusionAuth, programmatically. In order to speed up our development time, we’ll use the FusionAuth Java client library, which comes with already-built methods that we’ll use instead of building things from scratch. 
 
 <!--more-->
 
@@ -33,6 +33,7 @@ So, if your preferred language is [Python](https://fusionauth.io/blog/2019/10/01
 * Deleting an application
 
 ## What you'll need
+
 * FusionAuth (you can see the [FusionAuth system requirements here](https://fusionauth.io/docs/v1/tech/installation-guide/system-requirements))
 * The [FusionAuth Maven dependency](https://mvnrepository.com/artifact/io.fusionauth/fusionauth-java-client)
 * Java development environment
@@ -43,9 +44,10 @@ Ready?
 Let's get going...
 
 ## Setting up FusionAuth
+
 FusionAuth can be deployed on nearly any platform. Depending on the platform you're using, you can get the installation instructions [from here](https://fusionauth.io/download). 
 
-Once FusionAuth is installed on your platform, you can follow this [simple 5-minute guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) to set it up and ensure it's running properly.
+Once FusionAuth is installed on your platform, you can follow this [simple 5-minute guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) to set it up and ensure it's running properly. That guide uses Node for the integration, but you can skip that part if you prefer to use Java.
 
 Then, go to the FusionAuth UI and [create an API key](https://fusionauth.io/docs/v1/tech/apis/authentication). We’ll use this key to access the FusionAuth application programmatically. Make sure you scope it to only allow access to the application, user, and user/change-password APIs to follow the principle of least privilege.
 
@@ -53,17 +55,15 @@ After completing the FusionAuth setup, and grabbing the API key, we can move to 
 
 Shall we?
 
-
 ## Setting up the Maven dependency
 
-To set up the dependencies needed for this project, let's create a Maven utility project and add the FusionAuth Java client library to the pom.xml file. 
-We'll use [version 1.15.4](https://mvnrepository.com/artifact/io.fusionauth/fusionauth-java-client/1.15.4) of the FusionAuth Maven dependency:
+To set up the dependencies needed for this project, let's create a Maven utility project and add the FusionAuth Java client library to the pom.xml file. We'll use [version 1.15.4](https://mvnrepository.com/artifact/io.fusionauth/fusionauth-java-client/1.15.4) of the FusionAuth Maven dependency:
 
 ```xml
 <dependency>
-    <groupId>io.fusionauth</groupId>
-    <artifactId>fusionauth-java-client</artifactId>
-    <version>1.15.4</version>
+  <groupId>io.fusionauth</groupId>
+  <artifactId>fusionauth-java-client</artifactId>
+  <version>1.15.4</version>
 </dependency>
 ```
 
@@ -81,32 +81,29 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class ApplicationProperties {
+  private static String apiKey;
+  private static String fusionAuthURL;
 
-    private static String apiKey;
-    private static String fusionAuthURL;
+  public static String getApiKey() {
+    return apiKey;
+  }
 
-    public static String getApiKey() {
-        return apiKey;
+  public static String getFusionAuthURL() {
+    return fusionAuthURL;
+  }
+
+  public static void setupProperties() {
+    try (InputStream input = ApplicationProperties.class.getResourceAsStream("/application.properties")) {
+      Properties prop = new Properties();
+
+      // load a properties file
+      prop.load(input);
+      fusionAuthURL = prop.getProperty("fusionAuthURL");
+      apiKey = prop.getProperty("apiKey");
+    } catch (IOException ex) {
+      ex.printStackTrace();
     }
-
-    public static String getFusionAuthURL() {
-        return fusionAuthURL;
-    }
-
-    public static void setupProperties() {
-        try (InputStream input = ApplicationProperties.class.getResourceAsStream("/application.properties")) {
-
-            Properties prop = new Properties();
-
-            // load a properties file
-            prop.load(input);
-            fusionAuthURL = prop.getProperty("fusionAuthURL");
-            apiKey = prop.getProperty("apiKey");
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
+  }
 }
 ```
 
@@ -115,7 +112,7 @@ public class ApplicationProperties {
 
 In FusionAuth, an [application](https://fusionauth.io/docs/v1/tech/core-concepts/applications) refers to a place where a user can log into. Before you begin integrating authentication capabilities with FusionAuth, you’ll need to create at least one application. 
 
-For example, if you want to manage the activities of users accessing your todo application, you can create an application on FusionAuth and use it to register users’, manage users’ roles, monitor users’ activities, and more. 
+For example, if you want to manage the activities of users accessing your Todo application, you can create an application in FusionAuth and use it to register users’, manage users’ roles, monitor users’ activities, and more. 
 
 So, we’ll start by using the FusionAuth Java client to create an application. As earlier mentioned, the Java library comes with already-built methods that allow for easy integration of the FusionAuth REST API in Java environments.
 
@@ -130,50 +127,46 @@ Here is the code for using the createApplication method to create an application
 package io.fusionauth.example;
 
 import com.inversoft.error.Errors;
+import com.inversoft.rest.ClientResponse;
 import io.fusionauth.client.FusionAuthClient;
 import io.fusionauth.domain.Application;
 import io.fusionauth.domain.api.ApplicationRequest;
 import io.fusionauth.domain.api.ApplicationResponse;
-import com.inversoft.rest.ClientResponse;
 
 public class CreateApplication {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    // Instantiate the application with a name (using the FusionAuth builder pattern)
+    Application app = new Application().with(a -> a.name = "Todo");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Creating the request object
+    ApplicationRequest request = new ApplicationRequest(app, null);
 
-        // Initiating the application and providing registration details
-        Application app = new Application();
+    // Use the returned ClientResponse object
+    ClientResponse<ApplicationResponse, Errors> response = client.createApplication(null, request);
 
-        app.name = "Todo";
-
-        // Creating the request object
-        ApplicationRequest request = new ApplicationRequest(app, null);
-
-        // Using the returned ClientResponse object
-        ClientResponse<ApplicationResponse, Errors> response = client.createApplication(null, request);
-
-        if (response.wasSuccessful()) {
-            System.out.println("Application creation successful");
-        } else {
-            // Handling errors
-            System.out.println(response.exception);
-        }
+    if (response.wasSuccessful()) {
+      System.out.println("Application creation successful");
+    } else {
+      // Handle errors
+      System.out.println(response.exception);
     }
-
+  }
 }
 ```
-As you can see from the code above, when initiating the FusionAuth client, we specified the API key and the web address that points to our running FusionAuth application. You will need to provide your own unique values for these parameters.
 
-Then, we created an `app` object from the `Application` class, and used the object to define the name of the application. We also passed this object as a parameter to the `ApplicationRequest` class. 
+As you can see from the code above, when instantiating the FusionAuth client, we specified the API key and the web address that points to our running FusionAuth server. You will need to provide your own unique values for these parameters.
 
-Notice that the Java client returns a `ClientResponse` object that contains everything that happened while communicating with the FusionAuth server. 
+Then, we created an variable named `app` that is an instance of the `Application` class, and set the name of the application. We then passed this object to the constructor of the `ApplicationRequest` class. 
 
-Also, we passed the value of the first parameter of the `createApplication` method as `null`. This will allow FusionAuth to generate for us a secure random UUID for the created application. 
+Notice that the Java client returns a `ClientResponse` object that contains everything that happened while communicating with the FusionAuth server.
+
+Also, we passed the value of the first parameter of the `createApplication` method as `null`. This will allow FusionAuth to generate for us a secure random UUID for the newly created application. 
 
 Finally, we handle any errors experienced when creating the application on FusionAuth. 
 
@@ -196,11 +189,12 @@ Also, if we run the code again, we get the following error, indicating that the 
   "generalErrors" : [ ]
 }
 ```
+
 ## Creating a user
 
-Applications are no good without users. In FusionAuth, a [user](https://fusionauth.io/docs/v1/tech/core-concepts/users) refers to someone or something that has been granted the right to use your FusionAuth application—such as an employee, client, or device. So, let’s see how you can create a user and also carry out various user management tasks for the todo app.
+Applications are no good without users. In FusionAuth, a [user](https://fusionauth.io/docs/v1/tech/core-concepts/users) refers to someone that has been granted the right to use your FusionAuth application -- such as an employee, client, or an end-user. So, let’s see how you can create a user and also carry out various user management tasks for the Todo app.
 
-We’ll do what is called [Full Registration](https://fusionauth.io/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined). In this case, we’ll create a user and register them for the application we’d created previously. These two actions will take place simultaneously. If you'd rather not do that, you can create a user and then add them to an application--the choice is yours.
+We’ll do what is called [Full Registration](https://fusionauth.io/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined). In this case, we’ll create a user and register them for the application we’d created previously. These two actions will take place simultaneously in a single transaction. If you'd rather not do that, you can create a user and then add them to an application -- the choice is yours. 
 
 To do this, we’ll use the `register` method, which comes with the Java client library. This method requires two parameters: the `userId`, which should be supplied as a UUID string, and the `UserRegistration` request object.
 
@@ -219,58 +213,52 @@ import io.fusionauth.domain.api.user.RegistrationResponse;
 import com.inversoft.rest.ClientResponse;
 
 public class CreateUser {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    // Instantiate the user and provide login details
+    User user = new User().with(u -> u.email = "fusionjava@example.com")
+                          .with(u -> u.password = "mypassword101");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Instantiate the user registration and request object
+    UserRegistration registration = new UserRegistration();
+    registration.applicationId = UUID.fromString("1aae68ac-d4d3-4e96-b24c-c9478a309673");
 
-        // Initiating the user and providing registration details
-        User javauser = new User();
-        javauser.email = "fusionjava@example.com";
-        javauser.password = "mypassword101";
+    RegistrationRequest request = new RegistrationRequest(user, registration);
 
-        // Initiating user registration and creating request object
-        UserRegistration userreg = new UserRegistration();
-        userreg.applicationId = UUID.fromString("1aae68ac-d4d3-4e96-b24c-c9478a309673");
+    // Use the returned ClientResponse object
+    ClientResponse<RegistrationResponse, Errors> response = client.register(null, request);
 
-        RegistrationRequest request = new RegistrationRequest(javauser, userreg);
+    if (response.wasSuccessful()) {
+      System.out.println("Registration successful");
 
-        // Using the returned ClientResponse object
-        ClientResponse<RegistrationResponse, Errors> response = client.register(null, request);
-
-        if (response.wasSuccessful()) {
-            System.out.println("Registration successful");
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
-
+  }
 }
 ```
 
+Notice that we specified the ID of the application we created earlier. This is one way to register the user to the application. 
 
-Notice that we specified the ID of the application we’d created earlier. This is one way to register the user to the application. 
-
-Also, we did not specify the ID of the user. This will allow FusionAuth to create one for us automatically. 
+Also, we did not specify the ID of the user. This lets FusionAuth to create one for us automatically. 
 
 If we run the above code, and go to the FusionAuth UI, we see that the user has been created successfully:
 
 {% include _image.liquid src="/assets/img/blogs/java-client-example/user-created.png" alt="The new user has been created." class="img-fluid" figure=false %}
 
-Notice from the image above that the user’s ID has been created for us. We’ll use this ID in the subsequent sections of this tutorial. Also, the user has been registered to the todo application we created earlier. 
+Notice from the image above that the user’s ID has been created for us. We’ll use this ID in the subsequent sections of this tutorial. Also, the user has been registered to the Todo application we created earlier. 
 
 ## Retrieving a user's profile details
 
-Now, let’s see how to retrieve the profile details of the user we’d created previously. To do this, we’ll use the `retrieveUser` method. 
+Now, let’s see how to retrieve the profile details of the user we created previously. To do this, we’ll use the `retrieveUser` method. 
 
-If you check the method definition, you’ll find that it only requires the `userId` parameter, which should be supplied as a UUID string. 
-So, we just need to provide the `userId` and we’ll get the specified user’s profile details. Here is the code for using the `retrieveUser` method to retrieve a user’s registered information:
+If you check the method definition, you’ll find that it only requires the `userId` parameter, which should be supplied as a `java.util.UUID`. We just need to provide the `userId` and we’ll get the specified user’s profile details. Here is the code for using the `retrieveUser` method to retrieve a user’s registered information:
 
 ```java
 package io.fusionauth.example;
@@ -282,34 +270,31 @@ import io.fusionauth.domain.api.UserResponse;
 import com.inversoft.rest.ClientResponse;
 
 public class RetrieveUserInfo {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Use the returned ClientResponse object
+    ClientResponse<UserResponse, Errors> response = client.retrieveUser(userId);
 
-        UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
+    if (response.wasSuccessful()) {
+      // Output the user's profile details
+      System.out.println(response.successResponse.user);
 
-        // Using the returned ClientResponse object
-        ClientResponse<UserResponse, Errors> response = client.retrieveUser(userId);
-
-        if (response.wasSuccessful()) {
-            // Outputting the user's profile details
-            System.out.println(response.successResponse.user);
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
+  }
 }
 ```
 
-If you run the above code, here's the result we get on the console:
+If you run the above code, here's the result you should see on the console:
 
 ```json
 {
@@ -363,20 +348,16 @@ If you run the above code, here's the result we get on the console:
   "usernameStatus" : "ACTIVE"
 }
 ```
-This would be useful for displaying on their profile page in the todo application, for example.
 
+This would be useful for displaying on their profile page in the Todo application, for example.
 
 ## Log in a user
 
-Let’s say we want to use the FusionAuth Java client to login the user we’d created. We'd do this if we wanted to log a user in using our own application, rather than using [FusionAuth's OAuth capabilities](https://fusionauth.io/docs/v1/tech/oauth/) and the Authorization Code grant. You might do this if you were building a command line tool to add todos.
+Let’s say we want to use the FusionAuth Java client to log in the user we created. We'd do this if we wanted to log a user in from our own application, rather than using [FusionAuth's OAuth capabilities](https://fusionauth.io/docs/v1/tech/oauth/) and the Authorization Code grant. You might do this if you were building a command line tool to add Todos or a mobile application.
 
-We can do this by using the `login` method. This method allows us to login a user programmatically using the same credentials for logging them into FusionAuth. We’ll also provide the ID of the FusionAuth application where the user will log into. 
+We can do this by using the `login` method. This method allows us to login a user programmatically using their stored credentials. We’ll also provide the ID of our Todo application. 
 
-To login the user, we’ll use the `LoginRequest` class to create a `request` object. It’s this object which we’ll pass as an argument to the `login` method. 
-
-The `LoginRequest` class requires three string parameters: the ID of the application (as UUID), the user’s username, and their password.
-
-We’ll use the user we created earlier in this tutorial. 
+To log the user in, we’ll use the `LoginRequest` class. It’s this object which we’ll pass as an argument to the `login` method.  The `LoginRequest` class requires three string parameters: the ID of the application (as UUID), the user’s email/username, and their password. We’ll use the credentials we created earlier in this tutorial along with the ID of our Todo application. 
 
 Here is the code:
 
@@ -391,39 +372,38 @@ import io.fusionauth.domain.api.LoginResponse;
 import com.inversoft.rest.ClientResponse;
 
 public class UserLogin {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    UUID appId = UUID.fromString("1aae68ac-d4d3-4e96-b24c-c9478a309673");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Create the request object
+    LoginRequest request = new LoginRequest(appId, "fusionjava@example.com", "mypassword101");
 
-        UUID appId = UUID.fromString("1aae68ac-d4d3-4e96-b24c-c9478a309673");
-        // Creating the request object
-        LoginRequest request = new LoginRequest(appId, "fusionjava@example.com", "mypassword101");
+    // Use the returned ClientResponse object
+    ClientResponse<LoginResponse, Errors> response = client.login(request);
 
-        // Using the returned object
-        ClientResponse<LoginResponse, Errors> response = client.login(request);
+    if (response.wasSuccessful()) {
+      System.out.println("Login successful");
 
-        if (response.wasSuccessful()) {
-            System.out.println("Login successful");
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
+  }
 
 }
 ```
 
 ## Changing a user's password
 
-To change a user's password, we'll use the `changePasswordByIdentity` method. This method allows us to change a user's password using their identity--login ID and current password. This means we can let our users change their password in our todo application. Note that doing this will change their password across all FusionAuth applications running within [this tenant](https://fusionauth.io/docs/v1/tech/core-concepts/tenants).
+To change a user's password, we'll use the `changePasswordByIdentity` method. This method allows us to change a user's password using their identity -- login ID and current password. This means we can let our users change their password in our Todo application. Note that doing this will change their password across all FusionAuth applications running within [this tenant](https://fusionauth.io/docs/v1/tech/core-concepts/tenants).
 
-So, we'll use the `ChangePasswordRequest` class to create a `request` object, which we'll pass as an argument to the `changePasswordByIdentity` method. `ChangePasswordRequest` requires three string parameters--the login ID, the current password, and the new password. 
+We'll use the `ChangePasswordRequest` class, which we'll pass as an argument to the `changePasswordByIdentity` method. `ChangePasswordRequest` requires three string parameters -- the login ID, the current password, and the new password. 
 
 Here is the code:
 
@@ -437,35 +417,33 @@ import io.fusionauth.domain.api.user.ChangePasswordRequest;
 import com.inversoft.rest.ClientResponse;
 
 public class ChangePassword {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    // Creating the request object
+    ChangePasswordRequest request = new ChangePasswordRequest("fusionjava@gmail.com", "oldpassword", "newpassword");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Use the returned ClientResponse object
+    ClientResponse<Void, Errors> response = client.changePasswordByIdentity(request);
 
-        // Creating the request object
-        ChangePasswordRequest request = new ChangePasswordRequest("fusionjava@gmail.com", "xxxxxxxxxx", "xxxxxxxxxx");
+    if (response.wasSuccessful()) {
+      System.out.println("Password change successful");
 
-        // Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.changePasswordByIdentity(request);
-
-        if (response.wasSuccessful()) {
-            System.out.println("Password change successful");
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
+  }
 }
 ```
 
 ## Deactivating a user
 
-To deactivate a user, we'll use the `deactivateUser` method. We'll provide the user's ID as a UUID string in the parameter's value. Deactivation means they cannot login, which might happen if the credit card they used to sign up for the todo app was declined.
+To deactivate a user, we'll use the `deactivateUser` method. We'll provide the ID of the user we are deactivating to this method. Deactivation means they cannot login, which might happen if the credit card they used to sign up for the Todo app was declined.
 
 Here is the code:
 
@@ -478,28 +456,26 @@ import io.fusionauth.client.FusionAuthClient;
 import com.inversoft.rest.ClientResponse;
 
 public class DeactivateUser {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Use the returned ClientResponse object
+    ClientResponse<Void, Errors> response = client.deactivateUser(userId);
 
-        UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
+    if (response.wasSuccessful()) {
+      System.out.println("User deactivated successfully");
 
-        // Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.deactivateUser(userId);
-
-        if (response.wasSuccessful()) {
-            System.out.println("User deactivated successfully");
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
+  }
 }
 ```
 
@@ -509,7 +485,7 @@ Here's how the user will look in the admin interface when they've been deactivat
 
 ## Reactivating a user
 
-Next, to reactivate the user we just deactivated (perhaps they paid their bill and are now itching to add some todos), let's use the `reactivateUser` method and provide the ID of the user as its parameter. 
+Next, to reactivate the user we just deactivated (perhaps they paid their bill and are now itching to add some todos), let's use the `reactivateUser` method and provide the ID of the user as its parameter.
 
 Here is the code:
 
@@ -524,30 +500,27 @@ import io.fusionauth.domain.api.UserResponse;
 import com.inversoft.rest.ClientResponse;
 
 public class ReactivateUser {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Use the returned ClientResponse object
+    ClientResponse<UserResponse, Errors> response = client.reactivateUser(userId);
 
-        UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
+    if (response.wasSuccessful()) {
+      // Outputting the user's profile details
+      System.out.println(response.successResponse.user);
 
-        // Using the returned ClientResponse object
-        ClientResponse<UserResponse, Errors> response = client.reactivateUser(userId);
-
-        if (response.wasSuccessful()) {
-            // Outputting the user's profile details
-            System.out.println(response.successResponse.user);
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
-
+  }
 }
 ```
 
@@ -555,7 +528,7 @@ If you run the above code, and the request is successful, it'll reactivate the u
 
 ## Deleting a user
 
-Finally, let's see how to delete a user from the FusionAuth application. To do this, we'll use the `deleteUser` method and provide the ID of the user as its parameter. You might do this if a user cancels their todo app membership.
+Finally, let's see how to delete a user from the FusionAuth server. To do this, we'll use the `deleteUser` method and provide the ID of the user as its parameter. You might do this if a user cancels their Todo app membership.
 
 Remember that this method *permanently* deletes all the user information from your application. So, use it cautiously. 
 
@@ -570,32 +543,30 @@ import io.fusionauth.client.FusionAuthClient;
 import com.inversoft.rest.ClientResponse;
 
 public class DeleteUser {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Use the returned ClientResponse object
+    ClientResponse<Void, Errors> response = client.deleteUser(userId);
 
-        UUID userId = UUID.fromString("5eb46e47-927c-41ac-ae60-ed88e3840edd");
+    if (response.wasSuccessful()) {
+      System.out.println("Deleted!");
 
-        // Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.deleteUser(userId);
-
-        if (response.wasSuccessful()) {
-            System.out.println(response.successResponse);
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
+  }
 }
 ```
 
-If you run the above code, and the request is successful, you'll get a response of `null`, indicating that the user has been deleted from FusionAuth.
+If you run the above code, and the request is successful, you'll get a response of `Deleted!`, indicating that the user has been deleted from FusionAuth.
 
 ## Deactivating an application
 
@@ -612,29 +583,26 @@ import com.inversoft.error.Errors;
 import com.inversoft.rest.ClientResponse;
 
 public class DeactivateApplication {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Use the returned ClientResponse object
+    ClientResponse<Void, Errors> response = client.deactivateApplication(appId);
 
-        UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
+    if (response.wasSuccessful()) {
+      System.out.println("Application deactivated successfully");
 
-        // Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.deactivateApplication(appId);
-
-        if (response.wasSuccessful()) {
-
-            System.out.println("Application deactivated successfully");
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
+  }
 }
 ```
 
@@ -655,39 +623,37 @@ import com.inversoft.error.Errors;
 import com.inversoft.rest.ClientResponse;
 
 public class ReactivateApplication {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Use the returned ClientResponse object
+    ClientResponse<ApplicationResponse, Errors> response = client.reactivateApplication(appId);
 
-        UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
+    if (response.wasSuccessful()) {
+      // Output the application's details
+      System.out.println(response.successResponse.application);
 
-        // Using the returned ClientResponse object
-        ClientResponse<ApplicationResponse, Errors> response = client.reactivateApplication(appId);
-
-        if (response.wasSuccessful()) {
-            // Outputting the application's details
-            System.out.println(response.successResponse.application);
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
+  }
 }
 ```
 
-If you run the above code, and the request is successful, it'll reactivate the application. You'll also get the bonus of its details on the console. 
+If you run the above code, and the request is successful, it'll reactivate the application. You'll also get the bonus of printing out the application's details on the console. 
 
 ## Deleting an application
 
 Lastly, let's see how to delete an application from FusionAuth. To do this, we'll use the `deleteApplication` method and provide the ID of the application as its parameter. 
 
-Remember that this method permanently deletes the application from FusionAuth. So, you need to use it cautiously. Most of the time the better choice is to deactivate the application. But maybe you are no longer in the todo app business and want to remove it from your servers.
+Remember, this method permanently deletes the application from FusionAuth. So, you need to use it cautiously. Most of the time the better choice is to deactivate the application. But maybe you are no longer in the Todo app business and want to remove it from your servers.
 
 Here is the code:
 
@@ -701,43 +667,41 @@ import com.inversoft.error.Errors;
 import com.inversoft.rest.ClientResponse;
 
 public class DeleteApplication {
+  public static void main(String[] args) {
+    ApplicationProperties.setupProperties();
 
-    public static void main(String[] args) {
+    // Instantiate the client
+    FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
+        ApplicationProperties.getFusionAuthURL());
 
-        ApplicationProperties.setupProperties();
+    UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
 
-        // Initiating the client
-        FusionAuthClient client = new FusionAuthClient(ApplicationProperties.getApiKey(),
-                ApplicationProperties.getFusionAuthURL());
+    // Use the returned ClientResponse object
+    ClientResponse<Void, Errors> response = client.deleteApplication(appId);
 
-        UUID appId = UUID.fromString("991001b4-d196-4204-b483-a0ed5dbf7666");
+    if (response.wasSuccessful()) {
+      // Output the application's details
+      System.out.println("Deleted!");
 
-        // Using the returned ClientResponse object
-        ClientResponse<Void, Errors> response = client.deleteApplication(appId);
-
-        if (response.wasSuccessful()) {
-            // Outputting the application's details
-            System.out.println(response.successResponse);
-
-        } else {
-            // Handling errors
-            System.out.println(response.errorResponse);
-        }
+    } else {
+      // Handle errors
+      System.out.println(response.errorResponse);
     }
+  }
 }
 ```
 
-If you run the above code, and the request is successful, you'll get a response of `null`, indicating that the application has been deleted from FusionAuth.
+If you run the above code, and the request is successful, you'll get a response of `Deleted!`, indicating that the application has been deleted from FusionAuth.
 
 ## Conclusion
 
-To this end, you've seen how it is easy to integrate FusionAuth with Java using the client library. The library provides an easy-to-use native Java binding to the FusionAuth REST API, which allows you to quickly complete your identity and user management tasks. 
+Throughout this article, you've seen how it is easy to integrate FusionAuth with Java using the client library. The library provides an easy-to-use native Java binding to the FusionAuth REST API, which allows you to quickly complete your identity and user management tasks.
 
 Of course, we've just scratched the surface of the things you can achieve with the FusionAuth Java client. You can head over to [the documentation](https://github.com/FusionAuth/fusionauth-java-client) and discover its other awesome capabilities. 
 
 Next steps you might want to take to further explore the FusionAuth Java client library:
 
-* add a user to a group
-* retrieve all the users in a group
-* log a user out
+* Add a user to a group
+* Retrieve all the users in a group
+* Log a user out
 
