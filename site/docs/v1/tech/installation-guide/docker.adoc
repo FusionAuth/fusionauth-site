@@ -8,13 +8,32 @@ description: Deploy and test FusionAuth using a Docker container
 
 == Docker Compose
 
-All of the FusionAuth Docker images may be found on https://hub.docker.com/u/fusionauth/[Docker Hub]. If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. The following is an example and it may not be the most recent version. Refer to the following link in https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/docker-compose.yml[GitHub] to find the latest version.
+All of the FusionAuth Docker images may be found on https://hub.docker.com/u/fusionauth/[Docker Hub].
 
-```
+If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example.  The reference `docker-compose.yml` will install FusionAuth without the enhanced search capability that Elasticsearch provides.  If you would like to install FusionAuth including Elasticsearch for improved search capability, include the reference `docker-compose.override.yml` in the install steps below.
+
+The following are examples and may not be the most recent version. Refer to the following link in https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub] to find the latest version of our reference configuration.
+
+=== FusionAuth
+In this example, we will download the `docker-compose.yml` and the `.env` files and then start up the configured containers.
+
+[source]
+----
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
 docker-compose up
-```
+----
+
+=== FusionAuth with Elasticsearch
+In this example, we will download the `docker-compose.yml`, `docker-compose.override.yml` and the `.env` files and then start up the configured containers.
+
+[source]
+----
+curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
+curl -o docker-compose.override.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
+curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
+docker-compose up
+----
 
 The stock `.env` file will contain the following values, you will want to modify the `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` values are correct. You may also override any of these values using environment variables.
 
@@ -24,12 +43,15 @@ POSTGRES_PASSWORD=postgres
 DATABASE_USER=fusionauth
 DATABASE_PASSWORD=hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3
 
-ES_JAVA_OPTS=-Xms256m -Xmx256m
+ES_JAVA_OPTS=-Xms512m -Xmx512m
 
-FUSIONAUTH_MEMORY=256M
+FUSIONAUTH_MEMORY=512M
 ```
 
-The following is an example `docker-compose.yml` file configuring FusionAuth using the database for the user search engine:
+=== Docker Compose Examples
+
+==== FusionAuth
+The following is an example `docker-compose.yml` file configuring FusionAuth without the Elasticsearch engine. For the most recent version of this example find this file on https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub].
 ```yaml
 version: '3'
 
@@ -37,10 +59,12 @@ services:
   db:
     image: postgres:9.6
     environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - 54320:5432
+# Un-comment to access the db service directly
+#    ports:
+#      - 5432:5432
     networks:
       - db
     restart: unless-stopped
@@ -77,35 +101,24 @@ volumes:
   fa_config:
 ```
 
-The following is an example `docker-compose.yml` file configuring FusionAuth using Elasticsearch for the user search engine:
+==== FusionAuth with Elasticsearch
+The following is an example `docker-compose-override.yml` which may be included in your working directory next to the above `docker-compose.yml` to install and configure Elasticsearch. For the most recent version of this example find this file on https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub].
 ```yaml
 version: '3'
 
 services:
-  db:
-    image: postgres:9.6
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - 5432:5432
-    networks:
-      - db
-    restart: unless-stopped
-    volumes:
-      - db_data:/var/lib/postgresql/data
 
   search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.2
     environment:
-      - cluster.name=fusionauth
-      - bootstrap.memory_lock=true
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
-    ports:
-      - 9200:9200
-      - 9300:9300
+      cluster.name: fusionauth
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
+    # Un-comment to access the search service directly
+    # ports:
+    #  - 9200:9200
+    #  - 9300:9300
     networks:
       - search
     restart: unless-stopped
@@ -117,43 +130,27 @@ services:
       - es_data:/usr/share/elasticsearch/data
 
   fusionauth:
-    image: fusionauth/fusionauth-app:latest
     depends_on:
-      - db
       - search
     environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USER: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USER: ${DATABASE_USER}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_MEMORY: ${FUSIONAUTH_MEMORY}
       FUSIONAUTH_SEARCH_ENGINE_TYPE: elasticsearch
       FUSIONAUTH_SEARCH_SERVERS: http://search:9200
-      FUSIONAUTH_URL: http://fusionauth:9011
     networks:
-     - db
-     - search
-    restart: unless-stopped
-    ports:
-      - 9011:9011
-    volumes:
-      - fa_config:/usr/local/fusionauth/config
+      - search
 
 networks:
-  db:
-    driver: bridge
   search:
     driver: bridge
 
 volumes:
-  db_data:
   es_data:
-  fa_config:
 ```
 
+== Configuration
+Review the link:../reference/configuration#environment-variables[Configuration - Environment Variables] documentation to customize your deployment.
+
 == Docker Services
-In the above example configuration you will find a database, search and FusionAuth service. Read below to better understand how each service is configured.
+In the above example configurations you will find a database, search and FusionAuth service. Read below to better understand how each service is configured.
 
 === Database Service
 
@@ -161,18 +158,7 @@ At a minimum, you wil need to either set the `POSTGRES_PASSWORD` environment var
 
 === Search Service
 
-We currently support Elasticsearch versions 6.3.x - 7.6.x, do not modify the image value to a version outside of this range. Let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
-
-If you would like to add additional search nodes, simply copy and paste the service section named `search` and create as many as you'd like naming them `search2`, `search3` for example. Each will require a named volume, you may increment the name of the volume as well, for example `es_data1`, `es_data2`, `es_data3`, etc.
-
-////
-TODO - 1.16.0 - In order to configure multiple nodes in v7.6.x, what do we need to modify the `discovery.type` value to, and what do we set `cluster.initial_master_nodes` to?
-////
-
-=== FusionAuth Service
-
-==== Configuration
-Review the link:../reference/configuration#environment-variables[Configuration - Environment Variables] documentation to customize your deployment.
+We currently support Elasticsearch versions 6.3.x - 7.6.x.  Later versions may works as well, but may not have been tested for compatibility.  Please let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
 
 == Production Deployment
 

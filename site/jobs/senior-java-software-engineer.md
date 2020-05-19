@@ -23,7 +23,7 @@ Your responsibilities will include:
 
 * Designing new features
 * Producing clear design documentation as needed
-* Writing high-quality, preformat and secure code (primarily in Java but we use many other languages as well)
+* Writing high-quality, performant and secure code (primarily in Java but we use many other languages as well)
 * Writing extensive and thorough tests
 * Writing clear, high-quality documentation for new features
 * Rotate as the on-call engineer to solve critical customer issues (these are extremely rare since we pride ourselves on high-quality and well tested code)
