@@ -3,7 +3,7 @@ layout: blog-post
 title: Using Java to manage FusionAuth
 description: How to use Java to manage users, applications and more with FusionAuth
 author: Alfrick Opidi
-image: blogs/fusionauth-example-angular/oauth-angular-fusionauth.png
+image: blogs/java-client-example/tutorial-using-java-to-manage-fusionauth.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
