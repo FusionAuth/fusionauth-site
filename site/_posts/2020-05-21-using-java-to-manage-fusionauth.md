@@ -5,6 +5,7 @@ description: How to use Java to manage users, applications and more with FusionA
 author: Alfrick Opidi
 image: blogs/java-client-example/tutorial-using-java-to-manage-fusionauth.png
 category: blog
+tags: client-java
 excerpt_separator: "<!--more-->"
 ---
 
