@@ -38,7 +38,7 @@ end
 
 This controller will be simple. It is just going to return a hardcoded list of messages when a `GET` request is made to the `/messages` path. In a real world application, of course, you would store messages in the database and pull them dynamically using ActiveRecord. But for this tutorial, a hardcoded list will suffice.
 
-Create the controller at `app/controllers/messages_controller.rb`. Here are the contents of that class:
+Create the controller at `app//messages_controller.rb`. Here are the contents of that class:
 
 ```ruby
 class MessagesController < ApplicationController
@@ -66,10 +66,38 @@ But let's also add a test so that we can make sure future changes don't cause un
 
 Create the controller test at `test/controllers/messages_controller_test.rb`. Here are the contents of that class:
 
+```ruby
+require 'test_helper'
+
+class MessagesTest < ActionDispatch::IntegrationTest
+  test "can get messages" do
+    get "/messages"
+    assert_response :success
+  end
+  test "can get messages content" do
+    get "/messages"
+    res = JSON.parse(@response.body)
+    assert_equal '{"messages"=>["Hello"]}', res.to_s
+  end
+end
 ```
 
+Now we can run our test and make sure that we are getting what we expect:
+
+```shell
+$ rails test test/integration/messages_test.rb
+Running via Spring preloader in process 15492
+Run options: --seed 1452
+
+# Running:
+
+..
+
+Finished in 0.119373s, 16.7542 runs/s, 16.7542 assertions/s.
+2 runs, 2 assertions, 0 failures, 0 errors, 0 skips
 ```
 
+Excellent! Now let's secure the API.
 
 ## Secure the API
 
