@@ -10,7 +10,7 @@ excerpt_separator: "<!--more-->"
 
 Ruby on Rails is an excellent framework with which to build an API. The ability to quickly jam out code representing your business logic, the ease of creating and modifying data models, and the built in testing support all combine to make building a JSON API in Rails a no brainer. Add in a sleek admin interface built using something like [RailsAdmin](https://github.com/sferik/rails_admin) and you can build custom APIs in no time.
 
-In this tutorial, we're going to build a simple API in Ruby on Rails 6, and then secure the API using using a JSON Web Token.
+In this tutorial, we're going to build a simple API in Ruby on Rails 6, and then secure the API using using a JSON Web Token (JWT).
 
 <!--more-->
 
@@ -101,10 +101,65 @@ Excellent! Now let's secure the API.
 
 ## Secure the API
 
+Let's secure our API now. As a reminder, we're going to use a JWT to secure this API. While you can secure APIs using API keys or Basic Authentication, using a JWT has certain advantages. You can integrate with a number of identity providers that offer OAuth or SAML support. This lets you leverage an existing robust identity management system to control who has access to your API. You can also embed additional information into a JWT, including attributes like roles.
+
+The first step is to write the tests. Let's change the tests to expect a JWT and respond with a `:forbidden` HTTP status when none are provided.
+
+```ruby
+class MessagesTest < ActionDispatch::IntegrationTest
+  test "can' get messages with no auth" do
+    get "/messages"
+    assert_response :forbidden
+  end
+  test "can get messages with header" do
+    get "/messages", headers: { "HTTP_AUTHORIZATION" => "Bearer " + build_jwt }
+    assert_response :success
+  end
+  test "expired jwt fails" do
+    get "/messages", headers: { "HTTP_AUTHORIZATION" => "Bearer " + build_jwt(-1) }
+    assert_response :forbidden
+  end
+  test "can get messages content" do
+    get "/messages", headers: { "HTTP_AUTHORIZATION" => "Bearer " + build_jwt }
+    res = JSON.parse(@response.body)
+    assert_equal '{"messages"=>["Hello"]}', res.to_s
+  end
+
+  def build_jwt(valid_for_minutes = 5)
+    exp = Time.now.to_i + (valid_for_minutes*60)
+    payload = { "iss": "fusionauth.io",
+                "exp": exp,
+                "aud": "238d4793-70de-4183-9707-48ed8ecd19d9",
+                "sub": "19016b73-3ffa-4b26-80d8-aa9287738677",
+                "name": "Dan Moore",
+                "roles": ["USER"]
+    }
+
+    JWT.encode payload, Rails.configuration.x.oauth.jwt_secret, 'HS256'
+
+  end
+end
+```
+
+What we're doing here is specifying that the JWT will have an `Authorization` header of the form `Bearer JWT...`, and testing a couple of cases. Let's add our authorization code now that our tests fail.
+
+There are two places we could put the code that checks the JWT. We could place it in the Messages controller or we could put it in the Application controller and have authorization enforced for all requests. Since this is an API that is using JWT, and we're presuming all clients will be carrying a JWT, we should protect all our resources. If and when we need to distinguish between different JWT claims, we can refactor. For instance, we may want to have some APIs only accessible for users with the `ADMIN` role.
+
+Here's the code that we should put in the `app/controllers/application_controller.rb` file:
+
+```ruby
+
+```
+
+## Verify issuer
+
+
 ## Take it further
 
 Make the API more complicated. Create a messages model and have the messages pulled from the database. Change your JWT claims to include a preferred greeting, and prepend that to any messages provided.
 
 ## Next steps
 
+Let's get a JWT from an identity provider next.
 
+root 
