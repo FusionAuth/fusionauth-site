@@ -5,14 +5,15 @@ description: We'll configure FusionAuth and extend the ASP.NET Core web applicat
 author: Dan Moore
 image: blogs/whats-new-in-oauth-2-1/whats-new-with-oauth-2-1.png
 category: blog
+tags: client-netcore
 excerpt_separator: "<!--more-->"
 ---
 
-Previously, we used ASP.NET Core to [build a web application](TBD) with a single protected page. Let's extend the application to display the role of the user in FusionAuth as well as a custom claim. We're going to create a group, assign a role to that group and then place our user in that group. We'll also explore modifying our JavaScript Web Token (JWT) by using a lambda to expose the user's favorite color. Finally, we'll display all the claims on the "Secure" page.
+Previously, we used ASP.NET Core to [build a web application](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth) with a single protected page. Let's extend the application to display the role of the user in FusionAuth as well as a custom claim. We're going to create a group, assign a role to that group and then place our user in that group. We'll also explore modifying our JavaScript Web Token (JWT) by using a lambda to expose the user's favorite color. Finally, we'll display all the claims on the "Secure" page.
 
 <!--more-->
 
-If you haven't yet, please set up FusionAuth and the web application as specified in the [previous post](TBD).
+If you haven't yet, please set up FusionAuth and the web application as specified in the [previous post](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth).
 
 ## Setting up roles and groups
 
