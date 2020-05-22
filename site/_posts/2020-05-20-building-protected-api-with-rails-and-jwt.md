@@ -9,13 +9,13 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-Ruby on Rails is an excellent framework with which to build an API. The ability to quickly jam out code representing your business logic, the ease of creating and modifying data models, and the built in testing support all combine to make building a JSON API in Rails a no brainer. Add in a sleek admin interface built using something like [RailsAdmin](https://github.com/sferik/rails_admin) and you can build custom APIs in no time.
+Ruby on Rails is a modern web framework, but also is a great way to build an API. The ability to quickly jam out code representing your business logic, the ease of creating and modifying data models, and the built-in testing support all combine to make building a JSON API in Rails a no brainer. Add in a sleek admin interface built using something like [RailsAdmin](https://github.com/sferik/rails_admin) and using Rails you can build and manage APIs easily. 
 
-In this tutorial, we're going to build a simple API in Ruby on Rails 6, and then secure the API using using a JSON Web Token (JWT).
+But you don't typically want just anyone to access your API. You want to ensure the right people and applications are doing so. In this tutorial, we're going to build an API in Ruby on Rails 6, and secure it using using JSON Web Tokens (JWTs).
 
 <!--more-->
 
-As always, the code is available under an Apache2 license [on GitHub](https://github.com/FusionAuth/fusionauth-example-rails-api), if you'd rather jump ahead and just get the code.
+As always, the code is available under an Apache2 license [on GitHub](https://github.com/FusionAuth/fusionauth-example-rails-api), if you'd rather jump ahead.
 
 ## Prerequisites 
 
@@ -23,13 +23,13 @@ This post assumes you have Ruby and Rails 6 installed. If you don't, we suggest 
 
 ## Build the API
 
-To build the API, we're going to create a new Rails API application. Using the `--api` switch disables a bunch of functionality we won't use (like views).
+To build the API, we're going to create a new Rails application. Using the `--api` switch disables a bunch of functionality we won't need (like views).
 
 ```shell
 rails new hello_api --api
 ```
 
-Then, change to that directory. We're now going to add our controller to the routes that Rails knows about. Edit the `config/routes.rb` file and change the contents to 
+Change to the created directory. We're now going to add our controller to the routes file. Edit the `config/routes.rb` file and change the contents to:
 
 ```ruby
 Rails.application.routes.draw do
@@ -37,9 +37,9 @@ Rails.application.routes.draw do
 end
 ```
 
-This controller will be simple. It is just going to return a hardcoded list of messages when a `GET` request is made to the `/messages` path. In a real world application, of course, you would store messages in the database and pull them dynamically using ActiveRecord. But for this tutorial, a hardcoded list will suffice.
+The `Messages` controller won't be too complicated. It returns a hardcoded list of messages when a `GET` request is made to the `/messages` path. In a real world application, of course, you would store messages in the database and pull them dynamically using ActiveRecord. But for this tutorial, a hardcoded list suffices.
 
-Create the controller at `app//messages_controller.rb`. Here are the contents of that class:
+Create the controller at `app/controllers/messages_controller.rb`. Here is what the class looks like:
 
 ```ruby
 class MessagesController < ApplicationController
@@ -57,15 +57,13 @@ If you start up your Rails server:
 rails s
 ```
 
-You should now be able to visit http://localhost:4000/messages and see 
+You should now be able to visit `http://localhost:4000/messages` and see some messages:
 
 ```json
 {"messages":["Hello"]}
 ```
 
-But let's also add a test so that we can make sure future changes don't cause unexpected behavior.
-
-Create the controller test at `test/controllers/messages_controller_test.rb`. Here are the contents of that class:
+But let's add a test so future changes don't cause unexpected behavior. Create the controller test at `test/controllers/messages_controller_test.rb`. Here are the contents of that class:
 
 ```ruby
 require 'test_helper'
@@ -98,13 +96,13 @@ Finished in 0.119373s, 16.7542 runs/s, 16.7542 assertions/s.
 2 runs, 2 assertions, 0 failures, 0 errors, 0 skips
 ```
 
-Excellent! Now let's secure the API.
+Excellent! We have a working API which returns well formed JSON! Rails even takes care of setting the `Content-Type` header to `application/json; charset=utf-8`. Now let's secure the API.
 
 ## Secure the API
 
-Let's secure our API now. As a reminder, we're going to use a JWT to secure this API. While you can secure APIs using API keys or Basic Authentication, using a JWT has certain advantages. You can integrate with a number of identity providers that offer OAuth or SAML support. This lets you leverage an existing robust identity management system to control who has access to your API. You can also embed additional information into a JWT, including attributes like roles.
+Now, let's secure our API. As a reminder, we're going to use a JWT to secure this API. While you can secure Rails APIs using [a variety of methods](https://edgeguides.rubyonrails.org/action_controller_overview.html#http-authentications), using a JWT has advantages. You can integrate with a number of identity providers that offer OAuth or SAML support, which allows you to leverage an existing robust identity management system to control API access. You can also embed additional metadata into a JWT, including attributes like roles.
 
-The first step is to write the tests. Let's change the tests to expect a JWT and respond with a `:forbidden` HTTP status when none are provided.
+The first step to changing this API is to write tests. Let's change them to sometimes provide a JWT and expect `:forbidden` HTTP statuses when the JWT doesn't meet our expectations.
 
 ```ruby
 class MessagesTest < ActionDispatch::IntegrationTest
@@ -142,14 +140,12 @@ class MessagesTest < ActionDispatch::IntegrationTest
 end
 ```
 
-What we're doing here is specifying that the JWT will have an `Authorization` header of the form `Bearer JWT...`, and testing a couple of cases. 
+What we're doing here is writing a test that specifies the JWT will be in the `Authorization` header of any requests. Let's look more closely at the JWT. 
 
-First, let's talk about the JWT. 
-
-[JWTs have claims](https://tools.ietf.org/html/rfc7519#section-4), which are information carried by the JWT. The keys of the JSON payload, such as `iss`, and `name` are claims. Some of these are defined in the JWT RFC. These are called 'registered' claims. Others are registered with the IANA but are not part of the standard; these are 'public' claims. And yet others are entirely defined by the JWT creator; these are 'private' claims. 
+[JWTs have claims](https://tools.ietf.org/html/rfc7519#section-4) basically information embedded in the JWT. The keys of the JSON payload we build in the `build_jwt` function, such as `iss` and `name`, are claims. Some of these are defined in the JWT RFC. These are 'registered' claims. Others are recorded with the IANA but are not part of the standard; these are 'public' claims. And yet others are added to the payload by the JWT creator; these are 'private' claims. 
 
 
-```
+```ruby
 # ...
   def build_jwt(valid_for_minutes = 5)
     exp = Time.now.to_i + (valid_for_minutes*60)
@@ -165,19 +161,25 @@ First, let's talk about the JWT.
 # ...
 ```
 
-In this code we create a few registered claims that will be useful for our API. `exp` indicates when the JWT will expire. `aud` is an identifier of who/what this JWT is intended for. `sub` is the person or piece of software this JWT applies to--from the RFC: "The claims in a JWT are normally statements about the subject." And `iss` is the identifier for the issuer of the JWT. 
+Above, we create registered claims that our API may examine. `exp` indicates when the JWT will expire. `aud` is an identifier of who or what this JWT is intended for (the "audience"). `sub` is the person or piece of software this JWT applies to--to quote the RFC: "The claims in a JWT are normally statements about the subject." `iss` is an identifier for the issuer of the JWT. 
 
-We also add a `name` which is a public claim. And the `roles` which are a private claim, with a meaning undefined outside of our application. Note that because the content of JWTs is not encrypted (unless you take steps to do so), no secrets or private data should be put into a claim.
+We also add the `name` public claim. `roles` are a private claim with a meaning undefined outside of our application. Note that because the content of JWTs is not typically encrypted, claims should contain no secrets or private data.
 
-The last thing we do is encode our JWT with a secret. We use HMAC because in this scenario we control both the issuer of the JWT and the consumer, and so can share a secret reliably between them. If we didn't have a way to share secrets, using an asymmetric key would be a better choice.
+The last thing we do is encode our JWT. This signs it, adds needed metadata and creates the URL encoded version. Here's what one of the JWTs generated by `build_jwt` looks like:
 
-For this tutorial, we put the HMAC secret in the environment specific configuration files located at `config/environments/`. For production usage, use whatever you normally would for secrets. You should make the HMAC secret a long string, but don't use the secret key base.
+```
+eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJmdXNpb25hdXRoLmlvIiwiZXhwIjoxNTkwMTgxNjE5LCJhdWQiOiIyMzhkNDc5My03MGRlLTQxODMtOTcwNy00OGVkOGVjZDE5ZDkiLCJzdWIiOiIxOTAxNmI3My0zZmZhLTRiMjYtODBkOC1hYTkyODc3Mzg2NzciLCJuYW1lIjoiRGFuIE1vb3JlIiwicm9sZXMiOlsiVVNFUiJdfQ.P7KXBV8fNElGGr1McKIMQbU7-mZPMxv8tw5AbufZgr0
+```
 
-Let's add our authorization code now that our tests fail.
+We use the HMAC signature algorithm because in this tutorial we control both the issuer of the JWT and the consumer--our API. We can therefore share a secret reliably between them. If we didn't have a good way to share secrets, using an asymmetric key would be a wiser choice.
 
-There are two places we could put the code that checks the JWT. We could place it in the Messages controller or we could put it in the Application controller and have authorization enforced for all requests. Since this is an API that is using JWT, and we're presuming all clients will be carrying a JWT, we should protect all our resources. If and when we need to distinguish between different JWT claims, we can refactor. For instance, we may want to have some APIs only accessible for users with the `ADMIN` role. 
+For this tutorial, we put the HMAC secret in the environment configuration files. For production usage, use your normal secrets management solution. You should make the HMAC secret a long string, but don't use the secret key base.
 
-Here's the code that we should put in the `app/controllers/application_controller.rb` file:
+Let's add our authorization code now that our tests fail because they are expecting certain unauthorized requests to return `:forbidden`.
+
+There are two places we could put the code that checks the JWT. We could add it to the `Messages` controller. Or we could add it to `Application` controller. This latter choice would enforce authorization for all requests. Since we are building an API that should never be accessed without authorization, we should protect all our resources. If and when we need to distinguish between different claims (for instance, we may want to have some APIs only accessible for users with the `ADMIN` role), we can refactor and move the JWT examination code to different controllers.
+
+Here's the authorization code for the `app/controllers/application_controller.rb` file:
 
 ```ruby
 class ApplicationController < ActionController::API
@@ -204,18 +206,22 @@ class ApplicationController < ActionController::API
       decoded_token = JWT.decode token, Rails.configuration.x.oauth.jwt_secret, true
       return true
     rescue JWT::DecodeError
-
+      Rails.logger.warn "Error decoding the JWT: "+ e.to_s
     end
     false
   end
 end
 ```
 
-We look for the JWT in the `AUTHORIZATION` HTTP header. If it doesn't exist, we deny access. If it does, we try to decode it. If it decodes, we treat it as valid.
+We look for the JWT in the `AUTHORIZATION` HTTP header. If it doesn't exist, we deny access. If it does, we try to decode it. If it decodes without raising an exception, it is a valid JWT.
 
 ## Verify claims
 
-All of the registered claims should be checked when we're consuming the JWT. This helps make sure that the JWT is what we expect. Currently we're just testing that it is a valid JWT and that it hasn't expired. Let's do a bit more. We can do this by providing options to the `JWT.decode` method. Instead of:
+But really, what does valid mean? That's something you can define on an application by application basis. The `jwt` gem provides a baseline of default validation: [it checks the `exp` and `nbf` claims](https://github.com/jwt/ruby-jwt/blob/master/lib/jwt/default_options.rb), as well as verifying the signature. 
+
+But for this application, we need to be extra sure. After all, if our messages fell into the wrong hands, who knows what could happen?
+
+So let's verify more claims are as they should be when we are decoding the JWT. We can do this by providing options to the `JWT.decode` method. Instead of:
 
 ```ruby
 # ...
@@ -225,21 +231,24 @@ decoded_token = JWT.decode token, Rails.configuration.x.oauth.jwt_secret, true
 
 ```ruby
 # ...
+expected_iss = 'fusionauth.io'
+expected_aud = '238d4793-70de-4183-9707-48ed8ecd19d9'
+# ...
 decoded_token = JWT.decode token, Rails.configuration.x.oauth.jwt_secret, true, { verify_iss: true, iss: expected_iss, verify_aud: true, aud: expected_aud, algorithm: 'HS256' }
 # ...
 ```
 
-The key part is the options at the end of the JWT `decode` method. By default the `jwt` gem checks the `exp` and `nbf` claims, as well as verifying the signature. If we want our API to verify additional claims, we need to do it ourselves. XXX TODO need to add link to default claims class
+The key part is the options at the end of the JWT `decode` method, which specify which claims we want to verify. If there were private claims that we wanted to check, we'd need to do that as well. Again, while we are guaranteed by the HMAC signature that the contents of the JWT are exactly what they were when it was created, we aren't guaranteed that the contents will remain unexamined. So add private claims, but in general JWTs should contain a bare minimum, just enough data to allow their consumers to know how to retrieve the additional data needed.
 
-We also added some tests, but you can check out the GitHub repository to see that.
+We also added some tests, but you can check out the GitHub repository to see them.
 
 ## Take it further
 
-If you are interested in further exploring this example, you can make the API more realistic. Create a messages model and have the messages pulled from the database. Change your JWT claims to include a preferred greeting, and prepend that to any messages provided. Add more resources and only allow users with certain roles to access them.
+If you are interested in further extending this example, make the API more realistic. Create a `Messages` model and have them stored in the database. Change your claims to include a preferred greeting, and prepend that to any messages provided. Add more API endpoints and only allow users with certain roles to access them.
 
-The code is [on GitHub](https://github.com/FusionAuth/fusionauth-example-rails-api).
+The code is [on GitHub](https://github.com/FusionAuth/fusionauth-example-rails-api) for your perusal.
 
 ## Next steps
 
-You'll notice we never actually specified where the JWT is coming from. We just generated one using the `jwt` gem. In general, JWTs are provided by software which authenticates the user. Integrating in a user identity store such as FusionAuth is what we'll tackle next.
+You'll notice we never specified where the JWT was coming from. We just generated one using the `jwt` gem. In general, JWTs are provided after user authentication. Integrating in a user identity store such as FusionAuth is what we'll tackle next.
 
