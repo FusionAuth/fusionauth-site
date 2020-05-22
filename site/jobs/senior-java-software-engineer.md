@@ -9,7 +9,7 @@ datePosted: 2020-04-21
 dateValidThrough: 2020-12-31
 ---
 
-FusionAuth fast growing startup headquartered in Denver Colorado. We are expanding our team to help accelerate our growth and take FusionAuth to the next level.
+FusionAuth is a fast growing startup headquartered in Denver Colorado. We are expanding our team to help accelerate our growth and take FusionAuth to the next level.
  
 Our mission is to make authentication and authorization simple and secure for every developer. This means building the best IAM (Identity and Access Management) and CIAM (Customer Identity and Access Management) solution in the world. If you are passionate about technology and want to join a company that is moving the industry forward, FusionAuth might be a perfect fit for you. 
 
