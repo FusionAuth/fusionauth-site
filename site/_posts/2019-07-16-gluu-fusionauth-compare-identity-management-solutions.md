@@ -37,11 +37,6 @@ By offering free versions both Gluu and FusionAuth are providing an important op
 
 [{% include _image.liquid src="/assets/img/blogs/gluu-fusionauth-comparison.png" alt="Gluu and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4 mt-md-4 mb-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-gluu.pdf "Download the Gluu and FusionAuth Feature Comparison")
 
-### All Features From Day One
-Up above, we said that Gluu and FusionAuth both can be downloaded and deployed for free, and that is true. But there is an important difference: Gluu Server CE is a subset of the complete platform's features–you will need to upgrade to their [VIP or Enterprise packages](https://www.gluu.org/pricing#vip "Jump to Gluu site") to unlock additional high availability functionality, two-factor authentication features, and vulnerability notifications.
-
-FusionAuth takes a different approach. We provide our complete platform with no premium tiers, no enterprise-only features, and no sacrifices. You can download and deploy the entire platform with access to every feature with no restrictions, licenses, or barriers regardless of how many users you have. Whether you deploy it on your own servers or take advantage of our [FusionAuth Cloud managed hosting](/pricing) you get every feature and function of the entire platform from day one. You also get all future upgrades, features, and patches without any additional fees.
-
 ### Ease of Installation
 The installation process for Gluu and FusionAuth are drastically different. For Gluu, there is a [complex sequence of steps](https://gluu.org/docs/ce/installation-guide/ "Jump to Gluu site") including VM preparation, unique system configurations, domain settings, and multiple module downloads. There are also specific configuration steps depending on your platform–your Linux version, cloud provider, and VM choice all impact the steps you need to take to get the Gluu Server up and running. Additionally, you will need to purchase the VIP or Enterprise version of Gluu to deploy in containers such as Docker and Kubernetes. The entire process requires a deeper knowledge of server and system management as well as a substantial amount of time to complete.
 
