@@ -5,6 +5,7 @@ description: Use the FusionAuth APIs to create and manage a user using the .NET 
 author: Dan Moore
 image: blogs/dot-net-command-line-client/creating-user-cli-client.png
 category: blog
+tags: client-netcore
 excerpt_separator: "<!--more-->"
 ---
 

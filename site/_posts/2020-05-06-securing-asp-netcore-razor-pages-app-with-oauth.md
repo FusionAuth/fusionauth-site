@@ -5,6 +5,7 @@ description: We'll build a web application using ASP.NET Core and control page a
 author: Dan Moore
 image: blogs/authorization-code-grant-asp-net/securing-asp-net-app-oauth.png
 category: blog
+tags: client-netcore
 excerpt_separator: "<!--more-->"
 ---
 
