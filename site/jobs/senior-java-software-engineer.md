@@ -9,7 +9,7 @@ datePosted: 2020-04-21
 dateValidThrough: 2020-12-31
 ---
 
-FusionAuth fast growing startup headquartered in Denver Colorado. We are expanding our team to help accelerate our growth and take FusionAuth to the next level.
+FusionAuth is a fast growing startup headquartered in Denver Colorado. We are expanding our team to help accelerate our growth and take FusionAuth to the next level.
  
 Our mission is to make authentication and authorization simple and secure for every developer. This means building the best IAM (Identity and Access Management) and CIAM (Customer Identity and Access Management) solution in the world. If you are passionate about technology and want to join a company that is moving the industry forward, FusionAuth might be a perfect fit for you. 
 
@@ -23,10 +23,10 @@ Your responsibilities will include:
 
 * Designing new features
 * Producing clear design documentation as needed
-* Writing high-quality, preformat and secure code (primarily in Java but we use many other languages as well)
+* Writing high-quality, performant and secure code (primarily in Java but we use many other languages as well)
 * Writing extensive and thorough tests
 * Writing clear, high-quality documentation for new features
-* Rotate as the on-call engineer to solve critical customer issues (these are extremely rare since we pride ourselves on extremely high-quality and well tested code)
+* Rotate as the on-call engineer to solve critical customer issues (these are extremely rare since we pride ourselves on high-quality and well tested code)
 * Work closely with the rest of the engineering team to architect and design the product and deployment strategies
 
 ## Requirements
@@ -79,5 +79,5 @@ The requirements for this position include:
 * Savant
 * SLF4J
 * MyBatis
-* JGuice
+* Guice
 * Prime.js

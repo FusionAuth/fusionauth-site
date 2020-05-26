@@ -8,13 +8,32 @@ description: Deploy and test FusionAuth using a Docker container
 
 == Docker Compose
 
-All of the FusionAuth Docker images may be found on https://hub.docker.com/u/fusionauth/[Docker Hub]. If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. The following is an example and it may not be the most recent version. Refer to the following link in https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/docker-compose.yml[GitHub] to find the latest version.
+All of the FusionAuth Docker images may be found on https://hub.docker.com/u/fusionauth/[Docker Hub].
 
-```
+If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example.  The reference `docker-compose.yml` will install FusionAuth without the enhanced search capability that Elasticsearch provides.  If you would like to install FusionAuth including Elasticsearch for improved search capability, include the reference `docker-compose.override.yml` in the install steps below.
+
+The following are examples and may not be the most recent version. Refer to the following link in https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub] to find the latest version of our reference configuration.
+
+=== FusionAuth
+In this example, we will download the `docker-compose.yml` and the `.env` files and then start up the configured containers.
+
+[source]
+----
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
 docker-compose up
-```
+----
+
+=== FusionAuth with Elasticsearch
+In this example, we will download the `docker-compose.yml`, `docker-compose.override.yml` and the `.env` files and then start up the configured containers.
+
+[source]
+----
+curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
+curl -o docker-compose.override.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
+curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
+docker-compose up
+----
 
 The stock `.env` file will contain the following values, you will want to modify the `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` values are correct. You may also override any of these values using environment variables.
 
@@ -24,12 +43,15 @@ POSTGRES_PASSWORD=postgres
 DATABASE_USER=fusionauth
 DATABASE_PASSWORD=hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3
 
-ES_JAVA_OPTS=-Xms256m -Xmx256m
+ES_JAVA_OPTS=-Xms512m -Xmx512m
 
-FUSIONAUTH_MEMORY=256M
+FUSIONAUTH_MEMORY=512M
 ```
 
-The following is an example `docker-compose.yml` file configuring FusionAuth using the database for the user search engine:
+=== Docker Compose Examples
+
+==== FusionAuth
+The following is an example `docker-compose.yml` file configuring FusionAuth without the Elasticsearch engine. For the most recent version of this example find this file on https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub].
 ```yaml
 version: '3'
 
@@ -37,10 +59,12 @@ services:
   db:
     image: postgres:9.6
     environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - 54320:5432
+# Un-comment to access the db service directly
+#    ports:
+#      - 5432:5432
     networks:
       - db
     restart: unless-stopped
@@ -77,35 +101,24 @@ volumes:
   fa_config:
 ```
 
-The following is an example `docker-compose.yml` file configuring FusionAuth using Elasticsearch for the user search engine:
+==== FusionAuth with Elasticsearch
+The following is an example `docker-compose-override.yml` which may be included in your working directory next to the above `docker-compose.yml` to install and configure Elasticsearch. For the most recent version of this example find this file on https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub].
 ```yaml
 version: '3'
 
 services:
-  db:
-    image: postgres:9.6
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - 5432:5432
-    networks:
-      - db
-    restart: unless-stopped
-    volumes:
-      - db_data:/var/lib/postgresql/data
 
   search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.2
     environment:
-      - cluster.name=fusionauth
-      - bootstrap.memory_lock=true
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
-    ports:
-      - 9200:9200
-      - 9300:9300
+      cluster.name: fusionauth
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
+    # Un-comment to access the search service directly
+    # ports:
+    #  - 9200:9200
+    #  - 9300:9300
     networks:
       - search
     restart: unless-stopped
@@ -117,43 +130,27 @@ services:
       - es_data:/usr/share/elasticsearch/data
 
   fusionauth:
-    image: fusionauth/fusionauth-app:latest
     depends_on:
-      - db
       - search
     environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USER: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USER: ${DATABASE_USER}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_MEMORY: ${FUSIONAUTH_MEMORY}
       FUSIONAUTH_SEARCH_ENGINE_TYPE: elasticsearch
       FUSIONAUTH_SEARCH_SERVERS: http://search:9200
-      FUSIONAUTH_URL: http://fusionauth:9011
     networks:
-     - db
-     - search
-    restart: unless-stopped
-    ports:
-      - 9011:9011
-    volumes:
-      - fa_config:/usr/local/fusionauth/config
+      - search
 
 networks:
-  db:
-    driver: bridge
   search:
     driver: bridge
 
 volumes:
-  db_data:
   es_data:
-  fa_config:
 ```
 
+== Configuration
+Review the link:../reference/configuration#environment-variables[Configuration - Environment Variables] documentation to customize your deployment.
+
 == Docker Services
-In the above example configuration you will find a database, search and FusionAuth service. Read below to better understand how each service is configured.
+In the above example configurations you will find a database, search and FusionAuth service. Read below to better understand how each service is configured.
 
 === Database Service
 
@@ -161,99 +158,7 @@ At a minimum, you wil need to either set the `POSTGRES_PASSWORD` environment var
 
 === Search Service
 
-We currently support Elasticsearch versions 6.3.x - 7.6.x, do not modify the image value to a version outside of this range. Let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
-
-If you would like to add additional search nodes, simply copy and paste the service section named `search` and create as many as you'd like naming them `search2`, `search3` for example. Each will require a named volume, you may increment the name of the volume as well, for example `es_data1`, `es_data2`, `es_data3`, etc.
-
-////
-TODO - 1.16.0 - In order to configure multiple nodes in v7.6.x, what do we need to modify the `discovery.type` value to, and what do we set `cluster.initial_master_nodes` to?
-////
-
-=== FusionAuth Service
-
-==== Silent Configuration
-All of the environment variables are options, if not provided a default will be utilized. If you wish to perform a silent configuration which means you will not stop in maintenance mode to configure the database or search engine, you must provide the following environment variables:
-
-* `DATABASE_URL`
-* `DATABASE_ROOT_USER`
-
-If `FUSIONAUTH_SEARCH_ENGINE_TYPE` is set to `elasticsearch` you will also need to provide the `FUSIONAUTH_SEARCH_SERVERS` environment variable in order to bypass maintenance mode.
-
-When configured correctly these variables will allow FusionAuth to silently configure itself and go directly to the setup wizard. If they are omitted, FusionAuth will start up in Maintenance mode and require you to interactively configure the database and search engine.
-
-==== Configuration
-Review the following environment variables to customize your deployment.
-
-==== Environment Variables
-
-[.api]
-[field]#DATABASE_URL# [optional]#Optional#::
-The JDBC URL that FusionAuth can use to connect to the configured database.
-+
-Consider the example below and review each part of the URL string as you may need to adjust it for your configuration.
-+
-[quote]
-jdbc:postgresql://db:5432/fusionauth
-+
-    * Database type: PostgreSQL
-    * Database host: db
-    * Database port: 5432
-    * Database name: fusionauth
-+
-In the example above, notice we have specified the PostgreSQL jdbc type, a host of `db`, a port `5432` and a database name of `fusionauth`. The host is the service name of the database configuration, in this case it is named `db`.
-+
-You may also wish to connect to a remote database, in that case you will provide your own JDBC string URL and you will not require the `db` service in your configuration.
-+
-Setting this environment variable will override the `database.url` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
-
-[field]#DATABASE_ROOT_USER# [optional]#Optional#::
-The database root user that is used to create the FusionAuth schema and FusionAuth user.
-+
-Once FusionAuth is configured and running this value is no longer used and is never persisted.
-
-[field]#DATABASE_ROOT_PASSWORD# [optional]#Optional#::
-The database root password that is used to create the FusionAuth schema and FusionAuth user. It is recommended to leave the value of this variable empty as it is shown in the example. Using this configuration, the value will be picked up from the host environment. To use the value in this way, be sure to set this named environment value before calling `docker-compose up`.
-+
-Once FusionAuth is configured and running this value is no longer used and is never persisted.
-
-[field]#DATABASE_USER# [optional]#Optional# [default]#Defaults to `fusionauth`#::
-The database user that will be created during configuration to own the FusionAuth schema and to connect to the database at FusionAuth runtime.
-+
-Setting this environment variable will override the `database.username` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
-
-[field]#DATABASE_PASSWORD# [optional]#Optional# [default]#Defaults to `fusionauth`#::
-The database password that will be created during configuration to own the FusionAuth schema and to connect to the database at FusionAuth runtime. If you are deploying this into production it is extremely important that you sent this value to something other than the default.
-+
-Setting this environment variable will override the `database.password` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
-
-[field]#FUSIONAUTH_ADDITIONAL_JAVA_ARGS# [optional]#Optional#::
-Additional Java arguments to pass to the Java VM for FusionAuth.
-+
-Setting this environment variable will override the `fusionauth-app.additional-java-args` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
-
-[field]#FUSIONAUTH_MEMORY# [optional]#Optional# [default]#defaults to `256M`#::
-The RAM to assign to the Java VM for FusionAuth.
-+
-Setting this environment variable will override the `fusionauth-app.memory` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
-
-[field]#FUSIONAUTH_SEARCH_ENGINE_TYPE# [optional]#Optional# [defaults]#defaults to `database`#::
-The search engine type.  Possible values are:
-+
-  * `database`
-  * `elasticsearch`
-+
-Setting this environment variable will override the `fusionauth-app.search-engine-type` property in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
-
-[field]#FUSIONAUTH_SEARCH_SERVERS# [optional]#Optional# [default]#defaults to `http://localhost:9021`#::
-A comma separated listed of URLs to connect to one or more search servers.
-+
-Setting this environment variable will override the `fusionauth-app.search-servers` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
-
-[field]#FUSIONAUTH_URL# [optional]#Optional# [since]#Available Since 1.4.0#::
-The URL that that can be used to communicate with other FusionAuth nodes. Generally this should be a non-routable URL such as a site local address. If you have more than one FusionAuth nodes running this address would be a backplane site-local address. This value will be automatically set if not configured to a site local address if it exists, or it will fall back to a localhost address. When running in a container based environment such as Docker or Kubernetes, this should be set to allow the container to communicate with other FusionAuth containers.
-+
-Setting this environment variable will override the `fusionauth-app.url` in the Configuration file. See the link:../reference/configuration[Configuration Reference] for more information.
-
+We currently support Elasticsearch versions 6.3.x - 7.6.x.  Later versions may works as well, but may not have been tested for compatibility.  Please let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
 
 == Production Deployment
 
@@ -263,7 +168,7 @@ Elasticsearch has a few runtime requirements that may not be met by default on y
 
 For example if startup is failing and you see the following in the logs, you will need to increase `vm.max_map_count` on your host VM.
 
-[.blockquote]
+[source]
 ----
 2018-11-22T12:32:06.779828954Z Nov 22, 2018 12:32:06.779 PM ERROR c.inversoft.maintenance.search.ElasticsearchSilentConfigurationWorkflowTask
   - Silent configuration was unable to complete search configuration. Entering maintenance mode. State [SERVER_DOWN]

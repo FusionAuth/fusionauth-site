@@ -12,6 +12,54 @@ Hide stuff inside these lines
 
 [role=release-note]
 
+== Version 1.16.1
+_May 18th, 2020_
+
+=== Fixed
+* When attempting to utilize a silent configuration to configure the database schema without using Elasticsearch, FusionAuth would enter maintenance mode.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/618[GitHub Issue #618], thanks to https://github.com/mgetka[@mgetka] for reporting the issue!
+
+[role=release-note]
+
+== Version 1.16.0
+_May 8th, 2020_
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Changes
+* The favicon configuration in the default theme has been updated. If you have created your own theme and kept the default favicons using the FusionAuth logo you will want to either remove them or update them with the correct `href` paths. See the default theme for reference if you would like to use the FusionAuth favicons.
+
+=== New
+* The Identity Provider Lookup API will return a list of `applicationIds` to represent the enabled FusionAuth applications for the identity provider.
+* The Identity Provider Lookup API will return the SAML v2 `idpEndpoint` value configured in the SAML v2 IdP.
+
+=== Fixed
+* Specifying an Elasticsearch URL containing basic auth credentials works properly. For example the URL `\https://user:password@myelasticsearchservice.com` now functions as expected.
+** Tested against https://bonsai.io and https://aiven.io.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/531[GitHub Issue #531], thanks to https://github.com/joshuaavalon[@joshuaavalon] for reporting and https://github.com/nscarlson[@nscarlson] for the additional details and assistance.
+* Fixed a validation error when using the Import User API w/ an empty list of users. A `400` status code with a JSON response should have been returned.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/520[GitHub Issue #520], thanks to https://github.com/smcoll[@smcoll] for reporting.
+* Some JavaScript may fail on Internet Explorer version 11. Specifically the `Helper.js` which is used to handle the external login providers on the login page.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/423[GitHub Issue #423], thanks to https://github.com/downagain[@downagain] for reporting this issue and for the excellent debug.
+* A validation error in the OAuth2 Token endpoint returns a general error instead of the appropriate validation error.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/546[GitHub Issue #546], thanks to https://github.com/mgetka[@mgetka] for reporting the issue.
+* When using the Facebook login, it is possible that Facebook will send back an Image URL from the `/me/picture` API that will exceed `255` characters. If this occurs the login failed and an an exception was logged.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/583[GitHub Issue #583], thanks to our friends at https://famous.co/[famous.co] and https://www.frontdoorhome.com/[frontdoorhome.com] for letting us know.
+* Attempting to validate or save an Email template that contains a reference to a value stored in user data may cause an exception. For example `${user.data.company_name}` is a valid usage, but this would fail validation or cause an exception during validation.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/598[GitHub Issue #598]
+* In some cases, when a webhook fails to respond and subsequently fails the request do to the configured transaction setting the Elasticsearch index will be out of sync.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/600[GitHub Issue #600], thanks to our Icelandic friend https://github.com/arni-inaba[@arni-inaba] for letting us know and providing excellent recreate steps.
+* An extra curly bracket caused the SQL migration to fail if you are running PostgreSQL and performed an upgrade without modifying the default tenant.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/606[GitHub Issue #606], thanks to https://github.com/nscarlson[@nscarlson] for reporting the issue.
+
+=== Fixed from RC.1
+The following issues were fixed that only affect those running version 1.16.0-RC.1.
+
+* An unexpected request parameter may cause an exception due to the incorrect runtime mode.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/595[GitHub Issue #595], thanks to https://github.com/ceefour[@ceefour]
+
+[role=release-note]
+
 == Version 1.16.0-RC.1
 _April 21st, 2020_
 
@@ -20,25 +68,59 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 :warning_message: pass:normal[This is a release candidate. This release is not intended for production use. If you encounter issues please open a GitHub issue to let us know.]
 include::docs/v1/tech/__general-migration-warning.adoc[]
 
+=== Changes
+* Email Send API no longer requires a from email or a default from name, defaults may be taken from the tenant.  See the link:/docs/v1/tech/apis/emails[Emails API] documentation for reference.
+* The OpenID Connect link:/docs/v1/tech/oauth/endpoints#json-web-key-set-jwks[JSON Web Key Set] API endpoint returns only public keys generated by FusionAuth. This endpoint previously also returned imported public keys, for which we do not hold the private key.
+
+=== Security
+* Updated default CORS configuration for clean installs, see the link:/docs/v1/tech/reference/cors#default-configuration[CORS Reference] for details. It is highly recommended you modify your CORS configuration to match our new default values unless you have a technical requirement for your existing CORS configuration.
+* Upgrade Handlebars to version `4.7.6` due to a known vulnerability. There is no known exploit of this vulnerability in FusionAuth, this is a pro-active upgrade. FusionAuth uses this JavaScript library in the administrative UI to build dynamic table roles.
+** https://snyk.io/vuln/SNYK-JS-HANDLEBARS-534988
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/564[GitHub Issue #564], thanks to https://github.com/michael-burt[@michael-burt] for alerting us to this vulnerability.
+
+=== Enhancement
+* The OpenID Connect and SAML v2 Reconcile Lambda may now modify the assigned user roles. Prior to this version any changes to the roles were intentionally not preserved. This restriction has been lifted.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/536[GitHub Issue #536], thanks to https://github.com/sedough[@sedough] for opening the request.
+* In some cases the `state` parameter returning from external SAML v2 & OpenID Connect identity providers is decoded incorrectly.  We are now Base64 encoding this value to preserve it's integrity.
+
 === New
 * Support for Elasticsearch version 7
+** FusionAuth maintains backward-compatibility with Elasticsearch 6.3.x clusters and indexes.
+** `fusionauth-app.search-engine-type` configuration property and `FUSIONAUTH_SEARCH_ENGINE_TYPE` environment variable exposed for configuring the search engine, see the link:/docs/v1/tech/reference/configuration[Configuration] documentation for reference.
+** A reindex may be necessary depending on how you have upgraded your Elasticsearch cluster.  You may issue a reindex in the FusionAuth Admin UI under [breadcrumb]#System -> Reindex#.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/199[GitHub Issue #199]
 * Support for using the database as the user search engine.  This is now the default configuration.  See the link:/docs/v1/tech/core-concepts/users#user-search[Core Concepts - Users] documentation for details.
 ** Use of the database search engine provides limited search capabilities, and has limitations for the Users API, see the link:/docs/v1/tech/apis/users#bulk-delete-users[Bulk Delete Users API] and link:/docs/v1/tech/apis/users#search-for-users[Search for Users API] documentation for details.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/427[GitHub Issue #427]
 * The Registration API returns an access token within the `token` field of responses to `POST` requests.  See the link:/docs/v1/tech/apis/registrations[Registrations API] documentation for reference.
 ** Application registration records a login and will be reflected in the Login, Daily Active User, and Monthly Active User reports within the FusionAuth admin UI.
 * The `applicationId` is now optional for `PUT` requests (update login instants) to the Login API.  See the link:/docs/v1/tech/apis/login#update-login-instant[Login API] documentation for reference.
 ** `PUT` requests to the Login API records a login and will be reflected in the Login, Daily Active User, and Monthly Active User reports within the FusionAuth admin UI.
 * The User API returns an access token within the `token` field of responses to `POST` requests creating a user.  See the link:/docs/v1/tech/apis/users#create-a-user[User API] documentation for reference.
 ** User creation records a login and will be reflected in the Login, Daily Active User, and Monthly Active User reports within the FusionAuth admin UI.
-* System logs can be viewed from the Admin interface. Navigate to [breadcrumb]#System# icon:chevron-right[role=breadcrumb,type=fas] [breadcrumb]#Log# to view and download the system logs.
+* System logs can be viewed from the Admin interface. Navigate to [breadcrumb]#System -> Log# to view and download the system logs.
 ** This feature is available in the UI and via a new API.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/540[GitHub Issue #540]
+* System log export API has been added for retrieving a node's system logs as a compressed zip file.  See the link:/docs/v1/tech/apis/system-logs[System Logs API] documentation for reference.
 * There is a Test SMTP button that you can utilize during an Edit or Add Tenant operation to ensure the correct SMTP configuration.
-* Lots more, additional release notes and documentation updates will be coming soon.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/539[GitHub Issue #539]
+* Production runtime mode disables maintenance mode, database migrations must be applied manually in this runtime mode.  See the link:/docs/v1/tech/installation-guide/fusionauth-app#runtime-modes[FusionAuth App Installation Guide] documentation for reference.
+* Advanced configuration exposed for search engine type, runtime mode, and Same-Site cookie policy.  See the link:/docs/v1/tech/reference/configuration[Configuration] documentation for reference.
+* JWT Refresh webhook event, issued when an access token is refreshed by refresh token, see the link:/docs/v1/tech/events-webhooks/events#jwt-refresh[Events] documentation for reference.
+* Tenant email configuration provides a default from email and a default from name. See the link:/docs/v1/tech/apis/tenants#create-a-tenant[Tenants API] documentation for reference.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/262[GitHub Issue #262], thanks to https://github.com/engineertdog[@engineertdog] for the request!
+
+=== Docker
+* Next time a release candidate is built, the `latest` tag will be preserved to always be the latest stable release. This way if you are always using the `latest` tag you will not automatically upgrade to a release candidate.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/596[GitHub Issue #596], thanks to https://github.com/ceefour[@ceefour] for the request.
+* The reference `docker-compose.yml` provided by the https://github.com/FusionAuth/fusionauth-containers[fusionauth-containers project] has been modified to install leveraging database as the User search engine. You will need to include the reference `docker-compose.override.yml` in order to install and configure Elasticsearch as the User search engine.  See the link:/docs/v1/tech/installation-guide/docker[Docker installation guide] for reference.
 
 === Internal
 * The FusionAuth Java runtime has been upgraded to version 14. All external Java packages such as the Java REST client and the Plugin interface are all still compiled against Java 8 so this upgrade should not impact any users.
-* Upgrade Apache Tomcat to the latest patch version
-* Much smaller Docker images based upon Alpine Linux
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/481[GitHub Issue #481]
+* Upgrade Apache Tomcat to the latest patch version `8.5.53`.
+* Much smaller Docker images based upon Alpine Linux! Compressed size changed from ~ 150 MB to 76 MB. More features, less size? Yeah, that's right.
+** Check it out for yourself. See the https://hub.docker.com/repository/docker/fusionauth/fusionauth-app/tags?page=1[fusionauth/fusionauth-app] repo.
 
 [role=release-note]
 
@@ -306,14 +388,14 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 
 
 === Known Issues
-* A search index rebuild is required to complete this upgrade, this operation may not automatically be started during upgrade. If you have already upgraded to this release you can either upgrade to the 1.13.1, or manually initiate a reindex request by navigating in the UI to  [breadcrumb]#System# -> [role=breadcrumb,type=fas]#.
+* A search index rebuild is required to complete this upgrade, this operation may not automatically be started during upgrade. If you have already upgraded to this release you can either upgrade to the 1.13.1, or manually initiate a reindex request by navigating in the UI to  [breadcrumb]#System -> Reindex#.
 
 === New
 * Delete users who have not verified their email address after a specified duration
 ** See link:/docs/v1/tech/core-concepts/tenants[Tenant] configuration or the link:/docs/v1/tech/apis/tenants[Tenant] API for additional information.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/360[GitHub Issue #360]
 * Delete application registrations of users who have not verified their registration after a specified duration
-** See link:/docs/v1/tech/users/applications[Application] configuration or the link:/docs/v1/tech/apis/applications[Application] API for additional information.
+** See link:/docs/v1/tech/core-concepts/applications[Application] configuration or the link:/docs/v1/tech/apis/applications[Application] API for additional information.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/360[GitHub Issue #360]
 * Delete Users by Search Query
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/361[GitHub Issue #361]
@@ -329,9 +411,9 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/400[GitHub Issue #400], thanks to https://github.com/JesperWe[@JesperWe] for reporting!
 
 === Enhancement
-* `DELETE /api/user/bulk` takes `queryString` and `query` parameters to search for users to delete by ElasticSearch query string and raw JSON query, and a `dryRun` parameter to preview the affected users.  See the link:/docs/v1/tech/apis/users#bulk-delete-users[User Bulk Delete API documentation].
+* `DELETE /api/user/bulk` takes `queryString` and `query` parameters to search for users to delete by Elasticsearch query string and raw JSON query, and a `dryRun` parameter to preview the affected users.  See the link:/docs/v1/tech/apis/users#bulk-delete-users[User Bulk Delete API documentation].
 ** Addresses https://github.com/FusionAuth/fusionauth-issues/issues/361[GitHub Issue #361]
-* `POST /api/user/search` and `GET /api/user/search` take a `query` parameter to search for users by an ElasticSearch raw JSON query.  See the link:/docs/v1/tech/apis/users#search-for-users[User Search API documentation].
+* `POST /api/user/search` and `GET /api/user/search` take a `query` parameter to search for users by an Elasticsearch raw JSON query.  See the link:/docs/v1/tech/apis/users#search-for-users[User Search API documentation].
 ** Addresses https://github.com/FusionAuth/fusionauth-issues/issues/361[GitHub Issue #361]
 * `/api/user/search` takes new `sortFields` for sorting search results.  See the link:/docs/v1/tech/apis/users#search-for-users[User Search API documentation].
 * The Webhook URL is no longer constrained to 191 characters. Prior to this version, this URL was considered unique and the length was constrained due to indexing limitations. The URL is no longer required to be unique and it is up to the user to limit duplicate webhooks.
