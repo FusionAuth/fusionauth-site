@@ -3,7 +3,7 @@ layout: blog-post
 title: Sharing custom JWT claims with an ASP.NET Core app
 description: We'll configure FusionAuth and extend the ASP.NET Core web application to display role and custom claims from a JWT.
 author: Dan Moore
-image: blogs/whats-new-in-oauth-2-1/whats-new-with-oauth-2-1.png
+image: blogs/adding-more-claims-asp-net/fusionauth-asp-net-core-with-custom-claims.png
 category: blog
 tags: client-netcore
 excerpt_separator: "<!--more-->"
