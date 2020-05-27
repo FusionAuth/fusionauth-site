@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Good Bye Google Firebase Authentication
+title: Goodbye Google Firebase Authentication
 description: 
 author: Hunter Melnick
 image: blogs/news/blog-fusionauth-1-16.png
@@ -41,7 +41,7 @@ took only seconds. I simply plugged in my information and then used their built-
 testing to send myself a quick test text message to test out the integration. That's
 what I call quick two factor authentication integration.
 
-FusionAuth recently hit a [100 million users in a load test](/blog/2019/02/26/got-users-100-million). Enhanced scalability is one
+FusionAuth recently hit [100 million users in a load test](/blog/2019/02/26/got-users-100-million). Enhanced scalability is one
 many features that set FusionAuth apart from the competitors, including Google
 Firebase Authentication. When you need to plan to go from a 10,000 users to that million or more mark,
 you will be happy to know that FusionAuth has you covered.
@@ -71,7 +71,7 @@ the least.
 
 {% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/roles.png" alt="Sample roles for the Pied Piper application." class="img-fluid" figure=false %}
 
-I ended up creating custom web hooks to setup specific triggers within
+I ended up creating custom web hooks to set up specific triggers within
 my applications. Even changing the theme styles for my login page and registration
 page were easier than I thought. Seems like anything that I would need to
 customize was available to be customized. And, I have to say that my logo
@@ -97,7 +97,7 @@ Google Firebase Authentication does have a couple advanced features such as limi
 account per email address which prevents users from creating multiple accounts
 using the same email address with different authentication providers. Google Firebase
 Authentication also allows you to manage your sign-ups by IP addresses, making sure that a
-single IP address can only sign-up so many users, the default being a 100 users.
+single IP address can only sign-up so many users, the default being 100 users.
 
 Want to know when a user fails to log in or maybe when a user account is
 deactivated? The advanced built-in web hooks from FusionAuth give you the
@@ -105,7 +105,7 @@ ability to customize web hooks for each application; including the security type
 authentication of the web hooks, and setup user actions based on web hook
 execution states.
 
-{% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/webhooks.png" alt="Webhook configuration lets you integrate easily with other applications." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/webhook.png" alt="Webhook configuration lets you integrate easily with other applications." class="img-fluid" figure=false %}
 
 ## Enhanced Security
 
@@ -136,7 +136,7 @@ of mind) is invaluable to your goal offering premium customer service. Google
 Firebase Authentication could care less, as long as the password is correct your user will be
 authenticated, with no background verification method utilized. 
 
-## Good Bye Google Firebase Authentication
+## Goodbye Google Firebase Authentication
 
 In my opinion, the main difference between Google Firebase Authentication and FusionAuth is
 that FusionAuth offers you highly customized and secure solutions that scale in a
@@ -144,5 +144,5 @@ manner that won't break your bank. I know that I didn't cover everything that
 FusionAuth and Google Firebase Authentication have to offer (that could probably take a small book). 
 
 If you haven't checked out FusionAuth, then I recommend that now is the time for you to
-make the change. So... Good Bye Google Firebase Authentication... you were helpful when I
+make the change. So... Goodbye Google Firebase Authentication... you were helpful when I
 was new to the world of authentication, but now you are my past.
