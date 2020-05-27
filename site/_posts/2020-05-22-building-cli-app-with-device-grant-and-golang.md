@@ -56,9 +56,9 @@ Great -- your FA Application is setup, so now we just need two more things from 
 
 Sweet, our FA administrivia is out of the way now that we have our Client ID, Tenant ID, and API Key! Hurrah!
 
-Last setup item: Let's get our CLI app ([masterpointio/getgif](https://github.com/masterpointio/getgif)) cloned and setup so you can follow along:
+Last setup item: Let's get our CLI app ([getgif](https://github.com/FusionAuth/fusionauth-example-go-device-code-grant)) cloned and setup so you can follow along:
 
-1. Open up your favorite terminal and clone our project: `git clone git@github.com:masterpointio/getgif.git`
+1. Open up your favorite terminal and clone our project: `git clone https://github.com/FusionAuth/fusionauth-example-go-device-code-grant`
 1. Change directories into this new project and crack open the `.env` file with your favorite text editor. Here you'll see 3 variables that should look familar! Fill in those variables with your Client ID, Tenant ID, and API Key and then save and exit that file.
 1. Lastly, let's build our CLI app via `go build .`, which should create a `getgif` binary in the root of the project.
 
@@ -292,7 +292,9 @@ Great stuff, we send off our JWT to FA, FA's go-client intelligently responds wi
 
 Now, since this is a post about using using FusionAuth and not about the Giphy API, I won't dig into the `fetch` command too much and I'll leave that to you but suffice to say it's pretty simple. Here is the whole flow in action:
 
-{% include _image.liquid src="/assets/img/blogs/golang-cli-device-grant/fa-getgif-full-example.gif" alt="full gif of `getgif` - more meta." class="img-fluid" figure=false %}
+<div class="d-flex justify-content-center mb-5 mt-1 youtube">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/EKO3THhEkx8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ## Final Words
 
