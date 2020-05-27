@@ -9,7 +9,7 @@ tags: client-netcore
 excerpt_separator: "<!--more-->"
 ---
 
-Previously, we used ASP.NET Core to [build a web application](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth) with a single protected page. Let's extend the application to display the role of the user in FusionAuth as well as a custom claim. We're going to create a group, assign a role to that group and then place our user in that group. We'll also explore modifying our JavaScript Web Token (JWT) by using a lambda to expose the user's favorite color. Finally, we'll display all the claims on the "Secure" page.
+Previously, we used ASP.NET Core to [build a web application](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth) with a single protected page. Let's extend the application to display the role of the user in FusionAuth as well as a custom claim. We're going to create a group, assign a role to that group and then place our user in that group. We'll also explore modifying our JSON Web Token (JWT) by using a lambda to expose the user's favorite color. Finally, we'll display all the claims on the "Secure" page.
 
 <!--more-->
 
@@ -17,7 +17,7 @@ If you haven't yet, please set up FusionAuth and the web application as specifie
 
 ## Setting up roles and groups
 
-Let's navigate to the FusionAuth administration console and add a role to the application. Note that instead of the blue button where you edit the application configuration, click on the black button with the person symbol. This is where you can add application roles. As many as you want--they're free! I limited myself to adding an admin and a user role.
+Let's navigate to the FusionAuth administration console and add a role to the application. Note that instead of the blue button where you edit the application configuration, click on the dark blue button with the person symbol. This is where you can add application roles. As many as you want--they're free! I limited myself to adding an admin and a user role.
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-add-roles.png" alt="Adding roles to a FusionAuth application." class="img-fluid" figure=false %}
 
@@ -25,7 +25,7 @@ Then we want to create a group. We'll call this the "ASP.NET Core User" group, a
 	
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-create-group.png" alt="Creating a group in a FusionAuth application." class="img-fluid" figure=false %}
 
-Finally, we need to add our user to our group. Navigate to the "newuser2@example.com" user (or any other user you've created and associated with the "dotnetcore" application) and go to the "Groups" tab. Add them to the "ASP.NET Core User" group. Warning: if a user isn't associated with an application, being associated with a group that has a role for an application does nothing.
+Finally, we need to add our user to our group. Navigate to the "newuser2@example.com" user (or any other user you've created and registered for the "dotnetcore" application) and go to the "Groups" tab. Add the user to the "ASP.NET Core User" group. **WARNING:** if a user isn't registered for an application, being a member of a group that has a role for that application does nothing.
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-add-user-to-group.png" alt="Adding our user to a group in a FusionAuth application." class="img-fluid" figure=false %}
 
@@ -53,11 +53,11 @@ function populate(jwt, user, registration) {
 }
 ```
 
-To create it, we're going to use the FusionAuth API, rather than the administration console. I just felt it had been too long since I `curl`ed something. Create an API key called "Lambda management" allowing full access to the Lambda API. Allow the holder of this key to patch the application resource as well. We'll need the latter to configure our FusionAuth application to use our lambda.
+To create it, we're going to use the FusionAuth API, rather than the administration console. I just felt it had been too long since I `curl`ed something. Create an API key called "Lambda management" allowing full access to the Lambda API. Allow the user of this key to `PATCH` on application objects as well. We'll need the latter to configure our FusionAuth application to use our lambda.
 
 {% include _image.liquid src="/assets/img/blogs/adding-more-claims-asp-net/aspnetextended-lambda-management-api-key.png" alt="The API key with lambda and application permissions." class="img-fluid" figure=false %}
 
-Here's the shell script which creates the lambda and associates it with the "dotnetcore" application. You must update the `AUTH_HEADER` environment variable to the value of the API key we just created. Also, please update `APPLICATION_ID` to the id of the "dotnetcore" application. This script calls one API to create our lambda, and another to configure the application to use it.
+Here's the shell script which creates the lambda and associates it with the "dotnetcore" application. You must update the `AUTH_HEADER` environment variable to the value of the API key we just created. Also, be sure to update `APPLICATION_ID` to the id of the "dotnetcore" application. This script calls one API to create our lambda, and another to configure the application to use it. We also need to extract the ID of the lambda we create, so I used a `sed` regular expression to extract the ID from the response of the first API call.
 
 ```shell
 AUTH_HEADER=YOUR_API_KEY_HERE
