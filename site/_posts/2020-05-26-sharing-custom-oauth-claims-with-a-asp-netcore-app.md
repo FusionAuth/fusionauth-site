@@ -93,4 +93,4 @@ In a real-world application you'd do more than display these claims. You might c
 
 ## Conclusion
 
-This post is the end of our journey integrating FusionAuth and ASP.NET Core. Offloading your user management concerns to an identity management solution such as FusionAuth frees you to focus on the features and business logic of your application.
+This post is the end of our journey integrating FusionAuth and ASP.NET Core. Offloading your user management concerns to an identity management solution such as FusionAuth frees you to focus on the features and business logic of your application, whether that's displaying your user's favorite color or (hopefully)_something more useful!
