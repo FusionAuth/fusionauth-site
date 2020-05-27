@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Building a CLI app with the device grant and golang
-description: Building an authenticated CLI app using FusionAuth and the FusionAuth golang client library
+title: Building a CLI app with the Device Code grant and golang
+description: Build an authenticated CLI app using FusionAuth, the Device Code grant, and the golang client library.
 author: Matt Gowie
 image: blogs/java-client-example/tutorial-using-java-to-manage-fusionauth.png
 category: blog
