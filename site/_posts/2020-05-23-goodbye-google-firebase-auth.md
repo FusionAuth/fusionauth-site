@@ -69,7 +69,7 @@ preferences, email templates, and application settings. Having the ability to cr
 multiple unique roles for different applications in FusionAuth was helpful to say
 the least. 
 
-TBD image of roles
+{% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/roles.png" alt="Sample roles for the Pied Piper application." class="img-fluid" figure=false %}
 
 I ended up creating custom web hooks to setup specific triggers within
 my applications. Even changing the theme styles for my login page and registration
@@ -87,7 +87,7 @@ recent logins on the main page; including a graph representing the logins by hou
 The [reporting and metrics](/docs/v1/tech/apis/reports) of FusionAuth make analyzing your authentication
 platform a breeze. 
 
-TBD image of reporting
+{% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/reporting.png" alt="The reporting dashboard." class="img-fluid" figure=false %}
 
 Unfortunately, Google Firebase Authentication's metrics and usage reporting
 are almost non-existent. Currently, Google Firebase Authentication only is able to see the phone
@@ -105,7 +105,7 @@ ability to customize web hooks for each application; including the security type
 authentication of the web hooks, and setup user actions based on web hook
 execution states.
 
-TBD image of webhooks
+{% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/webhooks.png" alt="Webhook configuration lets you integrate easily with other applications." class="img-fluid" figure=false %}
 
 ## Enhanced Security
 
