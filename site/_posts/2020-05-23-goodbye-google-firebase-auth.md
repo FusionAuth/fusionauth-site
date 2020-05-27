@@ -87,7 +87,7 @@ recent logins on the main page; including a graph representing the logins by hou
 The [reporting and metrics](/docs/v1/tech/apis/reports) of FusionAuth make analyzing your authentication
 platform a breeze. 
 
-TBD image
+TBD image of reporting
 
 Unfortunately, Google Firebase Authentication's metrics and usage reporting
 are almost non-existent. Currently, Google Firebase Authentication only is able to see the phone
@@ -105,7 +105,7 @@ ability to customize web hooks for each application; including the security type
 authentication of the web hooks, and setup user actions based on web hook
 execution states.
 
-TBD image
+TBD image of webhooks
 
 ## Enhanced Security
 
