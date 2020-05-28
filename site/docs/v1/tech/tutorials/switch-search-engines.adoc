@@ -4,61 +4,65 @@ title: Switching search engines
 description: How to switch back and forth between the provided search engines
 ---
 
-As of version 1.16, FusionAuth supports two search engines:
+As of version 1.16, FusionAuth has the concept of a search engine type.
 
 * database
 * elasticsearch
 
-and you can easily switch between them. The strengths and limitations of each search engine type link:/docs/v1/tech/core-concepts/users#user-search[are documented here].
+You can easily switch between them. The strengths and limitations of each search engine type link:/docs/v1/tech/core-concepts/users#user-search[are documented here].
 
 This tutorial walks you through changing your search engine. Reasons for modifying it vary; you may be simplifying your deployment strategy by using the database search engine. Or perhaps you need the advanced searching options of Elasticsearch. Either way, it's an easy switch.
 
 === Prerequisites
 
-This tutorial assumes you have both the application and the search services running on Linux. You also must be running at least version 1.16.0. 
+This tutorial assumes you are running at least version 1.16.0.
 
-If you don't, head on over to the link:/docs/v1/tech/installation-guide/fusionauth-search[installation guide]. If you already have the application running, but need to install the search service, link:/docs/v1/tech/installation-guide/fusionauth-search[here are instructions].
+If you don't, head on over to the link:/docs/v1/tech/installation-guide[installation guide] or the link:/docs/v1/tech/installation-guide/upgrade[upgrade guide]. 
 
-If you are running FusionAuth via Docker, a Windows service, or some other mechanism, you'll have to stop and start FusionAuth in an installation specific manner.
+Because there are a variety of ways to run FusionAuth, this guide won't assume how you are starting or stopping it. Please consult the specific installation documentation for instructions on how to start or stop FusionAuth.
+
+=== Overview
+
+To switch the search engine, you need to do the following:
+
+* stop FusionAuth
+* modify FusionAuth configuration
+* start FusionAuth
+* reindex (if switching from the database search engine to Elasticsearch)
+
+The configuration can be set in a number of ways, outlined in the link:/docs/v1/tech/reference/configuration#environment-variables[Configuration Reference], including environment variables and modifying the `fusionauth.properties` file. This tutorial modifies the `fusionauth.properties` file. 
+
 
 === From Elasticsearch to Database
 
-Stop FusionAuth:
+Stop FusionAuth.
 
-```
-sudo service fusionauth-app stop
-sudo service fusionauth-search stop
-```
+Locate your FusionAuth configuration file named `fusionauth.properties`. This is usually located at `/usr/local/fusionauth/config/fusionauth.properties` unless you installed via Fast Path, in which case it is at your service root.
 
-Locate your FusionAuth configuration file, it might be at a location similar to `/usr/local/fusionauth/config/fusionauth.properties`.
-
-Comment out or remove the `fusionauth-search.*` properties and the `fusionauth-app.search-servers` value. 
-
-Add or update the `fusionauth-app.search-engine-type` key to have the value `database`.
+Add or update the `fusionauth-app.search-engine-type` key to have the value `database`. 
 ```
 fusionauth-app.search-engine-type=database
 ```
 
-Restart the FusionAuth application:
+Optionally, comment out or remove the `fusionauth-search.*` properties and the `fusionauth-app.search-servers` property. These will otherwise be ignored.
 
-```
-sudo service fusionauth-app start
-```
+Restart the FusionAuth application.
 
-Log into FusionAuth. Navigate to [breadcrumb]#User# and search for a user by email address or first name to confirm that the search engine is working. 
+==== Verify the change
+
+Log into the FusionAuth admin UI. Navigate to [breadcrumb]#System -> About# and look at the `System` panel. This will show the new value: `Database`.
+
+You can also navigate to [breadcrumb]#User# and search for a user by email address or first name to confirm that the search engine is working. 
 
 image::tutorials/database-user-search.png[User search with the database search engine,width=1200,role=shadowed]
 
 === From Database to Elasticsearch 
 
+If you already have FusionAuth running, but need to install the search service link:/docs/v1/tech/installation-guide/fusionauth-search[here are instructions].
 
-Stop FusionAuth:
+Stop FusionAuth.
 
-```
-sudo service fusionauth-app stop
-```
-
-Locate your config file, it might be at a location similar to `/usr/local/fusionauth/config/fusionauth.properties`.
+Locate your FusionAuth configuration file named `fusionauth.properties`. This is usually located at `/usr/local/fusionauth/config/fusionauth.properties` unless you installed via Fast Path, in which case it is at your service root.
 
 Uncomment or add the `fusionauth-app.search-servers` value. This must point to your Elasticsearch servers. 
 
@@ -72,18 +76,19 @@ Add or uncomment and update additional `fusionauth-search.*` properties, as docu
 fusionauth-app.search-engine-type=elasticsearch
 ```
 
-Restart the FusionAuth application, making sure to start the `fusionauth-search` service as well.
+Restart the FusionAuth application.
 
-```
-sudo service fusionauth-search start
-sudo service fusionauth-app start
-```
+==== Verify the change and reindex
 
-Log in to FusionAuth. Reindex the search index by navigating to [breadcrumb]#System -> Reindex#. This ensures that Elasticsearch has the latest user data. This may take some time, depending on the size of your data.
+Log into the FusionAuth admin UI. Navigate to [breadcrumb]#System -> About# and look at the `System` panel. This will show the new value: `Elasticsearch`.
+
+You'll also want to reindex by navigating to [breadcrumb]#System -> Reindex#. This will initialize the search index and synchronize it with your database. 
+
+Reindexing may take some time, depending on the number of users you have and the amount of custom data that requires indexing. 
 
 image::tutorials/reindex-elastic-search.png[Reindexing the Elasticsearch database,width=1200,role=shadowed]
 
-Navigate to [breadcrumb]#User# and search for a user by email address, first name or other attribute to confirm that the search engine is working. You'll also notice that the advanced search form elements are present.
+Navigate to [breadcrumb]#Users# and search for a user by email address, first name or other attribute to confirm that the search engine is working. You'll also notice that the advanced search form elements are present.
 
 image::tutorials/elastic-user-search.png[Searching for a user in a specific application with the elasticsearch search engine,width=1200,role=shadowed]
 
