@@ -22,19 +22,20 @@ This article will discuss how you can securely integrate JWTs into your system a
 
 ## Definitions
 
-claims
-
-client
+* creator: the system which creates the JWTs.
+* consumer: a system which consumes a JWT.
+* client: a system which holds a token and presents it to other systems.
+* claim: a piece of information asserted about the subject of the JWT. Some are standardized, others are application specific.
 
 ## Out of scope
 
-In this article, we'll only be discussing signed JWTs, the most common form of JWT. The signing behavior is also [standardized](https://tools.ietf.org/html/rfc7515). There are also standards for [encrypting JSON data](https://tools.ietf.org/html/rfc7516) but signed JWTs are far more common, and have most possible insecurities, so we'll focus on them. When I refer to a JWT in this article, I'm talking about a signed JWT, not an encrypted one.
+In this article, we'll only be discussing signed JWTs, the most common type of token. The signing behavior is [standardized](https://tools.ietf.org/html/rfc7515). There are also standards for [encrypting JSON data](https://tools.ietf.org/html/rfc7516) but signed JWTs are far more common, and have most possible insecurities, so we'll focus on them. When I refer to a JWT in this article, I'm talking about a signed token, not an encrypted one.
 
 ## For everyone
 
 When you are working with JWTs in any capacity, you should be aware of the footguns that are available to you (to, you know, let you shoot yourself in the foot). 
 
-The first is that a signed JWT is like a postcard. Anyone who gets ahold of it can read it. Even though this may look like garbage:
+The first is that a signed JWT is like a postcard. Anyone who gets a hold of it can read it. Though this may look unreadable:
 
 ```
 eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJmdXNpb25hdXRoLmlvIiwiZXhwIjoxNTkwNzA4Mzg1LCJhdWQiOiIyMzhkNDc5My03MGRlLTQxODMtOTcwNy00OGVkOGVjZDE5ZDkiLCJzdWIiOiIxOTAxNmI3My0zZmZhLTRiMjYtODBkOC1hYTkyODc3Mzg2NzciLCJuYW1lIjoiRGFuIE1vb3JlIiwicm9sZXMiOlsiUkVUUklFVkVfVE9ET1MiXX0.8QfosnY2ZledxWajJJqFPdEvrtQtP_Y3g5Kqk8bvHjo
@@ -62,7 +63,7 @@ Set the `typ` claim to a known value. This prevents one kind of JWT from being c
 
 ### Signature algorithms
 
-Choose the correct signing algorithm. You have two families of options, a symmetric algorithm like HMAC or an asymmetric choice like RSA or elliptic curve (ECC). The "none" algorithm, which doesn't sign the JWT and allows anyone to generate a token with any payload they want, should not be used. 
+Choose the correct signing algorithm. You have two families of options, a symmetric algorithm like HMAC or an asymmetric choice like RSA or elliptic curve (ECC). The "none" algorithm, which doesn't sign the JWT and allows anyone to generate a token with any payload they want, should not be used.  XXX secret/key term misuse?
 
 There are two main factors in algorithm selection. The first is performance. A choice like HMAC will perform better. Here are the benchmark results using the `ruby-jwt` library, which encoded and decoded a JWT using both HMAC and RSA algorithms 50,000 times:
 
@@ -81,11 +82,9 @@ ecc decode
  12.728000   0.008000  12.736000 ( 12.751313)
 ```
 
-Don't focus on the absolute numbers, they're going to change based on the programming language, particular run and server horsepower. Instead, look at the ratios. RSA encoding took approximately 9 times as long as HMAC encoding. ECC took almost two and a half times as long to encode and twice as long to decode. The code is [available](https://github.com/FusionAuth/fusionauth-example-ruby-jwt/blob/master/benchmark_algos.rb). Symmetric signatures are simply faster than asymmetric options.
+Don't focus on the absolute numbers, they're going to change based on the programming language, particular run and server horsepower. Instead, look at the ratios. RSA encoding took approximately 9 times as long as HMAC encoding. ECC took almost two and a half times as long to encode and twice as long to decode. The code is [available](https://github.com/FusionAuth/fusionauth-example-ruby-jwt/blob/master/benchmark_algos.rb). Symmetric signatures are simply faster than asymmetric options. However, the symmetric nature of HMAC also has security implications, unless you trust and control your JET consumers. The token consumer can create a JWT indistinguishable from a token from the creator, because both have access to the algorithm and the shared secret.
 
-However, the symmetric nature of HMAC also has security implications, unless you trust and control your clients. The token consumer can create a JWT indistinguishable from a token created by the creator, because both have access to the algorithm and the shared secret.
-
-However, the second factor in choosing the correct algorithm is distributing the secret. HMAC requires a shared secret to decode and encode the token. This means you need some way to get the secret to both the creator and consumer of the JWT. If you control both, this is not a problem; you can just put the secret in whatever secrets management solution you use and have both entities pull the secret from there. However, if you want outside entities to be able to verify your tokens without sharing a secret, choose an asymmetric option. This might happen if the consumer is operated by a different organizational department or perhaps a different business, but still needs to verify the authenticity of a JWT. The JWT creator can use the [JWK](https://tools.ietf.org/html/rfc7517) specification to publish the public keys in a well known location, and then the consumer of the JWT can validate it using that key. 
+The second factor in choosing the correct algorithm is distributing the secret. HMAC requires a shared secret to decode and encode the token. This means you need some way to get the secret to both the creator and consumer of the JWT. If you control both, this is not a problem; you can just put the secret in whatever secrets management solution you use and have both entities pull the secret from there. However, if you want outside entities to be able to verify your tokens without sharing a secret, choose an asymmetric option. This might happen if the consumer is operated by a different organizational department or perhaps a different business, but still needs to verify the authenticity of a JWT. The JWT creator can use the [JWK](https://tools.ietf.org/html/rfc7517) specification to publish the public keys in a well known location, and then the consumer of the JWT can validate it using that key. 
 
 There needs to be much less trust of the token consumer with RSA or similar algorithms. The token consumer doesn't need any access to the key used to encode the token, and so cannot generate a JWT.
 
@@ -157,14 +156,24 @@ For other types of clients, use the best practices for storing data securely.
 
 ## When consuming
 
-Confirm that the `typ` claim is what you expect.
+JWTs must be consumed as carefully as they are crafted. When you are consuming a JWT, you must verify the JWT to make sure it was signed correctly, verify and sanitize the claims. Similar to token creation, don't roll your own implementation, but instead use existing libraries.
+
+First you want to validate that the JWT signature is as expected. This includes making sure the algorithm that the JWT was signed with (based on the header) is what you use to decode it, and then using the correct secret or key to validate that the signature matches.
+
+Then you want to verify the claims are as expected. This includes all the implementation specific registered claims that were set on creation: `iss` and `aud`. You as a consumer should know the correct issuer identifier. And you should also verify that the JWT was meant for you; that is, you are the audience.
+
+Make sure the `typ` claim, in the header, is the expected value as well. Check that the JWT is within its valid lifetime; that is before the `exp` value and after the `nbf` value, if present.
+
+If any of these validations fail, the consumer should give minimal information to the client. Just as you should not reveal whether the issue was with the username or password on a failed authentication attempt, you should return the same error message and status code, `403`, for any invalid token. This minimizes the information that an attacker can gain by creating JWTs and sending them to your system.
+
+If you are going to do any lookups on values in a claim, make sure you sanitize those values. For instance, if you are going to run a database query based on a claim, make sure you use a parameterized query.
 
 ## In conclusion
 
-This article discussed a number of ways that you can ensure your JWTs are not susceptible to misuse. 
-
+JWTs are an extremely flexible technology, and can be used in many ways. This article discussed a number of steps you can take, as either a creator, client or consumer of tokens, to  ensure your JWTs are not susceptible to misuse. 
 
 ## References
 
-https://blog.trailofbits.com/2019/07/08/fuck-rsa/
-https://tools.ietf.org/html/rfc8725 
+* https://tools.ietf.org/html/rfc7519 
+* https://tools.ietf.org/html/rfc8725 
+* https://blog.trailofbits.com/2019/07/08/fuck-rsa/
