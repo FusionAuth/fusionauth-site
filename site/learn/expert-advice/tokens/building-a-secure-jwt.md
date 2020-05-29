@@ -91,6 +91,31 @@ There needs to be much less trust of the token consumer with RSA or similar algo
 
 If you have a choice between elliptic curve and RSA, choose elliptic curve cryptography, as it's easier to configure correctly, more modern, has fewer attacks, and is faster. You might have to use RSA if either party doesn't support ECC.
 
+### Claims
+
+Make sure you set your claims appropriately. The JWT specification is clear:
+
+> The set of claims that a JWT must contain to be considered valid is context dependent and is outside the scope of this specification.
+
+Therefore no claims are required by the RFC. But the following registered claims should be part of your secure token creation:
+
+* `iss` identifies the issuer of the JWT. It doesn't really matter what this string is as long as it is unique, doesn't leak information about the internals of the issuer, and is known by the consumer.
+* `aud` identifies the audience of the JWT. This can be a scalar or an array value, but in either case it should also be known by the consumer.
+* `nbf` and `exp` claims determine the timeframe that the token is valid. The `nbf` claim can be useful if issuing a token to be used in the future. The `exp` claim should always be set.
+
+### Revocation 
+
+Because it is difficult to invalidate JWTs once issued--one main selling point is that they are stateless--you should keep their lifetime on the order of hours or minutes, rather than days or months. This way they expire quickly.
+
+But there are times, such as a data breach or user logging out, when you'll need to revoke tokens, either across a system or on a granular basis. There are a few choices, in increasing order of impact to token consumer:
+
+* let tokens expire
+* implement [RFC 7009](https://tools.ietf.org/html/rfc7009) 
+* use a 'time window' solution
+* rotate keys
+
+Read more about [revoking JWTs](/learn/expert-advice/tokens/revoking-jwts)
+
 ### Keys
 
 It's important to use a long, random key when you are using a symmetric algorithm. Don't share this key with any other systems. 
@@ -105,12 +130,35 @@ The minimum for RSA:
 
 The minimum key length for ECC is not specificed in the RFC. Please consult the RFC for more specifics about other algorithms. 
 
-You should rotate your keys regularly. Ideally you'd set this up in an automated fashion.. This will render all tokens signed with the old key invalid, so plan accordingly.
+You should rotate your JWT signing keys regularly. Ideally you'd set this up in an automated fashion. This will render all tokens signed with the old key invalid, so plan accordingly.
 
 ## As a client
 
+A client can be a browser, a mobile phone or something else. A client receives a token from a token creator. They are then responsible for only two things:
+
+* passing the token on to any token consumers for authentication and authorization purposes
+* storing the token securely
+
+They should send the token to token consumers over a secure connection, typically TLS.
+
+The client must store the token securely. How to do that depends on what the client actually is.
+
+For a browser, you should avoid storing the JWT in localstorage. You should store it in a cookie with the following flags:
+
+* `Secure` to ensure the cookie is only sent over TLS.
+* `HttpOnly` so that no rogue JavaScript can access the token.
+* `SameSite` set to `Lax` or `Strict`. Either of these will ensure that the cookie is only sent to the domain it is associated with.
+
+An alternative to a cookie would be to use [a web worker](https://gitlab.com/jimdigriz/oauth2-worker) to store the token outside of the main JavaScript context.
+
+For a mobile device, you can store the token in a secure location. For example, on an Android device, you'd want to store a JWT in [internal storage with a restrictive access mode](https://developer.android.com/training/articles/security-tips#StoringData) or in [shared preferences](https://developer.android.com/reference/android/content/SharedPreferences). For an iOS device, storing the JWT [in the keychain](https://developer.apple.com/documentation/security/keychain_services) is the best option.
+
+For other types of clients, use the best practices for storing data securely.
+
 ## When consuming
+
 Confirm that the `typ` claim is what you expect.
+
 ## In conclusion
 
 This article discussed a number of ways that you can ensure your JWTs are not susceptible to misuse. 
