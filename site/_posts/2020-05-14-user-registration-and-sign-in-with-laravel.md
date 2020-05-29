@@ -129,7 +129,7 @@ You'll notice that this file requires a [Layout file as well](https://laravel.co
 </html>
 ```
 
-This layout file brings in a stylesheet that includes [Pure CSS](https://purecss.io/) - a minimal web styling library - and container for our app's primary content. These styles are purely cosmetic, so feel free to use your own stylesheets instead.
+This layout file brings in a stylesheet that includes [Pure CSS](https://purecss.io/) - a minimal web styling library - and a container for our app's primary content. These styles are purely cosmetic, so feel free to use your own stylesheets instead.
 
 Next, create a new controller using the [Artisan command line tool](https://laravel.com/docs/7.x/artisan):
 
