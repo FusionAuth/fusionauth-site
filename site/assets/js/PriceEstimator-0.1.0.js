@@ -6,8 +6,14 @@
 
 var FusionAuth = FusionAuth || {};
 
-FusionAuth.PriceEstimator = function () {
+FusionAuth.PriceEstimator = function() {
   Prime.Utils.bindAll(this);
+
+  this.priceModel = null;
+  new Prime.Ajax.Request('https://account.fusionauth.io/ajax/edition-price-model', 'GET')
+    .withSuccessHandler(this._handleResponse)
+    .withErrorHandler(this._handleResponse)
+    .go();
 
   var communityInput = Prime.Document.queryById('community-monthly-active-users').addEventListener('input', this._handleSliderChange);
   communityInput.domElement.element = communityInput;
@@ -26,40 +32,41 @@ FusionAuth.PriceEstimator = function () {
   enterpriseInput.domElement.label = Prime.Document.queryFirst('label[for=enterprise-monthly-active-users]');
   enterpriseInput.domElement.amount = enterpriseInput.queryUp('.cost').queryFirst('.amount');
   enterpriseInput.domElement.plan = 'ENTERPRISE';
-
-  this.currentAmount = null;
 };
 
 FusionAuth.PriceEstimator.constructor = FusionAuth.PriceEstimator;
 FusionAuth.PriceEstimator.prototype = {
-  _handleSliderChange: function (event) {
+  _handleSliderChange: function(event) {
+    if (this.priceModel === null) {
+      return;
+    }
+
     var element = event.currentTarget.element;
     var label = event.currentTarget.label;
     var plan = event.currentTarget.plan;
-    this.currentAmount = event.currentTarget.amount;
+    var amount = event.currentTarget.amount;
 
     // Set the slider label
     var userCount = element.getValue();
     label.setHTML(new Intl.NumberFormat('en').format(userCount));
 
+    var cost = 0;
     if (plan !== 'COMMUNITY') {
-      var requestData = {
-        "license.plan": plan,
-        "monthlyActiveUserCount": userCount
-      };
-
-      new Prime.Ajax.Request('https://account.fusionauth.io/ajax/support-price-estimate', 'GET')
-        .withData(requestData)
-        .withSuccessHandler(this._handleResponse)
-        .withErrorHandler(this._handleResponse)
-        .go();
+      var increments = userCount / 10000;
+      var edition = this.priceModel[plan];
+      if (increments < 10) {
+        cost = edition.BASE.pricePerUnit + (edition.TIER_2.pricePerUnit * (increments - 1));
+      } else {
+        cost = edition.BASE.pricePerUnit + (edition.TIER_2.pricePerUnit * 9) + (edition.TIER_3.pricePerUnit * (increments - 10));
+      }
     }
+
+    amount.setHTML('$' + new Intl.NumberFormat('en').format(cost));
   },
 
   _handleResponse: function(xhr) {
-    if (xhr.status === 200 && this.currentAmount !== null) {
-      var price = JSON.parse(xhr.responseText).priceText.replace('.00', '');
-      this.currentAmount.setHTML(price);
+    if (xhr.status === 200) {
+      this.priceModel = JSON.parse(xhr.responseText).support.tierPricing;
     }
   }
 };
