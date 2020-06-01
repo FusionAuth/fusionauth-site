@@ -10,7 +10,7 @@ FusionAuth.PriceEstimator = function() {
   Prime.Utils.bindAll(this);
 
   this.priceModel = null;
-  new Prime.Ajax.Request('https://account.fusionauth.io/ajax/edition-price-model', 'GET')
+  new Prime.Ajax.Request(FusionAuth.siteURL + '/ajax/edition-price-model', 'GET')
     .withSuccessHandler(this._handleResponse)
     .withErrorHandler(this._handleResponse)
     .go();
@@ -20,6 +20,12 @@ FusionAuth.PriceEstimator = function() {
   communityInput.domElement.label = Prime.Document.queryFirst('label[for=community-monthly-active-users]');
   communityInput.domElement.amount = communityInput.queryUp('.cost').queryFirst('.amount');
   communityInput.domElement.plan = 'COMMUNITY';
+
+  var developerInput = Prime.Document.queryById('developer-monthly-active-users').addEventListener('input', this._handleSliderChange);
+  developerInput.domElement.element = developerInput;
+  developerInput.domElement.label = Prime.Document.queryFirst('label[for=developer-monthly-active-users]');
+  developerInput.domElement.amount = developerInput.queryUp('.cost').queryFirst('.amount');
+  developerInput.domElement.plan = 'DEVELOPER';
 
   var premiumInput = Prime.Document.queryById('premium-monthly-active-users').addEventListener('input', this._handleSliderChange);
   premiumInput.domElement.element = premiumInput;
@@ -50,8 +56,8 @@ FusionAuth.PriceEstimator.prototype = {
     var userCount = element.getValue();
     label.setHTML(new Intl.NumberFormat('en').format(userCount));
 
-    var cost = 0;
     if (plan !== 'COMMUNITY') {
+      var cost;
       var increments = userCount / 10000;
       var edition = this.priceModel[plan];
       if (increments < 10) {
@@ -59,9 +65,9 @@ FusionAuth.PriceEstimator.prototype = {
       } else {
         cost = edition.BASE.pricePerUnit + (edition.TIER_2.pricePerUnit * 9) + (edition.TIER_3.pricePerUnit * (increments - 10));
       }
-    }
 
-    amount.setHTML('$' + new Intl.NumberFormat('en').format(cost));
+      amount.setHTML('$' + new Intl.NumberFormat('en').format(cost));
+    }
   },
 
   _handleResponse: function(xhr) {
