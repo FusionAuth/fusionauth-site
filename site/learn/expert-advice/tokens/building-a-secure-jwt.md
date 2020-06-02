@@ -55,7 +55,7 @@ If you are using OAuth, be careful with the Implicit grant, because if not imple
 
 ## Creating tokens
 
-When you are creating a JWT, you should do ensure you are using a library. Don't implement this RFC yourself. There are lots of [great libraries out there](https://openid.net/developers/jwt/). Use one.
+When you are creating a JWT, use a library. Don't implement this RFC yourself. There are lots of [great libraries out there](https://openid.net/developers/jwt/). Use one.
 
 Set the `typ` claim of your JWT header to a known value. This prevents one kind of token from being confused with one of a different type. 
 
@@ -80,7 +80,7 @@ ecc decode
  12.728000   0.008000  12.736000 ( 12.751313)
 ```
 
-Don't look on the absolute numbers, they're going to change based on the programming language, what's happening on the system during a benchmark run and CPU horsepower. Instead, focus on the ratios. RSA encoding took approximately 9 times as long as HMAC encoding. ECC took almost two and a half times as long to encode and twice as long to decode. The code is [available](https://github.com/FusionAuth/fusionauth-example-ruby-jwt/blob/master/benchmark_algos.rb) if you'd like to take a look. Symmetric signatures are faster than asymmetric options. 
+Don't look at the absolute numbers, they're going to change based on the programming language, what's happening on the system during a benchmark run and CPU horsepower. Instead, focus on the ratios. RSA encoding took approximately 9 times as long as HMAC encoding. ECC took almost two and a half times as long to encode and twice as long to decode. The code is [available](https://github.com/FusionAuth/fusionauth-example-ruby-jwt/blob/master/benchmark_algos.rb) if you'd like to take a look. Symmetric signatures are faster than asymmetric options. 
 
 However, the shared secret required for options like HMAC has security implications. The token consumer can create a JWT indistinguishable from a token built by the creator, because both have access to the algorithm and the shared secret.
 
@@ -104,7 +104,7 @@ Therefore no claims are required by the RFC. But to maximize security, the follo
 
 ### Revocation 
 
-Because it is difficult to invalidate JWTs once issued--one of their benefits is that they are stateless, which means that their holders don't need to reach out to server to verify they are valid--you should keep their lifetime on the order of hours or minutes, rather than days or months. Such quick expiration means that should they fall into the wrong hands, access lifetimes are limited.
+Because it is difficult to invalidate JWTs once issued--one of their benefits is that they are stateless, which means that their holders don't need to reach out to any server to verify they are valid--you should keep their lifetime on the order of hours or minutes, rather than days or months. Such quick expiration means that should they fall into the wrong hands, access lifetimes are limited.
 
 But there are times, such as a data breach or a user logging out of your application, when you'll want to revoke tokens, either across a system or on a more granular level. You have a few choices here. These are in order of how much effort implementation would require from the token consumer:
 
@@ -114,7 +114,7 @@ But there are times, such as a data breach or a user logging out of your applica
 
 ### Keys
 
-It's important to use a long, random secret when you are using a symmetric algorithm. Don't share use a key that is in use in any other system. 
+It's important to use a long, random secret when you are using a symmetric algorithm. Don't choose a key that is in use in any other system. 
 
 Longer keys or secrets are more secure, but take longer to generate signatures. To find the appropriate tradeoff, make sure you benchmark the performance. The [JWK RFC](https://tools.ietf.org/html/rfc7518) does specify minimum lengths for the various algorithms.
 
@@ -161,7 +161,7 @@ Other claims matter too. Make sure the `typ` claim, in the header, is as expecte
 
 If any of these claims fail to match expected values, the consumer should provide only minimal information to the client. Just as authentication servers should not reveal whether a failed login was due to an non-existent username or invalid password, you should return the same error message and status code, `403`, for any invalid token. This minimizes the information an attacker can learn by generating JWTs and sending them to you.
 
-If you are going use claims for further information processing, make sure you sanitize those values. For instance, if you are going to query a database based on a claim, use a parameterized query.
+If you are going to use claims for further information processing, make sure you sanitize those values. For instance, if you are going to query a database based on a claim, use a parameterized query.
 
 ## In conclusion
 
@@ -170,4 +170,4 @@ JWTs are a flexible technology, and can be used in many ways. This article discu
 ## References
 
 * [The JWT RFC](https://tools.ietf.org/html/rfc7519)
-* [JWT Security best practices](https://tools.ietf.org/html/rfc8725)
+* [JWT best practices](https://tools.ietf.org/html/rfc8725)
