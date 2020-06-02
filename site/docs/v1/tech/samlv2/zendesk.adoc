@@ -5,19 +5,106 @@ description: Setting up Zendesk to login using FusionAuth via SAML v2
 ---
 
 == Overview
+Zendesk allows customers to sign into their Zendesk accounts using a SAML identity provider. This document covers the configuration necessary to get Zendesk working with FusionAuth as the identity provider via SAML v2.
 
-=== Enable SAML SSO in Zendesk
-1. https://<your_domain>.zendesk.com/admin/security/sso
-2. Select SAML --> Edit
-3. Check enabled
-4. SAML SSO URL = https://login.fusionauth.io/samlv2/login/f32a81a4-e5be-93f2-cb34-ec605ed7f708
-4. Certificate fingerprint = 26:81:09:18:CD:5D:D4:3B:91:29:2D:92:38:5F:D3:5E:9E:F7:AD:7C:BF:A2:E6:BF:68:F2:D3:45:85:68:85:1F
-4. Remote logout URL = https://login.fusionauth.io/samlv2/logout/50c9e259-177c-43e1-b6b9-66b04f31a743
-5. Save
+We'll also set up roles in FusionAuth to automatically grant access in Zendesk.
+
+=== Prerequisites
+
+This document assumes you have running instances of FusionAuth and Zendesk. You will also need admin accounts for both to configure them correctly.
+
+You'll also need your Zendesk URL. for instance, it may be something like: `https://fusionauth-example.zendesk.com`. We'll use that value for this document, but please replace it with the correct URL.
+
+Finally, you'll need an existing FusionAuth user to sign in to Zendesk as. Or you can create one.
+
+=== Configure FusionAuth
+
+First, we want to create a new application, `Zendesk`, in FusionAuth. Navigate to [breadcrumb]#Applications# and create one.
+
+Then we want to create a role for our Zendesk agents and our admins in FusionAuth, using the `Manage roles` screen.
+* Create a role called `agent`
+* Create a role called `admin`
+TBD pic
+
+Then we want to create a lambda to take the FusionAuth role information and populate the SAML assertion we'll be sending to Zendesk.
+
+* Create a lambda called `Populate Zendesk roles`. 
+* The type should be `SAML v2 Populate`. 
+* Set the body to:
+[source,javascript]
+----
+function populate(samlResponse, user, registration) {
+  samlResponse.assertion.attributes['role'] = registration.roles || ['user'];
+}
+----
+
+TBD pic
+
+Return to the `Zendesk` FusionAuth application.
+* Edit the application.
+* Go to SAML tab.
+* Enable SAML.
+
+Here are the SAML settings:
+
+* `Issuer` = `https://fusionauth-example.zendesk.com`. Note that there is no trailing slash.
+* `Audience` = Leave blank
+* `Callback URL` = `https://fusionauth-hypr.zendesk.com/access/saml/`
+* `Logout URL` = Anywhere logged out users should go after they sign out of Zendesk.
+* `Signing Key` = Either select an existing key or let FusionAuth create a new one.
+* `XML signature canonicalization method` = `Exclusive with comments`
+* `Response populate lambda` = Choose the previously created lambda.
+TBD pic
+
+Click save.
+
+View the application and scroll down to the `SAML v2 Integration details` section.
+
+Copy the following information:
+* `Login URL`
+* `Logout URL`
+
+Next, navigate to [breadcrumb]#Users# to edit the user you have previously set up or create a new one. Create a registration to add the user to the `Zendesk` application and give them the appropriate role. If you don't give them an `admin` or `agent` role, they'll default to a user role.
+
+Finally, go to [breadcrumb]#Settings -> Key Master# and view the 'Signing Key' you created or selected. Copy the `Fingerprint (SHA-256)` value. This looks something like `FF:74:12:A5:40:67:E9:90:24:FC:95:07:FC:B7:E6:36:9B:26:75:6B:24:9D:3E:49:0A:43:4D:BC:03:00:DD:AA`.
+
+=== Configure Zendesk
+
+Zendesk supports SAML SSO. Here is the https://support.zendesk.com/hc/en-us/articles/203663676[help desk article] about setting it up.
+
+First, head to your application's security center, then to the 'Single sign-on' section. For example: https://fusionauth-example.zendesk.com/admin/security/sso
+
+Enable SAML, then configure it.
+
+* The `SAML SSO URL` is the `Login URL`.
+* The `Remote Logout URL` is the `Logout URL`.
+* The `Certificate fingerprint` is the `Fingerprint (SHA-256)` value.
+TBD pic
+
+Save the configuration.
+
+The next step is to allow users to log in using the SAML integration. You can choose to let either end users and staff or both use single sign-on.
+
+Proceed to the `Staff members` section. Check `External authentication` and select `Single sign-on`. You should see that SAML is enabled. 
+
+Save the configuration.
+TBD pic?
+
+Navigate to the `End users` section. Check `External authentication`. You should see that SAML is enabled. 
+
+Save the configuration.
+TBD pic?
+
+You can also uncheck `Zendesk Authentication` in these sections to ensure that users are managed solely in FusionAuth. Admin users will be able to log in at `https://fusionauth-example.zendesk.com/access/normal` should FusionAuth be unavailable for any reason.
+
+New users are assigned the `user` role if they have no role assigned in FusionAuth. By default, users with the `user` role are sent to the Zendesk help center, which is not enabled by default. If this is the case, you'll get an error message. 
+
+=== Log in
+
+Open a different browser and go to your Zendesk URL: `https://fusionauth-example.zendesk.com/`.
+
+Enter the user credentials previously configured in FusionAuth.
+
+You should arrive at the screen appropriate to their role.
 
 
-=== Enable SSO for Staff or End users
-
-1. https://<your_domain>.zendesk.com/admin/security/staff_members
-2. Enable "External authentication"
-3. Select "Single sign-on" from the radio select control
