@@ -19,19 +19,21 @@ When adding screenshots to the documentation, articles or blogs, use a normalize
 ```appleScript
 set theApp to "Safari"
 
-# Most UI screenshots should be taken at this size
-set appHeight to 1020
-set appWidth to 1220
+# Docs screens
+#set appHeight to 1100
+#set appWidth to 1080
 
-# Wider UI screens only if needed
-#set appHeight to 1020
+# Wider UI screens
+#set appHeight to 1100
 #set appWidth to 1550
 
-tell application "System Events"
-	tell appearance preferences
-		set dark mode to false
-	end tell
-end tell
+# Maintenance Mode Screens
+#set appHeight to 1100
+#set appWidth to 900
+
+# Blog screens
+set appHeight to 1020
+set appWidth to 1220
 
 tell application "Finder"
 	set screenResolution to bounds of window of desktop
@@ -43,8 +45,8 @@ set screenHeight to item 4 of screenResolution
 tell application theApp
 	activate
 	reopen
-	set xAxis to 200
-	set yAxis to 200
+	set xAxis to 640
+	set yAxis to 360
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
 ```
@@ -52,7 +54,9 @@ end tell
 ## Screenshot Standards
 
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
-- Crop top/bottom if necessary (don't crop sides)
+- After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
+   - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
+- Crop top/bottom if necessary (don't crop sides). 
 - Highlight sections using image preview editor
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
@@ -66,7 +70,7 @@ Gifs take up quite a lot of space: The brew gif was about 5mb, after some custom
 
 To reduce the space requirements further, a video format is highly recommended and the dominant video format is
 webm. Converting a gif to webm is cake: `ffmpeg -i terminalizer.gif terminalizer.webm`. ffmpeg will choose all
-of the best default settings for you because the format is already specificly for browsers.
+of the best default settings for you because the format is already specifically for browsers.
 
 The problem is webm is not supported by safari (yet). You will also want to create an mp4 (which isn't always supported
 by some of the lesser browsers because it uses codecs that require paid licenses inside). You also will have to
