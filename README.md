@@ -41,11 +41,13 @@ sb serve
 
 For more information on the Savant build tool, checkout [savantbuild.org](http://savantbuild.org/).
 
+If you are modifying the doc search and want to use a different Algolia index for testing, update the settings in `_config.yml`. To manually refresh the document search index, use this command: `ALGOLIA_API_KEY='<admin api key>' bundle exec jekyll algolia`
+
 ## Deploying
 
 This section is only useful if you have access to the FusionAuth web server(s).
 
-Make certain that you set the `ALGOLIA_API_KEY` to the `Admin API Key` value found in the Algolia dashboard.
+Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard.
 
 Only master is ever released. You should work on a feature branch so that nothing is inadverantly released, but you must merge to master before you release. Master on every project should always be completely clean and able to be released at anytime.
 
