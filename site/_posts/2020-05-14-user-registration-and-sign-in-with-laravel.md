@@ -3,7 +3,7 @@ layout: blog-post
 title: User registration and sign-in with Laravel and FusionAuth
 description: We'll build a Laravel application that delegates user management, registration and login to FusionAuth.
 author: Karl Hughes
-image: blogs/nodebb-single-sign-on/fusionauth-tutorial-sso-nodebb.png
+image: blogs/fusionauth-laravel/user-registration-sign-in-laravel-fusionauth.svg
 category: blog
 tags: client-php
 excerpt_separator: "<!--more-->"
