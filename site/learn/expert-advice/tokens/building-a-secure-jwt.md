@@ -16,22 +16,24 @@ JSON Web Tokens (JWTs) get a lot of hate online for being insecure. Tom Ptacek, 
 >
 > I know a lot of crypto people who do not like JWT. I don't know one who does.
 
-JWTs can be hard to use well, but they’re still common. They have other benefits too, they’re flexible, [standardized](https://tools.ietf.org/html/rfc7519), stateless, portable, easy to understand, and extendable. They also have libraries to help you generate and consume them in almost every programming language.
+Despite some negative sentiment, JWTs are a powerful and secure method of managing identity and authorization -- they simply need to be used properly. They have other benefits too, they’re flexible, [standardized](https://tools.ietf.org/html/rfc7519), stateless, portable, easy to understand, and extendable. They also have libraries to help you generate and consume them in almost every programming language.
 
-This article will help make sure your JWTs are unassailable. It'll cover how you can securely integrate tokens into your systems. I'm going to recommend the most secure options. 
+This article will help make sure your JWTs are unassailable. It'll cover how you can securely integrate tokens into your systems by illustrating the most secure options. 
 
-However, every situation is different. You know your data and risk factors, so please learn these best practices and then apply them using judgement. I wouldn't advise a bank to follow the same security practices as a 'todo' SaaS application; take your needs into account when implementing these recommendations. 
+However, every situation is different. You know your data and risk factors, so please learn these best practices and then apply them using judgement. A bank shouldn't follow the same security practices as a 'todo' SaaS application; take your needs into account when implementing these recommendations.
+
+One additional note regarding the security of JWTs is that they are similar in many respects to other signed data, such as SAML assertions. While JWTs are often stored in a wider range of locations than SAML tokens are, it is always recommended that you protect any signed tokens with the a high degree of diligence.
 
 ## Definitions
 
-* creator: the system which creates the JWTs. In the world of OAuth this is often called an Authorization Server or AS.
-* consumer: a system which consumes a JWT. In the world of OAuth this is often called the Resource Server or RS. These consume a JWT to determine if they should allow access to a Protected Resource such as an API.
-* client: a system which retrieves a token from the creator, holds it, and presents it to other systems like a consumer.
-* claim: a piece of information asserted about the subject of the JWT. Some are standardized, others are application specific.
+* **creator**: the system which creates the JWTs. In the world of OAuth this is often called an Authorization Server or AS.
+* **consumer**: a system which consumes a JWT. In the world of OAuth this is often called the Resource Server or RS. These consume a JWT to determine if they should allow access to a Protected Resource such as an API.
+* **client**: a system which retrieves a token from the creator, holds it, and presents it to other systems like a consumer.
+* **claim**: a piece of information asserted about the subject of the JWT. Some are standardized, others are application specific.
 
 ## Out of scope
 
-In this article, we'll only be discussing signed JWTs. Signing of JSON data structures is [standardized](https://tools.ietf.org/html/rfc7515). There are also standards for [encrypting JSON data](https://tools.ietf.org/html/rfc7516) but signed tokens are more common, so we'll focus on them. When I refer to a JWT in this article, I'm talking about a signed token, not an encrypted one.
+This article will only be discussing signed JWTs. Signing of JSON data structures is [standardized](https://tools.ietf.org/html/rfc7515). There are also standards for [encrypting JSON data](https://tools.ietf.org/html/rfc7516) but signed tokens are more common, so we'll focus on them. Therefore, references to JWTs in this article will all be to signed tokens, not an encrypted ones.
 
 ## Security considerations
 
@@ -43,7 +45,7 @@ The first is that a signed JWT is like a postcard. Anyone who has access to it c
 eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJmdXNpb25hdXRoLmlvIiwiZXhwIjoxNTkwNzA4Mzg1LCJhdWQiOiIyMzhkNDc5My03MGRlLTQxODMtOTcwNy00OGVkOGVjZDE5ZDkiLCJzdWIiOiIxOTAxNmI3My0zZmZhLTRiMjYtODBkOC1hYTkyODc3Mzg2NzciLCJuYW1lIjoiRGFuIE1vb3JlIiwicm9sZXMiOlsiUkVUUklFVkVfVE9ET1MiXX0.8QfosnY2ZledxWajJJqFPdEvrtQtP_Y3g5Kqk8bvHjo
 ```
 
-You can decode it using [any number of online tools](/learn/expert-advice/dev-tools/jwt-debugger), because it's just three base 64 encoded strings joined by a period.
+You can decode it using [any number of online tools](/learn/expert-advice/dev-tools/jwt-debugger), because it's just three base 64 encoded strings joined by periods.
 
 Keep any data that you wouldn't want in the hands of someone else outside of your JWT. When you sign and send a token, or when you decode and receive it, you're guaranteed the contents didn't change. You're not guaranteed the contents are unseen.
 
@@ -61,7 +63,7 @@ Set the `typ` claim of your JWT header to a known value. This prevents one kind 
 
 ### Signature algorithms
 
-Choose the correct signing algorithm. You have two families of options, a symmetric algorithm like HMAC or an asymmetric choice like RSA or elliptic curve (ECC). The `"none"` algorithm, which doesn't sign the JWT and allows anyone to generate a token with any payload they want, should not be used.  
+Choose the correct signing algorithm. You have two families of options, a symmetric algorithm like HMAC or an asymmetric choice like RSA or elliptic curve (ECC). The `"none"` algorithm, which doesn't sign the JWT and allows anyone to generate a token with any payload they want, should not be used and any JWTs that use this signing algorithm (meaning they aren't signed) should be rejected immediately.  
 
 There are two main factors in algorithm selection. The first is performance. A symmetric signing algorithm like HMAC is simply faster. Here are the benchmark results using the `ruby-jwt` library, which encoded and decoded a token 50,000 times:
 
@@ -80,7 +82,7 @@ ecc decode
  12.728000   0.008000  12.736000 ( 12.751313)
 ```
 
-Don't look at the absolute numbers, they're going to change based on the programming language, what's happening on the system during a benchmark run and CPU horsepower. Instead, focus on the ratios. RSA encoding took approximately 9 times as long as HMAC encoding. ECC took almost two and a half times as long to encode and twice as long to decode. The code is [available](https://github.com/FusionAuth/fusionauth-example-ruby-jwt/blob/master/benchmark_algos.rb) if you'd like to take a look. Symmetric signatures are faster than asymmetric options. 
+Don't look at the absolute numbers, they're going to change based on the programming language, what's happening on the system during a benchmark run, and CPU horsepower. Instead, focus on the ratios. RSA encoding took approximately 9 times as long as HMAC encoding. ECC took almost two and a half times as long to encode and twice as long to decode. The code is [available](https://github.com/FusionAuth/fusionauth-example-ruby-jwt/blob/master/benchmark_algos.rb) if you'd like to take a look. Symmetric signatures are faster than asymmetric options. 
 
 However, the shared secret required for options like HMAC has security implications. The token consumer can create a JWT indistinguishable from a token built by the creator, because both have access to the algorithm and the shared secret.
 
@@ -104,13 +106,13 @@ Therefore no claims are required by the RFC. But to maximize security, the follo
 
 ### Revocation 
 
-Because it is difficult to invalidate JWTs once issued--one of their benefits is that they are stateless, which means that their holders don't need to reach out to any server to verify they are valid--you should keep their lifetime on the order of hours or minutes, rather than days or months. Such quick expiration means that should they fall into the wrong hands, access lifetimes are limited.
+Because it is difficult to invalidate JWTs once issued--one of their benefits is that they are stateless, which means that their holders don't need to reach out to any server to verify they are valid--you should keep their lifetime on the order of hours or minutes, rather than days or months. Such quick expiration means that should a JWT be stolen, the stolen JWT will eventually expire and no longer be accepted by the consumer.
 
 But there are times, such as a data breach or a user logging out of your application, when you'll want to revoke tokens, either across a system or on a more granular level. You have a few choices here. These are in order of how much effort implementation would require from the token consumer:
 
-* let tokens expire. No effort required here.
-* have the creator rotate the secret or private key. This invalidates all extant tokens.
-* use a 'time window' solution in combination with webhooks. Read more about this option and [revoking JWTs](/learn/expert-advice/tokens/revoking-jwts) in general.
+* Let tokens expire. No effort required here.
+* Have the creator rotate the secret or private key. This invalidates all extant tokens.
+* Use a 'time window' solution in combination with webhooks. Read more about this option and [revoking JWTs](/learn/expert-advice/tokens/revoking-jwts) in general.
 
 ### Keys
 
@@ -130,14 +132,14 @@ You should rotate your token signing keys regularly. Ideally you'd set this up i
 
 ## Holding tokens
 
-Clients request and hold tokens. A client can be a browser, a mobile phone or something else. A client receives a token from a token creator. They are then responsible for two things:
+Clients request and hold tokens. A client can be a browser, a mobile phone or something else. A client receives a token from a token creator (sometimes through a proxy or a backend service that is usually part of your application). Clients are then responsible for two things:
 
-* passing the token on to any token consumers for authentication and authorization purposes
-* storing the token securely
+* Passing the token on to any token consumers for authentication and authorization purposes, such as when a web application makes an HTTP request to a backend or API.
+* Storing the token securely.
 
-They should deliver the JWT to consumers over a secure connection, typically TLS.
+Clients should deliver the JWT to consumers over a secure connection, typically TLS version 1.2 or later.
 
-The client must store the token securely as well. How to do that depends on what the client actually is. For a browser, you should avoid storing the JWT in localstorage. You should instead keep it in a cookie with the following flags:
+The client must store the token securely as well. How to do that depends on what the client actually is. For a browser, you should avoid storing the JWT in localstorage or a JavaScript object. You should instead keep it in a cookie with the following flags:
 
 * `Secure` to ensure the cookie is only sent over TLS.
 * `HttpOnly` so that no rogue JavaScript can access the cookie.
@@ -153,13 +155,13 @@ For other types of clients, use platform specific best practices for securing da
 
 Tokens must be examined as carefully as they are crafted. When you are consuming a JWT, verify the JWT to ensure it was signed correctly, and validate and sanitize the claims. Just like with token creation, don't roll your own implementation; use existing libraries.
 
-Verify that the JWT signature matches the content. Any library should be able to do this, but ensure that the algorithm that the token was signed with, based on the header, is used to decode it. 
+Verify that the JWT signature matches the content. Any library should be able to do this, but ensure that the algorithm that the token was signed with, based on the header, is used to decode it. It's worth mentioning again here that any JWTs using the `none` algorithm should be rejected immediately.
 
 Then you want to validate the claims are as expected. This includes any implementation specific registered claims set on creation, as well as the issuer (`iss`) and the audience (`aud`) claims. A consumer should know the issuer it expects, based on out of band information such as documentation. You should also ensure the JWT is meant for you.
 
 Other claims matter too. Make sure the `typ` claim, in the header, is as expected. Check that the JWT is within its lifetime; that is before the `exp` value and after the `nbf` value, if present. If you're concerned about clock skew, you can allow a few minutes of leeway.
 
-If any of these claims fail to match expected values, the consumer should provide only minimal information to the client. Just as authentication servers should not reveal whether a failed login was due to an non-existent username or invalid password, you should return the same error message and status code, `403`, for any invalid token. This minimizes the information an attacker can learn by generating JWTs and sending them to you.
+If any of these claims fail to match expected values, the consumer should provide only minimal information to the client. Just as authentication servers should not reveal whether a failed login was due to an non-existent username or invalid password, you should return the same error message and status code, `403` for example, for any invalid token. This minimizes the information an attacker can learn by generating JWTs and sending them to you.
 
 If you are going to use claims for further information processing, make sure you sanitize those values. For instance, if you are going to query a database based on a claim, use a parameterized query.
 
