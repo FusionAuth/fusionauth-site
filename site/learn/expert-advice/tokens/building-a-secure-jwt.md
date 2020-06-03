@@ -33,7 +33,7 @@ One additional note regarding the security of JWTs is that they are similar in m
 
 ## Out of scope
 
-This article will only be discussing signed JWTs. Signing of JSON data structures is [standardized](https://tools.ietf.org/html/rfc7515). There are also standards for [encrypting JSON data](https://tools.ietf.org/html/rfc7516) but signed tokens are more common, so we'll focus on them. Therefore, references to JWTs in this article will all be to signed tokens, not an encrypted ones.
+This article will only be discussing signed JWTs. Signing of JSON data structures is [standardized](https://tools.ietf.org/html/rfc7515). There are also standards for [encrypting JSON data](https://tools.ietf.org/html/rfc7516) but signed tokens are more common, so we'll focus on them. Therefore, in this article the term JWT refers to signed tokens, not encrypted ones.
 
 ## Security considerations
 
