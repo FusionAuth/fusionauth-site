@@ -32,8 +32,8 @@ set theApp to "Safari"
 #set appWidth to 900
 
 # Blog screens
-set appHeight to 1020
-set appWidth to 1220
+#set appHeight to 1020
+#set appWidth to 1220
 
 tell application "Finder"
 	set screenResolution to bounds of window of desktop
