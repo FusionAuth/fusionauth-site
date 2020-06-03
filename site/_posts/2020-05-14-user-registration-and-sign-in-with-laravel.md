@@ -66,14 +66,14 @@ Finally, you can take advantage of [Laravel's dependency injection system](https
 ```php
 class AppServiceProvider extends ServiceProvider
 {
-    //...
-    public function boot()
-    {
-        $this->app->bind(FusionAuthClient::class, function ($app) {
-            return new FusionAuthClient(env('FUSIONAUTH_API_KEY'), env('FUSIONAUTH_BASE_URL'));
-        });
-    }
-    //...
+  //...
+  public function boot()
+  {
+    $this->app->bind(FusionAuthClient::class, function ($app) {
+      return new FusionAuthClient(env('FUSIONAUTH_API_KEY'), env('FUSIONAUTH_BASE_URL'));
+    });
+  }
+  //...
 }
 ```
 
@@ -95,19 +95,19 @@ Next, you will need to create a [view file](https://laravel.com/docs/7.x/views) 
 @extends('layout')
 
 @section('content')
-    <h1>Register</h1>
-    <p>Create an account in our demo app.</p>
-    <form class="pure-form pure-form-stacked" action="/register" method="post">
-        @csrf
-        <label for="email">Email Address</label>
-        <input type="email" name="email" required>
+  <h1>Register</h1>
+  <p>Create an account in our demo app.</p>
+  <form class="pure-form pure-form-stacked" action="/register" method="post">
+    @csrf
+    <label for="email">Email Address</label>
+    <input type="email" name="email" required>
 
-        <label for="password">Password</label>
-        <input type="password" minlength="8" name="password" required>
+    <label for="password">Password</label>
+    <input type="password" minlength="8" name="password" required>
 
-        <input class="pure-button pure-button-primary" type="submit" value="Register">
-    </form>
-    <p>Already have an account? <a href="/">Login here</a></p>
+    <input class="pure-button pure-button-primary" type="submit" value="Register">
+  </form>
+  <p>Already have an account? <a href="/">Login here</a></p>
 @endsection
 ```
 
@@ -116,14 +116,14 @@ You'll notice that this file requires a [Layout file as well](https://laravel.co
 ```html
 <html>
 <head>
-    <title>FusionAuth Laravel Demo</title>
-    <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.1/build/pure-min.css">
+  <title>FusionAuth Laravel Demo</title>
+  <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.1/build/pure-min.css">
 </head>
 <body>
 <div class="pure-g" style="justify-content: center;">
-    <div class="pure-u-1-3">
-        @yield('content')
-    </div>
+  <div class="pure-u-1-3">
+    @yield('content')
+  </div>
 </div>
 </body>
 </html>
@@ -149,34 +149,34 @@ Open up the `app/Http/Controllers/RegisterUser.php` file created by the Artisan 
 ```php
 class RegisterUser extends Controller
 {
-    private $authClient;
+  private $authClient;
 
-    public function __construct(FusionAuthClient $authClient)
-    {
-        $this->authClient = $authClient;
+  public function __construct(FusionAuthClient $authClient)
+  {
+      $this->authClient = $authClient;
+  }
+
+  public function __invoke(Request $request)
+  {
+    $clientRequest = [
+      'registration' => ['applicationId' => env('FUSIONAUTH_APP_ID')],
+      'sendSetPasswordEmail' => false,
+      'user' => [
+        'password' => $request->get('password'),
+        'email' => $request->get('email'),
+        'passwordChangeRequired' => false,
+        'twoFactorEnabled' => false,
+      ],
+    ];
+
+    $clientResponse = $this->authClient->register(null, $clientRequest);
+
+    if (!$clientResponse->wasSuccessful()) {
+      return redirect()->back();
     }
 
-    public function __invoke(Request $request)
-    {
-        $clientRequest = [
-            'registration' => ['applicationId' => env('FUSIONAUTH_APP_ID')],
-            'sendSetPasswordEmail' => false,
-            'user' => [
-                'password' => $request->get('password'),
-                'email' => $request->get('email'),
-                'passwordChangeRequired' => false,
-                'twoFactorEnabled' => false,
-            ],
-        ];
-
-        $clientResponse = $this->authClient->register(null, $clientRequest);
-
-        if (!$clientResponse->wasSuccessful()) {
-            return redirect()->back();
-        }
-
-        return redirect('/');
-    }
+    return redirect('/');
+  }
 }
 ```
 
@@ -202,19 +202,19 @@ The login form is very similar to the registration form created in the previous 
 @extends('layout')
 
 @section('content')
-    <h1>Login</h1>
-    <p>Enter your username and password to login.</p>
-    <form class="pure-form pure-form-stacked" action="/login" method="post">
-        @csrf
-        <label for="email">Email Address</label>
-        <input type="email" name="email" required>
+  <h1>Login</h1>
+  <p>Enter your username and password to login.</p>
+  <form class="pure-form pure-form-stacked" action="/login" method="post">
+    @csrf
+    <label for="email">Email Address</label>
+    <input type="email" name="email" required>
 
-        <label for="password">Password</label>
-        <input type="password" minlength="8" name="password" required>
+    <label for="password">Password</label>
+    <input type="password" minlength="8" name="password" required>
 
-        <input class="pure-button pure-button-primary" type="submit" value="Login">
-    </form>
-    <p>Don't have an account yet? <a href="/register">Register here</a></p>
+    <input class="pure-button pure-button-primary" type="submit" value="Login">
+  </form>
+  <p>Don't have an account yet? <a href="/register">Register here</a></p>
 @endsection
 ```
 
@@ -231,31 +231,31 @@ Open the `app/Http/Controllers/LoginUser.php` file and add the following:
 ```php
 class LoginUser extends Controller
 {
-    private $authClient;
+  private $authClient;
 
-    public function __construct(FusionAuthClient $authClient)
-    {
-        $this->authClient = $authClient;
+  public function __construct(FusionAuthClient $authClient)
+  {
+    $this->authClient = $authClient;
+  }
+
+  public function __invoke(Request $request)
+  {
+    $clientRequest = [
+      'applicationId' => env('FUSIONAUTH_APP_ID'),
+      'ipAddress' => $request->ip(),
+      'loginId' => $request->get('email'),
+      'password' => $request->get('password'),
+    ];
+
+    $clientResponse = $this->authClient->login($clientRequest);
+
+    if (!$clientResponse->wasSuccessful()) {
+      return redirect()->back();
     }
-
-    public function __invoke(Request $request)
-    {
-        $clientRequest = [
-            'applicationId' => env('FUSIONAUTH_APP_ID'),
-            'ipAddress' => $request->ip(),
-            'loginId' => $request->get('email'),
-            'password' => $request->get('password'),
-        ];
-
-        $clientResponse = $this->authClient->login($clientRequest);
-
-        if (!$clientResponse->wasSuccessful()) {
-            return redirect()->back();
-        }
         
-        session(['user' => (array) $clientResponse->successResponse->user]);
-        return redirect('profile');
-    }
+    session(['user' => (array) $clientResponse->successResponse->user]);
+    return redirect('profile');
+  }
 }
 ```
 
@@ -277,16 +277,16 @@ use Illuminate\Auth\AuthenticationException;
 
 class Authenticate
 {
-    public function handle($request, \Closure $next)
-    {
-        $user = session()->get('user');
+  public function handle($request, \Closure $next)
+  {
+    $user = session()->get('user');
 
-        if (!$user) {
-            throw new AuthenticationException('You must login to access this page.', [], '/');
-        }
-
-        return $next($request);
+    if (!$user) {
+      throw new AuthenticationException('You must login to access this page.', [], '/');
     }
+
+    return $next($request);
+  }
 }
 ```
 
@@ -302,10 +302,10 @@ Now you can create a `profile.blade.php` file in your `resources/views/` directo
 @extends('layout')
 
 @section('content')
-    <h1>Profile</h1>
-    <p><strong>User ID: </strong> {{ session()->get('user')['id'] }}</p>
-    <p><strong>Email: </strong> {{ session()->get('user')['email'] }}</p>
-    <a href="/logout">Logout</a>
+  <h1>Profile</h1>
+  <p><strong>User ID: </strong> {{ session()->get('user')['id'] }}</p>
+  <p><strong>Email: </strong> {{ session()->get('user')['email'] }}</p>
+  <a href="/logout">Logout</a>
 @endsection
 ```
 
@@ -333,20 +333,20 @@ Open the `app/Http/Controllers/LogoutUser.php` file and add the following:
 ```php
 class LogoutUser extends Controller
 {
-    private $authClient;
+  private $authClient;
 
-    public function __construct(FusionAuthClient $authClient)
-    {
-        $this->authClient = $authClient;
-    }
+  public function __construct(FusionAuthClient $authClient)
+  {
+    $this->authClient = $authClient;
+  }
 
-    public function __invoke()
-    {
-        $this->authClient->logout(false);
-        session()->flush();
+  public function __invoke()
+  {
+    $this->authClient->logout(false);
+    session()->flush();
 
-        return redirect('/');
-    }
+    return redirect('/');
+  }
 }
 ```
 
