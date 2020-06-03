@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: Building a Secure Signed JSON Web Token
-description: How to use and revoke JWTs for effective and efficient authorization management. Examples, diagrams & more.
+title: Building a Secure Signed JWT
+description: How to use and revoke JSON Web Tokens for effective and efficient authorization management. Examples, diagrams & more.
 author: Dan Noore
 image: advice/revoking-jwts-article.png
 category: Tokens
