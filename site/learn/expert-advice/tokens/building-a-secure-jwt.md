@@ -3,11 +3,11 @@ layout: advice
 title: Building a Secure Signed JWT
 description: How to use and revoke JSON Web Tokens for effective and efficient authorization management. Examples, diagrams & more.
 author: Dan Noore
-image: advice/revoking-jwts-article.png
+image: advice/building-secure-signed-jwt-article.png
 category: Tokens
 related:
-date: 2020-05-28
-dateModified: 2020-05-28
+date: 2020-06-04
+dateModified: 2020-06-04
 ---
 
 JSON Web Tokens (JWTs) get a lot of hate online for being insecure. Tom Ptacek, founder of [Latacora](https://latacora.com/), a security consultancy, had this to say about [JWTs in 2017](https://news.ycombinator.com/item?id=14292223):
