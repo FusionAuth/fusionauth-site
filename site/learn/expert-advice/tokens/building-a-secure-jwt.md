@@ -22,7 +22,7 @@ This article will help make sure your JWTs are unassailable. It'll cover how you
 
 However, every situation is different. You know your data and risk factors, so please learn these best practices and then apply them using judgement. A bank shouldn't follow the same security practices as a 'todo' SaaS application; take your needs into account when implementing these recommendations.
 
-One additional note regarding the security of JWTs is that they are similar in many respects to other signed data, such as SAML assertions. While JWTs are often stored in a wider range of locations than SAML tokens are, it is always recommended that you protect any signed tokens with the a high degree of diligence.
+One additional note regarding the security of JWTs is that they are similar in many respects to other signed data, such as SAML assertions. While JWTs are often stored in a wider range of locations than SAML tokens are, it is always recommended that you carefully protect any signed tokens.
 
 ## Definitions
 
@@ -49,7 +49,7 @@ You can decode it using [any number of online tools](/learn/expert-advice/dev-to
 
 Keep any data that you wouldn't want in the hands of someone else outside of your JWT. When you sign and send a token, or when you decode and receive it, you're guaranteed the contents didn't change. You're not guaranteed the contents are unseen.
 
-A corollary of that is that any information you do send should avoid unintentional data leakage. This would include information such as identifiers. If my JWT includes a value like `123` for an id, that means anyone viewing it has a pretty good idea that there is an entity with the id of `122`. Use a GUID or random string for identifiers instead. Likewise, because tokens are not encrypted, use TLS for transmitting them. 
+A corollary of that is that any information you do send should avoid unintentional data leakage. This would include information such as identifiers. If a JWT includes a value like `123` for an id, that means anyone viewing it has a pretty good idea that there is an entity with the id of `122`. Use a GUID or random string for identifiers instead. Likewise, because tokens are not encrypted, use TLS for transmitting them. 
 
 Don't send JWTs using an HTTP method that may be cached or logged. So don't append the token to a `GET` request as a parameter. If you must send it in a GET request, use an HTTP header. You can also use other HTTP methods such as `POST`, which sends the JWT as a part of a request body. Sending the token value as part of a `GET` URL might result in the JWT being stored in a proxy's memory or filesystem, a browser cache, or even in web server access logs. 
 
@@ -106,7 +106,7 @@ Therefore no claims are required by the RFC. But to maximize security, the follo
 
 ### Revocation 
 
-Because it is difficult to invalidate JWTs once issued--one of their benefits is that they are stateless, which means that their holders don't need to reach out to any server to verify they are valid--you should keep their lifetime on the order of hours or minutes, rather than days or months. Such quick expiration means that should a JWT be stolen, the stolen JWT will eventually expire and no longer be accepted by the consumer.
+Because it is difficult to invalidate JWTs once issued--one of their benefits is that they are stateless, which means that their holders don't need to reach out to any server to verify they are valid--you should keep their lifetime on the order of hours or minutes, rather than days or months. Short lifetimes mean that should a JWT be stolen, the stolen token will soon expire and no longer be accepted by the consumer.
 
 But there are times, such as a data breach or a user logging out of your application, when you'll want to revoke tokens, either across a system or on a more granular level. You have a few choices here. These are in order of how much effort implementation would require from the token consumer:
 
