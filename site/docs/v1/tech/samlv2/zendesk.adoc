@@ -13,54 +13,57 @@ We'll also set up roles in FusionAuth to automatically grant agent dashboard acc
 
 This document assumes you have a running instance of FusionAuth and a working Zendesk application. You will also need admin accounts for both to configure them correctly.
 
-Additionally, you'll need to know your Zendesk URL. It may be something like: `https://fusionauth-example.zendesk.com`. We'll use that value for this document, but please replace it with the correct URL.
+Additionally, you'll need to know your Zendesk URL. It may be something like: `\https://fusionauth-example.zendesk.com` where `fusionauth-example` is your registered domain. We'll use that value for this document, but please replace it with your Zendesk URL.
 
-Finally, you'll need a FusionAuth user to sign in to Zendesk as. You can use an existing user or create one.
+Finally, you'll need a FusionAuth user that you will use to sign into Zendesk. You can use an existing user or create a new user for this purpose.
 
 === Configure FusionAuth
 
-First, we want to create a new application, `Zendesk`, in FusionAuth. Navigate to [breadcrumb]#Applications# and create an application. Create two roles as well:
+First, we want to create a new application named, `Zendesk`, in FusionAuth. Navigate to [breadcrumb]#Applications# and create an application with the following two roles:
 
-* Create a role called `agent`.
-* Create a role called `admin`.
+* `agent`
+* `admin`
 
-When you are done, your screen should look like this just before saving:
+When you are done, your screen should look like this just before saving. The role descriptions are optional but may be helpful to provide. Once you have confirmed the values, save the new application.
 
 image::samlv2/zendesk/create-application-and-roles.png[Creating FusionAuth application with Zendesk roles.,width=1200,role=shadowed]
 
-Next, we'll create a lambda to take FusionAuth role information and populate the SAML assertion that Zendesk will receive.
+Next, we'll create a lambda to take FusionAuth role information and populate the SAML assertion that Zendesk will receive. Navigate to [breadcrumb]#Settings -> Lambdas# and click the add button.
 
-* Create a lambda called `Populate Zendesk roles`. 
-* The type should be `SAML v2 Populate`. 
-* Set the body to:
+* Name the lambda `Populate Zendesk roles`.
+* Set the type to `SAML v2 populate`.
+* Add the following function body:
++
 [source,javascript]
 ----
 function populate(samlResponse, user, registration) {
-  samlResponse.assertion.attributes['role'] = registration.roles;
+  samlResponse.assertion.attributes.role = registration.roles;
 }
 ----
 
-This will set the users' roles in the SAML assertion to the value of their registered roles for the Zendesk FusionAuth application. If no roles are assigned, Zendesk treats the user as an end user, not an agent or an admin.
+.{nbsp} +
+
+When this lambda function is executed, it will set the users' roles in the SAML assertion to the roles found in the registration. These roles are the ones assigned by FusionAuth for the Zendesk FusionAuth application. If no roles are assigned, Zendesk treats the user as an end user, not an agent or an admin.
 
 image::samlv2/zendesk/create-role-lambda.png[Creating a lambda to populate roles.,width=1200,role=shadowed]
 
-Return to the `Zendesk` FusionAuth application.
+Click save, and then return to the `Zendesk` FusionAuth application by navigating to [breadcrumb]#Applications#
 
 * Edit the application.
 * Go to the SAML tab.
 * Enable SAML.
 
-To configure SAML, use these settings:
+To configure SAML, use the following settings, replacing `fusionauth-example` with your actual Zendesk domain.
 
-* `Issuer` = `https://fusionauth-example.zendesk.com`, note that there is no trailing slash.
-* `Audience` = Leave this blank.
-* `Callback URL` = `https://fusionauth-example.zendesk.com/access/saml/`
-* `Logout URL` = A location that users should be sent to after they sign out of Zendesk.
-* `Signing Key` = Either select an existing key or let FusionAuth create a new one.
-* `XML signature canonicalization method` = `Exclusive with comments`
-* `Response populate lambda` = Choose the previously created lambda.
+* [field]#Issuer# : `\https://fusionauth-example.zendesk.com`, note that there is no trailing slash.
+* [field]#Audience# : Leave this blank.
+* [field]#Callback URL (ACS)# : `\https://fusionauth-example.zendesk.com/access/saml/`
+* [field]#Logout URL# : A location that users should be sent to after they sign out of Zendesk.
+* [field]#Signing Key# : Either select an existing key or let FusionAuth create a new one.
+* [field]#XML signature canonicalization method# : `Exclusive with comments`
+* [field]#Response populate lambda# : Choose the previously created lambda named `Populate Zendesk roles`.
 
-image::samlv2/zendesk/saml-config.png[Application SAML configuration.,width=1200,role=shadowed]
+image::samlv2/zendesk/saml-config.png[Application SAML configuration.,width=1200,role=shadowed top-cropped]
 
 Click save. Now view the application configuration and scroll down to the `SAML v2 Integration details` section.  Copy the following information:
 
@@ -79,13 +82,13 @@ image::samlv2/zendesk/fingerprint-for-zendesk.png[The required certificate finge
 
 The https://support.zendesk.com/hc/en-us/articles/203663676[general Zendesk SSO instructions] are worth reading.
 
-To configure Zendesk to use FusionAuth to manage your users, head to your application's security center, then to the `Single sign-on` section. This is a direct URL to that section: https://fusionauth-example.zendesk.com/admin/security/sso
+To configure Zendesk to use FusionAuth to manage your users, head to your application's security center, then to the `Single sign-on` section. This is a direct URL to that section: `\https://fusionauth-example.zendesk.com/admin/security/sso`
 
 Enable SAML, then configure it.
 
-* The `SAML SSO URL` is the `Login URL` previously copied.
-* The `Remote Logout URL` is the `Logout URL` previously copied.
-* The `Certificate fingerprint` is the `Fingerprint (SHA-256)` value previously copied.
+* The [field]#SAML SSO URL# is the `Login URL` previously copied.
+* The [field]#Remote Logout URL# is the `Logout URL` previously copied.
+* The [field]#Certificate fingerprint# is the `Fingerprint (SHA-256)` value previously copied.
 
 image::samlv2/zendesk/zendesk-saml-config.png[The Zendesk SSO configuration screen.,width=1200,role=shadowed]
 
@@ -100,7 +103,7 @@ You can also uncheck `Zendesk Authentication` in these two sections to ensure th
 
 === Log in
 
-Open a different browser and go to your Zendesk URL: `https://fusionauth-example.zendesk.com/`.
+Open a different browser and go to your Zendesk URL: `\https://fusionauth-example.zendesk.com/`.
 
 Enter the user credentials previously configured in FusionAuth.
 
@@ -108,7 +111,7 @@ You should arrive at a screen appropriate to the role of the user (Help Center f
 
 === Troubleshooting
 
-Admin users will be able to access their dashboard at `https://fusionauth-example.zendesk.com/access/normal` should FusionAuth be unavailable for any reason. There's https://support.zendesk.com/hc/en-us/articles/115006925348-Accessing-your-Zendesk-account-when-your-SSO-service-is-down[more information at the Zendesk help center].
+Admin users will be able to access their dashboard at `\https://fusionauth-example.zendesk.com/access/normal` should FusionAuth be unavailable for any reason. There's more information at the https://support.zendesk.com/hc/en-us/articles/115006925348-Accessing-your-Zendesk-account-when-your-SSO-service-is-down[Zendesk help center].
 
 Ensure that the `Issuer` setting has no trailing slash and exactly matches your Zendesk URL.
 
