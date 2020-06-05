@@ -47,9 +47,9 @@ If you are modifying the doc search and want to use a different Algolia index fo
 
 This section is only useful if you have access to the FusionAuth web server(s).
 
-Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard.
+Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard. This key is used to push any changes to the index. Make certain that you set the `ALGOLIA_SEARCH_ONLY_API_KEY` environment variable to the `Search only API Key` value found in the Algolia dashboard. This key is used to retrieve results.
 
-Only master is ever released. You should work on a feature branch so that nothing is inadverantly released, but you must merge to master before you release. Master on every project should always be completely clean and able to be released at anytime.
+Only master is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to master before you release. Master on every project should always be completely clean and able to be released at anytime.
 
 After master contains what you want to release, there is a Savant build target called push. When you run `sb push` it will pull master, re-build and updates the website.
 
