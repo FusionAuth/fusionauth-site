@@ -11,7 +11,7 @@ excerpt_separator: "<!--more-->"
 
 Ruby on Rails is a modern web framework, but also a great way to build an API. The ability to quickly jam out your business logic, the ease of creating and modifying data models, and the built-in testing support all combine to make building a JSON API in Rails a no brainer. Add in a sleek admin interface built using something like [RailsAdmin](https://github.com/sferik/rails_admin) and you can build and manage APIs easily. 
 
-But you don't typically want just anyone to consume your API. You want to ensure the right people and applications are doing so. In this tutorial, we're going to build an API in Ruby on Rails 6, and secure it using using JSON Web Tokens (JWTs).
+But you don't typically want just anyone to consume your API. You want to ensure the right people and applications are doing so. In this tutorial, we're going to build an API in Ruby on Rails 6, and secure it using JSON Web Tokens (JWTs).
 
 <!--more-->
 
@@ -102,7 +102,7 @@ Excellent! We have a working API which returns well formed JSON! Rails even take
 
 As a reminder, we're going to use a JWT to secure this API. While you can secure Rails APIs using [a variety of methods](https://edgeguides.rubyonrails.org/action_controller_overview.html#http-authentications), using a token has advantages. You can integrate with a number of identity providers that offer OAuth or SAML support, which allows you to leverage an existing robust identity management system to control API access. You can also embed additional metadata into a JWT, including attributes like roles.
 
-The first step to changing this API is to write tests. Let's modify the test provide a JWT and expect `:forbidden` HTTP statuses when the token doesn't meet our expectations.
+The first step to changing this API is to write tests. Let's modify the test to provide a JWT and expect `:forbidden` HTTP statuses when the token doesn't meet our expectations.
 
 ```ruby
 class MessagesTest < ActionDispatch::IntegrationTest
@@ -177,7 +177,7 @@ For this tutorial, we put the HMAC secret in the environment configuration files
 
 Let's add our authorization code now that our tests fail because they are expecting certain unauthorized requests to return `:forbidden`.
 
-There are two places we could put the code that checks the token. We could add it to the `Messages` controller. Or we could add it to `Application` controller. This latter choice would enforce authorization for all requests. Since we are building an API that should never be accessed without authorization, we should protect all our resources. If and when we need to distinguish between different claims (for instance, we may want to have some APIs only accessible for users with the `ADMIN` role), we can refactor and move the verification code to different controllers.
+There are two places we could put the code that checks the token. We could add it to the `Messages` controller. Or we could add it to the `Application` controller. This latter choice would enforce authorization for all requests. Since we are building an API that should never be accessed without authorization, we should protect all our resources. If and when we need to distinguish between different claims (for instance, we may want to have some APIs only accessible for users with the `ADMIN` role), we can refactor and move the verification code to different controllers.
 
 Here's the authorization code for the `app/controllers/application_controller.rb` file:
 
