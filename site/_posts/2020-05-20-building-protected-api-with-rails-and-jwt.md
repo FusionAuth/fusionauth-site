@@ -102,6 +102,8 @@ Excellent! We have a working API which returns well formed JSON! Rails even take
 
 As a reminder, we're going to use a JWT to secure this API. While you can secure Rails APIs using [a variety of methods](https://edgeguides.rubyonrails.org/action_controller_overview.html#http-authentications), using a token has advantages. You can integrate with a number of identity providers that offer OAuth or SAML support, which allows you to leverage an existing robust identity management system to control API access. You can also embed additional metadata into a JWT, including attributes like roles.
 
+To create tokens we're using the [Ruby JWT library](https://github.com/jwt/ruby-jwt). Make sure you add that to your `Gemfile` and then run `bundle install`.
+
 The first step to changing this API is to write tests. Let's modify the test to provide a JWT and expect `:forbidden` HTTP statuses when the token doesn't meet our expectations.
 
 ```ruby
@@ -161,7 +163,7 @@ What we're doing here is writing a test that specifies the JWT will be in the `A
 # ...
 ```
 
-Above, we create registered claims that our API may examine. `exp` indicates when the JWT will expire. `aud` is an identifier of who or what this token is intended for (the "audience"). `sub` is the person or piece of software this token applies to--to quote the RFC: "The claims in a JWT are normally statements about the subject." `iss` is an identifier for the issuer of the JWT. 
+Above, we create registered claims that our API may examine. `exp` indicates when the JWT will expire. `aud` is an identifier of who or what this token is intended for (the "audience"). `sub` is the person or piece of software to which this token applies. To quote the RFC: "The claims in a JWT are normally statements about the subject." `iss` is an identifier for the issuer of the JWT. 
 
 We also add the `name` public claim to convey the user's name. `roles` are a private claim with a meaning undefined outside of our application. Note that because the content of JWTs is not typically encrypted, claims should contain no secrets or private data.
 
@@ -171,9 +173,9 @@ The last thing we do is encode our JWT. This signs it, adds needed metadata and 
 eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJmdXNpb25hdXRoLmlvIiwiZXhwIjoxNTkwMTgxNjE5LCJhdWQiOiIyMzhkNDc5My03MGRlLTQxODMtOTcwNy00OGVkOGVjZDE5ZDkiLCJzdWIiOiIxOTAxNmI3My0zZmZhLTRiMjYtODBkOC1hYTkyODc3Mzg2NzciLCJuYW1lIjoiRGFuIE1vb3JlIiwicm9sZXMiOlsiVVNFUiJdfQ.P7KXBV8fNElGGr1McKIMQbU7-mZPMxv8tw5AbufZgr0
 ```
 
-We use the HMAC signature algorithm because in this tutorial we control both the issuer of the token and the consumer--our API. We can therefore share a secret reliably between them. If we didn't have a good way to share secrets, using an asymmetric key would be a wiser choice.
+We use the HMAC signature algorithm because in this tutorial we control both the issuer of the token and the consumer, our API. We can therefore share a secret reliably between them. If we didn't have a good way to share secrets, using an asymmetric key would be a wiser choice.
 
-For this tutorial, we put the HMAC secret in the environment configuration files. For production usage, use your normal secrets management solution. You should make the HMAC secret a long string, but don't use the secret key base.
+For this tutorial, we put the HMAC secret in the environment configuration files. For production usage, use your normal secrets management solution. You should make the HMAC secret a long string, but don't use the any other Rails secrets, such as the session secret. 
 
 Let's add our authorization code now that our tests fail because they are expecting certain unauthorized requests to return `:forbidden`.
 
@@ -213,7 +215,7 @@ class ApplicationController < ActionController::API
 end
 ```
 
-We look for the JWT in the `AUTHORIZATION` HTTP header. If it doesn't exist, we deny access. If it does, we try to decode it. If it decodes without raising an exception, it is a valid JWT.
+We look for the JWT in the `AUTHORIZATION` HTTP header. Rails exposes it via the `HTTP_AUTHORIZATION` key in the `headers` hash of the request. If it doesn't exist, we deny access. If it does, we try to decode it. If it decodes without raising an exception, it is a valid JWT.
 
 ## Verify claims
 
@@ -221,7 +223,7 @@ But really, what does valid mean? That's something you define on an application 
 
 But for this application, we need to be extra sure. After all, if our messages fell into the wrong hands, who knows what could happen?
 
-So let's verify additional claims are as they should be when we are decoding the JWT. We can do this by providing options to the `JWT.decode` method. Instead of:
+So, let's verify that the claims values when we are decoding the JWT. We'll check to make sure that claims like the issuer are what we expect. We can perform these checks by providing options to the `JWT.decode` method. Instead of:
 
 ```ruby
 # ...
@@ -238,7 +240,11 @@ decoded_token = JWT.decode token, Rails.configuration.x.oauth.jwt_secret, true, 
 # ...
 ```
 
-The options at the end of the JWT `decode` method specify which claims we want to verify. If there were private claims that we wanted to check, we'd need to do that as well. Again, while we are guaranteed by the HMAC signature that the contents of the token are exactly what they were when it was created, we aren't guaranteed that the contents will remain unexamined. So add in your needed private claims, but remember JWTs should contain a bare minimum. If needed, consumers can always make additional queries of the identity management server.
+The options at the end of the JWT `decode` method specify which claims we want to verify. If there were private claims that we wanted to check, we'd need to do that as well. For instance, perhaps your application has a domain specific claim that the API needs to ensure is present in the JWT.
+
+A warning, while we are guaranteed by the HMAC signature that the contents of the token are exactly what they were when it was created, we aren't guaranteed that the contents will remain unexamined. 
+
+Therefore, add any needed claims, but remember JWTs should contain a bare minimum. If needed, consumers can always make additional requests of the identity management server if they need to get more information too private for a token. For example, based on the JWT we've generated, the consumer could retrieve more information about the subscriber `19016b73-3ffa-4b26-80d8-aa9287738677` with a direct request.
 
 We also added some tests, but you'll need to check out the GitHub repository to see them.
 
