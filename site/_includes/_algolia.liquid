@@ -32,23 +32,40 @@ const hitTemplate = function(hit) {
   `;
 }
 
+// Create a render function
+const renderSearchBox = (renderOptions, isFirstRender) => {
+  const { query, refine, clear, isSearchStalled, widgetParams } = renderOptions;
 
-search.addWidget(
-  instantsearch.widgets.searchBox({
-    container: '#search-searchbar',
-    placeholder: 'Search the docs...',
-    showSubmit: false,
-    showReset: false,
-    cssClasses : {
-          root: [
-          'input',
-          'search-field',
-          ],
-          input : 'ais-input-style',
-    },
-    poweredBy: true // This is required if you're on the free Community plan
-  })
+  if (isFirstRender) {
+    const input = document.createElement('input');
+
+    const loadingIndicator = document.createElement('span');
+    loadingIndicator.textContent = 'Loading...';
+
+    input.addEventListener('input', event => {
+      refine(event.target.value);
+    });
+
+    widgetParams.container.appendChild(input);
+    widgetParams.container.appendChild(loadingIndicator);
+  }
+
+  widgetParams.container.classes = 'input searchfield';
+  widgetParams.container.querySelector('input').value = query;
+  widgetParams.container.querySelector('span').hidden = !isSearchStalled;
+};
+
+// create custom widget
+const customSearchBox = instantsearch.connectors.connectSearchBox(
+  renderSearchBox
 );
+
+// instantiate custom widget
+search.addWidgets([
+  customSearchBox({
+    container: document.querySelector('#search-searchbar'),
+  })
+]);
 
 search.addWidget(
   instantsearch.widgets.hits({
