@@ -49,8 +49,8 @@ If you are making changes to CSS in `fusionauth-style`, do the following:
 * when your changes are done, run `sb int` which pushes up a integration build (similar to a maven snapshot) to the savant repo.
 * edit your css dependency to be something like this (with the appropriate version number):
 ```
- dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{integration}:css")
-       dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{integration}:css.map")
+dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{integration}:css")
+dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{integration}:css.map")
 ```
 * then you can commit this and other folks can pull down your changes
 
