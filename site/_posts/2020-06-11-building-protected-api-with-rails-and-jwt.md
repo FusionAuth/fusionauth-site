@@ -185,7 +185,7 @@ eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJmdXNpb25hdXRoLmlvIiwiZXhwIjoxNTkwMTgxNjE5LCJhdWQ
 
 We use the HMAC signature algorithm because in this tutorial we control both the issuer of the token and the consumer (our API). We can, therefore, share a secret reliably between them. If we didn't have a good way to share secrets, using an asymmetric signing key would be a wiser choice.
 
-For this tutorial, we put the HMAC secret in the environment configuration files. For production usage, use your normal secrets management solution. You should make the HMAC secret a long string, but don't use the any other shared secrets, such as the session secret. 
+For this tutorial, we put the HMAC secret in the environment configuration files. For production usage, use your normal secrets management solution. You should make the HMAC secret a long string, but don't use any other shared secrets, such as the session secret. 
 
 Let's add our authorization code now that our tests fail. They fail because they are expecting certain unauthorized requests to return `:forbidden`.
 
