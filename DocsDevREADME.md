@@ -17,6 +17,8 @@ Here are some guidelines to follow when writing documentation.
 
 When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent browser window.
 
+Note that you must have at least 1100 pixels of screen height. If you do not, your dimensions will be skewed. Go to "System Preferences > Display" then choose "More space".
+
 ```appleScript
 set theApp to "Safari"
 
