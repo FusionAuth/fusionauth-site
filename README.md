@@ -62,7 +62,7 @@ Before you merge to master, of course, you must do a CSS version release and upd
 
 This section is only useful if you have access to the FusionAuth web server(s).
 
-Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard. This key is used to push any changes to the index. Make certain that you set the `ALGOLIA_SEARCH_ONLY_API_KEY` environment variable to the `Search only API Key` value found in the Algolia dashboard. This key is used to retrieve results.
+Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard. This key is used to push any changes to the index at build time.
 
 Only master is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to master before you release. Master on every project should always be completely clean and able to be released at anytime.
 
