@@ -25,8 +25,6 @@ If you're a bit hazy on the Device Code grant, then here is a quick refresher fr
    printers) to obtain user authorization to access protected resources
    by using a user agent on a separate device.
 
-![Device Code Grant Diagram](https://is.docs.wso2.com/en/5.11.0/assets/img/using-wso2-identity-server/deviceflow.png)
-
 ## Setup Instructions
 
 First things first, to follow along you'll need golang obviously. If you don't already have golang on your local machine, *go* ahead and [install it over here](https://golang.org/doc/install).
@@ -247,7 +245,7 @@ func startPolling(tokenEndpoint string, deviceCode string, retryInterval int) (*
 This should look familiar! We start with our LoginCmd's `Run` function again, but we continue that function a bit more to do the following:
 
 1. We call `informUserAndOpenBrowser` with our `deviceResp.UserCode` that we got from the FusionAuth server. This prints to the user's CLI the given `userCode` and open's up FusionAuth's `/oauth2/device` endpoint for our Application and Tenant.
-1. Next, we call `startPolling` which continually polls the given `openIDConfig.TokenEndpoint` every `retryInterval` seconds (5 seconds is RFC8628's / FusionAuth's default) to see if the user has completed the Device login (tied to the given `deviceCode`). Once the user has completed their login, the FusionAuth server responds with a proper `200` response including a JWT Access Token which then populates our returned `result` object.
+1. Next, we call `startPolling` which continually polls the given `openIDConfig.TokenEndpoint` every `retryInterval` seconds (5 seconds is RFC8628's / FusionAuth's default) to see if the user has completed the Device login (tied to the given `deviceCode`). Once the user has completed their login, the FusionAuth server responds with a proper `200` response including a JWT Access Token, which then populates our returned `result` object.
 
 Now we're getting somewhere! The only thing left to do is trade our Access Token for the actual user record and save it to disk. Let's do it!
 
