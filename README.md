@@ -43,6 +43,8 @@ For more information on the Savant build tool, checkout [savantbuild.org](http:/
 
 If you are modifying the doc search and want to use a different Algolia index for testing, update the settings in `_config.yml`. To manually refresh the document search index, use this command: `ALGOLIA_API_KEY='<admin api key>' bundle exec jekyll algolia`
 
+If you want to clean your Jekyll install, run `bundle exec jekyll clean`.
+
 If you are making changes to CSS in `fusionauth-style`, do the following:
 
 * clone that repo, make changes there on a branch
@@ -56,7 +58,7 @@ dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{
 
 Each time you make a css chang, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
 
-Before you merge to master, of course, you must do a CSS version release and update the dependency in the `fusionauth-site` savant build file.
+Before you merge to master, of course, you must do a CSS version release, modify the version in `site/_includes/_head.liquid`, and update the dependency in the `fusionauth-site` savant build file.
 
 ## Deploying
 
