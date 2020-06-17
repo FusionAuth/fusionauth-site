@@ -12,6 +12,68 @@ Hide stuff inside these lines
 
 [role=release-note]
 
+== Version 1.17.1
+_June 15nd, 2020_
+
+=== Fixed
+* In version 1.17.0 Key Master supports importing a standalone private key. If you attempt this request in the UI with an RSA private key an error will occur.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/665[GitHub Issue #665], thanks to https://github.com/mgetka[@mgetka] who is quickly becoming one of our FusionAuth MVPs!
+* When using an expired Forgot Password link if you have not added the `client_id` to the URL in the email template you will see an unexpected error when you attempt to begin the process again by entering your email address. You may also experience this error if you are sending users directly to `/oauth2/forgot` instead of the user clicking the link during an OAuth2 workflow.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/671[GitHub Issue #671], thanks to https://github.com/maurobennici[@maurobennici] for reporting!
+
+
+[role=release-note]
+
+== Version 1.17.0
+_June 2nd, 2020_
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+:warning_message: pass:normal[This change includes some modifications to the way Lambdas are used with Identity Providers. If you are using an OpenID Connect or SAML v2 Identity Provider with a custom Lambda, please read all of the release notes to ensure a smooth upgrade.]
+include::docs/v1/tech/__general-migration-warning.adoc[]
+
+=== Changed
+* All Identity Provider configurations that did not have a lambda configured for User reconcile have been migrated to utilize a lambda to extract all optional user details from the IdP response. This allows you to have complete control over how these configurations work and what information is set or written to the user object during login. The business logic has not changed, but it has been moved from an internal FusionAuth service to a Lambda that can be modified. The following Identity Providers are affected:
+** All Facebook, Google and Twitter Identity Provider configurations
+** OpenID Connect and SAML v2 Identity Provider configurations without a configured lambda.
+* OpenID Connect and SAML v2 Identity Providers that were already configured with a lambda may require some manual migration. The claims that were mapped into the User by FusionAuth prior to this version have been moved into a lambda so they may be modified. For each of your OpenID Connect or SAML v2 Identity Provider configurations that already had a Lambda configured for User reconcile, please review to ensure all of the claims you desire are handled by your lambda.
+* For OpenID Connect Identity Provider configurations, review the new Lambda named `Default OpenID Connect Reconcile provided by FusionAuth`. Optionally copy any of the code you'd like to have executed into your configured Lambda and then test your integration. Specifically, the registered claims `given_name`, `middle_name`, `family_name`, `name`, `picture`, `phone_number`, `birthdate`, `locale` and `preferred_username` are now managed by the Lambda. If you would like these claims reconciled to the FusionAuth user, review the referenced Lambda function.
+* For SAML v2 Identity Provider configurations, review the new Lambda named `Default SAML v2 Reconcile provided by FusionAuth`. Optionally copy any of the code you'd like to have executed into your configured Lambda and then test your integration. Specifically, the SAML claims for `dateofbirth`, `givenname`, `surname`, `name`, and `mobilephone` are now managed by the Lambda. If you would like these SAML claims reconciled to the FusionAuth user, review the referenced Lambda function.
+
+=== New
+* Sign in with Apple. A new Identity Provider of type `Apple` is now available to enable Sign in with Apple support.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/336[GitHub Issue #336]
+** See the link:/docs/v1/tech/identity-providers/apple[Apple Identity Provider] for additional details
+* One time Use Refresh Tokens. A one time use refresh token means that each the time the refresh token is used to get a new access token (JWT) a new refresh token is returned. This feature must be enabled at the tenant level, and can optionally be overridden by the Application JWT configuration.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/394[GitHub Issue #394]
+* Sliding Window Refresh Token Expiration. By default the expiration of a refresh token is calculated from the time it was originally issued. Beginning in this release you may optionally configure the refresh token expiration to be based upon a sliding window. A sliding window expiration means that the expiration is calculated from the last time the refresh token was used. This expiration policy means that if you are using refresh tokens to maintain a user session, the session can be maintained as long as the user remains active. This expiration policy must be enabled at the tenant level, and may optionally be overridden by the Application JWT configuration.
+* Facebook, Google, HYPR and Twitter Identity Providers may be assigned a User Reconcile Lambda.
+** Previously the user reconcile logic was built into FusionAuth. Now the User reconcile logic has been moved to a lambda to provide additional control over attributes are extracted from the Identity Provider response and set into the FusionAuth user.
+
+=== Enhanced
+* Some development and possibly runtime errors that are used during external logins such as Facebook were not localized. These values may not be localized in your theme configuration.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/535[GitHub Issue #535], thanks to https://github.com/mgetka[@mgetka] for raising the issue.
+* Large cookies may cause the default maximum header size of 8k to be exceeded. When this occurs the request will fail and you may see an exception with a `400` status code indicating `java.lang.IllegalArgumentException: Request header is too large`.
+** This value may now be modified via configuration. See the link:/docs/v1/tech/reference/configuration[Configuration] reference or additional information.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/608[GitHub Issue #608], thanks to https://github.com/shortstack[@shortstack] for letting us know, providing great debug and confirming the fix.
+* When a user is registered, a refresh token will not be returned. This makes this API response consistent with the User Create API.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/626[GitHub Issue #626], thanks to https://github.com/LohithBlaze[@LohithBlaze] for reporting and suggesting the change.
+* When configuring a SAML v2 Identity Provider, a warning will be added to the Identity Provider index page if the CORS configuration is not adequate to allow the login request to complete. The configuration will generally require a `POST` request from a particular origin be allowed through the CORS filter.
+** This should help reduce CORS configuration issues causing a `403` during integration testing.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/641[GitHub Issue #641]
+
+=== Fixed
+* When importing a key using Key Master in the admin UI, when a key with an invalid length is imported the error was not being displayed.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/578[GitHub Issue #587]
+* The hosted FusionAuth log page may fail to function properly after the user changes the locale using the locale selector on the themed page. Specifically, once you add more than one language to your theme, and the user continues past the first login panel to a subsequent themed page, if the user switches the locale the context will be lost and the user will see an OAuth error.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/623[GitHub Issue #623], thanks to https://github.com/flangfeldt[@flangfeldt] and https://github.com/yrammos[@yrammos] for reporting.
+* A non POSIX compliant function definition in `setenv.sh` caused FusionAuth to fail to start on Ubuntu 18.04.4 and 20.04 (possibly others). This could be on any Linux distribution that sym-links `/bin/sh` to `dash` which is a POSIX compliant shell. This was introduced in version 1.16.0.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/645[GitHub Issue #645], thanks to https://github.com/s-vlade[@s-vlade] and https://github.com/yrammos[@yrammos] for letting us know.
+* When using the Facebook IdP and specifying `picture` as one of the requested `fields` an error occurs during the User reconcile process which causes the login to fail. If you encounter this issue, the work around is to remove `picture` from the field configuration, even with this change you will still get the picture back from Facebook as FusionAuth makes a second call to the Me Picture API.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/648[GitHub Issue #648], thanks to https://github.com/thekoding[@thekoding] for reporting and helping us track down the issue.
+
+[role=release-note]
+
 == Version 1.16.1
 _May 18th, 2020_
 
@@ -349,7 +411,7 @@ include::docs/v1/tech/__general-migration-warning.adoc[]
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/413[GitHub #413]
 
 === Fixed
-* A memory leak in the Nashorn JavaScript engine used to execute FusionAuth Lambdas has been resolve.
+* A memory leak in the Nashorn JavaScript engine used to execute FusionAuth Lambdas has been resolved.
 * The OAuth2 Authorization Code grant was required to complete a SAMLv2 login, this grant is no longer required to be enabled.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/432[Github Issue #432]
 * Added missing `theme_manager` role to the FusionAuth application

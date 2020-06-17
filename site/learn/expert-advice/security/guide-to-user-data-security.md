@@ -1269,7 +1269,29 @@ public class LoginHelper {
 }
 ```
 
-This method ensures that you are always correctly validating passwords and this part of the code cannot be circumvented.
+This method ensures that you are always correctly validating passwords and this part of the code cannot be circumvented. Depending on your requirements, you might also want to introduce a random pause or some other type of sleep in the code above. This is useful to prevent an account enumeration attack. This attack is possible when a login for a valid user takes longer than a login for an invalid user. This is caused by the hashing of the password taking a while to complete. 
+
+Here's the same code from above that mitigates the account enumeration attack. The implementation of the `randomSleep` method is left up to you to implement but it could introduce a random sleep to ensure that the timing of the `equals` can't be used to enumerate accounts:
+
+```java
+public class LoginHelper {
+  public boolean login(String email, String password) {
+    User user = loadUser(email);
+    if (user == null) {
+      // Do the same work we do if the user exists: hash, random sleep and compare
+      hashPassword("password");
+      randomSleep();
+      "447rs/aqqN47ICipNovHZ.Te87.DiZNUtU8mhdx7JFvMNkc5jUtZG".equals("447rs/aqqN47ICipNovHZ.Te87.DiZNUtU8mhdx7JFvMNkc5jUtZG");
+      return false;
+    }
+
+    String hashedPassword = hashPassword(password);
+    randomSleep();
+    return hashedPassword.equals(user.password);
+  }
+}
+```
+  
 
 There are two core concepts that impact the security of password hashing: salting and complexity. We will cover both of these in the sections below.
 
@@ -1441,6 +1463,8 @@ SELECT * FROM users WHERE name = '\';select concat(email,\':\',password) from us
 ```
 
 It is a good idea to centralize all of your database logic into a single module and regularly query the code for string concatenation or variable replacements that might open your application up to security risks.
+
+Finally, you should evaluate the database table that is being accessed and select the solution from above that best fits your requirements and provides the best security. For example, a public facing form that accesses a table that contains sensitive information might use prepared statements and enumerations in order to reduce the possibility of an attacker exploiting a regular expression vulnerability. On the other hand, an admin interface that accesses a small table might prefer to use regular expressions for their flexibility. 
 
 ### 4.5. Configuration {#configuration}
 
