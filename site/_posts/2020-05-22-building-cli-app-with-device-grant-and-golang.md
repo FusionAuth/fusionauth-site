@@ -33,7 +33,7 @@ Next, we need to set up FusionAuth on our local machine to properly be able to t
 
 Once you've got FusionAuth running, we'll need to create our CLI app's FusionAuth Application. Follow these steps to do so:
 
-1. Head over to [FusionAuth's Applications UI](http://localhost:9011/admin/application/)
+1. Head over to the Admin UI: http://localhost:9011/admin/application/
 1. Click the green "➕" button to add a new Application.
 1. Give your Application a good name so you remember what it is. "Device Code Grant Example" isn't a bad choice.
 1. Click on the OAuth tab and under "Enabled grants", check off "Device". This will enable support for the Device Code Grant type on our newly created Application.
