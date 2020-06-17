@@ -32,3 +32,7 @@ bundle exec jekyll build
 rm -rf /var/www/fusionauth.io
 mv _site /var/www/fusionauth.io
 chown www-data:www-data /var/www/fusionauth.io
+
+# Build a sym link for the login style, assuming only one website-style file
+cd site/assets/css
+ln -s `ls fusionauth-website-style*.css|head -n 1` fusionauth-login-style.css
