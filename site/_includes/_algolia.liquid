@@ -1,0 +1,132 @@
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.0.0/dist/algoliasearch-lite.umd.js" integrity="sha256-MfeKq2Aw9VAkaE9Caes2NOxQf6vUa8Av0JqcUXUGkd0=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4.0.0/dist/instantsearch.production.min.js" integrity="sha256-6S7q0JJs/Kx4kb/fv0oMjS855QTz5Rc2hh9AkIUjUsk=" crossorigin="anonymous"></script>
+
+<script>
+const searchClient = algoliasearch('{{ site.algolia.application_id }}','{{ site.env.ALGOLIA_SEARCH_ONLY_API_KEY }}');
+
+const search = instantsearch({
+  indexName: '{{ site.algolia.index_name }}',
+  searchClient: searchClient,
+  searchFunction(helper) {
+    const container = document.querySelector('#search-hits');
+    container.style.display = helper.state.query === '' ? 'none' : '';
+
+    helper.search();
+  }
+});
+
+const hitTemplate = function(hit) {
+
+  let url = `{{ site.baseurl }}${hit.url}#${hit.anchor}`;
+
+  const title = hit._highlightResult.title.value;
+
+  // create a snippet
+  const truncateLength = 120;
+  const excerpt = hit._highlightResult.content.value.substring(0,truncateLength);
+  const spaceIdx = excerpt.lastIndexOf(' ');
+  const snippet = excerpt.substring(0,spaceIdx)+"...";
+
+  return `
+    <span>
+      <a class="hits-title" href="${url}">${title}</a> <a class="hits-snippet" href="${url}">${snippet}</a>
+    </span>
+  `;
+}
+
+// Create a render function
+const renderSearchBox = (renderOptions, isFirstRender) => {
+  const { query, refine, clear, isSearchStalled, widgetParams } = renderOptions;
+
+  if (isFirstRender) {
+    const input = document.createElement('input');
+
+    const loadingIndicator = document.createElement('span');
+    loadingIndicator.textContent = 'Loading...';
+
+    input.addEventListener('input', event => {
+      refine(event.target.value);
+    });
+
+    widgetParams.container.appendChild(input);
+    widgetParams.container.appendChild(loadingIndicator);
+  }
+
+  widgetParams.container.classes = 'input searchfield';
+  widgetParams.container.querySelector('input').value = query;
+  widgetParams.container.querySelector('span').hidden = !isSearchStalled;
+};
+
+// create custom widget
+const customSearchBox = instantsearch.connectors.connectSearchBox(
+  renderSearchBox
+);
+
+// instantiate custom widget
+search.addWidgets([
+  customSearchBox({
+    container: document.querySelector('#search-searchbar'),
+  })
+]);
+
+/* unused custom hits rendering. I tried to do this to allow for keyboard navigation, but 
+couldn't figure it out.
+const renderHits = (renderOptions, isFirstRender) => {
+  const { hits, widgetParams } = renderOptions;
+
+  widgetParams.container.innerHTML = `
+   <div class="ais-Hits"><ol class="ais-Hits-list">
+<li>${hits.length} hits 
+</li>`+ hits
+        .map(
+          item =>
+            `<li tabindex="0" class="ais-Hits-item">`+ hitTemplate(item) + `</li>`
+        )
+        .join('') + `</ol></div>`;
+};
+
+// Create the custom widget
+const customHits = instantsearch.connectors.connectHits(renderHits);
+
+// Instantiate the custom widget
+search.addWidgets([
+  customHits({
+    container: document.querySelector('#search-hits'),
+  })
+]);
+
+*/
+search.addWidget(
+  instantsearch.widgets.hits({
+    container: '#search-hits',
+    templates: {
+      item: hitTemplate,
+      empty: function (results) { return `
+            <ol class="ais-Hits-list">
+              <li class="ais-Hits-item">
+                <span>No results for: \"${results.query}\"</span>
+              </li>
+            </ol>`; },
+      escapeHTML: true,
+    }
+  })
+  );
+
+search.addWidgets([
+  instantsearch.widgets.analytics({
+    pushFunction(formattedParameters, state, results) {
+      dataLayer.push({
+        'event': 'search',
+        'Search Query': state.query,
+        'Facet Parameters': formattedParameters,
+        'Number of Hits': results.nbHits,
+      });
+    },
+    triggerOnUIInteraction: true, 
+  })
+]);
+
+
+search.start();
+</script>
+
