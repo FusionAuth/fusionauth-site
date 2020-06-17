@@ -42,14 +42,22 @@ Once you've got FusionAuth running, we'll need to create our CLI app's FusionAut
 1. Your application form should look something like the below, and if so then you're doing great! Click the save button in the top right. {% include _image.liquid src="/assets/img/blogs/golang-cli-device-grant/fa-create-application-example.png" alt="FusionAuth Create Application Example." class="img-fluid" figure=false style="margin-bottom:0" %}
 1. Now, view your newly created application by clicking the green "🔍" and copy the Client ID as we'll need that later.
 
-Great -- your FusionAuth Application is set up, so now we just need two more things from the FusionAuth UI before moving forward:
+Great -- your FusionAuth Application is set up, so now we just need two more things from the FusionAuth UI:
 
 1. Your **Tenant ID** -- You can find this easily by clicking the "Tenants" tab on the left sidebar and then copying the "Id" value for the "Default" tenant.
 1. A new **API Key** -- This one requires a couple more clicks:
    1. Click "Settings > API Keys" on the left sidebar.
    1. Next click our friendly green "➕" button to add a new API Key.
    1. Give your new key a name (again, you can't go wrong with "Device Code Grant Example") and leave everything else the same. Hit save.
-   1. Finally, copy the "Id" value for your new key from the table.
+   1. Copy the "Id" value for your new key from the table.
+
+Finally, add a user to your FusionAuth application. 
+
+1. Go to **Users** and add a user. I used "getgif@example.com" and unchecked "Send email to setup password" to set the user's password.
+1. Save the user.
+1. Edit the same user.
+1. Add a registration for your "Device Code Grant Example" application.
+1. Save the user.
 
 Sweet, our FusionAuth administrivia is out of the way now that we have our Client ID, Tenant ID, and API Key! Hurrah!
 
