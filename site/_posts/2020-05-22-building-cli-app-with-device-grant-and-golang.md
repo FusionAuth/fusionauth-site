@@ -39,8 +39,7 @@ Once you've got FusionAuth running, we'll need to create our CLI app's FusionAut
 1. Click on the OAuth tab and under "Enabled grants", check off "Device". This will enable support for the Device Code Grant type on our newly created Application.
 1. Since it is required, be sure to fill in the "Device verification URL" field. You can just put "https://example.com/device" if you'd like since we don't need this for our particular application.
    1. Since our CLI app is actually running from a device with a browser, we don't need to provide a friendly URL to the user as we can open FusionAuth's `/oauth2/device` URL directly. Neat!
-1. Your application form should look something like the below, and if so then you're doing great! Click the save button in the top right.
-{% include _image.liquid src="/assets/img/blogs/golang-cli-device-grant/fa-create-application-example.png" alt="FusionAuth Create Application Example." class="img-fluid" figure=false %}
+1. Your application form should look something like the below, and if so then you're doing great! Click the save button in the top right. {% include _image.liquid src="/assets/img/blogs/golang-cli-device-grant/fa-create-application-example.png" alt="FusionAuth Create Application Example." class="img-fluid" figure=false style="margin-bottom:0" %}
 1. Now, view your newly created application by clicking the green "🔍" and copy the Client ID as we'll need that later.
 
 Great -- your FusionAuth Application is set up, so now we just need two more things from the FusionAuth UI before moving forward:
