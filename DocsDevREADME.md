@@ -9,6 +9,9 @@ Here are some guidelines to follow when writing documentation.
 - If you are referencing a field in a form, use the `[field]` class (rather than backticks): `[field]#Issuer#`
 - Don't abbreviate FusionAuth, use the full name.
 
+For blog posts:
+- Indent all code with two spaces per level.
+
 ### Proper names
 - macOS
 - Elasticsearch
