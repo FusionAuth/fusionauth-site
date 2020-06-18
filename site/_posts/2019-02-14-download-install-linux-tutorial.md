@@ -55,8 +55,8 @@ You may also download the packages via a browser and transfer them to the target
 We will be downloading both the `fusionauth-app` and the `fusionauth-ssearch` bundles. To begin, once your on the  [Download](/download) page right-click on the file and copy the destination to your clipboard. Then, paste it at the end of your `wget` command. Repeat this for both bundles, see the example commands below.
 
 ```
-wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.3.1/fusionauth-app_1.3.1-1_all.deb
-wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.3.1/fusionauth-search_1.3.1-1_all.deb
+wget https://files.fusionauth.io/products/fusionauth/1.3.1/fusionauth-app_1.3.1-1_all.deb
+wget https://files.fusionauth.io/products/fusionauth/1.3.1/fusionauth-search_1.3.1-1_all.deb
 ```
 
 In this example we have downloaded version `1.3.1`, you will likely be downloading the latest version which may be more recent than this version. Now that you have the two packages downloaded you will need to install the packages. I am using the `dpkg -i` command to install the Debian packages, see below for an example usage of the install command.
