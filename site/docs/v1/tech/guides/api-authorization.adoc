@@ -1,29 +1,26 @@
 ---
 layout: doc
 title: Securing your APIs with FusionAuth
-description: I want to use FusionAuth to verify that an entity is able to access an API.
+description: I want to use FusionAuth to control access to an API.
 ---
 
-== The Scenario
+== The scenario
 
-If you have an application that provides an API, you may want to protect API access. Let's say you have an API which allows an application to read tasks that are stored in a database. Let's call it the *Todo API*.
+If you have an application which provides an API (application programming interface), you may want to protect access to that API. For example, you may have an API which provides access to tasks. The tasks may be stored in a database, or in some other manner, but the API allows them to be queried and returns JSON over HTTP. Let's call this the *Todo API*.
 
-Suppose you want to use FusionAuth to manage this; third party applications can present credentials to the Todo API. The Todo API will verify the credentials against FusionAuth and then depending on whether the credentials are valid, will either return the requested data or an error. 
+Suppose you want to use FusionAuth to help control access to this API. Third party applications will present credentials of some kind to the Todo API. The Todo API will verify the credentials against FusionAuth and then depending on whether they are valid, will either return the requested data or an error message. 
 
-We want to authorize access to the Todo API from an arbitrary number of third party services. There could be many apps which need access the Todo API, such as a Google Calendar Todo Syncer or a Todo analytics program. But let's assume the first one is a *Reminder App*. This app will look at the Todo API and let someone know if they have any tasks due in the next day. 
+There could be many apps needing access the Todo API, such as a Google Calendar Todo Syncer or a Todo Analytics program. But let's assume the first one is an application which reminds people about upcoming tasks. Call it the *Reminder App*. This app will look at the Todo API and let someone know if they have any tasks due in the next day. 
 
 == The problem
 
+There are two parts to this conundrum. The first is creating and distributing whatever credentials the Reminder App will present to the Todo API. This will need to happen periodically, but won't necessarily need to be automated. 
 
-There are two parts to this problem. The first is creating and distributing whatever credentials the Reminder App will present to the Todo API.
-
-This will happen periodically, but may happen on a human time scale.
-
-The second part is the validation by FusionAuth that the credentials presented by the Reminder App to the Todo API are still valid. This operation is likely to need to happen quickly and won't have humans involved. The Reminder App may pull todo data from the Todo API on an automated basis.
+The second part is validating the presented credentials. We want to ensure that the credentials presented by the Reminder App to the Todo API are valid. This operation will be frequent and automatic each time the Reminder App checks about future todos. 
 
 == Your options
 
-You have three options, with different strengths and weaknesses.
+FusionAuth offers have three solutoins, with different strengths and weaknesses.
 
 * OAuth + JWTs
 * FusionAuth API Keys
@@ -31,76 +28,89 @@ You have three options, with different strengths and weaknesses.
 
 Let's examine each of these in turn.
 
-== OAuth + JWTs
+=== OAuth + JWTs
 
-With this path, a human being proceeds through the link:/docs/v1/tech/oauth/[Authorization Code grant] in a web application, like a developer portal, to get their credentials, which would be a JWT and a refresh token. You'd create a FusionAuth application called something like 'Dev Center' and grant access to this FusionAuth application for each third party application like Reminder App which needs access.
+With this choice, a human being proceeds through the link:/docs/v1/tech/oauth/[Authorization Code grant] in a web application, like a developer portal, to get their credentials, which would be a JWT and an optional refresh token. You'd create a FusionAuth application called something like 'Dev Center' and grant access to this FusionAuth application for each third party program, such as the Reminder App, which needs access.
 
-After the OAuth grant, the credentials are saved off, and then the associated Reminder App can present the JWT to the Todo API. If the JWT has expired, the Reminder App can call back to FusionAuth with the refresh token and get a new JWT. 
+After the OAuth grant occurs, credentials are saved off, and then the Reminder App can present the stored JWT to the Todo API. If the JWT has expired, the Reminder App can present the refresh token to FusionAuth to retrieve a new JWT. 
 
-The Todo API has a couple of choices when presented with the JWT. It can verify the token was signed by FusionAuth, possibly using JWKS to find the public key. It can also validate the claims in the JWT (the expiration of the token, the issuer, and others). These options have the benefit of not requiring the Todo API to contact the FusionAuth server at all.
+When presented with the token, the Todo API can verify it was signed by FusionAuth, possibly using JWKS to find the public key. It should validate the claims in the JWT, such as the expiration of the token, the issuer, and others. This processing has the benefit of requiring no contact between the Todo API and FusionAuth.
 
-It can also call into the `/oauth2/token` endpoint with the JWT to validate that this JWT is still valid.
+The Todo API can also call the `/oauth2/token` endpoint with the JWT to check its validity.
 
-Pros of this approach:
+Strengths of this approach:
 
-* it is a standard and thus may be more familiar to developers
-* similar to what some large companies such as Facebook and Google do
-* can put additional information into the JWT if more granularity is needed (like roles)
-* the Todo API can check credentials without communicating with FusionAuth
+* OAuth is a standard and thus may be more familiar to developers. There are also libraries to parse and validate JWTs.
+* This flow is similar to what large companies such as Facebook and Google require for access to their APIs.
+* Additional information can be stored in the JWT if needed (like roles).
+* The Todo API can check credential validity without communicating with FusionAuth. This helps with scale.
+* Logins are logged and could be used for auditing purposes.
 
-Cons:
+Challenges of this approach:
 
-* more complex than other options
-* user has to go through the grant with a browser
+* The process for gathering the credentials is more complex than other options.
+* A human being must be present for the initial credential grants.
 
-== FusionAuth API Keys
+=== FusionAuth API Keys
 
-You can also use link:/docs/v1/tech/apis/authentication#api-key-authentication[FusionAuth API keys].
+Another option is to use link:/docs/v1/tech/apis/authentication#api-key-authentication[FusionAuth API keys].
 
-To distribute the key, you'd log in to the FusionAuth admin application. Then you'd create an API key and provide that to the Reminder App developer. 
+To distribute the key, you would log in to the FusionAuth admin user interface, then create an API key and provide it to the Reminder App developer. 
 
-The Reminder App would present this API key to the Todo App. 
+The Reminder App would present this API key to the Todo App every time they needed access. 
 
-To verify this credential worked, the Todo API would make a call against some FusionAuth API endpoint with this key. If it succeeded, the Todo API would return the task data. If instead there was a 401 response, the Todo API would deny access.
+To validate this credential, the Todo API would make a call against some FusionAuth API endpoint with the key. If the call succeeds, the Todo API returns the requested task data. If, instead, FusionAuth responds with a 401 response, the Todo API denes access.
 
-Make sure the FusionAuth API Key is narrowly scoped so if it is compromised, FusionAuth won't be negatively affected. For example, you could grant read-only access to a FusionAuth feature you aren't using.
+When using this approach, ensure the FusionAuth API key is narrowly scoped so if it is compromised, there are no negative implications beyond access to the Todo API. For example, you could grant read-only access to a FusionAuth feature you aren't using.
 
-Pros of this approach:
+Strengths of this approach:
 
-* only one secret to distribute
-* this process doesn't require the Reminder App developers to use a browser
+* There is only one secret to distribute per client application, and distribution is straightforward. The Reminder App developers get the API key one time and it is good forever.
+* There is no browser interaction required in the credentials distribution process.
 
-Cons:
+Challenges of this approach:
 
-* no easy way to expire FusionAuth API keys--they're good until deleted manually.
-* no programmatic way to create them--you'll have to login to the admin UI
-* you're using a FusionAuth API key for business logic purposes. This isn't really what these API keys are designed for.
+* There is no easy way to automatically expire the credentials. FusionAuth API keys are valid until deleted. And such deletion is a manual process.
+* Similarly, there is no programmatic way to create these keys. A human being must log in to the admin UI.
+* A FusionAuth API key is being used for business logic. This isn't really what these API keys are designed for.
 
-== Authentication Tokens
+=== Authentication Tokens
 
-You could use link:/docs/v1/tech/tutorials/application-authentication-tokens[Authentication tokens] and the link:/docs/v1/tech/apis/login[Login API]. 
+link:/docs/v1/tech/tutorials/application-authentication-tokens[Authentication tokens] and the link:/docs/v1/tech/apis/login[Login API] are the final option. 
 
-In this case, you'd create an application called 'Dev Center'. You'd need to turn on Authentication Tokens for this application. When each user is created, you'd also generate a token. Both the token and the username or email would be distributed to the Reminder App developers.
+In this case, you'd create an application called 'Dev Center' and enable Authentication Tokens. The developers of the Reminder App would be associated with one or more users. When each user is created, an Authentication Token would also be created. Both the token and the user's email would be distributed to the Reminder App developers.
 
-Each time the Reminder App wanted to call the Todo API, it would present the username or email and the authentication token. 
+Each time the Reminder App wanted to call the Todo API, it would present the email address and the authentication token. 
 
-The Todo API would in turn call the Login API against FusionAuth with these two credentials. This would either return a 200 if the application authenticated correctly and also is part of this application, a 202 if the application authenticated correctly but is not registered with this application, or a 404 if the credentials were invalid. A JWT can also be generated if the Login API call is successful, should that be desired.
+The Todo API would in turn call the Login API against FusionAuth with these two credentials. FusionAuth would then either return a 200 if the program's user authenticated correctly and was registered with the 'Dev Center', a 202 if the application authenticated correctly but was not registered, or a 404 if the credentials were invalid. 
 
-Pros of this approach:
+Strengths of this approach:
 
-* No browser access required
-* Can leverage JWTs for additional metadata
-* Generation of the username/email and authentication token pair can be entirely automated
-* This is essentially a per user API key
+* There's no browser involved in acquiring credentials.
+* Generation of the email address and Authentication Token pair can be automated.
+* This is essentially a per user API key. This means you can use any of the user tools to manage them, such as locking a user to temporarily deny access.
+* Logins are logged and could be used for auditing purposes.
 
-Cons:
+Challenges of this approach:
 
-* Authentication tokens are not as secure as the OAuth grant
-
+* Authentication Token generation and usage are not as secure as the OAuth grant. 
+* Authentication Tokens don't expire automatically.
+* You can't generate the credentials with the admin UI, only with the API.
 
 == Other considerations
 
-* Should you put the users of an API in a separate tenant? The simplest choice is to create a separate application. Tenants might be applicable if you wanted multiple users with the same username or email to have different passwords, or if you want to have tenant scoped FusionAuth API keys to mitigate any security risks if you are using that option.
-* Which is the best option? This depends on your needs. We'd recommend the OAuth option as that is the most secure, but recognize that having a user interact to get the initial JWT and refresh token may be more complex than is needed.
-* Can I rotate keys? That is, I'd like to have multiple credentials valid for one user so that I can distribute the newer credentials over time. This is not currently possible, unfortunately.
-* Is this a replacement for a full API gateway, including features like billing aht throttling? Nope. This is a great way for you to leverage your current user identity management solution to handle API authorization, but is not a full API management solution.
+*Should you put the users of an API in a separate tenant?*
+
+The simplest choice is to create a separate application, such as the 'Dev Center' mentioned above. Tenants might be useful if you want multiple users with the same username or email to have different passwords, or if you need tenant scoped FusionAuth API keys to mitigate security risks.
+
+*Which is the best option?* 
+
+It all depends on your needs. Typically we recommend the OAuth option as that is the most secure, but recognize that having a user interact to get the initial JWT and refresh token may be problematic.
+
+*Can I rotate keys? That is, I'd like to have multiple credentials valid for one user so that I can distribute the newer credentials over time?*
+
+This is not currently possible, unfortunately.
+
+*Is this a replacement for a full API gateway, including features like billing and throttling?*
+
+Nope. This is a great way for you to leverage your current user identity management solution to handle API authorization, but is not a full API management solution.
