@@ -103,42 +103,42 @@ To start the Device Code grant off, we need to send the ["Device Authorization R
 
 // LoginCmd provides the command for logging into the FusionAuth server using the Device Code grant.
 var LoginCmd = &cobra.Command{
-   Use:   "login",
-   Short: "Authenticate to the FA server using the OAuth Device Flow.",
-   Run: func(cmd *cobra.Command, args []string) {
-      faClient = fusionauth.NewClient(httpClient, baseURL, apiKey)
-      openIDConfig, err := faClient.RetrieveOpenIdConfiguration()
-      if err != nil {
-         log.Fatal(err)
-      }
+  Use:   "login",
+  Short: "Authenticate to the FA server using the OAuth Device Flow.",
+  Run: func(cmd *cobra.Command, args []string) {
+    faClient = fusionauth.NewClient(httpClient, baseURL, apiKey)
+    openIDConfig, err := faClient.RetrieveOpenIdConfiguration()
+    if err != nil {
+      log.Fatal(err)
+    }
 
-      deviceResp, err := startDeviceGrantFlow(openIDConfig.DeviceAuthorizationEndpoint)
-      if err != nil {
-         log.Fatal(err)
-      }
+    deviceResp, err := startDeviceGrantFlow(openIDConfig.DeviceAuthorizationEndpoint)
+    if err != nil {
+      log.Fatal(err)
+    }
 
-      // To be continued...
-   },
+    // To be continued...
+  },
 }
 
 func startDeviceGrantFlow(deviceAuthEndpoint string) (*fusionauth.DeviceResponse, error) {
-   var result *fusionauth.DeviceResponse = &fusionauth.DeviceResponse{}
+  var result *fusionauth.DeviceResponse = &fusionauth.DeviceResponse{}
 
-   resp, err := http.PostForm(deviceAuthEndpoint, url.Values{
-      "client_id":            {ClientID},
-      "scope":                {"offline_access"},
-      "metaData.device.name": {"Golang CLI App"},
-      "metaData.device.type": {string(fusionauth.DeviceType_OTHER)},
-   })
+  resp, err := http.PostForm(deviceAuthEndpoint, url.Values{
+    "client_id":            {ClientID},
+    "scope":                {"offline_access"},
+    "metaData.device.name": {"Golang CLI App"},
+    "metaData.device.type": {string(fusionauth.DeviceType_OTHER)},
+  })
 
-   if err != nil {
-      return result, err
-   }
+  if err != nil {
+    return result, err
+  }
 
-   defer resp.Body.Close()
-   json.NewDecoder(resp.Body).Decode(result)
+  defer resp.Body.Close()
+  json.NewDecoder(resp.Body).Decode(result)
 
-   return result, nil
+  return result, nil
 }
 
 // ...
@@ -162,88 +162,88 @@ Again, let's look at some code and then work our way through it:
 ```go
 // LoginCmd provides the command for logging into the FA server using the Device Code grant.
 var LoginCmd = &cobra.Command{
-    Use:   "login",
-    Short: "Authenticate to the FA server using the OAuth Device Flow.",
-	Run: func(cmd *cobra.Command, args []string) {
-		faClient = fusionauth.NewClient(httpClient, baseURL, apiKey)
-		openIDConfig, err := faClient.RetrieveOpenIdConfiguration()
-		if err != nil {
-			log.Fatal(err)
-		}
+  Use:   "login",
+  Short: "Authenticate to the FA server using the OAuth Device Flow.",
+  Run: func(cmd *cobra.Command, args []string) {
+    faClient = fusionauth.NewClient(httpClient, baseURL, apiKey)
+    openIDConfig, err := faClient.RetrieveOpenIdConfiguration()
+    if err != nil {
+      log.Fatal(err)
+    }
 
-		deviceResp, err := startDeviceGrantFlow(openIDConfig.DeviceAuthorizationEndpoint)
-		if err != nil {
-			log.Fatal(err)
-		}
+    deviceResp, err := startDeviceGrantFlow(openIDConfig.DeviceAuthorizationEndpoint)
+    if err != nil {
+      log.Fatal(err)
+    }
 
-		informUserAndOpenBrowser(deviceResp.UserCode)
+    informUserAndOpenBrowser(deviceResp.UserCode)
 
-		accessToken, err := startPolling(openIDConfig.TokenEndpoint, deviceResp.DeviceCode, deviceResp.Interval)
-		if err != nil {
-			log.Fatal(err)
-		}
+    accessToken, err := startPolling(openIDConfig.TokenEndpoint, deviceResp.DeviceCode, deviceResp.Interval)
+    if err != nil {
+      log.Fatal(err)
+    }
 
-      // To be continued...
-   },
+    // To be continued...
+  },
 }
 
 // ...
 
 func informUserAndOpenBrowser(userCode string) {
-	cyan := color.New(color.FgCyan)
-	cyan.Printf("Your User Code is: ")
+  cyan := color.New(color.FgCyan)
+  cyan.Printf("Your User Code is: ")
 
-	yellow := color.New(color.FgYellow, color.Bold)
-	yellow.Printf("%s\n", userCode)
+  yellow := color.New(color.FgYellow, color.Bold)
+  yellow.Printf("%s\n", userCode)
 
-	cyan.Printf("Opening browser for code entry...\n")
+  cyan.Printf("Opening browser for code entry...\n")
 
-	// Wait a few seconds to give the user a chance to check out the printed user code.
-	time.Sleep(3 * time.Second)
+  // Wait a few seconds to give the user a chance to check out the printed user code.
+  time.Sleep(3 * time.Second)
 
-	url := fmt.Sprintf("%s/oauth2/device?client_id=%s&tenantId=%s", host, ClientID, TenantID)
-	open.Run(url)
+  url := fmt.Sprintf("%s/oauth2/device?client_id=%s&tenantId=%s", host, ClientID, TenantID)
+  open.Run(url)
 }
 
 func startPolling(tokenEndpoint string, deviceCode string, retryInterval int) (*fusionauth.AccessToken, error) {
-	var result *fusionauth.AccessToken = &fusionauth.AccessToken{}
-	yellow := color.New(color.FgYellow, color.Bold)
-	blue := color.New(color.FgBlue, color.Bold)
+  var result *fusionauth.AccessToken = &fusionauth.AccessToken{}
+  yellow := color.New(color.FgYellow, color.Bold)
+  blue := color.New(color.FgBlue, color.Bold)
 
-	for {
-		resp, err := http.PostForm(tokenEndpoint, url.Values{
-			"device_code": {deviceCode},
-			"grant_type":  {"urn:ietf:params:oauth:grant-type:device_code"},
-			"client_id":   {ClientID},
-		})
+  for {
+    resp, err := http.PostForm(tokenEndpoint, url.Values{
+      "device_code": {deviceCode},
+      "grant_type":  {"urn:ietf:params:oauth:grant-type:device_code"},
+      "client_id":   {ClientID},
+    })
 
-		if err != nil {
-			return result, err
-		}
+    if err != nil {
+      return result, err
+    }
 
-		// 400 status code (StatusBadRequest) is our sign that the user
-		// hasn't completed their device login yet, sleep and then continue.
-		if resp.StatusCode == http.StatusBadRequest {
+    // 400 status code (StatusBadRequest) is our sign that the user
+    // hasn't completed their device login yet, sleep and then continue.
+    if resp.StatusCode == http.StatusBadRequest {
+    
+      // Sleep for the retry interval and print a dot for each second.
+      for i := 0; i < retryInterval; i++ {
+        if i == 0 {
+          blue.Printf(".")
+        } else {
+          yellow.Printf(".")
+        }
+        time.Sleep(time.Second)
+      }
 
-			// Sleep for the retry interval and print a dot for each second.
-			for i := 0; i < retryInterval; i++ {
-				if i == 0 {
-					blue.Printf(".")
-				} else {
-					yellow.Printf(".")
-				}
-				time.Sleep(time.Second)
-			}
+      continue
+    }
 
-			continue
-		}
+    fmt.Printf("\n")
+    defer resp.Body.Close()
+    json.NewDecoder(resp.Body).Decode(result)
 
-		fmt.Printf("\n")
-		defer resp.Body.Close()
-		json.NewDecoder(resp.Body).Decode(result)
-
-		return result, nil
-	}
+    return result, nil
+  }
 }
 
 // ...
@@ -263,35 +263,35 @@ Our last task is simple: We have a JWT Access Token and our handy `FusionAuthCli
 ```go
 // LoginCmd provides the subcommand for logging into the FA server using the Device Code grant.
 var LoginCmd = &cobra.Command{
-	Use:   "login [no options!]",
-	Short: "Login to the FA server using the OAuth Device Flow.",
-	Run: func(cmd *cobra.Command, args []string) {
-      // ...
+  Use:   "login [no options!]",
+  Short: "Login to the FA server using the OAuth Device Flow.",
+  Run: func(cmd *cobra.Command, args []string) {
+    // ...
 
-		accessToken, err := startPolling(openIDConfig.TokenEndpoint, deviceResp.DeviceCode, deviceResp.Interval)
-		if err != nil {
-			log.Fatal(err)
-		}
+    accessToken, err := startPolling(openIDConfig.TokenEndpoint, deviceResp.DeviceCode, deviceResp.Interval)
+    if err != nil {
+      log.Fatal(err)
+    }
 
-		fetchAndSaveUser(accessToken)
-	},
+    fetchAndSaveUser(accessToken)
+  },
 }
 
 func fetchAndSaveUser(token *fusionauth.AccessToken) {
-	resp, _, err := faClient.RetrieveUserUsingJWT(token.AccessToken)
-	if err != nil {
-		log.Fatal(err)
-	}
+  resp, _, err := faClient.RetrieveUserUsingJWT(token.AccessToken)
+  if err != nil {
+    log.Fatal(err)
+  }
 
-	// Save our User object for later usage in fetch
-	Save("/tmp/getgif.json", resp.User)
+  // Save our User object for later usage in fetch
+  Save("/tmp/getgif.json", resp.User)
 
-	cyan := color.New(color.FgCyan)
-	cyan.Printf("You successfully authenticated! You can now use `getgif fetch`!\n")
+  cyan := color.New(color.FgCyan)
+  cyan.Printf("You successfully authenticated! You can now use `getgif fetch`!\n")
 }
 ```
 
-Great stuff, we send off our JWT to FusionAuth, FA's go-client intelligently responds with a [`UserResponse`](https://pkg.go.dev/github.com/FusionAuth/go-client/pkg/fusionauth?tab=doc#UserResponse) object, we save that response's User field (`resp.User`) to `/tmp/getgif.json`, and then we print a success message. Simple, easy, and effective!
+Great stuff, we send off our JWT to FusionAuth, FusionAuth's go-client intelligently responds with a [`UserResponse`](https://pkg.go.dev/github.com/FusionAuth/go-client/pkg/fusionauth?tab=doc#UserResponse) object, we save that response's User field (`resp.User`) to `/tmp/getgif.json`, and then we print a success message. Simple, easy, and effective!
 
 ## Working!
 
