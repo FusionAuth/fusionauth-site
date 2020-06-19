@@ -209,7 +209,9 @@ router.get('/', (req, res) => {
   const challenge = pkce.generateChallenge(req.session.verifier);
 
   // Redirect the user to log in via FusionAuth
-  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code&code_challenge=${challenge}&code_challenge_method=S256`);
+  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?`+
+    `client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code`+
+    `&code_challenge=${challenge}&code_challenge_method=S256`);
 });
 
 module.exports = router;
@@ -299,7 +301,8 @@ router.get('/', (req, res) => {
             // GET request to /registration endpoint
             {
               method: 'GET',
-              uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/${introspectResponse.sub}/${config.applicationID}`,
+              uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/`+
+                `${introspectResponse.sub}/${config.applicationID}`,
               json: true,
               headers: {
                 'Authorization': config.apiKey
