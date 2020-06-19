@@ -412,7 +412,7 @@ export default IndexPage
 
 To start your Gatsby app, navigate to the `./gatsby` directory in your terminal and run `gatsby develop`. Head over to `localhost:8000` in your browser where you should see a link to login.
 
-{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/fusionauth-2020-06-10-e.png" alt="A login link in Gatsby." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/gatsby-login-page.png" alt="A login link in Gatsby." class="img-fluid" figure=false %}
 
 ### Creating the profile page
 The profile page will call the `/user` endpoint in your Node app and show users a logout link. Because this page is only available to authenticated users, you'll make it a [client-only route](https://www.gatsbyjs.org/docs/client-only-routes-and-user-authentication/). This prevents the page from being indexed in search engines or generated during static site generation.
@@ -508,7 +508,7 @@ Start your FusionAuth server (if you haven't already) and your Node server using
 - Be redirected to the profile page where your email address is shown
 - Successfully log out by clicking the "Logout" button on your profile page
 
-{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/fusionauth-2020-06-10-f.png" alt="The profile page in Gatsby." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/gatsby-profile-page.png" alt="The profile page in Gatsby." class="img-fluid" figure=false %}
 
 You have now successfully implemented an authorization code workflow using the PKCE extension in Gatsby with FusionAuth. This method allows you to authenticate users securely without exposing your client secret or access token by proxying your calls to FusionAuth through your Node application.
 
