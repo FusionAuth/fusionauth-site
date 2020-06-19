@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Tenants and private labeling
+title: Private labeling with tenants
 description: Tenants can ease your operational burden.
 author: Dan Moore
 image: blogs/fusionauth-laravel/user-registration-sign-in-laravel-fusionauth.png
@@ -9,13 +9,13 @@ tags: api-tenants
 excerpt_separator: "<!--more-->"
 ---
 
-Sometimes you just need some space, right? Tenants in FusionAuth can provide logical separation of users and applications while letting you manage everything from one FusionAuth installation.
+Sometimes you just need a little space, right? Tenants in FusionAuth can provide logical separation of users and applications while letting you manage everything from one FusionAuth installation.
 
 <!--more-->
 
 All editions of FusionAuth support multiple tenants within the same FusionAuth installation. Using this feature eases operational burdens while still maintaining logical divisions.
 
-## Why would you want to set up multi-tenant FusionAuth?
+## Why set up multi-tenant FusionAuth?
 
 Pretend you have a SaaS application which lets people manage their todos. It's a glorious task management application. You started your company, TodoInc, selling individual accounts. That application lives at app.todo.com. You are using FusionAuth as your user data store, and you have a other applications using it as well: a [forum application](/blog/2020/05/13/setting-up-single-sign-on-for-nodebb), [Zendesk](/docs/v1/tech/samlv2/zendesk) for customer support and [GSuite](/docs/v1/tech/samlv2/google). 
 
@@ -51,11 +51,11 @@ But you can create as many as you'd like. From the perspective of user signing i
 
 When you create the second tenant, the admin UI displays a new column showing you with which tenant each application is associated.
 
-Image TBD
+{% include _image.liquid src="assets/img/blogs/private-label-with-tenants/applications-with-multiple-tenants.png" alt="Applications when there are multiple tenants." class="img-fluid" figure=false %}
 
-Normally a user's email address is unique across all of FusionAuth. But each tenant is a separate userspace, so you can have two different user accounts with the same email, but different data, passwords and application associations.
+Normally a user's email address is unique across FusionAuth. But each tenant is a separate userspace, so you can have two different user accounts with the same email, but different data, passwords and application associations.
 
-Image TBD
+{% include _image.liquid src="assets/img/blogs/private-label-with-tenants/duplicate-example-users.png" alt="Two users with the same email address." class="img-fluid" figure=false %}
 
 For user management system administrators, there are significant benefits with tenants. You get ample separation. You can limit API keys and webhooks, allowing for tighter integrations between your todo application and your clients' systems. The look and feel of the login, forgot password and other pages can be customized per tenant.
 
@@ -96,7 +96,7 @@ The full [code is available](https://github.com/FusionAuth/fusionauth-example-ru
 
 ## Caveats
 
-Once you create a second tenant, all API access needs to [pass in tenant information](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id). This isn't difficult, but you should plan for that.
+Once you create a second tenant, all API access needs to [pass in tenant information](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id). This isn't difficult, but you should plan for it.
 
 ## In conclusion
 
