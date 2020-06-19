@@ -17,7 +17,7 @@ In this blog post, you'll learn how to create a Gatsby site that uses FusionAuth
 
 At a high level, the authorization process looks like this:
 
-{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/fusionauth-2020-06-10-a.png" alt="Implementing the OAuth Authorization Code flow with PKCE extension using FusionAuth and Gatsby." class="img-fluid" figure=false %}
+{% plantuml source: _diagrams/blogs/gatsby/oauth-gatsby.plantuml, alt: "Diagram of the OAuth Authorization Code flow with PKCE extension using FusionAuth and Gatsby." %}
 
 In this tutorial, you'll walk through the process step-by-step, but if you want to download the code, it is [available on Github](https://github.com/fusionauth/fusionauth-example-gatsby).
 
