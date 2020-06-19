@@ -43,16 +43,20 @@ Once you have FusionAuth running, log into the admin panel and create a new Appl
 - Add `http://localhost:9000` to the "Authorized request origin URLs".
 - Enter `http://localhost:8000` in the "Logout URL" field.
 
-{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/fusionauth-2020-06-10-b.png" alt="FusionAuth configuration options for a Gatsby static site." class="img-fluid" figure=false %}
+You'll also want to store off the "Client Id" and "Client secret" values as you'll need them later.
+
+{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/application-setup.png" alt="FusionAuth configuration options for a Gatsby static site." class="img-fluid" figure=false %}
+
+You'll also need to create an API key. Go to "Settings" then to "API Keys". You can create one with adminstrative privileges for the purposes of this tutorial, but for a production application, please follow the priniciple of least privilege and limit the endpoints available to the key. Save that to the same text file as the "Client Id" and "Client secret".
 
 ## Creating a new user
 To test your Gatsby-based login, you'll need to add a new user and register them for your application in FusionAuth. From the Users page in FusionAuth, click "+" to add a user. Enter an email address and password for your new user and click the save button.
 
-![Creating a new user in FusionAuth](fusionauth-2020-06-10-c.png)
+{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/create-user.png" alt="Creating a new user in FusionAuth." class="img-fluid" figure=false %}
 
 Next, click "Add registration" to link this user to the application you created in Step 1. Click the save button when you're finished.
 
-![Registering a user in FusionAuth](fusionauth-2020-06-10-d.png)
+{% include _image.liquid src="/assets/img/blogs/oauth-gatsby/register-user.png" alt="Registering a user in FusionAuth." class="img-fluid" figure=false %}
 
 Now that a user is registered for your application, you can start building the Node app.
 
@@ -510,7 +514,7 @@ Start your FusionAuth server (if you haven't already) and your Node server using
 
 {% include _image.liquid src="/assets/img/blogs/oauth-gatsby/gatsby-profile-page.png" alt="The profile page in Gatsby." class="img-fluid" figure=false %}
 
-You have now successfully implemented an authorization code workflow using the PKCE extension in Gatsby with FusionAuth. This method allows you to authenticate users securely without exposing your client secret or access token by proxying your calls to FusionAuth through your Node application.
+You have now successfully implemented an OAuth authorization code workflow using the PKCE extension in Gatsby with FusionAuth. This method allows you to authenticate users securely without exposing your client secret or access token by proxying your calls to FusionAuth through your Node application.
 
 ## Conclusion and next steps
 While I hope this tutorial helps you get started with user authentication using FusionAuth and Gatsby, there are several next steps you could take to make the application more robust:
