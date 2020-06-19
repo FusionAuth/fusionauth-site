@@ -49,13 +49,17 @@ FusionAuth provides an easier way: tenants. Tenants are a first class construct 
 
 But you can create as many as you'd like. From the perspective of user signing in, each tenant is a separate installation. Each tenant has its own email templates, themes, application configurations and users. API keys can be scoped to a tenant, so if you want to give a client an API key so they can write their own integrations, you can. 
 
-When you create the second tenant, the admin UI displays a new column showing you with which tenant each application is associated.
+{% include _image.liquid src="/assets/img/blogs/private-label-with-tenants/creating-new-tenant.png" alt="Creating a new tenant" class="img-fluid" figure=false %}
 
-{% include _image.liquid src="assets/img/blogs/private-label-with-tenants/applications-with-multiple-tenants.png" alt="Applications when there are multiple tenants." class="img-fluid" figure=false %}
+You can change the token issuer, theme and many other settings at the tenant level. You can also duplicate existing tenants to pick up default settings.
+
+When you have two or more tenants, the admin UI displays a new column showing you with which tenant each application is associated.
+
+{% include _image.liquid src="/assets/img/blogs/private-label-with-tenants/applications-with-multiple-tenants.png" alt="Applications when there are multiple tenants." class="img-fluid" figure=false %}
 
 Normally a user's email address is unique across FusionAuth. But each tenant is a separate userspace, so you can have two different user accounts with the same email, but different data, passwords and application associations.
 
-{% include _image.liquid src="assets/img/blogs/private-label-with-tenants/duplicate-example-users.png" alt="Two users with the same email address." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/private-label-with-tenants/duplicate-example-users.png" alt="Two users with the same email address." class="img-fluid" figure=false %}
 
 For user management system administrators, there are significant benefits with tenants. You get ample separation. You can limit API keys and webhooks, allowing for tighter integrations between your todo application and your clients' systems. The look and feel of the login, forgot password and other pages can be customized per tenant.
 
