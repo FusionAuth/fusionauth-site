@@ -47,7 +47,7 @@ You'll also want to store off the "Client Id" and "Client secret" values as you'
 
 {% include _image.liquid src="/assets/img/blogs/oauth-gatsby/application-setup.png" alt="FusionAuth configuration options for a Gatsby static site." class="img-fluid" figure=false %}
 
-You'll also need to create an API key. Go to "Settings" then to "API Keys". You can create one with adminstrative privileges for the purposes of this tutorial, but for a production application, please follow the priniciple of least privilege and limit the endpoints available to the key. Save that to the same text file as the "Client Id" and "Client secret".
+You'll also need to create an API key. Go to "Settings", then to "API Keys". You can create one with adminstrative privileges for the purposes of this tutorial, but for a production application, please follow the principle of least privilege and limit the endpoints available to the key. Save that to the same text file as the "Client Id" and "Client secret".
 
 ## Creating a new user
 To test your Gatsby-based login, you'll need to add a new user and register them for your application in FusionAuth. From the Users page in FusionAuth, click "+" to add a user. Enter an email address and password for your new user and click the save button.
@@ -68,7 +68,7 @@ This project will use two separate applications: a Node app to securely store yo
 - `/user` - Uses the access token and the FusionAuth `introspect` endpoint to get the current user
 - `/logout` - Logs the user out and destroys the session
 
-You'll create all the endpoints first, and then you'll see how to call them from Gatbsy.
+You'll create all the endpoints first, and then you'll see how to call them from Gatsby.
 
 ### Setting up the Node app
 Before you get started, you need to create a new subdirectory and initialize an Express app. Use a [similar structure to the one outlined here](https://fusionauth.io/blog/2020/03/10/securely-implement-oauth-in-react):
@@ -222,7 +222,7 @@ Now when users visit `localhost:9000/login` the Node app will generate a PKCE ve
 ### Creating the OAuth callback
 Once the user has entered their username and password, the FusionAuth server will check their credentials and redirect them to your Node app's OAuth callback endpoint with an authorization code. Your app will use that code and the PKCE verifier generated in the previous step to request a [long-lived access token](https://fusionauth.io/docs/v1/tech/oauth/tokens).
 
-Adding the PKCE verifier adds another layer of security by proving that the same user who generated the login link is now requesting an access token. Your Node app will store the access token returned by FusionAuth in session storage and redirect the user to the Gatbsy profile page we'll create in the next step.
+Adding the PKCE verifier adds another layer of security by proving that the same user who generated the login link is now requesting an access token. Your Node app will store the access token returned by FusionAuth in session storage and redirect the user to the Gatsby profile page we'll create in the next step.
 
 Create a new route called `oauth-callback.js` and add the following:
 
@@ -262,7 +262,7 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-Your app now authenticates users and stores their access tokens in session storage. When you build the Gatbsy application, you'll pass the session ID stored in a cookie to the Node app to access the current user endpoint.
+Your app now authenticates users and stores their access tokens in session storage. When you build the Gatsby application, you'll pass the session ID stored in a cookie to the Node app to access the current user endpoint.
 
 Why not just omit the Node application? Storing the access token in the browser is insecure. It's vulnerable to cross site scripting attacks. 
 
@@ -369,7 +369,7 @@ Now that your server-side application is complete, you can test the login and lo
 Start the Node app using `npm start` and make sure FusionAuth is running locally. Visit `localhost:9000/login`, and you should be redirected to the FusionAuth login page. Log in, and you should be taken to the OAuth callback and then to `localhost:8000/profile`. That URL won't work (we'll create it in the Gatsby app next), but you should be able to go to `localhost:9000/logout` to end your session.
 
 ## Creating a Gatsby site
-Now that you've set up FusionAuth and your server-side Node application, you are ready to create your new Gatsby site. The easiest way to get started is to install the Gatbsy CLI:
+Now that you've set up FusionAuth and your server-side Node application, you are ready to create your new Gatsby site. The easiest way to get started is to install the Gatsby CLI:
 
 ```bash
 npm install -g gatsby-cli
@@ -464,7 +464,7 @@ export const getCurrentUser = callback => {
 }
 ```
 
-Finally, create a new page at `./gatsby/src/pages/profile.js`. Gatbsy will automatically create a new route for any files in the `pages` directory. Open the new file and add the following:
+Finally, create a new page at `./gatsby/src/pages/profile.js`. Gatsby will automatically create a new route for any files in the `pages` directory. Open the new file and add the following:
 
 ```
 import React from "react"
