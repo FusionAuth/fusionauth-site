@@ -17,13 +17,13 @@ All editions of FusionAuth support multiple tenants within the same FusionAuth i
 
 ## Why set up multi-tenant FusionAuth?
 
-Pretend you have a SaaS application which lets people manage their todos. It's a glorious task management application. You started your company, TodoInc, selling individual accounts. That application lives at app.todo.com. You are using FusionAuth as your user data store, and you have a other applications using it as well: a [forum application](/blog/2020/05/13/setting-up-single-sign-on-for-nodebb), [Zendesk](/docs/v1/tech/samlv2/zendesk) for customer support and [GSuite](/docs/v1/tech/samlv2/google). 
+Pretend you have a SaaS application which lets people manage their todos. It's a glorious task management application. You started your company, TodoInc, selling individual accounts. That application lives at app.todo.com. You are using FusionAuth as your user data store, and you have other applications using it as well: a [forum application](/blog/2020/05/13/setting-up-single-sign-on-for-nodebb), [Zendesk](/docs/v1/tech/samlv2/zendesk) for customer support and [GSuite](/docs/v1/tech/samlv2/google). 
 
-However, Company1, a large multi national corporation with a big checkbook approaches you. They want a premium edition; they have decided that your todo application is too good to live without. They want their application to be separate, private labeled, and located at todo.company1.com. They're willing to pay a premium price, as well.
+However, Company1, a large multinational corporation with a big checkbook approaches you. They want a premium edition; they have decided that your todo application is too good to live without. They want their application to be separate, private labeled, and located at todo.company1.com. They're willing to pay a premium price, as well.
 
 You realize you can offer this easily by modifying your application to respond to multiple hostnames. The logic is pretty straightforward.
 
-But what about your users? The accounts at todo.company1.com should be entirely separate from the accounts at app.todo.com. What if the CEO of Company1 already has an account at app.todo.com and signs up for the corporate account? It doesn't make sense to mix personal and business tasks. Further, suppose you sell Organization2 a premium todo application as well. These user should be separate too. 
+But what about your users? The accounts at todo.company1.com should be entirely separate from the accounts at app.todo.com. What if the CEO of Company1 already has an account at app.todo.com and signs up for the corporate account? It doesn't make sense to mix personal and business tasks. Further, suppose you sell Organization2 a premium todo application as well. These users should be separate too. 
 
 Also, each standalone application's login pages must be branded; your clients want their apps customized to match their websites. Oh, and by the way, Company1 wants users to authenticate against their ActiveDirectory database, and Organization2 wants users to be able to login with their Facebook accounts. 
 
@@ -63,7 +63,7 @@ But as an admin, you have one view into all system activity. Operations has one 
 
 ## How to create tenants via API
 
-Even better, tenant creation can be automated. Every time TodoInc sells a premium subscription, code create a corresponding tenant. Here's some sample code:
+Even better, tenant creation can be automated. Every time TodoInc sells a premium subscription, code can create a corresponding tenant, like so:
 
 ```ruby
 def create_new_tenant(generic_tenant_client, name)
