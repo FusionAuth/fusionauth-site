@@ -75,7 +75,7 @@ Before you get started, you need to create a new subdirectory and initialize an 
 
 ```
 fusionauth-gatsby
-├─gatbsy
+├─gatsby
 ├─server
 └─config.js
 ```
