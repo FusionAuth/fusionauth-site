@@ -1,0 +1,234 @@
+---
+layout: doc
+title: Families guide
+description: What are families in FusionAuth and how are they useful?
+---
+
+
+The family API in FusionAuth is a powerful way to logically group family members.
+
+You can review the link:/docs/v1/tech/apis/families[family API documentation] for detailed API call examples.
+
+== Why
+
+There are two main reasons you might want to use families. The first is to easily add family relationships to your application. You can have associations and different roles for each type of family member, which can allow access to different functionality within your application. These relationships may be quite complex; for example, a single child may be a member of multiple families headed by different parents.
+
+The second reason is because you are legally obligated to obtain parental consent due to the age of your users and what you are doing with their data, and you want to send and keep track of those consents within FusionAuth. While the ages and restrictions vary in each legal jurisdiction, in general applications need parental consent if children are using them.
+
+We'll walk through these scenarios below.
+
+== Limitations
+
+There are currently some limitations on the family functionality.
+
+While families display in the administrative UI and there is configuration that is set from the UI, you cannot create or modify families using the admin interface. If you are going to use families, you're going to be writing code against the APIs, either directly or using the client libraries. Note also that there's no support in the FusionAuth provided login screens for the family flows.
+
+There are only three family roles available:
+
+* `Adult`
+* `Child`
+* `Teen`
+
+While you can control the ages at which these roles take place, there is no relationship between the actual birth date of a user and the role they are assigned. These roles are completely assigned by you and if you want to categorize a 25 year old as a teenager, FusionAuth won't stop you. XXX what are the ages in the family settings screen used for?
+Ages are checked for the initial adult created, but no other users. XXX BUG
+
+These family roles have no relationship whatsoever to application roles that are created and managed at the application level.
+
+Family attributes are defined at the tenant level. If you require different configurations, you may need multiple tenants. For example, if the maximum age of a child is 12 for one application and 13 for another, you can't manage them in the same FusionAuth tenant.
+
+A family consists of at least one adult, and an arbitrary number of teens, children and adults.
+
+A family is created by associating an existing user with a family.
+
+Families can have more than one owner, but all owners must be adults. 
+
+Users with the `Child` or `Teen` family roles may belong to more than one family, but a user with the `Adult` role may not belong to more than one family. However, the same user may be added as a `Child` to one family and an `Adult` to another. XXX BUG
+
+
+== Setting up family management
+
+At a minimum, you need to enable the family settings. 
+
+Go to [breadcrumb]#Tenants -> Default -> Family# and enable the family, if you want the functionality to be available to the "Default" tenant.
+
+TBD pic of family settings basic
+
+Different use cases will require setting additional attributes, but for now let's leave the defaults and examine different use cases.
+
+== Use cases
+
+Let's walk through some cases where you might want to use families. 
+
+=== Family management
+
+In this scenario, you want associated accounts. This is the simplest flow. 
+
+Each account is standalone, but is part of the family. Accounts are added by the owner account, so no consent process is necessary. This is similar to adding a family member to a Netflix or Amazon account. When you are adding a family member to your Netflix account, there's no need for consent, because the account owner is creating the additional user. The consent is in the act.
+
+==== Creating and adding family members 
+
+First, create a user using the link:../apis/users[User API].
+
+Then, create a family associated with this user by calling the link:../apis/families#create-a-family[`/api/user/family`] endpoint.
+
+[source,shell]
+.Creating a Family
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" https://local.fusionauth.io/api/user/family -d $REQUEST_PAYLOAD
+----
+
+Here's an example request payload:
+
+[source,json]
+.Create Family Request JSON
+----
+include::docs/src/json/family/request.json[]
+----
+
+Here's an example response:
+
+[source,json]
+.Create Family Response JSON
+----
+include::docs/src/json/family/response.json[]
+----
+
+Then, add new family members as needed. Again, each user must exist before they can be added to the family. This is similar to adding an associated account in Netflix.
+
+The only difference between adding family members and creating a family are:
+
+. You provide the existing family id
+. You use the `PUT` method instead of the `POST` method
+. You can add users with any family role
+
+[source,shell]
+.Adding a User to a Family
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" https://local.fusionauth.io/api/user/family -d $REQUEST_PAYLOAD
+----
+
+Here's an example request payload:
+[source,json]
+.Add A Member To A Family Request JSON
+----
+include::docs/src/json/family/request-child.json[]
+----
+
+After each addition, you'll receive back the entire family object. Here's an example response payload:
+
+[source,json]
+.Add A Member To A Family Response JSON
+----
+include::docs/src/json/family/response-after-child-added.json[]
+----
+
+==== Retrieving family members
+
+Then you'll want to be able to find all of the members of a family. You'd make this API call if you wanted to display associated accounts on a sign in screen.
+
+You can either provide either a userid or a family id. If you are trying to find related family members, the former method will be useful. If, on the other hand, you know the family id and are looking for members, the latter is better. You'd make this API call when you wanted to display all the associated accounts, just like in Netflix when you choose which account's shows to watch.
+
+[source,shell]
+.Retrieving by family id
+----
+API_KEY=...
+FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
+curl -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family/'$FAMILY_ID
+----
+
+[source,shell]
+.Retrieving by user id
+----
+API_KEY=...
+USER_ID=b3360a2d-e81d-4314-b9f1-244a916ca52f
+curl -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family?userId='$USER_ID
+----
+
+Here's an example response payload:
+
+[source,json]
+.Retrieve Family Response JSON
+----
+include::docs/src/json/family/response-after-child-added.json[]
+----
+
+You can also see all family members in the admin UI. Go to [breadcrumb]#Users# and then view the user details and then the "Family" tab to see family members. Note that you can navigate to the User management screens of each family member.
+
+TBD Pic
+
+
+==== Update family members 
+
+You can update a family member. You might do this if their role or owner status has shifted, if someone is a teenager, for example.
+
+[source,shell]
+.Little e4440a4d is all grown up, let's make them a teenager
+----
+API_KEY=...
+FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
+REQUEST_PAYLOAD='{...}'
+curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" https://local.fusionauth.io/api/user/family/
+----
+
+Here's an example request payload, updating the user with id `e4440a4d-b81d-4314-c9f1-844a916ca52f`:
+
+[source,json]
+.Update Family Member Request JSON
+----
+include::docs/src/json/family/request-update-child.json[]
+----
+
+Here's an example response payload:
+
+[source,json]
+.Update Family Member Response JSON
+----
+include::docs/src/json/family/response-after-child-updated.json[]
+----
+
+==== Removing family members and families
+
+You can also remove family members. You might do this if someone signed up for their own Netflix account and shouldn't be affiliated with the family's account anymore. 
+
+[source,shell]
+.Remo
+----
+API_KEY=...
+FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
+USER_TO_REMOVE=e4440a4d-b81d-4314-c9f1-844a916ca52f
+curl -XDELETE -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family/'$FAMILY_ID'/'$USER_TO_REMOVE
+----
+
+You can't delete a family object. Similarly to the way it is created implicitly, if you remove all members, the family becomes unavailable. At that point any requests made against that family will fail. For example, if you attempt to retrieve it, a 404 will be returned.
+
+You can delete all the owners and adults from a family and leave a user with a `Child` or `Teen` family role. BUG?
+
+=== Parental Approval
+
+In this scenario, a child creates an account but doesn't have full access until a parent has approved the account.
+
+Both parent and child must have accounts.
+
+. The child creates an account including a 
+
+==== Updating and Removing Members
+
+This is the same XXX
+what about updating role? does that require consent?
+
+=== COPPA Email+
+
+
+== Alternatives
+
+If you are looking for a way to group users, consider link:/docs/v1/tech/core-concepts/groups[Groups].
+
+TODO
+
+Look at casing of code snippet titles.
+
+take pictures
