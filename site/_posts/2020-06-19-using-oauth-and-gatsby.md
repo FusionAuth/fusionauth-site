@@ -13,7 +13,7 @@ Gatsby is one of the most popular JavaScript static site generators available. W
 
 <!--more-->
 
-In this blog post, you'll learn how to create a Gatsby site that uses FusionAuth to allow users to log in and access their profile securely. This application will use an [OAuth Authorization Code workflow and the PKCE extension](https://fusionauth.io/learn/expert-advice/oauth/definitive-guide-to-oauth-2#52-code-flow--pkce) to log users in and a Node application to store your access token securely. PKCE stands for Proof Key for Code Exchange, and is often pronounced PKCE.
+In this blog post, you'll learn how to create a Gatsby site that uses FusionAuth to allow users to log in and access their profile securely. This application will use an [OAuth Authorization Code workflow and the PKCE extension](https://fusionauth.io/learn/expert-advice/oauth/definitive-guide-to-oauth-2#52-code-flow--pkce) to log users in and a Node application to store your access token securely. PKCE stands for Proof Key for Code Exchange, and is often pronounced "pixy".
 
 At a high level, the authorization process looks like this:
 
@@ -110,17 +110,17 @@ npm install express cors express-session request --save
 
 Next, open up your `package.json` file and add a `"start"` script:
 
-```package.json
-...
+```json
+// ...
 "scripts": {
   "start": "node index.js"
 },
-...
+// ...
 ```
 
 Finally, create a new file in the `./server` directory called `index.js` that will initialize your Express app:
 
-```index.js
+```javascript
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
@@ -171,7 +171,7 @@ Using PKCE adds an additional layer of security, as it is a one time use and gua
 
 To generate a [PKCE challenge and verifier](https://www.oauth.com/oauth2-servers/pkce/), you'll need to use some of the [Node crypto functions](https://nodejs.org/api/crypto.html). Create a new folder in the `./server` directory called `helpers`. Add a new file called `pkce.js` to the folder. You will generate a verifier and challenge in this file:
 
-```pkce.js
+```javascript
 const crypto = require('crypto');
 
 function base64URLEncode(str) {
@@ -197,7 +197,7 @@ module.exports.generateChallenge = (verifier) => {
 
 The two exported functions, `generateVerifier` and `generateChallenge`, will be used in your login route to create a PKCE verifier. Create a new directory called `routes` in your `./server` directory and add a new file called `login.js` to it:
 
-```login.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const config = require('../../config');
@@ -228,7 +228,7 @@ Again, adding PKCE adds another layer of security by proving that the entity whi
 
 Create a new route called `oauth-callback.js` and add the following:
 
-```oauth-callback.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const request = require('request');
@@ -273,7 +273,7 @@ FusionAuth includes an [`introspect` endpoint](https://fusionauth.io/docs/v1/tec
 
 Create a new route file called `user.js`:
 
-```user.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const request = require('request');
@@ -350,7 +350,7 @@ The last endpoint in your Node app allows users to log out. To fully log out of 
 
 Create a new route called `logout.js` and add the following:
 
-```logout.js
+```javascript
 const express = require('express');
 const router = express.Router();
 const config = require('../../config');
@@ -390,7 +390,7 @@ The Gatsby site we create will include a home page and profile page. The home pa
 
 Before you create the home page, create a new folder in the `./gatsby` directory called `helpers`. Add a new file within it called `auth.js`:
 
-```
+```javascript
 import config from "../../../config"
 
 export const generateLoginUrl = () => {
@@ -400,7 +400,7 @@ export const generateLoginUrl = () => {
 
 This function returns the login URL for your Node application. Next, update the `./gatbsy/src/pages/index.js` file to display a page title and login link:
 
-```
+```javascript
 import React from "react"
 import Layout from "../components/layout"
 import {
@@ -428,7 +428,7 @@ The profile page will call the `/user` endpoint in your Node app and show users 
 
 First, open up the `gatsby-node.js` configuration file to create the client-only route. Add the following to the file:
 
-```
+```javascript
 // Client-only profile route
 exports.onCreatePage = async ({ page, actions }) => {
   const { createPage } = actions
@@ -441,8 +441,8 @@ exports.onCreatePage = async ({ page, actions }) => {
 
 Next, update the `helpers/auth.js` file created above. Add a new function called `generateLogoutUrl` that returns the Node app's logout endpoint:
 
-```auth.js
-...
+```javascript
+// ...
 export const generateLogoutUrl = () => {
   return `http://localhost:${config.serverPort}/logout`
 }
@@ -450,8 +450,8 @@ export const generateLogoutUrl = () => {
 
 And add another exported function called `getCurrentUser` which calls the Node app to get the current user from FusionAuth:
 
-```auth.js
-...
+```javascript
+// ...
 export const getCurrentUser = callback => {
   fetch(`http://localhost:${config.serverPort}/user`, {credentials: 'include'})
     .then(res => res.json())
@@ -468,7 +468,7 @@ export const getCurrentUser = callback => {
 
 Finally, create a new page at `./gatsby/src/pages/profile.js`. Gatsby will automatically create a new route for any files in the `pages` directory. Open the new file and add the following:
 
-```
+```javascript
 import React from "react"
 import Layout from "../components/layout"
 import { generateLoginUrl, generateLogoutUrl, getCurrentUser } from '../helpers/auth';
