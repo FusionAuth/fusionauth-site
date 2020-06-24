@@ -13,7 +13,7 @@ Gatsby is one of the most popular JavaScript static site generators available. W
 
 <!--more-->
 
-In this blog post, you'll learn how to create a Gatsby site that uses FusionAuth to allow users to log in and access their profile securely. This application will use an [OAuth Authorization Code workflow and the PKCE extension](https://fusionauth.io/learn/expert-advice/oauth/definitive-guide-to-oauth-2#52-code-flow--pkce) to log users in and a Node application to store your access token securely. PKCE stands for Proof Key for Code Exchange, and is often pronounced "pixy".
+In this blog post, you'll learn how to create a Gatsby site that uses FusionAuth to allow users to log in and access their profile securely. This application will use an [OAuth Authorization Code workflow and the PKCE extension](https://fusionauth.io/learn/expert-advice/oauth/definitive-guide-to-oauth-2#52-code-flow--pkce) to log users in and a Node application to store your access token securely. PKCE stands for Proof Key for Code Exchange, and is often pronounced "pixie".
 
 At a high level, the authorization process looks like this:
 
@@ -167,7 +167,7 @@ In the following sections, you'll create the route files listed in the code abov
 ### Creating the login route
 To generate a login URL, your application will need to create a PKCE verifier and challenge. It will send the challenge to FusionAuth via query string parameters along with your client ID and a redirect URL. 
 
-Using PKCE adds an additional layer of security, as it is a one time use and guarantees that the Node application that generated the challenge is the same one that sent the verifier. Normally this PKCE is used where the client cannot keep a secret, such as a single page application. 
+Using PKCE adds an additional layer of security, as it is a one time use and guarantees that the Node application that generated the challenge is the same one that sent the verifier. Normally, PKCE is used where the client cannot keep a secret, such as a single page application. 
 
 To generate a [PKCE challenge and verifier](https://www.oauth.com/oauth2-servers/pkce/), you'll need to use some of the [Node crypto functions](https://nodejs.org/api/crypto.html). Create a new folder in the `./server` directory called `helpers`. Add a new file called `pkce.js` to the folder. You will generate a verifier and challenge in this file:
 
