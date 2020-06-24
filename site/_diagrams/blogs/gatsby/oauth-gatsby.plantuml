@@ -1,17 +1,23 @@
 @startuml
   !include ../../_config.plantuml
-User -> Gatsby : View Page
+
+participant "User/Browser" as User
+User -> Gatsby : View Initial Page
 User -> NodeApp : Click Login 
-NodeApp -> FusionAuth : Forward User With PCKE Challenge
+NodeApp -> User : Generate PCKE Challenge, Redirect User
+User -> FusionAuth : Request Login Page
+FusionAuth -> User : Return Login Page
 User -> FusionAuth : Provides Credentials
-FusionAuth -> NodeApp : Send Authorization Code and Verifier
-FusionAuth -> FusionAuth : Validate Challenge and Verifier
+FusionAuth -> User : Redirect With Authorization Code 
+User -> NodeApp : Request Redirect URI
 NodeApp -> FusionAuth : Request Access Token 
-FusionAuth -> NodeApp : Send Access Token
+FusionAuth -> FusionAuth : Validate Challenge and Verifier
+FusionAuth -> NodeApp : Return Access Token
 NodeApp -> NodeApp : Store Access Token in Session
+NodeApp -> Gatsby : Return Session Cookie \nAnd Redirect To Profile Page
 Gatsby -> NodeApp : Request User Info
 NodeApp -> FusionAuth : Request User Info While Sending Token
-FusionAuth -> NodeApp : Send User Info
-NodeApp -> Gatsby : Send User Info
+FusionAuth -> NodeApp : Return User Info
+NodeApp -> Gatsby : Return User Info
 Gatsby -> User : Display User Info
 @enduml
