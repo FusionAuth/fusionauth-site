@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Using OAuth and PKCE to Add Authentication to Your Gatsby Site
-description: 
+description: If you want to add authentication to your Gatsby site, FusionAuth combined with the OAuth Authorization Code grant and the PKCE extension, is an excellent solution.
 author: Karl Hughes
 image: blogs/golang-cli-device-grant/fusionauth-tutorial-building-a-cli-app-with-the-device-code-grant-and-golang.png
 category: blog
