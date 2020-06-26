@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Private labeling with tenants
-description: Tenants can ease your operational burden.
+title: How To Use FusionAuth's Multi-Tenant Feature To Create A Private Label Offering
+description: You can leverage multi-tenant features to easily separate users, themes, API keys and more. This will allow for logical separation while still allowing your customer support and operations teams to manage one FusionAuth instance.
 author: Dan Moore
 image: blogs/fusionauth-laravel/user-registration-sign-in-laravel-fusionauth.png
 category: blog
