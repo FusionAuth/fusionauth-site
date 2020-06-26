@@ -100,7 +100,7 @@ The full [code is available](https://github.com/FusionAuth/fusionauth-example-ru
 
 ## Caveats
 
-Once you create a second tenant, all API access needs to [pass in a tenant identifier](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id). This isn't difficult, but you should plan for it.
+Once you create a second tenant, API access typically needs to [pass in a tenant identifier](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id). This isn't difficult, but you should plan for it.
 
 ## In conclusion
 
