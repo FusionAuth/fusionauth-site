@@ -96,7 +96,7 @@ This is the most basic state for a formula which contains meta data for descript
 class FusionauthApp < Formula
   desc "FusionAuth App"
   homepage "https://fusionauth.io"
-  url "https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.5.0/fusionauth-app-1.5.0.zip"
+  url "https://files.fusionauth.io/products/fusionauth/1.5.0/fusionauth-app-1.5.0.zip"
   sha256 "14bdc6d65622d502149d175ee0765a586e832ae4ef5b5946ff82aee3c7cfde04"
 
   def install
