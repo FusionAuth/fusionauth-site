@@ -61,7 +61,7 @@ Normally a user's email address is unique across FusionAuth. But each tenant is 
 
 {% include _image.liquid src="/assets/img/blogs/private-label-with-tenants/duplicate-example-users.png" alt="Two users with the same email address." class="img-fluid" figure=false %}
 
-For administrators, there are significant benefits with tenants. You get ample separation as mentioend above. But as an admin, you have one view into all system activity. You also only have one FusionAuth installation to manage, secure, and upgrade. 
+For administrators, there are significant benefits with tenants. You get ample separation as mentioned above. But as an admin, you have one view into all system activity. You also only have one FusionAuth installation to manage, secure, and upgrade. 
 
 Operations has one place to go to set up new API keys or webhooks. If your customer service reps need to reset a password, they don't have to track down the correct FusionAuth installation. Central user management makes their lives easier.
 
