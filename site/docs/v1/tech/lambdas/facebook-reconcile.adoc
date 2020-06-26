@@ -1,0 +1,69 @@
+---
+layout: doc
+title: Facebook Reconcile
+description: An overview of the Facebook Reconcile lambda
+---
+
+:sectnumlevels: 0
+
+== Facebook Reconcile lambda
+
+When an Facebook identity provider is used to complete a federated login request FusionAuth will use the email address to reconcile user. You may optionally utilize a lambda to customize the user and user registration during this authentication event.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+[source,javascript]
+----
+function reconcile(user, registration, facebookUser) {
+  // Lambda code goes here
+}
+----
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+* `user` - the FusionAuth User object
+* `registration` - the FusionAuth UserRegistration object
+* `facebookUser` - the User returned from the Facebook ME API
+
+The two FusionAuth objects are well documented here in the link:../apis/users[User API] and link:../apis/registrations[Registration API] documentation. The `facebookUser` may contain various user claims depending upon the user's Facebook configuration.
+
+== Assigning the lambda
+
+Once a lambda is created, you may assign it to the Facebook identity provider in the IdP configuration.
+
+Navigate to [breadcrumb]#Settings -> Identity Providers# and select your existing Facebook configuration or click [breadcrumb]#Add provider# and select Facebook if it has not yet been configured.
+
+== Default lambda
+
+A default Facebook reconcile lambda is available in FusionAuth that may be used or modified. The default Facebook lambda function is documented below.
+
+[source,javascript]
+----
+// This is the default Facebook reconcile, modify this to your liking.
+function reconcile(user, registration, facebookUser) {
+
+  // Un-comment this line to see the facebookUser object printed to the event log
+  // console.info(JSON.stringify(facebookUser, null, 2));
+
+  user.firstName = facebookUser.first_name;
+  user.middleName = facebookUser.middle_name;
+  user.lastName = facebookUser.last_name;
+  user.fullName = facebookUser.name;
+
+  if (facebookUser.picture && !facebookUser.picture.data.is_silhouette) {
+    user.imageUrl = facebookUser.picture.data.url;
+  }
+
+  if (facebookUser.birthday) {
+    // Convert MM/dd/yyyy -> YYYY-MM-DD
+    var parts = facebookUser.birthday.split('/');
+    user.birthDate = parts[2] + -' +  parts[0] + '-' +  parts[1];
+  }
+}
+----
+
+=== Limitations
+
+The `user.email` field on the user will be ignored if modified by the lambda function. This is to protect the integrity of the `email` claim returned by the identity provider.  The `user.username` field on the user will be ignored if modified by the lambda function. This is to mitigate the risks of an account takeover due to a non globally unique identifier.

@@ -51,8 +51,8 @@ If you're a command line person, feel free to use `wget` if that is your prefere
 ```
 mkdir ~/fusionauth
 cd ~/fusionauth
-wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.3.1/fusionauth-app-1.3.1.zip
-wget https://storage.googleapis.com/inversoft_products_j098230498/products/fusionauth/1.3.1/fusionauth-search-1.3.1.zip
+wget https://files.fusionauth.io/products/fusionauth/1.3.1/fusionauth-app-1.3.1.zip
+wget https://files.fusionauth.io/products/fusionauth/1.3.1/fusionauth-search-1.3.1.zip
 ```
 
 Once you have downloaded both zip packages to `FUSIONAUTH_HOME` you'll have the following files in a directory.

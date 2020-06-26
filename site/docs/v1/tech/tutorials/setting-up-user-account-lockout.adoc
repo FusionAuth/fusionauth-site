@@ -1,0 +1,50 @@
+---
+layout: doc
+title: Setting Up User Account Lockout
+description: Learn how to set up account locking rules.
+---
+
+== Locking User Accounts Based on Failed Authentication Attempts
+
+If a user tries to authenticate multiple times and fails, you may want to prevent them from trying further. Typically you'd do so after a certain number of failures. Configuring this can help prevent brute force attacks, which is where attackers attempt to figure out your users' passwords by guessing repeatedly. 
+
+If you're concerned about breached passwords compromising your systems, you may also be interested in link:/docs/v1/tech/reactor[Reactor, which can detect breached passwords on user login].
+
+To accomplish this rules based account lockout, you need to take two steps:
+
+. Create a user action representing the account lock behavior
+. Configure tenant settings defining when to apply the lock and the duration of the lock
+
+=== Creating the User Action
+
+The first step is to create a user action, under [breadcrumb]#Settings -> User Actions#. Give it a name of "Account Lock". Check the [field]#Time-based# and [field]#Prevent login# checkboxes. 
+
+image::tutorials/setting-up-user-account-lockout/account-lock-user-action.png[Setting up the account lockout user action,width=1200,role=shadowed]
+
+There are other configuration options available, including localization and user notification options; check out the link:../apis/user-actions[User Action APIs] for more information.
+
+=== Tenant Configuration
+
+Next, configure your tenant, under [breadcrumb]#Tenants -> Default#. Then navigate to the "Password" tab. Under the "Failed authentication settings" section, change the [field]#User action# to your newly created user action, `Account Lock`.
+
+You can configure the number of failed attempts which will trigger the lockout, the time period during which the allotted failures must take place, and the duration of the lockout.
+
+For example, the below settings will allow five failed attempts in sixty seconds. Once the fifth attempt fails, the account will be locked for three minutes. However, each additional failed attempt restarts the three minute lockout.
+
+image::tutorials/setting-up-user-account-lockout/account-lock-tenant-settings.png[Configuring user account lockout settings,width=1200,role=shadowed]
+
+=== What Happens When The Account is Locked
+
+When a user account has been locked by this mechanism, they'll be able to sign in after the duration has elapsed. All login paths will be locked. This user will not be able to login using the FusionAuth login pages, and any login API access will return a 4xx error, as specified in the link:../apis/login[Login API docs]. 
+
+This is what a user will see if the standard FusionAuth OAuth theme is used:
+
+image::tutorials/setting-up-user-account-lockout/account-lock-user-view.png[What the user sees when they try to log in to a locked account,width=1200,role=shadowed]
+
+Since this is a temporary action, the user details screen in the administration user interface will not display a red lock. That is reserved for locks not applied by the user action rules, such as by users that have been link:../apis/users#delete-a-user[soft deleted]. 
+
+An administrator can manually remove or extend this lock. You can also modify the action applied to a user by using the link:../apis/actioning-users[Actioning Users API]. Administrators can see the action under the user's "Current actions" tab.
+
+image::tutorials/setting-up-user-account-lockout/account-lock-admin-view.png[What an admin sees when viewing a locked out user's account,width=1200,role=shadowed]
+
+
