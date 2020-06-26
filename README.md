@@ -56,7 +56,7 @@ dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{
 ```
 * then you can commit this and other folks can pull down your changes
 
-Each time you make a css chang, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
+Each time you make a css change, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
 
 Before you merge to master, of course, you must do a CSS version release, modify the version in `site/_includes/_head.liquid`, and update the dependency in the `fusionauth-site` savant build file.
 
