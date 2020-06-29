@@ -1,0 +1,60 @@
+---
+layout: doc
+title: Apple Reconcile
+description: An overview of the Apple Reconcile lambda
+---
+
+:sectnumlevels: 0
+
+== Apple Reconcile lambda
+
+When an Apple identity provider is used to complete a federated login request FusionAuth will use the email address to reconcile user. You may optionally utilize a lambda to customize the user and user registration during this authentication event.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+[source,javascript]
+----
+function reconcile(user, registration, idToken) {
+  // Lambda code goes here
+}
+----
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+* `user` - the FusionAuth User object
+* `registration` - the FusionAuth UserRegistration object
+* `idToken` - the JSON payload of the validated and decoded Id Token returned from Apple
+
+The two FusionAuth objects are well documented here in the link:../apis/users[User API] and link:../apis/registrations[Registration API] documentation. The Id Token object that contains the payload returned by Apple and may contain well known OpenID Connect registered claims as well as any custom claims defined by Apple.
+
+== Assigning the lambda
+
+Once a lambda is created, you may assign it to the Apple identity provider in the IdP configuration.
+
+Navigate to [breadcrumb]#Settings -> Identity Providers# and select your existing Apple configuration or click [breadcrumb]#Add provider# and select Apple if it has not yet been configured.
+
+== Default lambda
+
+A default Apple reconcile lambda is available in FusionAuth that may be used or modified. The default Apple lambda function is documented below.
+
+[source,javascript]
+----
+// This is the default Apple reconcile, modify this to your liking.
+function reconcile(user, registration, idToken) {
+
+  // Un-comment this line to see the idToken object printed to the event log
+  // console.info(JSON.stringify(idToken, null, 2));
+
+  // During the first login attempt, the user object will be available which may contain first and last name.
+  if (idToken.user && idToken.user.name) {
+    user.firstName = idToken.user.name.firstName || user.firstName;
+    user.lastName = idToken.user.name.lastName || user.lastName;
+  }
+}
+----
+
+=== Limitations
+
+The `user.email` field on the user will be ignored if modified by the lambda function. This is to protect the integrity of the `email` claim returned by the identity provider.  The `user.username` field on the user will be ignored if modified by the lambda function. This is to mitigate the risks of an account takeover due to a non globally unique identifier.

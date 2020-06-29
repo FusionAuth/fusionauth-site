@@ -2,7 +2,7 @@
 layout: job
 title: Senior Java Software Engineer 
 description: FusionAuth is seeking a Senior Java Software Engineer to join our team. Learn about this position and apply today.
-department: Marketing
+department: Engineering
 baseSalary: 140000
 id: 2
 datePosted: 2020-04-21

@@ -3,6 +3,8 @@
  */
 
 
+fusionauthWebsiteStyleVersion = "0.2.20-{integration}"
+
 project(group: "io.fusionauth", name: "fusionauth-site", version: "3.0.0", licenses: ["ApacheV2_0"]) {
   workflow {
     standard()
@@ -14,8 +16,8 @@ project(group: "io.fusionauth", name: "fusionauth-site", version: "3.0.0", licen
 
   dependencies {
     group(name: "css", export: false) {
-      dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12:css")
-      dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12:css.map")
+      dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:${fusionauthWebsiteStyleVersion}:css")
+      dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:${fusionauthWebsiteStyleVersion}:css.map")
     }
   }
 }
@@ -25,8 +27,9 @@ dependency = loadPlugin(id: "org.savantbuild.plugin:dependency:1.0.2")
 file = loadPlugin(id: "org.savantbuild.plugin:file:1.0.2")
 
 target(name: "css", description: "Copies the CSS into place") {
-  // Do not delete old versions of fusionauth-website-style-*, a theme may be using it. We can always
-  // manually delete old versions once we know themes aren't using them.
+  file.delete {
+    fileSet(dir: "site/assets/css", includePatterns: [~/fusionauth-website.+/,~/fusionauth-login-style.+/])
+  }
 
   dependency.copy(to: "site/assets/css") {
     dependencies(group: "css", transitive: false, fetchSource: true)
@@ -59,7 +62,7 @@ target(name: "watch", description: "Build and watch the project", dependsOn: ["c
   cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts", "--incremental", "--watch"])
 }
 
-target(name: "release", description: "Releases a full version of the project") {
+target(name: "release", description: "Releases a full version of the project", dependsOn:["clean", "compile"]) {
   release.release()
 }
 
@@ -71,6 +74,13 @@ target(name: "push", description: "Push the site to fusionauth.io") {
       output.infoln("You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
       exit 1
     }
+  }
+
+  // refresh the algolia index.
+  // TODO : I wonder if we should move this to the `deploy.sh` script ? Does Algolia have REST API we could use for this?
+  //        Then this would only run on the server during a deploy and we wouldn't have to have the API key configured locally.
+  if (!switches.has("skipReindex")) {
+    cleanExecute(["bundle", "exec", "jekyll", "algolia"])
   }
 
   // Allow the command line switch --user to specify a different user on the SSH command
