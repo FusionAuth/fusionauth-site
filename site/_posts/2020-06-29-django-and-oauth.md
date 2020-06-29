@@ -15,7 +15,7 @@ In this tutorial, we’ll build a basic Django web application which does user r
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/headerimage.png" alt="Header Image" class="img-fluid" figure=false %}
 
-The application itself will be very simple: it will let users put in their birthdays and keep this “secret” information safe for them, but with these basics in place, you’ll see how FusionAuth works and can extend the application to do whatever you need.
+The application itself will be very simple: it will let users put in their birthdays and keep this “secret” information safe for them, but with these basics in place, you’ll see how FusionAuth works and can extend the application to do whatever you need. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-python-django).
 
 ## What do you need to follow this tutorial?
 
@@ -497,7 +497,7 @@ Hitting the big Logout link in the Django app takes you back through FusionAuth,
 
 ## Where next?
 
-That’s the basics of our Django app done. The app stores sensitive information such as users’ names (from Gmail) and birthdates (that they enter in our app), but delegates all responsibility for safeguarding and validating this information to FusionAuth.
+That’s the basics of our Django app done. The app stores sensitive information such as users’ names (from Gmail) and birthdates (that they enter in our app), but delegates all responsibility for safeguarding and validating this information to FusionAuth. [Here's the code if you want to review it.](https://github.com/fusionauth/fusionauth-example-python-django).
 
 Of course, you would need to add more interesting features to this app for it to be useful. But any information that stores private information can follow a similar pattern. You could make the app useful by allowing people to store more information, such as journal entries. Or you could allow them to store people's names along with birthdays, and remind them to send good wishes the day before someone's birthday. The possibilities are endless.
 
