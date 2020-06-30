@@ -5,6 +5,7 @@ description: FusionAuth is a single-tenant solution that allows you to control m
 author: Daniel DeGroff
 image: blogs/multi-tenancy.png
 category: blog
+tags: api-tenants
 excerpt_separator: "<!--more-->"
 ---
 
