@@ -17,19 +17,19 @@ All editions of FusionAuth support multiple tenants within the same FusionAuth i
 
 ## Why set up multi-tenant FusionAuth?
 
-Pretend you have a SaaS application which lets people manage their todos. It's a glorious task management application. Your company, TodoInc, sells accounts to individuals. That application lives at app.todo.com. You are using FusionAuth as your user data store, and you have other applications using it as well: a [forum application](/blog/2020/05/13/setting-up-single-sign-on-for-nodebb), [Zendesk](/docs/v1/tech/samlv2/zendesk) for customer support and [GSuite](/docs/v1/tech/samlv2/google). 
+Pretend you have a SaaS application which lets people manage their todos. It's a glorious task management application. Your company, TodoInc, sells accounts to individuals. That application lives at `app.todo.com`. You are using FusionAuth as your user data store, and you have other applications using it as well: a [forum application](/blog/2020/05/13/setting-up-single-sign-on-for-nodebb), [Zendesk](/docs/v1/tech/samlv2/zendesk) for customer support and [GSuite](/docs/v1/tech/samlv2/google). 
 
-However, Company1, a large multinational corporation with a big checkbook, approaches you. They want a premium edition; they have decided that your todo application is too good to live without. They want their application to be separate, private labeled, and located at todo.company1.com. They're willing to pay a premium price, as well.
+However, Company1, a large multinational corporation with a big checkbook, approaches you. They want a premium edition; they have decided that your todo application is too good to live without. They want their application to be separate, private labeled, and located at `todo.company1.com`. They're willing to pay a premium price, as well.
 
 You realize you can offer this easily by modifying your application to respond to multiple hostnames. The logic is pretty straightforward.
 
-But what about your users? The accounts at todo.company1.com should be entirely separate from the accounts at app.todo.com. What if the CEO of Company1 has an account at app.todo.com with the email address ceo@company1.com, and then signs up for a corporate account with that same email address? 
+But what about your users? The accounts at `todo.company1.com` should be entirely separate from the accounts at `app.todo.com`. What if the CEO of Company1 has an account at `app.todo.com` with the email address `ceo@company1.com`, and then signs up for a corporate account with that same email address? 
 
 Will those be considered the same user? They shouldn't be. It doesn't make sense to mix personal and business tasks, and even though the email address for these two accounts is the same, they should be separate. 
 
-Furthermore, suppose you sell Organization2 a premium subscription as well. These user accounts should be independent too, with no possibility of collision, even if ceo@company1.com volunteers there and wants to keep track of their tasks at Organization2.
+Furthermore, suppose you sell Organization2 a premium subscription as well, to be hosted at `todo.organization2.org`. These user accounts should be independent too, with no possibility of collision, even if the CEO of Company1 volunteers there, and registers an account there with the email address `ceo@company1.com` to keep track of their tasks at Organization2.
 
-Each standalone application's login pages must be branded; your clients want their apps customized to match their websites. Oh, and by the way, Company1 wants users to authenticate against ActiveDirectory, and Organization2 wants users to be able to login with their Facebook accounts. 
+Each standalone application's login pages must also be branded; your clients want their apps customized to match their websites. Oh, and by the way, Company1 wants users to authenticate against ActiveDirectory, and Organization2 wants users to be able to login with their Facebook accounts. 
 
 _What to do?_
 
@@ -45,7 +45,7 @@ The first option is running separate FusionAuth instances on separate servers, e
 
 However, operationally this choice leads to complexity. There's the cost of running and maintaining the different servers. You'll need to make sure that configuration such as admin accounts, webhooks, and API keys are synced. When any employee of TodoInc departs, you'll need to ensure you remove accounts across all the servers. 
 
-You'll also need to automate your server rollout process so that todo.company1.com doesn't get left behind when you upgrade. And you'll need some way to let your customer service folks know which installation is associated with which client, so that when a request comes in to reset a password, they aren't hunting across different servers. This isn't a big issue when you have only three private labeled accounts, but when you have twenty or two hundred, it becomes problematic.
+You'll also need to automate your server rollout process so that `todo.company1.com` doesn't get left behind when you upgrade. And you'll need some way to let your customer service folks know which installation is associated with which client, so that when a request comes in to reset a password, they aren't hunting across different servers. This isn't a big issue when you have only three private labeled accounts, but when you have twenty or two hundred, it becomes problematic.
 
 ## Tenants to the rescue
 
