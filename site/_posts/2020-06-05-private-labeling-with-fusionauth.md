@@ -23,13 +23,13 @@ However, Company1, a large multinational corporation with a big checkbook, appro
 
 You realize you can offer this easily by modifying your application to respond to multiple hostnames. The logic is pretty straightforward.
 
-But what about your users? The accounts at todo.company1.com should be entirely separate from the accounts at app.todo.com. What if the CEO of Company1 has an account at app.todo.com with the email address ceo@company1.com and signs up for a corporate account with that same email address? 
+But what about your users? The accounts at todo.company1.com should be entirely separate from the accounts at app.todo.com. What if the CEO of Company1 has an account at app.todo.com with the email address ceo@company1.com, and then signs up for a corporate account with that same email address? 
 
-It doesn't make sense to mix personal and business tasks, and even though the email address for these two accounts is the same, they should be separate. 
+Will those be considered the same user? They shouldn't be. It doesn't make sense to mix personal and business tasks, and even though the email address for these two accounts is the same, they should be separate. 
 
-Further, suppose you sell Organization2 a premium subscription as well. These users should be separate too. 
+Furthermore, suppose you sell Organization2 a premium subscription as well. These user accounts should be independent too, with no possibility of collision, even if ceo@company1.com volunteers there and wants to keep track of their tasks at Organization2.
 
-Additionally, each standalone application's login pages must be branded; your clients want their apps customized to match their websites. Oh, and by the way, Company1 wants users to authenticate against ActiveDirectory, and Organization2 wants users to be able to login with their Facebook accounts. 
+Each standalone application's login pages must be branded; your clients want their apps customized to match their websites. Oh, and by the way, Company1 wants users to authenticate against ActiveDirectory, and Organization2 wants users to be able to login with their Facebook accounts. 
 
 _What to do?_
 
@@ -98,13 +98,11 @@ def create_new_tenant(generic_tenant_client, name)
 end
 ```
 
-In this code snippet, we find the tenant with the name `Default` and duplicate it, creating a new tenant with the same settings. 
-
-The [full code](https://github.com/FusionAuth/fusionauth-example-ruby-tenant-creation), which creates and modifies a new theme is available if you want to take a look. This example is written in ruby, but you can use any of our [client libraries](/docs/v1/tech/client-libraries/) to automate this process. 
+In this code snippet, we find the tenant with the name `Default` and duplicate it, creating a new tenant with the same settings. The [full code](https://github.com/FusionAuth/fusionauth-example-ruby-tenant-creation), which creates and modifies a new theme is available if you want to take a look. This example is written in ruby, but you can use any of our [client libraries](/docs/v1/tech/client-libraries/) to automate this process. 
 
 ## Caveats
 
-Once you create a second tenant, API access typically needs to [pass in a tenant identifier](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id). This isn't difficult, but you should plan for it. 
+Once you create a second tenant, API access typically needs to [pass in a tenant identifier](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id). This isn't difficult, but you should plan for it. For ruby, it's as simple as setting the tenant id on a client object:
 
 ```ruby
 # ...
