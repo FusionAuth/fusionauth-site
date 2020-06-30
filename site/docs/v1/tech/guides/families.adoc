@@ -274,23 +274,32 @@ You need to provide the parent's email address and birthday as well as the expec
 
 As soon as you provide the parent's email address on the registration, emails will be triggered, no matter what the age of the child isXXX BUG?. 
 
-At this point, the flow forks. On one path, the parent has a FusionAuth account. In this case, the "Confirm child account template"  will be sent.
+At this point, the flow forks. On one path, the parent has a FusionAuth account. In this case, the "Confirm child account template" email will be sent.
 
-On the other path, the "Parent registration request template" is sent when the parent must register and create a FusionAuth account. If you never want this email to be sent, you must create a parent account, even if the human parent doesn't sign in with this account. 
+On the other path, the "Parent registration request template" email is sent when the parent must register and create a FusionAuth account. If you never want a parent to be prompted to create an account, you could create a parent account for the given email address via the API. You could then let the parent reset the password when they receive the "Confirm child account template" email.
 
 In both these cases, there's a link in the email. You as a developer are responsible for handling that what happens at that link.
 
 ==== Handling the click
 
-When the link in the email is clicked, have the parent register or log in.  
+When the link in the email is clicked by the parent, they must register or log in to your application.  
 
-Then you present the parent with the list of children to confirm, or you can limit it to the child making the request.
+After they do so, you present the parent with the list of children to confirm.
 
-Note that you have to pass some state along, the easiest way to do that is to use the state parameter. Then in the OAuth callback handling code, you can capture that value if needed. For example, if you wanted to only show the child account requesting confirmation, you could pass that along in the state.
+You can do this by calling the "Retrieve Pending Family Members" API. 
 
-http://localhost:9011/oauth2/authorize?client_id=78bd26e9-51de-4af8-baf4-914ea5825355&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&state=confirm-child
+[source,shell]
+.Retrieving Pending Family Members
+----
+API_KEY=...
+PARENT_EMAIL_ADDRESS=parent@example.com
 
-Then you add them to the family in the same way as above, using the APIs to put them to the family.
+curl -XGET -H "Authorization: $API_KEY" 'http://local.fusionauth.io/api/user/family/pending?parentEmail='$PARENT_EMAIL_ADDRESS
+----
+
+This will return a list of User objects which correspond to the unconfirmed children.
+
+You may then add them to the family using the same APIs. Note that once you add them to the family, the `parentEmail` attribute of the user is removed XXX check.
 
 If the parent doesn't have a FusionAuth account, you'll want the send the user to the registration url. If they do, send them to the login url, but in both cases they'll end up at the list of children associated with their email address which they should confirm. You should ensure that this is a protected page.
 
@@ -300,11 +309,11 @@ https://github.com/FusionAuth/fusionauth-issues/issues/685 before 1.17.2 issue w
 
 ==== After the click
 
-You'll want to capture how the parent gave consent. You have a couple of options
+You'll want to capture how the parent gave consent. You have a couple of options:
 
 - You can record it elsewhere in your system. For example, the click handler could call off to another API.
 - can add it to the user.data of the child
-- you can record a consent (searchable?
+- you can record a consent 
 
 The important thing to know is that it doesn't happen automatically. 
 
@@ -316,29 +325,47 @@ Note that you can't give consent until the child has been made part of a family,
 
 First, create a consent. Let's do that via the admin UI. I'm going to add a consent called 'Email consent':
 
-Second, when the parent accepts the consent, create a user consent.
+Pic TBD
 
-We'd do this with the following curl command:
+Second, when the parent verifies the child, create a user consent.
 
-// no value
+We'd do this with the following curl command, though you can of course use the client libraries:
 
-Which responds with the following JSON
+[source,shell]
+.Granting Consent 
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
 
-You can also see the consent is now associated with the child
-XXX should be associated with the parent, but isn't? not sure why
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'http://localhost:9011/api/user/consent' -d $REQUEST_PAYLOAD
+----
 
+Here's an example request payload:
 
-Then, in the application, you can pull the consents for a given user to know what level of access.
+[source,json]
+.Granting Consent Request JSON
+----
+include::docs/src/json/user-consent/request.json[]
+----
 
-You can learn more about consents in the API docs.
+Which responds with the following:
+
+[source,json]
+.Granting Consent Response JSON
+----
+include::docs/src/json/user-consent/response-no-email-plus.json[]
+----
+
+In your application, you can pull the consents for a given user to know what level of access to allow or for reporting. You can learn more about link:../apis/consent[consents in the API docs].
 
 add in self registration requires email if you enable the birth date field.
 
-what happens if parent account doesn't exist? they get 'Parent registration request template'
 
-==== aa
-What happens if a parent doesn't confirm the child's account?
-- delete unverified children
+==== Unverified Children
+
+If a child registers and the parent never confirms their account, you can optionally have the child accounts automatically deleted after a certain number of days.
+
+Or you can keep the accounts around, if that works better for you.
 
 ==== Using the FusionAuth OAuth Interface
 
@@ -360,16 +387,15 @@ TBD Pic
 
 When a child registers, the parent will be emailed; the template used will be the "Parent registration request template" if they are not registered, but if they are, the "Confirm child account template" email will be sent.
 
-When the parent registers, you'll still have to display the pending family members using your own API calls and have the parents approve them. The OAuth registration pages don't provide for that.
-
+When the parent registers, you'll still have to handle the displaying the pending family members using your own API calls and have the parents approve them. The OAuth registration pages don't provide for that.
 
 
 ==== Updating and Removing Members
 
-This is the same XXX
-what about updating role? does that require consent?
+There are no differences in updating or removing family members in this scenario.
 
 === COPPA Email+
+
 
 
 == Alternatives
