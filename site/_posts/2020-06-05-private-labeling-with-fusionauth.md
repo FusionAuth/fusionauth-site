@@ -23,9 +23,13 @@ However, Company1, a large multinational corporation with a big checkbook, appro
 
 You realize you can offer this easily by modifying your application to respond to multiple hostnames. The logic is pretty straightforward.
 
-But what about your users? The accounts at todo.company1.com should be entirely separate from the accounts at app.todo.com. What if the CEO of Company1 has an account at app.todo.com and signs up for a corporate account? It doesn't make sense to mix personal and business tasks. Further, suppose you sell Organization2 a premium subscription as well. These users should be separate too. 
+But what about your users? The accounts at todo.company1.com should be entirely separate from the accounts at app.todo.com. What if the CEO of Company1 has an account at app.todo.com with the email address ceo@company1.com and signs up for a corporate account with that same email address? 
 
-Also, each standalone application's login pages must be branded; your clients want their apps customized to match their websites. Oh, and by the way, Company1 wants users to authenticate against ActiveDirectory, and Organization2 wants users to be able to login with their Facebook accounts. 
+It doesn't make sense to mix personal and business tasks, and even though the email address for these two accounts is the same, they should be separate. 
+
+Further, suppose you sell Organization2 a premium subscription as well. These users should be separate too. 
+
+Additionally, each standalone application's login pages must be branded; your clients want their apps customized to match their websites. Oh, and by the way, Company1 wants users to authenticate against ActiveDirectory, and Organization2 wants users to be able to login with their Facebook accounts. 
 
 _What to do?_
 
@@ -47,7 +51,7 @@ You'll also need to automate your server rollout process so that todo.company1.c
 
 FusionAuth provides an easier option: tenants. [Tenants](/docs/v1/tech/core-concepts/tenants) are a first class construct in FusionAuth. When you set up a new instance, there is one tenant installed: "Default". And sometimes one is enough. 
 
-But you can create as many as you'd like. From the perspective of user signing in, each tenant is a separate installation. Each tenant has its own email templates, themes, application configurations and users. API keys can be scoped to a tenant, so if you want to give a client an API key to allow them to create their own integrations, you can. This allows for tighter integrations between your todo application and your clients' systems, and is a nice premium feature to offer with no cost to you.
+But you can create as many as you'd like. From the perspective of a user signing in, each tenant is a separate installation. Each tenant has its own email templates, themes, application configurations and users. API keys can be scoped to a tenant, so if you want to give a client an API key to allow them to create their own integrations, you can. This allows for tighter integrations between your todo application and your clients' systems, and is a nice premium feature to offer with no cost to you.
 
 {% include _image.liquid src="/assets/img/blogs/private-label-with-tenants/creating-new-tenant.png" alt="Creating a new tenant" class="img-fluid" figure=false %}
 
@@ -81,7 +85,7 @@ def create_new_tenant(generic_tenant_client, name)
   default_tenant_id = tenants_response.success_response.tenants.select { |t| t.name == 'Default' }[0].id
   default_tenant_theme_id = tenants_response.success_response.tenants.select { |t| t.name == 'Default' }[0].themeId
 
-  new_tenant_request = { "sourceTenantId": default_tenant_id, tenant: {"name": "New client - "+name }}
+  new_tenant_request = { "sourceTenantId": default_tenant_id, tenant: { "name" : "New client - "+name }}
   new_tenant_response = generic_tenant_client.create_tenant(nil, new_tenant_request)
 
   if new_tenant_response.status != 200
@@ -94,13 +98,21 @@ def create_new_tenant(generic_tenant_client, name)
 end
 ```
 
-In this code, we find the tenant with the name `Default` and duplicate it, creating a new tenant with the same settings. We also create a new theme for the new tenant. 
+In this code snippet, we find the tenant with the name `Default` and duplicate it, creating a new tenant with the same settings. 
 
-The full [code is available](https://github.com/FusionAuth/fusionauth-example-ruby-tenant-creation) if you want to take a look. This example is written in ruby, but you can use any of our [client libraries](/docs/v1/tech/client-libraries/) to automate this process. 
+The [full code](https://github.com/FusionAuth/fusionauth-example-ruby-tenant-creation), which creates and modifies a new theme is available if you want to take a look. This example is written in ruby, but you can use any of our [client libraries](/docs/v1/tech/client-libraries/) to automate this process. 
 
 ## Caveats
 
-Once you create a second tenant, API access typically needs to [pass in a tenant identifier](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id). This isn't difficult, but you should plan for it.
+Once you create a second tenant, API access typically needs to [pass in a tenant identifier](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id). This isn't difficult, but you should plan for it. 
+
+```ruby
+# ...
+tenant_client = FusionAuth::FusionAuthClient.new(API_KEY, 'http://localhost:9011')
+tenant_client.set_tenant_id(TENANT_ID)
+user = tenant_client.retrieve_user_by_email('jared@piedpiper.com')
+# ...
+```
 
 ## In conclusion
 
