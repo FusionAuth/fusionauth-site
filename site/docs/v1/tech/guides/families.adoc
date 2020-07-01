@@ -4,13 +4,13 @@ title: Families guide
 description: What are families in FusionAuth and how are they useful?
 ---
 
-The family API in FusionAuth is a powerful way to logically group family members.
+The family API in FusionAuth is a powerful way to logically group family members and manage consents offered by parents.
 
 You can review the link:/docs/v1/tech/apis/families[family API documentation] for detailed API call examples.
 
 == Why would you use Families?
 
-There are two main reasons you might want to use families. The first is to easily add family relationships to your application. You can have associations and different roles for each type of family member, which can allow access to different functionality within your application. These relationships may be quite complex; for example, a single child may be a member of multiple families headed by different parents.
+There are two main reasons you might want to use the family API. The first is to easily add family relationships to your application. You can have associations and different roles for each type of family member, which can allow access to different functionality within your application. These relationships may be quite complex; for example, a single child may be a member of multiple families headed by different parents.
 
 The second reason is because you are legally obligated to obtain parental consent due to the age of your users and what you are doing with their data, and you want to send and keep track of those consents within FusionAuth. While the ages and restrictions vary in each legal jurisdiction, in general applications need parental consent if children are using them.
 
@@ -210,7 +210,7 @@ You can delete all the owners and adults from a family and leave a user with a `
 
 === Parental Approval
 
-In this scenario, a child creates an account but doesn't have full access until a parent has approved the signup. Depending on your application, you may make limited application functionality available, however. Think of a game aimed at children like Roblox. 
+In this scenario, a child creates an account but doesn't have full access until a parent has approved the signup. Depending on your application, you may make limited application functionality available, however. Think of a game aimed at children like Roblox. An example of functionality that may be unlocked by parental approval is in-game chat.
 
 Parents approve signups by receiving an email and clicking on a link. FusionAuth takes care of sending the email, but you need to make sure your application handles the link click.
 
@@ -337,7 +337,7 @@ We'd do this with the following curl command, though you can of course use the c
 API_KEY=...
 REQUEST_PAYLOAD='{...}'
 
-curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'http://localhost:9011/api/user/consent' -d $REQUEST_PAYLOAD
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'http://local.fusionauth.io/api/user/consent' -d $REQUEST_PAYLOAD
 ----
 
 Here's an example request payload:
@@ -409,7 +409,7 @@ What about family registrations when allow child registrations is off? XXX
 
 There are two different ways for companies to comply with COPPA, according to the FTC, depending on how you're going to use the data. You can use verified parental consent (VPC) or "email plus". While FusionAuth supports both, "email plus" is available out of the box and is more common.
 
-==== Enabling COPPA
+==== COPPA Consent
 
 The only difference between COPPA and Parental Approval is in the consent required. COPPA "email plus" requires two emails to be sent, and FusionAuth has built this workflow.
 
@@ -419,13 +419,107 @@ Pic TBD
 
 Then review both the COPPA notice email templates. At the least, you'll want to modify them so that they point to the correct location for the consent clicks.
 
-Similar to above, you must handle the clicks. There will be two emails sent, and in either case, the parent must login and 
+Here are the sample email templates.
+
+.The Initial COPPA Notice
+[source,text]
+----
+include::docs/src/email/coppa-notice.html[]
+----
 
 
+.The Email Plus COPPA Notice
+[source,text]
+----
+include::docs/src/email/coppa-plus-notice.html[]
+----
 
-review email plus tab 
+When a child is verified by a parent and added to the family, as above, create the consent. Here's an example of how you might do so for a child.
 
-edit the templates. again you must handle the clicks.
+[source,shell]
+.Granting Consent 
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'http://local.fusionauth.io/api/user/consent' -d $REQUEST_PAYLOAD
+----
+
+Here's an example request payload:
+
+[source,json]
+.Granting Consent Request JSON
+----
+include::docs/src/json/user-consent/request.json[]
+----
+
+Which responds with the following:
+
+[source,json]
+.Granting Consent Response JSON
+----
+include::docs/src/json/user-consent/response.json[]
+----
+
+For a teenager, you can perform self consent as well. In that case the `giverUserId` and the `userId` for the consent request would be the same `userId`, that of the teenager.
+
+==== Revocation
+You must handle the consent revocation. There will be two emails sent, and in either case, the parent can login and and view the consents. They should be able to grant or revoke them for any child in the family.
+
+Here's how you'd revoke a previously granted consent, using curl:
+
+[source,shell]
+.Revoking Consent 
+----
+API_KEY=...
+
+curl -v -XDELETE -H "Authorization: $API_KEY" 'http://local.fusionauth.io/api/user/consent/841d8b33-bf4d-488d-9f2f-2f50d769c3d2' 
+----
+
+Here's the response you'll receive on successful revocation:
+
+[source,json]
+.Revoked Consent Response JSON 
+----
+include::docs/src/json/user-consent/response-revoked.json[]
+----
+
+And here's how you'd pull a list of consents for a user to determine if they'd been given consent.
+
+[source,shell]
+.Listing User Consents
+----
+API_KEY=...
+
+curl -XGET -H "Authorization: $API_KEY" 'http://local.fusionauth.io/api/user/consent?userId=841d8b33-bf4d-488d-9f2f-2f50d769c3d2'
+----
+
+This call responds with this JSON when the consent has been granted.
+
+[source,json]
+.Listing Consent Response JSON When Consent Granted
+----
+include::docs/src/json/user-consent/response.json[]
+----
+
+
+This is the response when consent has been revoked:
+
+[source,json]
+.Listing Consent Response JSON When Consent Revoked
+----
+include::docs/src/json/user-consent/response-revoked.json[]
+----
+
+when the consent has been revoked. 
+
+[NOTE]
+====
+This means that you need to check the value of the consent `status`, not just whether the consent exists.
+====
+
+You'd want to call this after the child's login and prevent the child from accessing the application if consent has been revoked.
+
 
 add the consent
 
