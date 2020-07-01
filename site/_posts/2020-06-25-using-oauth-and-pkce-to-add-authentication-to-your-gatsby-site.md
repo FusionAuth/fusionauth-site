@@ -47,7 +47,7 @@ You'll also want to save the "Client Id" and "Client secret" values as you'll ne
 
 {% include _image.liquid src="/assets/img/blogs/oauth-gatsby/application-setup.png" alt="FusionAuth configuration options for a Gatsby static site." class="img-fluid" figure=false %}
 
-You'll also need to create an API key. Go to "Settings", then to "API Keys". You may create one with adminstrative privileges for the purposes of this tutorial. For a production application, please follow the principle of least privilege and limit the endpoints available to the key. Save the API key off as you'll need it later.
+You'll also need to create an API key. Go to "Settings", then to "API Keys". You may create one with administrative privileges for the purposes of this tutorial. For a production application, please follow the principle of least privilege and limit the endpoints available to the key. Save the API key off as you'll need it later.
 
 ## Creating a new user
 To test your Gatsby-based login, you'll need to add a new user and register them for your application in FusionAuth. From the Users page in FusionAuth, click "+" to add a user. Enter an email address and password for your new user and click the save button.
