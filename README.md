@@ -69,6 +69,9 @@ Before you merge your site changes with CSS dependencies to master:
 * do a CSS version release, which will bump the version (see instructions in that repo for more)
 * update the version number in `site/_includes/_head.liquid`
 * update the dependency in the `fusionauth-site` savant build file.
+* run `sb css`
+* check in the new css files.
+
 
 ## Deploying
 
