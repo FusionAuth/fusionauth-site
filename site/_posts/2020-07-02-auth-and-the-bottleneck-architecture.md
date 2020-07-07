@@ -3,7 +3,7 @@ layout: blog-post
 title: The Auth Bottleneck Pattern 
 description: How and why to use a centralized user management system.
 author: Dan Moore
-image: blogs/private-label-with-tenants/how-to-use-fusionauths-multi-tenant-feature-to-create-a-private-label-offering.png
+image: blogs/bottleneck-pattern/the-auth-bottleneck-pattern.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
