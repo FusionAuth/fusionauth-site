@@ -45,7 +45,11 @@ If you are modifying the doc search and want to use a different Algolia index fo
 
 If you want to clean your Jekyll install, run `bundle exec jekyll clean`.
 
-If you are making changes to CSS in `fusionauth-style`, do the following:
+### CSS changes
+
+This project depends on CSS from the `fusionauth-style` project.
+
+If you are making changes to the CSS, you'll need to do the following:
 
 * clone that repo, make changes there on a branch
 * when your changes are done, run `sb int` which pushes up a integration build (similar to a maven snapshot) to the savant repo.
@@ -58,7 +62,13 @@ dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{
 
 Each time you make a css change, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
 
-Before you merge to master, of course, you must do a CSS version release, modify the version in `site/_includes/_head.liquid`, and update the dependency in the `fusionauth-site` savant build file.
+#### Releasing CSS changes
+
+Before you merge your site changes with CSS dependencies to master:
+
+* do a CSS version release, which will bump the version (see instructions in that repo for more)
+* update the version number in `site/_includes/_head.liquid`
+* update the dependency in the `fusionauth-site` savant build file.
 
 ## Deploying
 
