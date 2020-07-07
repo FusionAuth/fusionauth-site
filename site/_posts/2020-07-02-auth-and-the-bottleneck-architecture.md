@@ -32,9 +32,9 @@ Here's a diagram of the bottleneck architecture:
 
 {% include _image.liquid src="/assets/img/blogs/bottleneck-pattern/bottleneck-diagram.png" alt="A common archictural diagram." class="img-fluid" figure=false %}
 
-The applications, in purple, rely on the centralized auth system, which is in teal. They'll send all their auth requests to one place. Depending on how the auth system is configured, the applications' requests for user information may be answered directly, based on information in the auth system's datastore. Or, alternately, auth requests for a given user can be relayed to the federated identity providers, in orange. (You can read more about [the identity providers](/docs/v1/tech/identity-providers/) FusionAuth supports.)
+The applications, in purple, rely on the centralized auth system, which is in gray. They'll send all their auth requests to one place. Depending on how the auth system is configured, the applications' requests for user information may be answered directly, based on information in the auth system's datastore. Or, alternately, auth requests for a given user can be relayed to the federated identity providers, in orange. (You can read more about [the identity providers](/docs/v1/tech/identity-providers/) FusionAuth supports.)
 
-## Benefits Of a User Auth Service
+## Benefits of a User Auth Service
 
 This user management architecture has substantial benefits when implemented. Among them are increased visibility, decreased operational complexity, and increased choice of auth method.
 
@@ -69,7 +69,7 @@ Of course, nothing is perfect. There are challenges with this approach as well. 
 
 First off is the [SSO tax](https://sso.tax/). Many third party applications don't support this user auth delegation until you are on an enterprise plan. Ouch. Investigate required applications to see if and how they can act as a RP or SP to a centralized user management system before you decide to pursue this architecture. 
 
-Another organizational challenge is ensuring developers and users don't do an end run around the organization's user management system. Encourage employees to work within these constraints by making it as easy as possible and repeatedly explaining the benefits. Providing examples of successful integrations can help with both goals.
+Another organizational challenge is ensuring developers and end users actually use the organization's user management system. Some may want to use their old, familiar authentication solutions. Encourage everyone to work within these constraints by making adoption as easy as possible and clearly explaining the benefits. Providing examples of successful integrations can help with both of these.
 
 Tying together the bottleneck system, the delegating applications, and the external identity providers requires effort. Sometimes it is as simple as following a tutorial on a website and adding a few lines of configuration. Other times it may be more complicated and may require support.
 
@@ -79,5 +79,7 @@ Finally, beware of insecure or slow auth services. No one cares about authentica
 
 If you'd like to see how easy it is to configure FusionAuth to serve as an centralized authentication and authorization service, HYPR and FusionAuth are hosting a webinar on Thursday, July 16 2020. 
 
-In less than 15 minutes, Zendesk will be set up as an application delegating auth decisions to FusionAuth (well, if you want to be technical, as an SP using SAML). HYPR will be configured as an identity provider. At the end, a user will be able to sign into Zendesk using HYPR's passwordless technology. [Sign up here!](https://get.hypr.com/fusionauth-webcast)
+In less than 15 minutes, Zendesk will be set up as an application delegating auth decisions to FusionAuth (well, if you want to be technical, as an SP using SAML). HYPR will be configured as an identity provider. At the end, a user will be able to sign into Zendesk using HYPR's Passwordless technology. 
+
+[Sign up for the webinar](https://get.hypr.com/fusionauth-webcast){:.button .brochure .orange .text-larger}
 
