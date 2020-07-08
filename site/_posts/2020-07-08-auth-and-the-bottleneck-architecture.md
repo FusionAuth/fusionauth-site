@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: The Auth Bottleneck Pattern 
-description: How and why to use a centralized user management system.
+description: How and why to use a centralized user management system rather than having individual applications use their own auth components.
 author: Dan Moore
 image: blogs/bottleneck-pattern/the-auth-bottleneck-pattern.png
 category: blog
@@ -12,7 +12,7 @@ One common pattern for modern organizations is to centralize user management wit
 
 <!--more-->
 
-## The Pattern
+## The Architectural Pattern With OIDC and SAML
 
 In this architectural pattern, applications delegate user management to the user management system. Many kinds of applications can perform such delegation. Examples include custom applications written by internal teams, third party services used by employees, such as Salesforce and Zendesk, and applications used by customers, such as forums or account management. 
 
@@ -36,7 +36,7 @@ The applications, in purple, rely on the centralized auth system, which is in gr
 
 ## Benefits of a User Auth Service
 
-This user management architecture has substantial benefits when implemented. Among them are increased visibility, decreased operational complexity, and increased choice of auth method.
+This user management architecture enables single sign-on (SSO) and has substantial benefits when implemented. Among them are increased visibility, decreased operational complexity, and increased choice of auth method.
 
 ### Increased Visibility and Development Speed
 
@@ -63,7 +63,7 @@ If your auth system allows for multiple different identity providers, your appli
 
 If you work for a large organization, you may need to federate your user management system, using one of the standards such as OIDC, to other user datastores. Having a central service for your suite of applications means federation and integration only needs to be done once, rather than for each application you build.
 
-## Challenges
+## Challenges With SSO
 
 Of course, nothing is perfect. There are challenges with this approach as well. Some technical, some not so much. 
 
@@ -75,7 +75,7 @@ Tying together the bottleneck system, the delegating applications, and the exter
 
 Finally, beware of insecure or slow auth services. No one cares about authentication and authorization, except when it doesn't work. When was the last time you heard someone exclaim "I love that login page!"? People want to log in when and how they choose and have it work, so they can get on to the task they need to accomplish. Select a system that is robust, has great support, and is flexible enough to meet future needs.
 
-## See It In Action
+## See It In Action See With HYPR and FusionAuth
 
 If you'd like to see how easy it is to configure FusionAuth to serve as an centralized authentication and authorization service, HYPR and FusionAuth are hosting a webinar on Thursday, July 16 2020. 
 
