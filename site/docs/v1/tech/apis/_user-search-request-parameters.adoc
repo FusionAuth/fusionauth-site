@@ -1,35 +1,53 @@
 
-// COMMENT
-
-ifdef::query_string_request[]
-:parameter_prefix:
-endif::[]
-
-ifndef::query_string_request[]
-:parameter_prefix: search.
-endif::[]
-
+// parameter_prefix is either blank for parameters or "search." for body
+// query_string_request is set to anything for query string requests
+// query_string_request is undefined for body requests
+// database_search_engine_type is defined if this is a database search engine entry
+// elasticsearch_search_engine_type is defined if this is a elasticsearch search engine entry
 
 [api]
 
 // The only field with a different definition between body and query string is ids
 ifdef::query_string_request[]
-[field]#ids# [type]#[UUID]# [optional]#Optional#::
-A User Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Users. Using this parameter is mutually exclusive with the [field]#query# and [field]#queryString# fields and is not paginated or sorted using the `sortFields`.
+[field]#{parameter_prefix}ids# [type]#[UUID]# [optional]#Optional#::
+A User Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Users. 
+ifdef::database_search_engine_type[]
+Using this parameter is mutually exclusive with the [field]#{parameter_prefix}queryString# field and is not paginated or sorted using the `sortFields`.
+endif::[]
+ifdef::elasticsearch_search_engine_type[]
+Using this parameter is mutually exclusive with the [field]#{parameter_prefix}query# and [field]#{parameter_prefix}queryString# fields and is not paginated or sorted using [field]#{parameter_prefix}sortFields#.
++
+Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
+endif::[]
+endif::[]
 endif::[]
 ifndef::query_string_request[]
 [field]#{parameter_prefix}ids# [type]#[Array<UUID>]# [optional]#Optional#::
-A list of User Ids to retrieve. When using this parameter, the results are not paginated or sorted using the `sortFields`. The [field]#ids#, [field]#query#, and [field]#queryString#  parameters are mutually exclusive, they are listed here in order of precedence.
+A list of User Ids to retrieve. When using this parameter, the results are not paginated or sorted using the [field]#{parameter_prefix}sortFields#. 
+ifdef::database_search_engine_type[]
+The [field]#{parameter_prefix}ids# and [field]#{parameter_prefix}queryString# parameters are mutually exclusive, they are listed here in order of precedence.
 endif::[]
+ifdef::elasticsearch_search_engine_type[]
+The [field]#{parameter_prefix}ids#, [field]#{parameter_prefix}query#, and [field]#{parameter_prefix}queryString# parameters are mutually exclusive, they are listed here in order of precedence.
 +
 Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
+endif::[]
+endif::[]
 
-[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+[field]#{parameter_prefix}numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
 The number of search results to return. Used for pagination.
+
+ifdef::elasticsearch_search_engine_type[]
+[field]#{parameter_prefix}query# [type]#[String]# [optional]#Optional# [since]#Available since 1.13.0#::
+The raw JSON Elasticsearch query that is used to search for Users.  The [field]#ids#, [field]#query#, and [field]#queryString#  parameters are mutually exclusive, they are listed here in order of precedence.
++
+It is necessary to use the [field]#search.query# parameter when querying against `registrations` in order to achieve expected results, as this field is defined as a link:https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html[nested datatype] in the Elasticsearch mapping.
+endif::[]
++
 
 ifdef::database_search_engine_type[]
 [field]#{parameter_prefix}queryString# [type]#[String]# [optional]#Optional#::
-A query string that is used to search for Users. Using this parameter is mutually exclusive with the [field]#ids# and [field]#query# fields.
+A query string that is used to search for Users. Using this parameter is mutually exclusive with the [field]#ids# field.
 +
 Database search limits effective queries to single search terms that may match the following fields on the User:
 +
@@ -40,17 +58,25 @@ Database search limits effective queries to single search terms that may match t
 * `username`
 endif::[]
 
-[field]#${parameter_prefix}startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to 0#::
+ifdef::elasticsearch_search_engine_type[]
+[field]#{parameter_prefix}queryString# [type]#[String]# [optional]#Optional#::
+The Elasticsearch query string that is used to search for Users.  The [field]#ids#, [field]#query#, and [field]#queryString#  parameters are mutually exclusive, they are listed here in order of precedence.
+endif::[]
+
+[field]#{parameter_prefix}startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to 0#::
 The start row within the search results to return. Used for pagination.
 
 [field]#{parameter_prefix}sortFields# [type]#[Array]# [optional]#Optional#::
 An array of sort fields used to sort the result. The order the sort fields are provided will be maintained in the sorted output.
 
-[field]#sortFields``[x]``.order# [type]#[String]# [optional]#Optional# [default]#defaults to `asc`#::
-The order to sort the specified field. Possible values are:
+ifdef::elasticsearch_search_engine_type[]
+[field]#{parameter_prefix}sortFields[``x``].missing# [type]#[String]# [optional]#Optional# [default]#defaults to `_last`#::
+The value to substitute if this field is not defined. Two special values may be used:
 +
-* `asc`
-* `desc`
+* `_first` When the field is not defined sort this record first.
+* `_last` When the field is not defined sort this record last.
+endif::[]
++
 
 ifdef::database_search_engine_type[]
 [field]#{parameter_prefix}sortFields[``x``].name# [type]#[String]# [required]#Required#:: 
@@ -71,5 +97,33 @@ The following field names are supported for the database search engine:
 * `username`
 endif::[]
 
-// clear the parameter prefix
-:parameter_prefix!:
+ifdef::elasticsearch_search_engine_type[]
+[field]#{parameter_prefix}search.sortFields[``x``].name# [type]#[String]# [optional]#Optional#::
+The name of the field to sort.
++
+[required]#Required# if [field]#{parameter_prefix}sortFields# is provided. 
++
+Due to how the search index is structured not all fields on the user are sortable. The following field names are currently supported.
++
+* `birthDate`
+* `email`
+* `fullName`
+* `id`&nbsp; [since]#Available since 1.13.0#
+* `insertInstant`
+* `lastLoginInstant` &nbsp; [since]#Available since 1.13.0#
+* `login`
+* `registrations.applicationId` &nbsp; [since]#Available since 1.13.0#
+* `registrations.id` &nbsp; [since]#Available since 1.13.0#
+* `registrations.insertInstant` &nbsp; [since]#Available since 1.13.0#
+* `registrations.lastLoginInstant` &nbsp; [since]#Available since 1.13.0#
+* `registrations.roles` &nbsp; [since]#Available since 1.13.0#
+* `tenantId`
+* `username`
+endif::[]
+
+[field]#{parameter_prefix}sortFields``[x]``.order# [type]#[String]# [optional]#Optional# [default]#defaults to `asc`#::
+The order to sort the specified field. Possible values are:
++
+* `asc`
+* `desc`
+
