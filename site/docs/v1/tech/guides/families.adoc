@@ -273,11 +273,7 @@ Here's an example request payload:
 }
 ----
 
-Provide the parent's email address and birthday as well as the application, email and password information.
-
-As soon as you create the child account, one of the above emails will be sent. 
-
-provide the parent's email address on the registration, emails will be triggered, no matter what the age of the child isXXX BUG?. 
+Provide the parent's email address and birthday as well as the application, email and password information. As soon as you create the child account, one of the above emails will be sent. 
 
 At this point, the path forks. On one side, the parent has a FusionAuth account. In this case, the "Confirm child account template" email will be sent. This email should contain a link displaying the child account to confirm.
 
@@ -327,7 +323,12 @@ However, whichever way you choose, know that it doesn't happen automatically.
 
 When using consents, your application capture how and when parental consent was provided. You can retrieve consents for each child and user. You can build a user interface to allow a parent to temporarily or permanently revoke a consent.
 
-Your application can't grant consent until the child has been made part of a family, and only the adults in a family can do so XXX or is it the owner. If a teenager is part of a family, they can self consent.
+Consents are entirely disjoint from families in terms of the API. That is, you don't need to be part of a family to grant consent to another user. However, if you're using the Consent API to capture parental consent, you'll want to validate that:
+
+* the user granting consent is in the same family as the user recieving it
+* if the user receiving consent is a child, the user granting consent is a parent
+
+If a user is less than the "Maximum child age" setting, however, they will not be able to grant consent to themselves. If a user is older than that, they can self consent.
 
 To use a consent, first, create a consent. Let's do that via the admin UI. I'm going to add a consent called 'Email consent'. I'll leave the other settings at their default values, but please consult the link:../apis/consent[Consent API] documentation for more information on the various options.
 
@@ -524,35 +525,20 @@ There is an [example nodejs application](https://github.com/FusionAuth/fusionaut
 
 == Limitations
 
-There are some limitations of the family functionality.
-
-A family consists of at least one adult, and an arbitrary number of teens, children and adults.
-
-A family is created by associating an existing user with a family.
-
-Families can have more than one owner, but all owners must be adults. 
-
-Families display in the administration user interface. You can configure settings related to families as detailed above in the administration user interface as well. But you may not create or modify families using the admin interface. 
-
-If you are going to use families, you're going to be writing code against the APIs, either directly or using the client libraries. However, there is support in the FusionAuth provided login screens for the child registrations.
-
-There are only three family roles available:
+There are three family roles available:
 
 * `Adult`
 * `Child`
 * `Teen`
 
-These roles have no relationship to the birth date of a user. These roles are completely assigned by you and if you want to categorize a 25 year old as a teenager, FusionAuth won't stop you. 
+These roles have no relationship to the birth date of a user. These roles are completely assigned by you and if you want to categorize a 25 year old as a teenager, FusionAuth won't stop you. Ages are only checked for the family creator. The first user added to a family must be older than the "Minimum owner age". All other owners, however, may be any age. Family roles have no relationship whatsoever to application roles, except they share the name "role". 
 
-Ages are checked for the initial adult created, but no other users. XXX BUG
+A family consists of at least one adult, and an arbitrary number of teens, children and other adults.
 
-Family roles have no relationship whatsoever to application roles, except they share the name "role". 
+Families display in the administration user interface. You can configure settings related to families as detailed above in the administration user interface as well. But you may not create or modify families using the admin interface. 
+
+If you are going to use families, you're going to be writing code against the APIs, either directly or using the client libraries. However, there is support in the FusionAuth provided login screens for the child registrations.
 
 Most family configuration is set at the tenant level. If you require different configurations, you need multiple tenants. For example, if the maximum age of a child is 12 for one application and 15 for another, you can't manage them in the same FusionAuth tenant. However, creating multiple tenants in one FusionAuth installation is simple; see the link:../apis/tenants[Tenants APIs] for more information.
 
-Users with the `Child` or `Teen` family roles may belong to more than one family, but a user with the `Adult` role may not belong to more than one family. However, the same user may be added as a `Child` to one family and an `Adult` to another. XXX BUG
-
-=== TODO
-
-Look at casing of code snippet titles.
-
+Users with the `Child` or `Teen` family roles may belong to more than one family, but a user with the `Adult` role may not belong to more than one family. 
