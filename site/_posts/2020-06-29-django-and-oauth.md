@@ -56,19 +56,19 @@ Note that this uses a public `.env` file containing hard-coded database password
 
 ### Configuring FusionAuth
 
-FusionAuth should now be running and reachable on `[http://localhost:9011](http://localhost:9011)`. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more set up steps, as shown below.
+FusionAuth should now be running and reachable on `http://localhost:9011`. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more set up steps, as shown below.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
 
-We'll skip step **#3** in this tutorial, but sending emails (e.g. to verify email addresses and do password resets) is a vital part of FusionAuth running in production.
+We'll skip step **#3** in this tutorial, but sending emails (e.g. to verify email addresses and do password resets) is a vital part of FusionAuth running in production, so you'll want to do that.
 
 ### Creating an Application
 
-Click “Setup" under “Missing Application" and call your new app “Secret Birthdays". It'll get a Client Id and Client secret automatically. Later, we'll set up a Django application which will run on [http://localhost:8000](http://localhost:8000), so configure the Authorized URLs accordingly. You should add:
+Click “Setup" under “Missing Application" and call your new app “Secret Birthdays". It'll get a Client Id and Client secret automatically. Later, we'll set up a Django application which will run on `http://localhost:8000`, so configure the Authorized URLs accordingly. You should add:
 
-- [http://localhost:8000/dashboard](http://localhost:8000/dashboard) to the Authorized redirect URLs
-- [http://localhost:8000/](http://localhost:8000/) to the Authorized request origin URL
-- [http://localhost:8000/](http://localhost:8000/) to the Logout URL
+- `http://localhost:8000/dashboard` to the Authorized redirect URLs
+- `http://localhost:8000/` to the Authorized request origin URL
+- `http://localhost:8000/` to the Logout URL
   
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
@@ -84,7 +84,7 @@ Click the Save button in the top right for your changes to take effect.
 
 In order to allow our users to sign in to our app using their Google account, you'll need to set up a Google Cloud project and get an OAuth ID and secret. The full instructions for doing this are available [here](https://fusionauth.io/docs/v1/tech/identity-providers/google).
 
-Use [http://localhost:9011](http://localhost:9011) for the authorized JavaScript origin and Authorized redirect URI. This will allow our FusionAuth app to talk to Google's servers and have them authenticate users on our behalf, as shown below.
+Use `http://localhost:9011` for the authorized JavaScript origin and Authorized redirect URI. This will allow our FusionAuth app to talk to Google's servers and have them authenticate users on our behalf, as shown below.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/google-authurls.png" alt="Adding authorized URLs to Google." class="img-fluid" figure=false %}
 
@@ -129,7 +129,7 @@ If all went well, the server should start successfully, as shown below.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/djangoserver.png" alt="The Django development server starting successfully." class="img-fluid" figure=false %}
 
-And if you visit [`http://localhost:8000`](http://localhost:8000) in your web browser, you should see the default Django page
+And if you visit `http://localhost:8000` in your web browser, you should see the default Django page
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/defaultdjango.png" alt="The Django default home page." class="img-fluid" figure=false %}
 
@@ -212,13 +212,13 @@ INSTALLED_APPS = [
 ]
 ```
 
-If you fire up http://localhost:8000 in your web browser now, you should see our home page.
+If you fire up `http://localhost:8000` in your web browser now, you should see our home page.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/homepage1.png" alt="Our public home page." class="img-fluid" figure=false %}
 
 To build the login URL (which will direct users to our FusionAuth server), we need to have some of our FusionAuth config copied across to our Django project. Specifically, we'll need an API key and our app's client ID.
 
-Go back to the FusionAuth dashboard ([http://localhost:9011](http://localhost9011)) and complete the next piece of set up.
+Go back to the FusionAuth dashboard (`http://localhost:9011`) and complete the next piece of set up.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/fusionauth-setup2.png" alt="We still need an API key." class="img-fluid" figure=false %}
 
@@ -484,7 +484,7 @@ def post(self, request):
 
 Here, if the user submits a birthday, we try to parse it into a date. The dateparser module is pretty good at understanding different date formats (e.g “1 Jan 90", “Jan 1 1990", “1/1/1990", etc), while FusionAuth needs the date in a specific format (“1990-01-01"). Therefore, we attempt to parse whatever the user gave us into a date, reformat it, and then send it across to FusionAuth using the `patch_user` function.
 
-Now you can visit the Django app at [http://localhost:8000](http://localhost:8000), press the link to log in, sign up as a new user using GMail (if you used your main Google account as the “admin" FusionAuth user and want to test this using a new user, then do this through an incognito or private window and sign up with a second Google account.)  
+Now you can visit the Django app at `http://localhost:8000`, press the link to log in, sign up as a new user using GMail (if you used your main Google account as the “admin" FusionAuth user and want to test this using a new user, then do this through an incognito or private window and sign up with a second Google account.)  
 
 Once you've added your birthday, you'll be able to see it in the dashboard.
 
@@ -502,7 +502,7 @@ Hitting the big Logout link in the Django app takes you back through FusionAuth,
 
 That's the basics of our Django app done. The app stores sensitive information such as users' names (from Gmail) and birthdates (that they enter in our app), but delegates all responsibility for safeguarding and validating this information to FusionAuth. [Here's the code if you want to review it.](https://github.com/fusionauth/fusionauth-example-python-django).
 
-Of course, you would need to add more interesting features to this app for it to be useful. But any information that stores private information can follow a similar pattern. You could make the app useful by allowing people to store more information, such as journal entries. Or you could allow them to store people's names along with birthdays, and remind them to send good wishes the day before someone's birthday. The possibilities are endless.
+Of course, you would need to add more interesting features to this app for it to be useful. But any information that stores private information can follow a similar pattern. You could make the app useful by allowing people to store more information, such as journal entries. Or you could allow them to store people's names along with birthdays, and remind them to send good wishes the day before someone's birthday. You could create multiple tenants to further encapsulate application data. The possibilities are endless.
 
 For a production set up, you would also need to do a bit more work in making sure FusionAuth was really safe. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co “hosted" with our Django application.
 
