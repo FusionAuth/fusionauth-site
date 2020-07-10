@@ -5,9 +5,14 @@ Here are some guidelines to follow when writing documentation.
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing. 
 - Use `Id` instead of `ID` when describing a unique identifier
 - Don't use complex breadcrumbs styling. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`
+- Don't put quotes around section names when used outside of a breadcrumb, or any other special styling. Just capitalize them as they are in the UI.
 - If you are referencing a URL as a setting and don't want it to be hyperlinked, preface it with a `\`. For example: `\https://fusionauth-example.zendesk.com`
 - If you are referencing a field in a form, use the `[field]` class (rather than backticks): `[field]#Issuer#`
 - Don't abbreviate FusionAuth, use the full name.
+- When referring to the admin UI, spell it out: administrative user interface.
+- When showing a code sample in the docs (using ascii doc), make sure to add a caption and capitalize all words in that caption (except a, an, the, of, and these you should capitalize if they begin the caption): 'The User Request JSON Contains the Child'
+- Spell out numbers 10 and under.
+- Section headers should be normal case: 'Setting up the email'
 
 For blog posts:
 - Indent all code with two spaces per level.
