@@ -7,7 +7,7 @@ image: advice/building-secure-signed-jwt-article.png
 category: Tokens
 related:
 date: 2020-06-04
-dateModified: 2020-06-04
+dateModified: 2020-06-25
 ---
 
 JSON Web Tokens (JWTs) get a lot of hate online for being insecure. Tom Ptacek, founder of [Latacora](https://latacora.com/), a security consultancy, had this to say about [JWTs in 2017](https://news.ycombinator.com/item?id=14292223):
@@ -155,7 +155,7 @@ For other types of clients, use platform specific best practices for securing da
 
 Tokens must be examined as carefully as they are crafted. When you are consuming a JWT, verify the JWT to ensure it was signed correctly, and validate and sanitize the claims. Just like with token creation, don't roll your own implementation; use existing libraries.
 
-Verify that the JWT signature matches the content. Any library should be able to do this, but ensure that the algorithm that the token was signed with, based on the header, is used to decode it. It's worth mentioning again here that any JWTs using the `none` algorithm should be rejected immediately.
+Verify that the JWT signature matches the content. Any library should be able to do this, but ensure that the algorithm that the token was signed with, based on the header, is used to decode it. In addition, verify the `kid` value in the header; make sure the key id matches the key you are using the validate the signature. It's worth mentioning again here that any JWTs using the `none` algorithm should be rejected immediately.
 
 Then you want to validate the claims are as expected. This includes any implementation specific registered claims set on creation, as well as the issuer (`iss`) and the audience (`aud`) claims. A consumer should know the issuer it expects, based on out of band information such as documentation. You should also ensure the JWT is meant for you.
 

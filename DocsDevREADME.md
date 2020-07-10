@@ -100,3 +100,26 @@ that this parameter will drop and significantly reduce your file size (by about 
 
 `-pix_fmt yuv420p` changes the pixel format to yuv420p which is the magic sauce that safari wants (this is
 also the part that needs a size that is divisible by 2)
+
+## Adding a 'Related Posts' section
+
+You can add a related posts section to any of the AsciiDocs pages.
+
+First add tags to the relevant blog posts. If it is a client library post, use the form `client-<language>`. If it is an API related post, use `api-<section name>`.
+
+Then, add the following directive to the top of the file:
+
+```
+:page-liquid:
+```
+
+Then, wherever you want the related posts to show up, add this text:
+
+```
+++++
+{% capture relatedTag %}api-tenants{% endcapture %}
+{% include _doc_related_posts.liquid %}
+++++
+```
+
+Update the `relatedTag` value to match the tag added to the blog post.
