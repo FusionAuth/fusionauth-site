@@ -166,20 +166,21 @@ Now create the file `secretbirthdaysapp/tempaltes/secretbirthdaysapp/home.html` 
 
 ```html
 <html>
-   <head>
-      <title>My Django Application</title>
-   </head>
-   <body>
-      <h1>Hi, this is a public page</h1>
-      <p> There are <b>{{num_users}}</b> users signed up </p>
-      <p>You can <a href="{{login_url}}">login</a> to view your private page</p>
-   </body>
+  <head>
+    <title>My Django Application</title>
+  </head>
+  <body>
+    <h1>Hi, this is a public page</h1>
+    <p> There are <b>{{num_users}}</b> users signed up </p>
+    <p>You can <a href="{{login_url}}">login</a> to view your private page</p>
+  </body>
 </html>
 ```
 
 We will still need to pass the variables `num_users` and `login_url` to this template from the backend.
 
 In `secretbirthdaysapp/views.py` import `View`, `User`, and add a `HomeView` to render our home page.
+
 ```python
 from django.contrib.auth.models import User
 from django.shortcuts import render
@@ -187,31 +188,31 @@ from django.views.generic import View
 
 class HomeView(View):
 
-    def get(self, request):
-        num_users = User.objects.count()
-        login_url = ""
-        return render(
-            request,
-            "secretbirthdaysapp/home.html",
-            {"login_url": login_url, "num_users": num_users},
-        )
+  def get(self, request):
+    num_users = User.objects.count()
+    login_url = ""
+    return render(
+      request,
+      "secretbirthdaysapp/home.html",
+      {"login_url": login_url, "num_users": num_users},
+    )
 ```
 
 Finally, register our app in the project-level settings.py file secretbirthdays/settings.py. Add `secretbirthdaysapp` to `INSTALLED_APPS`. The full definition should look as follows.
 
 ```python
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'secretbirthdaysapp',
+  'django.contrib.admin',
+  'django.contrib.auth',
+  'django.contrib.contenttypes',
+  'django.contrib.sessions',
+  'django.contrib.messages',
+  'django.contrib.staticfiles',
+  'secretbirthdaysapp',
 ]
 ```
 
-If you fire up [http://localhost:8000](http://localhost:8000) in your web browser now, you should see our home page.
+If you fire up http://localhost:8000 in your web browser now, you should see our home page.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/homepage1.png" alt="Our public home page." class="img-fluid" figure=false %}
 
@@ -244,29 +245,31 @@ Now for the fun part: let’s allow users to sign up for our application to view
   
 Create a new template in `secretbirthdaysapp/templates/secretbirthdaysapp/dashboard.html` and add the following code.
 
+{% raw %}
 ```html
 <html>
-   <head>
-      <title>SUPER PRIVATE INFO!!</title>
-   </head>
-   <body>
-      <h1>This is private information (<a href="{% url ‘logout’ %}">Logout</a>)</h1>
-      <p>You are logged in as {{request.user.username}}</p>
-      {% if message %}
+  <head>
+    <title>SUPER PRIVATE INFO!!</title>
+  </head>
+  <body>
+    <h1>This is private information (<a href="{% url ‘logout’ %}">Logout</a>)</h1>
+    <p>You are logged in as {{request.user.username}}</p>
+    {% if message %}
       <font color="red">
-         <h3>{{message}}</h3>
+        <h3>{{message}}</h3>
       </font>
-      {% endif %}
-      <p>Your birthday is {{birthday}}</p>
-      <p>Please enter your birthday</p>
-      <form action="/dashboard" method="POST">
-         {% csrf_token %}
-         <input type="text" name="birthday" placeholder="When were you born">
-         <input type="Submit" value="SEND">
-      </form>
-   </body>
+    {% endif %}
+    <p>Your birthday is {{birthday}}</p>
+    <p>Please enter your birthday</p>
+    <form action="/dashboard" method="POST">
+      {% csrf_token %}
+      <input type="text" name="birthday" placeholder="When were you born">
+      <input type="Submit" value="SEND">
+    </form>
+  </body>
 </html>
 ```
+{% endraw %}
 
 This template still needs some variables, namely the user’s birthday (if we have it) and any messages based on their input. We also need to connect it to a URL and make the /logout URL meaningful)
 
@@ -277,9 +280,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.HomeView.as_view(), name='home'),
-    path('dashboard', views.DashboardView.as_view(), name='dashboard'),
-    path('logout', views.LogoutView.as_view(), name='logout'),
+  path('', views.HomeView.as_view(), name='home'),
+  path('dashboard', views.DashboardView.as_view(), name='dashboard'),
+  path('logout', views.LogoutView.as_view(), name='logout'),
 ]
 ```
 Update the `secretbirthdaysapp/views.py` to account for these new routes.
@@ -299,30 +302,30 @@ from fusionauth.fusionauth_client import FusionAuthClient
 ```python
 class DashboardView(View):
 
-    def get(self, request):
-        if not user_login_ok(request):
-            login_url = get_login_url(request)
-            return redirect(login_url)
+  def get(self, request):
+    if not user_login_ok(request):
+      login_url = get_login_url(request)
+      return redirect(login_url)
 
-        birthday = None
-        user = None
+    birthday = None
+    user = None
 
-        try:
-            client = FusionAuthClient(
-                settings.FUSION_AUTH_API_KEY, settings.FUSION_AUTH_BASE_URL
-            )
-            r = client.retrieve_user(request.user.username)
+    try:
+      client = FusionAuthClient(
+        settings.FUSION_AUTH_API_KEY, settings.FUSION_AUTH_BASE_URL
+      )
+      r = client.retrieve_user(request.user.username)
 
-            if r.was_successful():
-                user = r.success_response
-                birthday = user["user"]["birthDate"]
-            else:
-                print(r.error_response)
-        except Exception as e:
-            print("couldn't get user")
-            print(e)
+      if r.was_successful():
+        user = r.success_response
+        birthday = user["user"]["birthDate"]
+      else:
+        print(r.error_response)
+    except Exception as e:
+      print("couldn't get user")
+      print(e)
 
-        return render(request, "fusiondemoapp/dashboard.html", {"birthday": birthday})
+    return render(request, "fusiondemoapp/dashboard.html", {"birthday": birthday})
 ```
 Here we check if the user can log in (functionality we still have to write). If everything looks OK, we retrieve the user’s birthday from FusionAuth (which it doesn’t have by default as we don’t get this information from Google or when the user registers).
 
@@ -331,23 +334,23 @@ Here we check if the user can log in (functionality we still have to write). If 
 ```python
 class LogoutView(View):
 
-    def get(self, request, *args, **kwargs):
-        redirect_url = request.build_absolute_uri("home")
-        url = f"{settings.FUSION_AUTH_BASE_URL}/oauth2/logout?client_id={settings.FUSION_AUTH_APP_ID}"
-        return redirect(url)
+  def get(self, request, *args, **kwargs):
+    redirect_url = request.build_absolute_uri("home")
+    url = f"{settings.FUSION_AUTH_BASE_URL}/oauth2/logout?client_id={settings.FUSION_AUTH_APP_ID}"
+    return redirect(url)
 ```
 
 4.  Add the get_or_create user function near the top of views.py
   
 ```python
 def get_or_create_user(user_id, request):
-    user = User.objects.filter(username=user_id).first()
+  user = User.objects.filter(username=user_id).first()
 
-    if not user:
-        user = User(username=user_id)
-        user.save()
+  if not user:
+    user = User(username=user_id)
+    user.save()
 
-    return user
+  return user
 ```
 
 This looks for a Django user using FusionAuth’s user_id as the username. If it doesn’t exist, we create it and save it to the database. Note that now in our Django application we will only keep really basic User objects, with nothing but a randomly generated ID to identify them - all sensitive PII and passwords are handled only by FusionAuth.
@@ -356,13 +359,13 @@ We also need to build a fairly long URL to log in with FusionAuth. Add another h
 
 ```python
 def get_login_url(request):
-    redirect_url = request.build_absolute_uri(reverse("dashboard"))
-    login_url = f"{settings.FUSION_AUTH_BASE_URL}/oauth2/authorize?client_id={settings.FUSION_AUTH_APP_ID}&redirect_uri={redirect_url}&response_type=code"
+  redirect_url = request.build_absolute_uri(reverse("dashboard"))
+  login_url = f"{settings.FUSION_AUTH_BASE_URL}/oauth2/authorize?client_id={settings.FUSION_AUTH_APP_ID}&redirect_uri={redirect_url}&response_type=code"
 
-    login_url = login_url.format(
-        settings.FUSION_AUTH_BASE_URL, settings.FUSION_AUTH_APP_ID,
-    )
-    return login_url
+  login_url = login_url.format(
+    settings.FUSION_AUTH_BASE_URL, settings.FUSION_AUTH_APP_ID,
+  )
+  return login_url
 ```
 We’ll build this using variables as the components would differ between local, staging, and production setups. We tell Django where to find our FusionAuth app, which App ID to authenticate with, and where FusionAuth should redirect the user once log in is completed.
  
@@ -370,36 +373,36 @@ Now add a helper function to check if everything went OK with the users log in. 
 
 ```python
 def user_login_ok(request):
-    client = FusionAuthClient(
-        settings.FUSION_AUTH_API_KEY, settings.FUSION_AUTH_BASE_URL
+  client = FusionAuthClient(
+    settings.FUSION_AUTH_API_KEY, settings.FUSION_AUTH_BASE_URL
+  )
+
+  code = request.GET.get("code")
+
+  if not code:
+    print("no code")
+    return False
+
+  try:
+    redirect_url = request.build_absolute_uri(reverse("dashboard"))
+    r = client.exchange_o_auth_code_for_access_token(
+      code,
+      redirect_url,
+      settings.FUSION_AUTH_CLIENT_ID,
+      settings.FUSION_AUTH_CLIENT_SECRET,
     )
 
-    code = request.GET.get("code")
+    if r.was_successful():
+      access_token = r.success_response["access_token"]
+      user_id = r.success_response["userId"]
+      get_or_create_user(user_id, request)
+      return user_id
+    else:
+      print(r.error_response)
+      return False
 
-    if not code:
-        print("no code")
-        return False
-
-    try:
-        redirect_url = request.build_absolute_uri(reverse("dashboard"))
-        r = client.exchange_o_auth_code_for_access_token(
-            code,
-            redirect_url,
-            settings.FUSION_AUTH_CLIENT_ID,
-            settings.FUSION_AUTH_CLIENT_SECRET,
-        )
-
-        if r.was_successful():
-            access_token = r.success_response["access_token"]
-            user_id = r.success_response["userId"]
-            get_or_create_user(user_id, request)
-            return user_id
-        else:
-            print(r.error_response)
-            return False
-
-    except Exception as e:
-        print(e)
+  except Exception as e:
+    print(e)
 ```
 
 Now after the user presses log in, they'll be taken over to the FusionAuth page where they can log in or create an account (if they choose the log in with Google option, the log in and sign up flows are the same).
@@ -428,54 +431,54 @@ Now add the following function to the DashboardAppView class in secretbirthdaysa
 ```python
 def post(self, request):
 
-    birthday = request.POST.get("birthday")
-    normalised_birthday = None
-    print(birthday)
+  birthday = request.POST.get("birthday")
+  normalised_birthday = None
+  print(birthday)
 
-    try:
-        dt = dateparser.parse(birthday)
-        normalised_birthday = dt.strftime("%Y-%m-%d")
-    except Exception as e:
-        print(e)
-        print("Couldn't parse birthday")
+  try:
+    dt = dateparser.parse(birthday)
+    normalised_birthday = dt.strftime("%Y-%m-%d")
+  except Exception as e:
+    print(e)
+    print("Couldn't parse birthday")
 
-    if not normalised_birthday:
-        return render(
-            request,
-            "fusiondemoapp/dashboard.html",
-            {"message": "Couldn't parse birthday. Please use YYYY-MM-DD"},
-        )
+  if not normalised_birthday:
+    return render(
+      request,
+      "fusiondemoapp/dashboard.html",
+      {"message": "Couldn't parse birthday. Please use YYYY-MM-DD"},
+    )
 
-    try:
-        client = FusionAuthClient(
-            settings.FUSION_AUTH_API_KEY, settings.FUSION_AUTH_BASE_URL
-        )
-        r = client.patch_user(
-            request.user.username, {"user": {"birthDate": normalised_birthday}}
-        )
-        if r.was_successful():
-            print(r.success_response)
-            return render(
-                request,
-                "secretbirthdaysapp/dashboard.html",
-                {"message": "Updated your birthday", "birthday": normalised_birthday,},
-            )
+  try:
+    client = FusionAuthClient(
+      settings.FUSION_AUTH_API_KEY, settings.FUSION_AUTH_BASE_URL
+    )
+    r = client.patch_user(
+      request.user.username, {"user": {"birthDate": normalised_birthday}}
+    )
+    if r.was_successful():
+      print(r.success_response)
+      return render(
+        request,
+        "secretbirthdaysapp/dashboard.html",
+        {"message": "Updated your birthday", "birthday": normalised_birthday,},
+      )
 
-        else:
-            print(r.error_response)
-            return render(
-                request,
-                "fusiondemoapp/dashboard.html",
-                {"message": "Something went wrong"},
-            )
+    else:
+      print(r.error_response)
+      return render(
+        request,
+        "fusiondemoapp/dashboard.html",
+        {"message": "Something went wrong"},
+      )
 
-    except Exception as e:
-        print(e)
-        return render(
-            request,
-            "secretbirthdaysapp/dashboard.html",
-            {"message": "Something went wrong"},
-        )
+  except Exception as e:
+    print(e)
+    return render(
+      request,
+      "secretbirthdaysapp/dashboard.html",
+      {"message": "Something went wrong"},
+    )
 
 ```
 
