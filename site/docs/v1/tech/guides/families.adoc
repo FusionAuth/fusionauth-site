@@ -52,7 +52,7 @@ Each user account is independent, with its own data, login identifier, and passw
 
 Families are created implicitly, by adding associating an existing user with a family. To do so, create a FusionAuth application using the link:../apis/applications[Application API] and a user with the link:../apis/users[User API]. Or, use the administrative user interface to create these objects. Make sure the user's age is greater than the `Minimum owner age` specified in the Tenant settings.
 
-Then, create a family with this user as the first member by `POST`ing to the link:../apis/families#create-a-family[`/api/user/family`] endpoint. Here's an example with curl:
+Then, create a family with this user as the first member by making a `POST` request to the link:../apis/families#create-a-family[`/api/user/family`] endpoint. Here's an example with curl:
 
 [source,shell]
 .Creating a Family
@@ -118,7 +118,7 @@ To allow a child to request an account:
 
 * Enable self service registrations in the application configuration.
 * Disable child registrations in the tenant settings.
-* Create a email template to be sent to a parent. A sample is below.
+* Create an email template to be sent to a parent. A sample is below.
 * Update the `Family request template` setting to that email template. If the value for that email template is not set, then no email will be sent. 
 
 Once this is configured, FusionAuth requires a birthdate during registration. If the user registering is under the `Maximum child age` setting, then they'll see a message prompting them to enter their parent's email address.
@@ -280,7 +280,7 @@ At this point, the path forks. Suppose the parent has an account. In this case, 
 
 If the parent has no account, the `Parent registration request template` email is sent. This prompts the parent to register. 
 
-In both these cases, the page on the other side of the link in the customized email template must be built by you. You as the application developer are responsible for handling that what happens when the user clicks that link.
+In both these cases, the page on the other side of the link in the customized email template must be built by you. You as the application developer are responsible for handling what happens when the user clicks that link.
 
 ==== Building a page to capture parental approval
 
@@ -299,14 +299,14 @@ curl -XGET -H "Authorization: $API_KEY" 'http://local.fusionauth.io/api/user/fam
 
 This will return a list of `User` objects corresponding to the unconfirmed, associated child user accounts. Make sure this page is protected.
 
-You may then add them to the family using the sames APIs as you would in the <<Family management>> scenario. Adding a child to the family will remove the `parentEmail` field from the child `User` object. The `parentEmail` field is an indicator that the child has not yet been added as a family member.
+You may then add them to the family using the same APIs as you would in the <<Family management>> scenario. Adding a child to the family will remove the `parentEmail` field from the child `User` object. The `parentEmail` field is an indicator that the child has not yet been added as a family member.
 
 ==== After confirmation
 
 When the child is confirmed as part of the family, you may want to capture more information about that consent. You have a couple options:
 
 - You can create and record a consent using the link:../apis/consent[Consent API]. This is the recommended choice.
-- You can record this action elsewhere in your application. For example, confirmation page could call a custom API.
+- You can record this action elsewhere in your application. For example, a confirmation page could call a custom API.
 - You can add the date, type and other consent information to the `user.data` field of the child account.
 - You could treat membership in a family as the record of consent.
 
@@ -324,7 +324,7 @@ When using consents, your application captures how and when parental consent was
 
 Consents are a different API than families. In fact, a user doesn't need to be part of a family to grant consent to another user or themselves. If you're using the Consent API to capture parental consent, you'll want to validate that:
 
-* the user granting consent is in the same family as the user recieving it
+* the user granting consent is in the same family as the user receiving it
 * if the user receiving consent is a child, the user granting consent is a parent
 
 If a user is less than the `Maximum child age` at the time of consent, they will not be able to grant consent to themselves. If a user is older, they can self consent.
@@ -389,15 +389,15 @@ image::guides/families/register-prompt-parent-email.png[Form for a child registe
 
 Just as when you use the APIs directly, if a child registers using these themed pages, the parent will be emailed; the template used will be the `Parent registration request template` if they are not registered, but if they are, the `Confirm child account template` email will be sent.
 
-When the parent registers, your application must display the pending family members using your own API calls, as well as allow parents approve or disapprove them. If you'd like to modify the registration pages to look like your own application, link:../themes[modify the tenant theme].
+When the parent registers, your application must display the pending family members using your own API calls, as well as allow parents to approve or disapprove them. If you'd like to modify the registration pages to look like your own application, link:../themes[modify the tenant theme].
 
 ==== Updating and removing members
 
-There are no difference in the process to update or remove family members in this use case. It is the same as the <<Family management>> use case.
+There is no difference in the process to update or remove family members in this use case. It is the same as the <<Family management>> use case.
 
 === Legal consent frameworks 
 
-For applications targetted at young children, laws come into play. For example the https://www.ftc.gov/enforcement/rules/rulemaking-regulatory-reform-proceedings/childrens-online-privacy-protection-rule[Children's Online Privacy Protection Act, or COPPA], in the USA and the https://gdpr-info.eu/art-8-gdpr/[General Data Protection Regulation, or GDPR] in the EU both outline specific requirements for informed parental consent when applications provide certain types of online activities at children.
+For applications targeted at young children, laws come into play. For example the https://www.ftc.gov/enforcement/rules/rulemaking-regulatory-reform-proceedings/childrens-online-privacy-protection-rule[Children's Online Privacy Protection Act, or COPPA], in the USA and the https://gdpr-info.eu/art-8-gdpr/[General Data Protection Regulation, or GDPR] in the EU both outline specific requirements for informed parental consent when applications provide certain types of online activities to children.
 
 FusionAuth allows you to build custom consent frameworks, as shown above, but also supports COPPA. If you're building a child-directed game (that is, one aimed at children) in the USA, and you'll be collecting data about the children for such purposes as marketing and gameplay improvement, you need to comply with COPPA.
 
@@ -479,7 +479,7 @@ Here's the response you'll receive on successful revocation. Note that `status` 
 include::docs/src/json/user-consent/response-revoked.json[]
 ----
 
-To create an audit log of the consents granted or revoked, you could use record the information yourself or use the link:../apis/audit-logs[Audit Log API]. In either case, do this at the same time as you call the consent API.
+To create an audit log of the consents granted or revoked, you could record the information yourself or use the link:../apis/audit-logs[Audit Log API]. In either case, do this at the same time as you call the consent API.
 
 When you are determining access to various parts of your application, you'll need to know which consents have been granted for a user. You might do this if a user was trying to access the chat section of your application, for example. Retrieve this data after the child has signed in and prevent the child from accessing parts of the application if consent has been revoked.
 
@@ -539,3 +539,5 @@ Families are displayed in the administrative user interface. You can configure s
 Most family configuration is set at the tenant level. If you require different configurations, you need multiple tenants. For example, if the `Maximum child age` is 12 for one application and 15 for another, you can't manage them in the same FusionAuth tenant. However, creating multiple tenants in one FusionAuth installation is simple; see the link:../apis/tenants[Tenants APIs] for more information.
 
 Users with the `Child` or `Teen` family roles may belong to more than one family, but a user with the `Adult` role may only belong to one family.
+
+You can not list all families in the system.
