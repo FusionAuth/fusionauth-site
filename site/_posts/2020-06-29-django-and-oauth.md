@@ -3,7 +3,7 @@ layout: blog-post
 title: Adding social sign in to your Django web application using OAuth
 description: Store your user data separately from Django and use OAuth and FusionAuth to enable social login.
 author: Gareth Dwyer
-image: blogs/oauth-gatsby/fusionauth-tutorial-using-oauth-and-pkce-to-add-authentication-to-your-gatsby-site.png
+image: blogs/social-sign-in-django/headerimage.png
 category: blog
 tags: client-python
 excerpt_separator: "<!--more-->"
@@ -12,9 +12,6 @@ excerpt_separator: "<!--more-->"
 In this tutorial, we'll build a basic Django web application which does user registration and authentication via FusionAuth, an authentication platform with some unique features.
 
 <!--more-->
-
-TODO do we want to use this?
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-django/headerimage.png" alt="Header Image" class="img-fluid" figure=false %}
 
 The application itself will be very simple: it will let users put in their birthdays and keep this "secret" information safe for them. With these basics in place, you'll see how FusionAuth works and can extend the application to do whatever you need. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-python-django).
 
@@ -153,7 +150,7 @@ urlpatterns = [
 ]
 ```
 
-Now we can create the home page. It will look like this.
+Now we can create the home page. It will look like this:
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/homepage4.png" alt="How our home page will look." class="img-fluid" figure=false %}
 
@@ -220,7 +217,7 @@ For extra security, you can restrict the permissions for the key. For our app, w
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
-Under Applications, click on the green magnifying glass by "Secret Birthdays" and take note of the Client Id/Application Id and Client Secret. You need to scroll down a bit in the modal to get to the correct section.
+Under Applications, click on the green magnifying glass by "Secret Birthdays" and take note of the Client Id (which is the same as the Application Id, so we use them interchangeabley) and Client Secret. You need to scroll down a bit in the modal to get to the correct section.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/fusionauth-clientidsecret.png" alt="Getting the Application ID from FusionAuth." class="img-fluid" figure=false %}
 
@@ -279,9 +276,8 @@ urlpatterns = [
   path('logout', views.LogoutView.as_view(), name='logout'),
 ]
 ```
-Update the `secretbirthdaysapp/views.py` to account for these new routes.
 
-1.  Add imports for our settings, the `FusionAuthClient` library, and Django's shortcuts. Your imports section should look as follows:
+Now we need to update the `secretbirthdaysapp/views.py` to account for these new routes. Add imports for our settings, the `FusionAuthClient` library, and Django's shortcuts. Your imports section should look as follows:
 
 ```python
 from django.conf import settings
@@ -291,7 +287,8 @@ from django.views.generic import View
 
 from fusionauth.fusionauth_client import FusionAuthClient
 ```
-2.  Add the Dashboard view
+
+Next, add the Dashboard view:
 
 ```python
 class DashboardView(View):
@@ -321,9 +318,8 @@ class DashboardView(View):
 
     return render(request, "secretbirthdaysapp/dashboard.html", {"birthday": birthday})
 ```
-Here we check if the user can log in (note, this is functionality we still have to write). If everything looks okay, we retrieve the user's birthday from FusionAuth (which it doesn't have by default as we don't get this information from Google or when the user registers).
 
-3.  Add the Logout view
+Here we check if the user can log in (note, this is functionality we still have to write). If everything looks okay, we retrieve the user's birthday from FusionAuth (which it doesn't have by default as we don't get this information from Google or when the user registers). We then need to add the Logout view:
 
 ```python
 class LogoutView(View):
@@ -334,7 +330,7 @@ class LogoutView(View):
     return redirect(url)
 ```
 
-4.  Add the get_or_create user function near the top of views.py
+Finally, add the get_or_create user function near the top of views.py:
   
 ```python
 def get_or_create_user(user_id, request):
