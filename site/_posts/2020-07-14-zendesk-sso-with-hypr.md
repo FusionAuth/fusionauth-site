@@ -8,11 +8,11 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth is an excellent centralized identity management platform, if we do say so ourselves. In a [webinar tomorrow](https://get.hypr.com/fusionauth-webcast), I'll be walking through how to set up single sign-on authentication between Zendesk, the popular customer support platform, and FusionAuth. In under 10 minutes, you'll see how easy it is to configure Zendesk use SAML to integrate with FusionAuth. 
+FusionAuth is an excellent centralized identity management platform, if we do say so ourselves. In a [webinar tomorrow](https://get.hypr.com/fusionauth-webcast), I'll be walking through how to set up single sign-on authentication between Zendesk, the popular customer support platform, and FusionAuth. In under 10 minutes, you'll see how easy it is to configure Zendesk to use SAML to integrate with FusionAuth. 
 
 <!--more-->
 
-If you were to continue this pattern with multiple applications, such as GSuite or a custom web application, users could sign into to your entire suite of tools, both COTS and custom, with one username and password. [This architecture](/blog/2020/07/08/auth-and-the-bottleneck-architecture) also allows for operational efficiencies since all users are managed in a single store.
+If you were to continue this pattern with multiple applications, such as GSuite or a custom web application, users could sign into your entire suite of tools, both COTS and custom, with one username and password. [This architecture](/blog/2020/07/08/auth-and-the-bottleneck-architecture) also allows for operational efficiencies since all users are managed in a single store.
 
 But wait, there's more.
 
