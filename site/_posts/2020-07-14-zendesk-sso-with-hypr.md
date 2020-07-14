@@ -12,9 +12,10 @@ FusionAuth is an excellent centralized identity management platform. In a [webin
 
 <!--more-->
 
+
 If you were to continue this pattern with multiple applications, such as GSuite or a custom web application, users could sign into to your entire suite of tools, both COTS and custom, with one username and password. [This architecture](/blog/2020/07/08/auth-and-the-bottleneck-architecture) also allows for operational efficiencies since all users are managed in a single store.
 
-But wait, there's more!
+{% include _image.liquid src="/assets/img/blogs/zendesk-sso-hypr/waitmore.png" alt="Yes, there's indeed more." class="img-fluid" figure=false %}
 
 To top it off, we'll be adding HYPR as an identity provider in the webinar. This will allow a user to authenticate using [HYPR's True Passwordless&trade; MFA](https://www.hypr.com/true-passwordless-mfa/). Any authorized user will then be able to access their applications in an easy, secure way.
 
