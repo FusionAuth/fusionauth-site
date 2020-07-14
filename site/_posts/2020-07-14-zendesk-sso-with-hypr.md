@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Zendesk Single Sign-On with FusionAuth and HYPR 
+title: Zendesk Single Sign-On with FusionAuth and HYPR Webinar
 description: Learn how to set up Zendesk to authenticate with FusionAuth and HYPR
 author: Dan Moore
 image: blogs/bottleneck-pattern/the-auth-bottleneck-pattern.png
