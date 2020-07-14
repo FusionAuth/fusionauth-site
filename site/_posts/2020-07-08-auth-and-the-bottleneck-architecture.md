@@ -12,6 +12,8 @@ One common pattern for modern organizations is to centralize user management wit
 
 <!--more-->
 
+aaaaaaa
+
 ## The Architectural Pattern With OIDC and SAML
 
 In this architectural pattern, applications delegate user management to the user management system. Many kinds of applications can perform such delegation. Examples include custom applications written by internal teams, third party services used by employees, such as Salesforce and Zendesk, and applications used by customers, such as forums or account management. 
