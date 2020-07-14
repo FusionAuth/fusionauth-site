@@ -16,6 +16,18 @@ If you want to submit a PR or test a change to fix a link, etc it may be helpful
 
 This project is built using jekyll and asciidoc, you'll need to have ruby installed.
 
+### Install
+
+Install these programs:
+
+- java
+- ruby (2.7.0)
+- plantuml
+- git
+
+`gem install bundle`
+`bundle install`
+
 ### Setup Savant
 
 We use the Savant build tool, in order to build and run this project, you'll need to first setup Savant.
