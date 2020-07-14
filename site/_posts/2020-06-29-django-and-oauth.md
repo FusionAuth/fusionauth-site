@@ -375,7 +375,7 @@ def user_login_ok(request):
     return False
 
   try:
-    redirect_url = request.build_absolute_uri(reverse("dashboard")) # XXX TODO, why reverse?
+    redirect_url = request.build_absolute_uri(reverse("dashboard"))
     r = client.exchange_o_auth_code_for_access_token(
       code,
       redirect_url,
