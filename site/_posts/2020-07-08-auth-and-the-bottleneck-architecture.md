@@ -30,7 +30,7 @@ However, an auth system isn't limited to just verifying users locally. It can al
 
 Here's a diagram of the bottleneck architecture:
 
-{% include _image.liquid src="/assets/img/blogs/bottleneck-pattern/bottleneck-diagram.png" alt="A common archictural diagram." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/bottleneck-pattern/bottleneck-diagram.png" alt="A common architectural pattern." class="img-fluid" figure=false %}
 
 The applications, in purple, rely on the centralized auth system, which is in gray. They'll send all their auth requests to one place. Depending on how the auth system is configured, the applications' requests for user information may be answered directly, based on information in the auth system's datastore. Or, alternately, auth requests for a given user can be relayed to the federated identity providers, in orange. (You can read more about [the identity providers](/docs/v1/tech/identity-providers/) FusionAuth supports.)
 
