@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Zendesk Single Sign-On with FusionAuth and HYPR Webinar
+title: Zendesk Single Sign-on (SSO) with FusionAuth and HYPR
 description: Learn how to set up Zendesk to authenticate with FusionAuth and HYPR
 author: Dan Moore
 image: blogs/bottleneck-pattern/the-auth-bottleneck-pattern.png
@@ -14,7 +14,9 @@ FusionAuth is an excellent centralized identity management platform, if we do sa
 
 If you were to continue this pattern with multiple applications, such as GSuite or a custom web application, users could sign into your entire suite of tools, both COTS and custom, with one username and password. [This architecture](/blog/2020/07/08/auth-and-the-bottleneck-architecture) also allows for operational efficiencies since all users are managed in a single store.
 
-But wait, there's more.
+## Single Sign-on with HYPR's True Passwordless&trade; MFA
+
+But wait, there's more!
 
 To top it off, we'll be adding HYPR as an identity provider in the webinar. This will allow a user to authenticate using [HYPR's True Passwordless&trade; MFA](https://www.hypr.com/true-passwordless-mfa/). Any authorized user will then be able to access their applications in an easy, secure way. 
 
