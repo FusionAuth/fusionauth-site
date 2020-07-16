@@ -46,13 +46,13 @@ Of course, this comes at a cost. The JWT is no longer a decoupled store of ident
 
 Again, if you use "self-contained" access tokens such as JWTs, then the authorization server (the IdP) and the resource server (the Todo Backend) must have some non-standardized "backend interaction" in order to invalidate a JWT.
 
-If you have have non self-contained access tokens, then the "resource server [issues] a request to the respective authorization server to retrieve the content of the access token every time a client presents an access token". Again, in that case, JWTs don't buy you much.
+If you don't have self-contained access tokens, then the "resource server [issues] a request to the respective authorization server to retrieve the content of the access token every time a client presents an access token". Again, in that case, JWTs don't buy you much.
 
 ## Rotate the keys
 
-If you are using a symmetric signing algorithm like HMAC and you can quickly distribute the shared key, you can rotate it. This will essentially invalidate all outstanding JWTs, so this is not an option to use lightly. However, rotating the keys may be a good choice depending on the number JWTs you have outstanding and the impact of a revoked JWT being accepted. If, for instance, there are few clients with JWTs and there is significant system impact if a revoked JWT is accepted by the Todo Backend, then rotating the keys may be acceptable.
+If you are using a symmetric signing algorithm like HMAC and you can quickly distribute the shared key, you can rotate it. This will essentially invalidate all outstanding JWTs, so this is not an option to use lightly. However, rotating the keys may be a good choice depending on the number of JWTs you have outstanding and the impact of a revoked JWT being accepted. If, for instance, there are few clients with JWTs and there is significant system impact if a revoked JWT is accepted by the Todo Backend, then rotating the keys may be acceptable.
 
-If you are using an asymmetric signing algorithm, then this option is less effective. How quickly the revoked JWT is no longer accepted by the Todo Backend depends on how often the Todo Backend retrieves public keys. That duration is the maximum time that an revoked JWT will be accepted. 
+If you are using an asymmetric signing algorithm, then this option is less effective. How quickly the revoked JWT is no longer accepted by the Todo Backend depends on how often the Todo Backend retrieves public keys. That duration is the maximum time that a revoked JWT will be accepted. 
 ## Reduce the duration of the JWT
 
 The most common solution is to reduce the duration of the JWT and revoke the refresh token so that the user can't generate a new JWT. With this setup, the JWT's expiration duration is set to something short (5-10 minutes) and the refresh token is set to something long (2 weeks or 2 months). At any time, an administrator can revoke the refresh token which means that the user must re-authenticate to get a new JWT. That is unless they happen to have a valid JWT.
@@ -63,7 +63,7 @@ It's this 5 to 10 minute window that freaks everyone out. So, how do we fix it?
 
 ## Webhooks
 
-One method leverages a distributed event system that notifies services when refresh tokens have been revoked. The IdP broadcasts an event when a refresh token is revoked and other backends/services listen for the event. If you squint, you might see something similiar to the non-standardized "backend interaction" mentioned in RFC 7009. When an event is received, the backends/services update a local cache that maintains a set of users whose refresh tokens have been revoked. This cache is checked whenever a JWT is verified to determine if the JWT should be honored. 
+One method leverages a distributed event system that notifies services when refresh tokens have been revoked. The IdP broadcasts an event when a refresh token is revoked and other backends/services listen for the event. If you squint, you might see something similar to the non-standardized "backend interaction" mentioned in RFC 7009. When an event is received, the backends/services update a local cache that maintains a set of users whose refresh tokens have been revoked. This cache is checked whenever a JWT is verified to determine if the JWT should be honored. 
 
 This solution maintains the statelessness of JWTs because it is based on the expiration of the tokens and expiration instant of individual JWTs, not any communication with the IdP.
 
@@ -146,7 +146,7 @@ export class JWTManager {
 setInterval(JWTManager._cleanUp, 7000).unref();
 ```
 
-Our backend also needs to ensure that it checks JWTs with the `JWTManager` on each API call. This has far less impact the client than calling out to the IdP, as it is in-memory. 
+Our backend also needs to ensure that it checks JWTs with the `JWTManager` on each API call. This has far less impact to the client than calling out to the IdP, as it is in-memory. 
 
 ```js
 router.get('/todo', function(req, res, next) {
