@@ -28,13 +28,15 @@ The Todo Backend in the diagram can use the JWT and the public key to verify the
 
 There are a few options that are worth considering.
 
-## Introspect
+## Check with the IdP
 
 If you have the Todo Backend call the `introspect` endpoint against every JWT it encounters, per [RFC 7662](https://tools.ietf.org/html/rfc7662), then you are guaranteed that if a JWT is revoked on the IdP, the Todo Backend will immediately be notified of any revoked JWTS.
 
-Of course, this comes at a cost. The JWT is no longer a decoupled store of identity, because it must be validated. You could still use JWTs because of their flexibility and message integrity, however. It may make sense to use an opaque token rather than a JWT, since the Todo Backend must consult the IdP on every call anyway.
+From the RFC, the `active` value of the response is defined as:
 
-## JWT Revocation
+> Boolean indicator of whether or not the presented token is currently active.  The specifics of a token's "active" state will vary depending on the implementation of the authorization server and the information it keeps about its tokens, but a "true" value return for the "active" property will generally indicate that a given token has been issued by this authorization server, has not been revoked by the resource owner, and is within its given time window of validity (e.g., after its issuance time and before its expiration time).
+
+Of course, this comes at a cost. The JWT is no longer a decoupled store of identity, because it must be validated every time the Todo Backend is accessed. You could still choose to use JWTs because of their flexibility and message integrity, however. It may make sense to use an opaque token rather than a JWT, since the Todo Backend must consult the IdP on every call anyway.
 
 [RFC 7009](https://tools.ietf.org/html/rfc7009) outlines a standard way to revoke OAuth 2.0 tokens. So, just pick an authorization server which supports that, right? Well, unfortunately, it isn't so simple. From section 3 of the RFC:
 
@@ -42,31 +44,32 @@ Of course, this comes at a cost. The JWT is no longer a decoupled store of ident
 
 >   While these are not the only options, they illustrate the implications for revocation.  In the latter case, the authorization server is able to revoke an access token previously issued to a client when the resource server relays a received access token.  In the former case, some (currently non-standardized) backend interaction between the authorization server and the resource server may be used when immediate access token revocation is desired.  Another design alternative is to issue short-lived access tokens, which can be refreshed at any time using the corresponding refresh tokens.  This allows the authorization server to impose a limit on the time revoked when access tokens are in use.
 
-If you use "self-contained" access tokens such as JWTs, then the authorization server (the IdP) and the resource server (the Todo Backend) must have some non-standardized "backend interaction" in order to invalidate a JWT.
+Again, if you use "self-contained" access tokens such as JWTs, then the authorization server (the IdP) and the resource server (the Todo Backend) must have some non-standardized "backend interaction" in order to invalidate a JWT.
 
-If you have have non self-contained access tokens, then the "resource server [issues] a request to the respective authorization server to retrieve the content of the access token every time a client presents an access token". Again, in that case, an opaque token is a simpler solution.
+If you have have non self-contained access tokens, then the "resource server [issues] a request to the respective authorization server to retrieve the content of the access token every time a client presents an access token". Again, in that case, JWTs don't buy you much.
 
 ## Rotate the keys
 
-If you are using a symmetric signing algorithm like HMAC and you have a way to quickly distribute the shared key, you can rotate it. This will essentially invalidate all extant JWTs, so this is not an option to use lightly. However, this is worth mentioning as an option, depending on the number JWTs you have outstanding and the impact of a revoked JWT being accepted.
+If you are using a symmetric signing algorithm like HMAC and you can quickly distribute the shared key, you can rotate it. This will essentially invalidate all outstanding JWTs, so this is not an option to use lightly. However, rotating the keys may be a good choice depending on the number JWTs you have outstanding and the impact of a revoked JWT being accepted. If, for instance, there are few clients with JWTs and there is significant system impact if a revoked JWT is accepted by the Todo Backend, then rotating the keys may be acceptable.
 
-If you are using an asymmetric signing algorithm, then this option is slightly more complicated. It depends on how often the Todo Backedn retrieves public keys. The duration between checks is the maximum time that an revoked JWT will be incorrectly accepted.
-
+If you are using an asymmetric signing algorithm, then this option is less effective. How quickly the revoked JWT is no longer accepted by the Todo Backend depends on how often the Todo Backend retrieves public keys. That duration is the maximum time that an revoked JWT will be accepted. 
 ## Reduce the duration of the JWT
 
 The most common solution is to reduce the duration of the JWT and revoke the refresh token so that the user can't generate a new JWT. With this setup, the JWT's expiration duration is set to something short (5-10 minutes) and the refresh token is set to something long (2 weeks or 2 months). At any time, an administrator can revoke the refresh token which means that the user must re-authenticate to get a new JWT. That is unless they happen to have a valid JWT.
 
-Here's where things get tricky. That user basically has 5 to 10 minutes to use the JWT before it expires. Once it expires, they'll use their current refresh token to try and get a new JWT. Since the refresh token has been revoked, this operation will fail and they'll be forced to login again.
+Here's where things get tricky. That user now has 5 to 10 minutes to use the JWT before it expires. Once it expires, they'll attempt to use their current refresh token to get a new JWT. Since the refresh token has been revoked, this operation will fail and they'll be forced to login again.
 
 It's this 5 to 10 minute window that freaks everyone out. So, how do we fix it?
 
 ## Webhooks
 
-One method leverages a distributed event system that notifies services when refresh tokens have been revoked. The IdP broadcasts an event when a refresh token is revoked and other backends/services listen for the event. If you squint, you might see something similiar to the non-standardized "backend interaction" mentioned in RFC 7009. When an event is received the backends/services update a local cache that maintains a set of users whose refresh tokens have been revoked. This cache is checked whenever a JWT is verified to determine if the JWT should be revoked or not. This is all based on the duration of JWTs and expiration instant of individual JWTs. 
+One method leverages a distributed event system that notifies services when refresh tokens have been revoked. The IdP broadcasts an event when a refresh token is revoked and other backends/services listen for the event. If you squint, you might see something similiar to the non-standardized "backend interaction" mentioned in RFC 7009. When an event is received, the backends/services update a local cache that maintains a set of users whose refresh tokens have been revoked. This cache is checked whenever a JWT is verified to determine if the JWT should be honored. 
+
+This solution maintains the statelessness of JWTs because it is based on the expiration of the tokens and expiration instant of individual JWTs, not any communication with the IdP.
 
 ### Example: Revoking JWTs in FusionAuth
 
-To illustrate this, I'm going to use [FusionAuth](https://fusionauth.io/)'s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
+To illustrate this, I'm going to use [FusionAuth](https://fusionauth.io/)'s event and Webhook system as well as the `jwt.refresh-token.revoke` event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
 
 The FusionAuth **jwt.refresh-token.revoke** event looks like this:
 
@@ -143,7 +146,7 @@ export class JWTManager {
 setInterval(JWTManager._cleanUp, 7000).unref();
 ```
 
-Our backend also needs to ensure that it checks JWTs with the JWTManager on each API call. This has far less impact on performance than calling out to the identity provider.
+Our backend also needs to ensure that it checks JWTs with the `JWTManager` on each API call. This has far less impact the client than calling out to the IdP, as it is in-memory. 
 
 ```js
 router.get('/todo', function(req, res, next) {
@@ -156,14 +159,19 @@ router.get('/todo', function(req, res, next) {
   // ...
 });
 ```
-And finally we configure our Webhook in FusionAuth:
 
-{% include _image.liquid src="/assets/img/blogs/webhooks-2019.jpg" alt="Set up a webhook in FusionAuth" class="img-fluid" figure=false %}
+A few final configuration steps. Again, these are specific to FusionAuth and may be different for your auth management system. First, we need to make sure that JWT revocation webhooks are enabled in the tenant.
+
+{% include _image.liquid src="/assets/img/expert-advice/revoking-jwts/enabling-webhooks-in-tenant.png" alt="Enabling webhooks for a FusionAuth tenant." class="img-fluid" figure=false %}
+
+And then we configure our Webhook in FusionAuth, making sure to the `jwt.refresh-token.update` event is enabled:
+
+{% include _image.liquid src="/assets/img/expert-advice/revoking-jwts/setting-up-a-webhook.png " alt="Set up a webhook in FusionAuth." class="img-fluid" figure=false %}
 
 We can now revoke a user's refresh token and FusionAuth will broadcast the event to our Webhook. The Webhook then updates the JWTManager which will cause JWTs for that user to be revoked.
 
-This solution works well even in large systems with numerous backends. It requires the use of refresh tokens and an API that allows refresh tokens to be revoked. The only caveat is to be sure that your JWTManager code cleans up after itself to avoid running out of memory.
+This solution works well even in large systems with numerous backends. It requires the use of refresh tokens and an API that allows refresh tokens to be revoked. The only caveat is to be sure that your JWTManager code cleans up after itself to avoid running out of memory. Also, if you are using a distributed system with multiple servers running the Todo Backend, you could store the list of revoked JWTs in redis or another in memory datastore and have the `JWTManager` update that when a webhook arrives.
 
-If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing JWTManager implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Typescript clients both have a JWTManager you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a Github issue and we will write one for you.
+If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing `JWTManager` implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Typescript clients both have a `JWTManager` you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a Github issue and we will write one for you.
 
 {% include _advice-get-started.liquid intro="If you are looking for a solution that provides support for events and Webhooks that can be used to implement this revocation strategy, FusionAuth has you covered." %}
