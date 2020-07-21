@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Help your users avoid using compromised passwords
-description: How can you easily prevent your users from using passwords that have been cracked and made available for sale on the web?
+title: How to enable breached password detection with FusionAuth
+description: How can you easily prevent your users from using passwords that have been cracked and made available for sale on the web? By enabling breached password detection with FusionAuth."
 author: Dan Moore
 image: blogs/social-sign-in-django/headerimage.png
 category: blog
@@ -15,7 +15,7 @@ While there are many ways for people to authenticate with online systems, userna
 
 ## The danger of compromised passwords
 
-Compromised passwords allow unauthorized access to your systems. If a user's credentials are known to another party, that party can access your systems acting as that user. Depending on data and functionality available in your systems, the results of unauthorized access could range from worrying to disastrous.
+Breached passwords allow unauthorized access to your systems. If a user's credentials are known to another party, that party can access your systems acting as that user. Depending on data and functionality available in your systems, the results of unauthorized access could range from worrying to disastrous.
 
 ## How to avoid unauthorized access
 
@@ -29,22 +29,26 @@ What all of these remedies have in common is that they all require your user to 
 
 [Defense in depth](https://en.wikipedia.org/wiki/Defense_in_depth_(computing)) is a security concept which basically means you shouldn't rely on one single way to protect your systems. Preventing a user from using a publicly available password, one that has been compromised, will increase your system security. There are numerous publicly available databases of cracked passwords. Your auth system can check if a user's password matches anything in these datasets.
 
+## How to protect against breached passwords
+
 Setting up your authentication system to check for and prevent use of breached passwords has a couple of benefits:
 
 * It helps prevent password reuse across systems. It's not perfect, but if any systems have been breached, you can prevent reuse of that password in your system.
 * It allows the user to pick whatever password they want, as long as it is unique. Whether that means using a password manager, a string of unique words, or an easily remembered, slightly modified quote. 
 
-Enabling breached password detection actually empowers your users. Rather than enforcing a certain set of characters in a password, you're disallowing problematic passwords. I get frustrated when I'm signing up for an account and am told: "you must have between 26 and 31.5 characters in your password, of which exactly 12 must be uppercase and 15 must be numeric and please hop on one foot while entering your password". Okay, maybe I exaggerate a bit.
+Enabling breached password detection actually empowers your users. Rather than enforcing a certain set of characters in a password, you're disallowing problematic passwords. 
+
+I don't know about you, but I get frustrated when I'm signing up for an account and am told: "you must have between 26 and 31.5 characters in your password, of which exactly 12 must be uppercase and 15 must be numeric and please hop on one foot while entering your password". Okay, maybe I exaggerate a bit.
 
 If you are going to build this feature, look for available datasets. You can also [look for APIs](https://haveibeenpwned.com/API/v3) to help you. Consider how to ingest and expose these sets to your auth systems in a performant manner. You'll also need to make sure you schedule time to keep these datasets up to date. 
 
-When building this feature, make sure to build a way to force users to change their compromised passwords. There's not a ton of literature out there, but [this recent study (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) of almost 250 users over two years showed that only 13% of users with a breached password changed their credentials within three months. From the conclusion:
+When building this feature, build a way to force users to change their compromised passwords. There's not a ton of literature out there, but [this recent study (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) of almost 250 users over two years showed that only 13% of users with a breached password changed their credentials within three months. From the conclusion:
 
 > Overall, our findings suggest that password breach notifications are failing dramatically, both at causing users to take action and at causing users to take *constructive* action. Regulators should take note of the ineffectiveness or absence of breach notifications and impose requirements on companies to implement better practices.
 
 Ouch.
 
-## How FusionAuth can help
+## How FusionAuth detects breached passwords
 
 *Please note that this is a paid edition feature. You can [learn more about paid editions here](/pricing).*
 
@@ -132,11 +136,11 @@ Here are some benchmarks I created using apache bench. I created 10 users with c
 | 2    | 107 | 115 | 7.5%  | 232 | 285 | 22.8%  |
 | 3    | 112 | 104 | -7.1% | 383 | 312 | -18.5% |
 
-You can see some impact on performance, but it fluctuated, and was less than a 20% difference in all cases. Due to the fact I was benchmarking on my local machine, the percentage change is more telling than the actual numbers. You probably won't be deploying your FusionAuth instance on a MacBook, so make sure you test in a more realistic setting.
+You can see a performance impact. It fluctuated between runs and was less than a 20% difference in all cases. Due to the fact I was benchmarking on my local machine, the percentage change is more telling than the actual numbers. You probably won't be deploying your FusionAuth instance on a MacBook, so make sure you test in a more realistic setting.
 
-## Conclusion
+## Enable Breached Password Detection Today
 
-Enabling breached password detection is a great strategy to help secure your users' data. You can choose how you want to respond and how you want to check passwords during the user authentication experience. You can add additional security with none of the frustrating password rules that often stymie user registration.
+Breached password detection helps secure your users' data. You can choose how you want to respond and how you want to check passwords during the user authentication experience. You can add additional security with none of the frustrating password rules that often stymie user registration.
 
 It also protects your applications and systems from breaches in other companies with zero effort on your part.
 
