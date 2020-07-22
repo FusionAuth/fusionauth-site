@@ -21,11 +21,11 @@ Breached passwords allow unauthorized access to your systems. If a user's creden
 
 Here are some options auth systems often provide to help secure accounts:
 
-* force users to choose hard passwords
-* require users to set up two factor authentication
-* make users change passwords regularly
+* Force users to choose long and complex passwords
+* Require users to set up two factor authentication
+* Make users change passwords regularly
 
-What all of these remedies have in common is that they all require your user to act. Who among us likes to change their password? In addition, none of these prevent a user from choosing to use a password across multiple systems.
+What all of these remedies have in common is that they all require your user to act. Who among us likes to change their password? In addition, none of these prevent a user from choosing to reuse a password across multiple applications.
 
 [Defense in depth](https://en.wikipedia.org/wiki/Defense_in_depth_(computing)) is a security concept which basically means you shouldn't rely on one single way to protect your systems. Preventing a user from using a publicly available password, one that has been compromised, will increase your system security. There are numerous publicly available databases of cracked passwords. Your auth system can check if a user's password matches anything in these datasets.
 
@@ -66,27 +66,27 @@ When configuring breached password detection, there are three levels of compromi
 * on the password plus username, email address or email sub-address
 * on the password and an exact match on username or email address, or commonly used passwords like "password". 
 
-While you know your security requirements best, we recommend matching on password alone, as this provides the most protection. 
+While you know your security requirements best, we recommend matching on password alone, as this provides the most protection. The match will check for a compromised credential whenever a user's password is created or modified. This includes the following scenarios:
 
-Matching rules apply to all passwords provided whenever a user is created. This includes:
+* A user registers, should self-registration be enabled
+* A user is created via the administrative user interface 
+* A user is created via the [User APIs](/docs/v1/tech/apis/users)
+* A user changes their password
+* An administrator changes a user's password
 
-* when they register themselves, should self-registration be enabled
-* when they are created via the administrative user interface 
-* when a user is created via the [User APIs](/docs/v1/tech/apis/users)
+In all cases, the provided password will be checked against a large and ever-growing database of compromised credentials maintained by FusionAuth. 
 
-In all cases, a provided password will be checked against a large and ever-growing database of compromised credentials maintained by FusionAuth. In addition, any time a password is changed by a user or administrator, the database will also be consulted. 
+The other configuration option is what, if any, action to take on user login. Should a password be checked when someone signs in? One option is to simply not check for compromised passwords during the sign in event. 
 
-The other configuration option is what, if any, action to take on user login. Should a password be checked when someone signs in? One option is to simply not check for compromised passwords during the sign in event. This is a good choice if you enable breached password detection before you have any production users. In that case, all passwords will have already been vetted during user creation. However, if a password is compromised after an account is created, a user won't be notified until they change their password.
+This is an acceptable choice if login performance is of the utmost importance to you. However, if a password is compromised after an account is created, no check will occur until the password is changed, exposing your system to unauthorized access. Test to make sure that the performance win is worth the security consequence. We recommend enabling one of the other choices. 
 
-Other, more secure, options include:
+Some of these other, more secure, options are:
 
-* recording the result, which will update statistics and [fire a webhook](/docs/v1/tech/events-webhooks/)
-* emailing the user, letting them know their password has been compromised
-* forcing the user to change their password before their authentication can be completed
+* Recording the result, which will update statistics and [fire a webhook](/docs/v1/tech/events-webhooks/)
+* Emailing the user, letting them know their password has been compromised
+* Forcing the user to change their password before their authentication can be completed
 
-It's important to note that these choices only apply to login events. Password changes and registrations will always require an uncompromised password before they'll succeed.
-
-Enabling this check on login allows you to increase the security of your user accounts in a gradual fashion. It also is likely to lead to a higher success rate, as you'll only be forcing a change when a user is already engaged trying to sign in.
+It's important to note that these only apply to login events. Once password breach detection is enabled, password changes and registrations always require an uncompromised credential before they'll succeed. Enabling this check on login allows you to increase the security of your user accounts in a gradual fashion. 
 
 These settings are also available in the [Tenant API](/docs/v1/tech/apis/tenants), under the `tenant.passwordValidationRules.breachDetection` key. 
 
@@ -128,7 +128,7 @@ Any administrator viewing the user details page will also see a warning and info
 
 FusionAuth handles password breach checks in real time. Any way you slice it, this check is additional work whenever someone registers or, if the login check is configured, signs in. How does that impact performance? 
 
-Here are some benchmarks I created using apache bench. I created 10 users with common poor passwords. Over three runs, with 10,000 requests and 100 threads, I made a login request for one of the random users against a local FusionAuth instance. Here are the 50th and 95 percentile durations with breached password detection disabled and enabled. 
+Here are some benchmarks I created using ApacheBench. I created 10 users with common poor passwords. Over three runs, with 10,000 requests and 100 threads, I made a login request for one of the random users against a local FusionAuth instance. Here are the 50th and 95 percentile durations with breached password detection disabled and enabled. 
 
 | Run number | Disabled 50th (ms) | Enabled 50th (ms) | 50th % increase | Disabled 95th (ms) | Enabled 95th (ms) | 95th % increase |
 |----|---|---|
