@@ -12,10 +12,6 @@ Here are some guidelines to follow when writing documentation.
 For blog posts:
 - Indent all code with two spaces per level.
 
-For lists:
-- Capitalize the first word.
-- Have a period on the end if it is a sentence, otherwise don't.
-
 ### Proper names
 - macOS
 - Elasticsearch
