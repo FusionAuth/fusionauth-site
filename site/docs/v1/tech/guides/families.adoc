@@ -6,25 +6,54 @@ description: What are families in FusionAuth and how are they useful?
 
 The family API in FusionAuth is a powerful way to logically group users who are family members. It also pairs nicely with the consent API to manage consents provided by parents to children. You can review the link:../apis/families[family API] for detailed API documentation. Here's what this guide will cover.
 
-* <<Why would you use families?>>
+* <<Benefits of families>>
+** <<Examples>>
+* <<Enabling families>>
+* <<Creating a family>>
+** <<Parent creates a family>>
+** <<Child self-registers and requests a family be created>>
+** <<Child registration disabled and requests a parent create a family and add them manually>>
+* <<Adding family members>>
+** <<Parent adds a member>>
+** <<Child self-registers and requests to be added to a family>>
+** <<Child registration disabled and requests a parent to add them manually>>
+* <<Retrieving family members>>
+* <<Updating family members>>
+* <<Deleting family members>>
+* <<Deleting a family>>
+* <<Granting consents to family members>>
+** <<Examples>>
+** <<Parent grants consent>>
+** <<Child requests consent>>
 * <<Setting up family management>>
-* <<Use cases>>
-** <<Family management>>
-** <<Parental approval>>
-** <<Legal consent frameworks>>
 * <<Alternatives>>
 * <<Example application>>
 * <<Limitations>>
 
-== Why would you use families?
+
+
+== Benefits of families
 
 There are two main reasons to use the family API. The first is to add family relationships to your application. You can create associations and assign roles to enable your application to offer different functionality for each family member. These relationships may be complex; for example, a child may be a member of multiple families, each headed by different adults.
 
-The second reason for using the family API is because you are legally obligated to obtain parental consent. This varies with the age of your users and what you are doing with their data. FusionAuth can help you send emails to verify consent and record what consent is given to each user by whom. While restrictions and age limits vary by legal jurisdiction, applications may require parental consent. 
+The second reason for using the family API is because you are legally obligated to obtain parental consent. This varies with the age of your users and what you are doing with their data. FusionAuth can help you send emails to verify consent and record what consent is given to each user by whom. While restrictions and age limits vary by legal jurisdiction, applications may require parental consent.
 
-== Setting up family management
+=== Examples
 
-To get started with the family workflows, enable the family settings in the Tenant settings. 
+Let's look at a few examples of applications that can use FusionAuth's families feature to fulfill various requirements:
+
+* A content streaming app (ala Netflix) - this example application leverages families for a couple of cases:
+** A parent can setup their children so they can watch TV shows and movies on their own devices. The parents might also want to ensure that the children are only watching age appropriate content
+** Each family member can maintain their own list of shows that they are watching or have subscribed to. This way when a child watches a kids show, it doesn't show up on the parent's "Continue watching" stream
+* A game designed for all ages (ala Roblox) - this example application leverages families for a couple of cases:
+** Parent's can play along with their child but manage their account separate. This way they have their own account, characters and items in the game.
+** The parent might enable or disable certain features in a child's account such as in-game chat, posting to the forums, or joining mature themed worlds
+
+We'll be using these two examples throughout the rest of this guide to help you understand the use cases and workflows that FusionAuth provides for families.
+
+== Enabling families
+
+To get started with FusionAuth's family features, you must enable the family settings in the Tenant settings.
 
 Go to [breadcrumb]#Tenants -> Default -> Family# and click `enable`. Do this for each tenant where you'd like to access family functionality.
 
@@ -34,25 +63,19 @@ Make sure your `Maximum child age` and `Minimum owner age` values are set approp
 
 Different use cases will require modifying additional Tenant attributes, but for now let's leave the defaults and look at some use cases.
 
-== Use cases
+== Creating a family
 
-We'll cover the following use cases:
+You can use the family APIs to create a family and associate users with that family. You can then treat the family as an atomic unit for certain purposes, such as billing. Using our example applications, our content streaming application needs to create a family if the account owner wants to allow family members to watch on their own devices. Similarly, our game example will need families to manage child accounts and allow parents to enable or disable features.
 
-* <<Family management>>
-* <<Parental approval>>
-* <<Legal consent frameworks>> such as COPPA
+Keep in mind that each user account within a family is a completely independent user, with its own data, login identifier, and password. Users are added a removed from families by the owner of the family, who is always of legal age that they are able to create the family and manage the users in the family.
 
-=== Family management
+=== Parent creates a family
 
-You may want to use the family APIs to create a family and associate users with that family. You can then treat the family as an atomic unit for certain purposes, such as billing. At the same time, your application can offer different functionality to each user, such as their own playlist, if this were a content streaming application such as Netflix.
+Families are created implicitly, by associating an existing user with a new family. The steps required to create a family are:
 
-Each user account is independent, with its own data, login identifier, and password. Users are associated with the family by actions of the owner. Consent is implied in the act of creation and doesn't need to be recorded in the system (though there's nothing preventing that).
-
-==== Creating and adding family members 
-
-Families are created implicitly, by adding associating an existing user with a family. To do so, create a FusionAuth application using the link:../apis/applications[Application API] and a user with the link:../apis/users[User API]. Or, use the administrative user interface to create these objects. Make sure the user's age is greater than the `Minimum owner age` specified in the Tenant settings.
-
-Then, create a family with this user as the first member by making a `POST` request to the link:../apis/families#create-a-family[`/api/user/family`] endpoint. Here's an example with curl:
+1. Create a FusionAuth application using the link:../apis/applications[Application API] (or, use the administrative user interface to create the application)
+2. Create a user with the link:../apis/users[User API] (or, use the administrative user interface to create the user). Make sure the user's age is greater than the `Minimum owner age` specified in the Tenant settings.
+3. Create a family with this user as the first member by making a `POST` request to the link:../apis/families#create-a-family[`/api/user/family`] endpoint. Here's an example with curl:
 
 [source,shell]
 .Creating a Family
@@ -78,11 +101,84 @@ Here's a typical response, which includes the id of the newly created family:
 include::docs/src/json/family/response.json[]
 ----
 
-After family creation, there is only one family member. That usually is insufficient. Your application can add family members as needed. Make sure the user you want to add to the family exists; using the User API if required. Adding users to a family is similar to first creating a family. The main differences include:
+After family creation, there is only one family member. That usually is insufficient. **NEED MORE HERE??**
 
-* You provide the existing family id
-* You use the `PUT` HTTP method instead of the `POST` method
-* You can add users with any family role: `Adult`, `Teen` or `Child`.
+
+
+
+=== Child self-registers and requests a family be created
+
+There are two methods for a child to request that a family be created when they are able to create their own account. First, is using the FusionAuth OAuth interface. In this case, the child will create their own account using FusionAuth's self-registration feature. Once the child creates their account, the parent will be notified via email. Depending on whether or not the parent already has an account, they will either self-register or log in and then they can add the child to their family.
+
+The second method of accomplishing this same workflow is using the API to create a child account and notify FusionAuth to send the email notification to the parent. We'll cover both options below.
+
+**THE OAUTH UI PROCESS NEEDS TO BE WRITTEN**
+
+In order to accomplish the same workflow via the API, you need to create the user and specify the `user.parentEmail` property. You can leverage either the link:../apis/users#create_a_user[`POST /api/user` API] or the link:../apis/registrations#create_a_user_and_registration_combined[`POST /api/user/registration` full-registration API]. Here's an example request to the API that will start the family creation process:
+
+[source,shell]
+.Creating a user to start the family creation process
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" https://local.fusionauth.io/api/user -d $REQUEST_PAYLOAD
+----
+
+[source,json]
+.Create Family Response JSON
+----
+include::docs/src/json/users/create-with-parentEmail-request.json[]
+----
+
+
+
+
+
+
+
+
+=== Child registration disabled and requests a parent create a family and add them manually
+
+**NEEDS TO BE WRITTEN OR FIXED UP USING EXISTING CONTENT**
+
+To use the FusionAuth OAuth front-end, you'll need to follow these steps:
+
+1. Enable self service registrations in the application configuration
+2. Disable child registrations in the tenant settings
+3. Create an email template to be sent to a parent (a sample is below)
+4. Update the `Family request template` setting to that email template (**NOTE:** if the value for that email template is not set, then no email will be sent)
+
+Here's an example of an `Family request template` email:
+
+.Sample Family Registration Request HTML Template
+[source,text]
+----
+include::docs/src/email/family-registration.html[]
+----
+
+Customize and localize this email template as required. Please see the link:../email-templates/email-templates[Email Templates documentation] for variables accessible in the template as well as more information about email templates in general. Keep in mind that the URL in the email should include a link that allows the parent to register for an account. This might be to the registration form in your application or to FusionAuth's self-registration form in our OAuth front-end.
+
+Once this is configured, FusionAuth will require a birthdate during self-registration. If the user registering is under the `Maximum child age` setting, then they'll see a message prompting them to enter their parent's email address.
+
+image::guides/families/parent-request-no-child-allowed.png[Form for a child requesting an account from a parent,width=700,role=box-shadow margin-right]
+
+If the child submits an email address, presumably for their parent, FusionAuth will use the email template you created above and send an email to the parent. If you ever need to resend this email, you can leverage the link:../apis/families#request-parental-approval[Request Parental Approval] API.
+
+In order to accomplish the same workflow via the API, you need to call the link:../apis/families#request_parent_approval[Request Parental Approval] API with the parent's email address. This will send the `Family request email template` to the parent and that will allow the parent to self-register or log in (if they already have an account) and create an account for the child.
+
+
+
+
+
+== Adding family members
+
+As part of your application, you might allow parents to add new family members or allow children to ask to be added to a family. Using our examples from the beginning of this guide, the content streaming application will allow the parent to create new accounts for their children and then manage the parental controls on those accounts. Additionally, our example game application might allow children to create their own accounts, but always require that they provide their parent's email address. In this case, if the parent already exists in FusionAuth, they will be notified that they need to approve this new child account.
+
+Let's take a look at how new members can be added to a family in FusionAuth.
+
+=== Parent adds a member
+
+If your application allows a parent to create new users for their children or other adults and add them to their family, you can accomplish this using the user and family APIs. We'll skip the user API, since that is covered in other places and focus on adding an existing user to an existing family. In this case, we'll be calling the link:../apis/families.adoc#add_a_user_to_a_family[`PUT /api/families` API].
 
 [source,shell]
 .Adding a Child to a Family
@@ -93,13 +189,14 @@ curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" http
 ----
 
 Here's an example request payload:
+
 [source,json]
 .Add A Child To A Family Request JSON
 ----
 include::docs/src/json/family/request-child.json[]
 ----
 
-You cannot add more than one user at a time to a family. After adding each user, the entire family object is returned Here's an example response payload returned after adding a child to an existing family:
+You cannot add more than one user at a time to a family. After adding each user, the entire family object is returned. Here's an example response payload returned after adding a child to an existing family:
 
 [source,json]
 .Add A Child To A Family Response JSON
@@ -107,129 +204,17 @@ You cannot add more than one user at a time to a family. After adding each user,
 include::docs/src/json/family/response-after-child-added.json[]
 ----
 
-===== Allowing a Child to Request an Account
 
-[NOTE]
-====
-This section only applies if you are using the FusionAuth OAuth login and registration templates and want to allow a child to ask their parents for an account.
-====
 
-To allow a child to request an account: 
+=== Child self-registers and requests to be added to a family
 
-* Enable self service registrations in the application configuration.
-* Disable child registrations in the tenant settings.
-* Create an email template to be sent to a parent. A sample is below.
-* Update the `Family request template` setting to that email template. If the value for that email template is not set, then no email will be sent. 
+**THIS NEEDS TO BE WRITTEN**
 
-Once this is configured, FusionAuth requires a birthdate during registration. If the user registering is under the `Maximum child age` setting, then they'll see a message prompting them to enter their parent's email address.
-
-image::guides/families/parent-request-no-child-allowed.png[Form for a child requesting an account from a parent,width=700,role=box-shadow margin-right]
-
-If the child submits an email address, presumably for their parents, the email based on the template you configured will be sent. To resend this email, use the link:../apis/families#request-parental-approval[Request Parental Approval] API.
-
-Here's an example of an `Family request template` email:
-
-.Sample Family Registration Request HTML Template
-[source,text]
-----
-include::docs/src/email/family-registration.html[]
-----
-
-Customize and localize this email template as required. Please see the link:../email-templates/email-templates[Email Templates documentation] for variables accessible in the template as well as more information about email templates in general. 
-
-==== Retrieving family members
-
-At some point in your application, you'll likely want to retrieve family members. An example might be if you wanted to display all the associated users. Think of the first screen of Netflix when you choose which account to log in as.
-
-To find family members, the application must start with either a user id or a family id. 
-
-[source,shell]
-.Retrieving a Family By Family Id
-----
-API_KEY=...
-FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
-curl -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family/'$FAMILY_ID
-----
-
-[source,shell]
-.Retrieving a Family By User Id
-----
-API_KEY=...
-USER_ID=b3360a2d-e81d-4314-b9f1-244a916ca52f
-curl -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family?userId='$USER_ID
-----
-
-Here's an example response payload, containing all the family information as well as the members:
-
-[source,json]
-.Retrieve Family Response JSON
-----
-include::docs/src/json/family/response-after-child-added.json[]
-----
-
-You can also use the administrative user interface. Go to [breadcrumb]#Users# and then view a user's details page. Navigate to the Family tab to see family members. You may navigate to each family member's details page from this tab as well.
-
-image::guides/families/display-family-members-admin-ui.png[Display of family members in the administrative user interface,width=700,role=box-shadow margin-right]
-
-==== Update family members 
-
-You might do update a family member if their role has changed. FusionAuth does not automatically change the role of a family member based on their age.
-
-[source,shell]
-.Little e4440a4d Is All Grown Up, Let's Mark Them As a Teenager
-----
-API_KEY=...
-FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
-REQUEST_PAYLOAD='{...}'
-curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" https://local.fusionauth.io/api/user/family/
-----
-
-Here's an example request payload:
-
-[source,json]
-.Update Family Member Request JSON
-----
-include::docs/src/json/family/request-update-child.json[]
-----
-
-Here's an example response payload, indicating that indeed, the user's family role has changed:
-
-[source,json]
-.Update Family Member Response JSON
-----
-include::docs/src/json/family/response-after-child-updated.json[]
-----
-
-==== Removing family members and families
-
-You may also remove users from a family. If someone signs up for their own account, they may no longer need a user account on the family plan, for example. 
-
-[source,shell]
-.Removing a Family Member 
-----
-API_KEY=...
-FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
-USER_TO_REMOVE=e4440a4d-b81d-4314-c9f1-844a916ca52f
-curl -XDELETE -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family/'$FAMILY_ID'/'$USER_TO_REMOVE
-----
-
-You can't delete a family object. Just as families are implicitly created, they are deleted implicitly. If you remove all members of a family, it becomes unavailable. Any API call against the deleted family will fail. For example, if you attempt to retrieve it, a 404 will be returned.
-
-=== Parental approval
-
-In contrast with the previous use case, in this scenario, a child creates an account but has no or limited access until a parent has approved the signup. A parent may or may not have an account, but if they do not, they'll be prompted to create one. At the end of the parental approval use case, both parent and child will have FusionAuth user accounts. 
-
-If you do not want a parent to have an account, but need their approval recorded, you may create a shadow account for them. A parent need not ever log in to such a shadow account, but it will be used to, for example, record if they provided consent to the child.
-
-Depending on your application, you may make limited application functionality available to a child before consent is granted. Think of a game aimed at children like Roblox. Some functionality may be available on registration, such as solo gameplay. Other functionality may be unlocked by parental approval, for example in-game chat. Unlike the previous use case, parental consent is not implied in the account creation, so you must record it if you need a record of it.
-
-Parents approve signups by receiving an email and clicking on a link. FusionAuth sends the email, but you need to make sure the content of the email is correct, including the link. Additionally, your application must handle the click.
-
-This scenario only differs from the previous use case in how users are added to a family and how consent is recorded. The process for updating and removing family members is unchanged. 
+In this scenario, the child will create an account on their own and will request to be added to an existing family. This is accomplished in the same manner that we used when the child requests that a family be created above. To begin, we need to create a new email template that will be used for this process.
 
 ==== Setting up the email
 
-Create or update the required email templates. The first is the `Confirm child account template` and the second is the `Parent registration request template`. Which email template is used depends on if the parent has an account.
+The email template that is used for this process is called the `Confirm child account template` and the second is the `Parent registration request template`. Which email template is used depends on if the parent has an account.
 
 The `Confirm child account template` is sent when a parent already has an account and merely needs to confirm the child's account creation. The `Parent registration request template`, on the other hand, is sent when a parent has no account and must register. You cannot resend these emails.
 
@@ -269,16 +254,16 @@ curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" http
 Here's an example request payload:
 
 [source,json]
-.Registering a Child With Parental Consent Request JSON 
+.Registering a Child With Parental Consent Request JSON
 ----
 include::docs/src/json/user-registrations/combined-request-parental-consent.json[]
 ----
 
-Provide the parent's email address and the child's birthday as well as the more typical application, email and password information. As soon as you create the child account, one of the above emails will be sent. 
+Provide the parent's email address and the child's birthday as well as the more typical application, email and password information. As soon as you create the child account, one of the above emails will be sent.
 
-At this point, the path forks. Suppose the parent has an account. In this case, the `Confirm child account template` email will be sent. This email should contain a link. On clicking that link, you should either display the child account to confirm or confirm the account. 
+At this point, the path forks. Suppose the parent has an account. In this case, the `Confirm child account template` email will be sent. This email should contain a link. On clicking that link, you should either display the child account to confirm or confirm the account.
 
-If the parent has no account, the `Parent registration request template` email is sent. This prompts the parent to register. 
+If the parent has no account, the `Parent registration request template` email is sent. This prompts the parent to register.
 
 In both these cases, the page on the other side of the link in the customized email template must be built by you. You as the application developer are responsible for handling what happens when the user clicks that link.
 
@@ -312,13 +297,202 @@ When the child is confirmed as part of the family, you may want to capture more 
 
 Creating a consent object is the preferred method to capture a record of the parental consent. Using this API has the following benefits:
 
-* You can create multiple kinds of consents for different purposes. 
+* You can create multiple kinds of consents for different purposes.
 * You can retrieve all consents for a given user, including the time they were created or updated.
 * Consents may be granularly granted and revoked.
 
-In general, recording a consent using the Consent API gives you more flexibility than the other options. 
+In general, recording a consent using the Consent API gives you more flexibility than the other options.
 
-==== Using consents
+
+
+=== Child registration disabled and requests a parent to add them manually
+
+This situation is the exact same as the <<Child registration disabled and requests a parent create a family and add them manually>> use case. Specifically, this process sends the same emails and requires that the parent either self-register or log into their account and manually create an account for their child and add the child to their family. Therefore, you should follow the steps in that section if you need to handle this case as well.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== Retrieving family members
+
+At some point in your application, you'll likely want to retrieve family members. An example might be if you wanted to display all the associated users. Think of the first screen of Netflix when you choose which account to log in as.
+
+To find family members, the application must start with either a user id or a family id. 
+
+[source,shell]
+.Retrieving a Family By Family Id
+----
+API_KEY=...
+FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
+curl -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family/'$FAMILY_ID
+----
+
+[source,shell]
+.Retrieving a Family By User Id
+----
+API_KEY=...
+USER_ID=b3360a2d-e81d-4314-b9f1-244a916ca52f
+curl -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family?userId='$USER_ID
+----
+
+Here's an example response payload, containing all the family information as well as the members:
+
+[source,json]
+.Retrieve Family Response JSON
+----
+include::docs/src/json/family/response-after-child-added.json[]
+----
+
+You can also use the administrative user interface. Go to [breadcrumb]#Users# and then view a user's details page. Navigate to the Family tab to see family members. You may navigate to each family member's details page from this tab as well.
+
+image::guides/families/display-family-members-admin-ui.png[Display of family members in the administrative user interface,width=700,role=box-shadow margin-right]
+
+=== Update family members
+
+At some point, you might need to update a family member if their role has changed. FusionAuth does not automatically change the role of a family member based on their age.
+
+[source,shell]
+.Little e4440a4d Is All Grown Up, Let's Mark Them As a Teenager
+----
+API_KEY=...
+FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
+REQUEST_PAYLOAD='{...}'
+curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" https://local.fusionauth.io/api/user/family/
+----
+
+Here's an example request payload:
+
+[source,json]
+.Update Family Member Request JSON
+----
+include::docs/src/json/family/request-update-child.json[]
+----
+
+Here's an example response payload, indicating that indeed, the user's family role has changed:
+
+[source,json]
+.Update Family Member Response JSON
+----
+include::docs/src/json/family/response-after-child-updated.json[]
+----
+
+=== Removing family members and families
+
+Similarly, you may also need to remove users from a family. If someone signs up for their own account, they may no longer need a user account on the family plan, for example. Here is an API call that is used to remove a user from a family.
+
+[source,shell]
+.Removing a Family Member 
+----
+API_KEY=...
+FAMILY_ID=a815b480-d52d-4755-96ac-749c067925d7
+USER_TO_REMOVE=e4440a4d-b81d-4314-c9f1-844a916ca52f
+curl -XDELETE -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/family/'$FAMILY_ID'/'$USER_TO_REMOVE
+----
+
+You can't delete a family object. Just as families are implicitly created, they are deleted implicitly. If you remove all members of a family, it becomes unavailable. Any API call against the deleted family will fail. For example, if you attempt to retrieve it, a 404 will be returned.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+== Parental approval
+
+**NOT SURE WE NEED THIS CONTENT ANYMORE**
+
+In most cases, setting up a family structure is only part of the requirements. Most applications need to ensure that parents are granting their children consents within the application. Depending on your application, you may make limited application functionality available to a child before consent is granted. Think of a game aimed at children like Roblox. Some functionality may be available on registration, such as solo gameplay. Other functionality may be unlocked by parental approval, for example in-game chat. Parental consent is not implied in the account creation, so you must record it if you need a record of it. These scenarios are often referred to as **"consent restricted features"**.
+
+Whenever a child is requesting approval from a parent, the parent account may or may exist yet. If the parent account does not exist, they'll be prompted to create one. At the end of the parental approval process, both parent and child will have FusionAuth user accounts.
+
+If you do not want a parent to have an account, but need their approval recorded, you may create a shadow account for them. A shadow account is a user object in FusionAuth that has a known `loginId` without a known `password`. A parent does not ever log into their a shadow account, but it will be used to record consents that they grant to their children.
+
+Parents approve signups by receiving an email and clicking on a link. FusionAuth sends the email, but you need to make sure the content of the email is correct, including the link. Additionally, your application must handle the click.
+
+This scenario only differs from the previous use case in how users are added to a family and how consent is recorded. The process for updating and removing family members is unchanged. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== Using consents
+
+**NEED TO REWORK THIS TO FOLLOW OUTLINE**
+
 
 When using consents, your application captures how and when parental consent was provided. You may retrieve consents for any user. You can build a user interface to allow a parent to temporarily or permanently revoke a consent.
 
@@ -362,11 +536,11 @@ include::docs/src/json/user-consent/response-no-email-plus.json[]
 
 The consent is now granted. In your application, pull the consents for a given user at login or any other time to determine the appropriate level of access. You may also pull it for reporting or other purposes. 
 
-==== Unverified children
+=== Unverified children
 
 If a child registers and the parent never confirms their account, FusionAuth can delete the child accounts automatically, after a certain number of days. Or you can keep the accounts indefinitely, if that works better for you. These are settings in the Family tab of the Tenant details page.
 
-==== Using the FusionAuth OAuth interface
+=== Using the FusionAuth OAuth interface
 
 While this guide has focused on the APIs, using these requires integrating with your own user interface. You can also use the FusionAuth OAuth interface for registration and login. To do so, in addition to the settings mentioned in <<Setting up family management>>, change the following settings:
  
@@ -391,11 +565,11 @@ Just as when you use the APIs directly, if a child registers using these themed 
 
 When the parent registers, your application must display the pending family members using your own API calls, as well as allow parents to approve or disapprove them. If you'd like to modify the registration pages to look like your own application, link:../themes[modify the tenant theme].
 
-==== Updating and removing members
+=== Updating and removing members
 
 There is no difference in the process to update or remove family members in this use case. It is the same as the <<Family management>> use case.
 
-=== Legal consent frameworks 
+== Legal consent frameworks
 
 For applications targeted at young children, laws come into play. For example the https://www.ftc.gov/enforcement/rules/rulemaking-regulatory-reform-proceedings/childrens-online-privacy-protection-rule[Children's Online Privacy Protection Act, or COPPA], in the USA and the https://gdpr-info.eu/art-8-gdpr/[General Data Protection Regulation, or GDPR] in the EU both outline specific requirements for informed parental consent when applications provide certain types of online activities to children.
 
@@ -403,7 +577,7 @@ FusionAuth allows you to build custom consent frameworks, as shown above, but al
 
 This guide will focus on COPPA; please check your local laws for child consent requirements.
 
-==== COPPA support
+=== COPPA support
 
 There are two different ways for companies to comply with COPPA, according to the FTC. Which you choose depends on how you're going to use the data. You can use verified parental consent (VPC) or "email plus". While FusionAuth supports both, the COPPA "email plus" compliance method is available out of the box and is the more common method.
 
