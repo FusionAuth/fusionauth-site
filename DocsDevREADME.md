@@ -6,8 +6,10 @@ Here are some guidelines to follow when writing documentation.
 - Use `Id` instead of `ID` when describing a unique identifier
 - Don't use complex breadcrumbs styling. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`
 - If you are referencing a URL as a setting and don't want it to be hyperlinked, preface it with a `\`. For example: `\https://fusionauth-example.zendesk.com`
-- If you are referencing a field in a form, use the `[field]` class (rather than backticks): `[field]#Issuer#`
+- If you are referencing a field in a form or JSON API doc, use the `[field]` class (rather than backticks): `[field]#Issuer#`
 - Don't abbreviate FusionAuth, use the full name.
+- When you have a list of values, use this phrase to prefix it: "The possible values are:"
+- Use single backticks when specifying a value that is not a field.
 
 For blog posts:
 - Indent all code with two spaces per level.
