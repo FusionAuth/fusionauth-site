@@ -15,7 +15,7 @@ Have I Been Pwned is one of the good guys. They are among the services sharing t
 
 There are other actors out there with, shall we say, less hospitable intentions, using breached datasets to gain unauthorized access to systems.
 
-Of course, the way step to avoid unauthorized access is to secure your own systems and encourage good security practices such as strong passwords and two factor authentication for your application users. Unfortunately, it's common for people to reuse passwords across different applications and services. No matter how good your security is, if credentials are shared between systems, your application is as vulnerable as they are, should they suffer a data breach. Wikipedia has a [list of hundreds of data breaches](https://en.wikipedia.org/wiki/List_of_data_breaches), including some from very large organizations.
+Of course, a great way to avoid unauthorized access is to secure your own systems and encourage good security practices such as strong passwords and two factor authentication for your application users. Unfortunately, it's common for people to reuse passwords across different applications and services. No matter how good your security is, if credentials are shared between systems, your application is as vulnerable as they are, should they suffer a data breach. Wikipedia has a [list of hundreds of data breaches](https://en.wikipedia.org/wiki/List_of_data_breaches), including some from very large organizations.
 
 ## What is breached password detection?
 
