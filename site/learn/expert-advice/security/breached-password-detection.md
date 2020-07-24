@@ -34,7 +34,9 @@ Beyond preventing unauthorized access to your systems, which is of course a subs
 
 It is a service to your end users. Informing them that their account with you, and any other accounts that may share the same password, has been compromised is useful information. Depending on how you implement the notice, it can be difficult to ignore. It's easy to forget about an email or letter, but harder to ignore being unable to log in to an application you use.
 
-Compromised password detection is also a protective measure that you, as an application developer or operator, can apply without requiring any user action. Until a leaked or insecure password is found, of course. Following the principles of defense in depth, there are other user account security practices that you should evaluate, such as two factor authentication. Enabling many of these require end user cooperation. Secure two factor authentication, for example, requires a relatively sophisticated user who can install and manage a TOTP application, as SMS is not a secure method for authentication.
+Compromised password detection is also a protective measure that you, as an application developer or operator, can apply without requiring any user action. Until a leacked or insecure password is found, of course. Following the principles of defense in depth, there are other user account security practices that you should evaluate, such as two factor authentication. Enabling many of these require end user cooperation. Secure two factor authentication, for example, requires a relatively sophisticated user who can install and manage a TOTP application, as SMS is not a secure method for authentication, as has been [publicized since at least 2016](https://www.wired.com/2016/06/hey-stop-using-texts-two-factor-authentication/). SIMs can be swapped using social engineering, as noted in [this 2020 paper PDF](https://www.issms2fasecure.com/assets/sim_swaps-final.pdf):
+
+> We found that all five carriers [that they examined] used insecure authentication challenges that could be easily subverted by attackers. We also found that attackers generally only needed to target the most vulnerable authentication challenges, because the rest could be bypassed.
 
 For users, especially when compared to the common practice of requiring a certain number of special characters or uppercase letters, checking for breached passwords is low impact. If it's not delightful, it is at the least not frustrating. Enabling detection also expands the universe of acceptable passwords, which may now include long passphrases without any special characters.
 
@@ -104,27 +106,32 @@ In any event, you'll have a source of compromised credentials and a way to check
 Now you'll need to hook into your user management service. Depending on what kind of auth system you have, the integration may be more or less difficult. However, you'll want to check passwords at a couple of different times during the lifecycle of a user's interactions with your systems:
 
 * When they register or an account is created for them.
-* When a user changes a password.
+* When a user changes their password.
+* When an administrative user changes a password for someone else.
 * When a user logs in.
-* Periodically checking against all users.
 
-You should enable checks on the first two events to prevent known compromised credentials from entering your system. The registration or password change should fail, with a clear message, if the user provides a publicly known password. You will want to enforce this even when a customer service or administrative user creates an account.
+You should enable checks on the first three events to prevent known compromised credentials from entering your system. The registration or password change should fail, with a clear message, if the user provides a publicly known password. You will want to enforce this even when a customer service or administrative user creates an account.
 
 ### Check even when the password isn't changing
 
-The last two deserve a bit of explanation. Suppose a user signs up on Example.com with a great password. Then they come to your site and sign up with the same great password. They continue to use your site for months, but forget about Example.com. 
+The last one deserves a bit of explanation. Suppose a user signs up on Example.com with a great password. Then they come to your site and sign up with the same great password. They continue to use your site for months, but forget about Example.com. 
 
 Then, Example.com is breached. They may send out a notice, but your user may not receive it or may not change their password. This [study from 2020 (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) covers a small dataset, approximately 250 users over two years. It found that of the 60ish users who had accounts on breached domains, only 13% changed their password within three months of the breach announcement.
 
 If you only check for compromise when the password is created at registration or modified by the end user, you'll end up with users who have credentials that have been compromised by breaches external to your system after account creation. 
 
-The Example.com breach affected your system through the vector of the reused password. Check for breached passwords whenever a user logs in and set up a scheduled job to check credentials of users who haven't logged in.
+The Example.com breach affected your system through the vector of the reused password. Check for breached passwords whenever a user logs in.
 
 ### What does a breached password detection look like?
 
-The actual implementation of the password check depends on how you are receiving the compromised dataset, but often you have a list of hashed passwords with a certain algorithm (SHA-1 or SHA-256, for example). When the user enters their credential, hash that using the same algorithm and then see if that value is present in the datasets. If it is, then the password has been compromised. 
+The actual implementation of the password check depends on how you are receiving the compromised dataset, but often you have a list of plaintext passwords. When the user enters their credential, see if that value is present in the datasets. If it is, then the password has been compromised. 
 
 Unfortunately, such datasets can only provide proof of hazard, not proof of safety. If the dataset doesn't contain the hash, then the password may have been compromised, but not publicly disclosed.
+
+Why not compare the hashed values? There are a couple of reasons.
+
+* If a data breach occurs and the passwords were properly encrypted and haven't been reverse engineered to plain text, the passwords aren't useful to attackers.
+* Since you are hopefully salting your passwords and hashing them in computationally expensive way, calculating the properly hashed value of each of the compromised passwords will take a long time (conceivably hours) which is too long.
 
 ## Taking action when the breached password is found
 
