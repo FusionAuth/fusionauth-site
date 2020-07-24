@@ -34,7 +34,7 @@ Beyond preventing unauthorized access to your systems, which is of course a subs
 
 It is a service to your end users. Informing them that their account with you, and any other accounts that may share the same password, has been compromised is useful information. Depending on how you implement the notice, it can be difficult to ignore. It's easy to forget about an email or letter, but harder to ignore being unable to log in to an application you use.
 
-Compromised password detection is also a protective measure that you, as an application developer or operator, can apply without requiring any user action. Until a leacked or insecure password is found, of course. Following the principles of defense in depth, there are other user account security practices that you should evaluate, such as two factor authentication. Enabling many of these require end user cooperation. Secure two factor authentication, for example, requires a relatively sophisticated user who can install and manage a TOTP application, as SMS is not a secure method for authentication, as has been [publicized since at least 2016](https://www.wired.com/2016/06/hey-stop-using-texts-two-factor-authentication/). SIMs can be swapped using social engineering, as noted in [this 2020 paper PDF](https://www.issms2fasecure.com/assets/sim_swaps-final.pdf):
+Compromised password detection is also a protective measure that you, as an application developer or operator, can apply without requiring any user action. Until a leaked or insecure password is found, of course. Following the principles of defense in depth, there are other user account security practices that you should evaluate, such as two factor authentication. Enabling many of these require end user cooperation. Secure two factor authentication, for example, requires a relatively sophisticated user who can install and manage a TOTP application, as SMS is not a secure method for authentication, as has been [known since at least 2016](https://www.wired.com/2016/06/hey-stop-using-texts-two-factor-authentication/). SIMs can be swapped using social engineering, as noted in [this 2020 paper PDF](https://www.issms2fasecure.com/assets/sim_swaps-final.pdf):
 
 > We found that all five carriers [that they examined] used insecure authentication challenges that could be easily subverted by attackers. We also found that attackers generally only needed to target the most vulnerable authentication challenges, because the rest could be bypassed.
 
@@ -67,7 +67,7 @@ Hopefully you're convinced. Now, let's return to our previous discussion of impl
 
 ## Finding compromised passwords
 
-First, you need to find the passwords. Have I Been Pwned is a good place to start, but there are other providers out there, such as DeHashed or GhostProject. There may be substantial overlap between these providers. 
+First, you need to find the plaintext passwords. Have I Been Pwned is a good place to start, but there are other providers out there, such as DeHashed or GhostProject. There may be substantial overlap between these providers. 
 
 You can also include lists of common passwords in your datasets. These may not be present in any public data breach, but are used often enough that they are easy for an attacker to guess, and so should be avoided. Feel free to augment your datasets with any other dictionary lists you can put together. 
 
@@ -75,29 +75,29 @@ Whatever you do, please ensure you include 'correcthorsebatterystaple' ([image c
 
 {% include _image.liquid src="/assets/img/advice/breached-password-detection/password-strength.png" alt="Password strength" class="img-fluid text-center" figure=false %}
 
-Make sure you are researching these providers and datasets on a regular schedule, since new breaches happen and new providers may appear. You'll also want to comply with any licensing or other requirements the data providers have. 
+Make sure you are researching these providers and datasets on a regular schedule, since new breaches happen and new providers may appear. You'll also want to comply with any licensing or other requirements the data providers have. Some providers offer these datasets for free, while others may charge or ask for a donation. Make sure you set aside some budget for this.
 
-Some providers offer these datasets for free, while others may charge or ask for a donation. Make sure you set aside some budget for this.
-
-When you have found these datasets, you'll want to download them, process them, and store it. Again, for a starting point, you can rely on a site like Have I Been Pwned. Make sure you subscribe to their updates.
+When you have found these datasets, you'll want to download, process, and store them. Again, for a starting point, you can rely on a site like Have I Been Pwned. Make sure you subscribe to their updates.
 
 ## Download and store the breached password datasets
 
 Now that you've catalogued the common passwords and known compromised credentials lists, you can build a system to download and store these data sets. Then you'll want to make them available to your authentication system. 
 
-This is a fairly standard data ingestion problem which has been solved in many contexts, so I won't go into nitty gritty details on how to accomplish this. However, make sure you're ingesting this data on a regular schedule. You'll also want to expose this service to your application or applications, possibly using a REST API or data export.
+This is a fairly standard data ingestion problem which has been solved in many contexts, so I won't go into nitty gritty details on how to accomplish this. However, make sure you're ingesting this data on a regular schedule. You'll also want to expose this service to your application or applications, possibly using an internal REST API or data export.
 
-Some services, such as the aforementioned Have I Been Pwned, also offer an HTTP API. Use these APIs if it fits your application needs. In general storing the datasets will give you more control and flexibility. Like any software system, in building breached password detection, you will need to make tradeoffs. 
+If you're considering doing so, secure this service. Since you'll be shipping your users' passwords to and from it, use TLS. You may want to consider additionally encrypting the payload so that, on the off chance that if there's a TLS exploit or your certificate is hijacked, passwords sent to the service will still be secure. FusionAuth encrypts the password on the client side using a per-client shared secret and then sends the password payload over TLS for two layers of encryption. 
 
-It is certainly simpler to rely on a REST API to perform breached password checks. What you lose is:
+### An alternative
+
+Some services, such as the aforementioned Have I Been Pwned, also offer an API. Such third party APIs may fit your needs. Like any software system, in building breached password detection, you will need to make tradeoffs. It is certainly simpler to rely on a third party API to perform breached password checks. What you lose is:
 
 * *Control*: You can no longer add your own suggested dictionaries or other customizations. It becomes more difficult to isolate your systems from the Internet.
 * *Performance*: You're now going over the Internet, which will almost certainly negatively affect response times. How much? It depends. You'll need to test.
-* *Reliability*: Integrating an outside service which may fail could affect users' ability to authenticate. Plan for the external service to fail to return results in a timely manner and ensure that your authentication system can handle that.
+* *Reliability*: Integrating an outside service could affect users' ability to authenticate. Plan for the external service to fail to return results in a timely manner and ensure that your authentication system handles it.
 
-Test any API thoroughly to ensure that your application won't be negatively affected by relying on it. Authentication is a critical part of any application. If it is degraded, then the user experience is degraded as well. 
+Test any third party API thoroughly to ensure that your application won't be negatively affected by relying on it. Authentication is a critical part of any application. If it is degraded, then the user experience is degraded as well. 
 
-However, for a quick solution, start with an API integration, perhaps using a [library such as these](https://haveibeenpwned.com/API/Consumers). It's certainly better to use an API integration than to not build this feature. Later, you can build your own data ingestion system as your use increases or you need more control. 
+Of course, you gain something when you use a third party API. Benefits include quicker time to market, reduced cost, or a simpler overall solution with fewer moving pieces. Starting with an API integration, perhaps using a [library such as these](https://haveibeenpwned.com/API/Consumers) may make sense. It's better to use a third party API integration than to not detect breached passwords at all. Later, you can build your own data ingestion system as your use increases or you need more control. 
 
 In any event, you'll have a source of compromised credentials and a way to check to see if a password is in that set.
 
@@ -112,26 +112,27 @@ Now you'll need to hook into your user management service. Depending on what kin
 
 You should enable checks on the first three events to prevent known compromised credentials from entering your system. The registration or password change should fail, with a clear message, if the user provides a publicly known password. You will want to enforce this even when a customer service or administrative user creates an account.
 
-### Check even when the password isn't changing
+### Detect breaches even when the password isn't changing
 
 The last one deserves a bit of explanation. Suppose a user signs up on Example.com with a great password. Then they come to your site and sign up with the same great password. They continue to use your site for months, but forget about Example.com. 
 
 Then, Example.com is breached. They may send out a notice, but your user may not receive it or may not change their password. This [study from 2020 (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) covers a small dataset, approximately 250 users over two years. It found that of the 60ish users who had accounts on breached domains, only 13% changed their password within three months of the breach announcement.
 
-If you only check for compromise when the password is created at registration or modified by the end user, you'll end up with users who have credentials that have been compromised by breaches external to your system after account creation. 
+If you only check for compromise when the password is created at registration or modified by the end user, you'll end up with users who have credentials that have been leaked by breaches external to your system after account creation. 
 
-The Example.com breach affected your system through the vector of the reused password. Check for breached passwords whenever a user logs in.
+The Example.com breach affected your system through the vector of the reused password. Detect breached passwords whenever a user logs in.
 
 ### What does a breached password detection look like?
 
-The actual implementation of the password check depends on how you are receiving the compromised dataset, but often you have a list of plaintext passwords. When the user enters their credential, see if that value is present in the datasets. If it is, then the password has been compromised. 
+The actual implementation of the password check depends on whether you are using a third party API or a data ingestion system. If the former, consult the third party docs. 
 
-Unfortunately, such datasets can only provide proof of hazard, not proof of safety. If the dataset doesn't contain the hash, then the password may have been compromised, but not publicly disclosed.
+If the latter, you have a list of plaintext leaked passwords and you have the plaintext password from the end user. Don't store the user's password unencrypted anywhere other than in RAM! At that point, do a lookup against your list of passwords to see if it is in the list. If the user's credentials are present, then the password has been compromised. 
 
-Why not compare the hashed values? There are a couple of reasons.
+Unfortunately, such datasets can only provide proof of hazard, not proof of safety. If the dataset doesn't contain the password, then it may have been compromised, but is not available in your datasets.
 
-* If a data breach occurs and the passwords were properly encrypted and haven't been reverse engineered to plain text, the passwords aren't useful to attackers.
-* Since you are hopefully salting your passwords and hashing them in computationally expensive way, calculating the properly hashed value of each of the compromised passwords will take a long time (conceivably hours) which is too long.
+Why not compare the hashed values? There are a couple of reasons. First, if an external data breach occurs and the passwords were properly encrypted and haven't been reverse engineered to plain text, the passwords aren't very useful to attackers.
+
+Second, I'll assume you are salting your passwords and hashing them in a computationally expensive way; if not, here's [some math reading to do](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy). In this case, to see if that password matched any on the list, you'd have to salt and hash all of the records on the list. Assume you could do that at a rate of 10,000 records a second, and you had a leaked password list of 500 million strings. This would take you approximately 14 hours to generate the hashes, or seven on average. (I'm assuming that the users' passwords are distributed evenly across the space of the compromised list, so we can cut the 14 hours in half.) Generating the hashes to compare would take too long to do interactively or in a batch fashion. 
 
 ## Taking action when the breached password is found
 
@@ -150,13 +151,13 @@ Consider the privilege level of the account with the breached password. If the u
 
 Depending on the breadth of your digital infrastructure, you may need to integrate with external systems when an account credential is compromised. Whether this happens in an entirely automated fashion or kicks off a manual process depends, again, on your security posture. Ensure the authentication system you are integrating with can fire off events notifying other interested systems.
 
-You also may want to be able to run reports or other analytics to determine if there are any patterns to the compromised passwords, or simply to know how many of your users have been affected. These reports may be provided in the auth system. An alternative is to use or build an analytics system to, again, subscribe to the published password breach events. 
+You also may want to be able to run reports or other analytics to determine if there are any patterns to the compromised passwords, or simply to know how many of your users have been affected. These reports may be provided in the auth system. An alternative is to use or build an analytics system and have it subscribe to the published password breach events. 
 
 ## Performance
 
-All security is a tradeoff; in this case, checking if password is breached is going to have an impact. The question is, how large is it? Performing a hash against a password isn't too computationally intensive. If there are network calls required, it may take a bit longer. It also depends on how many registration, password change and login attempts occur over a given timeframe. Only you can test in a real-world scenario and determine the performance impact on your system, but a back of the envelope calculation may help in deciding how many resources to spend. 
+All security is a tradeoff; in this case, checking if password is breached is going to have an impact. The question is, how large is it? Performing a hash against an individual password is computationally intensive, but the timing is on the order of tens or hundreds of milliseconds, not minutes. If there are network calls required, that may add some latency as well.
 
-If you are concerned about performance, pull the data close to your auth system to avoid the network delay. You can also examine the passwords of your users on a schedule in batches, and then avoid checking passwords which have been checked more recently than the breached password data has changed. 
+It also depends on how many registration, password change and login attempts occur over a given timeframe. Only you can test in a real-world scenario and determine the performance impact on your system. If you are concerned about performance, pull the data close to your auth system to avoid the network delay. 
 
 Finally, consider the performance impacts of having to take down your system because there was substantial unauthorized access because another system had a data breach and users didn't have unique passwords. That doesn't sound so fun to me.
 
