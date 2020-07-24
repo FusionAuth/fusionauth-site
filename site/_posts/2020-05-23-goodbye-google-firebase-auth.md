@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-So. You want to add more security, more customization, and integrate all the bells and whistles into your platform?
+So... You want to add more security, more customization, and integrate all the bells and whistles into your platform?
 
 Well, like a lot of you, my standard used to be using Google Firebase Authentication for my authentication needs because it is quick and easy.
 
@@ -21,19 +21,11 @@ Welcome to FusionAuth!
 
 I chose the self-hosting option when I installed FusionAuth, because it is free and I'm all about saving money. 
 
-Though the setup for both Google Firebase Authentication and FusionAuth were quick, you can't get any quicker using Docker. I tried various installations of FusionAuth, installing with Docker, Linux and on Windows. Enhancing the search capabilities with the ElasticSearch integration furthers the speed of the FusionAuth platform. ElasticSearch integration is not currently offered by Google Firebase Authentication.
+Though the setup for both Google Firebase Authentication and FusionAuth were quick, you can't get any quicker than using Docker. I tried various installations of FusionAuth, installing with Docker, Linux, and on Windows. Enhancing the search capabilities with the ElasticSearch integration furthers the speed of the FusionAuth platform. Plus, ElasticSearch integration is not currently offered by Google Firebase Authentication.
 
-With a variety of [integrations](/docs/v1/tech/integrations/), including Kafka, CleanSpeak and Twilio. The ability to have quality communication methods at your finger-tips are now possible
-inside an already easy to use platform.
+With a variety of [integrations](/docs/v1/tech/integrations/), including [Kafka](https://kafka.apache.org), [CleanSpeak](https://cleanspeak.com), and [Twilio](https://twilio.com), the ability to have quality communication methods at your finger-tips are now possible inside an easy to use platform. When I set up my instance of FusionAuth I chose to integrate with Twilio and it took only seconds. I simply plugged in my information and then used their built-in testing to send myself a quick text message to test out the integration. That's what I call quick two factor authentication integration.
 
-When I set up my instance of FusionAuth I chose to integrate with Twilio and it took only seconds. I simply plugged in my information and then used their built-in testing to send myself a quick test text message to test out the integration. That's what I call quick two factor authentication integration.
-
-FusionAuth recently hit [100 million users in a load test](/blog/2019/02/26/got-users-100-million). Enhanced scalability is one of many features that set FusionAuth apart from the competitors, including Google Firebase Authentication. When you need a plan for going from 10,000 users to one million or more, you will be happy to know that FusionAuth has you covered.
-
-There is nothing worse than having customers who can't login to use your services.  FusonAuth performs rigorous [penetration testing](/features/security-data-compliance) to constantly assess the security of their solution and to find more ways to improve and create additional security
-measures. 
-
-I don't have a million users on my apps right now, but I know if things go well then I have the ability to scale accordingly. Now I can focus my energies on marketing and creating new features and spend less effort on preparation for scalability.
+FusionAuth recently hit [100 million users in a load test](/blog/2019/02/26/got-users-100-million). Enhanced scalability is one of many features that set FusionAuth apart from the competitors, including Google Firebase Authentication. When you need a plan for going from 10,000 users to one million or more, you will be happy to know that FusionAuth has you covered. There is nothing worse than having customers who can't login to use your services.  FusionAuth performs rigorous [penetration testing](/features/security-data-compliance) to constantly assess the security of their solution and to find more ways to improve and create additional security measures. I don't have a million users on my apps right now, but I know if things go well then I have the ability to scale accordingly. Now I can focus my energies on marketing and creating new features and spend less effort on preparing for scalability.
 
 ## Customizing FusionAuth to make it your own authentication platform
 
@@ -45,28 +37,27 @@ I took the time to customize my roles, groups, logging preferences, email templa
 
 I ended up creating custom web hooks to set up specific triggers within my applications. Even changing the theme styles for my login page and registration pages were easier than I thought. Seems like anything that I would need to customize was available to be customized. And, I have to say that my logo looks smoothly integrated in the top left of the screen.
 
-This flexibility throughout FusionAuth encourages a high amount of customization of your platform. While Google Firebase Authentication is built in a much simpler way for a broader appeal to those who want to get started with authentication, FusionAuth works on finishing what Google Firebase Authentication began.
+This flexibility throughout FusionAuth encourages a high amount of customization of your platform. While Google Firebase Authentication is built for those who need to get up and running quickly with a basic level of authentication, FusionAuth works on finishing what Google Firebase Authentication began.
 
-I enjoy the sleek interface of FusionAuth and the ability to easily see the most recent logins on the main page; including a graph representing the logins by hour. The [reporting and metrics](/docs/v1/tech/apis/reports) of FusionAuth make analyzing your authentication platform a breeze. 
+I enjoy the sleek interface of FusionAuth and the ability to easily see the most recent logins on the main page; including a graph representing the logins by hour. The [reporting and metrics](/docs/v1/tech/apis/reports) of FusionAuth make analyzing your application usage a breeze. 
 
 {% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/reporting.png" alt="The reporting dashboard." class="img-fluid" figure=false %}
 
 Unfortunately, Google Firebase Authentication's metrics and usage reporting are almost non-existent. Currently, Google Firebase Authentication only is able to see the phone verifications under the Usage tab.
 
-Google Firebase Authentication does have a couple advanced features such as limiting one
-account per email address which prevents users from creating multiple accounts
-using the same email address with different authentication providers. Google Firebase
-Authentication also allows you to manage your sign-ups by IP addresses, making sure that a single IP address can only sign-up so many users, the default being 100 users.
+Google Firebase Authentication does have a couple advanced features such as limiting one account per email address which prevents users from creating multiple accounts using the same email address with different authentication providers. However, this feature can be quite limiting and frustrating for users that don't remember how they logged in previously. FusionAuth on the other hand allows users to authentication with multiple external providers and unify them all into a single User. This provides a much simpler and richer user experience. 
+
+Google Firebase Authentication also allows you to manage your sign-ups by IP addresses, making sure that a single IP address can only sign-up so many users, the default being 100 users. FusionAuth is currently working on an Advanced Threat Detection system that will handle this case and many others.
 
 ## Webhooks
 
-Want to know when a user fails to log in or maybe when a user account is deactivated? The advanced built-in web hooks from FusionAuth give you the ability to customize web hooks for each application; including the security type, authentication of the web hooks, and setup user actions based on web hook execution states.
+Want to know when a user fails to log in or maybe when a user account is deactivated? FusionAuth's Webhooks give you the ability fire off events from FusionAuth to other backend systems in your platform. FusionAuth supports many customizations for Webhooks including the security, timeouts, HTTP headers, and transactionality. This flexibility provides a rich set of integration possibilities that Firebase doesn't support.  
 
 {% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/webhook.png" alt="Webhook configuration lets you integrate easily with other applications." class="img-fluid" figure=false %}
 
 ## Enhanced security
 
-Identity providers are important, but vary depending on your specific needs. Being able to have third party logins, through Google Sign In, FaceBook, Twitter.  can enhance the ease of signing up users to your application. Both Google Fire Authentication and FusionAuth support a variety of [identity providers](/docs/v1/tech/identity-providers/); what sets FusionAuth apart is their integration with [HYPR](/docs/v1/tech/identity-providers/hypr).
+Identity providers are important, but vary depending on your specific needs. Being able to have third-party logins through external providers such as Google, Facebook, and Twitter, can enhance the ease of signing up users for your application. Both Google Firebase Authentication and FusionAuth support a variety of [identity providers](/docs/v1/tech/identity-providers/). What sets FusionAuth apart is their integration with [HYPR](/docs/v1/tech/identity-providers/hypr).
 
 HYPR is a passwordless Multi-Factored-Authentication (MFA) that greatly speeds up passwordless authentication. It runs silently in the background and makes it easy for your users to enroll multiple mobile devices with their desktops and laptops.
 
