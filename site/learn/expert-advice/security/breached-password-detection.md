@@ -97,9 +97,9 @@ Some services, such as the aforementioned Have I Been Pwned, also offer a REST A
 
 Test any third party API thoroughly to ensure that your application won't be negatively affected by relying on it. Authentication is a critical part of any application. If it is degraded, then the user experience is degraded as well. 
 
-Of course, you gain something when you use a third party API, too. Benefits include quicker time to market, reduced cost, or a simpler overall solution with fewer moving pieces. Starting with an API integration, perhaps using a [library such as these](https://haveibeenpwned.com/API/Consumers) may make sense. It's better to use a third party integration than to perform breached password detection at all. Later, you can build your own data ingestion system as your use increases or you need more control. 
+Of course, you gain something when you use a third party API, too. Benefits include quicker time to market, reduced cost, or a simpler overall solution with fewer moving pieces. Starting with an API integration, perhaps using a [library such as these](https://haveibeenpwned.com/API/Consumers), may make sense. It's better to use a third party integration than to perform no breached password detection at all. Later, you can build your own data ingestion system as your use increases or you need more control. 
 
-In any event, you'll have a source of compromised credentials and a way to check to see if a password is in that set.
+In any event, now you have a source of compromised credentials and a way to check to see if a password is in that set.
 
 ## Configuring your authentication system to check for leaked passwords
 
