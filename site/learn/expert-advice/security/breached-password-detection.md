@@ -24,7 +24,7 @@ Breached password detection can help. This practice consists of the following:
 * Finding breached and otherwise compromised lists of passwords. 
 * Optionally building a system to download, process and store these datasets.
 * Configuring or building a system to check passwords when authentication, registration and password events occur.
-* Taking action when a compromised credential is found.
+* Taking action when a leaked credential is found.
 
 Lets cover each of these in turn, but first, let's discuss some other reasons why you might be interested in implementing this functionality. 
 
@@ -34,11 +34,11 @@ Beyond preventing unauthorized access to your systems, which is of course a subs
 
 It is a service to your end users. Informing them that their account with you, and any other accounts that may share the same password, has been compromised is useful information. Depending on how you implement the notice, it can be difficult to ignore. It's easy to forget about an email or letter, but harder to ignore being unable to log in to an application you use.
 
-Compromised password detection is also a protective measure that you, as an application developer or operator, can apply without requiring any user action. Until a compromised password is found, of course. Following the principles of defense in depth, there are other user account security practices that you should evaluate, such as two factor authentication. Enabling many of these require end user cooperation. Secure two factor authentication, for example, requires a relatively sophisticated user who can install and manage a TOTP application, as SMS is not a secure method for authentication.
+Compromised password detection is also a protective measure that you, as an application developer or operator, can apply without requiring any user action. Until a leaked or insecure password is found, of course. Following the principles of defense in depth, there are other user account security practices that you should evaluate, such as two factor authentication. Enabling many of these require end user cooperation. Secure two factor authentication, for example, requires a relatively sophisticated user who can install and manage a TOTP application, as SMS is not a secure method for authentication.
 
 For users, especially when compared to the common practice of requiring a certain number of special characters or uppercase letters, checking for breached passwords is low impact. If it's not delightful, it is at the least not frustrating. Enabling detection also expands the universe of acceptable passwords, which may now include long passphrases without any special characters.
 
-### What does NIST have to say?
+### What does NIST have to say about breached password detection?
 
 In the same vein, [NIST, an American government agency](https://pages.nist.gov/800-63-3/sp800-63b.html#memsecret), recommends that auth systems should check passwords against a variety of sources; a "memorized secret" is NIST-speak for password. From the "Digital Identity Guidelines" document:
 
@@ -63,7 +63,7 @@ Why? Because doing so doesn't work. From the [NIST Guidelines FAQ](https://pages
 
 Hopefully you're convinced. Now, let's return to our previous discussion of implementation details.
 
-## Finding compromised credentials
+## Finding compromised passwords
 
 First, you need to find the passwords. Have I Been Pwned is a good place to start, but there are other providers out there, such as DeHashed or GhostProject. There may be substantial overlap between these providers. 
 
@@ -99,7 +99,7 @@ However, for a quick solution, start with an API integration, perhaps using a [l
 
 In any event, you'll have a source of compromised credentials and a way to check to see if a password is in that set.
 
-## Configuring your authentication system to check passwords
+## Configuring your authentication system to check for leaked passwords
 
 Now you'll need to hook into your user management service. Depending on what kind of auth system you have, the integration may be more or less difficult. However, you'll want to check passwords at a couple of different times during the lifecycle of a user's interactions with your systems:
 
