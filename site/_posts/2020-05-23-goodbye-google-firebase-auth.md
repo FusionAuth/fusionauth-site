@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Goodbye Google Firebase Authentication
-description: 
+title: Goodbye Google Firebase Authentication. Hello FusionAuth!
+description: I looked at FusionAuth after using Google Firebase. I was impressed by what I found. 
 author: Hunter Melnick
 image: blogs/news/blog-fusionauth-1-16.png
 category: blog
@@ -20,7 +20,8 @@ But now folks there's a better way...
 
 Welcome to FusionAuth!
 
-## Installation & Integration
+## Installation and Integration of FusionAuth
+
 
 I chose the self-hosting option when I installed FusionAuth, because it is free and
 I'm all about saving money. 
@@ -41,10 +42,7 @@ took only seconds. I simply plugged in my information and then used their built-
 testing to send myself a quick test text message to test out the integration. That's
 what I call quick two factor authentication integration.
 
-FusionAuth recently hit [100 million users in a load test](/blog/2019/02/26/got-users-100-million). Enhanced scalability is one
-many features that set FusionAuth apart from the competitors, including Google
-Firebase Authentication. When you need to plan to go from a 10,000 users to that million or more mark,
-you will be happy to know that FusionAuth has you covered.
+FusionAuth recently hit [100 million users in a load test](/blog/2019/02/26/got-users-100-million). Enhanced scalability is one of many features that set FusionAuth apart from the competitors, including Google Firebase Authentication. When you need a plan for going from 10,000 users to one million or more, you will be happy to know that FusionAuth has you covered.
 
 There is nothing worse than having customers who can't login to use your services.
 FusonAuth performs rigorous [penetration testing](/features/security-data-compliance) to constantly assess the security
@@ -56,7 +54,7 @@ go well then I have the ability to scale accordingly. Now I can focus my energie
 on marketing and creating new features and spend less effort on preparation for
 scalability.
 
-## Customization
+## Customizing FusionAuth to make it your own authentication platform
 
 FusionAuth offers an unprecedented amount of flexibility in being able to
 customize just about everything. From [email templates](/docs/v1/tech/email-templates/) to [themes and localization](/docs/v1/tech/themes/) to
@@ -89,6 +87,8 @@ platform a breeze.
 
 {% include _image.liquid src="/assets/img/blogs/fireauth-vs-fusionauth/reporting.png" alt="The reporting dashboard." class="img-fluid" figure=false %}
 
+## A grab bag of feature comparisons
+
 Unfortunately, Google Firebase Authentication's metrics and usage reporting
 are almost non-existent. Currently, Google Firebase Authentication only is able to see the phone
 verifications under the Usage tab.
@@ -111,8 +111,7 @@ execution states.
 
 Identity providers are important, but vary depending on your specific needs. Being
 able to have third party logins, through Google Sign In, FaceBook, Twitter.
-can enhance the ease of signing up users to your application. Both Google Fire
-Authentication support a variety of [identity providers](/docs/v1/tech/identity-providers/); what sets FusionAuth apart is
+can enhance the ease of signing up users to your application. Both Google Fire Authentication and FusionAuth support a variety of [identity providers](/docs/v1/tech/identity-providers/); what sets FusionAuth apart is
 their integration with [HYPR](/docs/v1/tech/identity-providers/hypr).
 
 HYPR is a passwordless Multi-Factored-Authentication (MFA) that greatly speeds
@@ -120,7 +119,7 @@ up passwordless authentication. It runs silently in the background and makes it
 easy for your users to enroll multiple mobile devices with their desktops and
 laptops.
 
-## Reactor
+## FusionAuth Reactor
 
 Power up your Reactor! Reactor takes the next leap forward in protecting your
 users. Reactor features [Breached Password Detection](/docs/v1/tech/reactor#breached-password-detection) and is a paid feature, but
