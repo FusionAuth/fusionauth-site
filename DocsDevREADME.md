@@ -67,7 +67,10 @@ end tell
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
    - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
-- Crop top/bottom if necessary (don't crop sides). 
+- Crop top/bottom if necessary (don't crop sides).
+   - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the 
+     class may not be necessary if there is adequate spacing below. When text continues below or right above you will need 
+     the class.
 - Highlight sections using image preview editor
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
