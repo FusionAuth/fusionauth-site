@@ -18,7 +18,7 @@ In addition to bug fixes and user interface improvements, there are a couple of 
 
 ### Advanced Registration Forms 
 
-FusionAuth now has support for [advanced registration forms](/docs/v1/tech/apis/forms). This [paid edition](/pricing) feature lets you build out flexible registration forms with no code required. You can add custom fields as well as controlling their display order. You can also set up multiple pages for registration; for example, you can have a step gathering personal information and then a second step asking for application specific registration information. Here's an example of adding a field to a custom registration form:
+FusionAuth now has support for [advanced registration forms](/docs/v1/tech/apis/forms). This [paid edition](/pricing) feature lets you build out flexible registration forms with no code required. You can add custom fields as well as control their display order. You can also set up multiple pages for registration; for example, you can have a step gathering personal information and then a second step asking for application specific registration information. Here's an example of adding a field to a custom registration form:
 
 {% include _image.liquid src="/assets/img/blogs/release-1-18/add-custom-registration-flow.png" alt="Adding a field to a custom registration form." class="img-fluid" figure=false %}
 
