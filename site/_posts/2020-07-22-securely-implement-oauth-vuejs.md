@@ -1,11 +1,11 @@
 ---
 layout: blog-post
-title: Adding social sign in to your Django web application using OAuth
-description: In this tutorial, we'll build a basic Django web application using FusionAuth for an easier and safer way of handling user registration and authentication.
-author: Gareth Dwyer
+title: How to Securely Implement OAuth in Vue
+description: This post describes how to securely implement OAuth in a Vue application using the Authorization Code Grant (with FusionAuth as the IdP).
+author: Ashutosh Singh 
 image: blogs/social-sign-in-django/headerimage.png
 category: blog
-tags: client-python
+tags: client-javascript
 excerpt_separator: "<!--more-->"
 ---
 
@@ -823,14 +823,13 @@ After  a successful post request, we use `.then()` to access the response from t
 You can see how an `access_token` looks like. The axios request ends with a catch block to throw any error that we may encounter.
 Now, head over to http://localhost:9000/login , if everything goes well, you will end up on your Vue application homepage because that is what we have set in `redirect_uri` and can see the response in the console(the terminal where you are running your server).
 
-XXX stopped here
 # Logout
 
 So, we have a `login` route that the signs in a user and then redirects back to our Vue app. Before we add this `login` route in our Vue app, let’s create a `logout` route and add them together, you will understand why it makes sense to add them together in a bit.
 
 Inside `server/routes` create a new file named `logout.js`.
 
-
+```
     server
     ├──node_modules
     ├──routes
@@ -841,19 +840,23 @@ Inside `server/routes` create a new file named `logout.js`.
     ├──index.js
     ├──package.json
     └─package-lock.json
+```
 
 Add then add this route to `index.js` 
 
-
+```javascript
+//...
     // Routes
     app.use('/user', require('./routes/user'))
     app.use('/login', require('./routes/login'))
     app.use('/logout', require('./routes/logout'))
     app.use('/oauth-callback', require('./routes/oauth-callback'))
+//...
+```
 
-Inside this `logout.js` file add the following.
+Inside the `logout.js` file add the following:
 
-
+```javascript
     const express = require('express');
     const router = express.Router();
     router.get('/', (req, res) => {
@@ -863,76 +866,76 @@ Inside this `logout.js` file add the following.
       res.redirect(`http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/logout?client_id=${process.env.CLIENT_ID}`);
     });
     module.exports = router;
+```
 
-Compared to `oauth-callback.js` it is pretty simple, we first destroy the Express server-side  session(and the `token` we store there) and then redirect to `oauth2/logout` endpoint with Client Id. 
+Compared to `oauth-callback.js` it is pretty simple, we first destroy the Express server-side session (and the `token` we store there) and then redirect to `oauth2/logout` endpoint with Client Id. 
 
-Head over to http://localhost:9000/logout and you will logout of FusionAuth, then head over to http://localhost:9000/login and you will see the login page which on submitting takes you back to your Vue application.
+Head over to http://localhost:9000/logout and you will logout from FusionAuth, then head over to http://localhost:9000/login and you will see the login page which on submitting takes you back to your Vue application.
 
-You might wonder why after **logging out** we **redirects back to our Vue app**, we didn’t write that in `logout.js` , this is happening because we configured the main entry point to our Vue App as Logout URL in FusionAuth, one of the two changes that we did. 
+You might wonder why after **logging out** we **redirect back to our Vue app**, yet we didn’t write that in `logout.js`. This is happening because we configured the main entry point to our Vue App as Logout URL in FusionAuth.
 
-
-# User 
+## Retrieving user data
 
 We have been using fake user up until now. Since we now have `access_token` stored in session we can use it to request actual user data from FusionAuth.
 
-Modify the `user.js` like 
+Modify the `user.js` to be:
 
-
-    const express = require("express");
-    const router = express.Router();
-    const axios = require("axios");
-    const qs = require("querystring");
-    
-    router.get("/", (req, res) => {
-      // token in session -> get user data and send it back to the vue app
-      if (req.session.token) {
-        axios
-          .post(
-            `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/introspect`,
-            qs.stringify({
-              client_id: process.env.CLIENT_ID,
-              token: req.session.token,
+```javascript
+const express = require("express");
+const router = express.Router();
+const axios = require("axios");
+const qs = require("querystring");
+  
+router.get("/", (req, res) => {
+  // token in session -> get user data and send it back to the vue app
+  if (req.session.token) {
+    axios
+      .post(
+        `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/introspect`,
+        qs.stringify({
+          client_id: process.env.CLIENT_ID,
+          token: req.session.token,
+        })
+      )
+      .then((result) => {
+        let introspectResponse = result.data;
+        // valid token -> get more user data and send it back to the Vue app
+        if (introspectResponse) {
+          
+          // GET request to /registration endpoint
+          axios
+            .get(
+              `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APLICATION_ID}`,
+              {
+                headers: {
+                  Authorization: process.env.API_KEY,
+                },
+              }
+            )
+            .then((response) => {
+              res.send({
+                introspectResponse: introspectResponse,
+                body: response.data.registration,
+              });
             })
-          )
-          .then((result) => {
-            let introspectResponse = result.data;
-            // valid token -> get more user data and send it back to the Vue app
-            if (introspectResponse) {
-              
-              // GET request to /registration endpoint
-              axios
-                .get(
-                  `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APLICATION_ID}`,
-                  {
-                    headers: {
-                      Authorization: process.env.API_KEY,
-                    },
-                  }
-                )
-                .then((response) => {
-                  res.send({
-                    introspectResponse: introspectResponse,
-                    body: response.data.registration,
-                  });
-                })
-            }
-          // expired token -> send nothing 
-            else {
-              req.session.destroy();
-              res.send({});
-            }
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-      }
-       // no token -> send nothing
-       else {
-        res.send({});
-      }
-    });
-    module.exports = router;
-    
+        }
+      // expired token -> send nothing 
+        else {
+          req.session.destroy();
+          res.send({});
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+  // no token -> send nothing
+  else {
+    res.send({});
+  }
+});
+module.exports = router;
+```
 
 Let’s discuss this step by step. 
 
@@ -940,7 +943,9 @@ First, we check if `access_token`  is present and then make a **POST** request t
 
 When this request is successful, we get a response object which contains `data` property that has all the information we need.
 
+Here's an example of the JSON:
 
+```json
     {
       active: true,
       applicationId: '9d5119d4-71bb-495c-b762-9f14277c116c',
@@ -954,11 +959,12 @@ When this request is successful, we get a response object which contains `data` 
       roles: [],
       sub: 'abdee025-fa3c-4ce2-b6af-d0931cfb4cea'   
     }
+```
 
-Then we make another request  to access more user information this time a **GET** request to the `/api/user/registration` API. This API requires User ID or the `sub` value of our response from `oauth2/introspect` endpoint. When this request is successful, we send all the data to our client via `res.send()` .
+Then we make another request  to access more user information this time a **GET** request to the `/api/user/registration` API. This API requires the User ID which is the `sub` value of our response from `oauth2/introspect` endpoint. When this request is successful, we send all the data to our client via `res.send()` .
 This is how the response from `/api/user/registration` looks like.
 
-
+```json
     {
         "applicationId": "9d5119d4-71bb-495c-b762-9f14277c116c",
         "data": "",
@@ -969,16 +975,18 @@ This is how the response from `/api/user/registration` looks like.
         "usernameStatus": "ACTIVE",
         "verified": true
     }
+```
 
-The API key that we are passing in headers is not part of OAuth parameters and you will not find it in [User Registration API Docs](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). Still, we added this to show how you will use the API Key (in `Authorization` header) if you decide to explore more endpoints from the Docs that require the API key.
+The API key that we are passing in headers is not part of OAuth standard. You need it to call non-standard endpoints such as the  [User Registration API Docs](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you will use the API Key (in `Authorization` header) if you decide to explore more endpoints from the Docs that require the API key.
 
 ## Showing User Data
 
-We can now access user’s information as available on FusionAuth, now next step is to display that data. In our `App.vue` we need to modify `mounted()`, since this time we are getting a response object that contains data from two endpoints.
+We can now access user's information that was stored in FusionAuth. The next step is to display that data. In our `App.vue` we need to modify `mounted()`, since this time we are getting a response object that contains data from two endpoints.
 
 We just need to one line in `App.vue`, instead of `data.user.email`, this time it will be `data.introspectResponse.email` . While we are doing this, let’s define `body` as null in `data()` and store `body` field of the response object inside it. 
 
-
+```javascript
+//...
      data() {
         return {
           email: null,
@@ -995,110 +1003,114 @@ We just need to one line in `App.vue`, instead of `data.user.email`, this time i
             this.body= data.body;
           });
       }
+//...
+```
 
 Everything else remains the same, we are now getting user information from FusionAuth in our application instead of fake user data. 
-Go through the login process once again, and you should see “Welcome [your email address]”.
+Go through the login process once again, and you should see "Welcome [your email address]".
 
-# Adding SignIn/SignOut in Vue
+## Adding sign in and sign out in Vue
 
-We have created the endpoints for `login`  and `logout`  so  let's add them in our Vue application. Create a new file named `Login.vue` and add the following
+We have created the endpoints for `login` and `logout` so let's add them in our Vue application. Create a new file named `Login.vue` and add the following
 
+```html
+<template>
+  <h1 v-if="email"><a href='http://localhost:9000/logout'>Sign Out</a></h1>
+  <h1 v-else><a href='http://localhost:9000/login'>Sign In</a></h1>
+</template>
+<script>
+export default {
+  name: "Login",
+  props: ["email"],
+};
+</script>
+```
 
-    <template>
-      <h1 v-if="email"><a href='http://localhost:9000/logout'>Sign Out</a></h1>
-      <h1 v-else><a href='http://localhost:9000/login'>Sign In</a></h1>
-    </template>
-    <script>
-    export default {
-      name: "Login",
-      props: ["email"],
-    };
-    </script>
+According to the above code, if the user is not logged in, `Sign In` will be shown else `Sign Out` will be shown. `email` is passed from `App.vue` as a prop here, so let’s do that. In our `App.vue`, first import this file :
 
-According to the above code, if the user is not logged in, `Sign In` will be shown else `Sign Out` will be shown, this `email` is passed from `App.vue` as a prop here, so let’s do that. In our `App.vue`
-first import this file 
-
-
-    import Login from "./Login";
+```javascript
+import Login from "./Login";
+```
 
 And then add this to `components` 
 
-
-    components: {
-        Greet,
-        Login 
-      }
-
+```javascript
+components: {
+  Greet,
+  Login 
+}
+```
  
 And finally use it inside `<template>  </template>`, 
 
-
-        <div id="container">
-          <Greet v-bind:email="email" />
-          <Login v-bind:email="email" />
-        </div>
+```html
+<div id="container">
+  <Greet v-bind:email="email" />
+  <Login v-bind:email="email" />
+</div>
+```
 
 Here is how it our application looks like now, we can now login and logout with a click.
+
+TBD image
 
 ![](https://paper-attachments.dropbox.com/s_41A638AB568946D29BF8A350B42F51304EFAAF396CFE14497A5C33D427FDA743_1594893599430_image.png)
 ![](https://paper-attachments.dropbox.com/s_41A638AB568946D29BF8A350B42F51304EFAAF396CFE14497A5C33D427FDA743_1594893751537_image.png)
 
-# Changing User Info
+## Changing User Info
 
 This last section deals with setting user data from our application.
 
-## set-user-data route
+We will  create the `/set-user-data` route, so inside `routes` create `set-user-data.js` and add this code to it:
 
-We will  create the `/set-user-data` route, so inside `routes` create `set-user-data.js` and add the following to it.
-
-
-    const express = require("express");
-    const router = express.Router();
-    const axios = require("axios");
-    const qs = require("query-string");
-    router.post("/", (req, res) => {
-     // POST request to /introspect endpoint
-      axios
-        .post(
-          `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/introspect`,
-          qs.stringify({
-            client_id: process.env.CLIENT_ID,
-            token: req.session.token,
-          })
-        )
-        .then((response) => {
-          let introspectResponse = response.data;
-        
-          // PATCH request to /registration endpoint
-          axios.patch(
-            `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APLICATION_ID}`,
-            {
-              registration: {
-                data: req.body,
-              },
-            },
-            {
-              headers: {
-                Authorization: process.env.API_KEY,
-              },
-            }
-          ).catch(err=>{
-              console.log(err)
-          })
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+```javascript
+const express = require("express");
+const router = express.Router();
+const axios = require("axios");
+const qs = require("query-string");
+router.post("/", (req, res) => {
+  // POST request to /introspect endpoint
+  axios
+    .post(
+      `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/introspect`,
+      qs.stringify({
+        client_id: process.env.CLIENT_ID,
+        token: req.session.token,
+      })
+    )
+    .then((response) => {
+      let introspectResponse = response.data;
     
+      // PATCH request to /registration endpoint
+      axios.patch(
+        `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APLICATION_ID}`,
+        {
+          registration: {
+            data: req.body,
+          },
+        },
+        {
+          headers: {
+            Authorization: process.env.API_KEY,
+          },
+        }
+      ).catch(err=>{
+          console.log(err)
+      })
+    })
+    .catch((err) => {
+      console.error(err);
     });
-    module.exports = router;
-    
 
-To ensure that we are updating the user currently logged in, we  extract token from our server which is done by making a **POST** request to `oauth/introspect` endpoint as we have already done in  `oauth2/user` route. 
+});
+module.exports = router;
+```
+
+To ensure that we are updating the user currently logged in, we  extract the token from our server which is done by making a **POST** request to `oauth/introspect` endpoint as we have already done in  `oauth2/user` route. 
 
 Once this request is successful, we make a **PATCH** request to `/api/user/registration` API. If you go through the [Docs](https://fusionauth.io/docs/v1/tech/apis/registrations#update-a-user-registration), you will find that this API accepts both **PUT** and **PATCH** requests but here we are using **PATCH** since we only want to update a single resource and **PATCH** will merge the request parameters to the existing object. 
 
-The `data` to send is stored inside the `registration` object which takes it value from `req.body` or body of the request. This `registration` is an object FusionAuth provides for storing arbitrary data related to a user’s registration in an application. We will be sending user data from our Vue app to the Express server via JSON in the body of a **POST** HTTP message.
+The `data` to send is stored inside the `registration` object which takes it value from `req.body`. This `registration` represents a user's association with an application. The `data` attribute is an object FusionAuth provides for storing arbitrary data related to a user’s registration in an application. We will be sending user data from our Vue app to the Express server via JSON in the body of a **POST** HTTP message.
 
 
 ## Setting User Data from Vue
@@ -1107,100 +1119,102 @@ Now that we have created our route for updating user data, let’s create a `tex
 
 In `client/src` create a new file named `Update.vue` and add the following to it.
 
+```html
+<template>
+  <form>
+    <textarea
+      v-model="userData"
+      placeholder="Update FusionAuth user data."
+    ></textarea>
+    <button type="submit" class="button">Submit</button>
+  </form>
+</template>
+<script>
+export default {
+  name: "Update",
+  data() {
+    return {
+      userData: "",
+    };
+  },
+</script>
+<style>
+textarea {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+button {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5px;
+}
+</style>
+```
 
-    <template>
-      <form>
-        <textarea
-          v-model="userData"
-          placeholder="Update FusionAuth user data."
-        ></textarea>
-        <button type="submit" class="button">Submit</button>
-      </form>
-    </template>
-    <script>
-    export default {
-      name: "Update",
-      data() {
-        return {
-          userData: "",
-        };
-      },
-    </script>
-    <style>
-    textarea {
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    button {
-      margin-left: auto;
-      margin-right: auto;
-      margin-top: 5px;
-    }
-    </style>
-    
+One of the cool features of Vue is that by using `v-model="userData``"`  and initializing `userData=``""` in `data()` , it creates a two-way data binding between `textarea` and `userData`.
 
-One of the cool features of Vue is that by using  `v-model="userData``"`  and initializing `userData=``""` in `data()` , it creates a two-way data binding between `textarea` and `userData`.
 We can now access whatever we type in `textarea` in `userData`. You can read more about it [here](https://vuejs.org/v2/guide/forms.html).
 
-And then add this component to `App.vue` . It does not make sense to show this component when the user is not logged in. FFor that just add `v-if =` `"``email` with this component like this and like some of our other components it will check to see if the `email` is present or not, i.e., user is logged in or not.
+And then add this component to `App.vue` . It does not make sense to show this component when the user is not logged in. To hide it, just add `v-if =` `"``email` with this component like this and like some of our other components it will check to see if the `email` is present or not, i.e., user is logged in or not.
 
-
-    <Update v-if="email" />
+```html
+<Update v-if="email" />
+```
 
 Here is how our application looks like
 
+TBD pic
 ![](https://paper-attachments.dropbox.com/s_41A638AB568946D29BF8A350B42F51304EFAAF396CFE14497A5C33D427FDA743_1594903024881_image.png)
 ![](https://paper-attachments.dropbox.com/s_41A638AB568946D29BF8A350B42F51304EFAAF396CFE14497A5C33D427FDA743_1594903073925_image.png)
 
 
-We still haven’t configured the `Submit` button, so let do so to send whatever we type in `textarea` to our server. For this, we will create a function `update` inside the `methods()`.
+We still haven’t configured the `Submit` button, so let do so to send whatever we type in `textarea` to our server to be stored. For this, we will create a function `update` inside the `methods()`.
 
-
-      methods: {
-        update: function() {
-          fetch(`http://localhost:9000/set-user-data`, {
-            credentials: "include",
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userData: this.userData,
-            }),
-          }).catch((err) => {
-              console.log(err);
-            });
-            this.userData=''
-        },
+```javascript
+//...
+methods: {
+  update: function() {
+    fetch(`http://localhost:9000/set-user-data`, {
+      credentials: "include",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        userData: this.userData,
+      }),
+    }).catch((err) => {
+        console.log(err);
+      });
+      this.userData=''
+  },
+},
+//...
+```
 
-In the above function, we use `fetch()` to **POST** JSON-encoded data. Here  `credentials: "include",`  is used for cross-origin calls, if you are familiar with `fetch()` API, you will see that this is a simple **POST** request using `fetch()`, nothing fancy. You can read more about it [here](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch).
+In the above function, we use `fetch()` to **POST** JSON-encoded data. Here, `credentials: "include",`  is used for cross-origin calls, if you are familiar with `fetch()` API, you will see that this is a simple **POST** request using `fetch()`, nothing fancy. You can read more about it [here](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch).
 
 Once we have sent `userData` to our server, we empty the `textarea` using `this.userData=``''`, since it is a two-way binding.
 
 And now to bind this function to `submit` event we will add the following to the `form` tag.
 
-
-    <form @submit.prevent="update">
-    //
-    </form>
+```html
+<form @submit.prevent="update">
+  //
+</form>
+```
 
 Using `.prevent` stops the page from reloading whenever the Submit button is clicked. Now go to your Vue app and type some message in the `textarea` and click the Submit button. You can now see that message under **User data** in **Users** tab in the FusionAuth dashboard. 
 
-
+Pic TBD
 ![](https://paper-attachments.dropbox.com/s_41A638AB568946D29BF8A350B42F51304EFAAF396CFE14497A5C33D427FDA743_1594903545542_image.png)
 
-
-
-
-----------
-# Conclusion
+## Conclusion
 
 Congrats, you have built a Vue app that can log in, log out, and modify user data. This article provides a good foundation for implementing OAuth using FusionAuth, and there are still so many features, components, and routes that you can create. 
 
-Here are a few ideas of what you can do:
-
+Here are a few ideas of what you can do to take next steps:
 
 - [Register Users from the App itself.](https://fusionauth.io/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined)
 - Secure your server using middlewares like [Helmet,](https://www.npmjs.com/package/helmet) 
