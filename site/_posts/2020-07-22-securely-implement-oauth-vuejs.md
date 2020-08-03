@@ -52,8 +52,6 @@ Next is to configure our application, there are only two configuration settings 
 - Set `Authorized redirect URLs` to `http://localhost:9000/oauth-callback`. This is the Express server URL that will handle processing the FusionAuth callback after a user signs in.
 - Set `Logout URL` to  `http://localhost:8081`. This is the URL where the FusionAuth server will redirect us after logout; this is the URL where the Vue app lives. It makes sense that after logout you end up being on the main landing page of the application.
 
-Record the Client Id and Client Secret values as well for later use.
-
 Click **Save**.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/application-configuration.png" alt="OAuth settings for the new application." class="img-fluid" figure=false %}
@@ -216,7 +214,7 @@ Now, you may wonder where to get all this other information for `.env` file, jus
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/oauth-configuration.png" alt="Client Id and Client Secret settings for the application." class="img-fluid" figure=false %}
 
-We have not discussed how to create the `API_KEY`, but [learn more about it here](https://fusionauth.io/docs/v1/tech/apis/authentication) if you want to create your own.
+We have not discussed how to create the `API_KEY`, but [learn more about it here](https://fusionauth.io/docs/v1/tech/apis/authentication) if you want to create your own, otherwise use the one you noted above.
 
 Below is the code for a basic express server; notice that we make use of `dotenv` by adding the following code inside our `index.js`:
 
