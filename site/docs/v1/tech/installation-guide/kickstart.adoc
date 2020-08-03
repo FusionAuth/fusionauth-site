@@ -18,8 +18,7 @@ Kickstart will only run if no API keys, users or tenants exist, so you can safel
 
 Let's work from simple to complex, each example will introduce a new feature so you can learn how to best build and leverage the options available to you as you build out your kickstart file.
 
-The examples found here, as well as community contributed examples may also be found on GitHub in the FusionAuth Kickstart repository. If you think you've got a cool kickstart, please submit a PR, your example may really help the community.
-* https://github.com/FusionAuth/fusionauth-example-kickstart
+The examples found here, as well as community contributed examples may also be found on GitHub in the https://github.com/FusionAuth/fusionauth-example-kickstart[FusionAuth Kickstart repository]. If you think you've got a cool kickstart, please submit a PR, your example may really help the community.
 
 === The API key
 
@@ -35,11 +34,13 @@ Here is the simplest kickstart file you can use, it simply adds a single API key
 }
 ```
 
+This API key can be any string, and you should specify one unique to your FusionAuth instance. Please don't use the above key in a production environment. It's a good idea to have it be a long random value. Any alphanumeric character or `-` or `_` characters are allowed.
+
 ==== Scoping an API key
 
-The first API key you specify has to have authority to all tenants and all endpoints. If you want to create subsequent API keys these can optionally be scoped to a Tenant and have restrictions on which endpoints they can call.
+The first API key you specify has to have authority over all tenants and permissions against all endpoints. If you want to create subsequent API keys these can optionally be scoped to a Tenant and have restrictions on which endpoints they can call.
 
-In this example we still have the first API key because it must have authority to all endpoints, and we will create a second API key that is restricted.
+In this example we still have the first API key with global permissions, but we will create a second API key that is restricted.
 
 ```json
 {
@@ -68,7 +69,7 @@ You may find yourself repeating yourself when you build your kickstart file, nob
 
 To use a variable, define the key and value in the `variables` section of the kickstart file and then access that value anywhere outside of the `variables` section using the `#{foo}` notation where `foo` is the name of the variable.
 
-Here is the same example as above, but instead of hard coding the API key, we are using a variable which can be re-used. This example is not particularly helpful, we've only moved the value from the `apiKeys` section to the `variables` section, but using variables may come in handy as you'll see in the next few examples.
+Here is the same example as above, but instead of hard coding the API key, we are using a variable which can be reused. This example is not particularly helpful, we've only moved the value from the `apiKeys` section to the `variables` section, but using variables can come in handy as you'll see in the next few examples.
 
 ```json
 {
@@ -86,7 +87,7 @@ Here is the same example as above, but instead of hard coding the API key, we ar
 
 === Using Environment Variables
 
-It is reasonable to think you may not want to hard code a password or API key in the kickstart file which could get checked into Git. You can use environment variables which should make this a bit easier for you.
+It is reasonable to think you may not want to hard code a password or API key in the kickstart file which could get checked into version control. You can use environment variables which should make this a bit easier for you.
 
 To use an environment variable prefix the name of the environment variable with `ENV.`.
 
@@ -107,7 +108,7 @@ Here is the same example as above, but instead of hard coding the API key, we ar
 
 === Adding API Requests
 
-Now comes the interesting part, once you have defined at least one API key, you can define one to many API requests that will be executed in order using the primary API key. You may call any API you like, you are only limited to the `POST`, `PUT` and `PATCH` HTTP methods.
+Now comes the interesting part. Once you have defined at least one API key, you can define one to many API requests that will be executed in order using the primary API key. You may call any API you like, but you are limited to the `POST`, `PUT` and `PATCH` HTTP methods.
 
 Here is an example of creating a FusionAuth admin user using the `requests` object array. This example is using the link:/docs/v1/tech/apis/registrations[Registration API] to create the User and registration in a single request.
 
@@ -157,7 +158,7 @@ If you don't create a tenant using the Tenant API in your kickstart file then yo
 
 There is a top level property in the request called `tenantId` and you simply set that value to indicate which Tenant you wish to use.
 
-In this example, we'll create a new application and we'll do it in a second tenant that we create. Because I need to know the `tenantId` I am generating a new UUID using the `#{UUID()}` variable value and assigning it to `secondTenantId`. Now I can re-use this value to create the tenant, and to make the Create Application API request.
+In this example, we'll create a new application and we'll do it in a second tenant that we create. Because I need to know the `tenantId` I am generating a new UUID using the `#{UUID()}` function call and assigning that value to `secondTenantId`. Now I can re-use this value to create the tenant, and to make the Create Application API request.
 
 This kickstart will create a second tenant named `Aviato` which will contain a single application named `My Cool Application`.
 
@@ -199,7 +200,7 @@ This kickstart will create a second tenant named `Aviato` which will contain a s
 
 ==== Tenants API Keys
 
-An API key may also be configured to be restricted to a single tenant. To do this, add the `tenantId` to the API key configuration.
+An API key may also be configured to be restricted to a single tenant, as implied above. To do this, add the `tenantId` to the API key configuration.
 
 In this example we will modify the restricted API key example from above to further limit it for use with one tenant.
 
@@ -245,7 +246,7 @@ In this example we will modify the restricted API key example from above to furt
 
 FusionAuth generates the Id for the default tenant when the database schema is first created. For development and production environments it may be helpful to have a known tenantId for consistency across environments.
 
-You may modify the default Tenant Id in your kickstart file by setting a special variable. In this example we have set the default Tenant Id to `30663132-6464-6665-3032-326466613934`. This value must be a valid UUID.
+You may modify the default Tenant Id in your kickstart file by setting a special variable: `defaultTenantId`. In this example we have set the default Tenant Id to `30663132-6464-6665-3032-326466613934`. This value must be a valid UUID.
 
 The value resolved when using the `FUSIONAUTH_TENANT_ID` variable will reflect this change.
 
@@ -261,7 +262,7 @@ The value resolved when using the `FUSIONAUTH_TENANT_ID` variable will reflect t
 
 If you have a paid edition you will be provided with a License Id. If you would like to set this value during kickstart you will set the value in a top level field called `licenseId`.
 
-In this example I have a license Id of `eb7244dc-5d8e-40cd-a005-70b116fbda31.`
+In this example I have a license Id of `eb7244dc-5d8e-40cd-a005-70b116fbda31`.
 ```json
 {
   "licenseId": "eb7244dc-5d8e-40cd-a005-70b116fbda31"
@@ -273,7 +274,7 @@ In this example I have a license Id of `eb7244dc-5d8e-40cd-a005-70b116fbda31.`
 
 When making API requests to create an Email template or request which may have lengthy values, it may be helpful to separate these values into separate files. The directories shown here are just examples, and you can use your own convention.
 
-To include a file in your kickstart definition use the `@{fileName}` syntax where the `fileName` is a relative path from your kickstart file.
+To include a text file in your kickstart definition, use the `@{fileName}` syntax where the `fileName` is a relative path from your kickstart file. For this type of include, we handle all line returns and properly JSON escape them for use in a JSON request body.
 
 For example, consider the following directory structure:
 
@@ -316,11 +317,13 @@ In this example we are creating an Email template and reading in the values for 
 }
 ```
 
+Newlines are preserved in included text files, whereas they are not in the kickstart file. If you are, for example, including a lambda function definition, it may lead to better readability if you include the body from a text file.
+
 === Include JSON files
 
 If you're making a lot of API requests, or simply want to manage each API request body separately it may be helpful to read in external JSON files. The directories shown here are just examples, and you can use your own convention.
 
-To include a JSON file in your kickstart definition use the `&{fileName}` syntax where the `fileName` is a relative path from your kickstart file.
+To include a JSON file in your kickstart definition use the `&{fileName}` syntax where the `fileName` is a relative path from your kickstart file. If this type of include is used, we expect the file to be JSON and we don't do anything with line returns.
 
 For example, consider the following directory structure:
 
@@ -419,3 +422,24 @@ And the usage in the kickstart file:
   ]
 }
 ```
+
+=== Reference
+
+The following environment variables  are built in:
+
+* `FUSIONAUTH_APPLICATION_ID` - The Id of the FusionAuth application
+* `FUSIONAUTH_TENANT_ID` - The Id of the default Tenant which is where the FusionAuth application resides
+ 
+The following functions are built in:
+
+* `UUID()` - Provides a random UUID
+
+The following are special variables:
+
+* `defaultTenantId` - The Id of the default Tenant which is where the FusionAuth application resides. Set this if you'd like to control the Id.
+
+You may not add comments to kickstart files. 
+
+The escape character sequence is `\\`.
+
+
