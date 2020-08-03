@@ -8,13 +8,13 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.18. The 1.18 release shipped on July 21, 2020. This version delivers new features as well as resolving issues for users on version 1.17 and older.
+We're excited to announce the release of version 1.18. The 1.18 release shipped in July, 2020. This version delivers new features as well as resolving issues for users on version 1.17 and older.
 
 <!--more-->
 
 ## Highlights
 
-In addition to bug fixes and user interface improvements, there are a couple of features available only to users of paid editions.
+In addition to bug fixes and user interface improvements, there are a couple of features available to users of paid editions.
 
 ### Advanced Registration Forms 
 
@@ -24,11 +24,11 @@ FusionAuth now has support for [advanced registration forms](/docs/v1/tech/apis/
 
 ### Connectors
 
-Support for [LDAP integration](xxx) has also been added, as well as a general framework for allowing authentication against external systems. These are referred to as Connectors. When you configure a Connector, you can write flexible rules determining which users will use the Connector and whether to migrate the external user information to FusionAuth. FusionAuth will authenticate users against external systems. This functionality is in technology preview, and is also a [paid edition](/pricing) feature. 
+Support for [LDAP integration](/docs/v1/tech/apis/connectors/ldap) has also been added, as well as a general framework for allowing authentication against external systems. These are referred to as Connectors. When you configure a Connector, you can write flexible rules determining which users will use the Connector and whether to migrate the external user information to FusionAuth. FusionAuth will authenticate users against external systems. This functionality is in technology preview, and is also a [paid edition](/pricing) feature. 
 
 {% include _image.liquid src="/assets/img/blogs/release-1-18/set-up-ldap-connector.png" alt="Adding an LDAP connector" class="img-fluid" figure=false %}
 
-In addition to these features, there were over ten other bugs squashed and GitHub issues resolved as well. These fixes include changes to JWT claims, consents and refresh tokens. Please see the [release notes](/docs/v1/tech/release-notes#version-1-18-1) for the full breakdown of the changes between 1.17 and 1.18. 
+In addition to these features, there were over ten other bugs squashed and GitHub issues resolved as well. These fixes include changes to JWT claims, consents and refresh tokens. Please see the [release notes](/docs/v1/tech/release-notes) for the full breakdown of the changes between 1.17 and 1.18. 
 
 This release includes a substantial data migration, so if you have a large number of users, make sure you test the upgrade process; testing upgrades with 3M+ users took approximately 3-5 minutes on bare metal with an SSD. 
 
