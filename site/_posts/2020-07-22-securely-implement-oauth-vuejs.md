@@ -649,9 +649,7 @@ Another thing is the `stateValue` or the state parameter, which is generally use
 
 Let’s discuss the other parameters we have used above. `redirect_uri` informs FusionAuth where to redirect the user to after login. `response_type` tells FusionAuth which OAuth flow we’re using (Authorization Code in this example).
 
-Try navigating to http://localhost:9000/login. And if everything is correct, you will see an error. Yes your code is working fine, no need to recheck. You will see an error like this.
-
-{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/initial-error.png" alt="An error screen on a login attempt" class="img-fluid" figure=false %}
+Try navigating to http://localhost:9000/login. And if everything is correct, you will see an error. Yes your code is working fine, no need to recheck. You will see an `invalid_client` error.
 
 If you review `login.js` above, you will find that `REDIRECT_URI` is set to `http://localhost:9000/oauth-callback` in our `.env` file but we haven’t actually created that route yet. So this error makes sense. We're actually logged in because we signed into the FusionAuth Dashboard from our previous configuration. 
 
