@@ -1,0 +1,66 @@
+---
+layout: doc
+title: LDAP Connector Reconcile
+description: An overview of the LDAP Connector Reconcile lambda
+---
+
+:sectnumlevels: 0
+
+== LDAP Connector Reconcile lambda
+
+When an LDAP Connector is used to authenticate a user based upon the Tenant connector policies, the LDAP Connector lambda is used to map the LDAP attributes into a FusionAuth user.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+[source,javascript]
+----
+function reconcile(user, userAttributes) {
+  // Lambda code goes here
+}
+----
+
+This lambda must contain a function named `reconcile` that takes two parameters. The parameters that the lambda is passed are:
+
+* `user` - the FusionAuth User object
+* `userAttributes` - the user attributes returned from LDAP during authentication
+
+The FusionAuth user object is well documented the link:../apis/users[User API] documentation. The `userAttributes` object may contain various values returned by the LDAP server.
+
+== Assigning the lambda
+
+Once a lambda is created, you may use it when adding an LDAP Connector in the Connector configuration.
+
+Navigate to [breadcrumb]#Settings -> Connectors# and click [breadcrumb]#Add# and select LDAP when prompted to select a connector type.
+
+== Example lambda
+
+The following is a simple example of an LDAP Connector reconcile lambda. You will need to modify it to suit your needs.
+
+[source,javascript]
+----
+// This is an example LDAP Connector reconcile, modify this to your liking.
+function reconcile(user, userAttributes) {
+
+  // Un-comment this line to see the userAttributes object printed to the event log
+  // console.info(JSON.stringify(userAttributes, null, 2));
+
+  // This assumes the 'uid' attribute is a string form of a UUID in the format
+  // `8-4-4-4-12`. It will be necessary to ensure an attribute is returned by your LDAP
+  // connection that can be used for the FusionAuth user Id.
+  user.id = userAttributes.uid;
+  user.active = true;
+
+  user.email = userAttributes.mail;
+  user.fullName = userAttributes.cn;
+
+  // In this example, the registration is hard coded, you may also build this
+  // dynamically based upon the returned LDAP attributes.
+  user.registrations = [{
+    applicationId: "5d562fea-9ba9-4d5c-b4a3-e57bb254d6db",
+    roles = ['user', 'admin']
+  }];
+
+}
+----

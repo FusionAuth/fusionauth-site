@@ -79,8 +79,9 @@ include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 The encoded access token.
 
 [field]#refreshToken# [type]#[String]#::
-The refresh token. This value will only be returned if a valid non-expired refresh token was provided on the request. The returned refresh token will share the same creation time as the original refresh token in regards to how the token expiration is calculated.
-
+The refresh token. This value will only be returned if a valid non-expired refresh token was provided on the request and [field]#application.loginConfiguration.generateRefreshTokens# is `true`. The returned refresh token will share the same creation time as the original refresh token in regards to how the token expiration is calculated.
++
+The refresh token expiration policy as defined by [field]#jwtConfiguration.refreshTokenExpirationPolicy# must be the same as the source application, if the policies are different a refresh token will not be returned.
 [source,json]
 .Example Response JSON
 ----
@@ -259,6 +260,8 @@ include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[
 [.api]
 [field]#refresh_token# [type]#[String]# [optional]#Optional#::
 The refresh token to be used to obtain a new access token.
++
+This value is required but optional as a cookie. It must be provided in either the request body or as a cookie.
 
 [field]#access_token# [type]#[String]# [optional]#Optional#::
 The previously issued encoded access token.  When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
@@ -268,6 +271,8 @@ The previously issued encoded access token.  When provided on the request, this 
 [.api]
 [field]#refreshToken# [type]#[String]# [optional]#Optional#::
 The refresh token to be used to obtain a new access token.
++
+This value is required but optional in the request body. It must be provided in either the request body or as a cookie.
 
 [field]#token# [type]#[String]# [optional]#Optional#::
 The previously issued encoded access token.  When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
@@ -296,7 +301,11 @@ include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 
 [.api]
 [field]#refreshToken# [type]#[String]#::
-The refresh token. The value will depend on the `tenant.jwtConfiguration.refreshTokenUsagePolicy`. 
+The refresh token.
++
+When [field]#jwtConfiguration.refreshTokenUsagePolicy# is equal to `Reusable` this will be equal to the refresh token provided in the request. When [field]#jwtConfiguration.refreshTokenUsagePolicy# is equal to `OneTimeUse` a new value will be returned and the previous refresh token value will no longer be valid.
++
+The [field]#jwtConfiguration.refreshTokenUsagePolicy# is configured at the tenant, and optionally per application.
 
 [field]#token# [type]#[String]#::
 The encoded access token.
@@ -314,7 +323,11 @@ include::docs/src/json/jwt/refresh-post-response.json[]
 The encoded access token. This cookie is written in the response as an `HTTPOnly` session cookie.
 
 [field]#refresh_token# [type]#[String]#::
-The encoded refresh token. This cookie is written in the response as an `HTTPOnly` cookie. The value will depend on the `tenant.jwtConfiguration.refreshTokenUsagePolicy`. 
+The encoded refresh token.
++
+This cookie is written in the response as an `HTTPOnly` cookie. When [field]#jwtConfiguration.refreshTokenUsagePolicy# is equal to `Reusable` this will be equal to the refresh token provided in the request. When [field]#jwtConfiguration.refreshTokenUsagePolicy# is equal to `OneTimeUse` a new value will be returned and the previous refresh token value will no longer be valid.
++
+The [field]#jwtConfiguration.refreshTokenUsagePolicy# is configured at the tenant, and optionally per application.
 
 == Retrieve Refresh Tokens
 
@@ -366,7 +379,7 @@ A unique device identifier to represent the device for which this Refresh Token 
 +
 [deprecated]#Removed in version 1.5.0# This parameter will no longer be returned in the response body.
 
-[field]#refreshTokens``[x]``.insertInstant# [type]#[String]#::
+[field]#refreshTokens``[x]``.insertInstant# [type]#[Long]#::
 The link:/docs/v1/tech/reference/data-types#instants[instant] this Refresh Token was issued.
 
 [field]#refreshTokens``[x]``.metaData.device.description# [type]#[String]#::

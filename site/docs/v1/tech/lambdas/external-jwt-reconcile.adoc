@@ -1,0 +1,63 @@
+---
+layout: doc
+title: External JWT Reconcile
+description: An overview of the External JWT Reconcile lambda
+---
+
+:sectnumlevels: 0
+
+== External JWT Reconcile lambda
+
+When an External JWT identity provider is used to complete a federated login request FusionAuth will use the email address to reconcile user. You may optionally utilize a lambda to customize the user and user registration during this authentication event.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+[source,javascript]
+----
+function reconcile(user, registration, jwt)  {
+  // Lambda code goes here
+}
+----
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+* `user` - the FusionAuth User object
+* `registration` - the FusionAuth UserRegistration object
+* `jwt` - the JSON payload returned by the external identity provider JWT
+
+The two FusionAuth objects are well documented here in the link:../apis/users[User API] and link:../apis/registrations[Registration API] documentation. The `jwt` may contain various user claims to utilize during the reconcile process.
+
+== Assigning the lambda
+
+Once a lambda is created, you may assign it to the External JWT identity provider in the IdP configuration.
+
+Navigate to [breadcrumb]#Settings -> Identity Providers# and select your existing External JWT configuration or click [breadcrumb]#Add provider# and select External JWT if it has not yet been configured.
+
+== Example lambda
+
+The following is a simple example of an External JWT reconcile lambda. You will need to modify it to suit your needs.
+
+[source,javascript]
+----
+// This is an example External JWT reconcile, modify this to your liking.
+function reconcile(user, registration, jwt) {
+  // User claims
+  user.firstName = jwt.first_name;
+  user.lastName = jwt.last_name;
+  user.birthDate = jwt.birth_date;
+  user.imageUrl = jwt.image_url;
+
+  user.data = user.data || {};
+  user.data['email'] = jwt.email;
+
+  // Registration claims
+  registration.data = registration.data || {};
+  registration.data['iss'] = jwt.iss;
+}
+----
+
+=== Limitations
+
+The `user.email` field on the user will be ignored if modified by the lambda function. This is to protect the integrity of the `email` claim returned by the identity provider.  The `user.username` field on the user will be ignored if modified by the lambda function. This is to mitigate the risks of an account takeover due to a non globally unique identifier.
