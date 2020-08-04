@@ -107,7 +107,7 @@ Once the project is initialized, start the development server by running the fol
 
 ```shell
 $ cd client
-$ npm run serve 
+$ npm run serve -- --port 8081
 ```
 
 Open a browser up and look at http://localhost:8081/. This is how your app will look:
