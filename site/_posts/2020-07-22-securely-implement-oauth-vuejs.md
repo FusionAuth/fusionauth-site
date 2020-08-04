@@ -33,9 +33,9 @@ You’ll also want to make sure your system meets the [memory, storage and CPU r
 
 If you get stuck at any time, feel free to refer to the finished app's [GitHub repository](https://github.com/fusionauth/fusionauth-example-vue).
 
-## Setting up FusionAuth
+## Setting up FusionAuth with Docker Compose
 
-If you don’t already have FusionAuth installed, we recommend Docker Compose option for the quickest setup:
+If you don’t already have FusionAuth installed, we recommend the Docker Compose option for the quickest setup:
 
 ```shell
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
@@ -47,7 +47,7 @@ Check out the [Download FusionAuth page](/download) for other installation optio
 
 Once FusionAuth is running (it listens by default at http://localhost:9011/), create a new application, this tutorial follows an application named `fusionauth-vue-example`. 
 
-Next is to configure our application, there are only two configuration settings that you need to change for this tutorial. In your application's **OAuth** tab:
+Next is to configure our application. There are only two configuration settings that you need to change for this tutorial. In your application's **OAuth** tab:
 
 - Set `Authorized redirect URLs` to `http://localhost:9000/oauth-callback`. This is the Express server URL that will handle processing the FusionAuth callback after a user signs in.
 - Set `Logout URL` to  `http://localhost:8081`. This is the URL where the FusionAuth server will redirect us after logout; this is the URL where the Vue app lives. It makes sense that after logout you end up being on the main landing page of the application.
@@ -66,7 +66,7 @@ We won't cover this here, but you can create multiple applications and configure
 
 And it's done. We can now start working on our initial Vue app. 
 
-## Project Structure
+## Project structure
 
 Here is what this project directory looks like:
 
@@ -297,7 +297,7 @@ Now you can see a response at http://localhost:9000/
 }
 ```
 
-## Sign In
+## Creating sign in for our Vue app
 
 Now, we will start creating the Sign In functionality for our application.
 
@@ -599,7 +599,7 @@ user:{
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/welcome-screen-hardcoded-richard.png" alt="The welcome screen with Richard's hardcoded data." class="img-fluid" figure=false %}
 
-## Sending Data from FusionAuth
+## Sending data from FusionAuth
 
 We will finally, instead of sending sample data, send actual data from FusionAuth. For this, we will first need to create a `login` route; how can we send user data if there is no user logged in?
 
@@ -643,7 +643,7 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-One important thing to notice is the endpoint that where we are making requests to, i.e., `/oauth2/authorize`. This endpoint will provide us with an Authorization Code, which we will discuss in a bit. You can [read more about it here](https://fusionauth.io/docs/v1/tech/oauth/endpoints#authorize).
+One important thing to notice is the endpoint to which we are making requests, i.e., `/oauth2/authorize`. This endpoint will provide us with an Authorization Code, which we will discuss in a bit. You can [read more about it here](https://fusionauth.io/docs/v1/tech/oauth/endpoints#authorize).
 
 Another thing is the `stateValue` or the state parameter, which is generally used as a Cross Site Request Forgery (CSRF) token. Any value provided in this field will be returned on a successful redirect, and if it isn't present, the communication may be compromised. We will later use this value in `oauth-callback` route. You can [read more about this here](https://openid.net/specs/openid-connect-core-1_0.html).
 
@@ -659,7 +659,7 @@ If you were using a new browser or an incognito window, you might see the login 
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/default-login-screen.png" alt="The default login screen." class="img-fluid" figure=false %}
 
-## OAuth Callback
+## Creating an OAuth callback for the Authorization Code grant
 
 Now, let’s get rid of the error and create a `oauth-callback` route. Inside `routes` create a new file `oauth-callback.js`.
 
@@ -822,7 +822,7 @@ You can see what an `access_token` looks like. The axios request ends with a cat
 
 Now, head over to http://localhost:9000/login. if everything goes well, you will end up on your Vue application homepage because that is what we have set in `redirect_uri` and can see the response in the console (the terminal where you are running your server).
 
-## Logout
+## Adding a logout route
 
 So, we have a `login` route that the signs in a user and then redirects back to our Vue app. Before we add this `login` route in our Vue app, let’s create a `logout` route and add them together. You will understand why it makes sense to add them together in a bit.
 
@@ -978,7 +978,7 @@ Here is what the response from `/api/user/registration` looks like:
 
 The API key that we are passing in headers is not part of OAuth standard. You need it to call non-standard endpoints such as the [User Registration API](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you will use the API Key (in `Authorization` header) if you decide to explore more endpoints which require the API key.
 
-## Showing User Data
+## Showing user data
 
 We can now access user's information that was stored in FusionAuth. The next step is to display that data. In our `App.vue` we need to modify `mounted()`, since this time we are getting a response object that contains data from two endpoints.
 
@@ -1056,7 +1056,7 @@ Here is how it our application looks like now, we can now login and logout with 
 And here's the application when you are signed in (if you signed up with `richard@fusionauth.io`):
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/when-logged-in.png" alt="The application when logged in." class="img-fluid" figure=false %}
 
-## Changing User Info
+## Changing user info
 
 This last section deals with setting user data from our application.
 
