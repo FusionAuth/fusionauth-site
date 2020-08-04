@@ -592,7 +592,7 @@ The output of the above is the same as when we have specified `email` in `data()
 If we comment `email` in `server/routes/user.js`, we will see a `You are not logged in` message in our application. We can change the email in `server/routes/user.js` and see the corresponding DOM changes as follows:
 
 ```
-user:{
+user: {
   email: 'richard@fusionauth.io'
 }
 ```
