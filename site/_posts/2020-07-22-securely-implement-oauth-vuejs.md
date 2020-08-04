@@ -338,11 +338,9 @@ h1 {
 </style>
 ```
 
-CSS will not be discussed in this tutorial; it is up to you to beautify this application with CSS or UI libraries. 
+CSS will not be discussed in this tutorial; it is up to you to beautify this application with CSS or UI libraries. Here is how your app will look like now:
 
-Here is how your app will look like now:
-
-{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/basic-app-shell.png" alt="The shell of the Vue.js app" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/basic-app-shell.png" alt="The shell of the Vue.js app." class="img-fluid" figure=false %}
 
 Now, based on whether the user is logged in or not, we will show different messages. For example, a message that says "Welcome, dinesh@fusionauth.io" should only be displayed if the user `dinesh@fusionauth.io` is logged in. 
 
