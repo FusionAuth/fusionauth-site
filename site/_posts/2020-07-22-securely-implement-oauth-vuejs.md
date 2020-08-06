@@ -9,18 +9,18 @@ tags: client-javascript
 excerpt_separator: "<!--more-->"
 ---
 
-In this article, we will discuss the step-by-step process of implementing the OAuth Authorization Code Grant in a Vue.js App. We’ll use FusionAuth as the IdP and also show you how to configure FusionAuth for this workflow.
+In this article, we will discuss the step-by-step process of implementing the OAuth Authorization Code Grant in a Vue.js app. We'll use FusionAuth as the IdP and also show you how to configure FusionAuth.
 
 <!--more-->
 
 At the end, your app will be able to:
 
-- log users in
-- log users out
-- read user data from FusionAuth
-- write user data to FusionAuth
+- Log users in
+- Log users out
+- Read user data from FusionAuth
+- Write user data to FusionAuth
 
-We will use Express for our backend server, which will act as a middleware between our Vue Client and FusionAuth and securely store the Access Token, Client Id, Client Secret, etc.
+We will use Express for our backend server, which will act as a middleware between our Vue client and FusionAuth. It will securely store the access token, client id, client secret, and other information.
 
 **Prerequisites**
 
@@ -29,13 +29,13 @@ We will use Express for our backend server, which will act as a middleware betwe
 - Node(12.x)/NPM on your local machine.
 - Any code editor of your choice.
 
-You’ll also want to make sure your system meets the [memory, storage and CPU requirements](/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
+You'll also want to make sure your system meets the [memory, storage and CPU requirements](/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
 
 If you get stuck at any time, feel free to refer to the finished app's [GitHub repository](https://github.com/fusionauth/fusionauth-example-vue).
 
 ## Setting up FusionAuth with Docker Compose
 
-If you don’t already have FusionAuth installed, we recommend the Docker Compose option for the quickest setup:
+If you don't already have FusionAuth installed, we recommend the Docker Compose option for the quickest setup:
 
 ```shell
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
@@ -43,28 +43,28 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-Check out the [Download FusionAuth page](/download) for other installation options (rpm, deb, etc) if you don’t have Docker installed. You can further follow the [FusionAuth Installation Guide](/docs/v1/tech/installation-guide/fusionauth-app) for more detailed steps.
+Check out the [FusionAuth download page](/download) for other installation options (rpm, deb, etc) if you don't have Docker installed. You can also follow the [FusionAuth Installation Guide](/docs/v1/tech/installation-guide/fusionauth-app) for more detailed steps.
 
-Once FusionAuth is running (it listens by default at http://localhost:9011/), create a new application, this tutorial follows an application named `fusionauth-vue-example`. 
+Once FusionAuth is running (the default address is http://localhost:9011/), create a new application. This tutorial uses an application named `fusionauth-vue-example`. 
 
-Next is to configure our application. There are only two configuration settings that you need to change for this tutorial. In your application's **OAuth** tab:
+Then, configure your application. There are only two configuration settings that you need to change for this tutorial. In your application's **OAuth** tab:
 
 - Set `Authorized redirect URLs` to `http://localhost:9000/oauth-callback`. This is the Express server URL that will handle processing the FusionAuth callback after a user signs in.
-- Set `Logout URL` to  `http://localhost:8081`. This is the URL where the FusionAuth server will redirect us after logout; this is the URL where the Vue app lives. It makes sense that after logout you end up being on the main landing page of the application.
+- Set `Logout URL` to  `http://localhost:8081`. This is the URL where the FusionAuth server will redirect us after logout. It is also where the Vue app lives. After logout a user ends up on the main landing page of the application.
 
 Click **Save**.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/application-configuration.png" alt="OAuth settings for the new application." class="img-fluid" figure=false %}
 
-Now, we will add our user to the new application. Select **Users** on the dashboard, select **Manage** and go to the **Registration** tab. Then click `Add Registration`, and add yourself to the application you just created.
+Next, add our current user to the new application. Select **Users** on the dashboard, select **Manage** and go to the **Registration** tab. Then click `Add Registration`, and add yourself to the application you just created.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-configuration.png" alt="User settings for the new application." class="img-fluid" figure=false %}
 
-Finally, navigate to **Settings** and then **API Keys**. You should have an API key present, but feel free to create one. For this tutorial, we won't limit permissions, but you should for production use. Record that value for later.
+Finally, navigate to **Settings** and then **API Keys**. You should have an API key present, but feel free to create one. For this tutorial, we won't limit permissions, but you should for production deployments. Record the API key value for later.
 
-We won't cover this here, but you can create multiple applications and configure multi-tenancy in FusionAuth, which would be useful if you wanted different levels of separation.
+We won't cover this today, but you can create multiple applications and configure multi-tenancy in FusionAuth. This would be useful if you wanted multiple applications all with their registration data maintained in FusionAuth.
 
-And it's done. We can now start working on our initial Vue app. 
+Now you're done configuring FusionAuth. We can start working on our initial Vue app. 
 
 ## Project structure
 
@@ -76,14 +76,13 @@ fusionauth-example-vue
 └─server
 ```
 
-All the express or server-side code will be in the `server` folder, and our Vue app will reside
- in the `client` folder. You don’t need to create folders right now, we will be doing so in the next steps.
+All the Express or server-side code will be in the `server` folder, and our Vue app will reside in the `client` folder. You don't need to create the folders right now; we will be doing so in the next steps.
 
 ## Creating the Vue app
 
-We will use the official Vue CLI to initialize our project which is the best way to scaffold Single Page Applications. It provides batteries-included build setups for a modern front-end workflow. It takes only a few minutes to get up and running with hot-reload, lint-on-save, and production-ready builds. You can read more about [the Vue CLI here](https://vuejs.org/).
+We will use the official Vue CLI to initialize our project. This is the best way to scaffold Single Page Applications (SPAs). It provides batteries-included build setups for a modern front-end workflow. It takes only a few minutes to get up and running with hot-reload, lint-on-save, and production-ready builds. You can read more about [the Vue CLI here](https://vuejs.org/).
 
-Before we create our Vue app, I recommend installing the official Vuejs Extension to make debugging and inspection processes easier. You can [download it here](https://github.com/vuejs/vue-devtools).
+Before we create our Vue app, I recommend installing the official Vuejs brownser extension to make debugging and inspection easier. You can [download it here](https://github.com/vuejs/vue-devtools).
 
 Use the following command to install Vue CLI globally:
 
@@ -93,15 +92,13 @@ $ npm install -g @vue/cli
 $ yarn global add @vue/cli
 ```
 
-Now, to create a project run the following command inside the project directory:
+Now, create a project by running the following command inside the project directory:
 
 ```shell
 $ vue create client
 ```
 
-You will be prompted to pick a preset. You can choose the **default preset** which comes with a basic **Babel + ESLint** setup or select **Manually select features** to customize the features according to your needs. 
-
-This project will use the default Babel + ESLint setup. You can [learn more about it here](https://cli.vuejs.org/guide/installation.html).
+You will be prompted to pick a preset. You can choose the **default preset** which comes with a basic **Babel + ESLint** setup or a manual option, by choosing **Manually select features**. The latter will allow you to customize features according to your needs. This project will use the default preset. You can [learn more about it here](https://cli.vuejs.org/guide/installation.html).  
 
 Once the project is initialized, start the development server by running the following command:
 
@@ -116,9 +113,9 @@ Open a browser up and look at http://localhost:8081/. This is how your app will 
 
 ## Remove the sample code
 
-Now you need to clean up and remove some of the sample code that the CLI command generated.
+Now you need to clean up and remove some of the sample code that the CLI generated.
 
-> Note that based on the configuration you choose, you might see different project structures, and if you are not sure how to clean them, then just stick to this example.
+> Based on the configuration you choose, you might see different project structures. If you are not sure how to clean it up, just stick to this example.
 
 Delete `components`, `views`, `router`, and  `assets` folders in `src` and then modify your `main.js` file to look like this:
 
@@ -152,19 +149,19 @@ export default {
 </style>
 ```
 
-And you're done with this step. Visiting http://localhost:8081/ will show you a blank screen now.
+Visiting http://localhost:8081/ will show you a blank screen now.
 
-> FUN FACT: You can load environment variables in most SPA (Single Page Applications) templates like Vue, React, etc. without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this here - [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables).
+> FUN FACT: You can load environment variables in most SPA templates like Vue or React without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this in the [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables) Vue documentation.
 
-Let's set aside the client for a bit, and focus on the server side.
+Let's set aside the client for a bit, and focus on the Express server
 
 ## Express
 
-We will use [Express.js](https://expressjs.com/) as our backend server. It is a super popular library that is widely used by developers.
+We will use [Express.js](https://expressjs.com/) as our backend server. It is a popular library that is widely used by developers.
 
-> FUN FACT: The letter **E**  in stacks like **MERN**, **MEVN**, or **MEAN** stands for Express. 
+> FUN FACT: The letter **E** in stacks like **MERN**, **MEVN**, or **MEAN** stands for Express. 
 
-Inside our root directory, we will create another folder named `server` and initialize a NodeJS application in it. Run the following command in your root directory:
+Inside our root directory, we will create another folder named `server` and initialize a NodeJS application in it. Run the following command in your root application directory:
 
 ```shell
 $ mkdir server
@@ -173,17 +170,17 @@ $ npm init -y
 $ npm install express cors morgan nodemon dotenv axios express-session query-string
 ```
 
-We installed a lot of packages, so let’s examine them:
+We installed a lot of packages, so let's look at them:
 
-- [cors](https://www.npmjs.com/package/cors) - middleware that helps us to make cross-origin requests.
-- [morgan](https://www.npmjs.com/package/morgan) - HTTP request logger middleware for node.js, you can use this for production.
-- [nodemon](https://www.npmjs.com/package/nodemon) - restarting server every time we make a change is a hassle, nodemon automatically restarts the node application when file changes are detected.
-- [dotenv](https://www.npmjs.com/package/dotenv) - loads environment variables from an `.env` file. We will use this to secure our API key, Client Secret, Client Id, etc.
-- [axios](https://www.npmjs.com/package/axios) - to make HTTP requests.
-- [express-session](https://www.npmjs.com/package/express-session) - to store our access token securely.
-- [query-string](https://www.npmjs.com/package/query-string) -  to stringify form data that we send using `axios`.
+- [cors](https://www.npmjs.com/package/cors) - This is a middleware that helps us to make cross-origin requests.
+- [morgan](https://www.npmjs.com/package/morgan) - This is an HTTP request logger middleware for node.js, you can use this for production.
+- [nodemon](https://www.npmjs.com/package/nodemon) - Restarting server every time we make a change is a hassle. Nodemon automatically restarts the node application when file changes are detected.
+- [dotenv](https://www.npmjs.com/package/dotenv) - This loads environment variables from an `.env` file. We will use this to secure our API key and client configuration.
+- [axios](https://www.npmjs.com/package/axios) - This allows us to make HTTP requests.
+- [express-session](https://www.npmjs.com/package/express-session) - This stores our access token securely.
+- [query-string](https://www.npmjs.com/package/query-string) - This is used to stringify form data that we send using `axios`.
 
-As we have installed `nodemon`, to use it inside `package.json` add the following scripts:
+Since we have installed `nodemon`, to use it inside `package.json` simply add the following scripts:
 
 ```javascript
 //...
@@ -194,7 +191,7 @@ As we have installed `nodemon`, to use it inside `package.json` add the followin
 //...
 ```
 
-Next, set up your environment variables. Inside the `server` folder create a `.env` file and store all your config (Client Id, Client Secret, SSH keys, or API credentials) inside it. 
+Next, set up your environment variables. Inside the `server` folder create a `.env` file and store your configuation, such as client information, ports, or API credentials in it:
 
 ```
 SERVER_PORT = 9000
@@ -202,21 +199,19 @@ FUSIONAUTH_PORT = 9011
 CLIENT_ID = 'c8642b18-5d1d-42b4-89fb-a37a5b750186'
 CLIENT_SECRET = 'oo06PflPxQrpfxqP8gY9ioOmfzQxARIW5R3BjJrlbS4'
 REDIRECT_URI = 'http://localhost:9000/oauth-callback'
-APLICATION_ID = 'c8642b18-5d1d-42b4-89fb-a37a5b750186'
+APPLICATION_ID = 'c8642b18-5d1d-42b4-89fb-a37a5b750186'
 API_KEY = 'Dy9bphElA3L3_ayW86T5KvrZkyK1Gj5EDV_2m9i39ow'
 ```
 
-You might notice that every environment variable is in CAPITAL LETTERS, it’s not a rule, just a convention to separate environment variables from your code variables.
+You might notice that every environment variable is in CAPITAL LETTERS. It's not a rule, just a convention to separate environment variables from variables in code.
 
-A bit more explanation. `REDIRECT_URI`  is the same as the URL in  `Authorized redirect URLs`.  `APPLICATION_ID` is same as `CLIENT_ID`. You can change `SERVER_PORT` to whatever port you want; this tutorial will use port **9000** for the server.
+`REDIRECT_URI` is the same as the URL you configured in the FusionAuth `Authorized redirect URLs` field. `APPLICATION_ID` is same as `CLIENT_ID`. You can change `SERVER_PORT` to whatever port you want; this tutorial will use port **9000** for the Express server. Use the API key you created above.
 
-Now, you may wonder where to get all this other information for `.env` file, just go to the application that you made earlier in the FusionAuth dashboard and click `View` button, the one with the green search button, and you can just copy/paste `CLIENT_ID` and `CLIENT_SECRET`  from there.
+Now, you may wonder where to get all this information for `.env` file. Go to the application that you made earlier in the FusionAuth dashboard and click the `View` button. It is the green magnifying glass. You can copy/paste `CLIENT_ID` and `CLIENT_SECRET` from there:
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/oauth-configuration.png" alt="Client Id and Client Secret settings for the application." class="img-fluid" figure=false %}
 
-We have not discussed how to create the `API_KEY`, but [learn more about it here](https://fusionauth.io/docs/v1/tech/apis/authentication) if you want to create your own, otherwise use the one you noted above.
-
-Below is the code for a basic express server; notice that we make use of `dotenv` by adding the following code inside our `index.js`:
+Below is the code for a basic Express server. Notice that we use the `dotenv` package by adding the following code inside our `index.js` file:
 
 ```javascript
 //...
@@ -224,11 +219,11 @@ require("dotenv").config();
 //...
 ```
 
-We can then use environment variables by writing `process.env.` in front of the environment variable's name whenever we use them in our code. 
+We can then read environment variables by writing `process.env.` in front of the environment variable's name whenever we need them in our code. 
 
 Since the `.env` file is ignored by git because of the `.gitignore` file, you will notice an `.env.example` file in the source code. To run on your local machine, rename that file to `.env` and add your Client Id, Client Secret, etc.
 
-Here is the sample code for an express server that makes use of all our installed packages:
+Here is the sample code for an Express server that makes use of all our installed packages:
 
 ```javascript
 const express = require("express");
@@ -250,33 +245,33 @@ const port =  process.env.SERVER_PORT || 3000;
 
 // Listen to server  
 app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
-  });
+  console.log(`Listening on port ${port}`);
+});
 ```
       
-To access our server from the browser, we will use the `cors` middleware. Remember to use `{ origin: true, credentials: true }` with `app.use(cors())`; you can read more about this [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).
+To access our server from the browser, we need the `cors` middleware. Remember to use the options `{ origin: true, credentials: true }` with `app.use(cors())` call. You can read more about this [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).
 
-Run the following command to start the development server in a new terminal window:
+Run the following command, in a new terminal window, to start the development server:
 
 ```shell
 $ npm run dev
 ```
 
-Head over to http://localhost:9000/; you will see an error! That behavior is correct since we have not created any routes yet.
+This might be the only time we will start the server; since we have installed `nodemon`, the server will restart every time it detects a file change. 
 
-{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/borked-route.png" alt="The express route doesn't exist yet, so we see an error message." class="img-fluid" figure=false %}
+Head over to http://localhost:9000/; you will see an error! This is actually to be expected, since we have not created any routes yet.
 
-Right now might be the only time we will run the server; since we have installed `nodemon`, the server will automatically restart every time it detects a file change. 
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/borked-route.png" alt="The Express route doesn't exist yet, so we see an error message." class="img-fluid" figure=false %}
 
-In your terminal, you can see  `morgan` in action. Whenever a request is made to our server, it will log it in the terminal like this:
+In your terminal, you can see `morgan` in action. Whenever a request is made to our server, it will log it in the terminal like this:
 
 ```
 ::ffff:127.0.0.1 - - [10/Jul/2020:08:48:21 +0000] "GET / HTTP/1.1" 404 139
 ```
 
-This can be very useful in debugging an application both in development and in production. 
+This can be useful in debugging an application both in development and in production. 
 
-Now let's create a simple route for our main page:
+Create a simple route for our main page by adding this to the `index.js` file:
 
 ```javascript
 //...
@@ -289,9 +284,9 @@ app.get("/", (req, res) => {
 //...
 ```
 
-You can see a response at http://localhost:9000/
+Now you will see a response should you visit http://localhost:9000/:
 
-```
+```json
 {
   "message": "FusionAuth Example With Vue"
 }
@@ -299,9 +294,7 @@ You can see a response at http://localhost:9000/
 
 ## Creating sign in for our Vue app
 
-We will start creating the Sign In functionality for our application.
-
-Our Vue application is empty. Let’s first add a heading and a container where we will render different components.
+We will start creating sign in functionality for our application. Our Vue application is empty, mostly because we removed the boilerplate. Let's add a heading and a container where we will render different components.
 
 Inside `client/src/App.vue` add the following:
     
@@ -338,15 +331,17 @@ h1 {
 </style>
 ```
 
-CSS will not be discussed in this tutorial; it is up to you to beautify this application with CSS or UI libraries. Here is how your app will look like now:
+CSS will not be covered in this tutorial; it is up to you to beautify this application with custom CSS or UI libraries. 
+
+Here is how your app will look:
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/basic-app-shell.png" alt="The shell of the Vue.js app." class="img-fluid" figure=false %}
 
-Now, based on whether the user is logged in or not, we will show different messages. For example, a message that says "Welcome, dinesh@fusionauth.io" should only be displayed if the user `dinesh@fusionauth.io` is logged in. 
+Based on whether the user is logged in or not, we should show different messages. For example, a message that says "Welcome, dinesh@fusionauth.io" should only be displayed if the user `dinesh@fusionauth.io` is logged in. 
 
-We will first hard code this response and then modify it to vary according to the response we get from FusionAuth.
+We will hard code this response first, and then later modify the code to display the response we get from FusionAuth.
 
-Create a new vue file `Greeting.vue` in the `src` folder.  We will create simple logic to check whether a user is logged in or not, which is Conditional Rendering. If `email` is present, the user is considered logged in. You can [read more about this here](https://vuejs.org/v2/guide/conditional.html).
+Create a new file called `Greeting.vue` in the `src` folder.  We will add logic to check whether a user is logged in or not; we will use Conditional Rendering. If `email` is present, the user is logged in, otherwise they are not. You can [read more about this here](https://vuejs.org/v2/guide/conditional.html).
 
 ```vue
 <template>
@@ -371,11 +366,11 @@ export default {
 </style>
 ```
 
-You will also notice something weird in the above code, we are using `email` to check whether the user is logged in or not. But where is this `email` value coming from?
+You will notice something weird in the above code, we are using `email` to check whether the user is logged in or not. But where is the `email` value coming from?
 
-The answer is we are passing this `email` as a prop from `App.vue` hence you can see a `prop` field in the `<script>` section. It might not make sense as to why we are doing this now but remember we will have other components in our app which will need the response data that we get from the server. Instead of calling for the same data in each individual component, it will be much better to request it in our central `App.vue` file and then pass the required data as props. 
+We are passing `email` as a prop from `App.vue`. Hence why there is a `prop` field in the `<script>` section. It might not make sense as to why we are doing this now but remember we will have other components in our app which will need the response data that we get from the server. Instead of calling for the same data in each individual component, it will be better to request it in our central `App.vue` file and then pass the required data as props to other components. 
 
-Next, we need to import this file in our `App.vue` and send the data to `<Greet />` component which we will be done with `v-bind`:
+Next, we need to import this file in `App.vue` and send the data to the `<Greet />` component. This is done with `v-bind`:
 
 ```vue
 <template>
@@ -419,7 +414,7 @@ h1 {
 </style>
 ```
     
-Go to http://localhost:8081/; you will see `Welcome dinesh@fusionauth.io`.
+In your browser, go to http://localhost:8081/; you will see `Welcome dinesh@fusionauth.io`:
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/welcome-screen-hardcoded.png" alt="The welcome screen with hardcoded data." class="img-fluid" figure=false %}
 
@@ -435,16 +430,15 @@ data(){
 //...
 ```
 
-Again head over to http://localhost:8081/
-As you can see, since we have removed `email`, we are now seeing a not logged in the message.
+Again head over to http://localhost:8081/. As you can see, since we have removed `email`, we are now seeing the "you are not not logged in" message.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/welcome-screen-hardcoded-no-email.png" alt="The welcome screen with hardcoded data, but no email." class="img-fluid" figure=false %}
 
-Great, the client works! We will now implement the same logic based on requests to our server.
+Great, the client works! We will now implement the same logic based on data from the server.
 
 ## Getting user info from the Express server
 
-We will create a `user` route in our express server to send fake user data to our application. Then, we will replace it with real data based on a request to FusionAuth.
+We will create a `user` route in our Express server to send fake user data to our application. Then, we will replace it with real data based on a request to FusionAuth.
 
 In your `server` folder, create a new folder `routes` and inside that folder create a new file named `user.js`.
 
@@ -458,7 +452,7 @@ server
 └─package-lock.json
 ``` 
 
-Create  a new `get` route in `user.js`, with this code:
+Create  a new `get` route in `user.js` with this code:
 
 ```javascript
 const express = require('express');
@@ -474,13 +468,13 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-Now to use this route, add following to our `index.js` file:
+To have Express expose this route, add the following to our `index.js` file:
 
 ```javascript
 app.use('/user', require('./routes/user'))
 ```
 
-And it's done, go to http://localhost:9000/user, and you will see the following response.
+Go to http://localhost:9000/user, and you will see the following response:
 
 ```json
 {
@@ -508,7 +502,7 @@ Remember, a *real* User object returned from FusionAuth will have more propertie
 }
 ```
 
-Now inside our `App.vue` file, we will use the `mounted()` lifecycle hook to make a call to our server:
+Inside our `App.vue` file, we will use the `mounted()` lifecycle hook to make a call to the server for our needed data:
 
 ```javascript
 //...
@@ -532,7 +526,7 @@ Here is the output of the above code in the console:
 }
 ```
 
-We can now use this object to check if the user is logged in or not. We will need to first define `email` as `null` in `data()`. If a response is received from the server-side, we will update `email` with the received value which in this case is an object with a property of `email`.
+We can now use this object to check if the user is logged in or not. We will need to first define `email` as `null` in the `data()` function. If a response is received from the server, we will update the `email` property with the received value. In this case, that is an object with a property of `email`, so we'll make sure to dereference it so that the `email` property is set to an email address, and not a JavaScript object.
     
 ```vue
 <template>
@@ -583,11 +577,11 @@ h1 {
 </style>
 ```
 
-The output of the above is the same as when we have specified `email` in `data()`. 
+The output of the above is the same as when we have hardcoded the `email` value in `data()`:
 
-{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/welcome-screen-hardcoded.png" alt="The welcome screen with hardcoded data." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/welcome-screen-hardcoded.png" alt="The welcome screen with hardcoded data delivered from the server." class="img-fluid" figure=false %}
 
-If we comment out `email` in `server/routes/user.js`, we will see a `You are not logged in` message in our application. We can change the email in `server/routes/user.js` and see the corresponding DOM changes as follows:
+If we comment out `email` in `server/routes/user.js`, we will see the "You are not logged in" message in our application. We can change the email in `server/routes/user.js` and see the corresponding DOM changes as well:
 
 ```
 user: {
@@ -599,8 +593,7 @@ user: {
 
 ## Sending data from FusionAuth
 
-Finally, we will send actual data from FusionAuth, rather than using sample data
-. For this, we will first need to create a `login` route; how can we send user data if there is no user logged in?
+Finally, we will pull data from FusionAuth, rather than using hardcoded values. For this, we will first need to create a `login` route; how can we send user data if there is no user logged in?
 
 Create a new file `server/routes/login.js` and add this `route` to `index.js`.
 
@@ -625,7 +618,7 @@ app.use('/login', require('./routes/login'))
 //...
 ```
 
-Here is the request that is made in `login.js`:
+Here is the code for `login.js`:
 
 ```javascript
 const express = require('express');
@@ -642,15 +635,15 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-One important thing to notice is the endpoint to which we are making requests, i.e., `/oauth2/authorize`. This endpoint will provide us with an Authorization Code, which we will discuss in a bit. You can [read more about it here](https://fusionauth.io/docs/v1/tech/oauth/endpoints#authorize).
+One important thing to notice is the endpoint to which we are making requests: `/oauth2/authorize`. This endpoint will provide us with an Authorization Code, which we will discuss in a bit. You can [read more about it here](https://fusionauth.io/docs/v1/tech/oauth/endpoints#authorize).
 
-Another thing is the `stateValue` or the state parameter, which is generally used as a Cross Site Request Forgery (CSRF) token. Any value provided in this field will be returned on a successful redirect, and if it isn't present, the communication may be compromised. We will later use this value in `oauth-callback` route. You can [read more about this here](https://openid.net/specs/openid-connect-core-1_0.html).
+Another thing is the `stateValue` or the state parameter, which is generally used as a Cross Site Request Forgery (CSRF) protection token. Any value provided in this field must be returned on a successful redirect, and if it isn't present, the communication may have been compromised. We will later use this value in the `oauth-callback` route. You can [read more about this here](https://openid.net/specs/openid-connect-core-1_0.html).
 
-Let’s discuss the other parameters we have used above. `redirect_uri` informs FusionAuth where to redirect the user to after login. `response_type` tells FusionAuth which OAuth flow we’re using (Authorization Code in this example).
+Let's discuss the other parameters we have used above. `redirect_uri` informs FusionAuth where to redirect the user after login. `response_type` tells FusionAuth which OAuth grant we're using (Authorization Code in this example).
 
-Try navigating to http://localhost:9000/login. And if everything is correct, you will see an error. Yes your code is working fine, no need to recheck. You will see an `invalid_client` error.
+Try navigating to http://localhost:9000/login. If everything is correct, you will see an `invalid_client` error. Yes, your code is working fine, no need to recheck.
 
-If you review `login.js` above, you will find that `REDIRECT_URI` is set to `http://localhost:9000/oauth-callback` in our `.env` file but we haven’t actually created that route yet. So this error makes sense. We're actually logged in because we signed into the FusionAuth Dashboard from our previous configuration. 
+If you take another look at `login.js`, you will find that `REDIRECT_URI` is set to the value of `http://localhost:9000/oauth-callback` in our `.env` file. But we haven't actually created that route yet. So this error makes sense. We're actually logged in because we signed into the FusionAuth dashboard during our setup of FusionAuth. 
 
 If you were using a new browser or an incognito window, you might see the login screen instead:
 
@@ -658,9 +651,9 @@ If you were using a new browser or an incognito window, you might see the login 
 
 ## Creating an OAuth callback for the Authorization Code grant
 
-Now, let’s get rid of the error and create a `oauth-callback` route. Inside `routes` create a new file `oauth-callback.js`.
+Now, let's get rid of the error by creating a `oauth-callback` route. Inside `routes` create a new file `oauth-callback.js`.
 
-Add this route to `index.js` 
+Add this route to `index.js`:
 
 ```javascript
 //...
@@ -671,17 +664,15 @@ app.use('/oauth-callback', require('./routes/oauth-callback'))
 //...
 ```
 
-During redirect, the `/oauth-callback` route will receive an Authorization Code from FusionAuth as a URL parameter. You can see it on the previous error page in the URL bar. It will be something like this (notice the string after `code=`):
+During the redirect, the `/oauth-callback` route will receive an Authorization Code from FusionAuth. It will be something like this (notice the string after `code=`):
 
 ```
 http://localhost:9000/oauth-callback?code=SSXVv3xkNTKEhnY4XzjUVvRZp7eyhgCuuREAgSeByrw&locale=en&userState=Authenticated
 ```
 
-This Authorization Code is not sufficient to access user information, for that we will need an `access_token`. To get an `access_token` we will make a post request to `/oauth2/token` endpoint with this Authorization Code.
+This Authorization Code is not sufficient to access user information. For that we will need an `access_token`. To get an `access_token` we will make a post request to `/oauth2/token` endpoint with this Authorization Code.
 
-When we make that request, we will also need to store this `access_token`. We can’t store it in a variable because we need it for future requests. We need a secure way that doesn’t expose this `access_token` and prevents malicious activities.
-
-We will store this `access_token` using the `express-session` middleware, so we need to import `express-session`.
+After we make that request, we need to store the `access_token`. We can't store it in an in-memory variable because we need it for future requests. We need a secure storage mechanism that doesn't expose it to our Vue client, because that is running a browser which is vulnerable to XSS exploits. We will store this `access_token` using the `express-session` middleware; we need to import `express-session`.
 
 ```javascript
 //...
@@ -689,9 +680,10 @@ const session = require("express-session")
 //...
 ```
 
-And then we need to add the following to `index.js`. It might be worth checking out the [Express Session docs](https://github.com/expressjs/session#readme) for more information.
+Then, we need to add the following to `index.js`. It might be worth checking out the [Express Session docs](https://github.com/expressjs/session#readme) for more information.
 
 ```javascript
+//...
 // configure sessions
 app.use(session(
   {
@@ -705,11 +697,10 @@ app.use(session(
     }
   })
 );
+//...
 ```
 
-Now, we can get back to `oauth-callback.js` files and make the post request to receive the `access_token`.
-
-Don’t let the code below confuse you, we will discuss it piece by piece.
+Now, we can get back to writing the `oauth-callback.js` file. We'll make the post request to receive the `access_token`. Don't let the code below confuse you, we will discuss it piece by piece.
 
 ```javascript
 const express = require("express");
@@ -761,16 +752,15 @@ if (stateFromServer !== req.session.stateValue) {
 module.exports = router;
 ```
     
-We start with standard code for a route just like `login.js`. And then we import `axios` and `querystring`. 
-We then use `if` statement to check the state parameter; if it does not match, we `console.log()` an error message.
+We start with standard code for a route just like `login.js`. And then we import `axios` and `querystring`. We then use an `if` statement to check the state parameter; if it does not match, we log an error message.
 
-We will use `axios` to make post requests to `oauth2/token` endpoint; this is the complete URL that we will request:
+We use `axios` to make post requests to `oauth2/token` endpoint; this is the complete URL that we will request:
 
 ```javascript
 const url = `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/token`;
 ```
 
-Another thing you will notice is the config variable. The `oauth2/token` endpoint can only access form-encoded data, which is why we are explicitly setting the content type in the headers.
+Another thing you will notice is the `config` variable. The `oauth2/token` endpoint requires form-encoded data, which is why we are explicitly setting the content type in the header:
 
 ```javascript
 //...
@@ -782,7 +772,7 @@ const config = {
 //...
 ```
 
-Now, let’s talk about the body of the request. If you go through the [FusionAuth docs](https://fusionauth.io/docs/v1/tech/oauth/endpoints#token), you will find these are standard request parameters that we need to send to the `oauth2/token` endpoint. Some are optional and some are required. The `code` is the Authorization Code that we received from `oauth2/authorize` endpoint and `grant_type` tells FusionAuth we’re using the Authorization Code Flow.
+Now, let's talk about the body of the request. If you go through the [FusionAuth docs](https://fusionauth.io/docs/v1/tech/oauth/endpoints#token), you will find there are standard request parameters expected by the `oauth2/token` endpoint. Some are optional and some are required. The `code` is the Authorization Code that we received from `oauth2/authorize` endpoint and `grant_type` tells FusionAuth we're using the Authorization Code Flow.
 
 
 ```javascript
@@ -797,14 +787,14 @@ qs.stringify({
 //...
 ```
 
-The `query-string` library stringifies this request object as you can see below. This saves us from doing this manually and makes code more readable.
+The `query-string` library stringifies this request object as you can see below. This saves us from doing this manually and makes code more readable:
 
 ```
 // the stringified parameters
 'client_id=1ac76336-9dd9-4048-99cb-f998af681d3e&client_secret=NLmIgHC65zHeHOPlQMmOMG4Nberle41GT85RUgijdqA&code=e_oTyBn_7WPTPgtFUjvEZk6TwBBLYajRi8NMixQehd0&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A9000%2Foauth-callback'
 ```
 
-After a successful post request, we use `.then()` to access the response from the endpoint. We then store the `access_token` received in the session with the name `req.session.token`. The above code has a `console.log()` of this response so that you can see the response. We are only concerned with the `data` property, though other information is returned. After storing this `access_token` we redirect to our Vue App. Here's an example of what might be returned after a successful login:
+After a successful post request, we use the `.then()` method to access the response from the endpoint. We store the `access_token` received in the session with the name `token`. The above code has logs this response so that you can see it for debugging. We are only concerned with the `data.access_token` value, though other information is returned. After storing this `access_token` we redirect to our Vue App. Here's an example of what might be returned after a successful request to the `token` endpoint:
 
 ```javascript
 data: {
@@ -815,13 +805,13 @@ data: {
 }
 ```
 
-You can see what an `access_token` looks like. The axios request ends with a catch block to handle any error that we may encounter.
+You can see what an `access_token` looks like; it's a JWT. The axios request ends with a catch block to handle any errors we may encounter.
 
-Now, head over to http://localhost:9000/login. if everything goes well, you will end up on your Vue application homepage because that is what we have set in `redirect_uri` and can see the response in the console (the terminal where you are running your server).
+Head over to http://localhost:9000/login. If everything goes well, you will end up on your Vue application homepage because that is what we have set in `redirect_uri`. You should see the response in the console (the terminal where you are running your server), as you were already logged in.
 
 ## Adding a logout route
 
-So, we have a `login` route that the signs in a user and then redirects back to our Vue app. Before we handle this `login` route in our Vue app, let’s create a `logout` route in the express server. Then we'll be able to easily add them both to the Vue app. You will understand why it makes sense to add them together in a bit.
+So, we have a `login` route that the signs in a user and then redirects back to our Vue app. Before we handle add links to login to our Vue app, let's create a `logout` route in the Express server. Then we'll be able to easily add them both to the Vue app. 
 
 Inside `server/routes` create a new file named `logout.js`.
 
@@ -850,7 +840,7 @@ app.use('/oauth-callback', require('./routes/oauth-callback'))
 //...
 ```
 
-Inside the `logout.js` file add the following:
+Inside the `logout.js` file add the following code:
 
 ```javascript
 const express = require('express');
@@ -864,17 +854,17 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-Compared to `oauth-callback.js`, it is pretty simple. We first destroy the Express server-side session (and the `token` we store there) and then redirect to `oauth2/logout` endpoint with our Client Id. 
+Compared to `oauth-callback.js`, this is pretty simple. We first destroy the Express server-side session (and therefore the `token` we stored) and then redirect to the `oauth2/logout` endpoint with our `CLIENT_ID`. 
 
-Head over to http://localhost:9000/logout and you will be logged out from FusionAuth. Navigate to http://localhost:9000/login and you will see the login page. After you sign in, you'll arrive back at your Vue application.
+Head over to http://localhost:9000/logout and you will be logged out. Navigate to http://localhost:9000/login and you will see the login page. After you sign in, you'll arrive back at your Vue application.
 
-You might wonder why after **logging out** we **redirect back to our Vue app**, yet we didn’t write that in `logout.js`. This is happening because we configured the main entry point to our Vue App as the Logout URL in FusionAuth.
+You might wonder why after **logging out** we **redirect back to our Vue app**, yet we didn't do anything like that in the `logout.js` file. This is happening because we configured the main entry point to our Vue app as the Logout URL in FusionAuth.
 
 ## Retrieving user data
 
-We have been using fake user data up until now. Since we now have `access_token` stored in the session we can use it to request actual user data from FusionAuth.
+We have been using fake user data up until now. Since we now have `access_token` stored in the session, we can use it to request user data from FusionAuth.
 
-Modify the `user.js` contents to be:
+Modify the `user.js` file contents to be:
 
 ```javascript
 const express = require("express");
@@ -901,7 +891,7 @@ router.get("/", (req, res) => {
           // GET request to /registration endpoint
           axios
             .get(
-              `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APLICATION_ID}`,
+              `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APPLICATION_ID}`,
               {
                 headers: {
                   Authorization: process.env.API_KEY,
@@ -933,11 +923,9 @@ router.get("/", (req, res) => {
 module.exports = router;
 ```
 
-Let’s discuss this step by step. 
+Let's examine this code. First, we check if an `access_token` is present and then make a **POST** request to `oauth2/introspect` endpoint which requires the Client Id and the token. Like the `oauth2/token` endpoint, this endpoint expects form-encoded data, so we again are using the `query-string` library.
 
-First, we check if an `access_token` is present and then make a **POST** request to `oauth2/introspect` endpoint which requires Client Id and the token. Like the `oauth2/token` endpoint, this endpoint expects form-encoded data, so we are using the `query-string` library.
-
-When this request is successful, we get a response object. This contains the user information.
+When this request is successful, we get a response object. This contains user data.
 
 Here's an example of the JSON:
 ```javascript
@@ -956,11 +944,9 @@ Here's an example of the JSON:
 }
 ```
 
-Then we make another request to access more user information this time a **GET** request to the `/api/user/registration` API. This API requires the User Id which is the `sub` value of our response from `oauth2/introspect` endpoint. This contains a `data` property that has the information we need. 
+Then we make another request to gather more user information. This time we make a **GET** request to the `/api/user/registration` endpoint. This API requires the User Id, which is the same as the `sub` value provided by the `introspect` endpoint. The response to the **GET** request contains the user `data` property, which has the information we need. Note that this is not standard, but the response from the `/oauth2/introspect` endpoint is.
 
-When this request is successful, we send all the data to our client via `res.send()`. Note that this is not standard, but the response from the `/oauth2/introspect` endpoint is.
-
-Here is what the response from `/api/user/registration` looks like:
+When this final request is successful, we send all the data to our Vue client via `res.send()`. Here is what the response from `/api/user/registration` call looks like:
 
 ```json
 {
@@ -975,13 +961,13 @@ Here is what the response from `/api/user/registration` looks like:
 }
 ```
 
-The API key that we are passing in the `Authorization` HTTP header is not part of OAuth standard. You need it to call non-standard endpoints such as the [User Registration API](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you will use the API Key (in `Authorization` header) if you decide to explore more endpoints which require the API key.
+The API key that we are passing in the `Authorization` HTTP header is not part of OAuth standard. You need it to call non-standard endpoints like the [User Registration API](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you can use the API key if you decide to access endpoints protected by that key.
 
 ## Showing user data
 
-We can now access the user's information that was stored in FusionAuth. The next step is to display that data. In our `App.vue` we need to modify `mounted()`, since this time we are getting a response object that contains data from two endpoints.
+The Express server can now access user's information stored in FusionAuth. The next step is to display that data. In our `App.vue` file we modify the `mounted()` method, since this time we are getting a response object that contains data from both the `introspect` and `registration` endpoints.
 
-We just need to one line in `App.vue`, instead of `data.user.email`, this time it will be `data.introspectResponse.email`. While we are doing this, let’s define `body` as null in `data()` and store `body` field of the response object inside it. 
+We just need to add one line in `App.vue`. Instead of `data.user.email`, this time it will be `data.introspectResponse.email`. While we are doing this, let's define `body` as null in `data()` and store the `body` field of the response object inside it. 
 
 ```javascript
 //...
@@ -1004,13 +990,13 @@ mounted() {
 //...
 ```
 
-Everything else remains the same, we are now getting user information from FusionAuth in our application instead of fake user data. 
+Everything else remains the same. We are now getting user information from FusionAuth in our application instead of fake user data. 
 
-Go through the login process once again, and you should see "Welcome [your email address]".
+Go through the login process once again, and you should see "Welcome [your email address]" after successful authentication.
 
 ## Adding sign in and sign out in Vue
 
-We have previously created the endpoints for `login` and `logout` so let's add them in our Vue application. Create a new file named `Login.vue` and add the following
+We have previously created the server endpoints for `login` and `logout`. Let's add them to our Vue application. Create a new file named `Login.vue` and add the following:
 
 ```vue
 <template>
@@ -1025,41 +1011,49 @@ export default {
 </script>
 ```
 
-According to the above code, if the user is not logged in, `Sign In` will be shown, otherwise `Sign Out` will be shown. `email` is passed from `App.vue` as a prop here, so let's do that. In our `App.vue`, first import this file :
+According to the above code, if the user is not logged in, the `Sign In` text will be displayed, otherwise a `Sign Out` message will be shown. `email` is expected to be passed from `App.vue` as a prop here, so let's do that. In our `App.vue` file, first import the `Login` component:
 
 ```javascript
+//...
 import Login from "./Login";
+//...
 ```
 
 And then add this to `components`:
 
 ```javascript
+//...
 components: {
   Greet,
   Login 
 }
+//...
 ```
  
-And finally use it inside the `<template>` tags, passing `email`:
+And finally use it inside the `<template>` tags, passing `email` as a property:
 
 ```vue
+//...
 <div id="container">
   <Greet v-bind:email="email" />
   <Login v-bind:email="email" />
 </div>
+//...
 ```
 
-Here is how it our application looks like now, we can now login and logout with a click. Here's the application when you are signed out:
+We can now log in and log out with a click. Here's the application when you are signed out:
+
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/when-logged-out.png" alt="application when logged out." class="img-fluid" figure=false %}
 
 And here's the application when you are signed in (if you signed up with `richard@fusionauth.io`):
+
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/when-logged-in.png" alt="The application when logged in." class="img-fluid" figure=false %}
 
 ## Changing user info
 
-This last section deals with setting user data from our application.
+This last section deals with setting FusionAuth user data from our Vue application.
 
-We will create the `/set-user-data` route; inside `routes` create `set-user-data.js` and add this code to it:
+We will create the `/set-user-data` route; inside `routes` add a `set-user-data.js` file and add this code to it:
 
 ```javascript
 const express = require("express");
@@ -1081,7 +1075,7 @@ router.post("/", (req, res) => {
     
       // PATCH request to /registration endpoint
       axios.patch(
-        `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APLICATION_ID}`,
+        `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APPLICATION_ID}`,
         {
           registration: {
             data: req.body,
@@ -1104,17 +1098,17 @@ router.post("/", (req, res) => {
 module.exports = router;
 ```
 
-To ensure that we are updating the user currently logged in, we extract the token from our server which is done by making a **POST** request to the `oauth/introspect` endpoint; this is similar to what we did in the `user` route. 
+To ensure that we are updating the user currently logged in, we find the token from our FusionAuth server by making a **POST** request to the `oauth/introspect` endpoint; this is similar to what we did in the `user` route. 
 
-Once this request is successful, we make a **PATCH** request to `/api/user/registration` API. If you go through the [User Registration docs](https://fusionauth.io/docs/v1/tech/apis/registrations#update-a-user-registration), you will find that this API accepts both **PUT** and **PATCH** requests but here we are using **PATCH** since we only want to update a single part of the user registration object and **PATCH** will merge the request parameters into the existing object. 
+Once this request is successful, we make a **PATCH** request to `/api/user/registration` API. If you go through the [User Registration docs](https://fusionauth.io/docs/v1/tech/apis/registrations#update-a-user-registration), you will find that this API accepts both **PUT** and **PATCH** requests. Here we are using **PATCH** since we only want to update a single part of the user registration object and **PATCH** will merge the request parameters into the existing object. 
 
-The `data` to send is stored inside the `registration` object which takes it value from `req.body`. This `registration` represents a user's association with an application. The `data` attribute allows us to store arbitrary data related to a user's registration in an application. 
+The `data` to send is stored inside the `registration` object which takes it value from `req.body`. This `registration` represents a user's association with an application. The `data` attribute allows us to store arbitrary key value data related to a user's registration in an application. 
 
 We are using **PATCH** in communicating from Express to FusionAuth, but we will be sending user data from our Vue app to the Express server via JSON in the body of a **POST** HTTP message.
 
 ## Setting user data from Vue
 
-Now that we have created our route for updating user data, let’s create a `text-area` in our Vue app. We will type the user data in that, which will be sent to the server when the `Submit` button is clicked.
+Now that we have created our server route for updating user data, let's create a `text-area` in our Vue app. Users will type data there and it will be sent to the server when the `Submit` button is clicked.
 
 In `client/src` create a new file named `Update.vue` and add the following to it:
 
@@ -1151,17 +1145,17 @@ button {
 </style>
 ```
 
-One of the cool features of Vue is that by using `v-model="userData"` and initializing `userData=""` in the `data()` function, it creates a two-way data binding between `textarea` and `userData`.
+One of the cool features of Vue is that by using `v-model="userData"` and initializing `userData` to be a blank string in the `data()` function, two-way data binding is configured between the `textarea` element and the `userData` property.
 
 We can now access whatever we type in `textarea` in `userData`. You can [read more about it here](https://vuejs.org/v2/guide/forms.html).
 
-Then add this component to `App.vue` . It does not make sense to show this component when the user is not logged in. To hide it, just add `v-if="email"` with this component. This component will, similiarly to others in the Vue app, check to see if `email` is present or not. That property determins whether user is logged in or not.
+Add this component to `App.vue`. It does not make sense to show this component when the user is not logged in, however. To hide it, add `v-if="email"` to this component. It will check to see if `email` is present or not. Therefore this component will hide itself if the user is logged out.
 
 ```vue
 <Update v-if="email" />
 ```
 
-We still haven’t configured the `Submit` button. Let's do so to send whatever we type in `textarea` to our server to be stored. For this, we will create a function `update` inside the `methods()` section.
+We still haven't configured the `Submit` button. Let's do so to send whatever we type in our `textarea` to our server to be stored. Create a function `update` inside the `methods()` section.
 
 ```javascript
 //...
@@ -1185,11 +1179,9 @@ methods: {
 //...
 ```
 
-In the above function, we use `fetch()` to **POST** JSON-encoded data. If you are familiar with `fetch()` API, you will see that this is a simple **POST** request using `fetch()`, nothing fancy. You can [read more about it here](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch).
+In the above function, we use `fetch()` to **POST** JSON-encoded data to Express. If you are familiar with `fetch()`, you will see that this is a simple **POST** request, nothing fancy. You can [read more about it here](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch).
 
-Once we have sent `userData` to our server, we empty the `textarea` using `this.userData=''`, since it is a two-way binding.
-
-And now to bind this function to `submit` event we will add the following to the `form` tag.
+Once we have sent `userData` to our server, we reset the `textarea` by setting  `userData` equal to `''`, since it is a two-way binding. To bind this function to the `submit` event we will add the following to the `form` tag:
 
 ```vue
 <form @submit.prevent="update">
@@ -1201,11 +1193,11 @@ Using `.prevent` stops the page from reloading whenever the Submit button is cli
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/signed-in-with-text-area.png" alt="The application when logged in with the text area for updating the data." class="img-fluid" figure=false %}
 
-Now go to your Vue app and type some message in the `textarea` and click the Submit button. You can now see that message under **User data** in **Users** tab in the FusionAuth dashboard. 
+Go to your Vue app and type some text in the `textarea` and click the Submit button. You can now see that message under **User data** in **Users** tab within the FusionAuth dashboard. 
 
 ## Conclusion
 
-Congrats, you have built a Vue app that can log in, log out, and modify user data. This article provides a foundation for implementing OAuth using FusionAuth, and there are a bunch of other features, components, and routes that you can add. 
+Congrats, you have built a Vue application which allows a user to log in, log out, and modify their user data. This article is a foundation for implementing OAuth using FusionAuth. There are a bunch of other features, components, and routes that you could add to expand this application.
 
 Again, here's [the code](https://github.com/fusionauth/fusionauth-example-vue) that you can fork and experiment with.
 
@@ -1213,6 +1205,4 @@ Here are a few ideas of what you can do next:
 
 - [Register Users from the App itself.](https://fusionauth.io/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined)
 - Secure your server using a middleware like [Helmet](https://www.npmjs.com/package/helmet) 
-- Explore third party OAuth like [Google](https://fusionauth.io/docs/v1/tech/apis/identity-providers/google), [Twitter,](https://fusionauth.io/docs/v1/tech/apis/identity-providers/twitter) etc.
-
-Check out the [FusionAuth APIs](https://fusionauth.io/docs/v1/tech/apis/) for even more options.
+- Explore third party authentication options such as [Google](https://fusionauth.io/docs/v1/tech/apis/identity-providers/google), [Twitter,](https://fusionauth.io/docs/v1/tech/apis/identity-providers/twitter), or others.
