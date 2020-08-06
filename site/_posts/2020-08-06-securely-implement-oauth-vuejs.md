@@ -654,7 +654,7 @@ If you were using a new browser or an incognito window, you might see the login 
 
 ## Creating an OAuth callback for the Authorization Code grant
 
-Now, let's get rid of the error by creating an `oauth-callback` route. Inside `routes` create a new file `oauth-callback.js`.
+Now, let's get rid of the error by creating an `oauth-callback` route. Inside `routes` create a new file, `oauth-callback.js`.
 
 Add this route to `index.js`:
 
@@ -792,7 +792,7 @@ qs.stringify({
 
 The `query-string` library stringifies this request object as you can see below. This saves us from doing this manually and makes code more readable:
 
-```
+```javascript
 // the stringified parameters
 'client_id=1ac76336-9dd9-4048-99cb-f998af681d3e&client_secret=NLmIgHC65zHeHOPlQMmOMG4Nberle41GT85RUgijdqA&code=e_oTyBn_7WPTPgtFUjvEZk6TwBBLYajRi8NMixQehd0&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A9000%2Foauth-callback'
 ```
