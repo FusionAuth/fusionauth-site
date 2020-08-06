@@ -82,7 +82,7 @@ All the Express or server-side code will be in the `server` folder, and our Vue 
 
 We will use the official Vue CLI to initialize our project. This is the best way to scaffold Single Page Applications (SPAs). It provides batteries-included build setups for a modern front-end workflow. It takes only a few minutes to get up and running with hot-reload, lint-on-save, and production-ready builds. You can read more about [the Vue CLI here](https://vuejs.org/).
 
-Before we create our Vue app, I recommend installing the official Vuejs brownser extension to make debugging and inspection easier. You can [download it here](https://github.com/vuejs/vue-devtools).
+Before we create our Vue app, I recommend installing the official Vue.js browser extension to make debugging and inspection easier. You can [download it here](https://github.com/vuejs/vue-devtools).
 
 Use the following command to install Vue CLI globally:
 
@@ -191,7 +191,7 @@ Since we have installed `nodemon`, to use it inside `package.json` simply add th
 //...
 ```
 
-Next, set up your environment variables. Inside the `server` folder create a `.env` file and store your configuation, such as client information, ports, or API credentials in it:
+Next, set up your environment variables. Inside the `server` folder create a `.env` file and store your configuration, such as client information, ports, or API credentials in it:
 
 ```
 SERVER_PORT = 9000
@@ -205,9 +205,9 @@ API_KEY = 'Dy9bphElA3L3_ayW86T5KvrZkyK1Gj5EDV_2m9i39ow'
 
 You might notice that every environment variable is in CAPITAL LETTERS. It's not a rule, just a convention to separate environment variables from variables in code.
 
-`REDIRECT_URI` is the same as the URL you configured in the FusionAuth `Authorized redirect URLs` field. `APPLICATION_ID` is same as `CLIENT_ID`. You can change `SERVER_PORT` to whatever port you want; this tutorial will use port **9000** for the Express server. Use the API key you created above.
+`REDIRECT_URI` is the same as the URL you configured in the FusionAuth `Authorized redirect URLs` field. `APPLICATION_ID` is the same as the `CLIENT_ID`. You can change `SERVER_PORT` to whatever port you want; this tutorial will use port **9000** for the Express server. Use the API key you created above.
 
-Now, you may wonder where to get all this information for `.env` file. Go to the application that you made earlier in the FusionAuth dashboard and click the `View` button. It is the green magnifying glass. You can copy/paste `CLIENT_ID` and `CLIENT_SECRET` from there:
+Now, you may wonder where to get all this information for your `.env` file. Go to the application that you made earlier in the FusionAuth dashboard and click the `View` button. It is the green magnifying glass. You can copy/paste `CLIENT_ID` and `CLIENT_SECRET` from there:
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/oauth-configuration.png" alt="Client Id and Client Secret settings for the application." class="img-fluid" figure=false %}
 
@@ -240,7 +240,7 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(morgan("common"));
 app.use(express.json());
 
-// Provide a defualt port 
+// Provide a default port 
 const port =  process.env.SERVER_PORT || 3000;
 
 // Listen to server  
@@ -440,7 +440,7 @@ Great, the client works! We will now implement the same logic based on data from
 
 We will create a `user` route in our Express server to send fake user data to our application. Then, we will replace it with real data based on a request to FusionAuth.
 
-In your `server` folder, create a new folder `routes` and inside that folder create a new file named `user.js`.
+In your `server` folder, create a new folder, `routes`, and inside that folder create a new file named `user.js`.
 
 ```
 server
@@ -651,7 +651,7 @@ If you were using a new browser or an incognito window, you might see the login 
 
 ## Creating an OAuth callback for the Authorization Code grant
 
-Now, let's get rid of the error by creating a `oauth-callback` route. Inside `routes` create a new file `oauth-callback.js`.
+Now, let's get rid of the error by creating an `oauth-callback` route. Inside `routes` create a new file `oauth-callback.js`.
 
 Add this route to `index.js`:
 
@@ -811,7 +811,7 @@ Head over to http://localhost:9000/login. If everything goes well, you will end 
 
 ## Adding a logout route
 
-So, we have a `login` route that the signs in a user and then redirects back to our Vue app. Before we handle add links to login to our Vue app, let's create a `logout` route in the Express server. Then we'll be able to easily add them both to the Vue app. 
+So, we have a `login` route that the signs in a user and then redirects back to our Vue app. Before we add links in our Vue app, let's create a `logout` route in the Express server. Then we'll be able to easily add them both to the Vue app. 
 
 Inside `server/routes` create a new file named `logout.js`.
 
@@ -1102,7 +1102,7 @@ To ensure that we are updating the user currently logged in, we find the token f
 
 Once this request is successful, we make a **PATCH** request to `/api/user/registration` API. If you go through the [User Registration docs](https://fusionauth.io/docs/v1/tech/apis/registrations#update-a-user-registration), you will find that this API accepts both **PUT** and **PATCH** requests. Here we are using **PATCH** since we only want to update a single part of the user registration object and **PATCH** will merge the request parameters into the existing object. 
 
-The `data` to send is stored inside the `registration` object which takes it value from `req.body`. This `registration` represents a user's association with an application. The `data` attribute allows us to store arbitrary key value data related to a user's registration in an application. 
+The `data` to send is stored inside the `registration` object which takes its value from `req.body`. This `registration` represents a user's association with an application. The `data` attribute allows us to store arbitrary key value data related to a user's registration in an application. 
 
 We are using **PATCH** in communicating from Express to FusionAuth, but we will be sending user data from our Vue app to the Express server via JSON in the body of a **POST** HTTP message.
 
@@ -1205,4 +1205,4 @@ Here are a few ideas of what you can do next:
 
 - [Register Users from the App itself.](https://fusionauth.io/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined)
 - Secure your server using a middleware like [Helmet](https://www.npmjs.com/package/helmet) 
-- Explore third party authentication options such as [Google](https://fusionauth.io/docs/v1/tech/apis/identity-providers/google), [Twitter,](https://fusionauth.io/docs/v1/tech/apis/identity-providers/twitter), or others.
+- Explore third party authentication options such as [Google](https://fusionauth.io/docs/v1/tech/apis/identity-providers/google), [Twitter](https://fusionauth.io/docs/v1/tech/apis/identity-providers/twitter), or others.
