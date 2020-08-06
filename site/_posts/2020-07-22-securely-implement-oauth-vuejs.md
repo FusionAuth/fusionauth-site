@@ -155,7 +155,8 @@ Visiting http://localhost:8081/ will show you a blank screen now.
 
 Let's set aside the client for a bit, and focus on the Express server
 
-## Express
+## Using Express as our backend server
+
 
 We will use [Express.js](https://expressjs.com/) as our backend server. It is a popular library that is widely used by developers.
 
