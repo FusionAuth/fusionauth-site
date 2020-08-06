@@ -260,7 +260,9 @@ $ npm run dev
 
 This might be the only time we will start the server; since we have installed `nodemon`, the server will restart every time it detects a file change. 
 
-Head over to http://localhost:9000/; you will see an error! This is actually to be expected, since we have not created any routes yet.
+Head over to http://localhost:9000/; you will see an error! 
+
+> FUN FACT: This is actually to be expected, since we have not created any routes yet.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/borked-route.png" alt="The Express route doesn't exist yet, so we see an error message." class="img-fluid" figure=false %}
 
@@ -1190,7 +1192,9 @@ Once we have sent `userData` to our server, we reset the `textarea` by setting  
 </form>
 ```
 
-Using `.prevent` stops the page from reloading whenever the Submit button is clicked. Here is how our application looks now:
+> FUN FACT: Using `.prevent` stops the page from reloading whenever the Submit button is clicked. 
+
+Here is how our application looks now:
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/signed-in-with-text-area.png" alt="The application when logged in with the text area for updating the data." class="img-fluid" figure=false %}
 
