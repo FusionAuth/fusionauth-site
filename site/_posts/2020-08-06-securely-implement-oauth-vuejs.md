@@ -194,7 +194,7 @@ Since we have installed `nodemon`, to use it inside `package.json` simply add th
 
 Next, set up your environment variables. Inside the `server` folder create a `.env` file and store your configuration, such as client information, ports, or API credentials in it:
 
-```
+```shell
 SERVER_PORT = 9000
 FUSIONAUTH_PORT = 9011
 CLIENT_ID = 'c8642b18-5d1d-42b4-89fb-a37a5b750186'
