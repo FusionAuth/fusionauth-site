@@ -62,7 +62,7 @@ Next, add our current user to the new application. Select **Users** on the dashb
 
 Finally, navigate to **Settings** and then **API Keys**. You should have an API key present, but feel free to create one. For this tutorial, we won't limit permissions, but you should for production deployments. Record the API key value for later.
 
-We won't cover this today, but you can create multiple applications and configure multi-tenancy in FusionAuth. This would be useful if you wanted multiple applications all with their registration data maintained in FusionAuth.
+We won't cover this today, but you can create multiple applications and configure multi-tenancy in FusionAuth. This would be useful if you had multiple applications and wanted all their user data to be stored in FusionAuth.
 
 Now you're done configuring FusionAuth. We can start working on our initial Vue app. 
 
