@@ -1198,7 +1198,7 @@ Here is how our application looks now:
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/signed-in-with-text-area.png" alt="The application when logged in with the text area for updating the data." class="img-fluid" figure=false %}
 
-Go to your Vue app and type some text in the `textarea` and click the Submit button. You can now see that message under **User data** in **Users** tab within the FusionAuth dashboard. 
+Go to your Vue app and type some text in the `textarea` and click the Submit button. If you log in to the FusionAuth dashboard, you can now see the text you added is stored in FusionAuth. It is under **User data** tab in your user account details.
 
 ## Conclusion
 
