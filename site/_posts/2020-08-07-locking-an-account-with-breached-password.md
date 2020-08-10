@@ -48,13 +48,13 @@ Navigate to *Tenants* and then to the default tenant. Go to the *Passwords* tab.
 
 Your settings should look like this:
 
-TBD pic tenant-settings-password-tab.png
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/tenant-settings-password-tab.png" alt="Setting up breached password detection." class="img-fluid" figure=false %}
 
 ## Configure tenant webhook settings
 
 Now, you need to configure the webhook at the tenant level. This will ensure the webhook receives the event. Navigate to the *Webhooks* tab for the default tenant. Enable the `user.password.breach` event and set the "Transaction setting" to "All the Webhooks must succeed".
 
-TBD pic tenant-settings-webhook-tab.png
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/tenant-settings-webhooks-tab.png" alt="Setting up webhook tenant settings." class="img-fluid" figure=false %}
 
 Now that you have configured the tenant to emit the webhook events, you need to configure a webhook to listen.
 
@@ -64,21 +64,23 @@ Navigate to the *Settings* section, and then to *Webhooks*. You may need to scro
 
 While a bit more complicated, configuring the tenant to emit an event and the webhook to receive it separately provides flexibility. You can create a number of global webhooks and then have tenants control which events are sent. For example, if you are [private labeling an application with FusionAuth's multi-tenancy functionality](/blog/2020/06/30/private-labeling-with-multi-tenant), you could set up one tenant to emit events for new user registrations and another to emit only failed user logins. If you want to emit the same event in different tenants, you can also configure the webhook to listen to events from certain applications.
 
-Create the webhook. Set the URL to `http://localhost:8000/webhook.php`, add a descripton, and make sure the `user.password.breach` event is enabled.
+Create the webhook. Set the URL to `http://localhost:8000/webhook.php`. For this example, using this protocol is fine, but for production, please use TLS. Add a description:
 
-TBD two pics
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-url.png" alt="The webhook configuration screen." class="img-fluid" figure=false %}
+
+Scroll down and make sure the `user.password.breach` event is enabled:
+
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-url.png" alt="Configuring the received webhook events." class="img-fluid" figure=false %}
 
 It's a good idea to add a layer of security for a webhook so no unauthorized use can occur. You can do that with a [header, basic auth, or at the network layer](/docs/v1/tech/events-webhooks/securing), or some combination. For this application, you'll set a header value for the webhook:
 
-TBD pic
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-add-headers.png" alt="Configuring the webhook to receive an Authorization header." class="img-fluid" figure=false %}
 
 ## Write the webhook code
 
-Now that everything is properly configured, let's write code. We'll be using PHP because it's a performant language with good JSON handling, but any of the supported [client libraries](/docs/v1/tech/client-libraries/) would work as well. 
+Now that everything is properly configured, let's write code. We'll be using PHP because it's a performant language with good JSON handling. You could use any of the support [client libraries](/docs/v1/tech/client-libraries/) or call the APIs directly. I suppose you could write the webhook in bash, IF YOU DARE.
 
-The code is [available here](https://github.com/FusionAuth/fusionauth-example-php-webhook) if you want to check it out.
-
-Here's the `webhook.php` code:
+But we'll use PHP. The code is [available here](https://github.com/FusionAuth/fusionauth-example-php-webhook) if you want to check it out. Here's the `webhook.php` code:
 
 ```php
 <?php
@@ -128,15 +130,16 @@ http_response_code(403);
 ?>
 ```
 
-Let's walk through this code:
+Let's walk through this code, line by line.
 
 ```php
 // ...
 require __DIR__. '/config.php';
 require __DIR__ . '/vendor/autoload.php';
+// ...
 ```
 
-First, require some needed libraries.
+First, there are some required libraries and files.
 
 ```php
 //...
@@ -154,7 +157,7 @@ if ($authorization_value !== $authorization_header_value) {
 //...
 ```
 
-Then, check the authorization header to make sure that whoever is calling the webhook has the correct permissions.
+Then, the code checks the authorization header. This ensures that only FusionAuth calls this webhook. For production, you would definitely want to use TLS as well.
 
 ```php
 //...
@@ -164,7 +167,7 @@ $obj = json_decode($input);
 //...
 ```
 
-Here, we pull the entire contents of the webhook payload and decode it into a JSON object.
+In these lines, the entire contents of the webhook payload are converted into a string. The string is then decoded into a JSON object for easier handling.
 
 ```php
 //...
@@ -187,7 +190,7 @@ if (!$user_id) {
 //...
 ```
 
-These lines of code validate the payload. If we don't get valid JSON, a password breach event, and a user id, log an error and return. That returns a `200` and the webhook succeeds.
+Next, validate the payload. If you don't get valid JSON, a password breach event, and a user id, simply log an error and return. Doing so allows the webhook succeed and the login event to succeed.
 
 ```php
 //...
@@ -201,9 +204,18 @@ if (!$response->wasSuccessful()) {
 //...
 ```
 
-This code is creating a new FusionAuth client. Then it deactivates the user. 
+Finally! This is where the action is. This code creates a new FusionAuth client. It then it deactivates the user who logged in with a password found to be compromised. 
 
-This is the place you could take any other action. You could add a date of deactivation to the `user.data` field, fire off another API call, or add data to S3 for future analysis.
+You could take other steps here. You could do more within FusionAuth, by, for example:
+
+* Adding a date of deactivation to the `user.data` field
+* [Actioning the user](/docs/v1/tech/apis/actioning-users) so this event could be displayed in the administrative interface or queried via the API. 
+* Putting the user in a [group](/docs/v1/tech/core-concepts/groups) for future processing
+
+You could also integrate with another system. You could:
+* Fire off an API call to another service that needs to know about this security violation.
+* Add an event to a streaming service such as Kafka for future analysis
+* Send an email to the user and their boss about the situation. Wouldn't be cool, but you could do it.
 
 ```php
 //...
@@ -211,24 +223,31 @@ http_response_code(403);
 //...
 ```
 
-Finally, we return a non `200` status. This disrupts the login process, because we configured this tenant to require all webhooks to succeed before processing the event. I returned a `403` because I think that is the correct semantic value; the client is no longer authorized.
+Finally, we return a non `200` status. This disrupts the login process. Because we configured this tenant to require all webhooks to succeed before processing the event, if any don't, the event doesn't complete. 
 
-If we didn't fail at the end of this webhook, the user would be logged in. The account would be deactivated and so they'd be unable to login again, but their current session would be active for the duration of the JWT, as configured in the tenant. We don't want that to happen, so that's why we fail.
+This code returns a `403` because that is the correct semantic value; the client is no longer authorized.
+
+If this webhook didn't fail, the user would be logged in. The account would be deactivated and so they'd be unable to login later, but their current session would be active for the duration of the token, as configured in the tenant. We don't want that to happen, so that's why we fail.
 
 ## Results
 
-If you install the webhook, follow the full instructions in the repository, and login as a user with a breached password, the user will see this on their first failed login: 
+If you install the webhook, follow the full instructions in [the repository](https://github.com/FusionAuth/fusionauth-example-php-webhook/blob/master/README.md), and login as a user with a breached password, the user will see this screen on their first failed login: 
 
-pic TBD
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/first-attempt-login-after-lock.png" alt="Login screen after first failed login attempt." class="img-fluid" figure=false %}
 
 On their second login, they'll see the normal "your account has been locked" error message.
+
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/first-attempt-login-after-lock.png" alt="Login screen after subsequent failed login attempts." class="img-fluid" figure=false %}
 
 In a production system, I'd want to customize these messages, and you can do that via [theming](/docs/v1/tech/themes/).
 
 This user will also be deactivated in the administrative user interface:
 
-pic TBD
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/admin-view-user-locked.png" alt="Administrative user interface view of locked user." class="img-fluid" figure=false %}
 
 ## Conclusion
 
-Webhooks allow you to extend FusionAuth in all kinds of interesting ways. Whether you are pushing data to an external system or calling back into FusionAuth to take custom actions, you can leverage webhooks to make FusionAuth work the way you want.
+Webhooks allow you to extend FusionAuth in all kinds of interesting ways. 
+
+Whether you are pushing data to an external system or calling back into FusionAuth to take custom actions, you can leverage webhooks to make FusionAuth work the way you want.
+
