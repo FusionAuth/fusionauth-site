@@ -15,11 +15,11 @@ A user management system like FusionAuth is rarely sufficient on its own. After 
 
 You can perform this integration with [JWTs](/docs/v1/tech/oauth/tokens) and the [FusionAuth API](/docs/v1/tech/apis/). However, when certain events happen, you may want other parts of your system to be informed so they can take action. You can do this with webhooks. You may also use webhooks to extend the functionality of FusionAuth, listening to events and then calling back into FusionAuth using the APIs.
 
-Suppose you have an application which is so sensitive that if any user's passord is found to be breached, the account should immediately be locked. This isn't built into FusionAuth. What do you do? 
+Suppose you have an application which is so sensitive that if any user's password is found to be breached, the account should immediately be locked. This isn't built into FusionAuth. What do you do? 
 
 In this tutorial, I'll show you how to lock an account immediately if someone signs in with a password that is compromised.
 
-This is different than [locking an account based on a number of failed logins](/docs/v1/tech/tutorials/setting-up-user-account-lockout). In this situation, you are relying on the [breached password detection previously covered here](/blog/2020/07/22/breached-password-detection). Note, this is a [paid edition feature](/pricing).
+This is different from [locking an account based on a number of failed logins](/docs/v1/tech/tutorials/setting-up-user-account-lockout). In this situation, you are relying on the [breached password detection previously covered here](/blog/2020/07/22/breached-password-detection). Note, this is a [paid edition feature](/pricing).
 
 > Due to the use case, this post focuses on the breached password event, but the principles of integration work for any of the [over fifteen events](/docs/v1/tech/events-webhooks/events) for which FusionAuth has webhooks.
 
@@ -37,7 +37,7 @@ Once you're in the administrative interface, create a user with a horrible passw
 
 Next, make sure you enable your license as [outlined here](/docs/v1/tech/reactor).
 
-Create an API key by navigating to the *Settings* tab and then to *API Keys*. At a miniumum configure the following permission: `DELETE` on the `/api/user` endpoint. Record the API key for later use.
+Create an API key by navigating to the *Settings* tab and then to *API Keys*. At a minimum configure the following permission: `DELETE` on the `/api/user` endpoint. Record the API key for later use.
 
 ## Configure breached password detection
 
@@ -190,7 +190,7 @@ if (!$user_id) {
 //...
 ```
 
-Next, validate the payload. If you don't get valid JSON, a password breach event, and a user id, simply log an error and return. Doing so allows the webhook succeed and the login event to succeed.
+Next, validate the payload. If you don't get valid JSON, a password breach event, and a user id, simply log an error and return. Doing so allows the webhook to succeed and the login event to succeed.
 
 ```php
 //...
@@ -204,7 +204,7 @@ if (!$response->wasSuccessful()) {
 //...
 ```
 
-Finally! This is where the action is. This code creates a new FusionAuth client. It then it deactivates the user who logged in with a password found to be compromised. 
+Finally! This is where the action is. This code creates a new FusionAuth client. It then deactivates the user who logged in with a password found to be compromised. 
 
 You could take other steps here. You could do more within FusionAuth, by, for example:
 
