@@ -29,7 +29,7 @@ This is different from [locking an account based on a number of failed logins](/
 
 ## Prerequisites
 
-* A modern PHP (tested with php 7.3)
+* A modern PHP (tested with PHP 7.3)
 * FusionAuth installed (see the [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide) if you don't have it)
 * A license for a paid edition of FusionAuth
 
@@ -64,7 +64,7 @@ Click the *Save* button to persist the tenant configuration. Now that you have c
 
 Navigate to the *Settings* section, and then to *Webhooks*. You may need to scroll to see this section. You're now setting the webhook up and making sure it is able to receive the breached password detection event.
 
-While a bit more complicated, seperately configuring the tenant to emit an event and the webhook to receive it provides flexibility. You can create a number of global webhooks and then have tenants control which events are sent. For example, if you are [private labeling an application with FusionAuth's multi-tenancy functionality](/blog/2020/06/30/private-labeling-with-multi-tenant), you could set up one tenant to emit events for new user registrations and another to emit only failed user logins. If you want to emit the same event in different tenants, you can also configure the webhook to listen to events from specific applications. See the [docs for more info](/docs/v1/tech/events-webhooks/).
+While a bit more complicated, separately configuring the tenant to emit an event and the webhook to receive it provides flexibility. You can create a number of global webhooks and then have tenants control which events are sent. For example, if you are [private labeling an application with FusionAuth's multi-tenancy functionality](/blog/2020/06/30/private-labeling-with-multi-tenant), you could set up one tenant to emit events for new user registrations and another to emit only failed user logins. If you want to emit the same event in different tenants, you can also configure the webhook to listen to events from specific applications. See the [docs for more info](/docs/v1/tech/events-webhooks/).
 
 Now, create the webhook in FusionAuth. Set the URL to `http://localhost:8000/webhook.php`. For an example, using this protocol is fine, but for production, please use TLS. Add a description, and you should end up with a screen like this:
 
