@@ -5,6 +5,7 @@ description: Use FusionAuth's webhooks to ensure that you can delete all a user'
 author: John Philips
 image: blogs/using-webhooks-in-fusionauth.jpg
 category: blog
+tags: feature-webhooks client-javascript
 excerpt_separator: "<!--more-->"
 ---
 
