@@ -35,13 +35,15 @@ If you'd like to jump ahead to the code, here's the [GitHub repo](https://github
 
 ## Set up users, license, and API keys
 
-Once you're in the administrative interface, create a user with a horrible password, one that is compromised. I suggest `password` as a tried and true option. Enable your license as [outlined here](/docs/v1/tech/reactor).
+Once you're in the administrative interface, create a user with a horrible password, one that is compromised. I suggest `password` as a tried and true option. 
 
-Then create an API key by navigating to the *Settings* tab and then to *API Keys*. At a minimum configure the following permission for this key: `DELETE` on the `/api/user` endpoint. Record the API key for later use.
+Enable your license as [outlined here](/docs/v1/tech/reactor).
+
+Create an API key by navigating to the *Settings* tab and then to *API Keys*. At a minimum configure the following permission for this key: `DELETE` on the `/api/user` endpoint. Note the API key for later use.
 
 ## Configure breached password detection
 
-Navigate to the *Tenants* tab and then to the default tenant. Go to the *Passwords* tab. Take the following steps:
+Navigate to the *Tenants* section and then to the default tenant. Go to the *Passwords* tab. Take the following steps:
 
 * Enable breached password detection.
 * Set the *On login* option to "Only record the result, take no action."
@@ -60,11 +62,11 @@ Click the *Save* button to persist the tenant configuration. Now that you have c
 
 ## Configure the webhook 
 
-Navigate to the *Settings* section, and then to *Webhooks*. You may need to scroll to see this section. You're now setting the webhook up and making sure it is able to receive the breached password detection event.
+While a bit more complicated, separately configuring the tenant to emit an event and the webhook to receive it provides flexibility. You can create global webhooks and then have tenants specify which events are sent. For example, if you are private labeling an application with [FusionAuth's multi-tenancy functionality](/blog/2020/06/30/private-labeling-with-multi-tenant), you could set up one tenant to emit new user registration events and another to send failed user logins. If you want to emit the same event in different tenants, you can also configure the webhook to listen to specific applications. See the [docs for more information](/docs/v1/tech/events-webhooks/).
 
-While a bit more complicated, separately configuring the tenant to emit an event and the webhook to receive it provides flexibility. You can create a number of global webhooks and then have tenants control which events are sent. For example, if you are [private labeling an application with FusionAuth's multi-tenancy functionality](/blog/2020/06/30/private-labeling-with-multi-tenant), you could set up one tenant to emit events for new user registrations and another to emit only failed user logins. If you want to emit the same event in different tenants, you can also configure the webhook to listen to events from specific applications. See the [docs for more info](/docs/v1/tech/events-webhooks/).
+Navigate to the *Settings* section, and then to *Webhooks*. You may need to scroll to see this section. You're now setting up the webhook to receive the breached password detection event.
 
-Now, create the webhook in FusionAuth. Set the URL to `http://localhost:8000/webhook.php`. For an example, using this protocol is fine, but for production, please use TLS. Add a description, and you should end up with a screen like this:
+Now, create the webhook in FusionAuth. Set the URL to `http://localhost:8000/webhook.php`. For this example, using the `http` protocol is fine, but for production, please use TLS. Add a description, and you should end up with a screen like this:
 
 {% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-url.png" alt="The webhook configuration screen." class="img-fluid" figure=false %}
 
@@ -72,19 +74,19 @@ Scroll down and make sure the `user.password.breach` event is enabled:
 
 {% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-event-choice.png" alt="Configuring the received webhook events." class="img-fluid" figure=false %}
 
-It's a good idea to secure your webhook so no unauthorized POSTs will be processed. You can do that with a [header, basic auth, or at the network layer](/docs/v1/tech/events-webhooks/securing), or some combination of the three. For this application, set a header value for the webhook:
+It's a good idea to secure your webhook so no unauthorized POSTs are processed. You can do that with a [header, basic auth, or at the network layer](/docs/v1/tech/events-webhooks/securing). For this application, let's configure FusionAuth to send a header value when the webhook is called:
 
 {% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-add-headers.png" alt="Configuring the webhook to receive an Authorization header." class="img-fluid" figure=false %}
 
-Finally, click the *Save* button.
+Finally, click the *Save* button, as you are done configuring the webhook.
 
 ## Write the webhook code
 
-Now that FusionAuth is properly configured, let's look at some code. We'll be using PHP because it's a performant language with good JSON handling. You could use any of the [client libraries](/docs/v1/tech/client-libraries/) or call the APIs directly. I suppose you could write the webhook in bash, IF YOU DARE.
+Now that FusionAuth is properly set up, let's look at some code. We'll be using PHP because it's a performant language that handles JSON well. You could use any of the [client libraries](/docs/v1/tech/client-libraries/) or call the APIs directly. I suppose you could write the webhook in bash, IF YOU DARE.
 
 But we'll use PHP. 
 
-The code is [available here](https://github.com/FusionAuth/fusionauth-example-php-webhook) if you want to check it out. Here's the `webhook.php` code, which is the heart of the example:
+The code is [available here](https://github.com/FusionAuth/fusionauth-example-php-webhook) if you want to check it out. Here's the `webhook.php` file, the heart of the example:
 
 ```php
 <?php
@@ -218,8 +220,8 @@ You could do more within FusionAuth, by, for example:
 
 You could also integrate with other systems.
 
-* You could fire off an API call to another service that needs to know about this security violation
-* The system could add an event to a streaming service such as Kafka for future analysis
+* You could fire off an API call to another service that needs to know about this security violation.
+* The system could add an event to a streaming service, such as Kafka, for future analysis.
 * Your application could send an email to the user and their boss about the situation. Wouldn't be cool, but you could do it.
 
 ```php
@@ -228,7 +230,7 @@ http_response_code(500);
 //...
 ```
 
-Finally, we return a `500` HTTP status code. This stops the login process. Because we configured this tenant to require all webhooks to succeed before processing the event, if any don't, the event doesn't complete. This means the user is not logged in. 
+Finally, the code returns a `500` HTTP status code. This stops the login process. Because you configured this tenant to require all webhooks to succeed before processing the event, if any don't, the event doesn't complete. This means the user is not logged in. 
 
 If this webhook didn't fail, the user would be logged in. The account would be deactivated; they'd be unable to login later. But their current session would be active for the duration of the token. We don't want that to happen, so that's why the code returns a `500`.
 
@@ -240,9 +242,9 @@ If you install the webhook, follow the instructions in [the repository](https://
 
 On their second login, they'll see the normal "your account has been locked" error message:
 
-{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/first-attempt-login-after-lock.png" alt="Login screen after subsequent failed login attempts." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/breached-password-webhook/subsequent-attempts-login-after-lock.png" alt="Login screen after subsequent failed login attempts." class="img-fluid" figure=false %}
 
-In a production system, I'd want to customize these messages; you can do that via [theming](/docs/v1/tech/themes/).
+In a production system, you'd typically customize or localize these messages. [Themes](/docs/v1/tech/themes/) allow you to do so.
 
 This user will also be deactivated in the administrative user interface:
 
