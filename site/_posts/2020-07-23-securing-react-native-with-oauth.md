@@ -29,7 +29,7 @@ Here's what you need to get started:
 If you are a web developer, you may be familiar with OAuth. With web development, we have three players:
 
 ```
-The browser -> The Server -> The OAuth server
+The browser -> The server -> The OAuth server
 ```
 
 This architecture was used in this post on [securing a React application with OAuuth](/blog/2020/03/10/securely-implement-oauth-in-react). 
@@ -309,7 +309,7 @@ const handleAuthorize = useCallback(
 
 Next, we need to create a user interface for all the components. We'll create a simple UI to display the access token and other server response data. The access token is what FusionAuth provides once a user has signed in. The code for UI implementation looks like this:
 
-```javascript
+```react
 //...
 return (
   <View style={styles.container}>
@@ -439,7 +439,7 @@ const getUser = async () => {
 
 Next, we need to update the user interface code to display the data:
 
-```javascript
+```react
 //...
 return (
   <View style={styles.container}>
