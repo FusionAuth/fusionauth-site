@@ -13,7 +13,7 @@ In this article, we will discuss the step-by-step process of implementing the OA
 
 <!--more-->
 
-At the end, your app will be able to:
+At the end, your app will be able to do the following:
 
 - Log users in
 - Log users out
