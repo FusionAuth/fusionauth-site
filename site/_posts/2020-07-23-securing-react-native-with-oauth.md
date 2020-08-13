@@ -74,7 +74,7 @@ Now, we move on to the React Native project.
 
 Since we are going to use the React Native command line interface tool (CLI) for development, we must have the React Native development environment installed. For installation instructions, please follow [the official documentation](https://reactnative.dev/docs/environment-setup).
 
-We also need to install development environments for iOS, Android, or both. We are going to use [brew](https://brew.sh/) to install additional these packages. Make sure that brew is already installed, or install the packages in a different way. 
+We also need to install development environments for iOS, Android, or both. We are going to use [brew](https://brew.sh/) to install additional packages. Make sure that brew is already installed, or install the packages in a different way. 
 
 ### iOS environment
 
@@ -138,7 +138,7 @@ yarn add react-native-app-auth
 
 ### Setting up iOS auth 
 
-To set up the auth for an iOS app, take the following steps. If you want to learn more about other, check out the [package docs](https://github.com/FormidableLabs/react-native-app-auth#setup). Here, only necessary steps will be outlined.
+To set up the auth for an iOS app, take the following steps. If you want to learn more about other options, check out the [package docs](https://github.com/FormidableLabs/react-native-app-auth#setup). Here, only the necessary steps will be covered.
 
 First, we need to install cacao pod by running the command shown below:
 
@@ -212,7 +212,7 @@ Now, we can move on to coding.
 
 As always, if you want to skip ahead, grab the code from the [GitHub repository](https://github.com/fusionauth/fusionauth-example-react-native).
 
-First, we need modify the `App.js` file. Add necessary imports as shown in the code snippet below:
+First, we need to modify the `App.js` file. Add necessary imports as shown in the code snippet below:
 
 ```javascript
 //...
