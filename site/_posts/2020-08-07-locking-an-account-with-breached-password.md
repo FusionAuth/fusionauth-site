@@ -9,7 +9,7 @@ tags: feature-breached-password-detection client-php feature-webhooks
 excerpt_separator: "<!--more-->"
 ---
 
-Suppose you have an application to which access is so sensitive that if any user's password is found to be breached, the account should immediately be locked. This feature isn't built into FusionAuth. What can you do? 
+Suppose you have an application to which access is so sensitive that if any user's password is found to be breached, the account should immediately be locked; the user should not be able to sign in. While you can force a user to change their password out of the box, an outright lock option isn't built-in. What can you do? 
 
 <!--more-->
 
@@ -29,7 +29,7 @@ This is different from [locking an account](/docs/v1/tech/tutorials/setting-up-u
 
 * A modern PHP (tested with PHP 7.3)
 * FusionAuth installed (see the [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide) if you don't have it)
-* A license for a paid edition of FusionAuth
+* A FusionAuth license
 
 If you'd like to jump ahead to the code, here's the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-php-webhook) that you can download and explore.
 
@@ -37,7 +37,7 @@ If you'd like to jump ahead to the code, here's the [GitHub repo](https://github
 
 Once you're in the administrative interface, create a user with a horrible password, one that is compromised. I suggest `password` as a tried and true option. 
 
-Enable your license as [outlined here](/docs/v1/tech/reactor).
+Next, [activate your license](/docs/v1/tech/reactor).
 
 Create an API key by navigating to the *Settings* tab and then to *API Keys*. At a minimum configure the following permission for this key: `DELETE` on the `/api/user` endpoint. Note the API key for later use.
 
@@ -70,6 +70,7 @@ Now, create the webhook in FusionAuth. Set the URL to `http://localhost:8000/web
 
 {% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-url.png" alt="The webhook configuration screen." class="img-fluid" figure=false %}
 
+{:style="margin-bottom:30px"}
 Scroll down and make sure the `user.password.breach` event is enabled:
 
 {% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-event-choice.png" alt="Configuring the received webhook events." class="img-fluid" figure=false %}
