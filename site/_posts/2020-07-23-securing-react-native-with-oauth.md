@@ -9,11 +9,11 @@ tags: client-javascript
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we are going to set up a React Native application to work with OAuth. We'll set up a FusionAuth app for authorization purposes, but this should work with any OAuth compliant auth service. 
+In this tutorial, we are going to set up a React Native application to work with OAuth. We'll set up FusionAuth for authorization purposes, but the React Native code should work with any OAuth compliant server. 
 
 <!--more-->
 
-We start by setting up FusionAuth app, then we set up a React Native project and finally perform the OAuth Authorization Code grant from within the React Native app. 
+We start by setting up the FusionAuth app. Then we'll set up a React Native project. We'll then perform an Authorization Code grant from within the React Native app. Finally, we'll request information from an OIDC endpoint to display user data in the application.
 
 ## Requirements
 
@@ -23,6 +23,8 @@ Here's what you need to get started:
 * VScode or any other text editor
 * `git`
 * `npx` 
+* Xcode, if building for iOS
+* Homebrew (optional)
 
 ## What you need to know
 
@@ -32,39 +34,33 @@ If you are a web developer, you may be familiar with OAuth. With web development
 The browser -> The server -> The OAuth server
 ```
 
-This architecture was used in this post on [securing a React application with OAuuth](/blog/2020/03/10/securely-implement-oauth-in-react). 
-
-With a mobile device, things change a bit. A corresponding scenario might be something like this:
+This is the architecture we used when [securing a React application with OAuuth](/blog/2020/03/10/securely-implement-oauth-in-react). However with a mobile device, things change a bit. A corresponding scenario might be something like this:
 
 ```
 The mobile device -> The server -> The OAuth server
 ```
 
-However, this can be simplified. The server can be removed and mobile devices can handle the callbacks from the OAuth server. 
+However, this can be simplified. The server can be removed and the mobile device can handle the callbacks directly from the OAuth server. We'll use the Authorization Code grant with the PKCE extension. 
 
 Here's a suggested [flow from RFC 8252](https://tools.ietf.org/html/rfc8252#page-5):
 
 {% include _image.liquid src="/assets/img/blogs/react-native-oauth/oauth-authorization-code-flow.png" alt="The authorization code flow for native applications." class="img-fluid" figure=false %}
 
-In this tutorial, we are going to follow this to enable a mobile application to interact with an OAuth server.
-
-Let's configure the server and set up our coding environment.
+In this tutorial, we are going to implement this to enable a mobile application to interact with an OAuth server. First, let's configure that server and set up our coding environment.
 
 ## Setting up FusionAuth
 
-In order to set up the FusionAuth, you can follow a [5-minute setup](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) guide on FusionAuth’s official documentation. It is very simple and quick.
+In order to set up FusionAuth, follow the [5-minute setup](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) guide. It is very simple and quick.
 
 By default, the OAuth server will run on `http://localhost:9011.
 
 ### Setting up the FusionAuth application
 
-In this step, we are going to configure a FusionAuth application. An application is anything a user might log in to. For this, we need to go to FusionAuth console and navigate to the Applications menu option. In Applications console, we need to create a new app.
+In this step, we are going to configure a FusionAuth application. An application is anything a user might log in to. To do so, we need to go to FusionAuth console and navigate to *Applications*. There, we need to create a new application.
 
-Navigate to the *OAuth* tab and add in a redirect URI of `fusionauth-demo:/oauthredirect`. We'll use this redirect in our applications later. 
+Once you've done that, navigate to the *OAuth* tab and add in a redirect URI of `fusionauth-demo:/oauthredirect`. We'll use this redirect URL in our React Native application later. 
 
-Also, note the value of the "Client Id"; we'll need that later. Click *Save*. 
-
-When you've properly configured it, the edit screen should look like this:
+Also, note the value of "Client Id"; we'll need that later too. Click *Save*. When properly configured, the application details screen should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/react-native-oauth/fusionauth-dashboard.png" alt="Configuring the FusionAuth application." class="img-fluid" figure=false %}
 
@@ -72,24 +68,23 @@ Make sure to register your user to the new application. If you want, you can add
 
 {% include _image.liquid src="/assets/img/blogs/react-native-oauth/fusionauth-dashboard-register-user.png" alt="Registering your user to the React Native FusionAuth application." class="img-fluid" figure=false %}
 
-Now, we move to the React Native project.
+Now, we move on to the React Native project.
 
-## Setting up the React Native project
+## Setting up the React Native development environment
 
-Since we are going to use React Native CLI for development, ensure that we have the React Native development environment installed. For installation instructions, follow [the official documentation](https://reactnative.dev/docs/environment-setup).
+Since we are going to use the React Native command line interface tool (CLI) for development, we must have the React Native development environment installed. For installation instructions, please follow [the official documentation](https://reactnative.dev/docs/environment-setup).
 
-We are going to use [brew](https://brew.sh/) to install the packages. Make sure that brew is already installed in your system, or install the packages in a different way.
-
-We also need to install development environments for iOS, Android, or both.
+We also need to install development environments for iOS, Android, or both. We are going to use [brew](https://brew.sh/) to install additional these packages. Make sure that brew is already installed, or install the packages in a different way. 
 
 ### iOS environment
 
-Make sure you have Xcode installed. Then, we need to install dependencies using the commands given below: 
+Install needed a needed iOS dependency using this command:
 
-* `brew install node`
-* `brew install watchman`
+```shell
+brew install watchman
+```
 
-Lastly, we need to install the Xcode CLI tools, which are not normally installed. For that, open Xcode and navigate to Preferences -> Locations. Then pick the Xcode version for command-line tools as shown in the screenshot below:
+We need to install the Xcode CLI tools, which are not normally present. To do so, open Xcode and navigate to "Preferences" and then "Locations". Then pick the Xcode version for command-line tools as shown in the screenshot below:
 
 {% include _image.liquid src="/assets/img/blogs/react-native-oauth/activate-xcode.png" alt="Activating Xcode." class="img-fluid" figure=false %}
 
@@ -105,7 +100,7 @@ brew cask install adoptopenjdk/openjdk/adoptopenjdk8
 
 Next, we need to download and install the [Android studio](https://developer.android.com/studio/install).
 
-Then, we need to configure the `ANDROID_HOME` environment variable in our system path.  We can just add the following lines to our `$HOME/.bash_profile` or `$HOME/.bashrc` (if you are using zsh then `~/.zprofile` or `~/.zshrc`) config file:
+Then, we need to configure the `ANDROID_HOME` environment variable in our system path.  We can add the following lines to our `$HOME/.bash_profile` or `$HOME/.bashrc`. If you are using zsh then the files are `~/.zprofile` or `~/.zshrc`.
 
 ```bash
 export ANDROID_HOME=$HOME/Library/Android/sdk
@@ -119,35 +114,31 @@ Now our setup for the Android platform is complete.
 
 ## React native project setup
 
-We are now going to create a new React Native Project.
-
-First, create a new react-native project in our desired directory by running the following command in the terminal:
+We are now going to create a new React Native project. First, create a new project in our desired directory by running the following command in the terminal:
 
 ```shell
 react-native init RNfusionauth
 ```
 
-Open the project folder in your text editor (VSCode or whatever you use).
+Open the project folder in your text editor, as we'll be making additional changes to these files.
 
 ### Installing react native app auth
 
-One of the key components of our application is the [`react-native-app-auth`](https://github.com/FormidableLabs/react-native-app-auth) package. This package sets up a bridge between [AppAuth-iOS](https://github.com/openid/AppAuth-iOS) and [AppAuth-Android](https://github.com/openid/AppAuth-Android) SDKs for communicating with [OAuth 2.0](https://tools.ietf.org/html/rfc6749) and [OpenID Connect](http://openid.net/specs/openid-connect-core-1_0.html) providers.
+A key dependency of our application is the [`react-native-app-auth`](https://github.com/FormidableLabs/react-native-app-auth) package. This sets up a bridge between the [AppAuth-iOS](https://github.com/openid/AppAuth-iOS) and [AppAuth-Android](https://github.com/openid/AppAuth-Android) SDKs for communicating with [OAuth 2.0](https://tools.ietf.org/html/rfc6749) and [OpenID Connect](http://openid.net/specs/openid-connect-core-1_0.html) providers.
 
-This library should support any server that implements the [OAuth2 spec](https://tools.ietf.org/html/rfc6749#section-2.2), which FusionAuth does.
+This library should support any server that implements the [OAuth2 spec](https://tools.ietf.org/html/rfc6749#section-2.2). FusionAuth does, so we should be good.
 
-This package also has support for Authorization Code grant. It also supports PKCE by default with no additional configuration needed.
+This package also has support for the Authorization Code grant. It enables PKCE by default. This is important because a mobile device is not a ["confidential client"](https://tools.ietf.org/html/rfc6749#section-2.1) and we want to make sure any malicious actors can't intercept our authorization code.
 
-To install this, we need to run the following code in our React Native project directory, in the terminal:
+To install `react-native-app-auth`, run the following in our React Native project directory:
 
 ```shell
 yarn add react-native-app-auth
 ```
 
-This will add the library.
+### Setting up iOS auth 
 
-### Setting up react native app auth for iOS
-
-To set up the auth for an iOS app, we need to take the following steps. For all the options, check out the [package docs](https://github.com/FormidableLabs/react-native-app-auth#setup). Here, only necessary steps will be outlined.
+To set up the auth for an iOS app, take the following steps. If you want to learn more about other, check out the [package docs](https://github.com/FormidableLabs/react-native-app-auth#setup). Here, only necessary steps will be outlined.
 
 First, we need to install cacao pod by running the command shown below:
 
@@ -171,17 +162,17 @@ Then, we need to open the React Native project with Xcode. Open the `info.plist`
  </array>
 ```
 
-Here, the URL, `fusionauth.demo`, is the same as the prefix for the OAuth redirect we configured in the FusionAuth dashboard before.
+Here, the URL, `fusionauth.demo`, is the same as the prefix for the OAuth redirect we configured in the FusionAuth dashboard above. 
 
-The last step is to change the `AppDelegate.h` file to include the needed imports and properties:
+The last step is to change the `AppDelegate.h` file to include needed imports and properties:
 
 {% include _image.liquid src="/assets/img/blogs/react-native-oauth/appdelegate-change.png" alt="Modifying the appdelegate class." class="img-fluid" figure=false %}
 
-### Setting up react native app auth for Android
+### Setting up auth for Android
 
-For Android, we need additional configuration to capture the [authorization redirect](https://github.com/openid/AppAuth-android#capturing-the-authorization-redirect). Add the following property to the `defaultConfig` in `android/app/build.gradle`:
+For Android, we need additional configuration to capture the [authorization redirect](https://github.com/openid/AppAuth-android#capturing-the-authorization-redirect). Add the following property to the `defaultConfig` object in the `android/app/build.gradle` file:
 
-```android
+```gradle
 android {
  defaultConfig {
    manifestPlaceholders = [
@@ -191,19 +182,15 @@ android {
 }
 ```
 
-However, a new issue pops up when we start working on Android. Developing and debugging an Android app on a Mac is difficult as the emulator is not fully supported. The emulator runs pretty slow compared to the iOS emulator. 
+However, a new issue pops up when we start working on the Android version. Developing and debugging an Android app on a Mac is difficult as the emulator is not fully supported. Among other issues, the emulator is slow compared to the iOS emulator. 
 
 A better solution is to use an actual Android mobile device. When you are doing so, how can you connect the FusionAuth server, running on localhost, to the device, which is on a wifi or cell network? The solution is to use a local tunnel service. There are several out there; we'll use ngrok.
 
-#### Start using HTTPS on Local 
+#### Setting up ngrok
 
-We have a local tunnel service like ngrok that enables us to connect localhost to internet connectivity. 
+A local tunnel service like ngrok enables us to proxy between localhost and internet connections. In order to configure ngrok, follow these instructions:
 
-In order to configure and set up ngrok, we need to follow the following instructions:
-
-First, unzip to install and install it.
-
-Then connect your account. Running the following command will add our auth token to the default `ngrok.yml` configuration file. This will grant us access to more features and longer session times. 
+First, unzip and install it. Then connect your account. Running the following command will add our auth token to the default `ngrok.yml` file. This will grant us access to more features and longer session times. 
 
 Running tunnels will be listed on the [status page](https://dashboard.ngrok.com/status/tunnels) of the dashboard.
 
@@ -211,13 +198,7 @@ Running tunnels will be listed on the [status page](https://dashboard.ngrok.com/
 ./ngrok authtoken Your key
 ```
 
-Launch ngrok. For full details, go through [the documentation](https://ngrok.com/docs). We can use it for our purposes by running it from the command line. For the help message:
-
-```shell
-./ngrok help
-```
-
-In order to start an HTTP tunnel forwarding to `localhost` and port `9011`, where FusionAuth is listening, we need to run the following command:
+Launch the ngrok proxy. For full details, consult [the documentation](https://ngrok.com/docs). For our purposes, running it from the command line is sufficient. We want to start HTTP tunnel forwarding to `localhost` and port `9011`, where FusionAuth is listening. To do so, run the following command:
 
 ```shell
 ./ngrok http 9011
