@@ -39,14 +39,14 @@ Once you're in the administrative interface, create a user with a horrible passw
 
 Next, [activate your license](/docs/v1/tech/reactor).
 
-Create an API key by navigating to the *Settings* tab and then to *API Keys*. At a minimum configure the following permission for this key: `DELETE` on the `/api/user` endpoint. Note the API key for later use.
+Create an API key by navigating to the "Settings" tab and then to "API Keys". At a minimum configure the following permission for this key: `DELETE` on the `/api/user` endpoint. Note the API key for later use.
 
 ## Configure breached password detection
 
-Navigate to the *Tenants* section and then to the default tenant. Go to the *Passwords* tab. Take the following steps:
+Navigate to the "Tenants" section and then to the default tenant. Go to the "Passwords" tab. Take the following steps:
 
 * Enable breached password detection.
-* Set the *On login* option to "Only record the result, take no action."
+* Set the "On login" option to "Only record the result, take no action."
 
 Your settings should look like this:
 
@@ -54,17 +54,17 @@ Your settings should look like this:
 
 ## Configure tenant webhook settings
 
-Now, you need to configure the webhook at the tenant level. This will ensure the tenant emits the event and waits for the webhook's success. Navigate to the *Webhooks* tab for the default tenant. Enable the `user.password.breach` event and set the "Transaction setting" to "All the Webhooks must succeed".
+Now, you need to configure the webhook at the tenant level. This will ensure the tenant emits the event and waits for the webhook's success. Navigate to the "Webhooks" tab for the default tenant. Enable the `user.password.breach` event and set the "Transaction setting" to "All the Webhooks must succeed".
 
 {% include _image.liquid src="/assets/img/blogs/breached-password-webhook/tenant-settings-webhooks-tab.png" alt="Setting up webhook tenant settings." class="img-fluid" figure=false %}
 
-Click the *Save* button to persist the tenant configuration. Now that you have configured the tenant to send events, you need to configure a webhook to listen.
+Click the "Save" button to persist the tenant configuration. Now that you have configured the tenant to send events, you need to configure a webhook to listen.
 
 ## Configure the webhook 
 
 While a bit more complicated, separately configuring the tenant to emit an event and the webhook to receive it provides flexibility. You can create global webhooks and then have tenants specify which events are sent. For example, if you are private labeling an application with [FusionAuth's multi-tenancy functionality](/blog/2020/06/30/private-labeling-with-multi-tenant), you could set up one tenant to emit new user registration events and another to send failed user logins. If you want to emit the same event in different tenants, you can also configure the webhook to listen to specific applications. See the [docs for more information](/docs/v1/tech/events-webhooks/).
 
-Navigate to the *Settings* section, and then to *Webhooks*. You may need to scroll to see this section. You're now setting up the webhook to receive the breached password detection event.
+Navigate to the "Settings" section, and then to "Webhooks". You may need to scroll to see this section. You're now setting up the webhook to receive the breached password detection event.
 
 Now, create the webhook in FusionAuth. Set the URL to `http://localhost:8000/webhook.php`. For this example, using the `http` protocol is fine, but for production, please use TLS. Add a description, and you should end up with a screen like this:
 
@@ -79,7 +79,7 @@ It's a good idea to secure your webhook so no unauthorized POSTs are processed. 
 
 {% include _image.liquid src="/assets/img/blogs/breached-password-webhook/webhook-settings-add-headers.png" alt="Configuring the webhook to receive an Authorization header." class="img-fluid" figure=false %}
 
-Finally, click the *Save* button, as you are done configuring the webhook.
+Finally, click the "Save" button, as you are done configuring the webhook.
 
 ## Write the webhook code
 
