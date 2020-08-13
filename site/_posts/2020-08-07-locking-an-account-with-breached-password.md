@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Locking user accounts with a webhook
-description: Webhooks let you take actions based on events in FusionAuth. For instance, when someone logs in with a compromised password, you can immediately lock their account.
+title: Breached Password Detection: How to Lock User Accounts with a Webhook
+description: Webhooks let you take actions based on events in FusionAuth. For instance, if you've detected that someone tried logging in with a compromised password, you can immediately lock their account.
 author: Dan Moore
 image: blogs/breached-password-detection/how-to-enable-breached-password-detection-fusionauth.png
 category: blog
@@ -9,7 +9,7 @@ tags: feature-breached-password-detection client-php feature-webhooks
 excerpt_separator: "<!--more-->"
 ---
 
-An auth system is rarely sufficient on its own. After all, users want to authenticate in order to use an application's functionality, not for the fun of entering their username and password. User management systems integrate into one or more applications, whether custom, open source, or SaaS software. 
+An auth system is rarely sufficient on its own. After all, users want to authenticate in order to use an application's functionality, not for the fun of entering their username and password. User management systems provide functionality such as forgot password flows, breached password detection and admin user interfaces. But they also typically integrate into one or more applications, whether custom, open source, or SaaS software. 
 
 <!--more-->
 
