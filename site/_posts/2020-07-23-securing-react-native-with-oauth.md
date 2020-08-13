@@ -204,15 +204,15 @@ Launch the ngrok proxy. For full details, consult [the documentation](https://ng
 ./ngrok http 9011
 ```
 
-We get random address which forwards to our FusionAuth instance. It'll be something like `https://ce2f267ff5a5.ngrok.io`. We can reference this value from our Android device and any traffic sent will be forwarded to FusionAuth. We will also use this for our iOS devices for consistency.
+We'll get a random URL which forwards traffic to our FusionAuth instance. It'll be something like `https://ce2f267ff5a5.ngrok.io`. We can reference this value from our Android device and any traffic sent will be forwarded. We will also use this for our iOS app for consistency, even though the iOS emulator can connect to localhost.
 
-Now, we can move to the coding.
+Now, we can move on to coding.
 
 ## The implementation
 
-If you want to skip ahead, just grab the code from the [GitHub repository](https://github.com/fusionauth/fusionauth-example-react-native).
+As always, if you want to skip ahead, grab the code from the [GitHub repository](https://github.com/fusionauth/fusionauth-example-react-native).
 
-First, we need to go to the `App.js` file of our project. Add necessary imports as shown in the code snippet below:
+First, we need modify the `App.js` file. Add necessary imports as shown in the code snippet below:
 
 ```javascript
 //...
@@ -222,13 +222,13 @@ import { authorize, refresh, revoke, prefetchConfiguration } from 'react-native-
 //...
 ```
 
-Then, we need to create a `configs` object as shown in the code snippet below:
+Next, we need to create a `configs` object as shown in the code snippet below:
 
 ```javascript
 //...
 const configs = {
   fusionauth: {
-    issuer: 'https://ce25267ff5a5.ngrok.io', // or whatever your ngrok address is
+    issuer: 'https://ce25267ff5a5.ngrok.io', 
     clientId: '253eb7aa-687a-4bf3-b12b-26baa40eecbf',
     redirectUrl: 'fusionauth.demo:/oauthredirect',
     additionalParameters: {},
@@ -238,15 +238,17 @@ const configs = {
 //...
 ```
 
-Here's more about the properties of the `fusionauth` object in the `configs` object:
+Here's more information about the properties of the `fusionauth` object in the `configs` object:
 
 * `issuer` is the URL for the FusionAuth server.
 * `clientId` is the ID that we grabbed from the FusionAuth dashboard.
 * `redirectURL` is the URL that we set up before, with a callback path defined by the react native app auth library.
 
-We also add any additional parameters we need to pass (none, in this case), as well as scopes to request. In this case, we're requesting `offline_access` as that will return a `refresh_token`, which can be used to request additional access tokens.
+Make sure you update the `issuer` and `clientId` keys in this object with your configuration values.
 
-Next, create a default auth state in order to handle the response from server, as shown in the code snippet below:
+We also add any additional parameters we need to pass (none, in this case), as well as scopes to request. We're requesting the `offline_access` scope as that will return a `refresh_token`, which can be used to request additional access tokens.
+
+Then, create a default auth state in order to handle the response from the server, as shown in the code snippet below:
 
 ```javascript
 //...
@@ -266,9 +268,10 @@ Now, we are ready to configure authorization.
 
 ## Configuring Authorization
 
-We need to create a function to perform authorization. The main authorization function requires the `configs` object that we previously created. The implementation of the function is below:
+We need to create a function to perform authorization. This will require the `configs` object previously created. The implementation of the function is below:
 
 ```javascript
+//...
 const handleAuthorize = useCallback(
   async provider => {
     try {
@@ -284,11 +287,12 @@ const handleAuthorize = useCallback(
   },
   [authState]
 );
+//...
 ```
 
 ## Building the user interface
 
-Next, we need to create a user interface for all the components. We'll create a simple UI to display the access token and other server response data. The access token is what FusionAuth provides once a user has signed in. The code for UI implementation looks like this:
+Next, we need to create a user interface (UI). We'll create a simple UI to display the access token and any other server response data. The access token is what FusionAuth provides once a user has authenticated. The code for UI implementation looks like this:
 
 ```react
 //...
@@ -327,26 +331,25 @@ return (
 );
 ```
 
-We'll show one of two states, depending on if we have an `accessToken`. We can run the app in the simulator:
+We'll show one of two states, depending on whether we have an `accessToken`. At this point, we can run the app in the simulator:
 
 <div class="d-flex justify-content-center mb-5 mt-1 youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/rmrqXT30X38" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
+Following best practices, the mobile application opens up a system browser for user authentication, rather than a webview or embedded user-agent.
 
 ## Securely storing the token
 
-Once the user has successfully authenticated, we will have a JWT and possibly a refresh token that should be stored securely. Storing sensitive data like an access token in `Asyncstorage` is bad practice. We can use another third-party package to easily access the iOS Keychain and Android secure storage. 
+Once the user has successfully authenticated, we will have a JWT, and possibly a refresh token, which should be stored securely. Storing sensitive data like an access token in `Asyncstorage` is bad practice. We can use another third-party package to access the iOS Keychain and Android secure storage. 
 
-There are many packages that help us interact with keychain and secure shared preferences.
-
-The Formidable team, the creators of the `react-native-app-auth` package we are using, recommend [`react-native-keychain`](https://github.com/oblador/react-native-keychain). We install it by running the following command:
+There are many options, but the Formidable team, the creators of the `react-native-app-auth` package we are using, recommend [`react-native-keychain`](https://github.com/oblador/react-native-keychain). Install it by running the following command:
 
 ```shell
 yarn add react-native-keychain
 ```
 
-We need to store the access token after authentication success. We can do so by using this code:
+We need to store the access token after successful authentication. We can do so by using this code:
 
 ```javascript
 //...
@@ -386,9 +389,9 @@ const getAccesstoken = async () => {
 
 ## Retrieving more information about the authenticated user
 
-Since we have the access token, and have stored it securely, the last thing we need to do is to use the token to get user data from FusionAuth.
+Since we have the access token, and have stored it securely, we can now get user data from FusionAuth.
 
-Create a new function named `getUser`. In it, we'll construct the URL and retrieve the access token, then we'll make a call to the standard `/oauth2/userinfo` endpoint. The code stores the response data as shown in the code snippet below:
+Create a new function called `getUser`. In it, we'll construct a URL and retrieve the access token from our storage, then we'll make a call to a standard endpoint to get user information. The code then stores the response data. 
 
 ```javascript
 //...
@@ -418,7 +421,7 @@ const getUser = async () => {
 //...
 ```
 
-Next, we need to update the user interface code to display the data:
+Next, we need to update the user interface to display the user data:
 
 ```react
 //...
@@ -459,21 +462,19 @@ return (
 );
 ```
 
-We're checking if we have `userinfo` is defined. If so, we'll display the user's given name and email address, pulled from FusionAuth.
+In this UI, we're checking if we have `userinfo` defined. If so, we'll display the user's given name and email address; this data was retrieved from FusionAuth.
 
-Here's a video showing the resulting interaction:
+Here's a video showing the emulators executing the code after these changes:
 
 <div class="d-flex justify-content-center mb-5 mt-1 youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/M1GQiLn6ZEA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
-There you have it. You have successfully configured FusionAuth with a React Native project. We have used FusionAuth to authenticate a user and displayed information from that user in the project.
+There you have it. You have successfully configured a React Native application to interact with FusionAuth. We have authenticated a user, stored their access token securely, and displayed information from that user.
 
 ## Conclusion
 
-This tutorial has been a rollercoaster of information about web and mobile authentication flow. We were able to perform authorization and get user data from the auth server by implementing the native app workflow. 
-
-As a reminder, the [code for this React Native project](https://github.com/fusionauth/fusionauth-example-react-native) is available on Github.
+This tutorial has been a rollercoaster of information about web and mobile authentication flows. We were able to perform authorization and get user data from an OAuth server. As a reminder, the [code for this React Native project](https://github.com/fusionauth/fusionauth-example-react-native) is available on Github.
 
 I hope you enjoyed this tutorial. See you next time!
 
