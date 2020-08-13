@@ -54,7 +54,7 @@ Let's configure the server and set up our coding environment.
 
 In order to set up the FusionAuth, you can follow a [5-minute setup](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) guide on FusionAuth’s official documentation. It is very simple and quick.
 
-By default, the OAuth server will run on `http://localhost:9011.
+By default, the OAuth server will run on `http://localhost:9011`.
 
 ### Setting up the FusionAuth application
 
@@ -223,7 +223,7 @@ In order to start an HTTP tunnel forwarding to `localhost` and port `9011`, wher
 ./ngrok http 9011
 ```
 
-We get random address which forwards to our FusionAuth instance. It'll be something like https://ce2f267ff5a5.ngrok.io. We can reference this value from our Android device and any traffic sent will be forwarded to FusionAuth.
+We get random address which forwards to our FusionAuth instance. It'll be something like `https://ce2f267ff5a5.ngrok.io`. We can reference this value from our Android device and any traffic sent will be forwarded to FusionAuth. We will also use this for our iOS devices for consistency.
 
 Now, we can move to the coding.
 
@@ -247,7 +247,7 @@ Then, we need to create a `configs` object as shown in the code snippet below:
 //...
 const configs = {
   fusionauth: {
-    issuer: 'http://localhost:9011/',
+    issuer: 'https://ce25267ff5a5.ngrok.io', // or whatever your ngrok address is
     clientId: '253eb7aa-687a-4bf3-b12b-26baa40eecbf',
     redirectUrl: 'fusionauth.demo:/oauthredirect',
     additionalParameters: {},
@@ -415,7 +415,7 @@ const getUser = async () => {
   try {
     const access_token = await getAccesstoken();
     if (access_token !== null) {
-      fetch("http://localhost:9011/oauth2/userinfo", {
+      fetch(configs.fusionauth.issuer+"/oauth2/userinfo", {
         method: "GET",
         headers: {
           Authorization: "Bearer " + access_token,
