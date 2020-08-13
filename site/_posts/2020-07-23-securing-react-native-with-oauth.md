@@ -50,11 +50,9 @@ In this tutorial, we are going to implement this to enable a mobile application 
 
 ## Setting up FusionAuth
 
-In order to set up FusionAuth, follow the [5-minute setup](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) guide. It is very simple and quick.
+In order to set up FusionAuth, follow the [5-minute setup](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) guide. It is very simple and quick. By default, the OAuth server will run on `http://localhost:9011`.
 
-By default, the OAuth server will run on `http://localhost:9011`.
-
-### Setting up the FusionAuth application
+### The application
 
 In this step, we are going to configure a FusionAuth application. An application is anything a user might log in to. To do so, we need to go to FusionAuth console and navigate to *Applications*. There, we need to create a new application.
 
@@ -462,9 +460,7 @@ return (
 );
 ```
 
-In this UI, we're checking if we have `userinfo` defined. If so, we'll display the user's given name and email address; this data was retrieved from FusionAuth.
-
-Here's a video showing the emulators executing the code after these changes:
+In this UI, we're checking if we have `userinfo` defined. If so, we'll display the user's given name and email address; this data was retrieved from FusionAuth. Here's a video showing the emulators executing the code after these changes:
 
 <div class="d-flex justify-content-center mb-5 mt-1 youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/M1GQiLn6ZEA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
