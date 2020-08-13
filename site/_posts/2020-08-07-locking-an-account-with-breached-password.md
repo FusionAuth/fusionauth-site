@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Breached Password Detection: How to Lock User Accounts with a Webhook
+title: ! 'Breached Password Detection: How to Lock User Accounts with a Webhook'
 description: Webhooks let you take actions based on events in FusionAuth. For instance, if you've detected that someone tried logging in with a compromised password, you can immediately lock their account.
 author: Dan Moore
 image: blogs/breached-password-detection/how-to-enable-breached-password-detection-fusionauth.png
@@ -13,17 +13,17 @@ Suppose you have an application to which access is so sensitive that if any user
 
 <!--more-->
 
-An auth system is rarely sufficient on its own. After all, users want to authenticate in order to use an application's functionality, not for the fun of entering their username and password. User management systems provide functionality such as forgot password flows, breached password detection and admin user interfaces. But they also typically integrate into one or more applications, whether custom, open source, or SaaS software. 
+An auth system is rarely sufficient on its own. After all, users want to authenticate in order to use an application's functionality, not for the fun of entering their username and password. User management systems provide forgot password flows, breached password detection and admin user interfaces. But they also typically integrate into one or more applications, whether custom, open source, or SaaS software. 
 
-FusionAuth gives you options. You can integrate using [JWTs](/docs/v1/tech/oauth/tokens) or the [APIs](/docs/v1/tech/apis/). However, when events happen, you may want other parts of your system to be informed so they can take action. Webhooks can help.
-
-You may also use webhooks to extend the functionality of FusionAuth, listening to events and then calling back into FusionAuth using APIs.
+FusionAuth gives you options. You can integrate using [JWTs](/docs/v1/tech/oauth/tokens) or the [APIs](/docs/v1/tech/apis/). However, when events happen, you may want to notify other parts of your system so they can take action. Webhooks can help. You may also use webhooks to extend the functionality of FusionAuth, listening to events and then calling back into FusionAuth using APIs.
 
 In this tutorial, we'll extend FusionAuth to lock an account if a user signs in with a compromised password.
 
 > Due to the use case, this post focuses on the breached password detection event, but the integration principles apply for any of the [over fifteen events](/docs/v1/tech/events-webhooks/events) for which FusionAuth can fire a webhook.
 
-This is different from [locking an account](/docs/v1/tech/tutorials/setting-up-user-account-lockout) based on login attempts. In this case, you are relying on the [breached password detection feature](/blog/2020/07/22/breached-password-detection). *Note: breached password detection is a [paid edition feature](/pricing).*
+This is different from [locking an account](/docs/v1/tech/tutorials/setting-up-user-account-lockout) based on login attempts. In this case, you are relying on the [breached password detection feature](/blog/2020/07/22/breached-password-detection). 
+
+*Note: breached password detection is a [paid edition feature](/pricing).*
 
 ## Prerequisites
 
