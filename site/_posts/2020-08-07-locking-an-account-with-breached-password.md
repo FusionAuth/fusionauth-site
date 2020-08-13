@@ -9,15 +9,15 @@ tags: feature-breached-password-detection client-php feature-webhooks
 excerpt_separator: "<!--more-->"
 ---
 
-An auth system is rarely sufficient on its own. After all, users want to authenticate in order to use an application's functionality, not for the fun of entering their username and password. User management systems provide functionality such as forgot password flows, breached password detection and admin user interfaces. But they also typically integrate into one or more applications, whether custom, open source, or SaaS software. 
+Suppose you have an application to which access is so sensitive that if any user's password is found to be breached, the account should immediately be locked. This feature isn't built into FusionAuth. What can you do? 
 
 <!--more-->
+
+An auth system is rarely sufficient on its own. After all, users want to authenticate in order to use an application's functionality, not for the fun of entering their username and password. User management systems provide functionality such as forgot password flows, breached password detection and admin user interfaces. But they also typically integrate into one or more applications, whether custom, open source, or SaaS software. 
 
 FusionAuth gives you options. You can integrate using [JWTs](/docs/v1/tech/oauth/tokens) or the [APIs](/docs/v1/tech/apis/). However, when events happen, you may want other parts of your system to be informed so they can take action. Webhooks can help.
 
 You may also use webhooks to extend the functionality of FusionAuth, listening to events and then calling back into FusionAuth using APIs.
-
-Suppose you have an application to which access is so sensitive that if any user's password is found to be breached, the account should immediately be locked. This feature isn't built into FusionAuth. What can you do? 
 
 In this tutorial, we'll extend FusionAuth to lock an account if a user signs in with a compromised password.
 
