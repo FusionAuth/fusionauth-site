@@ -13,7 +13,7 @@ FusionAuth is an auth system, but it also provides user management. If you're us
 
 <!--more-->
 
-In this blog post, we'll build a custom registration form for a real estate application. When the user registers, we'll use a two step form to capture additional information about their home buying needs.
+In this blog post, you'll build a custom registration form for a real estate application. When the user registers, you'll use a two step form to capture additional information about their home buying needs.
 
 We're going to capture the following information about new users:
 
@@ -25,7 +25,7 @@ We're going to capture the following information about new users:
 * Minimum house price
 * Maximum house price
 
-Because this is a lot of information to ask for, we'll break this up into two pages. We'll be walking through everything using the administrative user interface, but everything can be done via [the APIs](/docs/v1/tech/apis/forms), should you need to automate registration form creation.
+Because this is a lot of information to ask for, break this up into two pages. We'll be walking through everything using the administrative user interface, but everything can be done via [the APIs](/docs/v1/tech/apis/forms), should you need to automate registration form creation.
 
 ## Setup
 
@@ -34,6 +34,8 @@ If you don't have FusionAuth running, set it up [is outlined here](https://fusio
 The next thing you need to do is get a license key. *Please note that advanced registration forms are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing).*
 
 [Activate your paid edition](/docs/v1/tech/reactor) and then you can start building your form.
+
+Go to "Settings" and create an API key. We'll be using this for easier theme management and to read from user data.XXX perms?
 
 ## Use a custom theme
 
@@ -53,21 +55,21 @@ We'll modify this theme after we've created the form.
 
 ## Create form fields
 
-Navigate to "Customizations" and then "Form fields". Here are the form fields that are available by default.
+Navigate to "Customizations" and then "Form fields". Here are the form fields that are available by default. Each of these has a key, such as `user.email`, and these are called "predefined keys".
 
 Pic TBD
 
-You can add as many as you'd like. Let's add a couple for our sign up form. Let's add `minprice`. We'll have the data type be a number and use the text form control. Let's leave it as optional. While it is useful information, we don't want to stop someone from signing up if they don't know it or aren't comfortable sharing it. Here's what it might look like before we save the configuration.
+You can add as many custom fields as you'd like. Each of these use custom keys. Let's add a couple for our sign up form. Let's add a key of `minprice`. We'll have the data type be a number and use the text form control. Let's leave it as optional. While it is useful information, we don't want to stop someone from signing up if they don't know it or aren't comfortable sharing it. Here's what it might look like before we save the configuration.
 
 Pic TBD
 
-Note that the fieldname is `registration.data.minprice`. We can create as many custom fields as we want and store them in this data field. We can also create custom fields tied to the user.
+Note that the fieldname is `registration.data.minprice`, which is the full custom key name. We can create as many custom fields as we want and store them in this data field. We can also create custom fields tied to the user.
 
 As a reminder, [a registration](/docs/v1/tech/core-concepts/registrations) is a link between a user and an application. Since this is a real estate application, we'll want information that is germane to this app to be stored on the registration. If we were later to build a mortgage application, there'd be different data associated with that registration. But, on the other hand, if we wanted to ask for additional information better associated with the user, such as their income, that would be best stored in the `user.data` field.
 
-Let's also add a 'maxprice' and use the same settings. 
+Let's also add a 'maxprice' and use the same settings. It'll have a different key, but is also a number and should be optional.
 
-Finally, we'll add a geographic area. This will be required. It'll be a string, but let's use the textarea form control to give people a bit more space to tell us what they are looking for.
+Finally, we'll add a geographic area. It'll be a string, but let's use the textarea form control to give people a bit more space to tell us what they are looking for.
 
 Pic TBD
 
@@ -77,161 +79,202 @@ Pic TBD
 
 ## Build the form
 
+Next you need to build the form. Here you can mix and match any of the standard, predefined fields and our custom fields. They may appear in any order on the form, whatever makes the most sense.
 
+The only real requirements are:
 
+* You must have either an email or a username field in one of your steps.
+* You must have a password field in one of your steps.
 
+To being building your form, navigate to "Customizations" and then to "Forms". Click the green "+" to create a new form. Name the form. Add the first step and add the following fields:
 
-We're
+* Email
+* Password
+* First name
+* Phone number
 
- navigate to the Tenant details page, and then to the "Password" tab. Enable "Breached password detection settings" and then choose your options. If you need varied configuration for different applications, use the multi-tenant feature to create separate tenants and configure them individually.
+Pic TBD
 
+You can add as many steps as you want. Create a second step and add these fields:
 
+* Geographic area
+* Minimum house price
+* Maximum house price
 
- building a registration form so that users can sign up for your application 
+Pic TBD
 
-set up a custom reg form for a real estate app
-grab first name, email*, password*, mobile number (optional)
-grab three custom fields after
-apis?
-pull the data from the user afterwards for a portal
-(flask)
+You can rearrange the field order from this screen, but to change attributes you have to return to the "Fields" section.
 
-2 parts?
+When you're done, save the form.
 
-While there are many ways for people to authenticate with online systems, usernames and passwords are still commonly used credentials. Unfortunately, many passwords have been compromised and made available on the Internet. When combined with the fact that users often reuse passwords across different systems, this means that your application or site may be at risk through no fault of your own.
+## Use the form
 
-<!--more-->
+The next step is to use the form for your application. 
 
-## The danger of compromised passwords
+Navigate to "Applications" and create a new application. Name it "Real estate search". 
 
-Breached passwords allow unauthorized access to your systems. If a user's credentials are known to another party, that party can access your systems acting as that user. Depending on data and functionality available in your systems, the results of unauthorized access could range from worrying to disastrous.
+You have to provide a redirect URL for when registration succeeds. Navigate to the "OAuth" tab and enter "https://fusionauth.io" or some other public website that you wouldn't mind landing on once you are registered. 
 
-## How to avoid unauthorized access
+Go to the "Registration" tab and enable "Self service registration."
 
-Here are some options auth systems often provide to help secure accounts:
+Then you want to check the "Advanced" option and select the form you just created. 
 
-* Force users to choose long and complex passwords
-* Require users to set up two factor authentication
-* Make users change passwords regularly
+Click "Save".
 
-What all of these remedies have in common is that they all require your user to act. Who among us likes to change their password? In addition, none of these prevent a user from choosing to reuse a password across multiple applications.
+When you edit the application, you should see a screen something like this:
 
-[Defense in depth](https://en.wikipedia.org/wiki/Defense_in_depth_(computing)) is a security concept which basically means you shouldn't rely on one single way to protect your systems. Preventing a user from using a publicly available password, one that has been compromised, will increase your system security. There are numerous publicly available databases of cracked passwords. Your auth system can check if a user's password matches anything in these datasets.
+Pic TBD
 
-## How to protect against breached passwords
+You can easily find the registration URL by clicking on the green magnifying glass on the list of applications and looking for the "Registration URL".
 
-Setting up your authentication system to check for and prevent use of breached passwords has a couple of benefits:
+Pic TBD
 
-* It helps prevent password reuse across systems. It's not perfect, but if any systems have been breached, you can prevent reuse of that password in your system.
-* It allows the user to pick whatever password they want, as long as it is unique. Whether that means using a password manager, a string of unique words, or an easily remembered, slightly modified quote. 
+Let's check it out! Open up an incognito window and paste the "Registration URL" into the URL bar. 
 
-Enabling breached password detection actually empowers your users. Rather than enforcing a certain set of characters in a password, you're disallowing problematic passwords. 
+You can see that the first screen asks for first name, email address, password and phone number:
 
-I don't know about you, but I get frustrated when I'm signing up for an account and am told: "you must have between 26 and 31.5 characters in your password, of which exactly 12 must be uppercase and 15 must be numeric and please hop on one foot while entering your password". Okay, maybe I exaggerate a bit.
+Pic TBD
 
-If you are going to build this feature, look for available datasets. You can also [look for APIs](https://haveibeenpwned.com/API/v3) to help you. Consider how to ingest and expose these sets to your auth systems in a performant manner. You'll also need to make sure you schedule time to keep these datasets up to date. 
+And the second has a text area and asks for the pricing info. If you flip back to your administrative user interface, where you are logged into FusionAuth, and navigate to "Users", you'll see the user has been registered. If you go to the "User data" tab of the new user's details page, you can see the information they filled out as well.
 
-When building this feature, build a way to force users to change their compromised passwords. There's not a ton of literature out there, but [this recent study (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) of almost 250 users over two years showed that only 13% of users with a breached password changed their credentials within three months. From the conclusion:
+Pic TBD
 
-> Overall, our findings suggest that password breach notifications are failing dramatically, both at causing users to take action and at causing users to take *constructive* action. Regulators should take note of the ineffectiveness or absence of breach notifications and impose requirements on companies to implement better practices.
+But there are some issues. The placeholders for the fields are not very user friendly. `user.firstName` is understandable, but it'd be better to say "Your first name". And the geographic area doesn't even have a description, making it hard for people to know what to put in there.
 
-Ouch.
+We can solve these by updating the theme.
 
-## How FusionAuth detects breached passwords
+Make sure you close the incognito window. You've been logged in, and when you make the changes, you'll want to be signed out. Closing the incognito window is the easiest way to do that.
 
-*Please note that this is a paid edition feature. You can [learn more about paid editions here](/pricing).*
+## Theme the form
 
-We have built breached password detection into our auth management system. Enabling real time compromised password detection and mitigation in FusionAuth couldn't be easier. 
+Let's theme the form to make the registration look a bit better. Themes are a big topic, so this tutorial isn't going to cover making the entire experience beautiful. If you are interested in that, check out the [themes documentation](/docs/v1/tech/themes/) for more information. 
 
-Assuming you've [activated your paid edition with a license key](/docs/v1/tech/reactor), navigate to the Tenant details page, and then to the "Password" tab. Enable "Breached password detection settings" and then choose your options. If you need varied configuration for different applications, use the multi-tenant feature to create separate tenants and configure them individually.
+What you are going to do is:
 
-{% include _image.liquid src="/assets/img/blogs/breached-password-detection/enable-breached-password-check.png" alt="Enabling breached password detection." class="img-fluid" figure=false %}
+* Correct the hints in the text boxes so it is easier for the registering user to know what to put in the boxes
+* Add a title to the geographic area textbox
 
-This tab is also where you can specify various password settings. The defaults are fine, but feel free to change the rules to meet your needs, whether requiring certain types of characters, setting an expiration time, or mandating a minimum length. Just don't make me hop on one foot, please.
+In the administrative user interface, navigate to "Customizations" and then "Themes". Copy the theme id; mine is `de03191a-9369-4732-a9c4-0467d1f26482`.
 
-When configuring breached password detection, there are three levels of compromised password matching. You can match:
+### Modifying a theme via API
 
-* on the password alone
-* on the password plus username, email address or email sub-address
-* on the password and an exact match on username or email address, or commonly used passwords like "password". 
+At this point, you have two options. You can edit the messages directly in the user interface, or you can use the API to edit them on the command line. In this tutorial, we're going to do the latter for the messages. These scripts assume you are running FusionAuth on localhost:9011, if not, adjust accordingly. These scripts are [also available on GitHub](https://github.com/FusionAuth/fusionauth-theme-management).
 
-While you know your security requirements best, we recommend matching on password alone, as this provides the most protection. The match will check for a compromised credential whenever a user's password is created or modified. This includes the following scenarios:
-
-* A user registers, should self-registration be enabled
-* A user is created via the administrative user interface 
-* A user is created via the [User APIs](/docs/v1/tech/apis/users)
-* A user changes their password
-* An administrator changes a user's password
-
-In all cases, the provided password will be checked against a large and ever-growing database of compromised credentials maintained by FusionAuth. 
-
-The other configuration option is what, if any, action to take on user login. Should a password be checked when someone signs in? One option is to simply not check for compromised passwords during the sign in event. 
-
-This is an acceptable choice if login performance is of the utmost importance to you. However, if a password is compromised after an account is created, no check will occur until the password is changed, exposing your system to unauthorized access. Test to make sure that the performance win is worth the security consequence. We recommend enabling one of the other choices. 
-
-Some of these other, more secure, options are:
-
-* Recording the result, which will update statistics and [fire a webhook](/docs/v1/tech/events-webhooks/)
-* Emailing the user, letting them know their password has been compromised
-* Forcing the user to change their password before their authentication can be completed
-
-It's important to note that these only apply to login events. Once password breach detection is enabled, password changes and registrations always require an uncompromised credential before they'll succeed. Enabling this check on login allows you to increase the security of your user accounts in a gradual fashion. 
-
-These settings are also available in the [Tenant API](/docs/v1/tech/apis/tenants), under the `tenant.passwordValidationRules.breachDetection` key. 
-
-### Reporting on affected users
-
-When you enable this feature, you'll also get built in reporting. On a tenant by tenant basis, you can see how many of your users have had breached passwords: 
-
-{% include _image.liquid src="/assets/img/blogs/breached-password-detection/breach-password-report.png" alt="The breached password report." class="img-fluid" figure=false %}
-
-It's also easy to search for users who have compromised credentials from the administrative user interface. This makes it easy to lock accounts, reach out to your customers, or take any other actions.
-
-## What does breach detection look like?
-
-Here's an example of a registration API call. Breached password detection has been enabled for the tenant.
+The first thing to do is to pull down the messages into a text file for easy editing. Below is a shell script to convert the JSON into a nice newline delimited file. It assumes you have [jq](https://stedolan.github.io/jq/) and python3 installed. 
 
 ```shell
-API_KEY=...
-APPLICATION_ID=...
+API_KEY=<your api key>
+THEME_ID=<your theme id>
 
-curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/registration' -d '{"user" : {"email": "dan@piedpiper.com", "password": "password5" }, "registration": {"applicationId" : "'$APPLICATION_ID'" }}'
+curl -H "Authorization: $API_KEY" 'http://localhost:9011/api/theme/'$THEME_ID|jq '.theme.defaultMessages' |sed 's/^"//' |sed 's/"$//' |python3 convert.py > defaultmessages.txt
 ```
 
-And here is the response:
-```json
-{"fieldErrors":{"user.password":[{"code":"[breachedCommonPassword]user.password","message":"The [user.password] property value has been breached and may not be used, please select a different password."}]}}
+The `convert.py` file turns embedded newlines into real ones:
+
+```python
+import sys
+
+OUTPUT = sys.stdin.read()
+formatted_output = OUTPUT.replace('\\n', '\n')
+print(formatted_output)
 ```
 
-Luckily, it's easy to fix. The same curl command with a more secure password allows a registration. I mean, c'mon, "password5"?
+`defaultmessages.txt` ends up looking like this:
 
-If you require a password change when a breached credential is found, FusionAuth has built-in pages to support this flow. Here's what a user with a compromised password will see after attempting to log in, if you are using the FusionAuth provided pages:
+```
+#
+# Copyright (c) 2019-2020, FusionAuth, All Rights Reserved
+#
+# Licensed under the Apache License, Version 2.0 (the \"License\");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
 
-{% include _image.liquid src="/assets/img/blogs/breached-password-detection/invalid-login-message.png" alt="What a user sees when they are forced to change their breached password." class="img-fluid" figure=false %}
+// ...
 
-Any administrator viewing the user details page will also see a warning and information about when the breach was found. Here's an example of a details page for a user with a weak password:
+# Webhook transaction failure
+[WebhookTransactionException]=One or more webhooks returned an invalid response or were unreachable. Based on your transaction configuration, your action cannot be completed.
+```
 
-{% include _image.liquid src="/assets/img/blogs/breached-password-detection/admin-ui-warning-of-breach.png" alt="The warning an administrative user sees after a compromised password is found." class="img-fluid" figure=false %}
+It's long, about 200 lines. A version of this file for different languages is also available in the [`fusionauth-localization`](https://github.com/FusionAuth/fusionauth-localization) project.
 
-## Performance impacts
+You will want to focus on the "Custom Registration" section.
 
-FusionAuth handles password breach checks in real time. Any way you slice it, this check is additional work whenever someone registers or, if the login check is configured, signs in. How does that impact performance? 
+```
+#
+# Custom Registration forms. These must match the domain names.
+#
+user.email=Email
+user.password=Password
+user.birthDate=Birthdate
 
-Here are some benchmarks I created using ApacheBench. I created 10 users with common poor passwords. Over three runs, with 10,000 requests and 100 threads, I made a login request for one of the random users against a local FusionAuth instance. Here are the 50th and 95 percentile durations with breached password detection disabled and enabled. 
+#
+# Custom Registration form validation errors.
+#
+[confirm]user.password=Confirm password
+```
 
-| Run number | Disabled 50th (ms) | Enabled 50th (ms) | 50th % increase | Disabled 95th (ms) | Enabled 95th (ms) | 95th % increase |
-|----|---|---|
-| 1    | 120 | 123 | 2.5%  | 258 | 274 | 6.2%   |
-| 2    | 107 | 115 | 7.5%  | 232 | 285 | 22.8%  |
-| 3    | 112 | 104 | -7.1% | 383 | 312 | -18.5% |
+You'll want to add the placeholders to the section with this comment:
+```
+# Custom Registration forms. These must match the domain names.
+```
 
-You can see a performance impact. It fluctuated between runs and was less than a 20% difference in all cases. Due to the fact I was benchmarking on my local machine, the percentage change is more telling than the actual numbers. You probably won't be deploying your FusionAuth instance on a MacBook, so make sure you test in a more realistic setting.
+The keys must match the form field keys we created earlier. Here's what you'd add to set up placeholders.
 
-## Enable Breached Password Detection Today
+```
+user.firstName=Your first name
+user.mobilePhone=Your mobile phone num
+registration.data.minprice=Minimum home price
+registration.data.maxprice=Maximum home price
+registration.data.minprice=Where are you looking?
+```
 
-Breached password detection helps secure your users' data. You can choose how you want to respond and how you want to check passwords during the user authentication experience. You can add additional security with none of the frustrating password rules that often stymie user registration.
+Then you'll want to add validation messages to the section starting with
+```
+# Custom Registration form validation errors.
+```
 
-It also protects your applications and systems from breaches in other companies with zero effort on your part.
+You can examine the `Default validation errors` section for an example of all the errors that you can handle. You may append the fieldname to provide more specific errors. For example:
 
-Just a reminder, this is a paid edition feature only. You can [learn more about paid editions here](/pricing).
+```
+[blank]registration.data.minprice=Minimum home price required
+[blank]registration.data.maxprice=Maximum home price required
+```
 
+Note that if you make any changes with a double quote in them, please escape it: `\"`. This will help when you turn this file back into JSON. After you've made all your changes to the `defaultmessages.txt` file, you'll turn it back into the JSON format, add the keys and quotes previously stripped off, and the call `PATCH` on this theme object. `PATCH` only updates the elements of an object provided. You can do this with this shell script:
+
+```shell
+API_KEY=<your api key>
+THEME_ID=<your theme id>
+
+FILE_NAME=out.json$$
+
+awk '{printf "%s", $0"\\n"}' defaultmessages.txt |sed 's/^/{ "theme": { "defaultMessages": "/' | sed 's/$/"}}/' > $FILE_NAME
+
+STATUS_CODE=`curl -XPATCH -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'http://localhost:9011/api/theme/'$THEME_ID -d @$FILE_NAME -o /dev/null -w '%{http_code}' -s`
+
+if [ $STATUS_CODE -ne 200 ]; then
+  echo "Error with patch, exited with status code: "$STATUS_CODE
+  exit 1
+fi
+
+rm $FILE_NAME
+```
+
+When you go to your registration URL, you should now see nice placeholders:
+
+pic TBD
+{% include _image.liquid src="/assets/img/blogs/breached-password-detection/enable-breached-password-check.png" alt="Enabling breached password detection." class="img-fluid" figure=false %}
+
+### Additional validation
+
+Should you need it, there is additional validation available. You can ensure that a field matches a certain regular expression or that it matches a confirmation field. The latter may be useful if you are asking for sensitive data that you want to ensure the user provides correctly.
+
+All this is set at the form field level. The form is the display order of the form fields and nothing more.
+
+## Conclusion
+
+Allowing your customers to quickly and easily register themselves lets you focus on the parts of your application that they are actually registering for. With advanced registration forms, you can now create, via the API or the administrative user interface, unlimited registration forms. You can then associate these forms easily with your applications, gathering user information over multiple steps.
+
+This user information is available from the FusionAuth APIs, in the `user.data` and `registration.data` fields. You can retrieve and modify that data using the [APIs](/docs/v1/tech/apis) and in a future blog post we'll see exactly how to do that.
