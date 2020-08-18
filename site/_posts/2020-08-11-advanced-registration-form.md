@@ -45,11 +45,13 @@ Navigate to "Customizations" and then "Themes". Duplicate the existing "FusionAu
 
 Before you save it, it should look like this:
 
-Pic TBD
+pic TBD
+duplicate-theme
 
 Navigate to "Tenants" and then edit the "Default" tenant. Go to the "General" tab and change the "Login theme" to be the new theme. Save the configuration when the screen looks like:
 
-Pic TBD
+pic TBD
+select-login-theme
 
 We'll modify this theme after we've created the form.
 
@@ -58,31 +60,39 @@ We'll modify this theme after we've created the form.
 Navigate to "Customizations" and then "Form fields". Here are the form fields that are available by default. Each of these has a key, such as `user.email`, and these are called "predefined keys".
 
 Pic TBD
+predefined-keys
 
-You can add as many custom fields as you'd like. Each of these use custom keys. Let's add a couple for our sign up form. Let's add a key of `minprice`. We'll have the data type be a number and use the text form control. Let's leave it as optional. While it is useful information, we don't want to stop someone from signing up if they don't know it or aren't comfortable sharing it. Here's what it might look like before we save the configuration.
+You can add as many custom fields as you'd like. Each of these use custom keys. Let's add a couple for our sign up form. Let's add a key of `minprice`. Have the data type be a number and use the text form control. Let's make it required. It is useful information, and we want to stop someone from signing up if they don't know it or aren't comfortable sharing it. Of course, this choice is a business logic decision and you should do what makes sense. Here's what it might look like before we save the configuration.
 
 Pic TBD
+form-field-min-price-required
 
 Note that the fieldname is `registration.data.minprice`, which is the full custom key name. We can create as many custom fields as we want and store them in this data field. We can also create custom fields tied to the user.
 
 As a reminder, [a registration](/docs/v1/tech/core-concepts/registrations) is a link between a user and an application. Since this is a real estate application, we'll want information that is germane to this app to be stored on the registration. If we were later to build a mortgage application, there'd be different data associated with that registration. But, on the other hand, if we wanted to ask for additional information better associated with the user, such as their income, that would be best stored in the `user.data` field.
 
-Let's also add a 'maxprice' and use the same settings. It'll have a different key, but is also a number and should be optional.
+Let's also add a 'maxprice' and use the same settings. It'll have a different key, but is also a number and should be required.
 
-Finally, we'll add a geographic area. It'll be a string, but let's use the textarea form control to give people a bit more space to tell us what they are looking for.
+Finally, we'll add a geographic search area. You want folks to share where they are looking to buy. It'll be a string, but lets make it optional, as they might not have a firm idea.
 
 Pic TBD
+form-field-geographic-area
 
 There are a number of other types of fields and form controls you can use. You can even store arrays and maps in the custom data. Please consult [the API docs](/docs/v1/tech/apis/form-fields) for more information. We've added three fields and they are available for use in the form we're going to build. 
 
 Pic TBD
+list-of-form-fields
 
 ## Build the form
 
-Next you need to build the form. Here you can mix and match any of the standard, predefined fields and our custom fields. They may appear in any order on the form, whatever makes the most sense.
+Next you need to build the form. Here you can mix and match any of the standard, predefined fields and our custom fields. They may appear in any order on the form, whatever makes the most sense. When you create a new form, here's what you'll see. A name field and a button to add steps.
+
+Pic TBD
+initial-form
 
 The only real requirements are:
 
+* You must have at least one step.
 * You must have either an email or a username field in one of your steps.
 * You must have a password field in one of your steps.
 
@@ -94,18 +104,18 @@ To being building your form, navigate to "Customizations" and then to "Forms". C
 * Phone number
 
 Pic TBD
+form-first-step
 
-You can add as many steps as you want. Create a second step and add these fields:
+You can also add as many steps as you want. Create a second step and add these fields:
 
 * Geographic area
 * Minimum house price
 * Maximum house price
 
-Pic TBD
+pic TBD
+form-second-step
 
-You can rearrange the field order from this screen, but to change attributes you have to return to the "Fields" section.
-
-When you're done, save the form.
+You can rearrange the field order from this screen. However, to change field attributes, such as converting the form control or the data type you have to return to the "Fields" section. When you're done, save the form.
 
 ## Use the form
 
@@ -124,24 +134,36 @@ Click "Save".
 When you edit the application, you should see a screen something like this:
 
 Pic TBD
+application-with-custom-form-configured
 
 You can easily find the registration URL by clicking on the green magnifying glass on the list of applications and looking for the "Registration URL".
 
 Pic TBD
+viewing-application-details
 
 Let's check it out! Open up an incognito window and paste the "Registration URL" into the URL bar. 
 
 You can see that the first screen asks for first name, email address, password and phone number:
 
 Pic TBD
-
-And the second has a text area and asks for the pricing info. If you flip back to your administrative user interface, where you are logged into FusionAuth, and navigate to "Users", you'll see the user has been registered. If you go to the "User data" tab of the new user's details page, you can see the information they filled out as well.
+first-screen-for-user
 
 Pic TBD
+Fill out the screen
+first-screen-for-user-filled-out
 
-But there are some issues. The placeholders for the fields are not very user friendly. `user.firstName` is understandable, but it'd be better to say "Your first name". And the geographic area doesn't even have a description, making it hard for people to know what to put in there.
+Pic TBD
+Fill out the second screen
+user-registers-second-screen-50kmin
 
-We can solve these by updating the theme.
+And the second asks for the additional information: the pricing bounds and the geographic area of interest. If you flip back to your administrative user interface, where you are logged into FusionAuth, and navigate to "Users", you'll see the user has been registered. If you go to the "User data" tab of the new user's details page, you can see the information they filled out as well.
+
+Pic TBD
+user-screen
+
+But there are some issues. The placeholders for the fields are not very user friendly. `user.firstName` is understandable, but it'd be better to say "Your first name". 
+
+We can solve these by updating the theme. We're going to add in friendly placeholders, but there's a lot more you can do.
 
 Make sure you close the incognito window. You've been logged in, and when you make the changes, you'll want to be signed out. Closing the incognito window is the easiest way to do that.
 
@@ -230,12 +252,13 @@ registration.data.maxprice=Maximum home price
 registration.data.minprice=Where are you looking?
 ```
 
-Then you'll want to add validation messages to the section starting with
+Then you'll want to add validation messages to the section starting with:
 ```
 # Custom Registration form validation errors.
 ```
 
-You can examine the `Default validation errors` section for an example of all the errors that you can handle. You may append the fieldname to provide more specific errors. For example:
+You can examine the `Default validation errors` section for an example of all the errors that you can handle. Password rules can be quite complex and are set in the tenant settings, but the other fields should all be validated via messages here. XXX
+You may append the fieldname to provide more specific errors. For example:
 
 ```
 [blank]registration.data.minprice=Minimum home price required
@@ -267,11 +290,53 @@ When you go to your registration URL, you should now see nice placeholders:
 pic TBD
 {% include _image.liquid src="/assets/img/blogs/breached-password-detection/enable-breached-password-check.png" alt="Enabling breached password detection." class="img-fluid" figure=false %}
 
-### Additional validation
+first-screen-themed
+second-screen-themed
+
+### Additional validation and theming
 
 Should you need it, there is additional validation available. You can ensure that a field matches a certain regular expression or that it matches a confirmation field. The latter may be useful if you are asking for sensitive data that you want to ensure the user provides correctly.
 
+On the second screen, if you try to submit without providing a price range, you're shown the error messages you added above.
+
+pic TBD
+themed-with-validation-second-screen
+
 All this is set at the form field level. The form is the display order of the form fields and nothing more.
+
+You can customize your field display more extensively by modifying the `customField` freemarker macro helper. Currently this looks like:
+
+```freemarker
+[#macro customField field key autofocus=false placeholder=""]
+  [#assign fieldId = field.key?replace(".", "_") /]
+  [#local leftAddon = field.data.leftAddon!'info' /]
+  [#if field.control == "checkbox"]
+    [#if field.options?has_content]
+      [@checkbox_list field=field id="${fieldId}" name="${key}" required=field.required autofocus=autofocus options=field.options /]
+    [#else]
+      [@checkbox field=field id="${fieldId}" name="${key}" required=field.required autofocus=autofocus /]
+    [/#if]
+  [#elseif field.control == "number"]
+    [@input id="${fieldId}" type="number" name="${key}" leftAddon="${leftAddon}" required=field.required autofocus=autofocus placeholder=theme.optionalMessage(placeholder) /]
+  [#elseif field.control == "password"]
+    [@input id="${fieldId}" type="password" name="${key}" leftAddon="lock" autocomplete="new-password" autofocus=autofocus placeholder=theme.optionalMessage(placeholder)/]
+  [#elseif field.control == "radio"]
+    [@radio_list field=field id="${fieldId}" name="${key}" required=field.required autofocus=autofocus options=field.options /]
+  [#elseif field.control == "select"]
+    [@select id="${fieldId}" name="${key}" required=field.required autofocus=autofocus options=field.options /]
+  [#elseif field.control == "textarea"]
+    [@textarea id="${fieldId}" name="${key}" required=field.required autofocus=autofocus placeholder=theme.optionalMessage(placeholder) /]
+  [#elseif field.control == "text"]
+    [#if field.type == "date"]
+      [@input id="${fieldId}" type="text" name="${key}" leftAddon="${leftAddon}" required=field.required autofocus=autofocus placeholder=theme.optionalMessage(placeholder) class="date-picker" dateTimeFormat="yyyy-MM-dd" /]
+    [#else]
+      [@input id="${fieldId}" type="text" name="${key}" leftAddon="${leftAddon}" required=field.required autofocus=autofocus placeholder=theme.optionalMessage(placeholder) /]
+    [/#if]
+  [/#if]
+[/#macro]
+```
+
+You could display additional help text or other customizations based on the `fieldId`.
 
 ## Conclusion
 
