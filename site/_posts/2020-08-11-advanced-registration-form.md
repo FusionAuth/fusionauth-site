@@ -9,7 +9,7 @@ tags: feature-advanced-registration-forms client-python
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth is an auth system, but it also provides user management. If you're using a customer identity and access management system (CIAM), you want to allow people to register for your application. With FusionAuth, you can now build custom registration forms to capture application specific data.
+FusionAuth is an auth system, but it also provides user management. If you're using a customer identity and access management system (CIAM), you typically want to allow people to register for your application. With FusionAuth, you can now build custom registration forms to capture application specific data.
 
 <!--more-->
 
@@ -45,13 +45,11 @@ Navigate to "Customizations" and then "Themes". Duplicate the existing "FusionAu
 
 Before you save it, it should look like this:
 
-pic TBD
-duplicate-theme
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/duplicate-theme.png" alt="Duplicate your theme to allow for customization." class="img-fluid" figure=false %}
 
 Navigate to "Tenants" and then edit the "Default" tenant. Go to the "General" tab and change the "Login theme" to be the new theme. Save the configuration when the screen looks like:
 
-pic TBD
-select-login-theme
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/select-login-theme.png" alt="Select your new theme for the default tenant." class="img-fluid" figure=false %}
 
 We'll modify this theme after we've created the form.
 
@@ -59,13 +57,11 @@ We'll modify this theme after we've created the form.
 
 Navigate to "Customizations" and then "Form fields". Here are the form fields that are available by default. Each of these has a key, such as `user.email`, and these are called "predefined keys".
 
-Pic TBD
-predefined-keys
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/predefined-keys.png" alt="A list of the predefined form fields that you can use for registration." class="img-fluid" figure=false %}
 
 You can add as many custom fields as you'd like. Each of these use custom keys. Let's add a couple for our sign up form. Let's add a key of `minprice`. Have the data type be a number and use the text form control. Let's make it required. It is useful information, and we want to stop someone from signing up if they don't know it or aren't comfortable sharing it. Of course, this choice is a business logic decision and you should do what makes sense. Here's what it might look like before we save the configuration.
 
-Pic TBD
-form-field-min-price-required
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-field-min-price-required.png" alt="Adding the minimum price field." class="img-fluid" figure=false %}
 
 Note that the fieldname is `registration.data.minprice`, which is the full custom key name. We can create as many custom fields as we want and store them in this data field. We can also create custom fields tied to the user.
 
@@ -75,20 +71,17 @@ Let's also add a 'maxprice' and use the same settings. It'll have a different ke
 
 Finally, we'll add a geographic search area. You want folks to share where they are looking to buy. It'll be a string, but lets make it optional, as they might not have a firm idea.
 
-Pic TBD
-form-field-geographic-area
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-field-geographic-area.png" alt="Adding the geographic area field." class="img-fluid" figure=false %}
 
 There are a number of other types of fields and form controls you can use. You can even store arrays and maps in the custom data. Please consult [the API docs](/docs/v1/tech/apis/form-fields) for more information. We've added three fields and they are available for use in the form we're going to build. 
 
-Pic TBD
-list-of-form-fields
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/list-of-form-fields.png" alt="The list of fields with our custom fields added." class="img-fluid" figure=false %}
 
 ## Build the form
 
 Next you need to build the form. Here you can mix and match any of the standard, predefined fields and our custom fields. They may appear in any order on the form, whatever makes the most sense. When you create a new form, here's what you'll see. A name field and a button to add steps.
 
-Pic TBD
-initial-form
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/initial-form.png" alt="The blank form, ready to be assembled." class="img-fluid" figure=false %}
 
 The only real requirements are:
 
@@ -103,8 +96,7 @@ To being building your form, navigate to "Customizations" and then to "Forms". C
 * First name
 * Phone number
 
-Pic TBD
-form-first-step
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-first-step.png" alt="Adding fields to our first step." class="img-fluid" figure=false %}
 
 You can also add as many steps as you want. Create a second step and add these fields:
 
@@ -112,8 +104,7 @@ You can also add as many steps as you want. Create a second step and add these f
 * Minimum house price
 * Maximum house price
 
-pic TBD
-form-second-step
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-second-step.png" alt="Adding fields to our second step." class="img-fluid" figure=false %}
 
 You can rearrange the field order from this screen. However, to change field attributes, such as converting the form control or the data type you have to return to the "Fields" section. When you're done, save the form.
 
@@ -123,7 +114,7 @@ The next step is to use the form for your application.
 
 Navigate to "Applications" and create a new application. Name it "Real estate search". 
 
-You have to provide a redirect URL for when registration succeeds. Navigate to the "OAuth" tab and enter "https://fusionauth.io" or some other public website that you wouldn't mind landing on once you are registered. 
+You have to provide a redirect URL for when registration succeeds. Navigate to the "OAuth" tab and enter "https://fusionauth.io" or some other public website that you wouldn't mind landing on once you are registered. For a production application, of course, you'd use the URL of wherever a user should be sent after they register or login. You can have multiple redirect URLs, and specify them on the registration or sign in link.
 
 Go to the "Registration" tab and enable "Self service registration."
 
@@ -133,35 +124,39 @@ Click "Save".
 
 When you edit the application, you should see a screen something like this:
 
-Pic TBD
-application-with-custom-form-configured
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/application-with-custom-form-configured.png" alt="Specifying a custom registration form for our application." class="img-fluid" figure=false %}
 
-You can easily find the registration URL by clicking on the green magnifying glass on the list of applications and looking for the "Registration URL".
+You can easily find the registration URL by clicking on the green magnifying glass on the list of applications and looking for the "Registration URL". Here are the application details:
 
-Pic TBD
-viewing-application-details
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/viewing-application-details.png" alt="Finding the registration URL." class="img-fluid" figure=false %}
 
 Let's check it out! Open up an incognito window and paste the "Registration URL" into the URL bar. 
 
 You can see that the first screen asks for first name, email address, password and phone number:
 
-Pic TBD
-first-screen-for-user
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/first-screen-unthemed.png" alt="The first page of the custom registration flow." class="img-fluid" figure=false %}
 
-Pic TBD
-Fill out the screen
-first-screen-for-user-filled-out
+Put some information in there. Don't be shy!
 
-Pic TBD
-Fill out the second screen
-user-registers-second-screen-50kmin
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/first-screen-for-user-filled-out.png" alt="The first page of the custom registration flow with information in it." class="img-fluid" figure=false %}
 
-And the second asks for the additional information: the pricing bounds and the geographic area of interest. If you flip back to your administrative user interface, where you are logged into FusionAuth, and navigate to "Users", you'll see the user has been registered. If you go to the "User data" tab of the new user's details page, you can see the information they filled out as well.
+The second asks for the additional information: the pricing bounds and the geographic area of interest. Fill out the second screen with all the parameters for your dream home. I picked a wide range of price points, myself.
 
-Pic TBD
-user-screen
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/user-registers-second-screen-50kmin.png" alt="The second page of the custom registration flow with information in it." class="img-fluid" figure=false %}
 
-But there are some issues. The placeholders for the fields are not very user friendly. `user.firstName` is understandable, but it'd be better to say "Your first name". 
+If you flip back to your administrative user interface, in the browser where you are logged into FusionAuth, and navigate to "Users", you'll see the user has been registered. 
+
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/list-users-screen.png" alt="A list of users, including the one just registered." class="img-fluid" figure=false %}
+
+If you go to the "User data" tab of the new user's details page, you can see the information they filled out as well.
+
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/displaying-user-data.png" alt="The user data tab of the newly registered user." class="img-fluid" figure=false %}
+
+Alright! Mission accomplished.
+
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/yes.jpg" alt="Napolean Dynamite's brother." class="img-fluid" figure=false %}
+
+But there's trouble in paradise. The placeholders for the fields are not very user friendly. `user.firstName` is understandable, but it'd be better to say "Your first name". 
 
 We can solve these by updating the theme. We're going to add in friendly placeholders, but there's a lot more you can do.
 
@@ -285,13 +280,13 @@ fi
 rm $FILE_NAME
 ```
 
-When you go to your registration URL, you should now see nice placeholders:
+When you go to your registration URL, you should now see nice placeholders on both the first page.
 
-pic TBD
-{% include _image.liquid src="/assets/img/blogs/breached-password-detection/enable-breached-password-check.png" alt="Enabling breached password detection." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/first-screen-themed.png" alt="The first page of the registration form with the correct messages added." class="img-fluid" figure=false %}
 
-first-screen-themed
-second-screen-themed
+If you fill out the first page of the form, you'll see the nicely displayed second form.
+
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/second-screen-themed.png" alt="The second page of the registration form with the correct messages added." class="img-fluid" figure=false %}
 
 ### Additional validation and theming
 
@@ -299,12 +294,11 @@ Should you need it, there is additional validation available. You can ensure tha
 
 On the second screen, if you try to submit without providing a price range, you're shown the error messages you added above.
 
-pic TBD
-themed-with-validation-second-screen
+{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/themed-with-validation-second-screen.png" alt="The second page of the registration form with error messages." class="img-fluid" figure=false %}
 
-All this is set at the form field level. The form is the display order of the form fields and nothing more.
+Validation is configured at on the form field. The form is the display order of the form fields and nothing more.
 
-You can customize your field display more extensively by modifying the `customField` freemarker macro helper. Currently this looks like:
+You can customize your field display more extensively by modifying the `customField` freemarker macro helper. This is in the "Helpers" section of your theme. The default value is:
 
 ```freemarker
 [#macro customField field key autofocus=false placeholder=""]
@@ -337,6 +331,8 @@ You can customize your field display more extensively by modifying the `customFi
 ```
 
 You could display additional help text or other customizations based on the `fieldId`.
+
+XXX forms? can have more than one
 
 ## Conclusion
 
