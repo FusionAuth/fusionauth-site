@@ -56,7 +56,7 @@ In order to set up FusionAuth, follow the [5-minute setup guide](https://fusiona
 
 ### Configure the FusionAuth application
 
-In this step, we are going to configure a FusionAuth application. This is different than the FusionAuth instance or the React Native application. In FusionAuth, an application is anything a user might log in to. To configure this, sign into the FusionAuth administrative interface and navigate to "Applications". From there, create a new application.
+In this step, we are going to configure a FusionAuth application. This is different from the FusionAuth server instance or the React Native application. In FusionAuth, an application is anything a user might log in to. To configure this, sign into the FusionAuth administrative interface and navigate to "Applications". From there, create a new application.
 
 Once you've done that, navigate to the "OAuth" tab and add in a redirect URI of `fusionauth-demo:/oauthredirect`. We'll use this redirect URL in our React Native application later. 
 
