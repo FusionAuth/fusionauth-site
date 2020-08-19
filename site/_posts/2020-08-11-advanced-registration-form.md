@@ -55,11 +55,13 @@ We'll modify this theme after we've created the form.
 
 ## Create form fields
 
-Navigate to "Customizations" and then "Form fields". Here are the form fields that are available by default. Each of these has a key, such as `user.email`, and these are called "predefined keys".
+Navigate to "Customizations" and then "Form fields". Here are the form fields that are available by default. Each of these has a key, such as `user.email`, and these are referred to as "predefined keys". All of these form fields can be combined in any way you'd like.
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/predefined-keys.png" alt="A list of the predefined form fields that you can use for registration." class="img-fluid" figure=false %}
 
-You can add as many custom fields as you'd like. Each of these use custom keys. Let's add a couple for our sign up form. Let's add a key of `minprice`. Have the data type be a number and use the text form control. Let's make it required. It is useful information, and we want to stop someone from signing up if they don't know it or aren't comfortable sharing it. Of course, this choice is a business logic decision and you should do what makes sense. Here's what it might look like before we save the configuration.
+But the real power of this registration form building process comes with custom fields. You can add as many custom fields as you'd like. Each of these use custom keys. Let's add a couple for our sign up form. 
+
+Add a key of `minprice`. Have the data type be a number and use the text form control. Since it is useful information, and we want to stop someone from signing up if they don't know it or aren't comfortable sharing it, make it required. Of course, this choice is a business logic decision and you should do what makes sense. Here's what it might look like before we save the configuration.
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-field-min-price-required.png" alt="Adding the minimum price field." class="img-fluid" figure=false %}
 
@@ -98,41 +100,39 @@ To being building your form, navigate to "Customizations" and then to "Forms". C
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-first-step.png" alt="Adding fields to our first step." class="img-fluid" figure=false %}
 
-You can also add as many steps as you want. Create a second step and add these fields:
+You can also add as many steps as you want. Create a second step. Here you can add these fields, which are collecting application specific information, in this case about the house they want:
 
-* Geographic area
-* Minimum house price
-* Maximum house price
+* Geographic area of interest
+* Minimum house search price
+* Maximum house search price
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-second-step.png" alt="Adding fields to our second step." class="img-fluid" figure=false %}
 
-You can rearrange the field order from this screen. However, to change field attributes, such as converting the form control or the data type you have to return to the "Fields" section. When you're done, save the form.
+The form configuration is all about steps and displa order. You can rearrange the field order from this screen. You can delete a field from one step and add it to another. 
 
-## Use the form
+However, to change field attributes, such as converting the form control or the data type you have to return to the "Fields" section. When you're done, save the form.
 
-The next step is to use the form for your application. 
+## Specify the form for your application
 
-Navigate to "Applications" and create a new application. Name it "Real estate search". 
+The next step is to use the form for your application. Navigate to "Applications" and create a new FusionAuth application. As a reminder, an application can be anything a user can sign into: a web application, native app, API, anything. In this case, you are continuing to build out the real estate application, so let's pick something snappy and descriptive. How about "Real estate search". 
 
-You have to provide a redirect URL for when registration succeeds. Navigate to the "OAuth" tab and enter "https://fusionauth.io" or some other public website that you wouldn't mind landing on once you are registered. For a production application, of course, you'd use the URL of wherever a user should be sent after they register or login. You can have multiple redirect URLs, and specify them on the registration or sign in link.
+You must configure a redirect URL, which is where the user is sent when registration succeeds. To do so, navigate to the "OAuth" tab and enter "https://fusionauth.io" or some other public website. 
 
-Go to the "Registration" tab and enable "Self service registration."
+For a production application, of course, you'd use the URL of wherever a user should be sent after they register or login. You can have multiple redirect URLs, and specify them on the registration or sign in link.
 
-Then you want to check the "Advanced" option and select the form you just created. 
-
-Click "Save".
-
-When you edit the application, you should see a screen something like this:
+Go to the "Registration" tab and enable "Self service registration." Then check the "Advanced" option and select the form you just created. Click "Save". If you then edit the application you just created, you should see a screen something like this:
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/application-with-custom-form-configured.png" alt="Specifying a custom registration form for our application." class="img-fluid" figure=false %}
 
-You can easily find the registration URL by clicking on the green magnifying glass on the list of applications and looking for the "Registration URL". Here are the application details:
+Return to the list of applications. Now you're going to log in. You can find the registration URL by clicking on the green magnifying glass on the list of applications and looking for the "Registration URL". Here are the application details for what you just created, and the "Registration URL" is highlighted:
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/viewing-application-details.png" alt="Finding the registration URL." class="img-fluid" figure=false %}
 
+## Sign up
+
 Let's check it out! Open up an incognito window and paste the "Registration URL" into the URL bar. 
 
-You can see that the first screen asks for first name, email address, password and phone number:
+You can see that the first screen asks for first name, email address, password and phone number. It also lets the user know how many registration steps there are.
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/first-screen-unthemed.png" alt="The first page of the custom registration flow." class="img-fluid" figure=false %}
 
