@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Securing React Native with OAuth
-description: How and why to use a centralized user management system rather than having individual applications use their own auth components.
+description: React Native lets you build mobile applications for iOS and Android using JavaScript. This tutorial will show you how to use OAuth to authenticate users in a React Native application.
 author: Krissanawat Kaewsanmuang
 image: blogs/bottleneck-pattern/the-auth-bottleneck-pattern.png
 category: blog
@@ -26,7 +26,7 @@ Here's what you need to get started:
 * Xcode, if building for iOS
 * Homebrew (optional)
 
-## What you need to know
+## What you need to know about OAuth
 
 If you are a web developer, you may be familiar with OAuth. With web development, we have three players:
 
@@ -48,7 +48,7 @@ Here's a suggested [flow from RFC 8252](https://tools.ietf.org/html/rfc8252#page
 
 In this tutorial, we are going to implement this to enable a mobile application to interact with an OAuth server. First, let's configure that server and set up our coding environment.
 
-## Setting up FusionAuth
+## Setting up FusionAuth as your auth provider
 
 In order to set up FusionAuth, follow the [5-minute setup](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) guide. It is very simple and quick. By default, the OAuth server will run on `http://localhost:9011`.
 
@@ -120,7 +120,7 @@ react-native init RNfusionauth
 
 Open the project folder in your text editor, as we'll be making additional changes to these files.
 
-### Installing react native app auth
+### Installing `react-native-app-auth` to communicate with the OAuth 2.0 and OpenId Connect server
 
 A key dependency of our application is the [`react-native-app-auth`](https://github.com/FormidableLabs/react-native-app-auth) package. This sets up a bridge between the [AppAuth-iOS](https://github.com/openid/AppAuth-iOS) and [AppAuth-Android](https://github.com/openid/AppAuth-Android) SDKs for communicating with [OAuth 2.0](https://tools.ietf.org/html/rfc6749) and [OpenID Connect](http://openid.net/specs/openid-connect-core-1_0.html) providers.
 
@@ -133,6 +133,10 @@ To install `react-native-app-auth`, run the following in our React Native projec
 ```shell
 yarn add react-native-app-auth
 ```
+
+Using this library will help us out immensely. It takes care of most of the steps specified by RFC 8252; we just have to make sure to kick off the process (step 1) and then receive and store the access token (step 6). As a reminder, here's the diagram:
+
+{% include _image.liquid src="/assets/img/blogs/react-native-oauth/oauth-authorization-code-flow.png" alt="The authorization code flow for native applications." class="img-fluid" figure=false %}
 
 ### Setting up iOS auth 
 
@@ -160,11 +164,20 @@ Then, we need to open the React Native project with Xcode. Open the `info.plist`
  </array>
 ```
 
-Here, the URL, `fusionauth.demo`, is the same as the prefix for the OAuth redirect we configured in the FusionAuth dashboard above. 
+Here, the URL, `fusionauth.demo`, is the same as the prefix for the OAuth redirect we configured in the FusionAuth administrative user interface above. 
 
 The last step is to change the `AppDelegate.h` file to include needed imports and properties:
 
-{% include _image.liquid src="/assets/img/blogs/react-native-oauth/appdelegate-change.png" alt="Modifying the appdelegate class." class="img-fluid" figure=false %}
+```objective_c
+#import <React/RCTBridgeDelegate.h>
+#import <UIKit/UIKit.h>
+#import "RNAppAuthAuthorizationFlowManager.h"
+@interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate, RNAppAuthAuthorizationFlowManager>
+
+@property (nonatomic, strong) UIWindow *window;
+@property(nonatomic, weak)id<RNAppAuthAuthorizationFlowManagerDelegate>authorizationFlowManagerDelegate;
+@end
+```
 
 ### Setting up auth for Android
 
@@ -196,21 +209,191 @@ Running tunnels will be listed on the [status page](https://dashboard.ngrok.com/
 ./ngrok authtoken Your key
 ```
 
-Launch the ngrok proxy. For full details, consult [the documentation](https://ngrok.com/docs). For our purposes, running it from the command line is sufficient. We want to start HTTP tunnel forwarding to `localhost` and port `9011`, where FusionAuth is listening. To do so, run the following command:
+We want to start HTTP tunnel forwarding to `localhost` and port `9011`, where FusionAuth is listening. For more options and details, consult [the documentation](https://ngrok.com/docs). Run the following command to launch the ngrok proxy:
 
 ```shell
 ./ngrok http 9011
 ```
 
-We'll get a random URL which forwards traffic to our FusionAuth instance. It'll be something like `https://ce2f267ff5a5.ngrok.io`. We can reference this value from our Android device and any traffic sent will be forwarded. We will also use this for our iOS app for consistency, even though the iOS emulator can connect to localhost.
+We'll get a random URL which forwards traffic to our FusionAuth instance. It'll be something like `https://ce2f267ff5a5.ngrok.io`. We can reference this value from our Android device and traffic will be forwarded. We will also use this for our iOS app for consistency, even though the iOS emulator can connect to localhost.
 
 Now, we can move on to coding.
 
-## The implementation
+## Coding a React Native application to use OAuth and FusionAuth
 
-As always, if you want to skip ahead, grab the code from the [GitHub repository](https://github.com/fusionauth/fusionauth-example-react-native).
+Finally, the code! As always, if you want to skip ahead, grab the code from the [GitHub repository](https://github.com/fusionauth/fusionauth-example-react-native).
 
-First, we need to modify the `App.js` file. Add necessary imports as shown in the code snippet below:
+Big picture, we're going to be building out our logic and views in the `App.js` file. For a bigger project, you'd split this code up into components. We'll use libraries to manage authorization and secure storage of our data, however.
+
+Here's what `App.js` will look like when we are done (don't worry, it looks like a lot, but we'll explain most of it):
+
+```react
+import React, { useState, useCallback, useMemo } from 'react';
+import { Alert, StyleSheet, View, Image, Text, TouchableOpacity } from 'react-native';
+import { authorize, prefetchConfiguration } from 'react-native-app-auth';
+import * as Keychain from 'react-native-keychain';
+const defaultAuthState = {
+  hasLoggedInOnce: false,
+  provider: '',
+  accessToken: '',
+  accessTokenExpirationDate: '',
+  refreshToken: ''
+};
+export default () => {
+  const [authState, setAuthState] = useState(defaultAuthState);
+  const [userinfo, setuserinfo] = useState(null)
+  React.useEffect(() => {
+    prefetchConfiguration({
+      warmAndPrefetchChrome: true,
+      ...configs.fusionauth
+    });
+  }, []);
+  const configs = {
+    fusionauth: {
+      issuer: 'https://ce25267ff5a5.ngrok.io',
+      clientId: '253eb7aa-687a-4bf3-b12b-26baa40eecbf',
+      redirectUrl: 'fusionauth.demo:/oauthredirect',
+      additionalParameters: {},
+      scopes: ['offline_access'],
+    }
+  }
+
+  const getAccesstoken = async () => {
+    try {
+      // Retrieve the credentials
+      const credentials = await Keychain.getGenericPassword();
+      if (credentials) {
+
+        return credentials.password
+
+      } else {
+        console.log('No credentials stored');
+      }
+    } catch (error) {
+      console.log("Keychain couldn't be accessed!", error);
+    }
+  }
+  const getUser = async () => {
+    try {
+      const access_token = await getAccesstoken();
+      if (access_token !== null) {
+        fetch(configs.fusionauth.issuer + "/oauth2/userinfo", {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer " + access_token,
+          },
+        })
+          .then((response) => response.json())
+          .then((json) => {
+            console.log(json);
+            setuserinfo(json);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  const handleAuthorize = useCallback(
+    async () => {
+      try {
+        const newAuthState = await authorize(configs.fusionauth);
+        console.log(newAuthState)
+        setAuthState({
+          hasLoggedInOnce: true,
+          ...newAuthState
+        });
+        await Keychain.setGenericPassword('accessToken', newAuthState.accessToken);
+      } catch (error) {
+        Alert.alert('Failed to log in', error.message);
+      }
+    },
+    [authState]
+  );
+
+
+  return (
+    <View style={styles.container}>
+      <Image
+        source={require('./fusionauth.png')}
+      />
+      {authState.accessToken ? (
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => getUser()}
+        >
+          <Text style={styles.buttonText}>Get User</Text>
+        </TouchableOpacity>
+      ) : (<TouchableOpacity
+        style={styles.button}
+        onPress={() => handleAuthorize()}
+
+      >
+        <Text style={styles.buttonText}>Login with FusionAuth</Text>
+      </TouchableOpacity>)}
+      {userinfo ? (
+        <View style={styles.userInfo}>
+          <View>
+            <Text style={styles.userInfoText}>
+              Username:{userinfo.given_name}
+            </Text>
+            <Text style={styles.userInfoText}></Text>
+            <Text style={styles.userInfoText}>Email:{userinfo.email}</Text>
+            <Text style={styles.userInfoText}></Text>
+
+          </View>
+        </View>
+      ) : (
+          <View></View>
+        )}
+
+    </View>
+  );
+
+}
+
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "column",
+    backgroundColor: "grey",
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "space-evenly",
+  },
+  button: {
+    backgroundColor: "#f58321",
+    padding: 20
+  },
+  buttonText: {
+    color: "#000",
+    fontSize: 20,
+  },
+  userInfo: {
+    height: 300,
+    width: 300,
+    alignItems: "center",
+  },
+  userInfoText: {
+    color: "#fff",
+    fontSize: 18,
+  },
+  errorText: {
+    color: "#fff",
+    fontSize: 18,
+  },
+  profileImage: {
+    height: 64,
+    width: 64,
+    marginBottom: 32,
+  },
+});
+
+```
+
+First, we need to add necessary imports as shown in the code snippet below:
 
 ```javascript
 //...
@@ -220,7 +403,7 @@ import { authorize, refresh, revoke, prefetchConfiguration } from 'react-native-
 //...
 ```
 
-Next, we need to create a `configs` object as shown in the code snippet below:
+Next, we need to create a `configs` object. This will contain details such as your application's client id:
 
 ```javascript
 //...
@@ -236,17 +419,11 @@ const configs = {
 //...
 ```
 
-Here's more information about the properties of the `fusionauth` object in the `configs` object:
+The `issuer` is the URL for the FusionAuth server. The `clientId` is the ID that we grabbed from the FusionAuth administrative user interface. The `redirectUrl` is the URL that we set up on the application. The value `oauthredirect` is a callback path defined by the react native app auth library. Make sure you update the `issuer` and `clientId` keys in this object with your configuration values.
 
-* `issuer` is the URL for the FusionAuth server.
-* `clientId` is the ID that we grabbed from the FusionAuth dashboard.
-* `redirectURL` is the URL that we set up before, with a callback path defined by the react native app auth library.
+We can also add any additional parameters we need to pass (none, in this case). If you need custom scopes, you can add them too. We're requesting the `offline_access` scope so that the OAuth server will return a `refresh_token`. Such a token can be used to request additional access tokens should our current one expire.
 
-Make sure you update the `issuer` and `clientId` keys in this object with your configuration values.
-
-We also add any additional parameters we need to pass (none, in this case), as well as scopes to request. We're requesting the `offline_access` scope as that will return a `refresh_token`, which can be used to request additional access tokens.
-
-Then, create a default auth state in order to handle the response from the server, as shown in the code snippet below:
+Then, create a default auth state object. This will be used and updated as our user first views the app, then authenticates. This object will be mutated based on the response from the server.
 
 ```javascript
 //...
@@ -262,11 +439,11 @@ const [authState, setAuthState] = useState(defaultAuthState);
 //...
 ```
 
-Now, we are ready to configure authorization.
+Now, we are ready to configure the code which will actually receive the token. 
 
-## Configuring Authorization
+## Configuring React Native OAuth authorization
 
-We need to create a function to perform authorization. This will require the `configs` object previously created. The implementation of the function is below:
+Now we need to create the callback function mentioned in the project setup section. We'll use the the `configs` object. It will also use the `authorize` method from the `react-native-app-auth`. That method will do all the heavy lifting and actually connect with the OAuth server. The implementation of the function is below:
 
 ```javascript
 //...
@@ -288,9 +465,17 @@ const handleAuthorize = useCallback(
 //...
 ```
 
+Now we have the code to interface with FusionAuth. We want to give the user some way to invoke the code.
+
 ## Building the user interface
 
-Next, we need to create a user interface (UI). We'll create a simple UI to display the access token and any other server response data. The access token is what FusionAuth provides once a user has authenticated. The code for UI implementation looks like this:
+Next, we need to create a user interface (UI). We'll create a simple UI to begin authentication. After the user has logged in, we'll display the access token. The access token is what FusionAuth provides once a user has successfully signed in. 
+
+Of course, you typically don't want to simply display or store the access token. You want it because it allows your application to make other API calls, often to gather more information to display to the user. Later in this tutorial we'll use an access token to retrieve user information from a standard OpenID Connect endpoint, and display that in our application.
+
+You can also provide the token to APIs that let you take actions, like recording a todo or placing an order. We won't build those integrations today.
+
+Add the initial code for the UI to `App.js`:
 
 ```react
 //...
@@ -335,11 +520,13 @@ We'll show one of two states, depending on whether we have an `accessToken`. At 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/rmrqXT30X38" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
+You can further style the application by modifying the `styles` object, but we'll leave that as an exercise for the reader. 
+
 Following best practices, the mobile application opens up a system browser for user authentication, rather than a webview or embedded user-agent.
 
-## Securely storing the token
+## Securely storing the JWT access token
 
-Once the user has successfully authenticated, we will have a JWT, and possibly a refresh token, which should be stored securely. Storing sensitive data like an access token in `Asyncstorage` is bad practice. We can use another third-party package to access the iOS Keychain and Android secure storage. 
+Once the user has successfully authenticated, we will have an access token, and possibly a refresh token, which should be stored securely. The access token is a JSON Web Token, also known as a JWT. Storing sensitive data like an access token in `Asyncstorage` is bad practice. We can use another third-party package to access the iOS Keychain and Android secure storage, which are better choices.
 
 There are many options, but the Formidable team, the creators of the `react-native-app-auth` package we are using, recommend [`react-native-keychain`](https://github.com/oblador/react-native-keychain). Install it by running the following command:
 
@@ -347,7 +534,7 @@ There are many options, but the Formidable team, the creators of the `react-nati
 yarn add react-native-keychain
 ```
 
-We need to store the access token after successful authentication. We can do so by using this code:
+We need to store the access token after successful authentication. We can do so by using this code, again, adding it to the `App.js` file:
 
 ```javascript
 //...
@@ -365,7 +552,15 @@ try {
 //...
 ```
 
-Also, we must create a function to check for credentials before returning the key. If it's not there, we'll return an error:
+Before, we were setting the `authState` in memory, but now we're storing it in secure storage. This is the line we added:
+
+```javascript
+//...
+await Keychain.setGenericPassword('accessToken', newAuthState.accessToken);
+//...
+```
+
+Also, we must create a function to check for credentials before returning the key. If it's not there, we'll return `null`:
 
 ```javascript
 //...
@@ -387,9 +582,9 @@ const getAccesstoken = async () => {
 
 ## Retrieving more information about the authenticated user
 
-Since we have the access token, and have stored it securely, we can now get user data from FusionAuth.
+Since we have the access token, and have stored it securely, we can now get user data from FusionAuth. Of course, you could also use the access token to call other services or APIs.
 
-Create a new function called `getUser`. In it, we'll construct a URL and retrieve the access token from our storage, then we'll make a call to a standard endpoint to get user information. The code then stores the response data. 
+To retrieve user information, create a new function called `getUser` in the `App.js` file. In it, we'll construct a URL and retrieve the access token from our storage, then we'll make a call to a standard endpoint to get user information. The code then stores the response data. 
 
 ```javascript
 //...
@@ -423,24 +618,6 @@ Next, we need to update the user interface to display the user data:
 
 ```react
 //...
-return (
-  <View style={styles.container}>
-    <Image
-      source={require('./fusionauth.png')}
-    />
-    {authState.accessToken ? (
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => getUser()}
-      >
-        <Text style={styles.buttonText}>Get User</Text>
-      </TouchableOpacity>
-    ) : (<TouchableOpacity
-      style={styles.button}
-      onPress={() => handleAuthorize()}
-    >
-      <Text style={styles.buttonText}>Login with FusionAuth</Text>
-    </TouchableOpacity>)}
     {userinfo ? (
       <View style={styles.userInfo}>
         <View>
@@ -456,11 +633,12 @@ return (
     ) : (
         <View></View>
     )}
-  </View>
-);
+//...
 ```
 
-In this UI, we're checking if we have `userinfo` defined. If so, we'll display the user's given name and email address; this data was retrieved from FusionAuth. Here's a video showing the emulators executing the code after these changes:
+In this UI, we're checking if we have `userinfo`. If so, we'll display the user's given name and email address; this is the data retrieved from FusionAuth. 
+
+Here's a video showing the emulators executing the code after these changes:
 
 <div class="d-flex justify-content-center mb-5 mt-1 youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/M1GQiLn6ZEA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -472,5 +650,9 @@ There you have it. You have successfully configured a React Native application t
 
 This tutorial has been a rollercoaster of information about web and mobile authentication flows. We were able to perform authorization and get user data from an OAuth server. As a reminder, the [code for this React Native project](https://github.com/fusionauth/fusionauth-example-react-native) is available on Github.
 
-I hope you enjoyed this tutorial. See you next time!
+I hope you enjoyed this tutorial. Do you have any comments or questions?
+
+Please post them below.
+
+Happy coding!
 
