@@ -5,7 +5,7 @@ description: Advanced registration forms let you easily build out multi-step reg
 author: Dan Moore
 image: blogs/breached-password-detection/how-to-enable-breached-password-detection-fusionauth.png
 category: blog
-tags: feature-advanced-registration-forms client-python
+tags: feature-advanced-registration-forms
 excerpt_separator: "<!--more-->"
 ---
 
