@@ -198,7 +198,7 @@ Rather than use the API to do this, let's edit the helpers directly.
 
 Navigate to "Themes" and edit your theme. Click on "Helpers" and scroll to the bbottom. You'll be modifying the `customField` macro. Here's the default implementation for this freemarker macro:
 
-```freemarker
+```
 [#macro customField field key autofocus=false placeholder=""]
   [#assign fieldId = field.key?replace(".", "_") /]
   [#local leftAddon = field.data.leftAddon!'info' /]
@@ -263,11 +263,11 @@ Go through a registration flow again and you should see nice, accessible labels 
 PIC tbd
 PIC tbd
 
-This barely touches the full flexibility of themes, but should give you a good idea of how you can customize the FusionAuth authentication experience.
+This barely touches the full flexibility of themes. You can use the full power of [Apache Freemarker](https://freemarker.apache.org/). It's also worth checking out the [theme documentation](/docs/v1/tech/themes). However, this should give you a taste of how you can customize the FusionAuth authentication experience.
 
 ## Conclusion
 
-If you are using the FusionAuth registration forms, you will want to customize the default experience, both to improve user experience and also to make sure the brand is cohesive. FusionAuth's themes can be manipulated both in the administrative user interface and via the API.
+If you are using the FusionAuth registration forms, you will want to customize the default templates, both to improve user experience and also to make sure the brand is cohesive. FusionAuth's themes can be manipulated both in the administrative user interface and via the API.
 
 But what about the information the user provides when they are registering? This user information is available via the FusionAuth APIs, in the `user.data` and `registration.data` fields. It is also available for viewing, but not editing, in the administrative user interface. 
 
