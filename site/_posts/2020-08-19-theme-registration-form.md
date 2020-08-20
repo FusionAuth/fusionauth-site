@@ -34,11 +34,11 @@ The next step is to create a new theme. While you won't be modifying it extensiv
 
 Navigate to "Customizations" and then "Themes". Duplicate the existing "FusionAuth" theme. Rename your theme to "Real Estate Application". Before you save it by clicking the blue "Save" icon, it should look like this:
 
-{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/duplicate-theme.png" alt="Duplicate your theme to allow for customization." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/duplicate-theme.png" alt="Duplicate your theme to allow for customization." class="img-fluid" figure=false %}
 
 Navigate to "Tenants" and then edit the "Default" tenant. Go to the "General" tab and change the "Login theme" to be the new theme. Save the configuration when the screen looks like:
 
-{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/select-login-theme.png" alt="Select your new theme for the default tenant." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/select-login-theme.png" alt="Select your new theme for the default tenant." class="img-fluid" figure=false %}
 
 We'll modify this theme throughout the rest of this blog post.
 
@@ -176,17 +176,17 @@ Run this script with your modified `defaultMessages.txt` file. Find the registra
 
 Open an incognito window and visit this URL. You should see nice placeholders on the first page.
 
-{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/first-screen-themed.png" alt="The first page of the registration form with the correct messages added." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/first-screen-themed.png" alt="The first page of the registration form with the correct messages added." class="img-fluid" figure=false %}
 
 If you fill out the first page of the form, you'll see the the second form with placeholders as well.
 
-{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/second-screen-themed.png" alt="The second page of the registration form with the correct messages added." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/second-screen-themed.png" alt="The second page of the registration form with the correct messages added." class="img-fluid" figure=false %}
 
 ### Validation and theming
 
 On the second screen, if you submit the registration form without providing a price range, you're shown the error messages you added above:
 
-{% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/themed-with-validation-second-screen.png" alt="The second page of the registration form with error messages." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/themed-with-validation-second-screen.png" alt="The second page of the registration form with error messages." class="img-fluid" figure=false %}
 
 Validation is configured on the form field. The form controls which fields are on which steps as well as the display order of the fields.
 
