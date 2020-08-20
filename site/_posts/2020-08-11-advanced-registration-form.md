@@ -62,7 +62,7 @@ First, let's add a key of `minprice`. Configure the form field to have a data ty
 
 You can create as many custom fields as you want and store them in the `registration.data` field under a unique key. `registration.data` is the right place to store data related to a user and specific to an application. As a reminder, [a registration](/docs/v1/tech/core-concepts/registrations) is a link between a user and an application. 
 
-Since this is a real estate application, the minimum pricepoint of the user is germane to this app, so storing it on the registration is the right approach. If we were later to build a mortgage application, there'd be different fields associated with that registration, such as loan amount. 
+Since this is a real estate application, the minimum price point of the user is germane to this app, so storing it on the registration is the right approach. If we were later to build a mortgage application, there'd be different fields associated with that registration, such as loan amount. 
 
 We can also create custom fields tied to the user. If we wanted to ask for information that multiple applications would use, such as their current address or if they were from out of state, that would be best stored in the `user.data` field.
 
@@ -74,7 +74,7 @@ Finally, add a geographic search area, where folks can share where they are look
 
 There are many other available data types, such as date or boolean, and form controls, such as a textarea or select dropdowns. You can even store arrays and maps in the custom data. Please consult [the API docs](/docs/v1/tech/apis/form-fields) for more information. 
 
-If you view the list of fields, you'll notice you've added three fields. They are available for use in the form we're going to build next. They can also be used for future forms.
+If you view the list of fields, you'll notice you've added three fields. They are available for use in the form we're going to build next. They can also be used for future forms as well.
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/list-of-form-fields.png" alt="The list of fields with our custom fields added." class="img-fluid" figure=false %}
 
@@ -119,13 +119,15 @@ After you've added these fields to the form, you'll see this:
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-second-step.png" alt="Adding fields to our second step." class="img-fluid" figure=false %}
 
-Feel free to rearrange the form fields within each step by clicking the arrows to move a field up or down. The form configuration is specifies steps and display order of fields. If you need to move a field between steps, delete it from one step and add it to another. To change field attributes, data type, form control, or validation, return to the "Fields" section and make your changes. 
+Feel free to rearrange the form fields within each step by clicking the arrows to move a field up or down. The form configuration specifies steps and display order of fields. If you need to move a field between steps, delete it from one step and add it to another. To change field attributes, data type, form control, or validation, return to the "Fields" section and make your changes. 
 
 When you're done tweaking the form to your liking, save it.
 
 ## Specify the form for your application
 
-Now that you've created a form with custom fields, the next step is to specify which applications should use it. Navigate to the "Applications" tab and create a new FusionAuth application. As a reminder, an application is anything a user can sign into: a web application, native app, API, anything. In this case, you are still building out the real estate application; s pick something snappy and descriptive. How about "Real estate search"? 
+Now that you've created a form with custom fields, the next step is to specify which applications should use it. Forms and form fields can be reused in any application and any tenant. Since FusionAuth supports multiple tenants in any instance, you can easily reuse the fields and forms you've created. You simply have to assign the registration form to the application, which is the next step for this tutorial.
+
+Navigate to the "Applications" tab and create a new FusionAuth application. As a reminder, an application is anything a user can sign into: a web application, native app, API, anything. In this case, you are still building out the real estate application; pick something snappy and descriptive. How about "Real estate search"? 
 
 You must configure a redirect URL, this is where the user is sent when registration succeeds. To set this up, navigate to the "OAuth" tab of your application and enter "https://fusionauth.io" or any other public website. For a production application, of course, you'd instead specify where a user should be sent after they register. Each application may have multiple redirect URLs. You configure where to send a user after successful registration by adding a `redirect_uri` to the registration form link.
 
@@ -145,7 +147,7 @@ But first, we need to find the registration URL. Do so by clicking on the green 
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/viewing-application-details.png" alt="Finding the registration URL." class="img-fluid" figure=false %}
 
-Now that you have the URL, open up an incognito window navigate to this URL. You can see that the first screen asks for your first name, email address, password and phone number. It also lets you know how many registration steps there are.
+Now that you have the URL, open up an incognito window and navigate to this URL. You can see that the first screen asks for your first name, email address, password and phone number. It also lets you know how many registration steps there are.
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/first-screen-unthemed.png" alt="The first page of the custom registration flow." class="img-fluid" figure=false %}
 
@@ -153,7 +155,7 @@ Put some information in there. Don't be shy!
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/first-screen-for-user-filled-out.png" alt="The first page of the custom registration flow with information in it." class="img-fluid" figure=false %}
 
-The second screens asks for additional information: the minimum and maximum home prices and your area of geographic interest. Fill out the second screen with all the parameters for your dream home. I picked a wide range of price points, myself.
+The second screen asks for additional information: the minimum and maximum home prices and your area of geographic interest. Fill out the second screen with all the parameters for your dream home. I picked a wide range of price points, myself.
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/user-registers-second-screen-50kmin.png" alt="The second page of the custom registration flow with information in it." class="img-fluid" figure=false %}
 
