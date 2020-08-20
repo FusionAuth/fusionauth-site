@@ -33,13 +33,6 @@ Because this is a lot of information to ask for, you'll break this up into two p
 
 If you don't have FusionAuth running, [get it running in 5 minutes](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). 
 
-Go to "Settings" and create an API key. We'll be using this for easier theme management and to read from user data, so configure these allowed endpoints:
-
-* `/api/theme`: all methods
-* `/api/user`: all methods
-
-You may also specify no specific endpoint settings. This creates a super-user key. Fine for this tutorial, but for production, please limit access.
-
 Then get a license key and activate it. *Please note that advanced registration forms are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing).* 
 
 Next, [activate your license](/docs/v1/tech/reactor). Whew, that's all done. 
