@@ -59,6 +59,8 @@ Since this is a real estate application, the minimum price point of the user is 
 
 We can also create custom fields tied to the user. If we wanted to ask for information that multiple applications would use, such as their current address or if they were from out of state, that would be best stored in the `user.data` field.
 
+Beyond configuring a form field to be required, you can also ensure that a field matches a regular expression or a confirmation field. The latter may be useful if you are asking for sensitive data that you want to ensure the user provides correctly.
+
 Let's also add a `maxprice` field and use the same settings. It'll have a different name and key, but the other settings should be the same as `minprice`.
 
 Finally, add a geographic search area, where folks can share where they are looking to buy. It'll be a string, but make it optional, as potential users might not have a good idea of where they're interested in looking at homes.
