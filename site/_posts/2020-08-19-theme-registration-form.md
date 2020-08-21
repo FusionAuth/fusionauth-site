@@ -9,7 +9,7 @@ tags: feature-advanced-registration-forms feature-themes
 excerpt_separator: "<!--more-->"
 ---
 
-You can update your forms look and feel using themes. In this tutorial, you'll modify an advanced registration form to give it a better user experience.
+When a user is registering, you want to provide an on-brand look and feel, as well as a great user experience. In this tutorial, you'll improve an advanced registration form's display.
 
 <!--more-->
 
@@ -256,14 +256,17 @@ Let's add a label to each field. Right after `[#assign fieldId = field.key?repla
 
 When you are done, the `helpers` section should look like this:
 
-PIC tbd
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/theme-editor.png" alt="The theme editor after modifying the custom fields helper." class="img-fluid" figure=false %}
 
-Go through a registration flow again and you should see nice, accessible labels for both steps.
+Open an incognito window and go through a registration flow again and you should see labels for both steps. As a bonus, because you used the `label` element, you can click on the text label and the browser will put the cursor into the text input field.
 
-PIC tbd
-PIC tbd
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/first-screen-with-labels.png" alt="The first registration step with labels." class="img-fluid" figure=false %}
 
-This barely touches the full flexibility of themes. You can use the full power of [Apache Freemarker](https://freemarker.apache.org/). It's also worth checking out the [theme documentation](/docs/v1/tech/themes). However, this should give you a taste of how you can customize the FusionAuth authentication experience.
+If you submit information for the first step, you can see that these labels are present on the second step as well:
+
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/second-screen-with-labels.png" alt="The second registration step with labels." class="img-fluid" figure=false %}
+
+This example shows a glimpse of the full flexibility of themes. You can use the full power of [Apache Freemarker](https://freemarker.apache.org/). It's also worth checking out the [theme documentation](/docs/v1/tech/themes). However, this should give you a taste of how you can customize the FusionAuth authentication experience.
 
 ## Conclusion
 
