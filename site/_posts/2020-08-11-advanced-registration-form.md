@@ -114,7 +114,7 @@ After you've added these fields to the form, you'll see this:
 
 Feel free to rearrange the form fields within each step by clicking the arrows to move a field up or down. The form configuration specifies steps and field display order within those steps. If you need to move a field between steps, delete it from one step and add it to another. Each field can live in zero or one steps.
 
-To change field attributes, data type, form control, or validation, return to the "Fields" section to make your changes. When you're done tweaking the form to your liking, save it.
+To change field validation or other attributes, return to the "Fields" section to make your changes. When you're done tweaking the form to your liking, save it.
 
 ## Specify the form for your application
 
