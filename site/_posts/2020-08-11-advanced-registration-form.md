@@ -3,7 +3,7 @@ layout: blog-post
 title: How to use FusionAuth's advanced registration forms
 description: Advanced registration forms let you easily build out multi-step registration forms.
 author: Dan Moore
-image: blogs/breached-password-detection/how-to-enable-breached-password-detection-fusionauth.png
+image: blogs/advanced-registration-forms/how-to-use-fusionauths-advanced-registration-forms.png
 category: blog
 tags: feature-advanced-registration-forms
 excerpt_separator: "<!--more-->"
