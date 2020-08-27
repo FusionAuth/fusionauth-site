@@ -100,7 +100,9 @@ When you're done, it should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/form-first-step.png" alt="Adding fields to our first step." class="img-fluid" figure=false %}
 
-Just as you can add many custom form fields, you can also add as many steps as you want. However, please think of the users who are filling out the form and don't add too many steps! 
+Just as you can add many custom form fields, you can also add as many steps as you want. However, please think of the users who are filling out the form and don't add too many steps! The Nielson Norman group has a few suggestions about [website form usability](https://www.nngroup.com/articles/web-form-design/), but the number one suggestion is:
+
+> *Keep it short.* The mathematician Blaise Pascal famously said: “I have made this longer than usual because I have not had time to make it shorter.” This principle applies to web forms as well as prose writing. Eliminating unnecessary fields requires more time, but the reduced user effort and increased completion rates make it worthwhile. ... Every time you cut a field or question from a form, you increase its conversion rate — the business case for this guideline is that simple. 
 
 After you've examined the first step, create a second one. Add your custom fields to learn more about their house hunt.
 
