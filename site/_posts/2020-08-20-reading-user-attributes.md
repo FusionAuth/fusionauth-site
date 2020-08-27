@@ -32,7 +32,7 @@ Go to "Settings" and create an API key. We'll be using this for scripted theme m
 
 * `/api/user`: all methods
 
-You may also specify no specific endpoint settings. This creates a super-user key, so beware. That is fine for this tutorial, but for production, please limit access.
+You may also specify no specific endpoint methods. This creates a super-user key, so beware. That is fine for this tutorial, but for production, please limit access.
 
 ## Create the basic python app
 
@@ -41,6 +41,8 @@ Make a directory and change into it.
 Run this command to set up your virtual 
 
 python3 -m venv venv
+
+
 
 ## Conclusion
 
