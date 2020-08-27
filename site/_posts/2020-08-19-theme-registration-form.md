@@ -9,21 +9,21 @@ tags: feature-advanced-registration-forms feature-themes
 excerpt_separator: "<!--more-->"
 ---
 
-When a user is registering, you want to provide an on-brand look and feel, as well as a great user experience. In this tutorial, you'll improve an advanced registration form's display.
+When a user is registering, you want to provide an on-brand look and feel, as well as a great user experience. In this tutorial, you'll improve an advanced registration form's display by modifying a theme.
 
 <!--more-->
 
-Previously, we built a [self service registration form](TBD) for a real estate application. It was a two step form which captured specific information about their home buying needs. However, the form had a few rough user interface elements. In particular, it wasn't clear which data someone was supposed to enter into which form field.
+Previously, we built a [self service registration form](TBD) for a real estate application. It was a two step process which captured information about their home buying needs. However, the form had a few rough user interface elements. In particular, it wasn't clear which data someone was supposed to enter into which form field.
 
-This tutorial builds on the [previous one](TBD) and will walk you through changing the theme. While this tutorial will reference the previous form, you can adapt it to your own existing form as well.
+This tutorial builds on the [previous one](TBD) and will walk you through changing the theme. While this tutorial will reference the previous form, you can adapt it to your own forms as well.
 
 ## FusionAuth setup
 
-Go to "Settings" and create an API key. We'll be using this for scripted theme management, so configure these allowed endpoints:
+Go to "Settings" and create an API key. We'll be using this key to script some of our theme management, so configure this allowed endpoints:
 
 * `/api/theme`: all methods
 
-You may also specify no specific endpoint settings. This creates a super-user key. Fine for this tutorial, but for production, please limit access.
+You may also omit any. This creates a super-user key, able to do anything. Fine for this tutorial, but for production, please limit access.
 
 ## Creating a custom theme
 
