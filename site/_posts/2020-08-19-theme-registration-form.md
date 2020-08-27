@@ -257,6 +257,18 @@ If you submit information for the first step, you can see labels are present on 
 
 {% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/second-screen-with-labels.png" alt="The second registration step with labels." class="img-fluid" figure=false %}
 
+## Previewing a theme
+
+It is generally a good idea to review a theme in an incognito window because this will give you intuition about the total user registration experience. However, at times, you may need to make small changes in your theme that you want to view without going through an entire registration process. You can easily do so by previewing the theme. 
+
+Navigate to "Customizations" then to "Themes". Choose your theme, then click the preview link (the green magnifying glass). 
+
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/preview-theme-button.png" alt="Preview your theme." class="img-fluid" figure=false %}
+
+Doing this will open a new tab. Click "OAuth register" in the left hand navigation and you'll see the theme as it would be rendered. You can even switch between steps. Below you can see the preview for the second step:
+
+{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/view-theme-preview.png" alt="Preview your theme." class="img-fluid" figure=false %}
+
 ## Conclusion
 
 This post reveals a glimpse of the full flexibility of FusionAuth themes. You can use the full power of [Apache Freemarker](https://freemarker.apache.org/), Java ResourceBundles, CSS, and JavaScript to customize and localize these pages. As mentioned previously, it's also worth checking out the [theme documentation](/docs/v1/tech/themes). 
