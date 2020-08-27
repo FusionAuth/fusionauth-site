@@ -3,7 +3,7 @@ layout: blog-post
 title: Announcing FusionAuth 1.19
 description: The FusionAuth 1.19 release offers stateless admin pages, multi-tenant SSO, more flexible configuration, and more.
 author: Dan Moore
-image: blogs/release-1-18/fusionauth-release-1-18.png
+image: blogs/release-1-19/fusionauth-release-1-19.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
