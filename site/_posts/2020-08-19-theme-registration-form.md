@@ -13,7 +13,7 @@ When a user is registering, the last thing you want to do is get in their way or
 
 <!--more-->
 
-Previously, we built a [self service registration form](/blog/2020/08/27/advanced-registration-form) for a real estate webapp. It was a two step form which captured information about their home buying needs. However, the form had a few rough elements. In particular, it wasn't clear which data someone was supposed to enter into which form field.
+Previously, we built a [self service registration form](/blog/2020/08/27/advanced-registration-form) for a real estate webapp and used FusionAuth as the auth server. It was a two step form which captured information about their home buying needs. However, the form had a few rough elements. In particular, it wasn't clear which data someone was supposed to enter into which form field.
 
 This tutorial builds on the [previous one](/blog/2020/08/27/advanced-registration-form) and walks through changing the theme. While this tutorial will reference the previous form, feel free to apply it to any form you've created as well.
 
