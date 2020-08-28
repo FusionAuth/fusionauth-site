@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: How to enable breached password detection with FusionAuth
-description: How can you easily prevent your users from using passwords that have been cracked and made available for sale on the web? By enabling breached password detection with FusionAuth."
+description: How can you easily prevent your users from using passwords that have been cracked and made available for sale on the web? By enabling breached password detection with FusionAuth.
 author: Dan Moore
 image: blogs/breached-password-detection/how-to-enable-breached-password-detection-fusionauth.png
 category: blog
