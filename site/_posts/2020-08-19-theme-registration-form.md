@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: How to theme FusionAuth's advanced registration forms
-description: Advanced registration forms let you easily build out multi-step registration forms and you can use FusionAuth's full theming power to change how they look.
+description: Advanced registration forms let you easily build out multi-step registration forms. You can use FusionAuth's full theming power to change how they look.
 author: Dan Moore
 image: blogs/breached-password-detection/how-to-enable-breached-password-detection-fusionauth.png
 category: blog
