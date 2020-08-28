@@ -53,7 +53,7 @@ To begin, in the administrative user interface, navigate to "Customizations" and
 
 To change the hints and validation messages, you must edit a file containing messages. This is a Java resources file, and can be changed via the administrative user interface or the API. In this post, you're going to use the API to make the changes. This will show the power of the API first approach that FusionAuth takes, as well as providing a way to version control the file, should you so desire.
 
-These scripts assume you are running FusionAuth at `http://localhost:9011`; if not, adjust accordingly. These scripts are [also available on GitHub](https://github.com/FusionAuth/fusionauth-theme-management). They also require you have [jq](https://stedolan.github.io/jq/) and python3 installed locally.
+These scripts assume you are running FusionAuth at `http://localhost:9011`; if not, adjust accordingly. These scripts are [also available on GitHub](https://github.com/FusionAuth/fusionauth-theme-management). They also require you to have [jq](https://stedolan.github.io/jq/) and python3 installed locally.
 
 ### Retrieving a theme file for local editing
 
@@ -102,7 +102,7 @@ It's about 200 lines; the above is an excerpt. Open it in your favorite text edi
 
 > If you are interested in localized messages, check out the [`fusionauth-localization`](https://github.com/FusionAuth/fusionauth-localization) project.
 
-To improve the registration form, add values to the "Custom Registration" section. Maintaining sections in this property file isn't enforced (it's not a `.ini` file) but it's a good idea to change only what is needed. Upgrades to FusionAuth may change the properties file and you will have merge the changes, so simpler is better. Here is the section to which you're going to add lines:
+To improve the registration form, add values to the "Custom Registration" section. Maintaining sections in this property file isn't enforced (it's not a `.ini` file) but it's a good idea to change only what is needed. Upgrades to FusionAuth may change the properties file and you will have to merge the changes, so simpler is better. Here is the section to which you're going to add lines:
 
 ```
 # ...
@@ -189,7 +189,7 @@ On the second screen, if you submit the registration form without providing a pr
 
 You can customize your field display more extensively by modifying the `customField` macro. This is in the "Helpers" section of your theme. Rather than use the API to do this, let's edit it directly in the administrative user interface.
 
-Navigate to "Themes" and edit your theme. Click on "Helpers" and scroll to the bbottom. You'll be modifying the `customField` macro. Here's the default implementation for this freemarker macro:
+Navigate to "Themes" and edit your theme. Click on "Helpers" and scroll to the bottom. You'll be modifying the `customField` macro. Here's the default implementation for this freemarker macro:
 
 ```
 [#macro customField field key autofocus=false placeholder=""]
