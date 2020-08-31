@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.19
-description: The FusionAuth 1.19 release offers stateless admin pages, multi-tenant Single-Sign-on (SSO), more flexible configuration, and more.
+description: The FusionAuth 1.19 release offers stateless, multi-tenant Single-Sign-on (SSO), more flexible configuration, and more.
 author: Dan Moore
 image: blogs/release-1-19/fusionauth-release-1-19.png
 category: blog
@@ -38,7 +38,7 @@ This is now an option using login page hinting. Configure it for certain domains
 
 If you are migrating to FusionAuth, typically you are using [the Import Users API](/docs/v1/tech/apis/users#import-users), perhaps with a [custom password encryptor](/docs/v1/tech/plugins/password-encryptors). You usually want to minimize impact on your users due to migration of a production system. 
 
-With this release you can now import refresh tokens issued by a different user management system. FusionAuth will continue to honor those tokens. Rather than forcing a user to log at migration, when clients present the old refresh token, new JWTs will be issued. Score one for smooth, transparent migrations.
+With this release you can now import refresh tokens issued by a different user management system. FusionAuth will continue to honor those tokens. Rather than forcing a user to log in at migration, when clients present the old refresh token, new JWTs will be issued. Score one for smooth, transparent migrations.
 
 ### Application email templates
 
@@ -55,9 +55,9 @@ See the [email templates documentation](/docs/v1/tech/email-templates/) for more
 
 Previous to the 1.19 release, you needed to use sticky sessions (aka session pinning) for the FusionAuth administrative user interface and the FusionAuth login pages. Now, if you run more than one FusionAuth node fronted by a load balancer, you do not have to enable session pinning. The applications are now stateless.
 
-### Multi-Tenant Single-Sign-on (SSO)
+### Multi-tenant single-sign-on (SSO)
 
-This was a limitation prior to this released due to the way we managed the HTTP session. Now FusionAuth currently handles true multi-tenant SSO using the hosted login pages. Users can log in to multiple applications in different tenants in the same browser.
+This was a limitation prior to this release due to the way we managed the HTTP session. Now FusionAuth can handle true multi-tenant SSO using the hosted login pages. Users can sign in to multiple applications in different tenants in the same browser.
 
 In addition to these features, there were other bugs squashed and GitHub issues resolved as well. Please see the [release notes](/docs/v1/tech/release-notes) for the full breakdown of the changes between 1.18 and 1.19. 
 
