@@ -19,13 +19,15 @@ This tutorial builds on the [previous one](/blog/2020/08/27/advanced-registratio
 
 ## FusionAuth setup
 
-Go to "Settings" and create an API key by going to "Settings" and then to "API Keys". We'll be using this key to script some of our theme management, which means we need permission for this endpoint:
+
+
+Go to "Settings" and then create an API key by going to "API Keys". We'll be using this key to script some of our theme management, which means we need permission for this endpoint:
 
 * `/api/theme`: all methods
 
 You may also check no endpoints or methods. This creates a super-user key, able to do anything. Well, at least able to access all of the FusionAuth API. This is fine for a tutorial, but for production, please limit access.
 
-## Creating a custom theme
+## Creating a custom theme for a single or multi-tenant configuration
 
 The next step is to create a new theme. You will be changing some of the messages to improve the user experience, and the default theme is read-only. Themes are assigned on a tenant by tenant basis, so you can either change the theme for the default tenant (what this tutorial does) or create a new tenant and assign a new theme to it. FusionAuth supports multiple tenants out of the box, so either way works.
 
@@ -139,7 +141,7 @@ Append the key to provide specific errors for a given form field. For example, t
 [invalid]registration.data.maxprice=Maximum home price required
 ```
 
-If any of the values you add to `defaultmessages.txt` have a double quote in them, escape it: `\"`. This prevents issues when this file is converted into back JSON, which must happen before the changes are reflected in FusionAuth. 
+If any of the values you add to `defaultmessages.txt` have a double quote in them, escape it: `\"`. This prevents issues when this file is converted back into JSON, which must happen before the changes are reflected in FusionAuth. 
 
 ### Updating the theme in FusionAuth
 
@@ -279,7 +281,7 @@ This post gives you a glimpse of the full flexibility of FusionAuth themes. You 
 
 If you are using FusionAuth registration forms, be sure to customize the default templates to improve users' experience. FusionAuth's themes can be manipulated both in the administrative user interface and by API calls.
 
-But what about after the registration. What comes next? Let's build a small portal page for the user to see their data. This user information is available via the FusionAuth APIs, in the `user.data` and `registration.data` fields. It is also available for viewing, but not editing, in the administrative user interface. 
+But what about after the registration? This information is available via the FusionAuth APIs, in the `user.data` and `registration.data` fields. It is also available for viewing, but not editing, in the administrative user interface. 
 
-You can retrieve and modify user data using the [APIs](/docs/v1/tech/apis) and in a future blog post we'll see exactly how to do that.
+Let's build a small portal page for the user to see their data. You can retrieve and modify user data using the [APIs](/docs/v1/tech/apis) and in a future blog post we'll see exactly how to do that.
 
