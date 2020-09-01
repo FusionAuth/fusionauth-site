@@ -53,7 +53,7 @@ To begin, in the administrative user interface, navigate to "Customizations" and
 
 ### Modifying a theme via API
 
-To change the hints and validation messages, you must edit a file containing messages. This is a Java resources file, and can be changed via the administrative user interface or the API. In this post, you're going to use the API to make the changes. This will show the power of the API first approach that FusionAuth takes, as well as providing a way to version control the file, should you so desire.
+To change the hints and validation messages, you must edit a file containing messages. This is a Java properties file, and can be changed via the administrative user interface or the API. In this post, you're going to use the API to make the changes. This will show the power of the API first approach that FusionAuth takes, as well as providing a way to version control the file, should you so desire.
 
 These scripts assume you are running FusionAuth at `http://localhost:9011`; if not, adjust accordingly. These scripts are [also available on GitHub](https://github.com/FusionAuth/fusionauth-theme-management). They also require you to have [jq](https://stedolan.github.io/jq/) and python3 installed locally.
 
@@ -129,7 +129,7 @@ user.firstName=Your first name
 user.mobilePhone=Your mobile phone num
 registration.data.minprice=Minimum home price
 registration.data.maxprice=Maximum home price
-registration.data.minprice=Where are you looking?
+registration.data.geographicarea=Where are you looking?
 ```
 
 You aren't limited to placeholders, either. You can add validation messages to the section starting with: `# Custom Registration form validation errors`. You can examine the `Default validation errors` section for examples of all the errors available. 
@@ -191,7 +191,7 @@ On the second screen, if you submit the registration form without providing a pr
 
 You can customize your field display more extensively by modifying the `customField` macro. This is in the "Helpers" section of your theme. Rather than use the API to do this, let's edit it directly in the administrative user interface.
 
-Navigate to "Themes" and edit your theme. Click on "Helpers" and scroll to the bottom. You'll be modifying the `customField` macro. Here's the default implementation for this freemarker macro:
+Navigate to "Themes" and edit your theme. Click on "Helpers" and scroll to the bottom. You'll be modifying the `customField` macro. Here's the default implementation for this [FreeMarker macro](https://freemarker.apache.org/):
 
 ```
 [#macro customField field key autofocus=false placeholder=""]
@@ -277,7 +277,7 @@ Doing this will open a new tab. Click "OAuth register" in the left hand navigati
 
 ## Conclusion
 
-This post gives you a glimpse of the full flexibility of FusionAuth themes. You can use the power of [Apache Freemarker](https://freemarker.apache.org/), Java ResourceBundles, CSS, and JavaScript to customize and localize these pages. As mentioned previously, it's also worth checking out the [theme documentation](/docs/v1/tech/themes). 
+This post gives you a glimpse of the full flexibility of FusionAuth themes. You can use the power of Apache FreeMarker, ResourceBundles, CSS, and JavaScript to customize and localize these pages. As mentioned previously, it's also worth checking out the [theme documentation](/docs/v1/tech/themes). 
 
 If you are using FusionAuth registration forms, be sure to customize the default templates to improve users' experience. FusionAuth's themes can be manipulated both in the administrative user interface and by API calls.
 
