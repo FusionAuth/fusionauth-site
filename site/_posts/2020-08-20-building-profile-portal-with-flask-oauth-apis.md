@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Building a user portal with Flask and OAuth
+title: Building a user profile portal with Flask, OAuth, and APIs
 description: Advanced registration forms let you easily build out multi-step registration forms, but how do you lets the users modify their profile data?
 author: Dan Moore
 image: blogs/breached-password-detection/how-to-enable-breached-password-detection-fusionauth.png
