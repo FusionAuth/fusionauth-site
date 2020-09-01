@@ -795,6 +795,8 @@ pic TBD final screen
 
 The user can now register and update their profile whenever they want.
 
+As a reminder, you can see and use all this code by checking out the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-flask-portal).
+
 ## Next steps
 
 If you want to take this tutorial further, here are some ways to improve it:
