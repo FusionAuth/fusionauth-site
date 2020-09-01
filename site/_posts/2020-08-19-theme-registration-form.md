@@ -228,34 +228,10 @@ It looks a little wonky if you aren't used to it, but this is a series of if/the
 Let's add a label to each field. Right after `[#assign fieldId = field.key?replace(".", "_") /]`, add this:
 
 ```
-[#if fieldId == "user_firstName"]
-  <label for="${fieldId}">First name:</label>
-[/#if]
-[#if fieldId == "user_email"]
-  <label for="${fieldId}">Email:</label>
-[/#if]
-[#if fieldId == "user_password"]
-  <label for="${fieldId}">Password:</label>
-[/#if]
-[#if fieldId == "user_mobilePhone"]
-  <label for="${fieldId}">Mobile phone #:</label>
-[/#if]
-[#if fieldId == "registration_data_geographicarea"]
-  <label for="${fieldId}">Where are you looking?:</label>
-[/#if]
-[#if fieldId == "registration_data_minprice"]
-  <label for="${fieldId}">Minimum home price:</label>
-[/#if]
-[#if fieldId == "registration_data_maxprice"]
-  <label for="${fieldId}">Maximum home price:</label>
-[/#if]
+<label for="${fieldId}">${theme.optionalMessage(field.key)}:</label>
 ```
 
-More if statements! When you are done, the modified `customField` macro should look like this:
-
-{% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/theme-editor.png" alt="The theme editor after modifying the custom fields helper." class="img-fluid" figure=false %}
-
-Open an incognito window and go through the registration flow again. You should see labels for both steps. As a bonus, because you used the `label` HTML element, you can now click on the text label and the browser will put the cursor into the text input field. User experience win!
+Open an incognito window and go through the registration flow again. You should see labels for both steps. These label values will be pulled from your message bundles, so can be localized in the same way as any of the other messages. As a bonus, because you used the `label` HTML element, you can now click on the text label and the browser will put the cursor into the text input field. User experience win!
 
 {% include _image.liquid src="/assets/img/blogs/theming-advanced-forms/first-screen-with-labels.png" alt="The first registration step with labels." class="img-fluid" figure=false %}
 
