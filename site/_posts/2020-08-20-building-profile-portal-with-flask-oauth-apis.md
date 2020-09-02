@@ -335,6 +335,8 @@ def register():
 
 All of these build links and then redirect them. `/logout` simply deletes the user's session and then calls the FusionAuth logout endpoint. This ensures that both places where the user state is maintained, your application and FusionAuth, have logged out the user. 
 
+> You don't need these routes. You could hardcode URLs into the template. But doing this makes for a more maintainable application, as well as nicer looking URLs.
+
 The `/login` route uses the library to build an authorization URL. When clicked, the end user will be shown the FusionAuth hosted pages (which are themeable). 
 
 The `/register` route uses the same library to generate the URL but also modifies it: `registration_url = authorization_url.replace("authorize","register", 1)`. What's going on here? 
@@ -394,6 +396,8 @@ If you do so, you'll be able to register or login and end up at this screen:
 You could stop here, if you wanted, I suppose. You're showing the user data that is retrieved from the [`userinfo` standard endpoint](/docs/v1/tech/oauth/endpoints#userinfo). But you probably want more. 
 
 Let's take the next step and display not just the user's email address, but their registration specific data. You'll even pull the form field data dynamically so if you add more custom fields, the portal will display those as well.
+
+> At this point, you're switching from standard OIDC endpoints to using the FusionAuth APIs.
 
 To do this, first you need to add more settings. Update your `settings.py` file:
 
