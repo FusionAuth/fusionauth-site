@@ -31,7 +31,7 @@ However, if you need access to information beyond what the OIDC spec provides, y
 
 At the end of the day, you'll end up with a self service portal like this:
 
-pic TBD
+{% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/final-screen.png" alt="The self service profile management portal." class="img-fluid" figure=false %}
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ You may also specify no endpoint methods when you create the key. This creates a
 
 Update your application settings. Navigate to the "Applications" section, then the "OAuth" tab. Add `http://localhost:5000/callback` to the "Authorized request origin URLs" field. Set the logout URL to be `http://localhost:5000`.
 
-Pic TBD
+{% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/flask-oauth-portal/oauth-tab-of-application.png" alt="Configuring the FusionAuth application for the flask portal." class="img-fluid" figure=false %}
 
 ## Setting up the python virtual environment
 
@@ -152,7 +152,7 @@ You should see this in the terminal:
 
 And if you visit the page in your browser, you'll see this:
 
-pic TBD simple app screen
+{% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/simple-app-screen.png" alt="The initial Flask page." class="img-fluid" figure=false %}
 
 What you are doing here is starting up flask and having it display a rendered template. 
 
@@ -175,7 +175,7 @@ class Config(object):
 
 `CLIENT_ID` and `CLIENT_SECRET` are both available in the application you created previously. To get them now, go to "Applications" and click the green magnifying glass to view these values. 
 
-Pic TBD application screen fusionauth
+{% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/application-screen-fusionauth.png" alt="Finding the client id and client secret values." class="img-fluid" figure=false %}
 
 The rest of the values are standard OAuth/OIDC endpoints as well as your Flask application. You should only need to modify them if you are running FusionAuth or your Flask servers at a different host.
 
@@ -387,7 +387,7 @@ OAUTHLIB_INSECURE_TRANSPORT=1 FLASK_APP=oauth.py python3 -m flask run
 
 If you do so, you'll be able to register or login and end up at this screen:
 
-pic TBD oauth-portal page
+{% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/oauth-portal-page.png" alt="The portal page when you authenticate with OAuth." class="img-fluid" figure=false %}
 
 ## Editing profile data
 
@@ -412,7 +412,7 @@ class Config(object):
 
 You are adding an API key (which you added when configuring FusionAuth) and the form id for the advanced registration form (added in the [initial blog post](/blog/2020/08/27/advanced-registration-form)). To find the value for `FORM_ID`, naviage to "Customizations" then "Forms" and view your form.
 
-pic TBD form-id-display
+{% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/form-id-display.png" alt="Finding the form id for your advanced registration form." class="img-fluid" figure=false %}
 
 This will be used to pull the form fields.
 
@@ -791,7 +791,7 @@ OAUTHLIB_INSECURE_TRANSPORT=1 FLASK_APP=oauth.py python3 -m flask run
 
 You'll see the same initial page, but when you register or sign in, you'll see this page:
 
-pic TBD final screen
+{% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/final-screen.png" alt="The self service profile management portal." class="img-fluid" figure=false %}
 
 The user can now register and update their profile whenever they want.
 
