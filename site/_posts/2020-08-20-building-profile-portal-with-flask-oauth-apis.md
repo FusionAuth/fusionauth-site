@@ -344,7 +344,7 @@ This code works because the registration process in FusionAuth is embedded in an
 Let's look at the callback route, which the authorization server, FusionAuth, will redirect the browser to after the user signs in:
 
 ```python
-#...
+# ...
 @app.route("/callback", methods=["GET"])
 def callback():
   expected_state = session['oauth_state']
@@ -360,7 +360,7 @@ def callback():
   session['user'] = fusionauth.get(app.config['USERINFO_URL']).json()
 
   return redirect('/')
-#...
+# ...
 ```
 
 This code checks to see that the `state` parameter is the same value as was sent when the user signed up or signed in. Then it fetches the access token using the authorization code. This is embedded in `request.url` and parsed out by the library with no effort on our part.
@@ -389,34 +389,29 @@ You could stop here if you wanted, I suppose. You're showing the user data that 
 
 But you're no schmuck. You want more. I promised the ability to edit the profile data, and the below code will deliver.
 
-Let's take the next step and display not only the user's email address, but alos the data they provided on registration. You'll even see code to pull the form field configuration dynamically. If you change the configuration of your custom fields, the portal will display those as well.
+Let's take that next step and display not only the user's email address, but alos the data they provided on registration. You'll even pull the form field configuration dynamically. This means that if you change the configuration of your custom fields, to, say, make a profile field optional, the portal update form will change in response.
 
-XXX stopped here
+> At this point, you're changing from using OIDC to using the FusionAuth APIs.
 
-> At this point, you're switching from standard OIDC endpoints to using the FusionAuth APIs.
-
-To do this, first you need to add more settings. Update your `settings.py` file:
+First, add more configuration settings. Update your `settings.py` file like so:
 
 ```python
 class Config(object): 
   CLIENT_ID="85a03867-dccf-4882-adde-1a79aeec50df"
-  CLIENT_SECRET="5E_pVQeSQ2v4d7ckDy6rz_Z0HZjNSShUEbWPRYst2hg"
-  FA_URL='http://localhost:9011'
-  AUTHORIZATION_BASE_URL='http://localhost:9011/oauth2/authorize'
-  TOKEN_URL='http://localhost:9011/oauth2/token'
+# ...
   USERINFO_URL='http://localhost:9011/oauth2/userinfo'
   REDIRECT_URI='http://localhost:5000/callback'
   API_KEY='3_g6FQBuatlmxRSITB64FnkliODvtWMuAHxaPB0M3IU'
   FORM_ID='7a7e08db-5aee-4c28-b5b7-7ec7f7cedf14'
 ```
 
-You are adding an API key (which you added when configuring FusionAuth) and the form id for the advanced registration form (added in the [initial blog post](/blog/2020/08/27/advanced-registration-form)). To find the value for `FORM_ID`, naviage to "Customizations" then "Forms" and view your form.
+The changes add an API key (which you added when configuring FusionAuth) and the form id for the advanced registration form. The latter was created in the [initial blog post](/blog/2020/08/27/advanced-registration-form). To find the `FORM_ID`, navigate to "Customizations" then "Forms". You'll see the form identifier on the list of forms:
 
 {% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/form-id-display.png" alt="Finding the form id for your advanced registration form." class="img-fluid" figure=false %}
 
-This will be used to pull the form fields.
+The `FORM_ID` allows our code to retrieve the form fields which comprise that form. 
 
-Let's update the `index.html` file to both display and allow updating of the user's data.
+Let's update the `index.html` file to display the user's data as well as to generate a form to update that data:
 
 ```html
 <!doctype html>
@@ -488,31 +483,30 @@ This is a sample OAuth/Flask application.
 </html>
 ```
 
-Here are the relevant sections. First, this is the section displaying the information:
+Here are the changed, relevant sections. First, this is displays the profile information:
 
 ```html
 <!-- ... -->
-  <h3>Current preferences</h3>
-  {% if registration_data %}  
-    {% for key in registration_data.keys() %}
-      <p>
-      {% if key == 'geographicarea' and registration_data['geographicarea'] | length > 0 %}
-        Geographic area: {{registration_data['geographicarea']}}
-      {% endif %}
-      {% if key == 'maxprice' %}
-        Maximum home price: {{ "$%.0f"|format(registration_data['maxprice'])}}
-      {% endif %}
-      {% if key == 'minprice' %}
-        Minimum home price: {{ "$%.0f"|format(registration_data['minprice'])}}
-      {% endif %}
-      </p>
-    {% endfor %}
-  {% endif %}
-  </div>
+<h3>Current preferences</h3>
+{% if registration_data %}  
+  {% for key in registration_data.keys() %}
+    <p>
+    {% if key == 'geographicarea' and registration_data['geographicarea'] | length > 0 %}
+      Geographic area: {{registration_data['geographicarea']}}
+    {% endif %}
+    {% if key == 'maxprice' %}
+      Maximum home price: {{ "$%.0f"|format(registration_data['maxprice'])}}
+    {% endif %}
+    {% if key == 'minprice' %}
+      Minimum home price: {{ "$%.0f"|format(registration_data['minprice'])}}
+    {% endif %}
+    </p>
+  {% endfor %}
+{% endif %}
 <!-- ... -->
 ```
 
-This code iterates each of the values in the `registration_data` object, which is provided to the template, and displays them. If appropriate, it'll format the field.
+This display code iterates and displays the values in the `registration_data` array. If appropriate, the field is formatted. 
 
 The code which builds a form for updating is also worth checking out:
 
@@ -539,19 +533,24 @@ The code which builds a form for updating is also worth checking out:
 <!-- ... -->
 ```
 
-This builds a form from the same `registration_data` value. But it does something else intriguing. Let's take a deeper look at the maximum price form field:
+This builds a form from the same `registration_data` array. But it does something else which you might find intriguing. Let's take a deeper look at the maximum price form field, which has some additional newlines added below:
 
 ```html
 <!-- ... -->
-Maximum home price: <input type='{{fields['registration.data.'+key].control}}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{key}}' value='{{registration_data['maxprice']}}' />
+Maximum home price: 
+  <input 
+  type='{{fields['registration.data.'+key].control}}' 
+  {% if fields['registration.data.'+key].required %}required{% endif %} 
+  name='{{key}}' 
+  value='{{registration_data['maxprice']}}' />
 <!-- ... -->
 ```
 
 How are the `type` and `required` attribues determined? What is this `fields` value? 
 
-The source of this mysterious `fields` value is the form field definitions that were created previously. This means that if the field definition changes, such as if a field becomes required, the form field generated here will adhere to the same rules.
+The source of this mysterious `fields` value are the form field definitions. If the field definition changes, the form field generated is modified as well.
 
-Let's look at the code, where `registration_data` and `fields` are actually generated. Again, here's the entire `oauth.py` file, but below we'll examine the 
+Let's look at the code, where `registration_data` and `fields` variables are set up. Here's the entire `oauth.py` file, but below we'll examine the changes:
 
 ```python
 from requests_oauthlib import OAuth2Session
@@ -606,7 +605,6 @@ def update():
         form_key = field['key'].replace('registration.data.','')
         new_value = request.form.get(form_key,'')
         if field['control'] == 'number':
-          # TODO must handle all types here otherwise the data gets out of sync
           registration_data[form_key] = int(new_value)
         else:
           registration_data[form_key] = new_value
@@ -686,10 +684,10 @@ if __name__ == "__main__":
   app.run(debug=True)
 ```
 
-Two routes have changed or been added. The `/` route has a lot more going on now. The `/update` route is new. And a helper method, `get_fields` has been added. Let's look at each of these in turn.
+Two routes have changed or been added. The index, or `/`, route has a lot more going on now. The `/update` route is new. Additionally, a helper method, `get_fields` has been added. Let's look at each of these in turn. First up, the index route:
 
 ```python
-#...
+# ...
 @app.route('/', methods=["GET"])
 def homepage():
   user=None
@@ -707,22 +705,21 @@ def homepage():
     else:
       print(client_response.error_response)
   return render_template('index.html', user=user, registration_data=registration_data, fields=fields)
-#...
+# ...
 ```
 
-This now looks at the `user` object, and pulls off the `sub` attribute. This is the user identifier, which looks like `8ffee38d-48c3-48c9-b386-9c3c114c7bc9`. It also pulls the `applicationId` from the same object. Both of these existed on the user object before, but the previous code ignored them. 
+This route examines the `user` object, which was returned from the successful authentication. It pulls off the `sub` attribute, which is the user identifier and looks something like `8ffee38d-48c3-48c9-b386-9c3c114c7bc9`. It also retrieves the `applicationId`. Both of these existed on the user object before, but the previous code ignored them. 
 
-Once that data is available, the registration object is retrieved using a previously created client. This is placed into the `registration_data` variable and passed to the template.  The helper method (which will be examined below in more detail) is also called and whatever it returns is made available to the template.
+Once those ids are available, the registration object is retrieved using a previously created FusionAuth client. The registration object's data field is placed into the `registration_data` variable and passed to the template for display. The helper method, to be examined below in more detail, is also called and whatever it returns is made available to the template as the `fields` variable.
 
-Here's the `get_fields` method:
+Now, about that helper method. Let's take a look at `get_fields`:
 
 ```python
-#...
+# ...
 def get_fields(fusionauth_api_client):
   fields = {}
   client_response = fusionauth_api_client.retrieve_form(app.config['FORM_ID'])
   if client_response.was_successful():
-    #print("form")
     field_ids = client_response.success_response['form']['steps'][1]['fields']
     for id in field_ids:
       client_response = fusionauth_api_client.retrieve_form_field(id)
@@ -734,14 +731,14 @@ def get_fields(fusionauth_api_client):
   return fields
 ```
 
-This looks at the configured form and pulls all the field ids on the second step (`['form']['steps'][1]`) and then retrieves the full form field configuration. Then it adds the data to a dictionary, keyed off of the field key, such as `registration.data.minprice`. This dictionary is then iterated in the `index.html` template, as shown above. 
+This looks at the form and retrieves ids of all fields on the second step: `['form']['steps'][1]`. It then gets all each field configuration. 
 
-This would need to be modified if you had more than one step which collected profile data.
+The code then adds that form field configuration infomration to a dictionary, keyed off of the key of the field. A key is a string like `registration.data.minprice`. This dictionary is what is used to build certain attributes of the update form, as shown above. This would need to be modified to loop over steps if you had more than one step collecting profile data.
 
-The final interesting section of code is the `/update` route handler, shown below:
+The final relevant section of code is the `/update` route handler, shown below:
 
 ```python
-#...
+# ...
 @app.route("/update", methods=["POST"])
 def update():
   user=None
@@ -774,41 +771,39 @@ def update():
          error = "Unable to save data"
          return render_template('index.html', user=user, registration_data=registration_data, fields=fields, error=error)
   return redirect('/')
-#...
+# ... 
 ```
 
-This code pulls the registration and then updates the `data` object with any new values, perhaps transforming a field from a string to a different datatype if needed. Right now it only handles the `number` type, but if your profile data includes other types, it should be extended. 
+This code retrieves the user's registration object for this application. It then updates the `data` object with new values, perhaps transforming a field from a string to a different datatype if required. Currently it handles only the `number` type, but could be extended to handle `boolean` or other data types.
 
-Then, after the object has been updated, a `PATCH` request is made. This only updates the `data` field. Other parts of a user registration can be modified without worrying about collision or inadvertent overwrites.
+After the object has been updated, a `PATCH` request is made. This updates only the `data` field.
 
 ## Putting it all together
 
-You can run this updated code in the same way as you did the previous incarnation: 
+You can run the code with the display and update of profile data in the same way you did previously: 
 
 ```shell
 OAUTHLIB_INSECURE_TRANSPORT=1 FLASK_APP=oauth.py python3 -m flask run
 ```
 
-You'll see the same initial page, but when you register or sign in, you'll see this page:
+You'll see the same initial page prompting a login or registration. When you register or sign in, you'll see this page:
 
 {% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/final-screen.png" alt="The self service profile management portal." class="img-fluid" figure=false %}
 
-The user can now register and update their profile whenever they want.
-
-As a reminder, you can see and use all this code by checking out the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-flask-portal).
+The user can now register and update their profile information whenever they want. As a reminder, you can see and use all this code by checking out the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-flask-portal).
 
 ## Next steps
 
-If you want to take this tutorial further, here are some ways to improve it:
+If you want to take this tutorial further, here are some improvements:
 
-* Make the portal look better by incorporating a modern CSS framework like Tailwind.
-* Split up the flask config into dev/staging/prod sections.
-* Last but certainly not least, build out the real application! You have profile data from the end user, now send them some homes they might be interested in!
+* Make the portal look nicer by using a modern CSS framework.
+* Split up the flask `config` into dev/staging/prod objects.
+* Last but certainly not least, build out the real application! You have profile data from the end user, now send them some homes they might be interested in.
 
 ## Conclusion
 
-The code in this uses both standard OAuth/OIDC ilibraries and FusionAuth APIs. The flask application you build can retrieve and modify users' data, allowing them to make changes to the data they provided on registration.
+The code in this application uses both standard OAuth and OIDC to retrieve data. It also uses the FusionAuth APIs. The flask application you built can retrieve and modify users' data, allowing them to make changes to the data provided at registration.
 
-You have all the pieces to put together a user registration or login flow for any number of custom applications. You can create the registration form, theme it and provide your user a way to update their profile data.
+We've reached the end of this blog series about registration forms. You have all the pieces to put together a registration flow for custom applications. You can create the registration form, theme it and provide your user a way to update their profile data.
 
-
+Happy coding!
