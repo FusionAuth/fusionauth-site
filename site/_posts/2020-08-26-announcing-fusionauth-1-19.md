@@ -8,13 +8,13 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.19 of FusionAuth, which shipped at the end of August. This version delivers new features and resolves issues for users running any older version.
+We're excited to announce the release of version 1.19 of FusionAuth, which shipped at the beginning of September. This version delivers new features and resolves issues for users running any older version.
 
 <!--more-->
 
 ## Highlights
 
-In addition to bug fixes and user interface improvements, there are a few highlights we'd like to, well, highlight.
+In addition to the usual bug fixes and user interface improvements, there are a few highlights we'd like to, well, highlight.
 
 ### Revamped configuration options
 
@@ -24,7 +24,7 @@ Configuration options are now consistent no matter how you set them. Every optio
 * environment variables
 * Java system properties, set with the `-D` command line option when starting FusionAuth
 
-If you are running in Docker or Kubernetes, you'll have all the configuration flexibility without mounting any volumes.
+If you are running in Docker or Kubernetes, you'll have configuration flexibility without mounting any volumes.
 
 And if you are worried about your configuration breaking with these new settings, don't. All previous configuration options are backwards compatible. We will, however, kindly remind you to update your configuration values or environment variables, because that’s how we roll. Learn more in the [configuration reference docs](/docs/v1/tech/reference/configuration).
 
