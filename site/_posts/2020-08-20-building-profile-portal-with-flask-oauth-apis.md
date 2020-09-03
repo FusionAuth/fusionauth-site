@@ -60,7 +60,7 @@ These changes ensure that after the user signs in to FusionAuth, they can be sen
 
 ## Setting up the python virtual environment
 
-Make a directory for this codebase. You could call it something flashy, but I'm going create one called `flask`. `cd` into it, as that's where you'll create the entire portal application. To set up your virtual environment in this tutorial, you're going to use `venv`: `python3 -m venv venv`. This lets us install libraries locally.
+Make a directory for this codebase. You could call it something flashy, but I'm going to create one called `flask`. `cd` into it, as that's where you'll create the entire portal application. To set up your virtual environment in this tutorial, you're going to use `venv`: `python3 -m venv venv`. This lets us install libraries locally.
 
 Next, activate this virtual environment by running this command: `. venv/bin/activate`. You should now see `(venv)` in front of your shell prompt:
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
   app.run(debug=True)
 ```
 
-You are going to use flask templates to create the HTML pages. Create a directory `templates` and a file called `index.html` in that directory. Put the following markup in there:
+You are going to use flask templates to create the HTML pages. Create a directory called `templates` and a file called `index.html` in that directory. Put the following markup in there:
 
 ```html
 <!doctype html>
@@ -201,7 +201,7 @@ This is a sample OAuth/Flask application.
 </html>
 ```
 
-In this template, if `user` exists, user's email address is shown. Otherwise it displays login or registration links. 
+In this template, if the `user` variable exists, the user's email address is shown. Otherwise it displays login or registration links. 
 
 Finally, update `oauth.py` to provide the routes you added to the template. Below is the entire updated file, but we'll examine each method one at a time after the code block:
 
@@ -327,7 +327,7 @@ def register():
 
 All of these build links when called, and then send a redirect to the generated URL. 
 
-> You don't need these routes. You could hardcode URLs into the template. But doing this makes for a more maintainable application, as well as nicer looking URLs.
+> You don't need these routes. You could hard code URLs into the template. But doing this makes for a more maintainable application, as well as nicer looking URLs.
 
 The `/login` route uses the `requests_oauthlib` library to generate a proper authorization URL. The parameters for this URL are all defined by the [RFC](https://tools.ietf.org/html/rfc6749). When the link is clicked, the end user will be shown the FusionAuth themable hosted pages, where they may log in. 
 
@@ -389,7 +389,7 @@ You could stop here if you wanted, I suppose. You're showing the user data that 
 
 But you're no schmuck. You want more. I promised the ability to edit the profile data, and the below code will deliver.
 
-Let's take that next step and display not only the user's email address, but alos the data they provided on registration. You'll even pull the form field configuration dynamically. This means that if you change the configuration of your custom fields, to, say, make a profile field optional, the portal update form will change in response.
+Let's take that next step and display not only the user's email address, but also the data they provided on registration. You'll even pull the form field configuration dynamically. This means that if you change the configuration of your custom fields, to, say, make a profile field optional, the portal update form will change in response.
 
 > At this point, you're changing from using OIDC to using the FusionAuth APIs.
 
@@ -546,7 +546,7 @@ Maximum home price:
 <!-- ... -->
 ```
 
-How are the `type` and `required` attribues determined? What is this `fields` value? 
+How are the `type` and `required` attributes determined? What is this `fields` value? 
 
 The source of this mysterious `fields` value are the form field definitions. If the field definition changes, the form field generated is modified as well.
 
@@ -733,7 +733,7 @@ def get_fields(fusionauth_api_client):
 
 This looks at the form and retrieves ids of all fields on the second step: `['form']['steps'][1]`. It then gets all each field configuration. 
 
-The code then adds that form field configuration infomration to a dictionary, keyed off of the key of the field. A key is a string like `registration.data.minprice`. This dictionary is what is used to build certain attributes of the update form, as shown above. This would need to be modified to loop over steps if you had more than one step collecting profile data.
+The code then adds that form field configuration information to a dictionary, keyed off of the key of the field. A key is a string like `registration.data.minprice`. This dictionary is what is used to build certain attributes of the update form, as shown above. This would need to be modified to loop over steps if you had more than one step collecting profile data.
 
 The final relevant section of code is the `/update` route handler, shown below:
 
