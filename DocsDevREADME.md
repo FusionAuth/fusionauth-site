@@ -14,7 +14,7 @@ Here are some guidelines to follow when writing documentation.
 For blog posts:
 - Indent all code with two spaces per level.
 - Blog post headers should have only the first word and any proper nouns are capitalized.
-- When referencing a section in the admin UI, use double quotes: "Tenants".
+- For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 
 For lists:
 - Capitalize the first word.
