@@ -202,8 +202,7 @@ router.get('/oauth-redirect', function (req, res, next) {
 
 At this point, with your gateway server running, you should be able to go to `http://localhost:3000` in your browser and see this:
 
-pic TBD
-[Image of login screen - login.png]
+{% include _image.liquid src="/assets/img/blogs/node-microservices-gateway/login-screen.png" alt="The login screen for the gateway server." class="img-fluid" figure=false %}
 
 If we've got our setup working right, you should be able to click "Login". Login to FusionAuth with the user you set up previously. You'll see a "Hello [your name]" message.
 
