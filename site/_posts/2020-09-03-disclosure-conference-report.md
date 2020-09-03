@@ -16,9 +16,11 @@ Here's the [agenda for the 2020 conference](https://www.disclosureconference.com
 
 There were two tracks; one for developers and one for security folks. Being a developer, I watched videos on the former track.
 
-## Online conferences are weird
+## Online conferences are a bit different
 
-This was an entirely online conference. The platform was, as far as I can tell, [MeetingPlay](https://www.meetingplay.com/). There were virtual rooms for each talk.
+This was an entirely online conference. This was my first one, so I was curious how it would work. 
+
+The platform was, as far as I can tell, [MeetingPlay](https://www.meetingplay.com/). There were virtual rooms for each talk.
 
 ### Videos
 
@@ -33,19 +35,19 @@ If you were watching in real time you couldn't rewind or pause the videos. If yo
 There were a number of means to interact with speakers and other attendees.
 
 * You could tweet (and [I did](https://twitter.com/search?q=%23disclosureconference%20(from%3Amooreds)&src=typed_query), as [did others](https://twitter.com/search?q=%23disclosureconference&src=typed_query)). All tweets could be seen from within the conference website. 
-* You could ask questions directly of the speaker. These were public. I did this a few times and the speakers were very responsive.
+* You could publicly ask the speaker questions. I asked a few and the speakers were very responsive.
 * There was a chat for each session. If you "checked in" to the session, you could see it. "Checking in" required you to push a button. In my mind it was analogous to sitting down in a conference room. (At every conference I've ever attended, some people sit down and others hover around the door, unsure if they want to stay.) There were some witty or informative messages, but it didn't get out of hand. There were only two levels of comments; a comment and one level of replies. You also had a like button. 
 * You could directly message attendees. This seems like it was supposed to encourage random conversations, which are valuable at in-person conferences. With this feature, you could see if someone was online. I tried direct chatting two times during one of the breaks but neither person responded. 
 
-There was also a networking form you filled out before the conference with your interests. The platform provided a list of people with similar ones. It seems like a good idea, but I wasn't able to connect to anyone. I didn't try too hard, though.
+There was also a networking form you filled out before the conference with your interests. The platform provided a list of people with similar ones. It seems like a good idea, but I wasn't able to connect to anyone. I didn't try very hard, though.
 
-They also had session independent chat rooms. Some of the chat rooms were sponsored. I didn't head into any of those, figuring they'd be like a booth at a conference. I wasn't interested in any of the sponsors and didn't want to waste their time, or have booth folks come at me. (No offense meant, I've worked a booth too and that's their job.)
+They also had session independent chat rooms. Some of the chat rooms were sponsored. I didn't head into any of those, figuring they'd be like a booth at a conference: only good to check out if you're interested in the company, their offerings, or their swag.
 
 There were also a couple of general chat rooms, one for each track. I stuck my head in the developer chat room a few times, but the conversation was minimal, less than twenty messages for the entire day.
 
-Since this was the first online conference I have attended, I thought they did a decent job providing some of the serendipity and interaction which meatspace conferences do. 
+Since this was my first synchronous, one hundred percent online conference, I was unsure about how interactions would work. I thought they did a pretty good job providing some of the serendipity and conversation at which meatspace conferences excel. 
 
-## The talks
+## The talks I attended
 
 Ah, the content. I'm not going to break down everything for you, as you can watch the videos and see the talks for yourself. Instead, I'll post my top takeaways.
 
@@ -91,8 +93,8 @@ Then, I checked out ["Lazy, Stupid and Unconcerned - Why You Are the Perfect Tar
 
 Finally, I saw most of ["Blasting Browser Security with Extensions"](https://youtu.be/6jgBM8twUIQ) by [Micah Silverman](https://twitter.com/afitnerd). Takeaways:
 
-* It's disconcerting to see a floating head over slides in a video.
 * The speaker was able to build an extension and have it approved by the Chrome and FireFox web stores. This extension had permissions to take pretty scary actions, including replacing elements on a page, interacting with any page requested, reloading browser tabs, setting headers, and adding parameters to requests.
+* It's disconcerting to see a floating head over slides in a video.
 * Audit the code or at the very least the permissions before installing any browser extensions. 
 
 And that was it for me for sessions. I unfortunately was unable to attend the closing keynote.
@@ -107,4 +109,4 @@ One suggestion for the future would be to find a way to encourage person to pers
 
 The topics varied in technical depth, but all delivered new information and perspective on security. I definitely enjoyed the higher level view offered by the keynote, as well as some of the hands on technical resources provided by other speakers.
 
-I encourage you to check out the videos for a flavor of the conference and to attend next year.
+I encourage you to check out the videos for a flavor of the conference and to attend next year, even if it is still virtual.
