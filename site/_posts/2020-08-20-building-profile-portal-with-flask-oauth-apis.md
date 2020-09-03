@@ -17,6 +17,12 @@ Previously, we built a [self service registration form](/blog/2020/08/27/advance
 
 While this tutorial will reference the previous registration form, you can adapt it to an existing registration flow too.
 
+This is part of a three part series. Here are all the posts:
+
+1. [How to use FusionAuth's advanced registration forms](/blog/2020/08/27/advanced-registration-form)
+1. [How to theme FusionAuth's advanced registration forms](/blog/2020/09/01/theme-registration-form)
+1. Building a user profile portal with Flask, OAuth, and APIs (this one)
+
 ## Overview
 
 Before jumping into the code, let's outline what this blog post will cover. You'll learn how to set up a Flask application to use FusionAuth as a user data store. This post will only have one application and one tenant, but FusionAuth supports multiple tenants and applications out of the box, so if you need that logical separation, you got it.
