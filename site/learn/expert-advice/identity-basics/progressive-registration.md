@@ -33,15 +33,23 @@ The tradeoff with the above options is less control over users' data and the log
 
 If you've decided you need a registration form, winnow down how much information you are asking for. The fewer fields the better. There may be data needed for certain features of your application; ask for it when that feature is first visited. 
 
-If a form field is optional, clearly mark it as so. Even better, don't ask for optional data on the initial registration, but request that information later, as the user is more engaged.
+Basically, you want to follow all the best practices around forms in general:
 
-Provide clear error messages if validation fails. Use both client side validation, which is faster, and server side validation, which is secure.
+* If a form field is optional, clearly mark it as so. Even better, don't ask for optional data on the initial registration, but request that information later, as the user is more engaged.
 
-Avoid complicated password validation rules. Allow users to use a password manager and have the focus be on avoiding passwords known to be insecure. 
+* Provide clear error messages if validation fails. Use both client side validation, which is faster, and server side validation, which is secure.
 
-You do want to make sure that people enter data correctly. If there are any fields that it's critical to get correct, such as a government ID, use a confirmation field. Even though you are asking for more information, if the stakes of getting it wrong are high, the additional request is worth it.
+* Highlight the form fields as they are being filled out? TBD
 
-Make use of the full suite of HTML elements. Dropdowns and radio buttons are well known, but number and email input fields leverage browsers' built-in validation as well.
+* Make use of the full suite of HTML elements. Dropdowns and radio buttons are well known, but number and email input fields leverage browsers' built-in validation as well.
+
+There are also some aspects which are specific to registration forms.
+
+* Avoid complicated password validation rules. Allow users to use a password manager and have the focus be on avoiding passwords known to be insecure. 
+
+* You do want to make sure that people enter data correctly. If there are any fields that it's critical to get correct, such as a government ID, use a confirmation field. Even though you are asking for more information, if the stakes of getting it wrong are high, the additional request is worth it.
+
+If you need more than a few pieces of information on registration, consider splitting the form up and using a registration stepper.
 
 ## Registration steppers
 
@@ -51,7 +59,11 @@ A stepper is a UX element which shows the user how many steps are required to co
 
 https://material.io/archive/guidelines/components/steppers.html
 
-Splitting up a registration form into steps allows you to ask for more data, but in a more friendly manner. Group the fields logically. Have the first form step be minimal, perhaps just an email address, so that potential users aren't frightened off. Once they take that first step, they'll be more committed to finishing LINK TBD.
+Splitting up a registration form into steps allows you to ask for more data, but with a lesser impact to the user experience. It also allows you to track the progress of the user, giving you more information about the user experience. Rather than a registration being an all or nothing proposition, you can now see where people fall out of the registration funnel.
+
+When creating the steps, group the fields logically. This allows you to provide an explanation of why you need this type of data. Keep the explanation short because people don't read online TBD.
+
+Have the first form step be minimal, such as simply an email address, so that potential users aren't frightened off. Once they take that first step, they'll be more committed to finishing LINK TBD.
 
 However, splitting a form up into steps means that you'll need to maintain some state across the form. You can keep that state in hidden form parameters or in the user's session. You could also keep it in the database and progressively add to the user's registration as they provide more information, but that means that any required information must be submitted on the first step, limiting the flexibility.
 
@@ -73,6 +85,11 @@ Keeping the value in the session means you'll have to partially process the form
 
 Encrypting the data and storing it locally means that you can use normal form frameworks, but you'll need to additionally process the sensitive data. If you choose this path, you can use a symmetric key since you'll be decrypting it in the security of your server environment; the browser shouldn't need to read the data after the step .
 
+
+re-enter
+
+partially done registrations?
+- track
 
 
 
