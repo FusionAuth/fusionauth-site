@@ -6,11 +6,19 @@ Here are some guidelines to follow when writing documentation.
 - Use `Id` instead of `ID` when describing a unique identifier
 - Don't use complex breadcrumbs styling. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`
 - If you are referencing a URL as a setting and don't want it to be hyperlinked, preface it with a `\`. For example: `\https://fusionauth-example.zendesk.com`
-- If you are referencing a field in a form, use the `[field]` class (rather than backticks): `[field]#Issuer#`
+- If you are referencing a field in a form or JSON API doc, use the `[field]` class (rather than backticks): `[field]#Issuer#`
 - Don't abbreviate FusionAuth, use the full name.
+- When you have a list of values, use this phrase to prefix it: "The possible values are:"
+- Use single backticks when specifying a value that is not a field.
 
 For blog posts:
 - Indent all code with two spaces per level.
+- Blog post headers should have only the first word and any proper nouns are capitalized.
+- For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
+
+For lists:
+- Capitalize the first word.
+- Have a period on the end if it is a sentence, otherwise don't.
 
 ### Proper names
 - macOS
@@ -63,7 +71,10 @@ end tell
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
    - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
-- Crop top/bottom if necessary (don't crop sides). 
+- Crop top/bottom if necessary (don't crop sides).
+   - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the 
+     class may not be necessary if there is adequate spacing below. When text continues below or right above you will need 
+     the class.
 - Highlight sections using image preview editor
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:

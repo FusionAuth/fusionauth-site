@@ -469,12 +469,83 @@ include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 
 This API is used to search for Users. This API may be called using the `GET` or `POST` HTTP methods, examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will will provide the same search results given the same query parameters.
 
-[NOTE]
+=== Request
+
+Which search query parameters are available and how they behave depends on the search engine type. Read more about link:../core-concepts/users#user-search[the different types of search engines].
+
+=== Database Search Engine
+
+This is a good choice for link:../core-concepts/users#database-search-engine[smaller installs, embedded scenarios, or other places where the additional capability of Elasticsearch is not required].
+
+[NOTE.since]
 ====
-This API has some limitations when FusionAuth is configured to use the database as the user search engine.  These limitations are noted on the impacted request parameters below.
+Available Since Version 1.16.0
 ====
 
-=== Request
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Search for Users by Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user/search``?ids=\{uuid\}&ids=\{uuid\}``#
+--
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Search for Users by a query string
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user/search``?queryString=\{queryString\}``#
+--
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Search for Users by a query string and sort the response
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/user/search``?queryString=\{queryString\}&sortFields[0].name=\{name\}&sortFields[0].order=\{order\}``#
+--
+
+==== Request Parameters
+
+:query_string_request: 
+:database_search_engine_type:
+:parameter_prefix: 
+include::docs/v1/tech/apis/_user-search-request-parameters.adoc[]
+:query_string_request!:
+:database_search_engine_type!: 
+:parameter_prefix!: 
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Search for Users using a JSON request body. This allows for larger requests than are possible using request parameters.
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/search#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+:query_string_request: nottrue
+:database_search_engine_type:
+:parameter_prefix: search.
+include::docs/v1/tech/apis/_user-search-request-parameters.adoc[]
+:query_string_request!:
+:database_search_engine_type!: 
+:parameter_prefix!: 
+
+===== Request Body Examples
+
+include::docs/v1/tech/apis/_user-search-request-body-database-examples.adoc[]
+
+=== Elasticsearch Search Engine
+
+The Elasticsearch engine has link:../core-concepts/users#elasticsearch-search-engine[advanced querying capabilities and better performance].
 
 [.api-authentication]
 link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Search for Users by Id
@@ -510,116 +581,13 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Search 
 
 ==== Request Parameters
 
-[.api]
-[field]#ids# [type]#[UUID]# [optional]#Optional#::
-A User Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Users. Using this parameter is mutually exclusive with the [field]#query# and [field]#queryString# fields and is not paginated or sorted using the `sortFields`.
-+
-Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
-
-[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
-The number of search results to return. Used for pagination.
-
-[field]#query# [type]#[String]# [optional]#Optional# [since]#Available since 1.13.0#::
-The raw JSON Elasticsearch query that is used to search for Users. Using this parameter is mutually exclusive with the [field]#search.ids# and [field]#search.queryString# fields.
-+
-It is necessary to use the [field]#search.query# parameter when querying against `registrations` in order to achieve expected results, as this field is defined as a link:https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html[nested datatype] in the Elasticsearch mapping.
-+
-[NOTE]
-====
-*Database search engine*
-
-This parameter is not compatible with the database search engine, it may only be used when Elasticsearch is configured as the user search engine.
-====
-
-[field]#queryString# [type]#[String]# [optional]#Optional#::
-The Elasticsearch query string that is used to search for Users. Using this parameter is mutually exclusive with the [field]#ids# and [field]#query# fields.
-+
-[NOTE]
-====
-*Database search engine*
-
-The Elasticsearch query string DSL is not supported for the database search engine.  Database search limits effective queries to single search terms that may match the following fields on the User:
-
-* `firstName`
-* `lastName`
-* `fullName`
-* `email`
-* `username`
-
-The following is an example search request with a `queryString` value that is compatible with the database search engine:
-
-``GET /api/user/search?queryString=jared%40fusionauth.io``
-====
-
-[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to 0#::
-The start row within the search results to return. Used for pagination.
-
-[field]#sortFields# [type]#[Array]# [optional]#Optional#::
-An array of sort fields used to sort the result. The order the sort fields are provided will be maintained in the sorted output.
-
-[field]#sortFields``[x]``.missing# [type]#[String]# [optional]#Optional# [default]#defaults to `_last`#::
-The value to substitute if this field is not defined. Two special values may be used:
-+
-* `_first` When the field is not defined sort this record first.
-* `_last` When the field is not defined sort this record last.
-+
-[NOTE]
-====
-*Database search engine*
-
-This parameter has no effect when the database is configured as the user search engine.
-====
-
-[field]#sortFields``[x]``.name# [type]#[String]# [required]#Required#::
-The name of the field to sort.
-+
-Due to how the search index is structured not all fields on the user are sortable. The following field names are supported.
-+
-* `birthDate`
-* `email`
-* `fullName`
-* `id`&nbsp; [since]#Available since 1.13.0#
-* `insertInstant`
-* `lastLoginInstant`&nbsp; [since]#Available since 1.13.0#
-* `login`
-* `registrations.applicationId`&nbsp; [since]#Available since 1.13.0#
-* `registrations.id`&nbsp; [since]#Available since 1.13.0#
-* `registrations.insertInstant`&nbsp; [since]#Available since 1.13.0#
-* `registrations.lastLoginInstant`&nbsp; [since]#Available since 1.13.0#
-* `registrations.roles`&nbsp; [since]#Available since 1.13.0#
-* `tenantId`
-* `username`
-+
-[NOTE]
-====
-*Database search engine*
-
-The following field names are supported for the database search engine:
-
-* `birthDate`
-
-* `email`
-
-* `fullName`
-
-* `id`
-
-* `insertInstant`
-
-* `lastLoginInstant`
-
-* `login`
-
-* `tenantId`
-
-* `username`
-====
-
-[field]#sortFields``[x]``.order# [type]#[String]# [optional]#Optional# [default]#defaults to `asc`#::
-The order to sort the specified field. Possible values are:
-+
-* `asc`
-* `desc`
+:query_string_request: 
+:elasticsearch_search_engine_type:
+:parameter_prefix: 
+include::docs/v1/tech/apis/_user-search-request-parameters.adoc[]
+:query_string_request!:
+:elasticsearch_search_engine_type!: 
+:parameter_prefix!: 
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
@@ -633,11 +601,23 @@ link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Search 
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
-include::docs/v1/tech/apis/_user-search-request-body.adoc[]
+==== Request Body
+
+:query_string_request: nottrue
+:elasticsearch_search_engine_type:
+:parameter_prefix: search.
+include::docs/v1/tech/apis/_user-search-request-parameters.adoc[]
+:query_string_request!:
+:elasticsearch_search_engine_type!: 
+:parameter_prefix!: 
+
+===== Request Body Examples
+
+include::docs/v1/tech/apis/_user-search-request-body-elasticsearch-examples.adoc[]
 
 === Response
 
-The response contains the User objects that were found as part of the lookup or search.
+The response contains the User objects that were found as part of the lookup or search. Both the database and Elasticsearch search engines return the response in the same format.
 
 include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 

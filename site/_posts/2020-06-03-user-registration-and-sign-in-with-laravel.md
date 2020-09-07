@@ -298,6 +298,7 @@ Route::view('/profile', 'profile')->middleware('auth');
 
 Now you can create a `profile.blade.php` file in your `resources/views/` directory that shows the user's FusionAuth ID and email address:
 
+{% raw %}
 ```html
 @extends('layout')
 
@@ -308,6 +309,7 @@ Now you can create a `profile.blade.php` file in your `resources/views/` directo
   <a href="/logout">Logout</a>
 @endsection
 ```
+{% endraw %}
 
 Any other user data you choose to store in FusionAuth will be available in the `session()->get('user')` array if you'd like to show it to logged in users.
 
