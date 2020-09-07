@@ -258,4 +258,10 @@ We've covered a lot in this article. Our goal was to create a basic eCommerce ec
 
 For our API gateway, we leverage FusionAuth for centralized authentication and authorization. We then created forwarding routes to our two services, with the ability to pass roles to the services. And in the services themselves, we implemented the ability to allow or deny requests at the endpoint level based on the user's role.
 
+If you wanted to explore this further, you could:
+
+* Add more users and roles; for example, a `branch-manager` role which can view the products for a certain branch.
+* Build out a products and branches tables.
+* Build an application to display available products.
+
 Happy coding!
