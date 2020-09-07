@@ -166,7 +166,7 @@ const checkAuthentication = require('../middleware');
 // ...
 ```
 
-Our gateway application, along with our services, are based off the [fusionauth-example-node](https://github.com/FusionAuth/fusionauth-example-node) project, which gives us a basic UI (at the root) for interacting with FusionAuth. We also have a route for our OAuth redirect:
+Our gateway application, along with our services, are based on the [fusionauth-example-node](https://github.com/FusionAuth/fusionauth-example-node) project, which gives us a basic UI (at the root) for interacting with FusionAuth. We also have a route for our OAuth redirect:
 
 ```javascript
 // ...
@@ -250,7 +250,7 @@ router.get('/branches/:id/products', checkAuthentication, function(req, res, nex
 
 This route forwards over to our Product Inventory service. The `checkAuthentication` middleware can be used in any route where we want to check that the user is authenticated; it sends the user back to the root URL if they aren't logged in.
 
-Using your browser (to leverage our OAuth credentials present because we signed in), go to `http://localhost:3000/branches/1/products`. This works because the user you setup in the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) has an `admin` role in FusionAuth, and we're passing that role as a header to the Product Inventory service.
+Using your browser (to leverage our OAuth credentials present because we signed in), go to `http://localhost:3000/branches/1/products`. This works because the user you set up in the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) has an `admin` role in FusionAuth, and we're passing that role as a header to the Product Inventory service.
 
 ## Conclusion
 
@@ -261,7 +261,7 @@ For our API gateway, we leverage FusionAuth for centralized authentication and a
 If you wanted to explore this further, you could:
 
 * Add more users and roles; for example, a `branch-manager` role which can view the products for a certain branch.
-* Build out a products and branches tables.
+* Build out products and branches tables and have the microservices return dynamic data.
 * Build an application to display available products.
 
 Happy coding!
