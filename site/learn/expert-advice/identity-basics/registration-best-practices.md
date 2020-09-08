@@ -23,7 +23,7 @@ While user registration is common, every step required before seeing the value o
 
 ### Let them try it first
 
-Potential users are trying to kick the tires on your application. From a 2020 masters thesis, [A User-Centered Approach to LandingPage Optimization in a Software-as-a-Service Business"](https://aaltodoc.aalto.fi/bitstream/handle/123456789/44930/master_Meissner_Mai_2020.pdf?sequence=1&isAllowed=y):
+Potential users are trying to kick the tires on your application. From a 2020 masters thesis, [A User-Centered Approach to LandingPage Optimization in a Software-as-a-Service Business" (PDF)](https://aaltodoc.aalto.fi/bitstream/handle/123456789/44930/master_Meissner_Mai_2020.pdf?sequence=1&isAllowed=y):
 
 > "Visitors have several different needs before deciding to sign up and test the service. The most prominent need is understanding what the service offers and whether it could be a suitable solution for their problem."
 
@@ -75,7 +75,7 @@ Make use of the full suite of HTML elements. Dropdowns and radio buttons are pow
 
 There are also some considerations specific to registration forms. They are the ateway to your application, beyond any functionality exposed to anonymous users.
 
-What causes angst when a user is signing up? This [2012 paper](https://discovery.ucl.ac.uk/id/eprint/1378346/1/ewic_hci12_diss_paper7.pdf) examined registration for government services and defined sign up friction as "as the imbalance between the business process (user goals) and [required] security behaviour". This study found friction was best explained by the following attributes of a signup process:
+What causes angst when a user is signing up? This [2012 paper (PDF)](https://discovery.ucl.ac.uk/id/eprint/1378346/1/ewic_hci12_diss_paper7.pdf) examined registration for government services and defined sign up friction as "as the imbalance between the business process (user goals) and [required] security behaviour". This study found friction was best explained by the following attributes of a signup process:
 
 * The number of new credentials required
 * Any delay in the process, such as waiting for an activation email
