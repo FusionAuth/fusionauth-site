@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: Progressive registration
-description: 
+title: Registration forms
+description: Users have to register to gain application access. How can you make this as painless as possible?
 author: Dan Moore
 image: advice/multi-in-single-article.png
 category: Identity Basics
@@ -9,102 +9,123 @@ date: 2020-09-08
 dateModified: 2020-09-08
 ---
 
-# Progressive registration
+Signing up for accounts is something we're all familiar with. It's a gateway to the applications we want and need. But it's not really fun. Or pleasant. After all, we're signing up because we desire access to the application, not because we want to set up yet another username and password:
 
-Signing up for accounts is something we're all familiar with. It's a gateway to many of the applications we want and need. But it's not really fun. After all, we're signing up because we want to get access to the application, not because we want to set up yet another username and password.
+{% include _image.liquid src="/assets/img/advice/long-registration-form.png" alt="A long registration form. Honestly? You need my full name and my middle name?" class="img-fluid" figure=false %}
 
-Pic TBD
+You can make the registration process simpler. And you should.
 
-Progressive, or multi-step, registration is one way to make the sign up process less unpleasant. This article will discuss aspects of progressive registration and how to make it successful.
+## Is registration needed at all?
 
-## Is registration needed
+Before you implement any user registration, ask yourself a fundamental question: does your application need registration?
 
-However, before you implement anything, ask if your application can get by without registration?
+While user registration is common, every step required before seeing the value of your application affects sign up rates. What can you do to avoid the typical registration process?
 
-Ask yourself these questions:
-* Are there subsets of functionality you can offer to anonymous users? 
-* Can you leverage social login to make for a smoother experience? 
-* If you are targetting enterprise users, can you integrate with their internal identity providers? 
-* Would passwordless login work?
+### Let them try it first
 
-The tradeoff with the above options is less control over users' data and the login experience, but reduced sign up friction. These solutions won't be a fit for every application, but they will remove some of user angst and may lead to higher conversions, so are well worth considering and testing.
+Potential users are trying to kick the tires on your application. From a 2020 masters thesis, [A User-Centered Approach to LandingPage Optimization in a Software-as-a-Service Business"](https://aaltodoc.aalto.fi/bitstream/handle/123456789/44930/master_Meissner_Mai_2020.pdf?sequence=1&isAllowed=y):
+
+> "Visitors have several different needs before deciding to sign up and test the service. The most prominent need is understanding what the service offers and whether it could be a suitable solution for their problem."
+
+Is there functionality, degraded or not, which you can offer to anonymous users? For example, if you are building a drawing application, can you let a user create and download a picture without an account? This degraded functionality will still allow a user to see the value of your application. 
+
+If you are building a site which displays information based on a search, allow users to see the first couple of results without signing up. While teasers may be frustrating, they also reveal the value of what your application provides.
+
+In a [2013 study (PDF)](http://cups.cs.cmu.edu/soups/2013/trustbusters2013/Sign_up_or_Give_up_Malheiros.pdf), found the source of a sign up mattered for conversion:
+
+> The more valuable services are more likely to be considered worth the privacy and effort cost of disclosing personal data, while the least valuable will not. 
+
+Allowing someone to use your application, even in a limited fashion, helps them assess if a signup is worth their time.
+
+### Social or third party login
+
+You can also rely on a third party for account management. Would social login make for a smoother experience? If you are targetting enterprise users, can you integrate with internal identity providers such as ActiveDirectory? 
+
+Different types of users have different third party accounts. If you have a consumer focused application, offer Facebook auth, as almost everyone has a Facebook account. One less password for your potential users to remember, and one less obstacle to signing up. 
+
+If you are targeting enterprise customers, integrate with ActiveDirectory. If developers are your target market, GitHub authentication makes for a simple registration process and signals that you understand their needs.
+
+### Passwordless
+
+Passwordless login allows a user to authenticate with something they have (access to a phone or email account) rather than something they know (a password). While passwordless authentication requires providing contact information, it does remove the need for the user to create and remember yet another password. 
+
+All the above options provide an application with less data than the typical registration process. The benefit is that there's less signup friction. These solutions won't be a fit for every application, but are worth investigating.
 
 ## Ease the pain of registration
 
-If you've decided you need a registration form, winnow down how much information you are asking for. The fewer fields the better. There may be data needed for certain features of your application; ask for it when that feature is first visited. 
+If you've decided you need a registration form, remember that it is a form first and foremost. Follow known form best user experience practices.
 
-Basically, you want to follow all the best practices around forms in general:
+### A form is a form is a form
 
-* If a form field is optional, clearly mark it as so. Even better, don't ask for optional data on the initial registration, but request that information later, as the user is more engaged.
+The Nielsen Norman Group has an excellent article on [Website Forms Usability](https://www.nngroup.com/articles/web-form-design/), with a number of recommendations for improving forms. The number one suggestion is to:
 
-* Provide clear error messages if validation fails. Use both client side validation, which is faster, and server side validation, which is secure.
+> Keep it short. ... Eliminating unnecessary fields requires more time [to decide what data is truly worth asking for], but the reduced user effort and increased completion rates make it worthwhile. Remove fields which collect information that can be (a) derived in some other way, (b) collected more conveniently at a later date, or (c) simply omitted.
 
-* Highlight the form fields as they are being filled out? TBD
+Carefully consider the information you are asking for. The fewer fields the better. While admittedly in a different context, [Imagescape more than doubled a contact form conversion rate](https://unbounce.com/conversion-rate-optimization/how-to-optimize-contact-forms/) by decreasing the number of fields from 11 to 4. There may be data needed only for certain features of your application; ask for it when that feature is first accessed. 
 
-* Make use of the full suite of HTML elements. Dropdowns and radio buttons are well known, but number and email input fields leverage browsers' built-in validation as well.
+Make sure the form is mobile friendly; test at various screen sizes. Due to the complication of mobile data entry, being mobile friendly is another argument for having as few signup form fields as possible.
 
-There are also some aspects which are specific to registration forms.
+If a form field is optional, clearly mark it so. Even better, don't ask for optional data on the initial user registration. Request that information later, when the user is more engaged.
 
-* Avoid complicated password validation rules. Allow users to use a password manager and have the focus be on avoiding passwords known to be insecure. 
+Provide clear error messages if any validation fails. Use both client side validation, which is faster, and server side validation, which is tamper proof. On the topic of tampering, ensure any form is submitted over TLS. This makes sure the submitted information is kept confidential and secure.
 
-* You do want to make sure that people enter data correctly. If there are any fields that it's critical to get correct, such as a government ID, use a confirmation field. Even though you are asking for more information, if the stakes of getting it wrong are high, the additional request is worth it.
+Make use of the full suite of HTML elements. Dropdowns and radio buttons are powerful, but number and email input fields leverage browsers' built-in validation and should be used as well. 
 
-If you need more than a few pieces of information on registration, consider splitting the form up and using a registration stepper.
+### Registration forms have some unique aspects
 
-## Registration steppers
+There are also some considerations specific to registration forms. They are the ateway to your application, beyond any functionality exposed to anonymous users.
 
-A stepper is a UX element which shows the user how many steps are required to complete the action:
+What causes angst when a user is signing up? This [2012 paper](https://discovery.ucl.ac.uk/id/eprint/1378346/1/ewic_hci12_diss_paper7.pdf) examined registration for government services and defined sign up friction as "as the imbalance between the business process (user goals) and [required] security behaviour". This study found friction was best explained by the following attributes of a signup process:
 
-> Steppers display progress through a sequence by breaking it up into multiple logical and numbered steps.
+* The number of new credentials required
+* Any delay in the process, such as waiting for an activation email
+* Whether registration requires an interruption of routine 
+* The frequency of legally obligated use of the service
 
-https://material.io/archive/guidelines/components/steppers.html
+Obviously you can't control the last aspect, but minimize the number of new credentials, delays and interruptions of routine in your registration process.
 
-Splitting up a registration form into steps allows you to ask for more data, but with a lesser impact to the user experience. It also allows you to track the progress of the user, giving you more information about the user experience. Rather than a registration being an all or nothing proposition, you can now see where people fall out of the registration funnel.
+Most registration forms ask for a username and password. Make it clear what valid values are for each of these. If a username is an email address, make sure you allow all valid email addresses, including aliases.
 
-When creating the steps, group the fields logically. This allows you to provide an explanation of why you need this type of data. Keep the explanation short because people don't read online TBD.
+Avoid complicated password validation rules. Allow users to use a password manager and have the focus be on avoiding passwords known to be insecure. 
 
-Have the first form step be minimal, such as simply an email address, so that potential users aren't frightened off. Once they take that first step, they'll be more committed to finishing LINK TBD.
+Obtain proper user consent. Depending on what you are planning to do with user information and what regulatory regime applies, different levels of informed consent may be required. For example, if you are in the USA and are dealing with a child's personal information, you'll want to make sure you get parental consent because of COPPA. 
 
-However, splitting a form up into steps means that you'll need to maintain some state across the form. You can keep that state in hidden form parameters or in the user's session. You could also keep it in the database and progressively add to the user's registration as they provide more information, but that means that any required information must be submitted on the first step, limiting the flexibility.
+Ensure new users enter sensitive data correctly. If there are any critical fields, such as a government ID, use a confirmation field to ensure the data is typed correct. This is an exception to the rule of asking for less data. If the stakes of incorrect data entry are high, the additional field is worth the inconvenience.
 
-follow form best practices? TBD
+If you need more than a few pieces of information on registration, consider splitting the sign up form into pieces and using a registration stepper, also known as a multi-step form or a wizard. A stepper is a UX element which shows how many steps are required to complete an action: 
 
-## Sensitive information
+> "[Steppers display progress through a sequence by breaking it up into multiple logical and numbered steps].(https://material.io/archive/guidelines/components/steppers.html)". 
 
-You'll be collecting sensitive information in the registration from. This will likely be a password, but may be other information such as a government ID. If you are collecting these, you have a couple of options for securing such data:
+## Multi-step registration
 
-* Save asking for this information until the last step. Since the registration form will be sent over TLS, the data will be secure.
-* Allow it to be sent on any step, but keep it in the session and merge it back into the user's data at the final setp.
-* Allow it to be sent on any step. Store it encrypted in the client side form on subsequent steps.
+Splitting up a registration form into multiple steps allows you to ask for more data, but without imposing a high initial cognitive cost on a potential user. It also allows you to track registration progress, which gives you information about the user experience. Rather than a registration being an all or nothing proposition, you can see where people fall out of the registration funnel: is it because of step two or step three? It also may increase the conversion rate: Instapage saw an [18% increase in conversion rate](https://instapage.com/blog/multi-step-form-part-2) when they split their registration form into multiple steps.
 
-Each of these options has tradeoffs.
+When creating the pages, group fields logically, as per the Nielsen Norman Group recommendations which suggest "Visually group[ing] related labels and fields". Doing this on separate pages allows you to provide a coherent, logical explanation of why you need the data at each step. If you can't come up with a reasonable explanation, consider removing the fields.
 
-If you wait to ask for any sensitive information until the last step, you are limiting the flexibility of your form design. If you ask for more than one piece of sensitive data, you're forced to put them on the same, last page.
+Ask for as little as possible on the first registration step; perhaps just an email address. Once they take that first sign up step, they'll be more committed to finishing, thanks to our [love of consistency](http://changingminds.org/techniques/general/cialdini/consistency.htm).
 
-Keeping the value in the session means you'll have to partially process the form and remove the sensitive information after it has been submitted. Then you'll need to add it back in before the form is fully processed.
+Make sure you are clear about how many steps the registration process will take. Doing so lets the user assess the effort involved.
 
-Encrypting the data and storing it locally means that you can use normal form frameworks, but you'll need to additionally process the sensitive data. If you choose this path, you can use a symmetric key since you'll be decrypting it in the security of your server environment; the browser shouldn't need to read the data after the step .
+### Maintaining state
 
+Splitting a form up into multiple steps requires maintaining state across submissions. If you are using a framework, investigate helper libraries, such as [wicked](https://github.com/zombocom/wicked) for Ruby on Rails or [lavavel-wizard](https://github.com/ycs77/laravel-wizard) for Laravel.
 
-re-enter
+If you are rolling your own solution, you can maintain state in hidden form parameters or in the user's session. Either way, you'll want to serialize entered and validated data and store it. Then, when the form is ready to submit, you can deserialize it all and process it, typically saving it to a datastore.
 
-partially done registrations?
-- track
+Another option is to save registration data in the datastore and progressively add to the user's registration information as they work through the steps. This approach has downsides, however. Either any required information must be submitted on the first step, limiting flexibility, or you'll have to have a staging registration table, where partials registrations are stored until completed. 
 
+### Sensitive information and multi-page registration
 
+Typically an application collects sensitive information in a registration form. Passwords are the canonical example, but other types of data also need to be treated carefully, such as a social security number or other government identifier.
 
-https://material.io/archive/guidelines/components/steppers.html#steppers-types-of-steps
+When collecting sensitive data, make sure it is kept secure throughout the multi-page process. You have a couple of options:
 
-https://ux.stackexchange.com/questions/87679/what-do-you-call-a-point-by-point-like-slacks-registration-ui
+* Don't ask for this information until the last step. Since the registration form will be sent over TLS, the sensitive data will be secure.
+* Keep it in the server side user session until the form is complete.
+* Store it encrypted in the client side form data.
 
-https://www.interaction-design.org/literature/topics/progressive-disclosure
+Each of these options has tradeoffs. If you wait to ask for any sensitive information until the last step, you are limiting the flexibility of your form design. If you ask for more than one piece of sensitive data, you're forced to put all of them on the same, last page.
 
-https://unbounce.com/conversion-rate-optimization/how-to-optimize-contact-forms/
+Keeping the value in the session means you'll be increasing the size of your user sessions. You will also be forced to use sticky sessions, hindering the scalability of your application. 
 
-https://cxl.com/blog/cialdinis-principles-persuasion/
-
-https://go.forrester.com/blogs/12-02-20-have_you_signed_in_with_facebook_recently/?cm_mmc=RSS-_-MS-_-1711-_-blog_2684
-
-https://www.nngroup.com/articles/web-form-design/
-
-https://www.nngroup.com/articles/progressive-disclosure/
+Encrypting the data and storing it in a hidden form field means you'll need to additionally process the sensitive data. If you choose this path, use a symmetric key stored only on the server side. Since you'll be decrypting the form field in the security of your server environment, the browser shouldn't need to read the data after it is submitted.
