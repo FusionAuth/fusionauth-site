@@ -20,9 +20,11 @@ In addition to the usual bug fixes and user interface improvements, there are a 
 
 Configuration options are now consistent no matter how you set them. Every option can be specified in one of three ways:
 
-* a key value pair in the `fusionauth.properties` file
 * environment variables
 * Java system properties, set with the `-D` command line option when starting FusionAuth
+* a key value pair in the `fusionauth.properties` file
+
+The list above is presented in precedence order. Environment variables overrule system properties, which in turn override values in `fusionauth.properties`.
 
 If you are running in Docker or Kubernetes, you'll have configuration flexibility without mounting any volumes.
 
@@ -33,6 +35,8 @@ And if you are worried about your configuration breaking with these new settings
 If you are using FusionAuth as an [auth bottleneck](/blog/2020/07/08/auth-and-the-bottleneck-architecture), you may want to let users proceed directly to their third party identity provider, rather than have them see the FusionAuth login page initially. Doing so makes for a more pleasant user auth experience. 
 
 This is now an option using login page hinting. Configure it for certain domains or by passing request parameters and your users will proceed directly to their third party identity provider.
+
+If you want to send a user directly to an IdP, append the `idp_hint` parameter. It might look like `idp_hint=f318afe5-84d9-44ac-a32c-8a3d270e6d45` where the GUID is the identity provider id to which the browser should be redirected. If you'd rather have FusionAuth do the mapping, use the `login_hint` parameter, which like look like `login_hint=example.com`. If you have configured an identity provider to manage `example.com`, FusionAuth will forward to that identity provider's page.
 
 ### Import those refresh tokens
 
