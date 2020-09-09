@@ -419,6 +419,7 @@ The `FORM_ID` allows our code to retrieve the form fields which comprise that fo
 
 Let's update the `index.html` file to display the user's data as well as to generate a form to update that data:
 
+{% raw %}
 ```html
 <!doctype html>
 <title>Hello from FusionAuth</title>
@@ -488,9 +489,11 @@ This is a sample OAuth/Flask application.
 </body>
 </html>
 ```
+{% endraw %}
 
 Here are the changed, relevant sections. First, this is displays the profile information:
 
+{% raw %}
 ```html
 <!-- ... -->
 <h3>Current preferences</h3>
@@ -511,6 +514,7 @@ Here are the changed, relevant sections. First, this is displays the profile inf
 {% endif %}
 <!-- ... -->
 ```
+{% endraw %}
 
 This display code iterates and displays the values in the `registration_data` array. If appropriate, the field is formatted. 
 
@@ -543,6 +547,7 @@ The code which builds a form for updating is also worth checking out:
 
 This builds a form from the same `registration_data` array. But it does something else which you might find intriguing. Let's take a deeper look at the maximum price form field, which has some additional newlines added below:
 
+{% raw %}
 ```html
 <!-- ... -->
 Maximum home price: 
@@ -553,6 +558,7 @@ Maximum home price:
   value='{{registration_data['maxprice']}}' />
 <!-- ... -->
 ```
+{% endraw %}
 
 How are the `type` and `required` attributes determined? What is this `fields` value? 
 
