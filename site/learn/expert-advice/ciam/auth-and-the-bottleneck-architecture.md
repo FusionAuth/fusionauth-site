@@ -38,7 +38,7 @@ The applications, in purple, rely on the centralized auth system, which is in gr
 
 ## Benefits of a user auth service
 
-This user management architecture enables single sign-on (SSO), which makes users's lives easier. They only have to remember username and password for all their applications. Among other benefits are increased visibility, decreased operational complexity, and increased authentication choice.
+This user management architecture enables single sign-on (SSO), which makes users' lives easier. They only have to remember username and password for all their applications. Among other benefits are increased visibility, decreased operational complexity, and increased authentication choice.
 
 ### Increased visibility and development speed
 
