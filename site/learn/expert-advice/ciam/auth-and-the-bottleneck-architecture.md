@@ -10,9 +10,9 @@ date: 2020-09-08
 dateModified: 2020-09-08
 ---
 
-A common pattern for modern organizations is to centralize user management with a bottleneck architecture. One or multiple user management systems are provisioned and all authentication and authorization requests are routed through them. Rather than individual applications having their own auth components, these auth systems provide single points of control. If there are more than one, they may be federated. 
+A common pattern for modern organizations is to centralize user management with a bottleneck architecture, both for customers and for employees. A user management system is provisioned and all authentication and authorization requests are routed through it. Rather than individual applications having their own auth components, the auth system provides a single point of control. If there are other user databases, some auth requests may be federated.
 
-## The Architectural Pattern With OIDC and SAML
+## The architectural pattern with OIDC and SAML
 
 In this architectural pattern, applications delegate user management to a specific system designed for the purpose. Many applications can delegate their auth needs to a standards based system. Examples include custom applications written by internal teams, third party services used by employees, such as Salesforce and Zendesk, and applications used by customers, such as forums, help desk software, or account management. 
 
@@ -36,25 +36,25 @@ Here's a diagram of the bottleneck architecture:
 
 The applications, in purple, rely on the centralized auth system, which is in gray. They'll send auth requests to one place. Depending on how the auth system is configured, the applications' requests for user information may be answered directly, based on information in the auth system's datastore. Or, alternately, auth requests for a given user can be relayed to the federated identity providers, in orange. 
 
-## Benefits of a User Auth Service
+## Benefits of a user auth service
 
-This user management architecture enables single sign-on (SSO). Among other benefits are increased visibility, decreased operational complexity, and increased authentication choice.
+This user management architecture enables single sign-on (SSO), which makes users's lives easier. They only have to remember username and password for all their applications. Among other benefits are increased visibility, decreased operational complexity, and increased authentication choice.
 
-### Increased Visibility and Development Speed
+### Increased visibility and development speed
 
-There is one location for user and application management. Therefore, implementing organization wide policies is easier, including those which are security or compliance related. Users have only one identity to maintain, so any changes, such as to their password or personal information, are easier.
+There is one application for user and application management. Because of this, implementing organization wide policies is easier, including those which are security or compliance related. Users have only one identity to maintain, so any changes, such as to their password or personal information, are easier.
 
 This bottleneck also serves as a continuously maintained list of applications used by the organization. Knowing which services are in use, and seeing usage frequency, is as simple as signing into the auth service administration panel. This also helps the organization avoid buying apps with overlapping functionality.
 
 If your auth system has mature user management functionality, it will accelerate custom application development by providing necessary commodity user management functionality. No more worrying about building a front end to allow customer service reps to lock accounts. Nor do you have to build a way to let end users reset their passwords or register.
 
-### Operational Ease
+### Operational simplicity
 
 A centralized user auth service also makes it easy to turn accounts on and off. Onboarding a new employee becomes simpler, and offboarding departing employees is a matter of disabling their account in one place, rather than hunting down all the applications to which they have access. Or worse, leaving those accounts enabled.
 
 There are additional benefits to end users, as well. While identifying people with username, password and multi-factor authentication is a secure and relatively convenient method, there may be times when an alternative such as a passwordless solution is a better user experience.  
 
-### Give Your Users the Experience They Want
+### Meet your users where they are
 
 As you might expect, different types of users have different third party accounts. If you are building a consumer focused application, offering sign on with Facebook is a great idea, because most of the world has a Facebook account. One less password for your potential users to remember; one less obstacle to signing in. 
 
@@ -64,7 +64,7 @@ If your auth system allows for multiple identity providers, your application can
 
 If you work for a large organization, you may need to federate your user management system to other user datastores. Having a central service for your suite of applications means federation and integration only needs to be done once, rather than for each application you build.
 
-## Challenges With SSO
+## Challenges with SSO
 
 Of course, nothing is perfect. There are challenges with this approach as well. Some technical, some not so much. 
 
