@@ -516,6 +516,7 @@ This display code iterates and displays the values in the `registration_data` ar
 
 The code which builds a form for updating is also worth checking out:
 
+{% raw %}
 ```html
 <!-- ... -->
 <form action="/update" method="post">
@@ -538,6 +539,7 @@ The code which builds a form for updating is also worth checking out:
 </form>
 <!-- ... -->
 ```
+{% endraw %}
 
 This builds a form from the same `registration_data` array. But it does something else which you might find intriguing. Let's take a deeper look at the maximum price form field, which has some additional newlines added below:
 
