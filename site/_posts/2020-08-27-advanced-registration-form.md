@@ -31,7 +31,7 @@ This is part of a three part series. Here are all the posts:
 
 1. How to use FusionAuth's advanced registration forms (this one)
 1. [How to theme FusionAuth's advanced registration forms](/blog/2020/09/01/theme-registration-form)
-1. [Building a user profile portal with Flask, OAuth, and APIs](TBD)
+1. [Building a user profile portal with Flask, OAuth, and APIs](/blog/2020/09/10/building-profile-portal-with-flask-oauth-apis)
 
 ## FusionAuth setup
 
