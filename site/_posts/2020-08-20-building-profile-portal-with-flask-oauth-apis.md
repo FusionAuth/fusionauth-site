@@ -50,7 +50,7 @@ And of course you'll need to have a registration form and FusionAuth set up. If 
 
 ## FusionAuth setup
 
-Go to "Settings" and create an API key. We'll be using this for to pull the data, so configure these allowed endpoints:
+Go to "Settings" and create an API key. We'll be using this to pull the data, so configure these allowed endpoints:
 
 * `/api/user/registration`: all methods
 * `/api/form`: `GET` only
@@ -60,7 +60,7 @@ You may also specify no endpoint methods when you create the key. This creates a
 
 Next, update your application settings. Navigate to the "Applications" section, then the "OAuth" tab. Add `http://localhost:5000/callback` to the "Authorized redirect URLs" field. Set the logout URL to be `http://localhost:5000`.
 
-These changes ensure that after the user signs in to FusionAuth, they can be sent back to the Flask application endpoint which can process the authorization code and exchange it for an access token, as well as display their profile data. Additionally, once the user logs out, they'll be sent back to the Flask index page. At the end, the app configuration would look like this:
+These changes ensure that after the user signs in to FusionAuth, they can be sent back to the Flask application endpoint which can process the authorization code and exchange it for an access token, as well as display their profile data. Additionally, once the user logs out, they'll be sent back to the Flask index page. At the end, the app configuration looks like this:
 
 {% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/oauth-tab-of-application.png" alt="Configuring the FusionAuth application for the flask portal." class="img-fluid" figure=false %}
 
@@ -182,7 +182,8 @@ The rest of the configuration values are standard OAuth/OIDC endpoints as well a
 
 Let's update `index.html` as well, to add links for login and registration. Here's the new HTML:
 
-```html
+{% raw %}
+```jinja
 <!doctype html>
 <title>Hello from FusionAuth</title>
 <body>
@@ -206,12 +207,13 @@ This is a sample OAuth/Flask application.
 </body>
 </html>
 ```
+{% endraw %}
 
 In this template, if the `user` variable exists, the user's email address is shown. Otherwise it displays login or registration links. 
 
 Finally, update `oauth.py` to provide the routes you added to the template. Below is the entire updated file, but we'll examine each method one at a time after the code block:
 
-```
+```python
 from requests_oauthlib import OAuth2Session
 from flask import Flask, request, redirect, session, url_for, render_template
 from flask.json import jsonify
@@ -420,7 +422,7 @@ The `FORM_ID` allows our code to retrieve the form fields which comprise that fo
 Let's update the `index.html` file to display the user's data as well as to generate a form to update that data:
 
 {% raw %}
-```html
+```jinja
 <!doctype html>
 <title>Hello from FusionAuth</title>
 <body>
@@ -443,13 +445,13 @@ This is a sample OAuth/Flask application.
     {% for key in registration_data.keys() %}
       <p>
       {% if key == 'geographicarea' and registration_data['geographicarea'] | length > 0 %}
-        Geographic area: {{registration_data['geographicarea']}}
+        Geographic area: {{ registration_data['geographicarea'] }}
       {% endif %}
       {% if key == 'maxprice' %}
-        Maximum home price: {{ "$%.0f"|format(registration_data['maxprice'])}}
+        Maximum home price: {{ "$%.0f"|format(registration_data['maxprice']) }}
       {% endif %}
       {% if key == 'minprice' %}
-        Minimum home price: {{ "$%.0f"|format(registration_data['minprice'])}}
+        Minimum home price: {{ "$%.0f"|format(registration_data['minprice']) }}
       {% endif %}
       </p>
     {% endfor %}
@@ -464,13 +466,13 @@ This is a sample OAuth/Flask application.
         {% for key in registration_data.keys() %}
           <p>
           {% if key == 'geographicarea' %}
-            Geographic area: <input type='{{fields['registration.data.'+key].control}}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{key}}' value='{{registration_data['geographicarea']}}' />
+            Geographic area: <input type='{{ fields['registration.data.'+key].control }}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{ key }}' value='{{ registration_data['geographicarea'] }}' />
           {% endif %}
           {% if key == 'maxprice' %}
-            Maximum home price: <input type='{{fields['registration.data.'+key].control}}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{key}}' value='{{registration_data['maxprice']}}' />
+            Maximum home price: <input type='{{ fields['registration.data.'+key].control }}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{ key }}' value='{{ registration_data['maxprice'] }}' />
           {% endif %}
           {% if key == 'minprice' %}
-            Minimum home price: <input type='{{fields['registration.data.'+key].control}}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{key}}' value='{{registration_data['minprice']}}' />
+            Minimum home price: <input type='{{ fields['registration.data.'+key].control }}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{ key }}' value='{{ registration_data['minprice'] }}' />
           {% endif %}
           </p>
         {% endfor %}
@@ -494,20 +496,20 @@ This is a sample OAuth/Flask application.
 Here are the changed, relevant sections. First, this is displays the profile information:
 
 {% raw %}
-```html
+```jinja
 <!-- ... -->
 <h3>Current preferences</h3>
 {% if registration_data %}  
   {% for key in registration_data.keys() %}
     <p>
     {% if key == 'geographicarea' and registration_data['geographicarea'] | length > 0 %}
-      Geographic area: {{registration_data['geographicarea']}}
+      Geographic area: {{ registration_data['geographicarea'] }}
     {% endif %}
     {% if key == 'maxprice' %}
-      Maximum home price: {{ "$%.0f"|format(registration_data['maxprice'])}}
+      Maximum home price: {{ "$%.0f"|format(registration_data['maxprice']) }}
     {% endif %}
     {% if key == 'minprice' %}
-      Minimum home price: {{ "$%.0f"|format(registration_data['minprice'])}}
+      Minimum home price: {{ "$%.0f"|format(registration_data['minprice']) }}
     {% endif %}
     </p>
   {% endfor %}
@@ -521,20 +523,20 @@ This display code iterates and displays the values in the `registration_data` ar
 The code which builds a form for updating is also worth checking out:
 
 {% raw %}
-```html
+```jinja
 <!-- ... -->
 <form action="/update" method="post">
   {% if registration_data %}  
     {% for key in registration_data.keys() %}
       <p>
       {% if key == 'geographicarea' %}
-        Geographic area: <input type='{{fields['registration.data.'+key].control}}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{key}}' value='{{registration_data['geographicarea']}}' />
+        Geographic area: <input type='{{ fields['registration.data.'+key].control }}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{ key }}' value='{{ registration_data['geographicarea'] }}' />
       {% endif %}
       {% if key == 'maxprice' %}
-        Maximum home price: <input type='{{fields['registration.data.'+key].control}}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{key}}' value='{{registration_data['maxprice']}}' />
+        Maximum home price: <input type='{{ fields['registration.data.'+key].control }}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{ key }}' value='{{ registration_data['maxprice'] }}' />
       {% endif %}
       {% if key == 'minprice' %}
-        Minimum home price: <input type='{{fields['registration.data.'+key].control}}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{key}}' value='{{registration_data['minprice']}}' />
+        Minimum home price: <input type='{{ fields['registration.data.'+key].control }}' {% if fields['registration.data.'+key].required %}required{% endif %} name='{{ key }}' value='{{ registration_data['minprice'] }}' />
       {% endif %}
       </p>
     {% endfor %}
@@ -548,14 +550,14 @@ The code which builds a form for updating is also worth checking out:
 This builds a form from the same `registration_data` array. But it does something else which you might find intriguing. Let's take a deeper look at the maximum price form field, which has some additional newlines added below:
 
 {% raw %}
-```html
+```jinja
 <!-- ... -->
 Maximum home price: 
   <input 
-  type='{{fields['registration.data.'+key].control}}' 
+  type='{{ fields['registration.data.'+key].control }}' 
   {% if fields['registration.data.'+key].required %}required{% endif %} 
-  name='{{key}}' 
-  value='{{registration_data['maxprice']}}' />
+  name='{{ key }}' 
+  value='{{ registration_data['maxprice'] }}' />
 <!-- ... -->
 ```
 {% endraw %}
@@ -591,7 +593,6 @@ def homepage():
     application_id = user['applicationId']
     client_response = fusionauth_api_client.retrieve_registration(user_id, application_id)
     if client_response.was_successful():
-      #print(client_response.success_response)
       registration_data = client_response.success_response['registration'].get('data')
       fields = get_fields(fusionauth_api_client)
     else:
@@ -611,7 +612,6 @@ def update():
 
     client_response = fusionauth_api_client.retrieve_registration(user_id, application_id)
     if client_response.was_successful():
-      #print(client_response.success_response)
       registration_data = client_response.success_response['registration'].get('data')
       fields = get_fields(fusionauth_api_client)
       for key in fields.keys():
@@ -625,10 +625,10 @@ def update():
       patch_request = { 'registration' : {'applicationId': application_id, 'data' : registration_data }}
       client_response = fusionauth_api_client.patch_registration(user_id, patch_request)
       if client_response.was_successful():
-        #print(client_response.success_response)
+        pass
       else:
-         error = "Unable to save data"
-         return render_template('index.html', user=user, registration_data=registration_data, fields=fields, error=error)
+        error = "Unable to save data"
+        return render_template('index.html', user=user, registration_data=registration_data, fields=fields, error=error)
   return redirect('/')
 
 @app.route("/logout", methods=["GET"])
@@ -679,7 +679,6 @@ def get_fields(fusionauth_api_client):
   fields = {}
   client_response = fusionauth_api_client.retrieve_form(app.config['FORM_ID'])
   if client_response.was_successful():
-    #print("form")
     field_ids = client_response.success_response['form']['steps'][1]['fields']
     for id in field_ids:
       client_response = fusionauth_api_client.retrieve_form_field(id)
@@ -766,7 +765,6 @@ def update():
 
     client_response = fusionauth_api_client.retrieve_registration(user_id, application_id)
     if client_response.was_successful():
-      #print(client_response.success_response)
       registration_data = client_response.success_response['registration'].get('data')
       fields = get_fields(fusionauth_api_client)
       for key in fields.keys():
