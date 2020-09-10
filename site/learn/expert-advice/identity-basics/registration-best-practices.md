@@ -1,7 +1,7 @@
 ---
 layout: advice
 title: Best practices for registration forms
-description: Users have to register to gain application access. How can you make this as painless as possible?
+description: Users have to fill out registration forms to access applications. How can you make this as painless as possible?
 author: Dan Moore
 image: advice/multi-in-single-article.png
 category: Identity Basics
@@ -13,9 +13,9 @@ Signing up for accounts is something we're all familiar with. It's a gateway to 
 
 {% include _image.liquid src="/assets/img/advice/long-registration-form.png" alt="A long registration form. Honestly? You need my full name and my middle name?" class="img-fluid" figure=false %}
 
-You can make the registration process simpler. And you should. 
+You can make the registration form process simpler. And you should. 
 
-## Is registration needed at all?
+## Is a registration form needed at all?
 
 Before you start, ask yourself a fundamental question: does your application require registration?
 
@@ -77,7 +77,7 @@ Make use of the full suite of HTML elements. Dropdowns and radio buttons are pow
 
 But registration forms aren't just another form. They are the gateway to your full application or site.
 
-What causes angst when a user is signing up? This [2012 paper (PDF)](https://discovery.ucl.ac.uk/id/eprint/1378346/1/ewic_hci12_diss_paper7.pdf) examined registration for government services. It defined sign up friction as "as the imbalance between the business process (user goals) and [required] security behaviour" around signing up. This study found friction was best explained by the following attributes of a signup process:
+What causes angst when a user is signing up? This [2012 paper (PDF)](https://discovery.ucl.ac.uk/id/eprint/1378346/1/ewic_hci12_diss_paper7.pdf) examined registration for government services. It defined sign up friction as "the imbalance between the business process (user goals) and [required] security behaviour" around signing up. This study found friction was best explained by the following attributes of a signup process:
 
 * The number of new credentials required
 * Any delay in the process, such as waiting for an activation email
