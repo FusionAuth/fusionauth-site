@@ -14,14 +14,23 @@ This page contains all of the APIs for managing users.
 * <<Delete a User>>
 * <<Bulk Delete Users>>
 * <<Reactivate a User>>
-* <<Import Users>>
-* <<Search for Users>>
 * <<Retrieve Recent Logins>>
+
+=== Import Users
+* <<Import Users>>
+* <<Import Refresh Tokens>>
+
+=== User Search
+* <<Search for Users>>
+* <<Flush the Search Engine>>
+
+=== Email Verification
 * link:#verify-a-users-email[Verify a User's Email]
 * <<Resend Verification Email>>
+
+=== Forgot Password
 * <<Start Forgot Password Workflow>>
 * link:#change-a-users-password[Change a User's Password]
-* <<Flush the Search Engine>>
 
 
 == Create a User
@@ -465,6 +474,39 @@ Only a status code is available on the Import API, no JSON body will be returned
 include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 :webhook_event!:
 
+== Import Refresh Tokens
+
+THis API is used to import refresh tokens from an external system, this would generally be done during an initial user import or as an auxiliary step during a migration strategy.
+
+Before using this API, create the Users, Applications and User Registrations. A validation error will be returned if the user does not exist, or is not registered for the application.
+
+=== Request
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Import Refresh Tokens
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/refresh-token/import#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-create-operation.adoc[]
+
+include::docs/v1/tech/apis/_users-refresh-tokens-request-body.adoc[]
+
+=== Response
+
+The response does not contain a body, the HTTP status code will indicate the result of the request.
+
+:never_missing:
+:never_search_error:
+:success_code: 200
+:success_message: The request was successful.
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+:never_search_error!:
+:never_missing!:
+
+
 == Search for Users
 
 This API is used to search for Users. This API may be called using the `GET` or `POST` HTTP methods, examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will will provide the same search results given the same query parameters.
@@ -624,6 +666,30 @@ include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 :search_result:
 include::docs/v1/tech/apis/_users-response-body.adoc[]
 :search_result!:
+
+
+== Flush the Search Engine
+
+This API is used to issue a flush request to the FusionAuth Search. This will cause any cached data to be written to disk. In practice it is unlikely
+ you'll find a need for this API in production unless you are performing search requests immediately following an operation that modifies the index and
+  expecting to see the results immediately.
+
+=== Request
+
+[.api-authentication]
+link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Flushes the Search Engine
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/user/search#
+--
+
+=== Response
+
+The response does not contain a body. It only contains one of the status codes below.
+
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+
 
 == Retrieve Recent Logins
 
@@ -1083,25 +1149,3 @@ This JSON response body will only be returned when using a `changePasswordId` or
 include::docs/src/json/users/change-password-response.json[]
 ----
 
-
-== Flush the Search Engine
-
-This API is used to issue a flush request to the FusionAuth Search. This will cause any cached data to be written to disk. In practice it is unlikely
- you'll find a need for this API in production unless you are performing search requests immediately following an operation that modifies the index and
-  expecting to see the results immediately.
-
-=== Request
-
-[.api-authentication]
-link:authentication#api-key-authentication[icon:lock[role=red,type=fas]] Flushes the Search Engine
-[.endpoint]
-.URI
---
-[method]#PUT# [uri]#/api/user/search#
---
-
-=== Response
-
-The response does not contain a body. It only contains one of the status codes below.
-
-include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
