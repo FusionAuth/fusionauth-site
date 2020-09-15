@@ -136,7 +136,7 @@ In the context of separate services in an eCommerce domain, we want to have this
 
 Open up yet another terminal window, enter the `gateway` director, and run `npm install`.
 
-Head over to the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) for FusionAuth. During setup, the application that you configure will be linked to our gateway application, so you can name it "Gateway".
+Head over to the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) for FusionAuth. During setup, the application that you configure will be linked to our gateway application, so you can name it "Gateway". Note that while FusionAuth supports multi-tenant configurations, here you're setting everything up in the default tenant.
 
 Update the `routes/index.js` in the `gateway` directory with your FusionAuth application's client ID and secret and `views/index.pug` with your client ID. Then start the application by running `npm start`.
 
