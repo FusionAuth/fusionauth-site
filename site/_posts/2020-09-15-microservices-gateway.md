@@ -17,7 +17,7 @@ An API gateway with microservices is a common pattern for enterprise architectur
 
 For this article, we're going to need a running FusionAuth instance and three simple Node/Express applications. You can download the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) for this article and customize your FusionAuth configuration accordingly, or you can follow along conceptually. 
 
-If you want to follow along, it will be very helpful the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) first, as that will set up the needed users and roles in FusionAuth.
+If you want to follow along, it will be very helpful to go through the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) first, as that will set up the needed users and roles in FusionAuth.
 
 We're going to have four applications running, on the following ports:
 * FusionAuth: `9011`
@@ -30,7 +30,7 @@ We're also going to be dealing with authentication and authorization quite a bit
 ## Authentication and authorization
 Authentication is the verification of a particular user. When a user is logged in, they're saying to the application, "Hey, it's the real John Doe, let me in." The application validates their credentials, and they have access.
 
-In our API gateway, we're going to use FusionAuth, based on the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) as mentioned above. We'll talk about specific details when we set up our API gateway application later.
+In our API gateway, we're going to use FusionAuth, based on the 5-Minute Setup Guide as mentioned above. We'll talk about specific details when we set up our API gateway application later.
 
 Authorization is the process whereby we verify that a particular user (e.g. John Doe) has access to certain parts of our system (e.g. product inventory). In our eCommerce ecosystem, we're going to require authorization for the product inventory API, but not for the basic product APIs, since we want everyone to access the latter. For the product inventory route, we'll allow users with the "admin" role access.
 
