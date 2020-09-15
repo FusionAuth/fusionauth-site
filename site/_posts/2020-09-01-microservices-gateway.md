@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Building a microservices gateway application 
+title: Centralized authentication with a microservices gateway
 description: Implement authentication and authorization using FusionAuth for a gateway API application that routes to two different microservices.
 author: Tim Kleier
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
@@ -36,7 +36,7 @@ Authorization is the process whereby we verify that a particular user (e.g. John
 
 We'll return to authentication and authorization soon, but let's start building our applications! We're going to start with the services and work our way towards the gateway application.
 
-### Setup
+### Setting up the nodejs Product Catalog 
 
 Before you get going, you'll need node installed (code tested with version 14). If you don't have it installed, grab it from [the node website](https://nodejs.org/en/download/).
 
@@ -109,9 +109,9 @@ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -H "ro
 
 We've got our Product Inventory service up and running, with authorization to ensure that only admins can access a list of products for a branch. Doing an authorization check at the service level allows us to granularly implement authorization.
 
-### API-level authentication
+### API-level authentication for your microservices
 
-A quick note on API-level authentication. We're implementing centralized authentication through the API gateway, and we want only that gateway to have access to these microservices. You could do this at the network level, or with some form of API-level authentication, like an [API Key](https://microservice-api-patterns.org/patterns/quality/qualityManagementAndGovernance/APIKey). It's a little much for us to cover in this article, but it's definitely something you'll want to implement before launching your microservices into production.
+A quick note on API-level authentication. We're implementing centralized authentication through the API gateway. Only that gateway should have access to these microservices. You could do this at the network level, or with some form of API-level authentication, like an [API Key](https://microservice-api-patterns.org/patterns/quality/qualityManagementAndGovernance/APIKey). It's a little much for us to cover in this article, but it's definitely something you'll want to implement before launching your microservices into production.
 
 ## The gateway application
 
