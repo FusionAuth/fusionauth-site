@@ -15,7 +15,9 @@ In this article, we're going to implement authentication and authorization for a
 
 An API gateway with microservices is a common pattern for enterprise architectures. In this post, we'll pretend we're setting this up for an eCommerce enterprise. Our gateway application is a central API that will control access to a product catalog service and a product inventory service. We'll allow customers to access public endpoints but require authentication for some of the product inventory endpoints.
 
-For this article, we're going to need a running FusionAuth instance and three simple Node/Express applications. You can download the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) for this article and customize your FusionAuth configuration accordingly, or you can follow along conceptually.
+For this article, we're going to need a running FusionAuth instance and three simple Node/Express applications. You can download the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) for this article and customize your FusionAuth configuration accordingly, or you can follow along conceptually. 
+
+If you want to follow along, it will be very helpful the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) first, as that will set up the needed users and roles in FusionAuth.
 
 We're going to have four applications running, on the following ports:
 * FusionAuth: `9011`
@@ -28,7 +30,7 @@ We're also going to be dealing with authentication and authorization quite a bit
 ## Authentication and authorization
 Authentication is the verification of a particular user. When a user is logged in, they're saying to the application, "Hey, it's the real John Doe, let me in." The application validates their credentials, and they have access.
 
-In our API gateway, we're going to use FusionAuth, based on the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). We'll talk about specific details when we set up our API gateway application later.
+In our API gateway, we're going to use FusionAuth, based on the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) as mentioned above. We'll talk about specific details when we set up our API gateway application later.
 
 Authorization is the process whereby we verify that a particular user (e.g. John Doe) has access to certain parts of our system (e.g. product inventory). In our eCommerce ecosystem, we're going to require authorization for the product inventory API, but not for the basic product APIs, since we want everyone to access the latter. For the product inventory route, we'll allow users with the "admin" role access.
 
@@ -101,7 +103,7 @@ module.exports = router;
 
 In this service, we've just got one route, to get products for a specific store or branch. Notice, however, that we're allowing access (or denying it) based on the inclusion of an `admin` role in the `roles` header. The API gateway application will be responsible for passing this data to our Product Inventory service.
 
-If you were to start the service--go ahead and do so with `npm start`--and send a request to `http://localhost:3002/branches/1/products`, you should receive a 403. You can simulate a successful response by adding a `roles` header with a value of `admin`:
+If you were to start the service (go ahead and do so with `npm start`) and send a request to `http://localhost:3002/branches/1/products`, you should receive a 403. You can simulate a successful response by adding a `roles` header with a value of `admin`:
 
 ```shell
 curl -i -H "Accept: application/json" -H "Content-Type: application/json" -H "roles: admin" http://localhost:3002/branches/1/products
@@ -153,7 +155,7 @@ GET /products 200
 
 Let's go through the gateway application's `routes/index.js` file step by step. We start by requiring necessary files and setting up a `FusionAuthClient`. We also include a handy authentication middleware, which we'll use on our routes.
 
-```
+```javascript
 // ...
 const request = require('request');
 const express = require('express');
