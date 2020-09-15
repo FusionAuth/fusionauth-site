@@ -23,7 +23,7 @@ While user registration to create an account is commonplace, every step required
 
 ### Let them try it first
 
-Potential users are trying to kick the tires on your application. From a 2020 masters thesis, [A User-Centered Approach to Landing Page Optimization in a Software-as-a-Service Business" (PDF)](https://aaltodoc.aalto.fi/bitstream/handle/123456789/44930/master_Meissner_Mai_2020.pdf?sequence=1&isAllowed=y):
+Potential users are trying to kick the tires on your application. From a 2020 masters thesis, [A User-Centered Approach to Landing Page Optimization in a Software-as-a-Service Business (PDF)](https://aaltodoc.aalto.fi/bitstream/handle/123456789/44930/master_Meissner_Mai_2020.pdf?sequence=1&isAllowed=y):
 
 > "Visitors have several different needs before deciding to sign up and test the service. The most prominent need is understanding what the service offers and whether it could be a suitable solution for their problem."
 
