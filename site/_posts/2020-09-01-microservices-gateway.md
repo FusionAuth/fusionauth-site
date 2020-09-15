@@ -3,7 +3,7 @@ layout: blog-post
 title: Building a microservices gateway application 
 description: Implement authentication and authorization using FusionAuth for a gateway API application that routes to two different microservices.
 author: Tim Kleier
-image: blogs/theming-advanced-forms/how-to-theme-fusionauths-advanced-registration-forms.png
+image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
 category: blog
 tags: client-javascript
 excerpt_separator: "<!--more-->"
