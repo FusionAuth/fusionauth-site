@@ -12,7 +12,7 @@ Scott Plunkett is a FusionAuth customer building a game server management compan
 
 <!--more-->
 
-This interview has been lightly edited for clarity and length.
+*This interview has been lightly edited for clarity and length.*
 
 **Dan:** Tell me a bit about your work as a developer.
 
