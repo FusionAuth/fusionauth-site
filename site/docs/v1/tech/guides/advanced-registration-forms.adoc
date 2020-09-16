@@ -1,0 +1,576 @@
+---
+layout: doc
+title: Advanced Registration Forms
+description: Advanced Registration Forms
+---
+:page-liquid:
+
+== What Are Advanced Registration Forms
+
+Advanced registration forms let you build powerful, multi-step, custom registration experiences with no coding required.
+
+image::guides/advanced-registration-forms/built-out-advanced-form.png[Example of built out advanced registration form.,width=1200,role=box-shadow margin-right]
+
+You might be interested in this feature if you use the FusionAuth themed login pages for your application, and the default self service registration form doesn't meet your needs. Whether you want to break a form up into multiple steps for a better user experience, gather user consents, or have the user provide app specific data, advanced registration forms can help.
+
+If you are building your own login and registration pages using the link:../apis[APIs], you can still use the form builder in the administrative user interface, but you will have to generate the user facing HTML from the configured form data and recreate any front end logic. You may want to consider using the themeable hosted login pages instead.
+
+== How Do I Use Advanced Registration Forms?
+
+*This feature is available in all paid editions of FusionAuth. Please visit link:/pricing[our pricing page] to learn more about paid editions.*
+
+Here's a video showing setup and use of the advanced registration forms feature.
+
+video::NDXHE8I[youtube,width=560,height=315]
+
+To use advanced registration forms, you must:
+
+* Create any needed custom form fields.
+* Assemble predefined and custom form fields into steps, and steps into a form.
+* Configure an application to use the form for self service registration.
+* Theme the form (optional, but highly recommended).
+
+== What is the Difference Between Advanced and Basic Registration Forms
+
+FusionAuth has two types of registration forms: basic and advanced. Both of these options allow you to enable self service registration in your application. The basic option is available in all editions of FusionAuth, including Community.
+
+Basic registration is limited to a single step and offers minimal configuration. You may mix and match from the following user data fields:
+
+* Birthdate
+* First name
+* Full name
+* Last name
+* Middle name
+* Mobile phone
+
+Any displayed fields can be required for successful registration. You can choose to use a username or an email for your login identifier. A password field is displayed and required. 
+
+image::guides/advanced-registration-forms/basic-registration.png[Basic registration.,width=1200,role=box-shadow margin-right]
+
+This is a solid registration page; you can collect information and at the end the user will be associated with the application in FusionAuth and be able to sign in. The look and feel of the registration form can be themed. Validation is limited to having fields be required, though you can also implement additional validation in theme managed client side javascript.
+
+Basic registration forms have a subset of the functionality of advanced registration forms. With advanced registration forms, in addition to registering a user to an application, you can also:
+
+* Collect additional profile data and store it in FusionAuth.
+* Validate any field on the server in a variety of ways, including matching a regular expression.
+* Use more complicated fields, such as consents and confirmation fields.
+* Break a registration process into a series of less imposing steps.
+
+== Set Up
+
+To use advanced registration forms, you must have a valid license key. Please visit link:/pricing[our pricing page] to review paid edition options and buy a license.
+
+Next, you need to activate the license. Before that, ensure that your FusionAuth instance has outbound network access. To activate, follow the steps outlined in the link:/docs/v1/tech/reactor[Reactor documentation].
+
+== Building an Advanced Form Registration Flow
+
+Let's create a form for a fictional real estate application. When someone registers, the application should collect the minimum home price and maximum home price that the user is looking at. You'll also need to collect other, more typical, data, such as an email address. This guide will walk through creating a form to collect the following profile information:
+
+* Email
+* Password
+* First name
+* Phone number
+* Free form geographic area where they are looking to buy
+* Minimum house price
+* Maximum house price
+
+Some of these fields are available in every FusionAuth installation, but some are custom. Before you create a form, first create any non-standard form fields. 
+
+=== Create Form Fields
+
+The following fields are available by default:
+
+* Password
+* First name
+* Full name
+* Mobile phone
+* Birthdate
+* Last name
+* Username
+* Middle name
+* Email
+
+If you need additional fields, you must create them. To do so, navigate to [breadcrumb]#Customizations -> Form Fields#. You'll see a list of the above default fields, any existing custom fields and a button to create new ones. 
+
+You can mix and match any fields listed here on a form. If what you need is already defined, there's no need for any custom form field creation. But if not, create a new form field.
+
+==== Custom Form Fields
+
+The real power of advanced registration forms comes when you add custom fields. You can add as many of these as you'd like. 
+
+You may store data in any of the predefined user fields such as `user.fullName`. But you can also use the `data` field on both the `registration` and the `user` objects to store data. 
+
+`user.data` is the right place to store information related to a user's account which is not application specific. If you wanted information that multiple applications might use, such as a current mailing address, that would be best stored in the `user.data` field.
+
+Store data related to a user's account and specific to an application in `registration.data`. As a reminder, link:/docs/v1/tech/core-concepts/registrations[a registration] is a link between a user and an application defined in FusionAuth. 
+
+Since you are building a real estate app, the minimum house hunting price point of the user is only useful to this application. Therefore, storing the data in `registration.data` is the right approach. If you were later to build a mortgage application, there'd be different fields, such as loan amount sought, associated with that registration. 
+
+Now that you have decided where to store the custom profile data, you should create the fields.
+
+First, add a minimum price field. Configure the form field to have a data type of `number` and a `text` form control. The user's minimum price point is really useful information. Make it required so that a new user can't complete registration without providing a value. Here's what it will look like before saving the configuration:
+
+image::guides/advanced-registration-forms/minimum-price-form-field.png[Adding the minimum price field.,width=1200,role=box-shadow margin-right]
+
+Add a maximum price field by duplicating the `minprice` field. Use a key of `maxprice`; keys must be unique within the `data` object, `registration.data` in this case. Change the name as well. All other settings can be the same as those of the `minprice` field.
+
+Finally, add a geographic search area custom field. The purpose of this field is to capture where the new user is looking to buy. It'll be a string, but make it optional. Potential users might not have a good idea of where they're interested in looking at homes.
+
+image::guides/advanced-registration-forms/geographic-area-form-field.png[Adding the geographic area field.,width=1200,role=box-shadow margin-right]
+
+After saving the above custom fields, if you view the list of fields, you'll see the three new fields. They are now available for the advanced registration form you'll build next. These custom fields can be used for future forms as well.
+
+=== Create a Form
+
+The next step is to assemble the form from the form fields. You can mix and match any of the standard, predefined form fields and your custom form fields.
+
+Fields may appear in any order on the form. Arrange them in whatever order makes the most sense for your potential users. You may also add as many steps as make sense. It's a good idea to group similar types of fields together into the same step. 
+
+When you create a new form, you'll see a name field and a button to add steps:
+
+image::guides/advanced-registration-forms/new-form.png[The blank form, ready to be assembled.,width=1200,role=box-shadow margin-right]
+
+There are a few rules about advanced registration forms. Each form must have:
+
+* At least one step
+* Either an email or a username field in one of the steps
+* A password field in one of the steps
+* At least one field on each step
+
+To begin building this real estate application form, navigate to [breadcrumb]#Customizations -> Forms#. Click the green `+` button to create a new form.
+
+Add the first step and then the following fields:
+
+* First name
+* Email
+* Password
+* Phone number
+
+image::guides/advanced-registration-forms/first-step-form-editor.png[Adding fields to our first step.,width=1200,role=box-shadow margin-right]
+
+Create a second step. Add your custom house hunting parameter fields:
+
+* Geographic area of interest
+* Minimum house search price
+* Maximum house search price
+
+After you've added these fields to the form, feel free to rearrange the form fields within each step by clicking the arrows to move a field up or down. 
+
+The form configuration specifies steps and field display order within those steps. If you need to move a field between steps, delete it from one step and add it to another. To change field validation, return to the [breadcrumb]#Fields# section and make your changes. When you're done tweaking the form to your liking, save it.
+
+=== Associate a Form With an Application
+
+Once you've created an advanced registration form, the next step is to specify which applications should use this form. Forms can be reused in any application and any tenant.
+
+In addition to specifying the registration form, you'll need to configure a few other options. Assuming you are creating a new FusionAuth application, navigate to the [breadcrumb]#Applications# tab and add one. If you aren't, you'll need to tweak the settings of your existing application.
+
+You must configure a redirect URL; this is where the user is sent when registration succeeds. Navigate to the [breadcrumb]#OAuth# tab of your application and enter a valid redirect URL. Though the specifics depend on your application settings, such as whether you require email verification, a user will typically be authenticated at the end of the registration process.
+
+You must configure the application to allow users to register themselves. Otherwise, no users will be allowed to create their own accounts, which means they'll never see the registration form. Navigate to the [breadcrumb]#Registration# tab and enable [field]#Self service registration#. You configure the application to use your registration form by checking the advanced option and selecting the form you created above. 
+
+Return to the list of applications. Your form is ready to go. Once you have the registration URL, your users can sign up.
+
+=== User Registration
+
+To find the registration URL, navigate to [breadcrumb]#Applications# and then view the application you created. Copy the [field]#Registration URL#.
+
+image::guides/advanced-registration-forms/find-registration-url.png[Finding the registration URL.,width=1200,role=box-shadow margin-right]
+
+Now that you have the URL, open up an incognito window or a different browser and navigate to it. The first screen asks for your first name, email address, password and phone number. Each screen also shows how many registration steps there are.
+
+image::guides/advanced-registration-forms/first-step-no-placeholder.png[The first page of the custom registration flow.,width=1200,role=box-shadow margin-right]
+
+The second screen displays the custom fields: the minimum and maximum home prices and your area of geographic interest. Click `Register` to complete your sign up. You'll be sent to the configured redirect URL value and be signed in.  
+
+==== The Admin View
+
+Sign into the administrative user interface and navigate to [breadcrumb]#Users# section. You should see a new account added with the data you filled out. If you go to the [breadcrumb]#User data# tab on the new user's account details page, you'll see the custom data as well:
+
+image::guides/advanced-registration-forms/new-user-data-display.png[The user data tab of the newly registered user.,width=1200,role=box-shadow margin-right]
+
+=== Theming
+
+The form you built has a few rough user interface elements. You can create a better user experience by theming the form.
+
+==== Theming Setup
+
+While you can make the changes outlined below in the administrative user interface, you can also manipulate the theme via the FusionAuth API. To do so, navigate to [breadcrumb]#Settings -> API Keys# and create an API key. Allow this API key to call all methods on the `/api/theme` endpoint, at a minimum.
+
+Next, create a new theme, since the default theme is read-only. Themes are assigned on a tenant by tenant basis, so you may either change the theme for the default tenant or create a new tenant and assign a new theme to it. This guide will do the former. To do so, navigate to [breadcrumb]#Customizations -> Themes#. Duplicate the existing FusionAuth theme. Rename your theme to something meaningful, such as `Real Estate Application`. 
+
+Navigate to [breadcrumb]#Tenants# and edit the default tenant. Go to the [breadcrumb]#General# tab and update the [field]#Login theme# setting to the `Real Estate Application` theme. 
+
+image::guides/advanced-registration-forms/update-theme-for-tenant.png[Select your new theme for the default tenant.,width=1200,role=box-shadow margin-right]
+
+==== Customizing a Theme
+
+Customizing the theme gives you full control over what the user sees. As a reminder, here's what the first step of the registration flow looked like with no theming:
+
+image::guides/advanced-registration-forms/first-step-no-placeholder.png[The first page of the custom registration flow.,width=1200,role=box-shadow margin-right]
+
+You are going to add placeholders and labels, but there's a lot more you can do; check out the link:/docs/v1/tech/themes/[theming documentation] for more information.
+
+Navigate to [breadcrumb]#Customizations -> Themes#. Find the theme you created above and copy the id; it'll be a GUID like `42968bbf-29af-462b-9e83-4c8d7c2d55cf.
+
+===== Modifying a Theme Via API
+
+To change placeholders or other messages to users such as validation errors, you must modify the messages attribute of a theme. These are stored in a Java properties file format by FusionAuth. You might want to use the API, as opposed to the administrative user interface, to change these messages if you plan to version control them or use automated tooling.
+
+Scripts can help manage updating the messages via API. The below shell scripts assume you are running FusionAuth at `\http://localhost:9011`; if not, adjust the endpoints accordingly. These scripts are https://github.com/FusionAuth/fusionauth-theme-management[also available on GitHub]. To use them, you must have https://stedolan.github.io/jq/[jq] and python3 installed locally.
+
+===== Retrieving a Theme File For Local Editing
+
+To modify these messages, you will first retrieve the messages and store them in a text file. Below is a shell script which converts the JSON response from the API into a newline delimited file:
+
+```shell
+API_KEY=<your api key> # created above
+THEME_ID=<your theme id>
+
+curl -H "Authorization: $API_KEY" 'http://localhost:9011/api/theme/'$THEME_ID|jq '.theme.defaultMessages' |sed 's/^"//' |sed 's/"$//' |python3 convert.py > defaultmessages.txt
+```
+
+The `convert.py` script turns embedded newlines into real ones:
+
+```python
+import sys
+
+OUTPUT = sys.stdin.read()
+formatted_output = OUTPUT.replace('\\n', '\n')
+print(formatted_output)
+```
+
+Running this script after updating the API key and theme ID will create a `defaultmessages.txt` file in the current directory. This script downloads only the messages file, but could be extended to retrieve other theme attributes. The `defaultmessages.txt` file contents look like this:
+
+```
+#
+# Copyright (c) 2019-2020, FusionAuth, All Rights Reserved
+#
+# Licensed under the Apache License, Version 2.0 (the \"License\");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+
+# ...
+
+# Webhook transaction failure
+[WebhookTransactionException]=One or more webhooks returned an invalid response or were unreachable. Based on your transaction configuration, your action cannot be completed.
+```
+
+The file is approximately 200 lines in length so the above is an excerpt. Open it in your favorite text editor.
+
+===== Modifying the Messages File
+
+You are going to add both placeholders for the text input boxes as well as custom validation messages. To add the placeholders, add values to the `Custom Registration` section. 
+
+Maintaining sections in this file isn't required since it's not a `.ini` file. However, it's a good idea to change only what is needed and not restructure the entire file. Upgrades to FusionAuth will add more properties and you will have to merge your changes in. Search for the section starting with `Custom Registration forms`.
+
+The keys of the messages file must match the field keys for the registration form.
+
+To add the placeholders for the custom and default input fields, add these lines:
+
+```properties
+# ...
+user.firstName=Your first name
+user.mobilePhone=Your mobile phone num
+registration.data.minprice=Minimum home price
+registration.data.maxprice=Maximum home price
+registration.data.geographicarea=Where are you looking?
+# ...
+```
+
+To add validation messages, search for `# Custom Registration form validation errors`. You'll add the error messages there.
+
+Each error message takes the form: `[errortype]fieldname`. Look at the `Default validation errors` section to see the list of valid `errortype`s. The field name is the keyname for the field. For example, to display a user friendly error message when required price range information is omitted or invalid, add these properties:
+
+```properties
+[invalid]registration.data.minprice=Please enter a number
+[invalid]registration.data.maxprice=Please enter a number
+[missing]registration.data.minprice=Minimum home price required
+[missing]registration.data.maxprice=Maximum home price required
+```
+
+These messages are displayed to the user when the minimum or maximum prices are `invalid`. Because these fields have the `number` datatype, they are `invalid` any time the user input is not a number, but missing when the empty string is provided. 
+
+If any of the values added to `defaultmessages.txt` contain a double quote, escape it: `\"`. Since the file will be eventually turned into a quoted JSON attribute and sent to the API, an unescaped double quote is invalid JSON and will cause the API call to fail.
+
+===== Updating the Messages
+
+After `defaultmessages.txt` has been changed, it needs to be converted to JSON and sent to FusionAuth. The following script updates a FusionAuth theme's `defaultMessages` attribute:
+
+```shell
+API_KEY=<your api key>
+THEME_ID=<your theme id>
+
+FILE_NAME=out.json$$
+
+awk '{printf "%s", $0"\\n"}' defaultmessages.txt |sed 's/^/{ "theme": { "defaultMessages": "/' | sed 's/$/"}}/' > $FILE_NAME
+
+STATUS_CODE=`curl -XPATCH -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'http://localhost:9011/api/theme/'$THEME_ID -d @$FILE_NAME -o /dev/null -w '%{http_code}' -s`
+
+if [ $STATUS_CODE -ne 200 ]; then
+  echo "Error with patch, exited with status code: "$STATUS_CODE
+  exit 1
+fi
+
+rm $FILE_NAME
+```
+
+To load the new messages, run this script in the directory with the modified `defaultMessages.txt` file. Visit the registration URL in your incognito browser and see the changes:
+
+image::guides/advanced-registration-forms/first-step-with-placeholder.png[The first page of the registration form with the correct messages added.,width=1200,role=box-shadow margin-right]
+
+==== Adding Form Labels
+
+You can customize your field display more extensively by modifying macros used to build the registration form. You can edit these directly in the administrative user interface. Navigate to [breadcrumb]#Themes# and edit your theme. Click on [breadcrumb]#Helpers# and scroll to the bottom. You'll be modifying the `customField` link:https://freemarker.apache.org/[FreeMarker macro].
+
+The macro is a series of if/then statements executed against every custom field as the user interface is generated. The macro examines each field definition and creates the correct HTML element. For instance, a `password` field will be rendered as an HTML input field with the type `password`. 
+
+To add a label to each field, after `[#assign fieldId = field.key?replace(".", "_") /]`, add this:
+
+```
+<label for="${fieldId}">${theme.optionalMessage(field.key)}:</label>
+```
+
+Open an incognito window and go through the registration flow again. You should see labels for both steps. These label values are pulled from your message bundles.
+
+image::guides/advanced-registration-forms/first-step-with-placeholder-and-labels.png[The first registration step with labels.,width=1200,role=box-shadow margin-right]
+
+This gives you a glimpse of the full flexibility of FusionAuth themes. You can use the power of Apache FreeMarker, ResourceBundles, CSS, and JavaScript to customize and localize these pages. Check out the link:/docs/v1/tec/themes[theme documentation] for more.
+
+=== Reading the Data
+
+The registered user's profile data is available via the FusionAuth APIs, in the standard user fields, `user.data`, and `registration.data`. It is also available for viewing, but not editing, in the administrative user interface. 
+
+To enable users to modify their profile data, you'll have to build a profile management application. The application will let users log in or register. After a user has been authenticated, it will display their profile information. 
+
+Because the application profile data, such as the home price ange, isn't standard, you can't use an OAuth or OIDC library to retrieve it. Instead, you must use the FusionAuth APIs. To do so, you'll need to create an API key and then use either the API or one of the link:/docs/v1/tech/client-libraries/[client libraries] to access it.
+
+This interface should be integrated with the rest of your application, but this guide will build an example in python and flask. You can view the link:https://github.com/FusionAuth/fusionauth-example-flask-portal[example code here].
+
+==== Creating an API key
+
+Go to [breadcrumb]#Settings -> API Keys#. Create an API key. Configure these endpoints to be allowed:
+
+* `/api/user/registration`: all methods
+* `/api/form`: `GET` only
+* `/api/form/field`: `GET` only
+
+Here's the relevant section of the example application:
+
+```python
+# ...
+
+@app.route('/', methods=["GET"])
+def homepage():
+  user=None
+  registration_data=None
+  fields = {}
+  if session.get('user') != None:
+    user = session['user']
+    fusionauth_api_client = FusionAuthClient(app.config['API_KEY'], app.config['FA_URL'])
+    user_id = user['sub']
+    application_id = user['applicationId']
+    client_response = fusionauth_api_client.retrieve_registration(user_id, application_id)
+    if client_response.was_successful():
+      registration_data = client_response.success_response['registration'].get('data')
+      fields = get_fields(fusionauth_api_client)
+    else:
+      print(client_response.error_response)
+  return render_template('index.html', user=user, registration_data=registration_data, fields=fields)
+
+# ...
+```
+
+This home page route examines the `user` object, which was returned from the successful authentication. It pulls off the `sub` attribute, which is the user identifier and looks something like `8ffee38d-48c3-48c9-b386-9c3c114c7bc9`. It also retrieves the `applicationId`. 
+
+Once these are available, the registration object is retrieved using a FusionAuth client. The registration object's data field is placed into the `registration_data` variable and passed to the template for display. The helper method, to be examined below in more detail, is also called and whatever it returns is made available to the template as the `fields` variable.
+
+Here's the `get_fields` helper method:
+
+```python
+# ...
+
+def get_fields(fusionauth_api_client):
+  fields = {}
+  client_response = fusionauth_api_client.retrieve_form(app.config['FORM_ID'])
+  if client_response.was_successful():
+    field_ids = client_response.success_response['form']['steps'][1]['fields']
+    for id in field_ids:
+      client_response = fusionauth_api_client.retrieve_form_field(id)
+      if client_response.was_successful(): 
+        field = client_response.success_response['field']
+        fields[field['key']] = field
+  else:
+    print(client_response.error_response)
+  return fields
+# ...
+```
+
+This function looks at the form and retrieves ids of all fields on the second step: `['form']['steps'][1]`. It then retrieves the configuration of each field. 
+
+The code then adds that form field configuration information to a dictionary, with a key of the field `key`. A field key looks like `registration.data.minprice`. This dictionary is used to build attributes of the update form, which is created later. This helper would need to be modified to loop over multiple steps if you had more than one step collecting profile data.
+
+Here's the update form processing route:
+
+```python
+# ... 
+@app.route("/update", methods=["POST"])
+def update():
+  user=None
+  error=None
+  fields=[]
+  fusionauth_api_client = FusionAuthClient(app.config['API_KEY'], app.config['FA_URL'])
+  if session.get('user') != None:
+    user = session['user']
+    user_id = user['sub']
+    application_id = user['applicationId']
+
+    client_response = fusionauth_api_client.retrieve_registration(user_id, application_id)
+    if client_response.was_successful():
+      registration_data = client_response.success_response['registration'].get('data')
+      fields = get_fields(fusionauth_api_client)
+      for key in fields.keys():
+        field = fields[key]
+        form_key = field['key'].replace('registration.data.','')
+        new_value = request.form.get(form_key,'')
+        if field['control'] == 'number':
+          registration_data[form_key] = int(new_value)
+        else:
+          registration_data[form_key] = new_value
+      patch_request = { 'registration' : {'applicationId': application_id, 'data' : registration_data }}
+      client_response = fusionauth_api_client.patch_registration(user_id, patch_request)
+      if client_response.was_successful():
+        pass
+      else:
+        error = "Unable to save data"
+        return render_template('index.html', user=user, registration_data=registration_data, fields=fields, error=error)
+  return redirect('/')
+# ... 
+```
+
+This code retrieves the user's registration object. It updates the `data` object with new values from the profile update form, perhaps transforming a field from a string to a different datatype if required. Currently only the `number` type is transformed, but could be extended to handle `boolean` or other data types. After the object has been updated, a `PATCH` request is made. This updates only the `data` field of the user registration.
+
+Here's an image of the portal in action.
+
+image::guides/advanced-registration-forms/flask-app-screen-shot.png[The user profile portal.,width=1200,role=box-shadow margin-right]
+
+You can view the link:https://github.com/FusionAuth/fusionauth-example-flask-portal[example code here], which includes templates and the login and registration links as well as the above profile modification code.
+
+== Using the API to Manage Forms
+
+You can use the link:../apis/form-fields[form fields] and link:../apis/forms[forms] APIs to manage advanced registration forms. Using the API allows for migration of form configuration between environments as well as the dynamic creation of registration forms for new applications.
+
+For instance, if you had a private labelled application, you might want to allow an administrator to control which fields were required at registration without allowing them access to the FusionAuth administrative interface. Building a custom interface and calling the FusionAuth APIs to assemble the registration form and associate it with the application would accomplish this.
+
+== Consents
+
+To associate an existing consent with a field, select a [field]#field# of `Self consent`. See the link:../consents[Consent APIs] for more information on user consents. Consents are rendered as a checkbox to the user in the registration from. 
+
+The consent field will have a name automatically generated based on the consent identifier. For example: `consents['dd35541d-e725-4487-adba-5edbd3680fb8']`. However, it can be referenced in the theme files. To add a label for the the above consent, add this line to your messages file:
+
+```
+consents['dd35541d-e725-4487-adba-5edbd3680fb8']=I consent to sharing my data with affiliated companies
+```
+
+== Form Fields and Validation
+
+Making sure user registration data meets your quality requirements is important. FusionAuth provides multiple ways to validate user input during the registration process.
+
+Any validation failure will prevent the user from moving past the current registration step. The theme controls the location and display of error messages. All validation for advanced registration forms are either browser native or server side. If you'd like to add client side validation, you may inject JavaScript validation libraries and code into your login templates.
+
+=== Form Control
+
+If your field uses a form control with a limited set of options, such as a radio button or select dropdown, the user will be forced to choose from that set of options. 
+
+Form field control options are documented in the link:../apis/form-fields[form field API documentation].
+
+=== Data Type
+
+You can configure a form field to use one of the non-`String` data types. Doing so means the form field will require the user to enter data acceptable to that data type. For instance, if a form field has a data type of `Number`, any non-numeric value will result in an error message.
+
+Form field data type options are thoroughly documented in the link:../apis/form-fields[form field API documentation].
+
+=== The Required Attribute
+
+If a field is configured to be [field]#required#, a valid value must be provided. Otherwise an empty string is a valid value.
+
+=== The Confirm Value Attribute
+
+If a field is configured to have a [field]#Confirm value#, a second input field of the same type and control will be added to the form. This confirmation field will be displayed just below the original field, but the location can be customized by modifying the theme. 
+
+The form will fail validation unless the same value is entered in both fields.
+
+=== Regular Expression Validation
+
+If [field]#Validation# is enabled, a regular expression must be specified. The user input will be matched against the regular expression and validation will fail if it doesn't match. See the https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html[Java Regular Expression documentation] for more information on how to build such a regular expression.
+
+== Special Considerations
+
+
+=== Searching on User Data
+
+All data stored in the `registration.data` and `user.data` fields is indexed if you are using the Elasticsearch search engine. You may use the link:../apis/users[User Search API] to search against these values.
+
+For example, if you wanted to find all the users with a `minprice` value between 50000 and 100000, you could use this Elasticsearch query:
+
+[source,json]
+.Example JSON for the `query` parameter to search for users with a given house hunting price range
+----
+{
+  "bool": {
+    "must": [{
+      "nested": {
+        "path": "registrations",
+        "query": {
+          "range": {
+            "registrations.data.minprice": {
+              "gte": 50000,
+              "lte": 100000
+            }
+          }
+        }
+      }
+    }]
+  }
+}
+----
+
+=== Adding Required Fields Later
+
+Once you enable self service registration, the authentication flow is:
+
+```
+Authorize -> Complete Registration -> Redirect
+```
+
+Every time a user authenticates using the hosted login pages, FusionAuth ensures their registration is complete.
+
+If you add a required field to the application's registration form after users have registered, the next time one of the users authenticates using the hosted login pages, they'll be sent to the registration form to fill out the required field. The [field]#OAuth complete registration# template will be used in this scenario.
+
+=== Modifying an Existing Form Field
+
+You cannot change the underlying field, control or data type of an existing form field. Other attributes may be modified. 
+
+If you need to change the data type or form control of a field, create a new one. Duplicate the form field and update the form to use the duplicate.
+
+[WARNING]
+====
+Changing data types for the same underlying key into `registration.data` or `user.data` is problematic if you are using Elasticsearch and may require manual updates of the index. It is recommended that you change the key name if you must change the data type of a form field.
+====
+
+For example, if you wanted to modify the real estate search form to have the minimum price be a drop down instead of a numeric input field, duplicate the existing form field and modify the control. Then update the form to use the new form field. 
+
+=== Registration With Other Identity Providers 
+
+If you have an advanced registration form, but allow for a user to register with an external identity provider, such as Facebook or Active Directory, FusionAuth will drop the user into the registration flow after the external provider returns.
+
+Assume you've enabled the Facebook identity provider and allowed for registration with that provider. Also, assume you've created a registration form with three steps. The first step contains optional fields, and the second step contains required fields.
+
+After a user signs up with Facebook, they'll be dropped back into the registration flow on the second step. They'll be required to complete the registration from from the second step onward before they are fully registered.
+
+++++
+{% capture relatedTag %}feature-advanced-registration-forms{% endcapture %}
+{% include _doc_related_posts.liquid %}
+++++
+
