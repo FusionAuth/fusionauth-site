@@ -13,11 +13,11 @@ image::guides/advanced-registration-forms/built-out-advanced-form.png[Example of
 
 You might be interested in this feature if you use the FusionAuth themed login pages for your application, and the default self service registration form doesn't meet your needs. Whether you want to break a form up into multiple steps for a better user experience, gather user consents, or have the user provide app specific data, advanced registration forms can help.
 
-If you are building your own login and registration pages using the link:../apis[APIs], you can still use the form builder in the administrative user interface, but you will have to generate the user facing HTML from the configured form data and recreate any front end logic. 
+If you are building your own login and registration pages using the link:../apis[APIs], you can still use the form builder in the administrative user interface, but you will have to generate the user facing HTML from the configured form data and recreate any front end logic. You may want to consider using the themeable hosted login pages instead.
 
 == How Do I Use Advanced Registration Forms?
 
-*This is a paid edition feature and is unavailable in the community edition. Please visit link:/pricing[our pricing page] to learn more about paid editions.*
+*This feature is available in all paid editions of FusionAuth. Please visit link:/pricing[our pricing page] to learn more about paid editions.*
 
 Here's a video showing setup and use of the advanced registration forms feature.
 
@@ -32,9 +32,9 @@ To use advanced registration forms, you must:
 
 == What is the Difference Between Advanced and Basic Registration Forms
 
-FusionAuth has two types of registration forms: basic and advanced. Both of these allow a user to register themselves for your application.
+FusionAuth has two types of registration forms: basic and advanced. Both of these options allow you to enable self service registration in your application. The basic option is available in all editions of FusionAuth, including Community.
 
-Basic registration is only one step; all the fields are displayed on one form. With basic registration, you can mix and match the following user data fields:
+Basic registration is limited to a single step and offers minimal configuration. You may mix and match from the following user data fields:
 
 * Birthdate
 * First name
@@ -284,11 +284,13 @@ To add validation messages, search for `# Custom Registration form validation er
 Each error message takes the form: `[errortype]fieldname`. Look at the `Default validation errors` section to see the list of valid `errortype`s. The field name is the keyname for the field. For example, to display a user friendly error message when required price range information is omitted or invalid, add these properties:
 
 ```properties
-[invalid]registration.data.minprice=Minimum home price required
-[invalid]registration.data.maxprice=Maximum home price required
+[invalid]registration.data.minprice=Please enter a number
+[invalid]registration.data.maxprice=Please enter a number
+[missing]registration.data.minprice=Minimum home price required
+[missing]registration.data.maxprice=Maximum home price required
 ```
 
-These messages are displayed to the user when the minimum or maximum prices are `invalid`. Because these fields have the `number` datatype, they are `invalid` any time the user input is not a number, including the empty string.
+These messages are displayed to the user when the minimum or maximum prices are `invalid`. Because these fields have the `number` datatype, they are `invalid` any time the user input is not a number, but missing when the empty string is provided. 
 
 If any of the values added to `defaultmessages.txt` contain a double quote, escape it: `\"`. Since the file will be eventually turned into a quoted JSON attribute and sent to the API, an unescaped double quote is invalid JSON and will cause the API call to fail.
 
@@ -505,6 +507,35 @@ If [field]#Validation# is enabled, a regular expression must be specified. The u
 
 == Special Considerations
 
+
+=== Searching on User Data
+
+All data stored in the `registration.data` and `user.data` fields is indexed if you are using the Elasticsearch search engine. You may use the link:../apis/users[User Search API] to search against these values.
+
+For example, if you wanted to find all the users with a `minprice` value between 50000 and 100000, you could use this Elasticsearch query:
+
+[source,json]
+.Example JSON for the `query` parameter to search for users with a given house hunting price range
+----
+{
+  "bool": {
+    "must": [{
+      "nested": {
+        "path": "registrations",
+        "query": {
+          "range": {
+            "registrations.data.minprice": {
+              "gte": 50000,
+              "lte": 100000
+            }
+          }
+        }
+      }
+    }]
+  }
+}
+----
+
 === Adding Required Fields Later
 
 Once you enable self service registration, the authentication flow is:
@@ -522,6 +553,8 @@ If you add a required field to the application's registration form after users h
 You cannot change the underlying field, control or data type of an existing form field. Other attributes may be modified. 
 
 If you need to change the data type of a field, create a new one. Duplicate the form field and update the form to use the duplicate.
+
+Changing datatypes for the same underlying key into `registration.data` or `user.data` is problematic if you are using Elasticsearch. This data is indexed and changing data types is bad. It is suggested that you change the key name if you must change the data type.
 
 For example, if you wanted to modify the real estate search form to have the minimum price be a drop down instead of a numeric input field, duplicate the existing form field and modify the control. Then update the form to use the new form field. 
 
