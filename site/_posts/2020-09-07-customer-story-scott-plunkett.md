@@ -1,18 +1,21 @@
 ---
 layout: blog-post
-title: ! "Scott Plunkett's Customer story"
+title: ! "Scott Plunkett's customer story"
 description: 
 author: Dan Moore
 image: blogs/release-1-19/fusionauth-release-1-19.png
 category: blog
+tags: topic-customer-story
 excerpt_separator: "<!--more-->"
 ---
 
-Scott Plunkett is a FusionAuth customer building a game server management company. He chatted with us over email about how he and his team are using FusionAuth to help with their auth needs. 
+Scott Plunkett is a FusionAuth customer who is building a game server management company. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
 *This interview has been lightly edited for clarity and length.*
+
+-------
 
 **Dan:** Tell me a bit about your work as a developer.
 
@@ -22,7 +25,7 @@ The service is unique in that we don't charge for the hosting (users pay the pro
 
 > "We didn't want to have to manage the authentication lifecycle for the users and we didn't want to build it ourselves."
 
-**Dan:** How do you use FusionAuth? Is it for OAuth? User management? Social signon? Something else?
+**Dan:** How do you use FusionAuth? Is it for OAuth? User management? Social sign-on? Something else?
 
 **Scott:** Easy: all of the above! Right now we use FusionAuth for user management, OAuth, social sign-on, and two-factor authentication.
 
@@ -38,16 +41,20 @@ This opens up a bunch of codeless integrations for things like "When I type `!re
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
-**Scott:** If I said it was anything but cost, I'd be lying. We were fed up with the idea of having to pay per MAU when we didn't really know what our MAU count would be since we're just now starting. We also didn't see the value in the MAU count packages offered by competitors. Having the flexibility to start with self-hosting and later to go to cloud when we're tired of managing the servers is the greatest part.
+**Scott:** If I said it was anything but cost, I'd be lying. We were fed up with the idea of having to pay per MAU when we didn't really know what our MAU count would be since we're just now starting. We also didn't see the value in the MAU count packages offered by competitors. Having the flexibility to start with self-hosting and later to go to FusionAuth cloud when we're tired of managing the servers is the greatest part.
  
-**Dan:** How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
+**Dan:** How do you run FusionAuth (kubernetes, standalone server, behind a proxy, etc)?
 
-**Scott:** Right now we run FusionAuth on a Debian machine as an rpm package behind an ELB, but Kubernetes is in the works right now.
+**Scott:** Right now we run FusionAuth on a Debian machine as an rpm package behind an ELB, but Kubernetes is in the works.
 
 > "Having the flexibility to start with self-hosting and later to go to cloud when we're tired of managing the servers is the greatest part."
  
 **Dan:** Any general feedback/areas to improve?
 
-**Scott:** We love FusionAuth, but there are definitely some areas (Two-Factor Authentication recovery codes, session invalidation, exposing OAuth for customers to integrate) that are slightly irritating. However, they don't overshadow the benefits we get from FusionAuth as a solution itself.
+**Scott:** We love FusionAuth, but there are definitely some areas (Two-Factor Authentication recovery codes, session invalidation, exposing OAuth for customers to integrate) that are slightly irritating. 
 
-We love sharing customer stories. You can check out Scott's website at http://...
+However, they don't overshadow the benefits we get from FusionAuth as a solution itself.
+
+-------
+
+We love sharing customer stories. You can check out [Scott's website](https://contaim.io/) if you'd like to learn more about his company.
