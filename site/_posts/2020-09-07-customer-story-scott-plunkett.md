@@ -47,7 +47,7 @@ This opens up a bunch of codeless integrations for things like "When I type `!re
 
 **Scott:** Right now we run FusionAuth on a Debian machine as an rpm package behind an ELB, but Kubernetes is in the works.
 
-> "Having the flexibility to start with self-hosting and later to go to cloud when we're tired of managing the servers is the greatest part."
+> "Having the flexibility to start with self-hosting and later to go to FusionAuth cloud when we're tired of managing the servers is the greatest part."
  
 **Dan:** Any general feedback/areas to improve?
 
