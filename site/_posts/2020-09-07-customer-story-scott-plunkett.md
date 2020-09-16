@@ -9,7 +9,7 @@ tags: topic-customer-story
 excerpt_separator: "<!--more-->"
 ---
 
-Scott Plunkett is a FusionAuth customer who is building a game server management company. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
+Scott Plunkett is a FusionAuth customer who is building Contaim, a game server management company. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
@@ -19,7 +19,7 @@ Scott Plunkett is a FusionAuth customer who is building a game server management
 
 **Dan:** Tell me a bit about your work as a developer.
 
-**Scott:** I founded a company building a game server management service that cuts out the middle-men (game hosting companies). Our product allows users to deploy game servers on virtual machines through various cloud providers, such as Linode, Vultr, DigitalOcean, or AWS.
+**Scott:** I founded Contaim, a company building a game server management service that cuts out the middle-men (game hosting companies). Our product allows users to deploy game servers on virtual machines through various cloud providers, such as Linode, Vultr, DigitalOcean, or AWS.
 
 The service is unique in that we don't charge for the hosting (users pay the provider for their usage) and we backup the data when they aren't playing so they pay hourly prices for the server only when it's actively used. We support non-cloud machines, such as dedicated servers from unsupported providers, but they don't offer the same cost-saving benefits.
 
@@ -57,4 +57,4 @@ However, they don't overshadow the benefits we get from FusionAuth as a solution
 
 -------
 
-We love sharing customer stories. You can check out [Scott's website](https://contaim.io/) if you'd like to learn more about his company.
+We love sharing customer stories. You can check out [Contaim's website](https://contaim.io/) if you'd like to learn more about his company.
