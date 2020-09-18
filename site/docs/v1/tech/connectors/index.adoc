@@ -1,0 +1,63 @@
+---
+layout: doc
+title: FusionAuth Connectors
+description: FusionAuth Identity Providers
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+Connectors allow you to connect other sources of users to your FusionAuth instance.
+
+Once connected, you may either:
+
+* Authenticate the user against the external data source. This is similar to using the connector as another identity provider, except that the user doesn't choose their identity provider. As an administrator, you choose which data sources are the Source of Record.
+* Authenticate then migrate the user from the external data source to FusionAuth. In this scenario, the user data is migrated from the external data source to FusionAuth. 
+TBD does the external data source ever get consulted after a migration? My guess is no
+
+The following connectors are currently available.
+
+* link:generic-connector[Generic Connector]
+* link:ldap-connector[LDAP Connector]
+* link:fusionauth-connector[FusionAuth Connector]
+
+If you're looking for a connector not listed here, review the open features in https://github.com/FusionAuth/fusionauth-issues/issues[GitHub] and either vote or comment on an existing feature, or open a new feature request if you do not find an existing issue open.
+
+Find the FusionAuth Identity Providers in the UI by navigating to [breadcrumb]#Settings -> Connectors# or use the link:../apis/connectors/[Connectors] APIs.
+
+pic TBD connectors-screen
+
+image::identity-providers/identity-providers.png[Identity Providers,width=1200,role=shadowed]
+
+*This feature is available in all paid editions of FusionAuth. Please visit link:/pricing[our pricing page] to learn more about paid editions.*
+
+=== Connectors and Tenants
+
+Connectors can be enabled or disabled on a per tenant basis.
+
+In the following screenshot you will see that we have enabled two custom connectors for the Default tenant, and the default connector is present as well. 
+
+pic TBD connector-tenant-tab
+
+image::identity-providers/identity-providers.png[Identity Providers,width=1200,role=shadowed]
+
+The order of operations matters for connectors. The connector policy rules are applied in order when a user authenticates for the first time.
+
+In the above system, users who have an email address with a domain `example.com` will be authenticated against the Active Directory connector. If they are not found, they'll be authenticated against the Legacy User API connector. If they are not found in that system, the user will be authenticated against the FusionAuth connector.
+
+Users who have an email address with any other domain will be authenticated against the Legacy User API connector. If they are not found in that system, the user will be authenticated against the FusionAuth connector.
+
+On authentication the connector creates the user object and stores it into FusionAuth. However, this user object is not considered to be the source of truth for this user, and any subsequent logins will consult the connector.
+
+Once a user is authenticated against a connector, they will always be authenticated against that same data source, unless they are migrated.
+
+==== Migration
+
+Migrating users using connectors allows for a gradual adoption of FusionAuth. Each user, as they log in, will have their data moved from the external system to FusionAuth. This negates the need for a "big bang" migration and makes the transition easier.
+
+During migration, on authentication the connector creates the user object and stores it into FusionAuth. Then, this user object is presumed to be the source of record for the user going forward.
+
+TODO is the webhook fired?
+
+TODO how do you create a registration for this user?
