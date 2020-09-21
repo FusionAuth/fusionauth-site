@@ -16,9 +16,9 @@ image::identity-providers/identity-providers.png[Identity Providers,width=1200,r
 
 To use a Generic Connector:
 
-* Build an API endpoint in your application which exposes your user data.
-* Configure the Connector in [breadcrumb]#Settings -> Connectors#
-* Add the Connector Policy in [breadcrumb]#Teannts -> Your Tenant -> Connectors# to configure to which users the connector applies.
+* Build a Generic Connector API endpoint in your application which exposes your user data.
+* Configure the Connector in [breadcrumb]#Settings -> Connectors#, including securing the endpoint.
+* Add the Connector Policy in [breadcrumb]#Tenants -> Your Tenant -> Connectors# to configure to which users the connector applies.
 
 
 === Request
@@ -33,70 +33,20 @@ include::docs/src/json/login/request.json[]
 
 === Response
 
-Your API should return a 200 if the request can be handled, otherwise
+Your API should return a valid JSON user object with status code 200 if the user is found and authenticated.
 
 [source,json]
 .Example Response JSON
 ----
-include::docs/src/json/user/request.json[]
+include::docs/src/json/users/login-response.json[]
 ----
 
 === Security
 
-reuse the webhook security stuff (maybe make an import?P):w
-:wq
-
-add cert to the webhook security stuff
-
-Since the Connector is receiving username and password data, you should only transport over TLS.
-
-You may also opt to provide one or more of the following authentication options. 
-
-Identity Providers allow you to enable third-party login via FusionAuth.
-
-The following options are currently available.
-
-* link:apple[Apple]
-* link:facebook[Facebook]
-* link:google[Google]
-* link:hypr[HYPR]
-* link:twitter[Twitter]
-* link:openid-connect/[OpenID Connect]
-* link:samlv2/[SAML v2]
-* link:external-jwt/[External JWT]
-
-{empty} +
-
-If you're looking for a provider that is not listed here, review the open features in https://github.com/FusionAuth/fusionauth-issues/issues[GitHub] and either vote or comment on an existing feature, or open a new feature request if you do not find an existing feature open.
-
-Find the FusionAuth Identity Providers in the UI by navigating to [breadcrumb]#Settings -> Identity Providers# or use the link:../apis/identity-providers/[Identity Providers] APIs.
-
-image::identity-providers/identity-providers.png[Identity Providers,width=1200,role=shadowed]
-
-=== Identity providers and applications
-
-Identity providers can be enabled or disabled on a per application basis. 
-
-In the following screenshot you will see that we have enabled this login provider for the Pied Piper application and enabled "Create registration". Enabling "Create registration" means that a user does not need to be manually registered for the application prior to using this login provider.
-
-image::identity-providers/identity-provider-application-config.png[Identity Providers,width=1200,role=shadowed]
-
-For example, when a new user attempts to log into Pied Piper using Google, if their user does not exist in FusionAuth it will be created dynamically, and if the Create registration toggle has been enabled, the user will also be registered for Pied Piper and assigned any default roles assigned by the application.
-
-If you do not wish to automatically provision a user for this Application when logging in with Google, leave Create registration off and you will need to manually register a user for this application before they may complete login with Google and be authorized for the Pied Piper Application. 
-
-[NOTE]
-====
-Regardless of whether you enable "Create registration" or not, a user will be created within FusionAuth when a person signs in with the identity provider. This setting controls whether a user is authorized for this application.
-====
-
-When you enable an identity provider you're indicating that this external provider is an additional SoR (Source of Record). When the user successfully logs into this provider such as Google, Google has told FusionAuth the user exists and their credentials are valid. In return FusionAuth accepts this source or record and creates the user. Next we identify if the configuration allows us to automatically register (that is, provide authorization) for the requested application, based on the "Create registration" setting.
-
-=== Overrides
-
-For each application, you can provide unique configuration. You might do this if you had two different FusionAuth applications that were both using Facebook as an identity provider, but using different Facebook applications. You can override none, some or all of the configuration values.
-
-Override settings are not available the "External JWT" identity provider, since you can create multiple instances of these.AA
-
-
+:request_entity: Generic Connector API endpoint
+:request_entity_lc: user-api
+:ssl_certificate_sentence: This must be an SSL certificate previously added to the Key Master
+include::docs/v1/tech/shared/_securing_http_requests.adoc[]
+:request_entity!:
+:request_entity_lc!:
 
