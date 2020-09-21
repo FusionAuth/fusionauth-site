@@ -8,7 +8,7 @@ description: Connect to an LDAP directory
 
 == Overview
 
-LDAP Connectors allow you to authenticate users against or migrate them from any user datasource which is accessible over HTTP.
+LDAP Connectors allow you to authenticate users against or migrate them from an LDAP server accessible to FusionAuth.
 
 pic TBD ldap-connector-create-screen
 
@@ -16,45 +16,47 @@ image::identity-providers/identity-providers.png[Identity Providers,width=1200,r
 
 To use a LDAP Connector:
 
-* Ensure your LDAP server is accessible to the FusionAuth instance. This may entail locating FusionAuth in the correct network or configuring a firewall to allow access.
-* Optionally create an LDAP entry for FusionAuth to connect with.
-* Create an link:../lambdas/ldap-connector-reconcile[LDAP reconcile Lambda].
-* Configure the Connector in [breadcrumb]#Settings -> Connectors#.
+* Ensure your LDAP server is accessible to the FusionAuth instance. This may entail setting up a VPN, locating FusionAuth in the correct network, or configuring a firewall to allow access.
+* Determine which LDAP user FusionAuth will connect as.
+* Create an link:../lambdas/ldap-connector-reconcile[LDAP reconcile Lambda] to map the directory attributes to FusionAuth user attributes.
+* Configure the Connector in [breadcrumb]#Settings -> Connectors#. At a minimum, configure
 ** The LDAP URL and connection security
 ** The previously created lambda
-** LDAP directory settings: the base structure, account to connect as, mapping of attributes
+** LDAP directory settings
 * Add the Connector Policy in [breadcrumb]#Tenants -> Your Tenant -> Connectors# to configure to which domains the connector applies.
 
 === LDAP Directory Settings
 
-These help map the data from LDAP directory to FusionAuth. 
+These allow FusionAuth to access your LDAP directory and map the data from it to FusionAuth.
 
-==== Base structure
+==== Base Structure
 
-Where in the directory to start your search. To search the entire directory: `DC=piedpiper,DC=com`. If you want to search against only engineering: `OU=engineering,DC=piedpiper,DC=com`.
+Where in the directory to start looking for your users. To search the entire directory, you'd use a structure like: `DC=piedpiper,DC=com`. If you want to search against only engineering, add the organziation: `OU=engineering,DC=piedpiper,DC=com`.
 
-==== System account DN
+==== System Account DN
 
 The distinguished name of an entry which has read access to the directory. For example: `CN=ReadOnlyFusionAuthUser,OU=engineering,DC=piedpiper,DC=com`.
 
-==== System account password
+==== System Account Password
 
-The password of the entry with read access.
+The password of the System Account DN.
 
-==== Login identifier attribute
+==== Login Identifier Attribute
 
 The value that the user would enter for their username on a login screen. For example: `uid` or `userPrincipalName`.
 
-==== Identifying attribute
+==== Identifying Attribute
 
 The entry attribute name which is the first component of the distinguished name of entries in the directory. For example: `cn`.
 
 ==== Requested attributes
 
-The list of requested directory attributes to be returned. These will be passed to the lambda to be converted into FusionAuth user attributes. For example: `cn givenName sn userPrincipalName mail`
+The list of requested directory attributes to be returned. These will be passed to the lambda to be converted into FusionAuth user attributes. For example: `cn givenName sn userPrincipalName mail`. 
+
+In the administrative user interface, these must be added one at a time.
 
 === Security
 
-You can connect via either LDAPS or StartTLS. 
+You can connect to your LDAP server via either LDAPS or StartTLS. 
 
-You may also use an unencrypted connection, which is not recommended unless you use an alternative method of securing your connection, such as a VPN.
+You may also use an unencrypted connection. This is not recommended unless you use an alternative method of securing your connection, such as a VPN.
