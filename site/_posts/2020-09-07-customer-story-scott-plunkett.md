@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: ! "Scott Plunkett's customer story"
+title: Contaim adopts FusionAuth to manage their auth lifecycle
 description: 
 author: Dan Moore
 image: blogs/release-1-19/fusionauth-release-1-19.png
