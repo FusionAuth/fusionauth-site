@@ -3,14 +3,14 @@ layout: blog-post
 title: Contaim adopts FusionAuth to manage their auth lifecycle
 description: Contaim CEO Scott Plunkett discusses how FusionAuth has helped his business.
 author: Dan Moore
-image: blogs/contaim-customer-story/contaim-adopts-fusionauth-to-manage-their-auth-lifecycle.png
+image: blogs/contaim-story/contaim-adopts-fusionauth-to-manage-their-auth-lifecycle.png
 
 category: blog
-tags: topic-customer-story
+tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 
-Scott Plunkett is a FusionAuth customer who is building Contaim, a game server management company. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
+Scott Plunkett is a FusionAuth community member who is building Contaim, a game server management company. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
@@ -58,4 +58,4 @@ However, they don't overshadow the benefits we get from FusionAuth as a solution
 
 -------
 
-We love sharing customer stories. You can check out [Contaim's website](https://contaim.io/) if you'd like to learn more about his company.
+We love sharing community stories. You can check out [Contaim's website](https://contaim.io/) if you'd like to learn more about Scott and Contaim.
