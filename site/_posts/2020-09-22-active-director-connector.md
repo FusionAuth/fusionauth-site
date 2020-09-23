@@ -19,7 +19,7 @@ This is accomplished using the FusionAuth LDAP connector. This post will explain
 
 There are a few steps you need to take before you can dive into configuring the connection. 
 
-You are going to use ASP.NET to run an application that only LDAP users should have access to, so make sure you have dotnetcore installed.
+You are going to use ASP.NET to run an application that only LDAP users should have access to, so make sure you have dotnetcore installed if you want to follow along with the code. If you want to install it on the mac, I found the [bash script here](https://dotnet.microsoft.com/download/dotnet-core/scripts) worked best. 
 
 Then, ensure you have FusionAuth installed and running. You can download and install FusionAuth [using Docker, RPM, or a number of other ways](/docs/v1/tech/installation-guide/). 
 
@@ -87,18 +87,29 @@ In the "OAuth" tab, add a redirect URL of "http://localhost:5000/signin-oidc". A
 
 pic TBD
 
+Set up an asymmetric signing key and use that for your JWTs, as the version of the OAuth library used doesn't support HMAC as a signing key.
+
+pic TBD
+
+
 ## Configure LDAP connector
 
 tbd
 
 ## Set up and run the web application
 
-Clone [the ASP.NET Core application](https://github.com/FusionAuth/fusionauth-example-asp-netcore) from GitHub. Follow the instructions in the README, including updating the `appsettings.json` value.
+Clone [the ASP.NET Core application](https://github.com/FusionAuth/fusionauth-example-asp-netcore) from GitHub. Follow the instructions in the README, including updating the `appsettings.json` value:
 
-Publish the binary: `dotnet publish -r win-x64` (if you are on windows). Then 
-Start the application 
+
+
+This application was originally written to run on Windows. However, dotnetcore is cross platform. Let's run it on However, this post is going to show the cross platform nature of dotnet core. You can run it 
+
+Publish the binary: `dotnet publish -r win-x64` if you are on windows or `dotnet publish -r win-x64`
+
+Then start the application 
 bin\Debug\netcoreapp3.1\win-x64\publish\SampleApp.exe
 
+https://dotnet.microsoft.com/download/dotnet-core/scripts for macos
 
 
 
