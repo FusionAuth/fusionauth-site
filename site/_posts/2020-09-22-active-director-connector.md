@@ -5,27 +5,27 @@ description:
 author: Dan
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
 category: blog
-tags: feature-connectors feature-ldap
+tags: feature-connectors feature-ldap client-netcore
 excerpt_separator: "<!--more-->"
 ---
 
-Microsoft's Active Directory is a common enterprise directory product. However, you might want to connect FusionAuth to Active Directory. If you are building applications for both internal and external users, you can let FusionAuth act as a CIAM for your external users, but delegate authentication of internal users to Active Directory.
+Microsoft's Active Directory is a common enterprise directory. You might want to connect FusionAuth to Active Directory if you are building applications for both internal and external users. You can let FusionAuth act as a CIAM for your external users, but delegate authentication of internal users to Active Directory.
 
 <!--more-->
 
-Applications no longer have to understand LDAP or directly to Active Directory. Now you can use any framework that can handle OAuth/OIDC or SAML for auth, but keep all your user data in Active Directory.
+Applications no longer have to understand LDAP or be able to connect directly to your Active Directory server. Any framework or application which can handle OAuth/OIDC or SAML for access FusionAuth for auth information, but all your user data remains in Active Directory.
 
-This is accomplished using the FusionAuth LDAP connector. This post will explain how to set up such a connection between FusionAuth and Active Directory. The Active Directory servers are set up using the AWS Managed AD service, but the configuration and concepts explained in this post will work with any Microsoft Active Directory instance.
+You can do this with the FusionAuth LDAP connector. This post will explain how to set up a connection between FusionAuth and Active Directory. For this post, the Active Directory servers are run using [AWS Managed AD](https://aws.amazon.com/directoryservice/active-directory/), but the configuration and concepts explained in this post will work with any Microsoft Active Directory instance.
 
 ## Prerequisites
 
 There are a few steps you need to take before you can dive into configuring the connection. 
 
+*The LDAP Connector you'll use is a feature of the paid editions. You can sign up for a free trial of the [FusionAuth Developer Edition](/pricing).*
+
 You are going to use ASP.NET to run an application that only LDAP users should have access to, so make sure you have dotnetcore version 3 installed if you want to follow along with the code. If you want to install it on the mac, I found the [bash script here](https://dotnet.microsoft.com/download/dotnet-core/scripts) worked best. 
 
 Then, ensure you have FusionAuth installed and running. You can download and install FusionAuth [using Docker, RPM, or a number of other ways](/docs/v1/tech/installation-guide/). 
-
-*The LDAP Connector you'll use is a feature of the paid editions. You can sign up for a free trial of the [FusionAuth Developer Edition](/pricing).*
 
 Make sure you've [activated your instance](/docs/v1/tech/reactor) to enable the LDAP Connector.
 
@@ -83,16 +83,21 @@ pic TBD adding a user in activedirectory
 
 ## Configure FusionAuth
 
-Next, you want to add an application in FusionAuth. An application is anything a user can sign into. We're going to reuse an [existing ASP.NET Razor Pages application](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth). While important, the application isn't the focus of this blog post, so if you want to learn more, check out the past article.
+Next, you want to add an application in FusionAuth. An application is anything a user can sign into. We're going to reuse an [existing ASP.NET Razor Pages application](/blog/2019/05/06/securing-asp-netcore-razor-pages-app-with-oauth). While important, the application isn't the focus of this blog post, so if you want to learn more, check out the previous article. But let's pretend this ASP.NET Razor pages application is an internal payroll application. Only users in Active Directory should be able to access it.
 
-In the "OAuth" tab, add a redirect URL of "http://localhost:5000/signin-oidc". Add a logout redirect of "http://localhost:5000/". Note the `Client ID` and `Client Secret` values.
-
-pic TBD
-
-Set up an asymmetric signing key and use that for your JWTs, as the version of the OAuth library used doesn't support HMAC as a signing key.
+Navigate to "Settings" and then "Key Master" to set up an RSA keypair for your JWT. You need to do this because the default signing key for a JWT in FusionAuth is HMAC, but the ASP.NET library we are going to use doesn't support symmetric keys.
 
 pic TBD
 
+Create an application called "Internal Payroll App". In the "OAuth" tab, add a redirect URL of "http://localhost:5000/signin-oidc". Add a logout redirect of "http://localhost:5000/". 
+
+Then switch to the "JWT" tab. Enable it and change the signing keys to "For Internal Payroll App".
+
+pic TBD 
+
+Save the application and then view it and scroll down to the "OAuth configuration" section, noting the `Client ID` and `Client Secret` values:
+
+pic TBD
 
 ## Configure LDAP connector
 
@@ -188,11 +193,13 @@ function guidToString(b64)
 }
 ```
 
+The functions `guidToString` and `decodeBase64` are common code to deal with the `objectGUID` attribute, which is a set of bytes in Active Directory. 
+
 ### Configure the connector
 
 Next, navigate to "Settings" and then "Connectors". Create a new Connector and select the LDAP option. You'll see this screen staring back at you:
 
-pic tbd
+Pic TBD
 
 You'll want to provide the following information:
 
@@ -209,6 +216,10 @@ Finally, configure profile attributes to request from Active Directory. Anything
 
 You'll want to make sure you also include in the set of values a unique identifier that can be converted into a GUID. This is what you'll set the user's FusionAuth id to. In this case, Active Directory stores the user's id in binary in the `objectGUID`. The underlying LDAP access tries to treat this as a string, so you need to specify it as a binary object by appending `;binary` to the attribute name: `objectGUID;binary`. The Lambda then decodes this to a v4 GUID which is usable as an identifier within FusionAuth.
 
+After you've added everything, the configuration will look like this, though of course the URL and other configuration will differ:
+
+pic TBD
+
 ### Configure the Connector policy
 
 After you've set up the Connector, you need to tell FusionAuth how to use it. In the administrative user interface, navigate to "Tenants", then to the "Default" tenant. Go to the "Connectors" tab to enable the connector. Click "Add policy" and select the connector. You may optionally enter the email domain or domains for which this Connector should be used; add multiple domains on separate lines. You can also add a value of `*` which will cause this connector to be checked for users with any email address.
@@ -218,6 +229,10 @@ You can check the "Migrate User" option, which will cause FusionAuth to not chec
 pic TBD
 
 Order here matters; the Connectors are checked in order until the user is foundin one of them. At that point, the user is tied to that Connector and it will be used for future authentication attempts.
+
+Make sure that you move the Active Directory Connector above the Default Connector.
+
+pic TBD
 
 Note that Connectors are configured on a tenant by tenant basis. FusionAuth supports multiple tenants out of the box, so if you need different Connector configurations, you can use multiple tenants. TBD what is reason for tis.
 
@@ -263,23 +278,6 @@ Pic TBD
 
 ## Conclusion
 
-If you already have your user data in Active Directory, there's no need to move it. You can use FusionAuth and Connectors to federate with Active Directory and other LDAP servers. This allows you to use the features and APIs of FusionAuth to build your applications and at the same time keep your users in an existing directory that other systems may depend upon.
+If you already have your user data in Active Directory, there's no need to migrate. You can use FusionAuth and Connectors to federate with Active Directory and other LDAP servers. 
 
-
-
-Then start the application 
-bin\Debug\netcoreapp3.1\win-x64\publish\SampleApp.exe
-
-https://dotnet.microsoft.com/download/dotnet-core/scripts for macos
-
-
-
-get AWS managed active directory set up
-add a user
-configure the connector
-sign in as that user
-
-migrate
-multi tenant
-other ldap servers
-This post has was helpful when trying to https://tylersguides.com/guides/search-active-directory-ldapsearch/
+This allows you to use the features and APIs of FusionAuth to build your applications and at the same time keep your users in an existing directory that you know how to operate or that other systems may depend upon.
