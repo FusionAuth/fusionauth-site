@@ -1,8 +1,8 @@
 ---
 layout: blog-post
 title: Authenticating with AWS Managed Microsoft AD and LDAP
-description: 
-author: Dan
+description: You can use FusionAuth to authenticate users against Active Directory.
+author: Dan Moore
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
 category: blog
 tags: feature-connectors feature-ldap client-netcore
