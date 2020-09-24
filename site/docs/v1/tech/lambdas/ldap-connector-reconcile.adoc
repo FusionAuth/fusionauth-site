@@ -46,7 +46,7 @@ Values requested as a byte array will be provided to the lambda function as a Ba
 
 [source,javascript]
 ----
-// Example usage to convert a Bas64 encoded Microsoft Active Directory objectGUID to a UUID
+// Example usage to convert a Base64 encoded Microsoft Active Directory objectGUID to a valid FusionAuth UUID
 user.id = FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGuid;binary'])
 ----
 
@@ -87,3 +87,78 @@ function reconcile(user, userAttributes) {
 
 }
 ----
+
+=== Example Active Directory lambda
+
+Active Directory does not have a `uid` attribute, and delivers the GUID as a binary value.
+
+To enable the Connector to work with Active Directory, you must request this attribute: `objectGUID;binary`, decode it into a binary GUID, then convert that to version 4 UUID. Then you can assign that value to the `user.id` property.
+
+The below Lambda does this:
+
+```javascript
+// Using the response from an LDAP connector, reconcile the User.
+function reconcile(user, userAttributes) {
+
+  user.email = userAttributes.userPrincipalName;
+  user.firstName = userAttributes.givenName;
+  user.lastName  = userAttributes.sn;
+  user.active    = true;
+
+  // if you are using FusionAuth 1.19.7 or later, you can use the built in method and omit the decodeBase64 and guidToString functions. This is recommended.
+  // user.id = FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGuid;binary'])
+
+  user.id = guidToString(userAttributes['objectGUID;binary']);
+}
+
+function decodeBase64(string)
+{
+  var b=0,l=0, r='', 
+    m='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  string.split('').forEach(function (v) {
+    b=(b<<6)+m.indexOf(v); l+=6;
+    if (l>=8) r+=String.fromCharCode((b>>>(l-=8))&0xff);
+  });
+  return r;
+}
+
+function guidToString(b64)
+{
+    var x = decodeBase64(b64);
+  
+    var ret = "";
+  
+    for (i = 3; i >= 0; i--)
+    {
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+    ret += "-";
+    for (i = 5; i >= 4; i--)
+    {
+        //ret = ret + ('00' + (charCode & 0xFF00) >> 8);
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+    ret += "-";
+    for (i = 7; i >= 6; i--)
+    {
+        //ret = ret + ('00' + (charCode & 0xFF00) >> 8);
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+    ret += "-";
+    for (i = 8; i <= 9; i++)
+    {
+        //ret = ret + ('00' + (charCode & 0xFF00) >> 8);
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+    ret += "-";
+    for (i = 10; i < 16; i++)
+    {
+        //ret = ret + ('00' + (charCode & 0xFF00) >> 8);
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+  
+    return ret;
+}
+```
+
+Thanks to community member Bradley Kite for providing this code.

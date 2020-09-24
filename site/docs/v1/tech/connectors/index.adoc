@@ -1,0 +1,62 @@
+---
+layout: doc
+title: FusionAuth Connectors
+description: FusionAuth Identity Providers
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+Connectors allow you to connect other sources of user data to your FusionAuth instance. Once the connection is created, you may either:
+
+* Authenticate the user against the external data source, or
+* Authenticate and migrate the user from the external data source to FusionAuth
+
+The following Connectors are currently available:
+
+* link:generic-connector[Generic Connector]
+* link:ldap-connector[LDAP Connector]
+* link:fusionauth-connector[FusionAuth Connector]
+
+If you're looking for a Connector not listed here, review the open feature requests in https://github.com/FusionAuth/fusionauth-issues/issues[GitHub] and either vote or comment on an existing feature, or open a new feature request if you do not find an existing issue.
+
+Find the FusionAuth Identity Providers in the administrative user interface by navigating to [breadcrumb]#Settings -> Connectors# or use the link:../apis/connectors/[Connectors] APIs.
+
+image::connectors/connectors-screen.png[Choose what type of Connector to create.,width=1200,role=shadowed]
+
+*This feature is available in all paid editions of FusionAuth. Please visit link:/pricing[our pricing page] to learn more about paid editions.*
+
+=== Authentication
+
+Using a Connector for authentication alone results in similar functionality to using the data source as an OIDC Identity Provider. Subsequent logins continue to use the external source as the System of Record, including for user data such as registrations and group membership.
+
+In contrast to using an OIDC Identity Provider, with a Connector the user doesn't choose their identity provider; the administrator does. In addition, if the data source contains additional user profile information, a Connector allows you to map that into your user object. Finally, the data provider doesn't have to implement the OIDC specification.
+
+Using a Connector for authentication allows you to use an external user management system as another data source for FusionAuth. If the data source can speak LDAP or HTTP, you can authenticate users against it.
+
+=== Migration
+
+In this scenario, the user data is migrated from the external data source to FusionAuth. Subsequent authentications will authenticate against the external data store, but data will note be migrated.
+
+Using a Connector in this way allows for a phased migration. Let your users sign in and migrate their data as they do so. All changes to user data like group membership should then be made in FusionAuth. You can run the old system for a time, then shut it off and remove its configuration, then relying on FusionAuth for all user authentication.
+
+== Connector Policies
+
+Connectors can be enabled on a per tenant basis. This is done with a Connector policy. These may change over time.
+
+In the following screenshot you will see that we have enabled two custom Connectors for the Default tenant. The default Connector is present as well. 
+
+image::connectors/tenant-connector-tab.png[The Tenant Connector policy configuration tab.,width=1200,role=shadowed]
+
+The order of operations matters for Connectors. The Connector policy rules are applied in order when a user authenticates for the first time.
+
+In the above system, first time users who have an email address with a domain `pipedpiper.com` will be authenticated against the Active Directory Connector. If they are not found, they'll be authenticated against the Legacy User API Connector. If they are not found in that system, the user will be authenticated against the FusionAuth Connector.
+
+Users who have an email address with any other domain will be authenticated against the Legacy User API Connector the first time they log in. If they are not found in that system, the user will be authenticated against the FusionAuth Connector.
+
+On authentication the Connector creates the user object and stores it into FusionAuth. Once a user is authenticated against a Connector, they will always be authenticated against that same data source. If a Connector is deleted, users will be authenticated against the Connectors in the order defined by the current policy.
+
+=== Domains
+
+A domain may be either be the string `*` in which case the Connector policy applies to all users, or a valid email domain such as `example.com` or `piedpiper.com`.
