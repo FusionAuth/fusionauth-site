@@ -276,7 +276,7 @@ To log in, click "Secure" and you'll be taken to the FusionAuth login page. Thes
 
 {% include _image.liquid src="/assets/img/blogs/active-directory-connector/webapp-login-page.png" alt="The log in pages for the web application." class="img-fluid" figure=false %}
 
-Sign in with the Active Directory user you added (I'll use John's login) and you'll be redirected back to a profile page.
+Sign in with the Active Directory user you added (I'll use John's login) and you'll be redirected back to a profile page. Note that I used `john@danadtest.fusionauth.io` as the username. That corresponds to "User UPN logon" value when I created this account in Active Directory, which is also the `userPrincipalName` value, used for the "Login Identifier Attribute" when configuring the Connector.
 
 {% include _image.liquid src="/assets/img/blogs/active-directory-connector/webapp-secured-page.png" alt="The web application profile page." class="img-fluid" figure=false %}
 
