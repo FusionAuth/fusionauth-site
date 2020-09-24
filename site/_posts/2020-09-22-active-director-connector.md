@@ -75,7 +75,7 @@ This post will set up the EC2 instance inside the private subnet, so the connect
 
 You are going to want to create two users in Active Directory.
 
-The first will be an adminstrative user who has at least read access to the section of the directory where the users to be authenticated are.
+The first will be an administrative user who has at least read access to the section of the directory where the users to be authenticated are.
 
 The second user is someone who will log in to FusionAuth, but be authenticated against Active Directory. Below, I'm adding John Stafford.
 
@@ -210,7 +210,7 @@ You'll want to provide the following information:
 * You can configure the timeouts. If the Connector can't connect or read from the LDAP server for longer than the respective timeout, an error will be written to the log and users who are associated with this Connector will not be able to authenticate.
 * Set the Lambda to the name of the Lambda you created previously.
 * Set the Base Structure to the DN of where you want to start the search. To search the entire directory, you'd use a structure like: `DC=piedpiper,DC=com`. If you want to search against only engineering, add the organization: `OU=engineering,DC=piedpiper,DC=com`.
-* Set the "System Account DN" which is basically the user to connect to Active Directory as. This account will then search for the user who is attempting to authenticate. You created this user above. TBD put name there. For example: `CN=ReadOnlyFusionAuthUser,OU=engineering,DC=piedpiper,DC=com`. You also need to provide the password for this account.
+* Set the "System Account DN". This is basically the user to connect to Active Directory as. This account will then search for the user who is attempting to authenticate. This is the admin user you created above. For example: `CN=ReadOnlyFusionAuthUser,OU=engineering,DC=piedpiper,DC=com`. You also need to provide the password for this account.
 * Configure the "Login Identifier Attribute". This is the attribute value where the username resides. For Active Directory, that is `userPrincipalName`.
 * Set the "Identifying Attribute". This is the entry attribute name which is the first component of the distinguished name of entries in the directory. `cn` is the correct value.
 
@@ -230,17 +230,17 @@ You can check the "Migrate User" option, which will cause FusionAuth to not chec
 
 {% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-tenant-connector-policy.png" alt="Setting up the policy for the Active Directory Connector." class="img-fluid" figure=false %}
 
-Order here matters; the Connectors are checked in order until the user is foundin one of them. At that point, the user is tied to that Connector and it will be used for future authentication attempts. Make sure that you move the Active Directory Connector above the Default Connector, so that it is tried first.
+Order here matters; the Connectors are checked in order until the user is found in one of them. At that point, the user is tied to that Connector and it will be used for future authentication attempts. Make sure that you move the Active Directory Connector above the Default Connector, so that it is tried first.
 
 {% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-tenant-order-connectors.png" alt="Setting up the policy order for the Active Directory Connector." class="img-fluid" figure=false %}
 
-Note that Connectors are configured on a tenant by tenant basis. FusionAuth supports multiple tenants out of the box, so if you need different Connector configurations, you can use multiple tenants. TBD what is reason for tis.
+Note that Connectors are configured on a tenant by tenant basis. FusionAuth supports multiple tenants out of the box, so if you need different Connector domains or orders, you can use multiple tenants.
 
 ## Set up and run the web application
 
 Now that you have the ability to authenticate against Active Directory, set up an application to test it out. If you want to write a payroll application, feel free. But for the sake of time, this post will use a previously written application, as mentioned initially. 
 
-To get started, clone [the ASP.NET Core application](https://github.com/FusionAuth/fusionauth-example-asp-netcore) from GitHub. Follow the instructions in the README, including updating the `appsettings.json` values:
+To get started, clone [the ASP.NET Core application](https://github.com/FusionAuth/fusionauth-example-asp-netcore) from GitHub. Follow the instructions in the `README`, including updating the `appsettings.json` values:
 
 ```json
 {
@@ -260,7 +260,7 @@ To get started, clone [the ASP.NET Core application](https://github.com/FusionAu
 }
 ```
 
-This application was originally written to run on Windows. However, .NET Core is cross platform. If you're on a mac and have the runtime, use the following commands to get it started (instead of the publis and start commands in the README).
+This application was originally written to run on Windows. However, .NET Core is cross platform. If you're on a mac and have the runtime, use the following commands to get it started (instead of the publish and start commands in the `README`).
 
 First, publish the binary: `dotnet publish -r osx.10.14-x64`. Then start up the application: `bin/Debug/netcoreapp3.1/osx.10.14-x64/publish/SampleApp`. 
 
