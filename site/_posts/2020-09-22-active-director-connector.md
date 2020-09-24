@@ -15,7 +15,7 @@ Microsoft's Active Directory is a common enterprise directory. If you are buildi
 
 Applications no longer have to understand LDAP or be able to connect to your Active Directory server. Any framework or application with OAuth/OIDC or SAML support can access FusionAuth for auth information, but the relevant user data remains in Active Directory.
 
-You can achieve this with the FusionAuth LDAP connector. This post will explain how to set up a connection between FusionAuth and Active Directory. For this post, [AWS Micosoft Managed AD](https://aws.amazon.com/directoryservice/active-directory/) is used, but the configuration and concepts will work with any Microsoft Active Directory instance.
+You can achieve this with the FusionAuth LDAP connector. This post will explain how to set up a connection between FusionAuth and Active Directory. For this post, [AWS Microsoft Managed AD](https://aws.amazon.com/directoryservice/active-directory/) is used, but the configuration and concepts will work with any Microsoft Active Directory instance.
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ To fully exercise this functionality, you need to have an application users can 
 
 Then, ensure you have FusionAuth installed and running. You can download and install FusionAuth [using Docker, RPM, or in a number of other ways](/docs/v1/tech/installation-guide/). You'll need at least version 1.18. Make sure you've [activated your instance](/docs/v1/tech/reactor) to enable the Connector feature.
 
-Next, make sure you have Active Directory available. Make sure it is accessible to the server running FusionAuth, since they will need to communicate. In my case, since AWS Microsft Managed AD doesn't by [default expose an interface to the outside world](https://forums.aws.amazon.com/thread.jspa?messageID=688592&#688592), I stood up a FusionAuth server on an EC2 instance in the same subnet. You could use a VPN, SSH tunnel or HTTP proxy in front of Active Directory as well.
+Next, make sure you have Active Directory available. Make sure it is accessible to the server running FusionAuth, since they will need to communicate. In my case, since AWS Microsoft Managed AD doesn't by [default expose an interface to the outside world](https://forums.aws.amazon.com/thread.jspa?messageID=688592&#688592), I stood up a FusionAuth server on an EC2 instance in the same subnet. You could use a VPN, SSH tunnel or HTTP proxy in front of Active Directory as well.
 
 Test that you can access the Active Directory instance from your FusionAuth server by installing `ldapsearch` and testing access. For an EC2 instance running Amazon Linux, these commands will ensure you can access Active Directory:
 
@@ -214,7 +214,7 @@ Configure the LDAP Connector by providing or modifying the following:
 * Set the "Reconcile lambda" to the previously created lambda, `ldapconnector` in my case.
 * The "Base structure" to the distinguished name (DN) where you want to start the search for the user. To search the entire directory, you'd use a structure such as `DC=piedpiper,DC=com`. If you want to search against only engineering, add the organization: `OU=engineering,DC=piedpiper,DC=com`.
 * Update the "System Account DN", which is basically the accounts which searches Active Directory for the user who is authenticating. This user needs at least read access to the directory starting at the "Base structure". I used the `Admin` account, since this is a tutorial. Make sure you use the DN, not just the username; for example: `CN=Admin,OU=engineering,DC=piedpiper,DC=com`. You also need to provide the password for this account.
-* Configure the "Login Identifier Attribute". This is attribute contains the username. For my Active Directory instance that is `userPrincipalName`.
+* Configure the "Login Identifier Attribute". This attribute contains the username. For my Active Directory instance that is `userPrincipalName`.
 * Set the "Identifying Attribute". This is the entry attribute name that is the first component of the DN of entries in the directory. `cn` is the correct value for this Active Directory instance.
 
 After all of the above are configured, you'll also want to specify which directory attributes will be requested from Active Directory. Anything stored in the Active Directory instance can be requested here, as long as the authenticating user has permissions to retrieve the information. AWS Microsoft Managed AD [runs Windows Server 2012](https://docs.aws.amazon.com/directoryservice/latest/admin-guide/directory_microsoft_ad.html), so this is [the list of available attributes](https://docs.microsoft.com/en-us/windows/win32/adschema/c-user#windows-server-2012). 
@@ -281,7 +281,7 @@ To log in, click the "Secure" link and you'll be taken to the FusionAuth login p
 
 {% include _image.liquid src="/assets/img/blogs/active-directory-connector/webapp-login-page.png" alt="The log in pages for the web application." class="img-fluid" figure=false %}
 
-Sign in with the Active Directory user you added (I'll use John's login) and you'll be redirected back to a profile page. Note that I used `john@danadtest.fusionauth.io` as the username. That corresponds to "User UPN logon" value I configured when I created this account in Active Directory. This is also the `userPrincipalName` value, which is what the "Login Identifier Attribute" Connector configuration was set to.
+Sign in with the Active Directory user you added (I'll use John's login) and you'll be redirected back to a profile page. Note that I used `john@danadtest.fusionauth.io` as the username. That corresponds to the "User UPN logon" value I configured when I created this account in Active Directory. This is also the `userPrincipalName` value, which is what the "Login Identifier Attribute" Connector configuration was set to.
 
 {% include _image.liquid src="/assets/img/blogs/active-directory-connector/webapp-secured-page.png" alt="The web application profile page." class="img-fluid" figure=false %}
 
