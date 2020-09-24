@@ -23,7 +23,7 @@ For lists:
 ### Proper names
 - macOS
 - Elasticsearch
- 
+- .NET Core
 
 ## Sizing Window for Screenshots
 
