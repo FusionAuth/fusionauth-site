@@ -52,10 +52,10 @@ ldap_sasl_interactive_bind_s: Unknown authentication method (-6)
 	additional info: SASL(-4): no mechanism available: 
 ```
 
-This message is Active Directory telling you two things. 
+This message is Active Directory telling you:
 
-* "Hey bonehead, provide me some credentials"
-* You can connect from your FusionAuth server to Active Directory
+* "Hey bonehead, provide me some credentials" in a polite way.
+* You can connect from your FusionAuth server to Active Directory.
 
 ### Configuring AWS Microsoft Managed AD
 
@@ -260,9 +260,9 @@ To get started, clone [the ASP.NET Core application](https://github.com/FusionAu
   },
   "AllowedHosts": "*",
   "SampleApp" : { 
-      "Authority" : "https://local.fusionauth.io",
-      "CookieName" : "sampleappcookie",
-      "ClientId" : "f81adc10-04f7-4546-8410-f9837ff248ab"
+    "Authority" : "https://local.fusionauth.io",
+    "CookieName" : "sampleappcookie",
+    "ClientId" : "f81adc10-04f7-4546-8410-f9837ff248ab"
    }
 }
 ```
