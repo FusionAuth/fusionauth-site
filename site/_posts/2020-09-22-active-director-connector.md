@@ -122,7 +122,7 @@ function reconcile(user, userAttributes) {
 }
 ```
 
-This code isn't too helpful though, as no user attributes are copied. At a minimum, you must set `user.id` and either `user.username` or `user.email`. You also probably want to set the `registrations` collection, which is the set of FusionAuth applications for which this user is authorized.
+This code isn't too helpful though, as no user attributes are copied. At a minimum, you must set `user.id` and either `user.username` or `user.email`. You also probably want to set the `registrations` collection, which is the set of FusionAuth applications for which this user is authorized. If you have multiple tenants, populate `user.tenantId` as well.
 
 The lambda will receive a `userAttributes` variable. This contains attributes requested from Active Directory (you'll configure this value below). From this, you can assemble a FusionAuth `user` object. All the normal [lambda limitations apply](/docs/v1/tech/lambdas/#limitations). The attributes of the `user` object are thoroughly documented in the [API docs](/docs/v1/tech/apis/users#create-a-user). 
 
