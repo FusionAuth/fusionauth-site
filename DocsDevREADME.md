@@ -10,6 +10,7 @@ Here are some guidelines to follow when writing documentation.
 - Don't abbreviate FusionAuth, use the full name.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - Use single backticks when specifying a value that is not a field.
+- Never use the term GUID, it's always UUID
 
 For blog posts:
 - Indent all code with two spaces per level.
