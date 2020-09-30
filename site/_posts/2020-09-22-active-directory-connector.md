@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Authenticating with AWS Managed Microsoft AD and LDAP
-description: You can use FusionAuth to authenticate users against Active Directory.
+title: Authenticating with AWS Managed Microsoft Active Directory and LDAP
+description: You can use FusionAuth LDAP connectors to authenticate users against Microsoft Active Directory.
 author: Dan Moore
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
 category: blog
@@ -17,7 +17,7 @@ Applications no longer have to understand LDAP or be able to connect to your Act
 
 You can achieve this with the FusionAuth LDAP connector. This post will explain how to set up a connection between FusionAuth and Active Directory. For this post, [AWS Microsoft Managed AD](https://aws.amazon.com/directoryservice/active-directory/) is used, but the configuration and concepts will work with any Microsoft Active Directory instance.
 
-## Prerequisites
+## Setting up Microsoft Active Directory 
 
 There are a few steps you need to take before you can dive into configuring the LDAP Connector. 
 
@@ -84,7 +84,7 @@ The second user is the account who will log in to FusionAuth and be authenticate
 
 I ran into an issue where when creating the user I required their password to be changed, which prohibited FusionAuth from authenticating them. If you run into issues, you can check by attempting to sign into the domain, perhaps using the EC2 instance which is set up to auth directly against Active Directory.
 
-## Configure FusionAuth
+## Setting up FusionAuth
 
 Next, you want to add an application in FusionAuth. An application is anything a user can sign into. We're going to reuse an [existing ASP.NET Razor Pages application](/blog/2019/05/06/securing-asp-netcore-razor-pages-app-with-oauth). While important, the application isn't the focus of this blog post, so if you want to learn more, check out the previous article. But let's pretend this application is an internal payroll application. Only users in Active Directory should be able to access it.
 
@@ -200,7 +200,7 @@ The functions `guidToString` and `decodeBase64` convert the `objectGUID` attribu
 
 If you are using version 1.19.7 or later, use the built in function instead: `FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGuid;binary'])`. See [the LDAP lambda docs](/docs/v1/tech/lambdas/ldap-connector-reconcile) for more information.
 
-### Configure the connector
+### Configure the LDAP Connector to interact with Microsoft AD
 
 Next, navigate to "Settings" and then "Connectors". Create a new Connector and select the LDAP option. You'll see this screen staring back at you:
 
