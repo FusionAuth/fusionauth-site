@@ -1,0 +1,72 @@
+---
+layout: doc
+title: Silent mode
+description: A guide to using silent mode during the installation and upgrade process of FusionAuth
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+Silent mode has been available in FusionAuth since version 1.0.0. This feature was previously called Silent Configuration and allowed you to configure the database for FusionAuth without the need to manually run the SQL scripts or to interactively use maintenance mode in the UI. Prior to version 1.19.0, silent mode was not available if the runtime mode was set to anything except `development`. This prevented production systems from accidentally being modified by silent mode. Since version 1.19.0, silent mode is now fully configurable and can be enabled even when the runtime mode is set to `production`.
+
+Silent mode serves two purposes that we will cover in the following sections: installation and upgrades. Keep in mind that both of these processes might fail so you should always be ready to intervene and you should always make backups of existing databases.
+
+== Installation
+
+Silent can be used to automatically create the database and schema that FusionAuth uses. It can also grant the correct privileges to the correct database users so that FusionAuth is not connecting to the database as a super user. When enabled, silent mode will perform the following steps:
+
+1. Open a raw socket to the database on the correct port to ensure it is reachable
+2. If the configuration contains super user credentials, attempt to connect to the FusionAuth database using the super user (i.e. the `fusionauth` database and not the `mysql` or `postgres` database)
+3. If the database doesn't exist in either case, silent mode will connect to the root database (i.e. `mysql` or `postgres` depending on the database server type) again using the super user credentials and create the database
+4. Attempt to connect to the root database (i.e. `mysql` or `postgres` depending on the database server type) using the super user credentials and check if the ordinary user exists
+5. If the ordinary user doesn't exist, attempt to create it and grant it all the necessary privileges to connect and use the FusionAuth database. This might also change the owner of the FusionAuth database to the ordinary user if you are using PostgreSQL
+6. Finally, silent mode connects to the FusionAuth database as the ordinary user and creates the FusionAuth schema
+
+Notice that we are saying "attempt" a lot. This is because silent mode will try each of the steps above and if any of them fail, it will exit and put FusionAuth into maintenance mode. This will then require you to remedy the situation and possibly restart FusionAuth to get it back into silent mode. When silent mode does fail, it will present an error message for you to try and figure out what happened. The error might look like this:
+
+image::guides/silent-mode/failure.png[Example of silent mode failure screen.,width=1200,role=box-shadow margin-right]
+
+All of the silent mode steps ensure that at the end of silent mode FusionAuth can connect to the database and function properly. This also prevents FusionAuth from entering the interactive maintenance mode.
+
+In order to configure FusionAuth to take these steps, you must specify a number of configuration properties. Luckily in 1.19.0, FusionAuth now supports specifying configuration properties using environment variables, command line properties, or the `fusionauth.properties` file. You can also mix and match these strategies. Here is an example configuration file that defines the necessary properties to enable silent mode and instruct it to install FusionAuth using the steps above:
+
+[source,properties]
+.Example configuration file
+----
+database.url=jdbc:postgresql://localhost:5432/fusionauth
+database.username=fusionauth
+database.password=ordinary-user-password
+database.root.username=postgres
+database.root.password=super-user-password
+
+fusionauth-app.runtime-mode=production
+fusionauth-app.silent-mode=true
+----
+
+As you can see, there is a new configuration property to enable silent mode. In addition, all of the necessary database information must be specified.
+
+=== Managed databases
+
+Some cloud providers don't provide access to a super user account and also don't allow you to connect to the "root" databases (i.e. `mysql` or `postgres`). Instead, they provision an ordinary user account and create an empty database for you to use. Often you can name this database to anything you want.
+
+For these types of situations, FusionAuth can still connect to the managed database and create all of the necessary tables it requires to run. The only difference is that you must not specify the root credentials in the configuration. Here's an example configuration that will allow silent to function without access to any super user information or database:
+
+[source,properties]
+.Example configuration file
+----
+database.url=jdbc:postgresql://localhost:5432/fusionauth
+database.username=fusionauth
+database.password=ordinary-user-password
+
+fusionauth-app.runtime-mode=production
+fusionauth-app.silent-mode=true
+----
+
+== Upgrades
+
+Using silent mode to upgrade a FusionAuth deployment is simple. The configuration you need to provide is the exact same as the configuration we covered above in the Installation section. It is recommended that you backup your FusionAuth database before performing a silent mode upgrade.
+
+The only additional step that you need to take is to upgrade the version of FusionAuth itself. When the new version of FusionAuth starts up, it checks the database to determine if there are any database migrations that need to be run. If there are, FusionAuth will run the migrations in order and then resume the startup process.
+
+Easy peasy!

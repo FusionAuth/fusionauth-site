@@ -1,0 +1,68 @@
+---
+layout: doc
+title: LDAP Connector
+description: Connect to an LDAP directory
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+LDAP Connectors allow you to authenticate users against or migrate them from an LDAP server accessible to FusionAuth.
+
+image::connectors/ldap-connector-create-screen.png[The LDAP Connector creation screen.,width=1200,role=shadowed]
+
+To use a LDAP Connector:
+
+* Ensure your LDAP server is accessible to the FusionAuth instance. This may entail setting up a VPN, locating FusionAuth in the correct network, or configuring a firewall to allow access.
+* Determine which LDAP user FusionAuth will connect as.
+* Create an link:../lambdas/ldap-connector-reconcile[LDAP reconcile Lambda] to map the directory attributes to FusionAuth user attributes.
+* Configure the Connector in [breadcrumb]#Settings -> Connectors#. At a minimum, configure
+** The LDAP URL and connection security
+** The previously created lambda
+** LDAP directory settings
+* Add the Connector Policy in [breadcrumb]#Tenants -> Your Tenant -> Connectors# to configure to which domains the connector applies.
+
+=== Active Directory
+
+User data stored in Microsoft Active Directory is accessible via LDAP. If you'd like to federate and allow some of your users to authenticate against Active Directory, use the LDAP Connector.
+
+Here's a video walking through such a configuration of FusionAuth and Microsoft Active Directory:
+
+video::Cqd7EgK4ess[youtube,width=560,height=315]
+
+=== LDAP Directory Settings
+
+These allow FusionAuth to access your LDAP directory and map the data from it to FusionAuth.
+
+==== Base Structure
+
+Where in the directory to start looking for your users. To search the entire directory, you'd use a structure like: `DC=piedpiper,DC=com`. If you want to search against only engineering, add the organization: `OU=engineering,DC=piedpiper,DC=com`.
+
+==== System Account DN
+
+The distinguished name of an entry which has read access to the directory. For example: `CN=ReadOnlyFusionAuthUser,OU=engineering,DC=piedpiper,DC=com`.
+
+==== System Account Password
+
+The password of the System Account DN.
+
+==== Login Identifier Attribute
+
+The value that the user would enter for their username on a login screen. For example: `uid` or `userPrincipalName`.
+
+==== Identifying Attribute
+
+The entry attribute name which is the first component of the distinguished name of entries in the directory. For example: `cn`.
+
+==== Requested attributes
+
+The list of requested directory attributes to be returned. These will be passed to the lambda to be converted into FusionAuth user attributes. For example: `cn givenName sn userPrincipalName mail`. 
+
+In the administrative user interface, these must be added one at a time.
+
+=== Security
+
+You can connect to your LDAP server via either LDAPS or StartTLS. 
+
+You may also use an unencrypted connection. This is not recommended unless you use an alternative method of securing your connection, such as a VPN.
