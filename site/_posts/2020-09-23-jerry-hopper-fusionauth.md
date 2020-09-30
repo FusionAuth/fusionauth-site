@@ -34,59 +34,69 @@ With the 'rise of ARM devices' thanks to the Raspberry Pi, I discovered that Fus
 
 **Dan:** What problems did FusionAuth solve for you? And how were you solving them before FusionAuth?
 
-**Jerry:** 
+**Jerry:** The best thing about Fusionauth is that I never have any headaches about authentication mechanisms. In my pre-FusionAuth era, I was more or less dependent on services like 'login with google/facebook'. This doesn't work well when you are developing on places where there is no network.
 
-We wanted to offer OAuth capabilities for our customers as well in the near future. This is not something we've implemented yet because of some intricacies with FusionAuth and offering it as a service for our customers. We do use it for our 3rd party integrations we're working on building now, such as Integromat and Zapier as well as internal applications.
+Another nice aspect is that FusionAuth is api-driven, and has very complete logging, which makes it a breeze to make your applications GPDR compliant.  
 
-We're using FusionAuth's OIDC to authenticate users on Integromat (we have not begun building our Zapier integration yet, it's in the plan). The Integromat integration allows users to trigger the creation of game servers, kicking players, updating their ban list, receiving analytical data, etc. from Integromat. 
+The fact that fusionauth supports multiple tenants on one instance, helps when developing several different projects. 
 
-This opens up a bunch of codeless integrations for things like "When I type `!restart minecraft` in Discord, restart my Minecraft server" or "When I type `!banlist` in Discord, send a message in response with all people who are banned from my game servers". FusionAuth is the critical piece because the OIDC functionality made API authentication for Integromat super simple.
+However, the main problem that FA solves, is development time and authentication headaches.  
+
+**Dan:** Can you talk a bit more about how you use FusionAuth to make your projects GDPR compliant?
+
+**Jerry:** We compiled a list with minimal needs for the auth service that at least 'show your intentions to follow GDPR'. (Yes, intentions were very much a thing when GDPR was introduced and still is. Proof of good intentions can save you money when GDPR violations are judged or fined):
+
+Our gdpr checklist for an auth service:
+
+1. Hosted in EU
+1. Account export 'self service'
+1. Account removal 'self service'
+1. Password strength / 2fa 
+1. Auditing/logging
+1. Data encryption options
+1. Anonymization
+
+So, essentially we looked for the best product that could meet these needs. For FusionAuth, the checklist looked like:
+
+Point 1: hosted in EU - check!
+
+Points 2 and 3: self-service - check! (thanks to the API)
+
+Point 4: password strength/2fa - check
+
+Point 5: logging/audit - check
+
+Point 6: encryption - database encryption is not required or nessecary, but it is possible with postgreSQL. One drawback is that elastic doesn't support table level encryption. However, all passwords are stored securely in the database.
+
+Point 7: Anonymization - check, FA JWT claims can be modified when issued [to remove user data].
+
+When looking at the pure backend of the authentication service - FusionAuth has all GDPR headaches covered. Obviously a lot of GDPR compliance needs to come from the custom code in the application we build, but FusionAuth's API allowed us to do this with ease. Having the authentication separate from the main application gives the flexibility to adapt.
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
-**Jerry:** If I said it was anything but cost, I'd be lying. We were fed up with the idea of having to pay per MAU when we didn't really know what our MAU count would be since we're just now starting. We also didn't see the value in the MAU count packages offered by competitors. Having the flexibility to start with self-hosting and later to go to FusionAuth cloud when we're tired of managing the servers is the greatest part.
+**Jerry:** Well, I initally tried some OpenSource CAS software, which was way overcomplicated to setup and maintain. After that i used Bshaffer's [OAuth2 server](https://bshaffer.github.io/oauth2-server-php-docs/) - a php implementation which requires a lot of custom coding. Although I learned a lot about Oauth2, JWT, and openID, I somehow stumbled on Fusionauth. When i saw this 'out-of-the-box' signup, login and administration screens, I never went back! 
  
 **Dan:** How do you run FusionAuth (kubernetes, standalone server, behind a proxy, etc)?
 
-**Jerry:** Right now we run FusionAuth on a Debian machine as an rpm package behind an ELB, but Kubernetes is in the works.
+**Jerry:** All my FusionAuth instances run on docker, obviously behind an (nginx) proxy. 
 
-> "Having the flexibility to start with self-hosting and later to go to FusionAuth cloud when we're tired of managing the servers is the greatest part."
+For offline/external development I run a FusionAuth server on a NanoPi Neo2 SBC which I carry with me wherever my laptop goes. 
+
+
+> aaa
  
 **Dan:** Any general feedback/areas to improve?
 
-**Jerry:** We love FusionAuth, but there are definitely some areas (Two-Factor Authentication recovery codes, session invalidation, exposing OAuth for customers to integrate) that are slightly irritating. 
+**Jerry:** Im not sure - although I think for completeness sake the 'Client-Credentials' grant should be implemented.  
 
-However, they don't overshadow the benefits we get from FusionAuth as a solution itself.
+Oh, and would love to see official multi-arch docker builds  ;). 
 
 -------
 
-We love sharing customer stories. You can check out [Contaim's website](https://contaim.io/) if you'd like to learn more about his company.
+We love sharing community stories. You can check out [Contaim's website](https://contaim.io/) if you'd like to learn more about his company.
 
+    Jerry hopper, community maintainer Arm/Arm64 FA  repository  ( https://hub.docker.com/repository/docker/jerryhopper/fusionauth-app )
 
-
-
-Tell me a bit about your work as a developer.
-
-
-
-How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
-
-
-Im using fusionauth in several ways.  Mostly in my work-projects the choice of which IDP to use is already decided - if not, i recommend FA!. In my personal projects i use fusionauth as centralized idp server for applications like gitlab, blogs, wiki's and  m2m authentication via api's 
-With the 'rise of Arm devices'  -thanks to the raspberry pi-  i discovered that FusionAuth was able to run on Arm/Arm64 - and im maintaining a fusionauth docker-repo for it. Since then a 1gb sbc powers my oauth2_proxy
- 
- What problems did we solve for you? And how were you solving them before FusionAuth?
- The best thing about Fusionauth is that i never have any headaches about authentication mechanisms. In my pre-fusionauth era,i was more or less dependent on services like 'login with google/facebook' - which doesnt work nice when you are developing on places where there is no network.
- Another nice part is that fusionauth is api-driven, and has very complete logging, which makes it a brease to make your applications GPDR compliant.  
- The fact that fusionauth supports multiple tenants on one instance, helps when developing several different projects
- Besides all of the above - the main problem that FA solves, is development time and authentication headaches.  
-  
-  Why did you choose FusionAuth over the competition?
-   Well, i initally tried some opensource CAS, which was way overcomplicated to setup and maintain. After that i used Bshaffers Oauth2 server - a php implementation which requires a lot of custom coding.  Although i learned a lot about oAuth2 JWT and openID - i somehow stumled on Fusionauth and when i saw this 'out-of-the-box' signup, login and administration screens -  never went back! 
-
-   Any general feedback/areas to improve?
-
-    Im not sure - although i think for completeness-sake the 'Client-Credentials'  grant should be implemented.  - oh, and would love to see official multiarch docker builds  ;)
 
     What link would you like me to use when I introduce you (Jerry, from <company X>, or something different)
 
@@ -94,9 +104,6 @@ With the 'rise of Arm devices'  -thanks to the raspberry pi-  i discovered that 
 
 
      
-     How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
-      All my FusionAuth instances run on docker, obviously behind a (nginx) proxy. For offline/external development i run a FusionAuth server on a nanopi neo2 sbc which i carriy with me wherever my laptop goes. 
-       
 
 
 
@@ -128,28 +135,6 @@ Currently, im into php-Swoole docs. but if you are referring to my favorite pape
 
   
   * can you talk a bit more about how you use FusionAuth to make your projects GDPR compliant?
-
-  We compiled a list with minimal needs for the auth-service that at least 'show your intentions to follow gdpr'  ( yes, intentions was very much a thing when gdpr was introduced- and still is. proof of good intentions can save $ when gdpr violations are judged/fined):
-
-  Our gdpr checklist for Auth-Service
-  1. Hosted in EU
-  2. Account export 'self service'
-  3. Account removal 'self service'
-  4. Password strengt / 2fa 
-  5. Auditting/logging
-  6. Data encryption options
-  7. Anonimsation
-
-  So, essentially we looked for the best product that could meet these needs.
-  1. hosted in EU - check!
-  2/3. self-service - check! (thanks to the API)
-  4. password strength/2fa - check
-  5. logging/audit - check
-  6. Encryption -  db-encryption is  not required or nessecary - but it is possible with pgsql. Drawback - elastic doesnt support table level encryption. but FA passwords are stored secure.
-  7. Anonymisation - check, FA JWT claims can be modified when issued.
-
-  When looking at the pure backend of the authentication service - fusionauth has all GDPR headaches covered. Obviously - a lot of gdpr compliance needs to come from the custom code in the application we build,  but the  fusionauth's api allowed us to do this with ease. Having the authentication separate from the main application gives the flexibility to adapt.
-   
    * why don't you use fusionauth on your laptop instead of carrying around the nanopi neo2? Just because deploying FusionAuth to the nanopi is more fun :) ?
     
     When i worked at BLS-ICT, there was a need for a CAS server. The boss decided more or less he wanted Apereo/Cas implementation. i wasnt convinced. so after some research i introduced FA to my collegues while the choice was already set for Apereo/Cas. Initially i introduced FusionAuth to my collegues on a vm on my machine.   So - in their 'spare' time, they would be playing around with FA.  But i was both developer as well as technical support for some clients, for who i needed to use vpn, And when i was on the VPN - my collegues couldnt reach my virtual fusionauth instance.  My boss wouldnt allow me to run a FA on the dev-servers, so i just plugged a nanopi in the network so my collegues could play with it, even when i wasnt there.  It was my way of trying to convince my collegues - and giving the application maximum exposure.  i think after 1-2 months - i decided  to deploy a Arm64 device with fusionAuth in the office - as i wasnt allowed to run a dedicated one on development servers. i do think that the web-interface and 'local availability' of the fusionauth instance was the key to get to convince my collegues that FA was very suitable to us.
