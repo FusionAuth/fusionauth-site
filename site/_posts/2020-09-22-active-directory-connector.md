@@ -78,11 +78,11 @@ You are going to want to create two users in Active Directory.
 
 The first will be an administrative user who has at least read access to the section of the directory where the internal user accounts are stored. When I created the directory, there was an `Admin` account created as well, so I'll use that.
 
-The second user is will log in to FusionAuth and be authenticated against Active Directory using the Connector. Below, I'm adding John Stafford. 
+The second user will log in to FusionAuth and be authenticated against Active Directory using the Connector. Below, I'm adding John Stafford. 
 
 {% include _image.liquid src="/assets/img/blogs/active-directory-connector/active-directory-add-user.png" alt="Adding a user in Active Directory." class="img-fluid" figure=false %}
 
-I ran into an issue where when creating the user I required their password to be changed. This blocked prohibited FusionAuth from authenticating them. If you run into such issues, you can check by attempting to sign in to the domain, perhaps using the EC2 instance which is set up to auth directly against Active Directory.
+I ran into an issue where when creating the user I required their password to be changed. This blocked FusionAuth from authenticating them. If you run into such issues, you can check by attempting to sign in to the domain, perhaps using the EC2 instance which is set up to auth directly against Active Directory.
 
 ## Configure FusionAuth
 
