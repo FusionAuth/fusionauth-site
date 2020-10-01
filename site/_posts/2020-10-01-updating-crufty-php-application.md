@@ -1,21 +1,21 @@
 ---
 layout: blog-post
-title: Update a crufty PHP application to use OIDC for authorization
-description: Implement authentication and authorization using FusionAuth for a gateway API application that routes to two different microservices.
+title: Update a line of business PHP application to use OAuth for authorization
+description: We all have them. Line of business applications that have their own user datastore. How can you update them to use a centralized user datastore?
 author: Dan Moore
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
 category: blog
-tags: client-php feature-connectors
+tags: client-php
 excerpt_separator: "<!--more-->"
 ---
 
 Sometimes applications get written by interns. Sometimes prototypes get put into production. Sometimes crufty old applications, called "legacy" by some, are called "money makers" by others.
 
-But once you introduce an auth system such as FusionAuth, you may want to control access to all applications, even those who might not have been written with OIDC/OAuth in mind.
+But once you introduce an auth system such as FusionAuth, you want to control access to all applications, even those not written with OIDC/OAuth in mind.
 
 <!--more-->
 
-In this two part series, you'll update a line of business PHP application with its own user data store to use a modern auth system. In the second part, you'll learn about two methods to migrate accounts and profile data from a legacy data store to FusionAuth.
+In this two part series, you'll update a (fake) line of business PHP application with its own user data store to use a modern auth system. In the second part, you'll learn about two methods to migrate accounts and profile data from a legacy data store to FusionAuth.
 
 The code is all available in a [FusionAuth GitHub repository](https://github.com/fusionauth/fusionauth-example-php-connector) so you can clone and follow along if you'd like.
 
@@ -28,7 +28,7 @@ You'll need to have a few things set up before you get going.
 
 ## Introducing the legacy app
 
-The application you are planning to upgrade has an auth system, it just happens to be homegrown. This causes issues because it's hard to integrate with other systems, no one cares about it unless it doesn't work, and it takes time away from adding features to the app.
+The "fake" application this post will upgrade has an auth system, it just happens to be homegrown. This causes issues because it's hard to integrate with other systems, no one cares about auth unless it doesn't work and then they jump up and down, and care and feeding of the auth subsystem takes time away from adding features to the app.
 
 This application can be viewed by checking out the `insecure-legacy-app` branch. You can also [view it online](https://github.com/FusionAuth/fusionauth-example-php-connector/tree/insecure-legacy-app). Basically, there's an index page and a way to sign in and sign out. All the money making business logic, whether that's a way to update inventories, help customers or bill vendors, has been left as an exercise for the reader.
 
@@ -92,7 +92,13 @@ header("Location: /");
 
 `authenticate.php` calls the `auth` function, which determines if the user provided the correct credentials. 
 
-Before you log in, you'll see something like this:
+You can run this application by running:
+
+```shell
+php -S 0.0.0.0:8000
+```
+
+Visit `http://localhost:8000` to see this application in action. Before you log in, you'll see something like this:
 
 pic TBD
 
@@ -104,7 +110,9 @@ Let's go ahead and start updating the application to use a modern auth protocol:
 
 ## Configuring an application in FusionAuth
 
-Once you have FusionAuth installed, you need to configure an application to correspond to the legacy PHP application. Let's call it "The ATM" because of how much profit this application throws off. Navigate to "Applications" in the administrative user interface and create a new one. Go to the OAuth tab and ensure that the "Authorization Code" grant is checked. Add a redirect URL of `http://localhost:8000/oauth-callback.php`. At the end, it should look like this:
+You need to configure an application in FusionAuth to correspond to the legacy PHP application. Let's call it "The ATM" because of how much profit this application throws off. Note that you can have as many applications and users as you want.
+
+Navigate to "Applications" in the administrative user interface and create a new one. Go to the OAuth tab and ensure that the "Authorization Code" grant is checked. Add a redirect URL of `http://localhost:8000/oauth-callback.php`. At the end, it should look like this:
 
 pic TBD
 
@@ -114,11 +122,15 @@ Save the application, and then add a user who is registered to the application. 
 
 pic TBD
 
+Finally, you need the tenant identifier. If you just installed FusionAuth there is only one tenant, but it supports multiple tenants. Navigate to "Tenants" and copy the id of the "Default" tenant. 
+
 That's all for FusionAuth configuration. Now let's look at the PHP application.
 
 ## Updating the PHP app
 
-To update the "The ATM" PHP application, use composer to pull in a standard OAuth library. Instead of using the `auth` function, this code redirects to FusionAuth. It uses the Authorization Code grant to ensure that the user is authorized, then uses OIDC to retrieve customer data.
+To update the "The ATM" PHP application, use composer to pull in an OAuth library. Instead of using the `authenticate.php` file, this code redirects to FusionAuth. 
+
+The changes to this application can be viewed by checking out the `auth-with-oauth` branch. You can also [view it online](https://github.com/FusionAuth/fusionauth-example-php-connector/tree/auth-with-oauth). It uses the Authorization Code grant to ensure that the user is authorized, then uses an OIDC endpoint to retrieve customer data.
 
 First, update your `composer.json` file to look like this:
 
@@ -130,13 +142,13 @@ First, update your `composer.json` file to look like this:
 }
 ```
 
-This will pull in a [well supported OAuth client library](https://github.com/thephpleague/oauth2-client). Using this library reduces the integration with FusionAuth to a few lines of configuration. The generic provider works just fine. Install the new dependencies:
+This will pull in a [well supported OAuth client library](https://github.com/thephpleague/oauth2-client). Using this library reduces the integration with FusionAuth to a few lines of configuration. The generic provider works fine. Install the new dependencies:
 
 ```shell
 composer install
 ```
 
-You'll also need to set up the `config.php` file with the OAuth secrets you noted above:
+You'll also need to set up the `config.php` file with the OAuth secrets and tenant identifier you recorded above: 
 
 ```php
 <?php
@@ -250,69 +262,11 @@ This code verifies that the `state` parameter is unchanged and then retrieves an
 
 pic TBD 
 
+But we know the user is authenticated and have the user object in the session. This can be checked for authorization purposes.
 
+## Next steps
 
-## Configuring FusionAuth
+That's great, you've converted this application to use a central datastore. You get all the benefits of centralized auth management, including easy administration of new users and offloading of the complexities and security risks to a focused software package.
 
-The first thing to do is to log into the administrative user interface and set up an application. As a reminder, an application is anything 
+This flow works great for new users. But how do you get the existing users into FusionAuth? Ah, yes, that is important. Important enough to be the topic of an entirely separate, upcoming post.
 
-
-
-
-If you have a crufty old application which has its own, custom rolled auth system,
-
-
-TODO break into two blog posts
-
-first is converting a legacy php app to use oauth, and bailing if they aren't allowed to access the application
-
-second is pulling user data into that application via the generic connector.
-
-Have you ever had a legacy application that you wanted to shift to a different user datastore? And by "legacy" I mean, makes the company money? 
-
-You want to gain the security and functionality benefits of a modern identity provider, but you also want to avoid a risky, big bang migration. You may want to consider a phased migration. 
-
-<!--more-->
-
-Connectors can help you perform just such a migration. If you configure your Connectors to migrate users as they authenticate, each user will be moved over from the user datastore as they authenticate.
-
-At that time, they'll be full FusionAuth users. The external datastore won't be consulted in the future. It'll look a bit like this:
-
-
-{% plantuml source: _diagrams/blogs/generic-connector/first-time.plantuml, alt: "The first time a user authenticates." %}
-
-{% plantuml source: _diagrams/blogs/generic-connector/subsequent-times.plantuml, alt: "Subsequent times a user authenticates." %}
-
-
-, 
-
-
-Migrating users from a legacy user store.
-
-Have you ever wanted to migrate users from an existing database to a central one?
-
-<!--more-->
-
-you could have one or more existing applications. you might want to move users from them to a central auth system.  
-
-you could move people in a big bang migration. if so, you'd want to use the import users api, perhaps with a password plugin (helpful if you have a custom hashing scheme)
-
-you could also move these users bit by bit, as they login. generic connectors can help you do that.
-
-The way this would go is:
-
-* build an API in your existing application which takes the username and password and returns a JSON login response. protect that API by serving it over TLS and using basic authentication.
-* configure the connector
-* let it run for a while
-* reports to see how many users are moved.
-* when you reach a certain timeline or percentage moved over delete it 
-* users now auth against fusionauth
-* migrate the rest of the users (if needed) using the apis
-
-Any new password changes or other data changes will happen in FusionAuth, not in the external data source.
-password changes
-new registrations
-
-example with php auth 
-
-run through the scenario
