@@ -9,9 +9,29 @@ tags: client-php feature-connectors
 excerpt_separator: "<!--more-->"
 ---
 
-TODO break into two blog posts
+Once you have migrated an application to use a modern data store, how can you migrate your users?
 
-first is converting a legacy php app to use oauth, and bailing if they aren't allowed to access the application
+<!--more-->
+
+Previously, you updated a legacy line of business PHP application to use [OAuth and FusionAuth to authenticate users](TBD). 
+
+You can also create [roles in the application](/docs/v1/tech/core-concepts/roles), and assign them to users to enable or prohibit certain actions. 
+
+In this post, you'll create some roles in your application and display different data based on the role of the user. You'll also learn about  
+
+maybe do roles in first post?
+
+But how do you migrate users
+
+## why migrate
+
+## big bang
+
+## as authed
+
+## add roles
+
+
 
 second is pulling user data into that application via the generic connector.
 
@@ -25,14 +45,7 @@ Connectors can help you perform just such a migration. If you configure your Con
 
 At that time, they'll be full FusionAuth users. The external datastore won't be consulted in the future. It'll look a bit like this:
 
-
-{% plantuml source: _diagrams/blogs/generic-connector/first-time.plantuml, alt: "The first time a user authenticates." %}
-
-{% plantuml source: _diagrams/blogs/generic-connector/subsequent-times.plantuml, alt: "Subsequent times a user authenticates." %}
-
-
-, 
-
+tbd diagram
 
 Migrating users from a legacy user store.
 
