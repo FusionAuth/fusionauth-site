@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Update a line of business PHP application to use OAuth for authorization
+title: Update a line of business PHP application to use OAuth
 description: We all have them. Line of business applications that have their own user datastore. How can you update them to use a centralized user datastore?
 author: Dan Moore
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
@@ -102,11 +102,11 @@ php -S 0.0.0.0:8000
 
 Visit `http://localhost:8000` to see this application in action. Before you log in, you'll see something like this:
 
-pic TBD insecure-php-application-main-screen.png
+{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/insecure-php-application-main-screen.png" alt="The login screen for the legacy PHP application." class="img-fluid" figure=false %}
 
 After you login, you'll see a screen like this:
 
-pic TBD insecure-php-application-loggedin-screen.png
+{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/insecure-php-application-loggedin-screen.png" alt="The screen for authenticated users in the legacy PHP application." class="img-fluid" figure=false %}
 
 Now that you've seen the basics, let's go ahead and start updating the application to use a modern auth protocol: OAuth.
 
@@ -116,13 +116,15 @@ You need to configure an application in FusionAuth to correspond to the legacy P
 
 Navigate to "Applications" in the administrative user interface and create a new one. Go to the OAuth tab and ensure that the "Authorization Code" grant is checked. Add a redirect URL of `http://localhost:8000/oauth-callback.php`. At the end, it should look like this:
 
-pic TBD the-atm-oauth-configuration
+{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/the-atm-oauth-configuration.png" alt="Adding an application in FusionAuth." class="img-fluid" figure=false %}
 
 View the application using the green magnifying glass and scroll down to the "OAuth Configuration" section. Note the `Client ID` and `Client Secret` values, which you'll use below.
 
+{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/the-atm-oauth-configuration.png" alt="Finding the Client ID and Client Secret." class="img-fluid" figure=false %}
+
 Save the application, and then add a user who is registered to the application. Navigate to "Users" and add a user. Then go to the "Registrations" tab and register them to "The ATM" application so they can continue to log in and do their job.
 
-pic TBD user-added-to-application.png
+{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/user-added-to-application.png" alt="A user has been registered to the legacy application." class="img-fluid" figure=false %}
 
 Finally, you need the tenant identifier. If you just installed FusionAuth there is only one tenant, but FusionAuth supports multiple tenants, as many as you want. Navigate to "Tenants" and copy the id of the "Default" tenant. 
 
@@ -130,9 +132,11 @@ That's all for FusionAuth configuration. Now let's look at the PHP application a
 
 ## Updating the PHP app
 
-To update the "The ATM" PHP application, you'll use composer to add a dependency on an OAuth library. Instead of using the `authenticate.php` logic, redirect to FusionAuth. 
+To update the "The ATM" PHP application, you'll use composer to add a dependency on an OAuth library. Instead of using the `authenticate.php` logic, redirect to FusionAuth. Here's a diagram of the new flow:
 
-The changes to the application can be viewed by checking out the `auth-with-oauth` branch in the repo. You can also [view it online](https://github.com/FusionAuth/fusionauth-example-php-connector/tree/auth-with-oauth). These changes use the Authorization Code grant to ensure that the user is authorized, then use an OIDC endpoint to retrieve user data.
+{% plantuml source: _diagrams/blogs/update-php-application/authorization-code-grant.plantuml, alt: "The Authorization Code grant data flow." %}
+
+This section will walk through the changes, but they can be viewed by checking out the `auth-with-oauth` branch in the repo. You can also [view it online](https://github.com/FusionAuth/fusionauth-example-php-connector/tree/auth-with-oauth). These changes use the Authorization Code grant to ensure that the user is authorized, then use an OIDC endpoint to retrieve user data.
 
 Update your `composer.json` file to look like this:
 
@@ -204,15 +208,9 @@ Welcome to the application.
 <?php } ?>
 ```
 
-With this change, you've updated this application to authenticate using OAuth and OIDC rather than a crufty local datastore.
+With this change, you've updated this application to authenticate using OAuth and OIDC rather than a crufty local datastore. The entire `authenticate.php` file is now obsolete. Instead of posting to the internal datastore, the user is directed to the FusionAuth hosted login pages when they click "Login". This is what they'll see (this is the default look and feel, but [these pages can be themed](/docs/v1/tech/themes/)):
 
-Here's a diagram of what the flow is:
-
-{% plantuml source: _diagrams/blogs/update-php-application/authorization-code-grant.plantuml, alt: "The Authorization Code grant data flow." %}
-
-The entire `authenticate.php` file is now obsolete. Instead of posting to the internal datastore, the user is directed to the FusionAuth hosted login pages when they click "Login". This is what they'll see:
-
-pic TBD user-login-screen.png
+{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/user-login-screen.png" alt="The screen a user sees when logging in." class="img-fluid" figure=false %}
 
 After they authenticate, the `oauth-callback.php` code will be executed. It looks like this:
 
