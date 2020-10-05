@@ -55,7 +55,7 @@ We will see the maintenance mode form that requires a super user credential for 
 
 {% include _image.liquid src="/assets/img/blogs/golang-oauth/maintenance-mode-database.png" alt="The FusionAuth maintenance mode screen, including the super user configuration." class="img-fluid" figure=false %}
 
-It will use this to create a fusionauth user as specified further down the maintanence mode page:
+It will use this to create a database user for FusionAuth to connect to, as specified further down the maintenance mode page:
 
 {% include _image.liquid src="/assets/img/blogs/golang-oauth/maintenance-mode-database-lower.png" alt="Adding a user for FusionAuth to connect as." class="img-fluid" figure=false %}
 
@@ -160,11 +160,11 @@ func init() {
 //...
 ```
 
-Here, we have defined the OAuth instance inside the `init` function. This fucntion is called and run every time the application is started. In a production application, these values may be pulled from a configuration file or a database table.
+Here, we have defined the OAuth instance inside the `init` function. This function is called and run every time the application is started. In a production application, these values may be pulled from a configuration file or a database table.
 
 ## Adding our display
 
-Now, we need to display a page. For the `handleMain` function, we are hardcoding HTML as shown below, but for a larger application you might want to look at a templating language: 
+Now, we need to display a page. For the `handleMain` function, we are hard coding HTML as shown below, but for a larger application you might want to look at a templating language: 
 
 ```go
 //...
@@ -279,7 +279,7 @@ func getUserInfo(state string, code string) ([]byte, error) {
 
 That's a fair bit of code, let's break it down:
 
-* First, we check the `state` parameter received from the server matches what we sent. This is to prevent CSRF attack.
+* First, we check the `state` parameter received from the server matches what we sent. This is to prevent CSRF attacks.
 * Then, we exchange the `code` parameter and retrieve an access token.
 * Next, we construct a request to a well known user information endpoint with an `Authorization` header, using the access token as a bearer token.
 * Last, we print the response from the server.
