@@ -175,6 +175,7 @@ $user['tenantId'] = $tenant_id;
 
 $data = [];
 $data['favoriteColor'] = 'blue';
+$data['migratedFromTheAtmDatastore'] = true;
 $user['data'] = $data;
 
 $registrations = [];
@@ -220,11 +221,12 @@ You can set values on the user object. These are hardcoded or pulled from config
 //...
 $data = [];
 $data['favoriteColor'] = 'blue';
+$data['migratedFromTheAtmDatastore'] = true;
 $user['data'] = $data;
 //...
 ```
 
-You can populate the `data` field with arbitrary key value data about the user.
+You can populate the `data` field with arbitrary key value data about the user. In this case, the code is also adding a boolean attribute to be searched so that the progress of the migration can be calculated.
 
 ```php
 //...
@@ -252,8 +254,7 @@ Give it a name, like "My ATM Connector", and update the "Authentication URL" wit
 
 pic tbd generic-connector-create.png
 
-Then you need to configure the tenant to use this connector. 
-Navigating to "Tenants", "Your Tenant" and then the "Connectors" tab. Create a new policy. 
+Then you need to configure the tenant to use this connector. Navigating to "Tenants", "Your Tenant" and then the "Connectors" tab. FusionAuth supports multiple tenants, but for this post you can keep everything in a single one. Add a new policy. 
 
 Select the Connector you created and change the domain if needed; that's only required if a subset of users, differentiated by email domain, will be the only accounts authenticated against this Connector.
 
@@ -267,7 +268,14 @@ Make sure you save your tenant settings by clicking the blue "save" icon in the 
 
 You would then let the "The ATM" application run for a while. Users will be migrated over and registered with the application. Make sure that any users registering, should you allow that, register with FusionAuth and not the legacy application.
 
-Compare the numbers of users in FusionAuth to the number of users in your legacy data store by navigating to "Users" and searching for users registered for your application (if you are using the Elasticsearch search engine). Comparing this with the active user count in the legacy datastore will give the progress of the migration. 
+Compare the numbers of users in FusionAuth to the number of users in your legacy data store by navigating to "Users" and searching for users registered for your application (if you are using the Elasticsearch search engine) with a `user.data.migratedFromTheAtmDatastore` value of `true`. Comparing this with the active user count in the legacy datastore will give the progress of the migration. 
+
+You will start to see users registered to your application, with the correct user data:
+
+pic tbd
+
+new-user-added-registration.png
+new-user-added-user-data.png
 
 After it has run for a while and has migrated the majority of your users, you can make a decision about what to do with the other users. If you've run the phased migration for six months or a year, it may be that the users who haven't signed in have abandoned your application. 
 
@@ -281,4 +289,8 @@ You can also remove the `fusionauthconnector.php` file from your application, as
 
 ## Conclusion
 
-There are many ways to migrate your user data. For some a big bang approach with a single cutover date makes sense. For others, a phased migration, where users are migrated whenever they authenticate, will make for a smoother experience. 
+There are many ways to migrate your user data. For some situations a big bang approach with a single cutover date makes sense. For others, a phased migration, where users are migrated whenever they authenticate, will make for a smoother experience. 
+
+If you'd like to look at the [GitHub repo with the generic Connector example code](https://github.com/fusionauth/fusionauth-example-php-connector), feel free.
+
+Happy coding!
