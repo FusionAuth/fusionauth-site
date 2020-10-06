@@ -261,7 +261,7 @@ try {
 
 This code verifies that the `state` parameter is unchanged and then retrieves an access token (which is typically a JSON Web Token, or JWT) using the `code` request parameter. The access token is then presented to an endpoint which returns user data. That is stored in the session and the user is sent back to the index page, which is unchanged from above.
 
-However, the application knows the user is authenticated. It has the `user` object in the session, which can be checked for authorization purposes.
+However, the application knows the user is authenticated. It has the `user` object in the session, which can be checked for authorization purposes. You could also add roles to the FusionAuth user and control access to application functionality based on the user's role.
 
 ## Next steps
 
