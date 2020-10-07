@@ -3,7 +3,7 @@ layout: blog-post
 title: Securing your legacy PHP business application with OAuth
 description: We all have them. Line of business applications that have their own user datastore. How can you update them to use a centralized user datastore?
 author: Dan Moore
-image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
+image: blogs/upgrade-php-application/securing-your-legacy-php-business-application-with-oauth.png
 category: blog
 tags: client-php
 excerpt_separator: "<!--more-->"
