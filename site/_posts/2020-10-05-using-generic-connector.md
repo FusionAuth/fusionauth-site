@@ -252,7 +252,7 @@ First, create the Connector by navigating to "Settings" and then "Connectors", a
 
 Give it a name, like "My ATM Connector", and update the "Authentication URL" with the URL of the API you created above. You'll also want to update the headers tab with the authorization header you configured in `config.php`. You can also examine some of the other ways to secure your API endpoint. At the end, it looks like this:
 
-pic tbd generic-connector-create.png
+{% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/generic-connector-create.png" alt="Creating a generic connector." class="img-fluid" figure=false %}
 
 Then you need to configure the tenant to use this connector. Navigating to "Tenants", "Your Tenant" and then the "Connectors" tab. FusionAuth supports multiple tenants, but for this post you can keep everything in a single one. Add a new policy. 
 
@@ -260,7 +260,7 @@ Select the Connector you created and change the domain if needed; that's only re
 
 Finally, make sure you check the "Migrate user" checkbox. This ensures that the user data will be pulled over at authentication. After the first successful authentication, the "The ATM" Authentication URL will not be called for this user ever again.
 
-pic tbd add-connector-to-tenant.png
+{% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/add-connector-to-tenant.png" alt="Adding a connector to a tenant." class="img-fluid" figure=false %}
 
 Make sure you save your tenant settings by clicking the blue "save" icon in the upper right corner.
 
@@ -284,14 +284,15 @@ This will return all the users who have migrated. The JSON returned will look so
 {"total":629,"users":[ ... ] }
 ```
 
-You will start to see users registered to your application, with the correct user data:
+If you look in the administrative user interface, you will see users registered to your application:
 
-pic tbd
+{% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/new-user-added-registration.png" alt="Success! The user is registered to your application." class="img-fluid" figure=false %}
 
-new-user-added-registration.png
-new-user-added-user-data.png
+You'll also see the custom user data has been migrated over.
 
-After it has run for a while and has migrated the majority of your users, you can make a decision about what to do with the other users. If you've run the phased migration for six months or a year, it may be that the users who haven't signed in have abandoned your application. 
+{% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/new-user-added-user-data.png" alt="Success! The user is has been marked as migrated." class="img-fluid" figure=false %}
+
+After your users have been transparently migrated for a while, you can make a decision about what to do with the other users. How long depends on how often your userbase signs in, but you will probably want to enable this for a few months. If the phased migration has lasted for six months or a year and there are still users who are only in the old datastore, it is likely that the users who haven't signed in have abandoned your application. 
 
 You can choose to not migrate these users, perhaps archiving or deleting them. Or you can choose to migrate this set of users using the big bang method. This will of course be far lower risk because there are far fewer users to migrate.
 
