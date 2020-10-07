@@ -270,6 +270,20 @@ You would then let the "The ATM" application run for a while. Users will be migr
 
 Compare the numbers of users in FusionAuth to the number of users in your legacy data store by navigating to "Users" and searching for users registered for your application (if you are using the Elasticsearch search engine) with a `user.data.migratedFromTheAtmDatastore` value of `true`. Comparing this with the active user count in the legacy datastore will give the progress of the migration. 
 
+Here's an example of a user search request which will show you the count of users with a `user.data.migratedFromTheAtmDatastore` value of true:
+
+```shell
+API_KEY=...
+
+curl -H "Authorization: $API_KEY" 'http://localhost:9011/api/user/search?queryString=data.migratedFromTheAtmDatastore%3Atrue%0A'
+```
+
+This will return all the users who have migrated. The JSON returned will look something like this
+
+```json
+{"total":629,"users":[ ... ] }
+```
+
 You will start to see users registered to your application, with the correct user data:
 
 pic tbd
