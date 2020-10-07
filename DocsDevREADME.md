@@ -10,11 +10,15 @@ Here are some guidelines to follow when writing documentation.
 - Don't abbreviate FusionAuth, use the full name.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - Use single backticks when specifying a value that is not a field.
+- When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate.
+- Never use the term GUID, it's always UUID
 
 For blog posts:
 - Indent all code with two spaces per level.
 - Blog post headers should have only the first word and any proper nouns are capitalized.
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
+- For field names, use double quotes: "Login Identifier Attribute".
+- For values, use back ticks: `userPrincipalName`.
 
 For lists:
 - Capitalize the first word.
@@ -23,7 +27,7 @@ For lists:
 ### Proper names
 - macOS
 - Elasticsearch
- 
+- .NET Core
 
 ## Sizing Window for Screenshots
 

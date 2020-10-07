@@ -3,6 +3,7 @@ layout: doc
 title: LDAP Connector
 description: Connect to an LDAP directory
 ---
+:page-liquid:
 
 :sectnumlevels: 0
 
@@ -10,9 +11,87 @@ description: Connect to an LDAP directory
 
 LDAP Connectors allow you to authenticate users against or migrate them from an LDAP server accessible to FusionAuth.
 
-image::connectors/ldap-connector-create-screen.png[The LDAP Connector creation screen.,width=1200,role=shadowed]
+* <<Configuration>>
+* <<Using the LDAP Connector>>
+* <<Connecting to Active Directory>>
 
-To use a LDAP Connector:
+=== Configuration
+
+
+image::connectors/ldap-connector-create-screen.png[The LDAP Connector creation screen.,width=1200,role=shadowed bottom-cropped]
+
+
+=== Form Fields
+
+[.api]
+[field]#Id# [optional]#Optional#::
+An optional UUID. When this value is omitted a unique Id will be generated automatically.
+
+[field]#Name# [required]#Required#::
+A unique name to identify the Connector. This name is for display purposes only and it can be modified later if desired.
+
+[field]#LDAP URL# [required]#Required#::
+The URL used to connect to the LDAP service.
+
+[field]#Security method# [optional]#Optional# [default]#default is `None`#::
+The desired security method used to connect to LDAP. The default value of `None` is unencrypted which is not recommended unless you use an alternative method of securing your connection, such as a VPN.
+
+[field]#Connect timeout# [required]#Required# [default]#default is `1000`#::
+The connect timeout in milliseconds used when making the request to LDAP.
+
+[field]#Read timeout# [required]#Required# [default]#default is `2000`#::
+The read timeout in milliseconds used when making the request to LDAP.
+
+[field]#Reconcile lambda# [required]#Required#::
+The lambda used to reconcile the user from LDAP to FusionAuth.
++
+Navigate to [breadcrumb]#Customizations -> Lambdas# to create this lambda.
+
+[field]#Debug enabled# [optional]#Optional# [default]#default is `false`#::
+Enable debug to create an event log to assist you in debugging integration errors.
+
+
+image::connectors/ldap-connector-create-directory-tab.png[The LDAP Connector creation screen.,width=1200,role=shadowed top-cropped]
+
+
+=== Form Fields
+
+[.api]
+[field]#Base structure# [required]#Required#::
+The base structure is the directory to use in order to search for users.
++
+For example, to search the entire directory, you’d use a base structure of `DC=piedpiper,DC=com`. If you want to search against only engineering, add the organization: `OU=engineering,DC=piedpiper,DC=com`.
+
+[field]#System account DN# [required]#Required#::
+The distinguished name of an entry which has read access to the directory.
++
+For example: `CN=ReadOnlyFusionAuthUser,OU=engineering,DC=piedpiper,DC=com`.
+
+[field]#System account password# [required]#Required#::
+The password of the [field]#System Account DN#.
+
+[field]#Login identifier attribute# [required]#Required#::
+The value that the user would enter for their username on a login screen.
++
+For example: `uid` or `userPrincipalName`
+
+
+
+[field]#Identifying attribute# [required]#Required#::
+The entry attribute name which is the first component of the distinguished name of entries in the directory.
++
+For example: `cn`
+
+[field]#Requested attributes# [required]#Required#::
+The list of requested directory attributes to be returned. These will be passed to the lambda to be converted into FusionAuth user attributes. These must be added one at a time.
++
+For example: `cn` `givenName` `sn` `userPrincipalName` `mail`
+
+
+=== Using the LDAP Connector
+
+Once you have completed configuration of the LDAP connector, you will need to instruct a tenant to use this connector.
+
 
 * Ensure your LDAP server is accessible to the FusionAuth instance. This may entail setting up a VPN, locating FusionAuth in the correct network, or configuring a firewall to allow access.
 * Determine which LDAP user FusionAuth will connect as.
@@ -23,38 +102,15 @@ To use a LDAP Connector:
 ** LDAP directory settings
 * Add the Connector Policy in [breadcrumb]#Tenants -> Your Tenant -> Connectors# to configure to which domains the connector applies.
 
-=== LDAP Directory Settings
+=== Connecting to Active Directory
 
-These allow FusionAuth to access your LDAP directory and map the data from it to FusionAuth.
+User data stored in Microsoft Active Directory is accessible via LDAP. If you'd like to federate and allow some of your users to authenticate against Active Directory, use the LDAP Connector.
 
-==== Base Structure
+Here's a video walking through such a configuration of FusionAuth and Microsoft Active Directory:
 
-Where in the directory to start looking for your users. To search the entire directory, you'd use a structure like: `DC=piedpiper,DC=com`. If you want to search against only engineering, add the organization: `OU=engineering,DC=piedpiper,DC=com`.
+video::Cqd7EgK4ess[youtube,width=560,height=315]
 
-==== System Account DN
-
-The distinguished name of an entry which has read access to the directory. For example: `CN=ReadOnlyFusionAuthUser,OU=engineering,DC=piedpiper,DC=com`.
-
-==== System Account Password
-
-The password of the System Account DN.
-
-==== Login Identifier Attribute
-
-The value that the user would enter for their username on a login screen. For example: `uid` or `userPrincipalName`.
-
-==== Identifying Attribute
-
-The entry attribute name which is the first component of the distinguished name of entries in the directory. For example: `cn`.
-
-==== Requested attributes
-
-The list of requested directory attributes to be returned. These will be passed to the lambda to be converted into FusionAuth user attributes. For example: `cn givenName sn userPrincipalName mail`. 
-
-In the administrative user interface, these must be added one at a time.
-
-=== Security
-
-You can connect to your LDAP server via either LDAPS or StartTLS. 
-
-You may also use an unencrypted connection. This is not recommended unless you use an alternative method of securing your connection, such as a VPN.
+++++
+{% capture relatedTag %}feature-connectors{% endcapture %}
+{% include _doc_related_posts.liquid %}
+++++

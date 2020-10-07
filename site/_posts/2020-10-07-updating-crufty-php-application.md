@@ -1,9 +1,9 @@
 ---
 layout: blog-post
-title: Update a line of business PHP application to use OAuth
+title: Securing your legacy PHP business application with OAuth
 description: We all have them. Line of business applications that have their own user datastore. How can you update them to use a centralized user datastore?
 author: Dan Moore
-image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
+image: blogs/upgrade-php-application/securing-your-legacy-php-business-application-with-oauth.png
 category: blog
 tags: client-php
 excerpt_separator: "<!--more-->"
@@ -22,9 +22,9 @@ The code is all available in a [FusionAuth GitHub repository](https://github.com
 You'll need to have a few things set up before you get going.
 
 * A running instance of FusionAuth. If you don't have this, check out the [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide).
-* A modern PHP. This code was tested with php 7.3.11.
+* A modern version of PHP. This code was tested with php 7.3.11.
 
-## Introducing the legacy app
+## Introducing the legacy PHP app with a homegrown auth system
 
 The "fake" application this post will upgrade has an auth system, it just happens to be homegrown. This has the following issues:
 
@@ -120,7 +120,7 @@ Navigate to "Applications" in the administrative user interface and create a new
 
 View the application using the green magnifying glass and scroll down to the "OAuth Configuration" section. Note the `Client ID` and `Client Secret` values, which you'll use below.
 
-{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/the-atm-oauth-configuration.png" alt="Finding the Client ID and Client Secret." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/the-atm-oauth-configuration-display.png" alt="Finding the Client ID and Client Secret." class="img-fluid" figure=false %}
 
 Save the application, and then add a user who is registered to the application. Navigate to "Users" and add a user. Then go to the "Registrations" tab and register them to "The ATM" application so they can continue to log in and do their job.
 
@@ -130,7 +130,7 @@ Finally, you need the tenant identifier. If you just installed FusionAuth there 
 
 That's all for FusionAuth configuration. Now let's look at the PHP application and how you'll change it.
 
-## Updating the PHP app
+## Updating the PHP app to authenticate using OAuth
 
 To update the "The ATM" PHP application, you'll use composer to add a dependency on an OAuth library. Instead of using the `authenticate.php` logic, redirect to FusionAuth. Here's a diagram of the new flow:
 
@@ -261,7 +261,7 @@ try {
 
 This code verifies that the `state` parameter is unchanged and then retrieves an access token (which is typically a JSON Web Token, or JWT) using the `code` request parameter. The access token is then presented to an endpoint which returns user data. That is stored in the session and the user is sent back to the index page, which is unchanged from above.
 
-However, the application knows the user is authenticated. It has the `user` object in the session, which can be checked for authorization purposes.
+However, the application knows the user is authenticated. It has the `user` object in the session, which can be checked for authorization purposes. You could also add roles to the FusionAuth user and control access to application functionality based on the user's role.
 
 ## Next steps
 
