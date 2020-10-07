@@ -185,7 +185,7 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 
 Then, we need to call the `handleMain` function inside the `main` function. This lets us listen to port 8080:
 
-```
+```go
 //...
 func main() {
   http.HandleFunc("/", handleMain)
