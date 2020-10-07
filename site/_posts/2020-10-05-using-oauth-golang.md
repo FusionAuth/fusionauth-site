@@ -86,7 +86,7 @@ We set up this application in the default tenant. FusionAuth supports multi-tena
 
 We are going to set up a development environment for go. You can skip this if you already have it set up. First, we need to download Go from its [official website](https://golang.org/).
 
-Let's walk before we run. Here's the the simplest Go project; not surprisingly this is the typical 'Hello World' program. This is what it looks like:
+Let's walk before we run. Here's the simplest Go project; not surprisingly this is the typical 'Hello World' program. This is what it looks like:
 
 ```go
 package main
@@ -164,7 +164,7 @@ func init() {
 //...
 ```
 
-Here, we have configure our OAuth connection inside the `init` function. This function is run every time the application is started. In a production application, these values should be pulled from a configuration file or a database table, rather than hard coded.
+Here, we have configured our OAuth connection inside the `init` function. This function is run every time the application is started. In a production application, these values should be pulled from a configuration file or a database table, rather than hard coded.
 
 ## Adding our display
 
