@@ -9,70 +9,77 @@ tags: client-php feature-connectors
 excerpt_separator: "<!--more-->"
 ---
 
-Once you have migrated an application to use a modern data store, how can you migrate your users?
+Once you have migrated an application to use a modern identity provider, how can you migrate your users?
 
 <!--more-->
 
-Previously, you updated a legacy line of business PHP application to use [OAuth and FusionAuth to authenticate users](TBD). "The ATM" application now works well for new users. But how do you migrate existing users?
+Previously, we updated a legacy line of business PHP application to use [OAuth and FusionAuth to authenticate users](/blog/2020/10/07/updating-crufty-php-application). At the end of that post, "The ATM" application worked well for new users. But how do you migrate existing users without impacting their ability to use the application to do their job?
 
 ## Why migrate
 
-First, it's important to understand the benefits of having a central user data store, rather than disparate, per application data stores. If you centralize user accounts, you have a single:
+What are the benefits of having a centralized user data store, rather than disparate, per application data stores? If you centralize user accounts, you have a one place for all your user data. This means:
 
-* View of user data
-* Place to go to add and remove account and otherwise manage access
-* Application to secure and update
-* Interface for your users to interact with
-* Password for your users to remember
+* One application to go to add, remove and otherwise manage user access.
+* A single auth system to secure and update.
+* One place for all authentication and authorization logic.
+* A single login interface for your users.
+* One password for them to remember.
+* A single identity provider to hook other applications into as your business grows.
+* One view of your user across all their applications.
 
-You also have the ability to more easily implement single sign-on. As you add more and more applications, the value of this central user data store grows.
+As you add more and more applications, the value of having one place for user data grows. As you contemplate a migration of existing users to a new datastore, keep a few things in mind:
 
-As you are contemplating a migration of existing users to a user datastore, you want to keep a few things in mind:
+* Access: Usually, this is the highest priority concern. Any migration should minimally impact the user experience, including, but not limited to maintaining access to apps they currently use. 
+* Data: You want to map data from the previous system into the new system.
+* Passwords: This is a subset of the data concern, but one that should be treated differently. Since passwords are typically [hashed, not encrypted](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy), you can't import hashes directly unless you have have access to the same hashing algorithm.
 
-* Access: Usually, this is the highest priority concern. Any migration must be done with minimal impact to the user experience, including, but not limited to maintaining access to apps they currently use. 
-* Data: You need to map currently held user data into the new system.
-* Password: This is a subset of the data, but one that should be treated differently. Since passwords are typically [hashed, not encrypted](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy), you can't import hashes directly unless you have the same encryption algorithm.
-
-There are only a few options:
-
+In general, there are two types of migrations:
+ 
 * Big bang
 * Migrate-on-authentication
 
-I'll cover the big bang option briefly with some pointers to other docs, and then dive into migrate-on-authentication.
+I'll cover the big bang option at a high level, and then cover a migrate-on-authentication scenario in depth.
 
 ## Big bang
 
-If you choose the big bang method, you are moving all your users at once. This means you build a system to migrate them, test the heck out of it, and have some downtime where you flip a switch. You also should create a rollback plan in case the testing misses something.
+If you choose a big bang, you are choosing to move all your users at once. You build a system to migrate them, test the heck out of it, and have minimal downtime, or possibly a degraded system where the user store can be read, but not updated, when you flip the system of record for all your users from the old to the new. You have that downtime because you don't want anyone updating their user profile. Depending on your availability needs, you could also choose to do writes to both systems during that period. 
 
-This works well when you have a small userbase or an application. It also works when you need to decommission the legacy datastore as soon as possible, such as when a license renewal is upcoming. This may be operationally simpler too, because you are only running two systems for a small period of time; you keep the legacy system running only for so long as is required to verify the mass migration worked.
+With the big bang option, you also should create a rollback plan in case testing misses something, and things go sideways.
+
+This is a good choice when you have a small userbase, or aren't in production yet. It also works when you need to decommission the legacy datastore as soon as possible, such as because of an upcoming license renewal. The big bang is operationally simpler too, because you are only running two systems for a small period of time; you keep the legacy system running only for so long as is required to verify the mass migration worked.
 
 The risks of this type of migration are:
 
-* You'll miss some part of the migration during testing.
-* You'll encounter some unexpected error during the production rollout causing a rollback.
+* You'll miss something during testing. After all, you aren't doing this regularly; by definition this is a one time event.
+* You'll encounter some unexpected error during the production rollout.
+* If something goes sideways, many of your users will be impacted, since they were all being migrated.
 
-A variation on this approach is the segment by segment big bang. It may be possible to split up a big bang and move the users of each application to the new user data store, one application at at time.
+A variant of this approach is to segment your users, and migrate them segment by segment. For example, it may be possible to move the users of each application to the new user data store, one application at at time.
 
 ## FusionAuth's support for the big bang
 
-If you want to use this method with FusionAuth, you'll want to check out the [Migrate Users tutorial](/docs/v1/tech/tutorials/migrate-users). FusionAuth also includes support for custom password hashing schemes, as documented in that tutorial.
+If you want to use the big bang with FusionAuth, check out the [Migrate Users tutorial](/docs/v1/tech/tutorials/migrate-users). FusionAuth also includes support for [custom password hashing logic](/docs/v1/tech/plugins/password-encryptors), allowing you to import users without requiring them to modify their password.
 
 ## Migrate-on-authentication
 
-This is a phased approach. In this approach, you maintain the existing user data store, but each time a user authenticates, you move over their data.
+The other end of the spectrum from moving all your users at once is to move them one at a time. This is a phased approach. You maintain the existing user data store, but each time one user authenticates, you move over their data.
 
-The benefits of this approach are many:
+Some of the benefits of this approach:
 
 * There's less risk because this is gradual, so only a subset of users are affected if there is an issue. 
-* The change can be rolled out to focused set of users, perhaps internal, to reduce the need for manual testing. It's easier to dogfood.
-* There is no need to understand or reimplement the password hashing algorithm, as you'll re-hash each password when presented by the user.
-* You won't migrate users who haven't used your application at the end of the migration period. Depending on your application usage, these users may be candidates for archival or deletion.
+* It's easier to dogfood. The change can be rolled out to a focused set of users first.
+* There's less throwaway code to be written; you don't build a processing pipeline, only a way to expose the current data for one user. 
+* No system downtime is required.
+* There is no need to find, understand or reimplement the password hashing algorithm, as you'll re-hash each password when it is presented by the user.
+* You won't migrate users who haven't used your application by the end of the migration period. 
 
-However, there are risks with this approach as well. 
+However, there are risks with the phased approach as well. 
 
-* The cutover will take longer. You must maintain two systems for the duration of the cutover.
-* Customer service may have to look in two systems to find someone.
-* Rollback is more complex if there is an issue, because users are now in two systems.
+* The cutover will take longer. You must maintain both systems during this time.
+* Customer service may have to access two systems to find someone, especially if contacted via email or phone.
+* Rollback is more complex if there are issues, because there are two systems of record, one for users who have been migrated and one for users who are not.
+
+XXX stopped here.
 
 ## FusionAuth's support for phased user migration
 
@@ -193,7 +200,7 @@ echo json_encode($obj);
 
 This code does three main things. First, it checks some headers to ensure that it knows who is calling it. This endpoint opens up a view into your user datastore, so you want to make sure that there's no unauthorized access. There are a variety of security measures you can use, but running over TLS and using an authorization header enforces a basic level of security.
 
-Then it authenticates the user. It uses the same `auth` common code that was used way back before "The ATM" was converted to use OAuth (see the [previous post](TBD) for more), which probably reaches into the database in most applications.
+Then it authenticates the user. It uses the same `auth` common code that was used way back before "The ATM" was converted to use OAuth (see the [previous post](TBD) for more), which probably reaches into the database in most applications. This could also be updated to mark the user in the old datastore as migrated, which would help with data debugging, should it be needed.
 
 Finally, it builds the user object. Again, normally this would be coming from the database, but here it is hard coded. 
 
