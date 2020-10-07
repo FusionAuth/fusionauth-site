@@ -22,7 +22,7 @@ The code is all available in a [FusionAuth GitHub repository](https://github.com
 You'll need to have a few things set up before you get going.
 
 * A running instance of FusionAuth. If you don't have this, check out the [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide).
-* A modern PHP. This code was tested with php 7.3.11.
+* A modern version of PHP. This code was tested with php 7.3.11.
 
 ## Introducing the legacy app
 
@@ -120,7 +120,7 @@ Navigate to "Applications" in the administrative user interface and create a new
 
 View the application using the green magnifying glass and scroll down to the "OAuth Configuration" section. Note the `Client ID` and `Client Secret` values, which you'll use below.
 
-{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/the-atm-oauth-configuration.png" alt="Finding the Client ID and Client Secret." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/the-atm-oauth-configuration-display.png" alt="Finding the Client ID and Client Secret." class="img-fluid" figure=false %}
 
 Save the application, and then add a user who is registered to the application. Navigate to "Users" and add a user. Then go to the "Registrations" tab and register them to "The ATM" application so they can continue to log in and do their job.
 
