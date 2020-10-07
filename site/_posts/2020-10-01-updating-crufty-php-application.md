@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Update a line of business PHP application to use OAuth
+title: Securing your legacy PHP business application with OAuth
 description: We all have them. Line of business applications that have their own user datastore. How can you update them to use a centralized user datastore?
 author: Dan Moore
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
@@ -24,7 +24,7 @@ You'll need to have a few things set up before you get going.
 * A running instance of FusionAuth. If you don't have this, check out the [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide).
 * A modern version of PHP. This code was tested with php 7.3.11.
 
-## Introducing the legacy app
+## Introducing the legacy PHP app with a homegrown auth system
 
 The "fake" application this post will upgrade has an auth system, it just happens to be homegrown. This has the following issues:
 
@@ -130,7 +130,7 @@ Finally, you need the tenant identifier. If you just installed FusionAuth there 
 
 That's all for FusionAuth configuration. Now let's look at the PHP application and how you'll change it.
 
-## Updating the PHP app
+## Updating the PHP app to authenticate using OAuth
 
 To update the "The ATM" PHP application, you'll use composer to add a dependency on an OAuth library. Instead of using the `authenticate.php` logic, redirect to FusionAuth. Here's a diagram of the new flow:
 
