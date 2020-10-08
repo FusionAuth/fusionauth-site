@@ -75,37 +75,34 @@ Some of the benefits of this approach:
 
 However, there are risks with the phased approach as well. 
 
-* The cutover will take longer. You must maintain both systems during this time.
+* The cutover will take longer. You must maintain both systems during this time, even as usage shifts.
 * Customer service may have to access two systems to find someone, especially if contacted via email or phone.
 * Rollback is more complex if there are issues, because there are two systems of record, one for users who have been migrated and one for users who are not.
 
-XXX stopped here.
-
 ## FusionAuth's support for phased user migration
 
-You can do a phased migration using FusionAuth Connectors. 
+You can do a phased migration using FusionAuth Connectors. Let's walk through how to do so.
 
-If you don't have FusionAuth running, [get it going in 5 minutes](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). Then get a license key and activate it. *Please note that advanced registration forms are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing).* Finally, [activate your license](/docs/v1/tech/reactor). 
+If you don't have FusionAuth running, [get it going in 5 minutes](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). Then get a license key and activate it. *Please note that Connectors are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing).* Finally, [activate your license](/docs/v1/tech/reactor). 
 
-The way to use a Connector for a phased migration requires a few steps, but in general you will:
+To use a Connector for a phased migration, you will:
 
-* Build an API in your existing application which takes the username and password and returns a JSON login response. Protect that API by serving it over TLS and using basic authentication.
-* Configure the connector to run for your application
-* Let it run for a while and when you reach a certain timeline or percentage migrated over delete the connector .
-* Migrate the rest of the users (if needed) using the big bang APIs. The risk is much lower now, as there are far fewer active users.
+* Build an HTTP JSON API endpoint in your existing application. This endpoint will receive the username and password, among other data, and return a JSON response. You should protect that API; you have a [variety of options to do so](/docs/v1/tech/connectors/generic-connector#security-2).
+* Configure the Connector policy to determine which tenants and users for which it should be executed.
+* Let users authenticate against your application for a period of time; monitor how many users have migrated via searching users. 
+* Remove the Connector policy. Remove the API endpoint.
+* Migrate the rest of your users (if needed) using the Import Users APIs. 
 * Update the application to remove the legacy datastore. 
 
-Let's look at how this might work in the context of the previously examined ["The ATM" legacy line of business PHP application](TBD). This code is available in the `master` branch of the GitHub repo, or [online](https://github.com/fusionauth/fusionauth-example-php-connector).
+Let's look at how this might work in the context of the application [modified in a previous post](/blog/2020/10/07/updating-crufty-php-application): "The ATM" legacy line of business PHP application. This code is available in the `master` branch of that application's GitHub repo, or [online](https://github.com/fusionauth/fusionauth-example-php-connector).
 
 ## Build an API
 
-The first step to using a generic Connector is to build an API. This API will take the username and password input from FusionAuth and return a user JSON object.
-
-Here's an example of what you might see from FusionAuth:
+The first step to using a generic Connector for migration purposes is to build an API endpoint. This code takes the username and password from FusionAuth and returns a JSON object. Here's an example of what you might see from FusionAuth:
 
 ```json
 {
-  "loginId": "example@fusionauth.io",
+  "loginId": "richard@fusionauth.io",
   "password": "password",
   "applicationId": "10000000-0000-0002-0000-000000000001",
   "noJWT" : false,
@@ -113,9 +110,11 @@ Here's an example of what you might see from FusionAuth:
 }
 ```
 
-The meanings of these keys are explained in the [Login API](/docs/v1/tech/apis/login#authenticate-a-user) docs, but in general, you'll want to take the `loginId` and the `password` fields and authenticate against the legacy datastore. The `user` JSON object is in documented in the [User API](/docs/v1/tech/apis/users) docs.
+The meanings of these keys are explained in detail in the [Login API docs](/docs/v1/tech/apis/login#authenticate-a-user), but in general, your code should extract the `loginId` and the `password` fields and authenticate the user against the legacy datastore. You'll also receive the application which the user was trying to access; you should validate that as well.
 
-For the "The ATM" application, the PHP code for the API endpoint is pretty simple. First, there's a `config.php` file, which looks like this:
+The `user` JSON object which you must return is in documented in the [User API docs](/docs/v1/tech/apis/users), but the [required fields are documented as well](/docs/v1/tech/connectors/#migration).
+
+For the "The ATM" application, the PHP code for the endpoint is simple. There's a `config.php` file containing, well, configuration, which looks like this:
 
 ```php
 <?php
@@ -130,7 +129,7 @@ $redirect_uri = 'http://localhost:8000/oauth-callback.php';
 $fa_url = 'http://localhost:9011';
 ```
 
-This sets some variables which are then used by the file which accepts the call from FusionAuth and performs the authentication. In the sample repository, this file is `fusionauthconnector.php`.
+`config.php sets some variables which are used by the endpoint code. In the sample repository, this code is in `fusionauthconnector.php`. Let's look at that:
 
 ```php
 <?php
@@ -198,11 +197,13 @@ echo json_encode($obj);
 ?>
 ```
 
-This code does three main things. First, it checks some headers to ensure that it knows who is calling it. This endpoint opens up a view into your user datastore, so you want to make sure that there's no unauthorized access. There are a variety of security measures you can use, but running over TLS and using an authorization header enforces a basic level of security.
+This code does three main tasks. First, it checks some headers to ensure only authorized callers can access it. This endpoint essentially opens up your user data, so it's a good idea to ensure no unauthorized access. 
 
-Then it authenticates the user. It uses the same `auth` common code that was used way back before "The ATM" was converted to use OAuth (see the [previous post](TBD) for more), which probably reaches into the database in most applications. This could also be updated to mark the user in the old datastore as migrated, which would help with data debugging, should it be needed.
+Then this code authenticates the user. It uses the same `auth` common code that was used way back before "The ATM" was converted to use OAuth (see the [previous post](/blog/2020/10/07/updating-crufty-php-application) for more details). This method reaches into the database for many applications. At this point, you may want to consider updating the user record in the old datastore to mark the user as migrated. Doing so helps with data debugging, should it be needed.
 
-Finally, it builds the user object. Again, normally this would be coming from the database, but here it is hard coded. 
+Finally, the PHP code builds the `$user` object, which will, at the end of the method, be rendered as JSON. Again, normally much of this data would be pulled from the user datastore, but for purposes of this post, it is hard coded. 
+
+Let's look at some more details around building the `$user` object.
 
 ```php
 //...
@@ -210,11 +211,10 @@ $user['id'] = Uuid::uuid4();
 //...
 ```
 
-This code generates a UUID. FusionAuth requires each user to have a unique id which is a UUID. You can pull it from the legacy datastore rather than generate it, if that's easier.
+This code generates a UUID. Each account in FusionAuth must have a UUID. If your legacy datastore has a value you can transform into a UUID, you can use that rather than generate one. 
 
 ```php
 //...
-$user['id'] = Uuid::uuid4();
 $user['email'] = $inputobj->loginId;
 $user['active'] = true;
 $user['verified'] = true;
@@ -222,7 +222,7 @@ $user['tenantId'] = $tenant_id;
 //...
 ```
 
-You can set values on the user object. These are hardcoded or pulled from configuration, but they could have been pulled from anywhere.
+This code is adding more attributes to the `$user` object. These can be hardcoded, fetched from an API, extracted from the value posted to FusionAuth, as is the `email` value, or retrieved from a datastore. It doesn't matter as long as the attributes can be expressed in JSON.
 
 ```php
 //...
@@ -233,7 +233,7 @@ $user['data'] = $data;
 //...
 ```
 
-You can populate the `data` field with arbitrary key value data about the user. In this case, the code is also adding a boolean attribute to be searched so that the progress of the migration can be calculated.
+You can populate the user's FusionAuth `data` field with arbitrary data which can be represented as a key-value pair. Apparently a lot of people like the color blue. In this case, the code also is adding a boolean attribute. That will later be searched to learn about the progress of the migration.
 
 ```php
 //...
@@ -246,36 +246,56 @@ $user['registrations'] = $registrations;
 //...
 ```
 
-You will want to register this user to one or more applications defined in FusionAuth. In this case, the user is automatically registered for the application to which they are trying to authenticate, which is likely what you want. However, you could register them to multiple different applications at migration time.
+You typically want to register this user to one or more applications defined in FusionAuth. In this case, the user is automatically registered for the application to which they are trying to authenticate, which is likely what you want. You could also have pulled the `applicationId` from the JSON received at authentication and stored in `$inputobj`. You could register this user to multiple different applications at migration time as well.
 
-The Authentication URL API endpoint is now complete. The next step is to configure FusionAuth to use this.
+Finally, you'll want to update your `composer.json` file to include the UUID library:
 
-## Configure the connector
+```json
+{
+  "require": {
+    "ramsey/uuid": "^4.1",
+    "league/oauth2-client": "^2.5"
+  }
+}
+```
 
-There are two parts to configuring the Connector to use the API you just built. 
-The first is setting up the Connector and the second is updating the tenant configuration to use it. Below, you'll step through doing this with teh administrative user interface, but you can also do so by using the [Connector APIs](/docs/v1/tech/apis/connectors) and the [Tenant APIs](/docs/v1/tech/apis/tenants).
+Run `composer install`. Now you can start your application up by running:
 
-First, create the Connector by navigating to "Settings" and then "Connectors", and create a new one. 
+```shell
+php -S 0.0.0.0:8000
+```
 
-Give it a name, like "My ATM Connector", and update the "Authentication URL" with the URL of the API you created above. You'll also want to update the headers tab with the authorization header you configured in `config.php`. You can also examine some of the other ways to secure your API endpoint. At the end, it looks like this:
+The Authentication URL API endpoint is up and ready to go. The next step is to configure FusionAuth to send authentication attempts to this Connector.
+
+## Configure the Connector
+
+There are two parts to letting users authenticate against that shiny new API you just wrote.
+
+The first is setting up the Connector and the second is updating the tenant configuration to use it. Below, you'll do this with the FusionAuth administrative user interface, but you could use the [Connector APIs](/docs/v1/tech/apis/connectors) and the [Tenant APIs](/docs/v1/tech/apis/tenants), if desired.
+
+First, create the Connector by navigating to "Settings" and then "Connectors", and create a new one. Give it a name, like "My ATM Connector", and update the "Authentication URL" with the URL of the endpoint which you created above. For this post, update the headers tab with the authorization header value configured in `config.php`: `supersecretauthheader`. When configured, it looks like this:
 
 {% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/generic-connector-create.png" alt="Creating a generic connector." class="img-fluid" figure=false %}
 
-Then you need to configure the tenant to use this connector. Navigating to "Tenants", "Your Tenant" and then the "Connectors" tab. FusionAuth supports multiple tenants, but for this post you can keep everything in a single one. Add a new policy. 
+Now, set up the tenant to use this Connector. Navigate to "Tenants", "Your Tenant" and then the "Connectors" tab. FusionAuth supports multiple tenants, but for this post, let's just keep everything in the "Default" tenant. Click the button to add a new policy. 
 
-Select the Connector you created and change the domain if needed; that's only required if a subset of users, differentiated by email domain, will be the only accounts authenticated against this Connector.
+Select the Connector created above and modify the domain if needed; that's only required if a subset of users, with one or more email domains, are the only accounts which should be authenticated against this Connector.
 
-Finally, make sure you check the "Migrate user" checkbox. This ensures that the user data will be pulled over at authentication. After the first successful authentication, the "The ATM" Authentication URL will not be called for this user ever again.
+Finally, check the "Migrate user" checkbox. This ensures that user data will be pulled over at initial authentication. After the first one, the authentication endpoint will not be called for this user again.
 
 {% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/add-connector-to-tenant.png" alt="Adding a connector to a tenant." class="img-fluid" figure=false %}
 
-Make sure you save your tenant settings by clicking the blue "save" icon in the upper right corner.
+Make sure you save your tenant settings by clicking the blue "save" icon in the upper right corner, and you're good to go.
 
-## Let it run
+## Let your users sign in
 
-You would then let the "The ATM" application run for a while. Users will be migrated over and registered with the application. Make sure that any users registering, should you allow that, register with FusionAuth and not the legacy application.
+The next step takes a while. Let the "The ATM" application run and let users sign in. You can, if you are following along with the code, open up an incognito browser and sign in with a few users. If you are using the example PHP application, your password is `password`. 
 
-Compare the numbers of users in FusionAuth to the number of users in your legacy data store by navigating to "Users" and searching for users registered for your application (if you are using the Elasticsearch search engine) with a `user.data.migratedFromTheAtmDatastore` value of `true`. Comparing this with the active user count in the legacy datastore will give the progress of the migration. 
+During this time, users will be migrated over and registered with the application. Make sure that any users registering, should you allow that, are sent to register in FusionAuth rather than the legacy application.
+
+How long should this run? Long enough to move over most active users. This timeframe depends on how often your users sign in, and how many of them are active. If it's an application most visit daily, most users will be migrated quickly. If it is an application visited once a year, then it may take a year to get most of your users into FusionAuth. You also want to think about how hard running both user data stores; if it's difficult, you may migrate fewer users with the phased approach.
+
+During this time period, you can find the numbers of users in FusionAuth by searching for the users with a particular attribute. Comparing this count with the legacy datastore user numbers will give you an idea of the progress of the migration. 
 
 Here's an example of a user search request which will show you the count of users with a `user.data.migratedFromTheAtmDatastore` value of true:
 
@@ -291,28 +311,29 @@ This will return all the users who have migrated. The JSON returned will look so
 {"total":629,"users":[ ... ] }
 ```
 
-If you look in the administrative user interface, you will see users registered to your application:
+If you have 800 users, well, congrats, your migration is well under way. If you have 10,000 users, you've got a bit longer to wait. If you look at users in the administrative user interface, you can see users in FusionAuth registered to your application:
 
 {% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/new-user-added-registration.png" alt="Success! The user is registered to your application." class="img-fluid" figure=false %}
 
-You'll also see the custom user data has been migrated over.
+You'll also see the custom user data has been migrated over, too:
 
-{% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/new-user-added-user-data.png" alt="Success! The user is has been marked as migrated." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/new-user-added-user-data.png" alt="Success! The user is has been marked as migrated. Plus they love blue." class="img-fluid" figure=false %}
 
-After your users have been transparently migrated for a while, you can make a decision about what to do with the other users. How long depends on how often your userbase signs in, but you will probably want to enable this for a few months. If the phased migration has lasted for six months or a year and there are still users who are only in the old datastore, it is likely that the users who haven't signed in have abandoned your application. 
+After this migration process has taken place for a while, or perhaps after you've hit a percentage migrated, you will need to make a decision about users who remain in the old datatore. If the phased migration has lasted for six months or a year and there are still users who are only in the old datastore, it is likely that these users have abandoned your application; of course only you know your user's visitation patterns, so that's just a rule of thumb. 
 
-You can choose to not migrate these users, perhaps archiving or deleting them. Or you can choose to migrate this set of users using the big bang method. This will of course be far lower risk because there are far fewer users to migrate.
+So what to do with these users? You can opt to leave these users out of your FusionAuth system, perhaps archiving or deleting them. Or you can choose to migrate these users using the one time cutover methods described above. This will of course be far lower risk because there are far fewer users to migrate.
 
-## Remove the Connector and the Authentication URL
+## Remove the Connector and the authentication endpoint
 
-The final step is to remove the Connector and other migration code. You can delete the policy and then the Connector. Any user who has been migrated will authenticate against FusionAuth. Any user who has not will see an error message as their account won't be found.
+The final step to end the phased migration is removing the Connector and other migration code. You can delete the policy and then the Connector. Any user who has been migrated will authenticate against FusionAuth. Any user who has not will see an error message should they attempt to sign in, as their account won't be found.
 
 You can also remove the `fusionauthconnector.php` file from your application, as it won't be needed in the future.
+
+There are other cleanup steps, such as the final migration of users who haven't signed in, if that's the route you are taking, or dropping the `users` table from the "The ATM" application. But those are beyond the scope of this post.
+
+Feel free to take a gander at the [GitHub repo with the generic Connector example code](https://github.com/fusionauth/fusionauth-example-php-connector) we walked through above.
 
 ## Conclusion
 
 There are many ways to migrate your user data. For some situations a big bang approach with a single cutover date makes sense. For others, a phased migration, where users are migrated whenever they authenticate, will make for a smoother experience. 
 
-If you'd like to look at the [GitHub repo with the generic Connector example code](https://github.com/fusionauth/fusionauth-example-php-connector), feel free.
-
-Happy coding!
