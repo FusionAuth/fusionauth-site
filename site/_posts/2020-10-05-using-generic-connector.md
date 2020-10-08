@@ -31,7 +31,7 @@ As you add more and more applications, the value of having one place for user da
 
 * Access: Usually, this is the highest priority concern. Any migration should minimally impact the user experience, including, but not limited to maintaining access to apps they currently use. 
 * Data: You want to map data from the previous system into the new system.
-* Passwords: This is a subset of the data concern, but one that should be treated differently. Since passwords are typically [hashed, not encrypted](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy), you can't import hashes directly unless you have have access to the same hashing algorithm.
+* Passwords: This is a subset of the data concern, but one that should be treated differently. Since passwords are typically [hashed, not encrypted](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy), you can't import hashes directly unless you have access to the same hashing algorithm.
 
 In general, there are two types of migrations:
  
@@ -46,7 +46,7 @@ If you choose a big bang, you are choosing to move all your users at once. You b
 
 With the big bang option, you also should create a rollback plan in case testing misses something, and things go sideways.
 
-This is a good choice when you have a small userbase, or aren't in production yet. It also works when you need to decommission the legacy datastore as soon as possible, such as because of an upcoming license renewal. The big bang is operationally simpler too, because you are only running two systems for a small period of time; you keep the legacy system running only for so long as is required to verify the mass migration worked.
+This is a good choice when you have a small user base, or aren't in production yet. It also works when you need to decommission the legacy datastore as soon as possible, such as because of an upcoming license renewal. The big bang is operationally simpler too, because you are only running two systems for a small period of time; you keep the legacy system running only for so long as is required to verify the mass migration worked.
 
 The risks of this type of migration are:
 
@@ -54,7 +54,7 @@ The risks of this type of migration are:
 * You'll encounter some unexpected error during the production rollout.
 * If something goes sideways, many of your users will be impacted, since they were all being migrated.
 
-A variant of this approach is to segment your users, and migrate them segment by segment. For example, it may be possible to move the users of each application to the new user data store, one application at at time.
+A variant of this approach is to segment your users, and migrate them segment by segment. For example, it may be possible to move the users of each application to the new user data store, one application at a time.
 
 ## FusionAuth's support for the big bang
 
@@ -112,7 +112,7 @@ The first step to using a generic Connector for migration purposes is to build a
 
 The meanings of these keys are explained in detail in the [Login API docs](/docs/v1/tech/apis/login#authenticate-a-user), but in general, your code should extract the `loginId` and the `password` fields and authenticate the user against the legacy datastore. You'll also receive the application which the user was trying to access; you should validate that as well.
 
-The `user` JSON object which you must return is in documented in the [User API docs](/docs/v1/tech/apis/users), but the [required fields are documented as well](/docs/v1/tech/connectors/#migration).
+The `user` JSON object which you must return is documented in the [User API docs](/docs/v1/tech/apis/users), but the [required fields are documented as well](/docs/v1/tech/connectors/#migration).
 
 For the "The ATM" application, the PHP code for the endpoint is simple. There's a `config.php` file containing, well, configuration, which looks like this:
 
@@ -293,7 +293,7 @@ The next step takes a while. Let the "The ATM" application run and let users sig
 
 During this time, users will be migrated over and registered with the application. Make sure that any users registering, should you allow that, are sent to register in FusionAuth rather than the legacy application.
 
-How long should this run? Long enough to move over most active users. This timeframe depends on how often your users sign in, and how many of them are active. If it's an application most visit daily, most users will be migrated quickly. If it is an application visited once a year, then it may take a year to get most of your users into FusionAuth. You also want to think about how hard running both user data stores; if it's difficult, you may migrate fewer users with the phased approach.
+How long should this run? Long enough to move over most active users. This time frame depends on how often your users sign in, and how many of them are active. If it's an application most visit daily, users will migrate quickly. If it is an application accessed once a year, then a year may be needed to get most of your users into FusionAuth. You also want to think about how hard running both user data stores; if it's difficult, you may migrate fewer users with the phased approach.
 
 During this time period, you can find the numbers of users in FusionAuth by searching for the users with a particular attribute. Comparing this count with the legacy datastore user numbers will give you an idea of the progress of the migration. 
 
@@ -319,7 +319,7 @@ You'll also see the custom user data has been migrated over, too:
 
 {% include _image.liquid src="/assets/img/blogs/migrating-users-legacy-datastore/new-user-added-user-data.png" alt="Success! The user is has been marked as migrated. Plus they love blue." class="img-fluid" figure=false %}
 
-After this migration process has taken place for a while, or perhaps after you've hit a percentage migrated, you will need to make a decision about users who remain in the old datatore. If the phased migration has lasted for six months or a year and there are still users who are only in the old datastore, it is likely that these users have abandoned your application; of course only you know your user's visitation patterns, so that's just a rule of thumb. 
+After this migration process has taken place for a while, or perhaps after you've have a goal percentage of users migrated, you will need to decide about users in the old datastore. If the phased migration has lasted for six months or a year and there are still users who are only in there, it is likely that these users have abandoned your application; of course only you know your user's visitation patterns, so that's just a rule of thumb. 
 
 So what to do with these users? You can opt to leave these users out of your FusionAuth system, perhaps archiving or deleting them. Or you can choose to migrate these users using the one time cutover methods described above. This will of course be far lower risk because there are far fewer users to migrate.
 
