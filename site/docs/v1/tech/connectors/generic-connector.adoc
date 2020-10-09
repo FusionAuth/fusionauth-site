@@ -1,0 +1,118 @@
+---
+layout: doc
+title: Generic Connector
+description: Connect to an arbitrary user data source over HTTP
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+* <<Configuration>>
+* <<Using the Generic Connector>>
+* <<Security>>
+
+Generic Connectors allow you to authenticate users against or migrate them from any user datasource accessible over HTTP or TLS.
+
+
+=== Configuration
+
+image::connectors/generic-connector.png[The Generic Connector creation page.,width=1200,role=shadowed bottom-cropped]
+
+=== Form Fields
+
+[.api]
+[field]#Id# [optional]#Optional#::
+An optional UUID. When this value is omitted a unique Id will be generated automatically.
+
+[field]#Name# [required]#Required#::
+A unique name to identify the Connector. This name is for display purposes only and it can be modified later if desired.
+
+[field]#Authentication URL# [required]#Required#::
+The fully qualified URL of the API endpoint. The connector will send an HTTP POST request to this URL to authenticate the user. The format and status code returned will be identical to the link:../apis/login[Login API].
+
+[field]#Connect timeout# [required]#Required# [default]#default is `1000`#::
+The connect timeout in milliseconds used when making the POST request.
+
+[field]#Read timeout# [required]#Required# [default]#default is `2000`#::
+The read timeout in milliseconds used when making the POST request.
+
+[field]#Debug enabled# [optional]#Optional# [default]#default is `false`#::
+Enable debug to create an event log to assist you in debugging integration errors.
+
+=== Security
+
+The security settings may be used to require authentication in order to make the POST request to the authentication endpoint.
+
+image::connectors/generic-connector-security.png[The Generic Connector security section.,width=1200,role=shadowed bottom-cropped top-cropped]
+
+==== Form Fields
+
+[.api]
+[field]#Basic auth username# [optional]#Optional#::
+The username to be used for HTTP Basic Authentication.
+
+[field]#Basic auth password# [optional]#Optional#::
+The password to be used for HTTP Basic Authentication.
+
+[field]#Certificate# [optional]#Optional#::
+The SSL certificate to be used when connecting to the POST endpoint. 
++
+If you need to add a certificate for use with this connector, navigate to [breadcrumb]#Settings -> Key Master# and import a certificate. The certificate will then be shown as an option in this form control.
+
+=== Headers
+
+You can configure arbitrary headers to be added to the HTTP POST request when making a request to the configured authentication endpoint.
+
+image::connectors/generic-connector-header.png[The Generic Connector headers section.,width=1200,role=shadowed top-cropped bottom-cropped]
+
+==== Form Fields
+
+[.api]
+Name::
+The name of the header to add to the HTTP request when authenticating.
+Value::
+The header value to add to the HTTP request when authentiationg.
+
+
+=== Using the Generic Connector
+
+To use a Generic Connector:
+
+* Build a Generic Connector API endpoint in your application to expose your user data.
+* Configure the Connector in [breadcrumb]#Settings -> Connectors#, including securing the endpoint.
+* Add the Connector Policy in [breadcrumb]#Tenants -> Your Tenant -> Connectors# to configure to which domains the connector applies.
+
+==== Request
+
+The request to your API endpoint will be delivered as JSON:
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/login/request.json[]
+----
+
+Your application will then look up the user and verify the correct credentials were provided. Then you can return the response.
+
+==== Response
+
+Your API should return a valid FusionAuth `user` object with status code 200 if the user is found and authenticated. Note that while you may return any of the attributes of the user object, only the required ones must be returned.
+
+If the user cannot be authenticated, you should return the appropriate status code and response data as documented by the link:../apis/login[Login API].
+
+[source,json]
+.Example Successful Response JSON
+----
+include::docs/src/json/users/login-response.json[]
+----
+
+=== Security
+
+:request_entity: Generic Connector API endpoint
+:request_entity_lc: user-api
+:ssl_certificate_sentence: This must be an SSL certificate previously added to the Key Master
+include::docs/v1/tech/shared/_securing_http_requests.adoc[]
+:request_entity!:
+:request_entity_lc!:
+

@@ -28,6 +28,29 @@ This lambda must contain a function named `reconcile` that takes two parameters.
 
 The FusionAuth user object is well documented the link:../apis/users[User API] documentation. The `userAttributes` object may contain various values returned by the LDAP server.
 
+=== LDAP Attributes
+
+LDAP attributes can be returned to FusionAuth in a string form or a byte array. Some attributes are considered non-string values and need to be provided in a byte array to be useful in the Lambda function.
+
+A non-string attribute should be requested as a byte array. To request an attribute as a byte array, use the `;binary` LDAP attribute option as a suffix on your requested attribute. For example, instead of requesting `objectGUID`, you will request `objectGUID;binary`.
+
+== Helper Functions
+
+FusionAuth provides helper functions available in the Lambda function under the namespace `FusionAuth`.
+
+=== Active Directory Object GUID to UUID
+
+When using this connector with Microsoft Active Directory, the `objectGUID` attribute will need to be configured to be returned as a byte array. This can be accomplished by appending the suffix `;binary` as an LDAP attribute option to the `objectGUID` in the requested attributes configuration.
+
+Values requested as a byte array will be provided to the lambda function as a Base64 encoded string. Here is an example usage of the FusionAuth helper to convert this base64 encoded string representation of the `objectGUID` to a UUID.
+
+[source,javascript]
+----
+// Example usage to convert a Base64 encoded Microsoft Active Directory objectGUID to a valid FusionAuth UUID
+user.id = FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGUID;binary'])
+----
+
+
 == Assigning the lambda
 
 Once a lambda is created, you may use it when adding an LDAP Connector in the Connector configuration.
@@ -64,3 +87,78 @@ function reconcile(user, userAttributes) {
 
 }
 ----
+
+=== Example Active Directory lambda
+
+Active Directory does not have a `uid` attribute, and delivers the GUID as a binary value.
+
+To enable the Connector to work with Active Directory, you must request this attribute: `objectGUID;binary`, decode it into a binary GUID, then convert that to a version 4 UUID. Then you can assign that value to the `user.id` property.
+
+The below Lambda does this:
+
+```javascript
+// Using the response from an LDAP connector, reconcile the User.
+function reconcile(user, userAttributes) {
+
+  user.email = userAttributes.userPrincipalName;
+  user.firstName = userAttributes.givenName;
+  user.lastName  = userAttributes.sn;
+  user.active    = true;
+
+  // if you are using FusionAuth 1.19.7 or later, you can use the built in method and omit the decodeBase64 and guidToString functions. This is recommended.
+  // user.id = FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGuid;binary'])
+
+  user.id = guidToString(userAttributes['objectGUID;binary']);
+}
+
+function decodeBase64(string)
+{
+  var b=0,l=0, r='', 
+    m='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  string.split('').forEach(function (v) {
+    b=(b<<6)+m.indexOf(v); l+=6;
+    if (l>=8) r+=String.fromCharCode((b>>>(l-=8))&0xff);
+  });
+  return r;
+}
+
+function guidToString(b64)
+{
+    var x = decodeBase64(b64);
+  
+    var ret = "";
+  
+    for (i = 3; i >= 0; i--)
+    {
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+    ret += "-";
+    for (i = 5; i >= 4; i--)
+    {
+        //ret = ret + ('00' + (charCode & 0xFF00) >> 8);
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+    ret += "-";
+    for (i = 7; i >= 6; i--)
+    {
+        //ret = ret + ('00' + (charCode & 0xFF00) >> 8);
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+    ret += "-";
+    for (i = 8; i <= 9; i++)
+    {
+        //ret = ret + ('00' + (charCode & 0xFF00) >> 8);
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+    ret += "-";
+    for (i = 10; i < 16; i++)
+    {
+        //ret = ret + ('00' + (charCode & 0xFF00) >> 8);
+        ret += ('00'+x.charCodeAt(i).toString(16)).substr(-2,2);
+    }
+  
+    return ret;
+}
+```
+
+Thanks to community member Bradley Kite for providing this code.

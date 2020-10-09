@@ -22,6 +22,45 @@ section.docs article blockquote {
 
 [role=release-note]
 
+== Version 1.19.8
+_September 28th, 2020_
+
+=== Fixed
+
+* The documented configuration parameter `fusionauth-app.http.port` is not picked up by FusionAuth. If you were to override the default value of `9011`, the server will properly bind to the correct port, but FusionAuth will not use this local port to connect to itself.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/891[GitHub Issue #891]
+* When importing users using the Import API on PostgreSQL, if you have a wide distribution of values for the `insertInstant` on the User object, you may encounter a PostgreSQL exception.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/892[GitHub Issue #892]
+* Disable Elasticsearch Sniffer by default. The Elasticsearch Sniffer was enabled in version 1.19.0 to allow a single connection to Elasticsearch discover the other nodes in the cluster by the Elasticsearch REST client. This causes problems for cloud managed services or Elasticsearch running within a container service such as k8s. Turn this off by default, and allow it to be enabled if desired. See new configuration property `search.sniffer`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/893[GitHub Issue #893]
+
+=== Enhancements
+* Add a `referrer` meta tag to provide a default policy for the browser. Most browsers are now providing a decent default value, but this will ensure a secure default value is utilized. New Themes will default to `strict-origin` but this can be modified in the Helper template, and can also be added to existing themes.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/894[GitHub Issue #894]
+
+[role=release-note]
+
+== Version 1.19.7
+_September 23rd, 2020_
+
+=== Fixed
+
+* The default exception handling in the Elasticsearch REST client allows for some expected exceptions to go un-handled which may fail the search request. Add an exception handler to keep these underlying HTTP exceptions from causing failures.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/868[GitHub Issue #868], thanks to https://github.com/zbruhnke[@zbruhnke] for reporting and helping us track this one down.
+* Some LDAP exception messages will include an embedded `null` in the message body. PostgreSQL does not allow for embedded `null` characters in a text field, so this may cause FusionAuth to exception when using PostgreSQL.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/879[GitHub Issue #879]
+* When selecting Re-validate password on login when also restricting usage of previous passwords, the user may end up in a loop of being required to change their during login.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/880[GitHub Issue #880]
+* In the 1.19.0 MySQL migration script, if you have many refresh tokens, it is possible that a duplicate key will be generated due to a poor random Id generator.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/890[GitHub Issue #890]
+
+=== Enhancements
+
+* Add a helper for Active Directory LDAP to handle conversion of a based64 encoded Microsoft `objectGuid` to a Java UUID. See the link:/docs/v1/tech/lambdas/ldap-connector-reconcile[LDAP Connector Reconcile Lambda] for more information.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/822[GitHub Issue #822], thanks to https://github.com/bradleykite[@bradleykite] for the assistance on this one!
+
+[role=release-note]
+
 == Version 1.19.6
 _September 16th, 2020_
 
@@ -124,6 +163,7 @@ There a few changes in this release that you will need to be aware of, please re
 ** The API also now returns several status codes to provide additional insight into possible issues. See link:/docs/v1/tech/apis/system#system-status[Status] API documentation for additional information.
 * When building customized field error messages for custom Registration forms, a field error such as `[missing]user.data.foo` may now be `[blank].user.data.foo`. Note the prefix may have changed from `[missing]` to `[blank]`.  If you have created customized values for Registration Forms, please review your error messages and test your existing validation to ensure the correct text is displayed.
 * The Linux Debian and RPM packages now ship with a `systemd` service definition instead of the legacy Sys V init scripts. If the distribution of Linux you are using does not support `systemd` you will need to plan to upgrade. In most cases this should not affect anyone running FusionAuth on Linux using the provided RPM or Debian packages as bridge scripts generally allow you to start and stop the commands using a Sys V wrapper. See the Starting and Stopping documentation for additional information.
+* When using the python client library, the signature for the `exchange_o_auth_code_for_access_token` method which takes an authorization code has changed. The `client_id` and `redirect_uri` parameters flipped positions. This was done to make the signature consistent with the other client libraries. Instead of `exchange_o_auth_code_for_access_token(self, code, redirect_uri, client_id=None, client_secret=None)`, the method signature is now `exchange_o_auth_code_for_access_token(self, code, client_id, redirect_uri, client_secret=None)`. If you don't flip around the arguments, you'll recieve a 401 error, similar to link:https://github.com/FusionAuth/fusionauth-python-client/issues/7[this issue].
 
 === Known Issues
 * If you are using the database search engine, FusionAuth may fail to start up correctly. Resolved in 1.19.1.
@@ -463,6 +503,11 @@ _May 18th, 2020_
 _May 8th, 2020_
 
 include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Security
+* A vulnerability in an underlying SAML v2 library was resolved. If you are using SAML please upgrade FusionAuth to 1.16.0 or later as soon as possible.
+** https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-12676[CVE-2020-12676]
+** https://compass-security.com/fileadmin/Research/Advisories/2020-06_CSNC-2020-002_FusionAuth_Signature_Exclusion_Attack.txt[CSNC-2020-002]
 
 === Changed
 * The favicon configuration in the default theme has been updated. If you have created your own theme and kept the default favicons using the FusionAuth logo you will want to either remove them or update them with the correct `href` paths. See the default theme for reference if you would like to use the FusionAuth favicons.
