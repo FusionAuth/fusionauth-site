@@ -3,7 +3,7 @@ layout: blog-post
 title: How to migrate your legacy user data to a centralized auth system
 description: How can you safely and easily migrate your user's data from a legacy user datastore to a centralized auth system?  
 author: Dan Moore
-image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
+image: blogs/migrating-users-legacy-datastore/how-to-migrate-your-legacy-user-data-to-a-centralized-auth-system.png
 category: blog
 tags: client-php feature-connectors
 excerpt_separator: "<!--more-->"
