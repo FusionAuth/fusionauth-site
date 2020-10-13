@@ -35,6 +35,8 @@ When adding screenshots to the documentation, articles or blogs, use a normalize
 
 Note that you must have at least 1100 pixels of screen height. If you do not, your dimensions will be skewed. Go to "System Preferences > Display" then choose "More space".
 
+Also note that you should be resizing the image down to 1600px wide. If you are resizing up, something is wrong and your images will be fuzzy. 
+
 ```appleScript
 set theApp to "Safari"
 
