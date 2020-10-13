@@ -376,12 +376,21 @@ def user_login_ok(request):
 
   try:
     redirect_url = request.build_absolute_uri(reverse("dashboard"))
+    # if you are using version 1.19.x of the python library or later, use this
     r = client.exchange_o_auth_code_for_access_token(
       code,
+      settings.FUSION_AUTH_APP_ID,
       redirect_url,
-      settings.FUSION_AUTH_CLIENT_ID,
       settings.FUSION_AUTH_CLIENT_SECRET,
     )
+
+    # if you are using version 1.18.x of the python library or earlier, use this
+    #r = client.exchange_o_auth_code_for_access_token(
+      #code,
+      #redirect_url,
+      #settings.FUSION_AUTH_APP_ID,
+      #settings.FUSION_AUTH_CLIENT_SECRET,
+    #)
 
     if r.was_successful():
       access_token = r.success_response["access_token"]
