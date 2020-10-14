@@ -15,6 +15,11 @@ Once you have migrated an application to use a modern identity provider, how can
 
 Previously, we updated a legacy line of business PHP application to use [OAuth and FusionAuth to authenticate users](/blog/2020/10/07/updating-crufty-php-application). At the end of that post, "The ATM" application worked well for new users. But how do you migrate existing users without impacting their ability to use the application to do their job?
 
+This is part of a two part series. Here are all the posts:
+
+1. [Securing your legacy PHP business application with OAuth](/blog/2020/10/07/updating-crufty-php-application)
+1. How to migrate your legacy user data to a centralized auth system (this post)
+
 ## Why migrate to a centralized user datastore
 
 What are the benefits of having a centralized user datastore, rather than disparate, per application datastores? If you centralize user accounts, you have a one place for all your user data. This means:
