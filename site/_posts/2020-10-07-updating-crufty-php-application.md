@@ -15,6 +15,11 @@ Sometimes applications get written by interns. Sometimes prototypes get put into
 
 In this two part series, you'll update a (fake) line of business PHP application with its own user data store to instead use a modern auth system. In the second part, you'll learn about two methods to migrate accounts and profile data from a legacy data store to FusionAuth.
 
+This is part of a two part series. Here are all the posts: 
+
+1. Securing your legacy PHP business application with OAuth (this post)
+1. [How to migrate your legacy user data to a centralized auth system](/blog/2020/10/14/how-to-migrate-user-data-centralized-auth-system)
+
 The code is all available in a [FusionAuth GitHub repository](https://github.com/fusionauth/fusionauth-example-php-connector) so you can clone it and follow along if you'd like.
 
 ## Prerequisites
