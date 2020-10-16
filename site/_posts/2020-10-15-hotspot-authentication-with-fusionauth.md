@@ -1,7 +1,8 @@
 ---
 layout: blog-post
-title: Hotspot with FusionAuth authentication
+title: Controlling a hotspot with FusionAuth authentication
 description: Implement authentication and authorization using FusionAuth for allow web surfing at devices behind a firewall
+image: blogs/migrating-users-legacy-datastore/how-to-migrate-your-legacy-user-data-to-a-centralized-auth-system.png
 author: Mauro Viola
 category: blog
 tags: client-python 
@@ -131,7 +132,7 @@ If there is more gateway, delete them, leaving only the necessary one (TODO not 
 ip route
 ```
 
-Use the the appropriate parameters, paying attention to the fact that for the interfaces which were in DHCP before a system restart, you will have the route but then it will disappear when the system is configured with the static IP and restarted.
+Use the appropriate parameters, paying attention to the fact that for the interfaces which were in DHCP before a system restart, you will have the route but then it will disappear when the system is configured with the static IP and restarted.
 
 Enable ipv4 packet forwarding:
 
@@ -155,7 +156,7 @@ Disable selinux by editing `/etc/sysconfig/selinux` and setting the first value 
 
 Also check that the deleted `gw` entries do not reappear. If they do, it is possible that a network interface is still configured by DHCP.  
 
-Make sure you can access the internet from this machine: you will have to download several packages and this is the system that will enable internet access for the various PCs. If you can't surf from here, the others computers won't be able to either.
+Make sure you can access the internet from this machine: you will have to download several packages and this is the system that will enable internet access for the various PCs. If you can't surf from here, the other computers won't be able to either.
 
 ## Installing and setting up FusionAuth
 
@@ -230,7 +231,7 @@ Now that you are logged in as the FusionAuth administrator, navigate to "Applica
 
 This URL will also need to be set in the python scripts. Warning! It must be identical! Both here and in python scripts: if it ends with `/` here it must end with `/` in the .py scripts. Port 8080 is set in the python script; change it in both places if you want to use a different port.
 
-Set the the logout URL to `http://192.168.144.133` which is the address of the Apache server. We'll set this up later, but it will serve up a static html file to make logging in and out easier. Apache can run on this CentOS server, but it is not mandatory to use Apache or that it is on this server, as all it is doing is serving up that html file with convenient links. Don't forget, the IPs I use may be different from yours; make the appropriate changes.
+Set the logout URL to `http://192.168.144.133` which is the address of the Apache server. We'll set this up later, but it will serve up a static html file to make logging in and out easier. Apache can run on this CentOS server, but it is not mandatory to use Apache or that it is on this server, as all it is doing is serving up that html file with convenient links. Don't forget, the IPs I use may be different from yours; make the appropriate changes.
 
 {% include _image.liquid src="/assets/img/blogs/hotspot-with-fusionauth/adding-application.png" alt="Adding the WEBAuth application." class="img-fluid" figure=false %}
 
@@ -447,7 +448,7 @@ Note that at logout, which you can perform by accessing the appropriate URL, the
 
 Create the file `/root/clearRules.sh` with the content below. Remember to set the internet connected interface in the script (the `gwInterface` variable).
 
-You could also modify the script to allow permanent access to the certain computers, such as a campsite host or your boss. You'd do this by opening, with the appropriate rules, the ports needed (such as WiFi and RJ45) for the MAC addresses of those PCs. 
+You could also modify the script to allow permanent access to certain computers, such as a campsite host or your boss. You'd do this by opening, with the appropriate rules, the ports needed (such as WiFi and RJ45) for the MAC addresses of those PCs. 
 
 ```shell
 gwInterface="ens37"
@@ -473,7 +474,7 @@ do
   iptables -w -A INPUT -s $i -m conntrack --ctstate NEW  -j ACCEPT
 done
 iptables -w -A OUTPUT -m conntrack --ctstate NEW -j ACCEPT
-iptables -w -A OUTPUT  -j LOG  --log-level info --log-prefix "OUPUT -- DENY "
+iptables -w -A OUTPUT  -j LOG  --log-level info --log-prefix "OUPUT -- DENY " # TODO should it be output?
 iptables -w -A INPUT   -j LOG  --log-level info --log-prefix "INPUT -- DENY "
 iptables -w -A FORWARD -j LOG  --log-level info --log-prefix "FORWARD -- DENY "
 iptables -w -N clientRule
@@ -488,7 +489,7 @@ Ensure it will be started at boot (by adding it to `rc.local`) and put it in the
 
 Setting up apache is optional, but helpful. In testing, it becomes tedious to log out and then re-enter the URL to return to the login page. Let's create a static html page with the needed URL to make this process easier. Go to the `/var/www/html` directory.
 
-Create an `index.html` file and place the following HTML in it. Replace the `client_id` with your value from the FusionAuth application details page. Also remember to change the IP address (in all four places) and possibly the port 8080 (this is the the redirect URL you set in FusionAuth, with or without the trailing `/`, remember?).  
+Create an `index.html` file and place the following HTML in it. Replace the `client_id` with your value from the FusionAuth application details page. Also remember to change the IP address (in all four places) and possibly the port 8080 (this is the redirect URL you set in FusionAuth, with or without the trailing `/`, remember?).  
 
 This file automatically redirects any visitors to the authentication page without having to write the full URL in the URL bar of the browser each time.
 
@@ -519,7 +520,7 @@ You are ready to prove everything works!
 
 Run the `/root/clearRules.sh` script, this will reset all previous rules, and whoever is logged in will have to do it again. 
 
-1. Start the python script: `python3 /root/checkAccess.py`. This script will remain running waiting for the redirects after login (until you to press CTRL-C to terminate it).
+1. Start the python script: `python3 /root/checkAccess.py`. This script will remain running waiting for the redirects after login (until you press CTRL-C to terminate it).
 1. Now open a browser on the second machine. It must have the IP of the CentOS machine as a gateway (remember to set the DNS as well if you want). Try to visit a website; you won't be able to. Now go to the CentOS URL: `http://192.168.144.133` and the redirect to the FusionAuth login screen will occur. If the redirect doesn't work, it means that the `index.html` page has an issue. Double check that it was created correctly. If necessary, manually enter the login URL of the WEBAuth app.
 1. Log in with the test user you created earlier. The post login outcome should be "Access granted!"
 1. You should now be able to browse freely.
