@@ -147,7 +147,7 @@ func startDeviceGrantFlow(deviceAuthEndpoint string) (*fusionauth.DeviceResponse
 Here you can see the following:
 
 1. We have our login command, where our main logic is in our `Run` function.
-1. Our `Run` func starts off by creating a `FusionAuthClient` and assigning it to `faClient`. This is using FusionAuth's [go-client](github.com/FusionAuth/go-client/pkg/fusionauth) library, which **will be our primary interface to our FusionAuth server going forward** and is going to come in handy throughout our Device Code grant.
+1. Our `Run` func starts off by creating a `FusionAuthClient` and assigning it to `faClient`. This is using FusionAuth's [go-client](https://github.com/FusionAuth/go-client/pkg/fusionauth) library, which **will be our primary interface to our FusionAuth server going forward** and is going to come in handy throughout our Device Code grant.
 1. Next, we call `faClient.RetrieveOpenIdConfiguration` which returns to us an `openIDConfig` object of type [OpenIdConfiguration](https://pkg.go.dev/github.com/FusionAuth/go-client/pkg/fusionauth?tab=doc#OpenIdConfiguration). This will be handy as we'll be able to get some important OAuth endpoints from that configuration.
 1. Lastly, we call `startDeviceGrantFlow` with `openIDConfig.DeviceAuthorizationEndpoint`. This function sends the "Device Authorization Request" we mentioned earlier and populates the response into the `result` object which is of type [`fusionauth.DeviceResponse`](https://pkg.go.dev/github.com/FusionAuth/go-client/pkg/fusionauth?tab=doc#DeviceResponse).
 

@@ -47,7 +47,7 @@ A company doing business through the internet today has a storefront open to cus
 
 Every application has different security requirements. Some need to be HIPAA compliant, while others can be less stringent. We let you pick the level of security you need, and adjust it as quickly as your needs or threats evolve. We also allow you to use different password schemas for different groups of users, making it possible to consolidate multiple identity management systems into one efficient platform. This can be a completely transparent process without any downtime or customer friction.
 
-For more details, [read about how we migrated DataStax](/resources/datastax-case-study "Read about DataStax migration") from their previous solution.
+For more details, [read about how we migrated DataStax](/resources/datastax-case-study.pdf "Read about DataStax migration") from their previous solution.
 
 ### Reporting and Analytics
 
