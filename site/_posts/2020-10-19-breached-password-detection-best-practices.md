@@ -3,7 +3,7 @@ layout: blog-post
 title: Breached password detection best practices
 description: How can you protect your systems and users from known, breached passwords?
 author: Brian Pontarelli
-image: blogs/migrating-users-legacy-datastore/how-to-migrate-your-legacy-user-data-to-a-centralized-auth-system.png
+image: blogs/breached-password-detection-best-practices/breached-password-detection-best-practices.png
 category: blog
 tags: feature-breached-password-detection
 excerpt_separator: "<!--more-->"
