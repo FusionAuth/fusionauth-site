@@ -71,7 +71,7 @@ In the test phase you can manually set these parameters. DHCP will also need to 
 
 Furthermore, the `ens37` interface must be connected to the outside internet (so the associated IP address must be served by a DHCP server or you will have to set it manually. It can be published directly or behind a router and therefore there will be a double NAT).  
 
-In this post, we are only concerned with providing internet connectivity, not with device security: PC1 and PCn are connected to the same network with all of the security implications. If they were connected to the WiFi network, you could activate a separation client on the access points in order to keep them safe(TODO what is a separation client). Remember that above I wrote: *"I do not deny that there are many other things to say and to know"*? 
+In this post, we are only concerned with providing internet connectivity, not with device security: PC1 and PCn are connected to the same network with all of the security implications. If they were connected to the WiFi network, you could activate client separation on the access points in order to keep different clients separate and more secure. Remember that above I wrote: *"I do not deny that there are many other things to say and to know"*? 
 
 We want to achieve is this flow:
 
@@ -126,7 +126,7 @@ PREFIX=24
 
 Do not set the `DNS` and `gw` values for the card or cards that will serve the PCs.
 
-If there is more gateway, delete them, leaving only the necessary one (TODO not sure I understand), using the command:
+If there is more gateway, delete them, leaving only one. This simplifies the network configuration. You could have more than one, but it is beyond the scope of this tutorial. You can remove them using the command:
 
 ```shell
 ip route
@@ -474,7 +474,7 @@ do
   iptables -w -A INPUT -s $i -m conntrack --ctstate NEW  -j ACCEPT
 done
 iptables -w -A OUTPUT -m conntrack --ctstate NEW -j ACCEPT
-iptables -w -A OUTPUT  -j LOG  --log-level info --log-prefix "OUPUT -- DENY " # TODO should it be output?
+iptables -w -A OUTPUT  -j LOG  --log-level info --log-prefix "OUTPUT -- DENY " # TODO should it be output?
 iptables -w -A INPUT   -j LOG  --log-level info --log-prefix "INPUT -- DENY "
 iptables -w -A FORWARD -j LOG  --log-level info --log-prefix "FORWARD -- DENY "
 iptables -w -N clientRule
