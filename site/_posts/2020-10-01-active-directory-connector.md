@@ -86,7 +86,7 @@ I ran into an issue where when creating the user I required their password to be
 
 ## Setting up FusionAuth
 
-Next, you want to add an application in FusionAuth. An application is anything a user can sign into. We're going to reuse an [existing ASP.NET Razor Pages application](/blog/2019/05/06/securing-asp-netcore-razor-pages-app-with-oauth). While required, the application isn't the focus of this blog post, so if you want to learn more, check out the linked article. But let's pretend this application is an internal payroll application. Only users in Active Directory should be able to access it, but we want to leverage FusionAuth for all our application auth needs.
+Next, you want to add an application in FusionAuth. An application is anything a user can sign into. We're going to reuse an [existing ASP.NET Razor Pages application](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth). While required, the application isn't the focus of this blog post, so if you want to learn more, check out the linked article. But let's pretend this application is an internal payroll application. Only users in Active Directory should be able to access it, but we want to leverage FusionAuth for all our application auth needs.
 
 To set up this application in FusionAuth, navigate to "Settings" and then "Key Master" to set up an RSA keypair. You need to do this because the default signing algorithm for a JSON Web Token (JWT) in FusionAuth is HMAC, but the ASP.NET library used doesn't support symmetric algorithms. Below I'm generating an RSA key pair, but you can import one you've previously created should you need to share the keys across systems:
 

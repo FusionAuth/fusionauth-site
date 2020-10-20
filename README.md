@@ -65,10 +65,9 @@ If you are making changes to the CSS, you'll need to do the following:
 
 * clone that repo, make changes there on a branch
 * when your changes are done, run `sb int` which pushes up a integration build (similar to a maven snapshot) to the savant repo.
-* edit your css dependency to be something like this (with the appropriate version number):
+* edit your css dependency var to be something like this (with the appropriate version number):
 ```
-dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{integration}:css")
-dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:0.2.12-{integration}:css.map")
+fusionauthWebsiteStyleVersion = "0.2.27-{integration}"
 ```
 * then you can commit this and other folks can pull down your changes
 

@@ -47,7 +47,7 @@ For more details on the benefits and pitfalls of single- and multi-tenant soluti
 ### Configurable Password Encryption
 Every application has different security requirements. Some need to be HIPAA compliant, while others can be less stringent. We let you pick the level of security you need, and adjust it as quickly as your needs or threats evolve, including using different password schemas for different groups of users. This can be a completely transparent process without any downtime or customer friction.
 
-For more details, [read about how we migrated DataStax](/resources/datastax-case-study "Read about DataStax migration") from their previous solution.
+For more details, [read about how we migrated DataStax](/resources/datastax-case-study.pdf "Read about DataStax migration") from their previous solution.
 
 ### Enterprise Identity Unification (EIU)
 Another way OneLogin and FusionAuth differ is how they can handle complex bulk merger challenges. In today's fast-moving business world, companies merge with or acquire partners and competitors every day. It's a difficult challenge to combine and manage the unique databases of users that each company brings into the system. This is the realm of EIU and presents many complex issues such as duplicate users, incomplete or conflicting data, and varying password schemas.
