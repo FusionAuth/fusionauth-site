@@ -82,9 +82,9 @@ After successful setup, view the application by clicking the green magnifying gl
 
 We set up this application in the default tenant. FusionAuth supports multi-tenant configurations, but for this post, we'll keep all user data in one tenant, as that makes things slightly simpler. Now, our FusionAuth setup is complete. Let's move to the golang part.
 
-## Setting up the development environment for Go
+## Setting up the development environment for golang
 
-We are going to set up a development environment for go. You can skip this if you already have it set up. First, we need to download Go from its [official website](https://golang.org/).
+We are going to set up a development environment for golang. You can skip this if you already have it. First, we need to download Go from its [official website](https://golang.org/).
 
 Let's walk before we run. Here's the simplest Go project; not surprisingly this is the typical 'Hello World' program. This is what it looks like:
 
@@ -110,7 +110,7 @@ Hello, Golang
 
 Success! Let's add in some authentication, shall we?
 
-## Initial handlers and OAuth2 config
+## Setting up initial handlers and OAuth2 config in our golang app
 
 We are going to set up the handlers and OAuth2 configuration. For that, we need to import necessary components such as the OAuth and HTTP packages first:
 
