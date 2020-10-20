@@ -21,7 +21,7 @@ It's been a long time since OAuth 2.0 was released, so a consolidation point rel
 
 > My main goal with OAuth 2.1 is to capture the current best practices in OAuth 2.0 as well as its well-established extensions under a single name. That also means specifically that this effort will not define any new behavior itself, it is just to capture behavior defined in other specs. It also won’t include anything considered experimental or still in progress.
 
-OAuth 2.1 is not a scrape and rebuild of OAuth 2.0. Instead, OAuth 2.1 captures and consolidates changes and tweaks made to OAuth 2.0 over the past eight years. There's a particular a focus on better default security. It establishes best practices and will serve as a reference document going forward. 
+OAuth 2.1 is not a scrape and rebuild of OAuth 2.0. Instead, OAuth 2.1 captures and consolidates changes and tweaks made to OAuth 2.0 over the past eight years. There's a particular focus on better default security. It establishes best practices and will serve as a reference document going forward. 
 
 Here's a suggested description pulled from the [ongoing mailing list discussion](https://mailarchive.ietf.org/arch/msg/oauth/Ne4Q9erPP7SpC5051sSy6XnLDv0/): 
 
@@ -65,7 +65,7 @@ Whew, that's a lot. Let's examine each of these in turn. But before we do, let's
 
 * A `client` is a piece of code that the user is interacting with; browsers, native apps or single-page applications are all clients. 
 * An `OAuth server` implements OAuth specifications. It has or can obtain information about which resources are available to clients. In the RFCs this application is called an Authorization Server. This is also known as an Identity Provider. Most users call it "the place I sign in". 
-* An `application server` doesn’t have any authentication functionality delegates login requests to an OAuth server. It has a id which allows the OAuth server to identify it. 
+* An `application server` doesn’t have any authentication functionality but instead delegates login requests to an OAuth server. It has an id which allows the OAuth server to identify it. 
 
 ### The Authorization Code grant and PKCE
 
@@ -83,7 +83,7 @@ The OAuth 2.1 draft specification requires the PKCE challenge be used with every
 
 > Redirect URIs must be compared using exact string matching as per Section 4.1.3 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-Some OAuth grants, notably the Authorization Code grant, are configured with one or more redirect URIs. One of these are then requested by the client when the grant starts. After the grant succeeds, the OAuth server sends the client to the requested redirect URI. 
+Some OAuth grants, notably the Authorization Code grant, are configured with one or more redirect URIs. One of these is then requested by the client when the grant starts. After the grant succeeds, the OAuth server sends the client to the requested redirect URI. 
 
 Now, it would be convenient to support wildcards in this redirect URI list. At FusionAuth, we hear this request from folks who want to simplify their development or CI environments. Every time a new server is spun up, the redirect URI configuration needs to be updated to include the new URI. 
 
@@ -123,7 +123,7 @@ If you have a mobile application using this grant, you can either update the cli
 
 Bearer tokens, also known as access tokens, allow access to protected resources and therefore must be secured. They are called bearer tokens because merely possessing them gives you access. They're like a set of house keys. 
 
-These days, most tokens are JWTs. Clients store them securely and then use them to make API calls to the application server. The application server then uses the token to ensure the client calling the API has appropriate permissons. When first defined in [RFC 6750](https://tools.ietf.org/html/rfc6750), tokens were allowed in headers, POST bodies or query strings. The OAuth 2.1 draft prohibits sending a bearer token in a query string. 
+These days, most tokens are JWTs. Clients store them securely and then use them to make API calls to the application server. The application server then uses the token to ensure the client calling the API has appropriate permissions. When first defined in [RFC 6750](https://tools.ietf.org/html/rfc6750), tokens were allowed in headers, POST bodies or query strings. The OAuth 2.1 draft prohibits sending a bearer token in a query string. 
 
 A query string and, more generally, any string in a URL, is never private. JavaScript executing on a page can access it. A URL or components thereof may be recorded in server log files, caches, or browser history. In general, if you want to pass information privately over the internet, don't use anything in a URL. Instead, use TLS and put the sensitive information in a POST body or HTTP header.
 
@@ -139,7 +139,7 @@ If they are acquired by an attacker, they can create access tokens at will. Obvi
 
 The OAuth 2.1 draft provides two options for refresh tokens: they can be one-time use or tied to the sender with a cryptographic binding. 
 
-With one time use refresh tokens, after a refresh token (call it refresh token A) is used to retrieve an new access token, it becomes invalid. The OAuth server may send a new refresh token (call it refresh token B) along with the requested access token. Once the newly delivered access token expires, the client can request another access token using refresh token B, and receive the new access token and refresh token C, and so on and so on. The change to one-time use refresh tokens may require changing client code to store the new refresh token on every refresh of the access token.
+With one time use refresh tokens, after a refresh token (call it refresh token A) is used to retrieve a new access token, it becomes invalid. The OAuth server may send a new refresh token (call it refresh token B) along with the requested access token. Once the newly delivered access token expires, the client can request another access token using refresh token B, and receive the new access token and refresh token C, and so on and so on. The change to one-time use refresh tokens may require changing client code to store the new refresh token on every refresh of the access token.
 
 The other option is to ensure the OAuth server cryptographically binds the refresh token to the client. The options mentioned in the "OAuth 2.0 Security Best Current Practices" document include [OAuth token binding](https://www.ietf.org/archive/id/draft-ietf-oauth-token-binding-08.txt), Mutual TLS authentication [RFC 8705](https://tools.ietf.org/html/rfc8705) and [DPoP](https://tools.ietf.org/html/draft-ietf-oauth-dpop-01), among others. All of these binding methods ensure the request came from the client to which the refresh token was issued. 
 
