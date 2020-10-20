@@ -3,7 +3,7 @@ layout: blog-post
 title: Securing A Golang App with OAuth
 description: Golang lets you build web applications that are performant and easy to deploy. This tutorial will show you how to use OAuth to authenticate users in a golang application.
 author: Krissanawat Kaewsanmuang
-image: blogs/react-native-oauth/securing-react-native-with-oauth.png
+image: blogs/golang-oauth/securing-a-golang-app-with-oauth.png
 category: blog
 tags: client-golang
 excerpt_separator: "<!--more-->"
@@ -304,3 +304,4 @@ Using the Authorization Code grant in golang lets you use any OAuth compatible i
 
 Happy coding!
 
+*Modified golang gopher image courtesy of Renee French, under a [CCAv3 license](https://creativecommons.org/licenses/by/3.0/).*
