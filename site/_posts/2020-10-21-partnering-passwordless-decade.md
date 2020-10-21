@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Partnering in The Passwordless Decade
-description: FusionAuth and partner to delivery the strongest security and best user experienced.
+description: FusionAuth and HYPR partner to delivery the strongest security and best user experienced.
 author: Christine Castro
 image: blogs/passwordless-decade/partnering-in-the-passwordless-decade-hypr.png
 category: blog
