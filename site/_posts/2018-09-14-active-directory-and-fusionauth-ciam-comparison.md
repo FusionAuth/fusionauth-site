@@ -44,7 +44,7 @@ With today's internet, customers can come from anywhere in the world, but many c
 
 Not every application has the same security requirements. Some need to be HIPAA compliant, while others can be less stringent. We let you pick the level of security you need, and adjust it as quickly as your needs or threats evolve. We also allow you to use different password schemas for different groups of users, making it possible to consolidate multiple identity management systems into one efficient platform. This can be a completely transparent process without any downtime or customer friction.
 
-For more details, [read about how we migrated DataStax](/resources/datastax-case-study "Read about DataStax migration") from their previous solution.
+For more details, [read about how we migrated DataStax](/resources/datastax-case-study.pdf "Read about DataStax migration") from their previous solution.
 
 ### Enterprise Identity Unification (EIU)
 

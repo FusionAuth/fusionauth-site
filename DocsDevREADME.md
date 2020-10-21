@@ -12,6 +12,7 @@ Here are some guidelines to follow when writing documentation.
 - Use single backticks when specifying a value that is not a field.
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate.
 - Never use the term GUID, it's always UUID
+- All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
 
 For blog posts:
 - Indent all code with two spaces per level.
