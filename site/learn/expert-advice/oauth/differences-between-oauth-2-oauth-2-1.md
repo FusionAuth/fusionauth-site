@@ -2,7 +2,7 @@
 layout: advice
 title: Differences between OAuth 2 and OAuth 2.1
 description: The OAuth 2.1 draft will soon be published as an RFC. Why did they write it? How were the OAuth 2 specifications modified? What will you have to change?
-image: advice/oauth-device-authorization-article.png
+image: advice/oauth-2-1/expert-advice-differences-between-oauth-2-and-oauth-2.1.png
 author: Dan Moore
 category: OAuth
 date: 2020-10-20
