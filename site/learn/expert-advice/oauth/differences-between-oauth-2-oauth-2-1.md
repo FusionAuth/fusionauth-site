@@ -164,10 +164,14 @@ Make sure your OAuth server is doing to following:
 * Make sure bearer tokens are never present in the query string. 
 * Limit your refresh tokens, either by making them one time use or having them be sender constrained.
 
-## Future directions
+## What's next for OAuth
 
-> It's tough to make predictions, especially about the future." - Yogi Berra
+> Prediction is very difficult, especially if it's about the future. - Niehls Bohr
 
-OAuth 2.1 is still under discussion on the OAuth mailing list. If you are interested in following or influencing this RFC, review the [discussion archives](https://mailarchive.ietf.org/arch/browse/oauth/) and/or [join the mailing list](https://www.ietf.org/mailman/listinfo/oauth).
+OAuth 2.1 is still being discussed on the IETF OAuth mailing list. If you are interested in following or influencing this RFC, review the [discussion archives](https://mailarchive.ietf.org/arch/browse/oauth/) to get up to speed. You can also [join the mailing list](https://www.ietf.org/mailman/listinfo/oauth).
 
-Looking beyond OAuth 2.1, which aims to consolidate security best practices but leave most of the rest of OAuth 2.0 untouched, there’s also a "next gen" OAuth working group, [reimagining a Grant Negotiation and Authorization Protocol from the ground up](https://datatracker.ietf.org/wg/gnap/about/). The GNAP specification is further from release than the OAuth 2.1 specification.
+Looking beyond OAuth 2.1, which, as mentioned, aims to consolidate security best practices but leave most of the rest of OAuth 2.0 untouched, there’s also a "next gen" working group, [reimagining a Grant Negotiation and Authorization Protocol from the ground up](https://datatracker.ietf.org/wg/gnap/about/). This protocol aims to cover the same use cases as OAuth2, but [explicitly rules out backward compatibility](https://datatracker.ietf.org/wg/gnap/about/): 
+
+> "Although the artifacts for this work are not intended or expected to be backwards-compatible with OAuth 2.0 or OpenID Connect, the group will attempt to simplify migrating from OAuth 2.0 and OpenID Connect to the new protocol where possible."
+
+The GNAP specification is further from release than the OAuth 2.1 specification.
