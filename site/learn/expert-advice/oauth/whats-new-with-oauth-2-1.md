@@ -1,15 +1,18 @@
 ---
 layout: advice
-title: What is new in the OAuth 2.1?
-description: A draft of the OAuth 2.1 specification was recently released. What's coming down the pike?
+title: Differences between OAuth 2 and OAuth 2.1
+description: The OAuth 2.1 draft will soon be published as an RFC. Why did they write it? How were the OAuth 2 specifications modified? What will you have to change?
 image: advice/oauth-device-authorization-article.png
 author: Dan Moore
 category: OAuth
 date: 2020-10-20
 dateModified: 2020-10-20
+
 ---
 
-OAuth is getting spiffed up a bit. The original OAuth 2.0 specification was released in October 2012 as [RFC 6749](https://tools.ietf.org/html/rfc6749) and [RFC 6750](https://tools.ietf.org/html/rfc6750). It replaced OAuth 1.0, released in April 2010. There have been a number of extensions and modifications to OAuth 2 over the subsequent years. A new OAuth specification has been proposed and is currently under discussion. At this time, the specification was most recently updated on July 30, 2020. If approved, [OAuth 2.1](https://tools.ietf.org/html/draft-ietf-oauth-v2-1-00) will obsolete certain parts of Oauth 2.0 and mandate security best practices. The rest of the OAuth 2.0 specification will be retained. 
+OAuth 2.1 is consolidating best practices learned over the eight years since Oauth 2 was published. The original OAuth 2.0 specification was released in October 2012 as [RFC 6749](https://tools.ietf.org/html/rfc6749) and [RFC 6750](https://tools.ietf.org/html/rfc6750). It replaced OAuth 1.0, released in April 2010. There have been a number of extensions and modifications to OAuth 2 over the subsequent years. 
+
+A new OAuth specification has been proposed and is currently under discussion. At this time, the specification was most recently updated on July 30, 2020. If approved, [OAuth 2.1](https://tools.ietf.org/html/draft-ietf-oauth-v2-1-00) will obsolete certain parts of Oauth 2.0 and mandate security best practices. The rest of the OAuth 2.0 specification will be retained. 
 
 That bears repeating. Nothing new will be added. This is an explicit design goal of OAuth 2.1.
 
@@ -31,11 +34,11 @@ Many of the details are drawn from the [OAuth 2.0 Security Best Current Practice
 
 At the end of the day, the goal of OAuth 2.1 is to have a single document explaining how to best implement and use OAuth, as both a client and an authorization server. No longer will developers be required to hunt across multiple RFCs and standards documents to understand how a particular behavior should be implemented or used.
 
-## What does OAuth 2.1 mean to me?
+## How will OAuth 2.1 affect you?
 
 If you use OAuth in your application, don’t panic. 
 
-As mentioned above, the discussion process around this specification is ongoing. A draft was posted to the IETF mailing list in mid July and was adopted by the OAuth working group in late July. As of the time of writing, the draft is being reviewed and fine tuned. 
+As mentioned above, the discussion process around this specification is ongoing. A draft was posted to the IETF mailing list in mid July and was adopted by the OAuth working group in July 2020. As of the time of writing, the draft is being reviewed and fine tuned. 
 
 You may ask, when will it be available? The short answer is "no one knows". 
 
@@ -45,7 +48,7 @@ Even after OAuth 2.1 is released, it will likely be some time before it is widel
 
 That said, when OAuth 2.1 is released the largest impact on anyone using OAuth for authentication or authorization in their applications will be adapting to the removal of two OAuth 2.0 specified grants: the Implicit grant and the Resource Owner Password Credentials grant. 
 
-## What is changing?
+## What is changing from OAuth 2.0 to OAuth 2.1?
 
 The draft RFC has a [section](https://tools.ietf.org/id/draft-ietf-oauth-v2-1-00.html#name-differences-from-oauth-20) outlining the major changes between OAuth 2.0 and OAuth 2.1. There may be changes not captured in that section but the authors' goals are to document all formal changes there. There are six such changes: 
 
@@ -67,7 +70,7 @@ Whew, that's a lot. Let's examine each of these in turn. But before we do, let's
 * An `OAuth server` implements OAuth specifications. It has or can obtain information about which resources are available to clients. In the RFCs this application is called an Authorization Server. This is also known as an Identity Provider. Most users call it "the place I sign in". 
 * An `application server` doesn’t have any authentication functionality but instead delegates login requests to an OAuth server. It has an id which allows the OAuth server to identify it. 
 
-### The Authorization Code grant and PKCE
+### OAuth 2.1 change: The Authorization Code grant requires PKCE
 
 > The authorization code grant is extended with the functionality from PKCE ([RFC7636](https://tools.ietf.org/html/rfc7636)) such that the default method of using the authorization code grant according to this specification requires the addition of the PKCE parameters
 
@@ -79,7 +82,7 @@ This attack could also happen if TLS has a vulnerability or if a user's router f
 
 The OAuth 2.1 draft specification requires the PKCE challenge be used with every Authorization Code grant, protecting against the authorization code being hijacked by an attacker and being used to gain a token.
 
-### Redirect URIs must be compared using exact string matching
+### OAuth 2.1 change: Redirect URIs must be compared using exact string matching
 
 > Redirect URIs must be compared using exact string matching as per Section 4.1.3 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
@@ -95,7 +98,7 @@ An additional use case for a wild card redirect URI occurs when the final destin
 
 However, allowing wildcard matching for the redirect URI is a security risk. If the redirect URI matching is flexible, an attacker could send a user to an open redirect server controlled by them, and then on to a malicious destination. OWASP also discusses the [perils of such open redirect servers](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html#dangerous-url-redirects). While this attack requires compromising the request in some fashion, using exact matching for redirect URIs eliminates this risk because the redirect URI is always a known value.
 
-### The Implicit grant is removed
+### OAuth 2.1 change: The Implicit grant is removed
 
 > The Implicit grant ("response_type=token") is omitted from this specification as per Section 2.1.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
@@ -107,7 +110,7 @@ Here's an [article about the least insecure way to use the Implicit grant for an
 
 The OAuth 2.1 draft specification omits the Implicit grant. This means that any software implementing OAuth 2.1 won't have to implement this grant. If you use this grant in your application, you’ll have to replace it with a different one if you want to be compliant with OAuth 2.1. 
 
-### The Resource Owner Password Credentials grant is removed
+### OAuth 2.1 change: The Resource Owner Password Credentials grant is removed
 
 > The Resource Owner Password Credentials grant is omitted from this specification as per Section 2.4 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
@@ -117,7 +120,7 @@ This grant is often used for native mobile applications. While this grant made i
 
 If you have a mobile application using this grant, you can either update the client to use an Authorization Code grant using PKCE or keep using your OAuth 2.0 compliant system.
 
-### No bearer tokens in the query string
+### OAuth 2.1 change: No bearer tokens in the query string
 
 > Bearer token usage omits the use of bearer tokens in the query string of URIs as per Section 4.3.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
@@ -127,7 +130,7 @@ These days, most tokens are JWTs. Clients store them securely and then use them 
 
 A query string and, more generally, any string in a URL, is never private. JavaScript executing on a page can access it. A URL or components thereof may be recorded in server log files, caches, or browser history. In general, if you want to pass information privately over the internet, don't use anything in a URL. Instead, use TLS and put the sensitive information in a POST body or HTTP header.
 
-### Limiting refresh tokens 
+### OAuth 2.1 change: Limiting refresh tokens 
 
 > Refresh tokens must either be sender-constrained or one-time use as per Section 4.12.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
@@ -135,7 +138,7 @@ A query string and, more generally, any string in a URL, is never private. JavaS
 
 Refresh tokens are longer lived than access tokens and have a higher level of privilege, since they can be used to create entirely new access tokens. Therefore you should take more care when securing a refresh token. Never share your refresh tokens between different devices.
 
-If they are acquired by an attacker, they can create access tokens at will. Obviously at that point, the resource which the access tokens protect will no longer be secured. As an example of how to secure refresh tokens, here’s a [post using the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens using HttpOnly cookies with a constrained cookie domain. 
+If they are acquired by an attacker, they can create access tokens at will. Obviously at that point, the resource which the access tokens protect will no longer be secured. As an example of how to secure refresh tokens, here’s a [post using the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens using HttpOnly cookies with a constrained cookie domain, and you can learn more about [FusionAuth's access and refresh tokens here](/docs/v1/tech/oauth/tokens/).
 
 The OAuth 2.1 draft provides two options for refresh tokens: they can be one-time use or tied to the sender with a cryptographic binding. 
 
