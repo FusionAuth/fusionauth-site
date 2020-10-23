@@ -77,10 +77,4 @@ We were hesitant to host our own, since it then becomes another platform for us 
 
 -------
 
-We love sharing community stories. You can check out [Recon Infosec's website](https://reconinfosec.com/) if you'd like to learn more about Whitney and Reco nInfosec.
-
-**Whitney:** 
-**Dan:** 
-    What link would you like me to use when I introduce you (Whitney Champion, Lead Architected Recon Infosec ok?)
-
-        That's fine :) And you can use my Twitter or whitneychampion.com if you're adding a link.
+We love sharing community stories. You can check out [Recon Infosec's website](https://reconinfosec.com/) if you'd like to learn more about [Whitney](https://twitter.com/shortxstack/) and ReconInfosec.
