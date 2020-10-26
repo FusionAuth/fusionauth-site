@@ -22,6 +22,65 @@ section.docs article blockquote {
 
 [role=release-note]
 
+== Version 1.20.0
+_October 23rd, 2020_
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Changed
+- Updated base image for Docker from `alpine` to `ubuntu:focal`. This is a non-functional change, but please be aware of this change if your building Docker images using ours as a base.
++
+In order to run on `alpine` without including the GNU C Library (`glibc`) we had to use a custom build of OpenJDK compiled using the `musl` C library. Due to some possible performance concerns, we have moved to an official build of JDK provide by AdoptOpenJDK compiled using `glibc`. The `ubuntu:focal` base image added ~ 30 MB in size compared to our previous (compressed) image size, but until we can obtain builds from AdoptOpenJDK based upon the `musl` C library, we will not likely ship an official image on `alpine`.
++
+** https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile[fusionauth-containers / docker / fusionauth / fusionauth-app / Dockerfile]
+** https://hub.docker.com/r/fusionauth/fusionauth-app/tags[hub.docker.com / fusionauth / fusionauth-app]
+
+=== Fixed
+* Resolve a warning message about an upcoming deprecated use of reflection in a FusionAuth dependency. This warning message was not causing any failures, it was just noisy.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/721[GitHub Issue #721]
+* A negative count may be displayed in the FusionAuth dashboard and other reports. This was primarily due to how the delete tenant was handled as it related to keeping track of total user counts. The delete tenant code path no longer utilizes the Elasticsearch index and takes a safer approach to deleting users and keeping track of total counts.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/799[GitHub Issue #799], thanks to https://github.com/gurupras[@gurupras] for helping us out with this one!
+* Better user experience for advanced self service forms once a license has been de-activated.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/861[GitHub Issue #861]
+* Fix self service registration form validation when using custom options with a `select`, `radio` or `checkbox.`
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/863[GitHub Issue #863]
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/865[GitHub Issue #865]
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/867[GitHub Issue #867]
+* Fix UI form validation when adding and removing fields from an existing self service registration from.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/866[GitHub Issue #866]
+* The `applicationId` was not validated on the Import User API, the import would still correctly fail, just not in a developer friendly way.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/915[GitHub Issue #915]
+* Fix a typo the Activate Reactor page in the UI.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/945[GitHub Issue #945]
+* When using self service registration, the `authenticationType` claim found in the resulting JWT was always `PASSWORD` even if the authentication was performed using Facebook, Google or other identity provider.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/948[GitHub Issue #948]
+
+=== New
+- SAML POST Bindings support from a third party SP when FusionAuth is acting as the IdP
+* Resolves https://github.com/FusionAuth/fusionauth-issues/issues/845[GitHub Issue #845]
+- SAMP POST Bindings support to third party SAML IdP when FusionAuth is acting as the SP
+* Resolves https://github.com/FusionAuth/fusionauth-issues/issues/845[GitHub Issue #845]
+- SAML v2 SessionIndex
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/896[GitHub Issue #896]
+- Admin User Form
+* Resolves https://github.com/FusionAuth/fusionauth-issues/issues/753[GitHub Issue #753]
+- Admin Registration Form
+* Resolves https://github.com/FusionAuth/fusionauth-issues/issues/753[GitHub Issue #753]
+
+== Enhancements
+* When using more then one tenant the `tenantId` is documented to be required when using the OAuth2 endpoints. However, in some cases it may not be provided, this enhancement allows the correct tenant to be identified during logout when only the `id_token_hint` is provided on the request to `/oauth2/logout` endpoint. This issue only affects FusionAuth versions 1.19.0 and greater due to the addition to multi-tenant SSO. Prior to version 1.19.0, it was not possible to be logged into more than one tenant at once using FusionAuth SSO.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/925[GitHub Issue #925]
+* Initial build support for multi-arch Docker images. FusionAuth is not yet publishing images for these additional arch types, but we are trying to better support these builds in our base image definition. This should help those running FusionAuth on IBM z(s390x), IBM Power(64 bit PowerPC) and various ARM platforms including AWS Gravitron, Apple Bionic and hobby platforms such as Rasberry Pi.
++
+Thanks to a bunch of our FusionAuth MVPs including, but not limited to https://github.com/jerryhopper[@jerryhopper], https://github.com/arslanakhtar61[@arslanakhtar61], and https://github.com/ceefour[@ceefour], for helping with this work through code, advice and domain knowledge that we don't have!
++
+** https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile[fusionauth-containers / docker / fusionauth / fusionauth-app / Dockerfile]
+** https://github.com/FusionAuth/fusionauth-containers#multi-architecture-builds[Multi-Architecture Builds]
+** https://github.com/FusionAuth/fusionauth-containers/issues/49[GitHub [fusionauth-containers\] Issue #49]
+
+
+[role=release-note]
+
 == Version 1.19.8
 _September 28th, 2020_
 
