@@ -77,4 +77,4 @@ We were hesitant to host our own, since it then becomes another platform for us 
 
 -------
 
-We love sharing community stories. You can check out [Recon Infosec's website](https://reconinfosec.com/) if you'd like to learn more about Recon Infosec. You can also follow [Whitney on Twitter](https://twitter.com/shortxstack/).
+We love sharing community stories. You can check out [Recon Infosec's website](https://reconinfosec.com/) if you'd like to learn more. You can also follow [Whitney on Twitter](https://twitter.com/shortxstack/).
