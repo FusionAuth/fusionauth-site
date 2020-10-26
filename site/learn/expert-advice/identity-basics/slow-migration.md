@@ -21,7 +21,7 @@ Or maybe you have an outdated user management system with an impending license r
 
 Once you've decided to undertake the migration, using a slow migration process allows the movement of customer data with minimal impact to existing users and systems.
 
-A slow, or phased, migration is one where user data is migrated at the time of authentication. The first time a user authenticates with a new system after the migration as begun, their data is mapped from the old system to the new one. The new system is then the system of record for this user.
+A slow, or phased, migration is one where user data is migrated at the time of authentication. The first time a user authenticates with a new system after the migration has begun, their data is mapped from the old system to the new one. The new system is then the system of record for this user.
 
 This document will discuss what you need to do to succeed with a slow migration.
 
@@ -31,11 +31,11 @@ There are two alternatives to performing a slow, phased migration. You can migra
 
 If you choose a big bang, you are moving all your users at one point in time. To do so, you build a data processing system to migrate the users and test the heck out of it. When you are ready to migrate, arrange for minimal downtime. Migrate the data. Then flip the system of record for all your users from the old to the new. 
 
-You have downtime because you don’t want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. Depending on your availability needs, you could also choose to do writes to both systems during that period. An alternative approachs is to allow the old system to run in a degraded state, allowing user data can be read, but not updated.
+You have downtime because you don’t want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. Depending on your availability needs, you could also choose to do writes to both systems during that period. An alternative approach is to allow the old system to run in a degraded state, allowing user data to be read, but not updated.
 
 With the big bang option, you also should create a rollback plan in case testing misses something and things go sideways.
 
-The big bang is a good choice when you have a small user base, or aren't in production yet. It also works when you need to decommission the legacy datastore as soon as possible, i.e. an upcoming license renewal. The big bang is operationally simpler than altneratives, because you are running both systems for a short period of time; the legacy system is running only for so long as is required to verify the mass migration worked. People accessing user data, such as customer service reps, will only need to switch their working routines once the migration is done.
+The big bang is a good choice when you have a small user base, or aren't in production yet. It also works when you need to decommission the legacy datastore as soon as possible, i.e. an upcoming license renewal. The big bang is operationally simpler than alternatives, because you are running both systems for a short period of time; the legacy system is running only for so long as is required to verify the mass migration worked. People accessing user data, such as customer service reps, will only need to switch their working routines once the migration is done.
 
 However, there are some issues or concerns with a big bang migration:
 
@@ -43,7 +43,7 @@ However, there are some issues or concerns with a big bang migration:
 * Production systems, no matter how good the testing environment, have a way of being different, if for no other reason than that they are under load. You might encounter an unexpected error during the production rollout.
 * If something goes sideways, many users will be impacted, since they were all being migrated.
 * You'll write a bunch of code which you'll test intensely, use once and then throw away.
-* You need to ensure the new system understand how the passwords were hashed in the old system. Or force everyone to reset their password, which is a subpar user experience, to put it mildly.
+* You need to ensure the new auth system "understands" how passwords were hashed in the old system. Or force everyone to reset their password, which is a subpar user experience, to put it mildly.
 
 Segment by segment migration, the second alternative, can be thought of as a series of "little bang" migrations. You split up your user data in a natural way, then you migrate each segment of users.
 
@@ -51,14 +51,14 @@ A segment by segment migration lets you test your processes in production by mig
 
 However, a segment by segment migration may be problematic in the following ways:
 
-* You may not be able to perform one if there's no natural divisions in your userbase.
+* You may not be able to perform one if there's no natural divisions in your user base.
 * This may not be worth it if most of your users are in one segment. For example, if you have a popular application and a couple nascent apps and want to combine your users, you may not be decreasing your risk much.
 * This approach takes longer to complete, leaving you running multiple systems for a longer period of time.
 * You'll have downtime for each user segment, which requires additional off hours work or coordination.
 
 ## How does a slow migration work?
 
-At a high level, a slow migration happens in four phases. Each user proceeed through the phases independently of any other.  Here's how the data flows before any changes are made: 
+At a high level, a slow migration happens in four phases. Each user proceeds through the phases independently of any other.  Here's how the data flows before any changes are made: 
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-before-migration.plantuml, alt: "The user auth process before migration." %}
 
@@ -66,7 +66,7 @@ Then you'd stand up the new system, connect it to the old system, and route all 
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-migration-first-auth.plantuml, alt: "The auth process during an initial authentication in a slow migration." %}
 
-For subsequent logins, the user's data has been migrated. There's no need to consult the old auth system. However, it continues to run because there are other users who have not yet performed a initial authentication.
+For subsequent logins, the user's data has been migrated. There's no need to consult the old auth system. However, it continues to run because there are other users who have not yet performed an initial authentication.
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-migration-second-auth.plantuml, alt: "The auth process during a subsequent authentication in a slow migration." %}
 
@@ -111,7 +111,7 @@ As this example shows, getting ready for a migration is full of tiny choices and
 
 If you have the option of storing arbitrary key value data in the new system, serialize the user object from the old system and store it there. The old user model may be helpful in the future because if there was data that mistranslated, you'll have the original copy.
 
-You'll also want to think about relationships between users and other objects. Groups, roles, historical data, and anything else the old system has tied to users. Make sure you know where this data is coming from, if it can be discarded, and if not, where it will end up. Perhaps it will be migrated to the new system, perhaps to a different datatore.
+You'll also want to think about relationships between users and other objects. Groups, roles, historical data, and anything else the old system has tied to users. Make sure you know where this data is coming from, if it can be discarded, and if not, where it will end up. Perhaps it will be migrated to the new system, perhaps to a different datastore.
 
 There are two field types worth commenting on in more detail. The first is user ids. These are often referenced by other systems and are used for auditing, analytics or other historical purposes. If you can preserve user ids, do so. 
 
@@ -137,13 +137,13 @@ It's hard to give any blanket guidance as all systems are different, but you sho
 
 ## Proxy to the old auth system
 
-Once the planning and data mapping is done, you need to connect the two systemns.
+Once the planning and data mapping is done, you need to connect the two systems.
 
-The new auth system could connect to the old system's datastore, but it's better to create write an API in the old system. Doing so allows you to leverage any business logic the old system performs to authenticate the user or assemble their data. This API may also call any other APIs or systems needed to construct the full user object for the new system. 
+The new auth system could connect to the old system's datastore, but it's better to create an API in the old system. Doing so allows you to leverage any business logic the old system performs to authenticate the user or assemble their data. This API may also call any other APIs or systems needed to construct the full user object for the new system. 
 
 This code should mark the user as migrated in the old auth system datastore, if possible. This will be helpful in tracking progress and determining the system of record for each user.
 
-If you can't modify the old system to add an API, because it is proprietary or hard to change, you can either reach directly into the database, or put a network proxy in front of the old system to perform required data transformations. In a worst case scenario, you could mimic whatever user agent the old system expects, such as a browser, and convert the correspoding result into data to feed into the new system.
+If you can't modify the old system to add an API, because it is proprietary or hard to change, you can either reach directly into the database, or put a network proxy in front of the old system to perform required data transformations. In a worst case scenario, you could mimic whatever user agent the old system expects, such as a browser, and convert the corresponding result into data to feed into the new system.
 
 Make sure to lock down this API. At a minimum, use TLS and some form of authorization to ensure that no malicious party can call this endpoint. You don't want someone to be able to arbitrarily try out authentication credentials. Use basic authentication or a shared header value, and discard any requests which are not expected. You could also lock access to a given IP range, if the new system is only connecting from a certain set of IPs.
 
@@ -151,11 +151,11 @@ You should build an automated test against this API, ensuring that if there are 
 
 When you have tested that this proxy returns the correct user data for a given set of authentication credentials, cut your applications over to the new system. 
 
-No data needs to be migrated, but new users should register with the new auth system. It should recieve all authentication requests first. It will, of course, defer such requests to the old auth system.
+No data needs to be migrated, but new users should register with the new auth system. It should receive all authentication requests first. It will, of course, defer such requests to the old auth system.
 
 ## The authentication process
 
-When a user signs in, the new auth system passes on the crednetials to the old auth system, and receives the user data in response. Here's the diagram from above:
+When a user signs in, the new auth system passes on the credentials to the old auth system, and receives the user data in response. Here's the diagram from above:
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-migration-first-auth.plantuml, alt: "The auth process during an initial authentication in a slow migration." %}
 
@@ -208,11 +208,7 @@ There are a number of reasons to choose a slow, phased migration. Let's examine 
 
 User migrations are unique when compared to other migrations. 
 
-Users are a key component of most applications, and represent real, live people. People who tend to be angry when they can't log in to applications.
-
-User data is that it's protected in ways other data are not. Similar to payment information, user data has legal protections unlike most other forms of data. 
-
-Additionally, user passwords are hashed. Unlike encrypted data, hashes are one way. When you move user data, that password by design hidden in a hash. This means that you have to know the hashing mechanism to allow a user to sign in.
+Users are a key component of most applications, and represent real, live people. People who tend to be angry when they can't log in to applications. It's protected in ways other data are not. Similar to payment information, user data has legal protections unlike most other forms of data. Additionally, user passwords are hashed. Unlike encrypted data, hashes are one way. When you move user data, their password is hidden in a hash. This means that you have to know the hashing mechanism to allow a user to sign in.
 
 User data is also often commonly stored in more than one datastore. Almost every application needs the concept of a 'user', so as an organization grows and applications are added, user data grows more and more fragmented.
 
@@ -222,7 +218,7 @@ All of these factors combine to make user data especially complex to migrate. Wh
 
 A slow migration is also a business opportunity. When you perform one, you have a reason to reach out to existing users and encourage them to sign in, thus, hopefully, reactivating some of your users. 
 
-This opportunity also means you won't waste time and effort migrating users who are no longer using your application. While storing data is cheap, human attention is less so. A slow migration is an effective way to scrub your userbase. 
+This opportunity also means you won't waste time and effort migrating users who are no longer using your application. While storing data is cheap, human attention is less so. A slow migration is an effective way to scrub your user base. 
 
 After all, if you run a slow migration for a year, how valuable are the users who never authenticated during those twelve months?
 
@@ -230,7 +226,7 @@ After all, if you run a slow migration for a year, how valuable are the users wh
 
 A phased migration decreases cutover risk. There's less downtime because there's no data moved. Depending on your system architecture, there may be some downtime as you direct all your users to the new auth system, rather than the old one. 
 
-You may, eventually, decide to stop the slow migration and cut over remaining users. But even that is less risky because these will be definition be some of your least active users. And because you'll be moving fewer of them, the downtime requirements will decrease as well.
+You may, eventually, decide to stop the slow migration and cut over remaining users. But even that is less risky because these will by definition be some of your least active users. And because you'll be moving fewer of them, the downtime requirements will decrease as well.
 
 ### Minimized required understanding of the old auth system
 
@@ -246,11 +242,11 @@ Both systems, the new and the old, should be extensible or have snap in points t
 
 One of the benefits of the slow migration is that you don't have a big bang cutover, with downtime and risk. However, that comes at a cost. You have to run both the new and old systems for the length of your migration. Depending on the state of the old system, this may be more or less painful. 
 
-A corrolary is that customer service and other internal users may have to access two systems to find a user. This is especially true if a user contacts your business using an offline method, such as a phone call. Such a user may not be migrated, and the rep may not know where to find their data. Additionaly, systems which access user data may need to be updated to handle two systems, or you may need to put a proxy in place to look in one system or the other. One solution is to have the new auth system proxy not just authentication, but any user data request.
+A corollary is that customer service and other internal users may have to access two systems to find a user. This is especially true if a user contacts your business using an offline method, such as a phone call. Such a user may not be migrated, and the rep may not know where to find their data. Additionally, systems which access user data may need to be updated to handle two systems, or you may need to put a proxy in place to look in one system or the other. One solution is to have the new auth system proxy not just authentication, but any user data request.
 
 The new system can have links to the "old" system, and vice versa. Such links make finding the relevant user data easier. If possible, allow internal users to search both the new and old systems from one interface.
 
 Rollback from a phased migration is more complex if there are issues, because there are two systems of record, one for users who have been migrated and one for users who have not yet been moved. 
 
-You can work around this with tooling to keep track of which users have been migrated. If you needed to roll back to using the old system, look at the users who had been migrated and pull back all their data into the old system.
+You can work around this with tooling to keep track of which users have been migrated. If you need to roll back to using the old system, examine migrated users and move their data into the old system.
 
