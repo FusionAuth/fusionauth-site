@@ -59,7 +59,7 @@ We've also had to integrate internal tools with the FusionAuth API and the docum
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
-**Whitney:** A big factor was the fact that FusionAuth is extremely supportive of open source. While it's not 100% open source, parts of it are. You guys contribute to the community, are active on Slack and GitHub, are big on security, etc. It just kind of checked a lot of the big hits for us, that we really consider important in our space and to our company. 
+**Whitney:** A big factor was the fact that FusionAuth is extremely supportive of open source. While it's not 100% open source, parts of it are. You guys contribute to the community, are active on Slack and GitHub, are big on security, etc. It just kind of checked a lot of boxes for us, that we really consider important in our space and to our company. 
 
 We're huge believers in the open source community, and we try to contribute to as many of the tools we use as we can. Many of the platforms we rely on are open source, so it only made sense to try out FusionAuth when we found it. As it turns out, it checks just as many boxes as the other leading competitors (if not more), some of which are far more expensive in their enterprise offerings. 
 
@@ -77,4 +77,4 @@ We were hesitant to host our own, since it then becomes another platform for us 
 
 -------
 
-We love sharing community stories. You can check out [Recon Infosec's website](https://reconinfosec.com/) if you'd like to learn more about ReconInfosec. You can also follow [Whitney on Twitter](https://twitter.com/shortxstack/).
+We love sharing community stories. You can check out [Recon Infosec's website](https://reconinfosec.com/) if you'd like to learn more about Recon Infosec. You can also follow [Whitney on Twitter](https://twitter.com/shortxstack/).
