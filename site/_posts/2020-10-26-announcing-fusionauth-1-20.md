@@ -20,7 +20,7 @@ In addition to bug fixes and user interface improvements, there are a couple of 
 
 With this release, FusionAuth implements additional parts of the SAML 2.0 standard.
 
-FusionAuth now has support for SAML POST bindings when it is acting as either the SP or the IdP. This allows FusionAuth to integrate with a number of popular commercial off the shelf applications and websites, including [login.gov](https://developers.login.gov/saml/) and [Alfresco](https://docs.alfresco.com/saml/concepts/saml-overview.html).
+FusionAuth now has support for SAML POST bindings when it is acting as either the SP or the IdP. This allows FusionAuth to integrate with a number of popular commercial off-the-shelf applications and websites, including [login.gov](https://developers.login.gov/saml/) and [Alfresco](https://docs.alfresco.com/saml/concepts/saml-overview.html).
 
 FusionAuth also supports the `SessionIndex` attribute, which is optional, but required by some software applications, notably Artifactory.
 
@@ -38,9 +38,9 @@ In version 1.18, FusionAuth added [custom registration forms](/features/advanced
 
 In this release, we've added a few new forms. These customizations are also only available to customers with a paid edition. (Learn more about [purchasing a paid edition](/pricing/).) 
 
-This new feature allows you to customize the form used to add or edit a user on a per tenant basis. For instance, you can now require a mobile phone number or require one or many custom fields.
+This new feature allows you to customize the form used to add or edit a user from the FusionAuth admin UI. These forms can be configured on a per tenant basis. For instance, you can now require a mobile phone number or require one or many custom fields when a FusionAuth admin is creating a user.
 
-You can also modify the registration creation and update form, including capturing custom data, removing unused fields and adding validation to the custom fields. This form is configurable on an application by application basis. 
+You can also modify the registration creation and update form in the FusionAuth admin UI, including capturing custom data, removing unused fields and adding validation to the custom fields. This form is configurable on an application by application basis. 
 
 For instance, if your business logic needs to know a user's favorite color (or anything else), FusionAuth has you covered:
 
@@ -52,4 +52,4 @@ When combined with FusionAuth's granular roles, which allow you to create users 
 
 In addition to these features, there were over ten other bugs squashed and GitHub issues resolved as well. These fixes include changes to JWT contents in certain situations, dashboard user counts, and superfluous log messages. Please see the [release notes](/docs/v1/tech/release-notes/) for the full breakdown of the changes between 1.19 and 1.20. 
 
-If you'd like to upgrade your FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you, we promise. Or, if you'd like to download and use FusionAuth, [check out your options](/pricing/).
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). If you have a FusionAuth Cloud deployment, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} or [use our contact form](/contact){:target="_blank"} and we'll get your servers upgraded! Or, if you'd like to download and use FusionAuth, [check out your options](/pricing/).
