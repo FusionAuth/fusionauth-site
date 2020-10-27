@@ -4,13 +4,12 @@ title: Jerry loved FusionAuth so much he built an ARM image for it
 description: Community member Jerry Hopper discusses how and why he sold FusionAuth to his colleagues.
 author: Dan Moore
 image: blogs/contaim-customer-story/contaim-adopts-fusionauth-to-manage-their-auth-lifecycle.png
-
 category: blog
 tags: topic-customer-story
 excerpt_separator: "<!--more-->"
 ---
 
-Jerry Hopper is a FusionAuth user and community member. He also maintains the ARM/ARM64 FusionAuth docker repo. He chatted with us over email about how he is using FusionAuth to meet his auth needs. 
+Jerry Hopper is a FusionAuth user and community member. He also maintains the arm/arm64 FusionAuth docker repo. He chatted with us over email about how he is using FusionAuth to meet his auth needs. 
 
 <!--more-->
 
@@ -36,7 +35,7 @@ Seriously though, the last technical paper book I read was "Exchange 5.5" from O
 
 **Jerry:** I'm using FusionAuth in several ways. Mostly in my work projects the choice IdP is already decided. If not, I recommend FusionAuth! In my personal projects I use FusionAuth as a centralized IdP server for applications like gitlab, blogs, wikis and machine to machine authentication via APIs. 
 
-With the 'rise of ARM devices', thanks to the Raspberry Pi, I discovered that FusionAuth was able to run on ARM/ARM64. I'm maintaining the [FusionAuth docker repo for it](https://github.com/jerryhopper/fusionauth-app-multiarch). Since that time, a 1GB SBC powers my `oauth2_proxy`.
+With the 'rise of ARM devices', thanks to the Raspberry Pi, I discovered that FusionAuth was able to run on arm/arm64. I'm maintaining the [FusionAuth docker repo for it](https://github.com/jerryhopper/fusionauth-app-multiarch). Since that time, a 1GB SBC powers my `oauth2_proxy`.
 
 **Dan:** What problems did FusionAuth solve for you? And how were you solving them before FusionAuth?
 
@@ -104,7 +103,7 @@ For offline/external development I run a FusionAuth server on a NanoPi Neo2 SBC 
 **Jerry:** When I worked at BLS-ICT, there was a need for an auth server as mentioned above. The boss decided more or less he wanted the Apereo/CAS implementation. I wasn't convinced. So after some research I introduced FusionAuth to my colleagues while the choice was already set for Apereo/CAS. Initially I introduced FusionAuth to my colleagues on a VM on my machine. So in their 'spare' time, they would be playing around with FusionAuth.  
 > I do think that the web-interface and 'local availability' of the FusionAuth instance was the key to convincing my colleagues that FusionAuth was very suitable for us.
  
-But I was both a developer as well as technical support for some clients, for whom I needed to use a VPN. And when I was on the VPN my colleagues couldn't reach my virtual FusionAuth instance. My boss wouldn't allow me to run FusionAuth on the dev servers, so I just plugged a NanoPi in the network so my colleagues could play with it, even when I wasn't there.  It was my way of trying to convince my colleagues and giving the application maximum exposure. I think it was after one to two months I decided to deploy a ARM64 device with FusionAuth in the office as I wasn't allowed to run a dedicated one on development servers. I do think that the web-interface and 'local availability' of the FusionAuth instance was the key to convincing my colleagues that FusionAuth was very suitable for us.
+But I was both a developer as well as technical support for some clients, for whom I needed to use a VPN. And when I was on the VPN my colleagues couldn't reach my virtual FusionAuth instance. My boss wouldn't allow me to run FusionAuth on the dev servers, so I just plugged a NanoPi in the network so my colleagues could play with it, even when I wasn't there.  It was my way of trying to convince my colleagues and giving the application maximum exposure. I think it was after one to two months I decided to deploy an arm64 device with FusionAuth in the office as I wasn't allowed to run a dedicated one on development servers. I do think that the web-interface and 'local availability' of the FusionAuth instance was the key to convincing my colleagues that FusionAuth was very suitable for us.
 
 **Dan:** Any general feedback/areas to improve?
 
@@ -114,5 +113,5 @@ Oh, and would love to see official multi-arch docker builds ;).
 
 -------
 
-We love sharing community stories. You can check out [the FusionAuth ARM/ARM64 repository](https://github.com/jerryhopper/fusionauth-app-multiarch) if you'd like to learn more
+We love sharing community stories. You can check out [the FusionAuth arm/arm64 repository](https://github.com/jerryhopper/fusionauth-app-multiarch) if you'd like to learn more
 
