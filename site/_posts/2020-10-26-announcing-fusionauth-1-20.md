@@ -30,7 +30,7 @@ Finally FusionAuth now honors the `AssertionConsumerServiceURL` in a SAML reques
 
 In this release, we updated the base image for Docker from `alpine` to `ubuntu:focal`. This should not impact functionality, but it's worth paying attention to if you are building Docker images based on our image.
 
-We made this change because in order to run on `alpine` without including the GNU C Library (`glibc`) we had to use a custom build of OpenJDK compiled using the `musl` C library. Due to some possible performance concerns with this option, we have moved to an official build of JDK provided by AdoptOpenJDK. This build is compiled using `glibc`. Using `ubuntu:focal` increased the image size by approximately 30 MB compared to the `alpine` image, unfortunately. However, until we can obtain official builds from AdoptOpenJDK based upon the `musl` C library, we are not planning to ship an official FusionAuth image on `alpine` due to the performance concerns.
+We made this change because in order to run on `alpine` without including the GNU C Library (`glibc`) we had to use a custom build of OpenJDK compiled using the `musl` C library. Due to some possible performance concerns with this option, we have moved to an official build of JDK provided by AdoptOpenJDK. This build is compiled using `glibc`. Unfortunately, using the `ubuntu:focal` image increased the docker image size by approximately 30 MB over the `alpine` based image. However, until we can obtain official builds from AdoptOpenJDK based upon the `musl` C library, we are not planning to ship an official FusionAuth image on `alpine` due to the performance concerns.
 
 ### Additional admin forms
 
