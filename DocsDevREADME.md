@@ -1,6 +1,6 @@
 ## Documentation Style Guidelines
 
-Here are some guidelines to follow when writing documentation. 
+Here are some guidelines to follow when writing documentation (everything under `/site/docs`.
 
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing. 
 - Use `Id` instead of `ID` when describing a unique identifier
@@ -10,7 +10,7 @@ Here are some guidelines to follow when writing documentation.
 - Don't abbreviate FusionAuth, use the full name.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - Use single backticks when specifying a value that is not a field.
-- When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate.
+- When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Never use the term GUID, it's always UUID
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
 
