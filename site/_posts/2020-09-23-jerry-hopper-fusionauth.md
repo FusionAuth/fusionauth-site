@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Jerry loved FusionAuth so much he built an ARM image for it
-description: Community member Jerry Hopper discusses how and why he sold FusionAuth to his colleagues.
+title: Jerry talks GDPR compliance, ARM images and paper manuals
+description: Community member Jerry Hopper discusses how he discovered FusionAuth and how it's helped him and his teams save development time and avoid authentication headaches.
 author: Dan Moore
 image: blogs/contaim-customer-story/contaim-adopts-fusionauth-to-manage-their-auth-lifecycle.png
 category: blog
@@ -43,7 +43,7 @@ With the 'rise of ARM devices', thanks to the Raspberry Pi, I discovered that Fu
 
 Another nice aspect is that FusionAuth is API driven, and has very complete logging, which makes it a breeze to make your applications GDPR compliant.  
 
-The fact that fusionauth supports multiple tenants on one instance, helps when developing several different projects. 
+The fact that FusionAuth supports multiple tenants on one instance, helps when developing several different projects. 
 
 However, the main problem that FusionAuth solves is development time and authentication headaches.  
 
@@ -71,7 +71,7 @@ Meanwhile the HRMatches application development was on hold, as the client wasn'
 
 > Obviously a lot of GDPR compliance needs to come from the custom code in the application we build, but FusionAuth's API allowed us to do this with ease. Having the authentication separate from the main application gives us the flexibility to adapt.
 
-Our GDPR checklist for an auth service:
+This is what our GDPR checklist for an auth service looks like:
 
 1. Hosted in the EU
 1. Account export 'self service'
@@ -109,7 +109,7 @@ But I was both a developer as well as technical support for some clients, for wh
 
 **Jerry:** I think for completeness sake the 'Client Credentials' grant should be implemented. [ed note: see [this issue](https://github.com/FusionAuth/fusionauth-issues/issues/155) for more on that]
 
-Oh, and would love to see official multi-arch docker builds ;). 
+Oh, and I would love to see official multi-arch docker builds ;). 
 
 -------
 
