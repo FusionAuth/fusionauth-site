@@ -19,7 +19,7 @@ Jerry Hopper is a FusionAuth user and community member. He also maintains the ar
 
 **Dan:** Tell me a bit about your work as a developer.
 
-**Jerry:** Well, no school-educated nerd here.  I'm a self-made developer. When I was at school, there was no 'computer oriented' education. My first computer was a Commodore 64, 24 years ago. With no programming skills at all I started playing around with PHP. Not the best choice as a starting point but since then I have taught myself several languages through online courses. I eventually got a job as a programmer. Nowadays I'm a freelance application developer/system engineer, and I focus on backend APIs. 
+**Jerry:** Well, no school-educated nerd here.  I'm a self-made developer. When I was at school, there was no 'computer oriented' education. My first computer was a Commodore 64, in 1988. With no programming skills at all I started playing around with PHP. Not the best choice as a starting point but since then I have taught myself several languages through online courses. I eventually got a job as a programmer. Nowadays I'm a freelance application developer/system engineer, and I focus on backend APIs. 
 
 I'm still a fan of PHP but other than that I have mastered other languages like python, perl, node, and CFML. In my spare time I am also a developer. I'm that kind of guy that has a complete in-house cabinet with several servers and an impressive electricity bill. I read manuals instead of the newspaper. 
 
