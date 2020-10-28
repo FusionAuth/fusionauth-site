@@ -113,5 +113,4 @@ Oh, and I would love to see official multi-arch docker builds ;).
 
 -------
 
-We love sharing community stories. You can check out [the FusionAuth arm/arm64 repository](https://github.com/jerryhopper/fusionauth-app-multiarch) if you'd like to learn more
-
+We love sharing community stories. You can check out [the FusionAuth arm/arm64 repository](https://github.com/jerryhopper/fusionauth-app-multiarch) if you'd like to learn more.
