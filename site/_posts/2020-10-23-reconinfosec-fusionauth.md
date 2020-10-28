@@ -20,13 +20,13 @@ Whitney Champion is a FusionAuth community member and lead architect at Recon In
 
 **Dan:** Tell me a bit about your work as a developer/architect.
 
-**Whitney:** I'm the lead architect at Recon Infosec. We are a managed security services provider, and we also provide [security training through our network defense range](https://www.reconinfosec.com/training/). Both of these live on pretty sizable security stacks composed of a wide variety of tools that we use--for threat hunting, monitoring, ticketing, forensics, triaging, etc. I'm responsible for architecting/maintaining those stacks and finding the best ways to integrate everything we need in the most secure and efficient ways possible. 
+**Whitney:** I'm the lead architect at Recon Infosec. We are a managed security services provider, and we also provide [security training through our Network Defense Range](https://www.reconinfosec.com/training/). Both of these live on pretty sizable security stacks composed of a wide variety of tools that we use--for threat hunting, monitoring, ticketing, forensics, triaging, etc. I'm responsible for architecting/maintaining those stacks and finding the best ways to integrate everything we need in the most secure and efficient ways possible. 
 
 > [FusionAuth] has saved us from having to build our own middleware on top of Cognito, or drop $$$ on something like Auth0 or Okta. 
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
-**Whitney:** Primarily, we use FusionAuth for user management and OAuth. Our network defense range provides analysts with a suite of tools, and the authentication mechanisms within those tools vary widely. The nice part about FusionAuth coming into the picture is that it plays nice with all of those mechanisms, and AWS Cognito, so we can integrate all of our platforms, and continue to add them, knowing that FusionAuth will provide a seamless experience for our end users. 
+**Whitney:** Primarily, we use FusionAuth for user management and OAuth, specifically for our Network Defense Range. Our Network Defense Range provides analysts with a suite of tools, and the authentication mechanisms within those tools vary widely. The nice part about FusionAuth coming into the picture is that it plays nice with all of those mechanisms, and AWS Cognito, so we can integrate all of our platforms, and continue to add them, knowing that FusionAuth will provide a seamless experience for our end users. 
 
 **Dan:** Are there any tools you can name drop?
 
