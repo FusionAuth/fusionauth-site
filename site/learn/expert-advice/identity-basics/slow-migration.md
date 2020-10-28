@@ -9,11 +9,11 @@ date: 2020-10-20
 dateModified: 2020-10-20
 ---
 
-Migrating user data is a pain. People have to login to your application, and maintaining access is critical. User data is often siloed and changes at the whim of your users. 
+Migrating data used for auth is a pain. People have to login to your application, and maintaining access is critical. User data is often siloed and changes at the whim of your users. 
 
 A slow migration of user data can make the process easier. But first, why would you endure the data migration pain? There are many reasons why you might decide to migrate your user data.
 
-## Why migrate at all?
+## Why migrate user data at all?
 
 Perhaps you've been burned by home grown auth systems and want to migrate to a more secure, more featureful library or standalone auth solution. Maybe you want a single view into customers', users' or employees' profile data across all your applications.
 
@@ -56,7 +56,7 @@ However, a segment by segment migration may be problematic in the following ways
 * This approach takes longer to complete, leaving you running multiple systems for a longer period of time.
 * You'll have downtime for each user segment, which requires additional off hours work or coordination.
 
-## How does a slow migration work?
+## How does a slow migration of auth data work?
 
 At a high level, a slow migration happens in four phases. Each user proceeds through the phases independently of any other.  Here's how the data flows before any changes are made: 
 
@@ -76,7 +76,7 @@ After a period of time, most or all user data has been migrated. There's no need
 
 Slow migration is similar to the [strangler pattern](https://martinfowler.com/bliki/StranglerFigApplication.html), first documented by Martin Fowler. Let's walk through the steps to successfully undertake a phased migration.
 
-## Plan and map
+## Plan and map your old auth system to your new one
 
 The first step to any successful data migration is planning. A slow migration is no different. You need to know where all your data sources are, how to connect to them, and what the data looks like. 
 
@@ -176,7 +176,7 @@ At this point, you need to determine what to do with all the users who haven't m
 
 Let's examine each of these options.
 
-### Poke users to encourage migration
+### Encourage users to log in to initiate migration
 
 You can reach out to the users who remain in the old auth system and remind them of the value of your application. Encourage them to login, which will migrate their data. 
 
