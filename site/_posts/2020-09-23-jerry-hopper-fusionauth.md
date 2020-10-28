@@ -3,7 +3,7 @@ layout: blog-post
 title: Jerry talks GDPR compliance, ARM images and paper manuals
 description: Community member Jerry Hopper discusses how he discovered FusionAuth and how it's helped him and his teams save development time and avoid authentication headaches.
 author: Dan Moore
-image: blogs/contaim-customer-story/contaim-adopts-fusionauth-to-manage-their-auth-lifecycle.png
+image: blogs/jerry-hopper-story/jerry-talks-gdpr-compliance-arm-images-and-paper-manuals.png
 category: blog
 tags: topic-customer-story
 excerpt_separator: "<!--more-->"
