@@ -9,7 +9,6 @@
                   "ltr": "/assets/img/stars.png",
                   "rtl": "/assets/img/stars.png"
                 },
-                "readOnly": document.location.href.charAt(document.location.href.length - 1) === "/",
                 "size": "medium",
                 "showInfo": false,
                 "showTooltip": false,
