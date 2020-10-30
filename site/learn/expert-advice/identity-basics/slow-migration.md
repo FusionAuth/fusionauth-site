@@ -52,7 +52,7 @@ After the migration is complete, authentication is again allowed. All users then
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-after-big-bang.plantuml, alt: "The user auth process before the big bang." %}
 
-With the big bang option, you also should create a rollback plan in case testing misses something and things go sideways.
+With the big bang option, you should create a rollback plan in case testing misses something and things go sideways. Test this plan, because you don't want to test it for the first time when prod is down.
 
 The big bang is a good choice when you have a small user base, or aren't in production yet. It also works when you need to decommission the legacy datastore as soon as possible, i.e. an upcoming license renewal. The big bang is operationally simpler than alternatives, because you are running both systems for a short period of time; the legacy system is running only for so long as is required to verify the mass migration worked. People accessing user data, such as customer service reps, will only need to switch their working routines once the migration is done.
 
