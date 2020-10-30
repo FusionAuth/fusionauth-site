@@ -263,7 +263,7 @@ After all, if you run a slow migration for a year, how valuable are the users wh
 
 ### Decreased cutover risk
 
-A phased migration decreases cutover risk. There's less downtime because there's no data moved. Depending on your system architecture, there may be some downtime as you direct all your users to the new auth system, rather than the old one. 
+A phased migration decreases cutover risk. There's far less downtime because there's data is moved at auth time, one user at a time. Depending on your system architecture, there may be some downtime as you direct all your users to the new auth system, rather than the old one. 
 
 You may, eventually, decide to stop the slow migration and cut over remaining users. But even that is less risky because these will by definition be some of your least active users. And because you'll be moving fewer of them, the downtime requirements will decrease as well.
 
