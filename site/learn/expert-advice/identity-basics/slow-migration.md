@@ -79,9 +79,9 @@ In the second phase, you'd stand up the new system, connect it to the old system
 
 When this initial login is successful, any user data to be migrated is returned. That data is stored in the new system. The old system is the system of record for the first login of this user, but not after.
 
-This migration is also an excellent time to clean user data up as it is transfered to the new system, as long as you can do it quickly; the user is signing in, after all. For example, you can convert addresses to a standard format. 
+This migration is also an excellent time to clean user data up as it is transferred to the new system, as long as you can do it quickly; the user is signing in, after all. For example, you can convert addresses to a standard format. 
 
-You can also upgrade the user's password. If the old system stored the password was as an md5 hash, on migration you can use a more modern hashing algorithm, such as bcrypt. Since you have the user's password in plaintext, the normal difficulty of changing a password hash is avoided.
+You can also upgrade the user's password. If the old system stored the password as an md5 hash, on migration you can use a more modern hashing algorithm, such as bcrypt. Since you have the user's password in plaintext, the normal difficulty of changing a password hash is avoided.
 
 For subsequent logins, as mentioned, the user's data has been migrated. For this user, there's no longer any need to delegate to the old auth system. However, it continues to run because there are other users who have not yet logged in, and therefore have not yet been migrated.
 
