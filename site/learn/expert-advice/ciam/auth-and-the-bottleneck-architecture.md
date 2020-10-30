@@ -32,7 +32,7 @@ However, an auth system isn't limited to just verifying users based on a local d
 
 Here's a diagram of the bottleneck architecture:
 
-{% include _image.liquid src="/assets/img/advice/bottleneck/bottleneck-diagram.png" alt="A common architectural pattern for user identity management systems." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/advice/bottleneck/bottleneck-diagram.svg" alt="A common architectural pattern for user identity management systems." class="img-fluid" figure=false %}
 
 The applications, in purple, rely on the centralized auth system, which is in gray. They'll send auth requests to one place. Depending on how the auth system is configured, the applications' requests for user information may be answered directly, based on information in the auth system's datastore. Or, alternately, auth requests for a given user can be relayed to the federated identity providers, in orange. 
 
