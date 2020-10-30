@@ -69,19 +69,27 @@ However, a segment by segment migration may be problematic in the following ways
 
 ## How does a slow migration of auth data work?
 
-At a high level, a slow migration happens in four phases. Each user proceeds through the phases independently of any other.  Here's how the data flows before any changes are made: 
+At a high level, a slow migration happens in four phases. Each user proceeds through the phases independently of other users.  Here's how the data flows before any changes to the auth system are made: 
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-before-migration.plantuml, alt: "The user auth process before migration." %}
 
-Then you'd stand up the new system, connect it to the old system, and route all authentication requests to the new system. When the new auth system is in front of the old auth system, the old system consulted the first time a user authenticates:
+In the second phase, you'd stand up the new system, connect it to the old system, and route all authentication requests from applications to the new system. When the new auth system proxies the old auth system, the latter is consulted the first time a user authenticates:
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-migration-first-auth.plantuml, alt: "The auth process during an initial authentication in a slow migration." %}
 
-For subsequent logins, the user's data has been migrated. There's no need to consult the old auth system. However, it continues to run because there are other users who have not yet performed an initial authentication.
+When this initial login is successful, any user data to be migrated is returned. That data is stored in the new system. The old system is the system of record for the first login of this user, but not after.
+
+This migration is also an excellent time to clean user data up as it is transfered to the new system, as long as you can do it quickly; the user is signing in, after all. For example, you can convert addresses to a standard format. 
+
+You can also upgrade the user's password. If the old system stored the password was as an md5 hash, on migration you can use a more modern hashing algorithm, such as bcrypt. Since you have the user's password in plaintext, the normal difficulty of changing a password hash is avoided.
+
+For subsequent logins, as mentioned, the user's data has been migrated. For this user, there's no longer any need to delegate to the old auth system. However, it continues to run because there are other users who have not yet logged in, and therefore have not yet been migrated.
+
+Here's the auth process for a user who has been migrated to the new system:
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-migration-second-auth.plantuml, alt: "The auth process during a subsequent authentication in a slow migration." %}
 
-After a period of time, most or all user data has been migrated. There's no need to consult the old auth system. It can be safely shut down.
+After a period of time, most user data has been migrated. There's no need to consult the old auth system and it can be safely shut down.
 
 {% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-after-migration.plantuml, alt: "The auth process after migration is completed." %}
 
@@ -97,22 +105,22 @@ Is there a clean mapping between the data fields? The answer is almost certainly
 
 Let's examine a trivial example. Suppose an old auth system has a user data model with these attribute names and data types:
 
-* fname - string
-* lname - string
-* birthdate - string
-* phone_num - string
+* `fname - string`
+* `lname - string`
+* `birthdate - string`
+* `phone_num - string`
 
 Assume the new system has a user object with these attributes and data types:
 
-* first_name - string
-* last_name - string
-* date_of_birth - date
-* area_code - string
-* phone_number - string
+* `first_name - string`
+* `last_name - string`
+* `date_of_birth - date`
+* `area_code - string`
+* `phone_number - string`
 
 When you are moving between them, you'll face three challenges. 
 
-The first is converting from `fname` -> `first_name` and `lname` -> `last_name`. This is pretty easy. 
+The first is converting from `fname` to `first_name` and `lname` to `last_name`. This is pretty easy. 
 
 The second is parsing the `birthdate` field into a date format to place in the `date_of_birth` field. Depending on how clean the original data is, this could be trivial or it could be painful. 
 
@@ -224,6 +232,16 @@ Users are a key component of most applications, and represent real, live people.
 User data is also often commonly stored in more than one datastore. Almost every application needs the concept of a 'user', so as an organization grows and applications are added, user data grows more and more fragmented.
 
 All of these factors combine to make user data especially complex to migrate. When you use a slow migration, you trade the risk of screwing up the migration process for all your users at once for the additional operational overhead of running two auth systems for an extended period of time.
+
+### Password hash upgrade
+
+If the old system hashed the password using an older, less secure algorithm, you can take advantage of a slow migration to upgrade the hashing algorithm. 
+
+The user will be providing their password in plain text. The new auth system will delegate the authentication to the old system on the initial login. Then the new system will have the user data and the password. The plain text password can be hashed in any algorithm supported by the new system at the same time the user data is stored. 
+
+Then, on subsequent logins, the new system would hash the provided password using the modern algorithm and authenticate the user without ever touching the old system.
+
+This type of password upgrade would be more difficult to accomplish in a big bang migration because with that approach, you only have the hashed passwords.
 
 ### Business opportunity
 
