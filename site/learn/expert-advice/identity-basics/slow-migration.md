@@ -17,7 +17,9 @@ A slow migration of user data can make the process easier. But first, why would 
 
 Perhaps you've been burned by home grown auth systems and want to migrate to a more secure, more featureful library or standalone auth solution. Maybe you want a single view into customers', users' or employees' profile data across all your applications.
 
-Or maybe you have an outdated user management system with an impending license renewal and you want to migrate to a different system with a better cost structure. Or, perhaps you are looking to integrate both COTS applications and home grown internal apps and want a centralized auth system which supports standards.
+Or maybe you have an outdated user management system with an impending license renewal and you want to migrate to a different system with a better cost structure. Or, perhaps you are looking to integrate both COTS applications and home grown internal apps and want a centralized auth system which supports standards. Such a bottleneck architecture gives administrators more insight and control, while allowing users to have just one set of credentials:
+
+{% include _image.liquid src="/assets/img/advice/slow-migration/slow-migration-hub.svg" class="img-fluid" alt="A bottleneck architecture enabled by a modern auth system." figure=false %}
 
 Once you've decided to undertake the migration, using a slow migration process allows the movement of customer data with minimal impact to existing users and systems.
 
