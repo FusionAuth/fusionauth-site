@@ -40,17 +40,17 @@ If you choose a big bang, you are moving all your users at one point in time. To
 
 This migration has three phases, from the perspective of the user signing in: before, during and after the big bang migration. Before the migration, the user signs in with the old system.
 
-{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-before-big-bang.plantuml, alt: "The user auth process before the big bang." %}
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-before-big-bang.plantuml, alt: "The user auth process before the big bang migration." %}
 
 During the migration, there is no authentication allowed. Data is moved from the old datastore to the new datastore. The migration process pulls the data from the old datastore, cleans and processes it if needed, and pushes it to the new one.
 
-{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-big-bang.plantuml, alt: "The user auth process during the big bang." %}
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-big-bang.plantuml, alt: "The user auth process during the big bang migration." %}
 
 You have downtime because you don't want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. You could run a degraded system as well, letting users authenticate but not update any user data. Depending on your availability needs, you could also choose to do writes to both systems during that period, though this may lead to additional complexity and edge cases.
 
 After the migration is complete, authentication is again allowed. All users then authenticate against the new system:
 
-{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-after-big-bang.plantuml, alt: "The user auth process before the big bang." %}
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-after-big-bang.plantuml, alt: "The user auth process after the big bang migration." %}
 
 With the big bang option, you should create a rollback plan in case testing misses something and things go sideways. Test this plan, because you don't want to test it for the first time when prod is down.
 
@@ -81,7 +81,7 @@ However, a segment by segment migration may be problematic in the following ways
 
 At a high level, a slow migration happens in four phases. Each user proceeds through the phases independently of other users.  Here's how the data flows before any changes to the auth system are made: 
 
-{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-before-migration.plantuml, alt: "The user auth process before migration." %}
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-before-migration.plantuml, alt: "The user auth process before the migration." %}
 
 In the second phase, you'd stand up the new system, connect it to the old system, and route all authentication requests from applications to the new system. When the new auth system proxies the old auth system, the latter is consulted the first time a user authenticates:
 
@@ -101,7 +101,7 @@ Here's the auth process for a user who has been migrated to the new system:
 
 After a period of time, most user data has been migrated. There's no need to consult the old auth system and it can be safely shut down.
 
-{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-after-migration.plantuml, alt: "The auth process after migration is completed." %}
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-after-migration.plantuml, alt: "The auth process after the migration is completed." %}
 
 Slow migration is similar to the [strangler pattern](https://martinfowler.com/bliki/StranglerFigApplication.html), first documented by Martin Fowler. Let's walk through the steps to successfully undertake a phased migration.
 
