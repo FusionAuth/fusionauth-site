@@ -3,10 +3,10 @@ layout: advice
 title: Slow migration of user data
 description: What is a slow migration and when does it make sense to perform one?
 author: Dan Moore
-image: advice/registration-best-practices/expert-advice-best-practices-for-registration-forms.png
+image: advice/slow-migration/slow-migration-of-user-data.png
 category: Identity Basics
-date: 2020-10-20
-dateModified: 2020-10-20
+date: 2020-10-30
+dateModified: 2020-10-30
 ---
 
 Migrating data used for auth is a pain. People have to login to your application, and maintaining access is critical. User data is often siloed and changes at the whim of your users. 
