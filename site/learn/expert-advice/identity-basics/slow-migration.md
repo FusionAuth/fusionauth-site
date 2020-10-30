@@ -38,11 +38,21 @@ There are two alternatives to performing a slow, phased migration.
 
 If you choose a big bang, you are moving all your users at one point in time. To do so, you build a data processing system to migrate the users and test the heck out of it. When you are ready to migrate, arrange for enough downtime based on your testing, plus a bit more. Migrate the data. Then flip the system of record for all your users from the old to the new. 
 
-{% include _image.liquid src="/assets/img/advice/slow-migration/big-bang-migration.svg" class="img-fluid" alt="Data flow during big bang migration." figure=false %}
+This migration has three phases, from the perspective of the user signing in: before, during and after the big bang migration. Before the migration, the user signs in with the old system.
 
-You have downtime because you don't want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. 
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-before-big-bang.plantuml, alt: "The user auth process before the big bang." %}
 
-Depending on your availability needs, you could also choose to do writes to both systems during that period. An alternative approach is to allow the old system to run in a degraded state, allowing user data to be read, but not updated. With the big bang option, you also should create a rollback plan in case testing misses something and things go sideways.
+During the migration, there is no authentication allowed. Data is moved from the old datastore to the new datastore. The migration process pulls the data from the old datastore, cleans and processes it if needed, and pushes it to the new one.
+
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-big-bang.plantuml, alt: "The user auth process during the big bang." %}
+
+You have downtime because you don't want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. You could run a degraded system as well, letting users authenticate but not update any user data. Depending on your availability needs, you could also choose to do writes to both systems during that period, though this may lead to additional complexity and edge cases.
+
+After the migration is complete, authentication is again allowed. All users then authenticate against the new system:
+
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-after-big-bang.plantuml, alt: "The user auth process before the big bang." %}
+
+With the big bang option, you also should create a rollback plan in case testing misses something and things go sideways.
 
 The big bang is a good choice when you have a small user base, or aren't in production yet. It also works when you need to decommission the legacy datastore as soon as possible, i.e. an upcoming license renewal. The big bang is operationally simpler than alternatives, because you are running both systems for a short period of time; the legacy system is running only for so long as is required to verify the mass migration worked. People accessing user data, such as customer service reps, will only need to switch their working routines once the migration is done.
 
