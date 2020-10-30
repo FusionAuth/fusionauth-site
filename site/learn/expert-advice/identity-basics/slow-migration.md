@@ -25,11 +25,16 @@ A slow, or phased, migration is one where user data is migrated at the time of a
 
 This document will discuss what you need to do to succeed with a slow migration.
 
-## Alternatives
+## Alternatives to a slow migration
 
-There are two alternatives to performing a slow, phased migration. You can migrate everyone at once, in a big bang. You can also divide user accounts by application, employment status, or some other mechanism, and migrate users segment by segment.
+There are two alternatives to performing a slow, phased migration. 
 
-If you choose a big bang, you are moving all your users at one point in time. To do so, you build a data processing system to migrate the users and test the heck out of it. When you are ready to migrate, arrange for minimal downtime. Migrate the data. Then flip the system of record for all your users from the old to the new. 
+* You can migrate everyone at once, in a big bang. 
+* You can also divide user accounts by application, employment status, or some other mechanism, and migrate users segment by segment.
+
+### The big bang approach
+
+If you choose a big bang, you are moving all your users at one point in time. To do so, you build a data processing system to migrate the users and test the heck out of it. When you are ready to migrate, arrange for enough downtime based on your testing, plus a bit more. Migrate the data. Then flip the system of record for all your users from the old to the new. 
 
 You have downtime because you don’t want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. Depending on your availability needs, you could also choose to do writes to both systems during that period. An alternative approach is to allow the old system to run in a degraded state, allowing user data to be read, but not updated.
 
@@ -44,6 +49,8 @@ However, there are some issues or concerns with a big bang migration:
 * If something goes sideways, many users will be impacted, since they were all being migrated.
 * You'll write a bunch of code which you'll test intensely, use once and then throw away.
 * You need to ensure the new auth system "understands" how passwords were hashed in the old system. Or force everyone to reset their password, which is a subpar user experience, to put it mildly.
+
+### Migrating one user segment at a time
 
 Segment by segment migration, the second alternative, can be thought of as a series of "little bang" migrations. You split up your user data in a natural way, then you migrate each segment of users.
 
@@ -89,27 +96,27 @@ Let's examine a trivial example. Suppose an old auth system has a user data mode
 * fname - string
 * lname - string
 * birthdate - string
-* phone num - string
+* phone_num - string
 
 Assume the new system has a user object with these attributes and data types:
 
-* first name - string
-* last name - string
-* date of birth - date
-* area code - string
-* phone number - string
+* first_name - string
+* last_name - string
+* date_of_birth - date
+* area_code - string
+* phone_number - string
 
 When you are moving between them, you'll face three challenges. 
 
-The first is converting from `fname` -> `first name` and `lname` -> `last name`. This is pretty easy. 
+The first is converting from `fname` -> `first_name` and `lname` -> `last_name`. This is pretty easy. 
 
-The second is parsing the `birthdate` field into a date format to place in the `date of birth` field. Depending on how clean the data is, this could be trivial or it could be painful. 
+The second is parsing the `birthdate` field into a date format to place in the `date_of_birth` field. Depending on how clean the original data is, this could be trivial or it could be painful. 
 
-The last issue would be splitting the `phone num` into an `area code` and a `phone number`. 
+The last issue would be splitting the `phone_num` field into an `area_code` and a `phone_number`. 
 
-As this example shows, getting ready for a migration is full of tiny choices and design decisions. Make sure you understand the data model for your users before you start the migration. 
+As this example shows, getting ready for a migration consists of many tiny choices and design decisions. Make sure you understand the data model for your users before you start the migration. 
 
-If you have the option of storing arbitrary key value data in the new system, serialize the user object from the old system and store it there. The old user model may be helpful in the future because if there was data that mistranslated, you'll have the original copy.
+If you have the option of storing arbitrary key value data in the new system, serialize the user object from the old system and store it there. The old user model may be helpful in the future because if there were data that mistranslated, you'll have the original copy.
 
 You'll also want to think about relationships between users and other objects. Groups, roles, historical data, and anything else the old system has tied to users. Make sure you know where this data is coming from, if it can be discarded, and if not, where it will end up. Perhaps it will be migrated to the new system, perhaps to a different datastore.
 
