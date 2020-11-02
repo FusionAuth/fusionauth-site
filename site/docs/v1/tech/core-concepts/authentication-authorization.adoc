@@ -1,0 +1,70 @@
+---
+layout: doc
+title: Authentication and Authorization
+description: Authentication and authorization in FusionAuth
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+Authentication and authorization are two different concepts in FusionAuth. 
+
+The traditional definitions are:
+
+* authentication: who you are
+* authorization: what you can do
+
+Authentication is sometimes referred to as `authn` and authorization is sometimes referred to as `authz`.
+
+=== Authentication in FusionAuth
+
+Authentication means that a user has provided credentials which the system has accepted. This is often a username and password, but could be a passwordless, magic link, a token from a social provider, or a JWT from an external provider.
+
+Authentication happens at the tenant level. When authentication happens, a 2xx response is returned from FusionAuth, if using the link:/docs/v1/tech/apis/login/[Login API], or the user is redirected to the provided `redirect_uri` if using an link:/docs/v1/tech/oauth/[OAuth grant].
+
+In either case, a JWT is provided with information about the user.
+
+[source,json]
+.Example JWT For an Authenticated But Not Authorized User
+----
+include::docs/src/json/login/jwt-unauthorized.json[]
+----
+
+=== Authorization in FusionAuth
+
+Authorization means that the user has registered with an application. Authentication is a necessary prerequisite to authorization; if FusionAuth doesn't know who the user is, it can't know what the user is allowed to access.
+
+If using the link:/docs/v1/tech/apis/login/[Login API], the status code returned for an authorized user is `200`. 
+
+In either case, a JWT is provided with information about the user.
+
+[source,json]
+.Example JWT For an Authorized User
+----
+include::docs/src/json/login/jwt.json[]
+----
+
+=== An Example
+
+Say Bob has access to Applications A, B and C configured in FusionAuth, and Lisa has access to Applications C, D and E. Assume there's also an application F to which neither Bob nor Lisa is registered. 
+
+The way you grant access to a particular application is a link:/docs/v1/tech/core-concepts/registrations/[User Registration]. Once registered, a user can have 0 or more link:/docs/v1/tech/core-concepts/roles/[roles] as defined by the link:/docs/v1/tech/core-concepts/applications/[Application]. 
+
+Here is an example login result:
+
+Login results for Bob:
+```
+Bob --> Login to Application (A, B or C) --> [200] Authenticated
+Bob --> Login to Application (D, E or F) --> [202] Authenticated not registered
+```
+
+Login results for Lisa:
+```
+Lisa --> Login to Application (A, B or F) --> [202] Authenticated not registered
+Lisa --> Login to Application (C, D or E) --> [200] Authenticated
+```
+
+In addition to this status code, the JWT that is returned from the will not contain the `applicationId` or the `roles` claim because the user is not authorized for the requested resource.
+
+In other words, FusionAuth has successful authenticated the user because they exist, and the credentials they provided were correct. But if the user is not authorized to the Application, a `202` will be returned and the access token (JWT) returned will not contain authorization for the resource. 
