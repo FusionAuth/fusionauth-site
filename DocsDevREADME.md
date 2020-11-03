@@ -75,6 +75,7 @@ end tell
 
 ## Screenshot Standards
 
+- Use light mode when capturing screenshots
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
    - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
