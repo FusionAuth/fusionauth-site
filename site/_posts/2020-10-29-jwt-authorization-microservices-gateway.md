@@ -224,6 +224,8 @@ Then click on "Users", find the user you created, and under the "Registrations" 
 
 The next time you log in to FusionAuth and access the `/branches/:id/products` route, you will be authorized and receive the expected response from the Product Inventory service.
 
+If we needed to have multiple tenants, each with a different set of users, we'd want to add a tenant under the "Tenants" tab. However, for this example, let's keep everything in a single tenant.
+
 ## Session Housekeeping
 
 If you try multiple requests across the services, you may notice you're getting responses indicated you're unauthorized due to the session id changing. This is becaue the private services are responding with their own session cookie, which is overriding the one from the gateway. The fix for this is simple; you'll just need to add a unique name to the `expressSession` in the gateway and each of our microservices.
