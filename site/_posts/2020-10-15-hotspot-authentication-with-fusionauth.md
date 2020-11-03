@@ -19,7 +19,7 @@ I say customizable because there are obvious extensions. You may want to allow i
 
 The authentication is handled by FusionAuth (what else?), while the network access is performed by a Python script.  
 
-In this tutorial we will see how to:
+In this tutorial we will:
 
 - Prepare the test environment
 - Install and configure the Linux components we need
@@ -38,7 +38,8 @@ Here we go!
 
 ## Prepare the test environment
 
-In the prerequisites I specified a version of CentOS because there are differences between the various distributions and also between the same versions of a single distribution; the scripts have been tested with CentOS 8.2. Other versions and distributions may work but also may require changes.  
+In the prerequisites I specified a version of CentOS because there are differences between the various distributions and also between the same versions of a single distribution; the scripts have been tested with CentOS 8.2. Other versions and distributions could work but may require changes.
+
 
 The use of virtual machines greatly simplifies the preparation and development because it allows you, for example, to change the MAC address of a computer or to quickly add and remove network interfaces.  
 
@@ -68,7 +69,7 @@ Let's also assume that there is a DHCP server on the Device Network that distrib
 
 In the test phase you can manually set these parameters. DHCP will also need to distribute a DNS server IP which can be internal or external.  
 
-Furthermore, the `ens37` interface must be connected to the outside internet (so the associated IP address must be served by a DHCP server or you will have to set it manually. It can be published directly or behind a router and therefore there will be a double NAT).  
+Furthermore, the `ens37` interface must be connected to the outside internet. The associated IP address must be served by a DHCP server or you will have to set it manually. It can be published directly or behind a router which will be a double NAT.
 
 In this post, we are only concerned with providing internet connectivity, not with device security: `device 1` and `device n` are connected to the same network with all of the security implications that come along with it. If they were connected to the WiFi network, you could activate client separation on the access points in order to keep different clients separate and more secure. 
 
@@ -212,7 +213,7 @@ Now start it and wait:
 systemctl start fusionauth-app
 ```
 
-From a PC start a browser specifying the URL with the IP of our CentOS machine and the port of `9011` to complete configuring FusionAuth. This will be something like `http://192.168.144.133:9011`.
+From a PC start a browser specifying the URL with the IP of our CentOS machine and the port of `9011` to complete configuring FusionAuth. This will look something like `http://192.168.144.133:9011`.
 
 You can find the IP address with the command:
 
@@ -252,7 +253,7 @@ While you're at it, get the tenant ID by going to "Tenants" and looking for the 
 
 You are well underway!
 
-## Create the network control scripts
+## Create the network control scripts allowing internet access for authenticated users
 
 Create `/root/checkAccess.py` which is the Python script that will receive an authenticated user and make the changes to the firewall (iptables routing rules). Note that I allow external DNS access in the script. You may want to avoid this if you have internal DNS.  Here's the contents of the `/root/checkAccess.py` script: 
 
@@ -488,7 +489,7 @@ Setting up apache is optional, but helpful. In testing, it becomes tedious to lo
 
 Create an `index.html` file and place the following HTML in it. Replace the `client_id` with your value from the FusionAuth application details page. Also remember to change the IP address (in all four places) and possibly the port 8080 (this is the redirect URL you set in FusionAuth).  
 
-This file automatically redirects any visitors to the authentication page without having to write the full URL in the URL bar of the browser each time.
+This file automatically redirects any visitors to the authentication page without having to write the full URL in the browser each time.
 
 ```html
 <!DOCTYPE html>
