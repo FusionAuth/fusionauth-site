@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: dealcloser chooses FusionAuth, saves two months of development time
-description: Implement authentication and authorization using FusionAuth to allow web surfing at devices behind a firewall
+description: dealcloser, a legaltech startup, uses FusionAuth to solve their enterprise needs.
 image: blogs/controlling-hotspot/controlling-a-hotspot-with-fusionauth-authentication.png
 author: David Polstra
 category: blog
@@ -13,7 +13,7 @@ Alex Trauzzi is a Developer & Software Architect building dealcloser, a transact
 
 <!--more-->
 
-[dealcloser](https://www.dealcloser.com/) was originally using Auth0 to authenticate internal and external users, but they needed a solution that better fit their enterprise needs and they didn't want to build it inhouse.  They were also faced with a unique situation: many of their users needed to connect to their application without internet access. But dealcloser wanted to leverage existing standards such as OIDC. 
+[dealcloser](https://www.dealcloser.com/) was originally using Auth0 to authenticate internal and external users, but they needed a solution that better fit their enterprise needs and they didn't want to build it inhouse.  They were also faced with a unique situation: many of their users needed to connect to their application without internet access. But dealcloser wanted to leverage existing standards such as OpenID Connect (OIDC). 
 
 > "[While we were looking for a solution], [a]irgapping was the main driver. [The] biggest thing was to preserve that OpenID Connect compatibility."
 
