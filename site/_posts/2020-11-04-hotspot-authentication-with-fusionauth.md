@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Controlling a hotspot with FusionAuth authentication
-description: Implement authentication and authorization using FusionAuth for allow web surfing at devices behind a firewall
+description: Implement authentication and authorization using FusionAuth to allow web surfing at devices behind a firewall
 image: blogs/controlling-hotspot/controlling-a-hotspot-with-fusionauth-authentication.png
 author: Mauro Viola
 category: blog
