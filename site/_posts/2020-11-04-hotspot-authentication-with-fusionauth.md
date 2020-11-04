@@ -17,7 +17,7 @@ The proposed solution is a minimal, functional and highly customizable proof of 
 
 I say customizable because there are obvious extensions. You may want to allow internet use in certain time slots, rather than just for a limited time or provide access without authentication to the boss's computer! With appropriate modifications they can be done.  
 
-The authentication is handled by FusionAuth (what else?), while the network access is performed by a Python script.  
+The authentication is handled by FusionAuth (what else?), while the network access is performed by a Python script. You can see all the scripts in the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-python-hotspot).
 
 In this tutorial we will:
 
@@ -637,7 +637,7 @@ except ValueError:
 
 ## Conclusion
 
-In this tutorial we have seen many things. We have worked on Linux, with `iptables`, with FusionAuth, with Apache, with Python, and with networks. It was an interdisciplinary tutorial that should help you learn how to leverage FusionAuth for new use cases such as granting access to WiFi at a facility (such as a campground).  
+In this tutorial we have seen many things. We have worked on Linux, with `iptables`, with FusionAuth, with Apache, with Python, and with networks. It was an interdisciplinary tutorial that should help you learn how to leverage FusionAuth for new use cases such as granting access to WiFi at a facility (such as a campground). As a reminder, the scripts are available in the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-python-hotspot).
 
 I hope you enjoyed it. If you have any comments or questions, please post them below. Happy coding!
 
