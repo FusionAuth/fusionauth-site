@@ -9,7 +9,7 @@ tags: client-python
 excerpt_separator: "<!--more-->"
 ---
 
-In this post, the goal is to allow web browsing only for users who who have been authenticated. Imagine a campsite, a hotel, or a company that wants to provide this service to its visitors. There should also be adequate network infrastructure, but that's beyond the scope of this post.
+In this post, the goal is to allow web browsing only for users who have been authenticated. Imagine a campsite, a hotel, or a company that wants to provide this service to its visitors. There should also be adequate network infrastructure, but that's beyond the scope of this post.
 
 The proposed solution is a minimal, functional and highly customizable proof of concept.  
 
@@ -123,7 +123,7 @@ IPADDR=192.168.144.133
 PREFIX=24
 ```
 
-Do not set any `DNS` or `GATEWAY` values for the `ens33` network interface. This might seem counterintuitive, but don't worry, we'll be using code to connect the Device Network to the Internet Gateway below. Additionally, if there are more gateways configured on the system, we'll need to remove them from the networking subsystem. This simplifies our the network configuration. You could have more than one, but it is beyond the scope of this tutorial. You can remove them using the command:
+Do not set any `DNS` or `GATEWAY` values for the `ens33` network interface. This might seem counterintuitive, but don't worry, we'll be using code to connect the Device Network to the Internet Gateway below. Additionally, if there are more gateways configured on the system, we'll need to remove them from the networking subsystem. This simplifies our network configuration. You could have more than one, but it is beyond the scope of this tutorial. You can remove them using the command:
 
 ```shell
 ip route <args>
@@ -153,7 +153,7 @@ Next, disable `selinux` by editing `/etc/sysconfig/selinux` and setting the firs
 
 Also check that the deleted `GATEWAY` entries do not reappear. If they do, it is possible that a network interface is still configured by DHCP.  
 
-Make sure you can still access the internet from the Gateway Server machine at this point. This will ensure that the `ens37` network interface still has a GATEWAY defined and it correctly connecting to the Internet Gateway. This is necessary because you still need to download several packages. Plus, this is the server that will allow the Device Network access to the Internet. If you can't surf from here, none of the devices in the Device Network will be able to either.
+Make sure you can still access the internet from the Gateway Server machine at this point. This will ensure that the `ens37` network interface still has a GATEWAY defined and it correctly connects to the Internet Gateway. This is necessary because you still need to download several packages. Plus, this is the server that will allow the Device Network access to the Internet. If you can't surf from here, none of the devices in the Device Network will be able to either.
 
 ## Installing and setting up FusionAuth
 
@@ -637,7 +637,7 @@ except ValueError:
 
 ## Conclusion
 
-In this tutorial we have seen many things. We have worked on Linux, with `iptables`, with FusionAuth, with Apache, with Python, and with networks. It was an interdisciplinary tutorial that should help you learn how to leverage FusionAuth for new use cases such as granting access to WiFi at a facility (such as a camp ground).  
+In this tutorial we have seen many things. We have worked on Linux, with `iptables`, with FusionAuth, with Apache, with Python, and with networks. It was an interdisciplinary tutorial that should help you learn how to leverage FusionAuth for new use cases such as granting access to WiFi at a facility (such as a campground).  
 
 I hope you enjoyed it. If you have any comments or questions, please post them below. Happy coding!
 
