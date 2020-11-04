@@ -9,7 +9,7 @@ tags: client-python
 excerpt_separator: "<!--more-->"
 ---
 
-In this post, the goal is to allow web browsing only for users who have the right (i.e. who have been authenticated). Imagine a campsite, a hotel, or a company that wants to provide this service to its visitors. (Obviously there must also be adequate network infrastructure as well, but that's beyond the scope of this post.)
+In this post, the goal is to allow web browsing only for users who who have been authenticated. Imagine a campsite, a hotel, or a company that wants to provide this service to its visitors. There should also be adequate network infrastructure, but that's beyond the scope of this post.
 
 The proposed solution is a minimal, functional and highly customizable proof of concept.  
 
@@ -32,14 +32,13 @@ In this tutorial we will:
 
 - A couple of virtual or physical machines: the first running Linux CentOS 8.2 and the second to browse the internet after authentication.
 - An internet connection.
-- Novice level of networking and Linux knowledge.
+- Intermediate levels of networking and Linux knowledge.
 
 Here we go!
 
 ## Prepare the test environment
 
 In the prerequisites I specified a version of CentOS because there are differences between the various distributions and also between the same versions of a single distribution; the scripts have been tested with CentOS 8.2. Other versions and distributions could work but may require changes.
-
 
 The use of virtual machines greatly simplifies the preparation and development because it allows you, for example, to change the MAC address of a computer or to quickly add and remove network interfaces.  
 
@@ -255,7 +254,7 @@ You are well underway!
 
 ## Create the network control scripts allowing internet access for authenticated users
 
-Create `/root/checkAccess.py` which is the Python script that will receive an authenticated user and make the changes to the firewall (iptables routing rules). Note that I allow external DNS access in the script. You may want to avoid this if you have internal DNS.  Here's the contents of the `/root/checkAccess.py` script: 
+Create `/root/checkAccess.py` which is the Python script that will receive an authenticated user and make the changes to the firewall (iptables routing rules). Note that I allow external DNS access in the script. You may want to avoid this if you have internal DNS.  Here are the contents of the `/root/checkAccess.py` script: 
 
 ```python
 #script checkAccess.py: check the token: reply on port TCP 8080. You must execute it at the boot time!
@@ -412,7 +411,7 @@ logoutUrl='http://192.168.144.133:9011/oauth2/logout?client_id=' + applicationID
 
 The script accepts the redirect request from FusionAuth. It must always be active in the background. If the script isn't running, nothing will happen after the user authenticates.  
 
-The script exchanges the `code` handed to it after a successful authentication for a token. If this exchange succeeds, it is a valid login and the script proceeds to create the rules on the firewall via `iptables` commands. These commands to open up internet access to the device from which the request originated:
+The script exchanges the `code` handed to it after a successful authentication for a token. If this exchange succeeds, it is a valid login and the script proceeds to create the rules on the firewall via `iptables` commands. Use these commands to open up internet access to the device from which the request originated:
 
 ```python
 # ...
@@ -518,7 +517,7 @@ You are ready to prove everything works!
 
 Run the `/root/clearRules.sh` script, this will reset all previous rules, and whoever is logged in will have to do it again. 
 
-1. Start the Python script: `python3 /root/checkAccess.py`. This script will remain running waiting for the redirects after login (until you press CTRL-C to terminate it).
+1. Start the Python script: `python3 /root/checkAccess.py`. This script will remain running, waiting for the redirects after login (until you press CTRL-C to terminate it).
 1. Now open a browser on the second machine. It must have the IP of the CentOS machine as a gateway (remember to set the DNS as well if you want). Try to visit a website; you won't be able to. Now go to the CentOS URL: `http://192.168.144.133` and the redirect to the FusionAuth login screen will occur. If the redirect doesn't work, it means that the `index.html` page has an issue. Double check that it was created correctly. If necessary, manually enter the login URL of the FusionAuth OAuth login for the WEBAuth application (you can get this URL from the FusionAuth admin UI by clicking on the green view button for the Application).
 1. Log in with the test user you created earlier. The post login outcome should be "Access granted!"
 1. You should now be able to browse freely.
