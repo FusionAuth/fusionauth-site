@@ -4,7 +4,7 @@ title: FusionAuth license agreement
 description: The FusionAuth license agreement
 ---
 
-THIS MASTER LICENSE AGREEMENT ("Agreement") is entered into by and between Inversoft Inc. dba FusionAuth, a Colorado corporation ("Company"), and you (either an individual or single legal entity) ("Licensee") to permit Licensee to use Company's software product in object code form ("Software") and related documentation ("Documentation") (the Software and Documentation are referred to collectively as the "Product"). An amendment or addendum to this Agreement may accompany the Software. The Licensee agrees to be bound by the terms of this Agreement by downloading and installing the Software.
+THIS MASTER LICENSE AGREEMENT ("Agreement") is entered into by and between FusionAuth, a Colorado corporation ("Company"), and you (either an individual or single legal entity) ("Licensee") to permit Licensee to use Company's software product in object code form ("Software") and related documentation ("Documentation") (the Software and Documentation are referred to collectively as the "Product"). An amendment or addendum to this Agreement may accompany the Software. The Licensee agrees to be bound by the terms of this Agreement by downloading and installing the Software.
 
 
 1. Definitions. The following definitions apply herein:

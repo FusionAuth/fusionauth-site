@@ -20,7 +20,7 @@ Active Directory and FusionAuth do share some features. They both allow users to
 
 Security is a first-tier concern for Active Directory and FusionAuth so both are capable of multi-factor authentication as well as offering a choice of on-prem or private cloud deployment options. This is an important feature as cybercriminals increasingly target SaaS-based solutions in order to access the data of multiple companies with one attack. (For more information about the risks and benefits of SaaS, private cloud, and on-premise options read our [expert advice article covering single- and multi-tenant solutions](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions "Read more about single- and multi-tenant identity solutions").
 
-While these solutions have similar core capabilities, don't think that Active Directory and FusionAuth are the same. There are substantial feature differences in FusionAuth that provide essential benefits required by a true CIAM solution. ([Learn more about the difference between IAM and CIAM](https://www.inversoft.com/products/identity-user-management/ciam-vs-iam "Learn more about IAM vs. CIAM").)
+While these solutions have similar core capabilities, don't think that Active Directory and FusionAuth are the same. There are substantial feature differences in FusionAuth that provide essential benefits required by a true CIAM solution. ([Learn more about the challenges of CIAM](/learn/expert-advice/ciam/challenges-of-ciam.html "Learn more about CIAM")).
 
 ## How Active Directory and FusionAuth Are Different
 
