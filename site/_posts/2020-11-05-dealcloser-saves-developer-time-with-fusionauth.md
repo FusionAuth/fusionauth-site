@@ -25,7 +25,7 @@ dealcloser seamlessly migrated their user database from Auth0 to FusionAuth. Ale
 
 We’ll let Alex have the final word:
 
-"[FusionAuth has] completely offloaded the need to do any kind of auth coding. That OpenID Connect compatibility is like gold, it’s perfect. I can’t put a price on that."
+> "[FusionAuth has] completely offloaded the need to do any kind of auth coding. That OpenID Connect compatibility is like gold, it’s perfect. I can’t put a price on that."
 
 Want to learn more about dealcloser’s migration from Auth0 to FusionAuth? 
 
