@@ -2,7 +2,7 @@
 layout: blog-post
 title: dealcloser chooses FusionAuth, saves two months of development time
 description: dealcloser, a legaltech startup, uses FusionAuth to solve their enterprise needs.
-image: blogs/controlling-hotspot/controlling-a-hotspot-with-fusionauth-authentication.png
+image: blogs/dealcloser-case-study/dealcloser-chooses-fusionauth-saves-two-months-of-development-time.png
 author: David Polstra
 category: blog
 tags: topic-customer-story
