@@ -56,7 +56,7 @@ const jwtSigningKey = '[Default Signing Key]';
 const jwt = require('jsonwebtoken');
 ```
 
-Next, we'll add a function at the end of that file to get the gateway bearer token for forwarding to the microservices. In this case, we are setting the token to expire in 10 minutes, but this could be different depending on your scenario.
+Next, we'll add a function at the end of that file to get the gateway bearer token for forwarding to the microservices. In this case, we are setting the token to expire in 10 minutes. This is a common duration of the JWT, but you may want to reduce it for security concerns, as described in FusionAuth's article on [Revoking JWTs & JWT Expiration](https://fusionauth.io/learn/expert-advice/tokens/revoking-jwts/).
 
 ```javascript
 function getGatewayBearerToken(req) {
@@ -87,9 +87,9 @@ We'll want to do this for all other routes as well, but won't show that in this 
 
 We're now ready for the microservices to handle the bearer token passed in the header. As each microservice will need to handle the tokens in the same way, it makes sense to create a package utility that can be shared by each microservice.
 
-### Authorization Middlware
+### Authorization Middleware
 
-Here we'll just cover the contents of the utility, as the package creation is a little out of scope for this article. 
+Here we'll just cover the contents of the utility, as the [package creation](https://docs.npmjs.com/creating-node-js-modules) is a little out of scope for this article.
 
 ```javascript
 const jwt = require('jsonwebtoken');
@@ -189,7 +189,7 @@ router.get('/branches/:id/products', function(req, res, next) {
 //...
 ```
 
-We're making this change, in getting roles from `req.headers.roles` to `req.session.roles`, because our `authorizationMiddleware` takes the decoded token and puts the roles object onto `req.session`.
+We're making this change, in getting roles from `req.headers.roles` to `req.session.roles`, because our `authorizationMiddleware` takes the decoded token and puts the roles object onto `req.session`. This is appropriate as the roles are more closely linked to the user's session than with any specific request to our service.
 
 That's all we need to do in the Product Inventory service, but we'll need to make some changes to our gateway application to ensure it's passing the roles inside the JWT.
 
@@ -253,4 +253,3 @@ While this tutorial explains how to integrate JWT based authorization into your 
 We've successfully implemented JWT authorization, utilizing the pre-signed FusionAuth `access_token` for role-based access to the Product Inventory service, and creating our own signed JWT for a generic but private connection between the gateway and the Product Catalog service.
 
 There are a number of other ways we could have done this, but FusionAuth's default signing key and the simplicity of working with JWTs made this a pretty straightforward means by which to add a layer of security to our gateway and microservices.
-
