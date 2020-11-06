@@ -228,7 +228,7 @@ If we needed to have multiple tenants, each with a different set of users, we'd 
 
 ## Session Housekeeping
 
-If you try multiple requests across the services, you may notice you're getting responses indicated you're unauthorized due to the session id changing. This is becaue the private services are responding with their own session cookie, which is overriding the one from the gateway. The fix for this is simple; you'll just need to add a unique name to the `expressSession` in the gateway and each of our microservices.
+If you try multiple requests across the services, you may notice you're getting responses indicated you're unauthorized due to the session id changing. This is because the private services are responding with their own session cookie, which is overriding the one from the gateway. The fix for this is simple; you'll just need to add a unique name to the `expressSession` in the gateway and each of our microservices.
 
 In the gateway, modify `app.js`:
 
@@ -238,7 +238,7 @@ app.use(expressSession({name: 'fa.gw.sid', resave: false, saveUninitialized: fal
 //...
 ```
 
-All we've done is give the `expressSession` a unique name, this one representating FusionAuth ("fa"), the gateway ("gw"), and session id ("sid"). Do the same in each of the services and the `access_token` won't be compromised.
+All we've done is give the `expressSession` a unique name, this one representing FusionAuth ("fa"), the gateway ("gw"), and session id ("sid"). Do the same in each of the services and the `access_token` won't be compromised.
 
 ## Go further
 
