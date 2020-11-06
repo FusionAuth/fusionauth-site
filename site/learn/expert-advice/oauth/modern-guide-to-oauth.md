@@ -21,17 +21,17 @@ What does that mean? It means that your application sends the user over to an OA
 
 ## OAuth modes
 
-None of the specifications cover how OAuth is actually integrated into applications. They also don't cover the different workflows or processes that leverage OAuth. They leave almost everything up to the implementor (the person that writes the OAuth Server) and integrator (the person that integrates their application with the OAuth server). Rather than just reword the information in the specifications, let's create a vocabulary for real-world integrations and implementations of OAuth. We'll call them OAuth Modes.
+None of the specifications cover how OAuth is actually integrated into applications. They also don't cover the different workflows or processes that leverage OAuth. They leave almost everything up to the implementor (the person that writes the OAuth Server) and integrator (the person that integrates their application with the OAuth server). Rather than just reword the information in the specifications, let's create a vocabulary for real-world integrations and implementations of OAuth. We'll call them **OAuth modes**.
 
 There are 8 OAuth modes that are commonly used today. The OAuth modes are:
 
 1. Local login and registration
-2. Third-party service authorization
-3. Third-party login and registration _(federated identity)_
-4. First-party service authorization
-5. First-party login and registration _(reverse federated identity)_
-6. Enterprise login and registration _(federated identity)_
-7. Machine-to-machine authorization
+2. Third-party login and registration _(federated identity)_
+3. First-party login and registration _(reverse federated identity)_
+4. Enterprise login and registration _(federated identity)_
+5. Third-party service authorization
+6. First-party service authorization
+7. Machine-to-machine authentication and authorization
 8. Device login and registration
 
 I've included notation on a few of the items above specifying which are federated identity workflows. The reason that I've changed the names here from just "federated identity" is that each case is slightly different. Plus, the term federated identity is often overloaded and mis-understood. To help clarify terms, I'm using "login" instead. However, this is generally the same as "federated identity" in that the user's identity is stored in an OAuth server and the authentication/authorization is delegated to that server.
@@ -40,41 +40,117 @@ Let's discuss each mode in a bit more detail.
 
 ### Local login and registration
 
-The local login and registration mode is when you are using an OAuth workflow to registration or log users into your application. In this mode, you own the OAuth server and the application. You might not have written the OAuth server, but you control it (like using a product such as FusionAuth). In fact, this mode usually feels like the user is signing up or logging directly into your application via native forms.
+The **Local login and registration** mode is when you are using an OAuth workflow to registration or log users into your application. In this mode, you own the OAuth server and the application. You might not have written the OAuth server, but you control it (like using a product such as FusionAuth). In fact, this mode usually feels like the user is signing up or logging directly into your application via native forms and there is no delegation at all.
 
-What do we mean by native forms? Most developers have at one time written their own login and registration forms directly into the UI of their application. They create a table called `users` and it stores the `username` and `password`. Then they write the registration and the login forms (HTML or some other UI). The registration form collects the `username` and `password` and checks if they exist in the database and inserts if it doesn't exist. The login form collects the `username` and `password` and checks if it exists in the database and logs the user in if it does. This type of implementation is what we call native forms.
+What do we mean by native forms? Most developers have at one time written their own login and registration forms directly into an application. They create a table called `users` and it stores the `username` and `password`. Then they write the registration and the login forms (HTML or some other UI). The registration form collects the `username` and `password` and checks if the user exist in the database. If they don't, the application inserts the new user into the database. The login form collects the `username` and `password` and checks if it exists in the database and logs the user in if it does. This type of implementation is what we call native forms.
 
 The only difference with the **Local login and registration** mode is that you delegate the login and registration process to an OAuth server rather than writing everything by hand. Additionally, since you control the OAuth server and your application, it would be odd to ask the user to "authorize" your application. Therefore, this mode does not include the permission screens that we'll cover in the next few modes.
 
+So, how does this work in practice? Let's take a look at the steps for a fictitious web application called "The World's Greatest ToDo List" or "TWGTL" (pronounced Twig-Til) for short:
+
+1. A user visits TWGTL and wants to sign up and manage their ToDos.
+2. They click the "Sign Up" button on the homepage.
+3. This button takes them over to the OAuth server. In fact, it takes them directly to the registration form that is part of the OAuth workflow (specifically the Authorization Code Grant which is covered later in this guide).
+4. They fill out the registration form and click "Submit".
+5. The OAuth server ensures this is a new user and creates their account.
+6. The OAuth server redirects the browser back to TWGTL, which logs the user in.
+7. The user begins using TWGTL and adds their current ToDos.
+8. Later, the user comes back to TWGTL and needs to sign it in order to check of some of their ToDos. They click the `My Account` link at the top of the page.
+9. This takes the user to the OAuth server's login page.
+10. The user types in their username and password.
+11. The OAuth server confirms their identity.
+12. The OAuth redirects the browser back to TWGTL, which logs the user in.
+
+That's it. The user feels like they are registering and logging into TWGTL directly, but in fact, TWGTL is delegating this all to the OAuth server. The user is non-the-wiser so this is why we call this mode *Local login and registration*. 
+
 #### Examples
 
+Here are a few examples of web applications that use this mode:
+
 * https://fusionauth.io (click on the Login button in the header)
-* https://santasnorthpole.com/user/login
+* TODO Add more here
 
-### Third-party service authorization
+### Third-party login and registration
 
-The third-party service authorization mode is quite different than the **Local login and registration** mode. Here, the user is usually already logged into your application. Your application wants to use a set of APIs on behalf of or as the user. In order to use those APIs, the user has to grant your application permissions to do so. To accomplish this, your application asks the user to log into the third-party service using OAuth. During the login process, the third-party service usually shows the user a screen that asks for their permission to allow your application to make APIs on their behalf. Once the user allows this, your application will have permissions to call those APIs.
+The **Third-party login and registration** mode is implemented with the classic "Login with ..." buttons you see in many applications. These buttons let users sign up or log into your application by logging into one of their other accounts (i.e. Facebook or Google). Here, your application sends the user over to Facebook to log in. In most cases, your application will need to use one or more APIs from the OAuth provider (in this case Facebook) in order to retrieve information about the user or do things on behalf of the user (for example sending a message on behalf of the user). In order to use those APIs, the user has to grant your application permissions to do so. To accomplish this, the third-party service usually shows the user a screen that asks for certain permissions. In the Facebook example, Facebook will present a screen that might ask the user to share their email with you. Once the user grants these permissions, your application can call the Facebook APIs using an access token (which we will cover in detail later in this guide). We'll refer to these screens as the "permission grant screen" throughout the rest of the guide.
 
-The classic example of this is authorizing an application to post on Twitter or another social network as you. Or granting access for an application to use your GMail account. Here's an example of the permission screen that Google uses:
+Here's an example of the Facebook permission screen:
 
 <<IMAGE>>
 
-While this might seem like a federated identity case, it can be argued that the user isn't identifying themselves to your application. They are simply authorizing your application to call APIs on their behalf. Therefore, I did not mark this case a federated identity case.
+After the user has logged into the third-party OAuth server and granted your application permissions, they are redirect back to your application and logged into it.
+
+The key part of this mode is that the user was both logged in, but also granted your application permissions to the service (i.e. Facebook). This is why so many applications leverage the "Login with Facebook" or other social integrations. It gives them access to call the Facebook APIs on the user's behalf but also logs the user in.
+
+**NOTE:** Social logins are the most common examples of this, but there are plenty of other third-party OAuth servers outside of social (GitHub for example).
+
+This mode is a good example of federated identity. Here, the user's identity (username and password) is stored in the third-party system and they are using that system to registration or log into your application.
+
+So, how does this work in practice? Let's take a look at the steps for our TWGTL application to use Facebook to register and log users in:
+
+1. A user visits TWGTL and wants to sign up and manage their ToDos.
+2. They click the "Login with Facebook" button on the homepage.
+3. This button takes them over to Facebook's OAuth server.
+4. They log into Facebook (if they aren't already logged in).
+5. Facebook presents the user with the permission screen based on the permissions TWGTL needs. This is done using OAuth scopes, which we will cover later in this guide.
+6. Facebook redirects the browser back to TWGTL, which logs the user in. TWGTL also calls the Facebook API to retrieve the user's information.
+7. The user begins using TWGTL and adds their current ToDos.
+8. Later, the user comes back to TWGTL and needs to sign it in order to check of some of their ToDos. They click the `My Account` link at the top of the page.
+9. This takes the user back to Facebook and they repeat the same process as above.
+
+You might be wondering if the **Third-party login and registration** mode can work with the **Local login and registration** mode. Absolutely! This is what I like to call **Nested federated identity** (it's like a [https://www.youtube.com/watch?v=N-i9GXbptog](hot pocket in a hot pocket)). Basically, your application provides its registration and login forms by leveraging an OAuth server like FusionAuth. It also allows users to sign in with Facebook by enabling that feature of the OAuth server (FusionAuth calls this the **Facebook Identity Provider**). It's a little more complex, but the flow looks something like this:
+
+1. A user visits TWGTL and wants to sign up and manage their ToDos.
+2. They click the "Sign Up" button on the homepage.
+3. This button takes them over to the OAuth server to the login page. On this page, there is an button to "Login with Facebook" and the user clicks that.
+4. This button takes them over to Facebook's OAuth server.
+5. They log into Facebook.
+6. Facebook presents the user with the permission screen based.
+7. Facebook redirects the browser back to TWGTL's OAuth server, which reconciles out the user's account.
+8. TWGTL's OAuth server redirects the user back to the TWGTL application.
+9. The user is logged into TWGTL.
+
+The nice part about this workflow is that TWGTL doesn't have to worry about integrating with Facebook or any other provider or reconciling the user's account. That's all handled by the OAuth server. It's also possible to delegate to additional OAuth servers and make the nesting deeper than 2 levels.
+
+### First-party login and registration
+
+The **First-party login and registration** mode is the inverse of the **Third-party login and registration** mode. Basically, if you happen to be Facebook in the examples above and your customer is TWGTL, you are providing the OAuth server to TWGTL. You are also providing a way for them to call your APIs on behalf of your users. This type of setup is not just reserved from the massive social networks, more and more companies are offering this service to their customers and partners. In many cases, companies are also leveraging software products to provide this feature.
+
+### Enterprise login and registration
+
+The **Enterprise login and registration** mode is when your application allows users to sign up or log in with an enterprise identity provider such as a corporate Active Directory. This mode is very similar to the **Third-party login and registration** mode with a few differences. First, it rarely requires the user to grant permissions to your application using the "permission grant screen". Instead, the user does not have the option to grant or restrict permissions for your application. The permissions are usually managed in the enterprise directory (Active Directory for example) or in your application directly.
+
+Second, this mode does not apply to all users. In most cases, this mode is only available to a subset of users who exist in the enterprise directory. The rest of your users will either login directly to your application or through the **Third-party login and registration** mode.
+
+Outside of these differences, this mode behaves the same as the **Third-party login and registration** mode. 
+
+This is the final mode where users can register and login to your application. The remaining modes are used entirely for authorization, usually to APIs. We'll cover those next. 
+
+### Third-party service authorization
+
+The third-party service authorization mode is quite different than the **Third-party login and registration** mode. Here, the user is already logged into your application. The login could have been through a native form (that we discussed above) or using the **Local login and registration** mode, the **Third-party login and registration** mode, or the **Enterprise login and registartion** mode. Since the user is already logged in, all they are doing is granting access for your application to call APIs with a third-party. 
+
+For example, let's say a user has an account with TWGTL, but each time they complete a ToDo, they want to let their Twitter followers know. To accomplish this, TWGTL provides a Twitter integration that will automatically send a Tweet when the user completes the ToDo. The integration uses the Twitter APIs and those require an access token to call. In order to get an access token, the TWGTL application needs to log the user into Twitter via OAuth (technically Twitter is stuck on OAuth 1.0 but the concept is the same). 
+
+To hook all of this up, TWGTL needs to add a button to the user's profile page that says "Connect to Twitter". Notice it doesn't say "Login with Twitter" since the user is already logged in. Once the user clicks this button, they will be take to Twitter's OAuth server to login and grant the necessary permissions for TWGTL to Tweet for them. The workflow looks like this:
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #### Examples
 
 * (Buffer is a great example of this)[https://support.buffer.com/hc/en-us/articles/360038865673-Connecting-your-social-accounts-to-Buffer-Publish]
 * (Zapier is another great example)[https://zapier.com/help/doc/how-get-started-facebook-pages]
-
-### Third-party login and registration
-
-The third-party login and registration mode are the classic "Login with ..." buttons you see in many applications. These buttons let users sign up or log into your application by logging into one of their other accounts (i.e. Facebook or Google). Here, your application sends the user over to Facebook to log in. After they log in, they are usually presented with the same permission screen from the **Third-party service authorization** mode. After they allow the permissions, they are sent back to your application and are logged in.
-
-The key here is that the user was both logged in, but also granted your application permissions to the service (i.e. Facebook). This is why so many applications leverage the "Login with Facebook" or other social integrations. It gives them access to call the Facebook APIs on the user's behalf but also logs the user in.
-
-**NOTE:** Social logins are the most common examples of this, but there are plenty of other third-party OAuth servers outside of social (GitHub for example).
-
-This mode is a good example of federated identity. Here, the user's identity (username and password) is stored in the third-party system and they are using that system to registration or log into your application.
 
 ### First-party service authorization
 
@@ -85,20 +161,6 @@ With this mode, your OAuth server might display a permission screen to the user 
 #### Examples
 
 
-
-### First-party login and registration
-
-The first-party login and registration mode is the inverse of the **Third-party login and registration** mode. This is when another application wishes to allow users to "Login with Pied Piper" (if you happen to be the author of PiedPiper net for example). They will add this button to their login form and if a user clicks it, they will be taken to your OAuth server to login. Once they login to your OAuth server, they will then be sign up or logged into the other application. From your application's perspective, this is the exact same as the **First-party service authorization** mode. We'll use these two modes interchangeably throughout the rest of this guide.
-
-This is another example of federated identity except that a third-party application is federating to your OAuth server. That's why I marked it as "reverse federated identity".
-
-### Enterprise login and registration
-
-The enterprise login and registration mode is when your application allows users to sign up or log in with an enterprise identity provider. However, this mode is different than the **Third-party login and registration** mode because it does not ask for the user's permissions. Here, the enterprise identity provider likely doesn't have an API that you need to call on behalf of the user. You are simply letting them sign up for or log into your application using their corporate account.
-
-A good example of this is when you let users login using a corporate Active Directory or an HR system. This allows your customers to manage the access controls for their employees in their corporate Active Directory instead of your application's admin UI.
-
-This is another example of federated identity and the more traditional version of it. Here, your application is fully delegating the authentication of the user to an external system. In most cases, this requires the use of OpenID Connect in addition to basic OAuth. We'll cover that later in the guide.
 
 ### Machine-to-machine authorization
 
