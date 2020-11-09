@@ -13,7 +13,7 @@ In a recent article, we set up an API gateway with microservices for an eCommerc
 
 <!--more-->
 
-In this article, we'll build on the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) from that article, focusing on tightening up security by implementing [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT) authorization. This is a critical security concern because we don't want to allow just any application to call our microservices. You may want to re-read the [Centralized Authentication with a Microservices Gateway](/blog/2020/09/15/microservices-gateway/) post to refresh your memory.
+In this article, we'll build on the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) from that article, focusing on tightening up security by implementing [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT) authorization. This is a critical security concern because we don't want to allow just any application to call our microservices. You may want to re-read the [Centralized Authentication with a Microservices Gateway](/blog/2020/09/15/microservices-gateway/) post to refresh your memory. And we've created a new [sample project](https://github.com/timkleier/fusionauth-example-node-services-gateway-jwtauth) with updated source code based on this article.
 
 Even though we're allowing public access to the Product Catalog, we still want that traffic to come through our gateway application. That will ensure centralized access to our Product Catalog, and our microservices will be more protected.
 
@@ -49,7 +49,7 @@ To access your FusionAuth default signing key, go to **Settings > Key Master**, 
 
 Now we add this value as a variable to the gateway application (in `/routes/index.js`) and require the `jsonwebtoken` library:
 
-*NOTE:* In production applications, avoid storing secrets in code. Instead, use a separate secrets store and obtain the secret from that store at runtime. Such an effort is left as an exercise for the reader. 
+*NOTE:* In production applications, avoid storing secrets in code. Instead, use a separate secrets store and obtain the secret from that store at runtime. Such an effort is left as an exercise for the reader.
 
 ```javascript
 const jwtSigningKey = '[Default Signing Key]';
@@ -89,7 +89,7 @@ We're now ready for the microservices to handle the bearer token passed in the h
 
 ### Authorization Middleware
 
-Here we'll just cover the contents of the utility, as the [package creation](https://docs.npmjs.com/creating-node-js-modules) is a little out of scope for this article.
+Here we'll just cover the contents of the utility, as the [package creation](https://docs.npmjs.com/creating-node-js-modules) is a little out of scope for this article. For convenience, we've included this in a `shared` folder in the [sample project](https://github.com/timkleier/fusionauth-example-node-services-gateway-jwtauth).
 
 ```javascript
 const jwt = require('jsonwebtoken');
@@ -158,6 +158,7 @@ We're getting a bit ahead of ourselves in optionally handling roles, but for cor
 We have our `authorizationMiddleware` in place, and it's pretty simple to integrate it into the Product Catalog microservice (in `app.js`):
 
 ```javascript
+const { JWT_SIGNING_KEY, LOGIN_REDIRECT_URL } = process.env;
 var authorizationMiddleware = require('authorization-middleware'); // assuming it's packaged under that name
 
 // ...
@@ -168,6 +169,11 @@ app.use('/', indexRouter);
 Note that we're using the `authorizationMiddleware` prior to the `indexRouter`, which will ensure the middleware is applied to all our routes.
 
 Remember that we're using the `jwtSigningKey` to verify the JWT has been signed with the FusionAuth default signing key. Above, we manually pasted the string in, but here we've implemented it as an environment variable. This is better than hard-coding the key in code.
+
+In your local environment, you can add your `JWT_SIGNING_KEY` to your `bash_profile` or export it to your environment:
+```shell
+export JWT_SIGNING_KEY=[Default Signing Key]
+```
 
 ## Product Inventory Integration
 The Product Inventory service endpoint, `/branches/:id/product` has role-based access, so we're going to rework our gateway to pass the user role, which is included in the response we got from the FusionAuth OAuth login flow. Before hopping over to the gateway application to make that change, let's first make changes in the Product Inventory service.
@@ -193,10 +199,11 @@ We're making this change, in getting roles from `req.headers.roles` to `req.sess
 
 That's all we need to do in the Product Inventory service, but we'll need to make some changes to our gateway application to ensure it's passing the roles inside the JWT.
 
-In the gateway application, edit `routes/index.js` and add these changes:
+In the gateway application, edit `routes/index.js` and make these changes:
 
 ```javascript
 //...
+// Updates to the existing product inventory route
 router.get('/branches/:id/products', checkAuthentication, function(req, res, next) {
   const bearerToken = getUserBearerToken(req);
   const options = {
@@ -207,6 +214,7 @@ router.get('/branches/:id/products', checkAuthentication, function(req, res, nex
 });
 
 //...
+// adding a function similar to getGatewayBearerToken()
 function getUserBearerToken(req) {
   return 'Bearer ' + req.session.access_token;
 }
@@ -228,7 +236,7 @@ If we needed to have multiple tenants, each with a different set of users, we'd 
 
 ## Session Housekeeping
 
-If you try multiple requests across the services, you may notice you're getting responses indicated you're unauthorized due to the session id changing. This is because the private services are responding with their own session cookie, which is overriding the one from the gateway. The fix for this is simple; you'll just need to add a unique name to the `expressSession` in the gateway and each of our microservices.
+If you try multiple requests across the services, you may notice you're getting responses indicated you're unauthorized due to the session id changing. This is becaue the private services are responding with their own session cookie, which is overriding the one from the gateway. The fix for this is simple; you'll just need to add a unique name to the `expressSession` in the gateway and each of our microservices.
 
 In the gateway, modify `app.js`:
 
