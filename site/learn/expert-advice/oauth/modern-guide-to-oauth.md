@@ -105,7 +105,7 @@ You might be wondering if the **Third-party login and registration** mode can wo
 3. This button takes them over to the OAuth server to the login page. On this page, there is an button to "Login with Facebook" and the user clicks that.
 4. This button takes them over to Facebook's OAuth server.
 5. They log into Facebook.
-6. Facebook presents the user with the permission screen based.
+6. Facebook presents the user with the permission screen.
 7. Facebook redirects the browser back to TWGTL's OAuth server, which reconciles out the user's account.
 8. TWGTL's OAuth server redirects the user back to the TWGTL application.
 9. The user is logged into TWGTL.
@@ -128,29 +128,20 @@ This is the final mode where users can register and login to your application. T
 
 ### Third-party service authorization
 
-The third-party service authorization mode is quite different than the **Third-party login and registration** mode. Here, the user is already logged into your application. The login could have been through a native form (that we discussed above) or using the **Local login and registration** mode, the **Third-party login and registration** mode, or the **Enterprise login and registartion** mode. Since the user is already logged in, all they are doing is granting access for your application to call APIs with a third-party. 
+The third-party service authorization mode is quite different than the **Third-party login and registration** mode. Here, the user is already logged into your application. The login could have been through a native form (that we discussed above) or using the **Local login and registration** mode, the **Third-party login and registration** mode, or the **Enterprise login and registration** mode. Since the user is already logged in, all they are doing is granting access for your application to call APIs with a third-party. 
 
-For example, let's say a user has an account with TWGTL, but each time they complete a ToDo, they want to let their Twitter followers know. To accomplish this, TWGTL provides a Twitter integration that will automatically send a Tweet when the user completes the ToDo. The integration uses the Twitter APIs and those require an access token to call. In order to get an access token, the TWGTL application needs to log the user into Twitter via OAuth (technically Twitter is stuck on OAuth 1.0 but the concept is the same). 
+For example, let's say a user has an account with TWGTL, but each time they complete a ToDo, they want to let their Twitter followers know. To accomplish this, TWGTL provides a Twitter integration that will automatically send a Tweet when the user completes a ToDo. The integration uses the Twitter APIs and those require an access token to call. In order to get an access token, the TWGTL application needs to log the user into Twitter via OAuth (technically Twitter is stuck on OAuth 1.0 but the concept is the same). 
 
-To hook all of this up, TWGTL needs to add a button to the user's profile page that says "Connect to Twitter". Notice it doesn't say "Login with Twitter" since the user is already logged in. Once the user clicks this button, they will be take to Twitter's OAuth server to login and grant the necessary permissions for TWGTL to Tweet for them. The workflow looks like this:
+To hook all of this up, TWGTL needs to add a button to the user's profile page that says "Connect your Twitter account". Notice it doesn't say "Login with Twitter" since the user is already logged in. Once the user clicks this button, they will be taken to Twitter's OAuth server to login and grant the necessary permissions for TWGTL to Tweet for them. The workflow looks like this:
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Examples
-
-* (Buffer is a great example of this)[https://support.buffer.com/hc/en-us/articles/360038865673-Connecting-your-social-accounts-to-Buffer-Publish]
-* (Zapier is another great example)[https://zapier.com/help/doc/how-get-started-facebook-pages]
+1. A user visits TWGTL and logs into their account.
+2. They click the "My Profile" link.
+3. On their account page, they click the "Connect your Twitter account" button.
+4. This button takes them over to Twitter's OAuth server.
+5. They log into Twitter.
+6. Twitter presents the user with the permission screen and asks if TWGTL can Tweet on their behalf. The user grants TWGTL this permission.
+7. Twitter redirects the browser back to TWGTL where it calls Twitter's OAuth server to get an access token.
+8. TWGTL stores the access token in its database and can now call Twitter APIs.
 
 ### First-party service authorization
 
@@ -158,13 +149,11 @@ The First-party service authorization mode is the inverse of the **Third-party s
 
 With this mode, your OAuth server might display a permission screen to the user that asks if they want to grant the third-party application permissions to your APIs. This isn't strictly required and depends on your requirements.
 
-#### Examples
-
-
-
 ### Machine-to-machine authorization
 
-The machine-to-machine authorization mode is different than the previous modes we've covered. This mode does not involve users at all. Rather, it allows an application to interact with another application. Normally, this is via backend services communicating with each other via APIs. Here, one backend needs to be granted access to the other backend. We'll call the first backend the source and the second backend the target. To accomplish this, the source authenticates with the OAuth server. The OAuth server proves the identity of the source and then returns a token that the source will use to call the target. This process can also include permissions that are used by the target to authorize the call the source is making. 
+The machine-to-machine authorization mode is different than the previous modes we've covered. This mode does not involve users at all. Rather, it allows an application to interact with another application. Normally, this is via backend services communicating with each other via APIs. 
+
+Here, one backend needs to be granted access to the other backend. We'll call the first backend the source and the second backend the target. To accomplish this, the source authenticates with the OAuth server. The OAuth server proves the identity of the source and then returns a token that the source will use to call the target. This process can also include permissions that are used by the target to authorize the call the source is making. 
 
 ### Device login and registration
 
