@@ -1,6 +1,6 @@
 ## Documentation Style Guidelines
 
-Here are some guidelines to follow when writing documentation. 
+Here are some guidelines to follow when writing documentation (everything under `/site/docs`.
 
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing. 
 - Use `Id` instead of `ID` when describing a unique identifier
@@ -10,8 +10,9 @@ Here are some guidelines to follow when writing documentation.
 - Don't abbreviate FusionAuth, use the full name.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - Use single backticks when specifying a value that is not a field.
-- When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate.
+- When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Never use the term GUID, it's always UUID
+- All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
 
 For blog posts:
 - Indent all code with two spaces per level.
@@ -33,7 +34,9 @@ For lists:
 
 When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent browser window.
 
-Note that you must have at least 1100 pixels of screen height. If you do not, your dimensions will be skewed. Go to "System Preferences > Display" then choose "More space".
+Note that you must have at least `1100` pixels of screen height. If you do not, your dimensions will be skewed. Go to `System Preferences > Display` then choose `More Space` or the next selection up from your current selection to ensure you have enough space available.
+
+You will also want to ensure that you do not have scroll bars omni-present, this will affect the UI when taking screenshots. See `System Preferences > General > Show scroll bars` and ensure `When scrolling` is selected.
 
 Also note that you should be resizing the image down to 1600px wide. If you are resizing up, something is wrong and your images will be fuzzy. 
 
@@ -74,6 +77,8 @@ end tell
 
 ## Screenshot Standards
 
+- Use light mode when capturing screenshots
+- Make sure you set your `fusionauth-app.runtime-mode` to `production` unless documenting a feature only available in `development` mode.
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
    - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
