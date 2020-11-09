@@ -13,7 +13,7 @@ In a recent article, we set up an API gateway with microservices for an eCommerc
 
 <!--more-->
 
-In this article, we'll build on the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) from that article, focusing on tightening up security by implementing [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT) authorization. This is a critical security concern because we don't want to allow just any application to call our microservices. You may want to re-read the [Centralized Authentication with a Microservices Gateway](/blog/2020/09/15/microservices-gateway/) post to refresh your memory. And we've created a new [sample project](https://github.com/timkleier/fusionauth-example-node-services-gateway-jwtauth) with updated source code based on this article.
+In this article, we'll build on the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) from that article, focusing on tightening up security by implementing [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT) authorization. This is a critical security concern because we don't want to allow just any application to call our microservices. You may want to re-read the [Centralized Authentication with a Microservices Gateway](/blog/2020/09/15/microservices-gateway/) post to refresh your memory. And we've created a new [sample project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway-jwtauth) with updated source code based on this article.
 
 Even though we're allowing public access to the Product Catalog, we still want that traffic to come through our gateway application. That will ensure centralized access to our Product Catalog, and our microservices will be more protected.
 
@@ -28,7 +28,7 @@ So here's what we'll do:
 
 JWTs are an industry standard way for securely passing claims between two parties, allowing that information to be verified by the recipient. We're going to use them for the purpose of authorization (authorizing the gateway to access the microservices) as well as passing information (user claims, such as role membership).
 
-If you are going to make the code changes, clone the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway), otherwise feel free to follow along conceptually. TBD final github repo??
+If you are going to make the code changes, clone the [example project](mooreds/fusionauth-example-node-services-gateway-jwtauth), otherwise feel free to follow along conceptually. 
 
 In your gateway application, install `jsonwebtoken`:
 
@@ -89,7 +89,7 @@ We're now ready for the microservices to handle the bearer token passed in the h
 
 ### Authorization Middleware
 
-Here we'll just cover the contents of the utility, as the [package creation](https://docs.npmjs.com/creating-node-js-modules) is a little out of scope for this article. For convenience, we've included this in a `shared` folder in the [sample project](https://github.com/timkleier/fusionauth-example-node-services-gateway-jwtauth).
+Here we'll just cover the contents of the utility, as the [package creation](https://docs.npmjs.com/creating-node-js-modules) is a little out of scope for this article. For convenience, we've included this in a `shared` folder in the [sample project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway-jwtauth).
 
 ```javascript
 const jwt = require('jsonwebtoken');
