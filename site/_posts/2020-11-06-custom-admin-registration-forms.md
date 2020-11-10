@@ -101,7 +101,9 @@ Navigate to "Applications" and then edit your application. Go to the "Registrati
 
 Save the application. Simple, eh? This form will now be used any time you or any other admin user adds or edits a registration for this FusionAuth application.
 
-Now, use the form to edit a previously registered user. Let's pretend they just bought a home with your company, so you can change their status to "Closed". Cha-ching, you just made some imaginary money.
+Forms can be reused across applications and even across tenants. Since FusionAuth supports multi-tenant configurations, if that's what you need, you can build these forms once and reuse them many times. You can also manage the creation and updating of these forms and form fields via the API or client libraries, should you need to be able to modify them programmatically.
+
+Next, you'll use the form to edit a previously registered user. Let's pretend they just bought a home with your company, so you can change their status to "Closed". Cha-ching, you just made some imaginary money.
 
 ## Editing a user's registration data
 
@@ -119,17 +121,15 @@ This account doesn't have access to any FusionAuth functionality beyond user man
 
 ## Go further
 
-If you were paying attention, you noticed that the title of the newly added field is `registration.data.userstatus` in the form. 
+If you were paying attention, you might have thought I was pulling a fast one. You will have noticed that the title of the newly added field is `registration.data.userstatus` in the form.
 
-This is suboptimal but it is happening because the field name hasn't been added to the messages. You can update that field name by editing the properties. More in [this blog post](/blog/2020/09/01/theme-registration-form/), which updated the properties file for other custom fields.
+This is suboptimal but it is happening because the field name hasn't been added to the messages, which is where all the text UI elements are retrieved from. You can update that by editing the messages properties. This is covered in more dtail in [this blog post](/blog/2020/09/01/theme-registration-form/), which updated the properties file for other custom fields.
 
-If you wanted to take action when a user's registration data is changed, you could [use a webhook](/docs/v1/tech/events-webhooks/) to listen for that event. For example, you could automatically purchase some champagne every time a user's status is changed to "Closed".
+If you need to take action when a user's registration data is changed, you could [use a webhook](/docs/v1/tech/events-webhooks/) to listen for that particular event. For example, you could automatically send flowers to the home buyer whenever their status is changed to "Closed". This would require knowing the new home's address as well as an integration with an online flower seller, but is left as an exercise for the reader.
 
 ## In conclusion
 
-This new form functionality lets you build flexible user management interfaces without writing any code at all. The power of the different form controls, validation rules, and multiple sections are available to you. 
-
-While this post built a custom form for managing registrations, you can also build them for the editing custom user data as well. 
+This new form functionality lets you build flexible user management interfaces without writing any code. The power and customizability of different form controls, validation rules, and multiple sections are all available to you. And while this post built a custom form for managing registrations, you can also build them for the editing custom user data as well. 
 
 Happy coding!
 
