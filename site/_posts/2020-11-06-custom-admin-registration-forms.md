@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Update custom user data in the admin UI
+title: Update user profile data in the admin UI
 description: Once you have custom user data in the FusionAuth system, how can you update it?
 image: blogs/controlling-hotspot/controlling-a-hotspot-with-fusionauth-authentication.png
 author: Dan Moore
@@ -9,7 +9,7 @@ tags: feature-advanced-registration-forms
 excerpt_separator: "<!--more-->"
 ---
 
-Letting a user register and provide custom profile data solves the problem of pringing such data into your auth system. But how can you manage the data as it changes over time? 
+Letting a user register and provide custom profile data solves the problem of bringing such data into your auth system. But how can you manage the data as it changes over time? 
 
 After people register, you will want to enrich or change their profile. Sometimes this happens via automated systems. In that case, you can use an API. But what if you want to allow employees or other humans to update a user profile data?
 
@@ -123,7 +123,7 @@ This account doesn't have access to any FusionAuth functionality beyond user man
 
 If you were paying attention, you might have thought I was pulling a fast one. You will have noticed that the title of the newly added field is `registration.data.userstatus` in the form.
 
-This is suboptimal but it is happening because the field name hasn't been added to the messages, which is where all the text UI elements are retrieved from. You can update that by editing the messages properties. This is covered in more dtail in [this blog post](/blog/2020/09/01/theme-registration-form/), which updated the properties file for other custom fields.
+This is suboptimal but it is happening because the field name hasn't been added to the messages, which is where all the text UI elements are retrieved from. You can update that by editing the messages properties. This is covered in more detail in [this blog post](/blog/2020/09/01/theme-registration-form/), which updated the properties file for other custom fields.
 
 If you need to take action when a user's registration data is changed, you could [use a webhook](/docs/v1/tech/events-webhooks/) to listen for that particular event. For example, you could automatically send flowers to the home buyer whenever their status is changed to "Closed". This would require knowing the new home's address as well as an integration with an online flower seller, but is left as an exercise for the reader.
 
