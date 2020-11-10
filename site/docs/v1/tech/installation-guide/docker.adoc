@@ -253,3 +253,77 @@ If you want to build your own image starting with our base image, the following 
 ```
 docker pull fusionauth/fusionauth-app
 ```
+
+== Kickstart
+
+Using Docker with Kickstart is a powerful combination. Using these technologies together lets you:
+
+* Configure and share development environments
+* Create replicable bug reports 
+* Spin up auth instances with a well known, versioned set of data for continuous integration and testing
+
+All the normal limitations of Kickstart apply (the Kickstart will not run if the database has already been set up with an API key, for example).
+
+It's easy to get started with Kickstart, but you'll need to tweak your Docker Compose files a bit. Before you being, you'll need a valid `kickstart.json` file. Note that this file could be called anything, `kickstart.json` is simply a convention. Check out the link:/docs/v1/tech/installation-guide/kickstart/[Kickstart documentation] for more information on writing one.
+
+Once you have a valid `kickstart.json` file, create a subdirectory in the location of your `docker-compose.yml` file. It can be named anything; this documentation will use a directory called `kickstart`. Next, you'll mount this directory and set the `FUSIONAUTH_APP_KICKSTART_FILE` variable in the `docker-compose.yml` file. 
+
+Here are the steps to do so:
+
+* In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`
+* Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. The path refers to what the docker container expects.
+* Configure `docker-compose.yml` to pass the environment variable set by `.env` into the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
+
+The following is an example `docker-compose.yml` file configuring FusionAuth to use a `kickstart.json` at startup. 
+
+```yaml
+version: '3'
+
+services:
+  db:
+    image: postgres:9.6
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+# Un-comment to access the db service directly
+#    ports:
+#      - 5432:5432
+    networks:
+      - db
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  fusionauth:
+    image: fusionauth/fusionauth-app:latest
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USERNAME: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+      SEARCH_TYPE: database
+      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+    networks:
+     - db
+    restart: unless-stopped
+    ports:
+      - 9011:9011
+    volumes:
+      - fa_config:/usr/local/fusionauth/config
+      - ./kickstart:/usr/local/fusionauth/kickstart
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  db_data:
+  fa_config:
+```
