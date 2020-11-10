@@ -3,7 +3,7 @@ layout: blog-post
 title: Announcing FusionAuth 1.21
 description: The FusionAuth 1.21 Release offers SAML improvements and PKCE support for OIDC
 author: Dan Moore
-image: blogs/release-1-10/product-update-fusionauth-1.21.png
+image: blogs/release-1-21/product-update-fusionauth-1-21.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
