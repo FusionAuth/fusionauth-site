@@ -22,13 +22,13 @@ So here's what we'll do:
 * Add the `jsonwebtoken` package to our gateway and microservices.
 * Utilize FusionAuth's HMAC default signing key to create [signed JWTs](/learn/expert-advice/tokens/building-a-secure-jwt/) for the gateway to pass to the microservices.
 * Add roles to this JWT if the user is present.
-* Decode that JWT in each of the microservices, using the same signing key, to verifying the request.
+* Decode that JWT in each of the microservices, using the same signing key, to verif the request.
 
 This JWT will take the place of the API key used to ensure only the gateway accesses these services. Because it is a JWT, it can contain additional information for the microservices. 
 
 ## JWT Authorization
 
-JWTs are an standardized method for securely passing claims between two parties, allowing that information to be verified by the recipient. We're going to use them for the purpose of authorization (authorizing the gateway to access the microservices) as well as passing information (user claims, such as role membership).
+JWTs are a standardized method for securely passing claims between two parties, allowing that information to be verified by the recipient. We're going to use them for the purpose of authorization (authorizing the gateway to access the microservices) as well as passing information (user claims, such as role membership).
 
 If you are going to make the code changes, clone the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway-jwtauth), otherwise feel free to follow along conceptually. 
 
