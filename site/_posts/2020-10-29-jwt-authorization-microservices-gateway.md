@@ -40,10 +40,10 @@ npm install jsonwebtoken
 
 Next we'll head over to FusionAuth to get our key for signing the JWT.
 
-### Signing
+### Signing the JWT using FusionAuth's key
 By signing JWTs using FusionAuth's default signing key, we're effectively limiting access to applications that have the key, thus allowing private microservices to ensure the incoming message is from a trusted caller: the gateway.
 
-In this case, because we control all the microservices, we'll use a symmetric signing algorithm, such as HMAC. We could also use a public/private key signing algorithm, such as RSA, which would be less performant but wouldn't require us to share a secret between the signer of the JWT and its consumers.
+Because we control all the microservices, we'll use a symmetric signing algorithm, such as HMAC. We could also use a public/private key signing algorithm, such as RSA, which would be less performant but wouldn't require us to share a secret between the signer of the JWT and its consumers.
 
 To access your FusionAuth default signing key, go to **Settings > Key Master**, click on the magnifying glass next to the key with the name "Default signing key", then reveal it and copy the value of the "Secret".
 
@@ -249,6 +249,8 @@ While this tutorial explains how to integrate JWT based authorization into your 
 * Instead of using the shared HMAC secret, use a public/private key pair with the RSA algorithm to ensure you don't need to share any secrets. In this case, you'll want to have FusionAuth generate all the JWTs, so set up an anonymous user to allow access for the public APIs.
 * Benchmark the difference for multiple invocations with JWT auth and the API key used previously to understand the performance implications.
 
-## Wrapping Up
+## Conclusion
 
 We've successfully implemented JWT authorization. Every microservice is stateless and uses a JWT to ensure access is authorized. This is more complex but more flexible than the previous posts use of API keys. FusionAuth's default signing key and the simplicity of working with JWTs made this a pretty straightforward means by which to add a layer of security to our gateway and microservices.
+
+Happy coding!
