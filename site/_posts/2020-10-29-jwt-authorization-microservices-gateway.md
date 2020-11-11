@@ -19,10 +19,12 @@ Even though we're allowing public access to the Product Catalog, we still want t
 
 So here's what we'll do:
 
-* Add the `jsonwebtoken` package to our gateway and microservices
-* Utilize FusionAuth's HMAC default signing key to create [signed JWTs](/learn/expert-advice/tokens/building-a-secure-jwt/) for the gateway to pass to the microservices
-* Decode that JWT in each of the microservices, using the same signing key, to verifying the request
-* For role-based access checks, the gateway will forward the user's signed `access_token` from FusionAuth as an Authorization Bearer token, allowing microservices to verify and determine the caller's roles
+* Add the `jsonwebtoken` package to our gateway and microservices.
+* Utilize FusionAuth's HMAC default signing key to create [signed JWTs](/learn/expert-advice/tokens/building-a-secure-jwt/) for the gateway to pass to the microservices.
+* Add roles to this JWT if the user is present.
+* Decode that JWT in each of the microservices, using the same signing key, to verifying the request.
+
+This JWT will take the place of the API key used to ensure only the gateway accesses these services. Because it is a JWT, it can contain additional information for the microservices. 
 
 ## JWT Authorization
 
@@ -108,6 +110,10 @@ You can see that this code is nearly identical to the code for `/products` above
 
 We're now ready for the microservices to handle the bearer token passed in the header. As each microservice will need to handle the tokens in the same way, it makes sense to create a package utility that can be shared by each microservice.
 
+Here's the flow of a request to the catalog API, which is one of the APIs we'll be protecting with JWTs.
+
+{% plantuml source: _diagrams/blogs/jwt-authorization-microservices/catalog-flow.plantuml, alt: "Retrieving the catalog API." %}
+
 ### Authorization Middleware
 
 Here we'll just cover the contents of the utility, as the [package creation](https://docs.npmjs.com/creating-node-js-modules) is a little out of scope for this article. For convenience, we've included this in a `shared` folder in the [sample project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway-jwtauth).
@@ -171,7 +177,7 @@ We're exporting a function that looks for the `Authorization` header key coming 
 1. Grab the token portion
 1. Verify and decode the token using the `jwtSigningKey`
 
-If all those steps are successful, we'll end up with a decoded token. And if there were roles included, they will be added to `req.session`. For any errors in the process, the `handleUnauthorized` function will redirect to the login page and/or respond with a `401: UNAUTHORIZED`.
+If all those steps are successful, we'll end up with a decoded token. And if there were roles included, they will be added to `req`. For any errors in the process, the `handleUnauthorized` function will redirect to the login page and/or respond with a `401: UNAUTHORIZED`.
 
 We're getting a bit ahead of ourselves in optionally handling roles, but for correct authorization in the Product Inventory service, roles will be helpful.
 
@@ -199,6 +205,12 @@ export JWT_SIGNING_KEY=[Default Signing Key]
 ## Product Inventory Integration
 The Product Inventory service endpoint, `/branches/:id/product` has role-based access, so we're going to rework our gateway to pass the user role, which is included in the response we got from the FusionAuth OAuth login flow. Before hopping over to the gateway application to make that change, let's first make changes in the Product Inventory service.
 
+Here's the flow of a request to the inventory API.
+
+{% plantuml source: _diagrams/blogs/jwt-authorization-microservices/inventory-flow.plantuml, alt: "Retrieving the products API." %}
+
+### Authorization Middleware
+
 Follow the same steps above for adding the `authorizationMiddleware` to `app.js`, but do so in the Product Inventory service. Then we'll just need to slightly modify the `routes/index.js` file:
 
 ```javascript
@@ -216,32 +228,7 @@ router.get('/branches/:id/products', function(req, res, next) {
 //...
 ```
 
-We're making this change, in getting roles from `req.headers.roles` to `req.roles`, because our `authorizationMiddleware` takes the decoded token and puts the roles object onto `req.session`. This is appropriate as the roles are more closely linked to the user's session than with any specific request to our service.
-
-That's all we need to do in the Product Inventory service, but we'll need to make some changes to our gateway application to ensure it's passing the roles inside the JWT.
-
-In the gateway application, edit `routes/index.js` and make these changes:
-
-```javascript
-//...
-// Updates to the existing product inventory route
-router.get('/branches/:id/products', checkAuthentication, function(req, res, next) {
-  const bearerToken = getUserBearerToken(req);
-  const options = {
-    url: `http://localhost:3002/branches/${req.params.id}/products`,
-    headers: { authorization: bearerToken }
-  };
-  request(options).pipe(res);
-});
-
-//...
-// adding a function similar to getGatewayBearerToken()
-function getUserBearerToken(req) {
-  return 'Bearer ' + req.session.access_token;
-}
-```
-
-When forwarding the request to the Product Inventory service, we want to send the original `access_token` generated by FusionAuth during login, as we'll need to authorize based on the user role. It has already been signed, so we just need to send it as the `authorization` header bearer token.
+We're making this change, in getting roles from `req.headers.roles` to `req.roles`, because our `authorizationMiddleware` takes the decoded token and puts the roles object onto `req`. That's all we need to do in the Product Inventory service.
 
 We'll need to complete one more step in order to allow admin access to the Product Inventory route. In FusionAuth, click on "Applications", then the "Manage Roles" icon on the Gateway application. Add a new role called "admin".
 
@@ -254,20 +241,6 @@ Then click on "Users", find the user you created, and under the "Registrations" 
 The next time you log in to FusionAuth and access the `/branches/:id/products` route, you will be authorized and receive the expected response from the Product Inventory service.
 
 If we needed to have multiple tenants, each with a different set of users, we'd want to add a tenant under the "Tenants" tab. However, for this example, let's keep everything in a single tenant.
-
-## Session Housekeeping
-
-If you try multiple requests across the services, you may notice you're getting responses indicated you're unauthorized due to the session id changing. This is becaue the private services are responding with their own session cookie, which is overriding the one from the gateway. The fix for this is simple; you'll just need to add a unique name to the `expressSession` in the gateway and each of our microservices.
-
-In the gateway, modify `app.js`:
-
-```javascript
-//...
-app.use(expressSession({name: 'fa.gw.sid', resave: false, saveUninitialized: false, secret: 'fusionauth-node-example'}));
-//...
-```
-
-All we've done is give the `expressSession` a unique name, this one representing FusionAuth ("fa"), the gateway ("gw"), and session id ("sid"). Do the same in each of the services and the `access_token` won't be compromised.
 
 ## Go further
 
