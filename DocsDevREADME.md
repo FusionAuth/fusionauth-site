@@ -13,6 +13,11 @@ Here are some guidelines to follow when writing documentation (everything under 
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Never use the term GUID, it's always UUID
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
+- If something is new in a version, mark it with something like this:
+[NOTE.since]
+====
+Available Since Version 1.5.0
+====
 
 For blog posts:
 - Indent all code with two spaces per level.
