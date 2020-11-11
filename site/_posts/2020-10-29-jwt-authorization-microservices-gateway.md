@@ -28,9 +28,9 @@ This JWT will take the place of the API key used to ensure only the gateway acce
 
 ## JWT Authorization
 
-JWTs are an industry standard way for securely passing claims between two parties, allowing that information to be verified by the recipient. We're going to use them for the purpose of authorization (authorizing the gateway to access the microservices) as well as passing information (user claims, such as role membership).
+JWTs are an standardized method for securely passing claims between two parties, allowing that information to be verified by the recipient. We're going to use them for the purpose of authorization (authorizing the gateway to access the microservices) as well as passing information (user claims, such as role membership).
 
-If you are going to make the code changes, clone the [example project](mooreds/fusionauth-example-node-services-gateway-jwtauth), otherwise feel free to follow along conceptually. 
+If you are going to make the code changes, clone the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway-jwtauth), otherwise feel free to follow along conceptually. 
 
 In your gateway application, install `jsonwebtoken`:
 
@@ -41,24 +41,24 @@ npm install jsonwebtoken
 Next we'll head over to FusionAuth to get our key for signing the JWT.
 
 ### Signing
-By signing JWTs using FusionAuth's default signing key, we're effectively limiting access to applications that have the key, thus allowing private microservices to ensure the incoming message is from a trusted caller, the gateway in this case.
+By signing JWTs using FusionAuth's default signing key, we're effectively limiting access to applications that have the key, thus allowing private microservices to ensure the incoming message is from a trusted caller: the gateway.
 
-In this case, because we control all the microservices, we'll use a symmetric signing algorithm, such as HMAC. We could also use a public/private signing algorithm, such as RSA, which would be less performant but wouldn't require us to share a secret between the signer of the JWT and its consumers.
+In this case, because we control all the microservices, we'll use a symmetric signing algorithm, such as HMAC. We could also use a public/private key signing algorithm, such as RSA, which would be less performant but wouldn't require us to share a secret between the signer of the JWT and its consumers.
 
 To access your FusionAuth default signing key, go to **Settings > Key Master**, click on the magnifying glass next to the key with the name "Default signing key", then reveal it and copy the value of the "Secret".
 
 {% include _image.liquid src="/assets/img/blogs/microservices-jwt-auth/signing-key-secret.png" alt="Finding the JWT signing key value." class="img-fluid" figure=false %}
 
-Now we add this value as a variable to the gateway application (in `/routes/index.js`) and require the `jsonwebtoken` library:
+Now we add this value as a variable to the gateway application (in `/routes/index.js`) and require the `jsonwebtoken` library.
 
-*NOTE:* In production applications, avoid storing secrets in code. Instead, use a separate secrets store and obtain the secret from that store at runtime. Such an effort is left as an exercise for the reader.
+In production applications, avoid storing secrets in code. Instead, use a separate secrets store and obtain the secret from that store at runtime. Below we illustrate how to pull this value from an environment variable, which is a good option for some deployment environments.
 
 ```javascript
 const jwtSigningKey = '[Default Signing Key]';
 const jwt = require('jsonwebtoken');
 ```
 
-Next, we'll add a function at the end of that file to get the gateway bearer token for forwarding to the microservices. In this case, we are setting the token to expire in 10 minutes. This is a common duration of the JWT, but you may want to reduce it for security concerns, as described in FusionAuth's article on [Revoking JWTs & JWT Expiration](https://fusionauth.io/learn/expert-advice/tokens/revoking-jwts/).
+Next, we'll add a function at the end of that file to get the gateway `Bearer` token which will then be forwarded to the microservices. In this case, we are setting the token to expire in ten minutes. This is a common duration of the JWT, but you may want to reduce it for security concerns, as described in FusionAuth's article on [Revoking JWTs & JWT Expiration](https://fusionauth.io/learn/expert-advice/tokens/revoking-jwts/).
 
 ```javascript
 function getGatewayBearerToken(req) {
@@ -70,10 +70,10 @@ function getGatewayBearerToken(req) {
 }
 ```
 
-`getGatewayBearerToken()` creates a bearer token valid for ten minutes and utilizes our public signing key. It's how we will provide secure, general access between the gateway and microservices which don't require any further authorization. All this JWT is guaranteeing is that the request for the API came through the gateway.
+`getGatewayBearerToken()` creates a bearer token valid for ten minutes and utilizes our public signing key. It's how we will provide secure, general access between the gateway and any microservices which don't require any further authorization. All this JWT is guaranteeing is that the request for the API came through the gateway.
 
 ## Gateway Router Integration
-For the Product Catalog routes, we'll use `getGatewayBearerToken()` to prepare the bearer token and attach the result as a Bearer token in the `authorization` header.
+For the Product Catalog routes, we'll use `getGatewayBearerToken()` to prepare the `Bearer` token and attach it to the `authorization` header.
 
 ```javascript
 router.get('/products', function(req, res, next) {
@@ -86,7 +86,7 @@ router.get('/products', function(req, res, next) {
 });
 ```
 
-Let's update one other route in the API Gateway. This is the protected route that requires the user to be logged in and authenticated. We will pass a Bearer token that contains roles down to the Microservices:
+Let's update one other route in the API Gateway. This is the protected route that requires the user to be logged in and authenticated. We will pass a `Bearer` token that contains roles down to the microservices:
 
 ```javascript
 // ...
@@ -104,15 +104,13 @@ router.get('/branches/:id/products', checkAuthentication, function(req, res, nex
 // ...
 ```
 
-You can see that this code is nearly identical to the code for `/products` above. Since both APIs in the Gateway create a JWT and pass it down to the Microservices, they use the same method to authenticate and authorize API calls. Having everything be the same in the API Gateway is definitely a good thing and we could even extract the JWT creation code out to a Middleware at some point.
+You can see that this code is nearly identical to the code for `/products` above. Since both APIs in the Gateway create a JWT and pass it down to the Microservices, they use the same method to authenticate and authorize API calls. Having everything be the same in the API Gateway is definitely a good thing and we could even extract the JWT creation code out to a middleware at some point.
 
 ## Microservice JWT Integration
 
-We're now ready for the microservices to handle the bearer token passed in the header. As each microservice will need to handle the tokens in the same way, it makes sense to create a package utility that can be shared by each microservice.
+We're now ready for the microservices to handle the `Bearer` token passed in the header. As each microservice will need to handle the tokens in the same way, it makes sense to create a package utility that can be shared by each microservice. For example, here's the flow of a request to the Product Catalog:
 
-Here's the flow of a request to the catalog API, which is one of the APIs we'll be protecting with JWTs.
-
-{% plantuml source: _diagrams/blogs/jwt-authorization-microservices/catalog-flow.plantuml, alt: "Retrieving the catalog API." %}
+{% plantuml source: _diagrams/blogs/jwt-authorization-microservices/catalog-flow.plantuml, alt: "Retrieving the Product Catalog." %}
 
 ### Authorization Middleware
 
@@ -172,6 +170,7 @@ function handleUnauthorized(res, options) {
 ```
 
 We're exporting a function that looks for the `Authorization` header key coming from the gateway. It goes through the following steps:
+
 1. Find the `authorization` header
 1. Split the value it finds (giving us `Bearer` and the token)
 1. Grab the token portion
@@ -179,7 +178,7 @@ We're exporting a function that looks for the `Authorization` header key coming 
 
 If all those steps are successful, we'll end up with a decoded token. And if there were roles included, they will be added to `req`. For any errors in the process, the `handleUnauthorized` function will redirect to the login page and/or respond with a `401: UNAUTHORIZED`.
 
-We're getting a bit ahead of ourselves in optionally handling roles, but for correct authorization in the Product Inventory service, roles will be helpful.
+Why do we care about roles? For correct authorization in the Product Inventory service, we want to ensure a request is made with the correct role. We'll explore that after we examine the Product Catalog integration.
 
 ### Product Catalog Integration
 We have our `authorizationMiddleware` in place, and it's pretty simple to integrate it into the Product Catalog microservice (in `app.js`):
@@ -202,12 +201,12 @@ In your local environment, you can add your `JWT_SIGNING_KEY` to your `bash_prof
 export JWT_SIGNING_KEY=[Default Signing Key]
 ```
 
+Make sure you restart your microservices after you've set this environment variable.
+
 ## Product Inventory Integration
-The Product Inventory service endpoint, `/branches/:id/product` has role-based access, so we're going to rework our gateway to pass the user role, which is included in the response we got from the FusionAuth OAuth login flow. Before hopping over to the gateway application to make that change, let's first make changes in the Product Inventory service.
+The Product Inventory service endpoint, `/branches/:id/product` has role-based access. Previously we were pulling that from a FusionAuth generated JWT, but let's pull it from the JWT created in the gateway now. Here's the flow of a request to the Product Inventory.
 
-Here's the flow of a request to the inventory API.
-
-{% plantuml source: _diagrams/blogs/jwt-authorization-microservices/inventory-flow.plantuml, alt: "Retrieving the products API." %}
+{% plantuml source: _diagrams/blogs/jwt-authorization-microservices/inventory-flow.plantuml, alt: "Retrieving the Product Inventory." %}
 
 ### Authorization Middleware
 
@@ -240,18 +239,16 @@ Then click on "Users", find the user you created, and under the "Registrations" 
 
 The next time you log in to FusionAuth and access the `/branches/:id/products` route, you will be authorized and receive the expected response from the Product Inventory service.
 
-If we needed to have multiple tenants, each with a different set of users, we'd want to add a tenant under the "Tenants" tab. However, for this example, let's keep everything in a single tenant.
+If we needed to have multiple tenants, each with a different set of users, we'd want to add a tenant under the "Tenants" tab and create an application within that tenant. However, for this example, let's keep everything in a single tenant.
 
 ## Go further
 
 While this tutorial explains how to integrate JWT based authorization into your microservices environment, there are additional steps you could take to make the application better.
 
 * Extract all secrets to environment variables or a secrets manager.
-* Instead of using the shared HMAC secret, use a public private key with the RSA algorithm to ensure you don't need to share any secrets. In this case, you'll want to have FusionAuth generate all the JWTs, so set up an anonymous user to allow access for the public APIs.
+* Instead of using the shared HMAC secret, use a public/private key pair with the RSA algorithm to ensure you don't need to share any secrets. In this case, you'll want to have FusionAuth generate all the JWTs, so set up an anonymous user to allow access for the public APIs.
 * Benchmark the difference for multiple invocations with JWT auth and the API key used previously to understand the performance implications.
 
 ## Wrapping Up
 
-We've successfully implemented JWT authorization, utilizing the pre-signed FusionAuth `access_token` for role-based access to the Product Inventory service, and creating our own signed JWT for a generic but private connection between the gateway and the Product Catalog service.
-
-There are a number of other ways we could have done this, but FusionAuth's default signing key and the simplicity of working with JWTs made this a pretty straightforward means by which to add a layer of security to our gateway and microservices.
+We've successfully implemented JWT authorization. Every microservice is stateless and uses a JWT to ensure access is authorized. This is more complex but more flexible than the previous posts use of API keys. FusionAuth's default signing key and the simplicity of working with JWTs made this a pretty straightforward means by which to add a layer of security to our gateway and microservices.
