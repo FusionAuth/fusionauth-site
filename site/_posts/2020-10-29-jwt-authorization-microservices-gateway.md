@@ -60,7 +60,10 @@ Next, we'll add a function at the end of that file to get the gateway bearer tok
 
 ```javascript
 function getGatewayBearerToken(req) {
-  var token = jwt.sign({ data: req.url }, jwtSigningKey, { expiresIn: '10m', subject: 'gateway', issuer: req.get('host') });
+  // Recall that we put the User in the session in the previous post, but they might not be logged in so protect this code
+  // from a null User. 
+  var user = req.session.user;
+  var token = jwt.sign({ data: req.url, roles: user !== null ? user.registrations[0].roles : null }, jwtSigningKey, { expiresIn: '10m', subject: 'gateway', issuer: req.get('host') });
   return 'Bearer ' + token;
 }
 ```
@@ -81,7 +84,25 @@ router.get('/products', function(req, res, next) {
 });
 ```
 
-We'll want to do this for all other routes as well, but won't show that in this post.
+Let's update one other route in the API Gateway. This is the protected route that requires the user to be logged in and authenticated. We will pass a Bearer token that contains roles down to the Microservices:
+
+```javascript
+// ...
+/* PRODUCT INVENTORY ROUTES */
+// The checkAuthentication function was defined in our last post and it ensures that the user is logged in or redirects
+// them to FusionAuth to login.
+router.get('/branches/:id/products', checkAuthentication, function(req, res, next) {
+  const bearerToken = getGatewayBearerToken(req);
+  const options = {
+    url: `http://localhost:3002/branches/${req.params.id}/products`,
+    headers: { authorization: bearerToken }
+  };
+  request(options).pipe(res);
+});
+// ...
+```
+
+You can see that this code is nearly identical to the code for `/products` above. Since both APIs in the Gateway create a JWT and pass it down to the Microservices, they use the same method to authenticate and authorize API calls. Having everything be the same in the API Gateway is definitely a good thing and we could even extract the JWT creation code out to a Middleware at some point.
 
 ## Microservice JWT Integration
 
@@ -119,7 +140,7 @@ module.exports = function(options) {
       }
 
       const decoded_token = jwt.verify(token, options.jwtSigningKey);
-      req.session.roles = decoded_token.roles;
+      req.roles = decoded_token.roles; // These could be null if the user isn't logged in
 
     } catch(err) {
       console.error(err);
@@ -183,7 +204,7 @@ Follow the same steps above for adding the `authorizationMiddleware` to `app.js`
 ```javascript
 //...
 router.get('/branches/:id/products', function(req, res, next) {
-  const roles = req.session.roles; // this used to be req.headers.roles
+  const roles = req.roles; // this used to be req.headers.roles
 
   if (roles && roles.includes('admin')) {
     res.json(`Products for branch #${req.params.id}`);
@@ -195,7 +216,7 @@ router.get('/branches/:id/products', function(req, res, next) {
 //...
 ```
 
-We're making this change, in getting roles from `req.headers.roles` to `req.session.roles`, because our `authorizationMiddleware` takes the decoded token and puts the roles object onto `req.session`. This is appropriate as the roles are more closely linked to the user's session than with any specific request to our service.
+We're making this change, in getting roles from `req.headers.roles` to `req.roles`, because our `authorizationMiddleware` takes the decoded token and puts the roles object onto `req.session`. This is appropriate as the roles are more closely linked to the user's session than with any specific request to our service.
 
 That's all we need to do in the Product Inventory service, but we'll need to make some changes to our gateway application to ensure it's passing the roles inside the JWT.
 
