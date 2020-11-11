@@ -3,7 +3,7 @@ layout: blog-post
 title: JWT authorization in a microservices gateway
 description: How would
 author: Tim Kleier and Matt Anderson
-image: blogs/jerry-hopper-story/jerry-talks-gdpr-compliance-arm-images-and-paper-manuals.png
+image: blogs/microservices-jwt-auth/jwt-authorization-in-a-microservices-gateway.png
 category: blog
 tags: client-javascript
 excerpt_separator: "<!--more-->"
