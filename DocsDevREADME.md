@@ -43,6 +43,8 @@ Note that you must have at least `1100` pixels of screen height. If you do not, 
 
 You will also want to ensure that you do not have scroll bars omni-present, this will affect the UI when taking screenshots. See `System Preferences > General > Show scroll bars` and ensure `When scrolling` is selected.
 
+Also note that you should be resizing the image down to 1600px wide. If you are resizing up, something is wrong and your images will be fuzzy. 
+
 ```appleScript
 set theApp to "Safari"
 
@@ -89,6 +91,7 @@ end tell
    - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the 
      class may not be necessary if there is adequate spacing below. When text continues below or right above you will need 
      the class.
+- If you crop the image, don't use the `box-shadow` role. And vice versa.
 - Highlight sections using image preview editor
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
