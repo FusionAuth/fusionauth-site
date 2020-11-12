@@ -54,13 +54,16 @@ Now we add this value as a variable to the gateway application (in `/routes/inde
 In production applications, avoid storing secrets in code. Instead, use a separate secrets store and obtain the secret from that store at runtime. Below we illustrate how to pull this value from an environment variable, which is a good option for some deployment environments.
 
 ```javascript
+// ...
 const jwtSigningKey = '[Default Signing Key]';
 const jwt = require('jsonwebtoken');
+// ...
 ```
 
 Next, we'll add a function at the end of that file to get the gateway `Bearer` token which will then be forwarded to the microservices. In this case, we are setting the token to expire in ten minutes. This is a common duration of the JWT, but you may want to reduce it for security concerns, as described in FusionAuth's article on [Revoking JWTs & JWT Expiration](https://fusionauth.io/learn/expert-advice/tokens/revoking-jwts/).
 
 ```javascript
+// ...
 function getGatewayBearerToken(req) {
   // Recall that we put the User in the session in the previous post, but they might not be logged in so protect this code
   // from a null User. 
@@ -68,6 +71,7 @@ function getGatewayBearerToken(req) {
   var token = jwt.sign({ data: req.url, roles: user !== null ? user.registrations[0].roles : null }, jwtSigningKey, { expiresIn: '10m', subject: 'gateway', issuer: req.get('host') });
   return 'Bearer ' + token;
 }
+// ...
 ```
 
 `getGatewayBearerToken()` creates a bearer token valid for ten minutes and utilizes our public signing key. It's how we will provide secure, general access between the gateway and any microservices which don't require any further authorization. All this JWT is guaranteeing is that the request for the API came through the gateway.
