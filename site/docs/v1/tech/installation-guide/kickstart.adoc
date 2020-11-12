@@ -14,7 +14,9 @@ To kickstart FusionAuth, set an environment variable named `FUSIONAUTH_APP_KICKS
 
 Kickstart will only run if no API keys, users or tenants exist, so you can safely leave this environment variable configured even after the system has been configured.
 
-You are implicitly accepting the link:/license[Fusion License] when using Kickstart.
+You are implicitly accepting the link:/license/[Fusion License] when using Kickstart.
+
+If you'd like to run a Kickstart file in a Docker container, please check out the link:/docs/v1/tech/installation-guide/docker/[Docker installation guide].
 
 == Getting Started
 
@@ -275,7 +277,41 @@ In this example I have a license Id of `eb7244dc-5d8e-40cd-a005-70b116fbda31`.
 
 If you are using the community edition, you can omit this field.
 
-=== Include Text files
+=== Settings
+
+[NOTE.since]
+====
+Available since 1.20.1
+====
+
+Kickstart works by making API calls. By default each API request has a read and a connect timeout, and the API call will fail if it does not succeed within the timeout period. 
+
+You can configure these timeouts with a different value. For example, if you have high latency between the FusionAuth instance and its database, you may need to increase these values. In general the default setting should be adequate, but this is also useful for troubleshooting connectivity issues. 
+
+You can do so by creating a toplevel `settings` object, and setting either or both of the `connectTimeout` and `readTimeout` attributes. The value is specified in milliseconds.
+
+Below, both timeouts are set to 7 seconds.
+
+```json
+{
+  "settings" : {
+    "connectTimeout": 7000,
+    "readTimeout": 7000
+  }
+}
+```
+
+==== Settings Details
+
+[.api]
+[field]#connectTimeout# [type]#[Integer]# [optional]#Optional# [default]#defaults to `5000`#::
+The HTTP connect timeout in milliseconds used when connecting to the API.
+
+[field]#readTimeout# [type]#[Integer]# [optional]#Optional# [default]#defaults to `5000`#::
+The HTTP read timeout in milliseconds used when connecting to the API.
+
+
+=== Include Text Files
 
 When making API requests to create an email template or request which may have lengthy values, it may be helpful to separate these values into separate files. The directories shown here are just examples, and you can use your own convention.
 
@@ -430,10 +466,22 @@ And the usage in the kickstart file:
 
 === Reference
 
-The following environment variables  are built in:
+The following environment variables are built in:
 
-* `FUSIONAUTH_APPLICATION_ID` - The Id of the FusionAuth application
-* `FUSIONAUTH_TENANT_ID` - The Id of the default Tenant which is where the FusionAuth application resides
+* `FUSIONAUTH_APPLICATION_ID` - The Id of the FusionAuth application.
+* `FUSIONAUTH_TENANT_ID` - The Id of the default Tenant. This is always the Tenant which contains the FusionAuth application.
+* `FUSIONAUTH_FORM[adminUser]_ID` - The Id of the default admin user form.
+* `FUSIONAUTH_FORM[adminRegistration]_ID` - The Id of the default registration form.
+* `FUSIONAUTH_LAMBDA[lambdatype]_ID` - The Id of the default reconcile Lambda for supported Identity Providers, available since version 1.20.1. This would be used to configure a corresponding Identity Provider. For example, for Twitter the variable name would be would be `FUSIONAUTH_LAMBDA[TwitterReconcile]_ID`. 
+
+The following reconcile Lambda Ids are available as `FUSIONAUTH_LAMBDA[lambdatype]_ID` values: 
+
+* `OpenIDReconcile`
+* `SAMLv2Reconcile`
+* `AppleReconcile`
+* `FacebookReconcile`
+* `GoogleReconcile`
+* `TwitterReconcile`
  
 The following functions are built in:
 

@@ -20,7 +20,7 @@ FusionAuth.FixedHeader.prototype = {
   },
 
   _handleOnScroll: function() {
-    if (window.pageYOffset > 500) {
+    if (window.pageYOffset > 50) {
       this.show();
     } else {
       this.hide();
