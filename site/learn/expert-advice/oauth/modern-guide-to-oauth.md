@@ -61,14 +61,9 @@ So, how does this work in practice? Let's take a look at the steps for a fictiti
 11. The OAuth server confirms their identity.
 12. The OAuth redirects the browser back to TWGTL, which logs the user in.
 
-That's it. The user feels like they are registering and logging into TWGTL directly, but in fact, TWGTL is delegating this all to the OAuth server. The user is non-the-wiser so this is why we call this mode *Local login and registration*. 
+That's it. The user feels like they are registering and logging into TWGTL directly, but in fact, TWGTL is delegating this all to the OAuth server. The user is non-the-wiser so this is why we call this mode *Local login and registration*.
 
-#### Examples
-
-Here are a few examples of web applications that use this mode:
-
-* https://fusionauth.io (click on the Login button in the header)
-* TODO Add more here
+<<IMAGE OR VIDEO HERE MAYBE?>> 
 
 ### Third-party login and registration
 
@@ -120,7 +115,11 @@ The **First-party login and registration** mode is the inverse of the **Third-pa
 
 The **Enterprise login and registration** mode is when your application allows users to sign up or log in with an enterprise identity provider such as a corporate Active Directory. This mode is very similar to the **Third-party login and registration** mode with a few differences. First, it rarely requires the user to grant permissions to your application using the "permission grant screen". Instead, the user does not have the option to grant or restrict permissions for your application. The permissions are usually managed in the enterprise directory (Active Directory for example) or in your application directly.
 
-Second, this mode does not apply to all users. In most cases, this mode is only available to a subset of users who exist in the enterprise directory. The rest of your users will either login directly to your application or through the **Third-party login and registration** mode.
+Second, this mode does not apply to all users. In most cases, this mode is only available to a subset of users who exist in the enterprise directory. The rest of your users will either login directly to your application or through the **Third-party login and registration** mode. In some cases, the user's email address is used to determine how they are logged in. You might have noticed some login forms that only ask for your email on the first step like this:
+
+<<IMAGE>>
+
+This allows the OAuth server to determine where to send the user to login or if they should login locally.
 
 Outside of these differences, this mode behaves the same as the **Third-party login and registration** mode. 
 
@@ -132,7 +131,11 @@ The third-party service authorization mode is quite different than the **Third-p
 
 For example, let's say a user has an account with TWGTL, but each time they complete a ToDo, they want to let their Twitter followers know. To accomplish this, TWGTL provides a Twitter integration that will automatically send a Tweet when the user completes a ToDo. The integration uses the Twitter APIs and those require an access token to call. In order to get an access token, the TWGTL application needs to log the user into Twitter via OAuth (technically Twitter is stuck on OAuth 1.0 but the concept is the same). 
 
-To hook all of this up, TWGTL needs to add a button to the user's profile page that says "Connect your Twitter account". Notice it doesn't say "Login with Twitter" since the user is already logged in. Once the user clicks this button, they will be taken to Twitter's OAuth server to login and grant the necessary permissions for TWGTL to Tweet for them. The workflow looks like this:
+To hook all of this up, TWGTL needs to add a button to the user's profile page that says "Connect your Twitter account". Notice it doesn't say "Login with Twitter" since the user is already logged in. Once the user clicks this button, they will be taken to Twitter's OAuth server to login and grant the necessary permissions for TWGTL to Tweet for them. 
+
+<<IMAGE MAYBE>>
+
+The workflow for this mode looks like this:
 
 1. A user visits TWGTL and logs into their account.
 2. They click the "My Profile" link.
@@ -151,14 +154,26 @@ With this mode, your OAuth server might display a permission screen to the user 
 
 ### Machine-to-machine authorization
 
-The machine-to-machine authorization mode is different than the previous modes we've covered. This mode does not involve users at all. Rather, it allows an application to interact with another application. Normally, this is via backend services communicating with each other via APIs. 
+The **Machine-to-machine authorization** mode is different than the previous modes we've covered. This mode does not involve users at all. Rather, it allows an application to interact with another application. Normally, this is via backend services communicating with each other via APIs.
 
-Here, one backend needs to be granted access to the other backend. We'll call the first backend the source and the second backend the target. To accomplish this, the source authenticates with the OAuth server. The OAuth server proves the identity of the source and then returns a token that the source will use to call the target. This process can also include permissions that are used by the target to authorize the call the source is making. 
+<<IMAGE MAYBE>> 
+
+Here, one backend needs to be granted access to the other backend. We'll call the first backend the source and the second backend the target. To accomplish this, the source authenticates with the OAuth server. The OAuth server confirms the identity of the source and then returns a token that the source will use to call the target. This process can also include permissions that are used by the target to authorize the call the source is making.
 
 ### Device login and registration
 
-WRITE ME
+The **Device login and registration** mode is used to login (or register) to a user's account on a device that doesn't have a rich input device like a keyboard. In this case, a user wants to connect the device to their account, usually to ensure their account is active and the device is allowed to use their account. 
 
+A good example of this mode is setting up a streaming app on an Apple TV or Roku. In order to ensure you have a subscription to the streaming service, the app needs to verify the user's identity and connect to their account. The app on the Apple TV device displays a code and a URL and asks the user to visit the URL. The workflow for this mode is as follows:
+
+1. The user opens the app on the device.
+2. The device displays a code and a URL.
+3. The user types in the URL displayed by the device on their phone or computer.
+4. The user is taken to the OAuth server and asked for the code.
+5. The user submits this form and is taken to the login page.
+6. The user logs into the OAuth server.
+7. The user is taken to a "Finished" page.
+8. A few seconds later, the device is connected to the user's account.
 
 ## Grants
 
@@ -174,56 +189,57 @@ We'll cover each grant type below and discuss how it is used for each of the OAu
 
 ### Authorization Code Grant
 
-This is the most common OAuth grant and also the most secure. It relies on a user interacting with a browser (Chrome, Firefox, Safari, etc.) in order to handle OAuth modes 1 though 6 above. This grant requires the interaction of a user, so it isn't usable for the machine-to-machine authorization mode. All of the other modes fit well into this grant type but have slightly different steps. First, let's look at the steps that are the same between all of the OAuth modes:
+This is the most common OAuth grant and also the most secure. It relies on a user interacting with a browser (Chrome, Firefox, Safari, etc.) in order to handle OAuth modes 1 though 6 above. This grant requires the interaction of a user, so it isn't usable for the **Machine-to-machine authorization** mode. All of the interactive modes above are the same, except when a permission screen is displayed. Otherwise, the workflow is consistent.
 
-1. The user's browser, which might be embedded in a mobile or desktop application, takes the user to the OAuth server. This location is called the Authorize endpoint.
-2. The user might registration or log in, depending the OAuth mode and requirements.
-3. Once the user is signed up or logged in, the OAuth server redirects back to your application. This redirect contains an `Authorization Code` as a URL parameter and is called the `redirect_uri`.
-4. The browser performs a request to your application backend based on the `redirect_uri` (including the `Authorization Code`).
-5. Your application backend calls the OAuth server to exchange the `Authorization Code` for tokens. This location is call the Token endpoint.
+Let's take a look at how you implement this grant using a prebuilt OAuth server (like FusionAuth).
 
-Here is a diagram that illustrates this workflow visually:
+First, we need to add a "Login" or "My Account" link/button to our application; or if you are using one of the authorization modes from above, you'll add a "Connect to XYZ" link/button. There are two ways to connect this link/button to the OAuth server.
 
-{% plantuml source: _diagrams/learn/expert-advice/oauth/modern-oauth-authorization-code-grant-common.plantuml, alt: "Diagram of the OAuth Authorization Code flow." %}
+1. Set the `href` of the link to the full URL that starts the OAuth authorization code grant.
+2. Set the `href` to a local controller that does a redirect.
 
-These are the common components of all of the OAuth modes. The differences between the modes exist before step 1, after step 6, or between step 2 and 3. Let's go over each mode and how the steps differ.
+The reason some people prefer #2 is that the URL for the link/button is shorter, contains no parameters, and is easy to bookmark. 
 
-#### Local login and registration
+If you go with option #1, you'll need to determine the URL that starts the grant with your OAuth server as well as include all of the necessary parameters required by the specification. We'll use FusionAuth as an example, since it has a consistent URL pattern. Let's say you are running FusionAuth and it is deployed to `https://login.twgtl.com`. The URL for the OAuth authorize endpoint will also be located at:
 
-This mode requires that the user initially opens your application and needs to login (or registration) before they can use specific features. For example, if you are working on an ecommerce web application, users might need to create accounts and log in before they are allowed to make purchases. This process can be handled using the workflow above, with a few additional steps before and after. Here are the additional steps:
+```
+https://login.twgtl.com/oauth2/authorize
+```
 
-1. The user opens your app.
-2. The user either clicks the login or register button, or navigates to a location that requires them to be logged in to access.
-3. **COMMON STEPS FROM ABOVE**
-4. Your application backend stores the tokens from the OAuth server in a session or in the browser.
-5. Your application backend redirects the user back to a location that allows them to continue to use the features of your app.
+Next, you'll need to add a number of parameters to the URL in order for the OAuth server to work. These parameters are defined in the specification and are:
 
-These additional steps should feel very natural to all users since it is how we use most applications. We most log into them before we can use them. Here is our diagram with the new steps.
+* `client_id` - this identifies the application you are logging into. In OAuth, this is referred to as the `client`.
+* `redirect_uri` - this is the URL in your application that the OAuth server will redirect the user back to after they log in. This URL must be registered with the OAuth server and it must point to a controller in your app (rather than just a static page).
+* `state` - technically this is optional, but it is useful for preventing various security issues. This parameter is echoed back to your application by the OAuth server. It can be anything you might need to be persisted across the OAuth workflow. If you have no other need for this parameter, I suggest setting it to a large randomly generated string.
+* `response_type` - this should always be set to `code` for this workflow. This tells the OAuth server you are using the authorization code grant.
+* `scope` - this is also an optional parameter, but in same of the modes from above, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll cover this later in the guide as well).
 
-{% plantuml source: _diagrams/learn/expert-advice/oauth/modern-oauth-authorization-code-grant-local.plantuml, alt: "Diagram of the OAuth Authorization Code flow for local login and registration." %}
+Here's what an anchor tag might look like in your application:
 
-#### Third-party service authorization
+```html
+<a href="https://login.twgtl.com/oauth2/authorize?client_id=9b893c2a-4689-41f8-91e0-aecad306ecb6&redirect_uri=https%3A%2F%2Fapp.twgtl.com%2Foauth-callback&state=foobarbaz&response_type=code">Login</a>
+```
 
-This mode requires that the user is already logged into your application and is connecting another account. A good way to handle the initial login is using the **Local login and registration** mode. Once the user is logged in, they might click a button or a link that says "Connect your Facebook account". This link/button kicks off the OAuth process. Taking these extra items into account, here are the additional steps for this OAuth mode.
+You'll see that I encoded the `redirect_uri` parameter on this URL. This is sorta ugly and if you change anything in your integration with the OAuth server, you'll need to update all of your links.
 
-1. The user clicks on their account settings in your application.
-3. The user clicks the "Connect ..." button to allow your application to call APIs of the third-party on their behalf.
-4. **COMMON STEPS 1-2 FROM ABOVE**
-5. The OAuth server displays a permission screen that asks if the user wishes to grant your application specific permissions.
-6. The user accepts (or rejects) the permission grants.
-7. **COMMON STEPS 3-5 FROM ABOVE** 
-5. Your application backend stores the tokens from the OAuth server on the user's profile. These can be used at any time to make API calls to the third-party. For example, you might use the user's GMail account to send reports via email each night. 
-6. Your application backend redirects the user back to their account, showing the connection to the third-party is active.
+The other option is to use a vanity URL to a controller in your own app and do a redirect. First, let's update the anchor tag with the vanity URL:
 
-As you can see, there are quite a few differences between this mode and the **Local login and registration** mode. Not only are there additional steps before and after the common steps, but also a couple of additional steps in the middle. The reason for this is that the your application is asking for permissions to a third-party. Therefore, it is common that the third-party OAuth server confirms that the user is okay granting them. Similarly, your application backend needs to store the tokens from the third-party OAuth server somewhere they will be persistent.
+```html
+<a href="https://app.twgtl.com/login">Login</a>
+``` 
+ 
+Next, we need to write the controller for `/login` in the application. Here's a simple JavaScript snippet using NodeJS that accomplishes this:
 
-Here's another diagram that illustrates this workflow:
+```javascript
+router.get('/login', function (req, res, next) {
+  var state = generateAndSaveState();
+  res.redirect(302, `https://login.twgtl.com/oauth2/authorize?client_id=9b893c2a-4689-41f8-91e0-aecad306ecb6&redirect_uri=https%3A%2F%2Fapp.twgtl.com%2Foauth-callback&state=${state}&response_type=code`);
+});
+```
 
-{% plantuml source: _diagrams/learn/expert-advice/oauth/modern-oauth-authorization-code-grant-third-party.plantuml, alt: "Diagram of the OAuth Authorization Code flow authorizing a third-party." %}
+You'll also notice that I added in some code to generate and save off a value for `state`. We'll use this value later on, but this is another benefit of using this pattern.
 
-#### Third-party login and registration
 
-WRITE ME
 
 ### Implicit Grant
 
