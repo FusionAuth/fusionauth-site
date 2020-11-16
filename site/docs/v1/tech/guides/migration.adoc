@@ -1,0 +1,183 @@
+---
+layout: doc
+title: Migration guide
+description: How to migrate your users to FusionAuth
+---
+:page-liquid:
+
+== Overview
+
+This document will help you migrate your existing users to FusionAuth. 
+
+== Types of Migrations
+
+There are three types of migrations. 
+
+* Migrate everyone at once, also known as a "big bang" migration
+* Segment your users and migrate each segment in a series of small bang migrations.
+* Migrate on authentication, also known as "slow migration".
+
+These each have strengths and weaknesses. All three are supported by FusionAuth, so you should pick the one which works best for your situation.
+
+=== The Big Bang Migration
+
+With a big bang migration, you are moving all your users at one moment in time. The basic steps are:
+
+* Map user attributes from the old system to the new system.
+* Build a set of migration scripts or programs. 
+* Test it well; check for migration accuracy as well as duration. 
+* Plan to modify your applications to point to the new system.
+* When you are ready to migrate, arrange for an adequate period of downtime, then run the scripts or programs.
+* Flip the system of record for all your users from the old to the new.
+
+This approach has some strengths:
+
+* Depending on the downtime, the migration can have minimal impact on your users.
+* It has a fixed timeframe. When you are done with the migration, you're done (unless you have to rollback).
+* If you have to decomission the old system by a deadline (perhaps due to an upcoming license renewal) you can plan to migrate before that date.
+* You only have to run two user datastores in production for a short period of time.
+* People accessing user data, such as customer service reps, only need to switch their working routines after the migration is performed.
+
+It also has some downsides:
+
+* It is common to miss an issue during testing because by definition this is a one time process. Production systems are often different in subtle ways from testing environments. Leave time to fix unpleasant surprises.
+* If there is any issue, many users will be impacted, since all were migrated.
+* The big bang requires you to write code which you'll test intensely, use once and then throw away. Such code is the cost for the benefits.
+* You need to ensure the new auth system is compatible with the old system passwords hashes. The alternative is to force all users to reset their password.
+
+=== Segment by Segment Migration
+
+Segment by segment migration is the second alternative. It can be thought of as a series of "little bang" migrations. Split user data in a natural way, then migrate each segment. Some natural division points could be type of user, applications used or even recency of login.
+
+Such a segment by segment migration lets you test your processes in production by migrating less critical, or more understanding, sets of users first. The engineering team will be more understanding of issues than paying customers. 
+
+You will probably be able to reuse code between the different segments. In general, this approach decreases risk when compared to the one time big bang migration.
+
+However, this approach is not without its issues:
+
+* You have multiple projects and downtimes to manage, not just one.
+* There may be no natural divisions in your user base.
+* If most of the users are in one segment, it may not be worth the extra effort. For example, if you have one popular application and a couple nascent apps, the extra time to migrate in phases might not be worth it.
+* This will take longer to complete, requiring you to run both systems for longer.
+
+=== Migrate On Authentication
+
+This approach is the logical extension of the segment by segment approach; each segment is a single user. However, it has different fundamental characteristics and presents a different set of tradeoffs.
+
+With a slow migration, you set up a connection between the old system and the new system. The new system takes all auth requests, but delegates them to the old system. The old system returns the information and the new system stores it.
+
+To implement this, you need to have some way for the new system to pass auth information (username and password or other credentials) to the old system and get user information returned. And you need to modify your applications to point to the new auth system.
+
+Once it is set up, a slow migration happens in phases. Each user proceeds through the phases independently of other users. 
+
+* Initially, the user logs into the new system, but authentication decisions are delegated to the old system.
+* The old system returns the user information, which is stored in the new system. This includes the password, which is hashed by the new system.
+* The new system marks the user as migrated.
+* The new system performs authentication for this user for all subsequent logins.
+
+Migrate on authentication has some benefits:
+
+* Since you are only doing this at authentication, by definition the blast radius of a mistake is small; it's limited to whoever is logging in. You can decrease this further by splitting traffic and only sending a portion to the new system.
+* You can upgrade your password hash algorithms transparently without requiring anyone to reset their password.
+* You don't have to migrate users who aren't active. This migration is a way to scrub your userbase.
+* The migration can be an opportunity to contact inactive users and encourage them to login.
+* There's less downtime because the 
+Decreased cutover risk
+
+A phased migration decreases cutover risk. There’s far less downtime because there’s data is moved at auth time, one user at a time. Depending on your system architecture, there may be some downtime as you direct all your users to the new auth system, rather than the old one.
+
+You may, eventually, decide to stop the slow migration and cut over remaining users. But even that is less risky because these will by definition be some of your least active users. And because you’ll be moving fewer of them, the downtime requirements will decrease as well.
+Minimized required understanding of the old auth system
+
+With a phased migration, you don’t have to understand the nuts and bolts of the business logic of the old auth system. Just make sure you can add on a lightweight API which can authenticate using whatever means the old auth system expects. You never have to connect to the underlying user datastore.
+
+Compare that with the big bang approach, which requires you to understand the data store structure as well as any business logic which builds the user model.
+Risks of slow migration
+
+Like any solution, slow migration isn’t perfect. You are passing a user’s plaintext password from the new auth system to the old auth system. Therefore, you should take special care to secure this data in transit. Use TLS to encrypt the request. For an additional layer of security, have the new auth system encrypt the password, and have the old auth system endpoint decrypt it before authenticating.
+
+Both systems, the new and the old, should be extensible or have snap in points to connect them. If the old system supports a standard like LDAP, and the new system has a way to import users, you may be able to cobble together a slow migration even if the old system isn’t extensible.
+
+One of the benefits of the slow migration is that you don’t have a big bang cutover, with downtime and risk. However, that comes at a cost. You have to run both the new and old systems for the length of your migration. Depending on the state of the old system, this may be more or less painful.
+
+A corollary is that customer service and other internal users may have to access two systems to find a user. This is especially true if a user contacts your business using an offline method, such as a phone call. Such a user may not be migrated, and the rep may not know where to find their data. Additionally, systems which access user data may need to be updated to handle two systems, or you may need to put a proxy in place to look in one system or the other. One solution is to have the new auth system proxy not just authentication, but any user data request.
+
+The new system can have links to the “old” system, and vice versa. Such links make finding the relevant user data easier. If possible, allow internal users to search both the new and old systems from one interface.
+
+Rollback from a phased migration is more complex if there are issues, because there are two systems of record, one for users who have been migrated and one for users who have not yet been moved.
+
+You can work around this with tooling to keep track of which users have been migrated. If you need to roll back to using the old system, examine migrated users and move their data into the old system.
+
+
+
+
+
+
+
+Strenghts and weaknesses of each
+
+How to implement
+
+common implementation details
+
+from the migration tutorial
+
+big bang
+
+password encryptors
+import users
+import refresh tokens
+
+
+Migration guide
+
+Tenant stuff
+
+Switch to database search engine if possible
+
+Depends on how you build the import request. If you only provide a password field, then we will hash it for you. If you provide us the salt, password, encryptionScheme and factor then we will assume this is a hashed password, and it will not be hashed.
+https://fusionauth.slack.com/archives/GNURTTC8N/p1602032895434200 
+
+
+Ok. I would not recommend enabling the user.bulk.create webhook during import testing. If you do a 100k import - that will try to send you an event w/ 100k users.
+If FusionAuth sent the 504 that would indicate it is due to a webhook TX failure. If you have your webhook configured to not require a success - then it is possible it is coming from somewhere else, a proxy for example due to a timeout. (edited) 
+6:24
+.. That is unless, you want to receive the user.bulk.create event and plan to utilize it, but if not, it is adding un-necessary load to the import request.
+6:25
+You will want to ensure you are setting your timeout very long on your API requests in whatever tool you’re using to make the HTTP request.
+ 
+https://fusionauth.slack.com/archives/GNURTTC8N/p1601943864286800
+
+
+Timeout for client/sync calls
+
+
+The easiest and fastest way to load data into FusionAuth is to loop over a directory of JSON files that contain 100k users each. These should be clean and have no collisions and be minified. You can technically do this using 2 threads so that each thread is hitting different EC2 instances, but the database will always be the bottleneck.
+https://inversoft.slack.com/archives/C051S8N8E/p1602077833045300 
+
+
+
+
+test
+downtime
+switch
+
+segments
+
+
+slow migration
+
+connectors
+
+secure your connection
+
+4 phases
+
+determine finish point
+
+determine what to do at end
+
+
+additional resources
+http://localhost:4000/docs/v1/tech/tutorials/migrate-users/
+https://github.com/FusionAuth/fusionauth-import-scripts
