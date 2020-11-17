@@ -1,16 +1,16 @@
 ---
 layout: blog-post
-title: Recon Infosec switched to FusionAuth from AWS Cognito 
+title: Recon InfoSec switched to FusionAuth from AWS Cognito 
 description: Recon InfoSec Lead Architect Whitney Champion discusses how FusionAuth has helped her business provide a seamless experience to their end users.
 author: Dan Moore
-image: blogs/contaim-story/contaim-adopts-fusionauth-to-manage-their-auth-lifecycle.png
+image: blogs/reconinfosec-story/recon-infosec-switches-to-fusionauth-from-aws-cognito.png
 
 category: blog
 tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 
-Whitney Champion is a FusionAuth community member and lead architect at Recon Infosec, a managed security services provider. She chatted with us over email about how she and her team are using FusionAuth to meet their auth needs. 
+Whitney Champion is a FusionAuth community member and lead architect at Recon InfoSec, a managed security services provider. She chatted with us over email about how she and her team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
@@ -20,7 +20,7 @@ Whitney Champion is a FusionAuth community member and lead architect at Recon In
 
 **Dan:** Tell me a bit about your work as a developer/architect.
 
-**Whitney:** I'm the lead architect at Recon Infosec. We are a managed security services provider, and we also provide [security training through our Network Defense Range](https://www.reconinfosec.com/training/). Both of these live on pretty sizable security stacks composed of a wide variety of tools that we use--for threat hunting, monitoring, ticketing, forensics, triaging, etc. I'm responsible for architecting/maintaining those stacks and finding the best ways to integrate everything we need in the most secure and efficient ways possible. 
+**Whitney:** I'm the lead architect at Recon InfoSec. We are a managed security services provider, and we also provide [security training through our Network Defense Range](https://www.reconinfosec.com/training/). Both of these live on pretty sizable security stacks composed of a wide variety of tools that we use--for threat hunting, monitoring, ticketing, forensics, triaging, etc. I'm responsible for architecting/maintaining those stacks and finding the best ways to integrate everything we need in the most secure and efficient ways possible. 
 
 > [FusionAuth] has saved us from having to build our own middleware on top of Cognito, or drop $$$ on something like Auth0 or Okta. 
 
@@ -49,7 +49,7 @@ We've also had to integrate internal tools with the FusionAuth API and the docum
 
 **Whitney:** We were previously relying solely on AWS Cognito. And that works fine, for the most part, until you need anything beyond the basic capabilities it provides. Then you start having to develop your own tools, or integrating with others. While we are more than willing to do the former, it's not where we'd prefer to spend our time and resources. Which is where FusionAuth came in. We also needed passwordless login--the magic link feature. Few platforms make it as easy as FusionAuth does.
 
-**Dan:** Could you ballpark how much time using FusionAuth has saved Recon Infosec? 
+**Dan:** Could you ballpark how much time using FusionAuth has saved Recon InfoSec? 
 
 **Whitney:** I'm not sure on actual hours (many), but it has saved us from having to build our own middleware on top of Cognito, or drop $$$ on something like Auth0 or Okta. 
 
@@ -77,4 +77,4 @@ We were hesitant to host our own, since it then becomes another platform for us 
 
 -------
 
-We love sharing community stories. You can check out [Recon Infosec's website](https://www.reconinfosec.com/) if you'd like to learn more. You can also follow [Whitney on Twitter](https://twitter.com/shortxstack/).
+We love sharing community stories. You can check out [Recon InfoSec's website](https://www.reconinfosec.com/) if you'd like to learn more. You can also follow [Whitney on Twitter](https://twitter.com/shortxstack/).
