@@ -61,7 +61,7 @@ Next, we move on to setting up the Flutter app project.
 
 ## Setting up the Flutter project
 
-Setting up the Flutter project is simple and easy for every OS. We can follow the instructions in the [Flutter documentation](https://flutter.dev/docs/get-started/install). But to make things easier, a quick ouline of the setup steps is provided below.
+Setting up the Flutter project is simple and easy for every OS. We can follow the instructions in the [Flutter documentation](https://flutter.dev/docs/get-started/install). But to make things easier, a quick outline of the setup steps is provided below.
 
 First, we need to clone the Flutter SDK from GitHub by running the following command in our device terminal:
 
@@ -108,7 +108,7 @@ code fusionauth_demo
 
 If you don't have VSCode, open the files in whatever text editor you'd prefer; we're not picky!
 
-We can run our new project in the actual device or a emulator to confirm everything is working before we customize any code. Do so by running the following command in the project directory:
+We can run our new project in the actual device or an emulator to confirm everything is working before we customize any code. Do so by running the following command in the project directory:
 
 
 ```shell
@@ -199,7 +199,7 @@ Enough configuration! Let's look at some code.
 
 ## Dive into the code
 
-We need to open the `main.dart` file present inside the `./lib` directory of our project. Below is the entireity of the `main.dart` file, as it should be when fully finished. Don't worry, we'll go over each section individually!
+We need to open the `main.dart` file present inside the `./lib` directory of our project. Below is the entirety of the `main.dart` file, as it should be when fully finished. Don't worry, we'll go over each section individually!
 
 Putting all your logic in one file makes sense for a tutorial, but for a larger application you'll probably want to split it up.
 
@@ -553,7 +553,7 @@ class Login extends StatelessWidget {
 //...
 ```
 
-`MyApp` is the main class and extends `StatefulWidget`. The `MyApp` object is the main class that runs our app. The whole application is started by the `main` cfunction which calls the `runApp` function which starts up the `MyApp` object.
+`MyApp` is the main class and extends `StatefulWidget`. The `MyApp` object is the main class that runs our app. The whole application is started by the `main` function which calls the `runApp` function which starts up the `MyApp` object.
 
 ```dart
 //...
@@ -761,15 +761,4 @@ If you need to extend this application to access the FusionAuth API, check out t
 Aa a final reminder, the [entire working project](https://github.com/FusionAuth/fusionauth-example-flutter-dart/) is available under the Apache2 license on GitHub. Clone it, take a look and experiment.
 
 Until then, keep coding folks!
-
-
-
-TODO:
-submit PR for this repo
-https://pub.dev/packages/flutter_appauth
-
-https://github.com/MaikuB/flutter_appauth
-
-Pull over images and load up youtube
-
 
