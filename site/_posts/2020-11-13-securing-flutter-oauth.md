@@ -57,6 +57,8 @@ We need to make sure that we register our users to the new FusionAuth applicatio
 
 If we want, we can add more users to the "Users" and register them to this application. But you can work through this tutorial with just one registered user. 
 
+If you want to test with a real device, you should also set up ngrok to point to the local FusionAuth server, so that devices can access `http://localhost:9011`. While beyond the scope of this tutorial, here's [ngrok documentation](https://ngrok.com/docs#getting-started-expose) on how to do so. 
+
 Next, we move on to setting up the Flutter app project.
 
 ## Setting up the Flutter project
