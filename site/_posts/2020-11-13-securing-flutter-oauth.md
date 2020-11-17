@@ -31,6 +31,7 @@ Some tools you need to have before starting this tutorial:
 * iPhone development environment
 * Android emulator or real Android device
 * Android development environment
+* Familiarity with ngrok (optional, useful if you want to test in a device)
 
 ## Setting up FusionAuth as your auth provider
 
@@ -44,13 +45,15 @@ In this step, we are going to configure a FusionAuth application. This is differ
 
 Then navigate to the "OAuth" tab and add in a redirect URI of `com.fusionauth.flutterdemo://login-callback`. We’ll use this redirect URL in our Flutter application later. Make sure the "Require authentication" checkbox is set to off. Since the Flutter application is a native app, it's not considered a "confidential client" and a client secret isn't safe. It could be found by decompiling the application. The library we will use implements another method of securing access: proof of key code exchange, or PKCE (often pronounced PKCE).
 
-Ensure that the authorization code grant is enabled as well. Note the value of the "Client Id"; we'll need that later in the configuration process. Then, we need to click "Save". When properly configured, the application details screen should look like this:
+Ensure that the authorization code grant is enabled as well. Add the value of `7e3637e8-723a-42d6-9d1d-5cb36128d6f1` into the `Id` field. If you don't provide one, it will be generated for you. The Id of the application is also the "Client Id"; we'll need that later in the configuration process. 
 
-pic TBD
+Then, we need to click "Save". When properly configured, the application details screen should look like this:
+
+{% include _image.liquid src="/assets/img/blogs/securing-flutter-app/application-configuration.png" alt="Configuring the FusionAuth application." class="img-fluid" figure=false %}
 
 We need to make sure that we register our users to the new FusionAuth application. Doing so creates a relationship between a user and the newly created application as shown in the screenshot below:
 
-pic TBD
+{% include _image.liquid src="/assets/img/blogs/securing-flutter-app/user-registration.png" alt="Registering the user for the new application." class="img-fluid" figure=false %}
 
 If we want, we can add more users to the "Users" and register them to this application. But you can work through this tutorial with just one registered user. 
 
@@ -82,9 +85,9 @@ flutter doctor
 
 If everything is configured properly, we will see the following result in our terminal window:
 
-pic TBD from him
+{% include _image.liquid src="/assets/img/blogs/securing-flutter-app/flutter-doctor-output.png" alt="Output of the flutter doctor command." class="img-fluid" figure=false %}
 
-If you didn't see the above messages, please review the [more detailed installation instructions]((https://flutter.dev/docs/get-started/install) on the Flutter site.
+If you didn't see the above messages, please review the [more detailed installation instructions](https://flutter.dev/docs/get-started/install) on the Flutter site.
 
 Note that Flutter depends on iOS and/or Android development environments being installed. Doing so is beyond the scope of this tutorial, however. If you need to do that, please consult the platform installation instructions for Android or iOS as appropriate.
 
@@ -114,7 +117,7 @@ flutter run
 
 After running this, we will get the list of emulators or devices in which we want to run the project. We can simply choose the one in which we want our code to run.
 
-pic TBD from kriss
+{% include _image.liquid src="/assets/img/blogs/securing-flutter-app/flutter-choose-device.png" alt="Output of the flutter run command." class="img-fluid" figure=false %}
 
 However, to run the project on both iOS and Android together, we can use the following command:
 
@@ -124,7 +127,9 @@ flutter run -d all
 
 The build process always takes a while the first time an app is built. After the successful build, we will get the boilerplate flutter app in our emulators as displayed in the emulator screenshots below:
 
-pic TBD from kriss
+{% include _image.liquid src="/assets/img/blogs/securing-flutter-app/flutter-demo-home-page.png" alt="The default Flutter app in the emulator." class="img-fluid" figure=false %}
+
+
 
 Now that we have a basic working application running, let's jump into the fun stuff: adding auth!
 
@@ -157,9 +162,7 @@ In our editor, we need to go to the `android/app/build.gradle` file for our Andr
 
 At the end of your editing, make sure the `appAuthRedirectScheme` section looks similar to this:
 
-TBD does this render correctly?
-
-```android
+```gradle
 // ...
 android {
   //...
@@ -460,7 +463,7 @@ Next, we need to define some constants. We're using ngrok.io because we want to 
 ```dart
 //...
 const String FUSION_AUTH_DOMAIN = 'b47a7e1e6e7d.ngrok.io';
-const String FUSION_AUTH_CLIENT_ID = 'c93fe25d-7c79-470f-8014-89e3a5768230';
+const String FUSION_AUTH_CLIENT_ID = '7e3637e8-723a-42d6-9d1d-5cb36128d6f1';
 const String FUSION_AUTH_REDIRECT_URI =
     'com.fusionauth.flutterdemo://login-callback';
 const String FUSION_AUTH_ISSUER = 'https://$FUSION_AUTH_DOMAIN';
@@ -734,10 +737,9 @@ After editing `main.dart`, start up your emulators or real devices again.
 flutter run -d all
 ```
 
-You should see something similar to this:
+You should see something similar to this demo:
 
-video TBD
-https://drive.google.com/file/d/1ssYwiooqoJfoyoD1uO0WkJo-hSM9jzzT/view?usp=sharing
+<iframe width="560" height="315" src="https://www.youtube.com/embed/EklSdaT0xfw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Additional resources
 
