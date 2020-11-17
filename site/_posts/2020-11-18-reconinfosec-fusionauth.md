@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Recon Infosec switched to FusionAuth from AWS Cognito 
-description: Recon Infosec Lead Architect Whitney Champion discusses how FusionAuth has helped her business provide a seamless experience to their end users.
+description: Recon InfoSec Lead Architect Whitney Champion discusses how FusionAuth has helped her business provide a seamless experience to their end users.
 author: Dan Moore
 image: blogs/contaim-story/contaim-adopts-fusionauth-to-manage-their-auth-lifecycle.png
 
@@ -59,9 +59,9 @@ We've also had to integrate internal tools with the FusionAuth API and the docum
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
-**Whitney:** A big factor was the fact that FusionAuth is extremely supportive of open source. While it's not 100% open source, parts of it are. You guys contribute to the community, are active on Slack and GitHub, are big on security, etc. It just kind of checked a lot of boxes for us, that we really consider important in our space and to our company. 
+**Whitney:** A big factor was the fact that FusionAuth is extremely supportive of open source. While it's not 100% open source, parts of it are. FusionAuth contributes to the community, employees are active on Slack and GitHub, and you are big on security, etc. It just kind of checked a lot of boxes for us, that we really consider important in our space and to our company. 
 
-We're huge believers in the open source community, and we try to contribute to as many of the tools we use as we can. Many of the platforms we rely on are open source, so it only made sense to try out FusionAuth when we found it. As it turns out, it checks just as many boxes as the other leading competitors (if not more), some of which are far more expensive in their enterprise offerings. 
+We're huge believers in the open source community, and we try to contribute to as many of our tools as we can. Many of the platforms we rely on are open source, so it only made sense to try out FusionAuth when we found it. As it turns out, it checks just as many boxes as the other leading competitors (if not more), some of which are far more expensive in their enterprise offerings. 
 
 We were hesitant to host our own, since it then becomes another platform for us to maintain with everything else, but it has been a breeze so far, which speaks to how rock solid the documentation is--another contributing factor in our decision to use FusionAuth. The fact that it has such a robust API is also huge for us, since we use it heavily as well.
 
