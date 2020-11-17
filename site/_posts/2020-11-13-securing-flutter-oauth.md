@@ -725,8 +725,7 @@ Pull over images and load up youtube
 Add note about why we turn off 'require authentication' (maybe to react native post too?) in the application configuration. Note PKCE
 
 Note the github repo in the beginning
-
-add it to example apps
+https://github.com/FusionAuth/fusionauth-example-flutter-dart/blob/main/lib/main.dart
 
 appAuth.authorizeAndExchangeCode is convenience method
 
