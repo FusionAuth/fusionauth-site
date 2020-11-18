@@ -1,0 +1,26 @@
+A common pattern is to set up SAML as the login method for the FusionAuth application. This lets you keep all your users in the SAML IdP, and have FusionAuth be the RP. 
+
+However, if SAML isn't configured, you can end up in a dead end. If you:
+
+* Set up SAML as the authentication method for your FusionAuth admin application.
+* Set the [field]#Managed domains# to your domain. For example, `example.com`.
+* Don't have any users with a domain that is different than `example.com`.
+* Accidentally misconfigure SAML (incorrect IdP URL, verification key, etc) and SAML authentication is broken.
+* Log out of the FusionAuth admin application.
+
+Then you won't be able to log in to the FusionAuth admin application to correct the misconfiguration. You've locked down the FusionAuth admin application so that only valid SAML logins can access it, but because of the misconfiguration, there is no account with a valid SAML login.
+
+image::troubleshooting/unable-to-login-managed-domains.png[Unable to login with a managed domain and misconfigured Identity Provider.,width=1200,role=bottom-cropped]
+
+This is a problem, but not an insurmountable one. Your options depend on when you discover the issue. If you are beginning your SAML configuration, you can avoid this scenario. Follow these steps:
+
+* Don't set any value of [field]#Managed domains# before you have tested the SAML configuration. 
+* Test authentication in a different or incognito browser window, ensuring that an admin user account is always accessible to modify configuration.
+* Add an admin user account with a domain not in the [field]#Managed domains# setting. Ensure this user is registered with the FusionAuth admin application and has the `admin` role.
+
+If you are currently locked out of your FusionAuth application, you have fewer options:
+
+* If you have an API key with appropriate privileges you can delete the misconfigured identity provider. You can list all identity providers and then delete it. See the link:/docs/v1/tech/apis/identity-providers/samlv2/[SAML identity provider API for more]. This will then enable normal login.
+* If you have a known username and password that are not controlled by SAML, perhaps the initial account created when you set up FusionAuth, proceed to the FusionAuth admin login page. Append `&showPasswordField=true` to the end of the login URL. This will force the UI to show the password field. 
+
+If you have neither an API key nor a known user, you can restore from a database backup, attempt to modify the database directly if you have access, or re-install FusionAuth.
