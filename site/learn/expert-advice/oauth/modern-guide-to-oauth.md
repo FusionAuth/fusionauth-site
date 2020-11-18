@@ -191,6 +191,10 @@ We'll cover each grant type below and discuss how it is used for each of the OAu
 
 This is the most common OAuth grant and also the most secure. It relies on a user interacting with a browser (Chrome, Firefox, Safari, etc.) in order to handle OAuth modes 1 though 6 above. This grant requires the interaction of a user, so it isn't usable for the **Machine-to-machine authorization** mode. All of the interactive modes above are the same, except when a permission screen is displayed. Otherwise, the workflow is consistent.
 
+<<OVERVIEW NEEDED HERE SO THEY KNOW WHAT THE AUTHORIZE ENDPOINT, AUTHORIZATION CODE, AND TOKEN ENDPOINT ARE>>
+
+In this section we will also cover PKCE (Proof Key for Code Exchange - pronounced Pixy). PKCE is a security layer that sits on top of the authorization code grant to ensure that authorization codes can't be stolen or reused. The basics of PKCE is that the application generates a secret key (called the code verifier) and hashes it using SHA 256. This hash is one-way, so it can't be reversed by an attacker. The application then sends the hash to the OAuth server, which stores it. Later, when the application is getting tokens from the OAuth server, it will send it the secret key and the OAuth server will verify everything. This is a good protection against attackers that can intercept the authorization code, but don't have the secret key.
+
 Let's take a look at how you implement this grant using a prebuilt OAuth server (like FusionAuth).
 
 First, we need to add a "Login" or "My Account" link/button to our application; or if you are using one of the authorization modes from above (for example the **Third-party service authorization** mode), you'll add a "Connect to XYZ" link/button. There are two ways to connect this link/button to the OAuth server:
@@ -239,7 +243,7 @@ This code immediately redirects the browser to the OAuth server. However, the OA
 * `scope` - this is also an optional parameter, but in same of the modes from above, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll cover this later in the guide as well).
 * `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code Grant. This is known as a "public client". There aren't many cases of applications that specifically don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them.
 * `code_challenge_type` - this is an optional parameter, but if you implement PKCE, you must specify how your PKCE `code_challenge` parameter was create. It can either be `plain` or `s256`. We never recommend using anything except `s256` which uses SHA-256 secure hashing for PKCE.
-* `nonce` - this is an optional parameter and is used for OpenID Connect. We don't go into much detail of OpenID Connect in this guide, but we will cover a few aspects including ID tokens and `nonce`.
+* `nonce` - this is an optional parameter and is used for OpenID Connect. We don't go into much detail of OpenID Connect in this guide, but we will cover a few aspects including ID tokens and `nonce`. Basically, this `nonce` parameter will be included in the ID token that the OAuth server generates and we can verify that when we retrieve the ID token later in the guide.
 
 Let's update our controller from above with all of these values. While we don't actually need to use PKCE for this guide, it doesn't hurt anything to add it.
 
@@ -397,7 +401,7 @@ We will need to make an HTTP `POST` request to the Token endpoint using form enc
 * `grant_type` - this will always be the value `authorization_code` to let the OAuth server know we are sending it an authorization code.
 * `redirect_uri` - this is the redirect URI that we sent to the OAuth server above.
 
-Here's a NodeJS controller that calls the Token endpoint using these parameters. It also verifies the `state` parameter is correct and ensures
+Here's a NodeJS controller that calls the Token endpoint using these parameters. It also verifies the `state` parameter is correct along with the `nonce` that should be present in the `id_token`. It also restores the saved `codeVerifier` and passes that to the Token endpoint to complete the PKCE handling.
 
 ```javascript
 const request = require('request');
@@ -456,6 +460,8 @@ router.get('/oauth-callback', function (req, res, next) {
   );
 });
 ```
+
+
 
 ### Implicit Grant
 
