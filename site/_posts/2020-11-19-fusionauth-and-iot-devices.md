@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: jakl
+title: aa
 description: jkl
 author: Dan Moore
 image: blogs/reconinfosec-story/recon-infosec-switches-to-fusionauth-from-aws-cognito.png
@@ -24,6 +24,8 @@ Michał Getka is a FusionAuth community member and software engineer at Ampio Sm
 **Michał:** I'm working as a software engineer at Ampio Smart Home, a company providing complete highly customized smart home solutions. We provide components adding smart aspects into customer's lights, blinds, heating, air conditioning and more. Our system can also be integrated with IoT devices from other manufacturers. We are responsibile for most aspects of our product's design - from electronics, hardware design and manufacturing, embedded software development and finishing by providing a cloud platform allowing customers to remotely access their installations.
 
 Our system stands outs because of its distributed architecture. There is no single point of failure - there is no central component whose failure will prevent you from turning on the lights in your bedroom. Another prominent aspect is the fact that the installation is not tightly bound with our cloud. Customers with limited internet connectivity or who just don't want to utilize our cloud can still benefit from all the features on the LAN network, including the smart phone app. More computer literate customers can ensure themselves remote access without our cloud.
+
+> Primarily, we wanted to find a production ready identity management solution with OAuth capabilities, to focus our development efforts on our system domain components.
 
 **Dan:** What is the main use case for having a smart home solution? Is it comfort? Energy efficiency? Something else? Why would someone buy your solution? It certainly sounds awesome to me.
 
@@ -49,6 +51,8 @@ The second scenario is social sign-on. If the user creates an account directly, 
 
 **Michał:** Such estimates are always hard for me, so I would rather not answer with numbers out of thin air.
 
+> FusionAuth is a product where each of our requirements is either fulfilled out of the box, or it could be easily developed based on the API, webhooks or other workarounds.
+ 
 **Dan:** What problems did we solve for you? And how were you solving them before FusionAuth?
 
 **Michał:** Primarily, we wanted to find a production ready identity management solution with OAuth capabilities, to focus our development efforts on our system domain components. So, we did what you are suggesting on the FusionAuth homepage - we took FusionAuth, and have gone on to build something awesome.
@@ -74,6 +78,8 @@ On a network level, FusionAuth stands behind a reverse-proxy server. Publicly we
 **Michał:** I'm not entirely sure whether those few lines in python are worth publishing, but I can share what they are about. The idea is to create jinja2 templates for each email. The templates are localized with the use of GNU gettext. Based on jinja2 templates, localized FreeMarker templates are rendered... So, yeah - templates for templates ;) 
 
 Rendered templates and stylesheets are then passed through the premailer tool to increase visual consistency across email clients and pushed into FusionAuth either via Kickstart or the API. If you would be interested in building such functionality I believe it should be done in a similar way that themes are localized. That is, each message has an HTML and Text template and messages file for each locale. Our current solution is just a workaround of the current limitation and as such is not particularly elegant.
+
+> In order not to get distracted while building something awesome, we didn't want to implement front-end aspects of the authorization flow, which can be pretty complex taking different authentication flows into account. 
 
 **Dan:** Which reverse proxy did you use?
 
