@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: aa
-description: jkl
+title: IoT picks FusionAuth to avoid getting distracted by auth
+description: FusionAuth allows an IoT company solve auth problems and focus on building out their system
 author: Dan Moore
 image: blogs/reconinfosec-story/recon-infosec-switches-to-fusionauth-from-aws-cognito.png
 category: blog
@@ -21,7 +21,7 @@ Michał Getka is a FusionAuth community member and software engineer at Ampio Sm
 
 **Dan:** Tell me a bit about your work as a developer.
 
-**Michał:** I'm working as a software engineer at Ampio Smart Home, a company providing complete highly customized smart home solutions. We provide components adding smart aspects into customer's lights, blinds, heating, air conditioning and more. Our system can also be integrated with IoT devices from other manufacturers. We are responsibile for most aspects of our product's design - from electronics, hardware design and manufacturing, embedded software development and finishing by providing a cloud platform allowing customers to remotely access their installations.
+**Michał:** I'm working as a software engineer at Ampio Smart Home, a company providing complete highly customized smart home solutions. We provide components adding smart aspects into customer's lights, blinds, heating, air conditioning and more. Our system can also be integrated with IoT devices from other manufacturers. We are responsible for most aspects of our product's design - from electronics, hardware design and manufacturing, embedded software development and finishing by providing a cloud platform allowing customers to remotely access their installations.
 
 Our system stands outs because of its distributed architecture. There is no single point of failure - there is no central component whose failure will prevent you from turning on the lights in your bedroom. Another prominent aspect is the fact that the installation is not tightly bound with our cloud. Customers with limited internet connectivity or who just don't want to utilize our cloud can still benefit from all the features on the LAN network, including the smart phone app. More computer literate customers can ensure themselves remote access without our cloud.
 
@@ -62,6 +62,8 @@ At the moment, our system which incorporates FusionAuth is still in development.
 In order not to get distracted while building something awesome, we didn't want to implement front-end aspects of the authorization flow, which can be pretty complex taking different authentication flows into account. FusionAuth's theming system gave us enough flexibility to tailor the provided authorization flows to our needs.
 
 Another aspect worth mentioning is user migration. Our current system incorporates a custom password hashing scheme. By making use of the [password hashing plugin development tutorial](/docs/v1/tech/plugins/password-encryptors/), it was not an issue to implement our custom scheme, even for a developer with no experience in Java. To eventually get rid of the custom scheme we are enabling password rehashing on the login event.
+
+> ...I've seen that the dev team is pretty responsive to users' feedback
 
 **Dan:** Can you talk a bit more about the Google Assistant/Alexa integrations? Have those been built out, or are they on the roadmap? If the former, any interesting challenges encountered?
 
