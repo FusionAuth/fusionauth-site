@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: IoT picks FusionAuth to avoid getting distracted by auth
+title: IoT company picks FusionAuth to avoid getting distracted by auth
 description: FusionAuth allows an IoT company solve auth problems and focus on building out their system
 author: Dan Moore
 image: blogs/reconinfosec-story/recon-infosec-switches-to-fusionauth-from-aws-cognito.png
