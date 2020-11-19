@@ -17,8 +17,6 @@ In this tutorial, we will implement one of the most essential features for any a
 
 If you want to go straight to the code, check out the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-flutter-dart/).
 
-https://github.com/FusionAuth/fusionauth-example-flutter-dart/blob/main/lib/main.dart
-
 So, let's get started!
 
 ## Requirements
@@ -31,7 +29,7 @@ Some tools you need to have before starting this tutorial:
 * iPhone development environment
 * Android emulator or real Android device
 * Android development environment
-* Familiarity with ngrok (optional, useful if you want to test in a device)
+* Familiarity with ngrok (optional, useful if you want to test on a device)
 
 ## Setting up FusionAuth as your auth provider
 
@@ -43,7 +41,7 @@ We'll also run through some of the most important setup steps below:
 
 In this step, we are going to configure a FusionAuth application. This is different from the FusionAuth server instance or the Flutter application. In FusionAuth, an application is anything a user might log in to. To configure an application, sign into the FusionAuth administrative user interface and navigate to "Applications". From there, create a new application by clicking the green "plus" button.
 
-Then navigate to the "OAuth" tab and add in a redirect URI of `com.fusionauth.flutterdemo://login-callback`. We’ll use this redirect URL in our Flutter application later. Make sure the "Require authentication" checkbox is set to off. Since the Flutter application is a native app, it's not considered a "confidential client" and a client secret isn't safe. It could be found by decompiling the application. The library we will use implements another method of securing access: proof of key code exchange, or PKCE (often pronounced PKCE).
+Then navigate to the "OAuth" tab and add in a redirect URI of `com.fusionauth.flutterdemo://login-callback`. We’ll use this redirect URL in our Flutter application later. Make sure the "Require authentication" checkbox is set to off. Since the Flutter application is a native app, it's not considered a "confidential client" and a client secret isn't safe. It could be found by decompiling the application. The library we will use implements another method of securing access: proof of key code exchange, or PKCE (often pronounced "pixie").
 
 Ensure that the authorization code grant is enabled as well. Add the value of `7e3637e8-723a-42d6-9d1d-5cb36128d6f1` into the `Id` field. If you don't provide one, it will be generated for you. The Id of the application is also the "Client Id"; we'll need that later in the configuration process. 
 
@@ -68,15 +66,16 @@ Setting up the Flutter project is simple and easy for every OS. We can follow th
 First, we need to clone the Flutter SDK from GitHub by running the following command in our device terminal:
 
 ```shell
+cd $HOME/dev
 git clone https://github.com/flutter/flutter.git
 ```
 
-Note that we need to choose an appropriate directory in which to clone the SDK.
+Note that we need to choose an appropriate directory in which to clone the SDK. We choose `~/dev` above.
 
 Next, we need to add the flutter tool to our path by running the following command in the terminal (and if you are doing this more than once, perhaps to your `.bashrc` or `.zshrc`):
 
 ```shell
-export PATH="$PATH:`pwd`/flutter/bin"
+export PATH="$PATH:$HOME/dev/flutter/bin"
 ```
 
 We can check if everything is configured properly by running the following command in our terminal window:
@@ -99,6 +98,7 @@ In order to create and set up the new flutter app, run the following command. Yo
 
 
 ```shell
+cd $HOME/dev
 flutter create fusionauth_demo
 ```
 
@@ -114,10 +114,11 @@ We can run our new project in the actual device or an emulator to confirm everyt
 
 
 ```shell
+cd $HOME/dev/fusionauth_demo
 flutter run
 ```
 
-After running this, we will get the list of emulators or devices in which we want to run the project. We can simply choose the one in which we want our code to run.
+After running this, we will get the list of emulators or devices in which we want to run the project. We can simply choose the one in which we want our code to run. We'll assume you remain in this directory for the rest of this tutorial.
 
 {% include _image.liquid src="/assets/img/blogs/securing-flutter-app/flutter-choose-device.png" alt="Output of the flutter run command." class="img-fluid" figure=false %}
 
@@ -130,8 +131,6 @@ flutter run -d all
 The build process always takes a while the first time an app is built. After the successful build, we will get the boilerplate flutter app in our emulators as displayed in the emulator screenshots below:
 
 {% include _image.liquid src="/assets/img/blogs/securing-flutter-app/flutter-demo-home-page.png" alt="The default Flutter app in the emulator." class="img-fluid" figure=false %}
-
-
 
 Now that we have a basic working application running, let's jump into the fun stuff: adding auth!
 
@@ -288,11 +287,9 @@ class _MyAppState extends State<MyApp> {
           FUSION_AUTH_REDIRECT_URI,
           issuer: 'https://$FUSION_AUTH_DOMAIN',
           scopes: <String>['offline_access'],
-          // promptValues: ['login']
         ),
       );
       log('data: $result');
-      // final Map<String, Object> idToken = parseIdToken(result.idToken);
       final Map<String, Object> profile =
           await getUserDetails(result.accessToken);
 
@@ -340,7 +337,6 @@ class _MyAppState extends State<MyApp> {
         refreshToken: storedRefreshToken,
       ));
 
-      // final Map<String, Object> idToken = parseIdToken(response.idToken);
       final Map<String, Object> profile =
           await getUserDetails(response.accessToken);
 
@@ -611,7 +607,6 @@ Future<void> initAction() async {
       refreshToken: storedRefreshToken,
     ));
 
-    // final Map<String, Object> idToken = parseIdToken(response.idToken);
     final Map<String, Object> profile =
         await getUserDetails(response.accessToken);
 
@@ -701,7 +696,7 @@ Future<void> loginAction() async {
 // ...
 ```
 
-`loginAction` called `getUserDetails`. What does this to? It takes the access token as a parameter and makes the HTTP GET request to the auth server. If successful, it will receive the user details in response. This is a standard OIDC call. This function is called inside the `initAction` function as well.
+As you can see above, `loginAction` called `getUserDetails`. What does this function do? It takes the access token as a parameter and makes the HTTP GET request to the auth server. If successful, it will receive the user details in response. This is a standard OIDC call. This function is called inside the `initAction` function as well.
 
 ```dart
 // ...
