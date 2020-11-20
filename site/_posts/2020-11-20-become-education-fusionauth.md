@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Become Education chose FusionAuth to build features rather than user management. 
+title: Become Education chose FusionAuth and built features rather than user management
 description: Career Education as a Service startup Become Education evaluated IDaaS services and chose FusionAuth because FusionAuth understood them.
 author: Dan Moore
 image: blogs/reconinfosec-story/recon-infosec-switches-to-fusionauth-from-aws-cognito.png
@@ -24,6 +24,8 @@ David Wilson is a FusionAuth community member and co-founder and CTO at Become E
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
 **David:** We use FusionAuth for OAuth and use the provided login UI to support SSO and passwordless access for our users. Accounts are first established in our system and we use the FusionAuth API to create logins and keep things synced up.
+
+> For start-up products FusionAuth is very helpful and easy to roll out since it supports almost all popular identity protocols and frameworks.
 
 **Dan:** Interesting. So FusionAuth is not the system of record, your system is. Why didn't you build SSO and OAuth directly into your system? Has there been any hiccups in syncing the data from your system to FusionAuth? 
 
