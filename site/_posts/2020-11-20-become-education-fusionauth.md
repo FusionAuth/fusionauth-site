@@ -3,7 +3,7 @@ layout: blog-post
 title: Become Education chose FusionAuth and built features rather than user management
 description: Career Education as a Service startup Become Education evaluated IDaaS services and chose FusionAuth because FusionAuth understood them.
 author: Dan Moore
-image: blogs/reconinfosec-story/recon-infosec-switches-to-fusionauth-from-aws-cognito.png
+image: blogs/...
 category: blog
 tags: topic-community-story
 excerpt_separator: "<!--more-->"
