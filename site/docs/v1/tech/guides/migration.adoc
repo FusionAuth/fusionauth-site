@@ -102,19 +102,20 @@ The first step to any successful data migration is planning. You need to know wh
 
 Consider edge cases. What fields are required and optional in the old system (or systems)? What about the new system? Is there a clean mapping between the data fields? The answer is almost certainly no. 
 
-Think about how you are going to handle data you don't expect. You can save the entire record off for manual migration, toss them, or ignore fields that aren't a clean match.
+Think about how you are going to handle unexpected data. You can save the entire record off for manual migration, toss it, or ignore fields that aren't clean. Which choice you make depends on the value of the record.
 
-With FusionAuth, you have the option of storing arbitrary key value data. , serialize the user object from the old system and store it there. The old user model may be helpful in the future because if there were data that mistranslated, you’ll have the original copy.
+With FusionAuth, you have the option of storing arbitrary key value data in the user or the registration object. You can serialize the old system's user data and store it in `user.data`. The old model can be helpful in the future. If there was mistranslated data or fields, you'll have the original copy.
 
-You’ll also want to think about relationships between users and other objects. Groups, roles, historical data, and anything else the old system has tied to users. Make sure you know where this data is coming from, if it can be discarded, and if not, where it will end up. Perhaps it will be migrated to the new system, perhaps to a different datastore.
+Consider relationships between users and other authentication related entities. Groups, application associations, roles, historical data, and anything else which the old system and is tied to accounts. Make sure you know where this data is coming from, if it should be migrated, and where it will end up. It might end up in FusionAuth, or maybe in an auxiliary datastore. 
 
-There are two field types worth commenting on in more detail. The first is user ids. These are often referenced by other systems and are used for auditing, analytics or other historical purposes. If you can preserve user ids, do so.
+There are two field types worth a more detailed look. The first is user ids. These are often referenced by other systems and are used for auditing, analytics or other historical purposes. If you can preserve user ids, do so. You can do this in two ways with FusionAuth.
 
-If you cannot, plan accordingly. You may want to keep that field in the new system in an old_user_id field, accept the loss of this data, or build a system to map from old user ids to new user ids, to be used by any external party which depended on the old user id.
+* If your user ids are UUIDs, you can specify the user id when you are migrating each user to FusionAuth.
+* If your user ids are some other format, you can store them in your `user.data` field under a key similar to `original_user_id`. You will be able to search on this value if needed.
 
-The other notable attribute is the password, and any related fields such as a salt. Passwords don’t have to be migrated in a slow migration. The user will provide the password during authentication, and it can be stored in the new auth system during that process.
+The other notable attribute is the password, and any related fields such as a salt or hashing scheme. The means of dealing with this data depends on what kind of migration you are performing.
 
-One special complexity which will require more planning is if you have user data in multiple datastores and are planning to merge the data. Ensure you map both of the old data models into the new user data model before you write any migration code.
+One special complexity which will require more planning is if you have user data in multiple datastores and are planning to merge the data. Ensure you map both of the old data models into the FusionAuth user data model before you write any migration code.
 
 ==== An Example 
 
@@ -171,7 +172,11 @@ As this example shows, getting ready for a migration consists of many tiny choic
 
 === Big Bang Implementation
 
+passwords
+
 === Migrate on Authentication Implementation
+
+passwords
 
 How to implement
 
