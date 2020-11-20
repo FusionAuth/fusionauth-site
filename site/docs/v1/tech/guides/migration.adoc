@@ -13,11 +13,11 @@ This document will help you migrate your existing users to FusionAuth.
 
 There are three types of migrations. 
 
-* Migrate everyone at once, also known as a "big bang" migration
+* Migrate everyone at once, also known as a "big bang" migration.
 * Segment your users and migrate each segment in a series of small bang migrations.
 * Migrate on authentication, also known as "slow migration".
 
-These each have strengths and weaknesses. All three are supported by FusionAuth, so you should pick the one which works best for your situation.
+Each of these moves user and other account associated data into FusionAuth from one or more other systems of record. These each have strengths and weaknesses. All three are supported by FusionAuth, so you should pick the one which works best for your situation.
 
 === The Big Bang Migration
 
@@ -77,44 +77,101 @@ Once it is set up, a slow migration happens in phases. Each user proceeds throug
 
 Migrate on authentication has some benefits:
 
-* Since you are only doing this at authentication, by definition the blast radius of a mistake is small; it's limited to whoever is logging in. You can decrease this further by splitting traffic and only sending a portion to the new system.
+* Since you are only doing a user migration at the time a user authenticates, by definition the blast radius of a mistake is small; it's limited to whoever is logging in. You can decrease this further by splitting traffic and only sending a portion to the new system.
 * You can upgrade your password hash algorithms transparently without requiring anyone to reset their password.
 * You don't have to migrate users who aren't active. This migration is a way to scrub your userbase.
 * The migration can be an opportunity to contact inactive users and encourage them to login.
-* There's less downtime because the 
-Decreased cutover risk
+* There's less downtime; you aren't moving any data. Depending on your system architecture, there may be some downtime as you direct all your users to the new auth system, rather than the old one.
+* You don't have to understand all the moving pieces of the old system. You do need to be able to extend it to add the API, but you never have to connect to the underlying user datastore or understand all the business logic which goes into authentication.
 
-A phased migration decreases cutover risk. There’s far less downtime because there’s data is moved at auth time, one user at a time. Depending on your system architecture, there may be some downtime as you direct all your users to the new auth system, rather than the old one.
+However, a slow migration isn't the right solution for every system. Issues to be aware of:
 
-You may, eventually, decide to stop the slow migration and cut over remaining users. But even that is less risky because these will by definition be some of your least active users. And because you’ll be moving fewer of them, the downtime requirements will decrease as well.
-Minimized required understanding of the old auth system
+* You are passing a user's plaintext password from the new auth system to the old auth system. Therefore, you should take special care to secure this data in transit. For an additional layer of security, have the new auth system encrypt the password, and have the old auth system endpoint decrypt it before authenticating.
+* Both the new and old systems have to be extensible or support a standard like LDAP.
+* You have to run both the new and old systems for the length of your migration. Depending on the state of the old system, this may be more or less painful.
+* Customer service and other internal users may have to access two systems to find a user during the migration period.
+* Rollback from a phased migration is more complex if there are any issues, because there are two systems of record, one for users who have been migrated and one for users who have not yet been moved.
 
-With a phased migration, you don’t have to understand the nuts and bolts of the business logic of the old auth system. Just make sure you can add on a lightweight API which can authenticate using whatever means the old auth system expects. You never have to connect to the underlying user datastore.
+== Migration Implementation
 
-Compare that with the big bang approach, which requires you to understand the data store structure as well as any business logic which builds the user model.
-Risks of slow migration
+To implement any of the above migration strategies and bring your users into FusionAuth, there are N phases.
 
-Like any solution, slow migration isn’t perfect. You are passing a user’s plaintext password from the new auth system to the old auth system. Therefore, you should take special care to secure this data in transit. Use TLS to encrypt the request. For an additional layer of security, have the new auth system encrypt the password, and have the old auth system endpoint decrypt it before authenticating.
+=== Planning and Assessment
 
-Both systems, the new and the old, should be extensible or have snap in points to connect them. If the old system supports a standard like LDAP, and the new system has a way to import users, you may be able to cobble together a slow migration even if the old system isn’t extensible.
+The first step to any successful data migration is planning. You need to know where all your data sources are, who uses the data from the sources, how to connect to them, and what the data looks like.
 
-One of the benefits of the slow migration is that you don’t have a big bang cutover, with downtime and risk. However, that comes at a cost. You have to run both the new and old systems for the length of your migration. Depending on the state of the old system, this may be more or less painful.
+Consider edge cases. What fields are required and optional in the old system (or systems)? What about the new system? Is there a clean mapping between the data fields? The answer is almost certainly no. 
 
-A corollary is that customer service and other internal users may have to access two systems to find a user. This is especially true if a user contacts your business using an offline method, such as a phone call. Such a user may not be migrated, and the rep may not know where to find their data. Additionally, systems which access user data may need to be updated to handle two systems, or you may need to put a proxy in place to look in one system or the other. One solution is to have the new auth system proxy not just authentication, but any user data request.
+Think about how you are going to handle data you don't expect. You can save the entire record off for manual migration, toss them, or ignore fields that aren't a clean match.
 
-The new system can have links to the “old” system, and vice versa. Such links make finding the relevant user data easier. If possible, allow internal users to search both the new and old systems from one interface.
+With FusionAuth, you have the option of storing arbitrary key value data. , serialize the user object from the old system and store it there. The old user model may be helpful in the future because if there were data that mistranslated, you’ll have the original copy.
 
-Rollback from a phased migration is more complex if there are issues, because there are two systems of record, one for users who have been migrated and one for users who have not yet been moved.
+You’ll also want to think about relationships between users and other objects. Groups, roles, historical data, and anything else the old system has tied to users. Make sure you know where this data is coming from, if it can be discarded, and if not, where it will end up. Perhaps it will be migrated to the new system, perhaps to a different datastore.
 
-You can work around this with tooling to keep track of which users have been migrated. If you need to roll back to using the old system, examine migrated users and move their data into the old system.
+There are two field types worth commenting on in more detail. The first is user ids. These are often referenced by other systems and are used for auditing, analytics or other historical purposes. If you can preserve user ids, do so.
+
+If you cannot, plan accordingly. You may want to keep that field in the new system in an old_user_id field, accept the loss of this data, or build a system to map from old user ids to new user ids, to be used by any external party which depended on the old user id.
+
+The other notable attribute is the password, and any related fields such as a salt. Passwords don’t have to be migrated in a slow migration. The user will provide the password during authentication, and it can be stored in the new auth system during that process.
+
+One special complexity which will require more planning is if you have user data in multiple datastores and are planning to merge the data. Ensure you map both of the old data models into the new user data model before you write any migration code.
+
+==== An Example 
+
+Let's examine a trivial data mapping example. Suppose an old auth system has a user data model with these attribute names and data types:
+
+* `fname` - string
+* `lname` - string
+* `birthdate` - string
+* `phone_num` - string
+* `role` - string
+
+FusionAuth has a user object with these attributes and data types:
+
+* `firstName` - string
+* `lastName` - string
+* `birthDate` - An ISO-8601 formatted date string
+* `mobilePhone` - string
+
+When you are moving between them, you’ll face three challenges.
+
+The first mapping is converting from `fname` to `first_name` and `lname` to `last_name`. This is pretty easy. Where this gets difficult is that you need to make sure you do this for each and every one of the old data sources. Spreadsheets are your friend.
+
+The second mapping task is parsing the `birthdate` field into an ISO-8601 formatted string, to be placed in the `birthDate` FusionAuth field. Depending on how clean the original data is, this could be trivial or it could be painful. If the latter, use a date parsing library; it'll handle many more edge cases than your code.
+
+The third issue is how to handle the `phone_num` field. In this case, if you
+data field
+
+Finally, we nee dtRole
+
+Here's a sample FusionAuth user object which should give you an idea of what fields are available:
+
+[source,json]
+.Example User JSON
+----
+include::../../../src/json/user/request.json[]
+----
+
+Please consult the link:docs/tech/v1/apis/users/[User API] for full documentation. Here's a sample FusionAuth registration object.
+
+[source,json]
+.Example User Registration JSON
+----
+include::../../../src/json/user-registrations/request.json[]
+----
+
+Please consult the link:docs/tech/v1/apis/users/[Registration API] for full documentation.
+
+
+As this example shows, getting ready for a migration consists of many tiny choices and design decisions. Make sure you understand the data model for your users before you start the migration.
 
 
 
+=== Setting up FusionAuth
 
+=== Big Bang Implementation
 
-
-
-Strenghts and weaknesses of each
+=== Migrate on Authentication Implementation
 
 How to implement
 
