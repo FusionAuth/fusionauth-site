@@ -762,7 +762,7 @@ Then, we dove into code showing how to implement the authentication in Flutter, 
 
 If you need to extend this application to access the FusionAuth API, check out the [FusionAuth Dart client library](https://github.com/FusionAuth/fusionauth-dart-client/). For example, you could add the last login date as a custom data field to the profile UI.
 
-Aa a final reminder, the [entire working project](https://github.com/FusionAuth/fusionauth-example-flutter-dart/) is available under the Apache2 license on GitHub. Clone it, take a look and experiment.
+As a final reminder, the [entire working project](https://github.com/FusionAuth/fusionauth-example-flutter-dart/) is available under the Apache2 license on GitHub. Clone it, take a look and experiment.
 
 Until then, keep coding folks!
 
