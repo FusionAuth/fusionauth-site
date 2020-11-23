@@ -716,10 +716,9 @@ Future<Map<String, Object>> getUserDetails(String accessToken) async {
 // ...
 ```
 
-When you can log in, you want to be able to log out too. In `logoutAction` we do three things:
+When you can log in, you want to be able to log out too. In `logoutAction` we do two things:
 
 * Remove the access token from secure storage
-* Call out to the [FusionAuth logout endpoint](/docs/v1/tech/oauth/endpoints/#logout)
 * Set the state back to initial values
 
 These are all shown in the code snippet below:
@@ -727,10 +726,6 @@ These are all shown in the code snippet below:
 ```dart
 Future<void> logoutAction() async {
   await secureStorage.delete(key: 'refresh_token');
-  const String url = 'https://$FUSION_AUTH_DOMAIN/oauth2/logout?client_id=$FUSION_AUTH_CLIENT_ID';
-  final http.Response response = await http.get(
-    url
-  );
   setState(() {
     isLoggedIn = false;
     isBusy = false;
@@ -738,7 +733,7 @@ Future<void> logoutAction() async {
 }
 ```
 
-Note that if you have more than one tenant, you'd also need to provide a tenant id for the logout request. 
+If you log out and then log in again, the system browser where you were prompted to log in remembers you and you aren't prompted to sign in again. At publishing time, AppAuth has [an open issue](https://github.com/MaikuB/flutter_appauth/issues/48) about this behavior. 
 
 After editing `main.dart`, start up your emulators or real devices again.
 
