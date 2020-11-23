@@ -738,7 +738,7 @@ Future<void> logoutAction() async {
 }
 ```
 
-Note that if you have more than one tenant, you'd also need to provide the a tenant id for the logout request. 
+Note that if you have more than one tenant, you'd also need to provide a tenant id for the logout request. 
 
 After editing `main.dart`, start up your emulators or real devices again.
 
