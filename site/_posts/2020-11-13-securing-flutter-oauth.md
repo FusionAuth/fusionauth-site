@@ -2,7 +2,7 @@
 layout: blog-post
 title: Securing a Flutter App with OAuth
 description: How can you use Flutter, OAuth and OIDC together?
-image: blogs/controlling-hotspot/controlling-a-hotspot-with-fusionauth-authentication.png
+image: blogs/securing-flutter-app/securing-a-flutter-app-with-oauth.png
 author: Krissanawat Kaewsanmuang
 category: blog
 tags: client-dart 
