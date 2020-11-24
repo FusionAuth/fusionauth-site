@@ -179,7 +179,13 @@ Please consult the link:docs/tech/v1/apis/users/[Registration API] for full docu
 
 As this example shows, getting ready for a migration consists of many tiny choices and design decisions. Make sure you understand the data model for your users before you start the migration.
 
-=== Setting up FusionAuth
+=== Modifying Your Application
+
+If possible, modifying your application so that users can authenticate using an OAuth/OIDC library is helpful.
+
+TBD? not sure this section is needed.
+
+=== Setting Up FusionAuth
 
 Before you can migrate any user information into FusionAuth, you need to ensure it is set up correctly. 
 
@@ -268,31 +274,9 @@ Should you need to rollback, revert the changes to your application pointing it 
 
 The same processes applies to a segment by segment migration, except that you are going to split your user data into segments and migrate each segment.
 
-=== Migrate on Authentication Implementation
+=== Slow Migration Implementation
 
 With FusionAuth, slow migration happens with link:docs/v1/tech/connectors/[Connectors]. *This feature is available in all paid editions of FusionAuth. Please visit link:/pricing/[our pricing page] to learn more about paid editions.*
-
-==== Build A Proxy Layer
-
-With slow migration, FusionAuth is connecting to your previous datastore every time a user authenticates. This is typically done via either an HTTP API or LDAP connection. If your current user datastore is an LDAP database, then you don't need to build the proxy layer, since FusionAuth knows how to communicate with LDAP servers
-
-If, on the other hand, your datastore is not LDAP, you'll need to build an HTTP API, which can be connected using a Generic Connector. This API should take a login request in JSON format:
-
-[source,json]
-.Example Migrate on Authentication Login Request JSON
-----
-include::docs/src/json/login/request.json[]
-----
-
-It should return a FusionAuth login response, which includes the `User` object as well as a JWT:
-
-[source,json]
-.Example Successful Login Response JSON
-----
-include::docs/src/json/users/login-response.json[]
-----
-
-You can read more about the link:/docs/v1/tech/connectors/generic-connector/[Generic Connector requirements] in the documentation.
 
 ==== Determine Your Finish Line
 
@@ -312,16 +296,41 @@ It's hard to give blanket guidance as all applications are different. But in gen
 
 Set a goal for number or percent of migrated users, duration of the migration period, or both. Otherwise you don't know when to cut over. 
 
-To keep track of this, you’ll want to make sure you can regularly query new and old systems to know the number of migrated accounts.
+To keep track of this, you’ll want to make sure you can regularly query new and old systems to know the number of migrated accounts. Also make sure that you set a value on the `user.data` object, such as `user.data.migrated`, indicating the user was migrated.
+
+TBD migration period
+
+==== Build A Proxy Layer
+
+With slow migration, FusionAuth is connecting to your previous datastore every time a user authenticates. This is typically done via either an HTTP API or LDAP connection. If your current user datastore is an LDAP database, then you don't need to build the proxy layer, since FusionAuth knows how to communicate with LDAP servers
+
+If, on the other hand, your datastore is not LDAP, you'll need to build an HTTP API, which can be connected using a Generic Connector. This API should take a login request in JSON format:
+
+[source,json]
+.Example Migrate on Authentication Login Request JSON
+----
+include::docs/src/json/login/request.json[]
+----
+
+It should return a FusionAuth login response, which includes the `User` object as well as a JWT:
+
+[source,json]
+.Example Successful Login Response JSON
+----
+include::docs/src/json/users/login-migrated-response.json[]
+----
+
+You can see this response sets the value of `user.data.migrated` to `true`.
+
+You can read more about the link:/docs/v1/tech/connectors/generic-connector/[Generic Connector requirements] in the documentation.
 
 ==== Configure Your Connector
 
-To configure our connector 
+Navigate to [breadcrumb]#Settings -> Connectors# and add a Connector. You can also configure Connectors by using the API; consult the link:/docs/v1/tech/apis/connectors[Connector API documentation] for more details.
 
 pic TBD
 
-
-
+What you need to do next depends on the type of your current data source.
 
 ===== LDAP
 
@@ -334,7 +343,9 @@ With an LDAP Connector, you need to map each attribute from the LDAP database in
 include::docs/src/lambda/ldap-connector-reconcile.js[]
 ----
 
-Full configuration details are available in the link:/docs/v1/tech/connectors/ldap-connector/[LDAP Connector documentation].
+Make sure you uncomment the lines where `user.data.migrated` is set to `true`.
+
+More details about configuration are available in the link:/docs/v1/tech/connectors/ldap-connector/[LDAP Connector documentation].
 
 ===== Generic
 
@@ -350,21 +361,82 @@ As mentioned above, you want to make sure you can identify that the user has bee
 
 An easy way to do that is to ensure that every migrated user has a `user.data.migrated` attribute set to `true`. Whichever connection you use, make sure you set this attribute.
 
-==== Proxy Calls
+==== Proxying Authentication
 
-Set up tenanta
+With FusionAuth, proxying authentication requests to a connector is trivial. Since you've already set up the connection information when configuring the Connector, you simply have to associate the Connector to the tenant. This is called a Connector policy. Navigate to [breadcrumb]#Tenants -> Connectors# and add a policy.
+
+pic TBD
+
+Check the [field]#Migrate user# checkbox. With this setting, each user will be authenticated against the connected user datastore the first time they are seen. Their data will be migrated to FusionAuth. On subsequent authentications, they'll be migrated directly.
+
+You can learn more about configuring the Connector in the link:/docs/v1/tech/connectors/[Connector documentation].
 
 ==== Modify Your Application 
 
-You'll need 
+You'll need to modify your application to authenticate against FusionAuth. How to do so is application specific, but will typically involve using a library to interface with FusionAuth's OAuth and OIDC endpoints. There are link:/docs/v1/tech/example-apps/[numerous example applications] written that might provide a path forward.
+
+If you have self service registration, you'll need to modify your application to point to FusionAuth's registration form. If you have social, such as Google, or enterprise sign on, such as SAML, you'll need to configure and enable those providers as well.
+
+TBD themes? assessment plan to modify app above, need to use elasticsearch
+
+After you release this modified version of your application, your users will being to transparently be migrated into FusionAuth. 
+
+Make sure you record the number of accounts in the old system just before cutover.
 
 ==== Monitor Progress
 
+You can monitor your progress by comparing the number of users who have been migrated successfully with the number of users that were originally in the old user auth system. To query FusionAuth, you'd run this shell script:
+
+[source,shell]
+.Shell script to count the number of migrated users
+----
+API_KEY=...
+
+curl -H "Authorization: $API_KEY" 'http://localhost:9011/api/user/search?queryString=data.migrated%3Atrue%0A'
+----
+
+This will return all the users who've been migrated as well as a count, subject to the limits of FusionAuth's Elasticsearch integration. See this https://github.com/FusionAuth/fusionauth-issues/issues/494[GitHub issue] for more on those limits. Here's an example of the output:
+
+[source,json]
+.Results of the FusionAuth migrated user query
+----
+{"total":629,"users": [ ... ] }
+----
+
+If you have more than 10,000 users you are migrating, query Elasticsearch directly to retrieve the count:
+
+[source,shell]
+.Shell script to count the number of migrated users directly against Elasticsearch
+----
+curl 'https://elasticsearch.example.com/fusionauth_user/_count?q=data.migrated%3Atrue%0A'
+----
+
+[source,json]
+.Results of the Elasticsearch migrated user query
+----
+{"count":629,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0}}
+----
+
+However you retrieve the number, compare it to the number of users before the migration began. Recall your finish line estimation and determine if it is time to end the slow migration. 
+
 ==== Remove The Proxy
+
+When it is time to end the slow migration, you can remove the Connector policy and optionally the Connector.
+
+pic TBD just highlight the delete button on the connector policy
 
 ==== Deal With The Un-Migrated
 
+At this point, you need to decide how to handle users who haven't been migrated. You considered this situation while planning your migration, but now is the time to implement the decision; you can also adjust it if need be.
 
+Here are some options:
+
+* Notify the users to encourage them to migrate. You can contact them with a message like: "if you don’t log in by DATE, your account will be deleted".
+* Archive or delete the accounts and the corresponding data. When a user comes to your site and tries to sign in, they won't have an account and may be forced to re-register. 
+* Move them to FusionAuth via a big bang migration.
+* Extend the time running both systems; continue the slow migration.
+
+You can mix and match these approaches. You could migrate all paying customers, event those who haven't signed in during the migration period. At the same time you could archive the data of the free accounts; those potential customers may have been trialing your application in the past and may have forgotten they even have an account.
 
 == Additional Resources
 
