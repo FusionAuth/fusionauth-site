@@ -15,7 +15,7 @@ There are three types of migrations.
 
 * Migrate everyone at once, also known as a "big bang" migration.
 * Segment your users and migrate each segment in a series of small bang migrations.
-* Migrate on authentication, also known as "slow migration".
+* Migrate when a user authenticates, also known as "slow migration".
 
 Each of these moves user and other account associated data into FusionAuth from one or more other systems of record. These each have strengths and weaknesses. All three are supported by FusionAuth, so you should pick the one which works best for your situation.
 
@@ -75,7 +75,7 @@ Once it is set up, a slow migration happens in phases. Each user proceeds throug
 * The new system marks the user as migrated.
 * The new system performs authentication for this user for all subsequent logins.
 
-Migrate on authentication has some benefits:
+A slow migration has some benefits, too:
 
 * Since you are only doing a user migration at the time a user authenticates, by definition the blast radius of a mistake is small; it's limited to whoever is logging in. You can decrease this further by splitting traffic and only sending a portion to the new system.
 * You can upgrade your password hash algorithms transparently without requiring anyone to reset their password.
@@ -189,7 +189,7 @@ Determine where your instances should be hosted. You can use either a self hoste
 
 Decide your change management strategy. How will you capture your FusionAuth settings so that you can make changes in the future in a measured, understandable way. You can either use the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest[community supported Terraform provider] or script changes in your language's link:/docs/v1/tech/client-libraries/[client library]. 
 
-Finally, decide if you are going to pursue a big bang, segment by segment or migrate on authentication strategy.
+Finally, decide if you are going to pursue a big bang, segment by segment or slow migration strategy.
 
 ==== Configure FusionAuth
 
@@ -270,11 +270,11 @@ The same processes applies to a segment by segment migration, except that you ar
 
 === Migrate on Authentication Implementation
 
-With FusionAuth, migrate on authentication is enabled by link:docs/v1/tech/connectors/[Connectors]. *This feature is available in all paid editions of FusionAuth. Please visit link:/pricing/[our pricing page] to learn more about paid editions.*
+With FusionAuth, slow migration happens with link:docs/v1/tech/connectors/[Connectors]. *This feature is available in all paid editions of FusionAuth. Please visit link:/pricing/[our pricing page] to learn more about paid editions.*
 
 ==== Build A Proxy Layer
 
-With migrate on authentication, FusionAuth is connecting to your previous datastore every time a user authenticates. This is typically done via either an HTTP API or LDAP connection. If your current user datastore is an LDAP database, then you don't need to build the proxy layer, since FusionAuth knows how to communicate with LDAP servers
+With slow migration, FusionAuth is connecting to your previous datastore every time a user authenticates. This is typically done via either an HTTP API or LDAP connection. If your current user datastore is an LDAP database, then you don't need to build the proxy layer, since FusionAuth knows how to communicate with LDAP servers
 
 If, on the other hand, your datastore is not LDAP, you'll need to build an HTTP API, which can be connected using a Generic Connector. This API should take a login request in JSON format:
 
@@ -296,21 +296,53 @@ You can read more about the link:/docs/v1/tech/connectors/generic-connector/[Gen
 
 ==== Determine Your Finish Line
 
+Unlike a big bang migration, with a slow migration you need to set a completion goal. Because slow migrations move users one at a time, it is unlikely you’ll migrate all of your users. Some people use your application rarely and others have abandoned their account. No matter how long the migration period, some portion of your users will not log in.
+
+This means that you need to decide what "done" means. Consider the following when making this determination:
+
+* How often do people log in? Is this evenly distributed? 
+* Is there a significant long tail of users who visit the application less frequently than the average user?
+* Are there external events such as times of the year or holidays when greater or lesser numbers of users authenticate? 
+* What are the ramifications of a user being unable to log in? Are there business, compliance, legal, or security concerns? Is loss of timely access to your application an annoyance or a disaster?
+* You will have some users who are not migrated. What will you do with them?
+* How painful is it to operate both FusionAuth and your current authentication system?
+* Is there value in a customer who has not logged in to your application in six months? A year? Three years? What is that value?
+
+It's hard to give blanket guidance as all applications are different. But in general the more value an account has, the higher a percentage migrated you should aim for. The more painful it is to run both systems, the more accepting a low percentage makes sense, especially when combined with the possibility of doing a follow on big bang migration.
+
+Set a goal for number or percent of migrated users, duration of the migration period, or both. Otherwise you don't know when to cut over. 
+
+To keep track of this, you’ll want to make sure you can regularly query new and old systems to know the number of migrated accounts.
+
 ==== Configure Your Connector
-
-===== Progress Mapping
-
-add entry to user that they've been migrated
 
 ===== LDAP
 
-You'll need to configure the connection information
+You'll need to configure the connection information, including the URL of the server, the method used to connect to it (LDAPS, etc), and a system account which can query across all acounts for the CN you are migrating. You'll also need to specify LDAP attributes to be returned.
 
-With an LDAP Connector, you need to map each attribute from the LDAP database into a 
+With an LDAP Connector, you need to map each attribute from the LDAP database into a FusionAuth user object. You do this with an link:/docs/v1/tech/lambdas/ldap-connector-reconcile/[LDAP Connector Reconcile Lambda]. Here is a sample LDAP Connector Reconcile Lambda:
+
+[source,javascript]
+----
+include::docs/src/lambda/ldap-connector-reconcile.js[]
+----
+
+Full configuration details are available in the link:/docs/v1/tech/connectors/ldap-connector/[LDAP Connector documentation].
 
 ===== Generic
 
 With a Generic Connector, you'll need to configure the end URL and the security measures. The mapping of the old user data into the new system is taken care of when you build the API, so there's less to do.
+
+Make sure you use TLS to connect to this API, since you'll be sending sensitive user information.
+
+Full configuration details are available in the link:/docs/v1/tech/connectors/generic-connector/[Generic Connector documentation].
+
+===== Progress Mapping
+
+As mentioned above, you want to make sure you can identify that the user has been migrated, rather than has signed up for or been created directly in FusionAuth.
+
+An easy way to do that is to ensure that every migrated user has a `user.data.migrated` attribute set to `true`. Whichever connection you use, make sure you set this attribute.
+
 
 ==== Proxy Calls
 
