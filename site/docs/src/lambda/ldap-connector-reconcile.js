@@ -9,6 +9,10 @@ function reconcile(user, userAttributes) {
   // connection that can be used for the FusionAuth user Id.
   user.id = userAttributes.uid;
   user.active = true;
+  
+  // if migrating users, tag them by uncommenting the below lines
+  // user.data = {};
+  // user.data.migrated = true;
 
   user.email = userAttributes.mail;
   user.fullName = userAttributes.cn;
