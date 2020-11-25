@@ -8,18 +8,9 @@ description: Login using Azure AD as an OpenID Connect Identity Provider
 
 == Configure OpenID Connect with Azure Active Directory
 
-[NOTE]
-====
-FusionAuth's OpenID Connect flow currently only supports link:https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-overview[Azure Active Directory v1.0].
-
-link:https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-overview[Azure Active Directory v2.0] returns inconsistent claims from the UserInfo endpoint depending on the type of Microsoft account the end-user has.  See link:https://github.com/MicrosoftDocs/azure-docs/issues/28317[this open issue] for reference.
-
-The email address is required to be returned on the Userinfo endpoint, without this identity claim FusionAuth cannot complete login. Currently the https://graph.microsoft.com/oidc/userinfo endpoint does not necessarily return the email address of the user even when requesting the `openid` and `email` scopes. These scopes do provide the `email` claim in the returned `access_token` and `id_token` but are omitted from the Userinfo response.
-====
-
 Once you have completed this configuration you may enable an OpenID Connect "Login with Azure AD" button for one or more FusionAuth Applications.  See link:https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app[Azure - Register An App Quickstart Guide] as an additional reference.
 
-image::identity-providers/azure-openid-connect-login.png[Login with Azure AD,width=1200,role=shadowed]
+image::identity-providers/azure-openid-connect-login.png[Login with Azure AD,width=1200,role=bottom-cropped]
 
 === Register a New Azure Active Directory Application
 
@@ -27,21 +18,21 @@ You will first need to login to the link:https://azure.microsoft.com/en-us/featu
 
 Once logged in, navigate to [breadcrumb]#Azure Active Directory -> App Registrations -> New Registration# to create a new Azure Active Directory Application.
 
-image::identity-providers/azure-openid-connect-register-application.png[Register a new Azure AD Application,width=1200,role=shadowed]
+image::identity-providers/azure-openid-connect-register-application.png[Register a new Azure AD Application,width=1200]
 
 Here we have configured our application `Redirect URI`.  If FusionAuth is running at `https://local.fusionauth.io`, this value should be `https://local.fusionauth.io/oauth2/callback`.
 
-image::identity-providers/azure-openid-connect-client-id.png[Azure AD Client ID and Tenant ID,width=1200,role=shadowed]
+image::identity-providers/azure-openid-connect-client-id.png[Azure AD Client ID and Tenant ID,width=1200]
 
-Once the application has been created, note the `Application (client) ID` and the `Directory (tenant) ID`.  These will be used respectively as the [field]#Client Id# value and to construct the [field]#Issuer# value in your FusionAuth OpenID Connect Identity Providers configuration.
+Once the application has been created, note the `Application (client) ID` and the `Directory (tenant) ID`.  These will be used respectively as the [field]#Client Id# value and to construct the [field]#Issuer# value in your FusionAuth OpenID Connect Identity Provider configuration.
 
 === Create a New Azure Active Directory Application Secret
 
 Navigate to [breadcrumb]#Azure Active Directory -> App Registrations -> {Your Application} -> Certificates & secrets -> New client secret# to create a new Azure Active Directory Application Client Secret.
 
-image::identity-providers/azure-openid-connect-client-secret.png[Azure AD Client Secret,width=1200,role=shadowed]
+image::identity-providers/azure-openid-connect-client-secret.png[Azure AD Client Secret,width=1200]
 
-Note the `VALUE` of the created client secret.  This will be used as the [field]#Client secret# value in your FusionAuth OpenID Connect Identity Providers configuration.
+Note the `VALUE` of the created client secret.  This will be used as the [field]#Client secret# value in your FusionAuth OpenID Connect Identity Provider configuration.
 
 === Configure a New FusionAuth OpenID Connect Identity Provider
 
@@ -55,10 +46,15 @@ You will need to set [field]#Client authentication method# to `HTTP Basic authen
 
 Azure AD has implemented a well-known configuration endpoint, FusionAuth will be able to discover the necessary endpoints when you provide the URL `\https://login.microsoftonline.com/{tenantId}` to the provider in the `Issuer` field, where `{tenantId}` is the `Directory (tenant) ID` previously noted while creating our Azure AD Application.
 
-You will need to specify `openid` as a [field]#Scope# for your application.
+You may set a [field]#Reconcile lambda# to map attributes from the JWT provided by Azure AD to the FusionAuth user or registration. This is optional. link:/docs/v1/tech/lambdas/openid-connect-response-reconcile/[Learn more about lambdas]. You may also modify the [field]#Button text# or [field]#Button logo# if desired. 
 
-In the following screenshot you will see that we have enabled this login provider for the `Hooli` application and enabled `Create registration`.
+You will need to specify `openid` as a [field]#Scope# and `email` as the [field]#Email claim# for your application.
 
-That's it, now the `Login with Azure AD` button will show up on the login page of our `Hooli` application.
+image::identity-providers/top-of-fusionauth-azure-ad-oidc-config.png[FusionAuth Azure AD IdP Configuration,width=1200]
 
-image::identity-providers/azure-openid-connect-configuration.png[FusionAuth Azure AD IdP Configuration,width=1200,role=shadowed]
+Scroll down and make sure you enable this Identity Provider for your application. In the following screenshot you will see that we have enabled this login provider for the `Pied Piper` application and enabled `Create registration`.
+
+image::identity-providers/bottom-of-fusionauth-azure-ad-oidc-config.png[FusionAuth Azure AD IdP Configuration,width=1200,role=top-cropped]
+
+That's it, now the `Login with Azure AD` button will show up on the login page of our `Pied Piper` application.
+
