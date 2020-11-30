@@ -47,10 +47,10 @@ As such, we want to create a new application for our Rails app.
 Select `Applications` from the left nav bar. Then click the green plus sign in the upper-right hand corner to add a new application.
 We will want to configure a few pieces of important information:
 * **Name** (Required): A display name for our application. Enter `fusionauth-rails-app`.
-* **Authorized redirect URL's**: Found under the `Oauth` tab. This URL tells FusionAuth where to redirect to after a user successfully authenticates. 
-* **Logout URL**: Also found under the `Oauth` tab. This URL tells FusionAuth where to redirect to when a user logs out.
+* **Authorized redirect URL's**: Found under the `OAuth` tab. This URL tells FusionAuth where to redirect to after a user successfully authenticates. 
+* **Logout URL**: Also found under the `OAuth` tab. This URL tells FusionAuth where to redirect to when a user logs out.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/edit-application.png" alt="Creating a new Application in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/add-application.png" alt="Creating a new Application in FusionAuth." class="img-fluid" figure=false %}
 
 ### Create a User
 For this example, we will manually create a user. Click on `Users` in the left-nav bar and then click the green plus sign in the upper-right hand corner to add a new user.
