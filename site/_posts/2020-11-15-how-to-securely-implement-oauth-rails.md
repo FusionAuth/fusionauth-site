@@ -81,7 +81,6 @@ Our `Gemfile` will use a few additional dependencies so go ahead and add them be
 ```ruby
 gem 'jwt'
 gem 'oauth'
-gem 'rest-client'
 ```
 
 Install dependencies
