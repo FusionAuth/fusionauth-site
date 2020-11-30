@@ -13,11 +13,15 @@ In this tutorial, we'll walk through setting up a basic Ruby on Rails app to sec
 
 <!--more-->
 
-Many Rails applications traditionally handle authentication, authorization, and user-management within the framework itself. With FusionAuth, we are able to separate those concerns from our application.
-At the same time, we get the benefit of a complete identity solution capable of handling registration, login, MFA, passwordless, SSO, social-logins, and much more.
+Many Rails applications traditionally handle authentication, authorization, and user-management within the framework itself. There are many fine strategies for implementing auth whether it be homegrown or using a handy gem like [devise](https://github.com/heartcombo/devise). 
+With FusionAuth however, we are able to [separate our auth concerns](https://en.wikipedia.org/wiki/Separation_of_concerns) from our application. Right away, we can scale our user base independent of our main application. As we build new applications or integrate with other platforms, 
+we now have one centralized place to tackle our authentication and authorization needs. Finally, with FusionAuth we get the benefit of a complete identity solution capable of satisfying most auth requirements such as SSO, MFA, social-login.
 
+At the end of this tutorial, you will have a working Ruby on Rails application that completes the OAuth2 flow leveraging FusionAuth to authenticate its users. 
 
-At the end of this tutorial, you will have a working Ruby on Rails application that leverages FusionAuth to authenticate its users.
+It is worth mentioning that we walked through securing a Ruby on Rails API with JWTs [in a previous post](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/) where we dove into 
+the composition of a JWT with regards to user authorization. In the following post, we will be both a JWT provider and consumer.
+Note that while we will be decoding the access token we receive from FusionAuth, we will not be getting into the specifics of claims as it relates to user authorization in this example.
 
 ## Prerequisites
 - Rails 6
@@ -46,12 +50,12 @@ We will want to configure a few pieces of important information:
 * **Authorized redirect URL's**: Found under the `Oauth` tab. This URL tells FusionAuth where to redirect to after a user successfully authenticates. 
 * **Logout URL**: Also found under the `Oauth` tab. This URL tells FusionAuth where to redirect to when a user logs out.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/edit-application.png" alt="Edit Application" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/edit-application.png" alt="Creating a new Application in FusionAuth." class="img-fluid" figure=false %}
 
 ### Create a User
 For this example, we will manually create a user. Click on `Users` in the left-nav bar and then click the green plus sign in the upper-right hand corner to add a new user.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/create-user.png" alt="Create User" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/create-user.png" alt="Creating a new User in FusionAuth." class="img-fluid" figure=false %}
 
 Configure the following attributes and then save the new user:
 * **Email**
@@ -63,17 +67,27 @@ Again, navigate to the `Users` page, find our newly created user, and click the 
 
 Click on the `Add Registration` button, select the Rails application we created, and save.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/user-registered.png" alt="User Registered" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/user-registered.png" alt="The Manage User page in FusionAuth." class="img-fluid" figure=false %}
 
 ## Build the Rails Application
 Lets get started building a very basic Rails application to demonstrate authentication with FusionAuth.
 
-We are going to start by creating a new Rails application.
+Create a new Rails application.
 ```bash
 rails new rails-fusionauth-app
 ```
 
+Our `Gemfile` will use a few additional dependencies so go ahead and add them before we get started.
+```ruby
+gem 'jwt'
+gem 'oauth'
+gem 'rest-client'
+```
 
+Install dependencies
+```bash
+bundle install
+```
 
 ### Configuration
 Before we go any further, there are some critical `Application` attributes we will need from our FusionAuth configuration so that our Rails app knows how to successfully communicate with it.
@@ -85,7 +99,7 @@ Specifically:
 
 You can recall, these can be found under the `OAuth` tab when modifying an application in FusionAuth.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/edit-application.png" alt="Edit Application" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/edit-application.png" alt="The OAuth tab in the Edit Application page of FusionAuth." class="img-fluid" figure=false %}
 
 ### Routes
 For this app, we are going to setup three routes:
@@ -110,6 +124,9 @@ We will start off with a very basic welcome view that contains a link for a user
 <p>Welcome user! Please <%= link_to 'Log In', @login_url %></p>
 ```
 
+It should look something like this when rendered.
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/home.png" alt="The example Home screen for the Rails application." class="img-fluid" figure=false %}
+
 To begin the login process, we will want to construct a URL to make an [Authorization Code Grant Request](https://fusionauth.io/docs/v1/tech/oauth/endpoints/#authorization-code-grant-request).
 This URL is composed of the `client_id`, `client_secret`, and `redirect_uri` values from our application configuration. 
 
@@ -126,31 +143,59 @@ class WelcomeController < ApplicationController
 end
 ```
 
+
+I decided that I wanted to utilize my environment to set my `client_id`, `client_secret` and `idp_url` (identity provider url) using `development.rb`.
+```ruby
+  # OAuth configuration
+  config.x.oauth.client_id = "my-client-id"
+  config.x.oauth.client_secret = "my-super-secret-oauth-secret"
+  config.x.oauth.idp_url = "http://localhost:9011/"
+```
+
+Additionally, I added the following to `ApplicationController` such that my child classes have access.
+```ruby
+  protected
+
+  def idp_url
+    Rails.configuration.x.oauth.idp_url
+  end
+
+  def client_id
+    Rails.configuration.x.oauth.client_id
+  end
+
+  def client_secret
+    Rails.configuration.x.oauth.client_secret
+  end
+```
+
 Now it's time to actually implement the OAuth callback. 
 
-(Note: I utilize `development.rb` for my config properties)
 ```ruby
 # app/controllers/oauth_controller.rb
 
 class OauthController < ApplicationController
   def initialize
-    @client_id = Rails.configuration.x.oauth.client_id
-    @client_secret = Rails.configuration.x.oauth.client_secret
-    @identity_provider_url = Rails.configuration.x.oauth.idp_url
     @redirect_uri = "http://localhost:3000/oauth2-callback"
   end
 
+  # The OAuth callback
   def oauth_callback
     code = params[:code]
-    query = { code: code,
-              grant_type: "authorization_code",
-              client_id: @client_id,
-              client_secret: @client_secret,
-              redirect_uri: @redirect_uri }.to_query
 
-    response = RestClient.post("#{@identity_provider_url}oauth2/token?" << query, {})
-    token = JSON.parse(response.body)["access_token"]
-    session[:user_jwt] = {value: token, httponly: true}
+    # Create an OAuth2 client to communicate with the auth server
+    client = OAuth2::Client.new(client_id,
+                                client_secret,
+                                site: idp_url,
+                                token_url: '/oauth2/token')
+
+    # Make a call to exchange the authorization_code for an access_token
+    token = client.auth_code.get_token(params[:code],
+                                       'redirect_uri': @redirect_uri)
+
+    # Set the token on the user session
+    session[:user_jwt] = { value: token.to_hash[:access_token], httponly: true }
+
     redirect_to root_path
   end
 
@@ -222,15 +267,6 @@ end
 ```
 
 ## Putting it all together
-Before running the Rails server, make sure to add the following dependencies to your Gemfile.
-```
-gem 'jwt'
-gem 'rest-client'
-```
-Install dependencies
-```
-bundle install
-```
 
 Kick the tires and light the fires
 ```
@@ -239,22 +275,25 @@ rails s
 
 Navigating to `http://localhost:3000`
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/home.png" alt="Home" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/home.png" alt="The example Home screen for the Rails application." class="img-fluid" figure=false %}
 
 Login to the Application
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/fa-login.png" alt="FusionAuth Login" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/fa-login.png" alt="The FusionAuth login page." class="img-fluid" figure=false %}
 
-We made it!
+We made it! We are logged in and our application knows who we are.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/logged-in.png" alt="Logged In" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/logged-in.png" alt="The example Home screen when logged-in to the Rails application." class="img-fluid" figure=false %}
 
-All done. Time to logout.
+Logout.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/logging-out.png" alt="Logging Out" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/logging-out.png" alt="The FusionAuth logging out page." class="img-fluid" figure=false %}
 
 ## Next Steps
-Self service registration? FusionAuth can do that. MFA? Yes indeed! By integrating with FusionAuth, we can continue to enhance identity management for our users. 
+Now that we have the OAuth flow working, our foundation is set to expand as needed. Here are a few ideas to tackle next:
+* Add and assign user roles such that functionality in our Rails application can be shown or hidden accordingly.
+* Customize the FusionAuth login page with a look and feel of our application including a logo.
+* Add a "Login with Google" or "Login with Facebook" social login.
 
 ## What did we learn?
 Using the Authorization Code grant in Rails lets you use any OAuth compatible identity provider to secure your application. The example code can be found on Github [here](https://github.com/FusionAuth/fusionauth-rails-app). 
