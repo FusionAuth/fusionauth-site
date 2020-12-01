@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Update user profile data in the admin UI
+title: Manage custom user profile data in the FusionAuth admin
 description: Once you have custom user data in the FusionAuth system, how can you update it?
 image: blogs/controlling-hotspot/controlling-a-hotspot-with-fusionauth-authentication.png
 author: Dan Moore
