@@ -13,11 +13,19 @@ In this tutorial, we'll walk through setting up a basic Ruby on Rails app to sec
 
 <!--more-->
 
-Many Rails applications traditionally handle authentication, authorization, and user-management within the framework itself. There are many fine strategies for implementing auth whether it be homegrown or using a handy gem like [devise](https://github.com/heartcombo/devise). 
-With FusionAuth however, we are able to [separate our auth concerns](https://en.wikipedia.org/wiki/Separation_of_concerns) from our application. Right away, we can scale our user base independent of our main application. As we build new applications or integrate with other platforms, 
-we now have one centralized place to tackle our authentication and authorization needs. Finally, with FusionAuth we get the benefit of a complete identity solution capable of satisfying most auth requirements such as SSO, MFA, social-login.
+Many Rails applications traditionally handle authentication, authorization, and user-management within the framework itself. There are many strategies for implementing, including using a handy gem like [devise](https://github.com/heartcombo/devise). 
+With FusionAuth however, we are able to [separate our auth concerns](https://en.wikipedia.org/wiki/Separation_of_concerns) from our application. Right away, we can scale our user base independently of our main application. As we build new applications or integrate with other platforms, 
+we now have one centralized place to handle our authentication and authorization needs.
+
+Why does that matter? Imagine that my company already has an existing identity provider and that I need to integrate my new application with it. Perhaps I have many applications that I need to integrate with my identity provider.  
+Maybe I am a startup and want to offload all user management including the functionality and security concerns that come along with it to FusionAuth. By having all of our user management
+concerns handled in one place, we can focus on the requirements of our application independently. 
+
+Finally, with FusionAuth we get the benefit of a complete identity solution capable of satisfying most auth requirements such as SSO, MFA, and social-login.
 
 At the end of this tutorial, you will have a working Ruby on Rails application that completes the OAuth2 flow leveraging FusionAuth to authenticate its users. 
+
+The code is available under an Apache2 license [on Github](https://github.com/FusionAuth/fusionauth-example-rails-oauth).
 
 It is worth mentioning that we walked through securing a Ruby on Rails API with JWTs [in a previous post](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/) where we dove into 
 the composition of a JWT with regards to user authorization. In the following post, we will be both a JWT provider and consumer.
@@ -35,9 +43,9 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-(Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options.)
+If you prefer to install FusionAuth locally, see the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide/) to get up and running.  
 
-Once your Docker container is up, it should be running at [localhost:9011](http://localhost:9011). Navigate there and finish the setup steps. 
+Once you have FusionAuth installed, it should be running at [localhost:9011](http://localhost:9011). Navigate there and finish the setup steps. 
 When those are completed, login as the administrator that you just created. Now we are ready to rock!
 
 First things first. A [FusionAuth Application](https://fusionauth.io/docs/v1/tech/core-concepts/applications/) is simply something a user can log into.
@@ -100,6 +108,36 @@ You can recall, these can be found under the `OAuth` tab when modifying an appli
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/edit-application.png" alt="The OAuth tab in the Edit Application page of FusionAuth." class="img-fluid" figure=false %}
 
+I decided that I wanted to utilize my environment to set my `client_id`, `client_secret`, `idp_url` (identity provider url), and `redirect_uri` values using `development.rb`.
+```ruby
+  # OAuth configuration
+  config.x.oauth.client_id = "my-client-id"
+  config.x.oauth.client_secret = "my-super-secret-oauth-secret"
+  config.x.oauth.idp_url = "http://localhost:9011/"
+  config.x.oauth.redirect_uri = "http://localhost:3000/oauth2-callback"
+```
+
+Additionally, I added the following to `ApplicationController` such that our subclasses inherit the corresponding environment values.
+```ruby
+  protected
+
+  def idp_url
+    Rails.configuration.x.oauth.idp_url
+  end
+
+  def client_id
+    Rails.configuration.x.oauth.client_id
+  end
+
+  def client_secret
+    Rails.configuration.x.oauth.client_secret
+  end
+
+  def redirect_uri
+    Rails.config.x.oauth.redirect_uri
+  end
+```
+
 ### Routes
 For this app, we are going to setup three routes:
 * **welcome page**: Our root page or `view`. 
@@ -127,45 +165,38 @@ It should look something like this when rendered.
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/home.png" alt="The example Home screen for the Rails application." class="img-fluid" figure=false %}
 
 To begin the login process, we will want to construct a URL to make an [Authorization Code Grant Request](https://fusionauth.io/docs/v1/tech/oauth/endpoints/#authorization-code-grant-request).
-This URL is composed of the `client_id`, `client_secret`, and `redirect_uri` values from our application configuration. 
+This URL is composed of the `client_id`, `client_secret`, and `redirect_uri`. The `client_id` and `client_secret` parameters identify the application that we are logging into and are generated when we create the application in FusionAuth. The `redirect_uri` parameter
+indicates where to redirect upon a successful request. The `redirect_uri` value must exist as an `Authorized redirect URL` on the application configuration in FusionAuth for the request to be successful. This is why we initially set this value when creating the application.
 
-We will also construct the URL used to make a [Logout](https://fusionauth.io/docs/v1/tech/oauth/endpoints/#logout) request.
+We will also construct the URL used to make a [Logout](https://fusionauth.io/docs/v1/tech/oauth/endpoints/#logout) request. Again, recall that we also configured this on the application in FusionAuth.
 
 ```ruby
 # app/controllers/welcome_controller.rb
 
 class WelcomeController < ApplicationController
-  def initialize
-    @login_url = 'http://localhost:9011/oauth2/authorize?client_id=799b3fe1-4a52-494f-a13a-b97b1377e073&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth2-callback'
-    @logout_url = 'http://localhost:9011/oauth2/logout?client_id=799b3fe1-4a52-494f-a13a-b97b1377e073'
+  def index
+    build_login_url
+    build_logout_url
+  end
+
+  private
+
+  def build_login_url
+    query = {
+        client_id: client_id,
+        client_secret: client_secret,
+        response_type: "code",
+        redirect_uri: redirect_uri
+    }.to_query
+
+    @login_url = "#{idp_url}oauth2/authorize?#{query}"
+  end
+
+  def build_logout_url
+    query = { client_id: client_id }.to_query
+    @logout_url= "#{idp_url}oauth2/logout?#{query}"
   end
 end
-```
-
-
-I decided that I wanted to utilize my environment to set my `client_id`, `client_secret` and `idp_url` (identity provider url) using `development.rb`.
-```ruby
-  # OAuth configuration
-  config.x.oauth.client_id = "my-client-id"
-  config.x.oauth.client_secret = "my-super-secret-oauth-secret"
-  config.x.oauth.idp_url = "http://localhost:9011/"
-```
-
-Additionally, I added the following to `ApplicationController` such that my child classes have access.
-```ruby
-  protected
-
-  def idp_url
-    Rails.configuration.x.oauth.idp_url
-  end
-
-  def client_id
-    Rails.configuration.x.oauth.client_id
-  end
-
-  def client_secret
-    Rails.configuration.x.oauth.client_secret
-  end
 ```
 
 Now it's time to actually implement the OAuth callback. 
@@ -174,10 +205,6 @@ Now it's time to actually implement the OAuth callback.
 # app/controllers/oauth_controller.rb
 
 class OauthController < ApplicationController
-  def initialize
-    @redirect_uri = "http://localhost:3000/oauth2-callback"
-  end
-
   # The OAuth callback
   def oauth_callback
     code = params[:code]
@@ -190,7 +217,7 @@ class OauthController < ApplicationController
 
     # Make a call to exchange the authorization_code for an access_token
     token = client.auth_code.get_token(params[:code],
-                                       'redirect_uri': @redirect_uri)
+                                       'redirect_uri': redirect_uri)
 
     # Set the token on the user session
     session[:user_jwt] = { value: token.to_hash[:access_token], httponly: true }
@@ -284,7 +311,7 @@ We made it! We are logged in and our application knows who we are.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/logged-in.png" alt="The example Home screen when logged-in to the Rails application." class="img-fluid" figure=false %}
 
-Logout.
+Let us now assume that we are now done interacting with the application and are ready to log out by navigating to the corresponding URL.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/logging-out.png" alt="The FusionAuth logging out page." class="img-fluid" figure=false %}
 
@@ -295,6 +322,6 @@ Now that we have the OAuth flow working, our foundation is set to expand as need
 * Add a "Login with Google" or "Login with Facebook" social login.
 
 ## What did we learn?
-Using the Authorization Code grant in Rails lets you use any OAuth compatible identity provider to secure your application. The example code can be found on Github [here](https://github.com/FusionAuth/fusionauth-rails-app). 
+Using the Authorization Code grant in Rails lets you use any OAuth compatible identity provider to secure your application. The example code can be found on Github [here](https://github.com/FusionAuth/fusionauth-example-rails-oauth). 
 
 Happy coding!
