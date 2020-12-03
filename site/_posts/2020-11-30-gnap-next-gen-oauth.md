@@ -185,40 +185,60 @@ The `key` value of the `client` object is the public key of the client, in this 
 
 ### Identity built in
 
+Unlike OAuth which is an authorization framework and didn't really have the concept of identity, GNAP has identity built in. The client may request information about the resource owner in the initial grant request. If the authorization server determines that the resource owner has granted permission to release this information to the client, either actively or passively, it can be returned. Here's an example from the draft specification:
+
+```json
+{
+  "user": {
+    "sub_ids": [ {
+      "subject_type": "email",
+      "email": "user@example.com"
+    } ],
+    "assertions": {
+      "id_token": "eyj..."
+    }
+  }
+}
+```
+
+The flip side is also true. If the client knows who the resource owner is, it can present identity claims as well. If a client presents identity claims that the authorization server trusts are tied to the resource owner, the resource owner may not need to be consulted for delegation decisions. From the specification:
+
+> If the AS trusts the RC to present verifiable assertions, the AS MAY decide, based on its policy, to skip interaction with the RO, even if the RC provides one or more interaction modes in its request.
+
 ### Developer ergonomics
 
+OAuth requires you to use `application/x-www-form-urlencoded` media type, and all of the interactions are built using form parameters. This is a stable format, guaranteed to be understandable and usable by many different clients. However, many modern APIs use `application/json` as the media format. JSON has its flaws; why oh why can't we have comments in JSON? But this format is more flexible and allows for conveying richer object structures. One nice thing about JSON is that you can collapse many objects into simple strings; you don't have to use nested structures if you don't want to.
 
+You can reference resources, interactions and other entities by reference as well. For example, here's a reference to an interaction which can be used to modify an existing grant, as discussed above:
 
+```json
+{
+  "interact_ref": "4IFWWIKYBC2PQ6U56NL1"
+}
+```
+
+These references are one time use. Additionally, there is one endpoint starting off interaction. In true HATEOAS fashion, clients can start from one well known endpoint and then follow links presented by the authorization server. No more consulting documentation to find out which endpoints you have to call when.
 
 ## What should you do?
 
-If OAuth2 works for you, keep using it
-Authorization Code Grant with PKCE please
-People will still be running OAuth2 in 3 years
+That's a lot of new functionality. What should you do about GNAP in general?
 
+First, If OAuth2 works for you, keep using it. Use it properly, with all the security suggestions outlined by by OAuth 2.1, including the PKCE extension. Twitter recently updated from 2010's OAuth1; it's likely that systems will still be running OAuth2 in three years. In fact, my team mates laughed when I said three years; they think it'll be more like a decade.
 
-Keep an eye on the draft. There's a lot more in there that is worth examining.
-Check in
-Join the mailing list
-Contribute if you can
-Reference implementations
+If you are an authorization server vendor, or you build your own OAuth servers, then you should:
 
+* Keep an eye on the draft. There's a lot more in there that is worth examining, and it's changing fast.
+* Join the mailing list and contribute if you can, as many members of the identity community already have. I've seen new members join the mailing list and be welcomed with their feedback.
+* Watch for or implement reference implementations. Justin, one of the editors of the spec, has committed to transitioning [OAuth.XYZ](https://oauth.xyz/) to being an implementation of GNAP: "GNAP will one day be a formal standard, and as that standardization process takes place, XYZ will transition to being an implementation of that standard. "
 
-Review to see if it fits your use cases better
-Migration path for major OAuth grants
-In draft right now
+If you are a user of OAuth, you can take a more relaxed position. Howeer, it still behooves you to review GNAP and see if it fits your use cases better, especially as the specification becomes more and more concrete. In particular, review the migration path for the major OAuth grants. Have a discussion with your authorization server vendor, or with the maintainers of open source libraries you might use, to see what their plans are for GNAP.
 
+## Additional resources
 
+Here are some additional helpful resources, should this have just whetted your appetite for all things GNAP.
 
-video
-
-
-
-
-Why GNAP
-
-OAuth2 successful
-
-image ofk
-
+* [The GNAP WG charter](https://datatracker.ietf.org/wg/gnap/about/)
+* [The GNAP mailing list](https://mailarchive.ietf.org/arch/browse/txauth/)
+* [The GNAP GitHub repo](https://github.com/ietf-wg-gnap/gnap-core-protocol/)
+* An InfoWorld article: ["GNAP: OAuth the next generation"](https://www.infoworld.com/article/3596345/gnap-oauth-the-next-generation.html)
 
