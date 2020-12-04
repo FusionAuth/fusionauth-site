@@ -39,9 +39,9 @@ But nothing is perfect. OAuth2 also has some flaws. Some of them include:
 * Discovery of endpoints is slightly cumbersome. From the RFC: " The means through which the client obtains the location of the authorization endpoint are beyond the scope of this specification, but the location is typically provided in the service documentation."
 * The mobile app experience is suboptimal. The BCP for mobile apps, [8252](https://tools.ietf.org/html/rfc8252), indicates that webviews should not be used: "This best current practice requires that native apps MUST NOT use embedded user-agents to perform authorization requests...". This means that your beautiful native app has to open a system browser when it comes time to authenticate. Not the best user experience.
 
-A big issue with OAuth2 is complexity. Here are some of the RFCs that you may need to read as a user of OAuth.
+A big issue with OAuth2 is complexity. Here are some of the RFCs that you may need to read as a user of OAuth:
 
-PIC TBD
+{% include _image.liquid src="/assets/img//blogs/gnap-oauth2-next-gen/oauth2-spec-pyramid.svg" alt="The pyramid of OAuth2 specifications" class="img-fluid" figure=false %}
 
 To be fair, [OAuth 2.1 is addressing some of these issues](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/), but from my reading of the draft spec and discussion on the mailing list, GNAP aims to address them more fully.
 
