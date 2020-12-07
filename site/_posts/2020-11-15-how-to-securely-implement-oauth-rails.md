@@ -28,8 +28,7 @@ At the end of this tutorial, you will have a working Ruby on Rails application t
 The code is available under an Apache2 license [on Github](https://github.com/FusionAuth/fusionauth-example-rails-oauth).
 
 It is worth mentioning that we walked through securing a Ruby on Rails API with JWTs [in a previous post](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/) where we dove into 
-the composition of a JWT with regards to user authorization. In the following post, we will be both a JWT provider and consumer.
-Note that while we will be decoding the access token we receive from FusionAuth, we will not be getting into the specifics of claims as it relates to user authorization in this example.
+the composition of a JWT with regards to user authorization. In the following post, we will use the same process of securing our web application by validating a JWT that will be provided by the authentication process.
 
 ## Prerequisites
 - Rails 6
@@ -109,12 +108,14 @@ You can recall, these can be found under the `OAuth` tab when modifying an appli
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/edit-application.png" alt="The OAuth tab in the Edit Application page of FusionAuth." class="img-fluid" figure=false %}
 
 I decided that I wanted to utilize my environment to set my `client_id`, `client_secret`, `idp_url` (identity provider url), and `redirect_uri` values using `development.rb`.
+We will set an environment variable that contains our HMAC secret that will be used to decode the token recieved in the authentication process.
 ```ruby
   # OAuth configuration
   config.x.oauth.client_id = "my-client-id"
   config.x.oauth.client_secret = "my-super-secret-oauth-secret"
   config.x.oauth.idp_url = "http://localhost:9011/"
   config.x.oauth.redirect_uri = "http://localhost:3000/oauth2-callback"
+  config.x.oauth.hmac = ENV['HMAC_SECRET']
 ```
 
 Additionally, I added the following to `ApplicationController` such that our subclasses inherit the corresponding environment values.
@@ -152,7 +153,7 @@ Rails.application.routes.draw do
 end
 ```
 
-### Authenticating and Logging Out 
+### Authenticating with FusionAuth
 We will start off with a very basic welcome view that contains a link for a user to login to the application.
 
 ```ruby
@@ -199,7 +200,87 @@ class WelcomeController < ApplicationController
 end
 ```
 
-Now it's time to actually implement the OAuth callback. 
+Next, we want to implement the controller to handle the OAuth callback. 
+In summary, `oauth_callback` does a few things:
+1. Handles the redirect following FusionAuth authentication receiving an `authorization code`.
+2. Executes a request back to FusionAuth to exchange the authorization code for an access token.
+3. Decodes and validates the claims on the received access token.
+4. Saves the `access token` (JWT) on the session to indicate that the user has successfully authenticated.
+
+When a user clicks on the `Login` link, they will be presented with a login form from FusionAuth.
+Upon successful authentication, FusionAuth redirects back to the Rails app along with an `authorization_code` as described above.
+This is where we pick up in the `oauth_callback` method.
+
+The next step in the OAuth flow will be to exchange our authorization code for an access token.
+For that, we will make an additional [code exchange](https://fusionauth.io/docs/v1/tech/oauth/endpoints/#complete-the-authorization-code-grant-request) request. 
+Using the [`oauth2`](https://github.com/oauth-xx/oauth2) gem, we construct a client and then make the request passing the authorization code and 
+redirect URI.
+
+```ruby
+# Create an OAuth2 client to communicate with the auth server
+client = OAuth2::Client.new(client_id,
+                            client_secret,
+                            site: idp_url,
+                            token_url: '/oauth2/token')
+
+# Make a call to exchange the authorization_code for an access_token
+response = client.auth_code.get_token(params[:code],
+                                      'redirect_uri': redirect_uri)
+
+# Extract the access token from the response
+token = response.to_hash[:access_token]
+```
+
+We receive the access token encoded as a `JWT`. 
+We now want to decode the JWT and verify claims. For this example, we validate the `aud` and `iss` claims that 
+reflect the application `client_id` and token issuer respectively. 
+
+```ruby
+# Decode the token
+begin
+  decoded = TokenDecoder.new(token, client_id).decode
+rescue
+  head :forbidden
+  return
+end
+```
+
+The TokenDecoder class decodes the JWT, verifies the HMAC secret, and validates claims.
+
+```ruby
+class TokenDecoder
+
+  def initialize(token, aud)
+    @token = token
+    @aud = aud
+    @iss = 'fusionauth.io'
+  end
+
+  def decode
+    begin
+      JWT.decode(
+          @token,
+          Rails.configuration.x.oauth.hmac,
+          true,
+          {
+              verify_iss: true,
+              iss: @iss,
+              verify_aud: true,
+              aud: @aud,
+              algorithm: 'HS256'})
+    rescue JWT::VerificationError
+      puts "verification error"
+      raise
+    rescue JWT::DecodeError
+      puts "bad stuff happened"
+      raise
+    end
+  end
+end
+```
+
+Finally, we set the token on the user session and redirect back to our Welcome page concluding our `oauth_callback` method. 
+The entire class now looks like the following.
 
 ```ruby
 # app/controllers/oauth_controller.rb
@@ -207,8 +288,6 @@ Now it's time to actually implement the OAuth callback.
 class OauthController < ApplicationController
   # The OAuth callback
   def oauth_callback
-    code = params[:code]
-
     # Create an OAuth2 client to communicate with the auth server
     client = OAuth2::Client.new(client_id,
                                 client_secret,
@@ -216,11 +295,22 @@ class OauthController < ApplicationController
                                 token_url: '/oauth2/token')
 
     # Make a call to exchange the authorization_code for an access_token
-    token = client.auth_code.get_token(params[:code],
-                                       'redirect_uri': redirect_uri)
+    response = client.auth_code.get_token(params[:code],
+                                          'redirect_uri': redirect_uri)
+
+    # Extract the access token from the response
+    token = response.to_hash[:access_token]
+
+    # Decode the token
+    begin
+      decoded = TokenDecoder.new(token, client_id).decode
+    rescue
+      head :forbidden
+      return
+    end
 
     # Set the token on the user session
-    session[:user_jwt] = { value: token.to_hash[:access_token], httponly: true }
+    session[:user_jwt] = {value: decoded, httponly: true}
 
     redirect_to root_path
   end
@@ -231,18 +321,8 @@ class OauthController < ApplicationController
   end
 end
 ```
-In summary, `oauth_callback` does a few things:
-1. It handles the redirect following FusionAuth authentication receiving an `authorization code`.
-2. It makes an additional call to exchange the authorization code for an access token.
-3. Saves the `access token` (JWT) on the session to indicate that the user has successfully authenticated.
 
-When a user clicks on the `Login` link, they will be presented with a login form from FusionAuth.
-Upon successful authentication, the FusionAuth redirects back to the Rails app along with an `authorization_code`. This is where we pick up in the `oauth_callback` method.
-
-The next step will be to exchange our authorization code for an access token.
-While we are authenticated, it is not sufficient access to access a user's resources. For that, we will make an additional [code exchange](https://fusionauth.io/docs/v1/tech/oauth/endpoints/#complete-the-authorization-code-grant-request) request. 
-
-We receive the access token encoded as a `JWT`. Finally, we save the JWT on the user session and redirect to the Welcome page. 
+### Logging out
 
 The `logout` callback is much simpler. Similar to `oauth_callback` in the way that it receives the authorize redirect, our `destroy` method receives the logout redirect.
 Receiving the redirect tells us that the user has been logged out of FusionAuth and we are safe to clear the user's session in Rails.
@@ -252,7 +332,7 @@ Now that we have the functionality to authenticate users as well as log them out
 
 There are numerous ways to handle user sessions in Rails, but for this example, I decided to create helper methods accessible to all sub-classes of ApplicationController.
 
-`current_user` looks for a user jwt on the session. If it exists, it decodes the JWT and retrieves user's email address.
+`current_user` looks for a user JWT on the session. If it exists and the email has been verified, it retrieves the user's email address from the JWT.
 If it does not exist, this means the user has logged out or their session has expired.
 
 ```ruby
@@ -264,11 +344,15 @@ class ApplicationController < ActionController::Base
 
   def current_user
     if session[:user_jwt]
-      token = session[:user_jwt]
-      decoded = TokenService.decode(token["value"])
-      decoded.first["email"]
-    end
+      token = session[:user_jwt]["value"].first
 
+      if token && token["email_verified"]
+        @email = token["email"]
+      else
+        head :forbidden
+        return
+      end
+    end
   end
 
   def logged_in?
@@ -278,23 +362,11 @@ class ApplicationController < ActionController::Base
 end
 ```
 
-```ruby
-# app/services/token_service.rb
-
-class TokenService
-  def self.decode(token)
-    JWT.decode(
-        token,
-        nil,
-        false,
-        {algorithm: 'HS256'})
-  end
-end
-```
-
 ## Putting it all together
 
-Kick the tires and light the fires
+It's time to make our Ruby on Rails OAuth flow a reality by walking through an example login. 
+
+Kick the tires and light the fires! Fire up our Rails server.
 ```
 rails s
 ```
