@@ -27,8 +27,11 @@ At the end of this tutorial, you will have a working Ruby on Rails application t
 
 The code is available under an Apache2 license [on Github](https://github.com/FusionAuth/fusionauth-example-rails-oauth).
 
-It is worth mentioning that we walked through securing a Ruby on Rails API with JWTs [in a previous post](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/) where we dove into 
-the composition of a JWT with regards to user authorization. In the following post, we will use the same process of securing our web application by validating a JWT that will be provided by the authentication process.
+In a [previous post](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/), we demonstrated how to encode, decode, and verify the authenticity
+of a JWT to [secure a Ruby on Rails API](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/).
+In this post, we will leverage those same concepts with FusionAuth being the authentication provider issuing the token. 
+
+It is worth noting that we will be referring to a `JWT` and `access token` interchangeably. A JWT is simply the access token format issued by FusionAuth that we will be using.
 
 ## Prerequisites
 - Rails 6
@@ -72,7 +75,7 @@ Configure the following attributes and then save the new user:
 Looking good! Now we have our new application and a user. The last thing we want to do is `register` the user with our `application`.
 Again, navigate to the `Users` page, find our newly created user, and click the `Manage` button.
 
-Click on the `Add Registration` button, select the Rails application we created, and save.
+Click on the `Add Registration` button, select the Rails application we created, and `save`.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/user-registered.png" alt="The Manage User page in FusionAuth." class="img-fluid" figure=false %}
 
@@ -381,16 +384,16 @@ end
 It's time to make our Ruby on Rails OAuth flow a reality by walking through an example login. 
 Before starting up the Rails server, be sure to set `HMAC_SECRET` with the `default signing key` value in your environment making it accessible to our development configuration. 
 
-Kick the tires and light the fires! Fire up our Rails server.
+Kick the tires and light the fires!
 ```
 rails s
 ```
 
-Navigating to `http://localhost:3000`
+Navigate to `http://localhost:3000`. Substitute the corresponding port if you are using something other than 3000.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/home.png" alt="The example Home screen for the Rails application." class="img-fluid" figure=false %}
 
-Login to the Application
+Log-in to the application with the user we created and registered in FusionAuth.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/fa-login.png" alt="The FusionAuth login page." class="img-fluid" figure=false %}
 
