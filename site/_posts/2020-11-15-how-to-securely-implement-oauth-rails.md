@@ -76,6 +76,20 @@ Click on the `Add Registration` button, select the Rails application we created,
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/user-registered.png" alt="The Manage User page in FusionAuth." class="img-fluid" figure=false %}
 
+### Issuer and Signing Key
+
+There are two more attributes we want to configure in FusionAuth. The first attribute is the named issuer value used to sign tokens. We will use this value when 
+verifying the access token during login. To do this, navigate to `Tenants` on the left navigation bar and then click the `Edit` button that corresponds
+to `Default` tenant. Set the `issuer` field under the `General` tab.
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/issuer.png" alt="The Edit Tenant page where the issuer field is set." class="img-fluid" figure=false %}
+
+The second attribute is the HMAC signing key that is used to encode the token. Navigate to `Settings > Key Master` from the left navigation bar. 
+Then click on the `View` button that corresponds to the `Default Signing Key`. From here, `click to reveal` the key and copy it to a safe location. 
+We will need this value to successfully decode the token in our application.
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/secret.png" alt="The Edit Tenant page where the issuer field is set." class="img-fluid" figure=false %}
+
 ## Build the Rails Application
 Lets get started building a very basic Rails application to demonstrate authentication with FusionAuth.
 
@@ -233,7 +247,7 @@ token = response.to_hash[:access_token]
 
 We receive the access token encoded as a `JWT`. 
 We now want to decode the JWT and verify claims. For this example, we validate the `aud` and `iss` claims that 
-reflect the application `client_id` and token issuer respectively. 
+reflect the application `client_id` and token issuer respectively. Recall that we configured the issuer value earlier in FusionAuth. 
 
 ```ruby
 # Decode the token
@@ -365,6 +379,7 @@ end
 ## Putting it all together
 
 It's time to make our Ruby on Rails OAuth flow a reality by walking through an example login. 
+Before starting up the Rails server, be sure to set `HMAC_SECRET` with the `default signing key` value in your environment making it accessible to our development configuration. 
 
 Kick the tires and light the fires! Fire up our Rails server.
 ```
