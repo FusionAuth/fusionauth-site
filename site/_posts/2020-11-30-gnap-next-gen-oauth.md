@@ -45,23 +45,25 @@ A big issue with OAuth2 is complexity. Here are some of the RFCs that you may ne
 
 {% include _image.liquid src="/assets/img//blogs/gnap-oauth2-next-gen/oauth2-spec-pyramid.svg" alt="The pyramid of OAuth2 specifications" class="img-fluid" figure=false %}
 
-To be fair, [OAuth 2.1 is addressing some of these issues](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/), but from my research, including reading the draft spec and reviewing discussion on the mailing list, GNAP aims to address them more fully.
-
-WIP
+GNAP isn't alone in trying to fix some of these issues. [OAuth 2.1](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/) is addressing some of them as well, but from my research, including reading the draft spec and reviewing discussion on the mailing list, GNAP aims to address them more fully.
 
 ## Things that excite me about GNAP
 
-First, it's worth reiterating that GNAP is changing rapidly. There's a lot of discussion on the [mailing list](https://mailarchive.ietf.org/arch/browse/txauth/) and you can also see changes happening in the [GitHub repo](https://github.com/ietf-wg-gnap/gnap-core-protocol/). It appears that the draft is being edited there. All that is to say that these features may be in, out, or modified if you read this post months after it was posted.
+First, it's worth reiterating that GNAP is still changing. There's a lot of discussion on the [mailing list](https://mailarchive.ietf.org/arch/browse/txauth/) and you can also see changes in the [GitHub repo](https://github.com/ietf-wg-gnap/gnap-core-protocol/). It appears that the draft is being edited there. The features below may be in, out, or modified if you are reading this post months after it was published.
 
-Here's a video explaining more about GNAP. Plus beer gardens!
+Second, if you prefer authorization content spoken rather than written, I also recorded a video with about GNAP. Plus beer gardens!
 
 {% include _youtube-video.liquid youtubeid="n8xAFjzJsTU" %}
 
-Here are some of the parts of GNAP which seem exciting and will help make auth easier to use going forward.
+Below are some of the exciting GNAP features which will help make OAuth style auth easier to use when this specification is published and implemented.
 
 ### Distinct roles for the Requesting Party and Resource Owner 
 
-Right now, the resource owner, who can grant delegate access to the protected resources, is assumed to be the person who requested the grant. This is often the case, as when I grant a photo printing service access to my Flickr account. Wait, is it 2012? I meant my Google Photos account. But sometimes the entity requesting permission may be different than the entity which needs to grant permission, the "Resource Owner" or RO. This is called the "Requesting Party" and has the acronym RQ, maybe because RP already is taken by "Relying Party". The RQ drives the "Resource Client", or RC, which could be a browser or some other device.
+In the typical OAuth authorization code grant, the owner of a resource, who can grant delegate access to the protected resources, is assumed to be the person who requested the grant. 
+
+This is often the case, as when I grant a photo printing service access to my Flickr account. Wait, is it 2012? I meant my Google Photos account. 
+
+But sometimes the entity requesting permission may be different than the entity which needs to grant permission, the "Resource Owner" or RO. In GNAP, this entity is termed the "Requesting Party" and has the acronym RQ, maybe because RP already is taken by a common auth term: "Relying Party". The RQ drives the "Resource Client", or RC, which could be a browser or some other device. The RQ wants access to protected resources, which live on the "Resource Server", or RS.
 
 From the specification:
 
@@ -69,9 +71,11 @@ From the specification:
 
 ### Multiple access tokens
 
-A client can ask multiple access tokens in one grant request. This would allow you to ask for different levels of access for different resources. This is of course possible now with multiple grant requests, but could be useful in helping clients follow security best practices such as the principle of least privilege.
+With GNAP, a client can ask for multiple access tokens in one grant request. This would allow software to request different access levels for different resources. 
 
-Here's an example of how that might look, pulled from the draft specification.
+This is of course possible now with multiple grant requests, but making this easier will help build systems with more granular sets of permissions. For instance, you could request `read` privileges on one resource and `read/write` privileges on another, but only ask the owner of the resources to authenticate and approve these permissions once.
+
+Here's an example of how such a request might look, pulled from the draft specification:
 
 ```json
 { 
@@ -116,24 +120,24 @@ Here's an example of how that might look, pulled from the draft specification.
 }
 ```
 
-You can see that the resource requests can be rich JSON objects, such as the `photo-api` resource. They can also be simple strings, as is `dolphin-metadata`.
+You can see that the resources to which access is requested can be rich JSON objects, as the `photo-api` resource is. They can also be simple strings, as is `dolphin-metadata`.
 
 ### Interactions are first class concepts
 
-In GNAP, the client, also known as the RC, declares what kind of interactions it supports. The authorization server, also known as the AS, responds with the type of interaction that it wants the client to use to interact with the resource owner, or RO. This is a great way to provide an extension point for the future, while still supporting older clients.
+In GNAP, the "Requesting Client", also known as the RC, declares what kind of interactions it supports. The "Authorization Server", also known as the AS, responds to the request with a supported interaction which can be used to interact with the "Resource Owner", or RO. In some cases it may be used to interact with the RC as well; the specification is a bit fast and loose here. 
 
-Some examples of interactions include:
+Having these interactions defined in the spec as first class objects provides an extension point for adding future interactions. Examples of defined interactions include:
 
-* Redirect: "redirect[ing] to an arbitrary URL"
-* App: "launch an application URL"
-* Callback: a URL provided by the RC after the AS interaction is finished.
+* Redirect: "redirect[ing] to an arbitrary URL" using the browser.
+* App: "launch[ing] an application URL" on a mobile device.
+* Callback: a URL to which the AS should send the RO after the AS is done with this interaction.
 * User code: a short code which can be displayed, similar to the device grant.
 
-There's even support for avoiding interaction between the RC and the RO, which is useful if you have an out of band method for the RC and the RO to communicate.
+There's also support for "no interaction" between the RC and the RO, which is useful if you have an out of band method by which the RC and the RO can communicate.
 
-### Continuation of grant
+### Continuation of a grant
 
-Grant requests in OAuth2 are typically one and done. If circumstances change, you start a new grant. With GNAP, you get a grant identifier if the authorization server determines that the grant can be continued. That might look something like this:
+Grant requests in OAuth2 are typically one and done. If circumstances change, you start a new grant. With GNAP, if the AS determines a grant can be continued, you get a grant identifier. This might be part of the response recieved from an AS for such a grant:
 
 ```json
 {
@@ -148,48 +152,58 @@ Grant requests in OAuth2 are typically one and done. If circumstances change, yo
 }
 ```
 
-This lets a client step up or step down access. For example, when a client first interacts with a resource, it might need write access, but later only need read access. With GNAP, if the grant can be continued, the client can revise the grant request to get a token tied to fewer privileges. This again helps ensure that the client only has access that it needs, while doing so in a way that isn't an undue burden on the client. 
+The `access_token` in the above snippet is the grant identifier and can be presented to the AS if the grant should be modified or continued. It's a bit confusing, because this `access_token` isn't related to access to the resource servers in any direct manner.
 
-In some cases, such as the step down scenario above, the authorization server may not even need to communicate with the resource owner. From the spec:
+Being able to continue a grant lets a client step up or step down access if their circumstances change. For example, when a client first interacts with a resource, it might need write access, but later only need read access. With GNAP, the client can revise the grant request to get a new token tied to fewer privileges. This ensures that the client only has privileges it needs when it needs it.
 
-> ... The RC realizes that it no longer needs "write" access and therefore modifies its ongoing request, here asking for just "read" access instead of both "read" and "write" as before. The AS replaces the previous resources from the first request, allowing the AS to determine if any previously-granted consent already applies. In this case, the AS would likely determine that reducing the breadth of the requested access means that new access tokens can be issued to the RC. The AS would likely revoke previously-issued access tokens that had the greater access rights associated with them.
+In some cases, such as the step down scenario, where fewer privileges are needed, the authorization server may not even communicate with the resource owner. From the spec:
 
-You can also cancel grants, if the client's needs change. This is done with a call that feels RESTFUL:
+> ... [When] the RC realizes that it no longer needs "write" access and therefore modifies its ongoing request, here asking for just "read" access instead of both "read" and "write" as before. ... The AS replaces the previous resources from the first request, allowing the AS to determine if any previously-granted consent already applies. In this case, the AS would likely determine that reducing the breadth of the requested access means that new access tokens can be issued to the RC. The AS would likely revoke previously-issued access tokens that had the greater access rights associated with them.
+
+You can also cancel grants, if the client no longer needs access to protected resources. This is done with a `DELETE` call using the aforementioned `access_token`.
 
 > If the RC wishes to cancel an ongoing grant request, it makes an HTTP DELETE request to the continuation URI.
 
+This will also require the AS to revoke tokens associated with this request.
+
 ### Keys keys everywhere
 
-Cryptographic keys are built deep into GNAP, and are referenced many times in many parts of grants. Here's an example partial request, again pulled from the draft spec, from a client to which an authorization server might respond:
+Cryptographic keys are woven deeply into GNAP, and are referenced many times in the grant request workflow. Here's an excerpt of an example request, pulled from the draft spec, from a client:
 
 ```json
 {
-    "client": {
-      "display": {
-        "name": "My Client Display Name",
-        "uri": "https://example.net/client"
-      },
-      "key": {
-        "proof": "jwsd",
-        "jwk": {
-                    "kty": "RSA",
-                    "e": "AQAB",
-                    "kid": "xyz-1",
-                    "alg": "RS256",
-                    "n": "kOB5rR4Jv0GMeL...."
-        }
-      }
+  "client": {
+    "display": {
+      "name": "My Client Display Name",
+      "uri": "https://example.net/client"
     },
+    "key": {
+      "proof": "jwsd",
+      "jwk": {
+        "kty": "RSA",
+        "e": "AQAB",
+        "kid": "xyz-1",
+        "alg": "RS256",
+        "n": "kOB5rR4Jv0GMeL...."
+      }
+    }
+  },
 }
 ```
 
-The `key` value of the `client` object is the public key of the client, in this request JSON. This will be bound to requests, and many [formats are supported](https://www.ietf.org/archive/id/draft-ietf-gnap-core-protocol-02.html#name-binding-keys). In some cases, this could also have the value `true`, in which case the token in that response is bound to the key of the cliennt. Bearer tokens still work, however. They didn't abandon that construct, which has been so successful in the OAuth2 ecosystem; in that case the `key` value is `false.
+The `key` value of the `client` object is the key which signed the request. Many [formats are supported](https://www.ietf.org/archive/id/draft-ietf-gnap-core-protocol-02.html#name-binding-keys). 
 
-> If the key value is the boolean false, the access token is a bearer token sent using the HTTP Header method defined in [RFC6750].
+In some cases, the `key` attribute could have the value `true`, in which case the token in that response is bound to the key of the client, which has previously been presented to the AS. 
+
+Fear not! Bearer tokens still work. They didn't abandon that construct, which has been so successful in the OAuth2 ecosystem; if that's what you want, the `key` attribute should have the value of `false`:
+
+> If the key value is the boolean false, the access token is a bearer token sent using the HTTP Header method defined in RFC6750.
 
 ### Identity built in
 
-Unlike OAuth which is an authorization framework and didn't really have the concept of identity, GNAP has identity built in. The client may request information about the resource owner in the initial grant request. If the authorization server determines that the resource owner has granted permission to release this information to the client, either actively or passively, it can be returned. Here's an example from the draft specification:
+Unlike OAuth, an authorization framework which doesn't have the concept of identity, GNAP includes user identity features. 
+
+A client may request information about the owner of a resource in the initial grant request. If the Authorization Server determines that the owner has granted permission to release this information, either actively or passively, it can be returned. Here's an example of such a response from the draft:
 
 ```json
 {
@@ -205,15 +219,19 @@ Unlike OAuth which is an authorization framework and didn't really have the conc
 }
 ```
 
-The flip side is also true. If the client knows who the resource owner is, it can present identity claims as well. If a client presents identity claims that the authorization server trusts are tied to the resource owner, the resource owner may not need to be consulted for delegation decisions. From the specification:
+The reverse case is available as well. If the client knows who the owner is, it can present identity claims. If a client presents such claims and the authorization server trusts they tied to the resource owner, the owner may not need to be consulted for delegation decisions. This trust can be built through request signing.
+
+From the specification:
 
 > If the AS trusts the RC to present verifiable assertions, the AS MAY decide, based on its policy, to skip interaction with the RO, even if the RC provides one or more interaction modes in its request.
 
 ### Developer ergonomics
 
-OAuth requires you to use `application/x-www-form-urlencoded` media type, and all of the interactions are built using form parameters. This is a stable format, guaranteed to be understandable and usable by many different clients. However, many modern APIs use `application/json` as the media format. JSON has its flaws; why oh why can't we have comments in JSON? But this format is more flexible and allows for conveying richer object structures. One nice thing about JSON is that you can collapse many objects into simple strings; you don't have to use nested structures if you don't want to.
+OAuth requires you to use requests with the `application/x-www-form-urlencoded` media type. All of the interactions are built using form parameters. This is a stable format, guaranteed to be usable by many different clients and most programming languages. 
 
-You can reference resources, interactions and other entities by reference as well. For example, here's a reference to an interaction which can be used to modify an existing grant, as discussed above:
+However, many modern APIs use `application/json` as the media format. JSON has its flaws; why oh why can't we have comments in JSON? But JSON is more flexible and allows richer object structures. And you aren't forced to do so. You can collapse many objects into simple strings; you don't have to use nested structures if you don't want to.
+
+With GNAP, you can identify resources, interactions and other entities by reference as well. You can use these to refer to the entity in other operations. For example, here's a reference to an interaction which can be used to modify an existing grant, as discussed in the "Continuation of a grant" section.
 
 ```json
 {
@@ -221,28 +239,37 @@ You can reference resources, interactions and other entities by reference as wel
 }
 ```
 
-These references are one time use. Additionally, there is one endpoint starting off interaction. In true HATEOAS fashion, clients can start from one well known endpoint and then follow links presented by the authorization server. No more consulting documentation to find out which endpoints you have to call when.
+All references may be static or dynamically generated. In either case, they allow easier communication between the AS and the RC. From the spec:
+
+> Many parts of the RC's request can be passed as either a value or a reference. The use of a reference in place of a value allows for a client to optimize requests to the AS.
+
+With GNAP there is one endpoint starting off any interaction. In true [HATEOAS](https://en.wikipedia.org/wiki/HATEOAS) fashion, clients start from one well known endpoint and follow links embedded in received JSON documents to other endpoints. No more consulting documentation to find out which endpoints you have to call when.
 
 ## What should you do?
 
-That's a lot of new functionality. What should you do about GNAP in general?
+Whew. That's a lot of new functionality. What should you do about GNAP?
 
-First, If OAuth2 works for you, keep using it. Use it properly, with all the security suggestions outlined by by OAuth 2.1, including the PKCE extension. Twitter recently updated from 2010's OAuth1; it's likely that systems will still be running OAuth2 in three years. In fact, my team mates laughed when I said three years; they think it'll be more like a decade.
+First, If OAuth2 works for you, keep using it. Of course, make sure you use it properly, with all the security suggestions outlined by OAuth 2.1, including the PKCE extension. But it's not going anywhere.
+
+Twitter recently updated from OAuth1, which was published as a standard in 2010 so it's likely that systems will still be running OAuth2 in three years. In fact, my colleagues laughed when I mentioned three years; they think it'll be more like a decade.
 
 If you are an authorization server vendor, or you build your own OAuth servers, then you should:
 
-* Keep an eye on the draft. There's a lot more in there that is worth examining, and it's changing fast.
-* Join the mailing list and contribute if you can, as many members of the identity community already have. I've seen new members join the mailing list and be welcomed with their feedback.
-* Watch for or implement reference implementations. Justin, one of the editors of the spec, has committed to transitioning [OAuth.XYZ](https://oauth.xyz/) to being an implementation of GNAP: "GNAP will one day be a formal standard, and as that standardization process takes place, XYZ will transition to being an implementation of that standard. "
+* Keep an eye on the draft. There's more in there worth examining, and it's changing fast.
+* Join the mailing list and contribute if you can, as many members of the identity community already have. I've seen new folks join the mailing list and be welcomed with their feedback.
+* Watch for or build a reference implementations. Justin Richer, one of the editors of the spec, has committed to transitioning [OAuth.XYZ](https://oauth.xyz/) to being an implementation of GNAP: "GNAP will one day be a formal standard, and as that standardization process takes place, XYZ will transition to being an implementation of that standard. "
 
-If you are a user of OAuth, you can take a more relaxed position. Howeer, it still behooves you to review GNAP and see if it fits your use cases better, especially as the specification becomes more and more concrete. In particular, review the migration path for the major OAuth grants. Have a discussion with your authorization server vendor, or with the maintainers of open source libraries you might use, to see what their plans are for GNAP.
+If you are a user of OAuth, you can take a more relaxed position. However, you should still review the GNAP spec and see if it fits your use cases better, especially as the specification becomes more concrete. 
+
+In particular, review the migration path for the major OAuth grants. Have a discussion with your authorization server vendor, or with the maintainers of open source libraries you use, to see what their plans are for GNAP.
 
 ## Additional resources
 
-Here are some additional helpful resources, should this have just whetted your appetite for all things GNAP.
+Here are some additional resources, should this have whetted your appetite for all things GNAP.
 
 * [The GNAP WG charter](https://datatracker.ietf.org/wg/gnap/about/)
 * [The GNAP mailing list](https://mailarchive.ietf.org/arch/browse/txauth/)
 * [The GNAP GitHub repo](https://github.com/ietf-wg-gnap/gnap-core-protocol/)
 * An InfoWorld article: ["GNAP: OAuth the next generation"](https://www.infoworld.com/article/3596345/gnap-oauth-the-next-generation.html)
+
 
