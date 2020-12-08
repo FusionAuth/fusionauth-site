@@ -8,42 +8,46 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-The Grant Negotiation and Authorization Protocol, also known as GNAP, is currently being formulated in an IETF working group. This protocol will not be backward compatible with OAuth 2, yet it well worth paying attention to. 
+The Grant Negotiation and Authorization Protocol, also known as GNAP, is currently being formulated in an IETF working group. This protocol will not be backward compatible with OAuth 2. However, since it is a new major auth standard and is currently in development, you should give it some attention.
 
 <!--more-->
 
-This protocol is in the early stages, but you can read the [draft I'm writing about here](https://www.ietf.org/archive/id/draft-ietf-gnap-core-protocol-02.html). (GNAP, for those who are wondering, should be pronounced 'g-nap', though there was [some discussion](https://mailarchive.ietf.org/arch/msg/txauth/91n-mXRW_hQWMl-0cGx1j6sxHHI/) on the mailing list about the topic.) 
-
-According to the [working group charter](https://datatracker.ietf.org/wg/gnap/about/), this standard will be released in multiple parts beginning in the middle of 2021. Additionally, they very clearly call out that this is not going to be backwards compatible, but it is going to solve very similar problems as OAuth2 and OIDC:
+GNAP in the discussion stage, but you can read the [draft I'm writing about here](https://www.ietf.org/archive/id/draft-ietf-gnap-core-protocol-02.html). According to the [working group charter](https://datatracker.ietf.org/wg/gnap/about/), this standard will be released in multiple parts beginning in the middle of 2021. Additionally, they clearly state that GNAP will be backwards compatible with OAuth2 and OIDC, but it is going to solve similar problems:
 
 > This group is chartered to develop a fine-grained delegation protocol for authorization, API access, user identifiers, and identity assertions. ... Although the artifacts for this work are not intended or expected to be backwards-compatible with OAuth 2.0 or OpenID Connect, the group will attempt to simplify migrating from OAuth 2.0 and OpenID Connect to the new protocol where possible.
 
-It's important to note that the authors of the specification don't call this next gen OAuth. That's what I refer to it. Names are confusing: others have called it OAuth3, and it grew out of TxAuth and Oauth.xyz. 
+## What's in a name?
 
-However, the specification is properly called the Grant Negotiation and Authorization Protocol.
+Despite the title of this post, the authors of the specification don't call the standard "next gen OAuth". That's how I refer to it. 
+
+The names for this proposed standard are confusing. Others have called it OAuth3. The standard grew out of two competing efforts, called TxAuth and OAuth.xyz. 
+
+However, the specification is properly termed the Grant Negotiation and Authorization Protocol, or GNAP. GNAP, for those who are wondering, should be pronounced 'g-nap', though there was [some discussion](https://mailarchive.ietf.org/arch/msg/txauth/91n-mXRW_hQWMl-0cGx1j6sxHHI/) on the mailing list about the topic.
 
 ## What's wrong with OAuth
 
-Why might you care, if you are happy using OAuth2 and OIDC for your standards based authentication needs?  The core OAuth specification, good old [RFC 6749](https://tools.ietf.org/html/rfc6749), was released in 2012 and has some real strengths:
+Why might you care, if you are happy using OAuth2 and OIDC for your standards based authentication needs? The core OAuth specification, good old [RFC 6749](https://tools.ietf.org/html/rfc6749), was released in 2012 and has some real strengths:
 
 * The spec is widely supported and deployed.
-* It can and has been extended to support novel uses, such as the device grant.
-* You can build a secure system with delegation of permissiones with no security PhD required.
-* It is far easier on clients than other similar protocols such as SAML.
+* It can be, and has been, extended to support novel use cases, such as the device grant.
+* By leveraging the work of the experts who wrote the RFC as well as commercial and open source tools, you can build a complicated, secure auth system without a security PhD.
+* OAuth2 is far easier for clients to implement than other protocols solving similar problems, such as SAML.
 
-But nothing is perfect. OAuth2 also has some flaws. Some of them include:
+But nothing is perfect. OAuth2 also has some flaws, including:
 
-* It is tied tightly to redirects and the browser as a client.
-* It has archaic developer ergonomics, including plentiful use of form parameters.
-* Proof of possession is late to the game: there are several ways to limit tokens to clients that requested them ([DPOP](https://tools.ietf.org/html/draft-ietf-oauth-dpop-02), [MTLS](https://tools.ietf.org/html/rfc8705)), but most tokens are still bearer tokens, with all the risks. 
-* Discovery of endpoints is slightly cumbersome. From the RFC: " The means through which the client obtains the location of the authorization endpoint are beyond the scope of this specification, but the location is typically provided in the service documentation."
-* The mobile app experience is suboptimal. The BCP for mobile apps, [8252](https://tools.ietf.org/html/rfc8252), indicates that webviews should not be used: "This best current practice requires that native apps MUST NOT use embedded user-agents to perform authorization requests...". This means that your beautiful native app has to open a system browser when it comes time to authenticate. Not the best user experience.
+* The tight coupling of the auth process to redirects and a browser as the client.
+* Archaic developer ergonomics, including the use of form parameters.
+* There are several ways to limit tokens to the clients which requested them ([DPOP](https://tools.ietf.org/html/draft-ietf-oauth-dpop-02) and [MTLS](https://tools.ietf.org/html/rfc8705) are options; this is also known as "Proof of possession"), but these solutions are not widely deployed. Most OAuth systems issue bearer tokens, with the concomitant security risks. 
+* Discovery of OAuth endpoints is cumbersome. From the RFC: "The means through which the client obtains the location of the authorization endpoint are beyond the scope of this specification, but the location is typically provided in the service documentation." Translation: developer, look it up. There is an [RFC to help with this](https://tools.ietf.org/html/rfc8414), though.
+* The mobile app experience for OAuth2 is suboptimal. The Security Best Current Practices document for mobile apps, [RFC 8252](https://tools.ietf.org/html/rfc8252), indicates that webviews should not be used: "This best current practice requires that native apps MUST NOT use embedded user-agents to perform authorization requests...". This means that your beautiful native app has to open a system browser when it comes time to authenticate. Not the best user experience.
 
 A big issue with OAuth2 is complexity. Here are some of the RFCs that you may need to read as a user of OAuth:
 
 {% include _image.liquid src="/assets/img//blogs/gnap-oauth2-next-gen/oauth2-spec-pyramid.svg" alt="The pyramid of OAuth2 specifications" class="img-fluid" figure=false %}
 
-To be fair, [OAuth 2.1 is addressing some of these issues](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/), but from my reading of the draft spec and discussion on the mailing list, GNAP aims to address them more fully.
+To be fair, [OAuth 2.1 is addressing some of these issues](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/), but from my research, including reading the draft spec and reviewing discussion on the mailing list, GNAP aims to address them more fully.
+
+WIP
 
 ## Things that excite me about GNAP
 
