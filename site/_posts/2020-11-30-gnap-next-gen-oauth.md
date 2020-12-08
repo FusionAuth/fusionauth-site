@@ -51,7 +51,7 @@ GNAP isn't alone in trying to fix some of these issues. [OAuth 2.1](/learn/exper
 
 First, it's worth reiterating that GNAP is still changing. There's a lot of discussion on the [mailing list](https://mailarchive.ietf.org/arch/browse/txauth/) and you can also see changes in the [GitHub repo](https://github.com/ietf-wg-gnap/gnap-core-protocol/). It appears that the draft is being edited there. The features below may be in, out, or modified if you are reading this post months after it was published.
 
-Second, if you prefer authorization content spoken rather than written, I also recorded a video with about GNAP. Plus beer gardens!
+Second, if you prefer your auth content spoken rather than written, I also recorded a video about GNAP. Plus beer gardens!
 
 {% include _youtube-video.liquid youtubeid="n8xAFjzJsTU" %}
 
@@ -63,7 +63,7 @@ In the typical OAuth authorization code grant, the owner of a resource, who can 
 
 This is often the case, as when I grant a photo printing service access to my Flickr account. Wait, is it 2012? I meant my Google Photos account. 
 
-But sometimes the entity requesting permission may be different than the entity which needs to grant permission, the "Resource Owner" or RO. In GNAP, this entity is termed the "Requesting Party" and has the acronym RQ, maybe because RP already is taken by a common auth term: "Relying Party". The RQ drives the "Resource Client", or RC, which could be a browser or some other device. The RQ wants access to protected resources, which live on the "Resource Server", or RS.
+But sometimes the entity requesting permission may be different from the entity which needs to grant permission, the "Resource Owner" or RO. In GNAP, this entity is termed the "Requesting Party" and has the acronym RQ, maybe because RP already is taken by a common auth term: "Relying Party". The RQ drives the "Resource Client", or RC, which could be a browser or some other device. The RQ wants access to protected resources, which live on the "Resource Server", or RS.
 
 From the specification:
 
@@ -137,7 +137,7 @@ There's also support for "no interaction" between the RC and the RO, which is us
 
 ### Continuation of a grant
 
-Grant requests in OAuth2 are typically one and done. If circumstances change, you start a new grant. With GNAP, if the AS determines a grant can be continued, you get a grant identifier. This might be part of the response recieved from an AS for such a grant:
+Grant requests in OAuth2 are typically one and done. If circumstances change, you start a new grant. With GNAP, if the AS determines a grant can be continued, you get a grant identifier. This might be part of the response received from an AS for such a grant:
 
 ```json
 {
@@ -219,7 +219,7 @@ A client may request information about the owner of a resource in the initial gr
 }
 ```
 
-The reverse case is available as well. If the client knows who the owner is, it can present identity claims. If a client presents such claims and the authorization server trusts they tied to the resource owner, the owner may not need to be consulted for delegation decisions. This trust can be built through request signing.
+The reverse case is available as well. If the client knows who the owner is, it can present identity claims. If a client presents such claims and the authorization server trusts they are tied to the resource owner, the owner may not need to be consulted for delegation decisions. This trust can be built through request signing.
 
 From the specification:
 
@@ -257,7 +257,7 @@ If you are an authorization server vendor, or you build your own OAuth servers, 
 
 * Keep an eye on the draft. There's more in there worth examining, and it's changing fast.
 * Join the mailing list and contribute if you can, as many members of the identity community already have. I've seen new folks join the mailing list and be welcomed with their feedback.
-* Watch for or build a reference implementations. Justin Richer, one of the editors of the spec, has committed to transitioning [OAuth.XYZ](https://oauth.xyz/) to being an implementation of GNAP: "GNAP will one day be a formal standard, and as that standardization process takes place, XYZ will transition to being an implementation of that standard. "
+* Watch for or build a reference implementation. Justin Richer, one of the editors of the spec, has committed to transitioning [OAuth.XYZ](https://oauth.xyz/) to being an implementation of GNAP: "GNAP will one day be a formal standard, and as that standardization process takes place, XYZ will transition to being an implementation of that standard. "
 
 If you are a user of OAuth, you can take a more relaxed position. However, you should still review the GNAP spec and see if it fits your use cases better, especially as the specification becomes more concrete. 
 
