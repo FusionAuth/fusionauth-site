@@ -9,7 +9,6 @@ tags: client-javascript
 excerpt_separator: "<!--more-->"
 ---
 
-
 FusionAuth and Xkit came together for this blog post to share how you can seamlessly use our two services together to boost your engineering team's productivity. If you're working on growing your SaaS business, you know just how much your engineers have on their plates. At both FusionAuth and Xkit, we believe that outsourcing what you can -- like authentication and integration infrastructure -- lets your team focus on the core parts of your business that will really make it a success.
 
 <!--more-->
@@ -19,31 +18,31 @@ We've written this post to lay out how you can use our services together to simp
 
 ## What is Xkit
 
-Xkit is a SaaS platform which makes integrating third party systems a snap. Suppose you are writing a recipe management application and are going to sell it for big money to all the cooks of the world. After some market research, you realize that you want to integrate with other services. Your users are clamoring for the ability to export the steps of a recipe to a Trello board for sharing and Dropbox for backups. These are all services with APIs. End users can give your application access to their accounts with these services, but that takes some coding.
+Xkit is a SaaS platform which makes integrating third party systems a snap. Suppose you are writing a recipe management application and are going to sell it for big money to all the cooks of the world. After some market research, you realize that you want to integrate with other services. Your users are clamoring for the ability to export the steps of a recipe to a Trello board for sharing and Dropbox for backups. These are all services with APIs. 
 
-There's also a fair bit of hoop jumping: setting up API keys and OAuth consent screens, among other things.
+End users can give your application access to their accounts with these services, but that takes some coding. There's also a fair bit of hoop jumping: setting up API keys and OAuth consent screens, among other things.
 
-This is the problem which Xkit solves. If Xkit has a connection ([here's a list](https://docs.xkit.co/docs/connecting-with-apps-overview) of supported services), your application can allow a user to connect to a service, in the context of your application. I (Dan) was able to connect to Trello to my app in about an hour. The user experience of connecting the external application is smooth and far better than something I could whip up in a day, let alone an hour.
+This is the problem which Xkit solves. If Xkit has a connection ([here's a list](https://docs.xkit.co/docs/connecting-with-apps-overview) of supported services), your application can, after Xkit is installed configured, allow a user to connect to a service. I (Dan) was able to connect to Trello to my app in about an hour. The user experience of connecting the external application is smooth and far better than something I could whip up in a day, let alone an hour.
 
 ## Xkit and FusionAuth integration
 
 ### Install FusionAuth
 
-FusionAuth offers [a number of different methods you can use to install the service](https://fusionauth.io/docs/v1/tech/installation-guide/). Once you've installed, there's a Setup Wizard to walk you through the next steps. You'll need to create your application in the FusionAuth interface and then add a few elements to your application code base to fully implement the FusionAuth login flow. A [full, detailed setup guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide/) is also available. 
+FusionAuth offers [a number of different methods you can use to install the service](https://fusionauth.io/docs/v1/tech/installation-guide/). Once you've installed, there's a Setup Wizard to walk you through the next steps. You'll need to create your application in the FusionAuth interface and then add a few elements to your application code base to fully implement the FusionAuth login flow. A [full, detailed setup guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide/) is also available. Feel free to create additional [users via the FusionAuth administrative user interface](https://fusionauth.io/docs/v1/tech/core-concepts/users/).
 
-Once this is installed you have a full featured user management system, ready to go. APIs to control everything, multi factor authentication, consent management, SAML, OIDC, and more, all hosted wherever you need. There's also FusionAuth cloud, a managed services offering, if you don't want to host it yourself.
+Once this is installed you have a full featured user management system, ready to go. APIs to control everything, multi factor authentication, consent management, SAML, OIDC, and more, hosted wherever you want. There's also FusionAuth cloud, a managed services offering, if you don't want to host FusionAuth yourself.
 
 ### Install Xkit
 
 After you're set up with FusionAuth you'll want to head over and [create your Xkit account](https://app.xkit.co/sign-up). Upon sign-up, Xkit will also prompt you with some basic information needed to set up the environment. Fill out those details and you're good to go there.
 
-To set up Xkit in your code base, you'll need to add the script tag for xkit.js on your front-end:
+To set up Xkit in your code base, you'll need to add the script tag for `xkit.js` on your front-end:
 
 ```html
 <script src="https://<your-slug>.xkit.co/xkit.js"></script>
 ```
 
-In addition, your users need a place to actually sign in to their apps. The easiest way to do this is to direct users to the hosted integration catalog Xkit has set up for you:
+In addition, your users need a place to actually sign in to their apps, such as Dropbox for your cooking recipe sharers. The easiest way to do this is to direct users to the hosted integration catalog Xkit has set up for you:
 
 ```html
 <a href="https://<your-slug>.xkit.co">Integration Catalog</a>
@@ -52,7 +51,7 @@ Alternatively, if you need more customization, you can embed Xkit's catalog on y
 
 ### Connect FusionAuth with Xkit
 
-Now that you have both accounts set up, you'll need to connect the two. We do this by collecting some information from your FusionAuth dashboard and inputting it into Xkit. 
+Now that you have both FusionAuth and Xkit set up, you'll need to connect the two. We do this by collecting some information from your FusionAuth dashboard and inputting it into Xkit. 
 
 Specifically, you'll need to generate an RSA key and then add your "iss" claim, "aud" claim and JWKS URL into your Xkit account. This setup is [fully documented](https://docs.xkit.co/docs/fusionauth).
 
