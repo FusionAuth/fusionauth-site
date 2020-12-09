@@ -9,7 +9,7 @@ tags: client-ruby
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll walk through setting up a basic Ruby on Rails app to securely authenticate with an OAuth2 server using the authorization code grant.
+In this tutorial, we will walk through setting up a basic Ruby on Rails app to securely authenticate with an OAuth2 server using the authorization code grant.
 
 <!--more-->
 
@@ -17,11 +17,10 @@ Many Rails applications traditionally handle authentication, authorization, and 
 With FusionAuth however, we are able to [separate our auth concerns](https://en.wikipedia.org/wiki/Separation_of_concerns) from our application. Right away, we can scale our user base independently of our main application. As we build new applications or integrate with other platforms, 
 we now have one centralized place to handle our authentication and authorization needs.
 
-Why does that matter? Imagine that my company already has an existing identity provider and that I need to integrate my new application with it. Perhaps I have many applications that I need to integrate with my identity provider.  
-Maybe I am a startup and want to offload all user management including the functionality and security concerns that come along with it to FusionAuth. By having all of our user management
-concerns handled in one place, we can focus on the requirements of our application independently. 
+Why does that matter? Imagine that my company already has an existing identity provider and that I need to integrate my new application with it. Perhaps I have many applications that I need to integrate with my identity provider. Maybe I am a startup and want to offload all user management including the functionality and security concerns.
+By having all of our user management concerns handled in one place, we can focus on the requirements of our application independently. 
 
-Finally, with FusionAuth we get the benefit of a complete identity solution capable of satisfying most auth requirements such as SSO, MFA, and social-login.
+With a customer identity and access management platform like FusionAuth, we get the benefit of a complete identity solution capable of satisfying most auth requirements such as SSO, MFA, and social-login.
 
 At the end of this tutorial, you will have a working Ruby on Rails application that completes the [OAuth 2.0 authorization code](https://oauth.net/2/grant-types/authorization-code/) flow leveraging FusionAuth to authenticate users. 
 
@@ -30,8 +29,6 @@ The code is available under an Apache2 license [on Github](https://github.com/Fu
 In a [previous post](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/), we demonstrated how to encode, decode, and verify the authenticity
 of a JWT to [secure a Ruby on Rails API](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/).
 In this post, we will leverage those same concepts with FusionAuth being the authentication provider issuing the token. 
-
-It is worth noting that we will be referring to a [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token) and "access token" synonymously. A [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token) is simply the access token format issued by FusionAuth that we will be using.
 
 ## Prerequisites
 - Rails 6
@@ -87,7 +84,7 @@ to "Default" tenant. Set the "Issuer" field under the "General" tab.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/issuer.png" alt="The Edit Tenant page where the issuer field is set." class="img-fluid" figure=false %}
 
-The second attribute is the HMAC signing key that is used to encode the token. Navigate to "Settings -> Key Master" from the left navigation bar. 
+The second attribute is the HMAC signing key that is used to encode the token. Navigate to "Settings" and then "Key Master" from the left navigation bar. 
 Then click on the "View" button that corresponds to the `Default Signing Key`. From here, "click to reveal" the key and copy it to a safe location. 
 We will need this value to successfully decode the token in our application.
 
