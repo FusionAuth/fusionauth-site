@@ -53,9 +53,9 @@ As such, we want to create a new application in FusionAuth for our Rails app.
 ### Create an application
 Select "Applications" from the left nav bar. Then click the green plus sign in the upper-right hand corner to add a new application.
 We will want to configure a few pieces of important information:
-* "Name (Required)": A display name for our application. Enter `fusionauth-rails-app`.
-* "Authorized redirect URL's": Found under the "OAuth" tab. This URL tells FusionAuth where to redirect to after a user successfully authenticates. 
-* "Logout URL": Also found under the "OAuth" tab. This URL tells FusionAuth where to redirect to when a user logs out.
+* **Name** (Required): A display name for our application. Enter `fusionauth-rails-app`.
+* **Authorized redirect URL's**: Found under the "OAuth" tab. This URL tells FusionAuth where to redirect to after a user successfully authenticates. 
+* **Logout URL**: Also found under the "OAuth" tab. This URL tells FusionAuth where to redirect to when a user logs out.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/add-application.png" alt="Creating a new Application in FusionAuth." class="img-fluid" figure=false %}
 
@@ -65,8 +65,8 @@ For this example, we will manually create a user. Click on "Users" in the left-n
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/create-user.png" alt="Creating a new User in FusionAuth." class="img-fluid" figure=false %}
 
 Configure the following attributes and then save the new user:
-* "Email"
-* "Password and Confirm": Toggle `Send email to setup password` to off and manually enter a password for the user.
+* **Email**
+* **Password and Confirm**: Toggle `Send email to setup password` to off and manually enter a password for the user.
 
 ### Register the user
 Looking good! Now we have our new application and a user. The last thing we want to do is register the user with our application.
@@ -113,10 +113,10 @@ bundle install
 ### Configuration
 Before we go any further, there are some critical application attributes we will need from our FusionAuth configuration so that our Rails app knows how to successfully communicate with it.
 Specifically:
-* "Client Id"
-* "Client secret"
-* "Authorized redirect URL's"
-* "Logout URL"
+* **Client Id**
+* **Client secret**
+* **Authorized redirect URL's**
+* **Logout URL**
 
 You can recall, these can be found under the "OAuth" tab when modifying an application in FusionAuth.
 
@@ -145,10 +145,10 @@ This gives insight into the routes that we will need to define in our Rails app.
 
 ### Routes
 For this app, we are going to setup four routes:
-* "Welcome page": Our root page. 
-* "Login endpoint": Makes a request for the FusionAuth login page when a user clicks on the login link. 
-* "OAuth callback endpoint": Receiver of the redirect from FusionAuth when the authorization code is granted.
-* "Logout endpoint": Receiver of the redirect from FusionAuth when successfully logging out.
+* **Welcome page**: Our root page. 
+* **Login endpoint**: Makes a request for the FusionAuth login page when a user clicks on the login link. 
+* **OAuth callback endpoint**: Receiver of the redirect from FusionAuth when the authorization code is granted.
+* **Logout endpoint**: Receiver of the redirect from FusionAuth when successfully logging out.
 
  ```ruby
  Rails.application.routes.draw do
