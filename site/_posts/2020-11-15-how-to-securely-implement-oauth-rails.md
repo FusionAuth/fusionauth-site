@@ -13,12 +13,11 @@ In this tutorial, we will walk through setting up a basic Ruby on Rails app to s
 
 <!--more-->
 
-Many Rails applications traditionally handle authentication, authorization, and user-management within the framework itself. There are many strategies for implementing, including using a handy gem like [devise](https://github.com/heartcombo/devise). 
+Many Rails applications traditionally handle authentication, authorization, and user management within the framework itself. There are many strategies for implementing, including using a handy gem like [devise](https://github.com/heartcombo/devise). 
 With FusionAuth however, we are able to [separate our auth concerns](https://en.wikipedia.org/wiki/Separation_of_concerns) from our application. Right away, we can scale our user base independently of our main application. As we build new applications or integrate with other platforms, 
 we now have one centralized place to handle our authentication and authorization needs.
 
-Why does that matter? Imagine that my company already has an existing identity provider and that I need to integrate my new application with it. Perhaps I have many applications that I need to integrate with my identity provider. Maybe I am a startup and want to offload all user management including the functionality and security concerns.
-By having all of our user management concerns handled in one place, we can focus on the requirements of our application independently. 
+Why does that matter? Imagine that my company already has an existing identity provider and that I need to integrate my new application with it. Perhaps I have many applications that I need to integrate with my identity provider. Maybe I am a startup and want to offload all user management including the functionality and security concerns. By having all of our user management concerns handled in one place, we can focus on the requirements of our application independently. 
 
 With a customer identity and access management platform like FusionAuth, we get the benefit of a complete identity solution capable of satisfying most auth requirements such as SSO, MFA, and social-login.
 
@@ -172,13 +171,12 @@ This page will serve as the root page for our application.
 It should look something like this when rendered.
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/home.png" alt="The example Home screen for the Rails application." class="img-fluid" figure=false %}
 
-#### OauthController
+#### OAuthController
 
-The "OauthController" will handle each of the remaining routes needed to complete the authorization code grant flow.
-First, we will setup our client using the [oauth2](https://github.com/oauth-xx/oauth2) gem. This provides us with a "REST" client wrapper for the OAuth 2.0 specification.
+The "OAuthController" will handle each of the remaining routes needed to complete the authorization code grant flow. Here is what it will look like when we are finished:
 
 ```ruby
-class OauthController < ApplicationController
+class OAuthController < ApplicationController
   def initialize
     @oauth_client = OAuth2::Client.new(Rails.configuration.x.oauth.client_id,
                                        Rails.configuration.x.oauth.client_secret,
@@ -187,31 +185,78 @@ class OauthController < ApplicationController
                                        token_url: '/oauth2/token',
                                        redirect_uri: Rails.configuration.x.oauth.redirect_uri)
   end
-  # ...
+
+  # The OAuth callback
+  def oauth_callback
+    # Make a call to exchange the authorization_code for an access_token
+    response = @oauth_client.auth_code.get_token(params[:code])
+
+    # Extract the access token from the response
+    token = response.to_hash[:access_token]
+
+    # Decode the token
+    begin
+      decoded = TokenDecoder.new(token, @oauth_client.id).decode
+    rescue
+      head :forbidden
+      return
+    end
+
+    # Set the token on the user session
+    session[:user_jwt] = {value: decoded, httponly: true}
+
+    redirect_to root_path
+  end
+
+  def logout
+    # Invalidate session with FusionAuth
+    @oauth_client.request(:get, 'oauth2/logout')
+
+    # Reset Rails session
+    reset_session
+
+    redirect_to root_path
+  end
+
+  def login
+    redirect_to @oauth_client.auth_code.authorize_url
+  end
 end
 ```
 
-#### Login
-The login process beings when the user clicks on the "sign in" link we created.
-As seen in the sequence diagram above, we will want to direct this request to FusionAuth who is in charge of validating user credentials.
-In turn, the user will be presented with a default login page including username and password fields. 
-FusionAuth provides the flexibility to customize the style of this form via [themes](https://fusionauth.io/docs/v1/tech/themes/) but for this tutorial, we will stick with the default. 
+First, we will setup our client using the [oauth2](https://github.com/oauth-xx/oauth2) gem. This provides us with a "REST" client wrapper for the OAuth 2.0 specification.
+
+```ruby
+# ...
+def initialize
+  @oauth_client = OAuth2::Client.new(Rails.configuration.x.oauth.client_id,
+                                     Rails.configuration.x.oauth.client_secret,
+                                     authorize_url: '/oauth2/authorize',
+                                     site: Rails.configuration.x.oauth.idp_url,
+                                     token_url: '/oauth2/token',
+                                     redirect_uri: Rails.configuration.x.oauth.redirect_uri)
+end
+# ...
+```
+
+The login process beings when the user clicks on the "sign in" link we created. As seen in the sequence diagram above, we will want to direct this request to FusionAuth who is in charge of validating user credentials. In turn, the user will be presented with a default login page including username and password fields. FusionAuth provides the flexibility to customize the style of this form via [themes](https://fusionauth.io/docs/v1/tech/themes/) but for this tutorial, we will stick with the default. 
 
 The following method uses the "OAuth2" client to construct the "authorize_url" and redirects the request accordingly. 
+
 ```ruby
+# ...
 def login
   redirect_to @oauth_client.auth_code.authorize_url
 end
+# ...
 ```
 
 A successful response will yield the login page:
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/fa-login.png" alt="The FusionAuth login page." class="img-fluid" figure=false %}
 
-#### The OAuth callback
-
 Upon successful authentication, FusionAuth redirects to the Rails app along with the "authorization code" using the "redirect_uri".
-This value tells FusionAuth where to redirect upon successful authentication of which corresponds with our `oauth_callback` route.
+This value tells FusionAuth where to redirect upon successful authentication which corresponds with our `oauth_callback` route.
 We also added it to FusionAuth because every "redirect_uri" for a given application must exist as an "Authorized redirect URL". Think security!
 
 In summary, `oauth_callback` in our app does a few things:
@@ -226,11 +271,13 @@ Using the [oauth2](https://github.com/oauth-xx/oauth2) gem, we construct a clien
 redirect URI.
 
 ```ruby
+# ...
 # Make a call to exchange the authorization_code for an access_token
 response = @oauth_client.auth_code.get_token(params[:code])
 
 # Extract the access token from the response
 token = response.to_hash[:access_token]
+# ...
 ```
 
 We receive the access token encoded as a JWT. 
@@ -238,6 +285,7 @@ We now want to decode the JWT and verify claims. For this example, we validate t
 reflect the application `client_id` and token issuer respectively. Recall that we configured the issuer value earlier in FusionAuth. 
 
 ```ruby
+# ...
 # Decode the token
 begin
   decoded = TokenDecoder.new(token, client_id).decode
@@ -245,6 +293,7 @@ rescue
   head :forbidden
   return
 end
+# ...
 ```
 
 The TokenDecoder class decodes the JWT, verifies the HMAC secret, and validates claims.
@@ -261,15 +310,15 @@ class TokenDecoder
   def decode
     begin
       JWT.decode(
-          @token,
-          Rails.configuration.x.oauth.hmac,
-          true,
-          {
-              verify_iss: true,
-              iss: @iss,
-              verify_aud: true,
-              aud: @aud,
-              algorithm: 'HS256'})
+        @token,
+        Rails.configuration.x.oauth.hmac,
+        true,
+        {
+          verify_iss: true,
+          iss: @iss,
+          verify_aud: true,
+          aud: @aud,
+          algorithm: 'HS256'})
     rescue JWT::VerificationError
       puts "verification error"
       raise
@@ -284,20 +333,21 @@ end
 Finally, we set the token on the user session and redirect back to our Welcome page concluding our `oauth_callback` method. 
 
 ```ruby
+# ...
 # Set the token on the user session 
 # httponly to prevent XSS attacks
 session[:user_jwt] = {value: decoded, httponly: true}
 
 redirect_to root_path
+# ...
 ```
-
-#### Logging out
 
 When a user logs out, we want to invalidate their session on both FusionAuth and our app.
 Similar to `oauth_callback` in the way that it receives the authorize redirect, our `destroy` method receives the logout redirect.
 Receiving the redirect tells us that the user has been logged out of FusionAuth and we are safe to clear the user's session in Rails.
 
 ```ruby
+# ...
 def logout
   # Invalidate session with FusionAuth
   @oauth_client.request(:get, 'oauth2/logout')
@@ -307,6 +357,7 @@ def logout
 
   redirect_to root_path
 end
+# ...
 ```
 
 ### Polishing up our Rails session
@@ -358,7 +409,7 @@ Navigate to `http://localhost:3000`. Substitute the corresponding port if you ar
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/home.png" alt="The example Home screen for the Rails application." class="img-fluid" figure=false %}
 
-Log-in to the application with the user we created and registered in FusionAuth.
+Log in to the application with the user we created and registered in FusionAuth.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/fa-login.png" alt="The FusionAuth login page." class="img-fluid" figure=false %}
 
@@ -372,9 +423,9 @@ Let us now assume that we are now done interacting with the application and are 
 
 ## Next steps
 Now that we have the OAuth flow working, our foundation is set to expand as needed. Here are a few ideas to tackle next:
-* Add and assign user roles such that functionality in our Rails application can be shown or hidden accordingly.
-* Customize the FusionAuth login page with a look and feel of our application including a logo.
-* Add a "Login with Google" or "Login with Facebook" social login.
+* Add and assign user [roles](https://fusionauth.io/docs/v1/tech/core-concepts/roles/#overview) such that functionality in our Rails application can be shown or hidden accordingly.
+* Customize the FusionAuth login page with a look and feel of our application using [themes](https://fusionauth.io/docs/v1/tech/themes/).
+* Use [Identity Providers](https://fusionauth.io/docs/v1/tech/core-concepts/identity-providers/#overview) to add "Login with Google" or "Login with Facebook" social login buttons.
 
 ## What did we learn?
 Using the Authorization Code grant in Rails lets you use any OAuth compatible identity provider to secure your application. The example code can be found on Github [here](https://github.com/FusionAuth/fusionauth-example-rails-oauth). 
