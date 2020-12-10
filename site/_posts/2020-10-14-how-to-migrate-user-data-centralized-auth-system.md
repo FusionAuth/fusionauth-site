@@ -134,7 +134,7 @@ $redirect_uri = 'http://localhost:8000/oauth-callback.php';
 $fa_url = 'http://localhost:9011';
 ```
 
-`config.php sets some variables which are used by the endpoint code. In the sample repository, this code is in `fusionauthconnector.php`. Let's look at that:
+`config.php` sets some variables which are used by the endpoint code. In the sample repository, this code is in `fusionauthconnector.php`. Let's look at that:
 
 ```php
 <?php
