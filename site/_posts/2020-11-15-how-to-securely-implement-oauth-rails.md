@@ -165,7 +165,7 @@ This page will serve as the root page for our application.
 ```ruby
 # app/views/welcome/index.html.erb
 
-<p>Welcome! Please <%= link_to 'sign in', controller: 'oauth', action: :login %> </p>
+<p>Welcome! Please <%= link_to 'sign in', controller: 'o_auth', action: :login %> </p>
 ```
 
 It should look something like this when rendered.
@@ -197,7 +197,8 @@ class OAuthController < ApplicationController
     # Decode the token
     begin
       decoded = TokenDecoder.new(token, @oauth_client.id).decode
-    rescue
+    rescue Exception => error
+      "An unexpected exception occurred: #{error.inspect}"
       head :forbidden
       return
     end
@@ -289,7 +290,8 @@ reflect the application `client_id` and token issuer respectively. Recall that w
 # Decode the token
 begin
   decoded = TokenDecoder.new(token, client_id).decode
-rescue
+rescue Exception => error
+  "An unexpected exception occurred: #{error.inspect}"
   head :forbidden
   return
 end
