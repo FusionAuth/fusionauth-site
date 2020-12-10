@@ -53,7 +53,7 @@ As such, we want to create a new application in FusionAuth for our Rails app.
 Select "Applications" from the left nav bar. Then click the green plus sign in the upper-right hand corner to add a new application.
 We will want to configure a few pieces of important information:
 * **Name** (Required): A display name for our application. Enter `fusionauth-rails-app`.
-* **Authorized redirect URL's**: Found under the "OAuth" tab. This URL tells FusionAuth where to redirect to after a user successfully authenticates. 
+* **Authorized redirect URLs**: Found under the "OAuth" tab. This URL tells FusionAuth where to redirect to after a user successfully authenticates. 
 * **Logout URL**: Also found under the "OAuth" tab. This URL tells FusionAuth where to redirect to when a user logs out.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/add-application.png" alt="Creating a new Application in FusionAuth." class="img-fluid" figure=false %}
@@ -79,7 +79,7 @@ Click on the "Add Registration" button, select the Rails application we created,
 
 There are two more attributes we want to configure in FusionAuth. The first attribute is the named issuer value used to sign tokens. We will use this value when 
 verifying the access token during login. To do this, navigate to "Tenants" on the left-nav bar and then click the "Edit" button that corresponds
-to "Default" tenant. Set the "Issuer" field under the "General" tab.
+to "Default" tenant. Set the "Issuer" field under the "General" tab. The value of the issuer is typically the hostname of the identity provider. Since this is a demo, we'll use the value `fusionauth.io`.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/issuer.png" alt="The Edit Tenant page where the issuer field is set." class="img-fluid" figure=false %}
 
@@ -225,7 +225,7 @@ class OAuthController < ApplicationController
 end
 ```
 
-First, we will setup our client using the [oauth2](https://github.com/oauth-xx/oauth2) gem. This provides us with a "REST" client wrapper for the OAuth 2.0 specification.
+First, we will setup our client using the [oauth2](https://github.com/oauth-xx/oauth2) gem. This provides us with a [REST](https://www.codecademy.com/articles/what-is-rest) client wrapper for the OAuth 2.0 specification.
 
 ```ruby
 # ...
@@ -240,7 +240,7 @@ end
 # ...
 ```
 
-The login process beings when the user clicks on the "sign in" link we created. As seen in the sequence diagram above, we will want to direct this request to FusionAuth who is in charge of validating user credentials. In turn, the user will be presented with a default login page including username and password fields. FusionAuth provides the flexibility to customize the style of this form via [themes](https://fusionauth.io/docs/v1/tech/themes/) but for this tutorial, we will stick with the default. 
+The login process begins when the user clicks on the "sign in" link we created. As seen in the sequence diagram above, we will want to direct this request to FusionAuth which is in charge of validating user credentials. In turn, the user will be presented with a default login page including username and password fields. FusionAuth provides the flexibility to customize the style of this form via [themes](https://fusionauth.io/docs/v1/tech/themes/) but for this tutorial, we will stick with the default. 
 
 The following method uses the "OAuth2" client to construct the "authorize_url" and redirects the request accordingly. 
 
