@@ -65,7 +65,7 @@ For this example, we will manually create a user. Click on "Users" in the left-n
 
 Configure the following attributes and then save the new user:
 * **Email**
-* **Password and Confirm**: Toggle `Send email to setup password` to off and manually enter a password for the user.
+* **Password and Confirm**: Toggle "Send email to setup password" to off and manually enter a password for the user.
 
 ### Register the user
 Looking good! Now we have our new application and a user. The last thing we want to do is register the user with our application.
@@ -114,7 +114,7 @@ Before we go any further, there are some critical application attributes we will
 Specifically:
 * **Client Id**
 * **Client secret**
-* **Authorized redirect URL's**
+* **Authorized redirect URLs**
 * **Logout URL**
 
 You can recall, these can be found under the "OAuth" tab when modifying an application in FusionAuth.
