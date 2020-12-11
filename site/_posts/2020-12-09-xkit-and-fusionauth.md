@@ -105,3 +105,4 @@ To add integrations to other apps, you follow essentially the same steps and ret
 
 We're always looking for feedback and suggestions so let us know your thoughts! Thanks for reading.
 
+This post can also be found on the [Xkit blog](https://xkit.co/post/adding-native-integrations-to-your-app-with-xkit-and-fusionauth).
