@@ -3,8 +3,6 @@ var FusionAuth = FusionAuth || {};
 FusionAuth.Search = function() {
   Prime.Utils.bindAll(this);
 
-  console.info('Setup');
-
   Prime.Document.query('a.search').each(function(e) {
     e.addEventListener('click', this._handleSearchButtonClick);
   }.bind(this));
@@ -89,7 +87,7 @@ FusionAuth.Search.prototype = {
   },
 
   _hitTemplate: function(hit) {
-    var url = `${hit.url}#${hit.anchor}`;
+    var url = `${FusionAuth.siteURL}${hit.url}#${hit.anchor}`;
     var title = hit._highlightResult.title.value;
 
     // create a snippet
