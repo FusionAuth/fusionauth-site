@@ -58,6 +58,8 @@ We will want to configure a few pieces of important information:
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/add-application.png" alt="Creating a new Application in FusionAuth." class="img-fluid" figure=false %}
 
+This application is created in the default tenant. FusionAuth supports unlimited tenants, but for this example application we can leave everything in the default one.
+
 ### Create a user
 For this example, we will manually create a user. Click on "Users" in the left-nav bar and then click the green plus sign in the upper-right hand corner to add a new user.
 
