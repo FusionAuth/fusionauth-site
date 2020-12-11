@@ -3,7 +3,7 @@ layout: blog-post
 title: How to securely implement OAuth in Ruby on Rails 
 description: A detailed overview of securely integrating an Ruby on Rails application with an OAuth provider using the OAuth Authorization Code Grant  
 author: Brett Guy 
-image: blogs/fusionauth-example-angular/oauth-angular-fusionauth.png
+image: blogs/fusionauth-example-rails/how-to-securely-implement-oauth-in-ruby-on-rails-header-image.png
 category: blog
 tags: client-ruby
 excerpt_separator: "<!--more-->"
