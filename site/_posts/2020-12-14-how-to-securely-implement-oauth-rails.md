@@ -81,7 +81,7 @@ Click on the "Add Registration" button, select the Rails application we created,
 
 There are two more attributes we want to configure in FusionAuth. The first attribute is the named issuer value used to sign tokens. We will use this value when 
 verifying the access token during login. To do this, navigate to "Tenants" on the left-nav bar and then click the "Edit" button that corresponds
-to "Default" tenant. Set the "Issuer" field under the "General" tab. The value of the issuer is typically the hostname of the identity provider. Since this is a demo, we'll use the value `fusionauth.io`.
+to the "Default" tenant. Set the "Issuer" field under the "General" tab. The value of the issuer is typically the hostname of the identity provider. Since this is a demo, we'll use the value `fusionauth.io`.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-rails/issuer.png" alt="The Edit Tenant page where the issuer field is set." class="img-fluid" figure=false %}
 
@@ -145,7 +145,7 @@ Before we get into the code, let's take a look at the Authentication Code grant 
 This gives insight into the routes that we will need to define in our Rails app. 
 
 ### Routes
-For this app, we are going to setup four routes:
+For this app, we are going to set up four routes:
 * **Welcome page**: Our root page. 
 * **Login endpoint**: Makes a request for the FusionAuth login page when a user clicks on the login link. 
 * **OAuth callback endpoint**: Receiver of the redirect from FusionAuth when the authorization code is granted.
@@ -227,7 +227,7 @@ class OAuthController < ApplicationController
 end
 ```
 
-First, we will setup our client using the [oauth2](https://github.com/oauth-xx/oauth2) gem. This provides us with a [REST](https://www.codecademy.com/articles/what-is-rest) client wrapper for the OAuth 2.0 specification.
+First, we will set up our client using the [oauth2](https://github.com/oauth-xx/oauth2) gem. This provides us with a [REST](https://www.codecademy.com/articles/what-is-rest) client wrapper for the OAuth 2.0 specification.
 
 ```ruby
 # ...
@@ -347,7 +347,7 @@ redirect_to root_path
 ```
 
 When a user logs out, we want to invalidate their session on both FusionAuth and our app.
-Similar to `oauth_callback` in the way that it receives the authorize redirect, our `destroy` method receives the logout redirect.
+Similar to `oauth_callback` in the way that it receives the `authorize` redirect, our `destroy` method receives the `logout` redirect.
 Receiving the redirect tells us that the user has been logged out of FusionAuth and we are safe to clear the user's session in Rails.
 
 ```ruby
