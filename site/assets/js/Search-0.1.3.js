@@ -26,7 +26,8 @@ FusionAuth.Search = function() {
             container: '#search-box',
             placeholder: 'Search the FusionAuth website',
             showReset: false,
-            showSubmit: false
+            showSubmit: false,
+            showLoadingIndicator: false
           }
       )
   );
@@ -37,31 +38,10 @@ FusionAuth.Search = function() {
             container: '#search-results',
             templates: {
               item: this._hitTemplate,
-              empty: this._empty,
-              escapeHTML: true,
+              empty: this._empty
             }
           }
       )
-  );
-
-  this.search.addWidgets(
-      [
-        instantsearch.widgets.analytics(
-            {
-              pushFunction(formattedParameters, state, results) {
-                dataLayer.push(
-                    {
-                      'event': 'search',
-                      'Search Query': state.query,
-                      'Facet Parameters': formattedParameters,
-                      'Number of Hits': results.nbHits,
-                    }
-                );
-              },
-              triggerOnUIInteraction: true,
-            }
-        )
-      ]
   );
 
   this.search.start();
@@ -72,7 +52,7 @@ FusionAuth.Search.prototype = {
   _empty: function(results) {
     return `<ol class="ais-Hits-list">
               <li class="ais-Hits-item">
-                <span>No results for: \"${results.query}\"</span>
+                <a class="search-result">No results for: \"${results.query}\"</a>
               </li>
             </ol>`;
   },
@@ -121,22 +101,27 @@ FusionAuth.Search.prototype = {
     }
   },
 
-  _hitTemplate: function(hit) {
-    var url = `${FusionAuth.siteURL}${hit.url}#${hit.anchor}`;
-    var title = hit._highlightResult.title.value;
-
-    // create a snippet
-    var truncateLength = 120;
-    var excerpt = hit._highlightResult.content.value.substring(0, truncateLength);
-    var spaceIdx = excerpt.lastIndexOf(' ');
-    var snippet = excerpt.substring(0, spaceIdx) + "...";
+  _hitTemplate: function(item) {
+    var url = `${FusionAuth.siteURL}${item.url}#${item.anchor}`;
+    var title = item._highlightResult.title.value;
+    var snippet = "Missing description";
+    if (item._snippetResult) {
+      snippet = item._snippetResult.content.value;
+    } else if (item.description) {
+      snippet = item.description;
+    }
 
     return `<a class="search-result" href="${url}"><strong>${title}</strong> ${snippet}</a>`;
   },
 
   _searchHelperFunction: function(helper) {
-    var container = document.querySelector('#search-results');
-    container.style.display = helper.state.query === '' ? 'none' : '';
+    var searchResults = Prime.Document.queryById('search-results');
+    if (helper.state.query === '') {
+      searchResults.hide();
+    } else {
+      searchResults.show();
+    }
+
     helper.search();
   }
 };
