@@ -11,15 +11,13 @@ This guide will help you migrate existing users to FusionAuth. It covers the typ
 
 == Types of Migrations
 
-There are three approaches to user data migration. 
+There are three approaches to user data migration. Every migration involves a cutover for a user, where they authenticate with the new system, not with the old system. While each approach differs in implementation details, a good way to approach them is how many cutovers you have.
 
-* Migrate everyone at once, also known as a "big bang" migration.
-* Segment your users and migrate each segment in a series of small bang migrations. 
-* Migrate user data each time a user authenticates, also known as "slow migration".
+* Migrate everyone at once, also known as a "big bang" migration. With this approach, you have one cutover.
+* Segment your users and migrate each segment in a series of small bang migrations. With this method, you have multiple cutovers, but they are all planned and involve more than one user.
+* Migrate user data each time a user authenticates, also known as "slow migration". With this choice, each user authentication event is a cutover for that particular user.
 
-Each of these moves user and associated account data into FusionAuth from one or more systems of record. Each approach has strengths and weaknesses. 
-
-All three are supported by FusionAuth; pick the one which works best for your situation. Let's examine each approach.
+Each of these approaches migrates user and other account data into FusionAuth from one or more other systems of record. All three are supported by FusionAuth; pick the one which works best for your situation. Let's examine each approach in more detail.
 
 === The Big Bang Migration
 
@@ -30,7 +28,7 @@ With a big bang migration, you are moving all your users in one effort. The exac
 * Test it well. Determine migration accuracy and duration.
 * Plan to modify your applications to point to the new system (every approach requires this).
 * When you are ready to migrate, arrange for an adequate period of downtime, then run the migration scripts or programs.
-* Flip the system of record for all your users from the old to the new.
+* Perform the single cutover; flip the system of record for all your users from the old to the new.
 
 This approach has some strengths:
 
@@ -49,7 +47,7 @@ The big bang approach has some challenges as well:
 
 === Segment by Segment Migration
 
-Segment by segment migration is the second alternative. It can be thought of as a series of "little bang" migrations. Split accounts into segments and migrate each segment. Natural division points could be the type of user, applications used or even recency of login.
+Segment by segment migration is the second alternative. It can be thought of as a series of "little bang" migrations. Split accounts into segments and migrate each segment. Natural division points could be the type of user, applications used or even login recency.
 
 Such a segment by segment migration lets you test your processes in production by migrating less critical, or more understanding, sets of users first. The engineering team will be more understanding of migration issues than paying customers, for instance. 
 
@@ -57,7 +55,7 @@ You will probably be able to reuse code between the different segments. In gener
 
 However, this approach is not without its issues:
 
-* You have multiple projects and downtimes to manage, not just one.
+* You have multiple projects, downtime periods and cutovers to manage, not just one.
 * There may be no natural divisions in your user base.
 * If most of the users are in one segment, it may not be worth the extra effort. For example, if you have one popular application and a couple nascent apps, the extra time to migrate in phases might not be worth it.
 * This will take longer to complete, requiring you to run both systems for longer.
@@ -72,7 +70,7 @@ With a slow migration:
 * You set up a connection between the original auth system and FusionAuth.
 * You modify your application to point to FusionAuth.
 * FusionAuth receives all auth requests, but delegates the first request for each user to the original user management system. 
-* The old system returns the information and FusionAuth creates a new user.
+* The old system returns the information and FusionAuth creates a new user. This is the cutover for this user.
 * For subsequent authentication requests for this user, FusionAuth is now the system of record.
 
 To implement a slow migration, FusionAuth needs to pass auth credentials to the old system and get user information returned. You also need to modify applications to point to FusionAuth.
