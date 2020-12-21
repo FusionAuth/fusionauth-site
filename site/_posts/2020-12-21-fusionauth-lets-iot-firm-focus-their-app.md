@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: IoT company picks FusionAuth to avoid getting distracted by auth
-description: FusionAuth allows an IoT company solve auth problems and focus on building their applications.
+description: FusionAuth allows an IoT company to ignore auth and focus on building their applications.
 author: Dan Moore
 image: blogs/...
 category: blog
@@ -83,7 +83,7 @@ Rendered templates and stylesheets are then passed through the premailer tool to
 
 **Dan:** Which reverse proxy did you use?
 
-**Michał:** HAProxy as an edge proxy with TLS offloading, and a bunch of nginxs for static content, WSGI applications and the FusionAuth instance itself. HAProxy also has some neat features in the terms of upstream service health checking. 
+**Michał:** HAProxy as an edge proxy with TLS offloading, and a bunch of nginx instances for static content, WSGI applications and the FusionAuth instance itself. HAProxy also has some neat features in the terms of upstream service health checking. 
 
 The results of those checks are easily exposed in prometheus format. Since FusionAuth doesn't expose such metrics itself, we rely on the data provided by HAproxy. Anyway, a prometheus interface for FusionAuth would be lovely! [ed note: follow along on this issue for [prometheus support](https://github.com/FusionAuth/fusionauth-issues/issues/362).]
 
