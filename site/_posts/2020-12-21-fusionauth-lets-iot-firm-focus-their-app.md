@@ -91,7 +91,7 @@ The results of those checks are easily exposed in prometheus format. Since Fusio
 
 **Michał:** We didn't want to go with a SaaS option, so we were looking for a self-hosted solution. We defined a set of requirements including ease of user migration, MFA options, and so on. The features we needed were, in general, present in the solutions available on the market, but rarely all at once. FusionAuth is a product where each of our requirements is either fulfilled out of the box, or it could be easily developed based on the API, webhooks or other workarounds.
 
-Most of the concerns about FusionAuth stemmed from the closed source model. Apart from issues that may occur if FusionAuth goes out of business, the closed source model also closes the way to perform quick fixes in the service if glitches are encountered. After some time as a member of the FusionAuth community I've seen that the dev team is pretty responsive to users' feedback, so it calmed me enough to be confident in choosing FusionAuth as a central identity management service for our product.
+Most of the concerns about FusionAuth stemmed from the closed source model, particularly around responsiveness to bugs and business model risk. After some time as a member of the FusionAuth community I've seen that the dev team is pretty responsive to users' feedback, so it calmed me enough to be confident in choosing FusionAuth as a central identity management service for our product.
 
 **Dan:** Any general feedback/areas to improve?
 
