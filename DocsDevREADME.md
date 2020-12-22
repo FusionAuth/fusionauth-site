@@ -35,6 +35,9 @@ For lists:
 - macOS
 - Elasticsearch
 - .NET Core
+- Identity Provider
+- Connector
+- Kickstart
 
 ## Sizing Window for Screenshots
 
