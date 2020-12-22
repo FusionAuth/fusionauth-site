@@ -1,25 +1,41 @@
 ---
 layout: doc
-title: Multi-node
-description: How to run FusionAuth with multiple nodes
+title: Multi-node FusionAuth clusters
+description: How to cluster FusionAuth with multiple nodes
 ---
 
-This tutorial shows you how to run FusionAuth with multiple nodes. 
+This tutorial shows you how to cluster FusionAuth with multiple nodes. 
 
 FusionAuth is a stateless service, with all required state distributed to either the backend database (user passwords) or to clients (JWTs). This means it is horizontally scalable.
 
-== Multi-node Architecture
+== Requirements
+
+You'll want a load balancer in front of the FusionAuth instances and a shared relational database behind them. 
+
+As long as the load balancer can split HTTP traffic, it doesn't matter what it is. nginx, an AWS ALB, apache, or any other load balancer should work. 
+
+Depending on where you terminate TLS, you may connnect to FusionAuth over HTTP or TLS. Please consult your load balancer documentation for full configuration details. This tutorial will assume you terminate TLS at the load balancer and communicate with FusionAuth over port `9011`.
+
+== Set Up
+
+Once you have your load balancer set up, stand up your FusionAuth instances. Depending on your security posture, you may want to isolate these instances from the wider internet and have all traffic routed through the load balancer.
+
+Navigate to [breadcrumb]#Settingsthe load balancer and log in to FusionAuth.
+
+
+== Docker Example
+
 
 == How to Add More Nodes
-
-To add more nodes, you need to stand up new FusionAuth instances and have them connect to the same database.
+ 
+To add more nodes, you need to stand up new FusionAuth instances and have them connect to the same database. You'll also need to update your load balancer to send traffic to the new node.
 
 Each node registers itself in the database and therefore they can all communicate if needed. 
 
 The only reason a node needs to know about another node is for cache reloads and for log downloading. In the UI you can download logs using a button, and that will download logs from each node and put them into one zip file.
 
-
-== Concerns
+== Operational Concerns
 
 Make sure that all the link:/docs/v1/tech/reference/configuration/[configuration settings] are the same for each node. If they are not, behavior is nondeterministic.
 
+You'll also want to run your database migrations against your database server independently of FusionAuth. This will ensure that all the FusionAuth instances view the same schema.
