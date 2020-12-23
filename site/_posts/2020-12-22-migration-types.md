@@ -104,3 +104,6 @@ However, a slow migration isn't always the best solution. Some things to conside
 
 Slow migrations make a different set of tradeoffs. You don't have the upfront effort, apart from creating the connection and updating your applications. The risks of a failed migration are limited to the user who is migrating. However, you will need to run both systems for a longer period of time. So, a slow migration is a lower risk, longer duration approach. 
 
+## Conclusion
+
+Migrating user data is never fun. But doing so can save you money, allow new features or reduce operational headaches by consolidating users. I hope this overview of the different migration approaches that we've seen here at FusionAuth is helpful in guiding you toward the migration that works for you.
