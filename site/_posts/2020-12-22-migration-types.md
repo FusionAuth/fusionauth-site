@@ -14,19 +14,19 @@ There are a few different approaches to migrating user accounts. Each of these w
 
 <!--more-->
 
-There are three main approaches to user data migration. When you are changing how someone authenticates with your systems, you will eventually have to cutover. This is when a user authenticates with the new system instead of the old one. In this post, I'll assume FusionAuth is the new system, but these patterns work with any identity provider.
+There are three main approaches to user data migration. When you are changing how someone authenticates with your systems, you will eventually have to cut over. This is when a user authenticates with the new system instead of the old one. In this post, I'll assume FusionAuth is the new system, but these patterns work with any identity provider.
 
-While each approach differs in particulars, one way to decide which works for you is to consider at how many of these cutovers you want to handle. Options include:
+While each approach differs in the particulars, one way to decide which works for you is to consider how many of these cutovers you want to handle. Options include:
 
 * Migrate everyone at once. This is also known as a "big bang" migration. Here, you have one cutover. At one point in time everyone is authenticating against the old system. Then the migration occurs, and everyone is then logging into FusionAuth.
 * Segment your user base and migrate each chunk, one at a time. This approach requires multiple cutovers. First, you move the engineering team from the legacy system to FusionAuth. Then, you move the QA team. And so on and so forth.
-* Migrate when a user logs in, also known as a "slow migration". There are two cutover points with this choice. First, you cutover the application (or applications). Next at authentication, the user account data migrates and it is now stored in FusionAuth. There are many data cutover events, as users migrate one by one.
+* Migrate when a user logs in, also known as a "slow migration". There are two cutover points with this choice. First, you cut over the application (or applications). Next at authentication, the user account data migrates and it is now stored in FusionAuth. There are many data migration events, as users migrate one by one.
 
 Each of these approaches migrates user account data into FusionAuth from one or more legacy systems. Let's examine each approach in more detail to help you make the best decision for your use case.
 
 ## The Big Bang Migration
 
-With a big bang migration, you are moving all your users at one time. How long this takes varies depending on the amount of data you are moving, but there is a single cutover. For small systems it may be minutes, for bigger systems the cutover might last hours or even days. 
+With a big bang migration, you are moving all your users at one time. How long this takes varies depending on the amount of data you are moving, but there is a single cutover. For small systems it may be minutes, for bigger systems it might last hours or even days. 
 
 The basic steps for this approach are:
 
@@ -34,8 +34,8 @@ The basic steps for this approach are:
 * Build and test a set of migration scripts. Ensure that migration accuracy meets your needs. Figure out how long a migration takes.
 * Test application changes required to point users to FusionAuth for login, registration, and other auth needs.
 * When you are ready to migrate, bring your systems down or to a mode where authentication is disallowed.
-* Run the previosly tested migration scripts.
-* Release the application changes, which perform the cutover. Now the the system of record for all your users is FusionAuth.
+* Run the previously tested migration scripts.
+* Release the application changes, which perform the cutover. Now the system of record for all your users is FusionAuth.
 
 This approach has some real strengths:
 
@@ -67,7 +67,7 @@ This approach allows you to test your processes in production by migrating less 
 As implied, the segmented migration is not without its issues:
 
 * Instead of one project, you have multiple, with N downtime periods and cutovers to manage.
-* In some cases, there may be no useful natural divisions amoung your user accounts.
+* In some cases, there may be no useful natural divisions among your user accounts.
 * If the segment numbers are unbalanced, the extra effort to migrate some first may not be worth it. If you have one popular application and two nascent apps, migrating the latter won't really help derisk the migration of the former.
 * Because you have multiple migrations, this approach takes more calendar time to complete. Depending on what you are migrating from, you might end up running FusionAuth and the legacy system or systems for a longer period of time.
 * Depending on user segmentation, the application cutover might be complicated. For example, if you divide your users by type and initially migrate admin users, the application needs to be smart enough to dispatch admin users to FusionAuth and other users to the old system.
@@ -89,9 +89,9 @@ With the slow migration approach, you need to:
 
 This approach has the following benefits:
 
-* You are only performaing migration at the time a user authenticates. Therefore if there are issues, the blast radius is smaller and limited to the user authenticating.
+* You are only migrating at the time a user authenticates. Therefore if there are issues, the blast radius is smaller and limited to the user authenticating.
 * Since you have the user's password (they're providing it), you can upgrade their password hash to use a different algorithm transparently. This approach sidesteps any complexities around porting over bespoke hashing algorithms as well. 
-* You can scrub your user base of inactive users with little effort. At the same time, you can contact them and encourage them to revist your applications.
+* You can scrub your user base of inactive users with little effort. At the same time, you can contact them and encourage them to revisit your applications.
 * Application cutover is simpler. You aren't moving any account data, which can often take some time. Instead you are only switching where users authenticate.
 
 However, a slow migration isn't always the best solution. Some things to consider include:
