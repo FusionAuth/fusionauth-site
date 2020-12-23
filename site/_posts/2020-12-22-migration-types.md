@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: User account migration approaches
-description: What are the ways you can migrate user data?
+title: Approaches to user account migration
+description: What are the ways you can migrate user data, and why should you pick one over the others?
 author: Dan Moore
 image: blogs/ampio-customer-story/iot-company-picks-fusionauth-to-avoid-getting-distracted-by-auth-header-image.png
 category: blog
@@ -30,7 +30,7 @@ With a big bang migration, you are moving all your users at one time. How long t
 
 The basic steps for this approach are:
 
-* Map user attributes from the legacy system to FusionAuth.
+* Map user attributes from the legacy system to FusionAuth. As part of this, Decide which applications and tenants will need to be created in FusionAuth beforehand.
 * Build and test a set of migration scripts. Ensure that migration accuracy meets your needs. Figure out how long a migration takes.
 * Test application changes required to point users to FusionAuth for login, registration, and other auth needs.
 * When you are ready to migrate, bring your systems down or to a mode where authentication is disallowed.
@@ -47,10 +47,11 @@ This approach has some real strengths:
 
 Nothing is perfect, though. The big bang approach has some challenges:
 
-* Everyone is human, and it is common to miss issues during the testing period. Data migrations are, in general, unique. Testing helps, but production systems often differ in unexpected and subtle ways from even the best testing environments. 
-* Any problems with the migration impact many users, since everyone is being transferred.
-* This approach requires the migration scripts to be given a lot of care, and you need to test them well. Then, after the migration, you throw them away. Maybe there's a few lessons learned, but much of the specific knowledge will be inapplicable to future migrations.
-* FusionAuth, or any other new auth system, must be compatible with the old system's password hashing algorithm. Otherwise, you must force all users to reset their password, which is a suboptimal user experience, to put it mildly.
+Everyone is human, and it is common to miss issues during the testing period. Data migrations are, in general, unique. Testing helps, but production systems often differ in unexpected and subtle ways from even the best testing environments. Any problems with the migration impact many users, since everyone is being transferred.
+
+This approach also requires the migration scripts to be given a lot of care, and you need to test them well. Then, after the migration, you throw them away. Maybe there's a few lessons learned, but much of the specific knowledge will be inapplicable to future migrations.
+
+Finally, FusionAuth, or any other new auth system, must be compatible with the old system's password hashing algorithm. Otherwise, you must force all users to reset their password, which is a suboptimal user experience, to put it mildly.
 
 The big bang migration is conceptually easy to understand, with few moving pieces. It works well when you have deadlines. Because of the uniqueness of its implementation, this is the most high risk option.
 
@@ -87,12 +88,9 @@ With the slow migration approach, you need to:
 * When the first call happens, the old system returns account data if the user presented valid credentials. FusionAuth creates a new user with the data. 
 * When this user logs in subsequently, FusionAuth responds; it is now the system of record, the user has been migrated, and the old system no longer has that particular user's information.
 
-This approach has the following benefits:
+This approach has a number of benefits. You are only migrating at the time a user authenticates. Therefore if there are issues, the blast radius is smaller and limited to the user authenticating. You have the user's password (they're providing it when they are authenticating), so you can upgrade their password hash to use a different algorithm transparently. This approach sidesteps any complexities around porting over bespoke hashing algorithms as well. 
 
-* You are only migrating at the time a user authenticates. Therefore if there are issues, the blast radius is smaller and limited to the user authenticating.
-* Since you have the user's password (they're providing it), you can upgrade their password hash to use a different algorithm transparently. This approach sidesteps any complexities around porting over bespoke hashing algorithms as well. 
-* You can scrub your user base of inactive users with little effort. At the same time, you can contact them and encourage them to revisit your applications.
-* Application cutover is simpler. You aren't moving any account data, which can often take some time. Instead you are only switching where users authenticate.
+Application cutover is, all other things equal, simpler. You aren't moving any account data, which can often take some time. Instead you are only switching where users authenticate. In addition, you can scrub your user base of inactive users with little effort. Or, before the migration, you can contact them and encourage them to log in your applications, possibly regaining their interest.
 
 However, a slow migration isn't always the best solution. Some things to consider include:
 
