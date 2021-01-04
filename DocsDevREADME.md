@@ -36,6 +36,9 @@ For lists:
 - Elasticsearch
 - .NET Core
 - OAuth and OAuth2
+- Identity Provider
+- Connector
+- Kickstart
 
 ## Sizing Window for Screenshots
 
