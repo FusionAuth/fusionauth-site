@@ -35,6 +35,7 @@ For lists:
 - macOS
 - Elasticsearch
 - .NET Core
+- OAuth and OAuth2
 
 ## Sizing Window for Screenshots
 
