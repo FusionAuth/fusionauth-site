@@ -127,7 +127,7 @@ This is asking for two different tokens, for three different resources: `photo-a
 
 ### Interactions are first class concepts
 
-In GNAP, the requesting client, declares what kind of interactions it supports. The authorization server, responds to the request with an interaction to be used to communicate with the resource owner. In some cases the interaction may also be used to interact with the RC as well; the specification is a bit fast and loose here. 
+In GNAP, the requesting client, declares what kind of interactions it supports. The authorization server responds to the request with an interaction to be used to communicate with the resource owner. In some cases the interaction may also be used to interact with the RC as well; the specification is a bit fast and loose here. 
 
 Having these interactions defined in the spec as first class objects provides extension points for future communication. Examples of defined interactions include:
 
@@ -169,7 +169,7 @@ You can also cancel grants, if the client no longer needs access to protected re
 
 > If the RC wishes to cancel an ongoing grant request, it makes an HTTP DELETE request to the continuation URI.
 
-This will also require the authorization server to revoke tokens associated with this request. This is a depature from vanilla OAuth2, where tokens may not be explicitly revoked. 
+This will also require the authorization server to revoke tokens associated with this request. This is a departure from vanilla OAuth2, where tokens may not be explicitly revoked. 
 
 ### Keys keys everywhere
 
@@ -206,7 +206,7 @@ Are all GNAP tokens sender constrained? Fear not! Bearer tokens still work. The 
 
 ### Built-in identity
 
-Unlike OAuth2, an authorization framework which no concept of identity, GNAP includes such features. 
+Unlike OAuth2, an authorization framework with no concept of identity, GNAP includes such features. 
 
 A client may request information about the owner of a resource in the initial grant request. If the AS determines that the owner has granted permission to release this information, either actively or passively, it can be returned. 
 
@@ -236,7 +236,7 @@ From the specification:
 
 OAuth requires clients to make requests with the `application/x-www-form-urlencoded` media type. Data is transmitted using form parameters, a stable format, guaranteed to be usable by many different clients and most programming languages. 
 
-However, many modern APIs use `application/json` as the media format. JSON has its flaws; why oh why can't we have comments in JSON? But it is more flexible and allows richer object structures than form parameters. You aren't forced to do use JSON with GNAP. You can collapse many objects into simple strings; you don't have to use nested structures if you don't want to.
+However, many modern APIs use `application/json` as the media format. JSON has its flaws; why oh why can't we have comments in JSON? But it is more flexible and allows richer object structures than form parameters. You aren't forced to use JSON with GNAP. You can collapse many objects into simple strings; you don't have to use nested structures if you don't want to.
 
 With GNAP, you can identify resources, interactions and other entities by reference as well. You may use these to refer to the entity in other operations. For example, here's a reference to an interaction which can be used to modify an existing grant, as discussed in "Continuation of a grant" above.
 
