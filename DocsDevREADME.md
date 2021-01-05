@@ -60,6 +60,10 @@ set theApp to "Safari"
 #set appHeight to 1100
 #set appWidth to 1550
 
+# Video
+#set appHeight to 1100
+#set appWidth to 1550
+
 # Maintenance Mode Screens
 #set appHeight to 1100
 #set appWidth to 900
