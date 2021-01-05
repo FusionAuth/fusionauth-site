@@ -2,7 +2,7 @@
 layout: blog-post
 title: Unsupervised uses FusionAuth to integrate with customers' upstream providers 
 description: Unsupervised, a machine learning platform, uses FusionAuth to solve their enterprise integration needs.
-image: blogs/dealcloser-case-study/dealcloser-chooses-fusionauth-saves-two-months-of-development-time.png
+image: blogs/unsupervised-case-study/unsupervised-uses-fusionauth-to-integrate-with-customers-upstream-providers-header-image.png
 author: Dan Moore
 category: blog
 tags: topic-customer-story
