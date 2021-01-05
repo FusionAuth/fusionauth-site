@@ -19,7 +19,7 @@ Unsupervised was looking for an auth system that satisfied numerous customer com
 
 > "Allowing [FusionAuth] to be a known base is very freeing mentally. We are much more confident that FusionAuth will implement the authentication system correctly compared to our homegrown, quasi-maintained version."
 
-After choosing FusionAuth, the development team had one authentication system to code against, with all the complexity and diversity of various client auth systems abstracted away. As a bonus, employees at their clients configure the upstream connections using FusionAuth's documentation, saving Unsupervised engineers even more effort.
+After choosing FusionAuth, the development team had one authentication system to code against, with all the complexity and diversity of various client auth systems abstracted away. As a bonus, their clients' employees configure the upstream connections using FusionAuth's documentation, saving Unsupervised engineers even more effort.
 
 Justin estimates that if they had to rebuild what FusionAuth provides them, they'd have to hire an additional senior engineer to build, maintain, and debug their auth layer. 
 
