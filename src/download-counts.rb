@@ -32,36 +32,40 @@ Dir.foreach(temp_dir) do |file|
   if File.file?("#{temp_dir}/#{file}")
     date = file.gsub(/FusionAuthAccesssLog_usage_([0-9]{4})_([0-9]{2})_([0-9]{2}).*/, '\1\2\3')
     File.readlines("#{temp_dir}/#{file}").each do |l|
-      if l =~ /fusionauth-app[-_0-9all.]*(deb|rpm|zip)"/
+      begin
+        if l =~ /fusionauth-app[-_0-9all.]*(deb|rpm|zip)"/
 
-        # Initialize the counts for this date
-        unless counts.has_key? date
-          counts[date] = [0, 0, 0]
-        end
-
-        # Check to see if the IP is whitelisted
-        ip = /"\d+?","(.+?)"/.match(l).captures[0]
-        if whitelisted_ip_patterns.find_index { |pattern| pattern.match(ip) } == nil
-          if l =~ /deb/
-            counts[date][0] = counts[date][0] + 1
-          elsif l =~ /rpm/
-            counts[date][1] = counts[date][1] + 1
-          else
-            counts[date][2] = counts[date][2] + 1
+          # Initialize the counts for this date
+          unless counts.has_key? date
+            counts[date] = [0, 0, 0]
           end
 
-          # Initialize the ip_hash for this IP and lookup the Country and City
-          unless ip_hash.has_key? ip
-            puts "lookup IP #{ip}..."
-            ip_response = Net::HTTP.get(URI("https://ipapi.co/#{ip}/json/"))
-            ip_json = JSON.parse(ip_response)
+          # Check to see if the IP is whitelisted
+          ip = /"\d+?","(.+?)"/.match(l).captures[0]
+          if whitelisted_ip_patterns.find_index { |pattern| pattern.match(ip) } == nil
+            if l =~ /deb/
+              counts[date][0] = counts[date][0] + 1
+            elsif l =~ /rpm/
+              counts[date][1] = counts[date][1] + 1
+            else
+              counts[date][2] = counts[date][2] + 1
+            end
 
-            country = ip_json['country_name'] || '?'
-            city = ip_json['city'] || '?'
-            ip_hash[ip] = "#{country}, #{city}"
+            # Initialize the ip_hash for this IP and lookup the Country and City
+            unless ip_hash.has_key? ip
+              puts "lookup IP #{ip}..."
+              ip_response = Net::HTTP.get(URI("https://ipapi.co/#{ip}/json/"))
+              ip_json = JSON.parse(ip_response)
+
+              country = ip_json['country_name'] || '?'
+              city = ip_json['city'] || '?'
+              ip_hash[ip] = "#{country}, #{city}"
+            end
+
           end
-
         end
+      rescue ArgumentError => e
+        puts "#{e}, argument #{l}"
       end
     end
   end
