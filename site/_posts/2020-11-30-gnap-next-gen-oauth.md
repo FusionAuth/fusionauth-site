@@ -12,7 +12,7 @@ The Grant Negotiation and Authorization Protocol, also known as GNAP, is current
 
 <!--more-->
 
-GNAP in the discussion and iteration stage, but you can read the [draft version to which this post refers](https://www.ietf.org/archive/id/draft-ietf-gnap-core-protocol-02.html). According to the [working group charter](https://datatracker.ietf.org/wg/gnap/about/), this standard will be released in multiple parts beginning in the middle of 2021. Additionally, they state that GNAP will not be backwards compatible with OAuth2 and OIDC, but it will solve similar problems:
+GNAP is in the discussion and iteration stage, but you can read the [draft version to which this post refers](https://www.ietf.org/archive/id/draft-ietf-gnap-core-protocol-02.html). According to the [working group charter](https://datatracker.ietf.org/wg/gnap/about/), this standard will be released in multiple parts beginning in the middle of 2021. Additionally, they state that GNAP will not be backwards compatible with OAuth2 and OIDC, but it will solve similar problems:
 
 > This group is chartered to develop a fine-grained delegation protocol for authorization, API access, user identifiers, and identity assertions. ... Although the artifacts for this work are not intended or expected to be backwards-compatible with OAuth 2.0 or OpenID Connect, the group will attempt to simplify migrating from OAuth 2.0 and OpenID Connect to the new protocol where possible.
 
@@ -256,7 +256,7 @@ With GNAP, one endpoint begins all interactions between the requesting client an
 
 Whew. That's a lot of new functionality. What should you do about the GNAP release?
 
-First, if OAuth2 works for you, keep using it. Of course, make sure you use it properly, with all the security improvements documented in [OAuth 2.1](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/). But OAuth2 is not going anywhere.
+First, if OAuth2 works for you, keep using it. Of course, make sure you use it properly, with all the security improvements documented in [OAuth 2.1](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/). OAuth2 is not going anywhere.
 
 Twitter recently updated from OAuth1, which was published as a standard in 2010. It's likely that systems will still be running OAuth2 in three years. In fact, my colleagues laughed when I mentioned three years; they think it'll be more like a decade. Auth is so foundational that when it works, breaking upgrades take a long time to roll out.
 
