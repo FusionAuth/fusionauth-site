@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: GNAP, the next generation of OAuth
-description: What is GNAP and why should you care?
+description: What is GNAP, how does it fit in with OAuth, and why should you care?
 image: blogs/custom-admin-registration-form/manage-custom-user-profile-data-in-th-fusionauth-admin.png
 author: Dan Moore
 category: blog
@@ -252,7 +252,7 @@ All references may be static or dynamically generated. In either case, they allo
 
 With GNAP, one endpoint begins all interactions between the requesting client and the authorization server. In true [HATEOAS](https://en.wikipedia.org/wiki/HATEOAS) fashion, clients start from that well known endpoint and follow links embedded in received JSON documents to other endpoints. No more consulting documentation to find out which endpoints you have to call when.
 
-## What should you do?
+## Is it time to stop using OAuth?
 
 Whew. That's a lot of new functionality. What should you do about the GNAP release?
 
