@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Become Education chose FusionAuth and built features rather than user management
+title: Become Education chose FusionAuth and built features instead of user management
 description: Career Education as a Service startup Become Education evaluated IDaaS services and chose FusionAuth because FusionAuth understood them.
 author: Dan Moore
 image: blogs/...
@@ -91,7 +91,7 @@ FusionAuth is maintaining state while servicing apps that don't. I expect that a
 
 **Dan**: Other than the cost concerns (as mentioned above), were there any wrinkles or troubleshooting you had to do to run FusionAuth in AKS?
 
-**David:** Currently the AKS nodes are restarting at least daily and we don’t understand this yet. It would be useful if the system logs appeared in the UI rather in the docker environment.
+**David:** Currently the AKS nodes are restarting at least daily and we don’t understand this yet. It would be useful if the system logs appeared in the UI rather than in the docker environment.
 
 -------
 
