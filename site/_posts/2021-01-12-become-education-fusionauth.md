@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Become Education chose FusionAuth and built features rather than user management
+title: Become Education chose FusionAuth and built features instead of user management
 description: Career Education as a Service startup Become Education evaluated IDaaS services and chose FusionAuth because FusionAuth understood them.
 author: Dan Moore
 image: blogs/...
@@ -9,7 +9,7 @@ tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 
-David Wilson is a FusionAuth community member and co-founder and CTO at Become Education, a careers education as a service company. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
+David Wilson is a FusionAuth community member and co-founder and CTO at Become Education, a "careers education as a service" company. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
@@ -25,15 +25,15 @@ David Wilson is a FusionAuth community member and co-founder and CTO at Become E
 
 **David:** We use FusionAuth for OAuth and use the provided login UI to support SSO and passwordless access for our users. Accounts are first established in our system and we use the FusionAuth API to create logins and keep things synced up.
 
-> For start-up products FusionAuth is very helpful and easy to roll out since it supports almost all popular identity protocols and frameworks.
+> Free tiers for developers [for other IDaaS services] are common but requirements like custom domains or control of data residency can trigger enterprise pricing.
 
-**Dan:** Interesting. So FusionAuth is not the system of record, your system is. Why didn't you build SSO and OAuth directly into your system? Has there been any hiccups in syncing the data from your system to FusionAuth? 
+**Dan:** Interesting. So FusionAuth is not the system of record, your system is. Why didn't you build SSO and OAuth directly into your system? Have there been any hiccups in syncing the data from your system to FusionAuth? 
 
 **David:** FusionAuth definitely helped speed up the product release by letting us focus on building features rather than user management. For start-up products FusionAuth is very helpful and easy to roll out since it supports almost all popular identity protocols and frameworks.
 
 We anticipated that we couldn't accurately scope what functionality would become critical for us after gaining experience with early deployments. Passwordless, for example, was not on my radar. But having it available provided an unexpected solution for certain schools.
 
-We drive account creation from our admin app and the api's first step to create or lookup an account on FusionAuth and return the `user.id`. The FusionAuth `user.id` becomes the id for our user system, creating a link that will survive changes to the email address. We never drive account updates from the FusionAuth UI and always push from our system so this simplifies the syncing. But our user APIs are more complex than they would otherwise be and bugs do happen.
+We drive account creation from our admin app and the API's first step is to create or lookup an account on FusionAuth and return the `user.id`. The FusionAuth `user.id` becomes the id for our user system, creating a link that will survive changes to the email address. We never drive account updates from the FusionAuth UI and always push from our system so this simplifies the syncing. But our user APIs are more complex than they would otherwise be and bugs do happen.
 
 > The decision [to use FusionAuth] was then easy. Ignore the big names and go with the team that understands startups and can scale with them.
 
@@ -43,11 +43,13 @@ We drive account creation from our admin app and the api's first step to create 
 
 **Dan:** What resources are protected by OAuth (APIs or something else)?
 
-**David:** Everything interesting is behind our APIs so that’s what we protect. 
+**David:** Everything interesting is behind our APIs so that's what we protect. 
 
 **Dan:** What problems did we solve for you? And how were you solving them before FusionAuth?
 
 **David:** Our initial release of the student application didn't support user accounts - each class had an access key. FusionAuth allowed us to move beyond that by solving the authentication/authorization challenge.
+
+> For start-up products FusionAuth is very helpful and easy to roll out since it supports almost all popular identity protocols and frameworks.
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
@@ -75,7 +77,7 @@ I discovered FusionAuth in the midst of that frustration. We connected with a hu
 
 We host FusionAuth on Azure. We've redeployed four times looking for the right price/performance balance. We can deploy FusionAuth as needed to meet data residency requirements but this requires three VMs per region. 
 
-Utopia would be serverless deployment of FusionAuth. Versions for major cloud providers like Azure and AWS that would support consumption based plans. This would solve hosting cost and scalability challenges. 
+Utopia would be serverless deployment of FusionAuth. For example, versions for major cloud providers like Azure and AWS that would support consumption based plans. This would solve hosting cost and scalability challenges. 
 
 But since I've got VMs running 24/7 to handle CIAM, I see potential for more app access control in FusionAuth.
 
@@ -89,7 +91,7 @@ FusionAuth is maintaining state while servicing apps that don't. I expect that a
 
 **Dan**: Other than the cost concerns (as mentioned above), were there any wrinkles or troubleshooting you had to do to run FusionAuth in AKS?
 
-**David:** Currently the AKS nodes are restarting at least daily and we don’t understand this yet. It would be useful if the system logs appeared in the UI rather in docker environment.
+**David:** Currently the AKS nodes are restarting at least daily and we don’t understand this yet. It would be useful if the system logs appeared in the UI rather than in the docker environment.
 
 -------
 
