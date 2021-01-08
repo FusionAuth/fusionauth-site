@@ -21,6 +21,7 @@ Available Since Version 1.5.0
 
 For blog posts:
 - Indent all code with two spaces per level.
+- We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
 - Blog post headers should have only the first word and any proper nouns are capitalized.
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
@@ -34,6 +35,10 @@ For lists:
 - macOS
 - Elasticsearch
 - .NET Core
+- OAuth and OAuth2
+- Identity Provider
+- Connector
+- Kickstart
 
 ## Sizing Window for Screenshots
 

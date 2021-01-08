@@ -74,4 +74,16 @@ Prime.Document.onReady(function() {
     const width = li.getWidth();
     dropdown.domElement.style.setProperty('--super-dropdown-arrow-left', (left + (width / 2) - 12) + 'px');
   });
+
+  // Banner
+  Prime.Document.query('.banner').each(function(e) {
+    if (localStorage.getItem(e.getId()) !== null) {
+      e.hide();
+    } else {
+      e.queryFirst('button').addEventListener('click', function() {
+        localStorage.setItem(e.getId(), 'hidden');
+        e.hide();
+      });
+    }
+  });
 });
