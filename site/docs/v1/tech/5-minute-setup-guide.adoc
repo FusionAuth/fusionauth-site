@@ -212,7 +212,9 @@ If you don't want to use a client library, you may link:/docs/v1/tech/oauth/endp
 
 == Store the user object in the session
 
-The final step is to add some code to our route that will retrieve the User object from FusionAuth using the `access_token` we retrieved in the previous step. Once we have the User object, we will store it in a server side session so that it can be used in other parts of the application. We can also store the `access_token` from FusionAuth as a cookie if our application would rather push the state to the browser. In either case, the last step we take is to redirect the user back to the homepage. Here's the complete code for exchanging the token, retrieving the user and storing it in the session:
+The final step is to add some code to our route that will retrieve the User object from FusionAuth using the `access_token` we retrieved in the previous step. Once we have the User object, we will store it in a server side session so that it can be used in other parts of the application. We also check that the user has been registered to our application. 
+
+We can also store the `access_token` from FusionAuth as a cookie if our application would rather push the state to the browser. In either case, the last step we take is to redirect the authorized user back to the homepage. Here's the complete code for exchanging the token, retrieving the user and storing it in the session:
 
 [source,javascript,title=Node.js Route Complete]
 ----
@@ -230,6 +232,11 @@ router.get('/oauth-redirect', function (req, res, next) {
         return client.retrieveUserUsingJWT(response.successResponse.access_token);
       })
       .then((response) => {
+        if (!(response.response.user.registrations.length > 0 && response.response.user.registrations[0].applicationId === clientId)) {
+          console.log("User not registered, not authorized.");
+          res.redirect(302, '/');
+          return;
+        }
         req.session.user = response.successResponse.user;
       })
       .then(() => {
