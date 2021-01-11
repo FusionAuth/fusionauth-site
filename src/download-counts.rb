@@ -65,7 +65,7 @@ Dir.foreach(temp_dir) do |file|
           end
         end
       rescue ArgumentError => e
-        puts "#{e}, argument #{l}"
+        puts "Caught Exception\n#{e}\nArgument: #{l}"
       end
     end
   end
