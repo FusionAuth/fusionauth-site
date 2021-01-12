@@ -3,7 +3,7 @@ layout: blog-post
 title: Become Education chooses FusionAuth for IDaaS
 description: Career Education as a Service startup Become Education evaluated IDaaS services and chose FusionAuth because FusionAuth understood them.
 author: Dan Moore
-image: blogs/...
+image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
 category: blog
 tags: topic-community-story
 excerpt_separator: "<!--more-->"
