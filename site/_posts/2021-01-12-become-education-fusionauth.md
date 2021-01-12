@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Become Education chose FusionAuth and built features instead of user management
+title: Become Education chooses FusionAuth for IDaaS
 description: Career Education as a Service startup Become Education evaluated IDaaS services and chose FusionAuth because FusionAuth understood them.
 author: Dan Moore
 image: blogs/...
@@ -39,7 +39,7 @@ We drive account creation from our admin app and the API's first step is to crea
 
 **Dan:** Do schools have auth systems you need to integrate with?
 
-**David:** So far we’ve only need to support school OpenID Identity Providers.
+**David:** So far we’ve only needed to support school OpenID Identity Providers.
 
 **Dan:** What resources are protected by OAuth (APIs or something else)?
 
