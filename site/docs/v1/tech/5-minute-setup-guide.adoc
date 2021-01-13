@@ -212,7 +212,9 @@ If you don't want to use a client library, you may link:/docs/v1/tech/oauth/endp
 
 == Store the user object in the session
 
-The final step is to add some code to our route that will retrieve the User object from FusionAuth using the `access_token` we retrieved in the previous step. Once we have the User object, we will store it in a server side session so that it can be used in other parts of the application. We can also store the `access_token` from FusionAuth as a cookie if our application would rather push the state to the browser. In either case, the last step we take is to redirect the user back to the homepage. Here's the complete code for exchanging the token, retrieving the user and storing it in the session:
+The final step is to add some code to our route that will retrieve the User object from FusionAuth using the `access_token` we retrieved in the previous step. Once we have the User object, we will store it in a server side session so that it can be used in other parts of the application. We also check that the user has been registered to our application. 
+
+We can also store the `access_token` from FusionAuth as a cookie if our application would rather push the state to the browser. In either case, the last step we take is to redirect the authorized user back to the homepage. Here's the complete code for exchanging the token, retrieving the user and storing it in the session:
 
 [source,javascript,title=Node.js Route Complete]
 ----
@@ -230,6 +232,11 @@ router.get('/oauth-redirect', function (req, res, next) {
         return client.retrieveUserUsingJWT(response.successResponse.access_token);
       })
       .then((response) => {
+        if (!response.response.user.registrations || response.response.user.registrations.length == 0 || (response.response.user.registrations.filter(reg => reg.applicationId === clientId)).length == 0) {
+          console.log("User not registered, not authorized.");
+          res.redirect(302, '/');
+          return;
+        }
         req.session.user = response.successResponse.user;
       })
       .then(() => {
@@ -274,6 +281,7 @@ As mentioned above, the Node.js code above is available on the FusionAuth GitHub
 
 From here, you can begin creating a registration page in your application or using FusionAuth's registration tool. You can also start working with FusionAuth Themes to make the login pages look like your brand. If you want to use FusionAuth's forgot password system, you will need to configure an SMTP server. Here are some links to additional documents that will help you continue your integration with FusionAuth.
 
+* link:/docs/v1/tech/core-concepts/[Core Concepts]
 * link:/docs/v1/tech/themes/[Themes]
 * link:/docs/v1/tech/email-templates/[Emails]
 * link:/docs/v1/tech/oauth/[Additional OAuth documentation]
