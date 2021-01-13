@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: GNAP, the next generation of OAuth
-description: What is GNAP, how does it fit in with OAuth, and why should you care?
+title: Why outsource your auth system?
+description: What are the primary considerations when making your decision about whether to outsource your user management, authorization, and authentication system?
 image: blogs/gnap-oauth2-next-gen/gnap-the-next-generation-of-oauth-header-image.png
 author: Dan Moore
 category: blog
@@ -17,7 +17,9 @@ Authentication is one of those components that you deal with all the time. Auth 
 
 ## Speed to market
 
-This is the most obvious consideration. Depending on the features you need, it could literally take months to implement auth in-house, whereas it could take less than a day to incorporate an outsourced solution. And you could say "but what if we only need a bare-bones implementation? Some salted hashes in a database and we're good to go!" That's a totally valid point, and if you don't anticipate needing sophisticated auth features then your best bet might be to do a quick in-house implementation and move on. However, time and time again I've seen product developers underestimate the sophistication of features that will be required when their userbases grow. Most of the time development organizations then fall prey to the sunk costs fallacy and double down on augmenting their in-house solution, even when it may be more efficient to abandon the home-grown effort and replace it with an outsourced solution. This will cause huge issues for maintainability, which I'll talk about further below.
+This is the most obvious consideration. Depending on the features you need, it could literally take months to implement auth in-house, whereas it could take less than a day to incorporate an outsourced solution. And you could say "but what if we only need a bare-bones implementation? Some salted hashes in a database and we're good to go!" 
+
+That's a totally valid point, and if you don't anticipate needing sophisticated auth features then your best bet might be to do a quick in-house implementation and move on. However, time and time again I've seen product developers underestimate the sophistication of features that will be required when their userbases grow. Most of the time development organizations then fall prey to the sunk costs fallacy and double down on augmenting their in-house solution, even when it may be more efficient to abandon the home-grown effort and replace it with an outsourced solution. This will cause huge issues for maintainability, which I'll talk about further below.
 
 ## Consequences of an auth breach
 
@@ -29,16 +31,18 @@ A not-insignificant addendum is that I believe your in-house system is much more
 
 ## Consequences of an auth outage
 
-While less damaging than breaches, outages can still cause reputational damage and cause you liability issues if your SLAs make uptime guarantees. Similarly to breaches, if you outsource your auth system it's likely that any auth outage will extend beyond your company. As an example, when Microsoft's AAD (Azure Active Directory) [went down for a good portion of the afternoon late last year](https://www.zdnet.com/article/microsofts-azure-ad-authentication-outage-what-went-wrong/), logins for applications across the internet stopped working. When your competitors' authorization systems are down at the same time yours are, nobody blames you for it, but when you're the only company having issues, you suffer reputationally. No matter what your outsourced auth system is (FusionAuth, Cognito, AAD, etc), you can be almost certain that you won't be alone in the event of an outage.
+While less damaging than breaches, outages can still cause reputational damage and cause you liability issues if your SLAs make uptime guarantees. Similarly to breaches, if you outsource your auth system it's likely that any auth outage will extend beyond your company. 
+
+As an example, when Microsoft's AAD (Azure Active Directory) [went down for a good portion of the afternoon late last year](https://www.zdnet.com/article/microsofts-azure-ad-authentication-outage-what-went-wrong/), logins for applications across the internet stopped working. When your competitors' authorization systems are down at the same time yours are, nobody blames you for it, but when you're the only company having issues, you suffer reputationally. No matter what your outsourced auth system is (FusionAuth, Cognito, AAD, etc), you can be almost certain that you won't be alone in the event of an outage.
 
 ## Maintainability
 
-There are trade-offs here. The benefits to an in-house system:
+There are trade-offs here. The benefits to an in-house system include:
 
 * Your engineers can design the exact system to fit your needs, and you'll have unrestricted ability to add very specific features if requirements change over time.
 * If the same engineers who built the system are maintaining it, then they'll have the context required to anticipate issues as they add features.
 
-However, the drawbacks can be great:
+However, the drawbacks can be large:
 
 * Complex new features can take significant time to build. outsourced auth systems likely have these features already built (things like multi-factor authentication, user management interfaces, analytics and audit logs, and brute force hack detection, among others).
 * With an in-house solution, you'll have to budget time to monitor new security threats and patch your system in a rapidly evolving threat landscape.
@@ -59,7 +63,9 @@ When evaluating different auth providers, you'll also want to consider whether a
 
 ## Auth may be unrelated to your core competency
 
-As a final consideration, you may want to evaluate if your engineers even have the ability to implement a secure in-house auth system without a significant investment in education. This is something that many leaders dismiss, since they have great faith in the intelligence and skill of their people. However, knowledge and intelligence aren't the same, and just because your engineers are capable of becoming auth experts doesn't mean you want them to spend the time to do so. As an engineering leader, you have a responsibility to ensure that your engineers are spending their time on efforts that will optimally contribute to the long-term success of your organization. Auth is a necessary component, but is it really a differentiator for your application?
+As a final consideration, you may want to evaluate if your engineers even have the ability to implement a secure in-house auth system without a significant investment in education. This is something that many leaders dismiss, since they have great faith in the intelligence and skill of their people. 
+
+However, knowledge and intelligence aren't the same, and just because your engineers are capable of becoming auth experts doesn't mean you want them to spend the time to do so. As an engineering leader, you have a responsibility to ensure that your engineers are spending their time on efforts that will optimally contribute to the long-term success of your organization. Auth is a necessary component, but is it really a differentiator for your application?
 
 Only you have the context to make the best decisions for your company, but I hope this article has helped you think through some of the considerations involved in outsourcing your auth.
 
