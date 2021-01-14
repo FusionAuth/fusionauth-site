@@ -3,7 +3,7 @@ layout: blog-post
 title: Softozor integrated FusionAuth with Hasura and Kubernetes to save development effort
 description: While working on a consulting project building an ecommerce platform, Softozor choose FusionAuth to manage their authentication.
 author: Dan Moore
-image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
+image: blogs/...
 category: blog
 tags: topic-community-story
 excerpt_separator: "<!--more-->"
