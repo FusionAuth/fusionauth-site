@@ -61,6 +61,10 @@ set theApp to "Safari"
 #set appHeight to 1100
 #set appWidth to 1550
 
+# Video
+#set appHeight to 1100
+#set appWidth to 1550
+
 # Maintenance Mode Screens
 #set appHeight to 1100
 #set appWidth to 900
@@ -100,7 +104,7 @@ end tell
 - Highlight sections using image preview editor
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
-	1. Resize to width of 1600 in Preview.app
+	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
 	2. Use https://tinypng.com/ to compress the image
 
 Converting terminalizer gifs to videos
