@@ -219,6 +219,8 @@ In this section we will also cover PKCE (Proof Key for Code Exchange - pronounce
 
 Let's take a look at how you implement this grant using a prebuilt OAuth server (like FusionAuth).
 
+#### Login/register buttons
+
 First, we need to add a "Login" or "My Account" link/button to our application; or if you are using one of the authorization modes from above (for example the **Third-party service authorization** mode), you'll add a "Connect to XYZ" link/button. There are two ways to connect this link/button to the OAuth server:
 
 1. Set the `href` of the link to the full URL that starts the OAuth authorization code grant.
@@ -255,6 +257,8 @@ router.get('/login', function (req, res, next) {
   res.redirect(302, `https://login.twgtl.com/oauth2/authorize?[a bunch of parameters here]`);
 });
 ```
+
+#### Authorize endpoint parameters
 
 This code immediately redirects the browser to the OAuth server. However, the OAuth server will reject the request because it doesn't contain the required parameters to be valid. The parameters that are defined in the OAuth specifications are:
 
@@ -293,11 +297,16 @@ router.get('/login', function (req, res, next) {
 
 You'll notice that we have specified the `client_id`, which was likely provided to us by the OAuth server, the `redirect_uri`, which is part of our application, and a `scope` with the values `profile`, `offline_access`, and `openid` (space separated). These are all usually hardcoded values since they rarely change in practice. The other values change each time we make a request and are being generated in the controller.
 
-The `scope` parameter is used by the OAuth server to determine what authorization the application is requesting. There are a couple of standard values that are defined as part of OpenID Connect. These include `profile`, `offline_access` and `openid`. The OAuth specification does not define any standard scopes, but most OAuth servers support numerous values for this parameter. You should consult with your OAuth server to determine the scopes you'll need to pass. Here are definitions of the standard scopes in the OpenID Connect specification:
+The `scope` parameter is used by the OAuth server to determine what authorization the application is requesting. There are a couple of standard values that are defined as part of OpenID Connect. These scopes include `profile`, `offline_access` and `openid`. The OAuth specification does not define any standard scopes, but most OAuth servers support numerous values for this parameter. You should consult with your OAuth server to determine the scopes you'll need to pass. Here are definitions of the standard scopes in the OpenID Connect specification:
 
 * `openid` - tells the OAuth server to use OpenID Connect for the handling of the OAuth workflow. This additionally will tell the OAuth server to return an id token from the Token endpoint (covered below) 
 * `offline_access` - tells the OAuth server to generate and return a refresh token from the Token endpoint (covered below) 
-* `profile` - tells the OAuth server to generate and return a refresh token from the Token endpoint (covered below) 
+* `profile` - tells the OAuth server to include all of the standard OpenID Connect claims in the returned tokens (access and/or id tokens) 
+* `email` - tells the OAuth server to include the user's email in the returned tokens (access and/or id tokens)
+* `address` - tells the OAuth server to include the user's address in the returned tokens (access and/or id tokens)
+* `phone` - tells the OAuth server to include the user's phone number in the returned tokens (access and/or id tokens)
+
+In addition to returning
 
 In order to properly implement the handling for the `state`, PKCE, and `nonce` parameters, we need to save these values off somewhere they will be persisted across browser requests and redirects. There are two options for this:
 
@@ -401,9 +410,14 @@ function generateAndSaveNonce(req, res) {
 
 Encryption is generally not needed, specifically for the `state` and `nonce` parameters since those are sent as plaintext on the redirect anyways, but if you need ultimate security, this is the best way to secure these values.
 
+#### Logging in
+
 At this point, the user will be taken over to the OAuth server to login (or register). Technically, the OAuth server can manage the login and registration process however it needs. In some cases, a login won't be necessary because the user will already be authenticated with the OAuth server or they can be authenticated by other means (smart cards, hardware devices, etc). 
 
 The OAuth 2.0 specification doesn't specify anything about this process. In practice though, 99.999% of OAuth servers use a standard login page that collects the user's username and password. We'll assume that the OAuth server provides a standard login page and handles the collection of the user's credentials and verification of them.
+
+
+#### Redirect and retrieve the tokens
 
 After the user has logged in, the OAuth server redirects them back to the application. The exact location of the redirect is controlled by the `redirect_uri` parameter that we passed on the URL above. In our example, this location is `https://app.twgtl.com/oauth-callback`. When the OAuth server redirects the browser back to this location, it will add a number of parameters to the URL. These are:
 
