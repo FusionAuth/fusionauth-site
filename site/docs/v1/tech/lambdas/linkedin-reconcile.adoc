@@ -1,0 +1,72 @@
+---
+layout: doc
+title: LinkedIn Reconcile
+description: An overview of the LinkedIn Reconcile lambda
+---
+
+:sectnumlevels: 0
+
+== LinkedIn Reconcile lambda
+
+When an LinkedIn identity provider is used to complete a federated login request FusionAuth will use the email address to reconcile user. You may optionally utilize a lambda to customize the user and user registration during this authentication event.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+[source,javascript]
+----
+function reconcile(user, registration, linkedInUser) {
+  // Lambda code goes here
+}
+----
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+* `user` - the FusionAuth User object
+* `registration` - the FusionAuth UserRegistration object
+* `linkedInUser` - the JSON payload returned by the LinkedIn Email and Me APIs
+
+The two FusionAuth objects are well documented here in the link:/docs/v1/tech/apis/users/[User API] and link:/docs/v1/tech/apis/registrations/[Registration API] documentation. The `linkedInUser` may contain various user claims depending upon the user's LinkedIn configuration and the scopes requested in the LinkedIn configuration.
+
+== Assigning the lambda
+
+Once a lambda is created, you may assign it to the LinkedIn identity provider in the IdP configuration.
+
+Navigate to [breadcrumb]#Settings -> Identity Providers# and select your existing LinkedIn configuration or click [breadcrumb]#Add provider# and select LinkedIn if it has not yet been configured.
+
+== Default lambda
+
+A default LinkedIn reconcile lambda is available in FusionAuth that may be used or modified. The default LinkedIn lambda function is documented below.
+
+[source,javascript]
+----
+// This is the default LinkedIn reconcile, modify this to your liking.
+function reconcile(user, registration, linkedInUser) {
+
+  // Un-comment this line to see the linkedInUser object printed to the event log
+  // console.info(JSON.stringify(linkedInUser, null, ' '));
+
+  user.firstName = linkedInUser.localizedFirstName || user.firstName;
+  user.lastName = linkedInUser.localizedLastName || user.lastName;
+
+  // LinkedIn returns several images sizes.
+  // See https://docs.microsoft.com/en-us/linkedin/shared/references/v2/profile/profile-picture
+  var images = linkedInUser.profilePicture['displayImage~'].elements || [];
+  var image100 = images.length >= 1 ? images[0].identifiers[0].identifier : null;
+  var image200 = images.length >= 2 ? images[1].identifiers[0].identifier : null;
+  var image400 = images.length >= 3 ? images[2].identifiers[0].identifier : null;
+  var image800 = images.length >= 4 ? images[3].identifiers[0].identifier : null;
+
+  // Use the largest image.
+  user.imageUrl = image800;
+
+  // Record the LinkedIn Id
+  registration.data.linkedIn = registration.data.linkedIn || {};
+  registration.data.linkedIn.id = linkedInUser.id;
+}
+----
+
+=== Limitations
+
+The `user.email` field on the user will be ignored if modified by the lambda function. This is to protect the integrity of the `email` claim returned by the identity provider.  The `user.username` field on the user will be ignored if modified by the lambda function. This is to mitigate the risks of an account takeover due to a non globally unique identifier.
