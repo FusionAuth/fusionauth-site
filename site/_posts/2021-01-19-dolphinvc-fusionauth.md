@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Video conferencing company DolphinVC uses FusionAuth for cloud independence
+title: Video conferencing company DolphinVC chose FusionAuth for cloud independence
 description: ...
 author: Dan Moore
 image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
