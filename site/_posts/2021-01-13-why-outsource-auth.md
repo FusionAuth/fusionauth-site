@@ -14,7 +14,7 @@ You're a software engineering leader, and you're great at your job. You know tha
 
 You also know that these aren't decisions that you can only make once -- you have to keep reevaluating based on environment changes and the needs of new products.
 
-Authentication is one of those components that you deal with all the time. Auth is a necessary part of any web-based software product, but how you implement auth is not necessarily always the same. Careful consideration is needed, because your decision to outsource will not only impact speed of development, but also long-term product maintenance -- you don't want to slow down time to market because you re-implemented an entire auth system unnecessarily, but you also don't want to use an auth system that is going to cause problems down the road. 
+Authentication is one of those components that you deal with all the time. Auth is a necessary part of any software product, but how you implement auth is not necessarily always the same. Careful consideration is needed, because your decision to outsource will not only impact speed of development, but also long-term product maintenance -- you don't want to slow down time to market because you re-implemented an entire auth system unnecessarily, but you also don't want to use an auth system that is going to cause problems down the road. 
 
 So what are the primary considerations when making your decision?
 
@@ -56,7 +56,7 @@ However, the drawbacks can be large:
 * Complex new features can take significant time to build. Outsourced auth systems likely have these features already built (things like multi-factor authentication, user management interfaces, analytics and audit logs, and brute force hack detection, among others).
 * With an in-house solution, you'll have to budget time to monitor new security threats and patch your system in a rapidly evolving threat landscape.
 * You won't get the benefits of a dedicated team that are constantly improving your auth system. This is actually a bigger deal than it seems, because if you outsource auth then other companies will also be filing issue reports and feature requests on your behalf, so you reap the benefits of those extra eyes as well.
-* In the case of mergers or acquisitions, an in-house solution is likely to be terrible at combining different databases of users and managing things like duplicates and incomplete data. Enterprise Identity Unification (EIU) efforts can founder on internal auth systems.
+* In the case of mergers or acquisitions, an in-house solution is likely to be terrible at combining different databases of users and managing things like duplicates or incomplete data. Such enterprise identity unification efforts can founder on internal auth systems. FusionAuth, on the other hand, supports modeling different user bases with tenants. 
 
 ## Cost
 
@@ -64,7 +64,7 @@ When building an in-house auth system your costs are all ostensibly sunk (engine
 
 When making cost calculations, you should compare:
 
-**The revenue lost due to getting to market later PLUS the cost of engineer time to implement PLUS on-going staff hours required for maintenance**
+**Revenue lost by slower time-to-market PLUS engineering cost to implement in-house solution PLUS on-going maintenance costs of in-house solution PLUS increased risk of data breach PLUS increased risk of outage PLUS increased risk during a merger or acquisition**
 
 vs 
 
