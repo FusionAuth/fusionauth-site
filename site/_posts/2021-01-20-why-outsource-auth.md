@@ -58,7 +58,7 @@ However, the drawbacks can be large:
 * You won't get the benefits of a dedicated team that are constantly improving your auth system. This is actually a bigger deal than it seems, because if you outsource auth then other companies will also be filing issue reports and feature requests on your behalf, so you reap the benefits of those extra eyes as well.
 * In the case of mergers or acquisitions, an in-house solution is likely to be terrible at combining different databases of users and managing things like duplicates or incomplete data. Such enterprise identity unification efforts can founder on internal auth systems. FusionAuth, on the other hand, supports modeling different user bases with tenants. 
 
-## Cost
+## Cost of In-House vs Outsourced Auth
 
 When building an in-house auth system your costs are all ostensibly sunk (engineer salaries). However, if building your system in-house delays time to market or prevents creation of other features, the build could cost you a significant amount of real income. There will also be on-going maintenance costs with an in-house solution. 
 
