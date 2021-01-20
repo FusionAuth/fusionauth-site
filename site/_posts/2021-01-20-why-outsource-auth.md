@@ -2,7 +2,7 @@
 layout: blog-post
 title: Why outsource your auth system?
 description: What are the primary considerations when making your decision about whether to outsource your user management, authorization, and authentication system?
-image: blogs/gnap-oauth2-next-gen/gnap-the-next-generation-of-oauth-header-image.png
+image: blogs/why-outsource-auth/why-outsource-your-auth-system.png
 author: Joe Stech
 category: blog
 excerpt_separator: "<!--more-->"
