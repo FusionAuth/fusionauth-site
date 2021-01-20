@@ -21,7 +21,7 @@ Maciej Wisniowski is a FusionAuth community member and team leader in the web de
 
 **Maciej:** I'm a full-stack web developer working as a Team Leader in Orbitvu, a company that builds innovative imaging solutions for the world of eCommerce. 
 
-Orbitvu provides both software and hardware solutions for automated photography which means our client gets an end-to-end solution that starts with our hardware and desktop software with features like automatic background removal and then is able to effortlessly publish packshots and 360-degree interactive product presentations on the web. The latter part is my responsibility.
+Orbitvu provides both software and hardware solutions for automated product photography which means our client gets an end-to-end solution that starts with our hardware and desktop software with features like automatic background removal and then is able to effortlessly publish packshots and 360-degree interactive product presentations on the web. The latter part is my responsibility.
 
 **Dan:** What a cool idea! Do you have a link to a sample (or real) interactive product presentation? 
 
