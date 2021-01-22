@@ -12,6 +12,8 @@ This is a 5-minute guide to to setup and integrate with FusionAuth. Starting... 
 
 This guide assumes that you have installed either a MySQL or PostgreSQL database and have a super username and password for the database that is able to create schemas and databases. If you do not have a database installed, follow the instructions in our link:/docs/v1/tech/installation-guide/database/[Database Installation Guide] to install a database.
 
+You also need to have node installed. This has been tested with node 14, but should work with other versions.
+
 == Overview
 
 Here are the steps that we need to take to setup FusionAuth as a login provider (also known as an identity provider) for your application:
@@ -29,7 +31,7 @@ These steps are the standard integration with an OAuth identity provider. These 
 
 video::trzY5otEgKM[youtube,width=560,height=315]
 
-== Install FusionAuth
+== 1. Install FusionAuth
 
 FusionAuth is simple to setup on your laptop, desktop or any server. You can also purchase a basic hosting plan on the FusionAuth Cloud platform here: https://fusionauth.io/pricing
 
@@ -58,7 +60,7 @@ Install is complete. Time for tacos.
 Thank you have a nice day.
 ----
 
-== Start FusionAuth
+== 2. Start FusionAuth
 
 The next step is to start FusionAuth using the command that the Fast Path installer created. This script is called `startup.sh` and we can execute it from the installation directory like this:
 
@@ -69,7 +71,7 @@ fusionauth/bin/startup.sh
 
 This will start both the `fusionauth-search` and `fusionauth-app` components. If you are on Windows, you'll need to use the `startup.bat` file instead.
 
-== Complete Maintenance Mode and the Setup Wizard
+== 3. Complete Maintenance Mode and the Setup Wizard
 
 After we have FusionAuth installed and running, we can open our browser to http://localhost:9011. This is the default address for FusionAuth when running locally. This will bring up FusionAuth, which should be sitting in Maintenance Mode and ready to be configured. FusionAuth enters Maintenance Mode any time the database or the Elasticsearch engine is not accessible or is not properly setup. In our case, FusionAuth likely was able to connect to both of these, but neither was ready to be used. Here's how the Maintenance Mode screen should look:
 
@@ -91,7 +93,7 @@ image::5-minute-setup-guide/setup-wizard.png[Setup Wizard,width=1200,role=shadow
 
 Clicking **Submit** here will complete the Setup Wizard and log us into the FusionAuth admin UI.
 
-== Create an Application and configure the OAuth settings
+== 4. Create an Application and configure the OAuth settings
 
 Once we arrive in the FusionAuth admin UI, the first thing we need to do is create an Application. An Application is something that a user can log into. This is the application we are building or that we are migrating to use FusionAuth. We'll click the [breadcrumb]#Application# menu option on the left side of the page or the **Setup** button in the box at the top of the page.
 
@@ -113,7 +115,7 @@ Most of the defaults will work, but we also need to provide these items:
 
 Once we have all of this configured, we'll click the blue **Save** button at the top of the page.
 
-== Copy the OAuth login URL and add it to your application
+== 5. Copy the OAuth login URL and add it to your application
 
 Once the Application has been created, we'll be back on the listing page. From here, we can click the green View button for our new Application. This will open a dialog that contains information about the Application, including the full URL for the OAuth login page. We'll copy this URL and paste it into our application's HTML as a link for the user to login. Most applications have a link that says, "Login" or "My Account" for this action.
 
@@ -123,24 +125,21 @@ image::5-minute-setup-guide/application-view.png[Application View Dialog,width=1
 
 We can add this URL as a link to our Node.js example application in the main template. The https://github.com/FusionAuth/fusionauth-node-example[code is available] on the FusionAuth GitHub, and it's recommended you download it to follow along. 
 
-Here's how our Pug template looks:
+Here's how our Pug template, which lives in `views/index.pug`, looks:
 
 [source,pug,title=Pug Template]
 ----
 extends layout
 
 block content
-  - var clientId = '48cf2492-508d-4644-95eb-3741618821a4'
   h1= title
   if user
     p Hello #{user.firstName}
   else
-    a(href='http://localhost:9011/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&state='+stateValue) Login
+    a(href='http://localhost:9011/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&state='+stateValue+'&code_challenge='+challenge+'&code_challenge_method=S256') Login
 
   p Welcome to #{title}
 ----
-
-**NOTE**: The URL above does not include the `scope=offline_access` parameter. This is required in order for FusionAuth to return a refresh token when calling the Token API (covered below). If you want a refresh token, you'll need to add this parameter to the URL as well as enable it in the FusionAuth Application configuration page.
 
 If you are using raw HTML, here's an anchor tag that will start the OAuth workflow the same as the Pug template above:
 
@@ -151,7 +150,7 @@ If you are using raw HTML, here's an anchor tag that will start the OAuth workfl
 
 Just drop this anchor tag into your HTML page and it will take the user to FusionAuth to login.
 
-== Grant the user permissions to your application
+== 6. Grant the user permissions to your application
 
 Next, we need to grant the user we created in the Setup Wizard permissions to log into our new Application. This can be done from the User management section of the FusionAuth admin UI. By clicking the [breadcrumb]#Users# link in the navigation, we'll be taken to the main user search. Since we only have one user in FusionAuth at the moment, we'll just click on that user:
 
@@ -163,7 +162,7 @@ image::5-minute-setup-guide/registration-add-form.png[Registration Add Form,widt
 
 For this example, we don't need to provide any additional information for the registration, so we can just click the save button at the top. Now the user is setup so that they can log into the application. Keep in mind that in most cases, the process of creating a registration is done when the user signs up for our application. Therefore, the process we just used is normally not required in order for users to log in. However, this process can be used for applications that are closed systems such as internal applications for your company. In these cases, users will be manually granted permissions to each application by an administrator.
 
-== Write a route (controller, action, etc) in your backend application that completes the login
+== 7. Write a route (controller, action, etc) in your backend application that completes the login
 
 Before we test the login, let's write the route/controller in our application's backend that will complete the OAuth workflow. After a user logs into FusionAuth's OAuth front-end successfully, their browser will be redirected to the URL we provided in the configuration step above. This redirect will contain a query parameter called `code` that contains the OAuth authorization code from FusionAuth. Our route/controller will use this `code` parameter to call back to FusionAuth to exchange the code for an access and a refresh token.
 
@@ -179,19 +178,98 @@ In order to complete this process, we'll be using the FusionAuth typescript clie
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "@fusionauth/typescript-client": "^1.16.1",
+    "@fusionauth/typescript-client": "^1.22.0",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "express-session": "1.17.0",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
+    "pkce-challenge": "^2.1.0",
     "pug": "2.0.0-beta11"
   }
 }
 ----
 
-Next, we'll add a route that will respond to the path we configured above of `/oauth-redirect`. This route will pull the `code` parameter from the request and exchange it for an access token. In order to call the function on the FusionAuth client, we will also need the `client_id` and the `client_secret` from our Application configuration above. These are required so that our application can prove it is the correct application the user is logging into. Here's the Node.js code for the route:
+You'll want to install this all by running `npm install` after creating the above `package.json` file.
+
+Here's the full Express router. You want to create a file called `routes/index.js` and put this code in it:
+
+[source,javascript,title=Node.js Route]
+----
+const express = require('express');
+const router = express.Router();
+const {FusionAuthClient} = require('@fusionauth/typescript-client');
+const clientId = '48cf2492-508d-4644-95eb-3741618821a';
+const clientSecret = 'm-WaqEcvIIzghwy_uVtxoqFtVSrLoDpU76gG2V9RPX8';
+const client = new FusionAuthClient('noapikeyneeded', 'http://localhost:9011'); // only using public api methods
+const pkceChallenge = require('pkce-challenge');
+
+/* GET home page. */
+router.get('/', function (req, res, next) {
+  const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  req.session.stateValue = stateValue;
+
+  //generate the pkce challenge/verifier dict
+  pkce_pair = pkceChallenge();
+  // Store the PKCE verifier in session
+  req.session.verifier = pkce_pair['code_verifier'];
+  const challenge = pkce_pair['code_challenge'];
+  res.render('index', {user: req.session.user, title: 'FusionAuth Example', clientId: clientId, challenge: challenge, stateValue: stateValue});
+});
+
+/* OAuth return from FusionAuth */
+router.get('/oauth-redirect', function (req, res, next) {
+  const stateFromServer = req.query.state;
+  if (stateFromServer !== req.session.stateValue) {
+    console.log("State doesn't match. uh-oh.");
+    console.log("Saw: " + stateFromServer + ", but expected: " + req.session.stateValue);
+    res.redirect(302, '/');
+    return;
+  }
+
+  // This code stores the user in a server-side session
+ client.exchangeOAuthCodeForAccessTokenUsingPKCE(req.query.code,
+                                                 clientId,
+                                                 clientSecret,
+                                                 'http://localhost:3000/oauth-redirect',
+                                                 req.session.verifier)
+      .then((response) => {
+        return client.retrieveUserUsingJWT(response.response.access_token);
+      })
+      .then((response) => {
+        // check for authorization
+        if (!response.response.user.registrations || response.response.user.registrations.length == 0 || (response.response.user.registrations.filter(reg => reg.applicationId === clientId)).length == 0) {
+          console.log("User not registered, not authorized.");
+          res.redirect(302, '/');
+          return;
+        }
+      
+        req.session.user = response.response.user;
+      })
+      .then((response) => {
+        res.redirect(302, '/');
+      }).catch((err) => {console.log("in error"); console.error(JSON.stringify(err));});
+      
+  // This code pushes the access and refresh tokens back to the browser as secure, HTTP-only cookies without checking for authorization
+  // client.exchangeOAuthCodeForAccessTokenUsingPKCE(req.query.code,
+  //                                        clientId,
+  //                                        clientSecret,
+  //                                        'http://localhost:3000/oauth-redirect',
+  //                                        req.session.verifier)
+  //     .then((response) => {
+  //       res.cookie('access_token', response.response.access_token, {httpOnly: true});
+  //       res.cookie('refresh_token', response.response.refresh_token, {httpOnly: true});
+  //       res.redirect(302, '/');
+  //     }).catch((err) => {console.log("in error"); console.error(JSON.stringify(err));});
+});
+
+module.exports = router;
+----
+
+This is a lot, so you can just cut and paste it. But let's look at one specific portion of it. We need a route that will respond to the path we configured in the FusionAuth admin user interface above (`/oauth-redirect`). This route will pull the `code` parameter from the request and exchange it for an access token. 
+
+In order to call the function on the FusionAuth client, we will also need the `client_id` and the `client_secret` from our Application configuration above. These are required so that our application can prove it is the correct application the user is logging into. Here's an excerpt of the Node.js code for the route:
 
 [source,javascript,title=Node.js Route]
 ----
@@ -204,13 +282,14 @@ router.get('/oauth-redirect', function (req, res, next) {
   client.exchangeOAuthCodeForAccessToken(req.query.code,
                                          clientId,
                                          clientSecret,
-                                         'http://localhost:3000/oauth-redirect');
+                                         'http://localhost:3000/oauth-redirect',
+                                         req.session.verifier)
 });
 ----
 
 If you don't want to use a client library, you may link:/docs/v1/tech/oauth/endpoints#complete-the-authorization-code-grant-request[post directly to the `/oauth2/token` endpoint]. This will link:/docs/v1/tech/oauth/endpoints#response-body[return the access token as well as other data].
 
-== Store the user object in the session
+== 8. Store the user object in the session
 
 The final step is to add some code to our route that will retrieve the User object from FusionAuth using the `access_token` we retrieved in the previous step. Once we have the User object, we will store it in a server side session so that it can be used in other parts of the application. We also check that the user has been registered to our application. 
 
@@ -265,7 +344,8 @@ const clientSecret = 'm-WaqEcvIIzghwy_uVtxoqFtVSrLoDpU76gG2V9RPX8';
 client.exchangeOAuthCodeForAccessToken(req.query.code,
                                        clientId,
                                        clientSecret,
-                                       'http://localhost:3000/oauth-redirect')
+                                       'http://localhost:3000/oauth-redirect',
+                                       req.session.verifier)
   .then((response) => {
     res.cookie('access_token', response.successResponse.access_token, {httpOnly: true});
     res.cookie('refresh_token', response.successResponse.refresh_token, {httpOnly: true});
@@ -275,9 +355,11 @@ client.exchangeOAuthCodeForAccessToken(req.query.code,
 
 This code works well if you are building a single-page application (SPA) or any other type of application that uses cookies rather than server-side sessions.
 
-As mentioned above, the Node.js code above is available on the FusionAuth GitHub located here: https://github.com/FusionAuth/fusionauth-node-example
+As mentioned above, the Node.js code above is available on the FusionAuth GitHub located here: https://github.com/FusionAuth/fusionauth-node-example .
 
-== Feedback For Us
+== Feedback 
+
+We are beginning to work on a 10 minute guide and a 42 minute guide. What topics would you want to cover next? Please choose 2 at most.
 
 ++++
 <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfY0w3qAAkjdyeXIsZyyxZ4EJxrMQ-DmVkc9t4KfJDLZcDeNg/viewform?embedded=true" width="640" height="876" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
