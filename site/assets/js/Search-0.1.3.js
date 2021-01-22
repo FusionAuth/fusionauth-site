@@ -52,7 +52,7 @@ FusionAuth.Search.prototype = {
   _empty: function(results) {
     return `<ol class="ais-Hits-list">
               <li class="ais-Hits-item">
-                <a class="search-result">No results for: \"${results.query}\"</a>
+                <a class="search-result">No results for: \"${Prime.Utils.escapeHTML(results.query)}\"</a>
               </li>
             </ol>`;
   },
