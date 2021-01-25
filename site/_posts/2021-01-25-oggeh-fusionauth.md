@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Become Education chooses FusionAuth for IDaaS
-description: Career Education as a Service startup Become Education evaluated IDaaS services and chose FusionAuth because FusionAuth understood them.
+title: OGGEH Cloud Computing switched to FusionAuth from Gluu
+description: OGGEH Cloud Computing has a cloud computing platform that empowers front end developers. They chose FusionAuth because it requires less CPU and memory resources than alternatives.
 author: Dan Moore
 image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
 category: blog
