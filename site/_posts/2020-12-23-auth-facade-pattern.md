@@ -9,68 +9,81 @@ tags: topic-auth-patterns
 excerpt_separator: "<!--more-->"
 ---
 
-I have been seeing a common pattern when talking to FusionAuth customers, and I wanted to document it. I call it the Auth Facade pattern and it applies to people deploying their software in to other environments. These environments are run by your customers and you may have limited insight or control.
+During conversations with FusionAuth customers, I have seen a common deployment pattern I call the "Auth Facade". This pattern is useful when deploying software to heterogenous environments. These software networks are run by your customers and you may have limited insight into their setup. 
 
 <!--more-->
 
-At the same time, the enterprise doesn't want to have Yet Another User Database to maintain. Instead they want your application to authenticate its users against an existing user datastore. This may be Azure Active Directory, Okta, or another identity provider. This identity provider is run by your customer's employees and may support OIDC or SAML.
+At the same time, your enterprise customer doesn't want Yet Another User Database to maintain. Instead the stakeholders want your application to authenticate users against an existing datastore. This may be Azure Active Directory, Okta, or another identity provider. This identity provider is run by your customer's employees and may support OIDC or SAML.
 
-As an enterprise software developer, you have a couple of options:
+Finally, your application has needs around user data as well. Whether that is role based authorization, auditing access or displaying a 'Welcome Dan' message, your application will need access to user data.
 
-* Test and document how your application can be configured to use an upstream provider. This is a roll your own solution and requires insight into your customers deployment environments.
-* Code to the OIDC and SAML specs and hope that gives you all the data you need for your user store. This is federation.
+As an enterprise software developer, you have a couple of options to solve this problem:
+
+* Test and document how your application can be configured to use an upstream provider. This is a roll your own solution and requires knowledge of your customers deployment environments. You'll want to provide and test configuration options for all the major providers.
+* Code to the OIDC and SAML specs, since most enterprise providers will support these. Then you need to structure your user data needs around what these provide. This is the pure federation option.
 * Use an auth facade.
 
+Like any [facade](https://en.wikipedia.org/wiki/Facade_pattern), the auth facade hides a subsystem from a client. In this case, the subsystem is your client's identity provider.
 
-The auth facade, as any [good facade should](https://en.wikipedia.org/wiki/Facade_pattern), hides a subsystem from a client. In this case, it is your client's identity provider.
+{% include _image.liquid src="/assets/img/blogs/auth-facade/auth-facade-pattern.svg" alt="A common architectural pattern." class="img-fluid" figure=false %}
 
-The auth facade is more than just federation. Federation is a good start, but you need more functionality, support and documentation than what is guaranteed by the standards. When you use an auth facade, you get the following benefits:
+The auth facade provides more than just authentication and authorization federation, though. Federation is a good start, but sometimes you need more functionality, support and documentation than the standards provide. When you use an auth facade, you get the following:
 
-* A single interface for your developers
+* A single interface for your developers to access and manage user data
 * An easy, deployable, compact auth system which runs everywhere
-* A rich set of APIs and data model
+* A rich set of APIs and data models
 * Ample documentation for various upstream providers 
-
-TBD diagram?
 
 Let's talk a bit more about each of these.
 
 ## Developer interface
 
-Your developers will need to integrate with some auth system to know which users can access the application, as well as what fucntionality will be made available to each user. By using the auth facade, your devs only need to learn how to integrate with one system, rather than all the systems that your clients may use. This will ease development and free up more time for your devs to be building the features of your application. 
+Your developers will need to have some kind of auth system in order to know which users can access the application, as well as what particular functionality is available to them. By using the auth facade, your devs only learn how to integrate with one system, rather than every system your clients may use. This makes development easier and also frees up engineering time and focus for the features of your application. 
 
-Additionally, when there are bugs in the auth system, you either replicate them in your local environment, in the interaction between your application and the facade. Alternatively, the bug may occur in communication between the auth facade system and the upstream provider, due to a misconfiguration or bug in the auth system. This seperation of concerns makes it easier to track down issues.
+Additionally, when there are bugs in the auth system, there are two common locations:
 
-You'll want a responsive team behind the auth facade when there are issues. You don't want to keep your customers waiting for a fix.
+* between your application and the facade
+* between the auth facade system and the upstream provider
+
+In the former case, you have everything you need to debug what is causing an issue for your customer. In the latter, you'll be leveraging all the troubleshooting and bugfixing the auth facade system has performed against the upstream provider. In either case, separating the concerns makes it easier to track down issues.
+
+You'll want a responsive team behind the auth facade system when issues arise. You don't want to keep your customers waiting for a fix.
 
 ## Deployable auth system
 
-When evaluating auth facade solutions, you want to make sure you can deploy the system providing the facade anywhere. This pretty much rules out any SaaS based system, unless your enterprise clients are deploying your application into a network with internet connectivity; this is not always a given, and being able to support airgapped or isolated networks can be a strong differentiator for your application.
+When evaluating auth facade solutions, make sure you can deploy the system providing the facade into a variety of customer environments. This rules out any SaaS, unless your enterprise clients are deploying your application into a network with internet connectivity or the SaaS provider can deploy into their network. Being able to support airgapped or isolated networks can be a strong differentiator for your application, especially if the data it is accessing is sensitive.
 
-You also want to ensure that your application is easily deployable, and that the auth system is deployable in a similar manner. Depending on customers' needs, you may want to deploy in a unix friendly package like an RPM or DEB, a generic software package like a zip file, or, for the cutting edge clients who use kubernetes, a container like Docker.
+Ensure your application is easily deployable, and that the auth system is deployed using the same methods. Doing so lowers the installation complexity. Depending on customers' needs, you may want to deploy in a unix friendly package such as an RPM or DEB, a generic software package like a zip file, or, for the cutting edge clients using kubernetes, a container solution such as Docker.
 
-Since auth is a necessary part of your application, but not a differntiator, you actually want an auth system that fades into the background. Both in the literal sense, where the UX isn't recognizable as anything separate from your application, and the figurative sense, where your engineers don't need to spend any time worrying about it or maintaining it.
+Since auth is a necessary part of your application, but not a differntiator, an auth system that fades into the background is best. This should happen both in the literal sense, with a user interface that isn't recognizable as separate from your application, and the figurative sense, where your engineers minimize time spent worrying about it or maintaining it.
 
-You also want a friendly license for embedding the auth system into your code.
+You also want a friendly license and understandable business model for embedding the auth system into your application.
 
 ## APIs and data model
 
-If you can get by with the lowest common denominator of authentication and authorization information, it might be easier to do so by strictly following the OIDC and SAML standards. But often you'll want more information about a user than these standards can provide. You may want to store custom attributes that are domain specific and therefore useful to your application, for example.
+If you can get by with the lowest common denominator of authentication and authorization information, strictly follow the OIDC and SAML standards and you'll be happy. But often the application you are building will need more information about a user than these standards can provide. You may want to store custom domain specific attributes useful to your application, for example.
 
-Any auth facade solution must provide a superior data model when compared to the standards in order to be worthwhile to implement. 
+Any auth facade solution must provide a superior data model when compared to the standards in order to be worthwhile to implement. If it doesn't, just use the standards to interface with the upstream provider.
 
 ## Documentation
 
-This was surprising to me. While documentation is useful in many areas, why is it so important for an auth facade? 
+As I talked to customers, they pointed out the benefits of documentation, which was surprising to me. While documentation is often useful, why is it so important for an auth facade? 
 
-Because it lets you offload configuration of the connection between the auth facade and the upstream systems to people who know and maintain upstream systems. These employees of your clients won't be familiar with your application. In fact, they may resent the additional work that your application's installation is foisting on them. So making the configuration of the auth facade as well documented and simple as possible is going to make it easier to get your application working.
+Documentation lets you offload configuration of the connection between the auth facade and the upstream systems to people who know and maintain those upstream systems. These employees of your clients won't be familiar with your application. 
 
-This leads you with two choices. You can maintain such documentation yourself, or you can rely on the auth provider to be a source of great docs.
+In fact, they may resent the additional work that your application's installation requires of them. Making the configuration of the auth facade well documented and as simple as possible will make it easier to get your application working in your customer's environment.
+
+You therefore have two choices:
+
+* Maintain such documentation yourself
+* Rely on the auth facade provider to create and offer great docs
+
+Guess which one is easier for your engineering team?
 
 ## How can you implement the auth facade
 
-FusionAuth is a great auth facade. It runs anywhere, integrates with both SAML and OIDC, provides a single, rich interface for your developers, and is well documented.
+FusionAuth is a great choice for an auth facade. It runs anywhere, integrates with both SAML and OIDC as well as other upstream providers, provides a single, rich interface for your developers, and is well documented.
 
-To begin implementing, review the identity provider and connector documentation to make sure that your enterprise's target identity providers are supported. You can also read a case studies of customers using FusionAuth in this fashion.
+To begin implementing the auth facade with FusionAuth, review the FusionAuth [Identity Provider](/docs/v1/tech/identity-providers/) and [Connector](/docs/v1/tech/connectors/) documentation to make sure that your client's identity providers are supported. You can also read a case studies of customers using FusionAuth in this fashion, such as this one from [Unsupervised](/resources/unsupervised-case-study.pdf) (PDF).
 
-If FusionAuth fits your needs, download FusionAuth it and get going. If you are interested in packaging it as part of your application, please contact us to discuss a resellers agreement.
+If you think FusionAuth fits your needs, [download FusionAuth](/download/), kick the tires and build out a proof of concept. If you are interested in packaging it as part of your application, please contact us to discuss a resellers agreement.
