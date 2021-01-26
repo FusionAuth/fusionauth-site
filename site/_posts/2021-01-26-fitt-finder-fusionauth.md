@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: FITTFinder chose FusionAuth and left auth security to the experts
-description: FITTFinder, a health and fitness activity discovery startup, uses FusionAuth because they want to prepare for millions of users.
+title: FITT Finder chose FusionAuth and left auth security to the experts
+description: FITT Finder, a health and fitness activity discovery startup, uses FusionAuth because they want to prepare for millions of users.
 author: Dan Moore
 image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
 category: blog
