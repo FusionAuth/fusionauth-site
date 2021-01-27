@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: What is the auth facade pattern?
+title: Hide upstream identity providers with the Auth Facade
 description: How can the auth facade pattern help you deploy apps in customer's networks?
 author: Dan Moore
 image: blogs/ampio-customer-story/iot-company-picks-fusionauth-to-avoid-getting-distracted-by-auth-header-image.png
@@ -27,6 +27,8 @@ However, you want to ensure that your developers focus on building and extending
 
 Finally, your application has needs around user data as well. Whether that is role based authorization, auditing access or displaying a "Welcome" message, your application will need to access and modify user data.
 
+## Options for handling upstream auth
+
 As an enterprise software developer, you have a couple of options to solve this problem:
 
 * Test and document how your application can be configured to use an upstream provider. This is a roll your own solution and requires knowledge of your customers deployment environments. You'll want to provide and test configuration options for all the major providers.
@@ -36,6 +38,8 @@ As an enterprise software developer, you have a couple of options to solve this 
 Like any [facade](https://en.wikipedia.org/wiki/Facade_pattern), the auth facade hides a subsystem. In this case, the subsystem is your client's identity provider. When using this patter, as part of your application you ship an embedded auth and user management system. All auth functionality is routed through this; it is configured to communicate with upstream authentication providers. 
 
 {% include _image.liquid src="/assets/img/blogs/auth-facade/auth-facade-pattern.svg" alt="A common architectural pattern." class="img-fluid" figure=false %}
+
+## The auth facade vs federation
 
 The auth facade provides more than just authentication and authorization federation, though. Federation is a good start, but sometimes you need more functionality, support and documentation than standards provide. When you use an auth facade, you get the following:
 
@@ -100,4 +104,4 @@ To begin implementing the auth facade with FusionAuth, review the FusionAuth [Id
 
 If you think FusionAuth fits your needs, [download FusionAuth](/download/), kick the tires and build a proof of concept. 
 
-If you are interested in packaging it as part of your application, please contact us to discuss a resellers agreement.
+If you are interested in packaging it as part of your application, please [contact us]](/contact/) to discuss a resellers agreement.
