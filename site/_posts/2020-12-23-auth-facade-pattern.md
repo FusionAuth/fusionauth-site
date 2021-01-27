@@ -9,7 +9,7 @@ tags: topic-auth-patterns
 excerpt_separator: "<!--more-->"
 ---
 
-During conversations with FusionAuth customers, I have seen a common deployment pattern I call the "Auth Facade". This architecture is useful when deploying software to heterogenous environments. You and your team are building an application which will deploy onsite. This could be into a data center, an isolated network, or a private cloud. These environments are run by your customers and you have limited insight into their configuration.  
+During conversations with FusionAuth customers, I have seen a common deployment pattern I call the "Auth Facade". This architecture is useful when deploying software to heterogeneous environments. You and your team are building an application which will deploy onsite. This could be into a data center, an isolated network, or a private cloud. These environments are run by your customers and you have limited insight into their configuration.  
 
 <!--more-->
 
@@ -41,7 +41,9 @@ Like any [facade](https://en.wikipedia.org/wiki/Facade_pattern), the auth facade
 
 ## The auth facade vs federation
 
-The auth facade provides more than just authentication and authorization federation, though. Federation is a good start, but sometimes you need more functionality, support and documentation than standards provide. When you use an auth facade, you get the following:
+The auth facade provides more than just authentication and authorization federation, though. Federation is a good start, but sometimes you need more functionality, support and documentation than standards provide. 
+
+When you use an auth facade, you get the following:
 
 * A single interface for your developers to access and manage user data
 * An easy, deployable, compact auth system which runs everywhere
@@ -59,13 +61,13 @@ Additionally, when there are bugs in the auth system, there are two common locat
 * Between your application and the facade
 * Between the auth facade system and the upstream provider
 
-In the former case, you have everything you need to debug what is causing an issue for your customer. In the latter, you'll be leveraging the troubleshooting and bugfixing expertise of the maintainers of the auth facade system. In either case, separating the concerns makes it easier to track down issues.
+In the former case, you have everything you need to debug what is causing an issue for your customer. In the latter, you'll be leveraging the troubleshooting and bug fixing expertise of the maintainers of the auth facade system. In either case, separating the concerns makes it easier to track down issues.
 
 You'll want a responsive team behind the auth facade system when issues arise. You don't want to keep your customers waiting for a fix.
 
 ## Deployable auth system
 
-When evaluating auth facade solutions, make sure you can deploy the system providing the facade into a variety of customer environments. This rules out any typical SaaS solutions, unles the SaaS provider deploys into their network. Being able to support airgapped or isolated networks can be a strong differentiator for your application, especially if it accesses sensitive data.
+When evaluating auth facade solutions, make sure you can deploy the system providing the facade into a variety of customer environments. This rules out any typical SaaS solutions, unless the SaaS provider deploys into their network. Being able to support air gapped or isolated networks can be a strong differentiator for your application, especially if it accesses sensitive data.
 
 Ensure your application and the auth facade system are deployable using the same technologies. Doing so decreases installation complexity. Depending on customers' needs, you may want to deploy in a unix friendly package such as an RPM or DEB, a generic software package like a zip file, or, for the cutting edge clients using kubernetes, a container solution such as Docker.
 
@@ -100,8 +102,8 @@ Guess which one is easier for your engineering team?
 
 FusionAuth is a great choice for an auth facade. It runs anywhere, integrates with both SAML and OIDC as well as other upstream providers, provides a single, rich interface for your developers, and is well documented.
 
-To begin implementing the auth facade with FusionAuth, review the FusionAuth [Identity Provider](/docs/v1/tech/identity-providers/) and [Connector](/docs/v1/tech/connectors/) documentation to make sure that your client's identity providers are supported. [Contact us](/contact/) if they aren't; we'd love to learn more. You can also read a case studies of customers using FusionAuth in this fashion, such as this one from [Unsupervised](/resources/unsupervised-case-study.pdf) (PDF).
+To begin implementing the auth facade with FusionAuth, review the FusionAuth [Identity Provider](/docs/v1/tech/identity-providers/) and [Connector](/docs/v1/tech/connectors/) documentation to make sure that your client's identity providers are supported. [Contact us](/contact/) if they aren't; we'd love to learn more. You can also read case studies of customers using FusionAuth in this fashion, such as this one from [Unsupervised](/resources/unsupervised-case-study.pdf) (PDF).
 
 If you think FusionAuth fits your needs, [download FusionAuth](/download/), kick the tires and build a proof of concept. 
 
-If you are interested in packaging it as part of your application, please [contact us]](/contact/) to discuss a resellers agreement.
+If you are interested in packaging it as part of your application, please [contact us](/contact/) to discuss a resellers agreement.
