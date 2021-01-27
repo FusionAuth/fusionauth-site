@@ -13,7 +13,7 @@ During conversations with FusionAuth customers, I have seen a common deployment 
 
 <!--more-->
 
-You might do choose this deployment model for a variety of reasons:
+You might choose this deployment model for a variety of reasons:
 
 * Data gravity, when your application needs to go to the data because there's so much that the data isn't coming to you for cost or performance reasons.
 * Security of confidential data; the customer needs to have the data remain in their hands.
@@ -35,7 +35,7 @@ As an enterprise software developer, you have a couple of options to solve this 
 * Code to the OIDC and SAML specs, since most enterprise providers support these. You will limit your user data needs to what these provide. This is the pure federation option.
 * Use an auth facade.
 
-Like any [facade](https://en.wikipedia.org/wiki/Facade_pattern), the auth facade hides a subsystem. In this case, the subsystem is your client's identity provider. When using this patter, as part of your application you ship an embedded auth and user management system. All auth functionality is routed through this; it is configured to communicate with upstream authentication providers. 
+Like any [facade](https://en.wikipedia.org/wiki/Facade_pattern), the auth facade hides a subsystem. In this case, the subsystem is your client's identity provider. When using this pattern, as part of your application you ship an embedded auth and user management system. All auth functionality is routed through this; it is configured to communicate with upstream authentication providers. 
 
 {% include _image.liquid src="/assets/img/blogs/auth-facade/auth-facade-pattern.svg" alt="A common architectural pattern." class="img-fluid" figure=false %}
 
@@ -73,7 +73,7 @@ Ensure your application and the auth facade system are deployable using the same
 
 Since auth is a necessary part of your application, but not a differentiator, an auth system that fades into the background is best. This should happen both in the literal sense, with a user interface that isn't recognizable as separate from your application, and the figurative sense, where your engineers minimize time spent worrying about it or maintaining it.
 
-You also want a friendly license for embedding the auth system into your code. I am not a lawyer, but make you understand the licensing ramifications of any third party applications or libraries you ship hand in hand with your app. Some open source projects offer dual licensing, which may be a viable option.
+You also want a friendly license for embedding the auth system into your code. I am not a lawyer, but make sure you understand the licensing ramifications of any third party applications or libraries you ship hand in hand with your app. Some open source projects offer dual licensing, which may be a viable option.
 
 ## APIs and data model
 
