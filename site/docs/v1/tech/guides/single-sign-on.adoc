@@ -185,7 +185,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(expressSession({resave: false, saveUninitialized: false, secret: 'fusionauth-node-example-sso'}));
+app.use(expressSession({resave: false, saveUninitialized: false, secret: 'fusionauth-node-example', cookie: {maxAge: 60000}}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
@@ -222,11 +222,17 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
 //...
+app.use(expressSession({resave: false, saveUninitialized: false, secret: 'fusionauth-node-example', cookie: {maxAge: 60000}}));
+//...
 app.use('/', indexRouter);
 //...
 ----
 
-You set up set up one route, the code for which will live in `routes/index.js`. The `pug` view engine is specified and the views will live in `views`. Finally, hook up `indexRouter` to the `/` path, so that any request to this server will be handled by that router.
+You set up set up one route, the code for which will live in `routes/index.js`. The `pug` view engine is specified and the views will live in `views`. Those files will be built out in the next sections.
+
+The session length for this application is 60 seconds, since the `maxAge` value is in milliseconds. When the node application's session expires, it will redirect the end user to the FusionAuth application. If the single sign-on session has not expired, the user will be transparently redirected back. If it has expired, the user must re-authenticate.
+
+As the last step, hook up `indexRouter` to the `/` path, so that any request to this server will be handled by that router.
 
 === The Index Route
 
@@ -533,9 +539,28 @@ Once that happens, FusionAuth will recognize the user as being logged in and red
 
 == Additional Configuration 
 
+=== Session Expiration
+
 The single sign on session length can be configured at the Tenant level. Navigate to [breadcrumb]#Tenant -> Your Tenant -> OAuth# and edit the [field]#Session timeout# value to control the timeout for the single sign-on session. Because this is shared between applications, it isn't configurable at the application level.
 
 Image TBD
+
+The length of a single sign-on session can be different than the session length for individual applications. When a request to an application occurs, there are four possible scenarios.
+
+.Single sign-on session scenarios
+[cols="1,1,2"]
+|===
+| Application Session | FusionAuth Session | Result
+
+| valid | valid | Application serves request
+| valid | expired | Application serves request
+| expired | valid | Application redirects to FusionAuth, which redirects back to the application. The application then adds the user to the session.
+| expired | expired | User must authenticate with FusionAuth. FusionAuth then redirects back to the application. The application then adds the user to the session.
+
+|===
+
+
+=== Logout Behavior
 
 If, instead of logging a user out from all applications when they log out of FusionAuth, you want to only log the user out of the application which was the source of the logout request, you can do that by navigating to [breadcrumb]#Applications -> Your Application -> OAuth# configuring the [field]#Logout behavior# field to have the value `Redirect Only`.
 
