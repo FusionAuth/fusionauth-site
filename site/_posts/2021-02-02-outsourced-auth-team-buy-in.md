@@ -102,7 +102,7 @@ Talking points of concern to this role mainly focus on **the benefits of single 
 
 Now that we've discussed the majority of potential stakeholders, it should be clear that there's an overarching message to disseminate: **build new things!**
 
-Don't spend your time reimplementing boilerplate functionality that should already have robust solutions. 
+Don't spend your time reimplementing boilerplate functionality that already has robust solutions. Auth is like a datastore; yes, you could build your own, but that'll only make sense in specific circumstances.
 
 Get your team excited about pushing your product forward with new features that will solve problems for your customers. Outsource what already has tried-and-true implementations.
 
