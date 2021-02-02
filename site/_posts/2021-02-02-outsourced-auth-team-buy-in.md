@@ -70,7 +70,7 @@ Legal will likely appreciate the fact that you want to use a tried and tested so
 
 QA would love to live in a world where they could set up a bunch of regression tests on a system built out of stable third-party components and then move on to the next thing. They don't want to have to come back to dev with a huge list of issues they found in your home-grown auth system and then iterate with you on it over and over until all the kinks are worked out. 
 
-They **especially** don't want to miss a crucial test and then have stakeholders across a panicked company asking them why a production auth system wasn't tested thoroughly enough.
+They *especially* don't want to miss a crucial test and then have stakeholders across a panicked company asking them why a production auth system wasn't tested thoroughly enough.
 
 Talk to them about how your proposed auth solution has been pre-tested and battle-hardened (if it has been). Talk to them about the large community using the components and how the vendor responds to bugs; do they release a fix quickly or does the bug linger? Talk to them about how they can treat it like any other third-party component, which will let them focus on other concerns, like testing the features customers pay you for!
 
