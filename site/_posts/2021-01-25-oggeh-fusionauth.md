@@ -31,13 +31,21 @@ I would say that OGGEH Cloud Computing is a business built by nerds seeking out 
 
 > [FusionAuth] works like a charm from the first attempt. That's something not usually happens when trying new things. 
 
+**Dan:** Tell me more about the Cloud CMS. Does it deliver JSON data which can then be used by a variety of clients (mobile, webapp, etc) in whatever way makes sense?
+
+**Ahmed:** Yes, that's exactly what it does. There's a [single-page](https://docs.oggeh.com) that covers our API reference, developer access, service architecture, and more. We have [a short video](https://dev.oggeh.com/) that presents OGGEH Cloud Platform for the developer community as well.
+
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
 **Ahmed:** As we speak, FusionAuth manages and authenticates our users to use OGGEH Cloud Platform tools (Cloud Apps, Cloud CMS, Cloud Stats, .. etc). As well as a separate tenant/customer for each cloud app that requires its user authentication at the frontend (like e-commerce apps).
 
-We prefer OpenID Connect and OAuth 2.0 for the implementation. At the moment, we use both Authorization Code and Implicit flows for the authentication of our platform tools, and only Implicit flow on cloud apps (since they're PWA).
+We prefer OpenID Connect and OAuth 2.0 for the implementation. At the moment, we use both Authorization Code and Implicit flows for the authentication of our platform tools, and only Implicit flow on cloud apps (since they're progressive web apps).
 
 Securing OGGEH Cloud Platform customers are one of our main focuses, so we do not allow any special markup and/or scripts anyway. As I mentioned earlier, we introduce pure content management only. This means there's no easy way to inject code using our platform.
+
+**Dan:** Are you creating the tenants for each customer via the API or in the UX? Is the main reason for that separate because of the look and feel differences or are there other reasons to have a tenant for each cloud app?
+
+**Ahmed:** We prefer the API since it's part of automated builds. It's not because of the look and feel of FusionAuth (that's completely fine). It's more about abstracting complex configurations when creating our Cloud Apps. We aim to provide some sort of bare minimum UI for our customers to stick to pure content management, which includes user management. We're providing technical support anyway.
 
 **Dan:** What problems did we solve for you? And how were you solving them before FusionAuth?
 
@@ -45,7 +53,11 @@ Securing OGGEH Cloud Platform customers are one of our main focuses, so we do no
 
 Earlier, we had to replicate the authentication server for each customer (Cloud App) just to customize the login theme and email templates. We also had to use separate servers on each due to the high resource requirements to start and operate. Scaling servers is far more complex and comes with a greater financial cost.
 
-> Literarily 40% of our expenses just gone [after adopting FusionAuth]. 
+**Dan:** Do your customers have the ability to customize the themes and email templates or is that something you take care of for them?
+
+**Ahmed:** That depends, in most cases, we do it ourselves for non-technical customers. We plan to extend our API services for those who have a technical background and the ability to use our platform tools (i.e. frontend developers). So that they can inject those themselves.
+
+> Literarily 40% of our expenses [are] just gone [after adopting FusionAuth]. 
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
