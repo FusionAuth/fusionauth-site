@@ -42,6 +42,7 @@ An ideal candidate will have most of the following qualities or experiences:
 * Some programming experience
 * An aptitude for learning new technology
 * An interest in authentication and authorization technology
+* Experience interacting directly with customers
 
 ## Technologies
 
@@ -60,6 +61,14 @@ The requirements for this position include:
 * Java
 * JavaScript or Node.js
 * HTML
+
+## Interviewing details
+
+In general, you can expect the following during your interview process. 
+
+* An initial call to get to know you and tell you about the position.
+* A take home exercise will be assigned and a follow up meeting schedule to review.
+* A yes or no answer within a week of the take home review.
 
 ## Salary & Benefits
 
