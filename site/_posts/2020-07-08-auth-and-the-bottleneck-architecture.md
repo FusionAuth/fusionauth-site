@@ -5,6 +5,7 @@ description: How and why to use a centralized user management system rather than
 author: Dan Moore
 image: blogs/bottleneck-pattern/the-auth-bottleneck-pattern.png
 category: blog
+tags: topic-auth-patterns
 excerpt_separator: "<!--more-->"
 ---
 
