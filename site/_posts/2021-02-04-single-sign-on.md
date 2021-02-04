@@ -74,13 +74,13 @@ If this feels a bit mysterious, please bear with me. You'll build out both `oaut
 
 Here's what the Pied Piper application screen should look like when properly configured:
 
-image TBD 
+{% include _image.liquid src="/assets/img/blogs/sso-example/add-application.png" alt="The configured Pied Piper application." class="img-fluid" figure=false %}
 
 Click "Save" for each application.
 
 Next you need to find the client id and the client secret for each application. Navigate to "Applications" and view each application you created. Click the green magnifying glass and note the "Client Id" and "Client Secret" strings:
 
-image TBD [Looking up the Client Id and Client Secret values.,width=1200,role=bottom-cropped]
+{% include _image.liquid src="/assets/img/blogs/sso-example/application-config.png" alt="Looking up the Client Id and Client Secret values." class="img-fluid" figure=false %}
 
 The next setup step is making sure that you have a user registered for both the Pied Piper and Hooli applications. If you followed the 5 minute guide above, you'll have one user. You can register that user for both applications, or create a new user and register them. 
 
@@ -88,13 +88,9 @@ In either case, you'll navigate to the "Users" tab and modify the user in the ad
 
 In a production environment you might enable self service registration or use the API to create users. Here's what the user details of a user registered for both the Pied Piper and Hooli applications will look like:
 
-image TBD
-image::guides/single-sign-on/user-registration-docs.png[Registering a user for both applications.,width=1200]
+{% include _image.liquid src="/assets/img/blogs/sso-example/user-registration.png" alt="Registering a user for both applications." class="img-fluid" figure=false %}
 
 Finally, an optional configuration change is to modify how long an SSO session should last. This SSO timeout is set at the tenant level. To change it, navigate to "Tenants" and then choose your tenant. Go to the "OAuth" tab and modify the "Session timeout" to the number of seconds you want your SSO sessions to last.
-
-image TBD
-image::guides/single-sign-on/tenant-single-sign-on-session-timeout.png[Configuring the single sign-on session length.,width=1200,role=bottom-cropped]
 
 ## The SSO node applications
 
