@@ -60,7 +60,7 @@ After you are done with this tutorial, you can remove the `hooli.local` and `pie
 
 You'll need to configure applications in FusionAuth as well as register the user account with which you'll log in.
 
-This tutorial will create and configure the applications using the adminstrative user interface, but you could use the API if you wanted. It'll also use the default tenant. Though FusionAuth supports multiple tenants, for this tutorial you'll keep everything in one tenant for simplicity's sake.
+This tutorial will create and configure the applications using the administrative user interface, but you could use the API if you wanted. It'll also use the default tenant. Though FusionAuth supports multiple tenants, for this tutorial you'll keep everything in one tenant for simplicity's sake.
 
 Navigate to "Applications" and create two new applications; one named "Pied Piper" and one named "Hooli". For each of these, set the name appropriately. 
 
@@ -68,7 +68,7 @@ You'll also need to configure the "Authorized redirect URL" and the "Logout URL"
 
 The "Authorized redirect URL" field must include all valid redirect URLs. These values tell FusionAuth where it can safely send the user after login. This field can have many values, but for this tutorial it'll only have one. For the Pied Piper application, add `http://piedpiper.local:3000/oauth-redirect`. For the Hooli application, add `http://hooli.local:3001/oauth-redirect`.
 
-The "Logout URL" is the URL to which the user is sent after they log out from this application. However, it serves another purpose when SSO is enabled. With the default configuration, this URL is requested by FusionAuth when a browser is requests the FusionAuth logout URL, `/oauth2/logout`. This allows a user to be automatically logged out of all applications in a tenant with one click of a logout link. For the Pied Piper application, set the "Logout URL" to `http://piedpiper.local:3000/endsession`. For the Hooli application, set it to `http://hooli.local:3001/endsession`. 
+The "Logout URL" is the URL to which the user is sent after they log out from this application. However, it serves another purpose when SSO is enabled. With the default configuration, this URL is requested in an iframe by FusionAuth when a browser requests the FusionAuth logout URL, `/oauth2/logout`. This allows a user to be automatically logged out of all applications in a tenant with one click of a logout link. For the Pied Piper application, set the "Logout URL" to `http://piedpiper.local:3000/endsession`. For the Hooli application, set it to `http://hooli.local:3001/endsession`. 
 
 If this feels a bit mysterious, please bear with me. You'll build out both `oauth-redirect` and `endsession` in code later on.
 
@@ -100,13 +100,13 @@ image::guides/single-sign-on/tenant-single-sign-on-session-timeout.png[Configuri
 
 The next step is to write the code for the Pied Piper and Hooli applications. Both of these are pretty simple, as mentioned. They have one page which you can access if you are not logged in. This page is pretty bare, but in a real application could explain the benefits of signing up or of purchasing a subscription to the application. 
 
-They each have a home page where a person is greeted by name. For a real application, you'd provide the valuable service on this page. These pages are protected and a user must be logged in to access them. 
+They each have a homepage where a person is greeted by name. For a real application, you'd provide the valuable service on this page. These pages are protected and a user must be logged in to access them. 
 
-The main point of this tutorial is that the Hooli application home page is accessible when a user has logged in to the Pied Piper application, and vice versa. That's the magic of single sign-on. In this codebase you'll see how little plumbing you have to implement to make this happen when using FusionAuth as your datastore.
+The main point of this tutorial is that the Hooli application homepage is accessible when a user has logged in to the Pied Piper application, and vice versa. That's the magic of single sign-on. In this codebase you'll see how little plumbing you have to implement to make this happen when using FusionAuth as your datastore.
 
 As mentioned above, the code is available under an open source license on [GitHub](https://github.com/fusionauth/fusionauth-example-node-sso). Feel free to clone the repository and play around with it, but below you'll create each app step by step.
 
-You will create the Pied Piper application first. Once this is running, you can copy most of the code for to set up the Hooli application. Make a `piedpiper` directory and `cd` to it.
+You will create the Pied Piper application first. Once this is running, you can copy most of the code to set up the Hooli application. Make a `piedpiper` directory and `cd` to it.
 
 ```shell
 mkdir piedpiper && cd piedpiper
@@ -329,7 +329,7 @@ Why is the session lifetime so short? Mostly so you can experiment with SSO with
 This file creates the routes which will handle the pages discussed above:
 
 * The login page, available to unauthenticated users.
-* The home page, which greets users by name.
+* The homepage, which greets users by name.
 
 It also has a few other routes which don't have corresponding pages:
 
@@ -354,7 +354,7 @@ const title = 'Pied Piper';
 const loginUrl = 'http://localhost:9011/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2F'+hostName+'%3A'+port+'%2Foauth-redirect&scope=offline_access';
 const logoutUrl = 'http://localhost:9011/oauth2/logout?client_id='+clientId;
 
-/* GET home page. */
+/* GET homepage. */
 router.get('/', function (req, res, next) {
 
   if (!req.session.user) {
@@ -434,12 +434,12 @@ You'll need to change this section a bit. Update both the `clientId` and `client
 
 The first argument to the `client` constructor is `noapikeyneeded` because the client interactions performed do not require an API key. However, if you build more functionality in this application, such as updating user data or adding consents, change that value to a [real API key](/docs/v1/tech/apis/authentication/#manage-api-keys).
 
-Next up, the home page route. This is the page that will show the user's data.
+Next up, the homepage route. This is the page that will show the user's data.
 
 ```javascript
 //...
 
-/* GET home page. */
+/* GET homepage. */
 router.get('/', function (req, res, next) {
 
   if (!req.session.user) {
@@ -451,7 +451,7 @@ router.get('/', function (req, res, next) {
 //...
 ```
 
-Users can't view the home page if they aren't signed in. However, this is a design choice; you could show text for anonymous users and other text for users who have been authenticated. Here, the code checks for a user value in the session. If absent, the user is redirected to `loginUrl`, which is the FusionAuth login page configured previously. 
+Users can't view the homepage if they aren't signed in. However, this is a design choice; you could show text for anonymous users and other text for users who have been authenticated. Here, the code checks for a user value in the session. If absent, the user is redirected to `loginUrl`, which is the FusionAuth login page configured previously. 
 
 The route that handles the login page is up next.
 
@@ -534,7 +534,7 @@ module.exports = router;
 
 This is the code responsible for catching the authorization code from FusionAuth. This request is sent after the user has logged in. This code then retrieves an access token, and calls the `retrieveUserUsingJWT` function to get the user object. 
 
-Next, the user's registrations are checked. If the user isn't registered for this application, the app sends them to the home page, which will send them to the login page. If the user is registered, the user object is added to the session. That's what protected pages like the home page will check to determine if a user is logged in.
+Next, the user's registrations are checked. If the user isn't registered for this application, the app sends them to the homepage, which will send them to the login page. If the user is registered, the user object is added to the session. That's what protected pages like the home page will check to determine if a user is logged in.
 
 The last bit of `index.js` returns the configured `router` object. 
 
@@ -570,7 +570,7 @@ block content
   p Welcome to #{title}
 ```
 
-This is the login page discussed before, and is available to users who have not logged in. The next view file to look at is the home page, which should be added at `views/index.pug`.
+This is the login page discussed before, and is available to users who have not logged in. The next view file to look at is the homepage, which should be added at `views/index.pug`.
 
 ```
 extends layout
@@ -639,7 +639,7 @@ You'll be redirected to the FusionAuth login screen. Side note: [this page can b
 
 Log in as the user which you registered for both applications. 
 
-You'll be greeted with a welcome message. Now, click the Hooli link and you'll end up at the Hooli home page without having to authenticate.
+You'll be greeted with a welcome message. Now, click the Hooli link and you'll end up at the Hooli homepage without having to authenticate.
 
 You can log out by clicking any of the logout links. One caveat, however. If you are using Safari or Chrome on macOS, multi application logout won't work due to browser quirks with non TLS applications, iframes and cookies. Setting up a proxy and configuring everything to run over TLS will fix this. 
 
@@ -647,11 +647,12 @@ However, logging out with FireFox works whether you use TLS or not.
 
 ## Next steps
 
-Check out the completed applications in the [SSO application GitHub repo](https://github.com/FusionAuth/fusionauth-example-node-sso); feel free to clone and modify it. If you want to push the boundaries of what you can build with FusionAuth, add additional functionality:
+Check out the completed applications in the [SSO application GitHub repo](https://github.com/FusionAuth/fusionauth-example-node-sso); feel free to clone and modify it. If you want to push the boundaries of what you can build with FusionAuth, consider the following tasks:
 
 * Create a third application, possibly "Raviga", and add it to the menu.
 * Create an `admin` and a `user` role in each application and show different text to a user with each role.
 * Create a second protected page which shows the user's profile data, such as last name, email and phone number . Extract out the `logged in` check to a function.
 * Get logout working using TLS. Here's a [sample apache configuration](https://github.com/FusionAuth/fusionauth-contrib/blob/master/Reverse%20Proxy%20Configurations/apache/apache.ssl.conf) to get you started.
+* Review the [single sign-on guide](/docs/v1/tech/guides/single-sign-on/) for more information about FusionAuth's single sign-on implementation.
 
 Happy coding!
