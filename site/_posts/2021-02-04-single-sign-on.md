@@ -1,28 +1,26 @@
 ---
 layout: blog-post
-title: "Outsourcing auth: how to get buy-in from your team"
+title: Setting up single sign-on with FusionAuth
 description: Who are the players you'll need to work with to make an outsourced auth implementation successful?
 image: blogs/team-buy-in-outsource-auth/outsourcing-auth-how-to-get-buy-in-from-your-team-header-image.png
-author: Joe Stech
+author: Dan Moore
 category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-Single sign-on (SSO) allows lets your users access two or more applications with one single set of credentials. Properly implemented, it makes your users' lives easier, as they sign in once and don't have to sign in when they move between various applications.
+Single sign-on (SSO) lets your users access two or more applications with a single set of credentials. Properly implemented, it makes your users' lives easier; they sign in once and don't have to log in when they switch between various applications.
 
 <!--more-->
 
-Google has created a great single sign-on experience. You sign into gmail.com and then visit calendar.google.com or drive.google.com to access your calendar or files. The various systems know who you are without you ever re-authenticating. If you sign out from one of these applications, you're signed out from every one.
+Google has created a great single sign-on experience. You sign into gmail.com and then visit calendar.google.com or drive.google.com to access your calendar or files. The various systems know who you are without you ever re-authenticating. If you sign out from one of these applications, you're signed out from all of them.
 
-FusionAuth has built-in single sign-on support; this tutorial will walk through setting it up for two applications. There'll be a Pied Piper application and a Hooli application. Each application will be fairly simple, with the only functionality being greeting the user. The actual implementation of useful functionality behind the protection of authentication is left as an exercise for the reader.
+FusionAuth has built-in single sign-on support; this tutorial will walk through setting it up for two applications. One will be a Pied Piper application and the other a Hooli application. Each application is fairly simple; the only functionality will be a user greeting display. The actual implementation of useful functionality behind the protection of authentication is left as an exercise for the reader.
 
 If you want to follow along, you can check out the code in the [SSO application GitHub repo](https://github.com/FusionAuth/fusionauth-example-node-sso).
 
 ## Prerequisites
 
-You will need FusionAuth and Node installed. 
-
-For FusionAuth installation instructions, please visit [the 5 minute setup guide](/docs/v1/tech/5-minute-setup-guide/).
+You will need FusionAuth and node installed. For FusionAuth installation instructions, please follow [the 5 minute setup guide](/docs/v1/tech/5-minute-setup-guide/).
 
 To test if you have node installed, run:
 
@@ -30,19 +28,19 @@ To test if you have node installed, run:
 node -v
 ```
 
-and you should see a message like this:
+You should see a message like this:
 
 ```shell
 v14.4.0
 ```
 
-## Configure application domains 
+If you have that, you're ready to get started.
 
-Single sign-on applications typically live on different domains, or at least different paths. Let's create two different domains that both point to your local computer to simulate the real world in this tutorial. 
+## Application domain names 
 
-Edit your hosts file; on macOS, this file lives at `/etc/hosts`. Look for the line starting with `127.0.0.1`. This is the IP address of your computer, and we want to map additional names to that address.
+Single sign-on applications typically live on different domains or different paths. Let's create two different domains that point to your local computer to simulate the real world.
 
-Doing so will let you enter `piedpiper.local:3000` in your browser and retrieve a page running from a local node application.
+Edit your hosts file; on macOS, this file lives at `/etc/hosts`. Look for the line starting with `127.0.0.1`. This is the IP address of your computer. We want to map additional names to that address. Doing so will let you visit `http://piedpiper.local:3000` in your browser and retrieve a page running from a local node application.
 
 Add this text to the line starting with `127.0.0.1`:
 
@@ -50,33 +48,29 @@ Add this text to the line starting with `127.0.0.1`:
  hooli.local piedpiper.local
 ```
 
-The line will look like this after you are done (assuming you haven't edited this file before):
+Now the line will look like this, assuming you haven't edited this file before:
 
 ```
 127.0.0.1       localhost hooli.local piedpiper.local
 ```
 
-After you are done with this tutorial, you can remove the `hooli.local` and `piedpiper.local` lines.
+After you are done with this tutorial, you can remove the `hooli.local` and `piedpiper.local` lines if you'd like.
 
 ## Configure FusionAuth
 
-You'll need to configure the applications in FusionAuth and also register the end user you'll use to test single sign-on.
+You'll need to configure applications in FusionAuth as well as register the user account with which you'll log in.
 
-This tutorial will create and configure the applications using the adminstrative user interface, rather than the API. It'll also use the default tenant. Though FusionAuth supports multiple tenants, for this tutorial you'll keep everything in one tenant.
+This tutorial will create and configure the applications using the adminstrative user interface, but you could use the API if you wanted. It'll also use the default tenant. Though FusionAuth supports multiple tenants, for this tutorial you'll keep everything in one tenant for simplicity's sake.
 
 Navigate to "Applications" and create two new applications; one named "Pied Piper" and one named "Hooli". For each of these, set the name appropriately. 
 
-You'll also need to configure the "Authorized redirect URL" and the "Logout URL". Both of these fields are on the "OAuth tab".
+You'll also need to configure the "Authorized redirect URL" and the "Logout URL". Both of these fields are on the "OAuth" tab.
 
-The "Authorized redirect URL" field has to include all valide redirect URLs. The values here tell FusionAuth where it can send the user after they've signed in. This field can have many values, but for this tutorial it'll only have one. 
+The "Authorized redirect URL" field must include all valid redirect URLs. These values tell FusionAuth where it can safely send the user after login. This field can have many values, but for this tutorial it'll only have one. For the Pied Piper application, add `http://piedpiper.local:3000/oauth-redirect`. For the Hooli application, add `http://hooli.local:3001/oauth-redirect`.
 
-For the Pied Piper application, add `http://piedpiper.local:3000/oauth-redirect`. For the Hooli application, add `http://hooli.local:3001/oauth-redirect`.
+The "Logout URL" is the URL to which the user is sent after they log out from this application. However, it serves another purpose when SSO is enabled. With the default configuration, this URL is requested by FusionAuth when a browser is requests the FusionAuth logout URL, `/oauth2/logout`. This allows a user to be automatically logged out of all applications in a tenant with one click of a logout link. For the Pied Piper application, set the "Logout URL" to `http://piedpiper.local:3000/endsession`. For the Hooli application, set it to `http://hooli.local:3001/endsession`. 
 
-The "Logout URL" is the URL to which the user is sent after they log out from this application. However, it serves another purpose when SSO is enabled. By default, this URL is requested by FusionAuth when a user is sent to the FusionAuth logout URL, `/oauth2/logout`. This allows a user to be automatically logged out of all applications in a tenant with one click of a logout link.
-
-For the Pied Piper application, set the "Logout URL" to `http://piedpiper.local:3000/endsession`. For the Hooli application, set it to `http://hooli.local:3001/endsession`. 
-
-You'll build out both those endpoints, `oauth-redirect` and `endsession` in code later on.
+If this feels a bit mysterious, please bear with me. You'll build out both `oauth-redirect` and `endsession` in code later on.
 
 Here's what the Pied Piper application screen should look like when properly configured:
 
@@ -84,31 +78,33 @@ image TBD
 
 Click "Save" for each application.
 
-Next you need to get the client id and the client secret for each application. Navigate to "Applications" and view each application you just created. Click the green magnifying glass and note the "Client Id" and "Client Secret" strings:
+Next you need to find the client id and the client secret for each application. Navigate to "Applications" and view each application you created. Click the green magnifying glass and note the "Client Id" and "Client Secret" strings:
 
 image TBD [Looking up the Client Id and Client Secret values.,width=1200,role=bottom-cropped]
 
-The next setup step is making sure that you have a user who is registered for both the Pied Piper and Hooli applications. If you followed the 5 minute guide above, you'll have one user. You can register that user for both applications, or create a new user. In either case, you'll navigate to the "Users" tab and modify the user in the administrative user interface. In a production environment you would either enable self service registration or use the API to create users based on other systems, but for illustration purposes using the admin UI is fine.
+The next setup step is making sure that you have a user registered for both the Pied Piper and Hooli applications. If you followed the 5 minute guide above, you'll have one user. You can register that user for both applications, or create a new user and register them. 
 
-Here's what the user details of a user registered for both the Pied Piper and Hooli applications will look like:
+In either case, you'll navigate to the "Users" tab and modify the user in the administrative user interface. The applications will work best if the user also has a first name. 
+
+In a production environment you might enable self service registration or use the API to create users. Here's what the user details of a user registered for both the Pied Piper and Hooli applications will look like:
 
 image TBD
 image::guides/single-sign-on/user-registration-docs.png[Registering a user for both applications.,width=1200]
 
-Finally, an optional configuration change is how long an SSO session should last. This SSO timeout is set at the tenant level. If you want to change it, navigate to "Tenants" and then choose your tenant. Go to the "OAuth" tab and change the "Session timeout" value to be the number of seconds you want your SSO sessions to last.
+Finally, an optional configuration change is to modify how long an SSO session should last. This SSO timeout is set at the tenant level. To change it, navigate to "Tenants" and then choose your tenant. Go to the "OAuth" tab and modify the "Session timeout" to the number of seconds you want your SSO sessions to last.
 
 image TBD
 image::guides/single-sign-on/tenant-single-sign-on-session-timeout.png[Configuring the single sign-on session length.,width=1200,role=bottom-cropped]
 
-## The SSO Node applications
+## The SSO node applications
 
-The next step is to write the code. Both of these applications are pretty simple, as mentioned. They have one page which you can access if you are not logged in. This page is pretty bare, but in a real application could explain the benefits of signing up or of buying the application. 
+The next step is to write the code for the Pied Piper and Hooli applications. Both of these are pretty simple, as mentioned. They have one page which you can access if you are not logged in. This page is pretty bare, but in a real application could explain the benefits of signing up or of purchasing a subscription to the application. 
 
-Then they each have a home page where a person is greeted by name. For a real application, you'd provide the real service on this page. These pages are protected and a user must have logged in to access them. 
+They each have a home page where a person is greeted by name. For a real application, you'd provide the valuable service on this page. These pages are protected and a user must be logged in to access them. 
 
-The crucial point of this tutorial is that the Hooli application home page is accessible when a user has logged into Pied Piper, and vice versa. That's the magic of single sign-on. In this codebase you'll see how little plumbing you have to do to make this happen when you use FusionAuth as your datastore.
+The main point of this tutorial is that the Hooli application home page is accessible when a user has logged in to the Pied Piper application, and vice versa. That's the magic of single sign-on. In this codebase you'll see how little plumbing you have to implement to make this happen when using FusionAuth as your datastore.
 
-As mentioned above, the code is available under an open source license on [GitHub](https://github.com/fusionauth/fusionauth-example-node-sso). Feel free to clone the repository and play around with it, but below you'll create each part of the app step by step.
+As mentioned above, the code is available under an open source license on [GitHub](https://github.com/fusionauth/fusionauth-example-node-sso). Feel free to clone the repository and play around with it, but below you'll create each app step by step.
 
 You will create the Pied Piper application first. Once this is running, you can copy most of the code for to set up the Hooli application. Make a `piedpiper` directory and `cd` to it.
 
@@ -116,7 +112,7 @@ You will create the Pied Piper application first. Once this is running, you can 
 mkdir piedpiper && cd piedpiper
 ```
 
-### package.json
+### Setting up the package.json file
 
 Here's the `package.json` file. Create this file and save it.
 
@@ -141,13 +137,11 @@ Here's the `package.json` file. Create this file and save it.
 }
 ```
 
-Next you want to run `npm install` to get all needed libraries. 
+Next you want to run `npm install` to get all needed libraries. This file has a `script` entry which allows you to start the server. The script that actually starts the server is what you will create next.
 
-The only other interesting thing to note is that this file has a `script` entry which allows you to start the server. The script that actually starts the server is what you will create next.
+### The server startup script
 
-### Starting the server
-
-This script starts up the express server and should be placed in `bin/www`. That may sound familiar because it is in the `package.json`.
+This script starts up the express server and should be placed in `bin/www`. That may sound familiar because that is the exact path in the `start` script from `package.json`.
 
 ```javascript
 #!/usr/bin/env node
@@ -242,24 +236,19 @@ function onListening() {
 }
 ```
 
-Frankly, this code isn't that interesting with regards to single sign-on but you need it to start the server! So it is included for completeness. 
-
-What it does at a high level: 
+Frankly, this code isn't that interesting with regards to single sign-on but you need it to start the server! So it is included for completeness. At a high level, this code: 
 
 * Looks for a port from the environment or uses `3000` as a default. 
 * Registers error handling routines. 
 * Starts up a server listening on the configured port, passing the requests to code in `app.js`.
 
-`app.js` is another bit of necessary plumbing, so you'll create that next.
+`app.js` is another bit of necessary plumbing, so let's create that next.
 
 ### The express server
 
-Each application is going to be using the express framework; you'll configure the individual routes, among other settings, in a file called `app.js`. Create this in the root `piedpiper` directory.
-
-Here's the entire `app.js` file:
+Each application uses the express framework; you'll configure the individual routes, among other settings, in a file called `app.js`. Create this in the root `piedpiper` directory. Here's the entire `app.js` file:
 
 ```javascript
-----
 var createError = require('http-errors');
 var cookieParser = require('cookie-parser');
 var express = require('express');
@@ -303,10 +292,9 @@ app.use(function(err, req, res, next) {
 module.exports = app;
 ```
 
-That's a lot of code! However, most of it isn't specific to the Pied Piper application. Take a look at an excerpt of the interesting bits:
+That's a lot of code! However, most of it isn't specific to the Pied Piper application. Take a look at the interesting bits:
 
 ```javascript
-----
 //...
 var indexRouter = require('./routes/index');
 
@@ -324,37 +312,34 @@ app.use(expressSession({resave: false,
 //...
 app.use('/', indexRouter);
 //...
-----
+```
 
-Takeaways from the excerpt:
+Takeaways from the excerpted file:
 
 * The `indexRouter` variable is configured by the `routes/index.js` file. 
+* All `pug` files should live in the `views` directory. 
 * The `pug` view engine will be used for this application.
-* The `pug` files should live in the `views` directory. 
 * This application has a session lifetime of 60 seconds (the `maxAge` setting expects milliseconds). 
-* `indexRouter` is handles the root path, so all application requests fielded by this server will be handled by code in that file.
+* `indexRouter` handles the root path, so all application requests fielded by this server will be handled by that code.
 
-Why is the session lifetime so short? Mostly so that you can experiment with SSO without waiting for a long time. In a production application, you'd want to tweak this based on your security expectations as well as thinking about the load on the FusionAuth server. Note that even if a user's session expires in the Pied Piper application, they won't be forced to log in again unless their SSO session has also expired. 
+Why is the session lifetime so short? Mostly so you can experiment with SSO without waiting for a long time. In a production application, you'd want to tweak this based on your security expectations as well as load expectations. Note that even if a user's session expires in the Pied Piper application, they won't be forced to log in again unless their SSO session has also expired. The routes and views code will be built out in the next sections.
 
-The routes and views code will be built out in the next sections, and will illustrate that auto login functionality.
+### Creating the routes in index.js
 
-### index.js
+This file creates the routes which will handle the pages discussed above:
 
-This file creates the various routes which will handle the pages discussed above:
-
-* The login page, available to unauthenticated users
-* The home page, which greets users
+* The login page, available to unauthenticated users.
+* The home page, which greets users by name.
 
 It also has a few other routes which don't have corresponding pages:
 
 * A `logout` route, which lets people, well, log out.
-* An `endsession` route, which ends the session and sends the user to the login page.
+* An `endsession` route, which ends the session and sends the browser to the login page.
 * An `oauth-redirect` route which handles the bulk of the interesting logic. 
 
-Here's `index.js`. If you are building this application, put this code at `routes/index.js`.
+Here is the entire `index.js`. If you are building this application, put this code at `routes/index.js`.
 
 ```javascript
-----
 const express = require('express');
 const router = express.Router();
 const {FusionAuthClient} = require('@fusionauth/typescript-client');
@@ -423,7 +408,7 @@ router.get('/oauth-redirect', function (req, res, next) {
 module.exports = router;
 ```
 
-Again, that's a lot of code! Let's break it up and look at each section in turn.
+Again, that's a lot of code! Let's break it up and look at each section in turn. First up, the top of the file.
 
 ```javascript
 const express = require('express');
@@ -443,11 +428,11 @@ const logoutUrl = 'http://localhost:9011/oauth2/logout?client_id='+clientId;
 //...
 ```
 
-At the start of the file is configuration values, library `require` statements and constants. 
+This section contains configuration values, library `require` statements and constants. 
 
-You'll need to change this section a bit. Update both the `clientId` and `clientSecret` variables with what you recorded above when configuring the Pied Piper application. Make sure that the second argument to the `client` constructor matches your FusionAuth installation, typically `\http://localhost:9011`. If you are using a different host for FusionAuth, also change the `loginUrl` and `loginUrl` values.
+You'll need to change this section a bit. Update both the `clientId` and `clientSecret` variables with what you recorded above when configuring the Pied Piper application. Make sure that the second argument to the `client` constructor matches your FusionAuth installation, typically `\http://localhost:9011`. If you are using a different host for FusionAuth, also change the `loginUrl` and `logoutUrl` values to match.
 
-The first argument to the `client` constructor is `noapikeyneeded` because the client interactions performed do not require an API key. However, if you build on this applications to make them do something useful, such as updating user data or adding consents, change that value to a [real API key](/docs/v1/tech/apis/authentication/#manage-api-keys).
+The first argument to the `client` constructor is `noapikeyneeded` because the client interactions performed do not require an API key. However, if you build more functionality in this application, such as updating user data or adding consents, change that value to a [real API key](/docs/v1/tech/apis/authentication/#manage-api-keys).
 
 Next up, the home page route. This is the page that will show the user's data.
 
@@ -466,9 +451,7 @@ router.get('/', function (req, res, next) {
 //...
 ```
 
-Users can't view the home page if they aren't signed in. However, this is a design choice; you could show text for anonymous users and other text for users who have been authenticated. 
-
-Here, the code checks for a user value in the session. If it absent, the user is redirected to `loginUrl`, which is the FusionAuth login page configured previously. 
+Users can't view the home page if they aren't signed in. However, this is a design choice; you could show text for anonymous users and other text for users who have been authenticated. Here, the code checks for a user value in the session. If absent, the user is redirected to `loginUrl`, which is the FusionAuth login page configured previously. 
 
 The route that handles the login page is up next.
 
@@ -481,7 +464,7 @@ router.get('/login', function (req, res, next) {
 //...
 ```
 
-This login page is available to anonymous users. For this tutorial, only a link to login is shown, but, as mentioned above, typically this page would have text and images illustrating the benefits of this application.
+This login page is available to anonymous users. For this tutorial, only a link to log in is shown, but, as mentioned above, this page could have text and images illustrating the benefits of this application.
 
 Now, let's check out the logout route.
 
@@ -497,12 +480,12 @@ router.get('/logout', function (req, res, next) {
 
 This route does two things:
 
-* Removes the user object from the session 
+* Removes the user object from the session
 * Redirects to the FusionAuth logout URL
 
-The removal signs the user out of the Pied Piper application. The redirection will sign the user out of the SSO session and all other applications; in this case, that is just the Hooli application, but if there were five other applications, the user would be signed out of all of them.
+The removal logs the user out of the Pied Piper application. The redirection will sign the user out of the SSO session and all other applications; in this tutorial, that is the Hooli application, but if there were five other applications configured with logout URLs, the user would be signed out of all of them.
 
-How does that happen? Glad you asked, as the next route to check out, the `endsession` route, plays an integral role in that convenient feature.
+How does that happen? Glad you asked, as the next route, the `endsession` route, plays an integral role in that convenient feature.
 
 ```javascript
 //...
@@ -514,9 +497,9 @@ router.get('/endsession', function (req, res, next) {
 //...
 ``
 
-FusionAuth requests this route from the Pied Piper application when a user logs out from the Hooli application and any other application in this tenant. That means that this endpoint is responsible for logging the user out. This URL was configured in the FusionAuth application above. 
+FusionAuth requests this route from the Pied Piper application when a user logs out from the Hooli application. That means that this endpoint is responsible for logging the user out. This URL was configured in the FusionAuth application on the "OAuth" tab. 
 
-While similar in functionality to the `/logout` endpoint, it is separate. While each endpoint destroys the session, they need to send the browser to different places afterward. For `endession`, the request should forward to a page accessible to unauthenticated users. For `/logout` the user needs to be sent to the FusionAuth `logout` URL.
+While similar in functionality to the `/logout` endpoint, it is separate for a reason. While each endpoint destroys the session, they need to send the browser to different places afterward. For `endession`, the request should forward to a page accessible to unauthenticated users. For `/logout` the user needs to be sent to the FusionAuth `logout` URL.
 
 Let's take a look at the `oauth-redirect` route next.
 
@@ -547,23 +530,19 @@ router.get('/oauth-redirect', function (req, res, next) {
 });
 
 module.exports = router;
-----
+```
 
-This is the part of the code that is responsible for catching the authorization code `GET` from FusionAuth, which occurs after the user has logged in there. 
+This is the code responsible for catching the authorization code from FusionAuth. This request is sent after the user has logged in. This code then retrieves an access token, and calls the `retrieveUserUsingJWT` function to get the user object. 
 
-This code then retrieves an access token, and calls `retrieveUserUsingJWT` to get the user object. 
+Next, the user's registrations are checked. If the user isn't registered for this application, the app sends them to the home page, which will send them to the login page. If the user is registered, the user object is added to the session. That's what protected pages like the home page will check to determine if a user is logged in.
 
-Next, the user's registrations are checked. If the user isn't registered for this application, we send them to the home page, which will send them to the login page. If they user is registered, the user object is put in the session. That's what the protected pages like the home page, will check for to determine if a user is logged in.
+The last bit of `index.js` returns the configured `router` object. 
 
-The last bit of the `index.js` returns the configured `router` object. 
-
-That's pretty much it for the Pied Piper application code.  As mentioned above, coding features that might actually be useful is left as an exercise for the reader.
+That's pretty much it for the Pied Piper application code. As mentioned above, coding features that might actually be useful is left as an exercise for the reader.
 
 ### Views
 
-Now you will create the views. As configured in `app.js`, each of these will be placed in the `views` subdirectory. 
-
-The layout view is first:
+Now you will create the views. As configured in `app.js`, each of these will be placed in the `views` subdirectory. The `layout.pug` view is first:
 
 ```pug
 doctype html
@@ -577,9 +556,9 @@ html
     block content
 ```
 
-The content placed into any of the child views of this layout is displayed using the `block content` directive. Above the content is a text menu where users can switch between the Pied Piper and Hooli applications. 
+The content placed into any of the child views of this layout is displayed using the `block content` directive. Above the content is a menu allowing users to switch between the Pied Piper and Hooli applications. 
 
-Second, you can put this code in `login.pug`: 
+Second, put this code in `login.pug`: 
 
 ```pug
 extends layout
@@ -591,9 +570,7 @@ block content
   p Welcome to #{title}
 ```
 
-This is the login page discussed before, and is available to users who have not logged in.
-
-The next view file to look at is the home page, which should be placed at `views/index.pug`.
+This is the login page discussed before, and is available to users who have not logged in. The next view file to look at is the home page, which should be added at `views/index.pug`.
 
 ```
 extends layout
@@ -607,7 +584,7 @@ block content
   p Welcome to #{title}
 ```
 
-This is where the user is welcomed by name. Here you can display other information on the user object, or other information that should be accessible only by this user.
+This is where the user is welcomed by name. Here you can display other information on the user object, or other information that should be accessible only to this user.
 
 Side note: there is some CSS in this application; the CSS is available in the [GitHub repository](https://github.com/fusionauth/fusionauth-example-node-sso), but won't be reviewed here.
 
@@ -617,14 +594,12 @@ Next, create the sibling Hooli application.
 
 The Pied Piper and Hooli applications would, in a real world scenario, have different functionality. For instance, the Pied Piper application might deliver compression software and the Hooli application might sell the Hooliphone. 
 
-For this tutorial, though, the applications are going to be almost identical. After all, the point is to show how to set up single sign-on, not change the world.
+For this tutorial, though, the applications are going to be almost identical. After all, the point of this post is to show how to set up single sign-on, not change the world. To create the Hooli application, do the following:
 
-To create the Hooli application, do the following:
-
-* Use a different terminal window so that you can have both Node applications running at once.
-* Copy all the same files under a directory called `hooli`.
-* Modify `index.js` to use the correct values. Change the title to 'Hooli', the hostname to `hooli.local`, the port to `3001` and the Client Id and Client Secret to the values for the Hooli application you captured when first configuring FusionAuth.
-* The `layout.pug` file has to be modified so that the menu provides a link to the Pied Piper application, rather than the Hooli application. Don't forget the port!
+* Use a different terminal window so that you can have both node applications running at once.
+* Copy all the files in the `pied piper` directory to a peer directory called `hooli`.
+* Modify `index.js` to use the correct values. Change the title to 'Hooli', the hostname to `hooli.local`, the port to `3001` and the client id and client secret to the values for the Hooli application you captured when configuring FusionAuth.
+* The `layout.pug` file has to be modified so the menu provides a link to the Pied Piper application, rather than to the Hooli application. Don't forget the port!
 ```pug
 doctype html
 html
@@ -638,7 +613,7 @@ html
       || Hooli
     block content
 
-You will need to start the Hooli application with a different port: `3001`, otherwise the two applications will fight over the port and one will fail to start.
+You will need to start the Hooli application with a different port: `3001`, otherwise the two applications will fight over ports and one will fail to start:
 
 ```shell
 PORT=3001 npm start
@@ -648,27 +623,33 @@ And that's it. You've just created a second application.
 
 ### Test it out
 
-You've created the Pied Piper node application from scratch, including the `package.json`, startup scripts, routes and views. Now it is time to put it to the test. Start the Pied Piper application:
+You've created the Pied Piper node application from scratch, including the `package.json`, startup scripts, routes and views. You then duplicated it to create a sibling Hooli application. 
+
+Now it is time to put it to the test. Start the Pied Piper application:
 
 ```shell
 PORT=3000 npm start
 ```
 
-You can visit `http://piedpiper.local:3000/login`. Click on the Hooli link and you'll be prompted to authenticate. Hit the back button and then click the login link.
+Start the Hooli application if you didn't do so above.
 
-You'll be redirected to the FusionAuth login screen. (Side note: [this page can be themed to look like any website](/docs/v1/tech/themes/).) 
+Now you can visit `http://piedpiper.local:3000/login`. Click on the Hooli link and you'll be prompted to authenticate. Hit the back button and then click the login link.
+
+You'll be redirected to the FusionAuth login screen. Side note: [this page can be themed to look like any website](/docs/v1/tech/themes/).
 
 Log in as the user which you registered for both applications. 
 
 You'll be greeted with a welcome message. Now, click the Hooli link and you'll end up at the Hooli home page without having to authenticate.
 
-You can then log out by clicking any of the logout links. One caveat, however. If you are using Safari or Chrome on macOS, multi application logout won't work due to browser quirks with iframes and cookies. Setting up a proxy and configuring everything to run over TLS, then it will work. Logging out on FireFox works whether you use TLS or not.
+You can log out by clicking any of the logout links. One caveat, however. If you are using Safari or Chrome on macOS, multi application logout won't work due to browser quirks with non TLS applications, iframes and cookies. Setting up a proxy and configuring everything to run over TLS will fix this. 
+
+However, logging out with FireFox works whether you use TLS or not.
 
 ## Next steps
 
-If you want to push the boundaries of what you can build with FusionAuth, consider the following additional functionality.
+Check out the completed applications in the [SSO application GitHub repo](https://github.com/FusionAuth/fusionauth-example-node-sso); feel free to clone and modify it. If you want to push the boundaries of what you can build with FusionAuth, add additional functionality:
 
-* Create a third application, like "Raviga", and add it to the menu.
+* Create a third application, possibly "Raviga", and add it to the menu.
 * Create an `admin` and a `user` role in each application and show different text to a user with each role.
 * Create a second protected page which shows the user's profile data, such as last name, email and phone number . Extract out the `logged in` check to a function.
 * Get logout working using TLS. Here's a [sample apache configuration](https://github.com/FusionAuth/fusionauth-contrib/blob/master/Reverse%20Proxy%20Configurations/apache/apache.ssl.conf) to get you started.
