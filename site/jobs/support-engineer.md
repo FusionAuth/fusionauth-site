@@ -22,7 +22,7 @@ You will report directly to the CTO and will work from our Denver office.
 Your responsibilities will include:
 
 * Initial response and triage for our various support channels.
-* Identity and correct gaps or typos in our technical documentation.  
+* Identify and correct gaps or typos in our technical documentation.  
 * Work closely with the rest of the engineering team to identify how to best serve our customers
 
 ## Opportunities
