@@ -5,6 +5,7 @@ description: Learn how to set up Zendesk to authenticate with FusionAuth and HYP
 author: Dan Moore
 image: blogs/zendesk-sso-hypr-webinar/fusionauth-hypr-single-sign-on-sso-webinar.jpg
 category: blog
+tags: feature-sso
 excerpt_separator: "<!--more-->"
 ---
 
