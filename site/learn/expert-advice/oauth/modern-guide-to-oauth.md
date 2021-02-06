@@ -44,7 +44,7 @@ The **Local login and registration** mode is when you are using an OAuth workflo
 
 What do we mean by native forms? Most developers have at one time written their own login and registration forms directly into an application. They create a table called `users` and it stores the `username` and `password`. Then they write the registration and the login forms (HTML or some other UI). The registration form collects the `username` and `password` and checks if the user exist in the database. If they don't, the application inserts the new user into the database. The login form collects the `username` and `password` and checks if it exists in the database and logs the user in if it does. This type of implementation is what we call native forms.
 
-The only difference with the **Local login and registration** mode is that you delegate the login and registration process to an OAuth server rather than writing everything by hand. Additionally, since you control the OAuth server and your application, it would be odd to ask the user to "authorize" your application. Therefore, this mode does not include the permission screens that we'll cover in the next few modes.
+The only difference with the **Local login and registration** mode is that you delegate the login and registration process to an OAuth server rather than writing everything by hand. Additionally, since you control the OAuth server and your application, it would be odd to ask the user to "authorize" your application. Therefore, this mode does not include the permission grant screens that we'll cover in the next few modes.
 
 So, how does this work in practice? Let's take a look at the steps for a fictitious web application called "The World's Greatest ToDo List" or "TWGTL" (pronounced Twig-Til) for short:
 
@@ -77,7 +77,7 @@ Here's an example of the Facebook permission grant screen:
 
 <<IMAGE>>
 
-After the user has logged into the third-party OAuth server and granted your application permissions, they are redirect back to your application and logged into it.
+After the user has logged into the third-party OAuth server and granted your application permissions, they are redirected back to your application and logged into it.
 
 The key part of this mode is that the user was both logged in, but also granted your application permissions to the service (i.e. Facebook). This is why so many applications leverage the "Login with Facebook" or other social integrations. It gives them access to call the Facebook APIs on the user's behalf but also logs the user in.
 
@@ -88,18 +88,18 @@ This mode is a good example of federated identity. Here, the user's identity (us
 So, how does this work in practice? Let's take a look at the steps for our TWGTL application to use Facebook to register and log users in:
 
 1. A user visits TWGTL and wants to sign up and manage their ToDos.
-1. They click the "Sign Up" on the homepage.
+1. They click the "Sign Up" button on the homepage.
 1. On the login screen, the user clicks the "Login with Facebook" button.
 1. This button takes them over to Facebook's OAuth server.
 1. They log into Facebook (if they aren't already logged in).
-1. Facebook presents the user with the "permission grant screen" based on the permissions TWGTL needs. This is done using OAuth scopes, which we will cover later in this guide.
+1. Facebook presents the user with the permission grant screen based on the permissions TWGTL needs. This is done using OAuth scopes, which we will cover later in this guide.
 1. Facebook redirects the browser back to TWGTL, which logs the user in. TWGTL also calls the Facebook API to retrieve the user's information.
 1. The user begins using TWGTL and adds their current ToDos.
 1. Later, the user comes back to TWGTL and needs to sign in to check off some of their ToDos. They click the `My Account` link at the top of the page.
 1. This takes the user to the TWGTL login screen that contains the "Login with Facebook" button.
 1. This takes the user back to Facebook and they repeat the same process as above.
 
-You might be wondering if the **Third-party login and registration** mode can work with the **Local login and registration** mode. Absolutely! This is what I like to call **Nested federated identity** (it's like a [hot pocket in a hot pocket](https://www.youtube.com/watch?v=N-i9GXbptog)). Basically, your application provides its registration and login forms by leveraging an OAuth server like FusionAuth. It also allows users to sign in with Facebook by enabling that feature of the OAuth server (FusionAuth calls this the **Facebook Identity Provider**). It's a little more complex, but the flow looks something like this:
+You might be wondering if the **Third-party login and registration** mode can work with the **Local login and registration** mode. Absolutely! This is what I like to call **Nested federated identity** (it's like a [hot pocket in a hot pocket](https://www.youtube.com/watch?v=N-i9GXbptog)). Basically, your application delegates its registration and login forms to an OAuth server like FusionAuth. It also allows users to sign in with Facebook by enabling that feature of the OAuth server (FusionAuth calls this the **Facebook Identity Provider**). It's a little more complex, but the flow looks something like this:
 
 1. A user visits TWGTL and wants to sign up and manage their ToDos.
 1. They click the "Sign Up" button on the homepage.
@@ -120,7 +120,7 @@ The **First-party login and registration** mode is the inverse of the **Third-pa
 
 ### Enterprise login and registration
 
-The **Enterprise login and registration** mode is when your application allows users to sign up or log in with an enterprise identity provider such as a corporate Active Directory. This mode is very similar to the **Third-party login and registration** mode with a few differences. First, it rarely requires the user to grant permissions to your application using the "permission grant screen". Instead, the user does not have the option to grant or restrict permissions for your application. The permissions are usually managed in the enterprise directory (Active Directory for example) or in your application directly.
+The **Enterprise login and registration** mode is when your application allows users to sign up or log in with an enterprise identity provider such as a corporate Active Directory. This mode is very similar to the **Third-party login and registration** mode with a few differences. First, it rarely requires the user to grant permissions to your application using a permission grant screen. Instead, the user does not have the option to grant or restrict permissions for your application. The permissions are usually managed in the enterprise directory (Active Directory for example) or in your application directly.
 
 Second, this mode does not apply to all users. In most cases, this mode is only available to a subset of users who exist in the enterprise directory. The rest of your users will either login directly to your application or through the **Third-party login and registration** mode. In some cases, the user's email address is used to determine how they are logged in. You might have noticed some login forms that only ask for your email on the first step like this:
 
@@ -152,7 +152,7 @@ The workflow for this mode looks like this:
 1. Twitter presents the user with the "permission grant screen" and asks if TWGTL can Tweet on their behalf.
 1. The user grants TWGTL this permission.
 1. Twitter redirects the browser back to TWGTL where it calls Twitter's OAuth server to get an access token.
-1. TWGTL stores the access token in its database and can now call Twitter APIs on behlaf of the user.
+1. TWGTL stores the access token in its database and can now call Twitter APIs on behalf of the user.
 
 ### First-party service authorization
 
@@ -180,7 +180,7 @@ Using our TWGTL example, let's say that TWGTL has 2 microservices: one to manage
 
 The **Device login and registration** mode is used to login (or register) to a user's account on a device that doesn't have a rich input device like a keyboard. In this case, a user wants to connect the device to their account, usually to ensure their account is active and the device is allowed to use their account. 
 
-A good example of this mode is setting up a streaming app on an Apple TV or Roku. In order to ensure you have a subscription to the streaming service, the app needs to verify the user's identity and connect to their account. The app on the Apple TV device displays a code and a URL and asks the user to visit the URL. The workflow for this mode is as follows:
+A good example of this mode is setting up a streaming app on an Apple TV, smart TV, or other device such as a Roku. In order to ensure you have a subscription to the streaming service, the app needs to verify the user's identity and connect to their account. The app on the Apple TV device displays a code and a URL and asks the user to visit the URL. The workflow for this mode is as follows:
 
 1. The user opens the app on the Apple TV.
 2. The app displays a code and a URL.
@@ -191,7 +191,7 @@ A good example of this mode is setting up a streaming app on an Apple TV or Roku
 7. The user is taken to a "Finished" page.
 8. A few seconds later, the device is connected to the user's account.
 
-This mode often takes a bit of time to complete because the app is polling the OAuth server. We won't go over this mode in detail because our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization) covers this mode. 
+This mode often takes a bit of time to complete because the app on the Apple TV is polling the OAuth server. We won't go over this mode in detail because our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization) covers this mode. 
 
 ## Grants
 
@@ -207,15 +207,17 @@ We'll cover each grant type below and discuss how it is used for each of the OAu
 
 ### Authorization code grant
 
-This is the most common OAuth grant and also the most secure. It relies on a user interacting with a browser (Chrome, Firefox, Safari, etc.) in order to handle OAuth modes 1 though 6 above. This grant requires the interaction of a user, so it isn't usable for the **Machine-to-machine authorization** mode. All of the interactive modes above are the same, except when a "permission grant screen" is displayed. Otherwise, the workflow is consistent.
+This is the most common OAuth grant and also the most secure. It relies on a user interacting with a browser (Chrome, Firefox, Safari, etc.) in order to handle OAuth modes 1 though 6 above. This grant requires the interaction of a user, so it isn't usable for the **Machine-to-machine authorization** mode. All of the interactive modes we covered above are the same, except when a "permission grant screen" is displayed.
 
 A few terms we need to define before we dive into this grant.
 
-* **Authorize endpoint:** This is the location that starts the workflow and is a URL that the browser is taken to. Normally, user's register or login at this location.
-* **Authorization code:** This is a code that the OAuth includes in the redirect after the user has registered or logged in. This is used by the application's backend and exchanged for tokens.
-* **Token endpoint:** This is an API that is used to get tokens from the OAuth server after the user has logged in. The application's backend uses the **Authorization code** to call the **Token endpoint**.
+* **Authorize endpoint:** This is the location that starts the workflow and is a URL that the browser is taken to. Normally, users register or login at this location.
+* **Authorization code:** This is a code that the OAuth server includes in the redirect after the user has registered or logged in. This is used by the application backend and exchanged for tokens.
+* **Token endpoint:** This is an API that is used to get tokens from the OAuth server after the user has logged in. The application backend uses the **Authorization code** when it calls the **Token endpoint**.
 
 In this section we will also cover PKCE (Proof Key for Code Exchange - pronounced Pixy). PKCE is a security layer that sits on top of the authorization code grant to ensure that authorization codes can't be stolen or reused. The basics of PKCE is that the application generates a secret key (called the code verifier) and hashes it using SHA 256. This hash is one-way, so it can't be reversed by an attacker. The application then sends the hash to the OAuth server, which stores it. Later, when the application is getting tokens from the OAuth server, it will send it the secret key and the OAuth server will verify everything. This is a good protection against attackers that can intercept the authorization code, but don't have the secret key.
+
+**NOTE:** PKCE is not required for standard web browser uses of OAuth with the Authorization Code Grant when the application backend is passing both the `client_id` and `client_secret` to the Token endpoint. We will cover this in more detail below, but depending on your implementation, you might be able to safely skip implementing PKCE. I recommend always using it, but it isn't always required. 
 
 Let's take a look at how you implement this grant using a prebuilt OAuth server (like FusionAuth).
 
@@ -226,11 +228,11 @@ First, we need to add a "Login" or "My Account" link/button to our application; 
 1. Set the `href` of the link to the full URL that starts the OAuth authorization code grant.
 2. Set the `href` to a controller in the application backend that does a redirect.
 
-Option #1 is an older integration that is often not used in practice. There are a couple of reasons for this. First, the URL is long and not all that nice looking. Second, if you are going to use any enhanced security measures like PKCE and `nonce`, you'll need to have code that generates extra pieces of data to include on the redirect. We'll cover PKCE and OpenID Connect's `nonce` parameter as we setup our application integration.
+Option #1 is an older integration that is often not used in practice. There are a couple of reasons for this. First, the URL is long and not all that nice looking. Second, if you are going to use any enhanced security measures like PKCE and `nonce`, you'll need to write code that generates extra pieces of data to include on the redirect. We'll cover PKCE and OpenID Connect's `nonce` parameter as we setup our application integration.
 
 Before we dig into option #2, let's quickly take a look at how option #1 is often implemented. 
  
-First, you'll need to determine the URL that starts the grant with your OAuth server as well as include all of the necessary parameters required by the specification. We'll use FusionAuth as an example, since it has a consistent URL pattern. Let's say you are running FusionAuth and it is deployed to `https://login.twgtl.com`. The URL for the OAuth authorize endpoint will also be located at:
+First, you'll need to determine the URL that starts the authorization code grant with your OAuth server as well as include all of the necessary parameters required by the specification. We'll use FusionAuth as an example, since it has a consistent URL pattern. Let's say you are running FusionAuth and it is deployed to `https://login.twgtl.com`. The URL for the OAuth authorize endpoint will also be located at:
 
 ```
 https://login.twgtl.com/oauth2/authorize
@@ -242,7 +244,7 @@ Next, you would insert this URL with a bunch of parameters (which we will go ove
 <a href="https://login.twgtl.com/oauth2/authorize?[a bunch of parameters here]">Login</a>
 ```
 
-This anchor tag would take the user directly to the OAuth server to start the Authorization Code Grant. As we discussed above, this method is not generally used. Let's take a look at how Option #2 is implemented instead.
+This anchor tag would take the user directly to the OAuth server to start the authorization code grant. As we discussed above, this method is not generally used. Let's take a look at how Option #2 is implemented instead.
 
 Rather than point the anchor tag directly at the OAuth server, we'll point it at the TWGTL backend instead. To make everything work, we need to write code that will handle the request for `/login` and redirect the browser to the OAuth server. Here's our updated anchor tag that points at the backend controller:
 
@@ -250,7 +252,7 @@ Rather than point the anchor tag directly at the OAuth server, we'll point it at
 <a href="https://app.twgtl.com/login">Login</a>
 ``` 
  
-Next, we need to write the controller for `/login` in the application. Here's a simple JavaScript snippet using NodeJS that accomplishes this:
+Next, we need to write the controller for `/login` in the application. Here's a simple JavaScript snippet using NodeJS/Express that accomplishes this:
 
 ```javascript
 router.get('/login', function (req, res, next) {
@@ -299,14 +301,12 @@ You'll notice that we have specified the `client_id`, which was likely provided 
 
 The `scope` parameter is used by the OAuth server to determine what authorization the application is requesting. There are a couple of standard values that are defined as part of OpenID Connect. These scopes include `profile`, `offline_access` and `openid`. The OAuth specification does not define any standard scopes, but most OAuth servers support numerous values for this parameter. You should consult with your OAuth server to determine the scopes you'll need to pass. Here are definitions of the standard scopes in the OpenID Connect specification:
 
-* `openid` - tells the OAuth server to use OpenID Connect for the handling of the OAuth workflow. This additionally will tell the OAuth server to return an id token from the Token endpoint (covered below) 
+* `openid` - tells the OAuth server to use OpenID Connect for the handling of the OAuth workflow. This additionally will tell the OAuth server to return an ID token from the Token endpoint (covered below) 
 * `offline_access` - tells the OAuth server to generate and return a refresh token from the Token endpoint (covered below) 
 * `profile` - tells the OAuth server to include all of the standard OpenID Connect claims in the returned tokens (access and/or id tokens) 
 * `email` - tells the OAuth server to include the user's email in the returned tokens (access and/or id tokens)
 * `address` - tells the OAuth server to include the user's address in the returned tokens (access and/or id tokens)
 * `phone` - tells the OAuth server to include the user's phone number in the returned tokens (access and/or id tokens)
-
-In addition to returning
 
 In order to properly implement the handling for the `state`, PKCE, and `nonce` parameters, we need to save these values off somewhere they will be persisted across browser requests and redirects. There are two options for this:
 
@@ -378,15 +378,15 @@ function generateAndSaveNonce(req, res) {
 You might be wondering if it is safe to be storing these values in cookies since the cookies will be sent back to the browser. We are setting each of these cookies to `httpOnly` and `secure`. These flags ensure that no malicious code in the browser (i.e. JavaScript) can read their values. If you want to secure this even further, you can also encrypt the values like this:
 
 ```javascript
-const password = 'secret-password'
+const password = 'setec-astronomy'
 const key = crypto.scryptSync(password, 'salt', 24);
-const iv = Buffer.alloc(16, 0);
+const iv = crypto.randomBytes(16);
 
 function encrypt(value) {
     const cipher = crypto.createCipheriv('aes-192-cbc', key, iv);
     const encrypted = cipher.update(value, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    return encrypted;
+    return encrypted + ':' + iv.toString('hex');
 }
 
 function generateAndSaveState(req, res) {
@@ -416,7 +416,6 @@ At this point, the user will be taken over to the OAuth server to login (or regi
 
 The OAuth 2.0 specification doesn't specify anything about this process. In practice though, 99.999% of OAuth servers use a standard login page that collects the user's username and password. We'll assume that the OAuth server provides a standard login page and handles the collection of the user's credentials and verification of them.
 
-
 #### Redirect and retrieve the tokens
 
 After the user has logged in, the OAuth server redirects them back to the application. The exact location of the redirect is controlled by the `redirect_uri` parameter that we passed on the URL above. In our example, this location is `https://app.twgtl.com/oauth-callback`. When the OAuth server redirects the browser back to this location, it will add a number of parameters to the URL. These are:
@@ -432,7 +431,7 @@ https://app.twgtl.com/oauth-callback?code=123456789&state=foobarbaz
 
 Remember that the browser is going to make an HTTP `GET` request to this URL. In order to securely complete the OAuth authorization code grant, you should write a server-side controller that handles this URL. This will allow you to securely exchange the authorization `code` parameter for tokens. Let's look at how a controller accomplishes this.
 
-First, we need to know the location of the OAuth servers Token Endpoint. This is an API that the OAuth server provides that will validate the authorization `code` and exchange it for tokens. We are using FusionAuth as our example OAuth server and it has a consistent location for the Token endpoint. In our example, that location will be `https://login.twgtl.com/oauth2/token`.
+First, we need to know the location of the OAuth server's Token endpoint. This is an API that the OAuth server provides that will validate the authorization `code` and exchange it for tokens. We are using FusionAuth as our example OAuth server and it has a consistent location for the Token endpoint. In our example, that location will be `https://login.twgtl.com/oauth2/token`.
 
 We will need to make an HTTP `POST` request to the Token endpoint using form encoded data values for a number of parameters. Here are the parameters we need to send to the Token endpoint:
 
@@ -448,9 +447,10 @@ Here's a NodeJS controller that calls the Token endpoint using these parameters.
 ```javascript
 const express = require('express');
 const router = express.Router();
+const cookieParser = require('cookie-parser');
 const request = require('request');
 const clientId = '9b893c2a-4689-41f8-91e0-aecad306ecb6';
-const clientSecret = 'setec astronomy';
+const clientSecret = 'setec-astronomy';
 const redirectURI = encodeURI('https://app.twgtl.com/oauth-callback');
 
 var app = express();
@@ -498,7 +498,7 @@ router.get('/oauth-callback', function (req, res, next) {
         return;
       }
 
-      // Since the differen OAuth modes handle the tokens differently, we are going to 
+      // Since the different OAuth modes handle the tokens differently, we are going to 
       // put a placeholder function here. We'll discuss this function in the following 
       // sections
       handleTokens(accessToken, idToken, refreshToken);
@@ -506,18 +506,87 @@ router.get('/oauth-callback', function (req, res, next) {
   );
 });
 
+function restoreState(req) {
+  return req.session.oauthState; // Server-side session
+}
+
+function restoreCodeVerifier(req) {
+  return req.session.oauthCode; // Server-side session
+}
+
+function restoreNonce(req) {
+  return req.session.oauthNonce; // Server-side session
+}
+
 module.exports = app;
 ```
 
 At this point, we are completely finished with OAuth. We've successfully exchanged the authorization code for tokens, which is the last step of the OAuth authorization code grant.
 
+Let's take a quick look at the 3 `restore` functions from above and how they are implemented for cookies and encrypted cookies. Here is how those functions would be implemented if we were storing the values in cookies:
+
+```javascript
+function restoreState(req, res) {
+  const value = req.cookies.oauth_state;
+  res.clearCookie('oauth_state');
+  return value;
+}
+
+function restoreCodeVerifier(req, res) {
+  const value = req.cookies.oauth_code_verifier;
+  res.clearCookie('oauth_code_verifier');
+  return value;
+}
+
+function restoreNonce(req, res) {
+  const value = req.cookies.oauth_nonce;
+  res.clearCookie('oauth_nonce');
+  return value;
+}
+```
+
+And here is the code that decrypts the encrypted cookies:
+
+```javascript
+const password = 'setec-astronomy'
+const key = crypto.scryptSync(password, 'salt', 24);
+
+function decrypt(value) {
+  const parts = value.split(':');
+  const cipherText = parts[0];
+  const iv = Buffer.from(parts[1], 'hex');
+  const decipher = crypto.createDecipheriv('aes-192-cbc', key, iv);
+  const decrypted = decipher.update(value, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
+
+function restoreState(req, res) {
+  const value = decrypt(req.cookies.oauth_state);
+  res.clearCookie('oauth_state');
+  return value;
+}
+
+function restoreCodeVerifier(req, res) {
+  const value = decrypt(req.cookies.oauth_code_verifier);
+  res.clearCookie('oauth_code_verifier');
+  return value;
+}
+
+function restoreNonce(req, res) {
+  const value = decrypt(req.cookies.oauth_nonce);
+  res.clearCookie('oauth_nonce');
+  return value;
+}
+```
+
 #### Tokens
 
-Before moving on to next steps, let's quickly cover the tokens we received. For the sake of this guide, we are going to assume that the OAuth server is using JWTs (JSON Web Tokens) for the access and id tokens. Most modern OAuth servers use JWTs, so this is a safe assumption. Here are the tokens we have:
+Now that we've successfully exchanged the authorization `code` for tokens, let's look at the tokens we received from the OAuth server. For the sake of this guide, we are going to assume that the OAuth server is using JWTs (JSON Web Tokens) for the access and ID tokens. Most modern OAuth servers use JWTs, so this is a safe assumption. Here are the tokens we have:
 
 * `access_token`: This is a JWT that contains information about the user including their id, permissions, and anything else we might need from the OAuth server.
 * `id_token`: This is a JWT that contains public information about the user such as their name. This token is usually safe to store in non-secure cookies or local storage because it can't be used to call APIs on behalf of the user.
-* `refresh_token`: This is a token (not a JWT) that can be used to create new access tokens. Access tokens expire and might need to be renewed, depending on your requirements (for example how long you want access tokens to last versus how long you want users to stay logged in).
+* `refresh_token`: This is an opaque token (not a JWT) that can be used to create new access tokens. Access tokens expire and might need to be renewed, depending on your requirements (for example how long you want access tokens to last versus how long you want users to stay logged in).
 
 Since 2 of the tokens we have are JWTs, let's quickly cover that technology here. A full coverage of JWTs is outside of the scope of this guide, but there are a couple of good guides in our [Expert Advice Token section](/learn/expert-advice/tokens/) about JWTs.
 
@@ -534,7 +603,7 @@ JWTs have many other standard claims that you should be aware of. You can review
 * https://tools.ietf.org/html/rfc7519#section-4
 * https://openid.net/specs/openid-connect-core-1_0.html#Claims
 
-#### Local login
+#### Local login and registration
 
 Now that we have covered tokens, let's look at next steps for our application code.
 
@@ -545,9 +614,9 @@ For our example TWGTL application, we want to send the user to their ToDo list a
 * Cookies
 * Server-side sessions
 
-These two methods depend on your requirements, but both work well in practice and are both secure if done correctly. If you recall from above, we put a placeholder function call in our code just after we received the tokens from the OAuth server. Let's fill in that code for the `handleTokens` function each of the session options above.
+These two methods depend on your requirements, but both work well in practice and are both secure if done correctly. If you recall from above, we put a placeholder function call in our code just after we received the tokens from the OAuth server. Let's fill in that code for the `handleTokens` function for each of the session options above.
 
-First, let's write back the tokens as cookies to the browser and redirect the user to their ToDos. Here's some code that accomplishes that:
+First, let's store the tokens as cookies in the browser and redirect the user to their ToDos. Here's some code that accomplishes that:
 
 ```javascript
 function handleTokens(accessToken, idToken, refreshToken) {
@@ -561,9 +630,11 @@ function handleTokens(accessToken, idToken, refreshToken) {
 }
 ```
 
-At this point, the application backend has redirected the browser to the user's ToDo list. It has also sent the access token, id token, and refresh tokens back to the browser as cookies. The browser will now send these cookies to the backend each time it makes a request. These requests could be APIs or standard HTTP requests (i.e. `GET` or `POST`). The beauty of this solution is that our application knows the user is logged in because these cookies exist. We don't have to manage them at all since the browser does it all for us.
+At this point, the application backend has redirected the browser to the user's ToDo list. It has also sent the access token, ID token, and refresh tokens back to the browser as cookies. The browser will now send these cookies to the backend each time it makes a request. These requests could be APIs or standard HTTP requests (i.e. `GET` or `POST`). The beauty of this solution is that our application knows the user is logged in because these cookies exist. We don't have to manage them at all since the browser does it all for us.
 
-These cookies also act as our session. Once the cookies disappear or become invalid, our application knows that the user is no longer logged in. Let's take a look at how we use these tokens in and API. This API is used to retrieve the user's ToDos from the database. The key here is that we will assume that the OAuth server we are using creates JWTs (JSON Web Tokens) for the access token.
+These cookies also act as our session. Once the cookies disappear or become invalid, our application knows that the user is no longer logged in. Let's take a look at how we use these tokens for an API that the browser will call via AJAX. This API is used to retrieve the user's ToDos from the database. The key here is that we will assume that the OAuth server we are using creates JWTs (JSON Web Tokens) for the access token.
+
+<<SHOW API CALL>>
 
 Next, let's create a server-side session and store all of the tokens there. This method also writes a cookie back to the browser, but this cookie only stores the session id. This session id allows our server-side code to lookup the user's session during each request. The handling of session ids is generally handled by the framework you are using, so we won't go into details here. You can read up more on server-side sessions on the web if you are interested. 
 
@@ -571,7 +642,7 @@ Here's the code that creates a server-side session and redirects the user to the
 
 ```javascript
 var expressSession = require('express-session');
-app.use(expressSession({resave: false, saveUninitialized: false, secret: 'setec astronomy'}));
+app.use(expressSession({resave: false, saveUninitialized: false, secret: 'setec-astronomy'}));
 
 function handleTokens(accessToken, idToken, refreshToken) {
   // Store the tokens in the session
@@ -586,13 +657,33 @@ function handleTokens(accessToken, idToken, refreshToken) {
 
 This code stores the tokens in the server-side session and redirects the user. Now, each time the browser makes a request to the TWGTL backend, we can access these tokens from the session.
 
-Let's complete the connection between 
+Let's update our API code from above to use the server side sessions instead of the cookies:
 
-<<SHOW API CALL>>
+<<API CODE AGAIN>>
+
+Finally, we need to update our code to handle refreshing and updating the access token. You might have noticed that our API code was calling 2 functions that weren't defined. These functions check if the access token is valid and refresh the access token if so. Here is the code for these two functions:
 
 <<SHOW USING REFRESH TOKEN>>
 
-#### Third-party login
+#### Third-party login and registration
+
+In the previous section we covered the **Local login and registration** process where the user is logging into our TWGTL application using an OAuth server we control such as FusionAuth. The other method that users can login is using a third-party such as Facebook. This process uses OAuth in the same way we described above. 
+
+Some third-party providers have hidden some of the complexity from us by providing simple JavaScript libraries that handle the entire OAuth workflow (like Facebook for example). We won't go into Facebook login in detail though.
+
+In most cases, the third-party OAuth server is acting the same as our local OAuth server and in the end, the result is that we receive tokens that we can use to make API calls with the third-party. Let's update our `handleTokens` code to call an fictitious API to retrieve the user's friend list from the third-party.
+
+<<CODE HERE>>
+
+If you are implementing the **Third-party login and registration** mode without leveraging an OAuth server like FusionAuth, there are a couple of things to consider:
+
+* Do you want your sessions to be the same duration as the third-party system?
+  * In most cases, if you implement **Third-party login and registration** as we have outlined, your users will be logged into your applicaiton for as long as the access and refresh tokens from the third-party system are valid.
+  * You can change this behavior by setting timeouts on the cookies or server-side sessions you create to store the tokens.
+* Do you need to reconcile the user's information and store it in your own database?
+  * You might need to leverage an API in the third-party system to fetch the user's information and store it in your database. This is out of scope of this guide, but something to consider.
+    
+If you use a OAuth server such as FusionAuth to manage your user's and provide **Local login and registration**, it will often handle both of these items for you with little configuration and no additional coding.
 
 #### Third-party authorization
 
