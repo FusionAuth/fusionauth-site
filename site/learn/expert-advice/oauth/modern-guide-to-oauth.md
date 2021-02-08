@@ -11,6 +11,7 @@ dateModified: 2020-10-06
 # TODO
 
 * Add refresh token handling and code
+* Add user info endpoint usage
 * Convert all request uses to fetch or some other API
 * Test code
 * Make diagrams
@@ -278,7 +279,7 @@ This code immediately redirects the browser to the OAuth server. However, the OA
 * `response_type` - this should always be set to `code` for this grant type. This tells the OAuth server you are using the authorization code grant.
 * `scope` - this is also an optional parameter, but in some of the modes from above, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll cover this later in the guide as well).
 * `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code Grant. This is known as a "public client". There aren't many cases of applications that specifically don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them.
-* `code_challenge_type` - this is an optional parameter, but if you implement PKCE, you must specify how your PKCE `code_challenge` parameter was create. It can either be `plain` or `s256`. We never recommend using anything except `s256` which uses SHA-256 secure hashing for PKCE.
+* `code_challenge_method` - this is an optional parameter, but if you implement PKCE, you must specify how your PKCE `code_challenge` parameter was create. It can either be `plain` or `S256`. We never recommend using anything except `S256` which uses SHA-256 secure hashing for PKCE.
 * `nonce` - this is an optional parameter and is used for OpenID Connect. We don't go into much detail of OpenID Connect in this guide, but we will cover a few aspects including ID tokens and `nonce`. Basically, this `nonce` parameter will be included in the ID token that the OAuth server generates and we can verify that when we retrieve the ID token later in the guide.
 
 Let's update our controller from above with all of these values. While we don't actually need to use PKCE for this guide, it doesn't hurt anything to add it.
@@ -288,7 +289,7 @@ const clientId = '9b893c2a-4689-41f8-91e0-aecad306ecb6';
 const redirectURI = encodeURI('https://app.twgtl.com/oauth-callback');
 const scopes = encodeURIComponent('profile offline_access openid');
 
-router.get('/login', function(req, res, next) {
+router.get('/login', (req, res, next) => {
   const state = generateAndSaveState(req, res);
   const codeChallenge = generateAndSaveCodeChallenge(req, res);
   const nonce = generateAndSaveNonce(req, res);
@@ -300,7 +301,7 @@ router.get('/login', function(req, res, next) {
                  `response_type=code&` +
                  `scope=${scopes}&` +
                  `code_challenge=${codeChallenge}&` +
-                 `code_challenge_type=s256&` +
+                 `code_challenge_method=S256&` +
                  `nonce=${nonce}`);
 });
 ```
@@ -392,7 +393,7 @@ const iv = crypto.randomBytes(16);
 
 function encrypt(value) {
   const cipher = crypto.createCipheriv('aes-192-cbc', key, iv);
-  const encrypted = cipher.update(value, 'utf8', 'hex');
+  let encrypted = cipher.update(value, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   return encrypted + ':' + iv.toString('hex');
 }
@@ -467,7 +468,7 @@ app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 
-router.get('/oauth-callback', function(req, res, next) {
+router.get('/oauth-callback', (req, res, next) => {
   // Verify the state
   const reqState = req.query.state;
   const state = restoreState(req, res);
@@ -564,7 +565,7 @@ function decrypt(value) {
   const cipherText = parts[0];
   const iv = Buffer.from(parts[1], 'hex');
   const decipher = crypto.createDecipheriv('aes-192-cbc', key, iv);
-  const decrypted = decipher.update(value, 'hex', 'utf8');
+  let decrypted = decipher.update(cipherText, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
   return decrypted;
 }
@@ -610,6 +611,100 @@ JWTs have many other standard claims that you should be aware of. You can review
 
 * https://tools.ietf.org/html/rfc7519#section-4
 * https://openid.net/specs/openid-connect-core-1_0.html#Claims
+
+#### User and token information
+
+Before we cover how the Authorization code grant is used for each of the OAuth modes, let's discuss two additional OAuth endpoints that can be used to retrieve information about your users and their tokens. These endpoints are:
+
+* Introspection - this endpoint is an extension to the OAuth 2.0 specification and returns information about the token using the standard JWT claims from the previous section
+* UserInfo - this endpoint is defined as part of the OpenID Connect specification and returns information about the user
+
+These two endpoints are quite different and serve different purposes. They might actually return similar values, the purpose of the introspection endpoint is to return information about the token itself. The UserInfo endpoint is designed to return information about the user.
+
+Both endpoints are simple to use, so let's look at some code for each. 
+
+First, let's look at using the introspect endpoint to get information about an access token. We can use the information returned from this endpoint to ensure that the access token is still valid or get information such as the standard JWT claims we covered in the previous section. Besides the returning the JWT claims, this endpoint also returns a few additional claims that you can leverage in your app. These additional claims are:
+
+* `active`: Determines if the token is still active and valid.
+* `scope`: The list of scopes that were passed to the OAuth server during the login process and subsequently used to create the token.
+* `client_id`: The `client_id` value that was passed to the OAuth server during the login process.
+* `username`: The username of the user. This is likely the username they logged in with but could be something different.
+* `token_type`: The type of the token. Usually, this is `Bearer` meaning that the token belongs to and describes the user that is in control of it.
+
+Let's write a function that uses the introspect endpoint to determine if the access token is still valid. We'll use this function later in this guide when we cover refreshing tokens. This code will leverage FusionAuth's introspect endpoint, which again is always at a well-defined location:
+
+```javascript
+const axios = require('axios');
+const formData = require('form-data');
+
+function validateToken(accessToken, clientId) {
+  const form = new FormData();
+  form.append('token', accessToken);
+  form.append('clientId', clientId); // FusionAuth requires this for authentication
+  
+  return await axios.post('https://login.twgtl.com/oauth2/introspect', form, { headers: form.getHeaders() })
+      .then((res) => {
+        if (res.status === 200) {
+          return res.data.active;
+        }
+        
+        return false;
+      })
+      .catch((error) => false);
+}
+```
+
+This function makes a request to the introspect endpoint and then uses the response status code and JSON to determine if the token is valid. This is helpful if we are looking to validate tokens.
+
+If we need to get additional information about the user from the OAuth server, we can leverage the UserInfo endpoint. This endpoint takes the access token and returns a number of well defined claims about the user. Technically, this endpoint is part of the OpenID Connect specification, but most OAuth servers implement it, so you'll likely be safe using it. Here are the claims that are returned by standard the UserInfo endpoint:
+
+* `sub`: The unique identifier for the user.
+* `name`: The user's full name. 
+* `given_name`: The user's first name.
+* `family_name`: The user's last name.
+* `middle_name`: The user's middle name.
+* `nickname`: The user's nickname (i.e. Joe for Joseph).
+* `preferred_username`: The user's preferred username that they are using with your application.
+* `profile`: A URL that points to the user's profile page.
+* `picture`: A URL that points to an image that is the profile picture of the user.
+* `website`: A URL that points to the user's website (i.e. their blog).
+* `email`: The user's email address.
+* `email_verified`: A boolean that determines if the user's email address has been verified.
+* `gender`: A string describing the user's gender.
+* `birthdate`: The user's birthdate as an ISO 8601:2004 YYYY-MM-DD formated string.
+* `zoneinfo`: The timezone that the user is in.
+* `locale`: The user's preferred locale as an ISO 639-1 Alpha-2 language code in lowercase and an ISO 3166-1 Alpha-2 [ISO3166‑1] country code in uppercase, separated by a dash.
+* `phone_number`: The user's telephone number.
+* `phone_number_verified`: A boolean that determines if the user's phone number has been verified.
+* `address`: A JSON object that contains the user's address information. The sub-claims are:
+    * `formatted`: The user's address as a fully formatted string. 
+    * `street_address`: The user's street address component.
+    * `locality`: The user's city.
+    * `region`: The user's state, province, or regin.
+    * `postal_code`: The user's postal code or zipcode.
+    * `country`: The user's country.
+* `updated_at`: The instant that the user's profile was last updated as a number representing the number of seconds from Epoch UTC.
+
+Here's a function that we can use to retrieve a user object from the UserInfo endpoint. We'll also use this function later in this guide:
+
+```javascript
+function retrieveUser(accessToken, clientId) {
+  return await axios.get('https://login.twgtl.com/oauth2/userinfo', {}, 
+      { 
+        headers: {
+          Authorization: 'Bearer ' + accessToken
+        }  
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          return res.data;
+        }
+
+        return null;
+      })
+      .catch((error) => null);
+}
+```
 
 #### Local login and registration
 
