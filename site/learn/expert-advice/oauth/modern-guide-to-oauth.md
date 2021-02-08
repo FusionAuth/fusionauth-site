@@ -12,6 +12,7 @@ dateModified: 2020-10-06
 
 * Add refresh token handling and code
 * Add user info endpoint usage
+* Add API examples
 * Convert all request uses to fetch or some other API
 * Test code
 * Make diagrams
