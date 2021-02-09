@@ -406,7 +406,7 @@ module.exports = router;
 ```
 
 Again, that's a lot of code! Let's break it up and look at each section in turn. 
-#### Constants and set up
+#### Constants and setup
 
 First up, the top of the file.
 
