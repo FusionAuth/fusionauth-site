@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Setting up single sign-on with FusionAuth
+title: Setting up single sign-on (SSO) with FusionAuth
 description: Who are the players you'll need to work with to make an outsourced auth implementation successful?
 image: blogs/team-buy-in-outsource-auth/outsourcing-auth-how-to-get-buy-in-from-your-team-header-image.png
 author: Dan Moore
@@ -37,7 +37,7 @@ v14.4.0
 
 If you have that, you're ready to get started.
 
-## Application domain names 
+## Setting up application domain names to illustrate SSO
 
 Single sign-on applications typically live on different domains or different paths. Let's create two different domains that point to your local computer to simulate the real world.
 
@@ -321,7 +321,7 @@ Takeaways from the excerpted file:
 
 Why is the session lifetime so short? Mostly so you can experiment with SSO without waiting for a long time. In a production application, you'd want to tweak this based on your security expectations as well as load expectations. Note that even if a user's session expires in the Pied Piper application, they won't be forced to log in again unless their SSO session has also expired. The routes and views code will be built out in the next sections.
 
-### Creating the routes in index.js
+### Creating the SSO login routes in index.js
 
 This file creates the routes which will handle the pages discussed above:
 
@@ -642,7 +642,7 @@ You can log out by clicking any of the logout links. One caveat, however. If you
 
 However, logging out with FireFox works whether you use TLS or not.
 
-## Next steps
+## Next steps for FusionAuth single sign-on
 
 Check out the completed applications in the [SSO application GitHub repo](https://github.com/FusionAuth/fusionauth-example-node-sso); feel free to clone and modify it. If you want to push the boundaries of what you can build with FusionAuth, consider the following tasks:
 
