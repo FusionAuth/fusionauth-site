@@ -321,7 +321,7 @@ Takeaways from the excerpted file:
 
 Why is the session lifetime so short? Mostly so you can experiment with SSO without waiting for a long time. In a production application, you'd want to tweak this based on your security expectations as well as load expectations. Note that even if a user's session expires in the Pied Piper application, they won't be forced to log in again unless their SSO session has also expired. The routes and views code will be built out in the next sections.
 
-### Creating the SSO login routes in index.js
+### SSO routes in index.js
 
 This file creates the routes which will handle the pages discussed above:
 
@@ -405,7 +405,10 @@ router.get('/oauth-redirect', function (req, res, next) {
 module.exports = router;
 ```
 
-Again, that's a lot of code! Let's break it up and look at each section in turn. First up, the top of the file.
+Again, that's a lot of code! Let's break it up and look at each section in turn. 
+#### Constants and set up
+
+First up, the top of the file.
 
 ```javascript
 const express = require('express');
@@ -431,6 +434,8 @@ You'll need to change this section a bit. Update both the `clientId` and `client
 
 The first argument to the `client` constructor is `noapikeyneeded` because the client interactions performed do not require an API key. However, if you build more functionality in this application, such as updating user data or adding consents, change that value to a [real API key](/docs/v1/tech/apis/authentication/#manage-api-keys).
 
+#### Protecting user data in the homepage route
+
 Next up, the homepage route. This is the page that will show the user's data.
 
 ```javascript
@@ -450,6 +455,8 @@ router.get('/', function (req, res, next) {
 
 Users can't view the homepage if they aren't signed in. However, this is a design choice; you could show text for anonymous users and other text for users who have been authenticated. Here, the code checks for a user value in the session. If absent, the user is redirected to `loginUrl`, which is the FusionAuth login page configured previously. 
 
+#### The SSO login route
+
 The route that handles the login page is up next.
 
 ```javascript
@@ -462,6 +469,8 @@ router.get('/login', function (req, res, next) {
 ```
 
 This login page is available to anonymous users. For this tutorial, only a link to log in is shown, but, as mentioned above, this page could have text and images illustrating the benefits of this application.
+
+#### Setting up SSO logout 
 
 Now, let's check out the logout route.
 
@@ -484,6 +493,8 @@ The removal logs the user out of the Pied Piper application. The redirection wil
 
 How does that happen? Glad you asked, as the next route, the `endsession` route, plays an integral role in that convenient feature.
 
+#### Ending sessions across many applications
+
 ```javascript
 //...
 /* End session for global SSO logout */
@@ -497,6 +508,8 @@ router.get('/endsession', function (req, res, next) {
 FusionAuth requests this route from the Pied Piper application when a user logs out from the Hooli application. That means that this endpoint is responsible for logging the user out. This URL was configured in the FusionAuth application on the "OAuth" tab. 
 
 While similar in functionality to the `/logout` endpoint, it is separate for a reason. While each endpoint destroys the session, they need to send the browser to different places afterward. For `endession`, the request should forward to a page accessible to unauthenticated users. For `/logout` the user needs to be sent to the FusionAuth `logout` URL.
+
+#### Completing the authorization code grant
 
 Let's take a look at the `oauth-redirect` route next.
 
