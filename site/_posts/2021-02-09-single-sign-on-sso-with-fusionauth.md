@@ -503,7 +503,7 @@ router.get('/endsession', function (req, res, next) {
   res.redirect(302, "/login");
 });
 //...
-``
+```
 
 FusionAuth requests this route from the Pied Piper application when a user logs out from the Hooli application. That means that this endpoint is responsible for logging the user out. This URL was configured in the FusionAuth application on the "OAuth" tab. 
 
