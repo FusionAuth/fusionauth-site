@@ -9,7 +9,7 @@ date: 2021-02-05
 dateModified: 2021-02-05
 ---
 
-As more and more of our lives move online, multi factor authentication (MFA) is an important part of keeping accounts secure. As a user, you should enable MFA on any that contain valuable data. As a developer or software creator, you should have an understanding of where to apply MFA and how you might consider doing so.
+As more of our lives move online, multi factor authentication (MFA) becomes more important for keeping our accounts secure. As a user, enable MFA on any accounts containing valuable data. As a developer or software creator, you should have an understanding of MFA, what types are available and when you might consider requiring additional factors for user authentication. 
 
 ## What is MFA?
 
@@ -45,7 +45,7 @@ There are a number of situations where MFA makes sense. Sometimes it is the type
 
 ### High value accounts
 
-Privileged accounts, which have higher levels of access to systems, should use MFA. These adminstrator accounts often have the ability to wreak havoc if they were misused. Therefore, as a developer, you should require MFA on admin accounts.
+Privileged accounts, which have higher levels of access to systems, should use MFA. These adminstrator accounts often have the ability to wreak havoc if they were misused. Therefore, as a developer, you should require MFA on admin accounts. You may want to require MFA for every login or even every action which mutates a system with this type of account.
 
 There are also plenty of other high value accounts where MFA should be required. These accounts don't have elevated system privileges, but instead control information or actions. Compromise of these accounts will have significant negative repercussions.
 
@@ -174,29 +174,33 @@ WebAuthn standard works with a variety of the above factors, including physical 
 
 FIDO2 is a set of specifications, of which WebAuthn is one.
 
-## Other aspects of MFA
+## Disabling MFA
 
-There are other issues to consider when, as a developer, you are considering MFA.
+There are other issues to consider when, as a developer, you are implementing MFA. You may want to provide a way to disable MFA.
 
-### Forcing MFA
-
-
-
-In this document, I've talked about MFA as an adjunct to the normal username/password credentials. Depending on your secur
-
-Forced MFA
-I.e. bank login
-Turning off MFA
-“Trust this computer”
-One time codes (scratch codes, recovery codes)
+There are two main dimensions for disabling MFA.
 
 ### Disabling MFA for a device
 
+The first is at the device level. This often takes the form of a "trust this device" or "this is not a public computer" checkbox during authentication. In this case, the system records that this device can be trusted. The trust usually extends for a certain duration, after which MFA is required. 
 
-### Disabling MFA for an account
+With a browser this can be implemented with a cookie, and removing the cookie will cause MFA to be required at the next login. Other devices have similar local storage mechanisms where such preferences can be stored.
 
+### Disabling MFA for a user
 
+The second is disabling MFA for a user. This is obviously a high risk operation, since one of the main strengths of MFA is that multiple forms of proof of identity are provided, and removing them opens the users' account up to being hijacked by someone possessing only one factor of authentication, say a password.
 
+However, you might do this because the user has lost one of the factors previously associated with their account. Just make sure you provide controls around this.
+
+One possible control is to have this be a manual process, performed by a customer service rep trained in other ways to authenticate a user. So a user would call in or chat and provide proof that they were who they said they were before MFA is turned off. 
+
+Another option would be self service. You can provide a set of codes at the moment MFA is turned on that are one time use. These can then be used to circumvent MFA should the user need to do so. 
+
+In both of these cases, it's worth noting that the user is still providing additional factors of authentication, they are simply more flexible, because of the human intervention, or one time use, in the case of the codes.
+
+In either situation, the disabling of MFA is in itself a privileged operation and you should ensure that the user is authenticated to the standards needed.
+
+hhh....
 
 what about if someone else gets another factor?
 
