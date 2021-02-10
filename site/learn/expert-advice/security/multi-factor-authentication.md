@@ -13,122 +13,181 @@ As more of our lives move online, multi factor authentication (MFA) becomes more
 
 ## What is MFA?
 
-When a user is authenticating, they need to provide proof of who they are. A person can do this in a few ways:
+When a user is authenticating, they provide proof of who they are. There are three broad categories for this type of proof:
 
-* What they know, a password, for example.
-* What they have, such as a code from a device you possess.
-* What they are, like a fingerprint.
+* What they know. A password is an example. 
+* What they have, such as a code from a device a user possesses.
+* What they are; something like a fingerprint.
 
-Each of these is called a 'factor'. Multi factor authentication is, therefore, requiring two or more factors in order to authenticate.
+Each of these methods of proof is called a 'factor'. Factors have to be kept secure and not shared to be useful in authenticating a user. Multi factor authentication is best understood as requiring two or more factors in order to authenticate.
 
-MFA is slightly different from two factor authentication (2FA) because in the former case, the number of factors are not limited to two. 2FA is a subset of MFA.
+MFA is a superset of two factor authentication (2FA). With MFA an arbitrary number of factors of proof can be required. With 2FA, the number of factors is limited to two.
 
-Multi factor authentication isn't limited to systems on the Internet, either. If you have a safe deposit box, to get in, you provide a key (something you have) and a signature (something you are) or an id (another thing you have). However, this article will assume that the first factor of authentication will be a password, something the user knows.
+Multi factor authentication isn't just for online user accounts. If you are accessing a safe deposit box, you need a key (something you have) and a signature (something you are) or an id (another thing you have). 
 
-More and more online systems are requiring MFA to access accounts. Let's turn to why you'd use MFA as a developer.
+However, the focus of this article is MFA in the context of online account access. Because of that, this article will assume that one factor of use authentication is a password. More and more online systems are requiring proof beyond such a password to access accounts. Before discussing other types of factors, let's turn to why you'd use MFA when securing accounts.
 
 ## Why use MFA
 
-A foundational part of building a secure available system is to ensure that only people and software that should have access to it, do. Authentication, which ensures that users are who they say they are, and authorization, which ensures that users have access to only what they should, are key parts of managing access.
+Building a secure, available system requires ensuring only authorized people and software agent have access. Authentication, which ensures that users are who they say they are, and authorization, which controls access are both important in doing so.
 
-If your users have only one factor of authentication, it can be stolen by a bad actor. Whether it is the key to a safe deposit box or the password to a email account, if a user loses control of that single factor, that account can no longer be trusted. In particular, things users know, such as passwords, can and are being stolen regularly. While systems can prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection/) and users can protect themselves by practicing good password hygiene, adding another factor increases the obstacles to anyone else obtaining that account.
+If your users use only factor of authentication, it can be stolen by a bad actor, who will now have access as if they were the user whose credentials had been compromised. Whether it is the key to a safe deposit box or the password to a email account, if a user loses control of the factor allowing access, data and systems can be accessed by those who possess the stolen factor. 
 
-Adding factors to authentication can improve the security of your users' account. Microsoft researchers found that accounts are ["99.9% less likely to be compromised"](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/your-pa-word-doesn-t-matter/ba-p/731984) if MFA is used.
+Secrets users know, such as passwords, are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection/) and users can protect themselves by practicing good password hygiene, requiring another factor increases obstacles to anyone else obtaining that access. 
 
-It's a balance, because as a developer, you want to make the user login experience as smooth as possible while balancing the need to minimize account compromise. After all, any friction in the login process will annoy some percentage of your users. Plus your users don't use your application for the login, they want to have their problem solved. 
+In particular, if a factor that is not in the "something you know" category is added as part of the login process, the security of the account can go up dramatically, as the factors in the other two categories are more difficult to steal. Microsoft researchers found that accounts are ["99.9% less likely to be compromised"](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/your-pa-word-doesn-t-matter/ba-p/731984) if MFA is used.
 
-As a developer, you need to balance between the degraded user experience and the risk of account takeover. If your site lets users vote on cats, MFA may never be required. If your site lets users transfer money, it should require it. The hard part is the vast number of situations where the answer isn't that obvious. What are some situations where you should consider requiring multi factor authentication?
+### The balance
 
-## When is MFA typically used
+However, even though it is more secure, as a developer, you shouldn't necessarily require it everywhere. It's a balance; you want to make the user login experience as smooth as possible while minimizing chances of account takeover. Friction in the authentication process will annoy some percentage of your users. Additionally, your users don't love your application for the login experience, they want to solve their problems. 
 
-There are a number of situations where MFA makes sense. Sometimes it is the type of account that matters, sometimes it is metadata around the access, and other times it is external laws or policies.
+As a developer, you need to balance between the more difficult user experience and the risk of account takeover. If your site lets users vote on cat pictures, MFA may never be required for user accounts. If your site lets users transfer money, on the other hand, it should require MFA. These are both obvious ends of the security and user experience spectrum. 
+
+TBD DIAGRAM of spectrum
+
+The hard part is the situations where the answer isn't obvious. What are some situations where you should consider requiring multi factor authentication?
+
+## Times to require multiple factors of authentication
+
+There are a variety of situations where you should require an increased level of assurance during authentication or authorization. Sometimes the type of account matters, other times it is the access requested, and sometimes it is legal requirements or corporate policies.
+
+### Administrative accounts
+
+Privileged accounts with higher levels of access should use MFA. 
+
+These adminstrator or operator accounts can wreak havoc if misused or compromised. Therefore, as a developer, require MFA on admin accounts. Require MFA for every login. 
+
+In extremely sensitive systems, all changes to a system could require additional factors.
 
 ### High value accounts
 
-Privileged accounts, which have higher levels of access to systems, should use MFA. These adminstrator accounts often have the ability to wreak havoc if they were misused. Therefore, as a developer, you should require MFA on admin accounts. You may want to require MFA for every login or even every action which mutates a system with this type of account.
+There are also plenty of high value normal user accounts where MFA can help prevent unwanted account compromises. These accounts don't possess elevated privileges, but do control data or actions that are important to the user. Compromise of these accounts can have negative repercussions.
 
-There are also plenty of other high value accounts where MFA should be required. These accounts don't have elevated system privileges, but instead control information or actions. Compromise of these accounts will have significant negative repercussions.
+An example is online access to a bank account. You don't want users to lose their account access and learn that someone drained their savings. 
 
-An example of such an account would be a bank account. You don't want users to lose their account access and learn that someone had drained their savings. Another example would be email. Beyond the personal information often present in email inboxes, because so many password reset solutions send email, compromise of this account means that many other accounts are at risk.
+Another example is email. Beyond private information often present in email accounts, these represent risk to other accounts. Many password reset solutions send an email; therefore compromise of this account means that many other accounts of this user are at risk.
 
 ### Risky actions
 
-There may be times when a user has already been authenticated but is performing an action that is riskier than usual. This is also known as "step up auth". Examples of risky actions include:
+When a user has already authenticated but is performing an dangerous action, MFA provides extra security. 
+
+This is also known as "step up auth", because the additional factor is required at the moment a more privileged action is taken. Examples of such actions include:
 
 * Changing a password or username
 * Resetting a password
 * Spending money
 * Creating a new user with elevated privileges
 * Changing system settings
-* Modifying settings that would affect other factors such as email or phone number
+* Modifying configuration impacting other factors, such as an email or phone number
 
-When this happens, requiring another level of authentication helps ensure that the person taking the riskier action is actually the owner of the account. Since these actions may be both legitimate and of intense interest to attackers who have gained access to the account, preventing the latter from undertaking them makes sense.
+When such an action is requested, developers of a system need more certainty about who is actually behind it. These type of actions can be legitimate, but are also interesting to anyone who has compromised an account. 
+
+You can partially mitigate the damage of a compromised account by cimplementing step up auth. An attacker may be able to access the account, but won't be able to take damaging action.
 
 ### Legal or organizational policies
 
-If your application is going to be used by certain organizations or to store certain kinds of personally identifiable information, you may need to require multi factor authentication. As part of the NIST risk management framework, for example, Authenticator Assurance Level2 requires: ["proof of possession and control of two different authentication factors is required through a secure authentication protocol."](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63-3.pdf). 
+If your application is going to be used by certain organizations or to store certain kinds of personally identifiable information, you may need to require multi factor authentication. As part of the NIST risk management framework, for example, Authenticator Assurance Level 2 requires: ["proof of possession and control of two different authentication factors is required..."](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63-3.pdf). 
 
-Sometimes the requirement is not explicit. If you are looking to be SOC2 certified, on the other hand, you will likely have to use MFA, even though the term is never mentioned in the SOC "Trust Services Criteria" documentation. CC6.1 specifies "Persons, infrastructure, and software are identified and authenticated prior to accessing information assets, whether locally or remotely" without outlining implementation details. In this case, talk to your auditor about MFA requirements (among many other things).
+Sometimes an MFA requirement is not explicit, however. If you are looking to be SOC2 certified, you will likely require MFA, even though the term is never mentioned in the [SOC "Trust Services Criteria"](https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf).
 
-### When things look suspicious
+Section CC6.1 specifies "Persons, infrastructure, and software are identified and authenticated prior to accessing information assets, whether locally or remotely" without outlining implementation details. In this case, talk to your auditor about MFA requirements as well as other required controls.
 
-The system processing authentication has a unique viewpoint into who is signing in. There's explicitly provided data like the username and password, but also metadata such as:
+### When actions look suspicious
 
-* The time of access
-* Connection information such as IP address
-* Whether this device has been used to access this service before
-* Access patterns
+An auth system has a unique viewpoint into who is signing in. Many different pieces of information are supplied which result in a binary decision answering the question: "is this user who they are claiming to be?" 
 
-All of these can be used to help determine if the person behind the authentication request is legitimate. For instance, if a user accessed the system from the USA but then 24 hours later a request from Germany with the same credentials, this request deserves some scrutiny. It's possible it is legitimate, but may not be.
+Some of the data is explicitly provided, such as the username and password. But there is also metadata like:
+
+* The date and time of access
+* Connection information such as IP address and user agent
+* Has this device been used to access this service before
+* How many times the user has logged in recently
+
+All of the implicit data can help determine if the person behind the authentication request is legitimate. For instance, if a user accesses a system from the USA but 24 hours later there is a request from Germany with the same credentials, this request deserves some scrutiny. It's possible it is legitimate, but also possible it is not. MFA is an easy way to apply extra scrutiny.
 
 Another common event that triggers a higher level of authentication assurance is when a user signs in from a new device. For example, Google's GSuite can be configured in such a way as to require MFA for the initial authentication from a new device, but not after. Then, if you delete your cookies or use a different browser, MFA is required again, because to GSuite these situations look like access from a different device.
 
-### Example
+### Applying MFA requirements
 
-Resetting a password is a common login flow that almost everyone uses multiple factors to secure. This is because changing a user's password is a high risk activity. The system needs to know who you are, but it should require more clarity than it might in other situations where the stakes are lower.
+You should strive to embed the choices about when to require MFA in a central, easily changed location in your application. These choices will change over time as a system evolves. New features will be built, and some of them may require a step up. Distinct classes of users will appear, about which the system may require different levels of assurance.
 
-In this case, the two factors typically are:
+This policy configuration should itself be protected and only allow privileged users, perhaps with a recent multi factor authentication.
 
-* what you know: the email address or username of the account
-* what you have: access to the email inbox
+If you don't have organization or user wide policies, you should allow a user to set up MFA. This allows security conscious users to take their account security more seriously. They can evaluate their own security posture and make choices that make sense to them. For example, one person may run their entire life through their gmail account, while others may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it may not.
 
-## What additional factors are commonly used?
+However, in general, if you are worried about what a compromised account could do to either your systems or your users' data, you should strongly encourage or require MFA.
 
-Beyond the typical password factor, what are other ways a user can prove they are who they say they are?
+## Commonly used additional factors
 
-As defined above, there are three main options. Let's look at each in turn.
+Beyond the typical password, what are other ways a user can prove who they are?
+
+As defined above, there are three main categories. 
+
+* What they know.
+* What they have.
+* What they are.
+
+Each of these has a certain level of security and ease of use. The more factors you require, the more security you get. Nothing is 100% secure and all of the options have tradeoffs. Some of these factors require more security cooperation from the end user than others.
+
+TBD DIAGRAM of spectrum factor on spectrum
+
+Let's look at each in turn.
 
 ### What you have
 
-Having something that is independent from the account that the user has is a great way to prove that they are legitimate.
+Having possesion of something, whether physical or timebound knowledge, is a great additional authentication factor.
 
 #### TOTP
 
-A common option is a software or hardware time-based one time password (TOTP) generator. These solutions, such as Google Authenticator, Aegis Authenticator or Auth, generate a pseudo random numeric code based on a secret seed. The seed can be shared between your system and the generator. Then, when the user wants to sign in, the seed is combined with the current time to generate the code. 
+A software or hardware time-based one time password (TOTP) generator is one example. This consists of an application such as Google Authenticator, Aegis Authenticator or Authy, a secret seed created once in an environment where the user is known, and a shared algorithm. The algorithm generates a pseudo random numeric code based on the seed. The seed and algorithm are shared between the auth system and the generator application. 
 
-Both the the generator and the server have the secret seed, the current time and the algorithm to generate the code. Therefore, the server can compare the code calculated with the code provided and see if they match. To preserve this, you need to keep the initial secret safe and maintain control of the generator, whether that be on your phone or a separate device.
+When the user wants to sign in, the seed is combined with the current time by the algorithm to generate a code. 
+
+Both the the application and your server have all the information needed to generate the code. Therefore, the server can compare the code it calculates with the code the user provides. If they match, the user has possession of the secret. 
+
+To preserve the security of this system, as a developer, you need to keep the initial secret safe. The user must maintain control of the generator application. 
 
 #### SMS
 
-Simple message service, or SMS, is another common option. Here, the system sends an out of band text message to a previously provided mobile phone number. The authentication system knows the contents of the text message; it sent it! The user provides the content, typically a string of numbers or alphanumeric characters. To keep this factor safe, the physical or software phone must be kept in possession of the user. As a developer, you should also not allow a mobile number to be changed unless the user has authenticated with MFA. Otherwise an attacker with a password could log in, change the mobile number to one they control, and then be able to provide the MFA code sent to the new phone.
+Text messaging, also known as SMS, is another common factor. The system sends an out of band text message to a mobile phone number previously provided by the user. The authentication system knows the contents of the text message since it sent it. 
 
-Additionally, there's an attack vector where a bad actor takes over your phone number without getting your phone or changing the number associated with your account. These can range from social engineering attacks, where a customer service rep is convinced you set up a new phone, to more sophisticated attacks which target cell phone networks. SMS has weaknesses that have been exploited, but mostly it's safe. High value systems such as banking websites often use SMS as one of their factors. To make it even more secure, contact your cellphone provider and ask about their policy around new phone activation to help prevent social engineering attacks. You can also set up a software service such as Google Voice or Twilio to receive the SMSes; make sure you secure the SMS service well.
+The user provides the texted message content, which is typically a string of numbers or alphanumeric characters. If it matches up, the user has possession of a device capable of recieving this text message.
+
+To keep this factor safe, the physical or software phone must be in possession of the user. As a developer, do not allow a mobile number to be changed unless the user has authenticated with MFA.  Otherwise an attacker with a password could log in, change the mobile number to one they control, and then would be able to provide the MFA code sent to the new device.
+
+Additionally, there's an attack where a bad actor takes over your phone number without getting your phone or changing the number to which the code is sent. These can range from social engineering attacks, where a customer service rep is convinced you have set up a new phone and simply need to update their SIM card records, to more sophisticated attacks which target cell phone networks. 
+
+SMS has weaknesses that have been exploited, but mostly it's safe. High value systems such as banking websites often use SMS as one of their factors. Google researchers found in 2019 that a text message ["helped block 100% of automated bots, 96% of bulk phishing attacks, and 76% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
+
+There's not a lot you can do as a developer to make this factor more secure. Users, on the other hand, can contact their cellphone providers and ask about how phone number transfers are handled to understand possible social engineering attacks. Users can also set up a software service such as Google Voice or Twilio to receive text messages.
 
 #### App push
 
-Your phone isn't limited to being a TOTP software provider or receiving text messages, it can also have a specialized application that uses push notifications to provide a code. Again, this code is generated by the authenticating system and sent to the user. The user proves possession of their phone with the push notification application installed by sharing that code with the authenticating system. The application can encrypt the code before sending and decrypt it on the phone to ensure it can't be tampered with or read over the wire. 
+Your phone isn't limited to running a TOTP application or receiving text messages, it can also have a specialized application that uses push notifications to provide a code. Similar to text messages, this code is generated by the authenticating system and sent to the user. 
 
-With any of the phone based MFA options, set up the device to require authentication before these applications are accessed, such as Face ID or a pin. Ensure notifications and SMS messages can't be read without the user authenticating.
+The user proves their recieved the notification by sharing that code with the authenticating system. The server can encrypt the code before sending and the application can decrypt it on the phone to ensure the code can't be tampered with or read.
+
+Such systems are effective. In 2019, Google researchers found that such on-device prompts ["helped block 100% of automated bots, 99% of bulk phishing attacks, and 90% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
+
+Similar to text messages, the security of these systems is really up to the provider of the push notification. However, I hear Apple and Google are pretty good at this kind of thing.
+
+With any of the above MFA options which use information sent to a phone as an authentication factor, encourage your users to configure the device to require local authentication before any applications are accessed. This could be as Face ID or a pin. Also, encourage them to ensure notifications and SMS messages can't be read without the user authenticating first.
 
 #### Email
 
-Email can be used in the same way as SMS; to provide an out of band code to a user. After providing the code to the system, the presumption is that the user owns the email account. Possession of access to the email account is the additional authentication factor. 
+Email can be used in the same way as SMS or app notification. The goal is to provide an out of band code to a user. The user provides the code to the system and the presumption is that the user owns the email account to which the code was sent. Possession of the email account is the additional authentication factor. 
 
-Users must ensure that their email account is secured and that no one else has access. Similarly to SMS, you as the developer must ensure that the email address of a user's account can't be changed by an actor who has only authenticated with a password.
+As a developer, you need to ensure that you have verified the email to which the code is sent before sending the code. Registration is a great time to verify this email. You also need to ensure that the email address can't be changed in your system without a user providing multiple factors of authentication. 
+
+This factor is often more convenient because email accounts can be accessed from multiple different computers, as opposed to the phone based solutions above, which are typically tied to one device. This same convenience, however, means that this choice can be less secure, depending on user behavior. Users, for their part, must ensure their email account is secured with multiple factors and that no one else has access. 
 
 #### A physical device
 
-Physical devices that are specialized for authentication, such as Yubikeys, can provide another factor. These devices work with your computer or your phone to offer either another factor or single sign-on. As a developer, you will need to build in support for the device using an SDK or a standard it works with, such as WebAuthN. Your users will need to ensure they don't lose it.
+Physical devices used for authentication, such as Yubikeys, can provide another factor. These devices work with your computer or your phone to offer a factor. Depending on the device, the user either plugs in the device to a computer or passes the device close enough for wireless communication during the authentication process. 
+
+These devices differ from the other factors in the category because they cost money. This makes them acceptable for adminstrative or high value accounts, but makes this choice problematic for a broad userbase which will likely not have such devices.
+
+As a developer, you will need to build in support for the device using an SDK or a standard the device is compatible with, such as WebAuthN. Your users will need to ensure they don't lose it and have it available whenever they authenticate.
 
 ### What you know
 
@@ -178,11 +237,15 @@ FIDO2 is a set of specifications, of which WebAuthn is one.
 
 There are other issues to consider when, as a developer, you are implementing MFA. You may want to provide a way to disable MFA.
 
-There are two main dimensions for disabling MFA.
+There are three main dimensions for disabling MFA.
+
+### Disabling MFA for a time
+
+After a user has provided multiple factors of authentication, you should allow them to perform actions without those factors for a period of time. Just as you wouldn't require a user to enter their password every time they viewed an online bank account, you should have a timeframe where additional factors aren't required. After that time has elapsed, plan to require the additional proof of identity when the user next interacts with the system.
 
 ### Disabling MFA for a device
 
-The first is at the device level. This often takes the form of a "trust this device" or "this is not a public computer" checkbox during authentication. In this case, the system records that this device can be trusted. The trust usually extends for a certain duration, after which MFA is required. 
+The second is at the device level. This often takes the form of a "trust this device" or "this is not a public computer" checkbox during authentication. In this case, the system records that this device can be trusted. The trust usually extends for a certain duration, after which MFA is required. 
 
 With a browser this can be implemented with a cookie, and removing the cookie will cause MFA to be required at the next login. Other devices have similar local storage mechanisms where such preferences can be stored.
 
@@ -202,6 +265,9 @@ In either situation, the disabling of MFA is in itself a privileged operation an
 
 hhh....
 
+MFA objectsions
+
+
 what about if someone else gets another factor?
 
 resetting a password as an example
@@ -213,3 +279,6 @@ what you have
 
 Many applications allow you to authenticate once with your username and password and then require you to re-enter it if you are modifying your account information. This is an example of MFA because 
 
+policies?
+
+nothing perfect
