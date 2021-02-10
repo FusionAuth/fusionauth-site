@@ -10,10 +10,12 @@ dateModified: 2020-10-06
 
 # TODO
 
+* Build TOC and rework sections maybe
 * Add refresh token handling and code
 * Add user info endpoint usage
+* Clean up introspect code and discussion
 * Add API examples
-* Convert all request uses to fetch or some other API
+* Convert all request uses to axios or node-fetch or some other API
 * Test code
 * Make diagrams
 * Make images
@@ -531,6 +533,8 @@ function restoreNonce(req) {
 module.exports = app;
 ```
 
+<<TODO maybe talk about tokens more here???>>
+
 At this point, we are completely finished with OAuth. We've successfully exchanged the authorization code for tokens, which is the last step of the OAuth authorization code grant.
 
 Let's take a quick look at the 3 `restore` functions from above and how they are implemented for cookies and encrypted cookies. Here is how those functions would be implemented if we were storing the values in cookies:
@@ -709,7 +713,7 @@ function retrieveUser(accessToken, clientId) {
 
 #### Local login and registration
 
-Now that we have covered tokens, let's look at next steps for our application code.
+Now that we have covered the Authorization Code grant in detail, let's look at next steps for our application code.
 
 If you are implementing the **Local login and registration** mode, then your application is using OAuth to log users in. This means that after the OAuth workflow is complete, the user should be logged in and the browser should be redirected to your application.
 
@@ -776,6 +780,8 @@ In the previous section we covered the **Local login and registration** process 
 Some third-party providers have hidden some of the complexity from us by providing simple JavaScript libraries that handle the entire OAuth workflow (like Facebook for example). We won't cover these types of third-party systems and instead focus on traditional OAuth workflows.
 
 In most cases, the third-party OAuth server is acting the same as our local OAuth server and in the end, the result is that we receive tokens that we can use to make API calls with the third-party. Let's update our `handleTokens` code to call an fictitious API to retrieve the user's friend list from the third-party.
+
+<<TODO update for Axios or node-fetch>>
 
 ```javascript
 var expressSession = require('express-session');
@@ -871,6 +877,13 @@ router.post('/api/todo/complete/:id', function(req, res, next) {
 
 This code is just an example of how we might leverage the access and refresh tokens to call third-party APIs on behalf of the user.
 
+
+
+<<MODES ARE DONE HERE for the Authorization Code grant>>
+
+
+
+
 ### Implicit grant
 
 The next grant that is defined in the OAuth 2.0 specification is the Implicit grant. Normally, we would cover this grant in detail the same way we covered the Authorization code grant. Except, I'm not going to. :)
@@ -916,6 +929,8 @@ if (window.location.hash.contains('access_token')) {
 
 Three lines of code (we could have actually done it in one line of code) and the access token has been stolen. As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend that no one ever use this grant.
 
+<<TODO add info if they really must implement this, point to FusionAuth docs>>
+
 ### Resource Owner's Password Credentials Grant
 
 The next grant on our list is the Resource Owner's Password Credentials Grant. That's a lot of typing, so I'm going to refer to this as the Password Grant for this section.
@@ -938,6 +953,8 @@ There are two main issues with this approach:
     * Passwordless login
 
 Due to how limiting and insecure this grant is, it has been removed from the latest OAuth specification and it is recommended to not use it in production.
+
+<<TODO add info here if they really want to implement this, point them at docs>>
 
 ### Client Credentials Grant
 
@@ -972,7 +989,7 @@ function sendWUPHF(title, userId) {
   request(
     {
       method: 'POST',
-      uri: 'https://wuphf-service.twgtl.com/send',
+      uri: 'https://wuphf-microservice.twgtl.com/send',
       auth: {
         'bearer': accessToken
       },
@@ -1026,7 +1043,7 @@ We've now separated the code that is responsible for completing ToDos from the c
 
 Here's the code that generates the access token using the Client Credentials Grant:
 
-TODO - fix this code to use node-fetch
+<<TODO - fix this code to use node-fetch>>
 
 ```javascript
 const clientId = '82e0135d-a970-4286-b663-2147c17589fd';
@@ -1056,6 +1073,8 @@ In order to verify the access token in the WUPHF microservice, we will use the `
 
 Here is the code that verifies the access token:
 
+<<TODO - maybe use Axios>>
+
 ```javascript
 const fetch = require('node-fetch');
 
@@ -1072,6 +1091,8 @@ function verifyAccessToken(req) {
     });
 }
 ```
+
+<<TODO - SUMMARY HERE MAYBE>>
 
 ### Device Grant
 
