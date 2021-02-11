@@ -94,7 +94,7 @@ If your application is going to be used by certain organizations or to store cer
 
 Sometimes an MFA requirement is not explicit, however. If you are looking to be SOC2 certified, you will likely require MFA, even though the term is never mentioned in the [SOC "Trust Services Criteria"](https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf).
 
-Section CC6.1 specifies "Persons, infrastructure, and software are identified and authenticated prior to accessing information assets, whether locally or remotely" without outlining implementation details. In this case, talk to your auditor about MFA requirements as well as other required controls.
+Section CC6.1 of the above SOC document specifies "Persons, infrastructure, and software are identified and authenticated prior to accessing information assets, whether locally or remotely" without outlining implementation details. In this case, talk to your auditor about MFA requirements as well as other required controls.
 
 ### When actions look suspicious
 
@@ -135,7 +135,7 @@ Each of these has a certain level of security and ease of use. The more factors 
 
 TBD DIAGRAM of spectrum factor on spectrum
 
-Let's look at each in turn.
+Let's look at each category and common, popular or secure factors within each one.
 
 ### What you have
 
@@ -195,47 +195,85 @@ As a developer, you will need to build in support for the device using an SDK or
 
 ### What you know
 
-There are a couple of commonly used factors that are based on what you know. These suffer some of the same issues as passwords, in that they can be stolen, socially engineered or otherwise acquired by bad actors. As a developer, be wary of using these.
+A password is a common factor from this category.
 
-#### User questions
+The other options suffer from the same strengths and weaknesses as passwords:
 
-In this scenario, the system requests answers to questions when the user registers. These are stored off and when the user needs to provide another factor of authentication, one of the questions is asked. This method is commonly used for resetting passwords, but is no longer recommended by [institutions such as NIST](https://pages.nist.gov/800-63-FAQ/#q-b15). A variant of this that I've seen is to provide a list of facts about a user and have them select the accurate fact. For example, "What street did you live on?" might be the question, and the answers would be pulled from a list of publicly available information. 
+* No physical manifestation
+* Easily stolen or inadvertently shared
+* Prone to social engineering attacks
 
-If you are a user and are asked to provide this as a factor, the best option is to enter random answers. Remember them or, even better, store them in a password manager. For example, if a question is "what was your first pet's name", and your first pet's name was Fluffy, pick anything other than "Fluffy". Perhaps "h941TphXOL3h0ws7M0U2" or "relevance-middle-horoscope". This prevents someone from learning the name of your childhood pet from a post on Facebook and using that information to gain illicit access. 
+As a developer, be wary of using these options.
 
-If you are a developer implementing this, first, try to avoid implementing this solution and pick one of the other factors available. If you must implement it, let the user to enter their own questions; this will increase the randomness of the answers provided.
+#### Questions and answers
+
+With questions and answers, the auth system you are building requests answers to questions at a time when the user is known to be present; typically user registration. The questions and answers are saved. When the system determines a user must provide another factor at authentication, one of the saved questions is provided. The user answers the question and if the answer matches what the system has, the factor is successfully provided.  
+
+This method has been commonly used in the past for when resetting passwords, but is no longer recommended by [institutions such as NIST](https://pages.nist.gov/800-63-FAQ/#q-b15). 
+
+A similar solution is to provide a list of facts about a user and have them select the accurate fact. For example, "What street did you live on?" might be the question, and the answers would be pulled from a list of publicly available information. 
+
+In general this type of solution isn't optimal because one of two scenarios will occur:
+
+* The user will pick questions and answers that are true and thus can be found out by others. Such facts can be shared inadvertently on social media. There's also an astonishing amount of public records information available for sale.
+* The user will pick question and answers that are not true. In this case, it's essentially another password that needs to be stored safely.
+
+As a developer, avoid this. If you must implement it, let the user to enter their own questions; this will increase the randomness of the answers provided and let them pick private information. You can also use this in combination with another, more secure factor.
+
+If you are a user and forced to use this as a factor, choose the second path. Remember random answers or, even better, store them in a password manager. For example, if a question is "what was your first pet's name", and your first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "h941TphXOL3h0ws7M0U2" or "relevance-middle-horoscope". You want to prevent someone from learning the name of your childhood pet from your mother's Facebook post and using that information to gain illicit access. 
 
 #### Double blind passwords 
 
-This is a way to augment the security of a password factor, so is a bit different than some of the other factors discussed. The idea is that you split your password into two pieces. One is stored in a password manager, and the other is memorized. Then, when the password is entered, both strings are combined to provide the true password. This is not an option you can undertake as a developer, however. As a user, though, you can use it to increase the security of your highest value accounts, such as your email or bank accounts. However, it only protects against your password manager being compromised, not the password being stolen from the receiving system.
+A double blind password augments the security of a password factor. This is not an independent factor type and is entirely in control of the user. As a user, though, you can use it to increase the security of your highest value accounts, such as your email or bank accounts. 
 
-This is also known as a horcrux, a term from the popular Harry Potter novels.
+You as a developer cannot enforce the use of a double blind password. However, it is an interesting way to increase the security of an account, so deserves a brief mention.
+
+The idea is that a user splits a password into two pieces. One is stored in a password manager or other secure location; the other is memorized. When the password is entered, both strings are combined to provide the true password. This is also known as a horcrux, a term from the popular Harry Potter novels.
+
+This method protects against your password manager being compromised, but not a password being stolen in other ways.
 
 ### Who you are
 
-The final category of options for multi factor authentication is "who you are". These factors are tied to your physical body, but are conveyed to the system authenticating you in a secure fashion. As a developer, these are really intriguing options: nothing to forget or lose. However, people's bodies change over time, so make sure you include biometrics as another option or have a fallback plan for when someone has a new haircut.
+The final category is "who you are". These factors are tied to your physical body or your behavior; they must be shared security with the authentication system. 
+
+As a developer, these are really intriguing options: nothing to forget or lose. Support for each option, so you'll need to consider that.
+
+In addition, people's bodies change over time, so these factors should have some room for error. Make sure you include other options or have a fallback plan when someone has a new haircut.
 
 #### Physical biometric
 
-Physical biometric factors identify you based on part of your body. Examples include Face ID, which identifies a user from the shape and look of your face, fingerprint identification which matches fingerprints, and retinal scanners, which look at the variations in the tissue of a user's eye. The benefits of this solution is that the authentication mechanism is difficult to lose or forge. 
+These factors identify you based on your body. Examples include facial recognition, which identifies a user from the shape and look of their face, fingerprint scanning, voice identification, and retinal scanners, which look at the variations in the tissue of a user's eye. This type of factor is difficult to lose or forge. 
 
-To implement authentication using biometric factors as a developer, you'll either need custom hardware, specialized software or integration with an operating system. All of the major operating systems for phones and computers have some level of support for these solutions. 
+To implement authentication using biometric factors as a developer, first choose your solution. Make sure you understand which hardware is required and how widespread access is, what the error rates are, whether the solution's test population matches your own, and what software support is needed to implement this choice.
+
+An alternative is to use what is integrated with the operating system which your application's users have. All of the major operating systems for both phones and computers have some level of support for these solutions. 
+
+* Android has the [Biometric library](https://developer.android.com/jetpack/androidx/releases/biometric).
+* iOS supports [Face ID and Touch ID](https://developer.apple.com/design/human-interface-guidelines/ios/user-interaction/authentication/).
+* Windows has [Windows Hello](https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/windows-hello), which integrates with hardware such as a fingerprint scanner.
+* MacOS has [Touch ID](https://support.apple.com/guide/mac-help/touch-id-mchl16fbf90a/mac).
+
+If you are building web applications, use the [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/), which lets the browser access the operating systems biometric implementations. We'll cover this in more detail below.
 
 #### Behavioral biometrics
 
-These biometric factors use your behavior to identify and authenticate you. One form of this is gait recognition technology, though this is mostly used for user identification rather than authentication. 
+This category of biometrics uses your behavior to identify and authenticate you. 
 
-Another example is your keystroke pattern; that is, how you type, the rhythym of your keystrokes, the errors you make and the timing between key strikes. Done properly, this can identify a user without any action on their part, and could be a complement to some of the more explicit factors mentioned above. 
+An example of this is gait recognition technology, though this is mostly used for user identification rather than authentication. 
 
-However, there's wide individual variation, even within a single day, of keystroke patterns. If you implement a system like this you'll want to be able to tune it.
+Another option is your keystroke pattern; that is, how you type, the rhythym of your keystrokes, the errors you make and the timing between key strikes. Done properly, this can identify a user without any action on their part, and could be a complement to some of the more explicit factors mentioned above. 
+
+However, there's wide individual variation, even within a single day, of keystroke patterns, which can be problematic. A [study from 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3835878/) determined "The literature study suggested that keystroke dynamics biometrics are unlikely to replace existing knowledge-based authentication entirely and it is also not robust enough to be a sole biometric authenticator."
 
 ### Standards
 
-WebAuthn is a standard recently approved by the W3C standards body which link some of these types of authentication factors into the browser. This makes it easier as a developer to implement physical biometric authentication, for example. The browser vendor has already integrated with the operating system, which has in turn integrated with the hardware required for solutions such as fingerprint identification. If the application in question is accessed through a browser, all that's left for a developer to do is integrate with the browser API calls. 
+The [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/) is an evolving standard. As of early 2021 it had not yet become a Proposed Recommendation. However, it is supported by [many major browsers](https://caniuse.com/webauthn).
 
-WebAuthn standard works with a variety of the above factors, including physical devices such as Yubikey and the aforementioned fingerprint solution. 
+Using this standard allows you as to implement physical biometric authentication. The browser vendor has integrated with the operating system, which has in turn integrated with the hardware required for solutions such as fingerprint identification. If the application in question is accessed through a browser, all that's left for you to do is integrate with the browser API calls. Oh, and test. Make sure you spend some time testing the variety of different scenarios.
 
-FIDO2 is a set of specifications, of which WebAuthn is one.
+The WebAuthn standard works not just with biometric identification, but with others as well, including physical devices such as Yubikey.
+
+You may hear the term FIDO mentioned when WebAuthn is discussed. [FIDO2](https://fidoalliance.org/fido2/) is a set of specifications, of which WebAuthn is one.
 
 ## Disabling MFA
 
