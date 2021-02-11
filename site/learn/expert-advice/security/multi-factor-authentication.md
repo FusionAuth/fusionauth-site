@@ -39,11 +39,15 @@ In particular, if a factor that is not in the "something you know" category is a
 
 ### The balance
 
-However, even though it is more secure, as a developer, you shouldn't necessarily require it everywhere. It's a balance; you want to make the user login experience as smooth as possible while minimizing chances of account takeover. Friction in the authentication process will annoy some percentage of your users. Additionally, your users don't love your application for the login experience, they want to solve their problems. 
+However, even though it is more secure, as a developer, you shouldn't necessarily require it everywhere. It's a balance; you want to make the user login experience as smooth as possible while minimizing chances of account takeover. Friction in the authentication process will annoy some percentage of your users. 
 
-As a developer, you need to balance between the more difficult user experience and the risk of account takeover. If your site lets users vote on cat pictures, MFA may never be required for user accounts. If your site lets users transfer money, on the other hand, it should require MFA. These are both obvious ends of the security and user experience spectrum. 
+Additionally, your users don't love your application for the login experience, they want to solve their problems. User experience includes how widely deployed a solution is; if it's easy to use, but you can't find the hardware, then it isn't really easy to use.
 
-TBD DIAGRAM of spectrum
+As a developer, you need to balance between the more difficult user experience and the risk of account takeover. If your site lets users vote on cat pictures, MFA may never be required for user accounts. If your site lets users transfer money, on the other hand, it should require MFA.
+
+These scenarios are at opposite ends of the security and user experience spectrum:
+
+{% include _image.liquid src="/assets/img/advice/mfa/security-ux-spectrum.svg" alt="More secure or easier to use?" figure=false %}
 
 The hard part is the situations where the answer isn't obvious. What are some situations where you should consider requiring multi factor authentication?
 
