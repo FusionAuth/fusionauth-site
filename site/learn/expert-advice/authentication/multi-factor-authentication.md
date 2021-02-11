@@ -29,13 +29,15 @@ However, the focus of this article is MFA in the context of online account acces
 
 ## Why use MFA
 
-Building a secure, available system requires ensuring only authorized people and software agent have access. Authentication, which ensures that users are who they say they are, and authorization, which controls access are both important in doing so.
+Building a secure, available system requires ensuring only authorized people and software agents have access. Authentication, which ensures that users are who they say they are, and authorization, which controls access are both important in doing so. 
 
-If your users use only factor of authentication, it can be stolen by a bad actor, who will now have access as if they were the user whose credentials had been compromised. Whether it is the key to a safe deposit box or the password to a email account, if a user loses control of the factor allowing access, data and systems can be accessed by those who possess the stolen factor. 
+If your users use only one factor of authentication, it can be stolen by a bad actor, who will now have access as if they were the user whose credentials had been compromised. Whether it is the key to a safe deposit box or the password to an email account, if a user loses control of the factor allowing access, data and systems can be accessed by those who possess the stolen factor. 
 
 Secrets users know, such as passwords, are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection/) and users can protect themselves by practicing good password hygiene, requiring another factor increases obstacles to anyone else obtaining that access. 
 
 In particular, if a factor that is not in the "something you know" category is added as part of the login process, the security of the account can go up dramatically, as the factors in the other two categories are more difficult to steal. Microsoft researchers found that accounts are ["99.9% less likely to be compromised"](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/your-pa-word-doesn-t-matter/ba-p/731984) if MFA is used.
+
+Implementing MFA is a partnership with your users. Some forms are easier for system developers to implement and keep secure. Others require more effort and care from users providing them. 
 
 ### The balance
 
@@ -61,9 +63,7 @@ There are a variety of situations where you should require an increased level of
 
 Privileged accounts with higher levels of access should use MFA. 
 
-These adminstrator or operator accounts can wreak havoc if misused or compromised. Therefore, as a developer, require MFA on admin accounts. Require MFA for every login. 
-
-In extremely sensitive systems, all changes to a system could require additional factors.
+These administrator or operator accounts can wreak havoc if misused or compromised. Therefore you should require MFA on admin accounts. Require MFA for every login. In extremely sensitive systems, all changes to a system could require additional factors.
 
 ### High value accounts
 
@@ -75,7 +75,7 @@ Another example is email. Beyond private information often present in email acco
 
 ### Risky actions
 
-When a user has already authenticated but is performing an dangerous action, MFA provides extra security. 
+When a user has already authenticated but is performing a dangerous action, MFA provides extra security. 
 
 This is also known as "step up auth", because the additional factor is required at the moment a more privileged action is taken. Examples of such actions include:
 
@@ -86,9 +86,9 @@ This is also known as "step up auth", because the additional factor is required 
 * Changing system settings
 * Modifying configuration impacting other factors, such as an email or phone number
 
-When such an action is requested, developers of a system need more certainty about who is actually behind it. These type of actions can be legitimate, but are also interesting to anyone who has compromised an account. 
+When such an action is requested, developers of a system need more certainty about who is actually behind it. These types of actions can be legitimate, but could also be used by someone who has compromised a user account.
 
-You can partially mitigate the damage of a compromised account by cimplementing step up auth. An attacker may be able to access the account, but won't be able to take damaging action.
+You can partially mitigate the damage of a compromised account by implementing step up auth. An attacker may be able to access the account, but won't be able to take damaging action.
 
 ### Legal or organizational policies
 
@@ -133,7 +133,7 @@ As defined above, there are three main categories.
 * What they have.
 * What they are.
 
-Each of these has a certain level of security and ease of use. The more factors you require, the more security you get. Nothing is 100% secure and all of the options have tradeoffs. Some of these factors require more security cooperation from the end user than others. Another dimension to consider is how widely deployed each of these options is. 
+Each of these has a certain level of security and ease of use. The more factors you require, the more security you get. Nothing is 100% secure and all of the options have trade offs. Some of these factors require more security cooperation from the end user than others. Another dimension to consider is how widely deployed each of these options is. 
 
 Below is a diagram displaying estimates on deployment and security. Of course, these are generalities; you could have a group of users where physical devices are widely available, and passwords can be made very secure if you use a password manager.
 
@@ -143,7 +143,7 @@ Let's look at each category and examine the factors within each one.
 
 ### What you have
 
-Having possesion of something, whether physical or timebound knowledge, is a great additional authentication factor.
+Having possession of something such as a physical object or access to a separate user account, is a great additional authentication factor.
 
 #### TOTP
 
@@ -151,7 +151,7 @@ A software or hardware time-based one time password (TOTP) generator is one exam
 
 When the user wants to sign in, the seed is combined with the current time by the algorithm to generate a code. 
 
-Both the the application and your server have all the information needed to generate the code. Therefore, the server can compare the code it calculates with the code the user provides. If they match, the user has possession of the secret. 
+Both the application and your server have all the information needed to generate the code. Therefore, the server can compare the code it calculates with the code the user provides. If they match, the user has possession of the secret. 
 
 To preserve the security of this system, as a developer, you need to keep the initial secret safe. The user must maintain control of the generator application. 
 
@@ -159,7 +159,7 @@ To preserve the security of this system, as a developer, you need to keep the in
 
 Text messaging, also known as SMS, is another common factor. The system sends an out of band text message to a mobile phone number previously provided by the user. The authentication system knows the contents of the text message since it sent it. 
 
-The user provides the texted message content, which is typically a string of numbers or alphanumeric characters. If it matches up, the user has possession of a device capable of recieving this text message.
+The user provides the texted message content, which is typically a string of numbers or alphanumeric characters. If it matches up, the user has possession of a device capable of receiving this text message.
 
 To keep this factor safe, the physical or software phone must be in possession of the user. As a developer, do not allow a mobile number to be changed unless the user has authenticated with MFA.  Otherwise an attacker with a password could log in, change the mobile number to one they control, and then would be able to provide the MFA code sent to the new device.
 
@@ -167,19 +167,19 @@ Additionally, there's an attack where a bad actor takes over your phone number w
 
 SMS has weaknesses that have been exploited, but mostly it's safe. High value systems such as banking websites often use SMS as one of their factors. Google researchers found in 2019 that a text message ["helped block 100% of automated bots, 96% of bulk phishing attacks, and 76% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
 
-There's not a lot you can do as a developer to make this factor more secure. Users, on the other hand, can contact their cellphone providers and ask about how phone number transfers are handled to understand possible social engineering attacks. Users can also set up a software service such as Google Voice or Twilio to receive text messages.
+There's not a lot you can do as a developer to make this factor more secure. Users, on the other hand, can contact their cell phone providers and ask about how phone number transfers are handled to understand possible social engineering attacks. Users can also set up a software service such as Google Voice or Twilio to receive text messages.
 
 #### App push
 
 Your phone isn't limited to running a TOTP application or receiving text messages, it can also have a specialized application that uses push notifications to provide a code. Similar to text messages, this code is generated by the authenticating system and sent to the user. 
 
-The user proves their recieved the notification by sharing that code with the authenticating system. The server can encrypt the code before sending and the application can decrypt it on the phone to ensure the code can't be tampered with or read.
+The user proves they received the notification by sharing that code with the authenticating system. The server can encrypt the code before sending and the application can decrypt it on the phone to ensure the code can't be tampered with or read.
 
 Such systems are effective. In 2019, Google researchers found that such on-device prompts ["helped block 100% of automated bots, 99% of bulk phishing attacks, and 90% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
 
 Similar to text messages, the security of these systems is really up to the provider of the push notification. However, I hear Apple and Google are pretty good at this kind of thing.
 
-With any of the above MFA options which use information sent to a phone as an authentication factor, encourage your users to configure the device to require local authentication before any applications are accessed. This could be as Face ID or a pin. Also, encourage them to ensure notifications and SMS messages can't be read without the user authenticating first.
+With any of the above MFA options which use information sent to a phone as an authentication factor, encourage your users to configure the device to require local authentication before any applications are accessed. Also, encourage them to ensure notifications and SMS messages can't be read without the user authenticating first.
 
 #### Email
 
@@ -193,7 +193,7 @@ This factor is often more convenient because email accounts can be accessed from
 
 Physical devices used for authentication, such as Yubikeys, can provide another factor. These devices work with your computer or your phone to offer a factor. Depending on the device, the user either plugs in the device to a computer or passes the device close enough for wireless communication during the authentication process. 
 
-These devices differ from the other factors in the category because they cost money. This makes them acceptable for adminstrative or high value accounts, but makes this choice problematic for a broad userbase which will likely not have such devices.
+These devices differ from the other factors in the category because they cost money. This makes them acceptable for administrative or high value accounts, but makes this choice problematic for a broad user base which will likely not have such devices.
 
 As a developer, you will need to build in support for the device using an SDK or a standard the device is compatible with, such as WebAuthN. Your users will need to ensure they don't lose it and have it available whenever they authenticate.
 
@@ -220,9 +220,9 @@ A similar solution is to provide a list of facts about a user and have them sele
 In general this type of solution isn't optimal because one of two scenarios will occur:
 
 * The user will pick questions and answers that are true and thus can be found out by others. Such facts can be shared inadvertently on social media. There's also an astonishing amount of public records information available for sale.
-* The user will pick question and answers that are not true. In this case, it's essentially another password that needs to be stored safely.
+* The user will pick questions and answers that are not true. In this case, it's essentially another password that needs to be stored safely.
 
-As a developer, avoid this. If you must implement it, let the user to enter their own questions; this will increase the randomness of the answers provided and let them pick private information. You can also use this in combination with another, more secure factor.
+As a developer, avoid this. If you must implement it, let the user provide their own questions; this will increase the randomness of the answers provided and let them pick private information. You can also use this in combination with another, more secure factor.
 
 If you are a user and forced to use this as a factor, choose the second path. Remember random answers or, even better, store them in a password manager. For example, if a question is "what was your first pet's name", and your first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "h941TphXOL3h0ws7M0U2" or "relevance-middle-horoscope". You want to prevent someone from learning the name of your childhood pet from your mother's Facebook post and using that information to gain illicit access. 
 
@@ -265,7 +265,7 @@ This category of biometrics uses your behavior to identify and authenticate you.
 
 An example of this is gait recognition technology, though this is mostly used for user identification rather than authentication. 
 
-Another option is your keystroke pattern; that is, how you type, the rhythym of your keystrokes, the errors you make and the timing between key strikes. Done properly, this can identify a user without any action on their part, and could be a complement to some of the more explicit factors mentioned above. 
+Another option is your keystroke pattern; that is, how you type, the rhythm of your keystrokes, the errors you make and the timing between key strikes. Done properly, this can identify a user without any action on their part, and could be a complement to some of the more explicit factors mentioned above. 
 
 However, there's wide individual variation, even within a single day, of keystroke patterns, which can be problematic. A [study from 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3835878/) determined "The literature study suggested that keystroke dynamics biometrics are unlikely to replace existing knowledge-based authentication entirely and it is also not robust enough to be a sole biometric authenticator."
 
@@ -273,7 +273,7 @@ However, there's wide individual variation, even within a single day, of keystro
 
 The [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/) is an evolving standard. As of early 2021 it had not yet become a Proposed Recommendation. However, it is supported by [many major browsers](https://caniuse.com/webauthn).
 
-Using this standard allows you as to implement physical biometric authentication. The browser vendor has integrated with the operating system, which has in turn integrated with the hardware required for solutions such as fingerprint identification. If the application in question is accessed through a browser, all that's left for you to do is integrate with the browser API calls. Oh, and test. Make sure you spend some time testing the variety of different scenarios.
+Using this standard allows you to implement physical biometric authentication or other high security factors. The browser vendor has integrated with the operating system, which has in turn integrated with the hardware required for solutions such as fingerprint identification. If the application in question is accessed through a browser, all that's left for you to do is integrate with the browser API calls. Oh, and test. Make sure you spend some time testing the variety of different scenarios.
 
 The WebAuthn standard works not just with biometric identification, but with others as well, including physical devices such as Yubikey.
 
