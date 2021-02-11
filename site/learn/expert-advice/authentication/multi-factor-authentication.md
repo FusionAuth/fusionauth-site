@@ -43,6 +43,8 @@ However, even though it is more secure, as a developer, you shouldn't necessaril
 
 Additionally, your users don't love your application for the login experience, they want to solve their problems. User experience includes how widely deployed a solution is; if it's easy to use, but you can't find the hardware, then it isn't really easy to use.
 
+Listen to your users when you are discussing MFA requirements. You don't want them to circumvent MFA in destructive ways; at the same time they may need to be educated. How many of you know people who still write down passwords?
+
 As a developer, you need to balance between the more difficult user experience and the risk of account takeover. If your site lets users vote on cat pictures, MFA may never be required for user accounts. If your site lets users transfer money, on the other hand, it should require MFA.
 
 These scenarios are at opposite ends of the security and user experience spectrum:
@@ -131,11 +133,13 @@ As defined above, there are three main categories.
 * What they have.
 * What they are.
 
-Each of these has a certain level of security and ease of use. The more factors you require, the more security you get. Nothing is 100% secure and all of the options have tradeoffs. Some of these factors require more security cooperation from the end user than others.
+Each of these has a certain level of security and ease of use. The more factors you require, the more security you get. Nothing is 100% secure and all of the options have tradeoffs. Some of these factors require more security cooperation from the end user than others. Another dimension to consider is how widely deployed each of these options is. 
 
-TBD DIAGRAM of spectrum factor on spectrum
+Below is a diagram displaying estimates on deployment and security. Of course, these are generalities; you could have a group of users where physical devices are widely available, and passwords can be made very secure if you use a password manager.
 
-Let's look at each category and common, popular or secure factors within each one.
+{% include _image.liquid src="/assets/img/advice/mfa/security-deployment-spectrum.svg" alt="Secure, sure, but is it available?" figure=false %}
+
+Let's look at each category and examine the factors within each one.
 
 ### What you have
 
@@ -275,52 +279,27 @@ The WebAuthn standard works not just with biometric identification, but with oth
 
 You may hear the term FIDO mentioned when WebAuthn is discussed. [FIDO2](https://fidoalliance.org/fido2/) is a set of specifications, of which WebAuthn is one.
 
-## Disabling MFA
+## Relaxing MFA
 
-There are other issues to consider when, as a developer, you are implementing MFA. You may want to provide a way to disable MFA.
+MFA is all about providing additional security by ensuring that a user who is accessing a system is authenticated correctly.
 
-There are three main dimensions for disabling MFA.
+However, there may be times when you want to explicitly disable MFA. You can disable MFA for a given user for a period of time for a device, or for a user account that previously required MFA. As a developer, you'll want to allow this because it makes the user experience better.
 
-### Disabling MFA for a time
+### Known Devices
 
-After a user has provided multiple factors of authentication, you should allow them to perform actions without those factors for a period of time. Just as you wouldn't require a user to enter their password every time they viewed an online bank account, you should have a timeframe where additional factors aren't required. After that time has elapsed, plan to require the additional proof of identity when the user next interacts with the system.
+This form of MFA relaxation often takes the form of a "trust this device" or "this is not a public computer" checkbox during authentication. In this case, the authentication system records that this device can be trusted. The trust can be forever or for a certain duration, after which MFA is again required. 
 
-### Disabling MFA for a device
+With a browser you can implement this with a cookie; an expiring, missing or removed cookie causes MFA to be required at the next login. Other devices have similar local storage mechanisms where such preferences can be stored.
 
-The second is at the device level. This often takes the form of a "trust this device" or "this is not a public computer" checkbox during authentication. In this case, the system records that this device can be trusted. The trust usually extends for a certain duration, after which MFA is required. 
+### Turning Off MFA For a User
 
-With a browser this can be implemented with a cookie, and removing the cookie will cause MFA to be required at the next login. Other devices have similar local storage mechanisms where such preferences can be stored.
+At times, you might want to relax all MFA requirements for a user account. This is a high risk operation, since one of the main purposes of MFA is to increase user account security. Removing MFA opens the users' account up to being hijacked by someone possessing only one factor of authentication, such as a password. However, you might need to do this because the user has lost one of the required factors associated with their account. 
 
-### Disabling MFA for a user
+Make sure you provide controls around this action so it isn't abused.
 
-The second is disabling MFA for a user. This is obviously a high risk operation, since one of the main strengths of MFA is that multiple forms of proof of identity are provided, and removing them opens the users' account up to being hijacked by someone possessing only one factor of authentication, say a password.
+This could require a human to be in the loop. If it is a manual process, performed by a customer service rep trained in other ways to authenticate a user, perhaps with private data that only the company and the user would know, such as the amount of the last bill, the rep can use their judgement. A user would call in and provide proof of their identity before MFA was turned off for their account. This approach is vulnerable to social engineering.
 
-However, you might do this because the user has lost one of the factors previously associated with their account. Just make sure you provide controls around this.
+Another option is self service codes. Provide a set of one time use codes at the moment MFA is turned on. Build a system which accepts these codes to turn off MFA for the account, should the user need to do so. 
 
-One possible control is to have this be a manual process, performed by a customer service rep trained in other ways to authenticate a user. So a user would call in or chat and provide proof that they were who they said they were before MFA is turned off. 
+In both of these cases, the user is still providing additional factors of authentication. It's simply more flexible because of the human intervention or the one time use.
 
-Another option would be self service. You can provide a set of codes at the moment MFA is turned on that are one time use. These can then be used to circumvent MFA should the user need to do so. 
-
-In both of these cases, it's worth noting that the user is still providing additional factors of authentication, they are simply more flexible, because of the human intervention, or one time use, in the case of the codes.
-
-In either situation, the disabling of MFA is in itself a privileged operation and you should ensure that the user is authenticated to the standards needed.
-
-hhh....
-
-MFA objectsions
-
-
-what about if someone else gets another factor?
-
-resetting a password as an example
-what you know
-and 
-what you have
-
-#### Re-entering your password
-
-Many applications allow you to authenticate once with your username and password and then require you to re-enter it if you are modifying your account information. This is an example of MFA because 
-
-policies?
-
-nothing perfect
