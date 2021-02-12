@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.24 of FusionAuth. This release shipped on Feb 11, 2021. This version delivers resolves issues for FusionAuth community members and customers on versions 1.23 and older.
+We're excited to announce the release of version 1.24 of FusionAuth. This release shipped on Feb 11, 2021. This version resolves issues for FusionAuth community members and customers on versions 1.23 and older.
 
 <!--more-->
 
