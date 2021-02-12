@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.24
-description: The FusionAuth 1.24 Release offers customer support roles as well as the LinkedIn identity provider
+description: The FusionAuth 1.24 Release offers UX improvements and numerous bug fixes.
 author: Dan Moore
 image: blogs/release-1-24/product-update-fusionauth-1-24.png
 category: blog
