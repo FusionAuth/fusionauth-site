@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Become Education chooses FusionAuth for IDaaS
-description: Career Education as a Service startup Become Education evaluated IDaaS services and chose FusionAuth because FusionAuth understood them.
+title: Powered By Coffee helps WordPress scale with FusionAuth
+description: Powered By Coffee is an agency specialising in the media industry and helps media companies, organisations who rely on memberships and subscriptions and indie startups who create mass content.
 author: Dan Moore
 image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
 category: blog
@@ -17,82 +17,63 @@ Stewart Ritchie is a FusionAuth partner and founder and managing director at Pow
 
 -------
 
-**Dan:** Tell me a bit about your work as a developer and CTO.
+**Dan:** Tell me a bit about your work at Powered By Coffee. What kind of clients do you typically work with?
 
-**David:** I'm the technical cofounder at Become Education, based in Sydney. We provide Careers Education as a service to schools teaching grades 5 through 10. We provide curriculum and teacher professional development in conjunction with student and teacher facing SaaS applications to support that activity. I'm responsible for the apps as well as internal systems.
+**Stewart:** We're a WordPress development agency and we specialise in the media industry, helping media companies, organisations who rely on memberships and subscriptions and indie startups who create mass content.
+
+> We've continued to use and recommend Fusion Auth because we find it very pleasant to use as developers.  
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
-**David:** We use FusionAuth for OAuth and use the provided login UI to support SSO and passwordless access for our users. Accounts are first established in our system and we use the FusionAuth API to create logins and keep things synced up.
+**Stewart:** We use Fusion Auth to:
 
-> Free tiers for developers [for other IDaaS services] are common but requirements like custom domains or control of data residency can trigger enterprise pricing.
+* Centralise user data and identity so profiles can be used across products and services.
+* Manage access to content on membership sites.
+* Provide all the user infrastructure for a site, out of the box.
+* Give users a central place to manage their preferences.
+* Control access to the WordPress admin panel and setting user access levels.
 
-**Dan:** Interesting. So FusionAuth is not the system of record, your system is. Why didn't you build SSO and OAuth directly into your system? Have there been any hiccups in syncing the data from your system to FusionAuth? 
-
-**David:** FusionAuth definitely helped speed up the product release by letting us focus on building features rather than user management. For start-up products FusionAuth is very helpful and easy to roll out since it supports almost all popular identity protocols and frameworks.
-
-We anticipated that we couldn't accurately scope what functionality would become critical for us after gaining experience with early deployments. Passwordless, for example, was not on my radar. But having it available provided an unexpected solution for certain schools.
-
-We drive account creation from our admin app and the API's first step is to create or lookup an account on FusionAuth and return the `user.id`. The FusionAuth `user.id` becomes the id for our user system, creating a link that will survive changes to the email address. We never drive account updates from the FusionAuth UI and always push from our system so this simplifies the syncing. But our user APIs are more complex than they would otherwise be and bugs do happen.
-
-> The decision [to use FusionAuth] was then easy. Ignore the big names and go with the team that understands startups and can scale with them.
-
-**Dan:** Do schools have auth systems you need to integrate with?
-
-**David:** So far we’ve only needed to support school OpenID Identity Providers.
-
-**Dan:** What resources are protected by OAuth (APIs or something else)?
-
-**David:** Everything interesting is behind our APIs so that's what we protect. 
+To do this, we used these features:
+* The FusionAuth REST API
+* FusionAuth's OAuth support
+* Social Login
+* Migration and importing of user data
 
 **Dan:** What problems did we solve for you? And how were you solving them before FusionAuth?
 
-**David:** Our initial release of the student application didn't support user accounts - each class had an access key. FusionAuth allowed us to move beyond that by solving the authentication/authorization challenge.
+**Stewart:** FusionAuth solved a problem of scale and access for us. WordPress is a great CMS but it's a terrible user manager.
 
-> For start-up products FusionAuth is very helpful and easy to roll out since it supports almost all popular identity protocols and frameworks.
+By using FusionAuth to handle User authentication and access control we can bypass the WordPress User system and handle Authentication entirely client side. That means we can be much more aggressive with our caching, improving overall performance. 
+
+Similarly, these users don't need to have logins to WordPress anymore, hugely improving overall performance as we take a user table down from hundreds of thousands of users, down to a few hundred authors and editors.
+
+> I think the cost savings purely from helping optimise caching and performance on high traffic WordPress sites, massively reducing the number of servers needed to run a performant site, is massive.
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
-**David:** It is hard to overstate how expensive IDaaS services can be. The cost/feature ramp might work for some startups but can hurt product design and implementation at others.
+**Stewart:** In our case we were introduced to Fusion Auth by a client who had already decided to use it.
 
-Free tiers for developers are common but requirements like custom domains or control of data residency can trigger enterprise pricing.
+We've continued to use and recommend Fusion Auth because we find it very pleasant to use as developers.  There are lots of options for API access, different ways we can integrate FA in our projects and support is always there when we need a little extra help.
 
-Pre-sales support can burn a couple of weeks to return a canned reply.
- 
-I discovered FusionAuth in the midst of that frustration. We connected with a human on the first try and he happened to be the lead developer. The decision was then easy. Ignore the big names and go with the team that understands startups and can scale with them.
+It's great to see the product continue to evolve and the road map be published. It gives us more options to support our own clients.
 
-**Dan:** That's awesome! We love to hear that we've helped. To put some numbers on it, how much time and money would you say choosing FusionAuth saved you?
+**Dan:** How much time and money would you say FusionAuth has saved you and your clients?
 
-**David:** I don’t know how to do that with any accuracy. FusionAuth and competitor products have evolved. Our list of unknown unknowns is larger with the other guys, but our requirements will shift to deal with the environment, limitations, and compromises created by any decision.
+**Stewart:** Impossible to say I'm afraid. I think the cost savings purely from helping optimise caching and performance on high traffic WordPress sites, massively reducing the number of servers needed to run a performant site, is massive.
 
-> It is hard to overstate how expensive IDaaS services can be.
+Second, the reduction in developer time, having simple, straightforward API's to share that user profile and access information in multiple accessory applications is beyond calculation.
+
+> WordPress is a great CMS but it's a terrible user manager.
 
 **Dan:** How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
 
-**David:** Running on a three node cluster in Azure Kubernetes Service.
+**Stewart:** We run a couple of different Fusion Auth setups; we have a managed Fusion Auth instance that Fusion Auth lookafter for production work and we also have FusionAuth running as a Docker Container in our Development Network. We've also run FusionAuth as a service in a Docker Compose driven project.
 
 **Dan:** Any general feedback/areas to improve?
 
-**David:** Our applications are 'serverless' and we are on consumption based billing resulting in easy scaling. This is important since classroom activity is bursty and there are long periods with zero activity. 
-
-We host FusionAuth on Azure. We've redeployed four times looking for the right price/performance balance. We can deploy FusionAuth as needed to meet data residency requirements but this requires three VMs per region. 
-
-Utopia would be serverless deployment of FusionAuth. For example, versions for major cloud providers like Azure and AWS that would support consumption based plans. This would solve hosting cost and scalability challenges. 
-
-But since I've got VMs running 24/7 to handle CIAM, I see potential for more app access control in FusionAuth.
-
-FusionAuth is maintaining state while servicing apps that don't. I expect that a teacher will occasionally tell 3 or 30 kids to share the same account for the hour. A feature that limits creation of concurrent sessions could limit account abuse and protect user data from session overwrites.
-
-**Dan:** So a serverless version of FusionAuth would be awesome, eh? Are you thinking of something like Aurora Serverless or Cognito? Are there examples of other auth systems running out there that make you say: "I wish FusionAuth had that deployment model!"?
-
-**David:** Cognito has improved in the last couple years and yeah that deployment model is of great interest.
-
-> FusionAuth definitely helped speed up the product release by letting us focus on building features rather than user management. 
-
-**Dan**: Other than the cost concerns (as mentioned above), were there any wrinkles or troubleshooting you had to do to run FusionAuth in AKS?
-
-**David:** Currently the AKS nodes are restarting at least daily and we don’t understand this yet. It would be useful if the system logs appeared in the UI rather than in the docker environment.
+**Stewart:** You know, I'd love to be able to trigger a backup myself on the enterprise support plan.
 
 -------
 
-We love sharing community stories. You can check out [Become Education's website](https://www.become.education/) if you'd like to learn more. 
+We love sharing community stories. You can check out [Powered By Coffee](https://poweredbycoffee.co.uk/) if you'd like to learn more. 
+
