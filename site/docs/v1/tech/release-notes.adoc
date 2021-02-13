@@ -25,6 +25,10 @@ section.docs article blockquote {
 == Version 1.24.0
 _February 11th, 2021_
 
+=== Security
+* More consistent usage of the `Cache-Control` HTTP response header. The default for all pages will be `Cache-Control: no-cache`, and some pages that may contain potentially sensitive information such as the API key add, edit or index pages will use a `Cache-Control: no-store`. No known vulnerability exists with the previous behavior, this is just a proactive change to limit the possible mise-use of cached pages in the FusionAuth admin UI.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1103[GitHub Issue #1103]
+
 === Changed
 
 * The `applicationId` and `roles` claims are no longer returned in the `id_token` issued when requesting the `openid` scope. The `id_token` should not be used for authorization, this change makes it less likely to mis-use this token. If you have a requirement for these claims (you shouldn't), you can add them back by using a JWT Populate lambda. See link:/docs/v1/tech/oauth/tokens/#id-token[Id Token claims] for additional information.
@@ -37,6 +41,14 @@ _February 11th, 2021_
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1063[GitHub Issue #1063]
 * Unable to remove a User from a Group using the admin UI dialog. This was a regression issue introduced in version 1.23.0.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1081[GitHub Issue #1081]
+* If a user was not currently in the Elasticsearch index, the user delete request may fail.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1088[GitHub Issue #1088]
+* The JWT returned from the Register API when you are creating a User and a Registration in one request may not contain the `roles` claim. This occurs when you do not assign the roles explicitly on the request, and instead are using default role assignment in the application configuration.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1106[GitHub Issue #1106]
+* Updating a User that has existing group memberships may no longer be searchable in Elasticsearch by their Group memberships until the next time the user logs into FusionAuth.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1087[GitHub Issue #1087]
+* A Kafka Producer configuration that contains an equals sign `=` in the property value will fail to parse. This was identified in attempting to configure credentials to connect to CloudKarafka.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1107[GitHub Issue #1107], thanks to https://fusionauth.io/community/forum/user/chris-bridges[@chris-bridges] for letting us know!
 
 === New
 
@@ -45,6 +57,16 @@ _February 11th, 2021_
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1080[GitHub Issue #1080]
 * You may now import an RSA certificate with a key bit length less than `2048` into Key Master. The minimum supported RSA key length for signing a JWT is `2048`, so this was previously the minimum requirement to import anything into Key Master. However, we have several configurations now that require a certificate that is only used to verify a signature from a third party. In these cases, we are not using the certificate to sign anything, and https://github.com/trevorr[@trevorr] rightly pointed out that we should allow smaller keys to be imported to support these use cases. Thank you for the (now obvious) insight! We really appreciate our community members that provide us value for value.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1085[GitHub Issue #1085] & https://github.com/FusionAuth/fusionauth-issues/issues/1091[GitHub Issue #1091]
+* Added an additional Search API parameter to allow you to obtain the actual hit count from Elasticsearch. For performance reasons, the default behavior of an Elasticsearch query is to limit the hit count to 10,000. This means that if your query matched more than 10,000 records, the API response will only indicate that at least 10,000 records matched. This is very adequate for pagination purposes, or general queries. There are times where you are building a very specific query and the intent is to identify an accurate number of matching records. You may now provide an additional parameter to the search request named `accurateTotal` which will then return an accurate hit count on the API response. See the link:/docs/v1/tech/apis/users/#search-for-users[User Search API] for additional details.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1086[GitHub Issue #1086]
+* Allow the user to click on the Enabled column in the Webhook event configuration in the Webhook and Tenant configurations to enable or disable all events at once. This is just a usability enhancement to save you from clicking over and over. You're welcome.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1093[GitHub Issue #1093]
+* For pages with potentially a lot of items such as Applications, Tenants, etc - that do not currently have pagination, add a count at the bottom of the panel. This allows you to look smart by knowing how many "things" you have without having to count them yourself.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1104[GitHub Issue #1104]
+
+=== Internal
+* Some enhancements to JavaScript event handlers to perform better on pages with 2-3k+ applications. Pretty boring.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1105[GitHub Issue #1105]
 
 [role=release-note]
 
