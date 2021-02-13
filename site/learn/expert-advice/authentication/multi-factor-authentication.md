@@ -140,71 +140,82 @@ Below is a diagram displaying the relative deployment and security of various fa
 {% include _image.liquid src="/assets/img/advice/mfa/security-deployment-spectrum.svg" alt="Secure, sure, but is it available?" figure=false %}
 
 Let's look at each category and examine the factors within each one.
-xxx
 
 ### What you have
 
-Having possession of something such as a physical object or access to a separate user account, is a great additional authentication factor.
+Having possession of a physical object or access to a separate user account can be a secure authentication factor. An out of band communication of a one time code is also a form of "what you have" because it is only usable once.
 
 #### TOTP
 
-A software or hardware time-based one time password (TOTP) generator is one example. This consists of an application such as Google Authenticator, Aegis Authenticator or Authy, a secret seed created once in an environment where the user is known, and a shared algorithm. The algorithm generates a pseudo random numeric code based on the seed. The seed and algorithm are shared between the auth system and the generator application. When the user wants to sign in, the seed is combined with the current time by the algorithm to generate a code. 
+A software or hardware time-based one time password (TOTP) generator is a commonly used factor of authentication. This solution consists of:
 
-Both the application and your server have all the information needed to generate the code. Therefore, the server can compare the code it calculates with the code the user provides. If they match, the user has possession of the secret. 
+* A mobile application such as Google Authenticator, Aegis Authenticator or Authy (or analogous hardware)
+* A seed shared in an environment where the user is known; this is often in the form of a QR code which can be shared
+* A common algorithm
 
-This is a common factor. A [2021 Ponemon Institute survey](https://www.nass.org/sites/default/files/2020-04/Yubico%20Report%20Ponemon%202020%20State%20of%20Password%20and%20Authentication%20Security%20Behaviors.pdf) of 2000 users and IT professionals found 35% of users protect their personal accounts with TOTP using hardware.
+The algorithm generates a pseudo random numeric code based on the seed and the time. The seed and algorithm are shared between the auth system and the generator application or hardware. When the user wants to sign in, the code must be provided. 
 
-To preserve the security of this system, as a developer, you need to keep the initial secret safe. The user must maintain control of the generator application. 
+Both the application and your server have all the information needed to generate the code:
+
+* The seed
+* The algorithm
+* The current time
+
+Therefore, your server can compare the code it calculates with the code the user provides. If they match, the user is authenticated with another factor of trust.
+
+TOTP is a common factor. A [2021 Ponemon Institute survey](https://www.nass.org/sites/default/files/2020-04/Yubico%20Report%20Ponemon%202020%20State%20of%20Password%20and%20Authentication%20Security%20Behaviors.pdf) of approximately 2000 users and IT professionals found 35% of users protect their personal accounts with TOTP using hardware.
+
+To preserve the security of this system, as a developer, you need to keep the initial secret safe. The user must maintain control of the generator application or device. 
 
 #### SMS
 
-Text messaging, also known as SMS, is another common factor. The system sends an out of band text message to a mobile phone number previously provided by the user. The authentication system knows the contents of the text message since it sent it. 
+Text messaging, also known as SMS, is another common factor. The system sends a text message to a mobile phone number provided by the user. The authentication system knows the contents of the text message since it sent it. The user provides the texted message content, which is typically a string of numbers or alphanumeric characters. If it matches, the user has possession of the recipient device.
 
-The user provides the texted message content, which is typically a string of numbers or alphanumeric characters. If it matches up, the user has possession of a device capable of receiving this text message.
+To keep this factor safe, the phone must be in possession of the user. As a developer, do not allow a mobile number to be changed unless the user has authenticated with MFA. Otherwise an attacker with a password could log in, change the mobile number to one which they control, and then would be able complete MFA because they'll have the code sent to the new device.
 
-To keep this factor safe, the physical or software phone must be in possession of the user. As a developer, do not allow a mobile number to be changed unless the user has authenticated with MFA.  Otherwise an attacker with a password could log in, change the mobile number to one they control, and then would be able to provide the MFA code sent to the new device.
+Additionally, with SMS there are a attacks where a bad actor takes over your phone number without stealing your phone or modifing the number to which the code is sent. These range from social engineering, where a customer service rep is convinced you have set up a new phone and need to update your SIM card to more sophisticated attacks which target cell phone networks. 
 
-Additionally, there's an attack where a bad actor takes over your phone number without getting your phone or changing the number to which the code is sent. These can range from social engineering attacks, where a customer service rep is convinced you have set up a new phone and simply need to update their SIM card records, to more sophisticated attacks which target cell phone networks. 
-
-SMS has weaknesses that have been exploited, but mostly it's safe. High value systems such as banking websites often use SMS as one of their factors. Google researchers found in 2019 that a text message ["helped block 100% of automated bots, 96% of bulk phishing attacks, and 76% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
+SMS has weaknesses that have been exploited, but mostly it's safe. High value systems such as banking websites often use SMS as one of their factors. Google researchers found in 2019 that MFA with text messages ["helped block 100% of automated bots, 96% of bulk phishing attacks, and 76% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
 
 There's not a lot you can do as a developer to make this factor more secure. Users, on the other hand, can contact their cell phone providers and ask about how phone number transfers are handled to understand possible social engineering attacks. Users can also set up a software service such as Google Voice or Twilio to receive text messages.
 
+#### Phone call
+
+Receiving a phone call with a code is very similar to the SMS factor. With a phone call, you have the benefit of working for users who do not have a text capable phone. 
+
+Other than that, the implementation and issues are much the same.
+
 #### App push
 
-Your phone isn't limited to running a TOTP application or receiving text messages, it can also have a specialized application that uses push notifications to provide a code. Similar to text messages, this code is generated by the authenticating system and sent to the user. 
+Your phone isn't limited to running a TOTP application, accepting a phone call, or receiving text messages. You can also have an application on your phone which receives push notifications.  Similar to text messages, this code is generated by the authenticating system and sent to the user. 
 
-The user proves they received the notification by sharing that code with the authenticating system. The server can encrypt the code before sending and the application can decrypt it on the phone to ensure the code can't be tampered with or read.
+The user proves they received the notification by sharing that code with the authenticating system. The server can encrypt the code before sending it and the application can decrypt it on the phone to ensure the code can't be tampered with or read.
 
 Such systems are effective. In 2019, Google researchers found that such on-device prompts ["helped block 100% of automated bots, 99% of bulk phishing attacks, and 90% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
 
-Similar to text messages, the security of these systems is really up to the provider of the push notification. However, I hear Apple and Google are pretty good at this kind of thing.
+Similar to phone call and text messages's dependence on the phone network providers, the security of the push notification in transit systems is up to the provider of the push notification. However, I hear Apple and Google are pretty good at this security thing.
 
-With any of the above MFA options which use information sent to a phone as an authentication factor, encourage your users to configure the device to require local authentication before any applications are accessed. Also, encourage them to ensure notifications and SMS messages can't be read without the user authenticating first.
-
-#### Phone call
+With any of the above MFA options which use a smartphone as part of the authentication factor, encourage your users to configure the device to require authentication like a pin before applications can be accessed. Also, encourage them to ensure notifications and SMS messages can't be read without the user authenticating first.
 
 #### Email
 
-Email can be used in the same way as SMS or app notification. The goal is to provide an out of band code to a user. The user provides the code to the system and the presumption is that the user owns the email account to which the code was sent. Possession of the email account is the additional authentication factor. 
+Email can be used in the same way as an SMS or in-app notification by providing a code that is divorced from the system in question. The user provides that code to the system for another factor of authentication. The user possesses access to the email account to which the code was sent. 
 
-As a developer, you need to ensure that you have verified the email to which the code is sent before sending the code. Registration is a great time to verify this email. You also need to ensure that the email address can't be changed in your system without a user providing multiple factors of authentication. 
+As a developer, ensure that you have verified the email to which the code is sent before sending the code. When the user registers is a great time to do this. You also need to ensure that the email address can't be changed in your system without a user providing multiple factors of authentication. 
 
-This factor is often more convenient because email accounts can be accessed from multiple different computers, as opposed to the phone based solutions above, which are typically tied to one device. This same convenience, however, means that this choice can be less secure, depending on user behavior. Users, for their part, must ensure their email account is secured with multiple factors and that no one else has access. 
+This factor is more convenient because email accounts can be accessed from multiple different computers or devices, as opposed to the phone based solutions above, which are typically tied to one device. This convenience, however, means that this option can be less secure, depending on user behavior. Users, for their part, must ensure their email account is secured with multiple factors and that no one unauthorized parties have access. 
 
 #### A physical device
 
-Physical devices used for authentication, such as Yubikeys, can provide another factor. These devices work with your computer or your phone to offer a factor. Depending on the device, the user either plugs in the device to a computer or passes the device close enough for wireless communication during the authentication process. 
+Physical devices, such as Yubikeys, can be used for authentication. These devices work with your computer or your phone. Depending on the device, the user plugs in the device to a computer or passes the device close enough for wireless communication during the authentication process. 
 
-These devices differ from the other factors in the category because they cost money. This makes them acceptable for administrative or high value accounts, but makes this choice problematic for a broad user base which will likely not have such devices.
+These devices differ from the other factors in this category because they cost money. This makes them acceptable for administrators, technical users, or high value accounts. It also makes this factor problematic for a broad user base; they will likely not have such devices.
 
-As a developer, you will need to build in support for the device using an SDK or a standard the device is compatible with, such as WebAuthN. Your users will need to ensure they don't lose it and have it available whenever they authenticate.
+As a developer, to use this factor, you need to build in support for the device using an SDK or a standard the device is compatible with, such as WebAuthN. Your users need to ensure they don't lose it and have it available whenever they authenticate.
 
 ### What you know
 
-A password is a common factor from this category.
-
-The other options suffer from the same strengths and weaknesses as passwords:
+A password is a common factor from this category. The other options here suffer from the same strengths and weaknesses as passwords:
 
 * No physical manifestation
 * Easily stolen or inadvertently shared
@@ -214,22 +225,27 @@ As a developer, be wary of using these options.
 
 #### Questions and answers
 
-With questions and answers, the auth system you are building requests answers to questions at a time when the user is known to be present; typically user registration. The questions and answers are saved. When the system determines a user must provide another factor at authentication, one of the saved questions is provided. The user answers the question and if the answer matches what the system has, the factor is successfully provided.  
+With questions and answers, the auth system you are building requests answers to questions at a time when the user is known to be present; typically user registration. 
 
-This method has been commonly used in the past for when resetting passwords, but is no longer recommended by [institutions such as NIST](https://pages.nist.gov/800-63-FAQ/#q-b15). 
+The questions and answers are saved. When the system determines MFA is needed, one of the saved questions is displayed. The user answers the question and if the answer matches, another proof of identity has been provided.
 
-A similar solution is to provide a list of facts about a user and have them select the accurate fact. For example, "What street did you live on?" might be the question, and the answers would be pulled from a list of publicly available information. 
+This method has been commonly used in the past for resetting passwords, but is no longer recommended by [institutions such as NIST](https://pages.nist.gov/800-63-FAQ/#q-b15). 
 
-In general this type of solution isn't optimal because one of two scenarios will occur:
+A similar solution is to provide a list of facts about a user and have them select the accurate one. For example, "What street did you live on?" might be the question, and the answers would be pulled from a list of publicly available information. 
 
-* The user will pick questions and answers that are true and thus can be found out by others. Such facts can be shared inadvertently on social media. There's also an astonishing amount of public records information available for sale.
-* The user will pick questions and answers that are not true. In this case, it's essentially another password that needs to be stored safely.
+In general this factor isn't a good choice because one of two scenarios will occur:
 
-As a developer, avoid this. If you must implement it, let the user provide their own questions; this will increase the randomness of the answers provided and let them pick private information. You can also use this in combination with another, more secure factor.
+* The user will pick questions and answers that are true and possibly can be learned by others. Such facts may be shared inadvertently on social media. There's also an astonishing amount of public records information available for sale.
+* The user will pick questions and answers that are not true. In this case, it's essentially another password which needs to be stored safely.
 
-If you are a user and forced to use this as a factor, choose the second path. Remember random answers or, even better, store them in a password manager. For example, if a question is "what was your first pet's name", and your first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "h941TphXOL3h0ws7M0U2" or "relevance-middle-horoscope". You want to prevent someone from learning the name of your childhood pet from your mother's Facebook post and using that information to gain illicit access. 
+As a developer, avoid this factor. If you must implement it, let the user provide their own questions; this will increase the randomness of the answers provided and allow them to pick solutions they will be more likely to remember. Like all factors, you could use this as part of defense in depth solution, in combination with other options.
+
+Counsel your users to use this factor wisely. They should pick fake answers. For example, if a question is "what was your first pet's name", and their first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "fido" or "killer". 
+
+If the user is saving these answers in a password manager, may I suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is prevent someone from learning the name of a childhood pet from Facebook post and using that information to gain illicit access. 
 
 #### Double blind passwords 
+xxx
 
 A double blind password augments the security of a password factor. This is not an independent factor type and is entirely in control of the user. As a user, though, you can use it to increase the security of your highest value accounts, such as your email or bank accounts. 
 
@@ -310,6 +326,7 @@ In both of these cases, the user is still providing additional factors of authen
 what do you do? 
 plan for some kind of mfa for some kind of users
 talk to your users about what they have access to
+if secrets need to be shared, set up registration to do so
 offer it to let users step up if they want to
 pick accessible solutions that are secure
 use step up auth to guard dangerous actions
