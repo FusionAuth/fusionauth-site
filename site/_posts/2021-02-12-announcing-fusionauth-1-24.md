@@ -21,9 +21,9 @@ Some of the enhancements included in this release are:
 * More consistent use of the `Cache-Control` header for the FusionAuth administrative user interface
 * Support for certificates with key lengths of 1024 to support certain SAML integrations
 * Adding entity counts to pages such as Tenants, Lambdas and Consents
-* A new [User Search API](/docs/v1/tech/apis/users/#search-for-users) parameter, `accurateTotal` which allows you to retrieve exact user counts
-* Improvements to the webhooks screen to make enabling and disabling them easier
-* Removing unneeded claims from the `id_token`; neither the `applicationId` nor the `roles` claims will be present.
+* A new [User Search API](/docs/v1/tech/apis/users/#search-for-users) parameter, `accurateTotal` which allows you to retrieve the exact user count
+* Improvements to the webhooks screen to make enabling and disabling them en masse easier
+* Removing unneeded claims from the `id_token`; neither the `applicationId` nor the `roles` claims will be present
 
 ## Bugs squashed
 
