@@ -18,18 +18,21 @@ This was primarily a bug fix release and small enhancement release. Please see t
 
 Some of the enhancements included in this release are:
 
+* More consistent use of the `Cache-Control` header for the FusionAuth administrative user interface
 * Support for certificates with key lengths of 1024 to support certain SAML integrations
 * Adding entity counts to pages such as Tenants, Lambdas and Consents
-* Improvements to the webhooks screen to make enabling and disabling webhooks easier
-* Removing unneeded claims from the `id_token`
+* A new [User Search API](/docs/v1/tech/apis/users/#search-for-users) parameter, `accurateTotal` which allows you to retrieve exact user counts
+* Improvements to the webhooks screen to make enabling and disabling them easier
+* Removing unneeded claims from the `id_token`; neither the `applicationId` nor the `roles` claims will be present.
 
 ## Bugs squashed
 
-There were seven bugs fixed, including:
+There were multiple bugs fixed, including:
 
 * Kafka configuration parsing issues
 * Imports of unsupported certificates (for example, with key lengths that were too short) failed silently
 * A UX regression which prevented removing a user from a group using the administrative user interface
+* A fix to the Identity Provider admin UI to allow correct editing if you have more than 2000 applications
 
 ## Commence upgrading
 
