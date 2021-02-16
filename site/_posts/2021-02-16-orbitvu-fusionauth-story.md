@@ -21,11 +21,11 @@ Maciej Wisniowski is a FusionAuth community member and team leader in the web de
 
 **Maciej:** I'm a full-stack web developer working as a Team Leader in Orbitvu, a company that builds innovative imaging solutions for the world of eCommerce. 
 
-Orbitvu provides both software and hardware solutions for automated product photography which means our client gets an end-to-end solution that starts with our hardware and desktop software with features like automatic background removal and then is able to effortlessly publish packshots and 360-degree interactive product presentations on the web. The latter part is my responsibility.
+Orbitvu provides both software and hardware solutions for automated product photography. Our clients gets an end-to-end solution that starts with our hardware and desktop software with features like automatic background removal and can effortlessly publish packshots and 360-degree interactive product presentations on the web. The latter part is my responsibility.
 
 **Dan:** What a cool idea! Do you have a link to a sample (or real) interactive product presentation? 
 
-**Maciej:** Of course, the typical 360-degree presentation made with our solutions might be similar to this presentation of the [miter saw](https://orbitvu.co/share/uEnZJgngCNobquxATcbAyf/17144/orbittour/view). We have a number of products targeted to different industries and/or product sizes. For example, our [Alphashot Micro](https://orbitvu.com/product/alphashot-micro/) is made for photography of smaller objects, eg. jewelry or watches. For the bigger objects, also human models, we have other solutions like our newest product [Fashion Studio](https://orbitvu.com/product/fashion-studio/) that is great not just for packshots but also for the videos.
+**Maciej:** Of course, the typical 360-degree presentation made with our solutions might be similar to this presentation of the [miter saw](https://orbitvu.co/share/uEnZJgngCNobquxATcbAyf/17144/orbittour/view). We have a number of products targeted to different industries and/or product sizes. For example, our [Alphashot Micro](https://orbitvu.com/product/alphashot-micro/) is made for photography of smaller objects, eg. jewelry or watches. For larger objects, such as human models, we have other solutions like our newest product [Fashion Studio](https://orbitvu.com/product/fashion-studio/), which is great for packshots and videos.
 
 > [Choosing FusionAuth] opened a whole bunch of new possibilities in terms of possible architectural solutions and technologies we were able to use. 
 
@@ -33,9 +33,9 @@ Orbitvu provides both software and hardware solutions for automated product phot
 
 **Maciej:** We use FusionAuth as an OAuth2/OIDC/SAML server (with integrated Google sign-on) to provide login and SSO to our web applications and supplementary systems like the site with our manuals. 
 
-We are also starting to use FusionAuth internally. Orbitvu is not just a software development company but we also design and manufacture our automated photo studios. Because of that, we have a lot of different departments that utilize a number of internal systems like ERP, project management software, or Helpdesk. All of these can also benefit from FusionAuth integration.
+We are also starting to use FusionAuth internally. Orbitvu is not just a software development. We also design and manufacture our automated photo studios. We have a lot of different departments that utilize a number of internal systems like ERP, project management software, or Helpdesk which all benefit from our FusionAuth integration.
 
-Regarding the user management, this part remains in our own application due to the fact we already had it done before we switched to FusionAuth. We're integrating with FusionAuth using its API and it works flawlessly.
+We've kept user management in our own application because we already had it built out before we switched to FusionAuth. We're integrating with FusionAuth using its API and it works flawlessly.
 
 **Dan:** What benefits, if any, have you seen from having one view of your customer across multiple applications?
 
@@ -69,11 +69,11 @@ Last but not least is that at Orbitvu we love open source and we use it a lot. W
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
-**Maciej:** Given that FusionAuth is the only solution that is so complete and can be used on-premise without extra costs I'm pretty sure it has saved a lot of money for us. We use FusionAuth on our own hosting and we're managing it on our own so the costs are the hosting cost plus our working hours' cost. After the initial setup, there is not much to do with FusionAuth except upgrading from time to time, so this way it is way more cost-effective than the competing solutions that are sometimes extremely expensive when it comes to a bigger number of users.
+**Maciej:** Given that FusionAuth is the only solution that is so complete and can be used on-premise without extra costs I'm pretty sure it has saved us a lot of money. We use FusionAuth on our own hosting and we're managing it on our own so the costs are the hosting cost plus our working hours' cost. After the initial setup, there is not much to do with FusionAuth except upgrading from time to time, so this way it is way more cost-effective than the competing solutions that are sometimes extremely expensive when it comes to a bigger number of users.
 
 **Dan:** How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
 
-**Maciej:** We use the standalone tomcat server. Our production instances (and staging too as these are closely following production) are built to be highly available so there are two FusionAuth instances in a cluster, running behind a load balancer (Nova ADC) and using ElasticSearch cluster (3 nodes) with Postgresql database (managed, the highly available solution from the hosting provider).
+**Maciej:** We use the standalone tomcat server. Our production and staging instances are built to be highly available. There are two FusionAuth instances in a cluster, running behind a load balancer (Nova ADC) and using ElasticSearch cluster (3 nodes) with Postgresql database (managed, the highly available solution from the hosting provider).
 
 > Last but not least is that at Orbitvu we love open source and we use it a lot. What we do like in FusionAuth is that, while not open source, it feels like an open source project due to its development style with Github’s issue tracker.
 
@@ -81,7 +81,7 @@ Last but not least is that at Orbitvu we love open source and we use it a lot. W
 
 **Maciej:** I'm not sure if there is anything to improve... maybe you can release less often so that I can stop upgrading my instances every week - just kidding, but the frequency of FusionAuth releases is amazing.
 
-One thing I'd like to emphasize is the support you have. I remember when I started using FusionAuth and the Forum section was empty. I don't know if it was due to some kind of forum migration or it has really started from scratch but after few weeks I've noticed with amazement how fast the new topics appear, how popular the platform is, and how good support you have (as said before, like an open source project).
+One thing I'd like to emphasize is the support you have. I remember when I started using FusionAuth, the forum section was empty. After a few weeks I noticed with amazement how fast the new topics appear, how popular the platform is, and how good support you is (as said before, like an open source project).
 
 -------
 
