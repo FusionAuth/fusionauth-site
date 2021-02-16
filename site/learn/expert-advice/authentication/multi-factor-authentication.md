@@ -1,6 +1,6 @@
 ---
 layout: advice
-title: Multi-factor Authentication
+title: Multi-factor Authentication for Developers
 description: What is multi-factor authentication and why is it important?
 author: Dan Moore
 image: advice/breached-password-detection/expert-advice-breached-password-detection.png
@@ -24,7 +24,7 @@ When a user is authenticating, they are providing proof of who they are. There a
 * What the user is; one example would be a fingerprint.
 * Where the user is, possibly ascertained by using GPS.
 
-Each of these methods of proof is called a 'factor'. Factors have to be kept secure. They should not be sharedi, in order to ensure that the person who is authenticating is associated with the correct user account. 
+Each of these methods of proof is called a 'factor'. Factors have to be kept secure. They should not be shared, in order to ensure that the person who is authenticating is associated with the correct user account. 
 
 Multi-factor authentication is best understood as requiring two or more factors in order to authenticate a user. MFA is a superset of two factor authentication (2FA). With MFA an arbitrary number of factors of proof can be required. With 2FA, the number of factors is limited to two.
 
@@ -82,7 +82,7 @@ There are also plenty of high value user accounts where MFA can help prevent unw
 
 An example of such an account is online access to a bank account. You don't want users to learn that someone drained their savings because of a stolen password.
 
-Another example is an email account. Beyond the private information often present in email accounts, they represent a risk to accounts in other systems. Many password reset flows send an email to a known address and allow the recipient of that email to reset a password for a system. Compromise of an email account means that many other accounts assocated with this user are at risk.
+Another example is an email account. Beyond the private information often present in email accounts, they represent a risk to accounts in other systems. Many password reset flows send an email to a known address and allow the recipient of that email to reset a password for a system. Compromise of an email account means that many other accounts associated with this user are at risk.
 
 ### Risky actions
 
@@ -175,7 +175,7 @@ Text messaging, also known as SMS, is another common factor. The system sends a 
 
 To keep this factor safe, the phone must be in possession of the user. As a developer, do not allow a mobile number to be changed unless the user has authenticated with MFA. Otherwise an attacker with a password could log in, change the mobile number to one which they control, and then would be able complete MFA because they'll have the code sent to the new device.
 
-Additionally, with SMS there are a attacks where a bad actor takes over your phone number without stealing your phone or modifing the number to which the code is sent. These range from social engineering, where a customer service rep is convinced you have set up a new phone and need to update your SIM card to more sophisticated attacks which target cell phone networks. 
+Additionally, with SMS there are attacks where a bad actor takes over your phone number without stealing your phone or modifying the number to which the code is sent. These range from social engineering, where a customer service rep is convinced you have set up a new phone and need to update your SIM card to more sophisticated attacks which target cell phone networks. 
 
 SMS has weaknesses that have been exploited, but mostly it's safe. High value systems such as banking websites often use SMS as one of their factors. Google researchers found in 2019 that MFA with text messages ["helped block 100% of automated bots, 96% of bulk phishing attacks, and 76% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
 
@@ -244,7 +244,7 @@ As a developer, avoid this factor. If you must implement it, let the user provid
 
 Counsel your users to use this factor wisely. They should pick fake answers. For example, if a question is "what was your first pet's name", and their first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "fido" or "killer". 
 
-If the user is saving these answers in a password manager, may I suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is prevent someone from learning the name of a childhood pet from Facebook post and using that information to gain illicit access. 
+If the user is saving these answers in a password manager, may I suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is prevent someone from learning the name of a childhood pet from a Facebook post and using that information to gain illicit access. 
 
 #### Double blind passwords 
 
@@ -252,7 +252,7 @@ A double blind password augments the security of a password. This is not an inde
 
 With this technique, a user splits a password into two pieces. One is stored in a password manager or other secure location; the other is memorized. When the password is entered, both strings are combined to provide the true password. 
 
-Somone could conceivably split a password into more than two pieces and store them in different physical locations as well. This is also known as a horcrux, a term from the popular Harry Potter novels.
+Someone could conceivably split a password into more than two pieces and store them in different physical locations as well. This is also known as a horcrux, a term from the popular Harry Potter novels.
 
 This method protects against the compromise of a password manager or other password storage mechanism. However, if the system which stores the hash of a password is compromised, or the password is discovered in transit, a horcrux won't help.
 
@@ -337,11 +337,18 @@ In both of these cases, the user is still providing additional factors of authen
 
 It's all well and good to have a survey of the why, when and how, but what should you and your fellow team mates actually do about MFA?
 
+Here are four steps you can take:
+
+* Plan out what features need MFA
+* Talk to your users to learn what factors make sense
+* Build in features to support MFA
+* Centralize MFA configuration to make it easier to evolve
+
 First, model out your system and determine who should use MFA and when. How you make this call depends on the type of data you store, what your application or applications can do, and what your regulatory or compliance regime specifies. Don't consider MFA only at initial authentication; think about where both step up auth and MFA relaxation make sense.
 
 Don't forget to talk to your end users, or at least a subset of them. The factors which make sense for an online banking application will be different from a corporate intranet app or a consumer application. Plan for the inevitable tradeoff between user experience, solution accessibility and security. Have those conversations as early in the application requirements process as you can.
 
-If shared secrets need to be capture at authentication or registration, build or buy solutions which allow to you do so. These could be questions and answers, a seed for a TOTP solution, or even registering a physical device. 
+If shared secrets need to be captured at authentication or registration, build or buy solutions which allow you to do so. These could be questions and answers, a seed for a TOTP solution, or even registering a physical device. 
 
 Plan for both a minimum level of MFA and for users who want to go beyond that. Many security conscious users will want to enable MFA for their accounts; allow them to do so. For example, one person may run their entire life through their gmail account, while others may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it may not.
 
