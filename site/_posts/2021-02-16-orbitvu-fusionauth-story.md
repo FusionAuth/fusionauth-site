@@ -21,7 +21,7 @@ Maciej Wisniowski is a FusionAuth community member and team leader in the web de
 
 **Maciej:** I'm a full-stack web developer working as a Team Leader in Orbitvu, a company that builds innovative imaging solutions for the world of eCommerce. 
 
-Orbitvu provides both software and hardware solutions for automated product photography. Our clients gets an end-to-end solution that starts with our hardware and desktop software with features like automatic background removal and can effortlessly publish packshots and 360-degree interactive product presentations on the web. The latter part is my responsibility.
+Orbitvu provides both software and hardware solutions for automated product photography. Our clients get an end-to-end solution that starts with our hardware and desktop software with features like automatic background removal and can effortlessly publish packshots and 360-degree interactive product presentations on the web. The latter part is my responsibility.
 
 **Dan:** What a cool idea! Do you have a link to a sample (or real) interactive product presentation? 
 
@@ -81,7 +81,7 @@ Last but not least is that at Orbitvu we love open source and we use it a lot. W
 
 **Maciej:** I'm not sure if there is anything to improve... maybe you can release less often so that I can stop upgrading my instances every week - just kidding, but the frequency of FusionAuth releases is amazing.
 
-One thing I'd like to emphasize is the support you have. I remember when I started using FusionAuth, the forum section was empty. After a few weeks I noticed with amazement how fast the new topics appear, how popular the platform is, and how good support you is (as said before, like an open source project).
+One thing I'd like to emphasize is the support you have. I remember when I started using FusionAuth, the forum section was empty. After a few weeks I noticed with amazement how quickly the new topics appeared, how popular the platform was, and how good support you provided was (as said before, like an open source project).
 
 -------
 
