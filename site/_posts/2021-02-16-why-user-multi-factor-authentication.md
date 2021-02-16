@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: The what, why and when of multifactor authentication
-description: What is multifactor authentication and when should you use it?
+title: The what, why and when of multi-factor authentication
+description: What is multi-factor authentication and when should you use it?
 author: Dan Moore
 image: blogs/orbitvu-fusionauth-story/orbitvu-chose-fusionauth-for-architectural-flexibility-great-support-and-customizability-header-image.png
 category: blog
@@ -9,17 +9,20 @@ tags: topic-feature-mfa
 excerpt_separator: "<!--more-->"
 ---
 
-As more of our lives and data move online, multifactor authentication (MFA) becomes increasingly important to help keep accounts secure. As a user, you should enable MFA on any accounts containing valuable data. As a developer or software creator, you want have an understanding of MFA.
+As more of our lives and data move online, multi-factor authentication (MFA) becomes increasingly important to help keep accounts secure. As a user, you should enable MFA on any accounts containing valuable data. 
+
+But as a developer or software creator, you need a deeper understanding of MFA, why it's important and when to require it.
 
 <!--more-->
 
 ## What is MFA?
 
-When a user authenticates, they provide proof of who they are. There are three broad types of proof:
+When a user authenticates, they provide proof of who they are. There are multiple broad types of proof:
 
 * What they know. A password, for example.
 * What they have, such as a code from a device a user possesses.
 * What they are; something like a fingerprint.
+* Where they are, such as on a private network.
 
 Each of these methods of proof is called a 'factor'. Factors must be kept securely and not shared to be useful in correctly authenticating a user. Multi factor authentication is best understood as requiring two or more factors in order to authenticate.
 
@@ -43,7 +46,7 @@ Implementing MFA is a partnership with your users. Some forms of MFA are easier 
 
 ### The balance between user experience and account security
 
-However, even though MFA is more secure, as a developer, don't require it for all access. You are engaged in a fundamental engineering practice of making a tradeoff; you want the user login experience to be as smooth as possible while minimizing account takeover opportunities. Friction in the authentication process will annoy some percentage of your users, as they typically aren't using your application because of love of the login process. 
+However, even though MFA is more secure, as a developer, avoid requiring it for all system access. You are engaged in a fundamental engineering practice of making a tradeoff; you want the user login experience to be as smooth as possible while minimizing account takeover opportunities. Friction in the authentication process will annoy some percentage of your users, as they typically aren't using your application because of love of the login process. 
 
 Listen to your users when you are discussing MFA requirements. You don't want them to circumvent MFA in destructive ways; at the same time they may need to be educated on the benefits. How many of you know people who still write down passwords on post-it notes?
 
@@ -51,7 +54,9 @@ Balance between the friction of the login user experience and the risk of accoun
 
 If your site lets users vote on cat pictures, MFA may never be required. If your site lets users transfer money, or digital assets similar to money, to complete strangers on the internet, on the other hand, it should require MFA.
 
-These scenarios are at opposite ends of the security and user experience spectrum, and the case for MFA can be made rather easily. More difficult decisions occur when the answer isn't obvious. What are some situations where you should consider incorporating multifactor authentication?
+These scenarios are at opposite ends of the security and user experience spectrum, and the case for MFA can be made rather easily. More difficult decisions occur when the answer isn't obvious. 
+
+What are some situations where you should consider incorporating multi-factor authentication?
 
 ## When should I require multiple factors of authentication?
 
@@ -88,9 +93,9 @@ By using such a step up, you can help partially mitigate the damage of a comprom
 
 ### Legal or organizational policies
 
-If your application is used by certain organizations or stores personally identifiable information, you may need to require multifactor authentication for some or all accounts. As part of the NIST risk management framework, for example, Authenticator Assurance Level 2 requires: ["proof of possession and control of two different authentication factors is required..."](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63-3.pdf). 
+If your application is used by certain organizations or stores personally identifiable information, you may need to require multi-factor authentication for some or all accounts. As part of the NIST risk management framework, for example, Authenticator Assurance Level 2 requires: ["proof of possession and control of two different authentication factors is required..."](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63-3.pdf). 
 
-Sometimes an MFA requirement is not explicit, however. If you are seeking SOC2 certification, you will need to implement MFA, even though multifactor authentication is never mentioned in the [SOC "Trust Services Criteria"](https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf).
+Sometimes an MFA requirement is not explicit, however. If you are seeking SOC2 certification, you will need to implement MFA, even though multi-factor authentication is never mentioned in the [SOC "Trust Services Criteria"](https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf).
 
 From Section CC6.1 of the SOC document: "Persons, infrastructure, and software are identified and authenticated prior to accessing information assets, whether locally or remotely". The document has the requirements, but omits specific implementation details. Talk to your SOC2 auditor about required controls.
 
@@ -109,7 +114,7 @@ But there is also interesting metadata such as:
 
 This implicit data can help determine if the authentication request is a legitimate one. For instance, if a user accesses a system from the USA but 24 hours later there is another request from Germany with the same credentials, is this legitimate? Could be, but also could be indicative of a compromised account.
 
-Requiring MFA allows you to to apply extra scrutiny to strange requests.
+Requiring MFA allows you to apply extra scrutiny to strange requests.
 
 Another example where you might want to require additional authentication factors is when a user logs in from a new device. Popular SaaS applications such as Google's GSuite and Mailchimp can be configured to require MFA for the initial authentication from a new device, but not after.
 
@@ -117,7 +122,7 @@ Another example where you might want to require additional authentication factor
 
 You should strive to embed the choices about when to require MFA in a central, easily changed location in your application. Tying it tightly to a central authentication system generally makes sense. Choices about when to require MFA change over time as a system evolves. New features are built. Different types of users are supported.
 
-This policy configuration should itself be protected and only allow privileged users, perhaps with a recent multifactor authentication.
+This policy configuration should itself be protected and only allow privileged users, perhaps with a recent multi-factor authentication.
 
 If you don't have organization or user wide policies, allow users to set up MFA. This allows security conscious users to protect their account. They can evaluate their own security posture and make choices that make sense to them. For example, one person may run their entire life through their Gmail account, while others may use Gmail only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it may not.
 
