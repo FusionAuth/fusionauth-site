@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: Multi Factor Authentication
-description: What is multi factor authentication and why is it important?
+title: Multi-factor Authentication
+description: What is multi-factor authentication and why is it important?
 author: Dan Moore
 image: advice/breached-password-detection/expert-advice-breached-password-detection.png
 category: Security
@@ -9,7 +9,7 @@ date: 2021-02-05
 dateModified: 2021-02-05
 ---
 
-As more of our lives move online, multi factor authentication (MFA) becomes more important as a way of keeping our accounts secure. 
+As more of our lives move online, multi-factor authentication (MFA) becomes more important as a way of keeping our accounts secure. 
 
 As a user, you should enable MFA on any accounts containing valuable data. 
 
@@ -17,17 +17,18 @@ As a developer or software creator, you need an understanding of MFA, including 
 
 ## What is Multi Factor Authentication?
 
-When a user is authenticating, they are providing proof of who they are. There are three broad categories of proof:
+When a user is authenticating, they are providing proof of who they are. There are four broad categories of proof:
 
 * What the user knows. A password is an example. 
 * What the user has, such as a device.
 * What the user is; one example would be a fingerprint.
+* Where the user is, possibly ascertained by using GPS.
 
 Each of these methods of proof is called a 'factor'. Factors have to be kept secure. They should not be sharedi, in order to ensure that the person who is authenticating is associated with the correct user account. 
 
-Multi factor authentication is best understood as requiring two or more factors in order to authenticate a user. MFA is a superset of two factor authentication (2FA). With MFA an arbitrary number of factors of proof can be required. With 2FA, the number of factors is limited to two.
+Multi-factor authentication is best understood as requiring two or more factors in order to authenticate a user. MFA is a superset of two factor authentication (2FA). With MFA an arbitrary number of factors of proof can be required. With 2FA, the number of factors is limited to two.
 
-Multi factor authentication isn't just for online user accounts, though. If you are accessing a safe deposit box in a bank, you need a key (something you have) and a signature (something you are) or an id (another thing you have). 
+Multi-factor authentication isn't just for online user accounts, though. If you are accessing a safe deposit box in a bank, you need a key (something you have) and a signature (something you are) or an id (another thing you have). 
 
 This article will focus on online MFA, however. 
 
@@ -61,7 +62,7 @@ These scenarios are at opposite ends of the security and user experience spectru
 
 {% include _image.liquid src="/assets/img/advice/mfa/security-ux-spectrum.svg" alt="More secure or easier to use?" figure=false %}
 
-The hard part is the situations where the answer isn't obvious. What are some situations where you should consider requiring multi factor authentication?
+The hard part is the situations where the answer isn't obvious. What are some situations where you should consider requiring multi-factor authentication?
 
 ## When to require multiple factors of authentication
 
@@ -98,7 +99,7 @@ These types of actions can be legitimate, but could also be used by someone who 
 
 ### Laws or organizational policies
 
-If your application is used by certain organizations or stores personally identifiable information, you may need to require multi factor authentication for users. As part of the NIST risk management framework, for example, Authenticator Assurance Level 2 requires: ["proof of possession and control of two different authentication factors..."](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63-3.pdf). 
+If your application is used by certain organizations or stores personally identifiable information, you may need to require multi-factor authentication for users. As part of the NIST risk management framework, for example, Authenticator Assurance Level 2 requires: ["proof of possession and control of two different authentication factors..."](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63-3.pdf). 
 
 Sometimes an MFA requirement is not explicit, however. If you are looking to be SOC2 certified, MFA may be required, even though the term is never mentioned in the [SOC "Trust Services Criteria"](https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf). Section CC6.1 of the SOC document specifies "Persons, infrastructure, and software are identified and authenticated prior to accessing information assets, whether locally or remotely" without outlining implementation details. In this case, talk to your auditor about MFA requirements as well as other required controls.
 
@@ -129,7 +130,8 @@ As mentioned above, there are three main categories.
 
 * What they know.
 * What they have.
-* What they are.
+* Who they are.
+* Where they are.
 
 The more factors you require, the more security access is. No online system, however, is 100% secure. All of these options have trade offs, and some require more cooperation from the end user.
 
@@ -245,46 +247,47 @@ Counsel your users to use this factor wisely. They should pick fake answers. For
 If the user is saving these answers in a password manager, may I suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is prevent someone from learning the name of a childhood pet from Facebook post and using that information to gain illicit access. 
 
 #### Double blind passwords 
-xxx
 
-A double blind password augments the security of a password factor. This is not an independent factor type and is entirely in control of the user. As a user, though, you can use it to increase the security of your highest value accounts, such as your email or bank accounts. 
+A double blind password augments the security of a password. This is not an independent factor and is entirely in control of the user. It can improve the security of the highest value accounts, such as email or bank accounts. As a developer, you cannot enforce the use of a double blind password. However, it is an interesting way to increase security, so deserves a brief mention.
 
-You as a developer cannot enforce the use of a double blind password. However, it is an interesting way to increase the security of an account, so deserves a brief mention.
+With this technique, a user splits a password into two pieces. One is stored in a password manager or other secure location; the other is memorized. When the password is entered, both strings are combined to provide the true password. 
 
-The idea is that a user splits a password into two pieces. One is stored in a password manager or other secure location; the other is memorized. When the password is entered, both strings are combined to provide the true password. This is also known as a horcrux, a term from the popular Harry Potter novels.
+Somone could conceivably split a password into more than two pieces and store them in different physical locations as well. This is also known as a horcrux, a term from the popular Harry Potter novels.
 
-This method protects against your password manager being compromised, but not a password being stolen in other ways.
+This method protects against the compromise of a password manager or other password storage mechanism. However, if the system which stores the hash of a password is compromised, or the password is discovered in transit, a horcrux won't help.
 
 ### Who you are
 
-The final category is "who you are". These factors are tied to your physical body or your behavior; they must be shared security with the authentication system. 
+Another factor category is "who you are". These are tied to your physical body or your behavior; the information must be translated to a digital format and shared securely with the authentication system. 
 
-As a developer, these are really intriguing options: nothing to forget or lose. Support for each option, so you'll need to consider that.
+As a developer, biometrics are really intriguing: nothing to forget or lose. Support varies for each option, however. 
 
-In addition, people's bodies change over time, so these factors should have some room for error. Make sure you include other options or have a fallback plan when someone has a new haircut.
+In addition, people's bodies and behaviors change over time, so these factors must have room for error. While a password or code can match exactly, biometric solutions are more likely to provide a certain percent of accuracy. Allow other factors to be used or have a fallback plan when someone has a new haircut.
 
 #### Physical biometric
 
-These factors identify you based on your body. Examples include facial recognition, which identifies a user from the shape and look of their face, fingerprint scanning, voice identification, and retinal scanners, which look at the variations in the tissue of a user's eye. This type of factor is difficult to lose or forge. 
+These factors identify users based on their body. Examples include facial recognition, which identifies a user from the shape and look of their face, fingerprint scanning, voice identification, and retinal scanners, which look at the variations in the tissue of a user's eye. 
 
-To implement authentication using biometric factors as a developer, first choose your solution. Make sure you understand which hardware is required and how widespread access is, what the error rates are, whether the solution's test population matches your own, and what software support is needed to implement this choice.
+As you might expect, this type of factor is difficult to lose or forge. 
 
-An alternative is to use what is integrated with the operating system which your application's users have. All of the major operating systems for both phones and computers have some level of support for these solutions. 
+To implement authentication using biometric factors, first choose a solution. Make sure you understand the required hardware and the access to it which your user audience has, what the error rates are, whether the solution's test population matches your own, and the software libraries needed to implement it.
+
+You could also use biometrics integrated into the operating system where your applications are running. All major operating systems for both mobile phones and computers have some level of support for a biometric solution.
 
 * Android has the [Biometric library](https://developer.android.com/jetpack/androidx/releases/biometric).
 * iOS supports [Face ID and Touch ID](https://developer.apple.com/design/human-interface-guidelines/ios/user-interaction/authentication/).
 * Windows has [Windows Hello](https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/windows-hello), which integrates with hardware such as a fingerprint scanner.
 * MacOS has [Touch ID](https://support.apple.com/guide/mac-help/touch-id-mchl16fbf90a/mac).
 
-If you are building web applications, use the [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/), which lets the browser access the operating systems biometric implementations. We'll cover this in more detail below.
+If you are building web applications, use the [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/), which lets the browser access the operating systems biometric implementations. We'll cover this topic in more detail below.
 
 #### Behavioral biometrics
 
-This category of biometrics uses your behavior to identify and authenticate you. 
+This category of biometrics utilizes user behavior to identify and authenticate someone. 
 
-An example of this is gait recognition technology, though this is mostly used for user identification rather than authentication. 
+An example of this is gait recognition technology. This is primarily used for identification rather than authentication. 
 
-Another option is your keystroke pattern; that is, how you type, the rhythm of your keystrokes, the errors you make and the timing between key strikes. Done properly, this can identify a user without any action on their part, and could be a complement to some of the more explicit factors mentioned above. 
+Another option is keystroke pattern recognition; that is, how a user types, the rhythm of keystrokes, the errors made, and the timing between key strikes. Done properly, this can identify a user without any action on their part, and could be a complement to some of the more explicit factors mentioned above. 
 
 However, there's wide individual variation, even within a single day, of keystroke patterns, which can be problematic. A [study from 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3835878/) determined "The literature study suggested that keystroke dynamics biometrics are unlikely to replace existing knowledge-based authentication entirely and it is also not robust enough to be a sole biometric authenticator."
 
@@ -292,52 +295,54 @@ However, there's wide individual variation, even within a single day, of keystro
 
 The [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/) is an evolving standard. As of early 2021 it had not yet become a Proposed Recommendation. However, it is supported by [many major browsers](https://caniuse.com/webauthn).
 
-Using this standard allows you to implement physical biometric authentication or other high security factors. The browser vendor has integrated with the operating system, which has in turn integrated with the hardware required for solutions such as fingerprint identification. If the application in question is accessed through a browser, all that's left for you to do is integrate with the browser API calls. Oh, and test. Make sure you spend some time testing the variety of different scenarios.
+Using this standard allows developers to easily implement physical biometric authentication or other high security factors. The browser vendor has integrated with the operating system, which is in turn compatible with the hardware required for solutions such as fingerprint identification. 
 
-The WebAuthn standard works not just with biometric identification, but with others as well, including physical devices such as Yubikey.
+If the application in question is accessed through a browser, all that's left for you to do is integrate with the browser API calls. Oh, and test. Make sure you spend some time testing the variety of different scenarios.
 
-You may hear the term FIDO mentioned when WebAuthn is discussed. [FIDO2](https://fidoalliance.org/fido2/) is a set of specifications, of which WebAuthn is one.
+The WebAuthn standard works not only with biometric identification, but with other factors as well, including physical devices such as a Yubikey. You may hear the term FIDO mentioned when WebAuthn is discussed. [FIDO2](https://fidoalliance.org/fido2/) is a set of specifications, of which WebAuthn is one.
+
+### Where you are
+
+This is a relatively uncommon factor of authentication. 
+
+To implement this, you'd need to know where the user was, either through GPS or specific user interfaces only available in known locations. The system would then have a list of allowed locations and if the user was not in those locations, the authentication would fail.
+
+This approach has some issues. GPS is not foolproof and can be spoofed; in 2012 a drone was nearly crashed by ["sending false positional data" to it](https://spectrum.ieee.org/telecom/security/protecting-gps-from-spoofers-is-critical-to-the-future-of-navigation). Requiring your users to authenticate from a known user interface limits the usefulness of many applications.
 
 ## Relaxing MFA
 
-MFA is all about providing additional security by ensuring that a user who is accessing a system is authenticated correctly.
+MFA provides additional security by ensuring that a user who is accessing a system is authenticated correctly. However, there may be times when you want to explicitly disable MFA, if only for a while. 
 
-However, there may be times when you want to explicitly disable MFA. You can disable MFA for a given user for a period of time for a device, or for a user account that previously required MFA. As a developer, you'll want to allow this because it makes the user experience better.
+You can disable MFA when a request is made from a given device, for a period of time, or for a user account. As a developer, allowing this in certain circumstances makes the user experience better.
 
 ### Known Devices
 
-This form of MFA relaxation often takes the form of a "trust this device" or "this is not a public computer" checkbox during authentication. In this case, the authentication system records that this device can be trusted. The trust can be forever or for a certain duration, after which MFA is again required. 
+This form of MFA relaxation takes the form of a "trust this device" or "this is not a public computer" checkbox during authentication. In this case, the authentication system records that this device can be trusted. The trust can last forever or for a certain period, after which MFA is again required. 
 
-With a browser you can implement this with a cookie; an expiring, missing or removed cookie causes MFA to be required at the next login. Other devices have similar local storage mechanisms where such preferences can be stored.
+With a browser you can implement this by setting a cookie. An expiring, missing or removed cookie causes MFA to be required at the next login. Other devices have similar local storage mechanisms where preferences can be stored.
 
 ### Turning Off MFA For a User
 
-At times, you might want to relax all MFA requirements for a user account. This is a high risk operation, since one of the main purposes of MFA is to increase user account security. Removing MFA opens the users' account up to being hijacked by someone possessing only one factor of authentication, such as a password. However, you might need to do this because the user has lost one of the required factors associated with their account. 
+At times, you might want to relax all MFA requirements for a user's account. This is a high risk operation. Removing MFA opens the users' account up to being hijacked by someone possessing only one factor of authentication. You'll typically provide a way to do this at the beginning of an authentication flow.
 
-Make sure you provide controls around this action so it isn't abused.
+However, you might need to allow this because the user has lost or forgotten one of the required factors. Make sure you provide controls around this action so it isn't abused.
 
-This could require a human to be in the loop. If it is a manual process, performed by a customer service rep trained in other ways to authenticate a user, perhaps with private data that only the company and the user would know, such as the amount of the last bill, the rep can use their judgement. A user would call in and provide proof of their identity before MFA was turned off for their account. This approach is vulnerable to social engineering.
+Such controls often require a human to be in the loop. If it is a manual process, performed by a customer service rep trained in ways to authenticate a user, perhaps with private data that only the company and the user would know, such as the amount of the last bill, a rep can use their judgement. A user would call in and provide proof of their identity before MFA was turned off for their account. This approach is vulnerable to social engineering, however.
 
-Another option is self service codes. Provide a set of one time use codes at the moment MFA is turned on. Build a system which accepts these codes to turn off MFA for the account, should the user need to do so. 
+Another option is to create self service one time codes. Provide a set of one time use codes at the moment MFA is turned on. Have the user record these and keep them secret. When a user needs to turn off MFA, accept a code to do so.
 
-In both of these cases, the user is still providing additional factors of authentication. It's simply more flexible because of the human intervention or the one time use.
+In both of these cases, the user is still providing additional factors of authentication, but they are circumventing the typical automated MFA process. 
 
+## Building MFA
 
-what do you do? 
-plan for some kind of mfa for some kind of users
-talk to your users about what they have access to
-if secrets need to be shared, set up registration to do so
-offer it to let users step up if they want to
-pick accessible solutions that are secure
-use step up auth to guard dangerous actions
+It's all well and good to have a survey of the why, when and how, but what should you and your fellow team mates actually do about MFA?
 
-## Applying MFA requirements
+First, model out your system and determine who should use MFA and when. How you make this call depends on the type of data you store, what your application or applications can do, and what your regulatory or compliance regime specifies. Don't consider MFA only at initial authentication; think about where both step up auth and MFA relaxation make sense.
 
-You should strive to embed the choices about when to require MFA in a central, easily changed location in your application. These choices will change over time as a system evolves. New features will be built, and some of them may require a step up. Distinct classes of users will appear, about which the system may require different levels of assurance.
+Don't forget to talk to your end users, or at least a subset of them. The factors which make sense for an online banking application will be different from a corporate intranet app or a consumer application. Plan for the inevitable tradeoff between user experience, solution accessibility and security. Have those conversations as early in the application requirements process as you can.
 
-This policy configuration should itself be protected and only allow privileged users, perhaps with a recent multi factor authentication.
+If shared secrets need to be capture at authentication or registration, build or buy solutions which allow to you do so. These could be questions and answers, a seed for a TOTP solution, or even registering a physical device. 
 
-If you don't have organization or user wide policies, you should allow a user to set up MFA. This allows security conscious users to take their account security more seriously. They can evaluate their own security posture and make choices that make sense to them. For example, one person may run their entire life through their gmail account, while others may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it may not.
+Plan for both a minimum level of MFA and for users who want to go beyond that. Many security conscious users will want to enable MFA for their accounts; allow them to do so. For example, one person may run their entire life through their gmail account, while others may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it may not.
 
-However, in general, if you are worried about what a compromised account could do to either your systems or your users' data, you should strongly encourage or require MFA.
-
+You should strive to embed the choices about when to require MFA in a central, easily changed location in your application. These choices will change over time as a system evolves. New features will be built, and some of them may require step up. Different kinds of users may start using the system. This policy configuration should itself be protected and only allow privileged users, perhaps with a recent multi-factor authentication.
