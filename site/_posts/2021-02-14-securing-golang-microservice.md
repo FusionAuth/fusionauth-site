@@ -17,7 +17,7 @@ A JWT token can be used to carry the identity of the calling microservice, or th
 
 In this post, we are going to explore the role that JWT plays in securing service-to-service communication in a golang microservices deployment. In the golang programming ecosystem, there is an open source jwt-go package that enables us to generate the JWT token. 
 
-First, we are going to use to package to generate the JWT token and create a endpoint API that serves the token. You also could generate the JWT using an identity server such as FusionAuth, but it can be educational to see how JWTs are created using a library.
+First, we are going to use a package to generate the JWT token and create an endpoint API that serves the token. You also could generate the JWT using an identity server such as FusionAuth, but it can be educational to see how JWTs are created using a library.
 
 Then, we will be creating the microservice server. There will be an authorization middleware that will execute before accessing the golang microservices. This middleware will take the JWT token and validate it to ensure secure access to the microservices. 
 
@@ -31,7 +31,7 @@ So, let's get started!
 
 ## Implementing the JWT endpoint
 
-In this section, we will be creating an endpoint that generates a JWT and then returns it back to the client. 
+In this section, we will be creating an endpoint that generates a JWT and then returns it back to the client. All the code is available on [Github](https://github.com/FusionAuth/fusionauth-example-go-jwt-microservices) if you want to clone it and follow along.
 
 We will be using the HMAC algorithm for encrypting JWT. 
 
@@ -66,7 +66,7 @@ import (
 Then, we need to define a signing key as shown in the code snippet below. We could hardcode the secret:
 
 ```go
-var mySigningKey = []byte("mysecret")
+var mySigningKey = []byte("unicorns")
 ```
 
 But for additional security, we can use an environment variable to store the secret key instead of hardcoding it in the application:
@@ -479,8 +479,9 @@ Now we can construct the CURL command as shown below:
 
 ```shell
 curl http://localhost:9001 --header 'Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJiaWxsaW5nLmp3dGdvLmlvIiwiYXV0aG9yaXplZCI6dHJ1ZSwiY2xpZW50IjoiS3Jpc3NhbmF3YXQiLCJleHAiOjE2MTM1MDk1MDcsImlzcyI6Imp3dGdvLmlvIn0.t7qdqrpLk3nBOZFLBL_UOdciZ_rWei0rJg3tgyJ7cTw'
+```
 
-If you do this quickly, you'll see:
+If you do this within a minute, you'll be rewarded with:
 
 ```
 Super Secret Information
@@ -498,7 +499,7 @@ Using a JWT token to secure microservices is widely used as it is a secure and e
 
 ## Go further
 
-If you want to play around with JWTs and golang microservices you built here, you could:
+All the code is available on [Github](https://github.com/FusionAuth/fusionauth-example-go-jwt-microservices). If you want to play around with JWTs and golang microservices you built here, you could:
 
 * [Set up FusionAuth in 5 minutes](/docs/v1/tech/5-minute-setup-guide/) and have it generate the JWTs based on a user authenticating.
 * Change the key in the microservice and see what error message you get back.
@@ -507,5 +508,4 @@ If you want to play around with JWTs and golang microservices you built here, yo
 * Build more than one golang microservice and have service access authorized by the value of the `roles` claim in the JWT.
 
 
-All code available on [Github](https://github.com/krissnawat/jwt_go_microservice_example).
 
