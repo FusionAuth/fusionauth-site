@@ -155,7 +155,7 @@ A software or hardware time-based one time password (TOTP) generator is a common
 * A seed shared in an environment where the user is known; this is often in the form of a QR code which can be shared
 * A common algorithm
 
-The algorithm generates a pseudo random numeric code based on the seed and the time. The seed and algorithm are shared between the auth system and the generator application or hardware. When the user wants to sign in, the code must be provided. 
+The [standardized algorithm](https://tools.ietf.org/html/rfc6238) generates a numeric code based on the seed and the time. The seed and algorithm are shared between the auth system and the generator application or hardware. When the user wants to sign in, the code must be provided. 
 
 Both the application and your server have all the information needed to generate the code:
 
