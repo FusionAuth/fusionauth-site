@@ -29,7 +29,7 @@ So, let's get started!
 * Basic knowledge of JWT based authentication
 * Basic knowledge of golang programming
 
-## Implementing the JWT endpoint
+## Implementing the JWT endpoint with a go module
 
 In this section, we will be creating an endpoint that generates a JWT and then returns it back to the client. All the code is available on [Github](https://github.com/FusionAuth/fusionauth-example-go-jwt-microservices) if you want to clone it and follow along.
 
@@ -61,7 +61,7 @@ import (
 )
 ```
 
-### Set up the shared key
+### Set up the shared secret key
 
 Next, we define a signing key as shown below. We could hardcode the secret:
 
@@ -84,7 +84,8 @@ export SECRET_KEY=unicorns // for linux or mac
 
 You'll need to set this value every time you start a new terminal and want to run this code. You can also add this environment variable to your shell startup script to avoid that hassle.
 
-### Generate the token
+### Generate the JWT 
+
 
 To generate the token, we need to create a function called `GetJWT`. In the function, we start by initializing a new instance of `JWT` using the `New` method provided by our jwt library. 
 
@@ -121,7 +122,7 @@ func GetJWT() (string, error) {
 // ...
 ```
 
-### Serve the token
+### Set up a golang process to serve the JWT 
 
 Now, let's actually serve up this token. We start by importing the additional packages such as `net/http` and `log` to create the server:
 
@@ -220,7 +221,7 @@ func main() {
 }
 ```
 
-### Running the server
+### Spinning up the go server
 
 Now, we install the imported packages and start the server by executing the following commands:
 
@@ -243,7 +244,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJiaWxsaW5nLmp3dGdvLmlvIiwiYXV0aG9
 
 Now in the next section, we take this token and send it to a microservice.
 
-## Implement a simple API gateway
+## Implement a simple API gateway to validate the JWT
 
 In this section, we will be validating the JWT. After the token is found valid, clients can interact with the protected internal services. This server will act as an API gateway for the clients.
 
@@ -285,7 +286,8 @@ var MySigningKey = (byte[])os.Getenv("SECRET_KEY")
 
 This key will be used to validate the JWT presented to our microservices.
 
-### Create the middleware
+### Create the middleware to intercept incoming requests and validate the JWT
+
 
 After assigning the key, the first thing we need to do is to create a middleware that will intercept all incoming requests. It will check if the token is provided or not before allowing the request to proceed further. 
 
@@ -506,8 +508,8 @@ Using a token in this manner to secure microservices is widely used as it is a s
 
 All the code is available on [Github](https://github.com/FusionAuth/fusionauth-example-go-jwt-microservices). If you want to play around with JWTs and the golang microservices you built here, you could:
 
-* [Set up FusionAuth in 5 minutes](/docs/v1/tech/5-minute-setup-guide/) and have it generate the JWTs based on a user authenticating.
-* Change the key in one of the environments service and see what error message you get back.
+* [Set up FusionAuth in 5 minutes](/docs/v1/tech/5-minute-setup-guide/) and have it generate the JWTs when a user logs in.
+* Learn how to [secure golang applications with OAuth](/blog/2020/10/22/securing-a-golang-app-with-oauth/).
 * Modify the middleware and curl scripts to use the more standard `Authorization` header and `Bearer` token prefix.
 * Use an asymmetric signing algorithm such as RSA to avoid sharing a secret between the two programs.
 * Build more than one golang microservice and have service access controlled by the value of the `roles` claim in the JWT.
