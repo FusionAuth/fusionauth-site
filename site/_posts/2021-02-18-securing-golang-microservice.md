@@ -3,7 +3,7 @@ layout: blog-post
 title: Securing a Go Microservice with JWT
 description: How to use JWTs to secure your golang microservices
 author: Krissanawat Kaewsanmuang
-image: blogs/orbitvu-fusionauth-story/orbitvu-chose-fusionauth-for-architectural-flexibility-great-support-and-customizability-header-image.png
+image: blogs/securing-golang-microservice-jwt/securing-a-go-microservice-with-jwt-header-image.png
 category: blog
 tags: client-golang
 excerpt_separator: "<!--more-->"
