@@ -9,11 +9,14 @@ date: 2021-02-05
 dateModified: 2021-02-05
 ---
 
-As more of our lives move online, multi-factor authentication (MFA) becomes more important as a way of keeping our accounts secure. 
+As more of our lives move online, multi-factor authentication (MFA) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep secure. 
 
-As a user, you should enable MFA on any accounts containing valuable data. 
+As a developer or software creator, you need an understanding of MFA. This includes:
 
-As a developer or software creator, you need an understanding of MFA, including what factors are available and when you might consider requiring additional ones during user authentication or other actions. 
+* What MFA is
+* Why it is important
+* What factors are available 
+* When you might consider requiring MFA
 
 ## What is Multi Factor Authentication?
 
@@ -352,4 +355,4 @@ If shared secrets need to be captured at authentication or registration, build o
 
 Plan for both a minimum level of MFA and for users who want to go beyond that. Many security conscious users will want to enable MFA for their accounts; allow them to do so. For example, one person may run their entire life through their gmail account, while others may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it may not.
 
-You should strive to embed the choices about when to require MFA in a central, easily changed location in your application. These choices will change over time as a system evolves. New features will be built, and some of them may require step up. Different kinds of users may start using the system. This policy configuration should itself be protected and only allow privileged users, perhaps with a recent multi-factor authentication.
+Your MFA policies and configuration should be flexible. You can store MFA requirements in a central, easily changed location in your application, such as your identity provider, or in a configuration file. Be aware that these requirements will evolve as technology and your applications do. New features will be built, and some of them may require step up. Different kinds of users may start using the system. This policy configuration should itself be protected and only allow privileged users, perhaps with a recent multi-factor authentication.
