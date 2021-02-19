@@ -43,7 +43,7 @@ Building a secure, available system requires ensuring only authorized people and
 
 Authentication, which ensures that a system knows who the user is, and authorization, which controls what a given user can access, both play a role in building such a system. While you can control what an actor is doing without knowing who they are, it's far more common to tie authentication and authorization together.
 
-If your users have only one factor of authentication, it can be stolen, especailly if it is a password. At that point, you as a developer will have limited ability to stop the thief. Your system will have to notice suspicious behavior to determine who is legitimate and who is not. This can be done, but is complex to do at scale. If you can't determine illicit access, the thief will have the same privileges as the user whose stolen credentials are being used; they will be indistinguishable from that user.
+If your users have only one factor of authentication, it can be stolen, especially if it is a password. At that point, you as a developer will have limited ability to stop the thief. Your system will have to notice suspicious behavior to determine who is legitimate and who is not. This can be done, but is complex to do at scale. If you can't determine illicit access, the thief will have the same privileges as the user whose stolen credentials are being used; they will be indistinguishable from that user.
 
 Unfortunately, passwords are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection/) and users can protect themselves by practicing good password hygiene, requiring another factor increases the obstacles to a bad actor.
 
@@ -57,7 +57,7 @@ However, though MFA is more secure, you shouldn't require it everywhere. It's a 
 
 User experience isn't only about how easy the factor is to use. It's also about how widely deployed a solution is. If, say, retinal scanning is trivial to use, but users don't have or can't find the hardware, then it isn't really that easy after all.
 
-Listen to your users when you considering factors. You don't want them to circumvent MFA in ways that will damage system security. At the same time they may need to be educated. Do you know people who still write down passwords on sticky notes? I do.
+Listen to your users when considering factors. You don't want them to circumvent MFA in ways that will damage system security. At the same time they may need to be educated. Do you know people who still write down passwords on sticky notes? I do.
 
 As a developer, you need to balance between the user experience and the risk of account takeover. In some situations the call is easy. If your site lets users vote on cat pictures, MFA isn't really required. If your site transfers money to arbitrary people, on the other hand, it should require MFA. These scenarios are at opposite ends of the security and user experience spectrum:
 
@@ -67,7 +67,7 @@ The hard part is the situations where the answer isn't obvious. What are some si
 
 ## When to require multiple factors of authentication
 
-There are many situations where your need a higher level of assurance about the actor behind the credentials. Sometimes the type of the user account is the deciding factor. Other times it is the access requested. Depending on your application and organization, legal requirements or corporate policies may control.
+There are many situations where you need a higher level of assurance about the actor behind the credentials. Sometimes the type of the user account is the deciding factor. Other times it is the access requested. Depending on your application and organization, legal requirements or corporate policies may control.
 
 ### Administrative accounts
 
@@ -128,7 +128,7 @@ The more factors you require, the more secure access is. No online system, howev
 
 Solution availability, security and user experience all play a role in determining what solution is best for your users. When you are incorporating MFA into your application, consider how widely deployed options are among your users or potential audience. 
 
-Below is a diagram displaying estimated relative deployment and security attributes of various factors. When deciding which is right for your application, think about security needs as well as what your users have accessible and can use, unless unless you will be providing all your users with a factor such as a Yubikey. You can also allow multiple factors and let users select one that works for them.
+Below is a diagram displaying estimated relative deployment and security attributes of various factors. When deciding which is right for your application, think about security needs as well as what your users have accessible and can use, unless you will be providing all your users with a factor such as a Yubikey. You can also allow multiple factors and let users select one that works for them.
 
 {% include _image.liquid src="/assets/img/advice/mfa/security-deployment-spectrum.svg" alt="Secure, sure, but is it available?" figure=false %}
 
@@ -314,9 +314,9 @@ Make sure you provide controls around this action so it isn't abused.
 
 Such controls often require a human to be in the loop. A manual process performed by a customer service rep trained to authenticate a user may work. Perhaps the rep can access private data that only the company and the user would know, such as the amount of the last bill. With this information, a rep can verify that a user is who they say they are, and then could disable MFA. This approach is vulnerable to social engineering, however.
 
-Another option is to create self service one time codes. The system provides a set of one time use codes at the moment MFA is turned on. The user saves these and keep them secret. When a user needs to turn off MFA, the system accepts a code to do so.
+Another option is to create self service one time codes. The system provides a set of one time use codes at the moment MFA is turned on. The user saves these and keeps them secret. When a user needs to turn off MFA, the system accepts a code to do so.
 
-Note that in both of these cases, the user is still providing additional factors of authentication, but these are specialised ones, which circumventing the typical automated MFA process. 
+Note that in both of these cases, the user is still providing additional factors of authentication, but these are specialised ones, which circumvent the typical automated MFA process. 
 
 ## Building MFA
 
