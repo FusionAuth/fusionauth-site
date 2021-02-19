@@ -20,7 +20,7 @@ As a developer or software engineer, MFA may seem a bit mysterious. This article
 
 At the end, you should have a good understanding of options for integrating MFA into your applications, and how to start doing so.
 
-## What is Multi Factor Authentication?
+## What is multi-factor authentication (MFA)?
 
 When a user is authenticating, they are providing proof of who they are. There are four broad categories of proof:
 
@@ -37,7 +37,7 @@ Multi-factor authentication isn't just for online user accounts, though. If you 
 
 The majority of user accounts have a password as a factor. You might be working in such a system right now. As engineering teams become more aware of the problem of user account hijacking and its real world consequences, more are allowing or requiring additional factors of authentication. 
 
-## Why use MFA
+## Why use multi-factor authentication (MFA)?
 
 Building a secure, available system requires ensuring only authorized people and software agents have access to it. This is a foundational concern.
 
@@ -51,7 +51,7 @@ In particular, if another factor is required as part of the login process, accou
 
 Implementing MFA is a partnership with your users, however. Some factors are easier for system developers to support. Others require more effort and care from users.
 
-### The balance
+### The balance between user experience and security risk
 
 However, though MFA is more secure, you shouldn't require it everywhere. It's a balance, like many parts of software engineering; you want to make the user login experience as smooth as possible while minimizing chances of account takeover. Users don't love an application for the login experience. They want to solve their problems. Friction in the authentication process will annoy some percentage of your users and negatively affect your application's success. 
 
@@ -108,14 +108,14 @@ An auth system has a unique viewpoint into who is signing in. Information is sup
 
 * The date and time of access
 * Connection information like the IP address, location, and user agent
-* Whether this device been used to access this service before
+* Whether this device has been used to access this service before
 * How many times the user has logged in recently
 
-Such data can help determine if the person behind the authentication request is legitimate. For instance, if a user accesses a system from the USA but one day later later there is a request from Germany with the same credentials, the request deserves scrutiny. It's possible it is legitimate; after all, airplanes exist. But also possible that there is something nefarious going on in Germany.
+Such data can help determine if the person behind the authentication request is legitimate. For instance, if a user accesses a system from the USA but one day later there is a request from Germany with the same credentials, the request deserves scrutiny. It's possible it is legitimate; after all, airplanes exist. But also possible that there is something nefarious going on in Germany.
 
 Requiring MFA before access is allowed when suspicious activity occurs provides another check against stolen credentials. That German hacker could have acquired a user's password, but it's harder to steal a one time passcode sent to the user's phone as well.
 
-## Commonly used factors
+## Commonly used factors for MFA
 
 Beyond a password, what are other ways a user can prove who they are? As mentioned above, there are four main categories. 
 
@@ -233,7 +233,7 @@ Like all factors, you could use this option as part of defense in depth solution
 
 Counsel your users to answer these questions wisely. Frankly, they should pick fake answers. For example, if a question is "what was your first pet's name", and their first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "fido" or "killer". 
 
-If the user is saving these answers in a password manager, I would even suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is prevent someone from learning the name of a childhood pet from a Facebook post and using that information to gain illicit access. 
+If the user is saving these answers in a password manager, I would even suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is to prevent someone from learning the name of a childhood pet from a Facebook post and using that information to gain illicit access. 
 
 #### Double blind passwords 
 
@@ -292,7 +292,7 @@ If the application in question is accessed through a browser, all that's left fo
 
 The WebAuthn standard works not only with biometric identification, but with other factors as well, including physical devices. You may hear the term FIDO mentioned when WebAuthn is discussed. [FIDO2](https://fidoalliance.org/fido2/) is a set of specifications, of which WebAuthn is one.
 
-## Relaxing MFA
+## Relaxing multi-Factor authentication (MFA) requirements
 
 MFA provides additional security by ensuring that a person accessing a system is authenticated correctly. However, there may be times when you want to explicitly disable MFA, if only for a certain period. 
 
