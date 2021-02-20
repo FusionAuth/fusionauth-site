@@ -61,7 +61,7 @@ If you want to skip all the reading and just get down to some code, the next sec
 
 Start by logging into Twitter and navigating the Twitter developer console. Once you're there, navigate to the `Keys and tokens` tab of the application you're integrating. Here you will find a few key pieces of information that you'll need to sign the request.
 
-{% include _image.liquid src="/assets/img/docs/twitter-keys-tokens.png" alt="Twitter Consumer API Keys" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/docs/identity-providers/twitter-keys-tokens.png" alt="Twitter Consumer API Keys" class="img-fluid" figure=false %}
 
 Make note of the two values in the `Consumer API Keys` section, they are suffixed with the labels `API key` and `API secret key`. Once you are in the OAuth v1 world, we'll be using the `API key` value for the consumer key and the `API secret key` value for the consumer secret.
 

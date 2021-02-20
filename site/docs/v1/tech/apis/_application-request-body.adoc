@@ -19,6 +19,13 @@ True if CleanSpeak username moderation is enabled.
 [field]#application.data# [type]#[Object]# [optional]#Optional#::
 An object that can hold any information about the Application that should be persisted.
 
+[field]#application.formConfiguration.adminRegistrationFormId# [type]#[UUID]# [optional]#Optional# [default]#defaults to **[see description]**# [since]#Available since 1.20.0#::
+The unique Id of the form to use for the Add and Edit User Registration form when used in the FusionAuth admin UI. 
++
+When this parameter is not provided, it will default to the form Id currently assigned to the FusionAuth application.
++
+A paid edition of FusionAuth is required to utilize custom forms.
+
 [field]#application.jwtConfiguration.accessTokenKeyId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.6.0#::
 The Id of the signing key used to sign the access token.
 
@@ -31,10 +38,10 @@ When an HMAC algorithm is used such as `HS256`, `HS384` or `HS512`, the OAuth `c
 +
 &nbsp;
 +
-[deprecated]#Removed in version 1.6.0# In version 1.6.0 and beyond, JWT configuration can be managed in the `link:./keys[Keys API]` and Keymaster.
+[deprecated]#Removed in version 1.6.0# In version 1.6.0 and beyond, JWT configuration can be managed in the `link:/docs/v1/tech/apis/keys/[Keys API]` and Keymaster.
 
 [field]#application.jwtConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`#::
-Indicates if this application is using the JWT configuration defined here or the global JWT configuration defined by the System Configuration. If this is `false` the signing algorithm configured in the System Configuration will be used. If `true` the signing algorithm defined in this application will be used.
+Indicates if this application is using the JWT configuration defined here or the global JWT configuration defined by the Tenant. If this is `false` the signing algorithm configured in the Tenant will be used. If `true` the signing algorithm defined in this application will be used.
 
 [field]#application.jwtConfiguration.idTokenKeyId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.6.0#::
 The Id of the signing key used to sign the Id token.
@@ -46,7 +53,7 @@ Required when `enabled` is set to `true` and `algorithm` is set to an `RSA` or `
 +
 &nbsp;
 +
-[deprecated]#Removed in version 1.6.0# In version 1.6.0 and beyond, JWT configuration can be managed in the `link:./keys[Keys API]` and Keymaster.
+[deprecated]#Removed in version 1.6.0# In version 1.6.0 and beyond, JWT configuration can be managed in the `link:/docs/v1/tech/apis/keys/[Keys API]` and Keymaster.
 
 [field]#application.jwtConfiguration.publicKey# [type]#[String]# [optional]#Optional# [deprecated]#Deprecated#::
 The public key used when an `RSA` or `ECDSA` signing algorithms has been selected. The public key will be used to verify JWTs signed with the private key. This key is expected to be presented in a PEM encoded format.
@@ -55,7 +62,7 @@ Required when `enabled` is set to `true` and `algorithm` is set to an `RSA` or `
 +
 &nbsp;
 +
-[deprecated]#Removed in version 1.6.0# In version 1.6.0 and beyond, JWT configuration can be managed in the `link:./keys[Keys API]` and Keymaster.
+[deprecated]#Removed in version 1.6.0# In version 1.6.0 and beyond, JWT configuration can be managed in the `link:/docs/v1/tech/apis/keys/[Keys API]` and Keymaster.
 
 [field]#application.jwtConfiguration.refreshTokenTimeToLiveInMinutes# [type]#[Integer]# [optional]#Optional# [since]#Available since 1.2.0#::
 The length of time in minutes the JWT refresh token will live before it is expired and is not able to be exchanged for a JWT.
@@ -86,7 +93,7 @@ The Id of the Lambda that will be invoked when an Id token is generated for this
 The Id of the Lambda that will be invoked when a a SAML response is generated during a SAML authentication request.
 
 [field]#application.loginConfiguration.allowTokenRefresh# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.5.0#::
-Indicates if a JWT may be refreshed using a Refresh Token for this application. This configuration is separate from issuing new Refresh Tokens which is controlled by the `generateRefreshTokens` parameter. This configuration indicates specifically if an existing Refresh Token may be used to request a new JWT using the link:jwt#refresh-a-jwt[Refresh API].
+Indicates if a JWT may be refreshed using a Refresh Token for this application. This configuration is separate from issuing new Refresh Tokens which is controlled by the `generateRefreshTokens` parameter. This configuration indicates specifically if an existing Refresh Token may be used to request a new JWT using the link:/docs/v1/tech/apis/jwt#refresh-a-jwt[Refresh API].
 +
 If you do not intend to use the Login API, and instead will only be using the OAuth endpoints, you may leave this set to `false` to ensure Refresh Tokens cannot be used outside of the Refresh Token Grant.
 
@@ -185,7 +192,7 @@ Determines if the `firstName` field will be included on the registration form.
 Determines if the `firstName` field is required when displayed on the registration form.
 
 [field]#application.registrationConfiguration.formId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.18.0#::
-The Id of an associated link:/docs/v1/tech/apis/forms[Form] when using `advanced` registration configuration type.
+The Id of an associated link:/docs/v1/tech/apis/forms/[Form] when using `advanced` registration configuration type.
 This field is required when [field]#application.registrationConfiguration.type# is set to `advanced`.
 
 [field]#application.registrationConfiguration.fullName.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available since 1.4.0#::
@@ -255,11 +262,26 @@ endif::includeRoles[]
 [field]#application.samlv2Configuration.audience# [type]#[String]# [optional]#Optional# [default]#defaults to `issuer`# [since]#Available since 1.6.0#::
 The audience for the SAML response sent to back to the service provider from FusionAuth. Some service providers require different audience values than the `issuer` and this configuration option lets you change the `audience` in the response.
 
-[field]#application.samlv2Configuration.callbackURL# [type]#[String]# [required]#Required# [since]#Available since 1.6.0#::
+[field]#application.samlv2Configuration.authorizedRedirectURLs# [type]#[Array<String>]# [required]#Required# [since]#Available since 1.20.0#::
+One or more authorized URLS that may be specified by the SAML v2 Service Provider in the Authentication request `<AssertionConsumerServiceURL>` element. If a requested URL is not in this list the request will be rejected by FusionAuth.
++
+This is the URL that FusionAuth will send the SAML response during a SAML login request, this URL is also referred to as the Assertion Consumer Service or ACS). If the the Authentication request does not contain the `<AssertionConsumerServiceURL>` element, the first URL found in this list will be used to send the SAML response back to the Service Provider.
+
+[field]#application.samlv2Configuration.callbackURL# [type]#[String]# [optional]#Optional# [since]#Available since 1.6.0# [deprecated]#Deprecated#::
 The URL of the callback (sometimes called the Assertion Consumer Service or ACS). This is where FusionAuth sends the browser after the user logs in via SAML.
++
+[deprecated]#Deprecated in version 1.20.0# 
+In version 1.20.0 and beyond, Callback URLs can be managed via [field]#application.samlv2Configuration.authorizedRedirectURLs#.
 
 [field]#application.samlv2Configuration.debug# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available since 1.6.0#::
 Whether or not FusionAuth will log SAML debug messages to the event log. This is useful for debugging purposes.
+
+[field]#application.samlv2Configuration.defaultVerificationKeyId# [type]#[UUID]# [optional]#Optional#  [since]#Available since 1.20.0#::
+The verification key used to verify a signature when the SAML v2 Service Provider is using HTTP Redirect Bindings. 
++ 
+When HTTP POST Bindings are used, this is the default verification key used if a `<KeyInfo>` element is not found in the SAML AuthNRequest. If a `<KeyInfo>` element is found, Key Master will be used to resolve the key and this configuration will not be used to verify the request signature. 
++
+This parameter is required when [field]#application.samlv2Configuration.requireSignedRequests# is set to `true`. 
 
 [field]#application.samlv2Configuration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available since 1.6.0#::
 Whether or not the SAML IdP for this Application is enabled or not.
@@ -268,15 +290,20 @@ Whether or not the SAML IdP for this Application is enabled or not.
 The issuer that identifies the service provider and allows FusionAuth to load the correct Application and SAML configuration. If you don't know the `issuer`, you can often times put in anything here and FusionAuth will display an error message with the `issuer` from the service provider when you test the SAML login.
 
 [field]#application.samlv2Configuration.keyId# [type]#[UUID]# [optional]#Optional# [default]#Defaults to a new key# [since]#Available since 1.6.0#::
-The id of the Key used to sign the SAML response. If you do not specify this property, FusionAuth will create a new key and associate it with this Application.
+The unique Id of the Key used to sign the SAML response. If you do not specify this property, FusionAuth will create a new key and associate it with this Application.
 
 [field]#application.samlv2Configuration.logoutURL# [type]#[String]# [optional]#Optional# [default]#Defaults to the system logout URL or `/`# [since]#Available since 1.6.0#::
 The URL that the browser is taken to after the user logs out of the SAML service provider. Often service providers need this URL in order to correctly hook up single-logout. **Note** that FusionAuth does not support the SAML single-logout profile because most service providers to not support it properly.
 
+[field]#application.samlv2Configuration.requireSignedRequests# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.20.0#::
+Set this parameter equal to `true` to require the SAML v2 Service Provider to sign the request. When this value is `true` all requests missing a signature will be rejected.
++
+When set to `true`, the parameter [field]#application.samlv2Configuration.defaultVerificationKeyId# is required.
+
 [field]#application.samlv2Configuration.xmlSignatureC14nMethod# [type]#[String]# [optional]#Optional# [default]#Defaults to `exclusive_with_comments`# [since]#Available since 1.6.0#::
 The XML signature canonicalization method used when digesting and signing the SAML response. Unfortunately, many service providers do not correctly implement the XML signature specifications and force a specific canonicalization method. This setting allows you to change the canonicalization method to match the service provider. Often, service providers don't even document their required method. You might need to contact enterprise support at the service provider to figure out what method they use.
 +
-Valid values for this property are:
+The possible values are:
 +
 * `exclusive`
 ** The URI for this method is http://www.w3.org/2001/10/xml-exc-c14n#
@@ -286,6 +313,16 @@ Valid values for this property are:
 ** The URI for this method is http://www.w3.org/TR/2001/REC-xml-c14n-20010315
 * `inclusive_with_comments`
 ** The URI for this method is http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments
+
+[field]#application.samlv2Configuration.xmlSignatureLocation# [type]#[String]#  [default]#Defaults to `Assertion`# [since]#Available since 1.21.0#::
+The location to place the XML signature when signing a successful SAML response.
++
+The possible values are:
++
+ * `Assertion` - The XML signature will be added as a child element of the Assertion.
+ * `Response` - The XML signature will be added as a child element of the Response.
++
+In most cases the default configuration will be adequate. If you encounter a SAML v2 Service Provider that requires the signature to be a child of the Response, use this configuration to change the signature location. Prior to version `1.21.0`, the XML signature was always located as a child element of the Assertion when the response was successful.
 
 [field]#application.verificationEmailTemplateId# [type]#[UUID]# [optional]#Optional#::
 The Id of the Email Template that is used to send the Registration Verification emails to users. If the `verifyRegistration` field is `true` this field is required.

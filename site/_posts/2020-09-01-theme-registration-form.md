@@ -17,9 +17,13 @@ Previously, we built a [self service registration form](/blog/2020/08/27/advance
 
 This tutorial builds on the [previous one](/blog/2020/08/27/advanced-registration-form) and walks through changing the theme. While this tutorial will reference the previous form, feel free to apply it to any form you've created as well.
 
+This is part of a three part series. Here are all the posts:
+
+1. [How to use FusionAuth's advanced registration forms](/blog/2020/08/27/advanced-registration-form)
+1. How to theme FusionAuth's advanced registration forms (this one)
+1. [Building a user profile portal with Flask, OAuth, and APIs](/blog/2020/08/27/advanced-registration-form)
+
 ## FusionAuth setup
-
-
 
 Go to "Settings" and then create an API key by going to "API Keys". We'll be using this key to script some of our theme management, which means we need permission for this endpoint:
 

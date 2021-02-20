@@ -27,6 +27,12 @@ If you follow this tutorial, you'll end up with a form that asks a new user for 
 
 Because this is a lot of information to ask for at once, you'll break this up into two pages. We'll be walking through this using the administrative user interface, but everything can be done via [the APIs](/docs/v1/tech/apis/forms), should you need to manage registration forms programmatically.
 
+This is part of a three part series. Here are all the posts:
+
+1. How to use FusionAuth's advanced registration forms (this one)
+1. [How to theme FusionAuth's advanced registration forms](/blog/2020/09/01/theme-registration-form)
+1. [Building a user profile portal with Flask, OAuth, and APIs](/blog/2020/09/10/building-profile-portal-with-flask-oauth-apis)
+
 ## FusionAuth setup
 
 If you don't have FusionAuth running, [get it going in 5 minutes](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). 

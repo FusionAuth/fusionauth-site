@@ -1,9 +1,12 @@
 module Jekyll
   module Algolia
     module Hooks
-      def self.should_be_excluded?(filepath)
-        return false if filepath =~ %r{^docs}
-        true
+     # from https://community.algolia.com/jekyll-algolia/hooks.html
+     # don't send entire html
+     # not sure if we need it
+     def self.before_indexing_each(record, node, context)
+        record[:html] = nil
+        record
       end
     end
   end

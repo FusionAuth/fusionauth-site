@@ -6,7 +6,7 @@ author: Brian Pontarelli
 image: advice/developers-guide-to-gdpr-article.png
 category: CIAM
 date: 2019-11-04
-dateModified: 2019-11-04
+dateModified: 2020-10-07
 ---
 
 ## The who, what, when, where, and why of the GDPR for developers
@@ -37,7 +37,9 @@ Developers should also be ready to accept the role of "data protection officer",
 
 ## What data are we talking about?
 
-Next, let's cover the specific data the GDPR applies to. With thousands of possible data points that can be collected, what data is included and excluded? Traditionally, companies built security around explicit user data like name, address, phone number, and credit card numbers. The GDPR defines a much wider scope encompassing any information related to a natural person (a 'data subject') that can be used to directly or indirectly identify the person. It can be anything from a name, a photo, an email address, social network identities or posts, bank details, medical information, or a computer IP address. If you can connect it back to a person, it's covered.
+Next, let's cover the specific data the GDPR applies to. With thousands of possible data points that can be collected, what data is included and excluded? Traditionally, companies built security around explicit user data like name, address, phone number, and credit card numbers. The GDPR defines a much wider scope encompassing any information related to a natural person (a 'data subject'). It can be anything from a name, a photo, an email address, social network identities or posts, bank details, medical information, or a computer IP address. If it is related to a person, it's covered. From the [GDPR website](https://gdpr.eu/eu-gdpr-personal-data):
+
+> 'Personal data' means any information relating to an identified or identifiable natural person ('data subject'); an identifiable natural person is one who can be identified, directly or indirectly, in particular by reference to an identifier such as a name, an identification number, location data, an online identifier or to one or more factors specific to the physical, physiological, genetic, mental, economic, cultural or social identity of that natural person.
 
 Obviously this creates challenges—the first reason to collect data is to tailor a user's experience based on their preferences and behavior. In modern applications it is common practice to create a marketing profile based on viewing, interaction and purchase history. It is less common to ensure that all that collected data can be completely disconnected from their real-life identity. In fact, the overzealous collection and overuse of personal data is what prompted privacy concerns with consumers worldwide.
 

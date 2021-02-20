@@ -47,7 +47,7 @@ For more details on the benefits and pitfalls of single- and multi-tenant soluti
 
 Every application has different security requirements. Some need to be HIPAA compliant, while others can be less stringent. FusionAuth lets you pick the level of security you need, and adjust it quickly as your needs or threats evolve, including using different password schemas for different groups of users. This can be a completely transparent process without any downtime or customer friction.
 
-To see this in action, [read about how we migrated DataStax](/resources/datastax-case-study "Read about DataStax migration") from their previous solution.
+To see this in action, [read about how we migrated DataStax](/resources/datastax-case-study.pdf "Read about DataStax migration") from their previous solution.
 
 ### Enterprise Identity Unification (EIU)
 

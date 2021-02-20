@@ -43,12 +43,18 @@ The stock `.env` file will contain the following values, you will want to modify
 ```
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
-DATABASE_USER=fusionauth
+# Prior to version 1.19.0, using DATABASE_USER
+# DATABASE_USER=fusionauth
+# >= 1.19.0, using DATABASE_USERNAME
+DATABASE_USERNAME=fusionauth
 DATABASE_PASSWORD=hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3
 
 ES_JAVA_OPTS=-Xms512m -Xmx512m
 
-FUSIONAUTH_MEMORY=512M
+# Prior to version 1.19.0, using FUSIONAUTH_MEMORY
+# FUSIONAUTH_MEMORY=512M
+# >= 1.19.0, using FUSIONAUTH_APP_MEMORY
+FUSIONAUTH_APP_MEMORY=512M
 ```
 
 === Docker Compose Examples
@@ -60,7 +66,7 @@ version: '3'
 
 services:
   db:
-    image: postgres:9.6
+    image: postgres:11.9-alpine
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: ${POSTGRES_USER}
@@ -80,13 +86,13 @@ services:
       - db
     environment:
       DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USER: ${POSTGRES_USER}
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
       DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_MEMORY: ${FUSIONAUTH_MEMORY}
-      FUSIONAUTH_SEARCH_ENGINE_TYPE: database
-      FUSIONAUTH_URL: http://fusionauth:9011
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+      SEARCH_TYPE: database
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
     networks:
      - db
     restart: unless-stopped
@@ -112,7 +118,7 @@ version: '3'
 services:
 
   search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.1
     environment:
       cluster.name: fusionauth
       bootstrap.memory_lock: "true"
@@ -136,8 +142,8 @@ services:
     depends_on:
       - search
     environment:
-      FUSIONAUTH_SEARCH_ENGINE_TYPE: elasticsearch
-      FUSIONAUTH_SEARCH_SERVERS: http://search:9200
+      SEARCH_TYPE: elasticsearch
+      SEARCH_SERVERS: http://search:9200
     networks:
       - search
 
@@ -150,14 +156,14 @@ volumes:
 ```
 
 == Configuration
-Review the link:../reference/configuration#environment-variables[Configuration - Environment Variables] documentation to customize your deployment.
+Review the link:/docs/v1/tech/reference/configuration/[Configuration - Environment Variables] documentation to customize your deployment.
 
 == Docker Services
 In the above example configurations you will find a database, search and FusionAuth service. Read below to better understand how each service is configured.
 
 === Database Service
 
-At a minimum, you wil need to either set the `POSTGRES_PASSWORD` environment variable in the `db` service section, or more ideally set the value in the host environment and leave it out of the `docker-compose.yml` file. Ensure the other properties fit your requirements. Refer to the link:system-requirements[System Requirements] for database version support.
+At a minimum, you wil need to either set the `POSTGRES_PASSWORD` environment variable in the `db` service section, or more ideally set the value in the host environment and leave it out of the `docker-compose.yml` file. Ensure the other properties fit your requirements. Refer to the link:/docs/v1/tech/installation-guide/system-requirements/[System Requirements] for database version support.
 
 === Search Service
 
@@ -190,11 +196,58 @@ To upgrade FusionAuth when running with `docker-compose`:
 . Start it up: `docker-compose up`.
 . Login to the administrative UI. 
 
-If there were migrations required, they'll be applied automatically to your database if the installation is link:/docs/v1/tech/installation-guide/fusionauth-app#runtime-modes[has a runtime mode of development]. If the installation is in production mode, make sure you apply the migrations out of band. 
+=== Migrations
 
-If you have previously been on `fusionauth/fusionauth-app:latest` you may need to remove the old image first, as otherwise the latest image won't be used: `docker rmi <old image id>`. 
+If there were database migrations required, what happens on an upgrade depends on two settings: the runtime mode and the silent mode.
 
-This command may prompt you to remove containers using that image. Since all state is stored in the database, you can safely remove the containers.
+[NOTE]
+====
+Prior to version 1.19, migration behavior was different. See below for more.
+====
+
+If silent mode is set to `true`, then database migrations will automatically be performed.
+
+If silent mode is `false` and the runtime mode is set to `development`, then the link:/docs/v1/tech/installation-guide/fusionauth-app/#maintenance-mode[maintenance mode screen] will pop up and you will be prompted to complete the migrations there. 
+
+In all other cases the migrations will not be applied, and you'll have to perform them yourself. If you want to manage your own database upgrades, performing the SQL migrations out of band with another tool or process is a good option.
+
+[cols="2a,2a,5a"]
+.When Are Database Migrations Applied
+|===
+|Runtime Mode|Silent Mode|Migration Behavior
+
+|`development`
+|`true`
+|Migration applied automatically
+
+|`development`
+|`false`
+|Maintenance mode UI displayed, user prompted to run migrations
+
+|`production`
+|`true`
+|Migration applied automatically
+
+|`production`
+|`false`
+|Migration never applied by FusionAuth, must be applied out of band
+|===
+
+See the link:/docs/v1/tech/reference/configuration/[configation reference] or the link:/docs/v1/tech/guides/silent-mode/[silent mode guide] for more information. To apply the database migrations out of band see the link:/docs/v1/tech/installation-guide/upgrade/#database[database upgrade] documentation.
+
+==== Prior to 1.19
+
+If the installation is in `production` mode, apply the migrations out of band. 
+
+When running in development runtime mode, silent mode was enabled based upon the presence of environment variables, such as the database user, and could not explicitly be enabled or disabled. 
+
+=== Docker tags
+
+The docker compose file references the `latest` tag, but that tag is not dynamic, it is only the latest at a point in time. To get the most recently released image, you have a couple of options.
+
+* You can edit the docker compose file with an explicit tag version. This is a good idea for a production deployment.
+* You can remove the old image first, as otherwise the latest image won't be used: `docker rmi <old image id>`. This command may prompt you to remove containers using that image. Since all state is stored in the database, you can safely remove the containers.
+* You can pull the latest image with this command: `docker pull fusionauth/fusionauth-app:latest`.
 
 == Docker Images
 
@@ -204,4 +257,78 @@ If you want to build your own image starting with our base image, the following 
 
 ```
 docker pull fusionauth/fusionauth-app
+```
+
+== Kickstart
+
+Using Docker with Kickstart is a powerful combination. Using these technologies together lets you:
+
+* Configure and share development environments
+* Create replicable bug reports 
+* Spin up auth instances with a well known, versioned set of data for continuous integration and testing
+
+All the normal limitations of Kickstart apply (the Kickstart will not run if the database has already been set up with an API key, for example).
+
+It's easy to get started with Kickstart, but you'll need to tweak your Docker Compose files a bit. Before you being, you'll need a valid `kickstart.json` file. Note that this file could be called anything, `kickstart.json` is simply a convention. Check out the link:/docs/v1/tech/installation-guide/kickstart/[Kickstart documentation] for more information on writing one.
+
+Once you have a valid `kickstart.json` file, create a subdirectory in the location of your `docker-compose.yml` file. It can be named anything; this documentation will use a directory called `kickstart`. Next, you'll mount this directory and set the `FUSIONAUTH_APP_KICKSTART_FILE` variable in the `docker-compose.yml` file. 
+
+Here are the steps to do so:
+
+* In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`
+* Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. The path refers to what the docker container expects.
+* Configure `docker-compose.yml` to pass the environment variable set by `.env` into the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
+
+The following is an example `docker-compose.yml` file configuring FusionAuth to use a `kickstart.json` at startup. 
+
+```yaml
+version: '3'
+
+services:
+  db:
+    image: postgres:9.6
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+# Un-comment to access the db service directly
+#    ports:
+#      - 5432:5432
+    networks:
+      - db
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  fusionauth:
+    image: fusionauth/fusionauth-app:latest
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+      SEARCH_TYPE: database
+      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+    networks:
+     - db
+    restart: unless-stopped
+    ports:
+      - 9011:9011
+    volumes:
+      - fa_config:/usr/local/fusionauth/config
+      - ./kickstart:/usr/local/fusionauth/kickstart
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  db_data:
+  fa_config:
 ```

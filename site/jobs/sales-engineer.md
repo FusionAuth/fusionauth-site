@@ -45,3 +45,11 @@ The requirements for this position include:
 * Creativity
 * Analytical mind and strong quantitative skills
 * BSc in Computer Science or similar field (or equivalent work experience)
+
+## Salary & Benefits
+
+* **Salary range:** $120,000 to $180,000 (depending on experience)
+* **Benefits:** Medical, dental, and vision
+* **Bonus:** Up to 10% depending on how well the company performs
+* **Stock options:** Yes!
+* **Vacation:** Flexible! Take what you need. :)

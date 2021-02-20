@@ -5,6 +5,7 @@ description: Using OIDC, we'll set up single sign on for a NodeBB forum.
 author: Dan Moore
 image: blogs/nodebb-single-sign-on/fusionauth-tutorial-sso-nodebb.png
 category: blog
+tags: feature-sso
 excerpt_separator: "<!--more-->"
 ---
 

@@ -12,7 +12,12 @@ FusionAuth configuration is managed in a number of ways, depending on the item b
 
 === Lookup process
 
-The lookup process was introduced in version link:../release-notes#version-1-19-0[`1.19.0`] and allows any configuration option to be specified in one of three ways: environment variables, Java system properties, or in the `fusionauth.properties` configuration file. Here is the process for looking up configuration options (NOTE: that the name of the configuration options are listed below):
+[NOTE.since]
+====
+Available Since Version 1.19.0.
+====
+
+The lookup process was introduced in version link:/docs/v1/tech/release-notes#version-1-19-0[`1.19.0`] and allows any configuration option to be specified in one of three ways: environment variables, Java system properties, or in the `fusionauth.properties` configuration file. Here is the process for looking up configuration options (NOTE: that the name of the configuration options are listed below):
 
 1. Check if an environment variable is defined with the configuration option name
 2. Check if an environment variable is defined with the configuration option name translated by upper-casing it and replacing periods and dashes with underscores
@@ -46,7 +51,27 @@ Assuming you installed in the default locations, the configuration file may be f
 
 === Options
 
-The following table contains all of the configuration options that FusionAuth uses.
+The following table contains all of the configuration options that FusionAuth uses. For your convenience, you may select the type of configuration you plan to use and the names will be updated to correspond to your preference.
+
+Display configuration values in format:
+++++
+<style>
+dd p.deprecated {
+  color: #B20000;
+  font-weight: 500;
+  margin-bottom: 0 !important;
+  margin-top: 25px !important;
+}
+</style>
+<label class="select" style="width: 100%;">
+  <select id="configuration-type" class="select" style="width: 100%; margin-bottom: 5px;">
+    <option value="config-file">Configuration File Properties</option>
+    <option value="environment">Environment Variable</option>
+    <option value="java-system-property">Java system property</option>
+  </select>
+</label>
+++++
+
 
 [.api]
 [field]#database.connection-healthcheck-99percent-ms# [type]#[Integer]# [default]#defaults to `250`#::
@@ -73,19 +98,24 @@ When set to `true` and using MySQL, a 4 byte UTF compatible character set config
 If this validation is not desired or not it is not possible to modify your MySQL configuration to satisfy the validation, disable this check by setting this value to `false`. If this is `false`, any attempt to store a 4 byte unicode character will cause the `INSERT` or `UPDATE` request to fail. The initial MySQL UTF-8 implementation only supported up to characters up to 3 bytes in length; utf8mb4 extends this to 4 byte characters.
 
 [field]#database.password# [type]#[String]#::
-The password that FusionAuth will use to connect to the database. If you are using link:../guides/silent-mode[Silent Mode] or link:../tutorials/setup-wizard[Setup Wizard], then this password might be used when the `database.user` is automatically created for you, depending on your database server and configuration options.
+The password that FusionAuth will use to connect to the database. If you are using link:/docs/v1/tech/guides/silent-mode/[Silent Mode] or link:/docs/v1/tech/tutorials/setup-wizard/[Setup Wizard], then this password might be used when the `database.user` is automatically created for you, depending on your database server and configuration options.
 +
 Keep in mind, that this password must be secure if you let FusionAuth create the database user for you.
 
 [field]#database.root.password# [type]#[String]#::
-The password that FusionAuth will use to connect to the database server as part of link:../guides/silent-mode[Silent Mode] or link:../tutorials/setup-wizard[Setup Wizard] if it cannot connect using the `database.username` and `database.password` values. This should be the password for a user that has superuser privileges to the database. For example, many PostgreSQL servers will provide you with a password for the `postgres` user. Similarly, MySQL servers sometimes leave the password blank for the `mysql` user.
+The password that FusionAuth will use to connect to the database server as part of link:/docs/v1/tech/guides/silent-mode/[Silent Mode] or link:/docs/v1/tech/tutorials/setup-wizard/[Setup Wizard] if it cannot connect using the `database.username` and `database.password` values. This should be the password for a user that has superuser privileges to the database. For example, many PostgreSQL servers will provide you with a password for the `postgres` user. Similarly, MySQL servers sometimes leave the password blank for the `mysql` user.
 +
 This configuration option allows FusionAuth to create its own database and schema and also create the user specified by `database.username` with the password specified by `database.password`. This setting is useful for Docker and other containers where FusionAuth needs to bootstrap itself without any user interaction.
 
-[field]#database.root.username# [type]#[String]# [deprecated-names]#(Deprecated names: database.root.user)#::
-The password that FusionAuth will use to connect to the database server as part of link:../guides/silent-mode[Silent Mode] or link:../tutorials/setup-wizard[Setup Wizard] if it cannot connect using the `database.username` and `database.password` values. This should be the username that has superuser privileges to the database. For example, many PostgreSQL servers use the username of `postgres` for the superuser account. Similarly, MySQL servers often use the username `mysql` for the superuser account.
+[field]#database.root.username# [type]#[String]#::
+The password that FusionAuth will use to connect to the database server as part of link:/docs/v1/tech/guides/silent-mode/[Silent Mode] or link:/docs/v1/tech/tutorials/setup-wizard/[Setup Wizard] if it cannot connect using the `database.username` and `database.password` values. This should be the username that has superuser privileges to the database. For example, many PostgreSQL servers use the username of `postgres` for the superuser account. Similarly, MySQL servers often use the username `mysql` for the superuser account.
 +
 This configuration option allows FusionAuth to create its own database and schema and also create the user specified by `database.username` with the password specified by `database.password`. This setting is useful for Docker and other containers where FusionAuth needs to bootstrap itself without any user interaction.
++
+[.deprecated]
+Deprecated names:
++
+* database.root.user
 
 [field]#database.url# [type]#[String]#::
 The JDBC URL that FusionAuth can use to connect to the configured database.
@@ -116,42 +146,95 @@ In the example above, notice we have specified the MySQL jdbc type, a host of `d
 If you are using MySQL, you must include the `serverTimezone=UTC` parameter in the URL. The `?` character is the same as a standard URL parameter, so if you have additional parameters, you should only have a single `?` and parameters should be separated by `&`.
 +
 You may also wish to connect to a remote database, in that case you will provide your own JDBC string URL specifying the remote database host and port.
++
+Some MySQL services such as Microsoft Azure may require a specific version of TLS to connect successfully. At the time of writing this note, the MySQL connector will not attempt to utilize TLSv1.2 by default, so when connecting to a service that requires this version you will need to explicitly request this version of TLS on the connection string. For example, appending this `enabledTLSProtocols=TLSv1.2` to the connection string will allow you to successfully connect to an Azure managed MySQL database. See https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-using-ssl.html[MySQL Connector : Connecting Securely UsingSSL] for additional information.
 
-[field]#database.username# [type]#[String]# [deprecated-names]#(Deprecated names: database.user)#::
-The database user that FusionAuth will use to connect to the database. If you are using link:../guides/silent-mode[Silent Mode] or link:../tutorials/setup-wizard[Setup Wizard], then this user might be automatically created for you, depending on your database server and configuration options. If this user is created as part of link:../guides/silent-mode[Silent Mode] or link:../tutorials/setup-wizard[Setup Wizard], it will also be the owner of the database and schema for FusionAuth.
+[field]#database.username# [type]#[String]#::
+The database user that FusionAuth will use to connect to the database. If you are using link:/docs/v1/tech/guides/silent-mode/[Silent Mode] or link:/docs/v1/tech/tutorials/setup-wizard/[Setup Wizard], then this user might be automatically created for you, depending on your database server and configuration options. If this user is created as part of link:/docs/v1/tech/guides/silent-mode/[Silent Mode] or link:/docs/v1/tech/tutorials/setup-wizard/[Setup Wizard], it will also be the owner of the database and schema for FusionAuth.
++
+[.deprecated]
+Deprecated names:
++
+* database.user
 
-[field]#fusionauth-app.additional-java-args# [type]#[String]# [deprecated-names]#(Deprecated names: fusionauth.additional-java-args)#::
+[field]#fusionauth-app.additional-java-args# [type]#[String]#::
 include::docs/v1/tech/reference/_property-additional-jvm-args.adoc[]
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth.additional-java-args
 
-[field]#fusionauth-app.ajp.port# [type]#[Integer]# [default]#defaults to `9019`# [deprecated-names]#(Deprecated names: fusionauth-app.ajp-port)#::
+[field]#fusionauth-app.ajp.port# [type]#[Integer]# [default]#defaults to `9019`#::
 The port number that FusionAuth will use to accept AJP requests.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth-app.ajp-port
 
-[field]#fusionauth-app.http.cookie-same-site-policy# [type]#[String]# [since]#Available since 1.16.0# [deprecated-names]#(Deprecated names: fusionauth-app.cookie-same-site-policy, fusionauth-app.http.cookie.same-site-policy fusionauth.cookie.same.site.policy)#::
+[field]#fusionauth-app.http.cookie-same-site-policy# [type]#[String]# [since]#Available since 1.16.0#::
 The value to use in the Same-Site cookie attribute for cookies set by FusionAuth.  Possible values are:
 +
   * `None`
   * `Lax`
   * `Strict`
-
-[field]#fusionauth-app.http.max-header-size# [type]#[Integer]# [default]#Defaults to `10240`# [since]#Available since 1.17.0# [deprecated-names]#(Deprecated names: fusionauth.http.max.header-size, fusionauth-app.http-max-header-size)#::
-The maximum size of the HTTP header in bytes.
-
-[field]#fusionauth-app.http.port# [type]#[Integer]# [default]#defaults to `9011`# [deprecated-names]#(Deprecated names: fusionauth-app.http-port)#::
-The port number that FusionAuth will use to accept HTTP requests.
-
-[field]#fusionauth-app.https.port# [type]#[Integer]# [default]#defaults to `9013`# [deprecated-names]#(Deprecated names: fusionauth-app.https-port)#::
-The port number that FusionAuth will use to accept HTTPS requests.
-
-[field]#fusionauth-app.management.port# [type]#[Integer]# [default]#defaults to `9010`# [deprecated-names]#(Deprecated names: fusionauth-app.management-port)#::
-The port number used for internal Tomcat administration.
-
-[field]#fusionauth-app.memory# [type]#[String]# [default]#defaults to `512M`# [deprecated-names]#(Deprecated names: fusionauth.memory)#::
-include::docs/v1/tech/reference/_property-memory.adoc[]
-
-[field]#fusionauth-app.public-url# [type]#[String]# [deprecated]#Deprecated#::
-The FusionAuth App URL that is used to communicate with other FusionAuth nodes. This value is defaulted if not specified to use a localhost address or a site local if available. Unless you have multiple FusionAuth nodes the generated value should always work. You may need to manually specify this value if you have multiple FusionAuth nodes and the only way the nodes can communicate is on a public network.
 +
-Once available use `fusionauth-app.url` instead.
+[.deprecated]
+Deprecated names:
++
+* fusionauth.cookie.same.site.policy
+* fusionauth-app.cookie-same-site-policy
+* fusionauth-app.http.cookie.same-site-policy
+
+[field]#fusionauth-app.http.max-header-size# [type]#[Integer]# [default]#Defaults to `10240`# [since]#Available since 1.17.0#::
+The maximum size of the HTTP header in bytes.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth.http.max.header-size
+* fusionauth-app.http-max-header-size
+
+[field]#fusionauth-app.http.port# [type]#[Integer]# [default]#defaults to `9011`#::
+The port number that FusionAuth will use to accept HTTP requests.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth-app.http-port
+
+[field]#fusionauth-app.https.port# [type]#[Integer]# [default]#defaults to `9013`#::
+The port number that FusionAuth will use to accept HTTPS requests.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth-app.https-port
+
+[field]#fusionauth-app.kickstart.file# [type]#[String]#::
+The path to the FusionAuth Kickstart JSON file.
++
+[.deprecated]
+Deprecated environment variable names:
++
+* `FUSIONAUTH_KICKSTART`
+
+[field]#fusionauth-app.management.port# [type]#[Integer]# [default]#defaults to `9010`#::
+The port number used for internal Tomcat administration.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth-app.management-port
+
+[field]#fusionauth-app.memory# [type]#[String]# [default]#defaults to `512M`#::
+include::docs/v1/tech/reference/_property-memory.adoc[]
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth.memory
 
 [field]#fusionauth-app.reindex-batch-size# [type]#[Integer]# [default]#defaults to `1000`#::
 The number of users to process per batch for a reindex operation.
@@ -159,7 +242,7 @@ The number of users to process per batch for a reindex operation.
 [field]#fusionauth-app.reindex-thread-count# [type]#[Integer]# [default]#defaults to `2`#::
 The number of threads to process batches of users on for a reindex operation.
 
-[field]#fusionauth-app.runtime-mode# [type]#[String]# [default]#defaults to `development`# [since]#Available since 1.16.0# [deprecated-names]#(Deprecated names: fusionauth.runtime-mode)#::
+[field]#fusionauth-app.runtime-mode# [type]#[String]# [default]#defaults to `development`# [since]#Available since 1.16.0#::
 The FusionAuth runtime mode. The runtime mode causes some features to be modified based upon this configuration.
 +
 The possible values are:
@@ -167,21 +250,39 @@ The possible values are:
   * `development`
   * `production`
 +
-When in the `development` runtime mode, maintenance mode will interactively assist you configuring the database and connecting to Elasticsearch if configured. Once you move FusionAuth into production, it is recommended that you modify the runtime mode to `production`. When in `production` runtime mode maintenance mode will no longer be available to you which means you can be certain that your end users will not find themselves on the database upgrade panel during an Upgrade. When in `production` mode you will either need to leverage link:../guides/silent-mode[Silent Mode] to automatically apply database migrations or you will need to apply the database migrations yourself (either by hand or via a script of some sort).
+When in the `development` runtime mode, maintenance mode will interactively assist you configuring the database and connecting to Elasticsearch if configured. Once you move FusionAuth into production, it is recommended that you modify the runtime mode to `production`. When in `production` runtime mode maintenance mode will no longer be available to you which means you can be certain that your end users will not find themselves on the database upgrade panel during an Upgrade. When in `production` mode you will either need to leverage link:/docs/v1/tech/guides/silent-mode/[Silent Mode] to automatically apply database migrations or you will need to apply the database migrations yourself (either by hand or via a script of some sort).
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth.runtime-mode
 
 [field]#fusionauth-app.silent-mode# [type]#[Boolean]# [default]#defaults to `false`# [since]#Available since 1.19.0#::
-Determines if FusionAuth should use link:../guides/silent-mode[Silent Mode] during the startup process. Previous to version `1.19.0`, Silent Mode was only available when the [field]#fusionauth-app.runtime-mode# was `development`. This has been changed so that FusionAuth can now automatically apply database migrations during the startup process.
+Determines if FusionAuth should use link:/docs/v1/tech/guides/silent-mode/[Silent Mode] during the startup process. Previous to version `1.19.0`, Silent Mode was only available when the [field]#fusionauth-app.runtime-mode# was `development`. This has been changed so that FusionAuth can now automatically apply database migrations during the startup process.
 
 [field]#fusionauth-app.url# [type]#[String]# [since]#Available since 1.4.0#::
 The FusionAuth App URL that is used to communicate with other FusionAuth nodes. This value is defaulted if not specified to use a localhost address or a site local if available. Unless you have multiple FusionAuth nodes the generated value should always work. You may need to manually specify this value if you have multiple FusionAuth nodes and the only way the nodes can communicate is on a public network.
 
-[field]#fusionauth-search.additional-java-args# [type]#[String]# [deprecated-names]#(Deprecated names: fusionauthsearch.additional.java.args)#::
+[field]#fusionauth-app.user-search-index.name# [type]#[String]# [default]#defaults to `fusionauth_user`# [since]#Available since 1.22.0#::
+The name of the Elasticsearch index that will be created by FusionAuth to index users.
+
+[field]#fusionauth-search.additional-java-args# [type]#[String]#::
 include::docs/v1/tech/reference/_property-additional-jvm-args.adoc[]
++
+[.deprecated]
+Deprecated names:
++
+* fusionauthsearch.additional.java.args
 
-[field]#fusionauth-search.data-directory# [type]#[String (Path)]# [deprecated-names]#(Deprecated names: fusionauthsearch.data.directory)#::
+[field]#fusionauth-search.data-directory# [type]#[String (Path)]#::
 The location on disk where FusionAuth Search will store its data. This value is defaulted if not specified and generally should not be modified.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauthsearch.data.directory
 
-[field]#fusionauth-search.hosts# [type]#[String]# [default]#defaults to `\_local_`# [deprecated-names]#(Deprecated names: fusionauthsearch.hosts)#::
+[field]#fusionauth-search.hosts# [type]#[String]# [default]#defaults to `\_local_`#::
 This parameter indicates which address or network interfaces to bind during service startup. The default value will cause the service to bind  any loopback address on the system such as `127.0.0.1`.
 +
 This default value is sufficient for running FusionAuth and the Search Engine on the same server. If you run FusionAuth Search on a separate system than FusionAuth App you will need to modify this value. You may specify a single hostname or IP address or one of the special values in any combination.
@@ -197,12 +298,27 @@ The following is an example to bind to `localhost` as well as any site local add
 +
 [quote]
 `fusionauth-search.hosts=\_local_,\_site_`
++
+[.deprecated]
+Deprecated names:
++
+* fusionauthsearch.hosts
 
-[field]#fusionauth-search.http.port# [type]#[Integer]# [default]#defaults to `9021`# [deprecated-names]#(Deprecated names: fusionauth-search.http-port)#::
+[field]#fusionauth-search.http.port# [type]#[Integer]# [default]#defaults to `9021`#::
 The port number that the Search Engine will use to accept HTTP requests. This value is also utilized by FusionAuth to make HTTP requests to the FusionAuth Search.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth-search.http-port
 
-[field]#fusionauth-search.memory# [type]#[String (Memory)]# [default]#defaults to `512M`# [deprecated-names]#(Deprecated names: fusionauthsearch.memory)#::
+[field]#fusionauth-search.memory# [type]#[String (Memory)]# [default]#defaults to `512M`#::
 include::docs/v1/tech/reference/_property-memory.adoc[]
++
+[.deprecated]
+Deprecated names:
++
+* fusionauthsearch.memory
 
 [field]#fusionauth-search.servers# [type]#[String]# [default]#defaults to `localhost:9020`# [deprecated]#No longer used as of `1.16.0`#::
 A comma separated list of stand-alone search engine servers that will be used by FusionAuth. The port specified on the server should be the Search Engine Transport port, not the HTTP port.
@@ -214,21 +330,81 @@ The following is an example of a configuration for two separate search engines, 
 +
 This configuration value is used by the FusionAuth Search and the FusionAuth App services. Even when running FusionAuth App without FusionAuth Search on the same server this configuration value will need to be provided.
 
-[field]#fusionauth-search.transport.port# [type]#[Integer]# [default]#defaults to `9020`# [deprecated-names]#(Deprecated names: fusionauth-search.transport-port, fusionauthsearch.transport.port)#::
+[field]#fusionauth-search.transport.port# [type]#[Integer]# [default]#defaults to `9020`#::
 The port that the search engine will use for optimized TCP communications instead of HTTP communications. This port is used internally by the search engine to communicate between clustered nodes.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth-search.transport-port
+* fusionauthsearch.transport.port
 
-[field]#search.servers# [type]#[String]# [default]#defaults to `http://localhost:9021`# [deprecated-names]#(Deprecated names: fusionauth-app.search-servers)#::
+[field]#search.servers# [type]#[String]# [default]#defaults to `http://localhost:9021`#::
 A comma separated list of URLs that will be used by FusionAuth to connect to the search engine. The port specified on the URL should be the Search Engine HTTP port. (see `fusionauth-search.http-port`) It is not recommended to ever run the FusionAuth Search open to the public internet.
 +
 The following is an example of a configuration for two separate search engines, one running on localhost and the other is on a remote system.
 +
 [quote]
 `search.servers=http://localhost:9021,http://search2.example.com:9021`
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth-app.search-servers
 
-[field]#search.type# [type]#[String]# [default]#defaults to `database`# [since]#Available since 1.16.0# [deprecated-names]#(Deprecated names: fusionauth-app.search-engine-type, fusionauth.search.engine, fusionauth.search.engine.type)#::
+[field]#search.sniffer# [type]#[Boolean]# [default]#defaults to `false`# [since]#Available since 1.19.8#::
+Set to `true` if you want to use the Elasticsearch sniffer configuration. If you are using a managed Elasticsearch service, or running Elasticsearch inside of a container, you should leave this value set to `false`.
++
+This configuration can be helpful to allow FusionAuth to use a single connection to `localhost` and then allow the Elasticsearch REST client to discover all other nodes in the Elasticsearch cluster.
+
+[field]#search.type# [type]#[String]# [default]#defaults to `database`# [since]#Available since 1.16.0#::
 The search engine type.  The possible values are:
 +
   * `database`
   * `elasticsearch`
 +
 When configuring the search engine type to `elasticsearch`, you must configure the [field]#search.servers# property as well.
++
+[.deprecated]
+Deprecated names:
++
+* fusionauth-app.search-engine-type
+* fusionauth.search.engine
+* fusionauth.search.engine.type
+
+++++
+<script>
+var redraw = function() {
+  var selected = select.options[select.selectedIndex].value;
+  localStorage.setItem('configuration-type', selected);
+  for (var i = 0; i < elements.length; i++) {
+    var element = elements[i];
+    element.data = element.data || {};
+    element.data.property = element.data.property || element.innerHTML;
+    if (selected === 'config-file') {
+      element.innerHTML = element.data.property;
+    } else if (selected === 'environment') {
+      element.innerHTML = element.data.property.replaceAll('.', '_').replaceAll('-', '_').toUpperCase();
+    } else {
+      element.innerHTML = '-D' + element.data.property;
+    }
+  }
+}
+
+var elements = document.querySelectorAll('dl.api dt > .field');
+var select = document.getElementById('configuration-type');
+var saved = localStorage.getItem('configuration-type');
+if (saved) {
+  var options = select.getElementsByTagName('option');
+  for (var j = 0; j < options.length; j++) {
+    if (options[j].value === saved) {
+       options[j].selected = true;
+       redraw();
+       break;
+    }
+  }
+}
+
+select.addEventListener('change', redraw);
+</script>
+++++

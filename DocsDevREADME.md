@@ -1,6 +1,6 @@
 ## Documentation Style Guidelines
 
-Here are some guidelines to follow when writing documentation. 
+Here are some guidelines to follow when writing documentation (everything under `/site/docs`.
 
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing. 
 - Use `Id` instead of `ID` when describing a unique identifier
@@ -10,11 +10,24 @@ Here are some guidelines to follow when writing documentation.
 - Don't abbreviate FusionAuth, use the full name.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - Use single backticks when specifying a value that is not a field.
+- When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
+- Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
+- All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
+- If something is new in a version, mark it with something like this:
+[NOTE.since]
+====
+Available Since Version 1.5.0
+====
+- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_`.
+- If you are including a file in the docs/asciidoctor, do not prepend the include file path with `/`. Instead, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
 
 For blog posts:
 - Indent all code with two spaces per level.
+- We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
 - Blog post headers should have only the first word and any proper nouns are capitalized.
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
+- For field names, use double quotes: "Login Identifier Attribute".
+- For values, use back ticks: `userPrincipalName`.
 
 For lists:
 - Capitalize the first word.
@@ -23,13 +36,21 @@ For lists:
 ### Proper names
 - macOS
 - Elasticsearch
- 
+- .NET Core
+- OAuth and OAuth2
+- Identity Provider
+- Connector
+- Kickstart
 
 ## Sizing Window for Screenshots
 
 When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent browser window.
 
-Note that you must have at least 1100 pixels of screen height. If you do not, your dimensions will be skewed. Go to "System Preferences > Display" then choose "More space".
+Note that you must have at least `1100` pixels of screen height. If you do not, your dimensions will be skewed. Go to `System Preferences > Display` then choose `More Space` or the next selection up from your current selection to ensure you have enough space available.
+
+You will also want to ensure that you do not have scroll bars omni-present, this will affect the UI when taking screenshots. See `System Preferences > General > Show scroll bars` and ensure `When scrolling` is selected.
+
+Also note that you should be resizing the image down to 1600px wide. If you are resizing up, something is wrong and your images will be fuzzy. 
 
 ```appleScript
 set theApp to "Safari"
@@ -39,6 +60,10 @@ set theApp to "Safari"
 #set appWidth to 1080
 
 # Wider UI screens
+#set appHeight to 1100
+#set appWidth to 1550
+
+# Video
 #set appHeight to 1100
 #set appWidth to 1550
 
@@ -68,6 +93,8 @@ end tell
 
 ## Screenshot Standards
 
+- Use light mode when capturing screenshots
+- Make sure you set your `fusionauth-app.runtime-mode` to `production` unless documenting a feature only available in `development` mode.
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
    - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
@@ -75,10 +102,11 @@ end tell
    - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the 
      class may not be necessary if there is adequate spacing below. When text continues below or right above you will need 
      the class.
+- If you crop the image, don't use the `box-shadow` role. And vice versa.
 - Highlight sections using image preview editor
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
-	1. Resize to width of 1600 in Preview.app
+	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
 	2. Use https://tinypng.com/ to compress the image
 
 Converting terminalizer gifs to videos
@@ -129,3 +157,20 @@ Then, wherever you want the related posts to show up, add this text:
 ```
 
 Update the `relatedTag` value to match the tag added to the blog post.
+
+
+## Search
+
+We use algolia to search.
+
+To do a dry run:
+
+```
+bundle exec jekyll algolia --dry-run 
+```
+
+or, if you want to see everything:
+
+```
+bundle exec jekyll algolia --dry-run --verbose
+```
