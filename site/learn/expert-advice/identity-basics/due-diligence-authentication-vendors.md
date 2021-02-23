@@ -28,7 +28,7 @@ In this article, I'll discuss the various areas you should be checking into for 
 ## Security
 Security is at the top of this list and should come as no surprise. Letting unauthorized parties get access to systems leads to loss of consumer confidence and financial penalties from regulators. Putting in effort to make sure an AaaS offers proper security is critical.
 
-Authentication providers should have strong guardrails to protect your users' confidential data and minimize the possibility of security breaches. Work with potential authentication providers and your internal stakeholders on the following items to ensure security standards are met before onboarding them:
+Authentication providers should have strong guardrails to protect your users' confidential data and minimize the possibility of security breaches. Work with potential authentication providers and your internal stakeholders on the following items to ensure security standards are met before integrating them:
 
 1. Include all business and technology stakeholders to facilitate the security review. This will allow you to map which business segments will rely on the authentication provider. Make a practice of communicating your findings with these stakeholders as you move through these steps.
 1. Ask your vendor to fill out a questionnaire. This is a standard practice to understand security policies established by authentication providers. These questions should cover all security details, for example, how often are passwords reset? How are credentials stored? Where are they stored?
