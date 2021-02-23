@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: AaaS Security Due Diligence Tips
-description: What kind of security due diligence is needed before you choose an AaaS vendor?
+description: Before you choose an AaaS vendor, what kind of security due diligence should you perform?
 author: Mihir Patel
 image: blogs/securing-golang-microservice-jwt/securing-a-go-microservice-with-jwt-header-image.png
 category: blog
