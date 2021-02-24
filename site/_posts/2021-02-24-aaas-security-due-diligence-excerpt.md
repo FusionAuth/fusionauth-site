@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: AaaS Security Due Diligence Tips
-description: Before you choose an AaaS vendor, what kind of security due diligence should you perform?
+title: Authentication as a Service Security Due Diligence Tips
+description: Before you choose an Authentication as a Service (AaaS) vendor, what kind of security due diligence should you perform?
 author: Mihir Patel
 image: blogs/securing-golang-microservice-jwt/securing-a-go-microservice-with-jwt-header-image.png
 category: blog
@@ -25,9 +25,9 @@ _This blog post is an excerpt of [Performing Due Diligence on Authentication Ven
 
 If you do outsource authentication capability, then putting in your due diligence is a must.
  
-_Due diligence_ is a series of steps that require research and testing the capabilities of a third-party vendor. Going through this very intentional exercise is absolutely crucial before you onboard an AaaS into your system, as it can prevent future issues with security, performance, engineering, and pricing.
+_Due diligence_ is a series of steps that requires research and testing the capabilities of a third-party vendor. Going through this very intentional exercise is absolutely crucial before you onboard an AaaS into your system, as it can prevent future issues with security, performance, engineering, and pricing.
 
-## Think about security
+## Think about the security standards of the authentication provider
 
 Security is at the top of the list of due diligence tasks and should come as no surprise. Letting unauthorized parties get access to systems leads to loss of consumer confidence and financial penalties from regulators. Putting in effort to make sure an AaaS offers proper security is critical.
 

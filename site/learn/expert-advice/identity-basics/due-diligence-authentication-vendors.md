@@ -25,7 +25,8 @@ _Due diligence_ is a series of steps that require research and testing the capab
 
 In this article, I'll discuss the various areas you should be checking into for a potential AaaS, including security, performance, engineering implementation, and pricing.
 
-## Security
+## Examining the authentication provider's security standards
+
 Security is at the top of this list and should come as no surprise. Letting unauthorized parties get access to systems leads to loss of consumer confidence and financial penalties from regulators. Putting in effort to make sure an AaaS offers proper security is critical.
 
 Authentication providers should have strong guardrails to protect your users' confidential data and minimize the possibility of security breaches. Work with potential authentication providers and your internal stakeholders on the following items to ensure security standards are met before integrating them:
@@ -39,7 +40,8 @@ Authentication providers should have strong guardrails to protect your users' co
 
 Of course, we could dive deeper into security due diligence, but the items above should be a minimum place to start.
 
-## Performance 
+## Measuring performance with benchmarks
+
 Naturally, there's a tradeoff between building an infrastructure in-house and outsourcing. What you decide will have implications on your services. Auth0, Okta, and FusionAuth are performant services, but you should have preliminary benchmarks to measure initial performance against, with and without AaaS. You can use your performance metric to benchmark against external vendors to make sure they can meet your SLA and performance standards.
 
 First, we need to conduct benchmark testing. If we don't know what we are measuring against, performance metrics don't mean much. Coordinate testing measures on some of the following topics with your QA team:
@@ -50,8 +52,9 @@ First, we need to conduct benchmark testing. If we don't know what we are measur
 1. Introducing an authentication service in your architecture can lead to latency issues. Sign-ins will have to go through the authentication provider's data center before a user can start interacting with your features. This extra round trip can be costly unless the service is hosted on premise or in the same Availability Zones as your cloud provider.
 1. How is maintenance handled and communicated? If your business is global, local maintenance can impact clients globally. If your  business is global, you need a vendor who can support your services in different time zones. Vendor maintenance needs to be communicated to all impacted teams across the globe, and you have to make sure you know who exactly is responsible for that maintenance and releasing communication. Ensure your vendor communicates clearly and directly.
  
-## Engineering Implementation
-Authentication is a simple concept but a costly and complex infrastructure, which is exactly why [AaaS is on the rise](https://www.globenewswire.com/news-release/2020/05/09/2030657/0/en/Global-Authentication-Services-Industry.html#:~:text=Authentication%20Services%20market%20worldwide%20is,to%20grow%20at%20over%2020.). Outsourcing critical pieces of software development can help engineering teams deliver high-impact features without losing velocity.
+## Engineering effort to implement authentication
+
+Authentication is a simple concept but has costly and complex infrastructure, which is exactly why [AaaS is on the rise](https://www.globenewswire.com/news-release/2020/05/09/2030657/0/en/Global-Authentication-Services-Industry.html#:~:text=Authentication%20Services%20market%20worldwide%20is,to%20grow%20at%20over%2020.). Outsourcing critical pieces of software development can help engineering teams deliver high-impact features without losing velocity.
  
 Authentication providers need to keep this in mind while selling you on their service. If implementation is not straightforward, then it's not as beneficial. Here are some ways to ensure the process of AaaS implementation doesn't cost you market velocity:
  
