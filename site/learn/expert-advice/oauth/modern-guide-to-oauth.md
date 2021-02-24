@@ -1182,9 +1182,7 @@ if (window.location.hash.contains('access_token')) {
 
 Three lines of code and the access token has been stolen. As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend that no one ever use this grant.
 
-If you aren't dissuaded by the above scariness, and you really need to use the implicit grant, please [check out our documentation](/docs/v1/tech/oauth/#example-implicit-grant), which walks you through how to implement it. 
-
-XXX WIP
+If you aren't dissuaded by the above scariness, and you really need to use the Implicit grant, please [check out our documentation](/docs/v1/tech/oauth/#example-implicit-grant), which walks you through how to implement it. 
 
 ### Resource Owner's Password Credentials Grant
 
@@ -1198,7 +1196,7 @@ Many mobile applications and legacy web applications use this grant because they
 
 There are two main issues with this approach:
 
-1. The application is collecting the username and password and sending it to the OAuth server. This means that the application has ensure that the username and password are completely secure. This differs from the Authorization Code Grant where the username and password are only provided directly to the OAuth server.
+1. The application is collecting the username and password and sending it to the OAuth server. This means that the application has ensure that the username and password are completely secure in transit. This differs from the Authorization Code Grant where the username and password are only provided directly to the OAuth server.
 1. This grant does not support any of the auxiliary security features that your OAuth server may provide such as:
     * Multi-factor authentication
     * Password resets
@@ -1207,9 +1205,9 @@ There are two main issues with this approach:
     * Email and account verification
     * Passwordless login
 
-Due to how limiting and insecure this grant is, it has been removed from the latest OAuth specification and it is recommended to not use it in production.
+Due to how limiting and insecure this grant is, it has been removed from the latest draft of the OAuth specification and it is recommended to not use it in production.
 
-<<TODO add info here if they really want to implement this, point them at docs>>
+If you aren't dissuaded by the above issues with this grant, and you have a use case where you really need it, please [check out our documentation](/docs/v1/tech/oauth/#example-resource-owner-password-credentials-grant), which walks you through how to use it. 
 
 ### Client Credentials Grant
 
@@ -1221,7 +1219,7 @@ The Client credentials grant leverages the Token endpoint of the OAuth server an
 * `client_secret` - this is a secret key that is provided by the OAuth server. This should never be made public and should only ever be stored on the server.
 * `grant_type` - this will always be the value `client_credentials` to let the OAuth server know we are using the Client credentials grant.
 
-You can send the `client_id` and `client_secret` in the request body or you can send them in using Basic authorization. We'll send them in the body in the code below to keep things consistent with the code from the authorization code grant above.
+You can send the `client_id` and `client_secret` in the request body or you can send them in using Basic authorization. We'll send them in the body in the code below to keep things consistent with the code from the Authorization Code grant above.
 
 Let's rework our TWGTL application to use the client credentials grant in order to support two different backends making APIs calls to each other.
 
@@ -1260,6 +1258,55 @@ function sendWUPHF(title, userId) {
   );
 }
 ```
+```javascript
+const axios = require('axios');
+const axios = require('./common');
+
+router.post('/api/todos/complete/:id', function(req, res, next) {
+  common.authorizationCheck(req, res).then((authorized) => {
+    if (!authorized) {
+      res.sendStatus(403);
+      return;
+    }
+
+    // First, complete the ToDo by id
+    const idToUpdate = parseInt(req.params.id);
+    common.completeTodo(idToUpdate);
+    const todo = common.getTodo(idToUpdate);
+    const user = common.retrieveUser(req.cookies.access_token);
+  
+    sendWUPHF(todo.task, user, req.cookies.access_token);
+
+    // return all the todos
+    const todos = common.getTodos();
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(todos));
+  });
+}
+
+function async sendWUPHF(title, user, access_token) {
+    const body = { 'title': title, 'userId': user.id }
+    const result = await axios.post('https://wuphf-microservice.twgtl.com/send', body, { headers : { authorization: { 'bearer': accessToken } } }).
+
+
+    const wuphfTokens = loadWUPHFTokens(user);
+  
+    // Finally, call the API
+    axios.post('https://api.wuphf.com/send', {}, { 
+          headers: {
+            auth: { 'bearer': wuphfTokens.accessToken, 'refresh': wuphfTokens.refreshToken }
+          }
+        }).then((response) => {
+          // check for status, log if not 200
+        }
+      );
+    });
+    
+  });
+});
+```
+
+xxx stoppped here
 
 Here is the WUPHF microservice code that receives the access token and title of the WUPHF and sends it out:
 
@@ -1385,3 +1432,8 @@ implicit grant: implement yummy, ask ouaht server is this real
 introspect in client credentials because token isn't nec a jwt
 
 mobile applications best current practice, not applicable when you control both sides (local login)
+
+check the casing of each grant name
+Authorization Code
+Implicit
+Client Credentials
