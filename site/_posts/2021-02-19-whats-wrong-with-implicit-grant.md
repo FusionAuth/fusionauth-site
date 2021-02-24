@@ -1,14 +1,14 @@
 ---
 layout: blog-post
-title: What's Wrong With the Implicit Grant
-description: OAuth2 specifies an implicit grant. What's wrong with using it?
+title: What's Wrong With the Implicit Grant?
+description: OAuth2 specifies an Implicit grant. What's wrong with using it?
 author: Brian Pontarelli
 image: blogs/securing-golang-microservice-jwt/securing-a-go-microservice-with-jwt-header-image.png
 category: blog
 tags: client-javascript
 excerpt_separator: "<!--more-->"
 ---
-The implicit grant is part of the OAuth 2 RFC, but is [one of the features omitted in the OAuth 2.1 specification](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/). With this grant, you don't have to write server side code. Instead of having to exchange an authorization code for an access token, you are provide an access token on redirect.
+The Implicit grant is part of the OAuth 2 RFC, but is [one of the features omitted in the OAuth 2.1 specification](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/). With this grant, you don't have to write server side code. Instead of having to exchange an authorization code for an access token, you are provided an access token on redirect.
 
 <!--more-->
 
@@ -26,11 +26,11 @@ Instead of showing you how to use this grant, let's discuss why you should avoid
 
 The reason that it has been removed is that it skips an important step that allows you to secure the tokens you receive from the OAuth server. This step occurs when your application backend makes the call to the Token endpoint to retrieve the tokens.
 
-Unlike the Authorization Code Grant, the Implicit Grant does not redirect the browser back to your application backend with an Authorization Code. Instead, it puts the access token directly on the URL as part of the redirect. These URLs look like this:
+Unlike the [Authorization Code grant](/docs/v1/tech/oauth/#example-authorization-code-grant), the Implicit grant does not redirect the browser back to your application backend with an Authorization Code. Instead, it puts the access token directly on the URL as part of the redirect. These URLs look like this:
 
-`https://my-app.com/#token-goes-here`
+`https://piedpiper.com/#token-goes-here`
 
-The token is added to the redirect URL after the `#` symbol, which means it is technically the fragment portion of the URL. What this means is that wherever the OAuth server redirects the browser to, the access token is accessible any code running in the browser. In other words, to basically everyone. 
+The token is added to the redirect URL after the `#` symbol, which means it is technically the fragment portion of the URL. What this means is that wherever the OAuth server redirects the browser to, the access token is accessible to any code running in the browser. In other words, to basically everyone. 
 
 To be more precise, the access token is accessible to any and all JavaScript that is running in the browser (including third party libraries). Since this token allows the browser to make API calls and web requests on behalf of the user, having this token be accessible to third-party code is extremely dangerous.
 
@@ -48,10 +48,10 @@ Let's take a dummy example of a single-page web application that uses the Implic
 </body>
 ```
 
-This HTML includes 2 JavaScript libraries:
+This HTML includes two JavaScript libraries:
 
-* The code for the application itself (`my-spa-code-1.0.0.js`)
-* A library we found online that did something cool and we just pulled it in (`a-library-found-online-that-looked-cool-0.42.0.js`)
+* The code for the application itself (`my-spa-code-1.0.0.js`).
+* A library we found online that did something cool and we just pulled it in (`a-library-found-online-that-looked-cool-0.42.0.js`).
 
 Let's assume that our code is 100% secure and we don't have to worry about it. The issue here is that the library we pulled in is an unknown quantity. 
 
@@ -69,9 +69,11 @@ if (window.location.hash.contains('access_token')) {
 
 Three lines of code and the access token has been stolen. As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend that no one ever use this grant.
 
-## How to use OAuth in a SPA correctly
+## How to correctly use OAuth in a SPA
 
-Well, what should you use instead, if you are building a single page application?
+Well, if you are building an awesome React, Angular, Vue or other single page application, what should you use instead of the Implicit grant?
+
+Use the Authorization Code grant. In addition:
 
 * Use PKCE in your SPA to make sure your application, which can't maintain a secure client secret, is not susceptible to an authorization code interception attack.
 * Run a server. It needn't be complicated. In fact, it can be as simple as a few lines of node to exchange the authorization code for an access token. Here's [an example Node application](https://github.com/fusionauth/fusionauth-example-node). 
