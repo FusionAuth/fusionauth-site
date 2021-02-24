@@ -9,22 +9,30 @@ date: 2020-10-06
 dateModified: 2020-10-06
 ---
 
-# TODO
+I know what you are thinking, is this really another guide to OAuth 2.0? Well, yes and no. This guide is different than most of the others out there because it covers all of the ways that we actually use OAuth. It also covers all of the details you need to be an OAuth expert without reading all the specifications or writing your own OAuth server. This document is based on hundreds of conversations and multiple client and server implementations.
 
-* Build TOC and rework sections maybe
-* Add refresh token handling and code
-* Add user info endpoint usage
-* Clean up introspect code and discussion
-* Add API examples
-* Convert all request uses to axios or node-fetch or some other API
-* Test code
-* Make diagrams
-* Make images
+If that sounds good to you, keep reading! 
 
+We do cover a lot, so here's a handy table of contents to let you jump directly to a section if you'd like.
 
-I know what you are thinking, is this really another guide to OAuth 2.0? Well, yes and no. This guide is different than most of the others out there because it covers all of the ways that we actually use OAuth. It also covers all of the details you need to be an OAuth expert without reading all the specifications or writing your own OAuth server. XXX based on hundreds of conversations as well as implementing clients and servers multiple times.
-
-If that sounds good to you, keep reading!
+* [OAuth overview](#oauth-overview)
+* [OAuth modes](#oauth-modes)
+  * [Local login and registration](#local-login-and-registration)
+  * [Third-party login and registration](#third-party-login-and-registration)
+  * [First-party login and registration](#first-party-login-and-registration)
+  * [Enterprise login and registration](#enterprise-login-and-registration)
+  * [Third-party service authorization](#third-party-service-authorization)
+  * [First-party service authorization](#first-party-service-authorization)
+  * [Machine-to-machine authorization](#machine-to-machine-authorization)
+  * [Device login and registration](#device-login-and-registration)
+  * [Which mode is right for you?](#which-mode-is-right-for-you)
+* [Grants](#grants)
+  * [Authorization code grant](#authorization-code-grant)
+  * [Implicit grant](#implicit-grant)
+  * [Resource Owner's Password Credentials Grant](#resource-owners-password-credentials-grant)
+  * [Client Credentials Grant](#client-credentials-grant)
+  * [Device Grant](#device-grant)
+* [Conclusion](#conclusion)
 
 ## OAuth overview
 
@@ -36,7 +44,7 @@ What does that mean? It means that your application sends the user over to an OA
 
 None of the specifications cover how OAuth is actually integrated into applications. XXX but as a developer, that's what you care about. XXX They also don't cover the different workflows or processes that leverage OAuth. They leave almost everything up to the implementor (the person that writes the OAuth Server) and integrator (the person that integrates their application with the OAuth server). Rather than just reword the information in the specifications (yet again), let's create a vocabulary for real-world integrations and implementations of OAuth. We'll call them **OAuth modes**.
 
-There are 8 OAuth modes that are commonly used today. These real world OAuth modes are:
+There are eight OAuth modes that are commonly used today. These real world OAuth modes are:
 
 1. Local login and registration
 1. Third-party login and registration _(federated identity)_
@@ -49,7 +57,21 @@ There are 8 OAuth modes that are commonly used today. These real world OAuth mod
 
 I've included notation on a few of the items above specifying which are federated identity workflows. The reason that I've changed the names here from just "federated identity" is that each case is slightly different. Plus, the term federated identity is often overloaded and mis-understood. To help clarify terms, I'm using "login" instead. However, this is generally the same as "federated identity" in that the user's identity is stored in an OAuth server and the authentication/authorization is delegated to that server.
 
-Let's discuss each mode in a bit more detail.
+Let's discuss each mode in a bit more detail, but first, a cheat sheet.
+
+### Which mode is right for you?
+
+Wow, that's a lot of different ways you can use OAuth. That's the power and the downfall of OAuth, to be honest with you. It can serve so many purposes that many people new to it can be overwhelmed.
+
+So, here's a handy set of questions for you to ask yourself.
+
+* Are you building service to service communication? Is there no user involved? If so, you are looking for [Machine-to-machine authorization](#machine-to-machine-authorization).
+* Are you trying to let a user log in from a separate device? That is, from a TV or other device without a friendly typing interface? If this is the case, check out [Device login and registration](#device-login-and-registration).
+* Are you building a platform and want to allow other developers to ask for permissions to make calls to APIs or services on your platform? Put on your hoodie and review [First-party login and registration](#first-party-login-and-registration) and [First-party service authorization](#first-party-service-authorization).
+* Do you have a user store already integrated and only need to access a third party service on your users' behalf? Re-read [Third-party service authorization](#third-party-service-authorization).
+* Are you selling to Enterprise customers? Folks who hear terms like SAML and SOC2 and are comforted, rather than disturbed? Scoot on over to [Enterprise login and registration](#enterprise-login-and-registration).
+* Trying to avoid storing password credentials locally because you don't want to any responsibility for passwords? [Third-party login and registration](#third-party-login-and-registration) is where it's at.
+* Are you looking to build a safe, secure and standards friendly authentication and authorization system? You'll want [Local login and registration](#local-login-and-registration) in that case.
 
 ### Local login and registration
 
@@ -77,6 +99,14 @@ So, how does this work in practice? Let's take a look at the steps for a fictiti
 That's it. The user feels like they are registering and logging into TWGTL directly, but in fact, TWGTL is delegating this all to the OAuth server. The user is none-the-wiser so this is why we call this mode *Local login and registration*.
 
 <<IMAGE OR VIDEO HERE MAYBE?>>
+
+This mode has implications for some of the security best practices. In particular, the [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) Best Current Practices (BCP) recommends against using a webview:
+
+> This best current practice requires that native apps MUST NOT use embedded user-agents to perform authorization requests...
+
+This is because the "embedded user-agents", also known as webviews, are under control of the mobile application developer in a way that the system browser is not. 
+
+If you are operating in a mode where the OAuth server is under a different party's control, such as the third-party login that we'll cover next, this prohibition makes sense. But in the local mode, you control everything. In that case, the chances of a malicious webview being able to do extra damage is minimal, and must be weighed against the user interface issues associated with popping out to a system browser for authentication.
 
 ### Third-party login and registration
 
@@ -210,33 +240,6 @@ A good example of this mode is setting up a streaming app on an Apple TV, smart 
 
 This mode often takes a bit of time to complete because the app on the Apple TV is polling the OAuth server. We won't go over this mode in detail because our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization/) covers this mode.
 
-### Which mode is right for you?
-
-Are you building service to service communication?
-
-Y Machine-to-machine authorization
-
-N Are you trying to let a user login from a separate device
-
-Y Device login and registration 
-
-N Are you building a platform and want to allow other developers to ask for permissions to make calls on your platform
-
-Y first party stuff
-
-N Do you have a user store already and need access to a third party service on their behalf?
-
-Y Third-party service authorization
-
-N Are you selling to enterprise customers
-
-Y enterprise federation
-
-N Are you trying to avoid storing password credentials locally?
-
-Y third party federation
-
-N local login 
 
 ## Grants
 
@@ -553,7 +556,7 @@ router.get('/oauth-callback', (req, res, next) => {
   form.append('code_verifier', codeVerifier);
   form.append('grant_type', 'authorization_code');
   form.append('redirect_uri', redirectURI);
-  axios.post('https://local.fusionauth.io/oauth2/token', form, { headers: form.getHeaders() })
+  axios.post('https://login.twgtl.com/oauth2/token', form, { headers: form.getHeaders() })
     .then((response) => {
       const accessToken = response.data.access_token;
       const idToken = response.data.id_token;
@@ -600,9 +603,9 @@ const FormData = require('form-data');
 const config = require('./config');
 const { promisify } = require('util');
 
-const helper = {};
+const common = {};
 
-const jwksUri = 'https://local.fusionauth.io/.well-known/jwks.json';
+const jwksUri = 'https://login.twgtl.com/.well-known/jwks.json';
 
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
@@ -614,7 +617,7 @@ const client = jwksClient({
   timeout: 30000, // Defaults to 30s
 });
 
-helper.parseJWT = async (unverifiedToken, nonce) => {
+common.parseJWT = async (unverifiedToken, nonce) => {
   const parsedJWT = jwt.decode(unverifiedToken, {complete: true});
   const getSigningKey = promisify(client.getSigningKey).bind(client);
   let signingKey = await getSigningKey(parsedJWT.header.kid);
@@ -636,7 +639,7 @@ helper.parseJWT = async (unverifiedToken, nonce) => {
 
 //...
 
-module.exports = helper;
+module.exports = common;
 
 ```
 
@@ -749,7 +752,7 @@ First, let's look at using the introspect endpoint to get information about an a
 Let's write a function that uses the introspect endpoint to determine if the access token is still valid. This is an alternative to parsing the JWT locally. If you want to keep your JWT logic to a minimum, you can defer to this endpoint; the tradeoff is that you'll be making a network call. This code will leverage FusionAuth's introspect endpoint, which again is always at a well-defined location:
 
 ```javascript
-helper.validateToken = async function (accessToken, clientId) {
+common.validateToken = async function (accessToken, clientId) {
 
   const form = new FormData();
   form.append('token', accessToken);
@@ -805,7 +808,7 @@ Here's a function that we can use to retrieve a user object from the UserInfo en
 
 ```javascript
 
-helper.retrieveUser = async function (accessToken) {
+common.retrieveUser = async function (accessToken) {
   const response = await axios.get('https://login.twgtl.com/oauth2/userinfo', { headers: { 'Authorization' : 'Bearer ' + accessToken } });
   try {
     if (response.status === 200) {
@@ -820,7 +823,7 @@ helper.retrieveUser = async function (accessToken) {
 }
 ```
 
-#### Local login and registration
+#### Local login and registration with the Authorization Code grant
 
 Now that we have covered the Authorization Code grant in detail, let's look at next steps for our application code. 
 
@@ -851,7 +854,9 @@ function handleTokens(accessToken, idToken, refreshToken) {
 
 At this point, the application backend has redirected the browser to the user's ToDo list. It has also sent the access token, ID token, and refresh tokens back to the browser as cookies. The browser will now send these cookies to the backend each time it makes a request. These requests could be for JSON APIs or standard HTTP requests (i.e. `GET` or `POST`). The beauty of this solution is that our application knows the user is logged in because these cookies exist. We don't have to manage them at all since the browser does it all for us.
 
-These cookies also act as our session. Once the cookies disappear or become invalid, our application knows that the user is no longer logged in. Let's take a look at how we use these tokens for an API that the browser will call via AJAX. This API is used to retrieve the user's ToDos from the database. The key here is that we will assume that the OAuth server we are using creates JWTs (JSON Web Tokens) for the access token.
+These cookies also act as our session. Once the cookies disappear or become invalid, our application knows that the user is no longer logged in. Let's take a look at how we use these tokens for an API that the browser will call via AJAX. You can also have server side, non API html generated based on the `access_token` claims.
+
+This API is used to retrieve the user's ToDos from the database. The key here is that we will assume that the OAuth server we are using creates JWTs (JSON Web Tokens) for the access token.
 
 ```javascript
 authorizationCheck = async (req, res) => {
@@ -994,7 +999,7 @@ If, in parsing our access token, we see a `TokenExpiredError`, this code attempt
 Here's `refreshJWTs` code, which actually performs the JWT refresh:
 
 ```javascript
-helper.refreshJWTs = async (refreshToken) => {
+common.refreshJWTs = async (refreshToken) => {
   console.log("refreshing.");
   // POST refresh request to Token endpoint
   const form = new FormData();
@@ -1020,7 +1025,7 @@ helper.refreshJWTs = async (refreshToken) => {
 
 By default, FusionAuth requires authenticated requests to the refresh token endpoint. In this case, the `authValue` string is a correctly formatted authentication request.
 
-#### Third-party login and registration (also Enterprise login and registration)
+#### Third-party login and registration (also Enterprise login and registration) with the Authorization Code grant
 
 In the previous section we covered the **Local login and registration** process where the user is logging into our TWGTL application using an OAuth server we control such as FusionAuth. The other method that users can login is using a third-party such as Facebook or an Enterprise system such as Active Directory. This process uses OAuth in the same way we described above.
 
@@ -1071,7 +1076,7 @@ If you are implementing the **Third-party login and registration** mode without 
 
 If you use a OAuth server such as FusionAuth to manage your users and provide **Local login and registration**, it will often handle both of these items for you with little configuration and no additional coding.
 
-#### Third-party authorization
+#### Third-party authorization with the Authorization Code grant
 
 The last mode we will cover as part of the authorization code grant workflow is the **Third-party authorization** mode. This mode is the same as those above, but it requires slightly different handling of the tokens. Typically with this mode, the tokens we receive from the third-party need to be stored in our database. Doing so allows us to use them whenever we need to.
 
@@ -1361,7 +1366,7 @@ function async getAccessToken() {
 }
 ```
 
-In order to verify the access token in the WUPHF microservice, we will use the `introspect` endpoint that is an extension to the OAuth 2.0 specification. This endpoint takes an access token, verifies it, and then returns any claims associated with the access token. In our case, we are only using this endpoint to ensure the access token is valid. 
+In order to verify the access token in the WUPHF microservice, we will use the `introspect` endpoint that is an extension to the OAuth 2.0 specification. This endpoint takes an access token, verifies it, and then returns any claims associated with the access token. In our case, we are only using this endpoint to ensure the access token is valid. You could also do this by verifying the JWT instead of calling the introspect endpoint.
 
 Here is the code that verifies the access token:
 
@@ -1401,29 +1406,23 @@ Thanks for reading and happy coding!
 
 
 
-oauth
 
-
-rip request out, use axios or fetch for all node examples
-
-now I have this token, what the hell do I do with it
-
-api call vs html page
-
-refresh token example
 
 table of contents
 
 implicit grant: implement yummy, ask ouaht server is this real
 
-introspect in client credentials because token isn't nec a jwt
-
-mobile applications best current practice, not applicable when you control both sides (local login)
 
 check the casing of each grant name
 Authorization Code
 Implicit
 Client Credentials
 
-remove any references to local.fusionauth.io
 consolidate await/async/callback styles
+
+* Build TOC and rework sections maybe
+* Clean up introspect code and discussion
+* Test code
+* Make diagrams
+* Make images
+
