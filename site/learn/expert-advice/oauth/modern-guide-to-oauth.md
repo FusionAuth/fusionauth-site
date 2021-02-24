@@ -513,20 +513,27 @@ Here's a NodeJS controller that calls the Token endpoint using these parameters.
 <<TODO update for Axios or node-fetch>>
 
 ```javascript
+// Dependencies
 const express = require('express');
+const crypto = require('crypto');
+const axios = require('axios');
+const FormData = require('form-data');
+const common = require('./common');
+const config = require('./config');
+
+// Route and OAuth variables
 const router = express.Router();
-const cookieParser = require('cookie-parser');
-const request = require('request');
-const clientId = '9b893c2a-4689-41f8-91e0-aecad306ecb6';
-const clientSecret = 'setec-astronomy';
-const redirectURI = encodeURI('https://app.twgtl.com/oauth-callback');
+const clientId = config.clientId;
+const clientSecret = config.clientSecret;
+const redirectURI = encodeURI('http://localhost:3000/oauth-callback');
+const scopes = encodeURIComponent('profile offline_access openid');
 
-var app = express();
+// Crypto variables
+const password = 'setec-astronomy'
+const key = crypto.scryptSync(password, 'salt', 24);
+const iv = crypto.randomBytes(16);
 
-app.use(express.json());
-app.use(express.urlencoded({extended: false}));
-app.use(cookieParser());
-
+//
 router.get('/oauth-callback', (req, res, next) => {
   // Verify the state
   const reqState = req.query.state;
@@ -535,44 +542,42 @@ router.get('/oauth-callback', (req, res, next) => {
     res.redirect('/', 302); // Start over
     return;
   }
-
+  
   const code = req.query.code;
   const codeVerifier = restoreCodeVerifier(req, res);
   const nonce = restoreNonce(req, res);
 
   // POST request to Token endpoint
-  request(
-    {
-      method: 'POST',
-      uri: 'https://login.twgtl.com/oauth2/token',
-      form: {
-        'client_id': clientId,
-        'client_secret': clientSecret,
-        'code': code,
-        'code_verifier': codeVerifier,
-        'grant_type': 'authorization_code',
-        'redirect_uri': redirectURI
-      }
-    },
-    (error, response, body) => {
-      const json = JSON.parse(body);
-      const accessToken = json.access_token;
-      const idToken = json.id_token;
-      const refreshToken = json.refresh_token;
+  const form = new FormData();
+  form.append('client_id', clientId);
+  form.append('client_secret', clientSecret)
+  form.append('code', code);
+  form.append('code_verifier', codeVerifier);
+  form.append('grant_type', 'authorization_code');
+  form.append('redirect_uri', redirectURI);
+  axios.post('https://local.fusionauth.io/oauth2/token', form, { headers: form.getHeaders() })
+    .then((response) => {
+      const accessToken = response.data.access_token;
+      const idToken = response.data.id_token;
+      const refreshToken = response.data.refresh_token;
 
-      // Verify the nonce
-      if (idToken !== null && idToken.nonce !== nonce) {
-        res.redirect('/', 302); // Start over
-        return;
+      if (idToken) {
+        let user = common.parseJWT(idToken, nonce);
+          if (!user) {
+            console.log('Nonce is bad. It should be ' + nonce + ' but was ' + idToken.nonce);
+            res.redirect(302,"/"); // Start over
+            return;
+          }
       }
 
-      // Since the different OAuth modes handle the tokens differently, we are going to 
-      // put a placeholder function here. We'll discuss this function in the following 
+
+      // Since the different OAuth modes handle the tokens differently, we are going to
+      // put a placeholder function here. We'll discuss this function in the following
       // sections
-      handleTokens(accessToken, idToken, refreshToken);
-    }
-  );
+      handleTokens(accessToken, idToken, refreshToken, res);
+    }).catch((err) => {console.log("in error2"); console.error(JSON.stringify(err));});
 });
+
 
 function restoreState(req) {
   return req.session.oauthState; // Server-side session
@@ -589,7 +594,53 @@ function restoreNonce(req) {
 module.exports = app;
 ```
 
-<<TODO maybe talk about tokens more here???>>
+`common.parseJWT` abstracts the JWT parsing and verification out. In this case it expects public keys to be published in JWKs format at a well known location, and verifies the audience, issuer and expiration, as well as the signature.
+
+```javascript
+const axios = require('axios');
+const FormData = require('form-data');
+const config = require('./config');
+const { promisify } = require('util');
+
+const helper = {};
+
+const jwksUri = 'https://local.fusionauth.io/.well-known/jwks.json';
+
+const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
+const client = jwksClient({
+  strictSsl: true, // Default value
+  jwksUri: jwksUri,
+  requestHeaders: {}, // Optional
+  requestAgentOptions: {}, // Optional
+  timeout: 30000, // Defaults to 30s
+});
+
+helper.parseJWT = async (unverifiedToken, nonce) => {
+  const parsedJWT = jwt.decode(unverifiedToken, {complete: true});
+  const getSigningKey = promisify(client.getSigningKey).bind(client);
+  let signingKey = await getSigningKey(parsedJWT.header.kid);
+  let publicKey = signingKey.getPublicKey();
+  try {
+    const token = jwt.verify(unverifiedToken, publicKey, { audience: config.clientId, issuer: config.issuer });
+    if (nonce) {
+      if (nonce !== token.nonce) {
+        console.log("nonce doesn't match "+nonce +", "+token.nonce);
+        return null;
+      }
+    }
+    return token;
+  } catch(err) {
+    console.log(err);
+    throw err;
+  }
+}
+
+//...
+
+module.exports = helper;
+
+```
 
 At this point, we are completely finished with OAuth. We've successfully exchanged the authorization code for tokens, which is the last step of the OAuth authorization code grant.
 
@@ -652,13 +703,18 @@ function restoreNonce(req, res) {
 
 #### Tokens
 
-Now that we've successfully exchanged the authorization `code` for tokens, let's look at the tokens we received from the OAuth server. For the sake of this guide, we are going to assume that the OAuth server is using JWTs (JSON Web Tokens) for the access and ID tokens. Most modern OAuth servers use JWTs, so this is a safe assumption. Here are the tokens we have:
+Now that we've successfully exchanged the authorization `code` for tokens, let's look at the tokens we received from the OAuth server. We are going to assume that the OAuth server is using JWTs (JSON Web Tokens) for the access and ID tokens. OAuth2 doesn't define any token format, but in practice access tokens are often JWTs. OIDC, on the other hand, requires the `id_token` to be a JWT. Most modern OAuth servers use JWTs, so this is a safe assumption. 
+
+Here are the tokens we have:
 
 * `access_token`: This is a JWT that contains information about the user including their id, permissions, and anything else we might need from the OAuth server.
 * `id_token`: This is a JWT that contains public information about the user such as their name. This token is usually safe to store in non-secure cookies or local storage because it can't be used to call APIs on behalf of the user.
 * `refresh_token`: This is an opaque token (not a JWT) that can be used to create new access tokens. Access tokens expire and might need to be renewed, depending on your requirements (for example how long you want access tokens to last versus how long you want users to stay logged in).
 
-Since 2 of the tokens we have are JWTs, let's quickly cover that technology here. A full coverage of JWTs is outside of the scope of this guide, but there are a couple of good guides in our [Expert Advice Token section](/learn/expert-advice/tokens/) about JWTs.
+Since 2 of the tokens we have are JWTs, let's quickly cover that technology here. A full coverage of JWTs is outside of the scope of this guide, but there are a couple of good guides in our [Expert Advice Token section](/learn/expert-advice/tokens/) about JWTs. There are two salient points worth reiterating:
+
+* To securely use a token, make sure it is signed and verify additional claims, such as the issuer (who created it) and audience (who the token is for), are values you expect.
+* JWTs expire, but until then they are typically useable by anything that has access to them, as they are usually bearer tokens. Keep their lifetimes short and protect them as you would other valuabel information like an API key.
 
 JWTs are JSON objects that contain information about users and can also be signed. The act of signing allows the JWT to be verified to ensure it hasn't been tampered with. JWTs have a couple of standard claims that impact their use. These claims are:
 
@@ -680,7 +736,7 @@ Before we cover how the Authorization code grant is used for each of the OAuth m
 * Introspection - this endpoint is an extension to the OAuth 2.0 specification and returns information about the token using the standard JWT claims from the previous section.
 * UserInfo - this endpoint is defined as part of the OpenID Connect specification and returns information about the user.
 
-These two endpoints are quite different and serve different purposes. Though they might return similar values, the purpose of the introspection endpoint is to return information about the token itself. The UserInfo endpoint is designed to return information about the user.
+These two endpoints are quite different and serve different purposes. Though they might return similar values, the purpose of the introspection endpoint is to return information about the token itself. The UserInfo endpoint is designed to return information about the user. Both of these endpoints contain the same information as in the respective JWTs, but you can avoid parsing the JWTs if you use them; the cost is a network request.
 
 Both endpoints are simple to use, so let's look at some code for each. 
 
@@ -692,30 +748,29 @@ First, let's look at using the introspect endpoint to get information about an a
 * `username`: The username of the user. This is likely the username they logged in with but could be something different.
 * `token_type`: The type of the token. Usually, this is `Bearer` meaning that the token belongs to and describes the user that is in control of it.
 
-Let's write a function that uses the introspect endpoint to determine if the access token is still valid. We'll use this function later in this guide when we cover refreshing access tokens XXX. This code will leverage FusionAuth's introspect endpoint, which again is always at a well-defined location:
+Let's write a function that uses the introspect endpoint to determine if the access token is still valid. This is an alternative to parsing the JWT locally. If you want to keep your JWT logic to a minimum, you can defer to this endpoint; the tradeoff is that you'll be making a network call. This code will leverage FusionAuth's introspect endpoint, which again is always at a well-defined location:
 
 ```javascript
-const axios = require('axios');
-const formData = require('form-data');
+helper.validateToken = async function (accessToken, clientId) {
 
-function validateToken(accessToken, clientId) {
   const form = new FormData();
   form.append('token', accessToken);
-  form.append('clientId', clientId); // FusionAuth requires this for authentication
-  
-  return await axios.post('https://login.twgtl.com/oauth2/introspect', form, { headers: form.getHeaders() })
-      .then((res) => {
-        if (res.status === 200) {
-          return res.data.active;
-        }
-        
-        return false;
-      })
-      .catch((error) => false);
+  form.append('client_id', clientId); // FusionAuth requires this for authentication
+
+  try {
+    const response = await axios.post('https://login.twgtl.com/oauth2/introspect', form, { headers: form.getHeaders() });
+    if (response.status === 200) {
+      return response.data.active;
+    }
+  } catch (err) {
+    console.log(err);
+  }
+
+  return false;
 }
 ```
 
-This function makes a request to the introspect endpoint and then uses the response status code and JSON to determine if the token is valid. This is helpful if we are looking to validate tokens. You can't defer all validation to the introspect endpoint. The consumer of the access token should also validate the `aud` and `iss` claims are as expected.
+This function makes a request to the introspect endpoint and then uses the response status code and JSON to determine if the token is valid. This is helpful if we are looking to validate tokens. You can't defer all validation to the introspect endpoint, however. The consumer of the access token should also validate the `aud` and `iss` claims are as expected.
 
 If we need to get additional information about the user from the OAuth server, we can leverage the UserInfo endpoint. This endpoint takes the access token and returns a number of well defined claims about the user. Technically, this endpoint is part of the OpenID Connect specification, but most OAuth servers implement it, so you'll likely be safe using it. Here are the claims that are returned by standard the UserInfo endpoint:
 
@@ -746,24 +801,24 @@ If we need to get additional information about the user from the OAuth server, w
     * `country`: The user's country.
 * `updated_at`: The instant that the user's profile was last updated as a number representing the number of seconds from Epoch UTC.
 
-Here's a function that we can use to retrieve a user object from the UserInfo endpoint. We'll also use this function later in this guide XXX :
+Not all of these claims will be present, however. What is returned depends on the scopes requested in the initial authorization request as well as the configuration of the OAuth server. The `sub` claim will always be present. See the [OIDC spec](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims) as well as your OAuth server's documentation for the proper scopes and returned claims.
+
+Here's a function that we can use to retrieve a user object from the UserInfo endpoint. This is equivalent to parsing the `id_token` and looking at claims embedded there. 
 
 ```javascript
-function retrieveUser(accessToken, clientId) {
-  return await axios.get('https://login.twgtl.com/oauth2/userinfo', {}, 
-      { 
-        headers: {
-          Authorization: 'Bearer ' + accessToken
-        }  
-      })
-      .then((res) => {
-        if (res.status === 200) {
-          return res.data;
-        }
 
-        return null;
-      })
-      .catch((error) => null);
+helper.retrieveUser = async function (accessToken) {
+  const response = await axios.get(config.authServerUrl + '/oauth2/userinfo', { headers: { 'Authorization' : 'Bearer ' + accessToken } });
+  try {
+    if (response.status === 200) {
+      return response.data;
+    }
+
+    return null;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
 }
 ```
 
@@ -771,7 +826,7 @@ function retrieveUser(accessToken, clientId) {
 
 Now that we have covered the Authorization Code grant in detail, let's look at next steps for our application code. 
 
-Your application has this token, now what the heck do you do with it?
+**In other words, your application has these tokens, now what the heck do you do with them?**
 
 If you are implementing the **Local login and registration** mode, then your application is using OAuth to log users in. This means that after the OAuth workflow is complete, the user should be logged in and the browser should be redirected to your application.
 
@@ -800,7 +855,47 @@ At this point, the application backend has redirected the browser to the user's 
 
 These cookies also act as our session. Once the cookies disappear or become invalid, our application knows that the user is no longer logged in. Let's take a look at how we use these tokens for an API that the browser will call via AJAX. This API is used to retrieve the user's ToDos from the database. The key here is that we will assume that the OAuth server we are using creates JWTs (JSON Web Tokens) for the access token.
 
-<<SHOW API CALL>>
+```javascript
+authorizationCheck = async (req, res) => {
+  const accessToken = req.cookies.access_token;
+  const refreshToken = req.cookies.refresh_token;
+  try { 
+    let jwt = await common.parseJWT(accessToken);
+    return true;
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+}
+
+router.get('/api', (req, res, next) => {
+  authorizationCheck(req, res).then((authorized) => {
+    if (!authorized) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const todos = getTodos(); // get the todos from the database
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(todos));
+  }).catch((err) => {
+    console.log(err);
+  });
+});
+```
+
+The interesting code is `authorizationCheck` which parses the `access_token` which is pulled from the cookie and performs the same verifications as before. 
+
+This can be called like so:
+
+```html
+// assumes fetch is available
+fetch('http://localhost:3000/todos/api')
+  .then(response => response.json())
+  .then(data => console.log(data));
+```
+
+Because cookies are automatically sent, the API call is authorized.
 
 Next, let's look at the alternative implementation. We'll create a server-side session and store all of the tokens there. This method also writes a cookie back to the browser, but this cookie only stores the session id and nothing else. This session id allows our server-side code to lookup the user's session during each request. Sessions are generally handled by the framework you are using, so we won't go into details here. You can read up more on server-side sessions on the web if you are interested.
 
@@ -825,25 +920,119 @@ This code stores the tokens in the server-side session and redirects the user. N
 
 Let's update our API code from above to use the server side sessions instead of the cookies:
 
-<<API CODE AGAIN>>
+```javascript
+authorizationCheck = async (req, res) => {
+  const accessToken = req.session.accessToken;
+  const refreshToken = req.session.refreshToken;
+  try { 
+    let jwt = await common.parseJWT(accessToken);
+    return true;
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+}
 
-XXX put in js in view for client side code example
+router.get('/api', (req, res, next) => {
+  authorizationCheck(req, res).then((authorized) => {
+    if (!authorized) {
+      res.sendStatus(403);
+      return;
+    }
 
-Finally, we need to update our code to handle refreshing and updating the access token. You might have noticed that our API code was calling 2 functions that weren't defined. These functions check if the access token is valid and refresh the access token if so. Here is the code for these two functions:
+    const todos = getTodos(); // get the todos from the database
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(todos));
+  }).catch((err) => {
+    console.log(err);
+  });
+});
+```
 
-<<SHOW USING REFRESH TOKEN>>
+The only difference is where `authorizationCheck` pulls the access token from. Everything else is exactly the same.
+
+Finally, we need to update our code to handle refreshing and updating the access token. The best place for that is in the `authorizationCheck` code.
+
+```javascript
+authorizationCheck = async (req, res) => {
+  const accessToken = req.cookies.access_token;
+  const refreshToken = req.cookies.refresh_token;
+  try {
+    let jwt = await common.parseJWT(accessToken);
+    return true;
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      const refreshedTokens = await common.refreshJWTs(refreshToken);
+
+      const newAccessToken = refreshedTokens.accessToken;
+      const newIdToken = refreshedTokens.idToken;
+
+      // update our cookies
+      console.log("updating our cookies");
+      res.cookie('access_token', newAccessToken, {httpOnly: true, secure: true});
+      res.cookie('id_token', newIdToken); // Not httpOnly or secure
+
+      // subsequent parts of processing this request may pull from cookies, so if we refreshed, update them
+      req.cookies.access_token = newAccessToken;
+      req.cookies.id_token = newIdToken;
+
+      try {
+        let newJwt = await common.parseJWT(newAccessToken);
+        return true;
+      } catch (err2) {
+        console.log(err2);
+        return false;
+      }
+    } else {
+      console.log(err);
+    }
+    return false;
+  }
+}
+```
+
+If, in parsing our access token, we see a `TokenExpiredError`, this code attempts to refresh the JWT. If the JWT is malformed, or the new JWT is malformed, or if the refresh fails, then the refresh token may have been revoked and we'll want to deny access. 
+
+Here's `refreshJWTs` code, which actually performs the JWT refresh:
+
+```javascript
+helper.refreshJWTs = async (refreshToken) => {
+  console.log("refreshing.");
+  // POST refresh request to Token endpoint
+  const form = new FormData();
+  form.append('client_id', config.clientId);
+  form.append('grant_type', 'refresh_token');
+  form.append('refresh_token', refreshToken);
+  const authValue = 'Basic ' + Buffer.from(config.clientId +":"+config.clientSecret).toString('base64');
+  const response = await axios.post(config.authServerUrl+'/oauth2/token', form, {
+      headers: {
+         'Authorization' : authValue,
+         ...form.getHeaders()
+      } });
+
+  const accessToken = response.data.access_token;
+  const idToken = response.data.id_token;
+  const refreshedTokens = {};
+  refreshedTokens.accessToken = accessToken;
+  refreshedTokens.idToken = idToken;
+  return refreshedTokens;
+
+}
+```
+
+FusionAuth requires, by default, authenticated requests to the refresh token endpoint, which is what the `authValue` string is.
 
 #### Third-party login and registration (also Enterprise login and registration)
 
 In the previous section we covered the **Local login and registration** process where the user is logging into our TWGTL application using an OAuth server we control such as FusionAuth. The other method that users can login is using a third-party such as Facebook or an Enterprise system such as Active Directory. This process uses OAuth in the same way we described above.
 
-Some third-party providers have hidden some of the complexity from us by providing simple JavaScript libraries that handle the entire OAuth workflow (like Facebook for example). We won't cover these types of third-party systems and instead focus on traditional OAuth workflows.
+Some third-party providers have hidden some of the complexity from us by providing simple JavaScript libraries that handle the entire OAuth workflow (Facebook for example). We won't cover these types of third-party systems and instead focus on traditional OAuth workflows.
 
-In most cases, the third-party OAuth server is acting the same as our local OAuth server and in the end, the result is that we receive tokens that we can use to make API calls with the third-party. Let's update our `handleTokens` code to call an fictitious API to retrieve the user's friend list from the third-party.
-
-<<TODO update for Axios or node-fetch>>
+In most cases, the third-party OAuth server is acting the same as our local OAuth server and in the end, the result is that we receive tokens that we can use to make API calls with the third-party. Let's update our `handleTokens` code to call an fictitious API to retrieve the user's friend list from the third party.
 
 ```javascript
+const axios = require('axios');
+const FormData = require('form-data');
 var expressSession = require('express-session');
 app.use(expressSession({resave: false, saveUninitialized: false, secret: 'setec-astronomy'}));
 
@@ -854,22 +1043,16 @@ function handleTokens(accessToken, idToken, refreshToken) {
   req.session.refreshToken = refreshToken;
 
   // Call the third-party API
-  request(
-    {
-      method: 'POST',
-      uri: 'https://api.third-party-provider.com/profile/friends',
-      auth: {
-        'bearer': accessToken
-      }
-    },
-    (error, response, body) => {
-      const json = JSON.parse(body);
-      req.session.friends = json.friends;
+  axios.post('https://api.third-party-provider.com/profile/friends', form, { headers: { 'Authorization' : 'Bearer '+accessToken } })
+    .then((response) => { 
+      if (response.status == 200) {
+        const json = JSON.parse(response.data);
+        req.session.friends = json.friends;
 
-      // Optionally store the friends list in our database
-      storeFriends(req, json.friends);
-    }
-  );
+        // Optionally store the friends list in our database
+        storeFriends(req, json.friends);
+      }
+    });
 
   // Redirect to the To-do list
   res.redirect('/todos', 302);
