@@ -808,7 +808,7 @@ Here's a function that we can use to retrieve a user object from the UserInfo en
 ```javascript
 
 helper.retrieveUser = async function (accessToken) {
-  const response = await axios.get(config.authServerUrl + '/oauth2/userinfo', { headers: { 'Authorization' : 'Bearer ' + accessToken } });
+  const response = await axios.get('https://login.twgtl.com/oauth2/userinfo', { headers: { 'Authorization' : 'Bearer ' + accessToken } });
   try {
     if (response.status === 200) {
       return response.data;
@@ -890,12 +890,12 @@ This can be called like so:
 
 ```html
 // assumes fetch is available
-fetch('http://localhost:3000/todos/api')
+fetch('http://localhost:3000/todos/api') // XXX need to reverse this, because /todos/api is ugly and we should use /api/todos
   .then(response => response.json())
   .then(data => console.log(data));
 ```
 
-Because cookies are automatically sent, the API call is authorized.
+Because cookies are automatically sent by the browser, the API call is authorized as long as the cookies are valid.
 
 Next, let's look at the alternative implementation. We'll create a server-side session and store all of the tokens there. This method also writes a cookie back to the browser, but this cookie only stores the session id and nothing else. This session id allows our server-side code to lookup the user's session during each request. Sessions are generally handled by the framework you are using, so we won't go into details here. You can read up more on server-side sessions on the web if you are interested.
 
@@ -951,7 +951,7 @@ router.get('/api', (req, res, next) => {
 
 The only difference is where `authorizationCheck` pulls the access token from. Everything else is exactly the same.
 
-Finally, we need to update our code to handle refreshing and updating the access token. The best place for that is in the `authorizationCheck` code.
+Finally, we need to update our code to handle refreshing and updating the access token. The best place for that is in the `authorizationCheck` code. Here's the updated code:
 
 ```javascript
 authorizationCheck = async (req, res) => {
@@ -991,7 +991,7 @@ authorizationCheck = async (req, res) => {
 }
 ```
 
-If, in parsing our access token, we see a `TokenExpiredError`, this code attempts to refresh the JWT. If the JWT is malformed, or the new JWT is malformed, or if the refresh fails, then the refresh token may have been revoked and we'll want to deny access. 
+If, in parsing our access token, we see a `TokenExpiredError`, this code attempts to refresh the JWT. If the JWT is malformed, the new JWT is malformed, or if the refresh fails, then the refresh token may have been revoked and the code will deny access. This authorization code is perfect for extracting to a middleware.
 
 Here's `refreshJWTs` code, which actually performs the JWT refresh:
 
@@ -1000,11 +1000,11 @@ helper.refreshJWTs = async (refreshToken) => {
   console.log("refreshing.");
   // POST refresh request to Token endpoint
   const form = new FormData();
-  form.append('client_id', config.clientId);
+  form.append('client_id', clientId);
   form.append('grant_type', 'refresh_token');
   form.append('refresh_token', refreshToken);
-  const authValue = 'Basic ' + Buffer.from(config.clientId +":"+config.clientSecret).toString('base64');
-  const response = await axios.post(config.authServerUrl+'/oauth2/token', form, {
+  const authValue = 'Basic ' + Buffer.from(clientId +":"+clientSecret).toString('base64');
+  const response = await axios.post('https://login.twgtl.com/oauth2/token', form, {
       headers: {
          'Authorization' : authValue,
          ...form.getHeaders()
@@ -1020,7 +1020,7 @@ helper.refreshJWTs = async (refreshToken) => {
 }
 ```
 
-FusionAuth requires, by default, authenticated requests to the refresh token endpoint, which is what the `authValue` string is.
+By default, FusionAuth requires authenticated requests to the refresh token endpoint. In this case, the `authValue` string is a correctly formatted authentication request.
 
 #### Third-party login and registration (also Enterprise login and registration)
 
@@ -1035,6 +1035,8 @@ const axios = require('axios');
 const FormData = require('form-data');
 var expressSession = require('express-session');
 app.use(expressSession({resave: false, saveUninitialized: false, secret: 'setec-astronomy'}));
+
+//...
 
 function handleTokens(accessToken, idToken, refreshToken) {
   // Store the tokens in the session
@@ -1059,7 +1061,7 @@ function handleTokens(accessToken, idToken, refreshToken) {
 }
 ```
 
-This is just a simple example of using the access token we received from the third-party OAuth server to call an API.
+This is an example of using the access token we received from the third-party OAuth server to call an API. 
 
 If you are implementing the **Third-party login and registration** mode without leveraging an OAuth server like FusionAuth, there are a couple of things to consider:
 
@@ -1073,7 +1075,7 @@ If you use a OAuth server such as FusionAuth to manage your users and provide **
 
 #### Third-party authorization
 
-The last mode we will cover as part of the authorization code grant workflow is the **Third-party authorization** mode. This mode is the same as those above, but it requires slightly different handling of the tokens. In most cases, the tokens we receive from the third-party need to be stored in our database. This allows us to use them whenever we need them.
+The last mode we will cover as part of the authorization code grant workflow is the **Third-party authorization** mode. This mode is the same as those above, but it requires slightly different handling of the tokens. Typically with this mode, the tokens we receive from the third-party need to be stored in our database. Doing so allows us to use them whenever we need to.
 
 In our example, we wanted to leverage the WUPHF API to send a WUPHF when the user completes a ToDo. In order to accomplish this, we need to store the access and refresh tokens we received from WUPHF in our database. Then when the user completes a ToDo, we can send the WUPHF.
 
@@ -1090,43 +1092,46 @@ function handleTokens(accessToken, idToken, refreshToken) {
 }
 ```
 
-Now the tokens are safely stored in our database, we can retrieve them on our complete ToDo API and send the WUPHF. Here is some pseudo-code that implements this feature:
+Now the tokens are safely stored in our database, we can retrieve them in our complete ToDo API endpoint and send the WUPHF. Here is some pseudo-code that implements this feature:
 
-XXX change to use axios
 ```javascript
-// This is invoked like: https://app.twgtl.com/api/todo/complete/42
-router.post('/api/todo/complete/:id', function(req, res, next) {
-  // Verify the user is logged in
-  const user = authorizeUser(req);
+const axios = require('axios');
 
-  // First, complete the ToDo by id
-  todoService.complete(req.params.id, user);
-
-  // Next, load the access and refresh token from the database
-  const wuphfTokens = loadWUPHFTokens(user);
-
-  // Finally, call the API
-  request(
-    {
-      method: 'POST',
-      uri: 'https://api.wuphf.com/send',
-      auth: {
-        'bearer': wuphfTokens.accessToken,
-        'refresh': wuphfTokens.refreshToken
-      }
+// This is invoked like: https://app.twgtl.com/api/todos/complete/42
+router.post('/api/todos/complete/:id', function(req, res, next) {
+  common.authorizationCheck(req, res).then((authorized) => {
+    if (!authorized) {
+      res.sendStatus(403);
+      return;
     }
-  );
+
+    // First, complete the ToDo by id
+    const idToUpdate = parseInt(req.params.id);
+    common.completeTodo(idToUpdate);
+  
+    // Next, load the access and refresh token from the database
+    const wuphfTokens = loadWUPHFTokens(user);
+  
+    // Finally, call the API
+    axios.post('https://api.wuphf.com/send', {}, { 
+          headers: {
+            auth: { 'bearer': wuphfTokens.accessToken, 'refresh': wuphfTokens.refreshToken }
+          }
+        }).then((response) => {
+          // check for status, log if not 200
+        }
+      );
+    });
+    
+    // return all the todos
+    const todos = common.getTodos();
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(todos));
+  });
 });
 ```
 
 This code is just an example of how we might leverage the access and refresh tokens to call third-party APIs on behalf of the user.
-
-
-
-<<MODES ARE DONE HERE for the Authorization Code grant>>
-
-
-
 
 ### Implicit grant
 
@@ -1177,7 +1182,9 @@ if (window.location.hash.contains('access_token')) {
 
 Three lines of code and the access token has been stolen. As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend that no one ever use this grant.
 
-<<TODO add info if they really must implement this, point to FusionAuth docs>>
+If you aren't dissuaded by the above scariness, and you really need to use the implicit grant, please [check out our documentation](/docs/v1/tech/oauth/#example-implicit-grant), which walks you through how to implement it. 
+
+XXX WIP
 
 ### Resource Owner's Password Credentials Grant
 
