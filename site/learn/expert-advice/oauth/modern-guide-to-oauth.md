@@ -510,8 +510,6 @@ We will need to make an HTTP `POST` request to the Token endpoint using form enc
 
 Here's a NodeJS controller that calls the Token endpoint using these parameters. It also verifies the `state` parameter is correct along with the `nonce` that should be present in the `id_token`. It also restores the saved `codeVerifier` and passes that to the Token endpoint to complete the PKCE handling.
 
-<<TODO update for Axios or node-fetch>>
-
 ```javascript
 // Dependencies
 const express = require('express');
@@ -1275,7 +1273,7 @@ router.post('/api/todos/complete/:id', function(req, res, next) {
     const todo = common.getTodo(idToUpdate);
     const user = common.retrieveUser(req.cookies.access_token);
   
-    sendWUPHF(todo.task, user, req.cookies.access_token);
+    sendWUPHF(todo.task, user.id);
 
     // return all the todos
     const todos = common.getTodos();
@@ -1284,29 +1282,19 @@ router.post('/api/todos/complete/:id', function(req, res, next) {
   });
 }
 
-function async sendWUPHF(title, user, access_token) {
-    const body = { 'title': title, 'userId': user.id }
-    const result = await axios.post('https://wuphf-microservice.twgtl.com/send', body, { headers : { authorization: { 'bearer': accessToken } } }).
+function async sendWUPHF(title, userId, ) {
+  const accessToken = getAccessToken(); 
+  const body = { 'title': title, 'userId': user.id }
+  const result = await axios.post('https://wuphf-microservice.twgtl.com/send', body, { headers : { authorization: { 'bearer': accessToken } } });
+}
 
-
+```
     const wuphfTokens = loadWUPHFTokens(user);
   
-    // Finally, call the API
-    axios.post('https://api.wuphf.com/send', {}, { 
-          headers: {
-            auth: { 'bearer': wuphfTokens.accessToken, 'refresh': wuphfTokens.refreshToken }
-          }
-        }).then((response) => {
-          // check for status, log if not 200
-        }
-      );
-    });
-    
   });
 });
 ```
 
-xxx stoppped here
 
 Here is the WUPHF microservice code that receives the access token and title of the WUPHF and sends it out:
 
@@ -1325,80 +1313,79 @@ app.use(bearerToken());
 app.use(express.urlencoded({extended: false}));
 
 router.post('/send', function(req, res, next) {
-  verifyAccessToken(req); // Coming soon
+  const accessAllowed = verifyAccessToken(req); // Coming soon
+  if (!accessAllowed) {
+    res.sendStatus(403);
+    return;
+  }
 
   // Load the access and refresh token from the database (based on the userId)
-  const wuphfTokens = loadWUPHFTokens(req.body.userId);
+  const wuphfTokens = loadWUPHFTokens(req.data.userId);
 
   // Finally, call the API
-  request(
-    {
-      method: 'POST',
-      uri: 'https://api.wuphf.com/send',
-      auth: {
-        'bearer': wuphfTokens.accessToken,
-        'refresh': wuphfTokens.refreshToken
-      }
-    }
-  );
+  axios.post('https://api.wuphf.com/send', {}, { 
+        headers: {
+          auth: { 'bearer': wuphfTokens.accessToken, 'refresh': wuphfTokens.refreshToken }
+        }
+  }).then((response) => {
+        res.sendStatus(200);
+  }).catch((err) => {
+        console.log(err);
+        res.sendStatus(500);
+  });
 });
 
 ```
 
 We've now separated the code that is responsible for completing ToDos from the code that sends the WUPHF. The only thing left to do is hook this code up to our OAuth server in order to generate access tokens and verify them.
 
-Here's the code that generates the access token using the Client Credentials Grant:
-
-<<TODO - fix this code to use node-fetch>>
+Because this is machine to machine communication, the user's access tokens are irrelevant. Instead, the Todo API will authenticate against `login.twgtl.com` and receive an access token for its own use. Here's the code that generates the access token using the Client Credentials Grant:
 
 ```javascript
 const clientId = '82e0135d-a970-4286-b663-2147c17589fd';
 const clientSecret = 'setec-astronomy';
 
-function getAccessToken() {
+function async getAccessToken() {
   // POST request to Token endpoint
-  return request(
-    {
-      method: 'POST',
-      uri: 'https://login.twgtl.com/oauth2/token',
-      form: {
-        'client_id': clientId,
-        'client_secret': clientSecret,
-        'grant_type': 'client_credentials'
-      }
-    },
-    (error, response, body) => {
-      const json = JSON.parse(body);
-      return json.access_token;
-    }
-  );
-}
-```
-
-In order to verify the access token in the WUPHF microservice, we will use the `introspect` endpoint that is an extension to the OAuth 2.0 specification. This endpoint takens and access token, verifies it, and then returns any claims associated with the access token. In our case, we are only using this endpoint to ensure the access token is valid
-
-Here is the code that verifies the access token:
-
-<<TODO - maybe use Axios>>
-
-```javascript
-const fetch = require('node-fetch');
-
-function verifyAccessToken(req) {
-  fetch('https://login.twgtl.com/oauth2/introspect',
-        {
-          method: 'POST',
-          body: 'token=' + encodeURIComponent(req.token)
-        })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error('Invalid token');
-      }
+  const form = new FormData();
+  form.append('client_id', clientId);
+  form.append('client_secret', clientSecret)
+  form.append('grant_type', 'client_credentials');
+  axios.post('https://login.twgtl.com/oauth2/token', form, { headers: form.getHeaders() })
+    .then((response) => {
+      return response.data.access_token;
+    }).catch((err) => {
+      console.log(err);
+      return null;
     });
 }
 ```
 
-<<TODO - SUMMARY HERE MAYBE>>
+In order to verify the access token in the WUPHF microservice, we will use the `introspect` endpoint that is an extension to the OAuth 2.0 specification. This endpoint takes an access token, verifies it, and then returns any claims associated with the access token. In our case, we are only using this endpoint to ensure the access token is valid. 
+
+Here is the code that verifies the access token:
+
+```javascript
+const axios = require('axios');
+const FormData = require('form-data');
+
+function verifyAccessToken(req) {
+  const form = new FormData();
+  form.append('token', accessToken);
+  form.append('client_id', clientId); 
+  try {
+    const response = await axios.post('https://login.twgtl.com/oauth2/introspect', form, { headers: form.getHeaders() });
+    if (response.status === 200) {
+      return response.data.active;
+    }
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+}
+```
+
+With the Client Credentials grant, there is no user to log in. Instead, the clientId and clientSecret act as a username and password, respectively, for the entity trying to obtain an access token. 
 
 ### Device Grant
 
@@ -1406,7 +1393,7 @@ This grant is our final grant to cover. This grant type allows us to use the **D
 
 ## Conclusion
 
-I hope this guide has been a useful overview of real-world uses of OAuth 2.0 and provides insights into implementation and the future of the OAuth protocol. Again, you can view all the [code in this guide in the accompanying GitHub repository](https://github.com/FusionAuth/fusionauth-example-modern-guide-to-oauth).
+I hope this guide has been a useful overview of real-world uses of OAuth 2.0 and provides insights into implementation and the future of the OAuth protocol. Again, you can view working [code in this guide in the accompanying GitHub repository](https://github.com/FusionAuth/fusionauth-example-modern-guide-to-oauth).
 
 If you notice any issues, bugs, or typos, please submit a Github issue or pull request on [this repository](https://github.com/FusionAuth/fusionauth-site).
 
@@ -1437,3 +1424,6 @@ check the casing of each grant name
 Authorization Code
 Implicit
 Client Credentials
+
+remove any references to local.fusionauth.io
+consolidate await/async/callback styles
