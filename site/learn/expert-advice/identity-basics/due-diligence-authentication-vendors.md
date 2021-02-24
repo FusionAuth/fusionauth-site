@@ -3,7 +3,7 @@ layout: advice
 title: Performing Due Diligence on Authentication Vendors
 description: What kind of due diligence should you do when evaluating identity as a service vendors?
 author: Mihir Patel
-image: advice/registration-best-practices/expert-advice-best-practices-for-registration-forms.png
+image: advice/due-diligence/authentication-as-a-service-due-diligence-tips-header-image.png
 category: Identity Basics
 date: 2021-02-24
 dateModified: 2021-02-24
@@ -76,7 +76,7 @@ Conducting due diligence on pricing is every bit as critical as the previous ele
 1. Does the authentication provider charge for trial users who are nonpaying customers?
 1. What are the pricing level tiers? Does the cost go down as authentication goes up?
  
-##Conclusion
+## Conclusion
 
 To wrap up, vendor management and risk assessment is an important piece of onboarding a third-party service for many reasons. Performing due diligence can address security concerns, performance issues, implementation concerns, and pricing transparency, and understanding the limitations of your vendors is key to preventing security challenges down the road. 
  

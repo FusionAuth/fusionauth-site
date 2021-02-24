@@ -3,9 +3,8 @@ layout: blog-post
 title: Authentication as a Service Security Due Diligence Tips
 description: Before you choose an Authentication as a Service (AaaS) vendor, what kind of security due diligence should you perform?
 author: Mihir Patel
-image: blogs/securing-golang-microservice-jwt/securing-a-go-microservice-with-jwt-header-image.png
+image: blogs/security-due-diligence/authentication-as-a-service-security-due-diligence-tips-header-image.png
 category: blog
-tags: client-golang
 excerpt_separator: "<!--more-->"
 ---
 
@@ -17,7 +16,7 @@ Specifically, Authentication-as-a-Service (AaaS) is growing fast. Their out-of-t
 
 But outsourcing isn't as simple as it sounds. Vendor management is time-consuming and can introduce significant risks to the business if due diligence isn't observed.
  
-_This blog post is an excerpt of [Performing Due Diligence on Authentication Vendors](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors/)._
+_This blog post is an excerpt from [Performing Due Diligence on Authentication Vendors](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors/)._
 
 ## The need for due diligence
 
