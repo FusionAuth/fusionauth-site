@@ -1,0 +1,31 @@
+
+[NOTE.since]
+====
+Available Since Version 1.14.0
+====
+
+`PATCH` requests are handled differently than you might expect. `PATCH` operations allow you to modify only parts of an object in FusionAuth.
+
+In client libraries with static typing, such as this one for {client_library_language}, there are no strongly typed objects as set as part of the request. Instead, a hash, dictionary or map object is used. The reason for this is to allow you to build key value pairs that you want to use to build your `PATCH` request.
+
+For example, if you want to change only the name of an application using a `PATCH` you would want to ensure that the JSON that is sent across the wire looks like this:
+
+[source,json]
+.Example PATCH Application JSON
+----
+{
+  "application": {
+     "name": "changed"
+   }
+}
+----
+
+If you were to build up a typed ApplicationRequest object and then serialize it - it will contain empty arrays, or other default values. This will modify the object you are changing in ways you don't expect. This will likely cause the system behave in ways you don't want.
+
+By requiring you to enter key value pairs, we allow the JSON serialization to work correctly. This is essentially a limitation of the current implementation in {client_library_language} and FusionAuth `PATCH` support.
+
+To do this correctly with typed objects, we'd have to ensure the domain object has no default values, and then instruct the serializer to omit empty objects, empty arrays and other empty values from the resulting JSON to ensure that the `PATCH` is performed correctly.
+
+There are a bunch of open issues with `PATCH` support in the link:https://github.com/FusionAuth/fusionauth-issues/[issues repo] that we hope to solve at some point. Once we have support for link:https://github.com/FusionAuth/fusionauth-issues/issues/441[RFC 7396] this may open up some additional options for configuring JSON serializer to allow us to use typed domain objects for `PATCH`.
+
+As a workaround, if you want to use typed objects, you can perform a retrieve and then an update (`GET` and then `PUT`) instead of a `PATCH`.
