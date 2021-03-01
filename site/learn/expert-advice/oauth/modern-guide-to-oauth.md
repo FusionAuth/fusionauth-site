@@ -3,10 +3,10 @@ layout: advice
 title: Modern Guide to OAuth 
 description: Not just another OAuth tutorial. This guide walks you through all of the real use-cases of OAuth in clear and simple detail. 
 image: advice/oauth-device-authorization-article.png 
-author: Brian Pontarelli 
+author: Brian Pontarelli and Dan Moore
 categories: oauth
-date: 2020-10-06 
-dateModified: 2020-10-06
+date: 2021-03-02 
+dateModified: 2021-03-02
 ---
 
 I know what you are thinking, is this really another guide to OAuth 2.0? Well, yes and no. This guide is different than most of the others out there because it covers all of the ways that we actually use OAuth. It also covers all of the details you need to be an OAuth expert without reading all the specifications or writing your own OAuth server. This document is based on hundreds of conversations and multiple client and server implementations.
@@ -28,6 +28,15 @@ We do cover a lot, so here's a handy table of contents to let you jump directly 
   * [Which mode is right for you?](#which-mode-is-right-for-you)
 * [Grants](#grants)
   * [Authorization code grant](#authorization-code-grant)
+    * [Login/register buttons](#loginregister-buttons)
+    * [Authorize endpoint parameters](#authorize-endpoint-parameters)
+    * [Logging in](#logging-in)
+    * [Redirect and retrieve the tokens](#redirect-and-retrieve-the-tokens)
+    * [Tokens](#tokens)
+    * [User and token information](#user-and-token-information)
+    * [Local login and registration with the Authorization Code grant](#local-login-and-registration-with-the-authorization-code-grant)
+    * [Third-party login and registration (also Enterprise login and registration) with the Authorization Code grant](#third-party-login-and-registration-also-enterprise-login-and-registration-with-the-authorization-code-grant)
+    * [Third-party authorization with the Authorization Code grant](#third-party-authorization-with-the-authorization-code-grant)
   * [Implicit grant](#implicit-grant)
   * [Resource Owner's Password Credentials Grant](#resource-owners-password-credentials-grant)
   * [Client Credentials Grant](#client-credentials-grant)
@@ -65,13 +74,13 @@ Wow, that's a lot of different ways you can use OAuth. That's the power and the 
 
 So, here's a handy set of questions for you to ask yourself.
 
+* Are you looking to build a safe, secure and standards friendly authentication and authorization system? You'll want [Local login and registration](#local-login-and-registration) in that case.
+* Trying to avoid storing password credentials because you don't want to any responsibility for passwords? [Third-party login and registration](#third-party-login-and-registration) is where it's at.
+* Are you selling to Enterprise customers? Folks who hear terms like SAML and SOC2 and are comforted, rather than disturbed? Scoot on over to [Enterprise login and registration](#enterprise-login-and-registration).
 * Are you building service to service communication? Is there no user involved? If so, you are looking for [Machine-to-machine authorization](#machine-to-machine-authorization).
 * Are you trying to let a user log in from a separate device? That is, from a TV or other device without a friendly typing interface? If this is the case, check out [Device login and registration](#device-login-and-registration).
 * Are you building a platform and want to allow other developers to ask for permissions to make calls to APIs or services on your platform? Put on your hoodie and review [First-party login and registration](#first-party-login-and-registration) and [First-party service authorization](#first-party-service-authorization).
-* Do you have a user store already integrated and only need to access a third party service on your users' behalf? Re-read [Third-party service authorization](#third-party-service-authorization).
-* Are you selling to Enterprise customers? Folks who hear terms like SAML and SOC2 and are comforted, rather than disturbed? Scoot on over to [Enterprise login and registration](#enterprise-login-and-registration).
-* Trying to avoid storing password credentials locally because you don't want to any responsibility for passwords? [Third-party login and registration](#third-party-login-and-registration) is where it's at.
-* Are you looking to build a safe, secure and standards friendly authentication and authorization system? You'll want [Local login and registration](#local-login-and-registration) in that case.
+* Do you have a user store already integrated and only need to access a third party service on your users' behalf? Read up on [Third-party service authorization](#third-party-service-authorization).
 
 ### Local login and registration
 
@@ -714,12 +723,9 @@ Here are the tokens we have:
 * `id_token`: This is a JWT that contains public information about the user such as their name. This token is usually safe to store in non-secure cookies or local storage because it can't be used to call APIs on behalf of the user.
 * `refresh_token`: This is an opaque token (not a JWT) that can be used to create new access tokens. Access tokens expire and might need to be renewed, depending on your requirements (for example how long you want access tokens to last versus how long you want users to stay logged in).
 
-Since 2 of the tokens we have are JWTs, let's quickly cover that technology here. A full coverage of JWTs is outside of the scope of this guide, but there are a couple of good guides in our [Expert Advice Token section](/learn/expert-advice/tokens/) about JWTs. There are two salient points worth reiterating:
+Since 2 of the tokens we have are JWTs, let's quickly cover that technology here. A full coverage of JWTs is outside of the scope of this guide, but there are a couple of good guides in our [Expert Advice Token section](/learn/expert-advice/tokens/) about JWTs. 
 
-* To securely use a token, make sure it is signed and verify additional claims, such as the issuer (who created it) and audience (who the token is for), are values you expect.
-* JWTs expire, but until then they are typically useable by anything that has access to them, as they are usually bearer tokens. Keep their lifetimes short and protect them as you would other valuabel information like an API key.
-
-JWTs are JSON objects that contain information about users and can also be signed. The act of signing allows the JWT to be verified to ensure it hasn't been tampered with. JWTs have a couple of standard claims that impact their use. These claims are:
+JWTs are JSON objects that contain information about users and can also be signed. JWTs expire, but until then they are typically useable by anything that has access to them, as they are usually bearer tokens. Keep their lifetimes short and protect them as you would other credentials such as an API key. The act of signing allows the JWT to be verified to ensure it hasn't been tampered with. JWTs have a couple of standard claims that impact their use. These claims are:
 
 * `aud`: The intended audience of the JWT. This is usually an application id and your applications should verify this value.
 * `exp`: The expiration instant of the JWT. This is stored as the number of seconds since Epoch (January 1, 1970 UTC).
@@ -729,8 +735,8 @@ JWTs are JSON objects that contain information about users and can also be signe
 
 JWTs have many other standard claims that you should be aware of. You can review these specifications for a list of the standard claims:
 
-* https://tools.ietf.org/html/rfc7519#section-4
-* https://openid.net/specs/openid-connect-core-1_0.html#Claims
+* [JWT Claims in the JSON Web Token RFC](https://tools.ietf.org/html/rfc7519#section-4)
+* [Claims in the Open ID Connect 1.0 spec](https://openid.net/specs/openid-connect-core-1_0.html#Claims)
 
 #### User and token information
 
@@ -754,7 +760,7 @@ First, let's look at using the introspect endpoint to get information about an a
 Let's write a function that uses the introspect endpoint to determine if the access token is still valid. This is an alternative to parsing the JWT locally. If you want to keep your JWT logic to a minimum, you can defer to this endpoint; the tradeoff is that you'll be making a network call. This code will leverage FusionAuth's introspect endpoint, which again is always at a well-defined location:
 
 ```javascript
-common.validateToken = async function (accessToken, clientId) {
+async function (accessToken, clientId) {
 
   const form = new FormData();
   form.append('token', accessToken);
@@ -773,7 +779,7 @@ common.validateToken = async function (accessToken, clientId) {
 }
 ```
 
-This function makes a request to the introspect endpoint and then uses the response status code and JSON to determine if the token is valid. This is helpful if we are looking to validate tokens. You can't defer all validation to the introspect endpoint, however. The consumer of the access token should also validate the `aud` and `iss` claims are as expected.
+This function makes a request to the introspect endpoint and then uses the response status code and JSON to determine if the token is valid. This is helpful if we are looking to validate tokens. You can't defer all token logic to the introspect endpoint, however. The consumer of the access token should also validate the `aud` and `iss` claims are as expected.
 
 If we need to get additional information about the user from the OAuth server, we can leverage the UserInfo endpoint. This endpoint takes the access token and returns a number of well defined claims about the user. Technically, this endpoint is part of the OpenID Connect specification, but most OAuth servers implement it, so you'll likely be safe using it. Here are the claims that are returned by standard the UserInfo endpoint:
 
@@ -810,7 +816,7 @@ Here's a function that we can use to retrieve a user object from the UserInfo en
 
 ```javascript
 
-common.retrieveUser = async function (accessToken) {
+async function (accessToken) {
   const response = await axios.get('https://login.twgtl.com/oauth2/userinfo', { headers: { 'Authorization' : 'Bearer ' + accessToken } });
   try {
     if (response.status === 200) {
