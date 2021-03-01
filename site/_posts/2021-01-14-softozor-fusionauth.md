@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Softozor integrated FusionAuth with Hasura and Kubernetes to save development effort
-description: While working on a consulting project building an ecommerce platform, Softozor choose FusionAuth to manage their authentication.
+title: Softozor integrated FusionAuth with Hasura and Kubernetes and saved development effort
+description: While working on a consulting project building an ecommerce platform, Softozor choose FusionAuth to manage their authentication and authorization.
 author: Dan Moore
 image: blogs/...
 category: blog
@@ -9,7 +9,7 @@ tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 
-Dr Laurent Michel is a FusionAuth community member and product owner at Softozor. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
+Dr. Laurent Michel is a FusionAuth community member and product owner at Softozor. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
