@@ -835,7 +835,7 @@ async function (accessToken) {
 
 Now that we have covered the Authorization Code grant in detail, let's look at next steps for our application code. 
 
-**In other words, your application has these tokens, now what the heck do you do with them?**
+**In other words, your application now has these tokens, but what the heck do you do with them?**
 
 If you are implementing the **Local login and registration** mode, then your application is using OAuth to log users in. This means that after the OAuth workflow is complete, the user should be logged in and the browser should be redirected to your application.
 
@@ -1200,7 +1200,9 @@ if (window.location.hash.contains('access_token')) {
 }
 ```
 
-Three lines of code and the access token has been stolen. As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend that no one ever use this grant.
+Three lines of code and the access token has been stolen. The application at `yummy` can save these off, call the `login.twgtl.com` to verify the tokens are useful, and then can call APIs and other resources presenting the `access_token`. Oops.
+
+As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend that no one ever use this grant.
 
 If you aren't dissuaded by the above scariness, and you really need to use the Implicit grant, please [check out our documentation](/docs/v1/tech/oauth/#example-implicit-grant), which walks you through how to implement it. 
 
@@ -1227,7 +1229,7 @@ There are two main issues with this approach:
 
 Due to how limiting and insecure this grant is, it has been removed from the latest draft of the OAuth specification and it is recommended to not use it in production.
 
-If you aren't dissuaded by the above issues with this grant, and you have a use case where you really need it, please [check out our documentation](/docs/v1/tech/oauth/#example-resource-owner-password-credentials-grant), which walks you through how to use it. 
+If you aren't dissuaded by the above problems and you really need it, please [check out our documentation](/docs/v1/tech/oauth/#example-resource-owner-password-credentials-grant), which walks you through how to use this grant. 
 
 ### Client Credentials Grant
 
@@ -1373,7 +1375,7 @@ This grant is our final grant to cover. This grant type allows us to use the **D
 
 I hope this guide has been a useful overview of real-world uses of OAuth 2.0 and provides insights into implementation and the future of the OAuth protocol. Again, you can view working [code in this guide in the accompanying GitHub repository](https://github.com/FusionAuth/fusionauth-example-modern-guide-to-oauth).
 
-If you notice any issues, bugs, or typos, please submit a Github issue or pull request on [this repository](https://github.com/FusionAuth/fusionauth-site).
+If you notice any issues, bugs, or typos in the Modern Guide to OAuth, please submit a Github issue or pull request on [this repository](https://github.com/FusionAuth/fusionauth-site).
 
 Thanks for reading and happy coding!
 
@@ -1381,15 +1383,12 @@ Thanks for reading and happy coding!
 
 
 
-XXX table of contents
-
-implicit grant: implement yummy, ask ouaht server is this real
-
-
 check the casing of each grant name
 Authorization Code
 Implicit
 Client Credentials
+
+check casing of the headers.
 
 consolidate await/async/callback styles
 
