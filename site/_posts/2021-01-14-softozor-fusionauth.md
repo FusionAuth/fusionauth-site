@@ -37,7 +37,7 @@ The codebase we've come up with, however, will be used to produce other e-shoppi
 
 **Laurent:** The development of our platform is proceeding slowly. We integrated FusionAuth last year to the platform's admin panel. It is planned to be integrated to the e-shop as well, but that is not a priority. We use FusionAuth for user management. It produces JWTs for us which are then consumed by our hasura API. It is very important to us that FusionAuth provides permission management features. Also JWT lambdas are critical for us. 
 
-> [FusionAuth's] documentation is outstanding...
+> [The] documentation is outstanding...
 
 **Dan:** How do you use the lambdas? Is it to inject custom permissions (admin, seller, buyer) or for some other use? 
 
@@ -73,7 +73,7 @@ In our software, JWTs are used on the admin frontend, where the craftsmen can de
 
 **Laurent:** We run FusionAuth on a k8s cluster. It is completely hidden behind our hasura api. We write hasura actions that interact with FusionAuth.  
 
-> I'd say FusionAuth saved us something like one man-year of time.
+> I'd say it saved us something like one man-year of time.
 
 **Dan:** Can you tell me a bit more about the hasura actions? 
 
