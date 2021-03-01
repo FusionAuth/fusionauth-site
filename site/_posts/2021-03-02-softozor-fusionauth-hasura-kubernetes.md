@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Softozor integrated FusionAuth with Hasura and Kubernetes and saved development effort
-description: While working on a consulting project building an ecommerce platform, Softozor choose FusionAuth to manage their authentication and authorization.
+description: While working on a consulting project building an ecommerce platform, Softozor chose FusionAuth to manage their authentication and authorization.
 author: Dan Moore
 image: blogs/...
 category: blog
@@ -21,7 +21,7 @@ Dr. Laurent Michel is a FusionAuth community member and product owner at Softozo
 
 **Laurent:**  Softozor is a very little company made up by me, my brother and a few friends. Currently, we work together in our free time. We are mostly physicists and mathematicians. My brother and I work in software development companies. Our friends are teachers. One of the goals of the Softozor company is to produce educational video games. In order to achieve that goal, we need money, which we are trying to earn with software development projects. Currently, we are developing an ecommerce platform helping craftsmen to sell their products and make them visible in the regions they are living in. A craftsman can be a farmer, a caterer, a baker, a butcher, etc.
 
-I am the company's official leader. I energize the roles of developer, architect, and product owner. I am the only one in the team to have the role of product owner. The roles of developer and architect are taken by other members of the team. Every architectural decision is discussed in the team so that we get as much insight as possible into the possible problems that we might face during the development. This way we also spread the knowledge of everyone across the whole team.  
+I am the company's official leader. I energize the roles of developer, architect, and product owner. I am the only one team member with the product owner role. The roles of developer and architect are taken by other members of the team. Every architectural decision is discussed in the team so that we get as much insight as possible into the possible problems that we might face during the development. This way we also spread the knowledge of everyone across the whole team.  
 
 Nowadays, I essentially develop in C++, C# (.Net / WPF), javascript (VueJs), and python (mainly to write acceptance tests).  
 
@@ -29,7 +29,7 @@ Nowadays, I essentially develop in C++, C# (.Net / WPF), javascript (VueJs), and
 
 **Dan:** Is the craftsman site live? Can you share the URL? 
 
-**Laurent:**  Yes, the [craftsman site is live](https://www.ameising.ch), in a reduced form. In the near future, it will show our customers all the shops we are managing. Currently, no shop is shown yet but they will soon pop on the map that we see on the homepage. The platform is not a traditional e-shop. It manages multiple e-shops where each e-shop has multiple tenants. What you see today is just kind of our crowd-funding: we sell baskets of vegetables, fruits, bread, etc. Also, the project you see on that URL only targets Switzerland, no other country. It is a local project focusing on Switzerland. 
+**Laurent:**  Yes, the [craftsman site is live](https://www.ameising.ch), in a reduced form. In the near future, it will show our customers all the shops we are managing. Currently, no shop is shown yet but they will soon pop on the map that we see on the homepage. The platform is not a traditional e-shop. It manages multiple e-shops where each e-shop has multiple tenants. What you see today is just kind of our crowd-funding: we sell baskets of vegetables, fruits, bread, etc. Also, the project you see on that URL targets Switzerland.
 
 The codebase we've come up with, however, will be used to produce other e-shopping solutions, not necessarily located in Switzerland. 
 
@@ -67,11 +67,11 @@ In our software, JWTs are used on the admin frontend, where the craftsmen can de
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
-**Laurent:** It saved a lot of time. If we agree that time is money, then it saved us a lot of money too. We could've implemented a reduced set of the features provided by FusionAuth, but that would've taken a lot of time. We could've chosen another solution than FusionAuth and implemented the missing features, but again that would've been a killer. I'd say it saved us something like one man-year of time. 
+**Laurent:** It saved a lot of time. If we agree that time is money, then it saved us a lot of money too. We could've implemented a reduced set of the features provided by FusionAuth, but that would've taken a lot of time. We could've chosen another solution other than FusionAuth and implemented the missing features, but again that would've been a killer. I'd say it saved us something like one man-year of time. 
 
 **Dan:** How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
 
-**Laurent:** We run FusionAuth on a k8s cluster. It is completely hidden behind our hasura api. We write hasura actions that interact with FusionAuth.  
+**Laurent:** We run FusionAuth on a Kubernetes (k8s) cluster. It is completely hidden behind our hasura api. We write hasura actions that interact with FusionAuth.  
 
 > I'd say it saved us something like one man-year of time.
 
@@ -79,7 +79,7 @@ In our software, JWTs are used on the admin frontend, where the craftsmen can de
 
 **Laurent:**  Our system is based on the 3-factor app pattern: realtime graphql API, reliable eventing, and async serverless. That is out-of-the-box hasura behavior. 
 
-Whenever some relevant data are changed in our database, some events are triggered, which results in calling some serverless functions (e.g. in our system we use OpenFaaS). In addition to that, we can complete the GraphQL API automatically generated by hasura with additional queries / mutations, which are known as "hasura actions". For example, the automatically generated API does not come out with a login mutation. Either you route the login request from your frontend to FusionAuth directly or you decide that you have a central API over which everything should go. 
+When relevant data is changed in our database, some events are triggered, which results in calling some serverless functions (e.g. in our system we use OpenFaaS). In addition to that, we can complete the GraphQL API automatically generated by hasura with additional queries / mutations, which are known as "hasura actions". For example, the automatically generated API does not come out with a login mutation. Either you route the login request from your frontend to FusionAuth directly or you decide that you have a central API over which everything should go. 
 
 We chose the latter variant, as we find it both clearer and cleaner. In that case, we had to define a hasura login action. That amounts to telling hasura what the mutation looks like: what name, what input, what output, and then link that mutation with a serverless function. In that context, we are very happy to use the .Net SDK provided by FusionAuth! It has all the necessary REST client wrappers necessary for us to perform the operations we need on FusionAuth. 
 
