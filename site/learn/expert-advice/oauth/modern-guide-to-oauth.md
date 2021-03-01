@@ -42,7 +42,7 @@ What does that mean? It means that your application sends the user over to an OA
 
 ## OAuth modes
 
-None of the specifications cover how OAuth is actually integrated into applications. XXX but as a developer, that's what you care about. XXX They also don't cover the different workflows or processes that leverage OAuth. They leave almost everything up to the implementor (the person that writes the OAuth Server) and integrator (the person that integrates their application with the OAuth server). Rather than just reword the information in the specifications (yet again), let's create a vocabulary for real-world integrations and implementations of OAuth. We'll call them **OAuth modes**.
+None of the specifications cover how OAuth is actually integrated into applications. But as a developer, that's what you care about. They also don't cover the different workflows or processes that leverage OAuth. They leave almost everything up to the implementor (the person that writes the OAuth Server) and integrator (the person that integrates their application with the OAuth server). Rather than just reword the information in the specifications (yet again), let's create a vocabulary for real-world integrations and implementations of OAuth. We'll call them **OAuth modes**.
 
 There are eight OAuth modes that are commonly used today. These real world OAuth modes are:
 
@@ -85,7 +85,7 @@ So, how does this work in practice? Let's take a look at the steps for a fictiti
 
 1. A user visits TWGTL and wants to sign up and manage their ToDos.
 1. They click the "Sign Up" button on the homepage.
-1. This button takes them over to the OAuth server. In fact, it takes them directly to the registration form that is part of the OAuth workflow (specifically the Authorization Code Grant which is covered later in this guide). XXX
+1. This button takes them over to the OAuth server. In fact, it takes them directly to the registration form that is included as part of the OAuth workflow (specifically the Authorization Code Grant which is covered later in this guide). 
 1. They fill out the registration form and click "Submit".
 1. The OAuth server ensures this is a new user and creates their account.
 1. The OAuth server redirects the browser back to TWGTL, which logs the user in.
@@ -114,11 +114,11 @@ The **Third-party login and registration** mode is implemented with the classic 
 
 Let's use Facebook as an example OAuth provider. In most cases, your application will need to use one or more APIs from the OAuth provider in order to retrieve information about the user or do things on behalf of the user (for example sending a message on behalf of the user). In order to use those APIs, the user has to grant your application permissions to do so. To accomplish this, the third-party service usually shows the user a screen that asks for certain permissions.
 
-Facebook will present a screen that might ask the user to share their email address with your application. Once the user grants these permissions, your application can call the Facebook APIs using an access token (which we will cover in detail later in this guide XXX ). We'll refer to these screens as the "permission grant screen" throughout the rest of the guide.
+Facebook will present a screen that might ask the user to share their email address with your application. Once the user grants these permissions, your application can call the Facebook APIs using an access token (which we will cover [later in this guide](#third-party-login-and-registration-also-enterprise-login-and-registration-with-the-authorization-code-grant)). We'll refer to these screens as the "permission grant screen" throughout the rest of the guide.
 
 Here's an example of the Facebook permission grant screen:
 
-<<IMAGE>>
+{% include _image.liquid src="/assets/img/advice/modern-guide-oauth/facebook-permissions-screen.png" alt="The Facebook permissions grant screen for Zapier." class="img-fluid" figure=false %}
 
 After the user has logged into the third-party OAuth server and granted your application permissions, they are redirected back to your application and logged into it.
 
@@ -135,7 +135,7 @@ So, how does this work in practice? Let's take a look at the steps for our TWGTL
 1. On the login screen, the user clicks the "Login with Facebook" button.
 1. This button takes them over to Facebook's OAuth server.
 1. They log into Facebook (if they aren't already logged in).
-1. Facebook presents the user with the permission grant screen based on the permissions TWGTL needs. This is done using OAuth scopes, which we will cover later in this guide. XXX
+1. Facebook presents the user with the permission grant screen based on the permissions TWGTL needs. This is done using OAuth scopes, which we will cover later in this guide.
 1. Facebook redirects the browser back to TWGTL, which logs the user in. TWGTL also calls the Facebook API to retrieve the user's information.
 1. The user begins using TWGTL and adds their current ToDos.
 1. Later, the user comes back to TWGTL and needs to sign in to check off some of their ToDos. They click the `My Account` link at the top of the page.
@@ -151,9 +151,11 @@ You might be wondering if the **Third-party login and registration** mode can wo
 1. This button takes them over to Facebook's OAuth server.
 1. They log into Facebook.
 1. Facebook presents the user with the permission grant screen.
-1. Facebook redirects the browser back to TWGTL's OAuth server, which reconciles out the user's account. XXX what does reconcile out mean? copies over data, makes sure the user exists, etc? This is the first use of that
+1. Facebook redirects the browser back to TWGTL's OAuth server, which reconciles out the user's account. 
 1. TWGTL's OAuth server redirects the user back to the TWGTL application.
 1. The user is logged into TWGTL.
+
+> What does "reconcile out" mean? Like any other kind of technology, OAuth has its jargon. To reconcile a user with a remote system means optionally creating a local account and then attaching data and identity from a remote account to it. The remote account is treated as the authority and the local account is modified as needed to reflect the remote data.
 
 The nice part about this workflow is that TWGTL doesn't have to worry about integrating with Facebook (or any other provider) or reconciling the user's account. That's all handled by the OAuth server. It's also possible to delegate to additional OAuth servers, easily adding Login with Google. You can also nest deeper than the 2 levels illustrated here.
 
@@ -171,7 +173,7 @@ First, it rarely requires the user to grant permissions to your application usin
 
 Second, this mode does not apply to all users of an application. In most cases, this mode is only available to a subset of users who exist in the enterprise directory. The rest of your users will either login directly to your application using **Local login and registration** or through the **Third-party login and registration** mode. In some cases, the user's email address is used to determine how they are logged in. You might have noticed some login forms that only ask for your email on the first step like this:
 
-<<IMAGE>>
+{% include _image.liquid src="/assets/img/advice/modern-guide-oauth/email-requested-at-login.png" alt="For Zapier, the user's email address is requested before any password." class="img-fluid" figure=false %}
 
 Knowing a user's email domain allows the OAuth server to determine where to send the user to log in or if they should log in locally. If you work at Example Company, proud purveyers of TWGTL, providing `brian@example.com` to the login screen allows the OAuth server to know you are an employee.
 
@@ -265,7 +267,7 @@ A few terms we need to define before we dive into this grant.
 
 In this section we will also cover PKCE (Proof Key for Code Exchange - pronounced Pixy). PKCE is a security layer that sits on top of the authorization code grant to ensure that authorization codes can't be stolen or reused. The basics of PKCE is that the application generates a secret key (called the code verifier) and hashes it using SHA 256. This hash is one-way, so it can't be reversed by an attacker. The application then sends the hash to the OAuth server, which stores it. Later, when the application is getting tokens from the OAuth server, the application will send the server the secret key and the OAuth server will verify that the hash of the provided secret key matches the previously provided value. This is a good protection against attackers that can intercept the authorization code, but don't have the secret key.
 
-**NOTE:** PKCE is not required for standard web browser uses of OAuth with the Authorization Code Grant when the application backend is passing both the `client_id` and `client_secret` to the Token endpoint. We will cover this in more detail below XXX, but depending on your implementation, you might be able to safely skip implementing PKCE. I recommend always using it, but it isn't always required.
+**NOTE:** PKCE is not required for standard web browser uses of OAuth with the Authorization Code Grant when the application backend is passing both the `client_id` and `client_secret` to the Token endpoint. We will cover this in more detail below, but depending on your implementation, you might be able to safely skip implementing PKCE. I recommend always using it but it isn't always required.
 
 Let's take a look at how you implement this grant using a prebuilt OAuth server (like FusionAuth).
 
@@ -310,7 +312,7 @@ router.get('/login', function(req, res, next) {
 });
 ```
 
-You can view all the [code in this guide in the accompanying GitHub repository](https://github.com/FusionAuth/fusionauth-example-modern-guide-to-oauth).
+You can view [working code in this guide in the accompanying GitHub repository](https://github.com/FusionAuth/fusionauth-example-modern-guide-to-oauth). 
 
 #### Authorize endpoint parameters
 
@@ -320,7 +322,7 @@ This code immediately redirects the browser to the OAuth server. However, if you
 * `redirect_uri` - this is the URL in your application that the OAuth server will redirect the user back to after they log in. This URL must be registered with the OAuth server and it must point to a controller in your app (rather than a static page), because your app must do additional work after this URL is called.
 * `state` - technically this is optional, but it is useful for preventing various security issues. This parameter is echoed back to your application by the OAuth server. It can be anything you might need to be persisted across the OAuth workflow. If you have no other need for this parameter, I suggest setting it to a large randomly generated string. If you need to have data persisted across the workflow, I suggest setting URL encoding the data and appending a random string.
 * `response_type` - this should always be set to `code` for this grant type. This tells the OAuth server you are using the authorization code grant.
-* `scope` - this is also an optional parameter, but in some of the above modes, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll cover this later in the guide as well XXX).
+* `scope` - this is also an optional parameter, but in some of the above modes, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll cover using a refresh token later).
 * `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code Grant. This is known as a "public client". There aren't many cases of applications that specifically don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them and PKCE is recommended by the [OAuth 2.1 draft](https://fusionauth.io/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/).
 * `code_challenge_method` - this is an optional parameter, but if you implement PKCE, you must specify how your PKCE `code_challenge` parameter was create. It can either be `plain` or `S256`. We never recommend using anything except `S256` which uses SHA-256 secure hashing for PKCE.
 * `nonce` - this is an optional parameter and is used for OpenID Connect. We don't go into much detail of OpenID Connect in this guide, but we will cover a few aspects including ID tokens and the `nonce` parameter. Basically, this `nonce` parameter will be included in the ID token that the OAuth server generates and we can verify that when we retrieve the ID token later in the guide.
@@ -351,12 +353,12 @@ router.get('/login', (req, res, next) => {
 
 You'll notice that we have specified the `client_id`, which was likely provided to us by the OAuth server, the `redirect_uri`, which is part of our application, and a `scope` with the values `profile`, `offline_access`, and `openid` (space separated). These are all usually hardcoded values since they rarely change in practice. The other values change each time we make a request and are being generated in the controller.
 
-The `scope` parameter is used by the OAuth server to determine what authorization the application is requesting. There are a couple of standard values that are defined as part of OpenID Connect. These scopes include `profile`, `offline_access` and `openid`. The OAuth specification does not define any standard scopes, but most OAuth servers support numerous values for this parameter. You should consult with your OAuth server to determine the scopes you'll need to pass. 
+The `scope` parameter is used by the OAuth server to determine what authorization the application is requesting. There are a couple of standard values that are defined as part of OpenID Connect. These scopes include `profile`, `offline_access` and `openid`. The OAuth specification does not define any standard scopes, but most OAuth servers support different values. Consult with your OAuth server to determine the scopes you'll need to pass. 
 
 Here are definitions of the standard scopes in the OpenID Connect specification:
 
-* `openid` - tells the OAuth server to use OpenID Connect for the handling of the OAuth workflow. This additionally will tell the OAuth server to return an ID token from the Token endpoint (covered below XXX)
-* `offline_access` - tells the OAuth server to generate and return a refresh token from the Token endpoint (covered below XXX)
+* `openid` - tells the OAuth server to use OpenID Connect for the handling of the OAuth workflow. This additionally will tell the OAuth server to return an ID token from the Token endpoint (covered below)
+* `offline_access` - tells the OAuth server to generate and return a refresh token from the Token endpoint (covered below)
 * `profile` - tells the OAuth server to include all of the standard OpenID Connect claims in the returned tokens (access and/or id tokens)
 * `email` - tells the OAuth server to include the user's email in the returned tokens (access and/or id tokens)
 * `address` - tells the OAuth server to include the user's address in the returned tokens (access and/or id tokens)
@@ -378,7 +380,7 @@ router.get('/login', (req, res, next) => {
 //...
 ```
 
-Let's cover both of these options. First, let's write the code for each of the `generate*` functions and store the values in a server-side session: XXX not in the code
+Let's cover both of these options. First, let's write the code for each of the `generate*` functions and store the values in a server-side session: 
 
 ```javascript
 const crypto = require('crypto');
@@ -891,9 +893,18 @@ The interesting code is `authorizationCheck` which parses the `access_token` whi
 
 This can be called like so:
 
-```html
-// assumes fetch is available
-fetch('http://localhost:3000/todos/api') // XXX need to reverse this, because /todos/api is ugly and we should use /api/todos
+```javascript
+// assumes axios is available 
+axios.get('/api/todos')
+  .then(function (response) {
+    console.log(response.data);
+  })
+  .catch(function (error) {
+    
+    // handle error
+    console.log(error);
+  });
+fetch('http://localhost:3000/api/todos') 
   .then(response => response.json())
   .then(data => console.log(data));
 ```
@@ -952,7 +963,7 @@ router.get('/api', (req, res, next) => {
 });
 ```
 
-The only difference is where `authorizationCheck` pulls the access token from. Everything else is exactly the same.
+The only difference is where `authorizationCheck` pulls the access token from. Everything else is exactly the same. XXX
 
 Finally, we need to update our code to handle refreshing and updating the access token. The best place for that is in the `authorizationCheck` code. Here's the updated code:
 
@@ -1230,8 +1241,6 @@ If you recall from above, our code that completed a TWGTL ToDo item also sent ou
 
 Let's update our code to move the WUPHF code into a separate service:
 
-XXX change to use axios
-
 ```javascript
 router.post('/api/todo/complete/:id', function(req, res, next) {
   // Verify the user is logged in
@@ -1246,60 +1255,19 @@ router.post('/api/todo/complete/:id', function(req, res, next) {
 function sendWUPHF(title, userId) {
   const accessToken = getAccessToken(); // Coming soon
 
-  request(
-    {
-      method: 'POST',
-      uri: 'https://wuphf-microservice.twgtl.com/send',
-      auth: {
-        'bearer': accessToken
-      },
-      body: {
-        'title': title,
-        'userId': userId
-      }
-    }
-  );
-}
-```
-```javascript
-const axios = require('axios');
-const axios = require('./common');
-
-router.post('/api/todos/complete/:id', function(req, res, next) {
-  common.authorizationCheck(req, res).then((authorized) => {
-    if (!authorized) {
-      res.sendStatus(403);
-      return;
-    }
-
-    // First, complete the ToDo by id
-    const idToUpdate = parseInt(req.params.id);
-    common.completeTodo(idToUpdate);
-    const todo = common.getTodo(idToUpdate);
-    const user = common.retrieveUser(req.cookies.access_token);
-  
-    sendWUPHF(todo.task, user.id);
-
-    // return all the todos
-    const todos = common.getTodos();
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(todos));
-  });
-}
-
-function async sendWUPHF(title, userId, ) {
-  const accessToken = getAccessToken(); 
-  const body = { 'title': title, 'userId': user.id }
-  const result = await axios.post('https://wuphf-microservice.twgtl.com/send', body, { headers : { authorization: { 'bearer': accessToken } } });
-}
-
-```
-    const wuphfTokens = loadWUPHFTokens(user);
-  
+  const body = { 'title': title, 'userId': userId }
+  axios.post('https://wuphf-microservice.twgtl.com/send', body, { 
+        headers: {
+          auth: { 'bearer': accessToken }
+        }
+  }).then((response) => {
+        res.sendStatus(200);
+  }).catch((err) => {
+        console.log(err);
+        res.sendStatus(500);
   });
 });
 ```
-
 
 Here is the WUPHF microservice code that receives the access token and title of the WUPHF and sends it out:
 
@@ -1328,7 +1296,7 @@ router.post('/send', function(req, res, next) {
   const wuphfTokens = loadWUPHFTokens(req.data.userId);
 
   // Finally, call the API
-  axios.post('https://api.wuphf.com/send', {}, { 
+  axios.post('https://api.wuphf.com/send', {message: 'I just did a thing: '+req.data.title}, { 
         headers: {
           auth: { 'bearer': wuphfTokens.accessToken, 'refresh': wuphfTokens.refreshToken }
         }
@@ -1339,18 +1307,17 @@ router.post('/send', function(req, res, next) {
         res.sendStatus(500);
   });
 });
-
 ```
 
 We've now separated the code that is responsible for completing ToDos from the code that sends the WUPHF. The only thing left to do is hook this code up to our OAuth server in order to generate access tokens and verify them.
 
-Because this is machine to machine communication, the user's access tokens are irrelevant. Instead, the Todo API will authenticate against `login.twgtl.com` and receive an access token for its own use. Here's the code that generates the access token using the Client Credentials Grant:
+Because this is machine to machine communication, the user's access tokens are irrelevant. We don't care if the user has permissions to call the WUPHF API. Instead, the Todo API will authenticate against `login.twgtl.com` and receive an access token for its own use. Here's the code that generates the access token using the Client Credentials Grant:
 
 ```javascript
 const clientId = '82e0135d-a970-4286-b663-2147c17589fd';
 const clientSecret = 'setec-astronomy';
 
-function async getAccessToken() {
+function getAccessToken() {
   // POST request to Token endpoint
   const form = new FormData();
   form.append('client_id', clientId);
@@ -1366,7 +1333,7 @@ function async getAccessToken() {
 }
 ```
 
-In order to verify the access token in the WUPHF microservice, we will use the `introspect` endpoint that is an extension to the OAuth 2.0 specification. This endpoint takes an access token, verifies it, and then returns any claims associated with the access token. In our case, we are only using this endpoint to ensure the access token is valid. You could also do this by verifying the JWT instead of calling the introspect endpoint.
+In order to verify the access token in the WUPHF microservice, we will use the `introspect` endpoint that is an extension to the OAuth 2.0 specification. This endpoint takes an access token, verifies it, and then returns any claims associated with the access token. In our case, we are only using this endpoint to ensure the access token is valid. You could also verify the JWT instead of calling the introspect endpoint.
 
 Here is the code that verifies the access token:
 
@@ -1390,7 +1357,7 @@ function verifyAccessToken(req) {
 }
 ```
 
-With the Client Credentials grant, there is no user to log in. Instead, the clientId and clientSecret act as a username and password, respectively, for the entity trying to obtain an access token. 
+To reiterate, with the Client Credentials grant, there is no user to log in. Instead, the clientId and clientSecret act as a username and password, respectively, for the entity trying to obtain an access token. 
 
 ### Device Grant
 
@@ -1408,7 +1375,7 @@ Thanks for reading and happy coding!
 
 
 
-table of contents
+XXX table of contents
 
 implicit grant: implement yummy, ask ouaht server is this real
 
