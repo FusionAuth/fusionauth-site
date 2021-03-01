@@ -18,6 +18,23 @@ Your Webhook must handle the RESTful request described above and send back an ap
 
 Once your Webhook is complete and listening for events, you must configure your Webhook URL in FusionAuth. To add a webhook navigate to [breadcrumb]#Settings -> Webhooks#. If you have multiple Webhooks configured for a single Application, the transaction setting for the event or the User Action will dictate if FusionAuth will commit the transaction or not.
 
+=== Handling Create Events
+
+There are some events fired on creation of an entity in FusionAuth, such as `user.create`. Sometimes you want to modify the created entity, but if your webhook tries to modify the newly created object in a webhook handling the create event, the operation will fail. This is due to the fact that creation occurs in a transaction and has not yet completed when the webhook is running. In fact, it cannot until the webhook returns. The webhook is trying to modify an object that doesn't fully exist, and that operation fails.
+
+For example, here's a possible scenario:
+
+* You have a webhook that catches the `user.create` event.
+* It extracts the user's email address.
+* Then it queries a database and adds a custom `user.data.premiumUser` field to the FusionAuth user object based on the query results.
+* At user login, the value of the `user.data.premiumUser` field will be placed into a JWT for your other applications to access.
+
+In this example, you have a few options; which one is best depends on when you need to be able to read from the `user.data.premiumUser` field.
+
+* Provide the custom data field at user creation, instead of updating the user via a webhook. This option is the simplest, but may not be possible if users are self registering. In this case, the field is available from the moment the user is created.
+* Review other events and determine if a subsequent event occurs in your workflow. For example, `user.registration.create` or `user.login.success` both occur after a user is created. At this point, the user will exist and can be modified. If an event happens repeatedly, such as the login event, make the modification idempotent. In this case, the field is available as soon as the other event fires.
+* Use a webhook, but push the event JSON to a queue and return success. Have a queue consumer pull the data off and update the `user.data.premiumUser` field. The consumer can retry multiple times if the user object has not yet been fully created, which can happen if there are other webhooks whose completion is required. In this case, the field is available when the consumer finishes.
+
 === Example Code
 
 Here's a simple example of a Webhook written in Node using Express. In this example, if the event is a ``user.delete`` event, this code deletes all of the user's Todos.
