@@ -18,6 +18,8 @@ Here are some guidelines to follow when writing documentation (everything under 
 ====
 Available Since Version 1.5.0
 ====
+- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_`.
+- If you are including a file in the docs/asciidoctor, do not prepend the include file path with `/`. Instead, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
 
 For blog posts:
 - Indent all code with two spaces per level.
@@ -61,6 +63,10 @@ set theApp to "Safari"
 #set appHeight to 1100
 #set appWidth to 1550
 
+# Video
+#set appHeight to 1100
+#set appWidth to 1550
+
 # Maintenance Mode Screens
 #set appHeight to 1100
 #set appWidth to 900
@@ -100,7 +106,7 @@ end tell
 - Highlight sections using image preview editor
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
-	1. Resize to width of 1600 in Preview.app
+	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
 	2. Use https://tinypng.com/ to compress the image
 
 Converting terminalizer gifs to videos
@@ -151,3 +157,20 @@ Then, wherever you want the related posts to show up, add this text:
 ```
 
 Update the `relatedTag` value to match the tag added to the blog post.
+
+
+## Search
+
+We use algolia to search.
+
+To do a dry run:
+
+```
+bundle exec jekyll algolia --dry-run 
+```
+
+or, if you want to see everything:
+
+```
+bundle exec jekyll algolia --dry-run --verbose
+```

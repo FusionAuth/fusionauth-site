@@ -4,9 +4,8 @@ title: Recon InfoSec switched to FusionAuth from AWS Cognito
 description: Recon InfoSec Lead Architect Whitney Champion discusses how FusionAuth has helped her business provide a seamless experience to their end users.
 author: Dan Moore
 image: blogs/reconinfosec-story/recon-infosec-switches-to-fusionauth-from-aws-cognito.png
-
 category: blog
-tags: topic-community-story
+tags: topic-community-story topic-upgrade-saas topic-upgrade-cognito
 excerpt_separator: "<!--more-->"
 ---
 

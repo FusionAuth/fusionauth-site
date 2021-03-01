@@ -20,6 +20,21 @@ video::cXvvcOOAp6U[youtube,width=560,height=315]
 
 A User is scoped to a Tenant.  A User existing within a Tenant can be registered to, and use the same credentials to authenticate to multiple applications within that Tenant.
 
+== What makes a User Active
+
+FusionAuth includes reporting on the number of daily and monthly active users. What makes a User active during a time period is any of these events:
+
+* A User is created.
+* A User logs in. 
+* The link:/docs/v1/tech/apis/login/#update-login-instant[Login Ping API] is used.
+* A JWT is refreshed using a Refresh Token.
+* SSO is used; this calls the login ping.
+
+There are many different ways to log in using FusionAuth, but all of the below trigger a login event:
+
+include::docs/v1/tech/shared/_login_events.adoc[]
+
+
 == User search
 
 User search requests may be made through the link:/docs/v1/tech/apis/users#search-for-users[User Search API] or within the FusionAuth admin UI under [breadcrumb]#Users#.
@@ -42,9 +57,9 @@ You may also link:/docs/v1/tech/tutorials/switch-search-engines/[switch between 
 
 This configuration is lightweight, simplifies installation and system complexity, but comes with the trade offs of limited search capabilities and performance implications.
 
-The database search engine is appropriate for systems that are not dependent on the link:/docs/v1/tech/apis/users#search-for-users[User Search APIs], is not expected to have a large number of active users, and may be running in an embedded environment.
+The database search engine is appropriate for systems that are not dependent on the link:/docs/v1/tech/apis/users#search-for-users[User Search APIs], is not expected to have a large number of active users, and may be running in an embedded environment. 
 
-The database search engine enables fuzzy search by term against the following fields of the user:
+The database search engine enables fuzzy search against the following fields of the user:
 
 * `firstName`
 * `lastName`
@@ -54,13 +69,15 @@ The database search engine enables fuzzy search by term against the following fi
 
 image::user-search-database.png[User Search with Database Search Engine,width=1200,role=shadowed bottom-cropped]
 
+If you don't need advanced searching capabilities, you may be able to use the database search engine for large installations. This is not a use case FusionAuth tests, so ensure you provision your database with enough resources and benchmark your typical use cases.
+
 ==== Limitations
 
+You may add a `*` character to wildcard match any character, including none. So `*piedpiper` will match `piedpiper` and `thepiedpiper`. You may put the wildcard at any location in a search string.
 
-can you search for a value starting or ending with a certain string (prefix/suffix) ?
-is the search case sensitive?
-how are strings containing whitespaces supported? can you use quotes?
-can regular expressions be used?
+All search terms are converted to lowercase and compared with lowercase values.
+
+Regular expressions, ranges and other complicated queries can not be used.
 
 === Elasticsearch search engine
 

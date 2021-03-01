@@ -4,7 +4,6 @@ title: Contaim adopts FusionAuth to manage their auth lifecycle
 description: Contaim CEO Scott Plunkett discusses how FusionAuth has helped his business.
 author: Dan Moore
 image: blogs/contaim-story/contaim-adopts-fusionauth-to-manage-their-auth-lifecycle.png
-
 category: blog
 tags: topic-community-story
 excerpt_separator: "<!--more-->"

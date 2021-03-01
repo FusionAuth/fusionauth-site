@@ -1,0 +1,193 @@
+---
+layout: doc
+title: LinkedIn Identity Provider APIs
+description: APIs for creating, retrieving, updating and disabling the LinkedIn identity provider
+---
+
+== Overview
+
+[NOTE.since]
+====
+This API has been available since 1.23.0
+====
+
+The LinkedIn identity provider type will use OAuth 2.0 to authenticate a user with LinkedIn. It will also provide a `Login with LinkedIn` button on FusionAuth's login page that will direct a user to the LinkedIn login page. Additionally, after successful user authentication, this identity provider will call LinkedIn's `/v2/me` and `/v2/emailAddress` APIs to load additional details about the user and store them in FusionAuth.
+
+The email address returned by the LinkedIn `/v2/emailAddress` API will be used to create or look up the existing user. Additional claims returned by LinkedIn can be used to reconcile the User to FusionAuth by using a LinkedIn Reconcile lambda. Unless you assign a reconcile lambda to this provider, only the `email` address will be used from the available claims returned by LinkedIn.
+
+FusionAuth will also store the LinkedIn `access_token` returned from the login dialog in the `UserRegistration` object inside the `tokens` Map. This Map stores the tokens from the various identity providers so that you can use them in your application to call their APIs.
+
+=== Operations
+
+* <<Create the LinkedIn Identity Provider>>
+* <<Retrieve the LinkedIn Identity Provider>>
+* <<Update the LinkedIn Identity Provider>>
+* <<Delete the LinkedIn Identity Provider>>
+* <<Complete the LinkedIn Login>>
+
+== Create the LinkedIn Identity Provider
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Create the LinkedIn Identity Provider
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/identity-provider#
+--
+
+The [field]#type# in the request JSON is used to determine that you are managing the LinkedIn identity provider.
+
+include::docs/v1/tech/apis/identity-providers/_linkedin-request-body.adoc[]
+
+=== Response
+
+:never_search_error:
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:never_search_error!:
+
+include::docs/v1/tech/apis/identity-providers/_linkedin-response-body.adoc[]
+
+== Retrieve the LinkedIn Identity Provider
+
+There is only one LinkedIn Identity Provider, so this Identity Provider may be retrieved by type or Id.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve the LinkedIn Identity Provider by type
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/identity-provider``?type=LinkedIn``#
+--
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve the LinkedIn Identity Provider by Id
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/identity-provider/`6177c09d-3f0e-4d53-9504-3600b1b23f46`#
+--
+
+=== Response
+
+:never_search_error:
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+:never_search_error!:
+
+
+include::docs/v1/tech/apis/identity-providers/_linkedin-response-body.adoc[]
+
+== Update the LinkedIn Identity Provider
+
+There is only one LinkedIn Identity Provider, so this Identity Provider may be updated by type or Id.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Update the LinkedIn Identity Provider by type
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/identity-provider``?type=LinkedIn``#
+--
+
+:api_endpoint: pass:normal[/api/identity-provider``?type=LinkedIn``]
+include::docs/v1/tech/apis/_patch-support.adoc[]
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Update the LinkedIn Identity Provider by Id
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/identity-provider/`6177c09d-3f0e-4d53-9504-3600b1b23f46`#
+--
+
+:api_endpoint: pass:normal[/api/identity-provider/`6177c09d-3f0e-4d53-9504-3600b1b23f46`]
+include::docs/v1/tech/apis/_patch-support.adoc[]
+
+include::docs/v1/tech/apis/identity-providers/_linkedin-request-body.adoc[]
+
+
+=== Response
+
+The response for this API contains the LinkedIn Identity Provider.
+
+:never_search_error:
+include::docs/v1/tech/apis/_standard-put-response-codes.adoc[]
+:never_search_error!:
+
+
+include::docs/v1/tech/apis/identity-providers/_linkedin-response-body.adoc[]
+
+== Delete the LinkedIn Identity Provider
+
+There is only one LinkedIn Identity Provider, so this Identity Provider may be deleted by type or Id.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Delete the LinkedIn Identity Provider by type
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/identity-provider``?type=LinkedIn``#
+--
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Delete the LinkedIn Identity Provider by Id
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/identity-provider/`6177c09d-3f0e-4d53-9504-3600b1b23f46`#
+--
+
+=== Response
+
+This API does not return a JSON response body.
+
+:never_search_error:
+include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
+:never_search_error!:
+
+
+== Complete the LinkedIn Login
+
+This API allows you to complete a LinkedIn login after authenticating a user using the LinkedIn API. If you are using the FusionAuth login UI with the LinkedIn button you will not utilize this API directly.
+
+This API is intended to be used if you want to build your own login page and you have added the LinkedIn login button to your own login page and you then need to complete the login with FusionAuth.
+
+For example, if you built your own login page, you could add a Login with LinkedIn button and complete the LinkedIn authentication. When you complete the LinkedIn authentication you will have been returned an id token from LinkedIn. Using this API you can pass that id token returned from LinkedIn to FusionAuth and we will complete the login workflow and reconcile the user to FusionAuth.
+
+The user does not need to exist yet in FusionAuth to utilize this API. The token returned from LinkedIn will be used to retrieve the user's email address, if that user does not yet exist in FusionAuth the user will be created. If create registration has been enabled for this identity provider and the user does not yet have a registration for this application, a registration will be automatically created for the user. The user will be assigned any default roles configured for the application. If create registration has not been enabled, a registration will not be created if one does not yet exist. This last scenario is useful if you wish to manually provision users and then subsequently allow them to login with LinkedIn.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Complete LinkedIn Login
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/identity-provider/login#
+--
+
+==== Request Headers
+
+[.api]
+[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#::
+The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used if available, the request body value will take precedence.
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.adoc[]
+
+:loginProvider: LinkedIn
+include::docs/v1/tech/apis/identity-providers/_identity-provider-login-request-body.adoc[]
+:loginProvider!:
+
+=== Response
+
+The response for this API contains the User object.
+
+:loginProvider: LinkedIn
+include::docs/v1/tech/apis/identity-providers/_identity-provider-login-response-body.adoc[]
+:loginProvider!:
