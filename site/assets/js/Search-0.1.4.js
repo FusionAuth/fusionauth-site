@@ -102,7 +102,10 @@ FusionAuth.Search.prototype = {
   },
 
   _hitTemplate: function(item) {
-    var url = `${FusionAuth.siteURL}${item.url}#${item.anchor}`;
+    var url = `${item.url}#${item.anchor}`;
+    if (url.indexOf('http') == -1 ) {
+       url = `${FusionAuth.siteURL}${item.url}#${item.anchor}`;
+    }
     var title = item._highlightResult.title.value;
     var snippet = "Missing description";
     if (item._snippetResult) {
