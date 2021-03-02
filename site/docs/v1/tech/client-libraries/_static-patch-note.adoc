@@ -6,7 +6,7 @@ Available Since Version 1.14.0
 
 `PATCH` requests are handled differently than you might expect. `PATCH` operations allow you to modify only parts of an object in FusionAuth.
 
-In client libraries with static typing, such as this one for {client_library_language}, there are no strongly typed objects set as part of a `PATCH` request. Instead, a hash, dictionary or map object is used. The reason for this is to allow use of key value pairs to build a `PATCH` request.
+In client libraries with static typing, such as this one for {client_library_language}, there are no strongly typed objects set as part of a `PATCH` request. Instead, a hash, dictionary or map object is used. Ensure that you are using multi level dictionaries that create JSON with nested keys, otherwise the `PATCH` request will fail. This allows use of key value pairs to build a `PATCH` request.
 
 For example, if you want to change only the name of an application using `PATCH`, you would want the JSON that is sent across the wire to look like this:
 
@@ -20,13 +20,13 @@ For example, if you want to change only the name of an application using `PATCH`
 }
 ----
 
-If you were to build up a typed application request object and then serialize it, it will contain empty arrays or other default values. This will modify the object you are changing in ways you don't expect. This will likely cause the system behave in ways you don't want.
+If you built a typed application request object and then serialized it, it woudl contain empty arrays or other default values. This would modify the object you were changing in ways you didn't expect. This would likely cause the system behave in ways you don't want.
 
-By requiring you to enter key value pairs, the JSON serialization works correctly. This is essentially a limitation of the current implementation in {client_library_language} and FusionAuth `PATCH` support.
+By requiring you to build nested key value pairs, the JSON serialization works correctly. This is essentially a limitation of the current implementation in {client_library_language} and FusionAuth `PATCH` support.
 
-To do this correctly with typed objects, FusionAuth would need to ensure the domain object has no default values, and then instruct the serializer to omit empty objects, empty arrays and other values from the resulting JSON to ensure that the `PATCH` is performed correctly with no unwanted side effects.
+For this behavior to work correctly with typed objects, FusionAuth would need to ensure the domain object had no default values, and then instruct the serializer to omit empty objects, empty arrays and other values from the resulting JSON. This would ensure that the `PATCH` was performed correctly with no unwanted side effects.
 
 Once support for link:https://github.com/FusionAuth/fusionauth-issues/issues/441[RFC 7396] lands in FusionAuth, there may be some additional options for configuring a JSON serializer to allow use of typed domain objects for `PATCH`.
 
-As a workaround, if you want to use typed objects, perform a retrieve operation and then an update operation (`GET` and then `PUT`) instead of a single `PATCH` operation.
+An alternative that allows you to use typed objects immediately is to perform a retrieve operation, modify the object in memory, and then execute an update operation. These are functionally equivalent to a single `PATCH` operation.
 
