@@ -862,60 +862,107 @@ function handleTokens(accessToken, idToken, refreshToken) {
 
 At this point, the application backend has redirected the browser to the user's ToDo list. It has also sent the access token, ID token, and refresh tokens back to the browser as cookies. The browser will now send these cookies to the backend each time it makes a request. These requests could be for JSON APIs or standard HTTP requests (i.e. `GET` or `POST`). The beauty of this solution is that our application knows the user is logged in because these cookies exist. We don't have to manage them at all since the browser does it all for us.
 
-These cookies also act as our session. Once the cookies disappear or become invalid, our application knows that the user is no longer logged in. Let's take a look at how we use these tokens for an API that the browser will call via AJAX. You can also have server side, non API html generated based on the `access_token` claims.
+These cookies also act as our session. Once the cookies disappear or become invalid, our application knows that the user is no longer logged in. Let's take a look at how we use these tokens for an API that the browser will call via AJAX. You can also have server side html generated based on the `access_token` claims, but we'll leave that as an exercise for the user.
 
-This API is used to retrieve the user's ToDos from the database. The key here is that we will assume that the OAuth server we are using creates JWTs (JSON Web Tokens) for the access token.
+This API is used to retrieve the user's ToDos from the database. We'll then generate the user interface in browser side code. The key here is that we will assume that the OAuth server we are using creates JWTs (JSON Web Tokens) for the access token.
 
 ```javascript
-authorizationCheck = async (req, res) => {
-  const accessToken = req.cookies.access_token;
-  const refreshToken = req.cookies.refresh_token;
-  try { 
-    let jwt = await common.parseJWT(accessToken);
-    return true;
-  } catch (err) {
-    console.log(err);
-    return false;
-  }
+// including axios and jwt_decode libraries above
+
+axios.get('/api/todos')
+  .then(function (response) {
+    buildUI(response.data);
+    buildClickHandler();
+  })
+  .catch(function(error) {
+    console.log(error);
+  });
+
+function buildUI(data) {
+  // build our UI based on the todos
 }
 
-router.get('/api', (req, res, next) => {
-  authorizationCheck(req, res).then((authorized) => {
+function buildClickHandler() {
+  // post to API when task is done
+}
+```
+
+What does the server side API look like? Here's the route that handles `/api/todos`:
+
+```javascript
+// Dependencies
+const express = require('express');
+const common = require('./common');
+const config = require('./config');
+const axios = require('axios');
+
+// Router & constants
+const router = express.Router();
+
+router.get('/', (req, res, next) => {
+  common.authorizationCheck(req, res).then((authorized) => {
     if (!authorized) {
-      res.sendStatus(403);
+      res.sendStatus(403); 
       return;
     }
 
-    const todos = getTodos(); // get the todos from the database
+    const todos = common.getTodos();
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify(todos));
   }).catch((err) => {
     console.log(err);
   });
 });
+
+module.exports = router;
 ```
 
-The interesting code is `authorizationCheck` which parses the `access_token` which is pulled from the cookie and performs the same verifications as before. 
-
-This can be called like so:
+And here's the `authorizationCheck` method
 
 ```javascript
-// assumes axios is available 
-axios.get('/api/todos')
-  .then(function (response) {
-    console.log(response.data);
-  })
-  .catch(function (error) {
-    
-    // handle error
-    console.log(error);
-  });
-fetch('http://localhost:3000/api/todos') 
-  .then(response => response.json())
-  .then(data => console.log(data));
+
+const axios = require('axios');
+const FormData = require('form-data');
+const config = require('./config');
+const { promisify } = require('util');
+
+common.authorizationCheck = async (req, res) => {
+  const accessToken = req.cookies.access_token;
+  if (!accessToken) {
+    return false;
+  }
+  try {
+    let jwt = await common.parseJWT(accessToken);
+    return true;
+  } catch (err) { 
+    console.log(err);
+    return false;
+  }
+}
+
+common.parseJWT = async (unverifiedToken, nonce) => {
+  const parsedJWT = jwt.decode(unverifiedToken, {complete: true});
+  const getSigningKey = promisify(client.getSigningKey).bind(client);
+  let signingKey = await getSigningKey(parsedJWT.header.kid);
+  let publicKey = signingKey.getPublicKey();
+  try {
+    const token = jwt.verify(unverifiedToken, publicKey, { audience: config.clientId, issuer: config.issuer });
+    if (nonce) {
+      if (nonce !== token.nonce) {
+        console.log("nonce doesn't match "+nonce +", "+token.nonce);
+        return null;
+      }
+    }
+    return token;
+  } catch(err) {
+    console.log(err);
+    throw err;
+  }
+}
+module.exports = common;
 ```
 
-Because cookies are automatically sent by the browser, the API call is authorized as long as the cookies are valid.
+Because cookies are automatically sent by the browser, the API call is authorized as long as the cookies are valid JWTs.
 
 Next, let's look at the alternative implementation. We'll create a server-side session and store all of the tokens there. This method also writes a cookie back to the browser, but this cookie only stores the session id and nothing else. This session id allows our server-side code to lookup the user's session during each request. Sessions are generally handled by the framework you are using, so we won't go into details here. You can read up more on server-side sessions on the web if you are interested.
 
@@ -941,80 +988,109 @@ This code stores the tokens in the server-side session and redirects the user. N
 Let's update our API code from above to use the server side sessions instead of the cookies:
 
 ```javascript
-authorizationCheck = async (req, res) => {
+common.authorizationCheck = async (req, res) => {
   const accessToken = req.session.accessToken;
-  const refreshToken = req.session.refreshToken;
-  try { 
-    let jwt = await common.parseJWT(accessToken);
-    return true;
-  } catch (err) {
-    console.log(err);
+  if (!accessToken) {
     return false;
   }
-}
-
-router.get('/api', (req, res, next) => {
-  authorizationCheck(req, res).then((authorized) => {
-    if (!authorized) {
-      res.sendStatus(403);
-      return;
-    }
-
-    const todos = getTodos(); // get the todos from the database
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(todos));
-  }).catch((err) => {
-    console.log(err);
-  });
-});
-```
-
-The only difference is where `authorizationCheck` pulls the access token from. Everything else is exactly the same. XXX
-
-Finally, we need to update our code to handle refreshing and updating the access token. The best place for that is in the `authorizationCheck` code. Here's the updated code:
-
-```javascript
-authorizationCheck = async (req, res) => {
-  const accessToken = req.cookies.access_token;
-  const refreshToken = req.cookies.refresh_token;
   try {
     let jwt = await common.parseJWT(accessToken);
     return true;
-  } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      const refreshedTokens = await common.refreshJWTs(refreshToken);
-
-      const newAccessToken = refreshedTokens.accessToken;
-      const newIdToken = refreshedTokens.idToken;
-
-      // update our cookies
-      console.log("updating our cookies");
-      res.cookie('access_token', newAccessToken, {httpOnly: true, secure: true});
-      res.cookie('id_token', newIdToken); // Not httpOnly or secure
-
-      // subsequent parts of processing this request may pull from cookies, so if we refreshed, update them
-      req.cookies.access_token = newAccessToken;
-      req.cookies.id_token = newIdToken;
-
-      try {
-        let newJwt = await common.parseJWT(newAccessToken);
-        return true;
-      } catch (err2) {
-        console.log(err2);
-        return false;
-      }
-    } else {
-      console.log(err);
-    }
+  } catch (err) { 
+    console.log(err);
     return false;
   }
 }
+
 ```
 
-If, in parsing our access token, we see a `TokenExpiredError`, this code attempts to refresh the JWT. If the JWT is malformed, the new JWT is malformed, or if the refresh fails, then the refresh token may have been revoked and the code will deny access. This authorization code is perfect for extracting to a middleware.
+The only difference is from where we pull the access token; in the first case it was from the cookies, and in the latter case it was from the session. Everything else is exactly the same. 
 
-Here's `refreshJWTs` code, which actually performs the JWT refresh:
+Finally, we need to update our code to handle refreshing and updating the access token. Clients are best placed to know when a request fails. Therefore, in the browser code, we should check for any errors and attempt to refresh the cokeis.
 
+Here's the updated browser code. `buildAttemptRefresh` is a function that returns an error handling function. We use this construct so we can attempt a refresh any time we call the API. The `after` function is what will be called if the refresh attempt is successful.
+
+If the refresh attempt fails, we send the user back to the home page for reauthentication.
+
+```javascript
+const buildAttemptRefresh = function(after) {
+   return (error) => {
+    console.log("trying to refresh");
+    // we can't send the cookie, so we need to request the refresh endpoint
+    axios.post('/refresh', {})
+    .then(function (response) { 
+      after();
+    })
+    .catch(function (error) {
+      console.log("unable to refresh tokens");
+      console.log(error);
+      window.location.href="/";
+    });
+  };
+}
+
+// extract this to a function so we can retry later
+const getTodos = function() {
+  axios.get('/api/todos')
+    .then(function (response) {
+      buildUI(response.data);
+      buildClickHandler();
+    })
+    .catch(console.log);
+}
+
+axios.get('/api/todos')
+  .then(function (response) {
+    buildUI(response.data);
+    buildClickHandler();
+  })
+  .catch(buildAttemptRefresh(getTodos));
+
+function buildUI(data) {
+  // build our UI based on the todos
+}
+
+function buildClickHandler() {
+  // post to API when task is done
+}
+```
+
+Since the `refresh_token` is an HTTPOnly cookie, JavaScript can't simply call a refresh endpoint to get a new access token. Instead, it needs to call a new route on the node server, which will then try to refresh the tokens using the cookie value. After that, it will send down the new values as cookies, and the browser code can retry the API calls.
+
+Here's `refresh` route, which extracts the refresh token and tries to, well, refresh the access and id tokens. XXX should we not refresh the id tokens
+
+```javascript
+
+router.post('/refresh', async (req, res, next) => {
+  const refreshToken = req.cookies.refresh_token;
+  if (!refreshToken) {
+    res.sendStatus(403);
+    return;
+  }
+  try {
+    const refreshedTokens = await common.refreshJWTs(refreshToken);
+
+    const newAccessToken = refreshedTokens.accessToken;
+    const newIdToken = refreshedTokens.idToken;
+  
+    // update our cookies
+    console.log("updating our cookies");
+    res.cookie('access_token', newAccessToken, {httpOnly: true, secure: true});
+    res.cookie('id_token', newIdToken); // Not httpOnly or secure
+    res.sendStatus(200);
+    return;
+  } catch (error) {
+    console.log("unable to refresh");
+    res.sendStatus(403);
+    return;
+  }
+
+});
+
+module.exports = router;
+```
+
+and here's the refreshJWTs code which actually performs the JWT refresh:
 ```javascript
 common.refreshJWTs = async (refreshToken) => {
   console.log("refreshing.");
@@ -1036,7 +1112,6 @@ common.refreshJWTs = async (refreshToken) => {
   refreshedTokens.accessToken = accessToken;
   refreshedTokens.idToken = idToken;
   return refreshedTokens;
-
 }
 ```
 
@@ -1200,11 +1275,11 @@ if (window.location.hash.contains('access_token')) {
 }
 ```
 
-Three lines of code and the access token has been stolen. The application at `yummy` can save these off, call the `login.twgtl.com` to verify the tokens are useful, and then can call APIs and other resources presenting the `access_token`. Oops.
+Three lines of code and the access token has been stolen. The application at `http://steal-those-tokens.com/yummy` can save these off, call the `login.twgtl.com` to verify the tokens are useful, and then can call APIs and other resources presenting the `access_token`. Oops.
 
 As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend that no one ever use this grant.
 
-If you aren't dissuaded by the above scariness, and you really need to use the Implicit grant, please [check out our documentation](/docs/v1/tech/oauth/#example-implicit-grant), which walks you through how to implement it. 
+If you aren't dissuaded by the above, and you really need to use the Implicit grant, please [check out our documentation](/docs/v1/tech/oauth/#example-implicit-grant), which walks you through how to implement it. 
 
 ### Resource Owner's Password Credentials Grant
 
