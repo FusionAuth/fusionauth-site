@@ -99,6 +99,7 @@ So, how does this work in practice? Let's take a look at the steps for a fictiti
 1. The OAuth server ensures this is a new user and creates their account.
 1. The OAuth server redirects the browser back to TWGTL, which logs the user in.
 1. The user begins using TWGTL and adds their current ToDos. Yay!
+1. The user stops using the website; instead they head off to perform some ToDos.
 1. Later, the user comes back to TWGTL and needs to sign in to check off some of their ToDos. They click the `My Account` link at the top of the page.
 1. This takes the user to the OAuth server's login page.
 1. The user types in their username and password.
@@ -198,6 +199,8 @@ For example, let's say a user has an account with TWGTL, but each time they comp
 
 To hook all of this up, TWGTL needs to add a button to the user's profile page that says "Connect your WUPHF account". Notice it doesn't say "Login with WUPHF" since the user is already logged in; the user's identity for TWGTL isn't delegated to WUPHF. Once the user clicks this button, they will be taken to WUPHF's OAuth server to login and grant the necessary permissions for TWGTL to WUPHF for them.
 
+Since WUPHF doesn't actually exist, here's an example from Buffer, which connects to your social media accounts such as Twitter.
+
 <<IMAGE MAYBE>>
 
 The workflow for this mode looks like this:
@@ -222,7 +225,7 @@ With this mode, your OAuth server might display a "permission grant screen" to t
 
 The **Machine-to-machine authorization** OAuth mode is different than the previous modes we've covered. This mode does not involve users at all. Rather, it allows an application to interact with another application. Normally, this is via backend services communicating with each other via APIs.
 
-<<IMAGE MAYBE>>
+<<IMAGE/DIAGRAM MAYBE>>
 
 Here, one backend needs to be granted access to the other backend. We'll call the first backend the source and the second backend the target. To accomplish this, the source authenticates with the OAuth server. The OAuth server confirms the identity of the source and then returns a token that the source will use to call the target. This process can also include permissions that are used by the target to authorize the call the source is making.
 
@@ -883,7 +886,7 @@ function buildUI(data) {
 }
 
 function buildClickHandler() {
-  // post to API when task is done
+  // post to API when ToDo is done
 }
 ```
 
@@ -1051,7 +1054,7 @@ function buildUI(data) {
 }
 
 function buildClickHandler() {
-  // post to API when task is done
+  // post to API when ToDo is done
 }
 ```
 
