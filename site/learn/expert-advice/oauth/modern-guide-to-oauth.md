@@ -27,7 +27,7 @@ We do cover a lot, so here's a handy table of contents to let you jump directly 
   * [Device login and registration](#device-login-and-registration)
   * [Which mode is right for you?](#which-mode-is-right-for-you)
 * [Grants](#grants)
-  * [Authorization code grant](#authorization-code-grant)
+  * [Authorization Code grant](#authorization-code-grant)
     * [Login/register buttons](#loginregister-buttons)
     * [Authorize endpoint parameters](#authorize-endpoint-parameters)
     * [Logging in](#logging-in)
@@ -38,9 +38,9 @@ We do cover a lot, so here's a handy table of contents to let you jump directly 
     * [Third-party login and registration (also Enterprise login and registration) with the Authorization Code grant](#third-party-login-and-registration-also-enterprise-login-and-registration-with-the-authorization-code-grant)
     * [Third-party authorization with the Authorization Code grant](#third-party-authorization-with-the-authorization-code-grant)
   * [Implicit grant](#implicit-grant)
-  * [Resource Owner's Password Credentials Grant](#resource-owners-password-credentials-grant)
-  * [Client Credentials Grant](#client-credentials-grant)
-  * [Device Grant](#device-grant)
+  * [Resource Owner's Password Credentials grant](#resource-owners-password-credentials-grant)
+  * [Client Credentials grant](#client-credentials-grant)
+  * [Device grant](#device-grant)
 * [Conclusion](#conclusion)
 
 ## OAuth overview
@@ -94,7 +94,7 @@ So, how does this work in practice? Let's take a look at the steps for a fictiti
 
 1. A user visits TWGTL and wants to sign up and manage their ToDos.
 1. They click the "Sign Up" button on the homepage.
-1. This button takes them over to the OAuth server. In fact, it takes them directly to the registration form that is included as part of the OAuth workflow (specifically the Authorization Code Grant which is covered later in this guide). 
+1. This button takes them over to the OAuth server. In fact, it takes them directly to the registration form that is included as part of the OAuth workflow (specifically the Authorization Code grant which is covered later in this guide). 
 1. They fill out the registration form and click "Submit".
 1. The OAuth server ensures this is a new user and creates their account.
 1. The OAuth server redirects the browser back to TWGTL, which logs the user in.
@@ -265,15 +265,15 @@ This mode often takes a bit of time to complete because the app on the Apple TV 
 
 Now that we have covered the real world OAuth modes, let's dig into how these are actually implemented using the OAuth grants. OAuth grants are:
 
-* Authorization Code Grant
-* Implicit Grant
-* Resource Owner's Password Credentials Grant
-* Client Credentials Grant
-* Device Grant
+* Authorization Code grant
+* Implicit grant
+* Resource Owner's Password Credentials grant
+* Client Credentials grant
+* Device grant
 
 We'll cover each grant type below and discuss how it is used, or not, for each of the OAuth modes above.
 
-### Authorization code grant
+### Authorization Code grant
 
 This is the most common OAuth grant and also the most secure. It relies on a user interacting with a browser (Chrome, Firefox, Safari, etc.) in order to handle OAuth modes 1 though 6 above. This grant requires the interaction of a user, so it isn't usable for the **Machine-to-machine authorization** mode. All of the interactive modes we covered above involve the same parties and UI, except when a "permission grant screen" is displayed. 
 
@@ -283,9 +283,9 @@ A few terms we need to define before we dive into this grant.
 * **Authorization code:** This is a random string of printable ASCII characters that the OAuth server includes in the redirect after the user has registered or logged in. This is used by the application backend and exchanged for tokens.
 * **Token endpoint:** This is an API that is used to get tokens from the OAuth server after the user has logged in. The application backend uses the **Authorization code** when it calls the **Token endpoint**.
 
-In this section we will also cover PKCE (Proof Key for Code Exchange - pronounced Pixy). PKCE is a security layer that sits on top of the authorization code grant to ensure that authorization codes can't be stolen or reused. The basics of PKCE is that the application generates a secret key (called the code verifier) and hashes it using SHA 256. This hash is one-way, so it can't be reversed by an attacker. The application then sends the hash to the OAuth server, which stores it. Later, when the application is getting tokens from the OAuth server, the application will send the server the secret key and the OAuth server will verify that the hash of the provided secret key matches the previously provided value. This is a good protection against attackers that can intercept the authorization code, but don't have the secret key.
+In this section we will also cover PKCE (Proof Key for Code Exchange - pronounced Pixy). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can't be stolen or reused. The basics of PKCE is that the application generates a secret key (called the code verifier) and hashes it using SHA 256. This hash is one-way, so it can't be reversed by an attacker. The application then sends the hash to the OAuth server, which stores it. Later, when the application is getting tokens from the OAuth server, the application will send the server the secret key and the OAuth server will verify that the hash of the provided secret key matches the previously provided value. This is a good protection against attackers that can intercept the authorization code, but don't have the secret key.
 
-**NOTE:** PKCE is not required for standard web browser uses of OAuth with the Authorization Code Grant when the application backend is passing both the `client_id` and `client_secret` to the Token endpoint. We will cover this in more detail below, but depending on your implementation, you might be able to safely skip implementing PKCE. I recommend always using it but it isn't always required.
+**NOTE:** PKCE is not required for standard web browser uses of OAuth with the Authorization Code grant when the application backend is passing both the `client_id` and `client_secret` to the Token endpoint. We will cover this in more detail below, but depending on your implementation, you might be able to safely skip implementing PKCE. I recommend always using it but it isn't always required.
 
 Let's take a look at how you implement this grant using a prebuilt OAuth server (like FusionAuth).
 
@@ -293,14 +293,14 @@ Let's take a look at how you implement this grant using a prebuilt OAuth server 
 
 First, we need to add a "Login" or "My Account" link/button to our application; or if you are using one of the authorization modes from above (for example the **Third-party service authorization** mode), you'll add a "Connect to XYZ" link/button. There are two ways to connect this link/button to the OAuth server:
 
-1. Set the `href` of the link to the full URL that starts the OAuth authorization code grant.
+1. Set the `href` of the link to the full URL that starts the OAuth Authorization Code grant.
 2. Set the `href` to a controller in the application backend that does a redirect.
 
 Option #1 is an older integration that is often not used in practice. There are a couple of reasons for this. First, the URL is long and not all that nice looking. Second, if you are going to use any enhanced security measures like PKCE and `nonce`, you'll need to write code that generates extra pieces of data to include on the redirect. We'll cover PKCE and OpenID Connect's `nonce` parameter as we set up our application integration.
 
 Before we dig into option #2, let's quickly take a look at how option #1 works.
 
-First, you'll need to determine the URL that starts the authorization code grant with your OAuth server as well as include all of the necessary parameters required by the specification. We'll use FusionAuth as an example, since it has a consistent URL pattern. Let's say you are running FusionAuth and it is deployed to `https://login.twgtl.com`. The URL for the OAuth authorize endpoint will also be located at:
+First, you'll need to determine the URL that starts the Authorization Code grant with your OAuth server as well as include all of the necessary parameters required by the specification. We'll use FusionAuth as an example, since it has a consistent URL pattern. Let's say you are running FusionAuth and it is deployed to `https://login.twgtl.com`. The URL for the OAuth authorize endpoint will also be located at:
 
 ```
 https://login.twgtl.com/oauth2/authorize
@@ -312,7 +312,7 @@ Next, you would insert this URL with a bunch of parameters (which we will go ove
 <a href="https://login.twgtl.com/oauth2/authorize?[a bunch of parameters here]">Login</a>
 ```
 
-This anchor tag would take the user directly to the OAuth server to start the authorization code grant. As we discussed above, this method is not generally used. 
+This anchor tag would take the user directly to the OAuth server to start the Authorization Code grant. As we discussed above, this method is not generally used. 
 
 Let's take a look at how Option #2 is implemented instead. Don't worry, you'll still get to learn about all those parameters.
 
@@ -339,9 +339,9 @@ This code immediately redirects the browser to the OAuth server. However, if you
 * `client_id` - this identifies the application you are logging into. In OAuth, this is referred to as the `client`. This value will be provided to you by the OAuth server.
 * `redirect_uri` - this is the URL in your application that the OAuth server will redirect the user back to after they log in. This URL must be registered with the OAuth server and it must point to a controller in your app (rather than a static page), because your app must do additional work after this URL is called.
 * `state` - technically this is optional, but it is useful for preventing various security issues. This parameter is echoed back to your application by the OAuth server. It can be anything you might need to be persisted across the OAuth workflow. If you have no other need for this parameter, I suggest setting it to a large randomly generated string. If you need to have data persisted across the workflow, I suggest setting URL encoding the data and appending a random string.
-* `response_type` - this should always be set to `code` for this grant type. This tells the OAuth server you are using the authorization code grant.
+* `response_type` - this should always be set to `code` for this grant type. This tells the OAuth server you are using the Authorization Code grant.
 * `scope` - this is also an optional parameter, but in some of the above modes, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll cover using a refresh token later).
-* `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code Grant. This is known as a "public client". There aren't many cases of applications that specifically don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them and PKCE is recommended by the [OAuth 2.1 draft](https://fusionauth.io/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/).
+* `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code grant. This is known as a "public client". There aren't many cases of applications that specifically don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them and PKCE is recommended by the [OAuth 2.1 draft](https://fusionauth.io/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/).
 * `code_challenge_method` - this is an optional parameter, but if you implement PKCE, you must specify how your PKCE `code_challenge` parameter was create. It can either be `plain` or `S256`. We never recommend using anything except `S256` which uses SHA-256 secure hashing for PKCE.
 * `nonce` - this is an optional parameter and is used for OpenID Connect. We don't go into much detail of OpenID Connect in this guide, but we will cover a few aspects including ID tokens and the `nonce` parameter. Basically, this `nonce` parameter will be included in the ID token that the OAuth server generates and we can verify that when we retrieve the ID token later in the guide.
 
@@ -516,7 +516,7 @@ OAuth servers can add additional parameters as needed, but these are the only on
 https://app.twgtl.com/oauth-callback?code=123456789&state=foobarbaz
 ```
 
-Remember that the browser is going to make an HTTP `GET` request to this URL. In order to securely complete the OAuth authorization code grant, you should write a server-side controller that handles this URL. This will allow you to securely exchange the authorization `code` parameter for tokens. 
+Remember that the browser is going to make an HTTP `GET` request to this URL. In order to securely complete the OAuth Authorization Code grant, you should write a server-side controller that handles this URL. This will allow you to securely exchange the authorization `code` parameter for tokens. 
 
 Let's look at how a controller accomplishes this exchange.
 
@@ -663,7 +663,7 @@ module.exports = common;
 
 ```
 
-At this point, we are completely finished with OAuth. We've successfully exchanged the authorization code for tokens, which is the last step of the OAuth authorization code grant.
+At this point, we are completely finished with OAuth. We've successfully exchanged the authorization code for tokens, which is the last step of the OAuth Authorization Code grant.
 
 Let's take a quick look at the 3 `restore` functions from above and how they are implemented for cookies and encrypted cookies. Here is how those functions would be implemented if we were storing the values in cookies:
 
@@ -749,7 +749,7 @@ JWTs have many other standard claims that you should be aware of. You can review
 
 #### User and token information
 
-Before we cover how the Authorization code grant is used for each of the OAuth modes, let's discuss two additional OAuth endpoints that can be used to retrieve information about your users and their tokens. These endpoints are:
+Before we cover how the Authorization Code grant is used for each of the OAuth modes, let's discuss two additional OAuth endpoints that can be used to retrieve information about your users and their tokens. These endpoints are:
 
 * Introspection - this endpoint is an extension to the OAuth 2.0 specification and returns information about the token using the standard JWT claims from the previous section.
 * UserInfo - this endpoint is defined as part of the OpenID Connect specification and returns information about the user.
@@ -1179,7 +1179,7 @@ If you use a OAuth server such as FusionAuth to manage your users and provide **
 
 #### Third-party authorization with the Authorization Code grant
 
-The last mode we will cover as part of the authorization code grant workflow is the **Third-party authorization** mode. This mode is the same as those above, but it requires slightly different handling of the tokens. Typically with this mode, the tokens we receive from the third-party need to be stored in our database. Doing so allows us to use them whenever we need to.
+The last mode we will cover as part of the Authorization Code grant workflow is the **Third-party authorization** mode. This mode is the same as those above, but it requires slightly different handling of the tokens. Typically with this mode, the tokens we receive from the third-party need to be stored in our database. Doing so allows us to use them whenever we need to.
 
 In our example, we wanted to leverage the WUPHF API to send a WUPHF when the user completes a ToDo. In order to accomplish this, we need to store the access and refresh tokens we received from WUPHF in our database. Then when the user completes a ToDo, we can send the WUPHF.
 
@@ -1239,7 +1239,7 @@ This code is just an example of how we might leverage the access and refresh tok
 
 ### Implicit grant
 
-The next grant that is defined in the OAuth 2.0 specification is the Implicit grant. Normally, we would cover this grant in detail the same way we covered the Authorization code grant. Except, I'm not going to. :)
+The next grant that is defined in the OAuth 2.0 specification is the Implicit grant. Normally, we would cover this grant in detail the same way we covered the Authorization Code grant. Except, I'm not going to. :)
 
 The reason we won't cover the Implicit grant in detail is that it is horribly insecure, broken, deprecated, and should never, ever be used (ever). Okay, maybe that's being a bit dramatic, but please don't use this grant. 
 
@@ -1247,7 +1247,7 @@ Instead of showing you how to use it, let's discuss why.
 
 The Implicit grant has been removed from OAuth as of the most recent version of the OAuth 2.1 specification. The reason that it has been removed is that it skips an important step that allows you to secure the tokens you receive from the OAuth server. This step occurs when your application backend makes the call to the Token endpoint to retrieve the tokens.
 
-Unlike the Authorization Code Grant, the Implicit Grant does not redirect the browser back to your application backend with an Authorization Code. Instead, it puts the access token directly on the URL as part of the redirect. These URLs look like this:
+Unlike the Authorization Code grant, the Implicit grant does not redirect the browser back to your application backend with an authorization code. Instead, it puts the access token directly on the URL as part of the redirect. These URLs look like this:
 
 `https://my-app.com/#token-goes-here`
 
@@ -1290,19 +1290,19 @@ As you can see, the risk of leaking tokens is far too high to ever consider usin
 
 If you aren't dissuaded by the above, and you really need to use the Implicit grant, please [check out our documentation](/docs/v1/tech/oauth/#example-implicit-grant), which walks you through how to implement it. 
 
-### Resource Owner's Password Credentials Grant
+### Resource Owner's Password Credentials grant
 
-The next grant on our list is the Resource Owner's Password Credentials Grant. That's a lot of typing, so I'm going to refer to this as the Password Grant for this section.
+The next grant on our list is the Resource Owner's Password Credentials grant. That's a lot of typing, so I'm going to refer to this as the Password grant for this section.
 
 This grant is also being deprecated and the current recommendation is that it should not be used. Let's discuss how this grant works and why it is being deprecated.
 
-The Password Grant allows an application to collect the username and password directly from the user via a native form and send this information to the OAuth server. The OAuth server verifies this information and then returns an access token and optionally a refresh token.
+The Password grant allows an application to collect the username and password directly from the user via a native form and send this information to the OAuth server. The OAuth server verifies this information and then returns an access token and optionally a refresh token.
 
 Many mobile applications and legacy web applications use this grant because they want to present the user with a login UI that feels native to their application. In most cases, mobile applications don't want to open a web browser to log users in and web applications want to keep the user in their UI rather than redirecting the browser to the OAuth server.
 
 There are two main issues with this approach:
 
-1. The application is collecting the username and password and sending it to the OAuth server. This means that the application has ensure that the username and password are completely secure in transit. This differs from the Authorization Code Grant where the username and password are only provided directly to the OAuth server.
+1. The application is collecting the username and password and sending it to the OAuth server. This means that the application has ensure that the username and password are completely secure in transit. This differs from the Authorization Code grant where the username and password are only provided directly to the OAuth server.
 1. This grant does not support any of the auxiliary security features that your OAuth server may provide such as:
     * Multi-factor authentication
     * Password resets
@@ -1315,19 +1315,19 @@ Due to how limiting and insecure this grant is, it has been removed from the lat
 
 If you aren't dissuaded by the above problems and you really need it, please [check out our documentation](/docs/v1/tech/oauth/#example-resource-owner-password-credentials-grant), which walks you through how to use this grant. 
 
-### Client Credentials Grant
+### Client Credentials grant
 
-The Client Credentials Grant provides the ability for one `client` to authorize another `client`. In OAuth terms, a `client` is an application itself, independent of a user. Therefore, this grant is most commonly used to allow one application to use another application, often via APIs. This grant therefore implements the **Machine-to-machine authorization** mode described above.
+The Client Credentials grant provides the ability for one `client` to authorize another `client`. In OAuth terms, a `client` is an application itself, independent of a user. Therefore, this grant is most commonly used to allow one application to use another application, often via APIs. This grant therefore implements the **Machine-to-machine authorization** mode described above.
 
-The Client credentials grant leverages the Token endpoint of the OAuth server and sends in a couple of parameters as form data in order to generate access tokens. These access tokens are then used to call APIs. Here are the parameters needed for this grant:
+The Client Credentials grant leverages the Token endpoint of the OAuth server and sends in a couple of parameters as form data in order to generate access tokens. These access tokens are then used to call APIs. Here are the parameters needed for this grant:
 
 * `client_id` - this is client id that identifies the source application.
 * `client_secret` - this is a secret key that is provided by the OAuth server. This should never be made public and should only ever be stored on the server.
-* `grant_type` - this will always be the value `client_credentials` to let the OAuth server know we are using the Client credentials grant.
+* `grant_type` - this will always be the value `client_credentials` to let the OAuth server know we are using the Client Credentials grant.
 
 You can send the `client_id` and `client_secret` in the request body or you can send them in using Basic authorization. We'll send them in the body in the code below to keep things consistent with the code from the Authorization Code grant above.
 
-Let's rework our TWGTL application to use the client credentials grant in order to support two different backends making APIs calls to each other.
+Let's rework our TWGTL application to use the Client Credentials grant in order to support two different backends making APIs calls to each other.
 
 If you recall from above, our code that completed a TWGTL ToDo item also sent out a WUPHF. This was all inline but could have been separated out into different backends or microservices. I hear microservices are hot right now. 
 
@@ -1403,7 +1403,7 @@ router.post('/send', function(req, res, next) {
 
 We've now separated the code that is responsible for completing ToDos from the code that sends the WUPHF. The only thing left to do is hook this code up to our OAuth server in order to generate access tokens and verify them.
 
-Because this is machine to machine communication, the user's access tokens are irrelevant. We don't care if the user has permissions to call the WUPHF API. Instead, the Todo API will authenticate against `login.twgtl.com` and receive an access token for its own use. Here's the code that generates the access token using the Client Credentials Grant:
+Because this is machine to machine communication, the user's access tokens are irrelevant. We don't care if the user has permissions to call the WUPHF API. Instead, the Todo API will authenticate against `login.twgtl.com` and receive an access token for its own use. Here's the code that generates the access token using the Client Credentials grant:
 
 ```javascript
 const clientId = '82e0135d-a970-4286-b663-2147c17589fd';
@@ -1451,9 +1451,9 @@ function verifyAccessToken(req) {
 
 To reiterate, with the Client Credentials grant, there is no user to log in. Instead, the clientId and clientSecret act as a username and password, respectively, for the entity trying to obtain an access token. 
 
-### Device Grant
+### Device grant
 
-This grant is our final grant to cover. This grant type allows us to use the **Device login and registration** mode. As mentioned above, we cover this mode and the Device Grant in detail in our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization/).
+This grant is our final grant to cover. This grant type allows us to use the **Device login and registration** mode. As mentioned above, we cover this mode and the Device grant in detail in our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization/).
 
 ## Conclusion
 
@@ -1462,24 +1462,3 @@ I hope this guide has been a useful overview of real-world uses of OAuth 2.0 and
 If you notice any issues, bugs, or typos in the Modern Guide to OAuth, please submit a Github issue or pull request on [this repository](https://github.com/FusionAuth/fusionauth-site).
 
 Thanks for reading and happy coding!
-
-
-
-
-
-check the casing of each grant name
-Authorization Code
-Implicit
-Client Credentials
-
-check casing of the headers.
-
-consolidate await/async/callback styles
-
-* Build TOC and rework sections maybe
-* Clean up introspect code and discussion
-* Test code
-* Make diagrams
-* Make images
-
-should client call the refresh token endpoint, not the api? probably
