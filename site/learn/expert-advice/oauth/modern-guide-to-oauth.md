@@ -108,7 +108,7 @@ So, how does this work in practice? Let's take a look at the steps for a fictiti
 
 That's it. The user feels like they are registering and logging into TWGTL directly, but in fact, TWGTL is delegating this all to the OAuth server. The user is none-the-wiser so this is why we call this mode *Local login and registration*.
 
-<<IMAGE OR VIDEO HERE MAYBE?>>
+{% include _image.liquid src="/assets/img/advice/modern-guide-oauth/login-screen-local-mode.png" alt="I bet your login screen will be much prettier." class="img-fluid" figure=false %}
 
 This mode has implications for some of the security best practices. In particular, the [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) Best Current Practices (BCP) recommends against using a webview:
 
@@ -201,7 +201,11 @@ To hook all of this up, TWGTL needs to add a button to the user's profile page t
 
 Since WUPHF doesn't actually exist, here's an example from Buffer, which connects to your social media accounts such as Twitter.
 
-<<IMAGE MAYBE>>
+{% include _image.liquid src="/assets/img/advice/modern-guide-oauth/buffer-connect-prompt.png" alt="Buffer would like to connect to your accounts." class="img-fluid" figure=false %}
+
+When you allow Buffer to connect, you'll see a screen like this from one of the third parties: 
+
+{% include _image.liquid src="/assets/img/advice/modern-guide-oauth/buffer-connect-twitter.png" alt="Buffer would like to connect to your Twitter account." class="img-fluid" figure=false %}
 
 The workflow for this mode looks like this:
 
@@ -225,11 +229,13 @@ With this mode, your OAuth server might display a "permission grant screen" to t
 
 The **Machine-to-machine authorization** OAuth mode is different than the previous modes we've covered. This mode does not involve users at all. Rather, it allows an application to interact with another application. Normally, this is via backend services communicating with each other via APIs.
 
-<<IMAGE/DIAGRAM MAYBE>>
-
 Here, one backend needs to be granted access to the other backend. We'll call the first backend the source and the second backend the target. To accomplish this, the source authenticates with the OAuth server. The OAuth server confirms the identity of the source and then returns a token that the source will use to call the target. This process can also include permissions that are used by the target to authorize the call the source is making.
 
-Using our TWGTL example, let's say that TWGTL has 2 microservices: one to manage ToDos and another to send WUPHFs. The ToDo microservice needs to call the WUPHF microservice. The WUPHF microservice needs to ensure that any caller is allowed to call its APIs. The workflow for this looks like this:
+Using our TWGTL example, let's say that TWGTL has 2 microservices: one to manage ToDos and another to send WUPHFs. Overengineering is fun! The ToDo microservice needs to call the WUPHF microservice. The WUPHF microservice needs to ensure that any caller is allowed to call its APIs before it posts the WUPHF. 
+
+{% include _image.liquid src="/assets/img/advice/modern-guide-oauth/client-credentials-grant.svg" alt="The WUPHF microservice needs to ensure the TWGTL microservice is authorized." class="img-fluid" figure=false %}
+
+The workflow for this looks like this:
 
 1. The ToDo microservice authenticates with the OAuth server.
 1. The OAuth server returns a token to the ToDo microservice.
