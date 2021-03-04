@@ -3,7 +3,7 @@ layout: blog-post
 title: Congratulations Auth0 on the acquisition by Okta
 description: The acquisition of Auth0 by Okta, a leader in the identity and access management (IAM) space, is continued validation of the importance of customer identity and access management (CIAM).
 author: Dan Moore
-image: blogs/softozor-fusionauth-story/softozor-integrated-fusionauth-with-hasura-and-kubernetes-and-saved-development-effort.png
+image: blogs/auth0-okta-acquisition/congratulations-auth0-on-the-acquisition-by-okta-header-image.png
 category: blog
 tags: topic-upgrade-auth0
 excerpt_separator: "<!--more-->"
@@ -60,11 +60,13 @@ But, we know one thing. You don't buy another company to lose money. Okta is mak
 
 {% include _image.liquid src="/assets/img/blogs/auth0-okta-acquisition/acquisition-reasons.png" alt="Okta explains to investors why they acquired Auth0." class="img-fluid" figure=false %}
 
-While cross-selling will be great for Okta and primarily IT-centric customers, it may not be great for developers used to Auth0's model. Developers and IT are brothers and sisters-in-arms, they have very different needs when it comes to integrations. IT is justifiably conservative, while developers are focused on features and shipping. With luck, Auth0's developer focus will not be subsumed by the needs of IT admins in the name of cross-selling.
+While cross-selling will be great for Okta and primarily IT-centric customers, it may not be great for developers used to Auth0's model. Developers and IT are brothers and sisters-in-arms, they have very different needs when it comes to integrations. 
+
+IT is justifiably conservative in accepting new features and vendors, while developers are focused on features and shipping. With luck, Auth0's developer focus will not be subsumed by the needs of IT admins in the name of cross-selling.
 
 {% include _image.liquid src="/assets/img/blogs/auth0-okta-acquisition/tam-diagram.png" alt="CIAM and IAM markets in the view of Okta." class="img-fluid" figure=false %}
 
-While they plan to run Auth0 as an independent unit, integration between two large companies with disparate cultures are not known for going smoothly. We hope that everyone meshes well and the new company runs smoothly, doesn't raise prices, and continues to provide the great support and documentation that Auth0 is known for.
+While Okta plans to run Auth0 as an independent unit, integration between two large companies with disparate cultures are not known for going smoothly. We hope that everyone meshes well and the new company runs smoothly, doesn't raise prices, and continues to provide the great support and documentation that Auth0 is known for.
 
 ## How does this relate to FusionAuth
 
