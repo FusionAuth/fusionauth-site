@@ -3,6 +3,7 @@ layout: blog-post
 title: Auth0 and FusionAuth - A Tale of Two Solutions
 description: Compare FusionAuth and Auth0 for your identity and access management solution.
 author: Bryan Giese
+updated_date: 2021-03-04
 image: blogs/fusionauth-vs-auth0/header.png
 category: blog
 excerpt_separator: "<!--more-->"
@@ -11,6 +12,8 @@ excerpt_separator: "<!--more-->"
 We've seen a lot of news lately about Authentication as a Service platforms like Auth0 and FusionAuth and hope that trend will continue. Auth0 and FusionAuth both provide advanced customer identity and access management (CIAM) and it is exciting to see a company that we respect recognized by the wider community. Strangely, when I say this at the CIAM events we attend I get a few curious looks. Why would we want them to be recognized? Shouldn't we want FusionAuth to get the attention?
 
 <!--more-->
+
+**Most recently updated March 4, 2021.**
 
 ## Why the Attention is Good for Auth0 and FusionAuth
 
@@ -56,7 +59,7 @@ User reports have been in every slide presentation and corporate board meeting s
 ### Custom Feature Development
 Another difference between Auth0 and FusionAuth is our size and flexibility. Auth0 is a huge corporation with hundreds of employees and tens-of-millions in investor funding. They are beholden to an extensive range of investors and board influencers who are all chasing "the best product-market fit." Smaller companies with unique or specific needs are often overlooked or ignored.
 
-FusionAuth is a small, bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, StrategyCorp, Deutsche Bank and IBM.
+FusionAuth is a bootstrapped company dedicated to our customers. We have successfully provided our core solutions with unique customizations and one-on-one support for our clients. We have eliminated the overhead, complex approval pipelines, and corporate red-tape that cripples large firms so we can deliver exceptional solutions for clients like DataStax, StrategyCorp, Deutsche Bank and IBM.
 
 To see more details on how Auth0 and FusionAuth stack up, [download this feature comparison](/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison") and please [contact us](/contact "Contact Us") if you have any questions.
 
