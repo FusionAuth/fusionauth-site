@@ -1,0 +1,180 @@
+---
+layout: doc
+title: Migration Guide
+description: How to migrate your users to FusionAuth.
+---
+:page-liquid:
+
+== Overview
+
+This document assumes you have decided to migrate off of Auth0 and have chose FusionAuth as your new authentication, authorization and user management solution. It also assumes you have installed FusionAuth. If not, please link:/docs/v1/tech/installation-guide/[view the installation guide] and install FusionAuth before you begin. For more general migration guidance, please view the link:/docs/v1/tech/guides/migration/[migration guide].
+
+There are a number of different ways you can integrate with Auth0. This document will focus on exporting your user data from an Auth0 managed user database and importing it into FusionAuth. 
+
+You can use either the Auth0 management API or the Auth0 user interface to export your user data. This guide will use the user interface, but if you have a large number of users, using the https://auth0.com/docs/api/management/v2#!/Users/get_users[API is recommended]. Auth0 also has a https://auth0.com/docs/support/export-data[nice high level export guide] worth reviewing.
+
+== Exporting users
+
+To export users using the user interface, log in and go to your dashboard. You need to follow these steps:
+
+1. Add the Import/Export extension, if not present
+1. Run the extension
+1. Download the exported file
+
+Let's walk through each of these steps.
+
+=== Add the extension
+
+There's a convenient extension that allows you to both import and export users. Add the extension by going to extensions, searching for it and then adding it.
+
+The next step is to run the extension. The first time you run it, you'll be asked to grant needed permissions. 
+
+=== Run the extension
+
+Next, run the extension. Choose the export tab.
+
+This will bring up a screen with information such as what fields you want to export, which connections, and the export file format.
+
+For this guide, we'll export user information as JSON. We'll also choose the default user database. Finally, we don't have any special fields to include, but if you do, ensure you configure them.
+
+=== Download the file
+
+After you run the export, you will download a file. Depending on how many users you have in your database, it may take a while.
+
+At the end of the process, you'll end up with a file like this:
+
+[source,json,title=Sample Auth0 user data export download]
+----
+{"user_id":"auth0|60425da93519d90068f82966","email":"test@example.com","name":"test@example.com","nickname":"test","created_at":"2021-03-05T16:34:49.518Z","updated_at":"2021-03-05T16:34:49.518Z","email_verified":false}
+{"user_id":"auth0|60425dc43519d90068f82973","email":"test2@example.com","name":"test2@example.com","nickname":"test2","created_at":"2021-03-05T16:35:16.786Z","updated_at":"2021-03-05T16:35:16.786Z","email_verified":false}
+----
+
+This is half of the data you'll need to import your users. The other is the password hashes. 
+
+## Passwords
+
+Password hashes are sensitive information and Auth0 correctly doesn't export them as part of the general import/export process. You must open a support ticket.
+
+From your dashboard, navigate to support, and then open a ticket. Select the issue and details of your request.
+
+[NOTE]
+====
+Auth0 requires you to be on a link:https://auth0.com/docs/support/export-data[paid plan] to export your password hashes. You cannot export them if you are on the free tier.
+
+Auth0 makes no commitments about how long a password hash ticket will take.
+
+Plan accordingly.
+====
+
+You'll receive an automated message after this ticket is submitted and you can view the progress on the ticket screen. 
+
+At the end of the process, you'll recieve a JSON file containing the password hashes and user ids. It might look a little something like this:
+
+[source,json,title=Sample Auth0 password hash export download]
+----
+TBD
+----
+
+TBD what hashing algorithm is used?
+
+== Importing users
+
+Now you have your user data and your password data. The easiest way to import your data into FusionAuth is to use a provided script from the https://github.com/FusionAuth/fusionauth-import-scripts[FusionAuth GitHub repository].
+
+=== Set up FusionAuth
+
+But first, let's create a tenant and do some other setup. This will be useful if you need to repeat the import process repeatedly.
+
+Navigate to [breadcrumb]#Tenants# and choose the green plus sign.
+
+IMAGE 
+
+Enter any relevant information. Give it a descriptive name like Auth0 import test and save it. Note the Id, which will be something like `25c9d123-8a79-4edd-9f76-8dd9c806b0f3`.
+
+IMAGE
+
+Then, create an API key. This needs to have the permission to run a bulk import.
+
+=== Run the script
+
+The script requires ruby (tested with 2.7) and the FusionAuth ruby client. Please feel free to port it to any other language if you prefer. To get the script, clone the git repository
+
+[source,shell,title=Getting the import script files]
+----
+git clone https://github.com/FusionAuth/fusionauth-import-scripts
+----
+
+Change into the auth0 directory:
+[source,shell,title=Go to the correct directory]
+----
+cd fusionauth-import-scripts/auth0
+----
+
+Edit the `import.rb` script and update some key variables.
+
+[source,ruby,title=An excerpt of the import.rb]
+----
+#!/usr/local/bin/ruby -w
+
+require 'date'
+require 'json'
+require 'fusionauth/fusionauth_client'
+
+# BEGIN Modify these variables for your Import
+users_file = 'users.json'
+secrets_file = 'secrets.json'
+
+$fusionauth_url = 'http://localhost:9011'
+$fusionauth_api_key = 'bf69486b-4733-4470-a592-f1bfce7af580'
+
+# Optionally specify the target tenant. If only one tenant exists this is optional and the users
+# will be imported to the default tenant. When more than one tenant exists in FusionAuth this is required.
+$fusionauth_tenant_id = '16970284-4680-4b3c-8a7e-424644ed1090'
+
+# Map Auth0 userId to the FusionAuth User Id as a UUID
+$map_auth0_user_id = false
+
+# END Modify these variables for your Import
+----
+
+=== Starting over
+
+If you need to start over, delete the tenant you created at the beginning. This will remove all the users and other configuration for this tenant, giving you a fresh slate.
+
+Navigate to [breadcrumb]#Tenants# and choose the red trashcan icon. 
+
+IMAGE
+
+Confirm your desire to delete the tenant. 
+
+== Other entities
+
+Other entities to consider when exporting your data from Auth0:
+
+connections
+
+rules/hooks/actions
+
+integrations with your applications
+
+applications
+
+registrations
+
+
+users
+
+roles
+
+connections
+
+rules/hooks/actions
+
+https://auth0.com/docs/support/export-data
+-- have to open a support ticket to get the password hash
+-- not available from a free tier
+no login api with password, so can't use slow migration
+
+https://auth0.com/docs/api/management/v2#!/Users/get_users
+
+Had a lot of fun in a recent @platformsh "Deploy Friday" livestream. Talked about the book "97 things every cloud engineer should know". We covered vulnerability, scaling mentorship and why reference docs are more prevalent (and less useful) than use case based docs. https://www.youtube.com/watch?v=gyInLIqCfi4
