@@ -93,7 +93,13 @@ Enter any relevant information. Give it a descriptive name like Auth0 import tes
 
 IMAGE
 
-Then, create an API key. This needs to have the permission to run a bulk import.
+Then, create an API key. Navigate to [breadcrumb]#Settings -> API Keys# in the administrative user interface.
+
+This key needs to have the permission to run a bulk import. In the spirit of the principal of least privilege, allow it `POST` on `/api/user/import` and give it a descriptive name. Record the value, as you'll use it below.
+
+IMAGE 
+
+IMAGE
 
 === Run the script
 
@@ -137,9 +143,52 @@ $map_auth0_user_id = false
 # END Modify these variables for your Import
 ----
 
-=== Starting over
+You need to update the following variables.
 
-If you need to start over, delete the tenant you created at the beginning. This will remove all the users and other configuration for this tenant, giving you a fresh slate.
+* `users_file` needs to point to the location of the user export file you obtained.
+* `secrets_file` needs to point to the location of the password hash export file you requested.
+* `$fusionauth_url` must point to your FusionAuth instance. If you are testing locally, it may be `'http://localhost:9011'`.
+* `$fusionauth_api_key` needs to be set to the value of the API you set up above.
+* `$fusionauth_tenant_id` should be set to the Id of the testing tenant you created above.
+* `$map_auth0_user_id` is a configuration variable you may or may not want to change. If you have external systems relying on the Auth0 user identifier, you should preserve it across your systems. FusionAuth allows you to reuse that identifier, so if you need this, change the value of this variable to `true`.
+
+You also need to ensure the following gems are imported:
+
+* `date`
+* `json`
+* `fusionauth_client`
+
+If you have bundler installed, you can run `bundle install`, otherwise install the needed gems in whatever way you typically do.
+
+You can now run the import script:
+
+[source,shell,title=Running the import script]
+----
+ruby ./import.rb
+----
+
+You'll see output like:
+
+[source,shell,title=Import script output]
+----
+TBD
+----
+
+The next step is to log in to the FusionAuth administrative interface and review the users.
+
+IMAGE 
+
+=== The destination tenant
+
+After you are done testing, you can choose to import the users into the default tenant or a new tenant. 
+
+Whichever you choose, make sure to update the `$fusionauth_tenant_id` to the correct value before running the import for a final time.
+
+=== A fresh start
+
+If you need to start over because the import failed or you need to tweak a setting, delete the tenant you created. 
+
+This will remove all the users and other configuration for this tenant, giving you a fresh slate.
 
 Navigate to [breadcrumb]#Tenants# and choose the red trashcan icon. 
 
@@ -147,34 +196,45 @@ IMAGE
 
 Confirm your desire to delete the tenant. 
 
-== Other entities
+== Other considerations
 
-Other entities to consider when exporting your data from Auth0:
+As mentioned above, there are some other important entities that your running system may need to migrate from Auth0. There are typically fewer of these, so an automated migration may make less sense, but you need to ensure they are moved over for your system to function.
 
-connections
+The other difficulty with these is that the functionality may not be the same. You should definitely test FusionAuth before you begin a migration to learn about these differences.
 
-rules/hooks/actions
+A partial list of the configuration that may need to be migrated, depending on what you use Auth0 for:
 
-integrations with your applications
+* Connections are a source of data for users. FusionAuth calls these link:/docs/v1/tech/identity-providers/[Identity Providers].
+* Rules, Hooks and Actions are ways for you to customize the authentication or authorization workflow at various points. FusionAuth has a similar concept called link:/docs/v1/tech/lambdas/[Lambdas].
+* APIs, Applications and SSO Integrations are things your users can log in to. They are also called Clients in the Auth0 documentation. FusionAuth refers to these as link:/docs/v1/tech/core-concepts/applications/[Applications]. Read more about the link:/docs/v1/tech/core-concepts/authentication-authorization/[difference between authentication and authorization] in FusionAuth.
+* Tenants are a high level construct that groups other entities such as users and applications together. FusionAuth calls these link:/docs/v1/tech/core-concepts/tenants/[Tenants] as well.
+* Roles and Permissions are ways to provide information about what your users can do in your custom or off the shelf applications. FusionAuth has link:/docs/v1/tech/core-concepts/roles/[Roles] and they are defined in the Application.
 
-applications
+[NOTE]
+====
+In FusionAuth is that users are mapped to applications with a link:/docs/v1/tech/core-concepts/registrations/[Registration]. 
 
-registrations
+Auth0, in contrast, gives users access to all applications in a tenant by default. 
+====
 
+=== Universal login
 
-users
+Auth0 provides login pages called Universal Login. This is a complex, configurable component that works with SPAs, native applications and web applications. 
 
-roles
+FusionAuth's login experience is less complicated. You can choose to build your own login pages or use FusionAuth's hosted login pages. link:/docs/v1/tech/core-concepts/integration-points/#login-options[Read more about these choices].
 
-connections
+== What to do next
 
-rules/hooks/actions
+At a minimum, you'll need to assign your users to the relevant migrated FusionAuth applications. You'll also need to modify and test your applications to ensure that your users can log in to your applications with the appropriate permissions and roles.
 
-https://auth0.com/docs/support/export-data
--- have to open a support ticket to get the password hash
--- not available from a free tier
-no login api with password, so can't use slow migration
+You may want to review the list of link:/docs/v1/tech/example-apps/[FusionAuth Example Applications] to see if any accelerate your understanding of the changes needed to integrate. 
 
-https://auth0.com/docs/api/management/v2#!/Users/get_users
+If your application uses a standard OAuth, SAML or OIDC library to authenticate with Auth0, the transition should be painless.
 
-Had a lot of fun in a recent @platformsh "Deploy Friday" livestream. Talked about the book "97 things every cloud engineer should know". We covered vulnerability, scaling mentorship and why reference docs are more prevalent (and less useful) than use case based docs. https://www.youtube.com/watch?v=gyInLIqCfi4
+== Support
+
+If you need support in your migration beyond what is provided in this guide, you can either:
+
+* post in our link:/community/forums/[community forums] or
+* link:/pricing/editions/[purchase a support contract]
+
