@@ -7,21 +7,64 @@ description: How to migrate your users to FusionAuth.
 
 == Overview
 
-This document assumes you have decided to migrate off of Auth0 and have chose FusionAuth as your new authentication, authorization and user management solution. It also assumes you have installed FusionAuth. If not, please link:/docs/v1/tech/installation-guide/[view the installation guide] and install FusionAuth before you begin. For more general migration guidance, please view the link:/docs/v1/tech/guides/migration/[migration guide].
+This document will help you migrate off of Auth0. If you are looking to compare FusionAuth and Auth0, link:/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions/[this document may help]. 
 
-There are a number of different ways you can integrate with Auth0. This document will focus on exporting your user data from an Auth0 managed user database and importing it into FusionAuth. 
+This guide assumes you have installed FusionAuth. If you have not, please link:/docs/v1/tech/installation-guide/[view our installation guides] and install FusionAuth before you begin. For more general migration information, please view the link:/docs/v1/tech/guides/migration/[FusionAuth migration guide].
 
-You can use either the Auth0 management API or the Auth0 user interface to export your user data. This guide will use the user interface, but if you have a large number of users, using the https://auth0.com/docs/api/management/v2#!/Users/get_users[API is recommended]. Auth0 also has a https://auth0.com/docs/support/export-data[nice high level export guide] worth reviewing.
+There are a number of different ways you can integrate with Auth0, and it would be difficult to cover them all. This guide touches on the major pieces of a migration, but focuses on moving your user data from an Auth0 managed user database into FusionAuth. 
 
-Here's a brief video walking through the export process.
+== Planning considerations
+
+=== Obtaining user data
+
+You can use either the Auth0 management API or the Auth0 user interface to export user data. This guide will use the user interface, but if you have a large number of users, the https://auth0.com/docs/api/management/v2#!/Users/get_users[management API is recommended]. Auth0 also has a https://auth0.com/docs/support/export-data[high level export guide] worth reviewing.
+
+Your users' usernames and other data can be obtained by installing an extension and downloading the data. The password can be obtained by opening a support ticket.
+
+Here's a brief video walking through the export process, which is further documented below.
 
 video::wQklLZZP_3s[youtube,width=560,height=315]
 
+=== Mapping user attributes
+
+The attributes of the user object in FusionAuth are link:/docs/v1/tech/apis/users/[well documented]. 
+
+If there is an attribute in your Auth0 user which cannot be direclty mapped to a FusionAuth user attribute, you can place it to the `user.data` field. This field can store arbitrary JSON.
+
+=== Other entities
+
+There are other important entities, such as connections or roles, that may need to be migrated. There are typically fewer of these, so an automated migration may not make sense, but plan for moving this configuration in some form.
+
+The other difficulty with this type of entity is that the functionality may not be the same between Auth0 and FusionAuth. Contrast this with users, where if you can migrate the username and the password information, they can authenticate. It is highly recommended to link:/download/[download FusionAuth] before you begin a migration and do a proof of concept to learn more about these differences. 
+
+A partial list of configuration that may need to be migrated includes the following:
+
+* In Auth0, Connections are a source of data for users. FusionAuth calls these link:/docs/v1/tech/identity-providers/[Identity Providers].
+* Rules, Hooks and Actions are ways for you to customize authentication or authorization workflows. FusionAuth has a similar concept called link:/docs/v1/tech/lambdas/[Lambdas].
+* With Auth0, APIs, Applications and SSO Integrations are what your users can log in to. They are also called Clients in the Auth0 documentation. FusionAuth refers to these as link:/docs/v1/tech/core-concepts/applications/[Applications]. 
+* Tenants are a high level construct which groups other entities such as users and applications together. FusionAuth calls these link:/docs/v1/tech/core-concepts/tenants/[Tenants] as well.
+* For Auth0, Roles and Permissions provide information about what your users can do in your custom or off the shelf applications. FusionAuth has link:/docs/v1/tech/core-concepts/roles/[Roles] and they are defined on an Application by Application basis. Read more about the link:/docs/v1/tech/core-concepts/authentication-authorization/[difference between authentication and authorization] in FusionAuth.
+
+[NOTE]
+====
+In FusionAuth, users are mapped to applications with a link:/docs/v1/tech/core-concepts/registrations/[Registration]. 
+
+Auth0, in contrast, gives users access to all Auth0 applications in a tenant by default. 
+====
+
+=== Universal login
+
+Auth0 provides a login experience called Universal Login. This is a complex, configurable component that works with SPAs, native applications and web applications. 
+
+FusionAuth's login experience is less complicated. You can choose to build your own login pages or use FusionAuth's hosted login pages. link:/docs/v1/tech/core-concepts/integration-points/#login-options[Read more about these choices].
+
+Once you've planned your migration, export your user data from Auth0.
+
 == Exporting users
 
-To export users using the user interface, log in and go to your dashboard. You need to follow these steps:
+To export users with the user interface, log in and go to your dashboard. You'll perform the following steps:
 
-1. Add the Import/Export extension, if not present
+1. Add the User Import/Export extension, if not present
 2. Run the extension
 3. Download the exported file
 
@@ -29,23 +72,33 @@ Let's walk through each of these steps.
 
 === Add the extension
 
-There's a convenient extension that allows you to both import and export users. Add the extension by going to extensions, searching for it and then adding it.
+There's a convenient extension that allows you to both import and export users to and from Auth0. Add the extension by navigating to [breadcrumb]#Extensions# and searching for it.
 
-The next step is to run the extension. The first time you run it, you'll be asked to grant needed permissions. 
+image::guides/auth0-migration/find-user-export-extension.png[Finding the import/export extension.,width=1200,role=bottom-cropped]
+
+After you find the extension, install it:
+
+image::guides/auth0-migration/user-export-extension-install.png[Installing the import/export extension.,width=1200,role=bottom-cropped]
+
+The next step is to run the extension. 
 
 === Run the extension
 
-Next, run the extension. Choose the export tab.
+Next, run the extension. The first time you run it, you'll be asked to grant needed permissions. Then, choose the export tab. 
 
-This will bring up a screen with information such as what fields you want to export, which connections, and the export file format.
+This will bring up a screen with information such as what fields you want to export, which connections to pull users from, and the export file format.
 
-For this guide, we'll export user information as JSON. We'll also choose the default user database. Finally, we don't have any special fields to include, but if you do, ensure you configure them.
+image::guides/auth0-migration/user-export-extension-export-run.png[Running the import/export extension.,width=1200,role=bottom-cropped]
+
+For this guide, export user information as JSON. Choose the default user database. Finally, if you have special fields to include, configure them to be exported. Then begin the export.
+
+image::guides/auth0-migration/auth0-export-complete.png[View when the the import/export extension is finished.,width=1200,role=bottom-cropped]
+
+Depending on how many users you have in your database, it may take a while for this to complete.
 
 === Download the file
 
-After you run the export, you will download a file. Depending on how many users you have in your database, it may take a while.
-
-At the end of the process, you'll end up with a file like this:
+After the export finishes, download the file provided. At the end of the process, you'll end up with a JSON file like this:
 
 [source,json,title=Sample Auth0 user data export download]
 ----
@@ -53,13 +106,19 @@ At the end of the process, you'll end up with a file like this:
 {"user_id":"auth0|60425dc43519d90068f82973","email":"test2@example.com","name":"test2@example.com","nickname":"test2","created_at":"2021-03-05T16:35:16.786Z","updated_at":"2021-03-05T16:35:16.786Z","email_verified":false}
 ----
 
-This is half of the data you'll need to import your users. The other is the password hashes. 
+This is half of the data you'll need to migrate your users. The other half is the password hashes. Let's tackle that next.
 
-## Passwords
+== Exporting passwords
 
-Password hashes are sensitive information and Auth0 correctly doesn't export them as part of the general import/export process. You must open a support ticket.
+Password hashes and related information such as the salt and encryption algorithm are sensitive information. Auth0 doesn't export them as part of the general import/export process. 
 
-From your dashboard, navigate to support, and then open a ticket. Select the issue and details of your request.
+However, once you've imported the passwords, your users will be able to log in to FusionAuth with the same password they used previously. However, neither FusionAuth, Auth0 nor you know the password, only the one way hash of the password.
+
+You must open a support ticket to get access to the hashes. To do so, from your dashboard, navigate to [breadcrumb]#Get Support#, and then open a ticket by scrolling to the bottom of the support page. 
+
+image::guides/auth0-migration/create-ticket-start.png[The first step to getting your password hashes.,width=1200,role=top-cropped]
+
+Select the issue and details of your request. Choose "I have a question regarding my Auth0 account" and then pick the "I would like to obtain an export of my password hashes" option.
 
 [NOTE]
 ====
@@ -67,60 +126,71 @@ Auth0 requires you to be on a link:https://auth0.com/docs/support/export-data[pa
 
 Auth0 makes no commitments about how long a password hash ticket will take.
 
-Plan accordingly.
+Plan accordingly and allow plenty of time.
 ====
 
 You'll receive an automated message after this ticket is submitted and you can view the progress on the ticket screen. 
 
-At the end of the process, you'll recieve a JSON file containing the password hashes and user ids. It might look a little something like this:
+After your request is granted, you'll receive a JSON file containing the password hashes, related information and user ids. It might look a little something like this:
 
 [source,json,title=Sample Auth0 password hash export download]
 ----
 TBD
 ----
 
-TBD what hashing algorithm is used?
+Now that you have both the user data and the passwords, you can import your users.
 
 == Importing users
 
-Now you have your user data and your password data. The easiest way to import your data into FusionAuth is to use a provided script from the https://github.com/FusionAuth/fusionauth-import-scripts[FusionAuth GitHub repository].
+The easiest way to import your data into FusionAuth is to use the provided script from the https://github.com/FusionAuth/fusionauth-import-scripts[FusionAuth import scripts GitHub repository]. But first, you need to set up FusionAuth.
 
 === Set up FusionAuth
 
-But first, let's create a tenant and do some other setup. This will be useful if you need to repeat the import process repeatedly.
+There are a few steps to take to set up FusionAuth for your migrated user data.
 
-Navigate to [breadcrumb]#Tenants# and choose the green plus sign.
+==== Create a test tenant
 
-IMAGE 
+Create a separate tenant for your migration process. Tenants logically isolate configuration settings and users, so if a migration goes awry or you need to adjust it, it's easy to delete the tenant and start with a clean system.
 
-Enter any relevant information. Give it a descriptive name like Auth0 import test and save it. Note the Id, which will be something like `25c9d123-8a79-4edd-9f76-8dd9c806b0f3`.
+To add a tenant, navigate to [breadcrumb]#Tenants# and choose the green plus sign.
 
-IMAGE
+image::guides/auth0-migration/list-of-tenants-add-highlighted.png[Adding a tenant.,width=1200,role=bottom-cropped]
 
-Then, create an API key. Navigate to [breadcrumb]#Settings -> API Keys# in the administrative user interface.
+Give it a descriptive name like `Auth0 import test` and save it. You shouldn't need to modify any of the other configuration options to test importing users.
 
-This key needs to have the permission to run a bulk import. In the spirit of the principal of least privilege, allow it `POST` on `/api/user/import` and give it a descriptive name. Record the value, as you'll use it below.
+image::guides/auth0-migration/add-tenant.png[The tenant creation screen,width=1200,role=bottom-cropped]
 
-IMAGE 
+Record the Id of the tenant, which will be something like `25c9d123-8a79-4edd-9f76-8dd9c806b0f3`. You'll use this in the import script.
 
-IMAGE
+image::guides/auth0-migration/list-of-tenants.png[The tenant list.,width=1200,role=bottom-cropped]
 
-=== Run the script
+==== Set up your import API key
 
-The script requires ruby (tested with 2.7) and the FusionAuth ruby client. Please feel free to port it to any other language if you prefer. To get the script, clone the git repository
+The next step is to create an API key. To do so, navigate to [breadcrumb]#Settings -> API Keys# in the administrative user interface.
 
-[source,shell,title=Getting the import script files]
+image::guides/auth0-migration/add-api-key.png[Adding an API key,width=1200]
+
+This key needs to have the permission to run a bulk import of users. In the spirit of the principle of least privilege, give it the permission to `POST` to the `/api/user/import` endpoint. Record the API key string, as you'll use it below as well.
+
+image::guides/auth0-migration/set-api-key-permissions.png[Setting API key permissions,width=1200]
+
+=== Configure the script
+
+The import script requires ruby (tested with 2.7). To get the script, clone the git repository:
+
+[source,shell,title=Getting the import scripts]
 ----
 git clone https://github.com/FusionAuth/fusionauth-import-scripts
 ----
 
-Change into the auth0 directory:
-[source,shell,title=Go to the correct directory]
+Navigate to the `auth0` directory:
+
+[source,shell,title=Navigate to the correct directory]
 ----
 cd fusionauth-import-scripts/auth0
 ----
 
-Edit the `import.rb` script and update some key variables.
+Edit the `import.rb` script. You should update important variables:
 
 [source,ruby,title=An excerpt of the import.rb]
 ----
@@ -145,24 +215,41 @@ $fusionauth_tenant_id = '16970284-4680-4b3c-8a7e-424644ed1090'
 $map_auth0_user_id = false
 
 # END Modify these variables for your Import
+# ...
 ----
 
-You need to update the following variables.
+For this script to work correctly, update the following:
 
-* `users_file` needs to point to the location of the user export file you obtained.
-* `secrets_file` needs to point to the location of the password hash export file you requested.
-* `$fusionauth_url` must point to your FusionAuth instance. If you are testing locally, it may be `'http://localhost:9011'`.
-* `$fusionauth_api_key` needs to be set to the value of the API you set up above.
-* `$fusionauth_tenant_id` should be set to the Id of the testing tenant you created above.
-* `$map_auth0_user_id` is a configuration variable you may or may not want to change. If you have external systems relying on the Auth0 user identifier, you should preserve it across your systems. FusionAuth allows you to reuse that identifier, so if you need this, change the value of this variable to `true`.
+* `users_file` should point to the location of the user export file you obtained.
+* `secrets_file` needs to point to the location of the password hash export file you received.
+* `$fusionauth_url` must point to your FusionAuth instance. If you are testing locally, it will probably be `'http://localhost:9011'`.
+* `$fusionauth_api_key` needs to be set to the value of the API key created above.
+* `$fusionauth_tenant_id` should be set to the Id of the testing tenant created above.
 
-You also need to ensure the following gems are imported:
+You may or may not want to change `$map_auth0_user_id`. If you have external systems relying on the Auth0 user identifier, set this to `true`, which will ensure imported users have the the same Id as they did in Auth0. Otherwise, you can leave this variable set to `false`.
+
+You may also want to migrate additional data. Currently, the following attributes are migrated:
+
+* `user_id`
+* `email
+* `email_verified`
+* `username`
+* `insertInstant`
+* `password` and supporting attributes
+
+The migrated user will have the Auth0 tenant Id and original user Id stored on the `user.data` object. If you have additional user attributes you want to migrate, you should review and modify the `map_user` method. 
+
+You may also want to create Registrations or Group memberships, which you can do by creating the appropriate JSON data structures. These are documented in the link:/docs/v1/tech/apis/users/#import-users[Import User API docs].
+
+You also need to ensure the following gems are available:
 
 * `date`
 * `json`
 * `fusionauth_client`
 
-If you have bundler installed, you can run `bundle install`, otherwise install the needed gems in whatever way you typically do.
+If you have bundler installed, run `bundle install` in the `auth0` directory. Otherwise install the needed gems in your standard manner.
+
+=== Run the script
 
 You can now run the import script:
 
@@ -178,67 +265,45 @@ You'll see output like:
 TBD
 ----
 
-The next step is to log in to the FusionAuth administrative interface and review the users.
+=== Verify the import
+
+The next step is to log in to the FusionAuth administrative user interface and review the users. 
 
 IMAGE 
 
-=== The destination tenant
+If you have a test user, log in with them to ensure the hashing migration was successful.
 
-After you are done testing, you can choose to import the users into the default tenant or a new tenant. 
+=== The final destination of the imported users
 
-Whichever you choose, make sure to update the `$fusionauth_tenant_id` to the correct value before running the import for a final time.
+After you are done testing, choose whether to import users into the default tenant or a new tenant. 
 
-=== A fresh start
+Whichever you choose, make sure to update `$fusionauth_tenant_id` to the correct value before running the import for a final time.
 
-If you need to start over because the import failed or you need to tweak a setting, delete the tenant you created. 
+If you aren't keeping the users in the test tenant, delete the tenant as outlined below.
 
-This will remove all the users and other configuration for this tenant, giving you a fresh slate.
+=== Deleting the test tenant
 
-Navigate to [breadcrumb]#Tenants# and choose the red trashcan icon. 
+If you need to start over because the import failed or you need to tweak a setting, delete the tenant you created. This will remove all the users and other configuration for this tenant, giving you a fresh start. To do so, navigate to [breadcrumb]#Tenants# and choose the red trashcan icon. 
 
-IMAGE
+image::guides/auth0-migration/list-of-tenants-delete-highlighted.png[Deleting a a tenant.,width=1200,role=bottom-cropped]
 
-Confirm your desire to delete the tenant. 
-
-== Other considerations
-
-As mentioned above, there are some other important entities that your running system may need to migrate from Auth0. There are typically fewer of these, so an automated migration may make less sense, but you need to ensure they are moved over for your system to function.
-
-The other difficulty with these is that the functionality may not be the same. You should definitely test FusionAuth before you begin a migration to learn about these differences.
-
-A partial list of the configuration that may need to be migrated, depending on what you use Auth0 for:
-
-* Connections are a source of data for users. FusionAuth calls these link:/docs/v1/tech/identity-providers/[Identity Providers].
-* Rules, Hooks and Actions are ways for you to customize the authentication or authorization workflow at various points. FusionAuth has a similar concept called link:/docs/v1/tech/lambdas/[Lambdas].
-* APIs, Applications and SSO Integrations are things your users can log in to. They are also called Clients in the Auth0 documentation. FusionAuth refers to these as link:/docs/v1/tech/core-concepts/applications/[Applications]. Read more about the link:/docs/v1/tech/core-concepts/authentication-authorization/[difference between authentication and authorization] in FusionAuth.
-* Tenants are a high level construct that groups other entities such as users and applications together. FusionAuth calls these link:/docs/v1/tech/core-concepts/tenants/[Tenants] as well.
-* Roles and Permissions are ways to provide information about what your users can do in your custom or off the shelf applications. FusionAuth has link:/docs/v1/tech/core-concepts/roles/[Roles] and they are defined in the Application.
-
-[NOTE]
-====
-In FusionAuth is that users are mapped to applications with a link:/docs/v1/tech/core-concepts/registrations/[Registration]. 
-
-Auth0, in contrast, gives users access to all applications in a tenant by default. 
-====
-
-=== Universal login
-
-Auth0 provides login pages called Universal Login. This is a complex, configurable component that works with SPAs, native applications and web applications. 
-
-FusionAuth's login experience is less complicated. You can choose to build your own login pages or use FusionAuth's hosted login pages. link:/docs/v1/tech/core-concepts/integration-points/#login-options[Read more about these choices].
+Confirm your desire to delete the tenant. Depending on how many users you have imported, this may take some time.
 
 == What to do next
 
-At a minimum, you'll need to assign your users to the relevant migrated FusionAuth applications. You'll also need to modify and test your applications to ensure that your users can log in to your applications with the appropriate permissions and roles.
+At a minimum, assign your users to the relevant migrated FusionAuth applications. You can do this in two ways:
 
-You may want to review the list of link:/docs/v1/tech/example-apps/[FusionAuth Example Applications] to see if any accelerate your understanding of the changes needed to integrate. 
+* As part of your import script by modifying the script and adding link:/docs/v1/tech/apis/users/#import-users[Registration JSON information] to the `map_user` method 
+* After users have been migrated with the link:/docs/v1/tech/apis/registrations[Registrations API]. 
 
-If your application uses a standard OAuth, SAML or OIDC library to authenticate with Auth0, the transition should be painless.
+You'll also need to modify and test your applications to ensure that your users can log in to them and receive appropriate permissions and roles. If your application uses a standard OAuth, SAML or OIDC library to authenticate with Auth0, the transition should be relatively painless.
 
-== Support
+== Additional support
 
-If you need support in your migration beyond what is provided in this guide, you can either:
+If you need support in your migration beyond that provided in this guide, you may either:
 
 * post in our link:/community/forums/[community forums] or
 * link:/pricing/editions/[purchase a support contract]
+
+
 
