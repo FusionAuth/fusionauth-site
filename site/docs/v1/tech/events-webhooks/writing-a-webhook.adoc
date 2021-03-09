@@ -26,18 +26,18 @@ In fact, the created user will not be visible to any other API request until the
 
 Even if you configure your webhook transaction to not require any webhooks to succeed, it is unlikely your code will operate as intended due to the parallel timing of the requests. The `user.create` event was not designed to allow a webhook to retrieve and modify the user.
 
-For example, here's a possible scenario:
+Here's a scenario:
 
 * You have a webhook that catches the `user.create` event.
 * It extracts the user's email address.
-* Then it queries a database and adds a custom `user.data.premiumUser` field to the FusionAuth user object based on the query results.
-* At user login, the value of the `user.data.premiumUser` field will be placed into a JWT for your other applications to access.
+* Then it queries a non FusionAuth database and adds a custom `user.data.premiumUser` field to the FusionAuth user object based on the query results.
+* At user login, the value of the `user.data.premiumUser` field will be placed into a JWT for other applications to access.
 
 In this example, you have a few options; which one is best depends on when you need to be able to read from the `user.data.premiumUser` field.
 
 * Provide the custom data field at user creation, instead of updating the user via a webhook. This option is the simplest, but may not be possible if users are self registering. In this case, the field is available from the moment the user is created.
-* Review other events and determine if a subsequent event occurs in your workflow. For example, `user.registration.create` or `user.login.success` both occur after a user is created. At this point, the user will exist and can be modified. If an event happens repeatedly, such as the login event, make the modification idempotent. In this case, the field is available as soon as the other event fires.
-* Use a webhook, but push the event JSON to a queue and return success. Have a queue consumer pull the data off and update the `user.data.premiumUser` field. The consumer can retry multiple times if the user object has not yet been fully created, which can happen if there are other webhooks whose completion is required. In this case, the field is available when the consumer finishes.
+* Review available events and determine if a subsequent event occurs in your workflow. For example, `user.registration.create` may occur after a user is created. At this point, the user will exist and can be modified. If an event happens repeatedly, make the modification idempotent. In this case, the field is available as soon as the other event fires.
+* Don't process the data in the webhook. Instead, push the event JSON to a queue and return success. Have a queue consumer pull the data off and update the `user.data.premiumUser` field. The consumer can retry multiple times if the user object has not yet been fully created, which can happen if there are other webhooks whose completion is required. In this case, the field is available when the consumer finishes.
 
 While this scenario is most obvious when a user or registration is being created, it applies to all webhooks. The final state of the operation which caused the webhook is not persisted to FusionAuth until after the webhook finishes.
 
