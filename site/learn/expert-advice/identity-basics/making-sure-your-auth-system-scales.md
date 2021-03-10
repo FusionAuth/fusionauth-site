@@ -39,7 +39,7 @@ As modern computers quickly increase in power, so must your authentication solut
 
 Do you know how well your application is balancing its work factor versus performance?
 
-{% include _image.liquid src="/assets/img/advice/auth-system-scale/work-factor-performance-spectrum.svg" alt="The balance between the work factor and system performance." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/work-factor-performance-spectrum.png" alt="The balance between the work factor and system performance." class="img-fluid" figure=false %}
 
 ### Chattiness
 
@@ -159,9 +159,7 @@ If all your internal distributed services are behind a protected network, then t
      
 ### Third-Party Services
 
-Many organizations choose to leverage third-party auth services like [FusionAuth](https://fusionauth.io/), [Okta](https://www.okta.com/), [Auth0](https://auth0.com/), etc.
-
-Building your own SSO, user role management, two-factor authentication, token signing, performance optimizations, and so on is tedious, time-consuming, and potentially dangerous. By leveraging auth services created by experts, you don't have to worry about many of these scalability issues. You also get the peace of mind knowing that your authentication is done properly.
+Many organizations choose to leverage third-party auth services like [FusionAuth](https://fusionauth.io/), [Okta](https://www.okta.com/), [Auth0](https://auth0.com/), etc. Building your own SSO, user role management, two-factor authentication, token signing, performance optimizations, and so on is tedious, time-consuming, and potentially dangerous. By leveraging auth services created by experts, you don't have to worry about many of these scalability issues. You also get the peace of mind knowing that your authentication is done properly.
 
 You can combine some of the scalability techniques covered by this article with third-party services, too. For example, FusionAuth can give you tools to generate JWT tokens and still allow you to [verify tokens in your server code](https://github.com/fusionauth/fusionauth-jwt#verify-and-decode-a-jwt-using-hmac).
 
