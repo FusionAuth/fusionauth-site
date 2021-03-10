@@ -95,7 +95,7 @@ OWASP recommends using an algorithm such as [Argon2](https://cheatsheetseries.ow
 
 ### Rate Limiting
 
-So now you're using a modern hashing algorithm to hash user passwords. What happens when an attacker sends in a flood of HTTP traffic to your authentication end points?
+So now you're using a modern hashing algorithm to hash user passwords. What happens when an attacker sends in a flood of HTTP traffic to your authentication endpoints?
 
 Individual HTTP requests seem to work fine, but hundreds and thousands of HTTP requests over a small window of time can bring a system to its knees. Since computing a hash is CPU intensive, this is often an easy target for attackers. How could you defend against this?
 
