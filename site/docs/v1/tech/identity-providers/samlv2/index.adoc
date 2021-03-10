@@ -8,9 +8,19 @@ description: Login using a SAML v2 Identity Provider
 
 == Overview
 
-Adding a Login button for a third-party SAML v2 identity provider to FusionAuth is simple. This guide will walk you through the steps necessary to enable a SAML v2 identity provider. In this example FusionAuth is the SAML service provider and we are configuring a connection to the SAML Identity Provider.
+Adding a Login button for a third-party SAML v2 Identity Provider to FusionAuth is simple. This guide will walk you through the steps necessary to enable a SAML v2 Identity Provider. 
+
+[NOTE]
+====
+This document covers the configuration for FusionAuth's SAML v2 Identity Provider, where FusionAuth is a relying party. This is useful if you want to allow users to log into either FusionAuth's UI or your applications via a third party SAML v2 identity provider.
+
+If you are looking for instructions to set up FusionAuth as a SAML v2 IdP (i.e. you want FusionAuth to be the system of record for your users, and other applications authenticate against FusionAuth), consult the link:/docs/v1/tech/samlv2/[SAML v2 IdP] documentation.
+====
+
+In this example FusionAuth is the SAML service provider and we are configuring a connection to a SAML Identity Provider which will be the system of record for user data.
 
 * <<Create a SAML v2 Identity Provider>>
+* <<Integration Details>>
 * <<CORS Configuration>>
 
 {empty} +
@@ -23,7 +33,7 @@ We also provide specific examples for configuring SAML with some providers whose
 
 Once you have completed this configuration you will be able to enable the SAML v2 login button for one or more FusionAuth Applications. Below is an example login page with a SAML v2 Identity Provider enabled for PiedPiper.
 
-image::identity-providers/login-openid-connect.png[SAML v2 Login,width=1200]
+image::identity-providers/login-samlv2.png[SAML v2 Login,width=1200,role=bottom-cropped]
 
 
 == Create a SAML v2 Identity Provider
@@ -32,17 +42,13 @@ To create an Identity Provider navigate to [breadcrumb]#Settings -> Identity Pro
 
 This will take you to the `Add SAML v2` panel. Here you will need to fill out the required fields. If you do not know the IdP endpoint of your SAML v2 provider, you will need to contact the identity provider owner to get the URL.
 
-To enable this identity provider for an application, find your application name in the `Applications` configuration section at the bottom of this panel. You will always see the `FusionAuth` application, this application represents the FusionAuth user interface. If you wish to be able to log into FusionAuth with this provider you may enable this application.
+:identity_provider: SAMLv2
+:login_message: pass:quotes[That's it, now the `Login with PiedPiper` button will show up on the login page.]
+include::docs/v1/tech/identity-providers/_idp_application_configuration.adoc[]
+:identity_provider!:
+:login_message!:
 
-In the following screenshot you will see that we have enabled this login provider for the `Pied Piper` application and enabled `Create registration`. Enabling create registration means that a user does not need to be manually registered for the application prior to using this login provider.
-
-For example, when a new user attempts to log into the `Pied Piper` application using this identity provider, if their user does not exist in FusionAuth it will be created dynamically. Additionally, if the `Create registration` toggle has been enabled, the user will also be registered for the `Pied Piper` application in FusionAuth and assigned any default roles assigned by the application.
-
-If you do not wish to automatically provision a user for this Application when logging in with this identity provider, leave `Create registration` off and you will need to manually register a user for this application before they may complete login with this provider.
-
-That's it, now the `Login with PiedPiper` button will show up on the login page.
-
-image::identity-providers/identity-provider-samlv2-add.png[Add SAML v2,width=1200,role=shadowed]
+image::identity-providers/identity-provider-samlv2-add.png[Add SAML v2,width=1200,role=bottom-cropped]
 
 
 === Form Fields
@@ -56,9 +62,6 @@ A unique name to identity the identity provider. This name is for display purpos
 
 [field]#IdP endpoint# [required]#Required#::
 The URL of the SAML identity providers login page.
-
-[field]#Callback URL (ACS)# [read-only]#Read-only#::
-This is the callback URI you will need to provide to your identity provider.
 
 [field]#Issuer# [required]#Required#::
 The name of your FusionAuth deployment that is configured in the SAML identity provider.
@@ -74,14 +77,33 @@ When [field]#Use NameId for email# is enabled this field will not be displayed a
 [field]#Verification key# [required]#Required#::
 The public key or certificate that you must import into FusionAuth's KeyMaster. This is the public key provided to you by the identity provider.
 
+[field]#Use POST method# [optional]#Optional#::
+When enabled the authentication request will use the HTTP POST binding with the identity provider instead of the default Redirect binding which uses the HTTP GET method.
+
+[field]#Sign requests# [optional]#Optional#::
+When enabled authentication requests sent to the Identity Provider will be signed.
+
+[field]#Request signing key# [optional]#Optional#::
+The key used to sign the SAML request. Required when [field]#Sign request# is enabled. To create, manage or import a key, navigate to [breadcrumb]#Settings -> Key Master#.
+
+[field]#Canonicalization method# [optional]#Optional#::
+The XML signature canonicalization method used when digesting and signing the SAML request. Required when [field]#Use POST method# and [field]#Sign request# are enabled.
+
+=== Options
+
+image::identity-providers/identity-provider-samlv2-add.png[Add SAML v2 Options section,width=1200,role=bottom-cropped]
+
+==== Form Fields
+
+[api]
 [field]#Button text# [required]#Required#::
-The text to be displayed in the button on the login form. This value is defaulted to `Login with SAML` but it may be modified to your preference.
+The text to be displayed in the button on the login form. This value defaults to `Login with SAML` but it may be modified to your preference.
 
 [field]#Button image# [optional]#Optional#::
 The image to be displayed in the button on the login form. When this value is omitted a default SAML icon will be displayed on the login button.
 
 [field]#Reconcile lambda# [optional]#Optional#::
-A lambda may be utilized to map custom claims returned from the SAML response.
+A lambda maps custom claims returned from the SAML response into the FusionAuth `User` and `Registration`. To learn more about creating a lambda, view the link:/docs/v1/tech/lambdas/samlv2-response-reconcile/[SAML v2 Reconcile lambda documentation].
 +
 To configure a lambda, navigate to [breadcrumb]#Settings -> Lambdas#.
 
@@ -92,13 +114,29 @@ Adding one or more managed domains for this configuration will cause this provid
 +
 These configured domains will be used by the link:/docs/v1/tech/apis/identity-providers/#lookup-an-identity-provider[Lookup API].
 
+[field]#Debug# [optional]#Optional#::
+Some identity providers are not compliant with the SAML and XML signing specifications. This makes it challenging to get them working with FusionAuth. 
++
+If you are running into integration issues, toggle this setting on and FusionAuth will output debugging information into the Event Log during a SAML login. You can find the event log in [breadcrumb]#System -> Event Log#.
+
+== Integration Details
+
+After configuring the Identity Provider, you can view the details to see values that will likely be required by your SAML v2 Identity Provider in order to trust FusionAuth as a relying party. Do so by navigating to [breadcrumb]#Settings -> Identity Providers# and click the green magnifying glass on your SAML provider. 
+
+image::identity-providers/identity-provider-samlv2-view-list.png[View the identity provider list,width=1200,role=bottom-cropped]
+
+When viewing the details, scroll to the [breadcrumb]#SAML v2 Integration details# section. There you will find the needed values to configure an integration with a SAMLv2 IdP.
+
+image::identity-providers/identity-provider-samlv2-view-details.png[View the SAMLv2 identity provider details,width=1200]
+
+
 == CORS Configuration
 
 In order to complete the login request, the SAML v2 Identity Provider will make an HTTP `POST` request to the callback URL in FusionAuth. In order for this request to be allowed through the CORS filter you will need to navigate to [breadcrumb]#Settings -> System -> CORS# and add the SAML IdP origin as an [field]#Allowed Origin# the CORS configuration.
 
 Once you complete your SAML v2 Identity Provider configuration, if your CORS configuration is not yet configured to allow the login request to complete you wil be shown the following warning prompting you to complete the CORS configuration. See link:/docs/v1/tech/reference/cors/[CORS Filter reference] for additional details on modifying the CORS configuration.
 
-image::identity-providers/identity-provider-samlv2-cors-warning.png[SAMLv2 CORS Warning,width=1200,role=shadowed bottom-cropped]
+image::identity-providers/identity-provider-samlv2-cors-warning.png[SAMLv2 CORS Warning,width=1200,role=bottom-cropped]
 
 == Troubleshooting
 

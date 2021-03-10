@@ -8,6 +8,11 @@ module Jekyll
         record[:html] = nil
         record
       end
+
+      def self.should_be_excluded?(filepath)
+        return true if filepath =~ %r{^landing}
+        false
+      end
     end
   end
 end
