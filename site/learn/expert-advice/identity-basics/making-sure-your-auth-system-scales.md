@@ -5,8 +5,8 @@ description: What steps do you need to take to ensure your authentication system
 author: James Hickey
 image: advice/due-diligence/authentication-as-a-service-due-diligence-tips-header-image.png
 category: Identity Basics
-date: 2021-02-24
-dateModified: 2021-02-24
+date: 2021-03-11
+dateModified: 2021-03-11
 ---
 
 Have you ever worked on a software system that stored passwords in plain text? I once worked on a product that stored encrypted plain-text passwords. Thankfully, this system was eventually fixed to store hashed passwords!
@@ -49,7 +49,7 @@ Well, without having a grasp of the pitfalls of common issues with distributed s
 
 Imagine an HTTP request or asynchronous process where multiple distributed services need to collaborate. Each service needs to make sure the user is authenticated, right?
 
-![Auth microservice used by other services](https://i.imgur.com/wx4yAJO.png)
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/auth-chattiness.png" alt="Auth microservice used by other services" class="img-fluid" figure=false %}
 
 A system where individual services each send an HTTP request to the auth service means a lot of extra network latency and CPU/memory usage. And don't forget the additional costs that come from needing more powerful hardware to handle the extra load.
 
@@ -59,9 +59,9 @@ While basic password-based authentication has its challenges, compliance with st
 
 In the scenario described earlier, adding some of these extra security features will degrade scalability even further. More network hops are involved, and more external clients are making requests to the authentication service.
 
-![SSO auth with increased traffic](https://i.imgur.com/PpWOezx.png)
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/additional-security.png" alt="SSO auth with increased traffic" class="img-fluid" figure=false %}
 
-Implementing performant systems takes more thought than simply throwing everything into a "microservice."
+Implementing performant systems takes more thought than simply throwing everything into a "microservice".
 
 ### Uptime
 
@@ -101,15 +101,15 @@ Rate limiting is an effective defense against these kinds of attacks. It also en
 
 Rate limiting simply means restricting an IP address so it can only try signing in to your application once every _X_ milliseconds/seconds. This technique can help ensure that individual attackers can’t flood your system with authentication requests. Depending on your authentication system and system architecture, you can rate limit at:
 
-The network layer using an ACL or a CDN
-A proxy, such as nginx, in front of your auth system
-Inside the auth system itself
+* The network layer using an ACL or a CDN
+* A proxy, such as nginx, in front of your auth system
+* Inside the auth system itself
 
 ### Database Scaling
 
 Perhaps your application has grown to the point where you might need multiple web application processes running behind a load balancer. All of these processes are communicating with the same database.
 
-![Database load](https://i.imgur.com/IP5oyET.png)
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/database-scaling.png" alt="Database load" class="img-fluid" figure=false %}
 
 When your customers (or attackers) try to log in to your application, every login attempt will need to fetch the password hash from the database. Eventually, this may expose that the database has become a bottleneck in your system.
 
@@ -117,11 +117,11 @@ Typical database scaling techniques, like using read replicas or sharding, can h
 
 Read replicas are like having dedicated secondary instances of your database available for reads. All writes will go to the primary database instance, and changes will be pushed out to the read replicas behind the scenes. The overall traffic to your database will be spread across all instances/replicas.
 
-![Read replicas reduce load on primary database instance](https://i.imgur.com/yh06JMa.png)
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/read-replicas.png" alt="Read replicas reduce load on primary database instance" class="img-fluid" figure=false %}
 
 Sharding is another technique where individual records are stored to separate storage locations or database instances based on some algorithm or method of segmenting data.
 
-![Sharding database instances based on username first letter](https://i.imgur.com/LnYHzKX.png)
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/database-sharding.png" alt="Sharding database instances based on username first letter" class="img-fluid" figure=false %}
 
 ### Caching Session Data
 
@@ -131,7 +131,7 @@ Out-of-the-box web frameworks usually store user session data in a database. Whi
 
 [Redis](https://redis.io/) is a fantastic technology that’s often used as a distributed cache for solving issues like this.
 
-![In-memory key-value database used to store user sessions](https://i.imgur.com/qOH4Ogc.png)
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/user-session-cache.png" alt="In-memory key-value database used to store user sessions" class="img-fluid" figure=false %}
 
 By caching user sessions in this way, you can reduce the overall load of the primary database and/or server that houses your authentication data (e.g., password hashes). If your authentication, for example, is housed as a microservice, then this technique could have a large impact on how well your authentication system can scale.
 
@@ -145,7 +145,7 @@ Digitally signed tokens such as [JWTs](https://jwt.io/) can be verified by backe
 
 One way to do this is to create a shared code library that can run in-process and verify incoming JWT tokens.
 
-![Library verifying JWT incoming tokens](https://i.imgur.com/NEXBmnr.png)
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/shared-library-jwt.png" alt="Library verifying JWT incoming tokens" class="img-fluid" figure=false %}
 
 ### API Gateways
 
@@ -155,7 +155,7 @@ That is called an API gateway. For large solutions, often a dedicated API gatewa
 
 If all your internal distributed services are behind a protected network, then they can trust that the API gateway has already vetted the client. This removes the need for a service to communicate with the auth system to ensure the client is authorized, leading to less work for the authentication system and for the service.
 
-![API gateway authenticating HTTP requests up front](https://i.imgur.com/lSzwnPH.png)
+{% include _image.liquid src="/assets/img/advice/auth-system-scale/api-gateway.png" alt="API gateway authenticating HTTP requests up front" class="img-fluid" figure=false %}
      
 ### Third-Party Services
 
@@ -163,13 +163,7 @@ Many organizations choose to leverage third-party auth services like [FusionAuth
 
 You can combine some of the scalability techniques covered by this article with third-party services, too. For example, FusionAuth can give you tools to generate JWT tokens and still allow you to [verify tokens in your server code](https://github.com/fusionauth/fusionauth-jwt#verify-and-decode-a-jwt-using-hmac).
 
-
 ## Conclusion
 
 If you think that authentication and authorization are hard, it's because they are! Considering that broken authentication is the No. 2 OWASP security risk for web applications and APIs, you want to make sure that you do authentication well and that it can scale as your application grows. Make sure your engineering team is willing and able to spend the time to ensure that your authentication system doesn’t become a bottleneck; alternatively invest in a third party system which can offload these concerns from your team.
-
-
-
-
-
 
