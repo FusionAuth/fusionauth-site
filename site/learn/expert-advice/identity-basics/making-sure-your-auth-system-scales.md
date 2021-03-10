@@ -11,31 +11,33 @@ dateModified: 2021-03-11
 
 Have you ever worked on a software system that stored passwords in plain text? I once worked on a product that stored encrypted plain-text passwords. Thankfully, this system was eventually fixed to store hashed passwords!
 
-To make password hashes harder to compute, a standard technique is to hash passwords thousands of times before storing them in a database. But there's a trade-off: you get better security at the cost of a performance hit.
+To make password hashes harder to compute, a standard technique is to [hash passwords thousands of times](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy/) before storing them in a database. But there's a trade-off: you get better security at the cost of a performance hit.
 
-This trade-off lies at the heart of authentication. More robust security often means changes to how scalable your solution is. An increase in web traffic might expose these performance issues. If you've split your system into microservices, then you’ll be faced with other kinds of challenges, like how to authenticate services-to-service HTTP requests and share authentication logic across services. In fact, the second item on both current OWASP [Web Application Security Top Ten Risks](https://www.cloudflare.com/learning/security/threats/owasp-top-10/) and [API Security Top Ten Risks](https://owasp.org/www-project-api-security/) is *broken authentication*. 
+This trade-off lies at the heart of authentication. More robust security often means changes to how scalable your solution is. An increase in web traffic might expose these performance issues. If you've split your system into microservices, then you'll be faced with other kinds of challenges, like how to authenticate services-to-service HTTP requests and share authentication logic across services. In fact, the second item on both current OWASP [Web Application Security Top Ten Risks](https://www.cloudflare.com/learning/security/threats/owasp-top-10/) and [API Security Top Ten Risks](https://owasp.org/www-project-api-security/) is *broken authentication*. 
+
+> The trade-off between security and performance lies at the heart of authentication.
 
 To be a responsible and effective software engineer, you need to know how to deal with these scalability concerns while keeping your application's authentication secure. In this article, you'll get some tips on how to scale your authentication functionality and make sure it can meet the demands of your customers.
 
 ## Why Scaling Auth Is Hard
 
-There's a push-pull relationship between robust security and scalable solutions. Since security is so critical, and frankly nonnegotiable, you’ll have to grapple with the challenges of scaling your authentication.
+There's a push-pull relationship between robust security and scalable solutions. Since security is so critical, and frankly nonnegotiable, you'll have to grapple with the challenges of scaling your authentication.
 
 Let's look at a few of these challenges, including hashing performance, chattiness, additional security, and uptime.
 
 ### Hashing Performance
 
-As mentioned, a standard in securely storing passwords is to iteratively rehash the password_X_ times. The amount of rehashes is often called the _work factor_. 
+As mentioned, a standard in securely storing passwords is to iteratively rehash the password _X_ times. The amount of rehashes is often called the _work factor_. 
 
-Having a work factor that's too low ends in hashes that are easier to attack. In the event that an attacker was able to obtain a password hash (via a breached database, SQL injection attack, etc.), it would take significantly longer for an attacker to calculate that hash. This gives more time for your company to inform users to change their passwords. It might even mean that the attackers are only able to “break” (i.e., compute) a smaller number of password hashes altogether.
+Having a work factor that's too low ends in hashes that are easier to attack. In the event that an attacker was able to obtain a password hash (via a breached database, SQL injection attack, etc.), it would take significantly longer for an attacker to calculate that hash. This gives more time for your company to inform users to change their passwords. It might even mean that the attackers are only able to "break" (i.e., compute) a smaller number of password hashes altogether.
 
-However, a work factor that's too high can lead to performance degradation. This may alternatively give room for attackers to abuse these CPU-intensive operations and perform denial-of-service attacks by spamming a web application's login feature.
+However, a work factor that's too high can lead to performance degradation. This may alternatively give room for attackers to abuse these CPU-intensive operations and perform denial-of-service attacks by spamming a web application's login.
 
-As modern computers quickly increase in power, so must your authentication solution increase its work factor (ie, the number of hashing iterations). Again, this makes sure that password hashes are being generated securely enough. This means you may have to update existing systems and perform a migration of sorts to increase the number of hashing iterations if this hasn't been updated for quite a while.
+As modern computers quickly increase in power, so must your authentication solution increase its work factor (i.e., the number of hashing iterations). Again, this makes sure that password hashes are being generated securely enough. This means you may have to update existing systems and perform a migration of sorts to increase the number of hashing iterations if this hasn't been updated for quite a while.
 
-[OWASP suggests](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#upgrading-the-work-factor) increasing the work factor by one (ie, doubling the number of iterations) every eighteen months:
+[OWASP suggests](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#upgrading-the-work-factor) increasing the work factor by one (i.e., doubling the number of iterations) every eighteen months:
 
-> “Taking Moore's Law (ie, that computational power at a given price point doubles every eighteen months) as a rough approximation, this means that the work factor should be increased by 1 every eighteen months.” –Upgrading the Work Factor, OWASP
+> "Taking Moore's Law (i.e., that computational power at a given price point doubles every eighteen months) as a rough approximation, this means that the work factor should be increased by 1 every eighteen months." –Upgrading the Work Factor, OWASP
 
 Do you know how well your application is balancing its work factor versus performance?
 
@@ -71,17 +73,17 @@ This makes authentication a difficult problem: not only must it be secure and sc
 
 ## How Can You Effectively Scale Your Authentication?
 
-Now that you've seen some of the challenges that exist for ensuring secure authentication, let's look at how to attack these challenges. We’ll cover performance testing, modern hashing algorithms, rate limiting, database scaling, caching session data, auth tokens, API gateways, and third-party auth services.
+Now that you've seen some of the challenges that exist for ensuring secure authentication, let's look at how to attack these challenges. We'll cover performance testing, modern hashing algorithms, rate limiting, database scaling, caching session data, auth tokens, API gateways, and third-party auth services.
 
 ### How Fast Should It Be?
 
-First thing's first: how scalable and performant should your system be? Do you have any SLA agreements with your clients?
+First things first: how scalable and performant should your system be? Do you have any SLA agreements with your clients?
 
 [OWASP recommends](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#work-factors) that computing a hash should not take more than one second. Does that make sense for your customers?
 
-> “As a general rule, calculating a hash should take less than one second, although on higher traffic sites it should be significantly less than this.” –Work Factors, OWASP
+> "As a general rule, calculating a hash should take less than one second, although on higher traffic sites it should be significantly less than this." –Work Factors, OWASP
 
-Whatever you decide, you need to be able to test the performance of your authentication functionality. One specific tool I love is the open-source HTTP benchmarking tool [bombardier](https://github.com/codesenberg/bombardier). This is a great tool since it will enable you to test and benchmark the entire HTTP pipeline of your authentication endpoints. Perform such benchmarks regularly, preferably on each release of your applications, to ensure there are no performance regressions.
+Whatever you decide, you need to be able to test the performance of your authentication functionality. One specific tool I love is the open-source HTTP benchmarking tool [bombardier](https://github.com/codesenberg/bombardier). This is a great tool since it enables you to test and benchmark the entire HTTP pipeline of your authentication endpoints. Perform such benchmarks regularly, preferably on each release of your applications, to ensure there are no performance regressions.
 
 ### Modern Hashing Algorithms
 
@@ -95,11 +97,11 @@ OWASP recommends using an algorithm such as [Argon2](https://cheatsheetseries.ow
 
 So now you're using a modern hashing algorithm to hash user passwords. What happens when an attacker sends in a flood of HTTP traffic to your authentication end points?
 
-Individual HTTP requests seem to work fine, but a flood of hundreds and thousands of HTTP requests over a small window of time can bring a system to its knees. Since computing a hash is CPU intensive, this is often an easy target for attackers. How could you defend against this?
+Individual HTTP requests seem to work fine, but hundreds and thousands of HTTP requests over a small window of time can bring a system to its knees. Since computing a hash is CPU intensive, this is often an easy target for attackers. How could you defend against this?
 
 Rate limiting is an effective defense against these kinds of attacks. It also ensures the performance of your application's authentication will be more stable on average.
 
-Rate limiting simply means restricting an IP address so it can only try signing in to your application once every _X_ milliseconds/seconds. This technique can help ensure that individual attackers can’t flood your system with authentication requests. Depending on your authentication system and system architecture, you can rate limit at:
+Rate limiting simply means restricting an IP address so it can only try signing in to your application once every _X_ milliseconds or seconds. This technique can help ensure that individual attackers can't flood your system with authentication requests. Depending on your authentication system and architecture, you can rate limit at:
 
 * The network layer using an ACL or a CDN
 * A proxy, such as nginx, in front of your auth system
@@ -119,7 +121,7 @@ Read replicas are like having dedicated secondary instances of your database ava
 
 {% include _image.liquid src="/assets/img/advice/auth-system-scale/read-replicas.png" alt="Read replicas reduce load on primary database instance" class="img-fluid" figure=false %}
 
-Sharding is another technique where individual records are stored to separate storage locations or database instances based on some algorithm or method of segmenting data.
+Sharding is another technique where individual records are stored in separate storage locations or database instances based on some algorithm or method of segmenting data.
 
 {% include _image.liquid src="/assets/img/advice/auth-system-scale/database-sharding.png" alt="Sharding database instances based on username first letter" class="img-fluid" figure=false %}
 
@@ -127,21 +129,21 @@ Sharding is another technique where individual records are stored to separate st
 
 One of the most common performance optimizations you might be able to make in web applications is to cache your user session data. Almost every HTTP request to a typical web application will need to verify that a valid session for the user exists.
 
-Out-of-the-box web frameworks usually store user session data in a database. While database scalability optimizations will help (like read replicas and sharding), using a dedicated caching technology can significantly increase the performance of fetching user session data on every HTTP request.
+Out-of-the-box web frameworks usually store user session data in a database. While database scalability optimizations will help (like the aforementioned read replicas and sharding), using a dedicated caching technology can significantly increase the performance of fetching user session data.
 
-[Redis](https://redis.io/) is a fantastic technology that’s often used as a distributed cache for solving issues like this.
+[Redis](https://redis.io/) is a fantastic technology that's often used as a distributed cache for solving issues like this.
 
 {% include _image.liquid src="/assets/img/advice/auth-system-scale/user-session-cache.png" alt="In-memory key-value database used to store user sessions" class="img-fluid" figure=false %}
 
-By caching user sessions in this way, you can reduce the overall load of the primary database and/or server that houses your authentication data (e.g., password hashes). If your authentication, for example, is housed as a microservice, then this technique could have a large impact on how well your authentication system can scale.
+By caching user sessions in this way, you can reduce the overall load of the primary database and/or server that houses your authentication data (e.g., password hashes). If your authentication, for example, is a microservice, then this technique could have a large impact on how well your authentication system can scale.
 
 ### Auth Tokens
 
-One of the challenges mentioned earlier in this article was around microservices having to ensure that any given request is authorized to perform the requested operation. The same would apply to any type of distributed system that’s using the same distributed authentication/authorization HTTP service.
+One of the challenges mentioned earlier in this article was around microservices having to ensure that any given request is authorized to perform the requested operation. The same would apply to any type of distributed system that's using the same distributed authentication/authorization HTTP service.
 
 The main issue is that your authorization service becomes a bottleneck. Everyone needs to send an HTTP request to this service to verify its own external requests coming in. What if there was a way you could verify that the request was authorized without having to make all those extra HTTP requests?
 
-Digitally signed tokens such as [JWTs](https://jwt.io/) can be verified by backend server code without communicating with the auth system. By using a private/public key or a secret, you can enable various services to verify a given token within the same process and avoid those extra network hops.
+Digitally signed tokens such as [JWTs](/learn/expert-advice/tokens/) can be verified by backend server code without communicating with the auth system. By using a private/public key or a secret, you can enable various services to verify a given token within the same process and avoid those extra network hops.
 
 One way to do this is to create a shared code library that can run in-process and verify incoming JWT tokens.
 
@@ -151,7 +153,7 @@ One way to do this is to create a shared code library that can run in-process an
 
 There may be situations where you have dedicated web servers or services that handle incoming HTTP traffic. That service will verify that the requested action is allowed and then delegate work to one or more internal services. 
 
-That is called an API gateway. For large solutions, often a dedicated API gateway service from Amazon, Azure, etc. might be used. You can think of it as a lightweight "bouncer" that makes sure incoming HTTP requests are allowed in and can perform authorization checks once.
+That is called an API gateway. For large solutions, often a dedicated API gateway service from Amazon, Azure, etc. might be used. You can think of it as a lightweight "bouncer" that makes sure incoming HTTP requests are allowed in. It can perform authorization checks once.
 
 If all your internal distributed services are behind a protected network, then they can trust that the API gateway has already vetted the client. This removes the need for a service to communicate with the auth system to ensure the client is authorized, leading to less work for the authentication system and for the service.
 
@@ -161,9 +163,12 @@ If all your internal distributed services are behind a protected network, then t
 
 Many organizations choose to leverage third-party auth services like [FusionAuth](https://fusionauth.io/), [Okta](https://www.okta.com/), [Auth0](https://auth0.com/), etc. Building your own SSO, user role management, two-factor authentication, token signing, performance optimizations, and so on is tedious, time-consuming, and potentially dangerous. By leveraging auth services created by experts, you don't have to worry about many of these scalability issues. You also get the peace of mind knowing that your authentication is done properly.
 
-You can combine some of the scalability techniques covered by this article with third-party services, too. For example, FusionAuth can give you tools to generate JWT tokens and still allow you to [verify tokens in your server code](https://github.com/fusionauth/fusionauth-jwt#verify-and-decode-a-jwt-using-hmac).
+You can combine some of the scalability techniques covered by this article with third-party services, too. For example, FusionAuth can generate JWT tokens and still allow you to [verify tokens in your server code](https://github.com/fusionauth/fusionauth-jwt#verify-and-decode-a-jwt-using-hmac).
 
 ## Conclusion
 
-If you think that authentication and authorization are hard, it's because they are! Considering that broken authentication is the No. 2 OWASP security risk for web applications and APIs, you want to make sure that you do authentication well and that it can scale as your application grows. Make sure your engineering team is willing and able to spend the time to ensure that your authentication system doesn’t become a bottleneck; alternatively invest in a third party system which can offload these concerns from your team.
+If you think that authentication and authorization are hard, it's because they are!
 
+Considering that broken authentication is the No. 2 OWASP security risk for web applications and APIs, you want to make sure that you do authentication well and that it can scale as your application grows. 
+
+Make sure your engineering team is willing and able to spend the time to ensure that your authentication system doesn't become a bottleneck; alternatively invest in a third party system which can offload these concerns from your team.
