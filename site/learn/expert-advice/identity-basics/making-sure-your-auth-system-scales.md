@@ -1,6 +1,6 @@
 ---
 layout: advice
-title: Making Sure Your Authentication System Can Scale
+title: Making Sure Your Auth System Can Scale
 description: What steps do you need to take to ensure your authentication system can scale?
 author: James Hickey
 image: advice/due-diligence/authentication-as-a-service-due-diligence-tips-header-image.png
