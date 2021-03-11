@@ -22,13 +22,55 @@ section.docs article blockquote {
 
 [role=release-note]
 
-== Version 1.24.1
-_Pending Release_
+== Version 1.25.0
+_March 10th, 2021_
+
+
+:warning_message: pass:normal[SAML v2 Logout is now fully supported. No action should be required. If you are currently using FusionAuth as a SAML v2 IdP, please verify your configuration as you may want to provide additional configuration to take full advantage of the SAML v2 Logout configuration. The additional of SAML v2 Logout means there is a new themed page to manage the user experience for SAML v2 Logout. Please review your theme to ensure your user experience is not interrupted. See additional details in the New section below.]
+include::docs/v1/tech/__general-migration-warning.adoc[]
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Changed
+* In support of the SAML v2 Logout feature, the following theme changes have been made.
+** New themed template `SAMLv2 logout template`. This template will be rendered when you utilize the SAML v2 Logout feature, it is nearly identical to the existing OAuth2 logout themed page. If you are using themes, please review your theme to ensure your user experience is not interrupted.
 
 === Fixed
 * If you are using Elasticsearch version 6 you may encounter an error when using the Search API. This is due to a change in how we optionally request the document hit count in the search request to Elasticsearch. The change is not compatible with Elasticsearch version 6. As a work around, you can set `accurateTotal=true` in the API request. See the link:/docs/v1/tech/apis/users/#search-for-users[User Search API] for additional details on using this parameter.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1135[GitHub Issue #1135]
+* Using the HTTP `PATCH` method on the FusionAuth application may produce erroneous validation errors.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1110[GitHub Issue #1110]
+* Adding additional Java options in the configuration file when the value contains a space may not work correctly.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1065[GitHub Issue #1065]
+* A `NullPointerException` may occur when creating a login report when...
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1115[GitHub Issue #1115]
+* When you omit the `state` parameter on the Authorization request, you may receive a `state` parameter on the `redirect_uri` that you did not expect.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1113[GitHub Issue #1113]
 
+=== New
+* Add full support for SAML v2 Logout
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1137[GitHub Issue #1137]
+
+=== Enhancements
+* Add a button to the Sessions tab in the FusionAuth admin UI to delete all user sessions at once, this action is also available from the drop down action list when managing a user.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1094[GitHub Issue #1094]
+* Add Debug to OAuth2 Grants, this will primarily assist in debugging the Authorization Code Grant auth code exchange with the Token endpoint.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/781[GitHub Issue #781]
+* Add CORS Debug, this will assist you in debugging CORS related `403` HTTP status codes.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1126[GitHub Issue #1126]
+* Better SMTP debug for specific scenarios. This should assist with async connection issues and provide context to the tenant and template being rendered during the exception.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1064[GitHub Issue #1064]
+* Allow the Registration API to accept the `applicationId` as a URL segment
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1127[GitHub Issue #1127]
+* Twitter IdP Login API can optionally accept an access token. When building your own login page, if you complete the initial step with Twitter and utilize the `oauth_verifier` to perform some initial processing of the Twitter user, you may now still send the access token in the form of `oauth_token` and `oauth_token_secret` to FusionAuth to complete the login. This is done by omitting the `oauth_verifier` on the Login request. See link:/docs/v1/tech/apis/identity-providers/twitter/#complete-the-twitter-login[Complete the Twitter Login] for additional information.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1073[GitHub Issue #1073]
+* When Key Master generates a `kid` because one is not provided on the request, if there is a public key, generate the `kid` as a JWK thumbprint instead of a randomly generated value.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1136[GitHub Issue #1136]
+* When using the Search feature in the FusionAuth admin UI, once you begin searching using a specific term or any of the advanced controls, the pagination result total will be an accurate representation of the number of matches returned by Elasticsearch. When no search criteria is provided, the number of matches will cap at the default value of 10,000 and the pagination results will indicate 10,000+ which means at least 10,000 users match the search criteria.
+
+=== Internal
+* Upgrade Tomcat from version `8.5.57` to `8.5.63`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1119[GitHub Issue #1119]
 
 [role=release-note]
 
@@ -42,8 +84,7 @@ _February 11th, 2021_
 
 === Known Issues
 * If you are using Elasticsearch version 6 you may encounter an error when using the Search API. This is due to a change in how we optionally request the document hit count in the search request to Elasticsearch. The change is not compatible with Elasticsearch version 6. As a work around, you can set `accurateTotal=true` in the API request.
-** Resolved in 1.24.1, see https://github.com/FusionAuth/fusionauth-issues/issues/1135[GitHub Issue #1135] for additional details.
-
+** Resolved in 1.25.0, see https://github.com/FusionAuth/fusionauth-issues/issues/1135[GitHub Issue #1135] for additional details.
 
 === Changed
 
@@ -65,8 +106,6 @@ _February 11th, 2021_
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1087[GitHub Issue #1087]
 * A Kafka Producer configuration that contains an equals sign `=` in the property value will fail to parse. This was identified in attempting to configure credentials to connect to CloudKarafka.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1107[GitHub Issue #1107], thanks to https://fusionauth.io/community/forum/user/chris-bridges[@chris-bridges] for letting us know!
-
-=== New
 
 === Enhancements
 * Support a Kickstart file with only a `licenseId`. Previously at least one API key was required because the intent of Kickstart is to call one or more APIs. While there is not a very practical use case for only providing a `licenseId` and no API requests,  this minimal configuration will no longer fail indicating an API key is required. See link:/docs/v1/tech/installation-guide/kickstart/#set-your-license-id[Set your License Id] in the link:/docs/v1/tech/installation-guide/kickstart/[Kickstart] documentation.
