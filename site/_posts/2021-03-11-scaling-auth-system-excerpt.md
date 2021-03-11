@@ -3,7 +3,7 @@ layout: blog-post
 title: Auth specific scaling challenges
 description: What are the elements of an authentication system which make it difficult to scale?
 author: James Hickey
-image: blogs/security-due-diligence/authentication-as-a-service-security-due-diligence-tips-header-image.png
+image: blogs/scaling-auth-system/auth-specific-scaling-challenges-header-image.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
