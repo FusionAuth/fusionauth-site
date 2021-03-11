@@ -11,7 +11,32 @@ This document will help you migrate off of Auth0. If you are looking to compare 
 
 This guide assumes you have installed FusionAuth. If you have not, please link:/docs/v1/tech/installation-guide/[view our installation guides] and install FusionAuth before you begin. For more general migration information, please view the link:/docs/v1/tech/guides/migration/[FusionAuth migration guide].
 
-TBD TOC
+* <<Overview>>
+* <<Planning Considerations>>
+** <<Obtaining User Data>>
+** <<Mapping User Attributes>>
+** <<Other Entities>>
+** <<Universal Login>>
+* <<Exporting Users>>
+** <<Add the Extension>>
+** <<Run the Extension>>
+** <<Download the File>>
+* <<Exporting Passwords>>
+* <<Importing Users>>
+** <<Set up FusionAuth>>
+*** <<Create a Test Tenant>>
+*** <<Create a Test Application>>
+*** <<Add an API Key>>
+** <<Get the Script>>
+** <<Install Needed Gems>>
+** <<Configure the Script>>
+*** <<Enhancing the Script>>
+** <<Run the Script>>
+** <<Verify the Import>>
+** <<The Final Destination of the Imported Users>>
+** <<Deleting the Test Tenant>>
+* <<What to Do Next>>
+* <<Additional Support>>
 
 There are a number of different ways you can integrate with Auth0, and it would be difficult to cover them all. This guide touches on the major pieces of a migration, but focuses on moving your user data from an Auth0 managed user database into FusionAuth. 
 
@@ -167,9 +192,9 @@ To add a tenant, navigate to [breadcrumb]#Tenants# and choose the green plus sig
 
 image::guides/auth0-migration/list-of-tenants-add-highlighted.png[Adding a tenant.,width=1200,role=bottom-cropped]
 
-Give it a descriptive name like `Auth0 import test` and save it. You shouldn't need to modify any of the other configuration options to test importing users.
+Give it a descriptive name like `Auth0 import test` and save it. You shouldn't need to modify any of the other configuration options to test importing users. Save the tenant.
 
-image::guides/auth0-migration/add-tenant.png[The tenant creation screen,width=1200,role=bottom-cropped]
+image::guides/auth0-migration/add-tenant.png[The tenant creation screen.,width=1200,role=bottom-cropped]
 
 Record the Id of the tenant, which will be something like `25c9d123-8a79-4edd-9f76-8dd9c806b0f3`. You'll use this in the import script.
 
@@ -177,7 +202,18 @@ image::guides/auth0-migration/list-of-tenants.png[The tenant list.,width=1200,ro
 
 ==== Create a Test Application
 
-TBD
+Applications can be anything that a user can log into. In FusionAuth there's no differentiation between web applications, APIS or native apps. To add an application, navigate to [breadcrumb]#Applications# and choose the green plus sign.
+
+Give the application a descriptive name like `Auth0 application` and save it. 
+
+Navigate to the [breadcrumb]#OAuth# tab and add an entry to [field]#Authorized redirect URLs#. Use a value such as `\https://fusionauth.io` for testing. You shouldn't need to modify any of the other configuration options to test importing users. Save the application. 
+
+image::guides/auth0-migration/add-application.png[The application creation screen.,width=1200]
+
+Next, view the application by clicking the green magnifying glass and note the [field]#OAuth IdP login URL#. You'll be using that to test that users can log in.
+
+image::guides/auth0-migration/find-login-url.png[Finding the login URL.,width=1200,role=bottom-cropped]
+
 
 ==== Add an API Key
 
@@ -284,7 +320,7 @@ user['registrations'].push(application_registration)
 return user
 ----
 
-=== Run the script
+=== Run the Script
 
 You can now run the import script:
 
@@ -300,29 +336,27 @@ You'll see output like:
 TBD
 ----
 
-=== Verify the import
+=== Verify the Import
 
-The next step is to log in to the FusionAuth administrative user interface and review the users. 
+The next step is to log in to the FusionAuth administrative user interface and review the users to ensure all the data was correctly imported.
 
-IMAGE 
+image::guides/auth0-migration/list-users.png[List imported users.,width=1200,role=bottom-cropped]
 
-If you have a test user, open an incognito window and log in with them to ensure the hashing migration was successful.
+If you have a test user, open an incognito window and log in with them to ensure the hash migration was successful. You recorded the URL to log in to the example application in <<Create a Test Application>>.
 
-IMAGE
+image::guides/auth0-migration/user-login.png[The user login screen.,width=1200,role=bottom-cropped]
 
-After the login, the user will end up at a URL like `https://fusionauth.io/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`
+After the login, the user will be redirected to a URL like `\https://fusionauth.io/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`. This happens is because you haven't set up an web application to handle the authorization code redirect. 
 
-This is because you haven't set up an application to handle the authorization code redirect. That'll be an important next step but is beyond the scope of this document. Consult the link:/docs/v1/tech/5-minute-setup-guide/[5 minute setup guide] for an example of how to do this.
+That is an important next step but is beyond the scope of this document. Consult the link:/docs/v1/tech/5-minute-setup-guide/[5 minute setup guide] for an example of how to do this.
 
-=== The final destination of the imported users
+=== The Final Destination of the Imported Users
 
-After you are done testing, choose whether to import users into the default tenant or a new tenant. 
-
-Whichever you choose, make sure to update `$fusionauth_tenant_id` to the correct value before running the import for a final time.
+After you are done testing, choose whether to import users into the default tenant or a new tenant. Whichever you choose, make sure to update `$fusionauth_tenant_id` to the correct value before running the import for a final time.
 
 If you aren't keeping the users in the test tenant, delete the tenant as outlined below.
 
-=== Deleting the test tenant
+=== Deleting the Test Tenant
 
 If you need to start over because the import failed or you need to tweak a setting, delete the tenant you created. This will remove all the users and other configuration for this tenant, giving you a fresh start. To do so, navigate to [breadcrumb]#Tenants# and choose the red trashcan icon. 
 
@@ -330,18 +364,22 @@ image::guides/auth0-migration/list-of-tenants-delete-highlighted.png[Deleting a 
 
 Confirm your desire to delete the tenant. Depending on how many users you have imported, this may take some time.
 
-== What to do next
+== What to Do Next
 
 At a minimum, assign your users to the relevant migrated FusionAuth applications. You can do this in two ways:
 
 * As part of your import script by modifying the script and adding link:/docs/v1/tech/apis/users/#import-users[Registration JSON information] to the `map_user` method as illustrated in <<Enhancing the Script>>.
 * After users have been migrated with the link:/docs/v1/tech/apis/registrations[Registrations API]. 
 
-You'll also need to modify and test your applications to ensure that your users can log in to them and receive appropriate permissions and roles. 
+You'll also need to modify and test your applications to ensure:
+
+* Users can log in.
+* The authorization code redirect is handled.
+* Users receive appropriate permissions and roles. 
 
 If your application uses a standard OAuth, SAML or OIDC library to authenticate with Auth0, the transition should be relatively painless.
 
-== Additional support
+== Additional Support
 
 If you need support in your migration beyond that provided in this guide, you may:
 
