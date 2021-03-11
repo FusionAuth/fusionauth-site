@@ -13,7 +13,7 @@ We've seen a lot of news lately about Authentication as a Service platforms like
 
 <!--more-->
 
-**Most recently updated March 4, 2021.**
+**Most recently updated March 11, 2021.**
 
 ## Why the Attention is Good for Auth0 and FusionAuth
 
