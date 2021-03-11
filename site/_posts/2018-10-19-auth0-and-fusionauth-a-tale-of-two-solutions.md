@@ -3,7 +3,7 @@ layout: blog-post
 title: Auth0 and FusionAuth - A Tale of Two Solutions
 description: Compare FusionAuth and Auth0 for your identity and access management solution.
 author: Bryan Giese
-updated_date: 2021-03-04
+updated_date: 2021-03-11
 image: blogs/fusionauth-vs-auth0/header.png
 category: blog
 excerpt_separator: "<!--more-->"
@@ -42,10 +42,14 @@ Auth0 and FusionAuth share many essential elements of a customer identity manage
 [{% include _image.liquid src="/assets/img/blogs/fusionauth-vs-auth0/download-full-auth0-comparison.png" alt="Auth0 and FusionAuth Feature Comparison" figure=false %}](/resources/fusionauth-vs-auth0.pdf "Download the Auth0 and FusionAuth Feature Comparison")
 
 ### Free for Unlimited Users
-One of the biggest differences between Auth0 and FusionAuth is cost. FusionAuth is free for unlimited users. No strings, gimmicks, or tricks. No cost increases when you hit a certain Monthly Active User threshold. Much like a database or a web server, secure authentication is so essential that developers should be able to implement it quickly and easily without cost concerns. And unlike the free options from other vendors, we don't feature-cripple or user-limit FusionAuth. You get the full unrestricted platform with every feature and benefit.
+One of the biggest differences between Auth0 and FusionAuth is cost. FusionAuth is free for unlimited users. No strings, gimmicks, or tricks. No cost increases when you hit a certain Monthly Active User threshold. Much like a database or a web server, secure authentication is so essential that developers should be able to implement it quickly and easily without cost concerns. And unlike the free options from other vendors, we don't user-limit FusionAuth. You get a full unrestricted platform. 
+
+FusionAuth does offer advanced features and support for a price, but we have many many users running their business self hosting the community edition.
 
 ### Single-Tenant Security
-We mentioned above that Auth0 and FusionAuth both have on-premise and cloud options. Our difference is both our local and cloud options deliver true data isolation as *single-tenant solutions*. This eliminates the possibility of data leakage between unrelated companies, whether accidentally or through hacker activity. For additional security, customers can implement a firewall at any layer, further protecting their data from unauthorized access. With the substantial increase in the number and sophistication of hacking, phishing and spoofing attacks, we felt it was the best choice. Additionally, FusionAuth's single-tenant architecture also allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and the European Union's GDPR all place different restrictions on how a user's personal data can be used and transmitted. FusionAuth provides the expanded control that companies require to comply with laws and regulations in their specific region. For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this recent whitepaper](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions "Single- vs. Multi-Tenant Paper").
+We mentioned above that Auth0 and FusionAuth both have on-premise and cloud options. Our difference is both our local and cloud options deliver true data isolation as *single-tenant solutions*. This eliminates the possibility of data leakage between unrelated companies, whether accidentally or through hacker activity. For additional security, customers can implement a firewall at any layer, further protecting their data from unauthorized access. With the substantial increase in the number and sophistication of hacking, phishing and spoofing attacks, we felt it was the best choice. 
+
+Additionally, FusionAuth's single-tenant architecture also allows for easier compliance with complex regulatory restrictions in many industries and countries. Germany's Bundesdatenschutzgesetz, Australia's Privacy Principles, Canada's PIPEDA, and the European Union's GDPR all place different restrictions on how a user's personal data can be used and transmitted. FusionAuth provides the expanded control that companies require to comply with laws and regulations in their specific region. For more details on the benefits and pitfalls of single- and multi-tenant solutions [read this recent whitepaper](/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions "Single- vs. Multi-Tenant Paper").
 
 ### Localization
 Every company doing business through the internet today has a storefront open to customers from around the globe. While having a vast pool of potential customers is a benefit, many companies struggle to deliver their products and services to the wide range of languages they encounter. FusionAuth was designed to allow you to easily communicate with your customers in the language they prefer. You can create customized HTML and text email templates for the languages you support, and easily add additional options as your community grows.
