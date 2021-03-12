@@ -98,7 +98,13 @@ Now, create a project by running the following command inside the project direct
 $ vue create client
 ```
 
-You will be prompted to pick a preset. You can choose the **default preset** which comes with a basic **Babel + ESLint** setup or a manual option, by choosing **Manually select features**. The latter will allow you to customize features according to your needs. This project will use the default preset. You can [learn more about it here](https://cli.vuejs.org/guide/installation.html).  
+You will be prompted to pick a preset. 
+
+> You can choose:
+> 1. Vue 2 (**default**), 
+> 2. Vue 3 (preview), 
+> 3. A manual option, by choosing **Manually select features**. The latter will allow you to customize features according to your needs. This project will use the default preset. You can [learn more about it here](https://cli.vuejs.org/guide/installation.html).  
+> [More Info?](https://madewithvuejs.com/blog/vue-3-roundup)
 
 Once the project is initialized, start the development server by running the following command:
 
@@ -120,38 +126,38 @@ Now you need to clean up and remove some of the sample code that the CLI generat
 Delete `components`, `views`, `router`, and  `assets` folders in `src` and then modify your `main.js` file to look like this:
 
 ```javascript
-import Vue from 'vue';
-import App from './App.vue';
+import Vue from 'vue'
+import App from './App.vue'
 
-Vue.config.productionTip = false;
+Vue.config.productionTip = false
 
 new Vue({
-  render: (h) => h(App),
-}).$mount('#app');
+    render: h => h(App),
+}).$mount('#app')
 ```
 
 Next, modify your `App.vue` file to look like this:
 ```vue
 <template>
-  <div id='app'>
+  <div id="app">
   </div>
 </template>
 
 <script>
+
 export default {
-  name: 'app',
+  name: 'App',
   components: {
-  },
-};
+  }
+}
 </script>
 
 <style>
 </style>
 ```
+Visiting our locally running Vue Client (http://localhost:8081/) will show you a blank screen now (dont worry, we will update this shortly).
 
-Visiting http://localhost:8081/ will show you a blank screen now.
-
-> FUN FACT: You can load environment variables in most SPA templates like Vue or React without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this in the [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables) Vue documentation.
+> ***FUN FACT***: You can load environment variables in most SPA templates like Vue or React without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this in the [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables) Vue documentation.
 
 Let's set aside the client for a bit, and focus on the Express server
 
@@ -160,7 +166,7 @@ Let's set aside the client for a bit, and focus on the Express server
 
 We will use [Express.js](https://expressjs.com/) as our backend server. It is a popular library that is widely used by developers.
 
-> FUN FACT: The letter **E** in stacks like **MERN**, **MEVN**, or **MEAN** stands for Express. 
+> ***FUN FACT***: The letter **E** in stacks like **MERN**, **MEVN**, or **MEAN** stands for Express. 
 
 Inside our root directory, we will create another folder named `server` and initialize a NodeJS application in it. Run the following command in your root application directory:
 
@@ -212,7 +218,11 @@ Now, you may wonder where to get all this information for your `.env` file. Go t
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/oauth-configuration.png" alt="Client Id and Client Secret settings for the application." class="img-fluid" figure=false %}
 
-Below is the code for a basic Express server. Notice that we use the `dotenv` package by adding the following code inside our `index.js` file:
+Below is the code for a basic Express server on an `index.js` file. 
+If Express has not created an `index.js` file for you, please create one under the `src/` folder.
+
+Notice we use the `dotenv` package by adding the following code inside our `index.js` file:
+
 
 ```javascript
 //...
@@ -230,6 +240,7 @@ Here is the sample code for an Express server that makes use of all our installe
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const session = require("express-session")
 
 // dotenv
 require("dotenv").config();
@@ -240,6 +251,18 @@ const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(morgan("common"));
 app.use(express.json());
+app.use(session(
+  {
+    secret: '1234567890', // don't use this secret in prod :)
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: 'auto',
+      httpOnly: true,
+      maxAge: 3600000
+    }
+  })
+);
 
 // Provide a default port 
 const port =  process.env.SERVER_PORT || 3000;
@@ -262,7 +285,7 @@ This might be the only time we will start the server; since we have installed `n
 
 Head over to http://localhost:9000/; you will see an error! 
 
-> FUN FACT: This is actually to be expected, since we have not created any routes yet.
+> ***FUN FACT***: This is actually to be expected, since we have not created any routes yet.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/borked-route.png" alt="The Express route doesn't exist yet, so we see an error message." class="img-fluid" figure=false %}
 
@@ -361,7 +384,7 @@ export default {
 </script>
 <style > 
 *{
-  margin-top:30px;
+  margin-top: 30px;
   text-align: center;
   font-size: 20px;
   font-family: 'Courier New', Courier, monospace;
@@ -675,7 +698,7 @@ http://localhost:9000/oauth-callback?code=SSXVv3xkNTKEhnY4XzjUVvRZp7eyhgCuuREAgS
 
 This Authorization Code is not sufficient to access user information. For that we will need an `access_token`. To get an `access_token` we will make a post request to `/oauth2/token` endpoint with this Authorization Code.
 
-After we make that request, we need to store the `access_token`. We can't store it in an in-memory variable because we need it for future requests. We need a secure storage mechanism that doesn't expose it to our Vue client, because that is running a browser which is vulnerable to XSS exploits. We will store this `access_token` using the `express-session` middleware; we need to import `express-session`.
+After we make that request, we need to store the `access_token`. We can't store it in an in-memory variable because we need it for future requests. We need a secure storage mechanism that doesn't expose it to our Vue client, because that is running a browser which is vulnerable to XSS exploits. We will store this `access_token` using the `express-session` middleware; we need to import `express-session`, as outlined in index.js previously.
 
 ```javascript
 //...
@@ -964,7 +987,7 @@ When this final request is successful, we send all the data to our Vue client vi
 }
 ```
 
-The API key that we are passing in the `Authorization` HTTP header is not part of OAuth standard. You need it to call non-standard endpoints like the [User Registration API](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you can use the API key if you decide to access endpoints protected by that key.
+> ***NOTE***: The API key that we are passing in the `Authorization` HTTP header is not part of OAuth standard. You need it to call non-standard endpoints like the [User Registration API](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you can use the API key if you decide to access endpoints protected by that key.
 
 ## Showing user data
 
@@ -1056,7 +1079,13 @@ And here's the application when you are signed in (if you signed up with `richar
 
 This last section deals with setting FusionAuth user data from our Vue application.
 
-We will create the `/set-user-data` route; inside `routes` add a `set-user-data.js` file and add this code to it:
+We will create the `/set-user-data` route in `index.js`
+
+```javascript
+app.use('/set-user-data', require('./routes/set-user-data'))
+```
+
+Inside `routes` add a `set-user-data.js` file and add this code to it:
 
 ```javascript
 const express = require("express");
@@ -1192,7 +1221,24 @@ Once we have sent `userData` to our server, we reset the `textarea` by setting  
 </form>
 ```
 
-> FUN FACT: Using `.prevent` stops the page from reloading whenever the Submit button is clicked. 
+Also, be sure and update your `App.vue` to account for the user-data.  Here is a snippet of what your `App.vue` should look like from the improvements in this last section.
+
+```javascript
+import Greet from './Greeting';
+import Login from "./Login";
+import Update from "./Update";
+
+export default {
+name: 'app',
+components: {
+    Greet,
+    Login,
+    Update
+},
+//...
+```
+
+> ***FUN FACT***: Using `.prevent` stops the page from reloading whenever the Submit button is clicked. 
 
 Here is how our application looks now:
 
