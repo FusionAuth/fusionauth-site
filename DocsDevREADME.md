@@ -18,6 +18,12 @@ Here are some guidelines to follow when writing documentation (everything under 
 ====
 Available Since Version 1.5.0
 ====
+- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_`.
+- If you are including a file in the docs/asciidoctor, do not prepend the include file path with `/`. Instead, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
+- If a doc gets long consider adding a table of contents in the top section or breaking it into multiple documents. To generate a table of contents from section headers, run this script:
+```
+egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
+```
 
 For blog posts:
 - Indent all code with two spaces per level.
@@ -155,3 +161,20 @@ Then, wherever you want the related posts to show up, add this text:
 ```
 
 Update the `relatedTag` value to match the tag added to the blog post.
+
+
+## Search
+
+We use algolia to search.
+
+To do a dry run:
+
+```
+bundle exec jekyll algolia --dry-run 
+```
+
+or, if you want to see everything:
+
+```
+bundle exec jekyll algolia --dry-run --verbose
+```
