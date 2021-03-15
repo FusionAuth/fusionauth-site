@@ -22,7 +22,7 @@ By its nature, FusionAuth integrates with other systems, whether that be sending
 
 In this release, the team has added new debugging capabilities. When you have an issue around the functionality, look for a "Debug enabled" field and check it. Save the configuration, then run through the integration workflow one more time. Check the event log, by navigating to "System" and then "Event Log". The additional debugging information will be there.
 
-{% include _image.liquid src="/assets/img/blogs/release-1-25/debug-enabled.png" alt="Enabling additional debugging for an OAuth grant." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/release-1-25/debug-enabled-v2.png" alt="Enabling additional debugging for an OAuth grant." class="img-fluid" figure=false %}
 
 This additional debugging capability is exciting to me for two reasons:
 
