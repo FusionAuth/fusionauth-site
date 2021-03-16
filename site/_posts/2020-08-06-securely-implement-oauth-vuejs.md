@@ -78,6 +78,11 @@ fusionauth-example-vue
 
 All the Express or server-side code will be in the `server` folder, and our Vue app will reside in the `client` folder. You don't need to create the folders right now; we will be doing so in the next steps.
 
+### Diagram of the Architecture 
+
+Below is an example diagram to help you visualize the flow of information between our `client`, `server`, and `IdP`. Notice, our client never directly transfers information with our `IdP`. While explained in greater depth throughout our documentation, simply put this is for security purposes. Any information present on a client/in-browser environment can be read and therefore is not secure. Our user information is always hidden behind our server.  
+
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/vue-info-flow.png" alt="Flow of user information in our application." class="img-fluid" figure=true %}
 ## Creating the Vue app
 
 We will use the official Vue CLI to initialize our project. This is the best way to scaffold Single Page Applications (SPAs). It provides batteries-included build setups for a modern front-end workflow. It takes only a few minutes to get up and running with hot-reload, lint-on-save, and production-ready builds. You can read more about [the Vue CLI here](https://vuejs.org/).
@@ -200,7 +205,7 @@ Since we have installed `nodemon`, to use it inside `package.json` simply add th
 
 Next, set up your environment variables. Inside the `server` folder create a `.env` file and store your configuration, such as client information, ports, or API credentials in it:
 
-```shell
+```
 SERVER_PORT = 9000
 FUSIONAUTH_PORT = 9011
 CLIENT_ID = 'c8642b18-5d1d-42b4-89fb-a37a5b750186'
@@ -291,7 +296,7 @@ Head over to http://localhost:9000/; you will see an error!
 
 In your terminal, you can see `morgan` in action. Whenever a request is made to our server, it will log it in the terminal like this:
 
-```
+```shell
 ::ffff:127.0.0.1 - - [10/Jul/2020:08:48:21 +0000] "GET / HTTP/1.1" 404 139
 ```
 
@@ -372,7 +377,7 @@ Create a new file called `Greeting.vue` in the `src` folder.  We will add logic 
 ```vue
 <template>
   <div class="greet">
-    <h3 v-if="email">Welcome {{email}} </h3>
+    <h3 v-if="email">Welcome{% raw %} {{email}} {% endraw %}</h3>
     <h3 v-else>You are not logged in</h3>
   </div>
 </template>
@@ -609,7 +614,7 @@ The output of the above is the same as when we have hardcoded the `email` value 
 
 If we comment out `email` in `server/routes/user.js`, we will see the "You are not logged in" message in our application. We can change the email in `server/routes/user.js` and see the corresponding DOM changes as well:
 
-```
+```shell
 user: {
   email: 'richard@fusionauth.io'
 }
@@ -1245,6 +1250,211 @@ Here is how our application looks now:
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/signed-in-with-text-area.png" alt="The application when logged in with the text area for updating the data." class="img-fluid" figure=false %}
 
 Go to your Vue app and type some text in the `textarea` and click the Submit button. If you log in to the FusionAuth dashboard, you can now see the text you added is stored in FusionAuth. It is under the **User data** tab in your user account details.
+
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/custom-user-data.png" alt="custom user data" class="img-fluid top-cropped" figure=false %}
+
+## One Final Condition 
+
+If you have made it this far...Great!  You have a fully working example of a VueJS application using FusionAuth.  
+
+The remainder of this article will cover one final condition and improve our existing code.  
+
+### Authorization Versus Authentication 
+
+What happens if we create a user in FusionAuth but do not assign them to an application?  You may notice our expressJS server crashes.
+
+Why is that?  The short answer is we need to refactor our code (namely our axios code).  The longer answer is we need to understand [Authentication vs Authorization](https://fusionauth.io/docs/v1/tech/core-concepts/authentication-authorization/).  
+
+> <strong> Authentication is <u>who</u> you are. </strong>
+
+> <strong> Authorization is <u>what</u> you can do. </strong>  
+
+We will add feedback when a user is authenticated (known to FusionAuth), but not authorized to update user data.  Please note in some cases, you may not want to give such an acknowledgement, but rather simply route the user back to a login screen with a message of "Login Failed."  
+
+We will do this by adding a new data property called `authState` with the following possibilities: 
+- `Authorized`
+- `notAuthorized`
+- `notAuthenticated`
+
+### Update the `Server` code
+
+We will start by adding to our `user.js` axios request. 
+
+```javascript
+router.get("/", (req, res) => {
+    // token in session -> get user data and send it back to the vue app
+    if (req.session.token) {
+        axios
+            .post(
+                `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/introspect`,
+                qs.stringify({
+                    client_id: process.env.CLIENT_ID,
+                    token: req.session.token,
+                })
+            )
+            .then((result) => {
+                let introspectResponse = result.data;
+                // valid token -> get more user data and send it back to the Vue app
+                if (introspectResponse) {
+
+                    // GET request to /registration endpoint
+                    axios
+                        .get(
+                            `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APPLICATION_ID}`,
+                            {
+                                headers: {
+                                    Authorization: process.env.API_KEY,
+                                },
+                            }
+                        )
+                        .then((response) => {
+                            res.send({
+                                authState: "Authorized",
+                                introspectResponse: introspectResponse,
+                                body: response.data.registration,
+                            });
+                        })
+                        .catch((err) => {
+                            res.send({
+                                authState: "notAuthorized"
+                            });
+                            console.log(err)
+                            return
+                        })
+                }
+                // expired token -> send nothing
+                else {
+                    req.session.destroy();
+                    res.send({
+                        authState: "notAuthenticated"
+                    });
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    }
+    // no token -> send nothing
+    else {
+        res.send({
+            authState: "notAuthenticated"
+        });
+    }
+});
+```
+
+### Update the `Client` code
+#### Add to your `App.vue`
+
+We will pass additional props to our `Greet` and `Login` components.  Additionally, we have added `boolShowSignOut`, rather than simply `email` to better indicate if the user should be presented with a `sign in` or `sign out` button.  
+
+In the `container` div:
+
+```vue
+  <Greet v-bind:email="email" v-bind:authState="authState" />
+  <Login v-bind:email="email" v-bind:boolShowSignOut="boolShowSignOut"  />
+```
+
+In the data function: 
+
+```javascript
+  data() {
+    return {
+      email: null,
+      body: null,
+      boolShowSignOut: false,
+      authState: null
+    }
+  },
+```
+
+In the mounted function:
+
+```javascript
+mounted() {
+  fetch(`http://localhost:9000/user`, {
+    credentials: "include" // fetch won't send cookies unless you set credentials
+  })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.authState == "Authorized"){
+          this.email = data.introspectResponse.email;
+          this.body = data.body;
+          this.boolShowSignOut = true
+        }
+        else if (data.authState == "notAuthorized"){
+          this.boolShowSignOut = true
+        }
+        else if (data.authState == "notAuthenticated"){
+          this.boolShowSignOut = false
+        }
+        this.authState = data.authState
+      });
+}
+```
+
+#### Add to your `Greeting.vue`
+
+Add `authState` to `Greeting.vue` (as well as some small styling)
+
+```vue
+<template>
+    <div className="greet">
+        <h3 v-if="email">Welcome{% raw %} {{email}} {% endraw %}</h3>
+        <h3 v-else>You are not logged in</h3>
+        <div>
+            <u>authState:</u>
+        </div>
+        <div class="authStateBox"> {{authState}} </div>
+    </div>
+</template>
+<script>
+    export default {
+    name: 'Greet',
+    props: ["email", "authState"],
+};
+</script>
+<style>
+    *{
+        margin-top:30px;
+        text-align: center;
+        font-size: 20px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    .authStateBox{
+        margin: 20px;
+        background-color: lightcoral;
+        border-radius: 25px;
+    }
+</style>
+```
+
+#### Add to your `Login.vue`
+In our `Login.vue` we will update to conditionally render on the `boolShowSignOut` 
+
+```vue
+<template>
+  <h1 v-if="boolShowSignOut"><a href='http://localhost:9000/logout'>Sign Out</a></h1>
+  <h1 v-else><a href='http://localhost:9000/login'>Sign In</a></h1>
+</template>
+<script>
+export default {
+  name: "Login",
+  props: ["boolShowSignOut"],
+};
+</script>
+```
+
+With this code (and a small amount of styling code for a logo) our application should look like:
+
+#### Authorized 
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-authorized.png" alt="User authorized and authenticated." class="img-fluid" figure=false %}
+
+#### notAuthorized
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authorized.png" alt="User not authorized." class="img-fluid" figure=false %}
+#### notAuthenticated
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authen.png" alt="User not authenticated." class="img-fluid" figure=false %}
+
 
 ## Conclusion
 
