@@ -1,17 +1,14 @@
 ---
 layout: doc
-title: FusionAuth cluster setup
-description: FusionAuth cluster setup
+title: FusionAuth Cluster Setup
+description: Setting up a multi node FusionAuth cluster
 ---
 
 == Using Clustered FusionAuth
 
 FusionAuth is stateless and typically CPU bound. Clustering FusionAuth nodes improves performance and redundancy. You can run as many FusionAuth nodes in a cluster as you'd like.
 
-FusionAuth stores almost all state in its database. For clustered environments, the following interactions occur between nodes:
-
-* Cache invalidations
-* When the system log is downloaded, all node's logs are provided
+include::docs/v1/tech/installation-guide/_shared-state.adoc[]
 
 FusionAuth can be run in multiple architectures; see the link:/docs/v1/tech/installation-guide/server-layout/[Server Layout] documentation for more.
 
@@ -124,6 +121,25 @@ To remove nodes, simply:
 Here's a video covering how to add and remove nodes from a FusionAuth cluster:
 
 video::y6bPjqP4Dzk[youtube,width=560,height=315]
+
+==== "Bye node" Messages
+
+There are two different levels of cluster membership. The first is managed by the load balancer and concerns what traffic is sent to which node. FusionAuth operates a second level of cluster membership for the limited state shared between nodes.
+
+include::docs/v1/tech/installation-guide/_shared-state.adoc[]
+
+Each node regularly updates the shared database by updating a row with URL and timestamp information. If a node does not check in, after a certain period it will be removed from the cluster, as far as FusionAuth is concerned.
+
+If that happens you might see a message like this:
+
+[source]
+----
+io.fusionauth.api.service.system.NodeService - Node [abce451c-6c5f-4615-b4eb-c1ae5ccf460c] with address [http://10.0.0.2:9011] removed because it has not checked in for the last [83] seconds. Bye node.
+----
+
+While a node is removed from FusionAuth's node list, it will no longer participate in the FusionAuth cluster actions as mentioned above.
+
+This automated removal does not affect load balancer traffic. The load balancer, typically by using a health check, must stop sending a node authentication traffic if it is unhealthy.
 
 === How Many Instances Should I Run?
 
