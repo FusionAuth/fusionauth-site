@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: What to consider when you are considering an Auth0 migration
+title: Migrating off of Auth0? Here's what you need to know
 description: You aren't sure about the Okta acquisition. What are things you need to consider when migrating off of Auth0?
 author: Dan Moore
 image: blogs/scaling-auth-system/auth-specific-scaling-challenges-header-image.png
@@ -15,7 +15,7 @@ Pssst. You may have heard that [Auth0 was recently acquired by Okta](https://www
 
 I'll be using FusionAuth as an example migration alternative, but the investigation and feature mapping can be used to prepare a move to any Auth0 competitor. That said, since the announcement, our website has seen significantly more traffic and we've had dozens of people reach out to learn more about FusionAuth.
 
-## FusionAuth and Auth0
+## FusionAuth vs Auth0
 
 FusionAuth and Auth0 have many similarities. Both have friendly pricing structures, especially when you have less complex needs. Both allow you to get started quickly. 
 
@@ -33,6 +33,7 @@ However, Auth0 and FusionAuth have differences too. Here are some of the things 
 * Advanced registration forms
 * Unlimited SAML/OIDC connections
 * The ability to self-host
+* Unlimited tenants
 * A truly free option with no limits on the number of users when you self host the community edition
 
 Regardless of FusionAuth's strengths, a migration is a good time to re-evaluate your current system and alternatives. At FusionAuth, we recommend looking at your current Auth0 system and the alternatives both broadly and deeply.
