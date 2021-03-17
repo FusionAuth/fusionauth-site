@@ -2,7 +2,7 @@
 layout: blog-post
 title: How to Securely Implement OAuth in Vue.js
 description: This post describes how to securely implement OAuth in a Vue application using the Authorization Code Grant (with FusionAuth as the IdP).
-author: Ashutosh Singh 
+author: Ashutosh Singh
 image: blogs/oauth-vuejs/how-to-securely-implement-oauth-in-vue-js.png     
 category: blog
 tags: client-javascript
@@ -137,7 +137,7 @@ import App from './App.vue'
 Vue.config.productionTip = false
 
 new Vue({
-    render: h => h(App),
+  render: h => h(App),
 }).$mount('#app')
 ```
 
@@ -152,8 +152,7 @@ Next, modify your `App.vue` file to look like this:
 
 export default {
   name: 'App',
-  components: {
-  }
+  components: {}
 }
 </script>
 
@@ -194,7 +193,7 @@ We installed a lot of packages, so let's look at them:
 
 Since we have installed `nodemon`, to use it inside `package.json` simply add the following scripts:
 
-```javascript
+```json
 //...
 "scripts": {
   "start": "node index.js",
@@ -241,7 +240,7 @@ We can then read environment variables by writing `process.env.` in front of the
 > - node_modules
 > - *.env
 > 
-> To this file
+> To your `.gitignore` file before committing any code to your VCS or Github.
 
 Here is the sample code for an Express server that makes use of all our installed packages 
 
@@ -257,7 +256,7 @@ require("dotenv").config();
 const app = express();
 
 // Use our middlewares
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({origin: true, credentials: true}));
 app.use(morgan("common"));
 app.use(express.json());
 app.use(session(
@@ -274,7 +273,7 @@ app.use(session(
 );
 
 // Provide a default port 
-const port =  process.env.SERVER_PORT || 3000;
+const port = process.env.SERVER_PORT || 3000;
 
 // Listen to server  
 app.listen(port, () => {
@@ -313,7 +312,7 @@ Create a simple route for our main page by adding this to the `index.js` file:
 // Main Page
 app.get("/", (req, res) => {
   res.send({
-   message:"FusionAuth Example With Vue"
+    message: "FusionAuth Example With Vue"
   });
 });
 //...
@@ -339,14 +338,13 @@ Inside `client/src/App.vue` add the following:
     <header>
       <h1>FusionAuth Example Vue</h1>
     </header>
-    <div id = 'container'></div>
+    <div id='container'></div>
   </div>
 </template>
 <script>
 export default {
   name: 'app',
-  components: {
-  },
+  components: {},
 };
 </script>
 <style>
@@ -355,7 +353,8 @@ h1 {
   font-size: 40px;
   font-family: Arial, Helvetica, sans-serif;
 }
-#container{
+
+#container {
   box-sizing: border-box;
   border: 5px solid gray;
   border-radius: 15%;
@@ -391,8 +390,8 @@ export default {
   props: ["email"],
 };
 </script>
-<style > 
-*{
+<style>
+* {
   margin-top: 30px;
   text-align: center;
   font-size: 20px;
@@ -413,21 +412,22 @@ Next, we need to import this file in `App.vue` and send the data to the `<Greet 
     <header>
       <h1>FusionAuth Example Vue</h1>
     </header>
-    <div id = 'container'>
-      <Greet v-bind:email="email" />
+    <div id='container'>
+      <Greet v-bind:email="email"/>
     </div>
   </div>
 </template>
 <script>
 import Greet from './Greeting';
+
 export default {
   name: 'app',
   components: {
-      Greet,
+    Greet,
   },
-  data(){
+  data() {
     return {
-      email : 'dinesh@fusionauth.io'
+      email: 'dinesh@fusionauth.io'
     }
   }
 };
@@ -438,9 +438,10 @@ h1 {
   font-size: 40px;
   font-family: Arial, Helvetica, sans-serif;
 }
-#container{
+
+#container {
   box-sizing: border-box;
-  border: 5px solid gray ;
+  border: 5px solid gray;
   border-radius: 15%;
   width: 400px;
   height: 400px;
@@ -457,10 +458,11 @@ Now comment out `email` in the `App.vue` `data()` call.
 
 ```javascript
 //...
-data(){
+data()
+{
   return {
     //email : "dinesh@fusionauth.io"
-    }
+  }
 }
 //...
 ```
@@ -492,7 +494,7 @@ Create  a new `get` route in `user.js` with this code:
 ```javascript
 const express = require('express');
 const router = express.Router();
-    
+
 router.get('/', (req, res) => {
   res.send({
     user: {
@@ -521,7 +523,7 @@ Go to http://localhost:9000/user, and you will see the following response:
 
 Remember, a *real* User object returned from FusionAuth will have more properties than just an email address. It will look something like this:
 
-```javascript
+```json
 {
   active: true,
   applicationId: '1ac76336-9dd9-4048-99cb-f998af681d3e',
@@ -541,12 +543,13 @@ Inside our `App.vue` file, we will use the `mounted()` lifecycle hook to make a 
 
 ```javascript
 //...
-mounted() {
+mounted()
+{
   fetch(`http://localhost:9000/user`, {
     credentials: "include" // fetch won't send cookies unless you set credentials
   })
-  .then(response => response.json())
-  .then(data=> console.log(data));
+    .then(response => response.json())
+    .then(data => console.log(data));
 }
 //...
 ```
@@ -576,6 +579,7 @@ We can now use this object to check if the user is logged in or not. We will nee
 </template>
 <script>
 import Greet from "./Greeting";
+
 export default {
   name: "app",
   components: {
@@ -601,6 +605,7 @@ h1 {
   font-size: 40px;
   font-family: Arial, Helvetica, sans-serif;
 }
+
 #container {
   box-sizing: border-box;
   border: 5px solid gray;
@@ -661,7 +666,7 @@ const router = express.Router();
 
 router.get('/', (req, res) => {
 
-  const stateValue = Math.random().toString(36).substring(2,15) + Math.random().toString(36).substring(2,15) + Math.random().toString(36).substring(2,15) + Math.random().toString(36).substring(2,15) + Math.random().toString(36).substring(2,15) + Math.random().toString(36).substring(2,15);
+  const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
   req.session.stateValue = stateValue
 
@@ -752,13 +757,13 @@ const url = `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/token`;
 
 router.get("/", (req, res) => {
 // State from Server
-const stateFromServer = req.query.state;
-if (stateFromServer !== req.session.stateValue) {
-  console.log("State doesn't match. uh-oh.");
-  console.log(`Saw: ${stateFromServer}, but expected: &{req.session.stateValue}`);
-  res.redirect(302, '/');
-  return;
-}
+  const stateFromServer = req.query.state;
+  if (stateFromServer !== req.session.stateValue) {
+    console.log("State doesn't match. uh-oh.");
+    console.log(`Saw: ${stateFromServer}, but expected: &{req.session.stateValue}`);
+    res.redirect(302, '/');
+    return;
+  }
   //post request to /token endpoint
   axios
     .post(
@@ -778,7 +783,7 @@ if (stateFromServer !== req.session.stateValue) {
       req.session.token = result.data.access_token;
       console.log(result)
       //redirect to Vue app
-     res.redirect(`http://localhost:8081`);
+      res.redirect(`http://localhost:8081`);
     })
     .catch((err) => {
       console.error(err);
@@ -786,7 +791,7 @@ if (stateFromServer !== req.session.stateValue) {
 });
 module.exports = router;
 ```
-    
+
 We start with standard code for a route just like `login.js`. And then we import `axios` and `querystring`. We then use an `if` statement to check the state parameter; if it does not match, we log an error message.
 
 We use `axios` to make post requests to `oauth2/token` endpoint; this is the complete URL that we will request:
@@ -906,7 +911,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const qs = require("querystring");
-  
+
 router.get("/", (req, res) => {
   // token in session -> get user data and send it back to the vue app
   if (req.session.token) {
@@ -922,7 +927,7 @@ router.get("/", (req, res) => {
         let introspectResponse = result.data;
         // valid token -> get more user data and send it back to the Vue app
         if (introspectResponse) {
-          
+
           // GET request to /registration endpoint
           axios
             .get(
@@ -940,7 +945,7 @@ router.get("/", (req, res) => {
               });
             })
         }
-      // expired token -> send nothing 
+        // expired token -> send nothing 
         else {
           req.session.destroy();
           res.send({});
@@ -963,7 +968,7 @@ Let's examine this code. First, we check if an `access_token` is present and the
 When this request is successful, we get a response object. This contains user data.
 
 Here's an example of the JSON:
-```javascript
+```json
 {
   active: true,
   applicationId: '9d5119d4-71bb-495c-b762-9f14277c116c',
@@ -1006,21 +1011,23 @@ We just need to add one line in `App.vue`. Instead of `data.user.email`, this ti
 
 ```javascript
 //...
-data() {
+data()
+{
   return {
     email: null,
     body: null,
   };
 },
-mounted() {
+mounted()
+{
   fetch(`http://localhost:9000/user`, {
     credentials: "include" // fetch won't send cookies unless you set credentials
   })
-  .then((response) => response.json())
-  .then((data) => {
-    this.email = data.introspectResponse.email;
-    this.body= data.body;
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      this.email = data.introspectResponse.email;
+      this.body = data.body;
+    });
 }
 //...
 ```
@@ -1113,7 +1120,7 @@ router.post("/", (req, res) => {
     )
     .then((response) => {
       let introspectResponse = response.data;
-    
+
       // PATCH request to /registration endpoint
       axios.patch(
         `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APPLICATION_ID}`,
@@ -1127,8 +1134,8 @@ router.post("/", (req, res) => {
             Authorization: process.env.API_KEY,
           },
         }
-      ).catch(err=>{
-          console.log(err)
+      ).catch(err => {
+        console.log(err)
       })
     })
     .catch((err) => {
@@ -1179,6 +1186,7 @@ textarea {
   margin-left: auto;
   margin-right: auto;
 }
+
 button {
   margin-left: auto;
   margin-right: auto;
@@ -1199,10 +1207,10 @@ Add this component to `App.vue`. It does not make sense to show this component w
 
 We still haven't configured the `Submit` button. Let's do so to send whatever we type in our `textarea` to our server to be stored. Create a function `update` inside the `methods()` section.
 
-```javascript
+```vue
 //...
 methods: {
-  update: function() {
+  update: function () {
     fetch(`http://localhost:9000/set-user-data`, {
       credentials: "include",
       method: "POST",
@@ -1213,9 +1221,9 @@ methods: {
         userData: this.userData,
       }),
     }).catch((err) => {
-        console.log(err);
-      });
-      this.userData=''
+      console.log(err);
+    });
+    this.userData = ''
   },
 },
 //...
@@ -1233,74 +1241,76 @@ Once we have sent `userData` to our server, we reset the `textarea` by setting  
 
 Also, be sure and update your `App.vue` to account for the user-data.  Here is a snippet of what your `App.vue` should look like from the improvements in this last section.
 
-```javascript
+```vue
 import Greet from './Greeting';
 import Login from "./Login";
 import Update from "./Update";
 
 export default {
-name: 'app',
-components: {
+  name: 'app',
+  components: {
     Greet,
     Login,
     Update
-},
+  },
 //...
 ```
 
 > ***FUN FACT***: Using `.prevent` stops the page from reloading whenever the Submit button is clicked. 
 
 To summarize, here is a snapshot of the full code for `Update.vue` now:
-```javascript
+```vue
 <template>
-    <form @submit.prevent="update">
-    <textarea
-        v-model="userData"
-        placeholder="Update FusionAuth user data."
-    ></textarea>
+  <form @submit.prevent="update">
+  <textarea
+    v-model="userData"
+    placeholder="Update FusionAuth user data."
+  ></textarea>
     <button type="submit" class="button">Submit</button>
-</form>
+  </form>
 </template>
 <script>
-    export default {
-    name: "Update",
-    data() {
+export default {
+  name: "Update",
+  data() {
     return {
-    userData: "",
-};
-},
-    methods: {
-    update: function() {
-    fetch(`http://localhost:9000/set-user-data`, {
-    credentials: "include",
-    method: "POST",
-    headers: {
-    "Content-Type": "application/json",
-},
-    body: JSON.stringify({
-    userData: this.userData,
-}),
-}).catch((err) => {
-    console.log(err);
-});
-    this.userData=''
-},
-},
+      userData: "",
+    };
+  },
+  methods: {
+    update: function () {
+      fetch(`http://localhost:9000/set-user-data`, {
+        credentials: "include",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userData: this.userData,
+        }),
+      }).catch((err) => {
+        console.log(err);
+      });
+      this.userData = ''
+    },
+  },
 }
 </script>
 <style>
-    textarea {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+textarea {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
-    button {
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 5px;
+
+button {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5px;
 }
 </style>
 ```
+
 Here is how our application looks now:
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/signed-in-with-text-area.png" alt="The application when logged in with the text area for updating the data." class="img-fluid" figure=false %}
@@ -1457,30 +1467,31 @@ Additionally, we will add `authState` to `Greeting.vue` (as well as some small s
   <div className="greet">
     <h3 v-if="email">Welcome{% raw %} {{email}} {% endraw %}</h3>
     <h3 v-else>You are not logged in</h3>
-  <div>
-    <u>authState:</u>
-  </div>
-    <div class="authStateBox">{% raw %} {{authState}} {% endraw %}</div> 
+    <div>
+      <u>authState:</u>
+    </div>
+    <div class="authStateBox">{% raw %} {{authState}} {% endraw %}</div>
   </div>
 </template>
 <script>
-  export default {
+export default {
   name: 'Greet',
   props: ["email", "authState"],
 };
 </script>
 <style>
-  *{
-    margin-top:30px;
-    text-align: center;
-    font-size: 20px;
-    font-family: 'Courier New', Courier, monospace;
-  }
-  .authStateBox{
-    margin: 20px;
-    background-color: lightcoral;
-    border-radius: 25px;
-  }
+* {
+  margin-top: 30px;
+  text-align: center;
+  font-size: 20px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.authStateBox {
+  margin: 20px;
+  background-color: lightcoral;
+  border-radius: 25px;
+}
 </style>
 ```
 
@@ -1502,14 +1513,17 @@ export default {
 
 With this code (and a small amount of styling code for a logo) our application should look as follows:
 
-#### Authorized 
+#### Authorized
+
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-authorized.png" alt="User authorized and authenticated." class="img-fluid" figure=false %}
 
 #### notAuthorized
-{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authorized.png" alt="User not authorized." class="img-fluid" figure=false %}
-#### notAuthenticated
-{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authen.png" alt="User not authenticated." class="img-fluid" figure=false %}
 
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authorized.png" alt="User not authorized." class="img-fluid" figure=false %}
+
+#### notAuthenticated
+
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authen.png" alt="User not authenticated." class="img-fluid" figure=false %}
 
 ## Conclusion
 
