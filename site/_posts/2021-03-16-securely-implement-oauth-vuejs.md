@@ -80,7 +80,7 @@ All the Express or server-side code will be in the `server` folder, and our Vue 
 
 ### Diagram of the Architecture 
 
-Below is an example diagram to help you visualize the flow of information between our `client`, `server`, and `IdP`. Notice, our client never directly transfers information with our `IdP`. While explained in greater depth throughout our documentation, simply put this is for security purposes. Any information present on a client/in-browser environment can be read and therefore is not secure. Our user information is always hidden behind our server.  
+Below is an example diagram to help you visualize the flow of information between our `client`, `server`, and `IdP`. Notice, our client never directly transfers information with our `IdP`. While explained in greater depth throughout our documentation, simply put this is for security purposes. Any information present on a client/in-browser environment can be read and therefore is not secure. Our sensitive information is always hidden behind our server.  
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/vue-info-flow.png" alt="Flow of user information in our application." class="img-fluid" figure=true %}
 ## Creating the Vue app
@@ -237,9 +237,13 @@ require("dotenv").config();
 
 We can then read environment variables by writing `process.env.` in front of the environment variable's name whenever we need them in our code. 
 
-Since the `.env` file is ignored by git because of the `.gitignore` file, you will notice an `.env.example` file in the source code. To run on your local machine, rename that file to `.env` and add your Client Id, Client Secret, etc.
+> ***Important*** If a `.gitignore` file was not generated for you automatically - please do so now.  You will want to add the entries of 
+> - node_modules
+> - *.env
+> 
+> To this file
 
-Here is the sample code for an Express server that makes use of all our installed packages:
+Here is the sample code for an Express server that makes use of all our installed packages 
 
 ```javascript
 const express = require("express");
@@ -711,7 +715,7 @@ const session = require("express-session")
 //...
 ```
 
-Then, we need to add the following to `index.js`. It might be worth checking out the [Express Session docs](https://github.com/expressjs/session#readme) for more information.
+It might be worth checking out the [Express Session docs](https://github.com/expressjs/session#readme) for more information.
 
 ```javascript
 //...
@@ -1151,7 +1155,7 @@ In `client/src` create a new file named `Update.vue` and add the following to it
 
 ```vue
 <template>
-  <form>
+  <form @submit.prevent="update">
     <textarea
       v-model="userData"
       placeholder="Update FusionAuth user data."
@@ -1166,7 +1170,8 @@ export default {
     return {
       userData: "",
     };
-  },
+  }
+}
 </script>
 <style>
 textarea {
@@ -1218,7 +1223,7 @@ methods: {
 
 In the above function, we use `fetch()` to **POST** JSON-encoded data to Express. If you are familiar with `fetch()`, you will see that this is a simple **POST** request, nothing fancy. You can [read more about it here](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch).
 
-Once we have sent `userData` to our server, we reset the `textarea` by setting  `userData` equal to `''`, since it is a two-way binding. To bind this function to the `submit` event we will add the following to the `form` tag:
+Once we have sent `userData` to our server, we reset the `textarea` by setting  `userData` equal to `''`, since it is a two-way binding. To bind this function to the `submit` event we added the following to the `form` tag:
 
 ```vue
 <form @submit.prevent="update">
@@ -1245,6 +1250,57 @@ components: {
 
 > ***FUN FACT***: Using `.prevent` stops the page from reloading whenever the Submit button is clicked. 
 
+To summarize, here is a snapshot of the full code for `Update.vue` now:
+```javascript
+<template>
+    <form @submit.prevent="update">
+    <textarea
+        v-model="userData"
+        placeholder="Update FusionAuth user data."
+    ></textarea>
+    <button type="submit" class="button">Submit</button>
+</form>
+</template>
+<script>
+    export default {
+    name: "Update",
+    data() {
+    return {
+    userData: "",
+};
+},
+    methods: {
+    update: function() {
+    fetch(`http://localhost:9000/set-user-data`, {
+    credentials: "include",
+    method: "POST",
+    headers: {
+    "Content-Type": "application/json",
+},
+    body: JSON.stringify({
+    userData: this.userData,
+}),
+}).catch((err) => {
+    console.log(err);
+});
+    this.userData=''
+},
+},
+}
+</script>
+<style>
+    textarea {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+    button {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+}
+</style>
+```
 Here is how our application looks now:
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/signed-in-with-text-area.png" alt="The application when logged in with the text area for updating the data." class="img-fluid" figure=false %}
@@ -1253,15 +1309,15 @@ Go to your Vue app and type some text in the `textarea` and click the Submit but
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/custom-user-data.png" alt="custom user data" class="img-fluid top-cropped" figure=false %}
 
-## One Final Condition 
+## One final condition 
 
 If you have made it this far...Great!  You have a fully working example of a VueJS application using FusionAuth.  
 
 The remainder of this article will cover one final condition and improve our existing code.  
 
-### Authorization Versus Authentication 
+### Authorization vs authentication 
 
-What happens if we create a user in FusionAuth but do not assign them to an application?  You may notice our expressJS server crashes.
+What happens if we create a user in FusionAuth but do not assign them to an application?  You may notice our ExpressJS server crashes.
 
 Why is that?  The short answer is we need to refactor our code (namely our axios code).  The longer answer is we need to understand [Authentication vs Authorization](https://fusionauth.io/docs/v1/tech/core-concepts/authentication-authorization/).  
 
@@ -1269,168 +1325,167 @@ Why is that?  The short answer is we need to refactor our code (namely our axios
 
 > <strong> Authorization is <u>what</u> you can do. </strong>  
 
-We will add feedback when a user is authenticated (known to FusionAuth), but not authorized to update user data.  Please note in some cases, you may not want to give such an acknowledgement, but rather simply route the user back to a login screen with a message of "Login Failed."  
+We will add feedback when a user is authenticated, but not authorized to update user data or access our application.  Please note in some cases, you may not want to give such an acknowledgement, but rather simply route the user back to a login screen with a message of "Login Failed."  
 
-We will do this by adding a new data property called `authState` with the following possibilities: 
+We will do this by adding a new data property called `authState` to our server response with the following possible values: 
 - `Authorized`
 - `notAuthorized`
 - `notAuthenticated`
 
-### Update the `Server` code
+## Update the server code
 
 We will start by adding to our `user.js` axios request. 
 
 ```javascript
 router.get("/", (req, res) => {
-    // token in session -> get user data and send it back to the vue app
-    if (req.session.token) {
-        axios
-            .post(
-                `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/introspect`,
-                qs.stringify({
-                    client_id: process.env.CLIENT_ID,
-                    token: req.session.token,
-                })
-            )
-            .then((result) => {
-                let introspectResponse = result.data;
-                // valid token -> get more user data and send it back to the Vue app
-                if (introspectResponse) {
+  // token in session -> get user data and send it back to the vue app
+  if (req.session.token) {
+    axios
+      .post(
+        `http://localhost:${process.env.FUSIONAUTH_PORT}/oauth2/introspect`,
+        qs.stringify({
+          client_id: process.env.CLIENT_ID,
+          token: req.session.token,
+        })
+      )
+      .then((result) => {
+        let introspectResponse = result.data;
+        // valid token -> get more user data and send it back to the Vue app
+        if (introspectResponse) {
 
-                    // GET request to /registration endpoint
-                    axios
-                        .get(
-                            `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APPLICATION_ID}`,
-                            {
-                                headers: {
-                                    Authorization: process.env.API_KEY,
-                                },
-                            }
-                        )
-                        .then((response) => {
-                            res.send({
-                                authState: "Authorized",
-                                introspectResponse: introspectResponse,
-                                body: response.data.registration,
-                            });
-                        })
-                        .catch((err) => {
-                            res.send({
-                                authState: "notAuthorized"
-                            });
-                            console.log(err)
-                            return
-                        })
-                }
-                // expired token -> send nothing
-                else {
-                    req.session.destroy();
-                    res.send({
-                        authState: "notAuthenticated"
-                    });
-                }
+          // GET request to /registration endpoint
+          axios
+            .get(
+              `http://localhost:${process.env.FUSIONAUTH_PORT}/api/user/registration/${introspectResponse.sub}/${process.env.APPLICATION_ID}`, {
+                headers: {
+                  Authorization: process.env.API_KEY,
+                },
+              }
+            )
+            .then((response) => {
+              res.send({
+                authState: "Authorized",
+                introspectResponse: introspectResponse,
+                body: response.data.registration,
+              });
             })
             .catch((err) => {
-                console.log(err);
-            });
-    }
-    // no token -> send nothing
-    else {
-        res.send({
+              res.send({
+                authState: "notAuthorized"
+              });
+              console.log(err)
+              return
+            })
+        }
+        // expired token -> send nothing
+        else {
+          req.session.destroy();
+          res.send({
             authState: "notAuthenticated"
-        });
-    }
+          });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+  // no token -> send nothing
+  else {
+    res.send({
+      authState: "notAuthenticated"
+    });
+  }
 });
 ```
 
-### Update the `Client` code
+## Update the client code
 #### Add to your `App.vue`
 
-We will pass additional props to our `Greet` and `Login` components.  Additionally, we have added `boolShowSignOut`, rather than simply `email` to better indicate if the user should be presented with a `sign in` or `sign out` button.  
+We will pass additional props to our `Greet` and `Login` components.  Additionally, we have added `boolShowSignOut`, rather than rendering only based on `email` to better indicate if the user should be presented with a `sign in` or `sign out` button.  
 
-In the `container` div:
+In the `container` div we will update the `Greet` and `Login` components:
 
 ```vue
-  <Greet v-bind:email="email" v-bind:authState="authState" />
-  <Login v-bind:email="email" v-bind:boolShowSignOut="boolShowSignOut"  />
+<Greet v-bind:email="email" v-bind:authState="authState" />
+<Login v-bind:email="email" v-bind:boolShowSignOut="boolShowSignOut" />
 ```
 
-In the data function: 
+In the data function, we will add `boolShowSignOut` and `authState`: 
 
-```javascript
-  data() {
-    return {
-      email: null,
-      body: null,
-      boolShowSignOut: false,
-      authState: null
-    }
-  },
+```vue
+data() {
+  return {
+    email: null,
+    body: null,
+    boolShowSignOut: false,
+    authState: null
+  }
+},
 ```
 
-In the mounted function:
+In the mounted function we are going to add `authState` and `boolShowSignOut`:
 
-```javascript
+```vue
 mounted() {
   fetch(`http://localhost:9000/user`, {
     credentials: "include" // fetch won't send cookies unless you set credentials
   })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.authState == "Authorized"){
-          this.email = data.introspectResponse.email;
-          this.body = data.body;
-          this.boolShowSignOut = true
-        }
-        else if (data.authState == "notAuthorized"){
-          this.boolShowSignOut = true
-        }
-        else if (data.authState == "notAuthenticated"){
-          this.boolShowSignOut = false
-        }
-        this.authState = data.authState
-      });
+  .then((response) => response.json())
+  .then((data) => {
+    if (data.authState == "Authorized"){
+      this.email = data.introspectResponse.email;
+      this.body = data.body;
+      this.boolShowSignOut = true
+    }
+    else if (data.authState == "notAuthorized"){
+      this.boolShowSignOut = true
+    }
+    else if (data.authState == "notAuthenticated"){
+      this.boolShowSignOut = false
+    }
+    this.authState = data.authState
+  });
 }
 ```
 
 #### Add to your `Greeting.vue`
 
-Add `authState` to `Greeting.vue` (as well as some small styling)
+Additionally, we will add `authState` to `Greeting.vue` (as well as some small styling):
 
 ```vue
 <template>
-    <div className="greet">
-        <h3 v-if="email">Welcome{% raw %} {{email}} {% endraw %}</h3>
-        <h3 v-else>You are not logged in</h3>
-        <div>
-            <u>authState:</u>
-        </div>
-        <div class="authStateBox"> {{authState}} </div>
-    </div>
+  <div className="greet">
+    <h3 v-if="email">Welcome{% raw %} {{email}} {% endraw %}</h3>
+    <h3 v-else>You are not logged in</h3>
+  <div>
+    <u>authState:</u>
+  </div>
+    <div class="authStateBox">{% raw %} {{authState}} {% endraw %}</div> 
+  </div>
 </template>
 <script>
-    export default {
-    name: 'Greet',
-    props: ["email", "authState"],
+  export default {
+  name: 'Greet',
+  props: ["email", "authState"],
 };
 </script>
 <style>
-    *{
-        margin-top:30px;
-        text-align: center;
-        font-size: 20px;
-        font-family: 'Courier New', Courier, monospace;
-    }
-    .authStateBox{
-        margin: 20px;
-        background-color: lightcoral;
-        border-radius: 25px;
-    }
+  *{
+    margin-top:30px;
+    text-align: center;
+    font-size: 20px;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  .authStateBox{
+    margin: 20px;
+    background-color: lightcoral;
+    border-radius: 25px;
+  }
 </style>
 ```
 
 #### Add to your `Login.vue`
-In our `Login.vue` we will update to conditionally render on the `boolShowSignOut` 
+In our `Login.vue` we will update to conditionally render on the `boolShowSignOut`: 
 
 ```vue
 <template>
@@ -1445,7 +1500,7 @@ export default {
 </script>
 ```
 
-With this code (and a small amount of styling code for a logo) our application should look like:
+With this code (and a small amount of styling code for a logo) our application should look as follows:
 
 #### Authorized 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-authorized.png" alt="User authorized and authenticated." class="img-fluid" figure=false %}
