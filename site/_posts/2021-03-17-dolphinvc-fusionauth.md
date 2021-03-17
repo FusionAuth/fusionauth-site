@@ -41,11 +41,11 @@ We were also looking for a service which would provide us all the APIs that we w
 
 **Lohith:** We have built phone one time password (OTP) authentication, for example. 
 
-Users can sign up or sign in by entering the OTP which they were sent. Also we built some different types of email auth flows. 
+Users can sign up or sign in by entering the OTP which they were sent. We also built some different types of email auth flows. 
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
-**Lohith:** I choose FusionAuth over other options because I can run the FusionAuth service in my own private data center. 
+**Lohith:** I chose FusionAuth over other options because I can run the FusionAuth service in my own private data center. 
 
 Other reasons include the documentation and the APIs provided by FusionAuth to build custom features on top of FusionAuth if needed.
 
