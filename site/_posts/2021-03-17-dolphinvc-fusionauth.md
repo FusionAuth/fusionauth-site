@@ -23,7 +23,7 @@ Lohith Venkatesh is a FusionAuth community member. He chatted with us over email
 
 My daily work involves implementing new requirements or solving issues for our backend services. 
 
-> I choose FusionAuth over others because I can run the FusionAuth service on my own private data center.
+> I chose FusionAuth over others because I can run the FusionAuth service on my own private data center.
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
