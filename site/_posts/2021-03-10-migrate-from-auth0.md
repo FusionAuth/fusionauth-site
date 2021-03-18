@@ -17,12 +17,12 @@ I'll be using FusionAuth as an example migration destination, but the investigat
 
 ## FusionAuth vs Auth0
 
-FusionAuth and Auth0 have many similarities. Both allow you to get started quickly. They both the complexity of modern authentication, whether it be social sign-on, SAML, or OIDC, in a complete, easy to use package. Each make it easy to migrate data into their systems. But the similarities run deeper than that. Both Auth0 and FusionAuth were built with developers in mind. This means great APIs and documentation as well as support for open source projects. Both have good customer service, with active forums and responsive customer support teams.
+FusionAuth and Auth0 have many similarities. Both allow you to get started quickly. They both abstract the complexity of modern authentication, whether it be social sign-on, SAML, or OIDC, in a complete, easy to use package. Each makes it easy to migrate data into their systems. But the similarities run deeper than that. Both Auth0 and FusionAuth were built with developers in mind. This means great APIs and documentation as well as support for open source projects. Both have good customer service, with active forums and responsive customer support teams.
 
 However, Auth0 and FusionAuth have differences too. Here are some of the things that FusionAuth offers that Auth0 does not:
 
 * Fully customizable UI
-* A robuse consent data model
+* A robust consent data model
 * Support for parent/child relationships in the auth system
 * Flexible password hashing/bring your own algorithm
 * Better legacy backend support
