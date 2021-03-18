@@ -4,39 +4,59 @@ title: Localization and Internationalization
 description: Localization, Translations and Internationalization in FusionAuth
 ---
 
-== Localization
+== Overview
 
-TBD break out to separate section under core concepts
+FusionAuth is built from the ground up with localization (often abbreviated l10n), translation and internationalization (often abbreviated i18n) in mind. 
 
-Internationalization
+* Internationalization is the practice of building a product such that it can be used in many languages. This is often done by extracting user interface elements such as images and text to files which can be customized for a given language and country, as well as by having a data model capable of storing user's preferred language and locale.
+* Localization is the practice of actually configuring a product for a given language and country. This can include formatting of data, such as numbers, translation, and formatting images or layout.
+* Translation is converting all text in an interface to a given language.
+* A locale identifies a language and a geographic region. An example is `fr_CA`, which referrs to Canadian French, as opposed to French French. Java has https://www.oracle.com/technical-resources/articles/javase/locale.html[good locale documentation].
 
-Localizatoin
+The key data element most relevant to l10n and i18n in FusionAuth is the [field]#preferredLanguages# field. This is present in both the User and Registration objects and stores a user's locale. The reason it is in the Registraition is that application may support different languages.
 
-Translation
+There are four different areas of FusionAuth where user language preferences matter.
 
-FusionAuth is built from the ground up with localization in mind. The [field]#preferredLanguages# field in both the User and Registration objects stores a user's locale. Each application registration can also have an associated preferred language associated, if different applications have different supported languages.
+* Your application
+* Hosted login pages
+* Emails and other messages
+* The administrative user interface
 
-FusionAuth supports both translation and localization in the FusionAuth interfaces.
+== Obtaining the User's Locale In Your Application
 
-=== User Languages in Applications
+Assign a user's [field]#preferredLanguages# via the API or link:/docs/v1/tech/guides/advanced-registration-forms/[advanced registration form]. This allows you to store a user's preferred locale in FusionAuth and use it across all applications. This can take more than one locale, but currently they are stored in alphabetical order. There's an open issue to https://github.com/FusionAuth/fusionauth-issues/issues/1131[fix this and store them in the order they were added].
 
-You can assign a user's [field]#preferredLanguages# via the API or link:/docs/v1/tech/guides/advanced-registration-forms/[advanced registration form]. 
+The default application registration form has the [field]#preferredLanguages# field as well.
 
-After assignment, add the language value to a JWT to be presented to other applications. You may also retrieve the languages from via the link:/docs/v1/tech/apis/users[User API]. This allows you to store a user's preferred locale in FusionAuth and use it across all applications.
+TBD IMAGE
 
-The default application registration form has [field]#preferredLanguages# field.
+After the user has a locale assigned, you can add it to a JWT, so it can be read by other applications.
 
-TBD IMAGES
+[source,javascript]
+----
+function populate(jwt, user, registration) {
+  jwt.preferredLanguages = registration.preferredLanguages || [];
+}
+----
 
-=== The FusionAuth User Facing Interfaces
+You may also retrieve the value from via the link:/docs/v1/tech/apis/users[User API]. 
 
-Both the hosted login pages and the emails can be localized and translated. Except as noted below, you will have to perform the localization.
+== Hosted Login Pages
 
-Hosted login pages can be customized with link:/docs/v1/tech/themes/localization/[themes]. Emails can be customized with link:/docs/v1/tech/email-templates/email-templates/[email templates]. 
+The hosted login pages, which are displayed for link:/docs/v1/tech/core-concepts/integration-points/#hosted-login-pages[user facing login flows] are fully localized. 
+The translation and localization of these pages is done using link:/docs/v1/tech/themes/localization/[themes]. 
 
-==== Provided Hosted Login Pages Translations 
+The locale for display is determined in the following manner.
 
-The hosted login pages, which are displayed for link:/docs/v1/tech/core-concepts/integration-points/#hosted-login-pages[user facing login flows], have been translated into a number of languages. These are available for installation into FusionAuth. The current list of languages is:
+include::docs/v1/tech/shared/_locale_precedence.adoc[]
+
+The text in all of these login flows for these pages have been translated into a number of different languages. These are available for installation into your FusionAuth instance; they do not ship with the default installation. 
+
+To install a community supported localization package, navigate to [breadcrumb]#Themes -> Your Theme -> Messages# and click the "Add Localization" button. Select your [field]#Locale# and then copy and paste in the appropriate `messages` file obtained from the repository.
+
+IMAGE TBD
+
+The current list of languages is:
 
 * English (en)
 * Danish (da)
@@ -55,11 +75,26 @@ The hosted login pages, which are displayed for link:/docs/v1/tech/core-concepts
 
 Visit the https://github.com/FusionAuth/fusionauth-localization/[fusionauth-localization GitHub repo] to view current translations or contribute one.
 
-=== Localization and the FusionAuth Admin UI
+== Emails and Other Messages
 
-There are no translations of the FusionAuth administrative user interface. Currently the only supported language is English. However, you can localize the FusionAuth interface's display of dates, times and numbers. To do so, set the user's preferred language. Items such as dates and numbers will be formatted based on the user's locale. 
+FusionAuth sends emails and other messages on behalf of your application. An example would be a "Forgot Password" email. FusionAuth provides support for you to customize and localize these messages. 
 
-FusionAuth supports the following locales for the administrative user interface.
+Unlike the hosted login pages, there are no community supported bundles of translated email templates. This is because the shipped text in these templates is rarely used in production. In general you will customize the language to support your organization and applications.
+
+Please see the link:/docs/v1/tech/email-templates/email-templates/#localization[email template localization documentation] for more.
+
+// Add SMS localization here when it ships
+
+== The FusionAuth Administrative User Interface
+
+There are no translations of the FusionAuth administrative user interface. Currently the only supported language is English. The interface does support limited localization in the display of dates, times and numbers. To enable this localization, set the admin user's preferred language. 
+
+Then, items such as dates and numbers will be formatted based on the user's locale. FusionAuth supports the following locales for the administrative user interface.
+
+[NOTE]
+====
+The list below is of supported locales which will affect the date, time and number display in the administrative user interface, not locales for which the interface has been completely translated.
+====
 
 * Arabic (ar)
 * Czech (cs)
@@ -85,13 +120,9 @@ FusionAuth supports the following locales for the administrative user interface.
 * Chinese - Simplified (zh_CN)
 * Chinese - Traditional (zh_TW)
 
-[NOTE]
-====
-The above list is of localizations of the administrative user interface for date, time and numbers, not translations of the entire user interface.
-====
-
 In the below screenshot, Richard's has a [field]#preferredLanguage# of `French`. When Richard interacts with the FusionAuth administrative user interface, the account with the email `dinesh@fusionauth.io`, created on Oct 5, 2020, has a displayed date formatted as specified by the French locale, with the day first.
 
 image::core-concepts/user-locale-fusionauth-admin-ui.png[The FusionAuth administrative interface as viewed by a user with a preferred language of French.,width=1200,role=bottom-cropped]
 
 If you'd like to see additional localizations or translations of the FusionAuth administrative interface, please https://github.com/fusionauth/fusionauth-issues/issues[file an issue].
+
