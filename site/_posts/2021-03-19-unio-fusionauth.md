@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Unio self hosts FusionAuth and saved $100k
-description: Unio used FusionAuth to handle their user accounts, authentication, authorization, and password management.
+description: Unio uses FusionAuth to handle their user accounts, authentication, authorization, and password management.
 author: Dan Moore
 image: blogs/dolphinvc-fusionauth/video-conferencing-company-dolphinvc-chose-fusionauth-for-cloud-independence-header-image.png
 category: blog
@@ -24,7 +24,7 @@ I also have extensive experience working in both enterprise and startup environm
 
 **Dan:** Can you tell me a bit about what Unio is currently up to?
 
-**Jason:** Sure. [Our website](https://getunio.com) lays out the details of the platform. We are currently in beta testing with a few organizations and are getting ready for a general product release in May.
+**Jason:** Sure. [Our website](https://getunio.com) lays out the details of the platform, but we are a business messaging and collaboration tool. We are currently in beta testing with a few organizations and are getting ready for a general product release in May.
 
 > Compared to rolling out our own authentication and authorization services, we estimate that [FusionAuth] saved us around 1000 developer hours. Using a standard $100/hour rate, that's $100k in savings. 
 
