@@ -3,7 +3,7 @@ layout: advice
 title: Modern Guide to OAuth 
 description: Not just another OAuth tutorial. This guide walks you through all of the real use-cases of OAuth in clear and simple detail. 
 image: advice/oauth-device-authorization-article.png 
-author: Brian Pontarelli and Dan Moore
+author: Brian Pontarelli
 categories: oauth
 date: 2021-03-02 
 dateModified: 2021-03-02
@@ -127,7 +127,7 @@ If you are operating in a mode where the OAuth server is under a different party
 
 ### Third-party login and registration
 
-The **Third-party login and registration** mode is typically implemented with the classic "Login with ..." buttons you see in many applications. These buttons let users sign up or log into your application by logging into one of their other accounts (i.e. Facebook or Google). Here, your application sends the user over to Facebook or Google to log in.
+The **Third-party login and registration** mode is typically implemented with the classic "Login with ..." buttons you see in many applications. These buttons let users sign up or log in to your application by logging into one of their other accounts (i.e. Facebook or Google). Here, your application sends the user over to Facebook or Google to log in.
 
 Let's use Facebook as an example OAuth provider. In most cases, your application will need to use one or more APIs from the OAuth provider in order to retrieve information about the user or do things on behalf of the user (for example sending a message on behalf of the user). In order to use those APIs, the user has to grant your application permissions. To accomplish this, the third-party service usually shows the user a screen that asks for certain permissions. We'll refer to these screens as the "permission grant screen" throughout the rest of the guide.
 
@@ -151,7 +151,7 @@ So, how does this work in practice? Let's take a look at the steps for our TWGTL
 1. They click the "Sign Up" button on the homepage.
 1. On the login and registration screen, the user clicks the "Login with Facebook" button.
 1. This button takes them over to Facebook's OAuth server.
-1. They log into Facebook (if they aren't already logged in).
+1. They log in to Facebook (if they aren't already logged in).
 1. Facebook presents the user with the permission grant screen based on the permissions TWGTL needs. This is done using OAuth scopes, which we will cover later in this guide.
 1. Facebook redirects the browser back to TWGTL, which logs the user in. TWGTL also calls Facebook APIs to retrieve the user's information.
 1. The user begins using TWGTL and adds their current ToDos.
@@ -167,7 +167,7 @@ You might be wondering if the **Third-party login and registration** mode can wo
 1. This button takes them over to the OAuth server's login page.
 1. On this page, there is an button to "Login with Facebook" and the user clicks that.
 1. This button takes them over to Facebook's OAuth server.
-1. They log into Facebook.
+1. They log in to Facebook.
 1. Facebook presents the user with the permission grant screen.
 1. The user authorizes the requested permissions.
 1. Facebook redirects the browser back to TWGTL's OAuth server, which reconciles out the user's account. 
@@ -202,7 +202,7 @@ Knowing a user's email domain allows the OAuth server to determine where to send
 
 Outside of these differences, this mode behaves much the same as the **Third-party login and registration** mode.
 
-This is the final mode where users can register and login to your application. The remaining modes are used entirely for authorization, usually to application programming interfaces (APIs). We'll cover these modes next.
+This is the final mode where users can register and log in to your application. The remaining modes are used entirely for authorization, usually to application programming interfaces (APIs). We'll cover these modes next.
 
 ### Third-party service authorization
 
@@ -226,7 +226,7 @@ The workflow for this mode looks like this:
 1. They click the "My Profile" link.
 1. On their account page, they click the "Connect your WUPHF account" button.
 1. This button takes them over to WUPHF's OAuth server.
-1. They log into WUPHF.
+1. They log in to WUPHF.
 1. WUPHF presents the user with the "permission grant screen" and asks if TWGTL can WUPHF on their behalf.
 1. The user grants TWGTL this permission.
 1. WUPHF redirects the browser back to TWGTL where it calls WUPHF's OAuth server to get an access token.
@@ -291,7 +291,7 @@ This is the most common OAuth grant and also the most secure. It relies on a use
 
 A few terms we need to define before we dive into this grant.
 
-* **Authorize endpoint:** This is the location that starts the workflow and is a URL that the browser is taken to. Normally, users register or login at this location.
+* **Authorize endpoint:** This is the location that starts the workflow and is a URL that the browser is taken to. Normally, users register or log in at this location.
 * **Authorization code:** This is a random string of printable ASCII characters that the OAuth server includes in the redirect after the user has registered or logged in. This is exchanged for tokens by the application backend.
 * **Token endpoint:** This is an API that is used to get tokens from the OAuth server after the user has logged in. The application backend uses the **Authorization code** when it calls the **Token endpoint**.
 
@@ -357,7 +357,7 @@ This code immediately redirects the browser to the OAuth server. However, if you
 * `scope` - this is also an optional parameter, but in some of the above modes, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll refresh tokens later).
 * `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code grant. This is known as a "public client". There aren't many cases of applications that don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them. PKCE is also recommended by the [OAuth 2.1 draft](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/).
 * `code_challenge_method` - this is an optional parameter, but if you implement PKCE, you must specify how your PKCE `code_challenge` parameter was created. It can either be `plain` or `S256`. We never recommend using anything except `S256` which uses SHA-256 secure hashing for PKCE.
-* `nonce` - this is an optional parameter and is used for OpenID Connect. We don't go into much detail of OpenID Connect in this guide, but we will cover a few aspects including ID tokens and the `nonce` parameter. The `nonce` parameter will be included in the ID token that the OAuth server generates. We can verify that when we retrieve the ID token. This is discussed later.
+* `nonce` - this is an optional parameter and is used for OpenID Connect. We don't go into much detail of OpenID Connect in this guide, but we will cover a few aspects including Id tokens and the `nonce` parameter. The `nonce` parameter will be included in the Id token that the OAuth server generates. We can verify that when we retrieve the Id token. This is discussed later.
 
 Let's update our code with all of these values. While we don't actually need to use PKCE for this guide, it doesn't hurt anything to add it.
 
@@ -389,7 +389,7 @@ The `scope` parameter is used by the OAuth server to determine what authorizatio
 
 Here are definitions of the standard scopes in the OpenID Connect specification:
 
-* `openid` - tells the OAuth server to use OpenID Connect for the handling of the OAuth workflow. This additionally will tell the OAuth server to return an ID token from the Token endpoint (covered below).
+* `openid` - tells the OAuth server to use OpenID Connect for the handling of the OAuth workflow. This additionally will tell the OAuth server to return an Id token from the Token endpoint (covered below).
 * `offline_access` - tells the OAuth server to generate and return a refresh token from the Token endpoint (covered below).
 * `profile` - tells the OAuth server to include all of the standard OpenID Connect claims in the returned tokens (access and/or id tokens).
 * `email` - tells the OAuth server to include the user's email in the returned tokens (access and/or id tokens).
@@ -401,22 +401,22 @@ In order to properly implement the handling for the `state`, PKCE, and `nonce` p
 1. Store the values in a server-side session.
 2. Store the values in secure, http-only cookies (preferably encrypted).
 
-You might choose cookies if you are building a SPA and want to avoid maintaining server side sessions. Here is an excerpt of the above login route with functions that generate these values.
+You might choose cookies if you are building a SPA and want to avoid maintaining server side sessions. Here is an excerpt of the above `login` route with functions that generate these values.
 
 ```javascript
-//...
+// ...
 router.get('/login', (req, res, next) => {
   const state = generateAndSaveState(req, res);
   const codeChallenge = generateAndSaveCodeChallenge(req, res);
   const nonce = generateAndSaveNonce(req, res);
-//...
+// ...
 ```
 
 Let's cover both of these options. First, let's write the code for each of the `generate*` functions and store the values in a server-side session: 
 
 ```javascript
 const crypto = require('crypto');
-//...
+// ...
 // Helper method for Base 64 encoding that is URL safe
 function base64URLEncode(str) {
   return str.toString('base64')
@@ -448,7 +448,7 @@ function generateAndSaveNonce(req) {
   req.session.oauthNonce = nonce;
   return nonce;
 }
-//...
+// ...
 ```
 
 This code is using the `crypto` library to generate random bytes and converting those into URL safe strings. Each method is storing the values created in the session. You'll also notice that in the `generateAndSaveCodeChallenge` we are also hashing the random string using the `sha256` function. This is how PKCE is implemented when the code verifier is saved in the session and the hashed version of it is sent as a parameter to the OAuth server.
@@ -516,7 +516,7 @@ Encryption is generally not needed, especially for the `state` and `nonce` param
 
 #### Logging in
 
-At this point, the user will be taken to the OAuth server to login (or register). Technically, the OAuth server can manage the login and registration process however it needs. In some cases, a login won't be necessary because the user will already be authenticated with the OAuth server or they can be authenticated by other means (smart cards, hardware devices, etc).
+At this point, the user will be taken to the OAuth server to log in or register. Technically, the OAuth server can manage the login and registration process however it needs. In some cases, a login won't be necessary because the user will already be authenticated with the OAuth server or they can be authenticated by other means (smart cards, hardware devices, etc).
 
 The OAuth 2.0 specification doesn't specify anything about this process. Not a word!
 
@@ -613,8 +613,8 @@ router.get('/oauth-callback', (req, res, next) => {
       // Since the different OAuth modes handle the tokens differently, we are going to
       // put a placeholder function here. We'll discuss this function in the following
       // sections
-      handleTokens(accessToken, idToken, refreshToken, res);
-    }).catch((err) => {console.log("in error2"); console.error(JSON.stringify(err));});
+      handleTokens(accessToken, idToken, refreshToken, req, res);
+    }).catch((err) => {console.log("in error"); console.error(JSON.stringify(err));});
 });
 
 
@@ -633,7 +633,7 @@ function restoreNonce(req) {
 module.exports = app;
 ```
 
-`common.parseJWT` abstracts the JWT parsing and verification. It expects public keys to be published in JWKS format at a well known location, and verifies the audience, issuer and expiration, as well as the signature. This code can be used for access tokens, which do not have a `nonce`, and ID tokens, which do.
+`common.parseJWT` abstracts the JWT parsing and verification. It expects public keys to be published in JWKS format at a well known location, and verifies the audience, issuer and expiration, as well as the signature. This code can be used for access tokens, which do not have a `nonce`, and Id tokens, which do.
 
 ```javascript
 const axios = require('axios');
@@ -675,7 +675,7 @@ common.parseJWT = async (unverifiedToken, nonce) => {
   }
 }
 
-//...
+// ...
 
 module.exports = common;
 ```
@@ -741,7 +741,7 @@ function restoreNonce(req, res) {
 
 #### Tokens
 
-Now that we've successfully exchanged the authorization `code` for tokens, let's look at the tokens we received from the OAuth server. We are going to assume that the OAuth server is using JWTs (JSON Web Tokens) for the access and ID tokens. OAuth2 doesn't define any token format, but in practice access tokens are often JWTs. OpenId Connect (OIDC), on the other hand, requires the `id_token` to be a JWT. 
+Now that we've successfully exchanged the authorization `code` for tokens, let's look at the tokens we received from the OAuth server. We are going to assume that the OAuth server is using JWTs (JSON Web Tokens) for the access and Id tokens. OAuth2 doesn't define any token format, but in practice access tokens are often JWTs. OpenId Connect (OIDC), on the other hand, requires the `id_token` to be a JWT. 
 
 Here are the tokens we have:
 
@@ -891,7 +891,7 @@ Which of these methods is best depends on your requirements, but both work well 
 First, let's store the tokens as cookies in the browser and redirect the user to their ToDos:
 
 ```javascript
-function handleTokens(accessToken, idToken, refreshToken) {
+function handleTokens(accessToken, idToken, refreshToken, req, res) {
   // Write the tokens as cookies
   res.cookie('access_token', accessToken, {httpOnly: true, secure: true});
   res.cookie('id_token', idToken); // Not httpOnly or secure
@@ -902,7 +902,7 @@ function handleTokens(accessToken, idToken, refreshToken) {
 }
 ```
 
-At this point, the application backend has redirected the browser to the user's ToDo list. It has also sent the access token, ID token, and refresh tokens back to the browser as cookies. The browser will now send these cookies to the backend each time it makes a request. These requests could be for JSON APIs or standard HTTP requests (i.e. `GET` or `POST`). The beauty of this solution is that our application knows the user is logged in because these cookies exist. We don't have to manage them at all since the browser does it all for us.
+At this point, the application backend has redirected the browser to the user's ToDo list. It has also sent the access token, Id token, and refresh tokens back to the browser as cookies. The browser will now send these cookies to the backend each time it makes a request. These requests could be for JSON APIs or standard HTTP requests (i.e. `GET` or `POST`). The beauty of this solution is that our application knows the user is logged in because these cookies exist. We don't have to manage them at all since the browser does it all for us.
 
 The `id_token` is treated less securely than the `access_token` and `refresh_token` for a reason. The `id_token` should never be used to access protected resources; it is simply a way for the application to obtain read-only information about the user. If, for example, you want your SPA to update the user interface to greet the user by name, the `id_token` is available.
 
@@ -1018,7 +1018,7 @@ Here's code that creates a server-side session and redirects the user to their T
 var expressSession = require('express-session');
 app.use(expressSession({resave: false, saveUninitialized: false, secret: 'setec-astronomy'}));
 
-function handleTokens(accessToken, idToken, refreshToken) {
+function handleTokens(accessToken, idToken, refreshToken, req, res) {
   // Store the tokens in the session
   req.session.accessToken = accessToken;
   req.session.idToken = idToken;
@@ -1047,7 +1047,6 @@ common.authorizationCheck = async (req, res) => {
     return false;
   }
 }
-
 ```
 
 The **only difference** is how we get the access token. In the first case it was from the cookies, and in the second from the session. Everything else is exactly the same. 
@@ -1060,7 +1059,7 @@ Here's the updated browser code. Note that we're are assuming the tokens are sto
 
 ```javascript
 const buildAttemptRefresh = function(after) {
-   return (error) => {
+  return (error) => {
     axios.post('/refresh', {})
     .then(function (response) { 
       after();
@@ -1146,10 +1145,11 @@ common.refreshJWTs = async (refreshToken) => {
   form.append('refresh_token', refreshToken);
   const authValue = 'Basic ' + Buffer.from(clientId +":"+clientSecret).toString('base64');
   const response = await axios.post('https://login.twgtl.com/oauth2/token', form, {
-      headers: {
-         'Authorization' : authValue,
-         ...form.getHeaders()
-      } });
+    headers: {
+      'Authorization' : authValue,
+      ...form.getHeaders()
+    } 
+  });
 
   const accessToken = response.data.access_token;
   const idToken = response.data.id_token;
@@ -1164,11 +1164,11 @@ By default, FusionAuth requires authenticated requests to the refresh token endp
 
 #### Third-party login and registration (also Enterprise login and registration) with the Authorization Code grant
 
-In the previous section we covered the **Local login and registration** process where the user is logging into our TWGTL application using an OAuth server we control such as FusionAuth. The other method that users can log in is with a third-party provider such as Facebook or an Enterprise system such as Active Directory. This process uses OAuth in the same way we described above.
+In the previous section we covered the **Local login and registration** process where the user is logging into our TWGTL application using an OAuth server we control such as FusionAuth. The other method that users can log in with is a third-party provider such as Facebook or an Enterprise system such as Active Directory. This process uses OAuth in the same way we described above.
 
 Some third-party providers have hidden some of the complexity from us by providing simple JavaScript libraries that handle the entire OAuth workflow (Facebook for example). We won't cover these types of third-party systems and instead focus on traditional OAuth workflows.
 
-In most cases, the third-party OAuth server is acting in the same way as our local OAuth server. In the end, the result is that we receive tokens that we can use to make API calls to the third party. Let's update our `handleTokens` code to call an fictitious API to retrieve the user's friend list from the third party.
+In most cases, the third-party OAuth server is acting in the same way as our local OAuth server. In the end, the result is that we receive tokens that we can use to make API calls to the third party. Let's update our `handleTokens` code to call an fictitious API to retrieve the user's friend list from the third party. Here we are using sessions to store the access token and other tokens.
 
 ```javascript
 const axios = require('axios');
@@ -1176,9 +1176,9 @@ const FormData = require('form-data');
 var expressSession = require('express-session');
 app.use(expressSession({resave: false, saveUninitialized: false, secret: 'setec-astronomy'}));
 
-//...
+// ...
 
-function handleTokens(accessToken, idToken, refreshToken) {
+function handleTokens(accessToken, idToken, refreshToken, req, res) {
   // Store the tokens in the session
   req.session.accessToken = accessToken;
   req.session.idToken = idToken;
@@ -1222,7 +1222,7 @@ In our example, we wanted to leverage the WUPHF API to send a WUPHF when the use
 First, let's update the `handleTokens` function to store the tokens in the database:
 
 ```javascript
-function handleTokens(accessToken, idToken, refreshToken) {
+function handleTokens(accessToken, idToken, refreshToken, req, res) {
   // ... 
 
   // Save the tokens to the database
@@ -1336,7 +1336,7 @@ Many mobile applications and legacy web applications use this grant because they
 
 There are two main issues with this approach:
 
-1. , The application is collecting the username and **password** and sending it to the OAuth server. This means that the application has ensure that the username and password are completely secure in transit. This differs from the Authorization Code grant where the username and password are only provided directly to the OAuth server.
+1. The application is collecting the username and **password** and sending it to the OAuth server. This means that the application has ensure that the username and password are completely secure in transit. This differs from the Authorization Code grant where the username and password are only provided directly to the OAuth server.
 1. This grant does not support any of the auxiliary security features that your OAuth server may provide such as:
     * Multi-factor authentication
     * Password resets
@@ -1421,14 +1421,14 @@ router.post('/send', function(req, res, next) {
 
   // Finally, call the API
   axios.post('https://api.getwuphf.com/send', {message: 'I just did a thing: '+req.data.title}, { 
-        headers: {
-          auth: { 'bearer': wuphfTokens.accessToken, 'refresh': wuphfTokens.refreshToken }
-        }
+    headers: {
+      auth: { 'bearer': wuphfTokens.accessToken, 'refresh': wuphfTokens.refreshToken }
+    }
   }).then((response) => {
-        res.sendStatus(200);
+    res.sendStatus(200);
   }).catch((err) => {
-        console.log(err);
-        res.sendStatus(500);
+    console.log(err);
+    res.sendStatus(500);
   });
 });
 ```
@@ -1495,13 +1495,9 @@ If you notice any issues, bugs, or typos in the Modern Guide to OAuth, please su
 
 Thanks for reading and happy coding!
 
-check that login and log in are used appropriately
-nonce verified?
-make sure // ... is the same across all code
-ID should be Id?
 
-all code has two spaces?
-
-WUPHF.com is taken, but is getwuphf.com
+--
+WUPHF.com is taken, but is getwuphf.com? no, we got it
+also steal-those-tokens.com
 
 add single page sites sending people back to fusionauth easter egg
