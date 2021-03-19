@@ -1547,7 +1547,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 ## Next steps
 
-This is just an example application but there is certainly more to be explored.  For instance, perhaps try storing the access token as a cookie rather than in a ExpressJS session.  Feel free to browse our documentation and tinker with this application as you see fit!
+This is just an example application but there is certainly more to be explored.  For instance, perhaps try storing the access token as a cookie rather than in an ExpressJS session.  Feel free to browse our documentation and tinker with this application as you see fit!
 
 ## Conclusion
 
