@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: 
-description: 
+title: Unio self hosts FusionAuth and saved $100k
+description: Unio used FusionAuth to handle their user accounts, authentication, authorization, and password management.
 author: Dan Moore
 image: blogs/dolphinvc-fusionauth/video-conferencing-company-dolphinvc-chose-fusionauth-for-cloud-independence-header-image.png
 category: blog
