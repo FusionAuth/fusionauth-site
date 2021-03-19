@@ -400,9 +400,11 @@ Here are definitions of the standard scopes in the OpenID Connect specification:
 In order to properly implement the handling for the `state`, PKCE, and `nonce` parameters, we need to save these values off somewhere. They must be persisted across browser requests and redirects. There are two options for this:
 
 1. Store the values in a server-side session.
-2. Store the values in secure, http-only cookies (preferably encrypted).
+1. Store the values in secure, http-only cookies (preferably encrypted).
 
-You might choose cookies if you are building a SPA and want to avoid maintaining server side sessions. Here is an excerpt of the above `login` route with functions that generate these values.
+> You might choose cookies if you are building a SPA and want to avoid maintaining server side sessions. 
+
+Here is an excerpt of the above `login` route with functions that generate these values.
 
 ```javascript
 // ...
@@ -880,7 +882,7 @@ Now that we have covered the Authorization Code grant in detail, let's look at n
 
 If you are implementing the **Local login and registration** mode, then your application is using OAuth to log users in. This means that after the OAuth workflow is complete, the user should be logged in and the browser should be redirected to your application or the native app should have user information and render the appropriate views.
 
-For our example TWGTL application, we want to send the user to their ToDo list after they have logged in. In order to log the user in to the TWGTL application, we need to create a session of some sort for them. There are two ways to handle this:
+For our example TWGTL application, we want to send the user to their ToDo list after they have logged in. In order to log the user in to the TWGTL application, we need to create a session of some sort for them. Similar to the `state` and other values discussed above, are two ways to handle this:
 
 * Cookies
 * Server-side sessions
@@ -932,7 +934,7 @@ function buildClickHandler() {
 }
 ```
 
-You may have noticed a distinct lack of any token sending code in the `axios.get` call. This is one of the strengths of the cookie approach. As long as we're calling APIs from the same domain, cookies are sent for free. If you need to send cookies to a different domain, make sure you check your CORS settings.
+> You may have noticed a distinct lack of any token sending code in the `axios.get` call. This is one of the strengths of the cookie approach. As long as we're calling APIs from the same domain, cookies are sent for free. If you need to send cookies to a different domain, make sure you check your CORS settings.
 
 What does the server side API look like? Here's the route that handles `/api/todos`:
 
@@ -1050,7 +1052,7 @@ common.authorizationCheck = async (req, res) => {
 }
 ```
 
-The **only difference** is how we get the access token. In the first case it was from the cookies, and in the second from the session. Everything else is exactly the same. 
+> The only difference in this code is how we get the access token. Above the cookies provided it, and here the session does. Everything else is exactly the same. 
 
 ##### Refreshing the access token
 
@@ -1167,7 +1169,7 @@ By default, FusionAuth requires authenticated requests to the refresh token endp
 
 In the previous section we covered the **Local login and registration** process where the user is logging into our TWGTL application using an OAuth server we control such as FusionAuth. The other method that users can log in with is a third-party provider such as Facebook or an Enterprise system such as Active Directory. This process uses OAuth in the same way we described above.
 
-Some third-party providers have hidden some of the complexity from us by providing simple JavaScript libraries that handle the entire OAuth workflow (Facebook for example). We won't cover these types of third-party systems and instead focus on traditional OAuth workflows.
+> Some third-party providers have hidden some of the complexity from us by providing simple JavaScript libraries that handle the entire OAuth workflow (Facebook for example). We won't cover these types of third-party systems and instead focus on traditional OAuth workflows.
 
 In most cases, the third-party OAuth server is acting in the same way as our local OAuth server. In the end, the result is that we receive tokens that we can use to make API calls to the third party. Let's update our `handleTokens` code to call an fictitious API to retrieve the user's friend list from the third party. Here we are using sessions to store the access token and other tokens.
 
@@ -1285,6 +1287,8 @@ These scenarios won't be illustrated in this guide. But, the short version is:
 
 The next grant that is defined in the OAuth 2.0 specification is the Implicit grant. If this were a normal guide, we would cover this grant in detail the same way we covered the Authorization Code grant. Except, I'm not going to. :)
 
+> Please don't use the Implicit grant.
+
 The reason we won't cover the Implicit grant in detail is that it is horribly insecure, broken, deprecated, and should never, ever be used (ever). Okay, maybe that's being a bit dramatic, but please don't use this grant. Instead of showing you how to use it, let's discuss why you should not.
 
 The Implicit grant has been removed from OAuth as of the most recent version of the OAuth 2.1 draft specification. The reason that it has been removed is that it skips an important step that allows you to secure the tokens you receive from the OAuth server. This step occurs when your application backend makes the call to the Token endpoint to retrieve the tokens.
@@ -1360,6 +1364,8 @@ If you aren't dissuaded by the above problems and you really need it, please [ch
 ### Client Credentials grant
 
 The Client Credentials grant provides the ability for one `client` to authorize another `client`. In OAuth terms, a `client` is an application itself, independent of a user. Therefore, this grant is most commonly used to allow one application to call another application, often via APIs. This grant therefore implements the **Machine-to-machine authorization** mode described above.
+
+> With the Client Credentials grant, there is no user to log in.
 
 The Client Credentials grant leverages the Token endpoint of the OAuth server and sends in a couple of parameters as form data in order to generate access tokens. These access tokens are then used to call APIs. Here are the parameters needed for this grant:
 
@@ -1489,7 +1495,7 @@ function verifyAccessToken(req) {
 }
 ```
 
-To reiterate, with the Client Credentials grant, there is no user to log in. Instead, the `clientId` and `clientSecret` act as a username and password, respectively, for the entity trying to obtain an access token. 
+With the Client Credentials grant, there is no user to log in. Instead, the `clientId` and `clientSecret` act as a username and password, respectively, for the entity trying to obtain an access token. 
 
 ### Device grant
 
