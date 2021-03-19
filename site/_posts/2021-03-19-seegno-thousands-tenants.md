@@ -1,9 +1,9 @@
 ---
 layout: blog-post
-title: Video conferencing company DolphinVC chose FusionAuth for cloud independence
-description: DolphinVC chose FusionAuth because it saved them time and they could run it wherever they wanted. They didn't want to be restricted to a single cloud provider.
+title: Seegno manages thousands of tenants with FusionAuth and Kubernetes
+description: Seegno upgraded from their homegrown auth system and runs FusionAuth in Kubernetes.
 author: Dan Moore
-image: blogs/dolphinvc-fusionauth/video-conferencing-company-dolphinvc-chose-fusionauth-for-cloud-independence-header-image.png
+image: blogs/seegno-fusionauth/...
 category: blog
 tags: topic-community-story topic-upgrade-homegrown
 excerpt_separator: "<!--more-->"
@@ -31,6 +31,8 @@ I'm one of the team members responsible for researching and, using my background
 
 We also use FusionAuth's Identity Providers to offer our users the ability to register and authenticate using their social accounts.
 
+> FusionAuth ... turned out to be the most versatile, easy to use and, more importantly, configurable solution. 
+
 **Dan:** Approximately many tenants do you have? 
 
 **John:** In our largest environment we currently handle over five thousand tenants. 
@@ -50,6 +52,8 @@ We also use FusionAuth's Identity Providers to offer our users the ability to re
 An example of what we were able to do with FusionAuth (and struggled to accomplish with all the other solutions!) was the configuration of different JSON Web Token (JWT) encryption keys for each tenant via API.
 
 The active community was also a big factor on our decision making. Whenever we encountered an issue with FusionAuth, we always received a quick response from the support team and were always able to find a solution together.
+
+> Whenever we encountered an issue with FusionAuth, we always received a quick response from the support team and were always able to find a solution together.
 
 **Dan:** Are there any other examples of customization, beyond the JWT keys, that you could share?
 
@@ -72,6 +76,8 @@ But if we were to update our in-house solution to offer what we currently need, 
 **John:** To be fair, much of what we asked for has already been done. We would like to ask the FusionAuth team to continue improving the services' ability to handle a high number of tenants, both in performance and in the UI.
 
 We would also like FusionAuth to be compatible with the Kubernetes multi-cluster strategy. This would make it possible to deploy multiple instances across various regions to improve its availability and regional performance.
+
+> In our largest environment we currently handle over five thousand tenants. 
 
 **Dan:** Other than the multi-cluster strategy you mention, have you run into any issues with FusionAuth in Kubernetes?
 
