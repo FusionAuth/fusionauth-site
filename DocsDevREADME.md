@@ -14,6 +14,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
 - If something is new in a version, mark it with something like this:
+- If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
 [NOTE.since]
 ====
 Available Since Version 1.5.0
