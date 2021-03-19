@@ -53,7 +53,7 @@ What does that mean, really? It means that your application sends the user over 
 
 ## OAuth modes
 
-None of the specifications cover how OAuth is actually integrated into applications. Whoops! But as a developer, that's what you care about. They also don't cover the different workflows or processes that leverage OAuth. They leave almost everything up to the implementor (the person who writes the OAuth Server) and integrator (the person who integrates their application with that OAuth server). 
+None of the specifications cover how OAuth is actually integrated into applications. Whoops! But as a developer, that's what you care about. They also don't cover the different workflows or processes that leverage OAuth. They leave almost everything up to the implementer (the person who writes the OAuth Server) and integrator (the person who integrates their application with that OAuth server). 
 
 Rather than just reword the information in the specifications (yet again), let's create a vocabulary for real-world integrations and implementations of OAuth. We'll call them **OAuth modes**.
 
@@ -76,8 +76,8 @@ Let's discuss each mode in a bit more detail, but first, a cheat sheet.
 
 Wow, that's a lot of different ways you can use OAuth. That's the power and the danger of OAuth, to be honest with you. It is so flexible that people new to it can be overwhelmed. So, here's a handy set of questions for you to ask yourself.
 
-* Are you looking to build a safe, secure and standards friendly authentication and authorization system? You'll want [Local login and registration](#local-login-and-registration) in that case.
-* Trying to avoid storing credentials because you don't want to any responsibility for passwords? [Third-party login and registration](#third-party-login-and-registration) is where it's at.
+* Are you looking to outsource your authentication and authorization to a safe, secure and standards-friendly auth system? You'll want [Local login and registration](#local-login-and-registration) in that case.
+* Trying to avoid storing any credentials because you don't want responsibility for passwords? [Third-party login and registration](#third-party-login-and-registration) is where it's at.
 * Are you selling to Enterprise customers? Folks who hear terms like SAML and SOC2 and are comforted, rather than disturbed? Scoot on over to [Enterprise login and registration](#enterprise-login-and-registration).
 * Are you building service to service communication with no user involved? If so, you are looking for [Machine-to-machine authorization](#machine-to-machine-authorization).
 * Are you trying to let a user log in from a separate device? That is, from a TV or similar device without a friendly typing interface? If this is so, check out [Device login and registration](#device-login-and-registration).
@@ -92,7 +92,7 @@ The **Local login and registration** mode is when you are using an OAuth workflo
 
 What do we mean by native forms? Most developers have at one time written their own login and registration forms directly into an application. They create a table called `users` and it stores `username`s and `password`s. Then they write the registration and the login forms (HTML or some other UI). The registration form collects the `username` and `password` and checks if the user exists in the database. If they don't, the application inserts the new user into the database. The login form collects the `username` and `password` and checks if the account exists in the database and logs the user in if it does. This type of implementation is what we call native forms.
 
-The only difference between native forms and the **Local login and registration** OAuth mode is that with latter you delegate the login and registration process to an OAuth server rather than writing everything by hand. Additionally, since you control the OAuth server and your application, it would be odd to ask the user to "authorize" your application. Therefore, this mode does not include the permission grant screens that often mentioned in OAuth tutorials. Never fear; we'll cover these in the next few sections.
+The only difference between native forms and the **Local login and registration** OAuth mode is that with the latter you delegate the login and registration process to an OAuth server rather than writing everything by hand. Additionally, since you control the OAuth server and your application, it would be odd to ask the user to "authorize" your application. Therefore, this mode does not include the permission grant screens that often are mentioned in OAuth tutorials. Never fear; we'll cover these in the next few sections.
 
 So, how does this work in practice? Let's take a look at the steps for a fictitious web application called "The World's Greatest ToDo List" or "TWGTL" (pronounced Twig-Til):
 
@@ -117,7 +117,7 @@ That's it. The user feels like they are registering and logging into TWGTL direc
 
 #### An aside about this mode and mobile applications
 
-The details of this mode has implications for the security best practices recommendedby some of the standards bodies. In particular, the [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) Best Current Practices (BCP) recommends against using a webview:
+The details of this mode has implications for the security best practices recommended by some of the standards bodies. In particular, the [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) Best Current Practices (BCP) recommends against using a webview:
 
 > This best current practice requires that native apps MUST NOT use embedded user-agents to perform authorization requests...
 
@@ -165,7 +165,7 @@ You might be wondering if the **Third-party login and registration** mode can wo
 1. A user visits TWGTL and wants to sign up and manage their ToDos.
 1. They click the "Sign Up" button on the homepage.
 1. This button takes them over to the OAuth server's login page.
-1. On this page, there is an button to "Login with Facebook" and the user clicks that.
+1. On this page, there is a button to "Login with Facebook" and the user clicks that.
 1. This button takes them over to Facebook's OAuth server.
 1. They log in to Facebook.
 1. Facebook presents the user with the permission grant screen.
@@ -198,7 +198,7 @@ You might have noticed some login forms only ask for your email on the first ste
 
 {% include _image.liquid src="/assets/img/advice/modern-guide-oauth/email-requested-at-login.png" alt="For Zapier, the user's email address is requested before any password." class="img-fluid" figure=false %}
 
-Knowing a user's email domain allows the OAuth server to determine where to send the user to log in or if they should log in locally. If you work at Example Company, proud purveyers of TWGTL, providing `brian@example.com` to the login screen allows the OAuth server to know you are an employee and should be authenticated against a corporate authentication source. If instead you enter `dan@gmail.com`, you won't be authenticated against that directory.
+Knowing a user's email domain allows the OAuth server to determine where to send the user to log in or if they should log in locally. If you work at Example Company, proud purveyors of TWGTL, providing `brian@example.com` to the login screen allows the OAuth server to know you are an employee and should be authenticated against a corporate authentication source. If instead you enter `dan@gmail.com`, you won't be authenticated against that directory.
 
 Outside of these differences, this mode behaves much the same as the **Third-party login and registration** mode.
 
@@ -206,7 +206,7 @@ This is the final mode where users can register and log in to your application. 
 
 ### Third-party service authorization
 
-The third-party service authorization mode is quite different than the **Third-party login and registration** mode; don't be deceived by the similar names. Here, the user is already logged into your application. The login could have been through a native form (as discussed above) or using the **Local login and registration** mode, the **Third-party login and registration** mode, or the **Enterprise login and registration** mode. Since the user is already logged in, all they are doing is granting access for your application to call third-party's APIs on their behalf.
+The third-party service authorization mode is quite different from the **Third-party login and registration** mode; don't be deceived by the similar names. Here, the user is already logged into your application. The login could have been through a native form (as discussed above) or using the **Local login and registration** mode, the **Third-party login and registration** mode, or the **Enterprise login and registration** mode. Since the user is already logged in, all they are doing is granting access for your application to call third-party's APIs on their behalf.
 
 For example, let's say a user has an account with TWGTL, but each time they complete a ToDo, they want to let their [WUPHF](https://www.youtube.com/watch?v=yL1z1ZHD0K4) followers know. (WUPHF is an up and coming social network; sign up at getwuphf.com.) To accomplish this, TWGTL provides an integration that will automatically send a WUPHF when the user completes a ToDo. The integration uses the WUPHF APIs and calling those requires an access token. In order to get an access token, the TWGTL application needs to log the user into WUPHF via OAuth.
 
@@ -240,7 +240,7 @@ With this mode, your OAuth server might display a "permission grant screen" to t
 
 ### Machine-to-machine authorization
 
-The **Machine-to-machine authorization** OAuth mode is different than the previous modes we've covered. This mode does not involve users at all. Rather, it allows an application to interact with another application. Normally, this is backend services communicating with each other via APIs.
+The **Machine-to-machine authorization** OAuth mode is different from the previous modes we've covered. This mode does not involve users at all. Rather, it allows an application to interact with another application. Normally, this is backend services communicating with each other via APIs.
 
 Here, one backend needs to be granted access to the other. We'll call the first backend the source and the second backend the target. To accomplish this, the source authenticates with the OAuth server. The OAuth server confirms the identity of the source and then returns a token that the source will use to call the target. This token can also include permissions that are used by the target to authorize the call the source is making.
 
@@ -287,7 +287,7 @@ We'll cover each grant type below and discuss how it is used, or not, for each o
 
 ### Authorization Code grant
 
-This is the most common OAuth grant and also the most secure. It relies on a user interacting with a browser (Chrome, Firefox, Safari, etc.) in order to handle OAuth modes 1 though 6 above. This grant requires the interaction of a user, so it isn't usable for the **Machine-to-machine authorization** mode. All of the interactive modes we covered above involve the same parties and UI, except when a "permission grant screen" is displayed. 
+This is the most common OAuth grant and also the most secure. It relies on a user interacting with a browser (Chrome, Firefox, Safari, etc.) in order to handle OAuth modes 1 through 6 above. This grant requires the interaction of a user, so it isn't usable for the **Machine-to-machine authorization** mode. All of the interactive modes we covered above involve the same parties and UI, except when a "permission grant screen" is displayed. 
 
 A few terms we need to define before we dive into this grant.
 
@@ -546,7 +546,7 @@ We will need to make an HTTP `POST` request to the Token endpoint using form enc
 * `code` - this is the authorization code we are exchanging for tokens.
 * `client_id` - this is client id that identifies our application.
 * `client_secret` - this is a secret key that is provided by the OAuth server. This should never be made public and should only ever be stored in your application on the server.
-* `code_verifier` - this is code verifier value we created above and either stored in the session or in a cookie.
+* `code_verifier` - this is the code verifier value we created above and either stored in the session or in a cookie.
 * `grant_type` - this will always be the value `authorization_code` to let the OAuth server know we are sending it an authorization code.
 * `redirect_uri` - this is the redirect URI that we sent to the OAuth server above. It must be exactly the same value.
 
@@ -836,8 +836,8 @@ Here are the claims that are returned by the UserInfo endpoint:
 * `email`: The user's email address.
 * `email_verified`: A boolean that determines if the user's email address has been verified.
 * `gender`: A string describing the user's gender.
-* `birthdate`: The user's birthdate as an ISO 8601:2004 YYYY-MM-DD formated string.
-* `zoneinfo`: The timezone that the user is in.
+* `birthdate`: The user's birthdate as an ISO 8601:2004 YYYY-MM-DD formatted string.
+* `zoneinfo`: The time zone that the user is in.
 * `locale`: The user's preferred locale as an ISO 639-1 Alpha-2 language code in lowercase and an ISO 3166-1 Alpha-2 [ISO3166‑1] country code in uppercase, separated by a dash.
 * `phone_number`: The user's telephone number.
 * `phone_number_verified`: A boolean that determines if the user's phone number has been verified.
@@ -845,8 +845,8 @@ Here are the claims that are returned by the UserInfo endpoint:
     * `formatted`: The user's address as a fully formatted string. 
     * `street_address`: The user's street address component.
     * `locality`: The user's city.
-    * `region`: The user's state, province, or regin.
-    * `postal_code`: The user's postal code or zipcode.
+    * `region`: The user's state, province, or region.
+    * `postal_code`: The user's postal code or zip code.
     * `country`: The user's country.
 * `updated_at`: The instant that the user's profile was last updated as a number representing the number of seconds from Epoch UTC.
 
@@ -908,7 +908,7 @@ The `id_token` is treated less securely than the `access_token` and `refresh_tok
 
 These cookies also act as our session. Once the cookies disappear or become invalid, our application knows that the user is no longer logged in. Let's take a look at how we use these tokens to make an authorized API call. You can also have server side html generated based on the `access_token`, but we'll leave that as an exercise for the reader.
 
-This API is retrieves the user's ToDos from the database. We'll then generate the user interface in browser side code.
+This API retrieves the user's ToDos from the database. We'll then generate the user interface in browser side code.
 
 ```javascript
 // include axios 
@@ -931,7 +931,7 @@ function buildClickHandler() {
 }
 ```
 
-You may noticed a distinct lack of authorization code in the `axios.get` call. This is one of the strengths of the cookie approach. As long as we're calling APIs from the same domain, cookies are sent for free. If you need to send cookies to a different subdomain, such as `otherapi.twgtl.com`, make sure your CORS settings are correct.
+You may have noticed a distinct lack of any token sending code in the `axios.get` call. This is one of the strengths of the cookie approach. As long as we're calling APIs from the same domain, cookies are sent for free. If you need to send cookies to a different domain, make sure you check your CORS settings.
 
 What does the server side API look like? Here's the route that handles `/api/todos`:
 
@@ -1055,7 +1055,7 @@ The **only difference** is how we get the access token. In the first case it was
 
 Finally, we need to update our code to handle refreshing the access token. The client, in this case a browser, is the right place to know when a request fails. It could fail for any number of reasons, such as network connectivity issues. But it might also fail because the access token has expired. In the browser code, we should check for errors and attempt to refresh the token if the failure was due to expiration.
 
-Here's the updated browser code. Note that we're are assuming the tokens are stored in cookies for this section of code. `buildAttemptRefresh` is a function that returns an error handling function. We use this construct so we can attempt a refresh any time we call the API. The `after` function is what will be called if the refresh attempt is successful. If the refresh attempt fails, we send the user back to the home page for reauthentication.
+Here's the updated browser code. We are assuming the tokens are stored in cookies here. `buildAttemptRefresh` is a function that returns an error handling function. We use this construct so we can attempt a refresh any time we call the API. The `after` function is what will be called if the refresh attempt is successful. If the refresh attempt fails, we send the user back to the home page for reauthentication.
 
 ```javascript
 const buildAttemptRefresh = function(after) {
@@ -1211,11 +1211,11 @@ If you are implementing the **Third-party login and registration** mode without 
 * Do you need to reconcile the user's information and store it in your own database?
     * You might need to call an API in the third-party system to fetch the user's information and store it in your database. This is out of scope of this guide, but something to consider.
 
-If you use a OAuth server such as FusionAuth to manage your users and provide **Local login and registration**, it will often handle both of these items for you with little configuration and no additional coding.
+If you use an OAuth server such as FusionAuth to manage your users and provide **Local login and registration**, it will often handle both of these items for you with little configuration and no additional coding.
 
 #### Third-party authorization with the Authorization Code grant
 
-The last mode we will cover as part of the Authorization Code grant workflow is the **Third-party authorization** mode. For the user, this mode is the same as those above, but it requires slightly different handling of the tokens recieved after login. Typically with this mode, the tokens we receive from the third party need to be stored in our database because we will be making additional API calls on behalf of the user to the third party. These calls may happen long after the user has logged out of our application.
+The last mode we will cover as part of the Authorization Code grant workflow is the **Third-party authorization** mode. For the user, this mode is the same as those above, but it requires slightly different handling of the tokens received after login. Typically with this mode, the tokens we receive from the third party need to be stored in our database because we will be making additional API calls on behalf of the user to the third party. These calls may happen long after the user has logged out of our application.
 
 In our example, we wanted to leverage the WUPHF API to send a WUPHF when the user completes a ToDo. In order to accomplish this, we need to store the access and refresh tokens we received from WUPHF in our database. Then, when the user completes a ToDo, we can send the WUPHF.
 
@@ -1336,7 +1336,7 @@ Many mobile applications and legacy web applications use this grant because they
 
 There are two main issues with this approach:
 
-1. The application is collecting the username and **password** and sending it to the OAuth server. This means that the application has ensure that the username and password are completely secure in transit. This differs from the Authorization Code grant where the username and password are only provided directly to the OAuth server.
+1. The application is collecting the username and **password** and sending it to the OAuth server. This means that the application must ensure that the username and password are kept completely secure. This differs from the Authorization Code grant where the username and password are only provided directly to the OAuth server.
 1. This grant does not support any of the auxiliary security features that your OAuth server may provide such as:
     * Multi-factor authentication
     * Password resets
@@ -1501,3 +1501,5 @@ WUPHF.com is taken, but is getwuphf.com? no, we got it
 also steal-those-tokens.com
 
 add single page sites sending people back to fusionauth easter egg
+
+first party authn and authz
