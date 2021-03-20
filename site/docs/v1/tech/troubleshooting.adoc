@@ -153,3 +153,20 @@ You can do the former with the `fusionauth-app.memory` setting. See the link:/do
 
 You may do the latter by running a larger server or running fewer competing applications. In particular, applications used by FusionAuth such as Elasticsearch or the database may be moved off to external servers.
 
+=== MapperParsingException
+
+If you are using the Elasticsearch search engine, attributes in the `user.data` and `registration.data` are indexed for you. The data fields can contain arbitrary JSON objects.
+
+If your user search is failing mysteriously and you see an error like this one in your system logs:
+
+```
+org.elasticsearch.index.mapper.MapperParsingException: Could not dynamically add mapping for field [field.email]. Existing mapping for [data.field] must be of type object but found [text].
+```
+
+This means that the type of a field in one of the data fields was changed. In this case, `data.field` was originally text, but the request causing this error message was trying to put an object into that attribute.
+
+Elasticsearch will dynamically build a schema based upon custom data, so it is critical that the schema not be modified.
+
+The fix is to modify the problematic objects in the database and then re-index. If you have a support contract, please https://account.fusionauth.io/account/support/[open a ticket] and we'll help you out. 
+
+If not, be aware this is a delicate operation since you are modifying a field in the database directly. Please backup your FusionAuth database and test the fix before applying it to production. 
