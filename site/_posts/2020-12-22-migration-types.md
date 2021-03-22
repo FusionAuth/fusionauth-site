@@ -30,7 +30,7 @@ With a big bang migration, you are moving all your users at one time. How long t
 
 The basic steps for this approach are:
 
-* Map user attributes from the legacy system to FusionAuth. As part of this, Decide which applications and tenants will need to be created in FusionAuth beforehand.
+* Map user attributes from the legacy system to FusionAuth. As part of this, decide which applications and tenants will need to be created in FusionAuth beforehand.
 * Build and test a set of migration scripts. Ensure that migration accuracy meets your needs. Figure out how long a migration takes.
 * Test application changes required to point users to FusionAuth for login, registration, and other auth needs.
 * When you are ready to migrate, bring your systems down or to a mode where authentication is disallowed.
@@ -90,7 +90,7 @@ With the slow migration approach, you need to:
 
 This approach has a number of benefits. You are only migrating at the time a user authenticates. Therefore if there are issues, the blast radius is smaller and limited to the user authenticating. You have the user's password (they're providing it when they are authenticating), so you can upgrade their password hash to use a different algorithm transparently. This approach sidesteps any complexities around porting over bespoke hashing algorithms as well. 
 
-Application cutover is, all other things equal, simpler. You aren't moving any account data, which can often take some time. Instead you are only switching where users authenticate. In addition, you can scrub your user base of inactive users with little effort. Or, before the migration, you can contact them and encourage them to log in your applications, possibly regaining their interest.
+Application cutover is, all other things equal, simpler. You aren't moving any account data, which can often take some time. Instead you are only switching where users authenticate. In addition, you can scrub your user base of inactive users with little effort. Or, before the migration, you can contact them and encourage them to log in to your applications, possibly regaining their interest.
 
 However, a slow migration isn't always the best solution. Some things to consider include:
 
