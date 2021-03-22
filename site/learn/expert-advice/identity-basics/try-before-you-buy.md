@@ -87,4 +87,4 @@ If you don't already have a QA environment, this can be a great chance to create
 
 Trying a full version of an authentication provider that you're considering is a very important step in making a final purchasing decision. Because authentication is a crucial component of any application, it's not a decision you want to be forced to reverse down the road. That would not only be costly in terms of dollars but also in developer time that could be spent working on new features for your product.
 
-If you're looking for an authentication provider you can get running in five minutes with an unlimited free option, check out [FusionAuth](https://fusionauth.io/).
+If you're looking for an authentication provider you can get running in five minutes with an unlimited free plan, check out and download [FusionAuth](https://fusionauth.io/download/).
