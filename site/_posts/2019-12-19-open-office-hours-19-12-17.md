@@ -46,7 +46,7 @@ If you missed the this first one, **FusionAuth's Open Office Hours** are free se
 
 We'll have another session in January, so get your questions ready! We look forward to talking with you. Here's this month's video.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/Iww_Usc5vhU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="Iww_Usc5vhU" %}
 <br/>
 
 
