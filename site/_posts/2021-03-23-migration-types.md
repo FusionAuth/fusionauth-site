@@ -3,7 +3,7 @@ layout: blog-post
 title: Approaches to user account migration
 description: What are the ways you can migrate user data, and why should you pick one over the others?
 author: Dan Moore
-image: blogs/ampio-customer-story/iot-company-picks-fusionauth-to-avoid-getting-distracted-by-auth-header-image.png
+image: blogs/approaches-user-migration/approaches-to-user-account-migration-header-image.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
