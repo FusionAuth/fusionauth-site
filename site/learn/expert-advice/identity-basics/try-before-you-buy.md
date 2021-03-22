@@ -75,7 +75,7 @@ Some options, like self hosted FusionAuth, are free to run forever. Even if this
 
 It's important to be realistic. Try to work with the vendor to get an extended trial if you think you'll need it. You don't want to get to the end of your trial and find that your time and effort were wasted because you weren't able to answer your important questions about the product. Some vendors will be able to offer an extended trial if you ask.
 
-Otherwise consider reducing your list of important questions to what you can reasonably verify in the allotted time or signing up for a paid plan with the internal understanding that you aren't necessarily committing..
+Otherwise consider reducing your list of important questions to what you can reasonably verify in the allotted time or signing up for a paid plan with the internal understanding that you aren't necessarily committing.
 
 ### Isolate Your Experiment
 
