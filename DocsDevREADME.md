@@ -15,6 +15,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
 - If something is new in a version, mark it with something like this:
 - If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
+
 [NOTE.since]
 ====
 Available Since Version 1.5.0
@@ -24,6 +25,7 @@ Available Since Version 1.5.0
 
 For blog posts:
 - Indent all code with two spaces per level.
+- Single spaces should be used instead of double spaces after a period.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
 - Blog post headers should have only the first word and any proper nouns are capitalized.
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.

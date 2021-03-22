@@ -14,7 +14,7 @@ In this article, we will discuss the step-by-step process of implementing the OA
 
 <!--more-->
 
-At the end, your app will be able to:
+In the end, your app will be able to:
 
 - Log users in
 - Log users out
@@ -51,7 +51,7 @@ Once FusionAuth is running (the default address is http://localhost:9011/), crea
 Then, configure your application. There are only two configuration settings that you need to change for this tutorial. In your application's **OAuth** tab:
 
 - Set `Authorized redirect URLs` to `http://localhost:9000/oauth-callback`. This is the Express server URL that will handle processing the FusionAuth callback after a user signs in.
-- Set `Logout URL` to `http://localhost:8081`. This is the URL where the FusionAuth server will redirect us after logout. It is also where the Vue app lives. After logout a user ends up on the main landing page of the application.
+- Set `Logout URL` to `http://localhost:8081`. This is the URL where the FusionAuth server will redirect us after logout. It is also where the Vue app lives. After logout, a user ends up on the main landing page of the application.
 
 Click **Save**.
 
@@ -83,7 +83,7 @@ All the Express or server-side code will be in the `server` folder, and our Vue 
 
 ### Diagram of the Architecture 
 
-The Vue code, our client, never interacts directly with FusionAuth, our IdP. Instead, we proxy through the node application. This is one possible architecture. An alternative would be to store tokens server side as HttpOnly, Secure cookies. See our expert advice on authentication flows for more options. With this choice, any sensitive access tokens remain securely stored server side.
+The Vue code, our client, never interacts directly with FusionAuth, our IdP. Instead, we proxy through the node application. This is one possible architecture. An alternative would be to store tokens server-side as HttpOnly, Secure cookies. See our expert advice on authentication flows for more options. With this choice, any sensitive access tokens remain securely stored server-side.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/vue-info-flow.png" alt="Flow of user information in our application." class="img-fluid" figure=true %}
 ## Creating the Vue app
@@ -168,7 +168,7 @@ Visiting our locally running Vue Client (http://localhost:8081/) will show you a
 
 > ***FUN FACT***: You can load environment variables in most SPA templates like Vue or React without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this in the [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables) Vue documentation.
 
-Let's set aside the client for a bit, and focus on the Express server
+Let's set aside the client for a bit, and focus on the Express server.
 
 ## Using Express as our backend server
 
@@ -190,7 +190,7 @@ We installed a lot of packages, so let's look at them:
 
 - [cors](https://www.npmjs.com/package/cors) - This is a middleware that helps us to make cross-origin requests.
 - [morgan](https://www.npmjs.com/package/morgan) - This is an HTTP request logger middleware for node.js, you can use this for production.
-- [nodemon](https://www.npmjs.com/package/nodemon) - Restarting server every time we make a change is a hassle. Nodemon automatically restarts the node application when file changes are detected.
+- [nodemon](https://www.npmjs.com/package/nodemon) - Restarting the server every time we make a change is a hassle. Nodemon automatically restarts the node application when file changes are detected.
 - [dotenv](https://www.npmjs.com/package/dotenv) - This loads environment variables from an `.env` file. We will use this to secure our API key and client configuration.
 - [axios](https://www.npmjs.com/package/axios) - This allows us to make HTTP requests.
 - [express-session](https://www.npmjs.com/package/express-session) - This stores our access token securely.
@@ -243,11 +243,11 @@ We can then read environment variables by writing `process.env.` in front of the
 
 > ***Important*** If a `.gitignore` file was not generated for you automatically - please do so now. You will want to add the entries of: 
 > - node_modules
-> - *.env
+> - .env
 > 
 > To your `.gitignore` file before committing any code to your VCS or Github.
 
-Here is the sample code for an Express server that makes use of all our installed packages
+Here is the sample code for an Express server that makes use of all our installed packages:
 
 ```javascript
 const express = require("express");
@@ -298,7 +298,7 @@ This might be the only time we will start the server; since we have installed `n
 
 Head over to http://localhost:9000/; you will see an error! 
 
-> ***FUN FACT***: This is actually to be expected, since we have not created any routes yet.
+> ***FUN FACT***: This is actually to be expected since we have not created any routes yet.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/borked-route.png" alt="The Express route doesn't exist yet, so we see an error message." class="img-fluid" figure=false %}
 
@@ -331,9 +331,9 @@ Now you will see a response should you visit http://localhost:9000/:
 }
 ```
 
-## Creating sign in for our Vue app
+## Creating sign-in for our Vue app
 
-We will start creating sign in functionality for our application. Our Vue application is empty, mostly because we removed the boilerplate. Let's add a heading and a container where we will render different components.
+We will start creating sign-in functionality for our application. Our Vue application is empty, mostly because we removed the boilerplate. Let's add a heading and a container where we will render different components.
 
 Inside `client/src/App.vue` add the following:
 
@@ -380,7 +380,7 @@ Based on whether the user is logged in or not, we should show different messages
 
 We will hard code this response first, and then later modify the code to display the response we get from FusionAuth.
 
-Create a new file called `Greeting.vue` in the `src` folder. We will add logic to check whether a user is logged in or not; we will use Conditional Rendering. If `email` is present, the user is logged in, otherwise they are not. You can [read more about this here](https://vuejs.org/v2/guide/conditional.html).
+Create a new file called `Greeting.vue` in the `src` folder. We will add logic to check whether a user is logged in or not; we will use Conditional Rendering. If `email` is present, the user is logged in, otherwise, they are not. You can [read more about this here](https://vuejs.org/v2/guide/conditional.html).
 
 ```vue
 <template>
@@ -407,7 +407,7 @@ export default {
 
 You will notice something weird in the above code, we are using `email` to check whether the user is logged in or not. But where is the `email` value coming from?
 
-We are passing `email` as a prop from `App.vue`. Hence, why there is a `prop` field in the `<script>` section. It might not make sense as to why we are doing this now but remember we will have other components in our app which will need the response data that we get from the server. Instead of calling for the same data in each individual component, it will be better to request it in our central `App.vue` file and then pass the required data as props to other components. 
+We are passing `email` as a prop from `App.vue`. Hence, why there is a `prop` field in the `<script>` section. It might not make sense as to why we are doing this now but remember we will have other components in our app which will need the response data that we get from the server. Instead of calling for the same data in each component, it will be better to request it in our central `App.vue` file and then pass the required data as props to other components. 
 
 Next, we need to import this file in `App.vue` and send the data to the `<Greet />` component. This is done with `v-bind`:
 
@@ -528,7 +528,7 @@ Go to http://localhost:9000/user, and you will see the following response:
 
 Remember, a *real* User object returned from FusionAuth will have more properties than just an email address. It will look something like this:
 
-```json
+```javascript
 {
   active: true,
   applicationId: '1ac76336-9dd9-4048-99cb-f998af681d3e',
@@ -628,10 +628,12 @@ The output of the above is the same as when we have hardcoded the `email` value 
 
 If we comment out `email` in `server/routes/user.js`, we will see the "You are not logged in" message in our application. We can change the email in `server/routes/user.js` and see the corresponding DOM changes as well:
 
-```shell
+```javascript
+//...
 user: {
   email: 'richard@fusionauth.io'
 }
+//...
 ```
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/welcome-screen-hardcoded-richard.png" alt="The welcome screen with Richard's hardcoded data." class="img-fluid" figure=false %}
@@ -688,7 +690,7 @@ Let's discuss the other parameters we have used above. `redirect_uri` informs Fu
 
 Try navigating to http://localhost:9000/login. If everything is correct, you will see an `invalid_client` error. Yes, your code is working fine, no need to recheck.
 
-If you take another look at `login.js`, you will find that `REDIRECT_URI` is set to the value of `http://localhost:9000/oauth-callback` in our `.env` file. But we haven't actually created that route yet. So this error makes sense. We're actually logged in because we signed into the FusionAuth dashboard during our setup of FusionAuth. 
+If you take another look at `login.js`, you will find that `REDIRECT_URI` is set to the value of `http://localhost:9000/oauth-callback` in our `.env` file. But we haven't actually created that route yet. So this error makes sense. We're logged in because we signed into the FusionAuth dashboard during our setup of FusionAuth. 
 
 If you were using a new browser or an incognito window, you might see the login screen instead:
 
@@ -715,9 +717,9 @@ During the redirect, the `/oauth-callback` route will receive an Authorization C
 http://localhost:9000/oauth-callback?code=SSXVv3xkNTKEhnY4XzjUVvRZp7eyhgCuuREAgSeByrw&locale=en&userState=Authenticated
 ```
 
-This Authorization Code is not sufficient to access user information. For that we will need an `access_token`. To get an `access_token` we will make a post request to `/oauth2/token` endpoint with this Authorization Code.
+This Authorization Code is not sufficient to access user information. For that, we will need an `access_token`. To get an `access_token` we will make a post request to `/oauth2/token` endpoint with this Authorization Code.
 
-After we make that request, we need to store the `access_token`. We can't store it in an in-memory variable because we need it for future requests. We need a secure storage mechanism that doesn't expose it to our Vue client, because that is running a browser which is vulnerable to XSS exploits. We will store this `access_token` using the `express-session` middleware; we need to import `express-session`, as outlined in index.js previously.
+After we make that request, we need to store the `access_token`. We can't store it in an in-memory variable because we need it for future requests. We need a secure storage mechanism that doesn't expose it to our Vue client because that is running a browser which is vulnerable to XSS exploits. We will store this `access_token` using the `express-session` middleware; we need to import `express-session`, as outlined in index.js previously.
 
 ```javascript
 //...
@@ -901,7 +903,7 @@ module.exports = router;
 
 Compared to `oauth-callback.js`, this is pretty simple. We first destroy the Express server-side session (and therefore the `token` we stored) and then redirect to the `oauth2/logout` endpoint with our `CLIENT_ID`. 
 
-Head over to http://localhost:9000/logout and you will be logged out. Navigate to http://localhost:9000/login and you will see the login page. After you sign in, you'll arrive back at your Vue application.
+Head over to http://localhost:9000/logout and you will be logged out. Navigate to http://localhost:9000/login and you will see the login page. After you sign- in, you'll arrive back at your Vue application.
 
 You might wonder why after **logging out** we **redirect back to our Vue app**, yet we didn't do anything like that in the `logout.js` file. This is happening because we configured the main entry point to our Vue app as the Logout URL in FusionAuth.
 
@@ -973,7 +975,7 @@ Let's examine this code. First, we check if an `access_token` is present and the
 When this request is successful, we get a response object. This contains user data.
 
 Here's an example of the JSON:
-```json
+```javascript
 {
   active: true,
   applicationId: '9d5119d4-71bb-495c-b762-9f14277c116c',
@@ -993,7 +995,7 @@ Then we make another request to gather more user information. This time we make 
 
 When this final request is successful, we send all the data to our Vue client via `res.send()`. Here is what the response from `/api/user/registration` call looks like:
 
-```json
+```javascript
 {
   "applicationId": "9d5119d4-71bb-495c-b762-9f14277c116c",
   "data": "",
@@ -1041,7 +1043,7 @@ Everything else remains the same. We are now getting user information from Fusio
 
 Go through the login process once again, and you should see "Welcome [your email address]" after successful authentication.
 
-## Adding sign in and sign out in Vue
+## Adding sign-in and sign-out in Vue
 
 We have previously created the server endpoints for `login` and `logout`. Let's add them to our Vue application. Create a new file named `Login.vue` and add the following:
 
@@ -1058,7 +1060,7 @@ export default {
 </script>
 ```
 
-According to the above code, if the user is not logged in, the `Sign In` text will be displayed, otherwise a `Sign Out` message will be shown. `email` is expected to be passed from `App.vue` as a prop here, so let's do that. In our `App.vue` file, first import the `Login` component:
+According to the above code, if the user is not logged in, the `Sign In` text will be displayed, otherwise, a `Sign Out` message will be shown. `email` is expected to be passed from `App.vue` as a prop here, so let's do that. In our `App.vue` file, first import the `Login` component:
 
 ```javascript
 //...
@@ -1077,7 +1079,7 @@ components: {
 //...
 ```
  
-And finally use it inside the `<template>` tags, passing `email` as a property:
+And finally, use it inside the `<template>` tags, passing `email` as a property:
 
 ```vue
 //...
@@ -1326,13 +1328,13 @@ Go to your Vue app and type some text in the `textarea` and click the Submit but
 
 ## One final condition 
 
-If you have made it this far...Great! You have a fully working example of a VueJS application using FusionAuth.
+If you have made it this far...great! You have a fully working example of a VueJS application using FusionAuth.
 
-The remainder of this article will cover one final condition and improve our existing code.
+The remainder of this article will cover one final scenario as well as improve our existing code.
 
 ### Authorization vs authentication 
 
-What happens if we create a user in FusionAuth but do not assign them to an application? You may notice our ExpressJS server crashes (to recap, screenshots of an assigned user and unassigned user are displayed below).  
+What happens if we create a user in FusionAuth but do not assign them to an application? You may notice our ExpressJS server crashes (to recap, screenshots of an assigned user and unassigned user are displayed below).
 
 #### Unassigned user
 
@@ -1348,7 +1350,7 @@ Why is that? The short answer is we need to refactor our code (namely our axios 
 
 > <strong> Authorization is <u>what</u> you can do. </strong>
 
-We will add feedback when a user is authenticated, but not authorized to update user data or access our application. Please note in some cases, you may not want to give such an acknowledgement, but rather simply route the user back to a login screen with a message of "Login Failed."
+We will add feedback when a user is authenticated, but not authorized to update user data or access our application. Please note in some cases, you may not want to give such an acknowledgment, but rather simply route the user back to a login screen with a message of "Login Failed."
 
 We will do this by adding a new data property called `authState` to our server response with the following possible values: 
 - `Authorized`
@@ -1537,7 +1539,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 > ***Note:*** this is a new message (added above) 
 > 
-> The user is authenticated (known to FusionAuth), but they are not authorized to use our application.   
+> The user is authenticated (known to FusionAuth), but they are not authorized to use our application.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authorized.png" alt="User not authorized." class="img-fluid" figure=false %}
 
@@ -1547,7 +1549,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 ## Next steps
 
-This is just an example application but there is certainly more to be explored.  For instance, perhaps try storing the access token as a cookie rather than in an ExpressJS session.  Feel free to browse our documentation and tinker with this application as you see fit!
+This is just an example application but there is certainly more to be explored. For instance, perhaps try storing the access token as a cookie rather than in an ExpressJS session. Feel free to browse our documentation and tinker with this application as you see fit!
 
 ## Conclusion
 
@@ -1559,4 +1561,4 @@ Here are a few ideas of what you can do next:
 
 - [Register Users from the App itself.](https://fusionauth.io/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined)
 - Secure your server using a middleware like [Helmet](https://www.npmjs.com/package/helmet) 
-- Explore third party authentication options such as [Google](https://fusionauth.io/docs/v1/tech/apis/identity-providers/google), [Twitter](https://fusionauth.io/docs/v1/tech/apis/identity-providers/twitter), or others.
+- Explore third-party authentication options such as [Google](https://fusionauth.io/docs/v1/tech/apis/identity-providers/google), [Twitter](https://fusionauth.io/docs/v1/tech/apis/identity-providers/twitter), or others.
