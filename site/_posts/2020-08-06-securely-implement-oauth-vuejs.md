@@ -166,7 +166,10 @@ export default {
 ```
 Visiting our locally running Vue Client (http://localhost:8081/) will show you a blank screen now (don't worry, we will update this shortly).
 
-> ***FUN FACT***: You can load environment variables in most SPA templates like Vue or React without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this in the [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables) Vue documentation.
+{% include _callout_fun_fact.liquid 
+content=
+  "You can load environment variables in most SPA templates like Vue or React without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this in the [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables) Vue documentation."
+%}
 
 Let's set aside the client for a bit, and focus on the Express server.
 
@@ -175,7 +178,9 @@ Let's set aside the client for a bit, and focus on the Express server.
 
 We will use [Express.js](https://expressjs.com/) as our backend server. It is a popular library that is widely used by developers.
 
-> ***FUN FACT***: The letter **E** in stacks like **MERN**, **MEVN**, or **MEAN** stands for Express.
+{% include _callout_fun_fact.liquid content=
+  "The letter **E** in stacks like **MERN**, **MEVN**, or **MEAN** stands for Express."
+%}
 
 Inside our root directory, we will create another folder named `server` and initialize a NodeJS application in it. Run the following command in your root application directory:
 
@@ -298,7 +303,9 @@ This might be the only time we will start the server; since we have installed `n
 
 Head over to http://localhost:9000/; you will see an error! 
 
-> ***FUN FACT***: This is actually to be expected since we have not created any routes yet.
+{% include _callout_fun_fact.liquid content=
+  "This is actually to be expected since we have not created any routes yet."
+%}
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/borked-route.png" alt="The Express route doesn't exist yet, so we see an error message." class="img-fluid" figure=false %}
 
@@ -1008,7 +1015,9 @@ When this final request is successful, we send all the data to our Vue client vi
 }
 ```
 
-> ***NOTE***: The API key that we are passing in the `Authorization` HTTP header is not part of OAuth standard. You need it to call non-standard endpoints like the [User Registration API](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you can use the API key if you decide to access endpoints protected by that key.
+{% include _callout_note.liquid content=
+"The API key that we are passing in the `Authorization` HTTP header is not part of OAuth standard. You need it to call non-standard endpoints like the [User Registration API](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you can use the API key if you decide to access endpoints protected by that key."
+%}
 
 ## Showing user data
 
@@ -1263,7 +1272,10 @@ export default {
 //...
 ```
 
-> ***FUN FACT***: Using `.prevent` stops the page from reloading whenever the Submit button is clicked.
+{% include _callout_fun_fact.liquid content=
+  "Using `.prevent` stops the page from reloading whenever the Submit button is clicked."
+%}
+
 
 To summarize, here is a snapshot of the full code for `Update.vue` now:
 ```vue
@@ -1537,9 +1549,9 @@ With this code (and a small amount of styling code for a logo) our application s
 
 #### notAuthorized
 
-> ***Note:*** this is a new message (added above) 
-> 
-> The user is authenticated (known to FusionAuth), but they are not authorized to use our application.
+{% include _callout_note.liquid content=
+ "This is a new message (added above). The user is authenticated (known to FusionAuth), but they are not authorized to use our application."
+%}
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authorized.png" alt="User not authorized." class="img-fluid" figure=false %}
 
