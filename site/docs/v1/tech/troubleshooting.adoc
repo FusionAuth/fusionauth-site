@@ -153,3 +153,31 @@ You can do the former with the `fusionauth-app.memory` setting. See the link:/do
 
 You may do the latter by running a larger server or running fewer competing applications. In particular, applications used by FusionAuth such as Elasticsearch or the database may be moved off to external servers.
 
+=== MapperParsingException
+
+If you are using the Elasticsearch search engine, attributes in the `user.data` and `registration.data` are indexed for you. The data fields can contain arbitrary JSON objects.
+
+If your user search is failing mysteriously and you see an error like this one in your system logs:
+
+```
+org.elasticsearch.index.mapper.MapperParsingException: failed to parse field [data.field] of type [text] in document with id 'b8f1ad7d-def0-48d1-a983-aeabf0122b90'. Preview of field's value: '{bar=123}'
+```
+
+or 
+```
+org.elasticsearch.index.mapper.MapperParsingException: Could not dynamically add mapping for field [field.email]. Existing mapping for [data.field] must be of type object but found [text].
+```
+
+This means that the type of a field in one of the data fields was changed. In this case, `data.field` was originally text, but the request causing this error message was trying to put an object into that attribute.
+
+Elasticsearch will dynamically build a schema based upon custom data, so it is critical that the schema not be modified.
+
+The fix is:
+
+* understand how the field types changed
+* find the user's Id
+* modify the problematic `data` fields via the User API to remove the mismatched fields
+
+Unfortunately, you can't search for the user by email or username or other characteristics using the User Search API. If you have the user's Id, which may be available in the error messages, you can use that. Searching by UUID doesn't use Elasticsearch. If you do not have the UUID, you should change to the database search engine to find the user. You can switch back to Elasticsearch after you have corrected the `data` field.
+
+If you have a support contract, please https://account.fusionauth.io/account/support/[open a ticket] and we'll help you out. If not, please back up your FusionAuth database and test the fix thoroughly in a staging environment before applying it to your production instance.
