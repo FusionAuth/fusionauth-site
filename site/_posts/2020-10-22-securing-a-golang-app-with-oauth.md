@@ -290,7 +290,7 @@ That's a fair bit of code, let's break it down:
 
 If you run this locally, you'll see something similar to what is in this video:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/gGa9TMh-MG0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="gGa9TMh-MG0" %}
 
 ## Next steps
 
