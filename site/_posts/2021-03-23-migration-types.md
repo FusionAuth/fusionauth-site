@@ -24,7 +24,7 @@ While each approach differs in the particulars, one way to decide which works fo
 
 Each of these approaches migrates user account data into FusionAuth from one or more legacy systems. Let's examine each approach in more detail to help you make the best decision for your use case.
 
-## The Big Bang Migration
+## The big bang migration
 
 With a big bang migration, you are moving all your users at one time. How long this takes varies depending on the amount of data you are moving, but there is a single cutover. For small systems it may be minutes, for bigger systems it might last hours or even days. 
 
@@ -55,7 +55,7 @@ Finally, FusionAuth, or any other new auth system, must be compatible with the o
 
 The big bang migration is conceptually easy to understand, with few moving pieces. It works well when you have deadlines. Because of the uniqueness of its implementation, this is the most high risk option.
 
-## Segment by Segment Migration
+## Segment by segment migration
 
 The segment by segment migration is an alternative to the big bang, with some significant overlap. This approach is essentially a series of "little bang" migrations, where you use the same approach, just with smaller chunks of users. You split your accounts into segments and migrate each segment one at a time. You can split your accounts in a number of ways:
 
@@ -75,7 +75,7 @@ As implied, the segmented migration is not without its issues:
 
 In general, the segment by segment migration is useful when you have natural, well, segments. It decreases cutover risk because a smaller chunk of users will be migrated, and you can control which ones you do first. But it also introduces more complexities because you are running multiple migrations.
 
-## Slow Migration
+## Slow migration
 
 This approach is the logical endpoint of segment by segment migration. What if you made each chunk of accounts to be migrated as small as possible. Well, you end up with each segment being a single user. 
 
