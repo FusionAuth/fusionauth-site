@@ -4,6 +4,7 @@ title: Approaches to user account migration
 description: What are the ways you can migrate user data, and why should you pick one over the others?
 author: Dan Moore
 image: blogs/approaches-user-migration/approaches-to-user-account-migration-header-image.png
+tags: topic-upgrade-auth0 topic-migrate
 category: blog
 excerpt_separator: "<!--more-->"
 ---
@@ -104,4 +105,4 @@ Slow migrations make a different set of tradeoffs. You don't have the upfront ef
 
 ## Conclusion
 
-Migrating user data is never fun. But doing so can save you money, allow new features or reduce operational headaches by consolidating users. I hope this overview of the different migration approaches that we've seen here at FusionAuth is helpful in guiding you toward the migration that works for you.
+Migrating user data is never fun. But doing so can save you money, allow new features or reduce operational headaches by consolidating users. I hope this overview of the different migration approaches that we've seen here at FusionAuth is helpful in guiding you toward the migration that works for you. 
