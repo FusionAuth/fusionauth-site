@@ -69,7 +69,7 @@ As implied, the segmented migration is not without its issues:
 
 * Instead of one project, you have multiple, with N downtime periods and cutovers to manage.
 * In some cases, there may be no useful natural divisions among your user accounts.
-* If the segment numbers are unbalanced, the extra effort to migrate some first may not be worth it. If you have one popular application and two nascent apps, migrating the latter won't really help derisk the migration of the former.
+* If the segment numbers are unbalanced, the extra effort to migrate some first may not be worth it. If you have one popular application and two nascent apps, migrating the latter won't really help remove risk from the migration of the former.
 * Because you have multiple migrations, this approach takes more calendar time to complete. Depending on what you are migrating from, you might end up running FusionAuth and the legacy system or systems for a longer period of time.
 * Depending on user segmentation, the application cutover might be complicated. For example, if you divide your users by type and initially migrate admin users, the application needs to be smart enough to dispatch admin users to FusionAuth and other users to the old system.
 
@@ -84,7 +84,7 @@ With the slow migration approach, you need to:
 * Map your user attributes from the old system to the new system. 
 * Set up a connection between the legacy system and FusionAuth. This could be an API call or some other way to pass authentication information from FusionAuth to the old system, and get back an authentication response.
 * Modify the application or applications to send users to FusionAuth for authentication. Test these changes before rolling them out, including that the connection created above works. If you previously used OIDC or SAML to connect to the legacy system, this effort may be minimal.
-* At this point, FusionAuth receives all auth requests. It delegates the initial authentication for each user to the legacy system. 
+* At this point, FusionAuth receives all user authentication requests. It delegates the initial authentication for each user to the legacy system. 
 * When the first call happens, the old system returns account data if the user presented valid credentials. FusionAuth creates a new user with the data. 
 * When this user logs in subsequently, FusionAuth responds; it is now the system of record, the user has been migrated, and the old system no longer has that particular user's information.
 
@@ -94,7 +94,7 @@ Application cutover is, all other things equal, simpler. You aren't moving any a
 
 However, a slow migration isn't always the best solution. Some things to consider include:
 
-* You are passing a plaintext password or other credential from FusionAuth to the legacy system. Make sure you take care of this precious cargo using TLS at a minimum. If possible, keep it from travelling over the internet by placing FusionAuth and the legacy system on the same network.
+* You are passing a plaintext password or other credential from FusionAuth to the legacy system. Make sure you take care of this precious cargo using TLS or some other form of on the wire encryption. If possible, keep it from travelling over the internet by placing FusionAuth and the legacy system on the same network.
 * The legacy user management solution has to be able to provide an authentication API or support LDAP. You may need to extend it to do so, and this may not always be possible.
 * The timeline is a lot longer for this kind of migration. You also must run both FusionAuth and the original system for that period of time. If you have a deadline or the old system is creaky, this may be painful.
 * Internal users accessing user account data will need to look in both places to find a user during the migration, though you can write tooling to check both systems from one application.
