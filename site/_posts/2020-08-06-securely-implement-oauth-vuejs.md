@@ -1545,7 +1545,13 @@ With this code (and a small amount of styling code for a logo) our application s
 
 #### Authorized
 
+{% include _callout_note.liquid content=
+"The user is fully known to FusionAuth and the application."
+%}
+
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-authorized.png" alt="User authorized and authenticated." class="img-fluid" figure=false %}
+
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-configuration-after.png" alt="User settings for the new application." class="img-fluid" figure=false %}
 
 #### notAuthorized
 
@@ -1555,7 +1561,13 @@ With this code (and a small amount of styling code for a logo) our application s
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authorized.png" alt="User not authorized." class="img-fluid" figure=false %}
 
+{% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-configuration-before.png" alt="User settings for the new application." class="img-fluid" figure=false %}
+
 #### notAuthenticated
+
+{% include _callout_note.liquid content=
+"The user is not known to FusionAuth or the application."
+%}
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authen.png" alt="User not authenticated." class="img-fluid" figure=false %}
 
