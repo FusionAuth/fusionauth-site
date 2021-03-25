@@ -17,7 +17,7 @@ This holds especially true for larger or more long-term purchases. When you're e
 
 Choosing incorrectly could mean a major rewrite of your application logic. Getting months down the road only to realize that a particular provider can't support all your use cases can really kill developer momentum.
 
-## Advantages of Trying Before You Buy
+## Advantages of Trying an Auth Provider Before You Buy
 
 Trying your authentication provider before you commit can save you lots of headaches in the future and should be an important part of choosing an authentication partner.
 
@@ -37,13 +37,13 @@ This would be a huge problem leading to a major rewrite or possibly having to dr
 
 Many API-based products such as authentication providers are usage-based, which means as your usage increases, the pricing changes. While looking at the pricing table may have you convinced that you'll be on a free or low-cost plan, actually building out a prototype might reveal otherwise.
 
-There are all sorts of potential hidden costs or costs that you may not have considered from just thinking about your application at a high level. Knowing what this product costs on average for other companies of your scale is helpful.
+There are all sorts of potential hidden costs that you may not have considered from just thinking about your application at a high level. Knowing what this product costs on average for other companies of your scale is helpful.
 
 For example, if you're working with an authentication provider that charges you on a per-authentication basis, you might take a look at your users and how active they are, and estimate how many people will be authenticating every month. With this math, you might conclude that you're well under the threshold for the authentication provider's free plan.
 
 But when you build a prototype, you might notice that every incorrect password attempt counts as authentication, demonstrating that your previous estimates might be severely different from what you should expect for actual usage. You might learn that multiple connections to enterprise identity stores, such as SAML IdPs, cost an arm and a leg.
 
-Catching surprises like this during a free trial can help you know how to factor your costs correctly, as opposed to finding out when your integration is already in production. It allows your development team a chance to think up different ways to architect your solution to fit within these constraints, or even choose a different provider if a workaround or change in architecture isn't going to be possible.
+Catching surprises like this during a free trial can help you understand how to factor your costs correctly, as opposed to finding out when your integration is already in production. It allows your development team a chance to think up different ways to architect your solution to fit within these constraints, or even choose a different provider if a workaround or change in architecture isn't going to be possible.
 
 ### Developer Buy-In
 

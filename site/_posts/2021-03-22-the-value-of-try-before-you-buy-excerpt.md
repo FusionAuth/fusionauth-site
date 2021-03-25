@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: How to get the most out of a trial period
-description: When you are trialing software, how can you make most effective use of this time?
+title: How to get the most out of a free auth provider trial
+description: When you are trialing auth software, how can you make most effective use of this time?
 author: Keanan Koppenhaver
 image: blogs/scaling-auth-system/auth-specific-scaling-challenges-header-image.png
 category: blog
