@@ -1,0 +1,169 @@
+---
+layout: doc
+title: FusionAuth Cloud
+description: FusionAuth Cloud is FusionAuth in the cloud, managed by us
+---
+
+== What is FusionAuth Cloud
+
+== Why Use FusionAuth Cloud
+
+== How To Use FusionAuth Cloud
+
+== Using Clustered FusionAuth
+
+FusionAuth is stateless and typically CPU bound. Clustering FusionAuth nodes improves performance and redundancy. You can run as many FusionAuth nodes in a cluster as you'd like.
+
+include::docs/v1/tech/installation-guide/_shared-state.adoc[]
+
+FusionAuth can be run in multiple architectures; see the link:/docs/v1/tech/installation-guide/server-layout/[Server Layout] documentation for more.
+
+=== Requirements
+
+Before you cluster multiple servers or containers running FusionAuth, prepare your environment. In addition to FusionAuth, you'll need the following components:
+
+* A database. This will be used by all nodes to maintain state. While you could have the database on a node running FusionAuth, you'll see better performance on a dedicated database server.
+* A load balancer in front of the FusionAuth nodes. This will distribute traffic between them.
+* An Elasticsearch cluster, if using the link:/docs/v1/tech/core-concepts/users/#user-search[Elasticsearch search engine]. 
+
+This infrastructure must be created and managed when operating a FusionAuth cluster. However, this setup is beyond the scope of this document. 
+
+These instructions assume you have a load balancer, optional Elasticsearch server, and database server already configured.
+
+When building a FusionAuth cluster, consider:
+
+* What load balancer will you use? Software or hardware load balancers both work. You can use a vendor managed balancer like an AWS application load balancer or an open source web server such as nginx. 
+* By what algorithm will traffic be distributed? If all the nodes have equivalent capacity, a round robin algorithm is fine.
+* Where will you terminate SSL? Typically this is done at the load balancer, but can be done at the FusionAuth nodes.
+* What level of security and network isolation do you need? Build the architecture that suits your needs. You can run FusionAuth in a private network and have all HTTP connections proceed through the load balancer, with SSH connections happening through a jump box, for example.
+* What version of FusionAuth will you be running? All nodes must be on the same version for correct functionality.
+* How will you manage link:/docs/v1/tech/reference/configuration/[FusionAuth configuration]? All nodes must have the same configuration or undetermined behavior will occur. Ensure that configuration changes are replicated to every node.
+* With a standalone database you must use the link:/docs/v1/tech/installation-guide/fusionauth-app/#advanced-installation[advanced database installation] and run the database creation and migration scripts outside of FusionAuth. How will you manage this? Do you have in-house tools you can leverage to do so?
+
+=== FusionAuth Installation
+
+User the link:/docs/v1/tech/installation-guide/fusionauth-app/#advanced-installation[advanced database installation instructions] to create and populate the FusionAuth database. Add a FusionAuth database user and password. Record the connection information; you'll want a JDBC URL, the username and the password.
+
+Install FusionAuth on each of the servers or containers which you plan to run. You can install the software via RPM, DEB, zip file or link:/docs/v1/tech/installation-guide/[any of the installation methods]. 
+
+Build your link:/docs/v1/tech/reference/configuration/[FusionAuth configuration]. Double check the following settings:
+
+* `fusionauth-app.url` should typically be blank. You may need to manually specify this value if you have multiple FusionAuth nodes and the only way the nodes can communicate is on a public network. In that case, specify each node's public address.
+* Set `fusionauth-app.runtime-mode` to `production`. This setting ensures your users will never see maintenance mode. You will have to apply database upgrades manually. link:/docs/v1/tech/installation-guide/fusionauth-app/#runtime-modes[More here].
+* Configure `database.url` with the full JDBC connection string URL recorded above.
+* Set `database.username` to the database user name recorded above.
+* Update `database.password` as the database password noted above.
+
+Distribute your FusionAuth configuration to all nodes. You can do this by setting environment variables, Java system properties, or by pushing the `fusionauth.properties` file to each server. 
+
+Restart the instances to ensure configuration changes are picked up.
+
+Add the instance addresses to your load balancer. If you are terminating TLS at the load balancer, proxy the http port, otherwise communicate over the TLS port. Both of these are configurable, but they default to `9011` and `9013`, respectively. 
+
+Configure the load balancer to forward the following headers to FusionAuth:
+
+* `X-Forwarded-Proto`: typically this will be `https`. This ensures any redirects are sent with the appropriate scheme.
+* `X-Forwarded-Host`: The original host requested by the client in the `Host` HTTP request header.
+* `X-Forwarded-For`: The originating IP address of the client.
+* `X-Forwarded-Server`: The hostname of the proxy server.
+
+You can see community submitted proxy configurations in link:https://github.com/FusionAuth/fusionauth-contrib/tree/master/Reverse%20Proxy%20Configurations[the fusionauth-contrib repo].
+
+==== Troubleshooting installation
+
+If you have difficulty installing FusionAuth in a cluster, you can set up a cluster with one node. Set up your load balancer to point to only one server, and get this working before adding any other nodes. This will narrow down any issues you may encounter.
+
+=== Verification
+
+Verify that the installation is clustered by navigating to [breadcrumb]#System -> About#. You'll see multiple nodes listed:
+
+image::installation-guides/cluster/clustered-about-page.png[The about page with multiple nodes,width=1200]
+
+The node which served the request you made has a checkmark in the [field]#This node# field. `Node 1` served the above request.
+
+You may see incorrect IP addresses for each node if you are using a version of FusionAuth prior to 1.23. This bug doesn't affect clustering functionality. All other information about the nodes is correct.
+
+== Cluster Operation
+
+=== Security
+
+While ssh access to each node is helpful for initial installation and troubleshooting, you should not need it during normal cluster operation. Modify your firewall accordingly. 
+
+You may also lock down the FusionAuth nodes to only accept traffic from the load balancer, so that all HTTP traffic goes through it.
+
+=== Monitoring
+
+If your load balancer supports health checks, call the link:/docs/v1/tech/apis/system#system-status[status API]. A `GET` request against the `/api/status` endpoint will return a status code. It'll either be `200` if the system is operating as expected or non `200` value if there are any issues with the node.
+
+There's https://github.com/FusionAuth/fusionauth-issues/issues/362[an open issue to add a Prometheus endpoint] but Prometheus is not currently supported.
+
+You can ingest the link:/docs/v1/tech/apis/system/#export-system-logs[system log output], link:/docs/v1/tech/apis/event-logs/[event logs] and link:/docs/v1/tech/apis/audit-logs/#export-audit-logs[audit logs] into a log management system via API calls. 
+
+=== Log Files 
+
+[NOTE.since]
+====
+Available since 1.16.0-RC1
+====
+
+Should you need to review system log files in the administrative user interface, you can see those by navigating to [breadcrumb]#System -> Logs#. Logs for all nodes are displayed there. 
+
+See link:/docs/v1/tech/troubleshooting/[the Troubleshooting documentation] for more information about logs.
+
+=== Adding and Removing Nodes
+
+To add more nodes to the cluster, do the following:
+
+* Stand up new FusionAuth servers.
+* Provide the same FusionAuth configuration as the existing nodes. In particular, provide the same connection info for the database. 
+* Update your load balancer to send traffic to the new node.
+
+To remove nodes, simply:
+
+* Update your load balancer configuration; remove the node that you'll be shutting down. 
+* Stop FusionAuth on the node to be removed.
+* Verify that the node disappears from the node list displayed at [breadcrumb]#System -> About#.
+
+Here's a video covering how to add and remove nodes from a FusionAuth cluster:
+
+video::y6bPjqP4Dzk[youtube,width=560,height=315]
+
+==== "Bye node" Messages
+
+There are two different levels of cluster membership. The first is managed by the load balancer and concerns what traffic is sent to which node. FusionAuth operates a second level of cluster membership for the limited state shared between nodes.
+
+include::docs/v1/tech/installation-guide/_shared-state.adoc[]
+
+Each node regularly updates the shared database by updating a row with URL and timestamp information. If a node does not check in, after a certain period it will be removed from the cluster, as far as FusionAuth is concerned.
+
+If that happens you might see a message like this:
+
+[source]
+----
+io.fusionauth.api.service.system.NodeService - Node [abce451c-6c5f-4615-b4eb-c1ae5ccf460c] with address [http://10.0.0.2:9011] removed because it has not checked in for the last [83] seconds. Bye node.
+----
+
+While a node is removed from FusionAuth's node list, it will no longer participate in the FusionAuth cluster actions as mentioned above.
+
+This automated removal does not affect load balancer traffic. The load balancer, typically by using a health check, must stop sending a node authentication traffic if it is unhealthy.
+
+=== How Many Instances Should I Run?
+
+To determine the number of nodes to run, load test your cluster. Usage, installation and configuration differ across environments and load testing is the best method to determine the correct setup for your situation.
+
+Any commercial or open source load testing tool will work. Alternatively, use https://github.com/FusionAuth/fusionauth-load-tests[the FusionAuth load testing scripts]. 
+
+If you'd prefer detailed architecture or design guidance customized to your situation, please purchase link:/pricing/[a support contract].
+
+== Cluster Upgrades
+
+To upgrade your cluster, first schedule a downtime window. During that window: 
+
+* Take down all the nodes.
+* Upgrade the database schema by running the migration SQL scripts.
+* Upgrade FusionAuth on each node.
+* Start all the nodes.
+
+The recommendation is to automate this process using whatever scripting or configuration management tool you like. This will minimize the downtime. 
+
+As a point of reference, for our hosted solutions FusionAuth uses a configuration management tool and typically sees downtime on the order of seconds.
