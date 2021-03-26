@@ -27,8 +27,8 @@ We do cover a lot, so here's a handy table of contents to let you jump directly 
   * [First-party service authorization](#first-party-service-authorization)
   * [Machine-to-machine authorization](#machine-to-machine-authorization)
   * [Device login and registration](#device-login-and-registration)
-  * [Which mode is right for you?](#which-mode-is-right-for-you)
-* [Grants](#grants)
+  * [Which OAuth mode is right for you?](#which-oauth-mode-is-right-for-you)
+* [OAuth Grants](#oauth-grants)
   * [Authorization Code grant](#authorization-code-grant)
     * [Login/register buttons](#loginregister-buttons)
     * [Authorize endpoint parameters](#authorize-endpoint-parameters)
@@ -40,7 +40,7 @@ We do cover a lot, so here's a handy table of contents to let you jump directly 
     * [Third-party login and registration (also Enterprise login and registration) with the Authorization Code grant](#third-party-login-and-registration-also-enterprise-login-and-registration-with-the-authorization-code-grant)
     * [Third-party authorization with the Authorization Code grant](#third-party-authorization-with-the-authorization-code-grant)
     * [First-party login and registration and first-party service authorization](#first-party-login-and-registration-and-first-party-service-authorization)
-  * [Implicit grant](#implicit-grant)
+  * [Implicit grant in OAuth 2.0](#implicit-grant-in-oauth-20)
   * [Resource Owner's Password Credentials grant](#resource-owners-password-credentials-grant)
   * [Client Credentials grant](#client-credentials-grant)
   * [Device grant](#device-grant)
@@ -73,7 +73,7 @@ I've included notation on a few of the items above specifying which are federate
 
 Let's discuss each mode in a bit more detail, but first, a cheat sheet.
 
-### Which mode is right for you?
+### Which OAuth mode is right for you?
 
 Wow, that's a lot of different ways you can use OAuth. That's the power and the danger of OAuth, to be honest with you. It is so flexible that people new to it can be overwhelmed. So, here's a handy set of questions for you to ask yourself.
 
@@ -249,7 +249,7 @@ Using our TWGTL example, let's say that TWGTL has two microservices: one to mana
 
 {% include _image.liquid src="/assets/img/advice/modern-guide-oauth/client-credentials-grant.svg" alt="The WUPHF microservice needs to ensure the TWGTL microservice is authorized." class="img-fluid" figure=false %}
 
-The workflow for this looks like this:
+The workflow for this mode looks like:
 
 1. The ToDo microservice authenticates with the OAuth server.
 1. The OAuth server returns a token to the ToDo microservice.
@@ -272,9 +272,9 @@ A good example of this mode is setting up a streaming app on an Apple TV, smart 
 7. The user is taken to a "Finished" screen.
 8. A few seconds later, the device is connected to the user's account.
 
-This mode often takes a bit of time to complete because the app on the Apple TV is polling the OAuth server. We won't go over this mode because our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization/) covers this mode in great detail.
+This mode often takes a bit of time to complete because the app on the Apple TV is polling the OAuth server. We won't go over this mode because our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization/) covers it in great detail.
 
-## Grants
+## OAuth Grants
 
 Now that we have covered the real world OAuth modes, let's dig into how these are actually implemented using the OAuth grants. OAuth grants are:
 
@@ -756,7 +756,7 @@ Since two of the tokens we have are JWTs, let's quickly cover that technology he
 
 JWTs are JSON objects that contain information about users and can also be signed. The keys of the JSON object are called "claims". JWTs expire, but until then they can be presented to APIs and other resources to obtain access. Keep their lifetimes short and protect them as you would other credentials such as an API key. Because they are signed, a JWT can be verified to ensure it hasn't been tampered with. JWTs have a couple of standard claims. These claims are:
 
-* `aud`: The intended audience of the JWT. This is usually an identifier and your applications should verify this value is as is expected.
+* `aud`: The intended audience of the JWT. This is usually an identifier and your applications should verify this value is as expected.
 * `exp`: The expiration instant of the JWT. This is stored as the number of seconds since Epoch (January 1, 1970 UTC).
 * `iss`: An identifier for that system which created the JWT. This is normally a value configured in the OAuth server. Your application should verify that this claim is correct.
 * `nbf`: The instant after which the JWT is valid. It stands for "not before". This is stored as the number of seconds since Epoch (January 1, 1970 UTC).
@@ -772,7 +772,7 @@ JWTs have other standard claims that you should be aware of. You can review thes
 Before we cover how the Authorization Code grant is used for each of the OAuth modes, let's discuss two additional OAuth endpoints used to retrieve information about your users and their tokens. These endpoints are:
 
 * Introspection - this endpoint is an extension to the OAuth 2.0 specification and returns information about the token using the standard JWT claims from the previous section.
-* UserInfo - this endpoint is defined as part of the OIDC Connect specification and returns information about the user.
+* UserInfo - this endpoint is defined as part of the OIDC specification and returns information about the user.
 
 These two endpoints are quite different and serve different purposes. Though they might return similar values, the purpose of the Introspection endpoint is to return information about the access token itself. The UserInfo endpoint returns information about the user for whom the access token was granted. 
 
@@ -1103,7 +1103,7 @@ function buildClickHandler() {
 
 Since the `refresh_token` is an HTTPOnly cookie, JavaScript can't call a refresh endpoint to get a new access token. Our client side JavaScript would have to have access to the refresh token value to do so, but we don't allow that because of cross site scripting concerns. Instead, the client calls a server-side route, which will then try to refresh the tokens using the cookie value; it has access to that value. After that, the server will send down the new values as cookies, and the browser code can retry the API calls.
 
-Here's `refresh` server side route, which accesses the refresh token and tries to, well, refresh the access and id tokens.
+Here's the `refresh` server side route, which accesses the refresh token and tries to, well, refresh the access and id tokens.
 
 ```javascript
 
@@ -1283,7 +1283,7 @@ These scenarios won't be illustrated in this guide. But, the short version is:
 * First-party login and registration should be handled by an OAuth server.
 * First-party service authorization should use tokens generated by an OAuth server. These tokens should be presented to APIs written by the same party.
 
-### Implicit grant
+### Implicit grant in OAuth 2.0
 
 The next grant that is defined in the OAuth 2.0 specification is the Implicit grant. If this were a normal guide, we would cover this grant in detail the same way we covered the Authorization Code grant. Except, I'm not going to. :)
 
