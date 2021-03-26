@@ -1,0 +1,146 @@
+---
+layout: doc
+title: Migration
+description: How to migrate your users to FusionAuth.
+---
+:page-liquid:
+
+== Overview
+
+This guide will help you set up a multi-tenant application in FusionAuth. Tenants are logical separations of users, applications and other entities in FusionAuth.
+
+TOC TODO
+
+== Why Multi-Tenant
+
+There are many reasons why you might be interested in a multi-tenant FusionAuth installation. The overriding reason is the logical separation it provides. While you have only one FusionAuth instance to manage, users, applications, and other entities are logically separated. Even FusionAuth API keys can be tied to tenants. 
+
+You might be interested in building an application which you'll offer as a SaaS (Software as a Service). In this case, you can private label your application using tenants. All user information within each tenant will be entirely separate.
+
+Another use case might be for different environments. For instance, on one FusionAuth instance, you could run integration, user acceptance and developer environments. 
+
+You also might want to provide a tenant for each developer on a dedicated development server. This would allow developers free reign to add, remove and modify entities in their FusionAuth tenant, while keeping them insulated from each other.
+
+There also may be situations where you have settings that need to be different for different sets of users. Examples of such settings include password rules, the look and feel of the login pages, or webhook transaction level.
+
+== Multi-Tenant Concepts
+
+Before this guide covers how to set up multi-tenancy, let's cover what can be configured at the tenant level. There are five general categories of modifiable entities in FusionAuth:
+
+* Tenant scoped entities
+* Tenant attached entities
+* Application scoped entities
+* Application attached entities
+* Global "things"
+
+A "scoped" entity is contained within the enclosing entity, and if the latter is deleted, the former will be as well. For instance, a user is scoped to a tenant, and if that tenant is deleted, the user will be as well.
+
+An "attached" entity is affiliated with an enclosing entity, but if the latter is deleted, the former will continue to exist. For instance, a signing key is associated with a tenant's JWT configuration. If that tenant is deleted, the signing key's association with the tenant is removed, but the tenant is not.
+
+TODO extract to share with core concepts?
+
+=== Tenant Scoped Entities
+
+Here is a list of tenant scoped entities:
+
+* Users
+* Groups
+* Applications
+
+=== Tenant Attached Entities
+
+Here is a partial list of tenant attached entities:
+
+* Email templates (some of them)
+* Forms (some of them)
+* Themes
+* API Keys (optionally)
+* Connectors
+* Consents
+* User actions
+* Webhooks
+
+
+=== Application Scoped Entities
+
+Here is a list of application scoped entities.
+
+* Registrations
+* Roles
+
+Because an application is tenant scoped, these entities are also scoped to a tenant and cannot be used across tenants. For example, if a tenant containing the containing application is deleted, the registrations for a given application will also be deleted.
+
+=== Application Attached Entities
+
+Here is a partial list of application attached entities:
+
+* Identity providers
+* Email templates (some of them)
+* Forms (some of them)
+* Lambdas
+
+You can separate the attached items by
+
+=== Global "Things"
+
+These are items that are shared between tenant.
+
+* API Keys (optionally)
+* Login reports?
+
+Additionally, there are configuration settings for CORS which are shared between all the tenants in 
+
+The administrative user interface is also shared between tenants. There is an https://github.com/FusionAuth/fusionauth-issues/issues/91[open issue], but currently there is no way to grant access to the FusionAuth administrative user interface and limit the user to a single tenant's settings.
+
+If you need separation of these global elements, or if you need true physical separation due to different regulatory regimes, you can always run multiple FusionAuth instances. To keep configuration in sync between them, you should script all changes using the API or client libraries.
+
+
+
+Useful FusionAuth multi-tenant concepts (could probably go into core concepts too)
+Definition and examples of tenant scoped entities (things contained within a tenant)
+User
+Application
+…
+Definition and examples of tenant attached entities (things that are attached to an tenant, but exist outside of a tenant) 
+User self service registration form
+Keys
+Connectors
+Definition and examples of application scoped entities
+Registrations
+Definition and examples of application attached entities 
+Identity providers
+Groups
+Definition and examples of global scoped things
+CORS settings
+Event logs
+Access to FusionAuth admin panel (link to issue)
+
+== Example Application
+Let’s build a multi tenant, private labelled “pied piper video chat”. Just like slack, but with middle out compression. We want to let people sign up and get their own tenant.
+Functionality
+A management tenant for people who want the private labelled app to sign up in.
+app.piedpiper.com
+Self registration with tenant hostname (dan-test) and some css/login background color as attributes
+Company1chat.piedpiper.com
+company2chat.piedpiper.com
+New tenant with one application created on registration via webhook
+Python application handing the tenant hostnames as well as the oauth redirects.
+
+== Tenant Level Customization
+
+Customization available
+Pretty much everything. Here are the high points.
+Themes
+Should probably customize them some.
+Registration forms (with advanced reg forms)
+Password rules
+Social sign on
+
+== Limits
+Resources, primarily, but we have people running thousands of tenants in FA. 
+Access to fusionauth admin ui
+Intermixing of login records/other logs across tenants.
+I’m not aware of any other limits
+
+tenant limitations from the limitations doc
+social sign on providers (only one of those)
