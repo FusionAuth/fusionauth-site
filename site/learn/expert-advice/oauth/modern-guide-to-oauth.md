@@ -3,7 +3,7 @@ layout: advice
 title: Modern Guide to OAuth 
 description: Not just another OAuth tutorial. This guide walks you through all of the real use-cases of OAuth in clear and simple detail. 
 image: advice/oauth-device-authorization-article.png 
-author: Brian Pontarelli
+author: Brian Pontarelli and Dan Moore
 categories: oauth
 date: 2021-03-02 
 dateModified: 2021-03-02
