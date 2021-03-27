@@ -5,8 +5,8 @@ description: Not just another OAuth tutorial. This guide walks you through all o
 image: advice/modern-guide-oauth/expert-advice-the-modern-guide-to-oauth-header-image.png
 author: Brian Pontarelli and Dan Moore
 categories: oauth
-date: 2021-03-02 
-dateModified: 2021-03-02
+date: 2021-03-26 
+dateModified: 2021-03-26
 ---
 
 I know what you are thinking, is this really another guide to OAuth 2.0? 
