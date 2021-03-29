@@ -31,9 +31,9 @@ I'm one of the team members responsible for researching and, using my background
 
 We also use FusionAuth's Identity Providers to offer our users the ability to register and authenticate using their social accounts.
 
-> FusionAuth ... turned out to be the most versatile, easy to use and, more importantly, configurable solution. 
+> FusionAuth ... turned out to be the most versatile, easy to use and, most importantly, configurable solution. 
 
-**Dan:** Approximately many tenants do you have? 
+**Dan:** Approximately how many tenants do you have? 
 
 **John:** In our largest environment we currently handle over five thousand tenants. 
 
@@ -47,7 +47,7 @@ We also use FusionAuth's Identity Providers to offer our users the ability to re
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
-**John:** After comparing multiple authentication services, such as Keycloak and Okta, we ended up choosing FusionAuth because it turned out to be the most versatile, easy to use and, more importantly, configurable solution. 
+**John:** After comparing multiple authentication services, such as Keycloak and Okta, we ended up choosing FusionAuth because it turned out to be the most versatile, easy to use and, most importantly, configurable solution. 
 
 An example of what we were able to do with FusionAuth (and struggled to accomplish with all the other solutions!) was the configuration of different JSON Web Token (JWT) encryption keys for each tenant via API.
 
