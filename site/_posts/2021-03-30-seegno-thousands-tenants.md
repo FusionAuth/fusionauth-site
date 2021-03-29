@@ -81,7 +81,7 @@ And after that we would still need to regularly maintain and update all of the f
 
 **John:** To be fair, much of what we asked for has already been done. 
 
-We would like to ask the FusionAuth team to continue improving the services' ability to handle a high number of tenants, both in performance and in the UI _editor's note: follow along on [this issue](https://github.com/FusionAuth/fusionauth-issues/issues/374) for more details about these improvements_.
+We would like to ask the FusionAuth team to continue improving the services' ability to handle a high number of tenants, both in performance and in the UI [_editor's note: follow along on [this issue](https://github.com/FusionAuth/fusionauth-issues/issues/374) for more details about these improvements_].
 
 We would also like FusionAuth to be compatible with the Kubernetes multi-cluster strategy. This would make it possible to deploy multiple instances across various regions to improve its availability and regional performance.
 
