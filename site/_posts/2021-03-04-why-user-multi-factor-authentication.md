@@ -30,9 +30,9 @@ Multi factor authentication is best understood as requiring two or more factors 
 
 MFA is a superset of two factor authentication (2FA). With MFA an arbitrary number of factors of proof can be required. With 2FA, the number of factors is limited to two.
 
-Multi factor authentication isn't only for online user account access. When you go to a bank to get documents (or maybe diamonds, if you are a James Bond villian) from a safe deposit box, you usually need a key (something you have) and a signature (something you are). If your signature doesn't match, you can also provide a government issued id (another thing you have). 
+Multi factor authentication isn't only for online user account access. When you go to a bank to get documents (or maybe diamonds, if you are a James Bond villain) from a safe deposit box, you usually need a key (something you have) and a signature (something you are). If your signature doesn't match, you can also provide a government issued id (another thing you have). 
 
-However, the focus of this post is MFA in the context of online account access. Because of that and the prevalance of passwords, this post will assume that your users' first factor is a password. 
+However, the focus of this post is MFA in the context of online account access. Because of that and the prevalence of passwords, this post will assume that your users' first factor is a password. 
 
 Let's talk more about why you, as a developer, should enable and encourage your users to use MFA.
 
@@ -116,13 +116,13 @@ Some data, such as the username and password, is explicitly provided to the syst
 
 Such implicit data can help determine if the authentication request is legitimate. For instance, if a user accesses a system from the USA and 24 hours later there is another request from Germany with the same credentials, is the latter valid? Could be, but it could also be that the request from Germany is due to a compromised account. Requiring MFA at such a time allows you to apply extra scrutiny to strange requests.
 
-Another example where you might want additional authentication factors is when a user logs in from a new device. Popular SaaS applications such as Google's GSuite and Mailchimp can be configured to require MFA for the only the initial authentication from a new device.
+Another example where you might want additional authentication factors is when a user logs in from a new device. Popular SaaS applications such as Google's GSuite and Mailchimp can be configured to require MFA for only the initial authentication from a new device.
 
 ### Applying MFA requirements
 
 Put the MFA requirement configuration in a central location in your application to make it easier to modify. Tying it tightly to the authentication system generally makes sense. Choices about when to require MFA change over time as a system evolves. New features are built. Different types of users are supported.
 
-This policy configuration should itself be protected and only allow access to privileged users with a recent multi-factor authentication.
+This policy configuration should itself be protected and only allow access to privileged users with recent multi-factor authentication.
 
 If you don't have organization or user wide policies, at the least allow users to set up MFA. Doing so allows security conscious users to protect their account. They can evaluate their own security posture and make their own sensible choices. For example, one person may run their entire life through their Gmail account, while others may use Gmail only occasionally as a throwaway email address. In the former case, MFA makes sense; in the latter it may not.
 
