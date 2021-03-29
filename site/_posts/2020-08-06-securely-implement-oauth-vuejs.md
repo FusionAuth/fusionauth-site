@@ -131,7 +131,7 @@ Open a browser up and look at http://localhost:8081/. This is how your app will 
 
 Now you need to clean up and remove some of the sample code that the CLI generated.
 
-{% include _callout_tip.liquid
+{% include _callout-tip.liquid
 content=
  "Based on the configuration you choose, you might see different project structures. If you are not sure how to clean it up, just stick to this example."
 %}
@@ -171,7 +171,7 @@ export default {
 ```
 Visiting our locally running Vue Client (http://localhost:8081/) will show you a blank screen now (don't worry, we will update this shortly).
 
-{% include _callout_tip.liquid 
+{% include _callout-tip.liquid 
 content=
   "You can load environment variables in most SPA templates like Vue or React without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this in the [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables) Vue documentation."
 %}
@@ -183,7 +183,7 @@ Let's set aside the client for a bit, and focus on the Express server.
 
 We will use [Express.js](https://expressjs.com/) as our backend server. It is a popular library that is widely used by developers.
 
-{% include _callout_tip.liquid content=
+{% include _callout-tip.liquid content=
   "The letter **E** in stacks like **MERN**, **MEVN**, or **MEAN** stands for Express."
 %}
 
@@ -306,7 +306,7 @@ This might be the only time we will start the server; since we have installed `n
 
 Head over to http://localhost:9000/; you will see an error! 
 
-{% include _callout_tip.liquid content=
+{% include _callout-tip.liquid content=
   "This is actually to be expected since we have not created any routes yet."
 %}
 
@@ -1018,7 +1018,7 @@ When this final request is successful, we send all the data to our Vue client vi
 }
 ```
 
-{% include _callout_note.liquid content=
+{% include _callout-note.liquid content=
 "The API key that we are passing in the `Authorization` HTTP header is not part of OAuth standard. You need it to call non-standard endpoints like the [User Registration API](https://fusionauth.io/docs/v1/tech/apis/registrations#retrieve-a-user-registration). We added this to show how you can use the API key if you decide to access endpoints protected by that key."
 %}
 
@@ -1275,7 +1275,7 @@ export default {
 //...
 ```
 
-{% include _callout_tip.liquid content=
+{% include _callout-tip.liquid content=
   "Using `.prevent` stops the page from reloading whenever the Submit button is clicked."
 %}
 
@@ -1548,7 +1548,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 #### Authorized
 
-{% include _callout_note.liquid content=
+{% include _callout-note.liquid content=
 "The user is fully known to FusionAuth and the application."
 %}
 
@@ -1558,7 +1558,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 #### notAuthorized
 
-{% include _callout_note.liquid content=
+{% include _callout-note.liquid content=
  "This is a new message (added above). The user is authenticated (known to FusionAuth), but they are not authorized to use our application."
 %}
 
@@ -1568,7 +1568,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 #### notAuthenticated
 
-{% include _callout_note.liquid content=
+{% include _callout-note.liquid content=
 "The user is not known to FusionAuth or the application."
 %}
 
