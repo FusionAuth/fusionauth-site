@@ -131,7 +131,12 @@ Open a browser up and look at http://localhost:8081/. This is how your app will 
 
 Now you need to clean up and remove some of the sample code that the CLI generated.
 
-> Based on the configuration you choose, you might see different project structures. If you are not sure how to clean it up, just stick to this example.
+{% include _callout_tip.liquid
+content=
+ "Based on the configuration you choose, you might see different project structures. If you are not sure how to clean it up, just stick to this example."
+%}
+
+
 
 Delete `components`, `views`, `router`, and `assets` folders in `src` and then modify your `main.js` file to look like this:
 
@@ -166,7 +171,7 @@ export default {
 ```
 Visiting our locally running Vue Client (http://localhost:8081/) will show you a blank screen now (don't worry, we will update this shortly).
 
-{% include _callout_fun_fact.liquid 
+{% include _callout_tip.liquid 
 content=
   "You can load environment variables in most SPA templates like Vue or React without installing any extra dependencies. A minor difference for Vue is that you must add `VUE_APP_` in front of every environment variable. You can read more about this in the [Modes and Environment Variables](https://cli.vuejs.org/guide/mode-and-env.html#environment-variables) Vue documentation."
 %}
@@ -178,7 +183,7 @@ Let's set aside the client for a bit, and focus on the Express server.
 
 We will use [Express.js](https://expressjs.com/) as our backend server. It is a popular library that is widely used by developers.
 
-{% include _callout_fun_fact.liquid content=
+{% include _callout_tip.liquid content=
   "The letter **E** in stacks like **MERN**, **MEVN**, or **MEAN** stands for Express."
 %}
 
@@ -203,7 +208,7 @@ We installed a lot of packages, so let's look at them:
 
 Since we have installed `nodemon`, to use it inside `package.json` simply add the following scripts:
 
-```json
+```javascript
 //...
 "scripts": {
   "start": "node index.js",
@@ -246,11 +251,10 @@ require("dotenv").config();
 
 We can then read environment variables by writing `process.env.` in front of the environment variable's name whenever we need them in our code. 
 
-> ***Important*** If a `.gitignore` file was not generated for you automatically - please do so now. You will want to add the entries of: 
-> - node_modules
-> - .env
-> 
-> To your `.gitignore` file before committing any code to your VCS or Github.
+{% include _callout-important.liquid content= 
+"If a '.gitignore' file was not generated for you automatically - please do so now. You will want to add the entries of 
+ 'node_modules' and '.env' to your '.gitignore' file before committing any code to your VCS or Github."
+ %}
 
 Here is the sample code for an Express server that makes use of all our installed packages:
 
@@ -303,7 +307,7 @@ This might be the only time we will start the server; since we have installed `n
 
 Head over to http://localhost:9000/; you will see an error! 
 
-{% include _callout_fun_fact.liquid content=
+{% include _callout_tip.liquid content=
   "This is actually to be expected since we have not created any routes yet."
 %}
 
@@ -1272,7 +1276,7 @@ export default {
 //...
 ```
 
-{% include _callout_fun_fact.liquid content=
+{% include _callout_tip.liquid content=
   "Using `.prevent` stops the page from reloading whenever the Submit button is clicked."
 %}
 
