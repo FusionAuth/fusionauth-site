@@ -252,8 +252,7 @@ require("dotenv").config();
 We can then read environment variables by writing `process.env.` in front of the environment variable's name whenever we need them in our code. 
 
 {% include _callout-important.liquid content= 
-"If a '.gitignore' file was not generated for you automatically - please do so now. You will want to add the entries of 
- 'node_modules' and '.env' to your '.gitignore' file before committing any code to your VCS or Github."
+"If a `.gitignore` file was not generated for you automatically please add one now. You will want to add the entries of `node_modules` and`.env` to your `.gitignore` file before committing any code to your VCS or Github."
  %}
 
 Here is the sample code for an Express server that makes use of all our installed packages:
