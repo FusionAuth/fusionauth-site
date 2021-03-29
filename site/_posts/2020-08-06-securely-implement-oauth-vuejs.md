@@ -6,7 +6,7 @@ author: Ashutosh Singh
 image: blogs/oauth-vuejs/how-to-securely-implement-oauth-in-vue-js.png
 category: blog
 updated_date: 2021-03-16
-tags: client-javascript
+tags: client-javascript, tutorial, tutorial-vue
 excerpt_separator: "<!--more-->"
 ---
 
@@ -1548,9 +1548,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 #### Authorized
 
-{% include _callout-note.liquid content=
-"The user is fully known to FusionAuth and the application."
-%}
+The user is fully known to FusionAuth and the application.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-authorized.png" alt="User authorized and authenticated." class="img-fluid" figure=false %}
 
@@ -1558,9 +1556,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 #### notAuthorized
 
-{% include _callout-note.liquid content=
- "This is a new message (added above). The user is authenticated (known to FusionAuth), but they are not authorized to use our application."
-%}
+This is a new message (added above). The user is authenticated (known to FusionAuth), but they are not authorized to use our application.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authorized.png" alt="User not authorized." class="img-fluid" figure=false %}
 
@@ -1568,9 +1564,7 @@ With this code (and a small amount of styling code for a logo) our application s
 
 #### notAuthenticated
 
-{% include _callout-note.liquid content=
-"The user is not known to FusionAuth or the application."
-%}
+The user is not known to FusionAuth or the application.
 
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/user-not-authen.png" alt="User not authenticated." class="img-fluid" figure=false %}
 
