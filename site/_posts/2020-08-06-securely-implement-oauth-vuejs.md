@@ -5,7 +5,7 @@ description: This post describes how to securely implement OAuth in a Vue applic
 author: Ashutosh Singh
 image: blogs/oauth-vuejs/how-to-securely-implement-oauth-in-vue-js.png
 category: blog
-updated_date: 2021-03-16
+updated_date: 2021-03-29
 tags: client-javascript, tutorial, tutorial-vue
 excerpt_separator: "<!--more-->"
 ---
