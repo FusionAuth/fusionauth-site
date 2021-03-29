@@ -16,6 +16,21 @@ Here are some guidelines to follow when writing documentation (everything under 
 - If something is new in a version, mark it with something like this:
 - If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
 
+- When writing posts, you have access to callouts.
+  ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
+  ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
+  ![tip-call](https://user-images.githubusercontent.com/16090626/112875862-f7f2d680-9081-11eb-845f-09c37a7bcf6d.png)
+
+  - There are three callout liquid files `_callout-tip`, `_callout-important`, `_callout-note`
+  - They can be accessed as so:
+    ```markdown
+    {% include _callout-tip.liquid
+    content=
+    "<your-content-here-and-markdown-compatible-strings-accepted>"
+    %}
+    ```
+
+
 [NOTE.since]
 ====
 Available Since Version 1.5.0
