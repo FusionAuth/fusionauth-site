@@ -43,6 +43,7 @@ For blog posts:
 - Single spaces should be used instead of double spaces after a period.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
 - Blog post headers should have only the first word and any proper nouns are capitalized.
+  (quick check is: `grep '^## \([^ ].*\)\{0,1\}' site/_posts/<post>.md`)
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
