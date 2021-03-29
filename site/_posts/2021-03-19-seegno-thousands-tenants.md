@@ -81,7 +81,7 @@ We would also like FusionAuth to be compatible with the Kubernetes multi-cluster
 
 **Dan:** Other than the multi-cluster strategy you mention, have you run into any issues with FusionAuth in Kubernetes?
 
-**John:** We struggle a bit to run multiple FusionAuth instances in Kubernetes. We usually have more than one replica of each service and to do this in Kubernetes we normally only need to indicate the number of replicas we want. But with FusionAuth this can't be done because each replica needs to know its URL through `FUSIONAUTH_APP_URL` environment variable. 
+**John:** We struggle a bit to run multiple FusionAuth instances in Kubernetes. We usually have more than one replica of each service and to do this in Kubernetes we normally only need to indicate the number of replicas we want. But with FusionAuth this can't be done because each replica needs to know its URL through the `FUSIONAUTH_APP_URL` environment variable. 
 
 To work around this issue and have at least two replicas of FusionAuth we need to create two separate deployments, each with just one replica, and then create a service pointing to these two deployments.
 
