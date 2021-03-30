@@ -54,7 +54,7 @@ You want the user login experience to be as smooth as possible while minimizing 
 
 Listen to your users when you are discussing MFA requirements. You don't want them to circumvent MFA. At the same time they may need to be educated on the benefits. How many of you know people who still write down passwords on post-it notes? I do.
 
-Acknowledge and address the balance between the friction of the user login experience and the risk of account compromise. Do so in the context of the data your system secures; different data requires different levels of assurance. If your site lets users vote on cat pictures, MFA may never be required. If your site lets users transfer money, or digital assets similar to money, to complete strangers on the internet, on the other hand, it should require MFA.
+Acknowledge and address the balance between the friction of the user login experience and the risk of account compromise. Do so in the context of the data your system secures; different data requires different levels of assurance. If your site lets users vote on cat pictures, MFA may never be required. On the other hand, if your site lets users transfer money to complete strangers on the internet, require additional factors of authentication.
 
 These scenarios are at opposite ends of the security and user experience spectrum, and the case for MFA, or not, can be made rather easily. More difficult decisions are required when the answer isn't obvious. 
 
@@ -116,13 +116,13 @@ Some data, such as the username and password, is explicitly provided to the syst
 
 Such implicit data can help determine if the authentication request is legitimate. For instance, if a user accesses a system from the USA and 24 hours later there is another request from Germany with the same credentials, is the latter valid? Could be, but it could also be that the request from Germany is due to a compromised account. Requiring MFA at such a time allows you to apply extra scrutiny to strange requests.
 
-Another example where you might want additional authentication factors is when a user logs in from a new device. Popular SaaS applications such as Google's GSuite and Mailchimp can be configured to require MFA for only the initial authentication from a new device.
+Another example where you might want additional authentication factors is when a user logs in from a new device or IP. Popular SaaS applications such as Google's GSuite and Mailchimp can be configured to require MFA for only the initial authentication from a new location.
 
 ### Applying MFA requirements
 
-Put the MFA requirement configuration in a central location in your application to make it easier to modify. Tying it tightly to the authentication system generally makes sense. Choices about when to require MFA change over time as a system evolves. New features are built. Different types of users are supported.
+Put the MFA requirement configuration in a central location in your application to make it easier to modify. This policy configuration should itself be protected and only allow access to privileged users with recent multi-factor authentication. 
 
-This policy configuration should itself be protected and only allow access to privileged users with recent multi-factor authentication.
+Tying it tightly to the authentication system generally makes sense. Choices about when to require MFA change over time as a system evolves. New features are built. Different types of users are supported.
 
 If you don't have organization or user wide policies, at the least allow users to set up MFA. Doing so allows security conscious users to protect their account. They can evaluate their own security posture and make their own sensible choices. For example, one person may run their entire life through their Gmail account, while others may use Gmail only occasionally as a throwaway email address. In the former case, MFA makes sense; in the latter it may not.
 
