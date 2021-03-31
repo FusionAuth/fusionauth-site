@@ -1,11 +1,12 @@
 ---
 layout: blog-post
 title: User registration and sign-in with Laravel and FusionAuth
-description: We'll build a Laravel application that delegates user management, registration and login to FusionAuth.
+description: We'll build a Laravel application that delegates user management, registration, and login to FusionAuth.
 author: Karl Hughes
 image: blogs/fusionauth-laravel/user-registration-sign-in-laravel-fusionauth.png
 category: blog
-tags: client-php
+updated-date: 2020-30-03
+tags: client-php, tutorial, tutorial-laravel
 excerpt_separator: "<!--more-->"
 ---
 
@@ -46,6 +47,10 @@ composer create-project --prefer-dist laravel/laravel fusionauth-laravel
 
 There are several other options for [installing](https://laravel.com/docs/7.x#installation) and [configuring](https://laravel.com/docs/7.x#configuration) Laravel, so be sure to check out the documentation. Once you've installed Laravel, you can use [Homestead](https://laravel.com/docs/7.x/homestead), [Valet](https://laravel.com/docs/7.x/valet), [Docker](https://www.digitalocean.com/community/tutorials/how-to-set-up-laravel-nginx-and-mysql-with-docker-compose), or [PHP's built-in webserver](https://scotch.io/tutorials/prototype-quickly-in-laravel-with-phps-built-in-server-and-sqlite) to run it locally.
 
+{% include _callout-tip.liquid content=
+"One simple option to run your site locally is the command `php artisan serve`"
+%}
+
 ## Installing and configuring the FusionAuth PHP package
 After you create the new Laravel application, you can use Composer to install the [FusionAuth PHP Client](https://fusionauth.io/docs/v1/tech/client-libraries/php). This will allow you to connect to the FusionAuth instance:
 
@@ -64,6 +69,10 @@ FUSIONAUTH_BASE_URL=http://localhost:9011
 Finally, you can take advantage of [Laravel's dependency injection system](https://laravel.com/docs/7.x/providers) by registering the `FusionAuthClient` in the `boot()` method of your `app/Providers/AppServiceProvider.php` file:
 
 ```php
+//...
+use FusionAuth\FusionAuthClient;
+//...
+
 class AppServiceProvider extends ServiceProvider
 {
   //...
@@ -82,14 +91,9 @@ Including the `FusionAuthClient` in Laravel's service provider will allow you to
 At this point, your Laravel application is ready to connect to your FusionAuth instance. Next, you will create the Views and Controllers that will handle the display and business logic.
 
 ## Registering a new user
-You'll need to create two routes to register new users: one to display the registration form and another to process the data and interact with the FusionAuth client. Add the following lines to your `routes/web.php` file:
 
-```php
-Route::view('/register', 'register');
-Route::post('/register', 'RegisterUser');
-```
 
-Next, you will need to create a [view file](https://laravel.com/docs/7.x/views) to display the registration form. Create a new view called `register.blade.php` in the `resources/views/` directory of your Laravel app:
+We are going to create a form and layout to register users. You will need to create a [view file](https://laravel.com/docs/7.x/views) to display the registration form. Create a new view called `register.blade.php` in the `resources/views/` directory of your Laravel app:
 
 ```html
 @extends('layout')
@@ -131,7 +135,7 @@ You'll notice that this file requires a [Layout file as well](https://laravel.co
 
 This layout file brings in a stylesheet that includes [Pure CSS](https://purecss.io/) - a minimal web styling library - and a container for our app's primary content. These styles are purely cosmetic, so feel free to use your own stylesheets instead.
 
-Next, create a new controller using the [Artisan command line tool](https://laravel.com/docs/7.x/artisan):
+Next, create a new register user controller using the [Artisan command line tool](https://laravel.com/docs/7.x/artisan):
 
 ```shell
 php artisan make:controller RegisterUser --invokable
@@ -147,6 +151,11 @@ In this [single action controller](https://laravel.com/docs/7.x/controllers#sing
 Open up the `app/Http/Controllers/RegisterUser.php` file created by the Artisan command above and add the following:
 
 ```php
+//..
+use FusionAuth\FusionAuthClient;
+//..
+
+//..
 class RegisterUser extends Controller
 {
   private $authClient;
@@ -178,23 +187,44 @@ class RegisterUser extends Controller
     return redirect('/');
   }
 }
+//..
 ```
 
-_Note: FusionAuth includes several other options for user registration. Be sure to [check out the documentation](https://fusionauth.io/docs/v1/tech/apis/registrations) to make sure you include all the appropriate options._
+Finally, you'll need to create two routes to register new users: one to display the registration form and another to process the data and interact with the FusionAuth client. Add the following lines to your `routes/web.php` file (remove the welcome route):
+
+```php
+Route::view('/register', 'register');
+Route::post('/register', 'RegisterUser');
+```
+
+{% include _callout-note.liquid content=
+"FusionAuth includes several other options for user registration. Be sure to [check out the documentation](https://fusionauth.io/docs/v1/tech/apis/registrations) to make sure you include all the appropriate options."
+%}
 
 At this point, you should be able to access the `/register` route in your Laravel application and successfully register a new user in FusionAuth.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/fusionauth-2020-05-22-a.png" alt="The registration page for a Laravel application using FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/welcome-screen-login.png" alt="The registration page for a Laravel application using FusionAuth." class="img-fluid" figure=false %}
+
+{% include _callout-important.liquid content=
+"If you get stuck at this point, remember to import the FusionAuth client into your controller - `use FusionAuth\FusionAuthClient;`"
+%}
+
+##  Let's take a look at our progress
+
+No users have been added or registered yet!
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/no-user-registration.png" alt="No users in our application yet!" class="img-fluid" figure=false %}
+
+Our newly registered user!
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/new-user-registered.png" alt="We have a new user!" class="img-fluid" figure=false %}
+
+They even have a cool default avatar!
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/new-user-assigned-to-application.png" alt="They are assigned to our application" class="img-fluid" figure=false %}
 
 ## Logging a user in
-Now that users can register a new account, you'll need to allow them to login using the email and password they created during registration. This will require two new routes, so open your `routes/web.php` file again and add the following lines:
-
-```php
-Route::view('/', 'login');
-Route::post('/login', 'LoginUser');
-```
-
-The first route will display a new view file that includes an email and password input field. The second route will use a new action controller to log a user in via FusionAuth.
+Now that users can register a new account, you'll need to allow them to login using the email and password they created during registration.
 
 The login form is very similar to the registration form created in the previous step, but it will submit entries to the `/login` route instead of `/register`. Create a new file at `resources/views/login.blade.php` and add the HTML below:
 
@@ -218,7 +248,7 @@ The login form is very similar to the registration form created in the previous 
 @endsection
 ```
 
-Finally, to process user logins, you'll need to create another single action controller. First, run the artisan command:
+To process user logins, you'll need to create another single action controller. First, run the artisan command:
 
 ```shell
 php artisan make:controller LoginUser --invokable
@@ -229,6 +259,11 @@ This time, your controller will use the `login()` method of the FusionAuth PHP C
 Open the `app/Http/Controllers/LoginUser.php` file and add the following:
 
 ```php
+//..
+use FusionAuth\FusionAuthClient;
+//..
+
+//..
 class LoginUser extends Controller
 {
   private $authClient;
@@ -257,11 +292,23 @@ class LoginUser extends Controller
     return redirect('profile');
   }
 }
+//..
 ```
 
-_Note: When users are logged in, FusionAuth also returns a JWT token. If you're building a single page application or want to perform client-side requests, [check out the documentation](https://fusionauth.io/docs/v1/tech/apis/jwt) for details._
+Finally, this will require two new routes, so open your `routes/web.php` file again and add the following lines:
 
-Now when you login using the new form, you'll be redirected to `/profile`, but that page doesn't exist yet.
+```php
+Route::view('/', 'login');
+Route::post('/login', 'LoginUser');
+```
+
+The first route will display a new view file that includes an email and password input field. The second route will use a new action controller to log a user in via FusionAuth.
+{% include _callout-tip.liquid content="When users are logged in, FusionAuth also returns a JWT token. If you're building a single page application or want to perform client-side requests, [check out the documentation](https://fusionauth.io/docs/v1/tech/apis/jwt) for details."
+%}
+
+Now when you login using the new form, you'll be redirected to `/profile`, but that page doesn't exist yet (hence, the 404 error)
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/logging-user-in.png" alt="They are assigned to our application" class="img-fluid" figure=false %}
 
 ## Showing the current user's profile
 Users shouldn't be able to access the `/profile` route until they've logged in, and your application has stored their user data into session storage. Laravel uses the concept of [Middleware](https://laravel.com/docs/7.x/middleware) to protect specific routes from unauthorized access.
@@ -311,28 +358,34 @@ Now you can create a `profile.blade.php` file in your `resources/views/` directo
 ```
 {% endraw %}
 
-Any other user data you choose to store in FusionAuth will be available in the `session()->get('user')` array if you'd like to show it to logged in users.
+Any other user data you choose to store in FusionAuth will be available in the `session()->get('user')` array if you'd like to show it to logged-in users.
 
 When you log in, you should see a profile page that looks something like this:
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/fusionauth-2020-05-22-b.png" alt="The profile page for a Laravel application using FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/profile-user-view.png" alt="The profile page for a Laravel application using FusionAuth." class="img-fluid" figure=false %}
 
 ## Logging out
-Finally, you can create a controller and route that will flush a user's session data and call the `FusionAuthClient::logout()` method, logging them out of the application. Again, open up your `routes/web.php` file and add a new `logout` route:
+Finally, you can create a controller and route that will flush a user's session data and call the `FusionAuthClient::logout()` method, logging them out of the application.
 
-```php
-Route::get('/logout', 'LogoutUser');
-```
-
-And create a new controller using the Artisan command:
+Use the following Artisan command to create a new controller:
 
 ```shell
 php artisan make:controller LogoutUser --invokable
 ```
 
+Again, open up your `routes/web.php` file and add a new `logout` route:
+
+```php
+Route::get('/logout', 'LogoutUser');
+```
+
 Open the `app/Http/Controllers/LogoutUser.php` file and add the following:
 
 ```php
+//...
+use FusionAuth\FusionAuthClient;
+//...
+
 class LogoutUser extends Controller
 {
   private $authClient;
@@ -355,6 +408,7 @@ class LogoutUser extends Controller
 Now when a logged-in user viewing their profile clicks the `Logout` link, Laravel will delete their session data and send them back to the home page to login.
 
 ## Conclusion and next steps
+
 I hope this minimal working example gives you a good starting point for integrating FusionAuth into your Laravel application. There are many other things you should consider if you're building authentication into a production application. For example, I've added [flash messages](https://laravel.com/docs/7.x/session#flash-data) for errors and successes to the [code repository on Github](https://github.com/FusionAuth/fusionauth-example-laravel). You will probably also want to create other workflows like deleting users, updating emails and passwords, setting user roles and permissions, and forgot password workflows. All of these things are possible using FusionAuth and Laravel.
 
 If you have questions or need help integrating your Laravel application with FusionAuth, feel free to leave a comment below.
