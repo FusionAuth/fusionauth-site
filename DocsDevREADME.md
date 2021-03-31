@@ -14,6 +14,12 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
 - If something is new in a version, mark it with something like this:
+
+  [NOTE.since]
+  ====
+  Available Since Version 1.5.0
+  ====
+
 - If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
 
 - When writing posts, you have access to callouts.
@@ -31,10 +37,6 @@ Here are some guidelines to follow when writing documentation (everything under 
     ```
 
 
-[NOTE.since]
-====
-Available Since Version 1.5.0
-====
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_`.
 - If you are including a file in the docs/asciidoctor, do not prepend the include file path with `/`. Instead, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
 
