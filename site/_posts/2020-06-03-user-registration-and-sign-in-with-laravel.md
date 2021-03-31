@@ -203,15 +203,15 @@ Route::post('/register', 'RegisterUser');
 
 At this point, you should be able to access the `/register` route in your Laravel application and successfully register a new user in FusionAuth.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/welcome-screen-login.png" alt="The registration page for a Laravel application using FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/new-user-register.png" alt="The registration page for a Laravel application using FusionAuth." class="img-fluid bottom-cropped" figure=false %}
 
-{% include _callout-important.liquid content=
-"If you get stuck at this point, remember to import the FusionAuth client into your controller - `use FusionAuth\FusionAuthClient;`"
+{% include _callout-tip.liquid content=
+"Getting Errors at this point?  One common mistake is forgetting to import the FusionAuth client into your controller - `use FusionAuth\FusionAuthClient;`"
 %}
 
 ##  Let's take a look at our progress
 
-No users have been added or registered yet!
+Previous to the registration step above, no new users had been added or registered yet.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/no-user-registration.png" alt="No users in our application yet!" class="img-fluid" figure=false %}
 
@@ -219,7 +219,7 @@ Our newly registered user!
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/new-user-registered.png" alt="We have a new user!" class="img-fluid" figure=false %}
 
-They even have a cool default avatar!
+Our user even has a cool default avatar!
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/new-user-assigned-to-application.png" alt="They are assigned to our application" class="img-fluid" figure=false %}
 
@@ -302,7 +302,10 @@ Route::view('/', 'login');
 Route::post('/login', 'LoginUser');
 ```
 
-The first route will display a new view file that includes an email and password input field. The second route will use a new action controller to log a user in via FusionAuth.
+The first route will display a new view file that includes an email and password input field. The second route will use a new action controller to log a user in via FusionAuth.  Your login page should look like this:
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/login-page.png" alt="The profile page for a Laravel application using FusionAuth." class="img-fluid bottom-cropped" figure=false %}
+
 {% include _callout-tip.liquid content="When users are logged in, FusionAuth also returns a JWT token. If you're building a single page application or want to perform client-side requests, [check out the documentation](https://fusionauth.io/docs/v1/tech/apis/jwt) for details."
 %}
 
@@ -362,7 +365,7 @@ Any other user data you choose to store in FusionAuth will be available in the `
 
 When you log in, you should see a profile page that looks something like this:
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/profile-user-view.png" alt="The profile page for a Laravel application using FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/profile-user-view.png" alt="The profile page for a Laravel application using FusionAuth." class="img-fluid bottom-cropped" figure=false %}
 
 ## Logging out
 Finally, you can create a controller and route that will flush a user's session data and call the `FusionAuthClient::logout()` method, logging them out of the application.
@@ -373,13 +376,13 @@ Use the following Artisan command to create a new controller:
 php artisan make:controller LogoutUser --invokable
 ```
 
-Again, open up your `routes/web.php` file and add a new `logout` route:
+Now open up your `routes/web.php` file and add a new `logout` route:
 
 ```php
 Route::get('/logout', 'LogoutUser');
 ```
 
-Open the `app/Http/Controllers/LogoutUser.php` file and add the following:
+Finally, open the `app/Http/Controllers/LogoutUser.php` file and add the following:
 
 ```php
 //...
