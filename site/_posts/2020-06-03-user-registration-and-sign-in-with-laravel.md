@@ -206,7 +206,7 @@ At this point, you should be able to access the `/register` route in your Larave
 {% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/new-user-register.png" alt="The registration page for a Laravel application using FusionAuth." class="img-fluid bottom-cropped" figure=false %}
 
 {% include _callout-tip.liquid content=
-"Getting Errors at this point?  One common mistake is forgetting to import the FusionAuth client into your controller - `use FusionAuth\FusionAuthClient;`"
+"Getting errors at this point?  One common mistake is forgetting to import the FusionAuth client into your controller - `use FusionAuth\FusionAuthClient;`"
 %}
 
 ##  Let's take a look at our progress
@@ -376,13 +376,7 @@ Use the following Artisan command to create a new controller:
 php artisan make:controller LogoutUser --invokable
 ```
 
-Now open up your `routes/web.php` file and add a new `logout` route:
-
-```php
-Route::get('/logout', 'LogoutUser');
-```
-
-Finally, open the `app/Http/Controllers/LogoutUser.php` file and add the following:
+Now open the `app/Http/Controllers/LogoutUser.php` file and add the following:
 
 ```php
 //...
@@ -406,6 +400,12 @@ class LogoutUser extends Controller
     return redirect('/');
   }
 }
+```
+
+Finally, open up your `routes/web.php` file and add a new `logout` route:
+
+```php
+Route::get('/logout', 'LogoutUser');
 ```
 
 Now when a logged-in user viewing their profile clicks the `Logout` link, Laravel will delete their session data and send them back to the home page to login.
