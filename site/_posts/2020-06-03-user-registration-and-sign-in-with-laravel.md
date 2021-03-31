@@ -311,7 +311,7 @@ The first route will display a new view file that includes an email and password
 
 Now when you login using the new form, you'll be redirected to `/profile`, but that page doesn't exist yet (hence, the 404 error)
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/logging-user-in.png" alt="They are assigned to our application" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/404-error.png" alt="They are assigned to our application" class="img-fluid" figure=false %}
 
 ## Showing the current user's profile
 Users shouldn't be able to access the `/profile` route until they've logged in, and your application has stored their user data into session storage. Laravel uses the concept of [Middleware](https://laravel.com/docs/7.x/middleware) to protect specific routes from unauthorized access.
