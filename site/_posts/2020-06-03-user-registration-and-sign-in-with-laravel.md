@@ -302,7 +302,7 @@ Route::view('/', 'login');
 Route::post('/login', 'LoginUser');
 ```
 
-The first route will display a new view file that includes an email and password input field. The second route will use a new action controller to log a user in via FusionAuth.  Your login page should look like this:
+The first route will display a new view file that includes an email and password input field. The second route will use a new action controller to log a user in via FusionAuth. Your login page should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/login-page.png" alt="The profile page for a Laravel application using FusionAuth." class="img-fluid bottom-cropped" figure=false %}
 
