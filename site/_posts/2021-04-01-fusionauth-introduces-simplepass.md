@@ -30,6 +30,10 @@ DeGroff continued: "We just store their plain-text password in the FusionAuth da
 
 Understandably proud of the team and their recent breakthrough, DeGroff confidently added "We're disrupting passwords. I don't even know what that means, but I'm pretty sure that is what is happening."
 
+Here's a brief demo showing this innovative new technology:
+
+{% include _youtube-video.liquid youtubeid="OjvLnZVNaKQ" %}
+
 CEO Brian Pontarelli was skeptical of the technology at first. However, when shown how easy it allowed him to log into his Hotmail account, he was blown away. 
 
 
