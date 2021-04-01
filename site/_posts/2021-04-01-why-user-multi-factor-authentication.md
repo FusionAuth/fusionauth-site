@@ -3,7 +3,7 @@ layout: blog-post
 title: The what, why and when of multi-factor authentication (MFA)
 description: What is multi-factor authentication (MFA) and when should developers require it?
 author: Dan Moore
-image: blogs/orbitvu-fusionauth-story/orbitvu-chose-fusionauth-for-architectural-flexibility-great-support-and-customizability-header-image.png
+image: blogs/what-where-why-mfa/the-what-why-and-when-of-multi-factor-authentication-mfa-header-image.png
 category: blog
 tags: topic-feature-mfa
 excerpt_separator: "<!--more-->"
