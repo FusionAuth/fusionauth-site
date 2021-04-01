@@ -40,7 +40,7 @@ Pontarelli went on to say "This technology is so important for the whole world. 
 
 > SimplePass&trade; Disrupting passwords, since now.
 
-Brian went on to share that as part of the R&D process, extensive user experience testing was performed to validate the research. In one trial, FusionAuth presented two login forms to [Peter Starke, a systems analyst](https://www.theonion.com/most-popular-passwords-of-year-include-123456-password-1821529484). One was the typical username and password (boring) and the other used the SimplePass&trade; technology.
+A FusionAuth representative explained that as part of the R&D process, extensive user experience testing was performed to validate the research. In one trial, FusionAuth presented two login forms to [Peter Starke, a systems analyst](https://www.theonion.com/most-popular-passwords-of-year-include-123456-password-1821529484). One was the typical username and password (boring) and the other used the SimplePass&trade; technology.
 
 Peter was quick to choose the form with SimplePass&trade; technology stating "I mean, it types the password for me! Now I don't have to remember anything to log into my bank account. It's great! Maybe they could work on entering my email address, I'm always forgetting that too."
 
