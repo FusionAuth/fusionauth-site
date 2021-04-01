@@ -3,7 +3,7 @@ layout: blog-post
 title: FusionAuth releases SimplePass(tm), disrupts passwords
 description: Why enter a password when the system can do it for you?
 author: Dan Moore
-image: blogs/seegno-fusionauth/seegno-manages-thousands-of-tenants-with-fusionauth-and-kubernetes-header-image.png
+image: tbd
 category: blog
 excerpt_separator: "<!--more-->"
 ---
@@ -26,7 +26,7 @@ As part of extensive user experience testing, FusionAuth presented two login for
 
 Peter was quick to choose the SimplePass form: "I mean, it types the password for me! Now I don't have to remember anything to log into my bank account. It's great! But not perfect. Maybe they could work on entering my email address too."
 
-TBD IMAGE
+{% include _image.liquid src="/assets/img/blogs/simplepass/simplepass-in-action.png" alt="The majesty of SimplePass(tm)" class="img-fluid" figure=false %}
 
 Since the announcement, FusionAuth has come under fire from industry security experts. They state that this feature, while helpful to users and a benefit to the login experience, may be open to exploit by experienced hackers.
 
