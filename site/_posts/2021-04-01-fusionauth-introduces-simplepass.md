@@ -34,7 +34,7 @@ Said Pontarelli, "I thought Passwordless was the future, I suppose everyone did.
 
 Pontarelli went on to say "This technology is so important for the whole world. We are making the technology publicly available today and I will call it SimplePass&trade;, because it's so simple."
 
-> SimplePass&trade; Disrupting passwords, since now.
+> SimplePass&trade; - Disrupting passwords, since now.
 
 As part of the R&D process, extensive user experience testing was performed to validate the research. In one trial, FusionAuth presented two login forms to [Peter Starke, a systems analyst](https://www.theonion.com/most-popular-passwords-of-year-include-123456-password-1821529484). One was the typical username and password (boring) and the other used the SimplePass&trade; technology.
 
