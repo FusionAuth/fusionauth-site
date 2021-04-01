@@ -24,7 +24,7 @@ It's long been known that passwords are:
 
 The FusionAuth R&D team, with decades of experience in security and software development, saw a clear market opportunity and went to work.
 
-"The feature is remarkably simple" said CTO Daniel DeGroff. "Rather than requiring an email address AND password to login, now we just ask them for their email. Then FusionAuth shows them their password. We literally show the user their plain text password. We store it in plain text anyway, so we thought, what the hell! We can even enter their password in for them if they don't know how to copy and paste."
+"The feature is remarkably simple," said CTO Daniel DeGroff. "Rather than requiring an email address AND password to login, now we just ask them for their email. Then FusionAuth shows them their password. We literally show the user their plain text password. We store it in plain text anyway, so we thought, what the hell! We can even enter their password in for them if they don't know how to copy and paste."
 
 DeGroff continued: "We just store their plain-text password in the FusionAuth database, retrieve it, and show them! Plus, we can even type their password in for them if they don't know how to copy and paste. After completing the initial prototype we looked at each other and said 'Holy $@%!, I can't believe nobody thought of this before'. I'll never forget it."
 
