@@ -9,7 +9,7 @@ tags: topic-feature-mfa
 excerpt_separator: "<!--more-->"
 ---
 
-As more of our lives and data move online, multi-factor authentication (MFA) becomes increasingly important to help keep our accounts secure. As a user, you should enable MFA on accounts with valuable data. But as a developer or software creator, you need a deeper understanding of MFA, why it's important and when to require it. Account security is no April Fool's joke.
+As more of our lives and data move online, multi-factor authentication (MFA) becomes increasingly important to help keep our accounts secure. As a user, you should enable MFA on accounts with valuable data. But as a developer or software creator, you need a deeper understanding of MFA, why it's important and when to require it. 
 
 <!--more-->
 
