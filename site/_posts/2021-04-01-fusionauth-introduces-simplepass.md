@@ -56,3 +56,5 @@ However, the FusionAuth team would like to address some criticism. Since the ann
 These "experts" state that this feature, while helpful to users and obviously beneficial to the login  experience, could be exploited by experienced hackers.
 
 Our reply: "Haters gonna hate. You don't know crap about security."
+
+**Also, Happy April Fool's Day!**
