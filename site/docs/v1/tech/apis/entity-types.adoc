@@ -17,7 +17,7 @@ This page contains the APIs for managing Entity Types. Here are the APIs:
 * <<Retrieve an Entity Type>>
 * <<Update an Entity Type>>
 * <<Delete an Entity Type>>
-* Search Entity Types TODO
+* <<Search for an Entity Type>>
 * Permissions Grant TODO
 
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
@@ -162,57 +162,53 @@ This API does not return a JSON response body.
 
 include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
 
-== Send an Email
 
-This API is used to send an Email to one or more users using an Entity Type.
+== Search for an Entity Type
+
+This API is used to search for matching Entity Types. 
 
 === Request
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send an entity using a type by Id
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Search Entity Types
 [.endpoint]
 .URI
 --
-[method]#POST# [uri]#/api/entity/send/`\{entityTypeId\}`#
+[method]#GET# [uri]#/api/entity/type/search?``name=\{name\}``#
 --
 
 ==== Request Parameters
 
 [.api]
-[field]#entityTypeId# [type]#[UUID]# [required]#Required#::
-The Id of the Entity Type to use to generate the Email from.
+[field]#name# [type]#[String]# [required]#Required#::
+The name of the Entity Type for which to search. 
++
+The search matches against the name field and any entity type matching. The match is case-insensitive, and you may not search by prefix or suffix. Whitespace is not allowed in the search. Regular expressions may not be used. A value of `*` will match all records.
 
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+The number of results to return from the search.
 
-==== Request Body
+[field]#orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `name ASC`#::
+The database column to order the search results on plus the order direction.
++
+The columns you can use for this are:
++
+* `insert_instant` - the link:/docs/v1/tech/reference/data-types/#instants[instant] when the Event Type was created
+* `lastUpdateInstant` - the link:/docs/v1/tech/reference/data-types/#instants[instant] when the Event Type was last updated
+* `name` - the name of the Event Type
++
+For example, to order the results by the insert instant in a descending order, the value would be provided as `insert_instant DESC`. The final string is optional can be set to `ASC` or `DESC`.
 
-[.api]
-[field]#bccAddresses# [type]#[Array<String>]# [optional]#Optional#::
-A list of entity addresses to BCC when sending the Email.
-
-[field]#ccAddresses# [type]#[Array<String>]# [optional]#Optional#::
-A list of entity addresses to CC when sending the Email.
-
-[field]#requestData# [type]#[Object]# [optional]#Optional#::
-An optional JSON object that is passed to the Entity Type during rendering. The variables in the JSON object will be accessible to the FreeMarker types of the Entity Type.
-
-[field]#userIds# [type]#[Array<UUID>]# [required]#Required#::
-The list of User Ids to send the Email to. You must specify at least one Id.
-
-[source,json]
-.Example Request JSON
-----
-include::docs/src/json/entity-types/send-request.json[]
-----
+[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#::
+The offset into the total results. In order to paginate the results, increment this value by the [field]#numberOfResults# for subsequent requests.
 
 === Response
 
-:success_code: 202
-:success_message: The request was successful. The response will contain a JSON body. If the JSON body is empty the type was rendered correctly and queued to be sent for all user Ids provided. If one or more failed the response will contain errors in the response format documented below.
-include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+The response for this API contains the Entity Type matching the search criteria in paginated format.
 
-include::docs/v1/tech/apis/_send-response-body.adoc[]
+:no_errors:
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+:no_errors!:
 
-// Unset the variables used in this part.
-:success_code!:
-:success_message!:
+include::docs/v1/tech/apis/_entity-types-response-body.adoc[]
+
