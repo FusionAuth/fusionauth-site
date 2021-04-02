@@ -25,6 +25,10 @@ There also may be situations where you have settings that need to be different f
 
 == Multi-Tenant Concepts
 
+XXX TODO?
+
+To make things a bit more concrete, let's use an example. Let's talk about Pied Piper video chat. It will be so much better than Slack chat with patented middle out compression. This application will have multiple tenants. Every one who signs up will get a domain name like `companyx.piedpiper.com`.
+
 Before this guide covers how to set up multi-tenancy, let's cover what can be configured at the tenant level. There are five general categories of modifiable entities in FusionAuth:
 
 * Tenant scoped entities
@@ -33,9 +37,13 @@ Before this guide covers how to set up multi-tenancy, let's cover what can be co
 * Application attached entities
 * Global "things"
 
-A "scoped" entity is contained within the enclosing entity, and if the latter is deleted, the former will be as well. For instance, a user is scoped to a tenant, and if that tenant is deleted, the user will be as well.
+A "scoped" entity is contained within the enclosing entity, and if the latter is deleted, the former will be as well. For instance, a user is scoped to a tenant, and if that tenant is deleted, the user will be as well. 
 
-An "attached" entity is affiliated with an enclosing entity, but if the latter is deleted, the former will continue to exist. For instance, a signing key is associated with a tenant's JWT configuration. If that tenant is deleted, the signing key's association with the tenant is removed, but the tenant is not.
+Scoped entities cannot be shared between multiple entities to which they are scoped. If the Pied Piper chat application needs groups for different user privileges, each tenant would have its own "Admin Group", "Moderator Group" and so on.
+
+An "attached" entity is affiliated with an enclosing entity, but if the latter is deleted, the former will continue to exist. For instance, a signing key is associated with a tenant's JWT configuration. If that tenant is deleted, the signing key's association with the tenant is removed, but the tenant is not. 
+
+Attached entities can be re-used between entities. For example, if the Pied Piper chat application needs to add a user privilege claim to a JWT, the same Lambda can be used.
 
 TODO extract to share with core concepts?
 
@@ -45,6 +53,7 @@ Here is a list of tenant scoped entities:
 
 * Users
 * Groups
+* API Keys (optionally)
 * Applications
 
 === Tenant Attached Entities
@@ -54,12 +63,10 @@ Here is a partial list of tenant attached entities:
 * Email templates (some of them)
 * Forms (some of them)
 * Themes
-* API Keys (optionally)
 * Connectors
 * Consents
 * User actions
 * Webhooks
-
 
 === Application Scoped Entities
 
@@ -68,7 +75,7 @@ Here is a list of application scoped entities.
 * Registrations
 * Roles
 
-Because an application is tenant scoped, these entities are also scoped to a tenant and cannot be used across tenants. For example, if a tenant containing the containing application is deleted, the registrations for a given application will also be deleted.
+Because an application is tenant scoped, the above entities are also scoped to a tenant. They cannot be used across tenants. For example, if a tenant containing the containing application is deleted, the registrations for a given application will also be deleted.
 
 === Application Attached Entities
 
@@ -79,50 +86,122 @@ Here is a partial list of application attached entities:
 * Forms (some of them)
 * Lambdas
 
-You can separate the attached items by
-
 === Global "Things"
 
-These are items that are shared between tenant.
+There are entities which are global in scope. These are typically scoped under `system` in the API namespace.
 
 * API Keys (optionally)
 * Login reports?
+* Logs
 
-Additionally, there are configuration settings for CORS which are shared between all the tenants in 
+Additionally, there are configuration settings for CORS which are shared between all the tenants in an instance.
 
-The administrative user interface is also shared between tenants. There is an https://github.com/FusionAuth/fusionauth-issues/issues/91[open issue], but currently there is no way to grant access to the FusionAuth administrative user interface and limit the user to a single tenant's settings.
+The administrative user interface is also shared between tenants. There is no way to grant access to the FusionAuth administrative user interface but limit the user to a single tenant. There is an https://github.com/FusionAuth/fusionauth-issues/issues/91[open issue].
 
-If you need separation of these global elements, or if you need true physical separation due to different regulatory regimes, you can always run multiple FusionAuth instances. To keep configuration in sync between them, you should script all changes using the API or client libraries.
-
-
-
-Useful FusionAuth multi-tenant concepts (could probably go into core concepts too)
-Definition and examples of tenant scoped entities (things contained within a tenant)
-User
-Application
-…
-Definition and examples of tenant attached entities (things that are attached to an tenant, but exist outside of a tenant) 
-User self service registration form
-Keys
-Connectors
-Definition and examples of application scoped entities
-Registrations
-Definition and examples of application attached entities 
-Identity providers
-Groups
-Definition and examples of global scoped things
-CORS settings
-Event logs
-Access to FusionAuth admin panel (link to issue)
+If you need separation of global configuration, or if you need true physical separation due to different regulatory regimes, you can run multiple FusionAuth instances. If you need to sync configuration between them, script your changes using the API, terraform provider, or client libraries.
 
 == Example Application
-Let’s build a multi tenant, private labelled “pied piper video chat”. Just like slack, but with middle out compression. We want to let people sign up and get their own tenant.
-Functionality
-A management tenant for people who want the private labelled app to sign up in.
-app.piedpiper.com
-Self registration with tenant hostname (dan-test) and some css/login background color as attributes
-Company1chat.piedpiper.com
-company2chat.piedpiper.com
+
+Let's continue to build out our Pied Piper video chat application. Let's talk about what this application needs:
+
+* A way for users to sign up to set up a video chat space. This will include their desired hostname: `companyA.chat.piedpiper.com` or `organizationB.chat.piedpiper.com`.
+* A way for users to sign up for a given video chat space: `companyA.chat.piedpiper.com`.
+* A way for users to log in to a specific video chat space: `companyA.chat.piedpiper.com`.
+* Video chat functionality.
+
+This guide will build an application meeting all of these requirements, except for the last one. That is left as an exercise for the reader. Here's https://github.com/FusionAuth/fusionauth-example-python-multi-tenant[the GitHub repo] with working code if you'd like.
+
+=== Prerequisites
+
+This application will be written in using symfony, so you'll need symfony, php and a database. If you don't have that, https://symfony.com/doc/current/setup.html[install symfony], https://www.php.net/manual/en/install.php[php] and https://dev.mysql.com/doc/mysql-installation-excerpt/8.0/en/[mysql]. 
+
+You'll also need to create a mysql user. 
+
+
+https://stackoverflow.com/questions/53066962/an-exception-occurred-in-driver-sqlstatehy000-2054-the-server-requested-aut
+After you create the user, convert their password to the legacy password format
+
+ALTER USER 'username'@'ip_address' IDENTIFIED WITH mysql_native_password BY 'password';
+
+You'll also need a running FusionAuth instance. Visit the link:/docs/v1/tech/installation-guide/[installation guides] and choose one of the many ways to install it.
+
+
+=== Setting Up 
+
+Create the application.
+
+symfony new piedpipervideochat --full --version=lts
+
+We're using LTS since it is supported for a long time. This code is running symfony version 4.4.
+
+cd piedpipervideochat 
+
+require some needed libraries
+composer require symfony/orm-pack; composer require --dev symfony/maker-bundle
+symfony composer require twig
+composer require fusionauth/fusionauth-client
+symfony composer require annotations
+
+start a new tab and start the server
+
+symfony server:start
+
+
+=== Setting Up FusionAuth
+
+Let's manage FusionAuth configuration using the php client and doctrine migrations. 
+
+First, log in to FusionAuth and create an API key. You can do this by navigating to [breadcrumb]#Settings -> API Keys#. Add a global API key with unlimited permissions, since any kind of configuration may be set here.
+
+TBD image
+
+Add the value to your .env.local file
+
+```
+FUSIONAUTH_API_KEY=...
+```
+
+then add the followign to your config/services.yaml
+
+```yaml
+parameters:
+    fusionauth_api_key: '%env(FUSIONAUTH_API_KEY)%' # new line
+```
+
+This lets us pull the API key from the environment, which is less dangerous than checking it in.
+
+FusionAuth ships with a default tenant, but to have full separation, let's add a new tenant. 
+
+
+generate an empty migration
+
+php bin/console doctrine:migrations:generate 
+
+you should see output like
+
+ Generated new migration class to "/Users/dan/work/fusionauth-example-python-multi-tenant/piedpipervideochat/migrations/Version20210401222131.php"
+ 
+ To run just this migration for testing purposes, you can use migrations:execute --up 'DoctrineMigrations\Version20210401222131'
+ 
+ To revert the migration you can use migrations:execute --down 'DoctrineMigrations\Version20210401222131'
+
+edit migrations/Version20210401222131.php
+
+and add in this code
+
+...
+
+You can then run this to see the status of the migration
+
+php bin/console doctrine:migrations:status
+
+and this to run it:
+
+php bin/console doctrine:migrations:execute
+
+This will let you manage the configuration of your FusionAuth server in a version controlled manner.
+
+
 New tenant with one application created on registration via webhook
 Python application handing the tenant hostnames as well as the oauth redirects.
 
