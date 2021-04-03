@@ -4,6 +4,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing. 
 - Use `Id` instead of `ID` when describing a unique identifier
+- Use `logged in` instead of `logged-in`
 - Don't use complex breadcrumbs styling. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`
 - If you are referencing a URL as a setting and don't want it to be hyperlinked, preface it with a `\`. For example: `\https://fusionauth-example.zendesk.com`
 - If you are referencing a field in a form or JSON API doc, use the `[field]` class (rather than backticks): `[field]#Issuer#`
@@ -23,6 +24,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
 
 - When writing posts, you have access to callouts.
+  
   ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
   ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
   ![tip-call](https://user-images.githubusercontent.com/16090626/112875862-f7f2d680-9081-11eb-845f-09c37a7bcf6d.png)
