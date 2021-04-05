@@ -1,11 +1,11 @@
 ---
 layout: blog-post
 title: C# API calls, SMTP configuration and authentication 
-description: Seegno upgraded from their homegrown auth system and uses FusionAuth in Kubernetes as their headless, self-hosted solution.
+description: Top highlights from the FusionAuth forum in March.
 author: Dan Moore
-image: blogs/seegno-fusionauth/seegno-manages-thousands-of-tenants-with-fusionauth-and-kubernetes-header-image.png
+image: blogs/mar-2021-forum-highlights/forum-highlights-c-sharp-api-calls-smtp-configuration-and-authentication-header-image.png
 category: blog
-tags: topic-community-story topic-upgrade-homegrown
+tags: topic-forum-posts client-netcore
 excerpt_separator: "<!--more-->"
 ---
 
