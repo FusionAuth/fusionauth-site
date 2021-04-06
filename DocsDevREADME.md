@@ -4,6 +4,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing. 
 - Use `Id` instead of `ID` when describing a unique identifier
+- Use `logged in` instead of `logged-in`
 - Don't use complex breadcrumbs styling. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`
 - If you are referencing a URL as a setting and don't want it to be hyperlinked, preface it with a `\`. For example: `\https://fusionauth-example.zendesk.com`
 - If you are referencing a field in a form or JSON API doc, use the `[field]` class (rather than backticks): `[field]#Issuer#`
@@ -15,9 +16,16 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
 - If something is new in a version, mark it with something like this:
+
+  [NOTE.since]
+  ====
+  Available Since Version 1.5.0
+  ====
+
 - If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
 
 - When writing posts, you have access to callouts.
+  
   ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
   ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
   ![tip-call](https://user-images.githubusercontent.com/16090626/112875862-f7f2d680-9081-11eb-845f-09c37a7bcf6d.png)
@@ -32,10 +40,6 @@ Here are some guidelines to follow when writing documentation (everything under 
     ```
 
 
-[NOTE.since]
-====
-Available Since Version 1.5.0
-====
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_`.
 - If you are including a file in the docs/asciidoctor, do not prepend the include file path with `/`. Instead, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
 - If a doc gets long consider adding a table of contents in the top section or breaking it into multiple documents. To generate a table of contents from section headers, run this script:
