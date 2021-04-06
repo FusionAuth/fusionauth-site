@@ -17,8 +17,12 @@ This API has been available since 1.26.0
 * <<Retrieve an Entity>>
 * <<Update an Entity>>
 * <<Delete an Entity>>
-* <<Grant a User or Entity Permissions to an Entity>>
 * <<Search for an Entity>>
+* <<Grant a User or Entity Permissions to an Entity>>
+* <<Retrieve an Entity Grant>>
+* <<Delete an Entity Grant>>
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
 == Create an Entity
 
@@ -33,6 +37,8 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 --
 [method]#POST# [uri]#/api/entity#
 --
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-create-operation.adoc[]
 
 [.api-authentication]
 link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Create an Entity with the provided Id
@@ -50,6 +56,8 @@ The Id to use for the new Entity. If not specified a secure random UUID will be 
 
 include::docs/v1/tech/apis/_entity-request-body.adoc[]
 
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-create-operation.adoc[]
+
 === Response
 
 The response for this API contains the information for the Entity that was created.
@@ -61,7 +69,7 @@ include::docs/v1/tech/apis/_entity-response-body.adoc[]
 
 == Retrieve an Entity
 
-This API is used to retrieve one configured Entity. 
+This API is used to retrieve one Entity. 
 
 === Request
 
@@ -79,6 +87,8 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 [field]#entityId# [type]#[UUID]# [required]#Required#::
 The Id of the Entity to retrieve.
 
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
 === Response
 
 The response for this API contains a single Entity. 
@@ -91,7 +101,11 @@ include::docs/v1/tech/apis/_entity-response-body.adoc[]
 
 == Update an Entity
 
-This API is used to update an Entity. You must specify the Id of the Entity to update on the URI.
+// TODO push this throughout all patchable objects
+
+:object_name: Entity
+include::docs/v1/tech/apis/_update-section-text.adoc[]
+:object_name!:
 
 === Request
 
@@ -111,6 +125,8 @@ include::docs/v1/tech/apis/_patch-support.adoc[]
 [.api]
 [field]#entityId# [type]#[UUID]# [required]#Required#::
 The Id of the Entity to update.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
 include::docs/v1/tech/apis/_entity-request-body.adoc[]
 
@@ -143,13 +159,216 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 [field]#entityId# [type]#[UUID]# [required]#Required#::
 The Id of the Entity to delete.
 
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
 === Response
 
 This API does not return a JSON response body.
 
 include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
 
+== Search for an Entity
+
+TBD
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
 == Grant a User or Entity Permissions to an Entity
 
-== Search for an Entity
+This API is used to grant permissions to an Entity for a User or another Entity.
+
+This is an upsert operation. If the grant to this Entity for the specified User or recipient Entity exists, it will be updated. Otherwise it will be created.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Create an Entity Entity Grant
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/entity/`\{entityId\}`/grant#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#entityId# [type]#[UUID]# [required]#Required#::
+The Id of the Entity to which access is granted.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Update an Entity Grant
+[.endpoint]
+.URI
+--
+[method]#PUT# [uri]#/api/entity/`\{entityId\}`/grant#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#entityId# [type]#[UUID]# [required]#Required#::
+The Id of the Entity to which access is granted.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+
+[field]#entityGrant.data# [type]#[Object]#::
+An object that can hold any information about the Entity Grant that should be persisted. Please review the link:/docs/v1/tech/reference/limitations#data-field-limitations[limits on data field types] as you plan for and build your custom data schema.
+
+[field]#entityGrant.permissions# [type]#[Array<String>]# [optional]#Optional#::
+The set of permissions of this Entity Grant.
+
+[field]#entityGrant.recipientEntityId# [type]#[UUID]# [optional]#Optional#::
+The Entity Id for which access is granted.
++
+If [field]#recipientEntityId# is not provided, then the [field]#userId# will be required. 
+
+[field]#entityGrant.userId# [type]#[UUID]# [optional]#Optional#::
+The User Id for which access is granted.
++
+If [field]#userId# is not provided, then the [field]#recipientEntityId# will be required. 
+
+[source,json]
+.Example User Grant Request JSON
+----
+include::docs/src/json/entities/user-grant-request.json[]
+----
+
+[source,json]
+.Example Entity Grant Request JSON
+----
+include::docs/src/json/entities/recipient-entity-grant-request.json[]
+----
+
+=== Response
+
+The response for this API contains the information for the created grant.
+
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+
+include::docs/v1/tech/apis/_entity-grant-response-body.adoc[]
+
+== Retrieve an Entity Grant
+
+This API is used to retrieve one or all of the Entity Grants. Specifying only an entityId on the URI will retrieve a single Entity Grant. Adding a parameter of userId or recipientEntityId will retrieve all Entity Grants to the User or Entity, respectively, for this Entity. 
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve Grants To This Entity
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/entity/``\{entityId\}``/grant#
+--
+
+==== Request Parameters
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve Entity Grants For a User
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/entity/``\{entityId\}``/grant``?userId=\{userId\}``#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#entityId# [type]#[UUID]# [required]#Required#::
+The Id of the Entity to which access is granted.
+
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The Id of the User which has been granted access.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve Entity Grants For Another Entity
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/entity/``\{entityId\}``/grant``?recipientEntityId=\{recipientEntityId\}``#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#entityId# [type]#[UUID]# [required]#Required#::
+The Id of the Entity to which access is granted.
+
+[field]#recipientEntityId# [type]#[UUID]# [required]#Required#::
+The Id of the Entity which has been granted access.
+
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+=== Response
+
+This API is used to retrieve one or all of the Entity Grants. Specifying only an entityId on the URI will retrieve a single Entity Grant. Adding a parameter of userId or recipientEntityId will retrieve all Entity Grants to the User or Entity, respectively.
+
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+
+include::docs/v1/tech/apis/_entity-grant-response-body.adoc[]
+
+include::docs/v1/tech/apis/_entity-grants-response-body.adoc[]
+
+== Delete an Entity Grant
+
+This API is used to delete an Entity Grant from an Entity. 
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Delete Entity Grants for a User
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/entity/``\{entityId\}``/grant``?userId=\{userId\}``#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#entityId# [type]#[UUID]# [required]#Required#::
+The Id of the Entity which is the target of the Entity Grant.
+
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The Id of the User who received the Entity Grant.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Delete an Entity Grant for a Recipient Entity
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/entity/``\{entityId\}``/grant``?recipientEntityId=\{recipientEntityId\}``#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#entityId# [type]#[UUID]# [required]#Required#::
+The Id of the Entity which is the target of the Entity Grant.
+
+[field]#recipientEntityId# [type]#[UUID]# [required]#Required#::
+The Id of the Entity which received the Entity Grant.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+=== Response
+
+This API does not return a JSON response body.
+
+include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
 
