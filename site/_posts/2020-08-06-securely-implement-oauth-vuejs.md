@@ -7,6 +7,7 @@ image: blogs/oauth-vuejs/how-to-securely-implement-oauth-in-vue-js.png
 category: blog
 updated_date: 2021-03-16
 tags: client-javascript, tutorial, tutorial-vue, tutorial-javascript
+
 excerpt_separator: "<!--more-->"
 ---
 
