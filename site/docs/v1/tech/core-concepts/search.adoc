@@ -1,0 +1,61 @@
+---
+layout: doc
+title: Search
+description: Search optins within FusionAuth
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+FusionAuth ships with two options for search: a simple search via the database search engine and Elasticsearch database engine.
+
+* <<Simple search>>
+* <<Elasticsearch search engine>>
+
+== Simple search
+
+As of version 1.16.0, FusionAuth ships with a database search engine as the default.
+
+=== Configuration
+
+See the [field]#fusionauth-app.search-engine-type# and [field]#fusionauth-app.search-servers# properties, as well as the `FUSIONAUTH_SEARCH_ENGINE_TYPE` and `FUSIONAUTH_SEARCH_SERVERS` environment variables definitions of the link:/docs/v1/tech/reference/configuration/[Configuration Reference] for details on configuring the search engine and (optional) Elasticsearch integration.
+
+If you are running FusionAuth in a Docker environment, see the link:/docs/v1/tech/installation-guide/docker/[Using FusionAuth on Docker] documentation for an example configuring Elasticsearch as the user search engine.
+
+You may view the configured search engine type in the FusionAuth admin UI by navigating to [breadcrumb]#System -> About#.
+
+image::about-search-engine-type.png[About - Search Engine Type,width=1200,role=shadowed top-cropped]
+
+You may also link:/docs/v1/tech/tutorials/switch-search-engines/[switch between the different search engines].
+
+=== Using the database search engine
+
+This configuration is lightweight, simplifies installation and system complexity, but comes with the trade offs of limited search capabilities and performance implications.
+
+The database search engine is appropriate for systems that are not dependent on the FusionAuth API's, is not expected to have a large number of search results, and may be running in an embedded environment.
+
+If you don't need advanced searching capabilities, you may be able to use the database search engine for large installations. This is not a use case FusionAuth tests, so ensure you provision your database with enough resources and benchmark your typical use cases.
+
+==== Limitations
+
+You may add a `*` character to wildcard match any character, including none. So `*piedpiper` will match `piedpiper` and `thepiedpiper`. You may put the wildcard at any location in a search string.
+
+All search terms are converted to lowercase and compared with lowercase values.
+
+Regular expressions, ranges and other complicated queries can not be used.
+
+=== Elasticsearch search engine
+
+Leveraging Elasticsearch, enables advanced search capabilities on more numerous and granular data and a performance improvement.
+
+The Elasticsearch search engine is appropriate for systems that are dependent on the FusionAuth API's (such as link:/docs/v1/tech/apis/users#search-for-users[users]), are expected to have a large number of results, and requires a more tactical search than is provided by the database search engine.
+
+==== Reindex
+
+It is possible, though rare, for an Elasticsearch index to become out of sync with the database. If you stand up FusionAuth with a database dump and restore, you may need to run this operation. You may also be instructed to do so by FusionAuth support.
+
+However, in general, even if a temporary outage occurs with Elasticsearch, the index will be sync up automatically. Reindexing is an expensive operation, especially if your system has a large number of users, so it should not be run unless necessary.
+
+If you do need to run this, navigate to [breadcrumb]#System -> Reindex# in the FusionAuth admin UI to initiate a reindex of all users. This navigation item will only be displayed when the search engine is Elasticsearch.
+
