@@ -22,6 +22,7 @@ Here's link:/technical-support/[more information about getting technical support
 * <<Troubleshooting Themes>>
 * <<Troubleshooting Two Factor Authentication>>
 * <<Troubleshooting Database Connections>>
+* <<Troubleshooting Performance>>
 * <<Common Errors>>
 
 == Logs
@@ -130,6 +131,16 @@ The fix is to ensure that the FusionAuth server has the correct system time. How
 If you find that FusionAuth is unable to connect to the database, ensure you are able to use a command line client connection to successfully make a connection using the same port and credentials.
 
 Some MySQL services such as Microsoft Azure may require a specific version of TLS to connect successfully. At the time of writing this note, the MySQL connector will not attempt to utilize TLSv1.2 by default, so when connecting to a service that requires this version you will need to explicitly request this version of TLS on the connection string. For example, appending this `enabledTLSProtocols=TLSv1.2` to the connection string will allow you to successfully connect to an Azure managed MySQL database. See https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-using-ssl.html[MySQL Connector : Connecting Securely Using SSL] for additional information.
+
+== Troubleshooting Performance
+
+If you are not seeing the logins per second you'd expect from FusionAuth, you can take some steps to troubleshoot the issue. Generally speaking the primary bottleneck for logins per second is CPU. Hashing the password is intentionally slow. FusionAuth will not be able to perform more logins per second than your CPU can handle. The database is the other likely bottleneck.
+
+One way to identify if the password hashing is the bottleneck in load tests is to reduce the hash strength. See [breadcrumb]#Tenants -> Edit -> Password -> Cryptographic hash settings#. Set this to Salted MD5 with a factor of 1 and then enable Re-hash on login. This will cause each user to have their password re-hashed next time they login to use MD5. Salted MD5 is *not* a good password hashing strategy for a number of reasons, but is useful to test whether your system is CPU bound. Make sure you switch back after testing is done.
+
+If you can still get a lower number of logins per second than you'd expect with this configuration, then the database is likely the bottleneck and you should update your system to use a database with more resources and load test that system.
+
+If the MD5 configuration allows you to achieve a much higher logins per second, then the CPU is your bottleneck. If you are CPU bound, the only way to get more logins per second is to horizontally scale (add more nodes) or vertically scale (use larger CPUs with each node).
 
 == Common Errors
 
