@@ -8,61 +8,170 @@ description: An overview of the SAML identity provider capabilities of FusionAut
 
 SAML is an XML based authentication protocol developed and released in 2005. While OpenID Connect is the newest single sign-on solution, many backends and applications still rely solely on SAML. FusionAuth provides both a SAML identity provider interface as well as a SAML service provider interface. If you are unfamiliar with these SAML terms, they are defined as follows:
 
-* Identity provider - the entity that is performing the authentication of a user. Essentially, this is the thing that is providing the login page.
-* Service provider - the entity that needs a user to login with an identity provider in order to provide some service. Essentially, this is the app the user wants to use.
+* Identity provider - the entity that is performing the authentication of a user. Essentially, this is the thing that is providing the login page. Also known as an IdP.
+* Service provider - the entity that needs a user to login with an identity provider in order to provide some service. Essentially, this is the app the user wants to use. Also known as an SP.
 
-As a concrete example, you might have an app called `Payroll Zen` that manages your companies payroll. This app requires that employees who have access to use it login in using your companies Active Directory. In this case, `Payroll Zen` is the service provider and Active Directory is the identity provider.
+As a concrete example, you might have an app called `Payroll Zen` that manages your company's payroll. This app requires that employees who have access to use it log in using the credentials stored in your company's Active Directory. `Payroll Zen` is therefore the service provider and Active Directory is the identity provider.
 
 include::docs/v1/tech/samlv2/_saml_idp_note.adoc[]
 
-It should also be noted that FusionAuth's SAML identity provider uses the OAuth workflow under the hoods. When a service provider starts a SAML workflow by sending a SAML request to FusionAuth, FusionAuth will forward the browser to its own OAuth UI. This is an important concept if you are interested in using FusionAuth's OAuth theme support to customize the look and feel of your SAML identity provider.
+FusionAuth's SAML identity provider uses the OAuth workflow under the hoods. When a service provider starts a SAML workflow by sending a SAML request to FusionAuth, FusionAuth will forward the browser to the hosted login pages. This is an important concept if you are interested in using FusionAuth's themes to customize the look and feel of your SAML identity provider user interface.
 
-== Configure SAML identity provider
+=== Single Sign-on and Logout
 
-In order to configure FusionAuth to act as a SAML identity provider, you need to specify the SAML configure for an Application. This will allow FusionAuth to present a SAML login page that will allow users to login for that application. In this case, FusionAuth will consume SAML requests from the application and return SAML responses to the application after the user logs in.
+SAML is widely used to offer Single Sign-on across applications. When enabled, a user can sign in to an IdP such as FusionAuth, and then other correctly configured applications will not require authentication from that same user.
 
-The SAML configuration is under the SAML tab on the Application form. In the screenshot below, you can see that we are configuring SAML for the Pied Piper application:
+SAML also offers Single Logout, which is the inverse of Single Sign-on. With Single Logout, a user logs out of the IdP and all other applications are notified of the logout and should end the user's session.
 
-image::samlv2-application.png[Application SAML v2 Configuration,width=1200,role=shadowed]
+== Configure FusionAuth as a SAML Identity Provider
 
-=== SAML v2 Form Fields
+In order to configure FusionAuth to act as a SAML identity provider, you need to enable and configure SAML for an Application. When properly configured, FusionAuth, the IdP, will consume Authentication requests from an application, the SP, and, after a user logs in, return proper Authentication responses.
+
+Navigate to [breadcrumb]#Applications -> Your application -> SAML# to configure this functionality. In the screenshot below, you can see that we are configuring SAML for the Pied Piper application:
+
+image::samlv2/overview/samlv2-application.png[Application SAML v2 Configuration,width=1200]
+
+=== Form Fields
 
 [.api]
 [field]#Issuer# [required]#Required#::
-This is the issuer string that the service provider will send inside the SAML request to FusionAuth. FusionAuth uses this issuer to lookup the correct application in order to start the SAML login process.
+This is the issuer string that the service provider will send in the SAML request to FusionAuth. FusionAuth uses this issuer value to look up this FusionAuth application in order to start the SAML login process.
++
+The issuer string is used by service providers (e.g. Google, Zendesk, etc.) to identify themselves to FusionAuth's SAML identity provider. Often you cannot set this to a custom value in the service provider and need to read their documentation or test the integration and use the error messages to determine the correct value.
 
 [field]#Audience# [optional]#Optional#::
-Some service providers require a different audience in the SAML response than the issuer set above. If you are configuring a service provider that has a different audience requirement, enter the audience name here. If this isn't specified, FusionAuth will set the audience to the same string as the `issuer`.
+Some service providers, such as Zendesk, require a different audience in the SAML response than the [field]#Issuer# set above. If you are configuring a service provider that requires a different audience, enter the audience name, otherwise leave it blank.
++
+If this isn't specified, FusionAuth will set the audience to the same value as the [field]#Issuer#.
+
+[field]#Authorized redirect URLs# [required]#Required#::
+One or more URLs that FusionAuth may redirect to after the user has successfully logged in. 
++
+This is also known as the Assertion Consumer Service URL or ACS.
 
 [field]#Logout URL# [optional]#Optional#::
-The URL used to perform the `302` redirect as the response from the `/samlv2/logout` endpoint. If this value is omitted, the globally configured logout URL will be used. See the `Logout URL` under the `OAuth` tab of the System Settings.
+The URL used to perform the `302` redirect as the response from the `/samlv2/logout` endpoint. If this value is omitted, the tenant configured logout URL will be used. See the [field]#Logout URL# under the [breadcrumb]#Tenant -> Your Tenant -> OAuth# tab.
++
+Usually this is the starting location of the application.
 
+[field]#Debug enabled# [optional]#Optional#::
+Many service providers are not compliant with the SAML and XML signing specifications. This makes it challenging to get them working with FusionAuth. 
++
+If you are running into integration issues, toggle this setting on and FusionAuth will output debugging information into the Event Log during a SAML login. You can find the event log in [breadcrumb]#System -> Event Log#.
+
+=== Authentication Request
+
+image::samlv2/overview/samlv2-application-authentication.png[Application SAML v2 Authentication Configuration,width=1200]
+
+Settings in this section configure SAML request handling.
+
+==== Form Fields
+
+[.api]
+[field]#Require signature# [optional]#Optional#::
+Enable to require the SAML v2 Service Provider to sign the SAML v2 authentication request. When this is enabled, if a signature is omitted the request will be rejected.
+
+[field]#Default verification key# [required]#Required#::
+The default key used to verify the signature if the public key cannot be determined by the KeyInfo element when using POST bindings, or the key used to verify the signature when using HTTP Redirect bindings.
++
+If a [field]#Require signature# is not enabled, this field is optional.
+
+=== Authentication Response
+
+Settings in this section configure how FusionAuth processes the SAML response.
+
+==== Form Fields
+
+[.api]
 [field]#Signing key# [required]#Required#::
-In order to properly sign the SAML responses, FusionAuth requires a key pair from KeyMaster. You can either select an existing key here or select the top option to have FusionAuth generate a key pair to use.
+In order to properly sign the SAML responses, FusionAuth requires a key pair from Key Master. You can either select an existing key here or select the first option to have FusionAuth generate a key pair to use. If no choice is selected, a new key will be automatically created and assigned.
++
+To add, manage or import your key, navigate to [breadcrumb]#Settings -> Key Master#.
 
-[field]#XML signature canonicalization method# [required]#Required#::
-This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML response. This method is also used when FusionAuth creates a message digest in the SAML response. This option is usually the first thing to change if a service provider is rejecting the SAML response from FusionAuth. Many service providers are not compliant with the full XML signature specification and require a fixed canonicalization method. Your best bet is to try all four values until the login works.
+[field]#Signature canonicalization method# [optional]#Optional#::
+This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML response. This method is also used when FusionAuth creates a message digest in the SAML response. 
++
+This option is usually the first thing to change if a service provider is rejecting the SAML response from FusionAuth. Many service providers are not compliant with the full XML signature specification and require a fixed canonicalization method. Your best bet is to try all four values until a login succeeds.
+
+[field]#Signature location# [optional]#Optional#::
+Some service providers may require the signature in a specific location. When `Assertion` is selected the signature element will be a child of the assertion. When `Response` is selected the signature will be placed at the top level of the response.
 
 [field]#Response populate lambda# [optional]#Optional#::
-This optionally specifies a lambda that FusionAuth will invoke prior to sending the SAML response to the service provider. This allows you to write a lambda that can populate additional information into the SAML response. In most cases, your lambda will add additional `Attribute`s to the response.
+This specifies a lambda that FusionAuth will invoke prior to sending the SAML response to the service provider. This allows you to write a lambda to populate additional information into the SAML response. In most cases, your lambda will add additional `Attribute`s to the response.
 +
 The complete documentation for this lambda can be found on the link:/docs/v1/tech/lambdas/samlv2-response-populate/[SAML v2 response populate lambda documentation page].
 
-[field]#Debug enabled# [optional]#Optional#::
-Many service providers are not compliant with the SAML and XML signing specifications. This makes it very challenging to get them working with FusionAuth. If you are running into issues, you can toggle this setting to instruct FusionAuth to log debugging information the the Event Log (which is accessible via the System > Event Log menu).
+=== Logout Request
+
+Settings in this section configure SAML Logout handling. They define how FusionAuth will handle incoming logout requests from a service provider. When Single Logout is enabled, additional settings are available that will be used sign the Logout Request sent to session participants.
+
+image::samlv2/overview/samlv2-application-logout.png[Application SAML v2 Logout Configuration,width=1200]
+
+==== Form Fields
+
+[.api]
+[field]#Require signature# [optional]#Optional#::
+Enable to require the SAML v2 Service Provider to sign the SAML v2 Logout request. When this is enabled, if a signature is omitted the request will be rejected.
+
+[field]#Default verification key# [required]#Required#::
+The default key used to verify the signature if the public key cannot be determined by the KeyInfo element when using POST bindings, or the key used to verify the signature when using HTTP Redirect bindings.
++
+If a [field]#Require signature# is not enabled, this field is optional.
+
+[field]#Logout behavior# [optional]#Optional#::
+When set to `All session participants`, each session participant that has [field]#Enable single logout# set to true will be sent a Logout Request. 
++
+When set to `Only Originator`, no other session participants will be notified when a logout request is sent for this application. 
++
+This configuration is functionally equivalent to the Logout Behavior found in the OAuth2 configuration.
+
+[field]#Enable single logout# [optional]#Optional#::
+Enable Single Logout behavior. When enabled, this application will receive LogoutRequests from any other application in this tenant recieves one.
+
+[field]#Logout URL# [required]#Required#::
+The URL which you want to receive the LogoutRequest from FusionAuth.
++
+If [field]#Enable single logout# is not enabled, this field is optional.
+
+[field]#Signing key# [required]#Required#::
+In order to properly sign the SAML Single Logout responses, FusionAuth requires a key pair from Key Master. You can either select an existing key here or select the first option to have FusionAuth use the authentication response signing key.
++
+To add, manage or import your key, navigate to [breadcrumb]#Settings -> Key Master#.
+
+[field]#Signature canonicalization method# [optional]#Optional#::
+This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML Single Logout response. 
++
+This option is usually the first thing to change if a service provider is rejecting the SAML Single Logout response from FusionAuth. Many service providers are not compliant with the full XML signature specification and require a fixed canonicalization method. Your best bet is to try all four values until a logout succeeds.
+
+=== Logout Response
+
+Settings in this section configure how FusionAuth processes the SAML Logout response.
+
+==== Form Fields
+
+[.api]
+[field]#Signing key# [required]#Required#::
+In order to properly sign the SAML Logout responses, FusionAuth requires a key pair from Key Master. You can either select an existing key here or select the first option to have FusionAuth use the authentication response signing key.
++
+To add, manage or import your key, navigate to [breadcrumb]#Settings -> Key Master#.
+
+[field]#Signature canonicalization method# [optional]#Optional#::
+This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML Logout response. 
++
+This option is usually the first thing to change if a service provider is rejecting the SAML Logout response from FusionAuth. Many service providers are not compliant with the full XML signature specification and require a fixed canonicalization method. Your best bet is to try all four values until a logout succeeds.
 
 
 === Endpoints
 
 Once you have configured the SAML identity provider for an application, you will need to copy and paste a number of URLs to the service provider or send the metadata XML file to the service provider. The URLs for all of these items can be found by clicking on the view icon from the application list page.
 
-image::applications-list-view.png[View icon on the Application listing page,width=1200,role=shadowed bottom-cropped]
+image::samlv2/overview/applications-list-view.png[View icon on the Application listing page,width=1200,role=bottom-cropped]
 
-Once you click the view icon, the dialog will pop up. Under the heading **SAML v2 Integration details**, you will see all of the SAML endpoint URLs that the service provider will need. These include the login URL, logout URL and metadata URL. If the service provider needs a metadata XML file, you can copy and paste the metadata URL from this dialog into a new browser tab and then save the contents of that webpage into a new file named `metadata.xml`. Some browser will force the name of the file to be `metadata.xhtml` and you will have to rename it before sending it to the service provider.
+Once you click the view icon, the dialog will pop up. Under the heading **SAML v2 Integration details**, you will see all of the SAML endpoint URLs that the service provider will need. These include the login URL, logout URL and metadata URL. If the service provider needs a metadata XML file, you can copy and paste the metadata URL from this dialog into a new browser tab and then save the contents of that webpage into a new file named `metadata.xml`. Some browsers will force the name of the file to be `metadata.xhtml` and you will have to rename it before sending it to the service provider.
 
 Here is what the view dialog looks like and the SAML information you will need:
 
-image::applications-list-view-dialog.png[View dialog on the Application listing page,width=1200,role=shadowed]
+image::samlv2/overview/applications-list-view-dialog.png[View dialog on the Application listing page,width=1200,role=bottom-cropped]
 
 == Attributes
 
@@ -84,4 +193,8 @@ FusionAuth provides a number of attributes as part of its SAML response. These a
 * `\http://schemas.xmlsoap.org/ws/2005/05/identity/claims/mobilephone` pulled from `user.mobilePhone`
 * `mobile_phone` pulled from `user.mobilePhone`
 
-Of course, you can modify, delete, or add any attributes you want using SAML v2 populate lambda configuration of the application.
+Of course, you can modify, delete, or add any attributes you want by configuring a link:/docs/v1/tech/lambdas/samlv2-response-populate/[SAML v2 response populate lambda] for the application.
+
+== Limitations
+
+include::docs/v1/tech/samlv2/_saml_limitations.adoc[]

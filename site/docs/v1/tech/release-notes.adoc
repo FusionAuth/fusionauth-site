@@ -20,6 +20,115 @@ section.docs article blockquote {
 </label>
 ++++
 
+
+////
+Note - for 1.26.0, or whatever version MFA is delivered, if you are upgrading from pre-1.7.0, you will ned to upgrade to a version greater than or equal to 1.7.0 but less than 1.26.0 before upgrading to 1.26.0.
+This is because I deleted a Java migration for 1.7.0 and 1.6.0 in this release.
+////
+
+[role=release-note]
+
+== Version 1.25.0
+_March 10th, 2021_
+
+
+:warning_message: pass:normal[SAML v2 Logout is now fully supported. No action should be required. If you are currently using FusionAuth as a SAML v2 IdP, please verify your configuration as you may want to provide additional configuration to take full advantage of the SAML v2 Logout configuration. The additional of SAML v2 Logout means there is a new themed page to manage the user experience for SAML v2 Logout. Please review your theme to ensure your user experience is not interrupted. See additional details in the New section below.]
+include::docs/v1/tech/__general-migration-warning.adoc[]
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Changed
+* In support of the SAML v2 Logout feature, the following theme changes have been made.
+** New themed template `SAMLv2 logout template`. This template will be rendered when you utilize the SAML v2 Logout feature, it is nearly identical to the existing OAuth2 logout themed page. If you are using themes, please review your theme to ensure your user experience is not interrupted.
+
+=== Fixed
+* If you are using Elasticsearch version 6 you may encounter an error when using the Search API. This is due to a change in how we optionally request the document hit count in the search request to Elasticsearch. The change is not compatible with Elasticsearch version 6. As a work around, you can set `accurateTotal=true` in the API request. See the link:/docs/v1/tech/apis/users/#search-for-users[User Search API] for additional details on using this parameter.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1135[GitHub Issue #1135]
+* Using the HTTP `PATCH` method on the FusionAuth application may produce erroneous validation errors.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1110[GitHub Issue #1110]
+* Adding additional Java options in the configuration file when the value contains a space may not work correctly.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1065[GitHub Issue #1065]
+* A `NullPointerException` may occur when you have users registered for an application in a non default tenant and you create a login report for only that application. Thanks to https://github.com/NikolayMetchev[@NikolayMetchev] for filing this.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1115[GitHub Issue #1115]
+* When you omit the `state` parameter on the Authorization request, you may receive a `state` parameter on the `redirect_uri` that you did not expect.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1113[GitHub Issue #1113]
+
+=== New
+* Add full support for SAML v2 Logout
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1137[GitHub Issue #1137]
+
+=== Enhancements
+* Add a button to the Sessions tab in the FusionAuth admin UI to delete all user sessions at once, this action is also available from the drop down action list when managing a user.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1094[GitHub Issue #1094]
+* Add Debug to OAuth2 Grants, this will primarily assist in debugging the Authorization Code Grant auth code exchange with the Token endpoint.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/781[GitHub Issue #781]
+* Add CORS Debug, this will assist you in debugging CORS related `403` HTTP status codes.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1126[GitHub Issue #1126]
+* Better SMTP debug for specific scenarios. This should assist with async connection issues and provide context to the tenant and template being rendered during the exception.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1064[GitHub Issue #1064]
+* Allow the Registration API to accept the `applicationId` as a URL segment
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1127[GitHub Issue #1127]
+* Twitter IdP Login API can optionally accept an access token. When building your own login page, if you complete the initial step with Twitter and utilize the `oauth_verifier` to perform some initial processing of the Twitter user, you may now still send the access token in the form of `oauth_token` and `oauth_token_secret` to FusionAuth to complete the login. This is done by omitting the `oauth_verifier` on the Login request. See link:/docs/v1/tech/apis/identity-providers/twitter/#complete-the-twitter-login[Complete the Twitter Login] for additional information.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1073[GitHub Issue #1073]
+* When Key Master generates a `kid` because one is not provided on the request, if there is a public key, generate the `kid` as a JWK thumbprint instead of a randomly generated value.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1136[GitHub Issue #1136]
+* When using the Search feature in the FusionAuth admin UI, once you begin searching using a specific term or any of the advanced controls, the pagination result total will be an accurate representation of the number of matches returned by Elasticsearch. When no search criteria is provided, the number of matches will cap at the default value of 10,000 and the pagination results will indicate 10,000+ which means at least 10,000 users match the search criteria.
+
+=== Internal
+* Upgrade Tomcat from version `8.5.57` to `8.5.63`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1119[GitHub Issue #1119]
+
+[role=release-note]
+
+== Version 1.24.0
+_February 11th, 2021_
+
+=== Security
+* More consistent usage of the `Cache-Control` HTTP response header. The default for all pages will be `Cache-Control: no-cache`, and some pages that may contain potentially sensitive information such as the API key add, edit or index pages will use a `Cache-Control: no-store`. No known vulnerability exists with the previous behavior, this is just a proactive change to limit the possible mis-use of cached pages in the FusionAuth admin UI.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1103[GitHub Issue #1103]
+* This release includes numerous security improvements. We recommend that all FusionAuth customers upgrade to this version or newer.
+
+=== Known Issues
+* If you are using Elasticsearch version 6 you may encounter an error when using the Search API. This is due to a change in how we optionally request the document hit count in the search request to Elasticsearch. The change is not compatible with Elasticsearch version 6. As a work around, you can set `accurateTotal=true` in the API request.
+** Resolved in 1.25.0, see https://github.com/FusionAuth/fusionauth-issues/issues/1135[GitHub Issue #1135] for additional details.
+
+=== Changed
+
+* The `applicationId` and `roles` claims are no longer returned in the `id_token` issued when requesting the `openid` scope. The `id_token` should not be used for authorization, this change makes it less likely to mis-use this token. If you have a requirement for these claims (you shouldn't), you can add them back by using a JWT Populate lambda. See link:/docs/v1/tech/oauth/tokens/#id-token[Id Token claims] for additional information.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1102[GitHub Issue #1102]
+
+=== Fixed
+* When using the Add or Edit Identity Provider forms in the admin UI, if you have ~2,000 or more applications it is possible for the form request to be truncated by the underlying application server. This error is caused by the maximum number of request parameters being exceeded. This form in particular, along with the Group Add/Edit and Webhook Add/Edit contains a number of fields that is a function of the number of applications configured. An informational error may be written to the system log indicating this truncation has occurred, but no hard error would have occurred. The symptom will be that depending upon your configuration, a portion of it may be lost during this form submit. The entry in the log will contain this message `org.apache.tomcat.util.http.Parameters.processParameters More than the maximum number of request parameters (GET plus POST) for a single request ([10,000]) were detected. Any parameters beyond this limit have been ignored.`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1057[GitHub Issue #1057]
+* When you have registered a custom plugin for password hashing, using the View Tenant dialog may fail to render.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1063[GitHub Issue #1063]
+* Unable to remove a User from a Group using the admin UI dialog. This was a regression issue introduced in version 1.23.0.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1081[GitHub Issue #1081]
+* If a user was not currently in the Elasticsearch index, the user delete request may fail.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1088[GitHub Issue #1088]
+* The JWT returned from the Register API when you are creating a User and a Registration in one request may not contain the `roles` claim. This occurs when you do not assign the roles explicitly on the request, and instead are using default role assignment in the application configuration.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1106[GitHub Issue #1106]
+* Updating a User that has existing group memberships may no longer be searchable in Elasticsearch by their Group memberships until the next time the user logs into FusionAuth.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1087[GitHub Issue #1087]
+* A Kafka Producer configuration that contains an equals sign `=` in the property value will fail to parse. This was identified in attempting to configure credentials to connect to CloudKarafka.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1107[GitHub Issue #1107], thanks to https://fusionauth.io/community/forum/user/chris-bridges[@chris-bridges] for letting us know!
+
+=== Enhancements
+* Support a Kickstart file with only a `licenseId`. Previously at least one API key was required because the intent of Kickstart is to call one or more APIs. While there is not a very practical use case for only providing a `licenseId` and no API requests,  this minimal configuration will no longer fail indicating an API key is required. See link:/docs/v1/tech/installation-guide/kickstart/#set-your-license-id[Set your License Id] in the link:/docs/v1/tech/installation-guide/kickstart/[Kickstart] documentation.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1080[GitHub Issue #1080]
+* You may now import an RSA certificate with a key bit length less than `2048` into Key Master. The minimum supported RSA key length for signing a JWT is `2048`, so this was previously the minimum requirement to import anything into Key Master. However, we have several configurations now that require a certificate that is only used to verify a signature from a third party. In these cases, we are not using the certificate to sign anything, and https://github.com/trevorr[@trevorr] rightly pointed out that we should allow smaller keys to be imported to support these use cases. Thank you for the (now obvious) insight! We really appreciate our community members that provide us value for value.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1085[GitHub Issue #1085] & https://github.com/FusionAuth/fusionauth-issues/issues/1091[GitHub Issue #1091]
+* Added an additional Search API parameter to allow you to obtain the actual hit count from Elasticsearch. For performance reasons, the default behavior of an Elasticsearch query is to limit the hit count to 10,000. This means that if your query matched more than 10,000 records, the API response will only indicate that at least 10,000 records matched. This is very adequate for pagination purposes, or general queries. There are times where you are building a very specific query and the intent is to identify an accurate number of matching records. You may now provide an additional parameter to the search request named `accurateTotal` which will then return an accurate hit count on the API response. See the link:/docs/v1/tech/apis/users/#search-for-users[User Search API] for additional details.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1086[GitHub Issue #1086]
+* Allow the user to click on the Enabled column in the Webhook event configuration in the Webhook and Tenant configurations to enable or disable all events at once. This is just a usability enhancement to save you from clicking over and over. You're welcome.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1093[GitHub Issue #1093]
+* For pages with potentially a lot of items such as Applications, Tenants, etc - that do not currently have pagination, add a count at the bottom of the panel. This allows you to look smart by knowing how many "things" you have without having to count them yourself.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1104[GitHub Issue #1104]
+
+=== Internal
+* Some enhancements to JavaScript event handlers to perform better on pages with 2-3k+ applications. Pretty boring.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1105[GitHub Issue #1105]
+
 [role=release-note]
 
 == Version 1.23.3
@@ -57,6 +166,9 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 === Known Issues
 * If you are upgrading to this version, are using PostgreSQL, and you intend to use the provided LinkedIn Reconcile lambda, you will need to make a small adjustment prior to using it.
 ** Navigate to [breadcrumb]#Customizations -> Lambdas# and edit the lambda named `Default LinkedIn Reconcile provided by FusionAuth` and click edit. You will see an error indicated by a red dot on line `23` of the function body. To fix this error, delete the two empty lines between the end of line `23` and `25`, once the error indicator is gone, save the lambda.
+* Unable to remove a User from a group using the Admin UI dialog.
+** Fixed in version 1.24.0 via https://github.com/FusionAuth/fusionauth-issues/issues/1081[GitHub Issue #1081]
+
 
 === Fixed
 * A validation error may not be visible when selecting self service registration options when the FusionAuth license has not been activated.

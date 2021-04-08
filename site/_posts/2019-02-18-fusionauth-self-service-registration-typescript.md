@@ -30,7 +30,7 @@ If you're integrating FusionAuth with a TypeScript application, [this library](/
 Real-time reporting is essential to monitor your applications. Who wants week- or even day-old reports with no details? In this release we have enhanced our User Login Report to allow you to narrow the report to a single user by using a rich text search field. Watch the video below to see it in action.
 
 <div class="d-flex justify-content-center mb-5 mt-1 youtube">
-<iframe src="https://www.youtube.com/embed/IPB8Rig52PI" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="IPB8Rig52PI" %}
 </div>
 
 ## Fixes & Updates
