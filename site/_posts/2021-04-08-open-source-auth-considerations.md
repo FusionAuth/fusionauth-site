@@ -18,7 +18,7 @@ _This blog post is an excerpt from [Open Source vs Commercial Auth Providers](/l
 
 ### Support
 
-For solutions that are truly free and open source, often the only support avenue available is submitting a detailed issue via the project's issue tracker and hoping that one of the project maintainers gets back to you. The timeline for this is very undefined, and many open-source maintainers are overwhelmed with the volume of issues that projects get. This can be problematic for something as crucial to an application as an authentication provider, but that's the tradeoff for getting something completely free.
+For solutions that are truly free and open source, often the only support avenue available is submitting a detailed issue via the project's issue tracker and hoping one of the project maintainers gets back to you. The timeline for this is very undefined, and many open-source maintainers are overwhelmed with the volume of issues that projects get. This can be problematic for something as crucial to an application as an authentication provider, but that's the tradeoff for getting something completely free.
 
 On the plus side, many open-source projects have started introducing paid support tiers, often provided by an affiliated company. If you choose to go with this option, you don't get the product entirely for free, but you usually get an SLA with not only guaranteed support but a guaranteed response time as well. You'll have peace of mind knowing someone knowledgeable about the product is ready and able to answer your questions in a timely manner.
 
@@ -38,7 +38,7 @@ Most open-source projects of any size have the license for the project publicly 
 
 Some open-source projects, especially if they are backed by a company, support dual licensing. This means that you can choose one license or another as fits your business model. The first license may be the GPL or a similar restrictive license, while the other may be a commercial license with fewer restrictions that costs money. 
 
-Always review the license for any solution.
+Always review the license for any auth system you are considering before moving forward.
 
 ### Maintenance Responsibility
 
@@ -54,7 +54,7 @@ Open-source projects [may be more secure, especially over time](https://www.info
 
 However, there are also [instances of vulnerabilities remaining open for months](https://github.com/keycloak/keycloak/pull/7612). But if the bug is severe and an open-source project is well supported or popular, the timeline may shrink to days or weeks.
 
-In the end, you (and the maintainers) are ultimately responsible for the security of the software. Just like with maintenance responsibility, if you don't have time for your team to frequently review the security issues as they're reported and fixed and then upgrade your system, this may mean that open source isn't the best option for you.
+In the end, you (and the maintainers) are ultimately responsible for the security of the software. If you don't have time for your team to frequently review the security issues as they're reported and fixed and then upgrade your system, this may mean that open source isn't the best option.
 
 ### Cost
 
