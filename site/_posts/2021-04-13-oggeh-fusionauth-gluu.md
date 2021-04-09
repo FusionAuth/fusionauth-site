@@ -19,9 +19,9 @@ Ahmed Abbas is a FusionAuth community member and CEO of OGGEH Cloud Computing, a
 
 **Dan:** Tell me a bit about your work as a developer and what OGGEH Cloud Computing is working on?
 
-**Ahmed:** I consider myself a front end Swiss Army Knife. I started as a UX Designer 16 years ago. My developer journey started with ActionScript producing rich internet apps in Flash Player. The turning point after the famous letter by Steve Jobs, which was officially the death certificate of the Flash Player. Right then, I switched to JavaScript.
+**Ahmed:** I consider myself a front end Swiss Army Knife. I started as a UX Designer 16 years ago. My developer journey started with ActionScript producing rich internet apps in Flash Player. The turning point came after the famous letter by Steve Jobs, which was officially the death certificate of the Flash Player. Right then, I switched to JavaScript.
 
-OGGEH Cloud Computing the only qualified Progressive Web Application (PWA) Agency by Google Developers in Africa and the MENA region. As well as the only Google Cloud Technology Partner in the Arabian countries! Actual users/customers are always looking for a simple way to manage their content at the backend. Something that does not involve writing mysterious markup like HTML and/or weird shortcodes as most plugins do (for WordPress, Joomla, Drupal, and others). 
+OGGEH Cloud Computing is the only qualified Progressive Web Application (PWA) Agency by Google Developers in Africa and the MENA region. As well as the only Google Cloud Technology Partner in the Arabian countries! Actual users/customers are always looking for a simple way to manage their content at the backend. Something that does not involve writing mysterious markup like HTML and/or weird shortcodes as most plugins do (for WordPress, Joomla, Drupal, and others). 
 
 OGGEH Cloud Platform takes care of complex backend/infrastructure logic for security and scalability. 
 
@@ -31,7 +31,7 @@ We pick our early adopters carefully. Large organizations with real traffic on P
 
 I would say that OGGEH Cloud Computing is a business built by nerds seeking out other nerds. Surviving on cloud usage subscriptions. (We might expose our platform as an open-source project in the near future.)
 
-> [FusionAuth] works like a charm from the first attempt. That's something that doesn't usually happen when trying new things. 
+> [FusionAuth] worked like a charm from the first attempt. That's something that doesn't usually happen when trying new things. 
 
 **Dan:** Tell me more about the Cloud CMS. Does it deliver JSON data which can then be used by a variety of clients (mobile, webapp, etc) in whatever way makes sense?
 
@@ -43,9 +43,9 @@ I would say that OGGEH Cloud Computing is a business built by nerds seeking out 
 
 We prefer OpenID Connect and OAuth 2.0 for the implementation. At the moment, we use both Authorization Code and Implicit flows for the authentication of our platform tools, and only Implicit flow on cloud apps (since they're progressive web apps).
 
-Securing OGGEH Cloud Platform customers are one of our main focuses, so we do not allow any special markup and/or scripts anyway. As I mentioned earlier, we introduce pure content management only. This means there's no easy way to inject code using our platform.
+Securing OGGEH Cloud Platform customers is one of our main focuses, so we do not allow any special markup and/or scripts anyway. As I mentioned earlier, we introduce pure content management only. This means there's no easy way to inject code using our platform.
 
-**Dan:** Are you creating the tenants for each customer via the API or in the UX? Is the main reason for that separate because of the look and feel differences or are there other reasons to have a tenant for each cloud app?
+**Dan:** Are you creating the tenants for each customer via the API or in the UX? Is the main reason for that separation because of the look and feel differences or are there other reasons to have a tenant for each cloud app?
 
 **Ahmed:** We prefer the API since it's part of automated builds. It's not because of the look and feel of FusionAuth (that's completely fine). It's more about abstracting complex configurations when creating our Cloud Apps. We aim to provide some sort of bare minimum UI for our customers to stick to pure content management, which includes user management. We're providing technical support anyway.
 
@@ -67,7 +67,7 @@ Earlier, we had to replicate the authentication server for each customer (Cloud 
 
 There's also one important note I must add here. Gluu might break due to expired JKS files for SCIM. These Java Keystore files are generated upon installation and [expire after one year](https://gluu.org/docs/gluu-server/4.0/operation/replace-expired-jks-scim/). Imagine how we felt after exactly one year of the installation to find a broken Gluu and spending many hours digging up this annoying fact!
 
-To be honest, that was the moment where I decided to get rid of Gluu. There were many other alternatives. FusionAuth caught my attention and just stuck there. I used to say that Auth0 has the best documentation and comprehensive service. But all that changed dramatically after I explored FusionAuth. It works like a charm from the first attempt. That's something that doesn't usually happen when trying new things. I wish to thank you for that.
+To be honest, that was the moment where I decided to get rid of Gluu. There were many other alternatives. FusionAuth caught my attention and just stuck there. I used to say that Auth0 has the best documentation and comprehensive service. But all that changed dramatically after I explored FusionAuth. It worked like a charm from the first attempt. That's something that doesn't usually happen when trying new things. I wish to thank you for that.
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
@@ -79,13 +79,13 @@ To be honest, that was the moment where I decided to get rid of Gluu. There were
 
 **Ahmed:** K8s. We do the same for the rest of OGGEH Cloud Platform tools, which includes a variety of auto-scaled micro-services. Now FusionAuth is one of those. I did not exactly pick the docker version provided by FusionAuth docs. I had to modify the official Dockerfile from FusionAuth/fusionauth-containers repository for auto-installing a custom plugin. One that handles LDAP Salted SHA512 passwords (imported from Gluu). 
 
-We need to have a stateless container. I'm not sure if I can auto-install a custom plugin using a kickstart file by FusionAuth. [ed note: This is not currently possible, but there's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/1096).]
+We need to have a stateless container. I'm not sure if I can auto-install a custom plugin using a kickstart file by FusionAuth. _[ed note: This is not currently possible, but there's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/1096).]_
 
 **Dan:** Any general feedback/areas to improve?
 
 **Ahmed:** Would love to be able to change the branding of the default login screen of FusionAuth from the very first setup/kickstart. Even though we use a custom tenant for our users. Separating those from FusionAuth admin interface (which works great). Someone might just hit the hostname of our authentication server directly without any request parameters that define a tenant (i.e. `sso.oggeh.com`). 
 
-They will not be able to login using their credentials of course, and I do not mind that the FusionAuth logo sits there at the bottom and the favicon. But that login screen has this "help" link at the top-right corner which links to the FusionAuth docs and I prefer to show the OGGEH logo instead. It would be nice if we can use a custom stylesheet as well.
+They will not be able to login using their credentials of course, and I do not mind that the FusionAuth logo sits there at the bottom and the favicon. But that login screen has this "help" link at the top-right corner which links to the FusionAuth docs and I prefer to show the OGGEH logo instead. It would be nice if we can use a custom stylesheet as well. _[ed note: Review [this issue](https://github.com/FusionAuth/fusionauth-issues/issues/994) for more on such functionality, which is coming soon in a paid edition.]_
 
 -------
 
