@@ -3,7 +3,7 @@ layout: blog-post
 title: What to consider before choosing an open source auth provider
 description: Some of the pros and cons of open-source auth providers.
 author: Keanan Koppenhaver
-image: blogs/try-before-you-buy/how-to-get-the-most-out-of-a-free-auth-provider-trial-header-image.png
+image: blogs/open-source-considerations/what-to-consider-before-choosing-an-open-source-auth-provider-header-image.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
