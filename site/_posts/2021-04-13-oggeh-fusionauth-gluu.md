@@ -3,7 +3,7 @@ layout: blog-post
 title: OGGEH Cloud Computing switched to FusionAuth from Gluu
 description: OGGEH Cloud Computing has a cloud computing platform that empowers front end developers. They chose FusionAuth and saved 40% because it requires less CPU and memory resources than Gluu.
 author: Dan Moore
-image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
+image: blogs/oggeh-fusionauth-gluu/oggeh-cloud-computing-switched-to-fusionauth-from-gluu.png
 category: blog
 tags: topic-community-story topic-upgrade-gluu
 excerpt_separator: "<!--more-->"
