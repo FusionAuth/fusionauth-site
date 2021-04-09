@@ -11,7 +11,7 @@ dateModified: 2021-04-15
 
 When it comes to building any web or mobile application, authentication is one of those areas where you generally don't want to take on the risk yourself. Third-party authentication providers have made this their entire business and dedicate lots of time and money to make sure their solutions are performant, easy to use, and most of all, secure. However, some of these providers make the source code for their solutions available and others keep their source code proprietary.
 
-Choosing one of these types of authentication providers over the other is not always a cut-and-dried decision, as there are benefits to each. Support, release frequency, relicensing capability, maintenance, who is responsible for security, and cost are all factors you should consider when making this decision.
+Choosing one of these types of authentication providers over the other is not always a cut-and-dried decision, as there are benefits to each. Support, release frequency, relicensing capability, maintenance, security, and cost are all factors you should consider when making this decision.
 
 Let's take a more in-depth look at the pros and cons of open-source and commercial authentication providers.
 
@@ -73,7 +73,7 @@ While this price tag is attractive, it's important not to forget that open-sourc
 
 An alternative to open-source, commercial authentication providers (such as [FusionAuth](https://fusionauth.io/), [Okta](https://www.okta.com/), and [Auth0](https://auth0.com/)) are popular because they take care of all the ambiguity and self-reliance that come with open source.
 
-But just because commercial providers handle many of open source's problems doesn't mean there aren't tradeoffs that need to be considered with them as well.
+But just because commercial providers handle many of open source's problems doesn't mean there aren't tradeoffs that need to be considered.
 
 ### Support
 
@@ -91,7 +91,7 @@ This is one of the questions you can ask the sales team when evaluating differen
 
 Commercial providers tend to have either more obscure or more restrictive licenses. You won't be able to take the code and do anything you want with it. If you are building a typical web application, this shouldn't be an issue, but if you are embedding or redistributing your code with the auth system, that may violate the license. Ask your vendor. 
 
-Many of the issues of relicensing that come with open-source technologies don't apply to commercial authentication providers, because they usually provide a single license that goes with their product. They handle the licensing of any component parts in-house and usually have legal teams or at the very least an attorney that's reviewing all of the different aspects of software licensing.
+Many of the issues of relicensing that come with open-source technologies don't apply to commercial authentication providers, because they usually provide a single license that goes with their product. They handle the licensing of any component parts in-house and usually have legal teams or an attorney that's reviewing all of the different aspects of software licensing.
 
 This is another thing you don't have to worry about with a commercial provider, rather than being responsible for reviewing all these licenses if you went with an open-source solution.
 
@@ -99,13 +99,15 @@ This is another thing you don't have to worry about with a commercial provider, 
 
 This is one of the main benefits of a commercial provider. They are responsible for all the maintenance of their product. Because you're paying for the product directly, this is one area you no longer have to worry about. You are trading money for time.
 
-However, unlike with open source, you have less freedom to make fixes yourself. So if you have a feature or a fix that you believe should be in the product, the most you can do is try to convince someone at the vendor to get that prioritized. With an open-source solution, you could fix it yourself, if you are willing to accept the maintenance burden.
+However, unlike with open source, you have less freedom to make fixes yourself. So if you have a feature or a fix that you believe should be in the product, you try to convince someone at the vendor to get that prioritized. With an open-source solution, you could fix it yourself, if you are willing to accept the maintenance burden. 
+
+That said, many commercial vendors accept community input to their roadmap and let you file bugs. Some vendors, such as FusionAuth, even offer professional services agreements which can ensure feature delivery on a schedule.
 
 If you are worried about access to the source code if the commercial vendor goes out of business, ask about a source code escrow. Some providers are willing to add a provision to their contract with you.
 
 ### Security Responsibility
 
-As with maintenance responsibility, the responsibility for the security of a commercial product is on the vendor. They will be the ones applying patches and (hopefully) doing frequent security audits to ensure their product is secure. These could include running internal security reviews, a bug bounty program, or hiring a pentesting firm to test the product's security.
+As with maintenance responsibility, the responsibility for the security of a commercial product is on the vendor. They will be the ones applying patches and performing frequent security audits to ensure their product is secure. These could include running internal security reviews, a bug bounty program, or hiring a pentesting firm to test the product's security.
 
 It may take longer to find bugs than it would with an open-source product where more people from all sorts of different backgrounds are invested in the security of the product and review it frequently. While the security responsibility may not be on you as a customer, you _do_ have the responsibility to [perform due diligence on any potential vendor](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors/) and ensure that they take the security of their product seriously. One way to do that is to examine the vendor's public security policy. Another is to look at the [CVE database](https://cve.mitre.org/) and see how vulnerabilities are handled.
 
@@ -115,13 +117,15 @@ One of the more notable differences between open source and commercial solutions
 
 However, some commercial software offers free tiers with limited support. For example, Auth0 allows you a certain number of users for free. FusionAuth has a community edition allowing you an unlimited number of users if you self-host.
 
-Depending on what stage your company is in, this cost can either be something you can absorb or a dealbreaker.
+Another item to consider is the pricing structure of the commercial solution. Some commercial products may prove cost-effective to large corporations, with high usage, but terribly improbable for a startup wanting a lowering buy-in point. Or more commonly, commercial providers provide different tiers depending on usage. This may make some use cases untenable as your product scales.
+
+Depending on what stage your company is in, this monetary expense can either be something you can absorb or a dealbreaker. You should weigh this cost against the time and effort needed to maintain an open source solution.
 
 ## The Final Showdown
 
 Using third-party authentication can be a great choice for your application, allowing you to focus on the business logic where your application provides value, but there is more than one type of provider. So in the battle of open source versus commercial authentication, which is the better choice? As with most real-world decisions, the answer is "that depends."
 
-Open-source authentication providers can be a great choice if you have more time than money. They are usually more cost-effective, too, but they do require maintenance and upkeep internally.
+Open-source authentication providers can be a great choice if you have more time than money. They are usually more cost-effective, too, but they do require internal resources for maintenance and upkeep.
 
-If you don't have the staff or the time to maintain an open-source solution, or if you do but don't want to make that investment, providers like [FusionAuth](https://fusionauth.io/) can be a great asset to your company, bringing a high-quality authentication solution to your business and taking care of all the maintenance and security concerns that go with it, so you can focus on writing the code that matters.
+If you don't have the staff or the time to maintain an open-source solution, or if you do but don't want to make that investment, providers like FusionAuth can be a great option. Such providers offer high-quality authentication solutions to your business and take care of all the maintenance and security concerns that go with it. This lets you focus on writing the code that matters.
 
