@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: OGGEH Cloud Computing switched to FusionAuth from Gluu
-description: OGGEH Cloud Computing has a cloud computing platform that empowers front end developers. They chose FusionAuth because it requires less CPU and memory resources than alternatives.
+description: OGGEH Cloud Computing has a cloud computing platform that empowers front end developers. They chose FusionAuth and saved 40% because it requires less CPU and memory resources than Gluu.
 author: Dan Moore
 image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
 category: blog
@@ -83,7 +83,7 @@ We need to have a stateless container. I'm not sure if I can auto-install a cust
 
 **Dan:** Any general feedback/areas to improve?
 
-**Ahmed:** Would love to be able to change the branding of the default login screen of FusionAuth from the very first setup/kickstart. Even though we use a custom tenant for our users. Separating those from FusionAuth admin interface (which works great). Someone might just hit the hostname of our authentication server directly without any request parameters that define a tenant (i.e. `sso.oggeh.com`). 
+**Ahmed:** Would love to be able to change the branding of the default login screen of FusionAuth from the very first setup/kickstart. Even though we use a custom tenant for our users, they still see the FusionAuth admin UI screen sometimes. Someone might just hit the hostname of our authentication server directly without any request parameters that define a tenant (i.e. `sso.oggeh.com`). 
 
 They will not be able to login using their credentials of course, and I do not mind that the FusionAuth logo sits there at the bottom and the favicon. But that login screen has this "help" link at the top-right corner which links to the FusionAuth docs and I prefer to show the OGGEH logo instead. It would be nice if we can use a custom stylesheet as well. _[ed note: Review [this issue](https://github.com/FusionAuth/fusionauth-issues/issues/994) for more on such functionality, which is coming soon in a paid edition.]_
 
