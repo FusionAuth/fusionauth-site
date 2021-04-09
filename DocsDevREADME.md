@@ -61,6 +61,9 @@ For blog posts:
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
 
+For documentation posts:
+- Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
+
 For lists:
 - Capitalize the first word.
 - Have a period on the end if it is a sentence, otherwise don't.
