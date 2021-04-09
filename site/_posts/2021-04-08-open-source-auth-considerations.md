@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Open source auth provider considerations
+title: What to consider before choosing an open source auth provider
 description: Some of the pros and cons of open-source auth providers.
 author: Keanan Koppenhaver
 image: blogs/try-before-you-buy/how-to-get-the-most-out-of-a-free-auth-provider-trial-header-image.png
@@ -30,7 +30,7 @@ First, you can look back at the entire release history and see how frequently re
 
 And second, open-source projects tend to "work in public," meaning discussions about release frequency, notes from planning meetings, and more may be publicly accessible. Depending on how the project is structured, you may even be able to be part of these meetings. Some projects have this information in their README file or some similar place. You'd rarely get this kind of transparency with a more proprietary provider. 
 
-However, it is worth noting the distinction between open source and open process. A project can be open source but take no feedback from the community; some of Apple's open source projects are like this. On the other hand, commercial software companies can develop “in the open” and even make the source available for inspection using source-available licenses, without allowing for the freedoms that are key to open source licensing. When you evaluate an open-source project, make sure you know what the community feedback process is, if any.
+However, it is worth noting the distinction between open source and open process. A project can be open source but take no feedback from the community; some of Apple's open source projects are like this. On the other hand, commercial software companies, like FusionAuth, can develop "in the open" and even make the source available for inspection using source-available licenses, without allowing for the freedoms that are key to open source licensing. When you evaluate an open-source project, make sure you know what the community feedback process is, if any.
 
 ### Relicensing
 
@@ -42,11 +42,11 @@ Always review the license for any auth system you are considering before moving 
 
 ### Maintenance Responsibility
 
-In a true open-source solution, the "community" is responsible for submitting fixes they want to see included in the project. Feature requests from the community tend to need to be contributed to by the community itself, meaning you as the customer bear more of the maintenance burden. The amount of testing done for a new release varies based on the effort the community puts forth.
+In a true open-source solution, the "community" is responsible for submitting fixes they want to see included in the project. Feature requests from the community tend to be contributed to by the community itself. This means customers bear more of the maintenance burden, as part of that community. The amount of testing done for a new release varies based on the effort the community puts forth.
 
 On the flip side, it could mean you have more say in the product roadmap if you're able to contribute fixes in a way that is acceptable to the community. Heck, you could even pay a developer to spend most of their day writing code for this system, which would buy you a lot of influence. Consider how much bandwidth your team has to contribute to this process; it might be a dealbreaker.
 
-You can also, if you need to, make a change in your own version of the project. You can then submit it to the maintainers. If it meets their quality standards and goal for the project, it can be integrated; this is also known as upstreaming. However, if it doesn't get incorporated, you are stuck supporting a critical feature and making sure that future releases don't break it.
+You can also make a change in your own version of the project. You can then submit it to the maintainers. If it meets their quality standards and goal for the project, it can be integrated; this is also known as upstreaming. However, if it doesn't get incorporated, you are stuck supporting a critical feature and making sure that future releases don't break it.
 
 ### Security Responsibility
 
@@ -60,7 +60,7 @@ In the end, you (and the maintainers) are ultimately responsible for the securit
 
 This is where many open-source solutions really shine. If you're running an open-source authentication provider, the cost for the provider itself in many cases is nothing. Zip. Nada. Who doesn't like free?
 
-The caveat to that price tag is that you generally also have to run this software on your own infrastructure, so there's an implicit cost there. However, if you're already running your own infrastructure, then in many cases, an open-source authentication provider can be added at no direct monetary cost to you.
+The caveat to that price tag is that you generally also have to run this software on your own infrastructure, so there's an implicit cost there. However, if you're already running your own infrastructure, then in many cases, an open-source authentication provider can be added at no direct monetary cost to you. There will likely be some additional work for the ops team to install and run the provider.
 
 While this price tag is attractive, it's important not to forget that open-source providers come with added maintenance and security responsibility when compared to proprietary solutions, as we've already discussed.
 
