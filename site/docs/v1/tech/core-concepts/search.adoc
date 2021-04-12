@@ -1,0 +1,82 @@
+---
+layout: doc
+title: Search
+description: Search options within FusionAuth
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+FusionAuth ships with two options for search: a simple search via the database search engine and the Elasticsearch database engine.
+
+== Using the Search Engine
+
+* <<Using the Database Search Engine>>
+* <<Using the Elasticsearch Search Engine>>
+
+== Configuration
+
+[NOTE.since]
+====
+
+As of version 1.16.0, FusionAuth ships with a database search engine as the default.
+
+By selecting the appropriate link:/docs/v1/tech/installation-guide/[installation guide], one can easily create a configuration with Elasticsearch pre-enabled.
+
+====
+
+=== Configuration Reference
+
+The relevant properties which control the configuration of the search engine include `search.type` which specifies the search engine type. For the database search engine, there is no other configuration needed. All other settings referencing `search` apply to the Elasticsearch search engine only. Please see the link:/docs/v1/tech/reference/configuration/[Configuration Reference] for more details.
+
+==== Switch Engine Types
+
+You may link:/docs/v1/tech/tutorials/switch-search-engines/[switch between the different search engines].
+
+==== Docker
+If you are running FusionAuth in a Docker environment, see the link:/docs/v1/tech/installation-guide/docker/[Using FusionAuth on Docker] documentation for an example configuring Elasticsearch as the user search engine.
+
+
+==== View Current Configuration
+
+You may view the configured search engine type in the FusionAuth admin UI by navigating to [breadcrumb]#System -> About#.  As you can see below, this system is configured to use the database search engine.
+
+image::about-search-engine-type.png[About - Search Engine Type,width=1200,role=shadowed top-cropped]
+
+== Using the Database Search Engine
+
+This configuration is lightweight, simplifies installation and system complexity, but comes with the trade offs of limited search capabilities and performance implications.
+
+The database search engine is appropriate for systems that are not dependent on the FusionAuth APIs, are not expected to have a large number of search results, or are running in an embedded environment.
+
+If you don't need advanced searching capabilities, you may be able to use the database search engine for large installations. This is not a use case FusionAuth tests, so ensure you provision your database with enough resources and benchmark your typical use cases.
+
+=== Limitations
+
+You may add a `*` character to wildcard match any character, including none. So `*piedpiper` will match `piedpiper` and `thepiedpiper`. You may put the wildcard at any location in a search string.
+
+All search terms are converted to lowercase and compared with lowercase values.
+
+Regular expressions, ranges, and other complicated queries can not be used.
+
+== Using the Elasticsearch Search Engine
+
+Leveraging Elasticsearch enables advanced search capabilities on more numerous and granular data. It also provides a performance improvement.
+
+The Elasticsearch search engine is appropriate for systems that are dependent on the FusionAuth APIs (such as link:/docs/v1/tech/apis/users#search-for-users[user search]), are expected to have a large number of results, or require more granularity in search than is provided by the standard database search engine.
+
+=== Reindexing Elasticsearch
+
+[WARNING]
+====
+Reindexing is an expensive operation, especially if your system has a large number of users, so it should not be run unless necessary.
+====
+
+It is possible, though rare, for an Elasticsearch index to become out of sync with the database. If you stand up FusionAuth with a database dump and restore, you may need to run this operation. You may also be instructed to do so by FusionAuth support.
+
+In general, even if a temporary outage occurs with Elasticsearch, the index will be sync up automatically.
+
+
+If you do need to run this, navigate to [breadcrumb]#System -> Reindex# in the FusionAuth admin UI to initiate a reindex of all users. This navigation item will only be displayed when the search engine is Elasticsearch.
+
