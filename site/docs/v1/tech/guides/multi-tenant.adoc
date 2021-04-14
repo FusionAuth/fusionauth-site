@@ -47,18 +47,19 @@ Attached entities can be re-used between entities. For example, if the Pied Pipe
 
 TODO extract to share with core concepts?
 
-=== Tenant Scoped Entities
+=== Tenant Scoped 
 
-Here is a list of tenant scoped entities:
+Here is a list of items that are tenant scoped:
 
 * Users
 * Groups
 * API Keys (optionally)
 * Applications
+* Entities
 
-=== Tenant Attached Entities
+=== Tenant Attached 
 
-Here is a partial list of tenant attached entities:
+Here is a partial list of tenant attached items:
 
 * Email templates (some of them)
 * Forms (some of them)
@@ -68,27 +69,27 @@ Here is a partial list of tenant attached entities:
 * User actions
 * Webhooks
 
-=== Application Scoped Entities
+=== Application Scoped
 
-Here is a list of application scoped entities.
+Here is a list of application scoped items.
 
 * Registrations
 * Roles
 
 Because an application is tenant scoped, the above entities are also scoped to a tenant. They cannot be used across tenants. For example, if a tenant containing the containing application is deleted, the registrations for a given application will also be deleted.
 
-=== Application Attached Entities
+=== Application Attached
 
-Here is a partial list of application attached entities:
+Here is a partial list of application attached things:
 
 * Identity providers
 * Email templates (some of them)
 * Forms (some of them)
 * Lambdas
 
-=== Global "Things"
+=== Global Items
 
-There are entities which are global in scope. These are typically scoped under `system` in the API namespace.
+There are items global in scope. These are typically scoped under `system` in the API namespace.
 
 * API Keys (optionally)
 * Login reports?
@@ -126,13 +127,18 @@ ALTER USER 'username'@'ip_address' IDENTIFIED WITH mysql_native_password BY 'pas
 You'll also need a running FusionAuth instance. Visit the link:/docs/v1/tech/installation-guide/[installation guides] and choose one of the many ways to install it.
 
 
+
 === Setting Up 
 
 Create the application.
 
-symfony new piedpipervideochat --full --version=lts
 
-We're using LTS since it is supported for a long time. This code is running symfony version 4.4.
+symfony new piedpipervideochat --full 
+
+set up the connection to the database in your .env.local file
+
+
+This code is running symfony version 5.2.6, the latest stable release at the time.
 
 cd piedpipervideochat 
 
@@ -141,13 +147,64 @@ composer require symfony/orm-pack; composer require --dev symfony/maker-bundle
 symfony composer require twig
 composer require fusionauth/fusionauth-client
 symfony composer require annotations
+composer require knpuniversity/oauth2-client-bundle
 
 start a new tab and start the server
 
 symfony server:start
 
+=== Build the Video Application
 
-=== Setting Up FusionAuth
+Let's build the bones of the video application. We won't build a login form, as we'll be using FusionAuth's hosted login pages. But we'll add a home page for the video application, and then a chat page. Building the middle out compression algorithm will be left as an exercise for the user.
+
+Add two controllers to the symfony applicatiion.
+
+symfony add controller home page
+
+symfony add controller chat page
+
+=== Add Login with FusionAuth
+
+Let's add login with FusionAuth, without tenants. We will lay the groundwork for tenants, however.
+
+Add a tenant model in symfony.
+
+Add an application id, url and a color. As you build this out, you could add logos or custom urls as well.
+
+Set up an application in FusionAuth, and add the application id and the color "gray" to symfony.
+
+add symfony routes to send people to login and logout, and send to chat page
+
+Have a user login by going to the
+
+=== Manually Set up a Tenant
+
+Let's test things out by manually creating a tenant.
+
+Add them to the symfony system
+create the tenant object
+
+Do the fusionauth stuff
+create a tenant 
+create an application
+enable self service registration
+create a user
+copy the theme
+
+modify the color
+body { background-color: red; }
+
+update the tenant object
+
+log the user in
+
+add registration link
+
+=== Automate it
+
+do the following steps above by using the api. do a syncrhonous webhook (with note that you might want it to be async later)
+
+=== Setting Up FusionAuth Tenants
 
 Let's manage FusionAuth configuration using the php client and doctrine migrations. 
 
@@ -202,7 +259,13 @@ php bin/console doctrine:migrations:execute
 This will let you manage the configuration of your FusionAuth server in a version controlled manner.
 
 
-New tenant with one application created on registration via webhook
+New tenant with one application created on registration via webhook, new theme, and update CSS for the theme.
+
+Also map 
+
+
+
+
 Python application handing the tenant hostnames as well as the oauth redirects.
 
 == Tenant Level Customization
@@ -223,3 +286,9 @@ I’m not aware of any other limits
 
 tenant limitations from the limitations doc
 social sign on providers (only one of those)
+
+https://fusionauth.io/community/forum/topic/936/newbie-question-on-urls-for-multitenant-applications
+https://fusionauth.io/community/forum/topic/900/authentication-for-an-application-with-web-client-and-mobile-front-ends/9
+
+for fusionauth cloud
+no, you just send the client id, and we know which tenant to holds that client id
