@@ -1,10 +1,10 @@
 ---
 layout: advice
 title: Why outsource your auth system and how to sell the decision to your company
-description: Why should you consider outsourcing your authentication, authorization and user management system.
+description: Why should you consider outsourcing your authentication, authorization and user management system, and how to get buy-in from your teammates.
 author: Joe Stech
 image: advice/registration-best-practices/expert-advice-best-practices-for-registration-forms.png
-category: Identity Basics
+category: Authentication
 date: 2021-04-15
 dateModified: 2021-04-15
 ---
