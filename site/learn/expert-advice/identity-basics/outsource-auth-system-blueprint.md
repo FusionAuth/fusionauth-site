@@ -17,7 +17,7 @@ Authentication is one of those components that you deal with all the time. Auth 
 
 ## Auth outsourcing considerations
 
-What are the primary considerations when making an outsourcing decision, especially around a component as critical as your identity management system?
+What are the primary considerations when making an outsourcing decision, especially around a component as critical as your identity management system? This document is a blueprint for both what you should consider as well as who to get on board if you decide using a third party auth provider makes sense.
 
 ### Speed to market
 
