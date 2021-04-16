@@ -5,8 +5,8 @@ description: Why should you consider outsourcing your authentication, authorizat
 author: Joe Stech
 image: advice/why-outsource/expert-advice-why-outsource-your-auth-system-and-how-to-sell-the-decision-to-your-company-header-image.png
 category: Identity Basics
-date: 2021-04-15
-dateModified: 2021-04-15
+date: 2021-04-16
+dateModified: 2021-04-16
 ---
 
 You're a software engineering leader, and you're great at your job. You know that the optimal path for software development lies in figuring out which components of your design to implement from scratch and which have already been implemented by specialists and can be reused. 
