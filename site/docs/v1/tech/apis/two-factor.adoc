@@ -15,18 +15,46 @@ This API underwent breaking changes in version 1.26. You can view the link:../tw
 
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
-The TOTP implementation is not a premium feature (TBD).
+The TOTP implementation is not a premium feature.
 
 * <<Enable Two Factor>>
 * <<Disable Two Factor>>
-* <<Send a Two Factor Code>>
-* <<Generate a Secret>>
 
+* <<Send a Two Factor Code During Login or Step Up>>
+* <<Send a Two Factor Code When Enabling MFA>>
+* <<Send a Two Factor Code When Disabling MFA>>
+
+* <<Generate a Secret>>
 * <<Start Two Factor>>
+
+Here's a general outline of how you might use FusionAuth's MFA.
+
+* Enable it at the tenant level, configuring allowed MFA options. Please see the tenant documentation for that API.
+* Enable it on a user in a tenant, configuring allowed MFA options.
+* The user can log in and must provide MFA.
+* The user can be interacting with an application and take a privileged action and be required to provide a code.
+* Disable it on a user in a tenant.
+
+
+
+The "Send" API is used to send a Two Factor verification code to a User. There are three main use cases:
+
+* The user is logging in or is in a "step up auth" flow where they are undertaking a privileged action.
+* The user is enabling MFA
+* The user is disabling MFA
+
+
+== Authentication
+
+Some of these operations can use JWT authentication instead of API key authentication. 
+
+Learn more about link:/docs/v1/tech/apis/authentication/#jwt-authentication[JWT authentication and see examples here].
+
+If you have a valid [field]#twoFactorId#, neither a JWT nor an API key is required.
 
 == Start Two Factor
 
-Starts a two factor request. This would be used for step up auth, such as when sensitive data is requested.
+Starts a two factor request. This would be used for step up auth, such as when sensitive data is requested or for where you need to control the Two Factor Authentication process.
 
 === Request
 
@@ -43,6 +71,9 @@ include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[
 include::docs/v1/tech/apis/_two-factor-start-request-body.adoc[]
 
 === Response
+
+TBD
+
 
 :missing_message: The User does not exist. The response will be empty.
 include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
@@ -78,7 +109,7 @@ link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas
 
 === Response
 
-The response for this API contains the a Two Factor secret.
+The response for this API contains a Two Factor secret suitable for an authenticator like Google Authenticator.
 
 :never_missing:
 :no_errors:
@@ -100,6 +131,277 @@ A Base32 encoded form of the provided secret. This useful if you need to provide
 ----
 include::docs/src/json/two-factor/secret/response.json[]
 ----
+
+== Send a Two Factor Code During Login or Step Up
+
+This operations allows you to send a message with a code to finish a Two Factor flow, and requires an existing `twoFactorId`. No API key is required. 
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Send a Two Factor code to complete Two Factor Login
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send/`{twoFactorId}`#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#twoFactorId# [type]#[String]# [required]#Required#::
+The `twoFactorId` returned by the Login API or the Start Two Factor request.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#methodId# [type]#[String]# [required]#Required#::
+The Id of the MFA method to be used.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/twoFactorId-request.json[]
+----
+
+=== Response
+
+This API does not return a JSON response body.
+
+:success_code: 200
+:success_message: The request was successful.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:success_code!:
+:success_message!:
+
+== Send a Two Factor Code When Enabling MFA
+
+You are enabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. You are using FusionAuth as your delivery mechanism.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Two Factor code to an existing User by Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#email# [type]#[String]# [optional]#Optional#::
+The email to which send Two Factor codes. If the [field]#method# is equal to `email`, this is required.
+
+[field]#method# [type]#[String]# [required]#Required#::
+The type of the MFA method which will be added. The value provided here must be allowed in the Tenant MFA configuration as well.
++
+Valid values are:
++
+* `email`
+* `sms`
+
+[field]#mobilePhone# [type]#[String]# [optional]#Optional#::
+The mobile phone to which send Two Factor codes. If the [field]#method# is equal to `sms`, this is required.
+
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The User Id. 
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/enable-userId-request.json[]
+----
+
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Send a Two Factor code to an authenticated User using a JWT
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#email# [type]#[String]# [optional]#Optional#::
+The email to which send Two Factor codes. If the [field]#method# is equal to `email`, this is required.
+
+[field]#method# [type]#[String]# [required]#Required#::
+The type of the MFA method which will be added. The value provided here must be allowed in the Tenant MFA configuration as well.
++
+Valid values are:
++
+* `email`
+* `sms`
+
+[field]#mobilePhone# [type]#[String]# [optional]#Optional#::
+The mobile phone to which send Two Factor codes. If the [field]#method# is equal to `sms`, this is required.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/enable-jwt-request.json[]
+----
+
+=== Response
+
+This API does not return a JSON response body.
+
+:success_code: 200
+:success_message: The request was successful.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:success_code!:
+:success_message!:
+
+
+== Send a Two Factor Code When Disabling MFA
+
+You are disabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. You are using FusionAuth as your delivery mechanism.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Two Factor code to an existing User by Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#methodId# [type]#[String]# [required]#Required#::
+The Id of the MFA method which will be removed.
+
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The User Id of the User to send a Two Factor verification code. This User is expected to already have Two Factor enabled.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/disable-userId-request.json[]
+----
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Send a Two Factor code to an authenticated User using a JWT
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#methodId# [type]#[String]# [required]#Required#::
+The Id of the MFA method which will be removed.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/disable-jwt-request.json[]
+----
+
+=== Response
+
+This API does not return a JSON response body.
+
+:success_code: 200
+:success_message: The request was successful.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:success_code!:
+:success_message!:
+
+
+BUSTED BELOW THIS LINE
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Two Factor code to an existing User by Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication and has at least one MFA method configured.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#email# [type]#[String]# [optional]#Optional#::
+The email to which send the Two Factor code. If the [field]#mobilePhone# is not provided, this is required when enabling MFA.
+
+[field]#methodId# [type]#[String]# [optional]#Optional#::
+The MFA method to use for this request.
+
+[field]#method# [type]#[String]# [optional]#Optional#::
+The MFA method to use for this request. Valid values are:
++
+* `authenticator`
+* `email`
+* `sms`
+
+[field]#mobilePhone# [type]#[String]# [optional]#Optional#::
+The mobile phone to which send the Two Factor code. If the [field]#mobilePhone# is not provided, this is required to enabling MFA.
+
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The User Id of the User to send a Two Factor verification code. This User is expected to already have Two Factor enabled.
+
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/request_userId.json[]
+----
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Two Factor code to a mobile phone
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+This request is intended to be used to send a Two Factor code to a User to assist in enabling Two Factor authentication.
+
+==== Request Body
+
+[.api]
+[field]#mobilePhone# [type]#[String]# [required]#Required#::
+A mobile phone to send the Two Factor verification code.
+
+[field]#secret# [type]#[String]# [required]#Required#::
+The Two Factor secret used to generate a Two Factor verification code to send to the provided mobile phone.
++
+You may optionally use value provided in the `secret` field returned by the link:/docs/v1/tech/apis/two-factor#generate-a-secret[Two Factor Secret] API instead of generating this value yourself.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/request.json[]
+----
+
+
+
+
 =================================== review below this line
 
 == Enable Two Factor
@@ -243,105 +545,3 @@ include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[
 |The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
 |===
 
-== Send a Two Factor Code
-
-This API is used to send a Two Factor verification code to a User. This may be useful during Two Factor authentication if the initial
-code is no longer valid. It may be also used to send a code to a User to assist in enabling or disabling Two Factor authentication.
-
-To send a code to a User that already has Two Factor enabled, it is not required they have `TextMessage` set as their preferred delivery.
-As long as the User has a mobile phone defined you may send the User a code.
-
-This API requires that the link:/docs/v1/tech/integrations/twilio/[Twilio] integration is enabled and configured properly.
-
-=== Request
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Two Factor code to an existing User by Id
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/two-factor/send#
---
-
-This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication to assist in disabling Two Factor authentication. The User must already have Two Factor enabled and have a valid mobile phone for this to succeed.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-==== Request Body
-
-[.api]
-[field]#userId# [type]#[UUID]# [required]#Required#::
-The User Id of the User to send a Two Factor verification code. This User is expected to already have Two Factor enabled.
-
-[source,json]
-.Example Request JSON
-----
-include::docs/src/json/two-factor/send/request_userId.json[]
-----
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Two Factor code to a mobile phone
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/two-factor/send#
---
-
-This request is intended to be used to send a Two Factor code to a User to assist in enabling Two Factor authentication.
-
-==== Request Body
-
-[.api]
-[field]#mobilePhone# [type]#[String]# [required]#Required#::
-A mobile phone to send the Two Factor verification code.
-
-[field]#secret# [type]#[String]# [required]#Required#::
-The Two Factor secret used to generate a Two Factor verification code to send to the provided mobile phone.
-+
-You may optionally use value provided in the `secret` field returned by the link:/docs/v1/tech/apis/two-factor#generate-a-secret[Two Factor Secret] API instead of generating this value yourself.
-
-[source,json]
-.Example Request JSON
-----
-include::docs/src/json/two-factor/send/request.json[]
-----
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Send a Two Factor code to complete Two Factor Login
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/two-factor/send/`{twoFactorId}`#
---
-
-This request is intended to send additional messages to the User's mobile phone during login.
-
-==== Request Parameters
-
-[.api]
-[field]#twoFactorId# [type]#[String]# [required]#Required#::
-The `twoFactorId` returned by the Login API.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Send a Two Factor code to an authenticated User using a JWT
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/two-factor/send#
---
-
-This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication to assist
-in disabling Two Factor authentication. When using JWT authentication the User's Id is retrieved from the JWT. The User must already have
-Two Factor enabled and have a valid mobile phone for this to succeed.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-=== Response
-
-:success_code: 200
-:success_message: The request was successful.
-include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
-:success_code!:
-:success_message!:
