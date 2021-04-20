@@ -15,34 +15,15 @@ This API underwent breaking changes in version 1.26. You can view the link:../tw
 
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
-The TOTP implementation is not a premium feature.
+The Authenticator/TOTP implementation is not a premium feature.
 
 * <<Enable Two Factor>>
 * <<Disable Two Factor>>
-
+* <<Generate a Secret>>
+* <<Start Two Factor>>
 * <<Send a Two Factor Code During Login or Step Up>>
 * <<Send a Two Factor Code When Enabling MFA>>
 * <<Send a Two Factor Code When Disabling MFA>>
-
-* <<Generate a Secret>>
-* <<Start Two Factor>>
-
-Here's a general outline of how you might use FusionAuth's MFA.
-
-* Enable it at the tenant level, configuring allowed MFA options. Please see the tenant documentation for that API.
-* Enable it on a user in a tenant, configuring allowed MFA options.
-* The user can log in and must provide MFA.
-* The user can be interacting with an application and take a privileged action and be required to provide a code.
-* Disable it on a user in a tenant.
-
-
-
-The "Send" API is used to send a Two Factor verification code to a User. There are three main use cases:
-
-* The user is logging in or is in a "step up auth" flow where they are undertaking a privileged action.
-* The user is enabling MFA
-* The user is disabling MFA
-
 
 == Authentication
 
@@ -52,34 +33,146 @@ Learn more about link:/docs/v1/tech/apis/authentication/#jwt-authentication[JWT 
 
 If you have a valid [field]#twoFactorId#, neither a JWT nor an API key is required.
 
-== Start Two Factor
+== Enable Two Factor
 
-Starts a two factor request. This would be used for step up auth, such as when sensitive data is requested or for where you need to control the Two Factor Authentication process.
+This API is used to enable Two Factor authentication for a single User. To use this API the User must provide a valid
+Two Factor verification code.
+
+To enable using `TextMessage` delivery, you may use the link:/docs/v1/tech/apis/two-factor#send-a-two-factor-code[Two Factor Send] API to deliver a
+code to the User, the User will then provide this code as input.
 
 === Request
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Start Two Factor Authentication
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Enable Two Factor Authentication
 [.endpoint]
 .URI
 --
-[method]#POST# [uri]#/api/user/two-factor/start#
+[method]#POST# [uri]#/api/user/two-factor/`{userId}`#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The Id of the User to enable Two Factor authentication.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Enable Two Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/two-factor#
 --
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
-include::docs/v1/tech/apis/_two-factor-start-request-body.adoc[]
+include::docs/v1/tech/apis/_two-factor-request-body.adoc[]
 
 === Response
 
-TBD
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
 
+|200
+|The request was successful. Two Factor has been enabled for the User.
 
-:missing_message: The User does not exist. The response will be empty.
-include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
-:missing_message!:
+|400
+|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
 
-include::docs/v1/tech/apis/_two-factor-start-response-body.adoc[]
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication].
+
+|404
+|The User does not exist. The response will be empty.
+
+|421
+|The `code` request parameter is not valid. The response will be empty.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
+
+|503
+|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+|===
+
+== Disable Two Factor
+
+This API is used to disable Two Factor authentication for a single User. To use this API the User must provide a valid
+Two Factor verification code.
+
+If the User has configured `TextMessage` delivery, you may use the link:/docs/v1/tech/apis/two-factor#send-a-two-factor-code[Two Factor Send] API to deliver a
+code to the User, the User will then provide this code as input.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Disable Two Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/two-factor/`{userId}?code={code}`#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The Id of the User to enable Two Factor authentication.
+
+[field]#code# [type]#[String]# [required]#Required#::
+The time based one time use password, also called a Two Factor verification code.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Disable Two Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/two-factor``?code={code}``#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#code# [type]#[String]# [required]#Required#::
+The time based one time use password, also called a Two Factor verification code.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+=== Response
+
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. Two Factor has been disabled for the User.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
+
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication].
+
+|404
+|The User does not exist. The response will be empty.
+
+|421
+|The `code` request parameter is not valid. The response will be empty.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
+
+|503
+|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+|===
 
 == Generate a Secret
 
@@ -131,6 +224,32 @@ A Base32 encoded form of the provided secret. This useful if you need to provide
 ----
 include::docs/src/json/two-factor/secret/response.json[]
 ----
+
+== Start Two Factor
+
+Starts a two factor request. This would be used for step up auth, such as when sensitive data is requested or for where you need to control the Two Factor Authentication process.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Start Two Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/two-factor/start#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+include::docs/v1/tech/apis/_two-factor-start-request-body.adoc[]
+
+=== Response
+
+:missing_message: The User does not exist. The response will be empty.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:missing_message!:
+
+include::docs/v1/tech/apis/_two-factor-start-response-body.adoc[]
 
 == Send a Two Factor Code During Login or Step Up
 
@@ -402,146 +521,4 @@ include::docs/src/json/two-factor/send/request.json[]
 
 
 
-=================================== review below this line
-
-== Enable Two Factor
-
-This API is used to enable Two Factor authentication for a single User. To use this API the User must provide a valid
-Two Factor verification code.
-
-To enable using `TextMessage` delivery, you may use the link:/docs/v1/tech/apis/two-factor#send-a-two-factor-code[Two Factor Send] API to deliver a
-code to the User, the User will then provide this code as input.
-
-=== Request
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Enable Two Factor Authentication
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/user/two-factor/`{userId}`#
---
-
-==== Request Parameters
-
-[.api]
-[field]#userId# [type]#[UUID]# [required]#Required#::
-The Id of the User to enable Two Factor authentication.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Enable Two Factor Authentication
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/user/two-factor#
---
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-include::docs/v1/tech/apis/_two-factor-request-body.adoc[]
-
-=== Response
-
-[cols="1,9"]
-.Response Codes
-|===
-|Code |Description
-
-|200
-|The request was successful. Two Factor has been enabled for the User.
-
-|400
-|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
-
-|401
-|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication].
-
-|404
-|The User does not exist. The response will be empty.
-
-|421
-|The `code` request parameter is not valid. The response will be empty.
-
-|500
-|There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
-
-|503
-|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
-|===
-
-== Disable Two Factor
-
-This API is used to disable Two Factor authentication for a single User. To use this API the User must provide a valid
-Two Factor verification code.
-
-If the User has configured `TextMessage` delivery, you may use the link:/docs/v1/tech/apis/two-factor#send-a-two-factor-code[Two Factor Send] API to deliver a
-code to the User, the User will then provide this code as input.
-
-=== Request
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Disable Two Factor Authentication
-[.endpoint]
-.URI
---
-[method]#DELETE# [uri]#/api/user/two-factor/`{userId}?code={code}`#
---
-
-==== Request Parameters
-
-[.api]
-[field]#userId# [type]#[UUID]# [required]#Required#::
-The Id of the User to enable Two Factor authentication.
-
-[field]#code# [type]#[String]# [required]#Required#::
-The time based one time use password, also called a Two Factor verification code.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Disable Two Factor Authentication
-[.endpoint]
-.URI
---
-[method]#DELETE# [uri]#/api/user/two-factor``?code={code}``#
---
-
-==== Request Parameters
-
-[.api]
-[field]#code# [type]#[String]# [required]#Required#::
-The time based one time use password, also called a Two Factor verification code.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-=== Response
-
-[cols="1,9"]
-.Response Codes
-|===
-|Code |Description
-
-|200
-|The request was successful. Two Factor has been disabled for the User.
-
-|400
-|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
-
-|401
-|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication].
-
-|404
-|The User does not exist. The response will be empty.
-
-|421
-|The `code` request parameter is not valid. The response will be empty.
-
-|500
-|There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
-
-|503
-|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
-|===
 
