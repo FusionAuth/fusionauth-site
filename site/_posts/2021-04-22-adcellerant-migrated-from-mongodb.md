@@ -2,7 +2,7 @@
 layout: blog-post
 title: AdCellerant seamlessly migrated their data from MongoDB to FusionAuth
 description: Before migrating to FusionAuth, AdCellerant used a homegrown authentication solution with MongoDB. When they moved to FusionAuth, they transferred thousands of accounts transparently. 
-image: blogs/dealcloser-case-study/dealcloser-chooses-fusionauth-saves-two-months-of-development-time.png
+image: blogs/adcellerant-case-study/adcellerant-seamlessly-migrated-their-data-from-mongodb-to-fusionauth-header-image.png
 author: Dan Moore
 category: blog
 tags: topic-customer-story topic-upgrade-homegrown
