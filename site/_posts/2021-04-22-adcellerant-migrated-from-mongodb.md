@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: dealcloser chooses FusionAuth, saves two months of development time
-description: dealcloser, a legaltech startup, uses FusionAuth to solve their enterprise needs.
+title: AdCellerant seamlessly migrated their data from MongoDB to FusionAuth
+description: Before migrating to FusionAuth, AdCellerant used a homegrown authentication solution with MongoDB. When they moved to FusionAuth, they transferred thousands of accounts transparently. 
 image: blogs/dealcloser-case-study/dealcloser-chooses-fusionauth-saves-two-months-of-development-time.png
 author: Dan Moore
 category: blog
@@ -23,7 +23,7 @@ In particular, the application had scaling issues as they added more customers. 
 
 The growing pains of the monolithic application impacted the engineering team timelines, unfortunately. They also made it difficult to deliver on promises to clients.
 
-AdCellerant seamlessly migrated their data from MongoDb to FusionAuth with no impact on users. Thousands of accounts were transferred. The AdCellerant team continues to migrate applications from the homegrown auth system to FusionAuth. 
+AdCellerant seamlessly migrated their data from MongoDB to FusionAuth with no impact on users. Thousands of accounts were transferred. The AdCellerant team continues to migrate applications from the homegrown auth system to FusionAuth. 
 
 They've also been able to use FusionAuth for new projects, including building an API to allow external developers to integrate with their flagship product. We'll let James have the final word:
 
