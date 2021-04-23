@@ -81,4 +81,6 @@ In addition to using that grant, take these steps to secure your SPA OAuth flow:
 * Run a server. It needn't be complicated. In fact, it can be as simple as a few lines of node to exchange the authorization code for an access token. Here's [an example Node application](https://github.com/fusionauth/fusionauth-example-node). This is also known as the BFF, or Backend For a Frontend, pattern.
 * Store access tokens out of reach of JavaScript in the browser. You could store them in a server side session, or in `secure`, `HttpOnly` cookies.
 
+Want to learn more about the different OAuth grants? Check out [The Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/) for an in-depth look at all the different OAuth grants and how you might use them in the real world.
+
 Happy coding!
