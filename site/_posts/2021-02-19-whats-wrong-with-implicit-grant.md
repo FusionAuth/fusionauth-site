@@ -73,8 +73,12 @@ Three lines of code and the access token has been stolen. As you can see, the ri
 
 Well, if you are building an awesome React, Angular, Vue or other single page application, what should you use instead of the Implicit grant?
 
-Use the Authorization Code grant. In addition:
+Use the Authorization Code grant. It's secure, safe, well tested, standardized and keeps tokens out of the URL.
+
+In addition to using that grant, take these steps to secure your SPA OAuth flow:
 
 * Use PKCE in your SPA to make sure your application, which can't maintain a secure client secret, is not susceptible to an authorization code interception attack.
-* Run a server. It needn't be complicated. In fact, it can be as simple as a few lines of node to exchange the authorization code for an access token. Here's [an example Node application](https://github.com/fusionauth/fusionauth-example-node). 
-* Store access tokens out of reach of javascript in the browser. You could store them in a server side session, or in `secure`, `HttpOnly` cookies.
+* Run a server. It needn't be complicated. In fact, it can be as simple as a few lines of node to exchange the authorization code for an access token. Here's [an example Node application](https://github.com/fusionauth/fusionauth-example-node). This is also known as the BFF, or Backend For a Frontend, pattern.
+* Store access tokens out of reach of JavaScript in the browser. You could store them in a server side session, or in `secure`, `HttpOnly` cookies.
+
+Happy coding!
