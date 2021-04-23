@@ -21,6 +21,8 @@ Brittany Roddy is a FusionAuth community member and lead software engineer and a
 
 **Brittany:** Since our founding in 2012, CurrentDesk has provided web-based technology solutions to financial brokerages and their partners worldwide. Our mission is to create the industry-leading brokerage management platform across all major trading platforms and financial markets so that our customers can manage their entire client and partner operations from one place.
 
+> When we performed a cost estimate of our previous provider, our annual bill was expected to increase by tens of thousands of dollars once we reached anticipated production load [when compared with FusionAuth]
+
 **Dan:** Tell me about your work as a lead developer and architect at CurrentDesk. 
 
 **Brittany:** I am involved in translating the business requirements into digestible and well-organized work for the team, then supporting the team as they build out and deliver the features. Being a relatively small team, I have a foot in almost every facet of the development process from requirements to release and I personally love that! 
@@ -30,6 +32,8 @@ As an architect, I get to explore the best technology and creative approaches to
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
         
 **Brittany:** We use FusionAuth primarily for OAuth.
+
+> When FusionAuth says it's built for devs, they mean it! 
 
 **Dan:** What problems did we solve for you? And how were you solving them before FusionAuth?
 
@@ -43,6 +47,8 @@ This helps us achieve a straightforward and resilient approach to multi-tenancy.
 
 Some organizations may additionally want to require two-factor login set-up; FusionAuth allows us the flexibility to configure the on-boarding experience so that each organization is able to set its own rules for their users.
 
+> The API is easy to use and well-maintained, and the support team is quick to assist when we encounter an issue (which is rare!).
+
 **Dan:** How were you solving these problems before FusionAuth?
 
 **Brittany:** We have used other authentication providers and even built some in-house solutions for other products before deciding on FusionAuth for our next-generation platform.
@@ -52,6 +58,8 @@ Some organizations may additionally want to require two-factor login set-up; Fus
 **Brittany:** As we started to evaluate what launching with other providers would look like, it became very clear that the pricing model for many popular providers did not scale well, especially considering the flexibility needed to satisfy our requirements. It simply was not feasible for authentication to account for such a large portion of our budget. When we came back to the drawing board and found FusionAuth, we were very impressed how affordable it was considering the functionality offered. 
 
 Overall, a rich feature set complemented by strong flexibility and developer control means we are able to leverage core authentication capabilities while also having the freedom to develop creative solutions to fit our unique use cases. When FusionAuth says it's built for devs, they mean it! The API is easy to use and well-maintained, and the support team is quick to assist when we encounter an issue (which is rare!). This is perfect for a relatively small team building enterprise software. 
+
+> Being able to host FusionAuth in our own environment means we have complete control over the infrastructure cost and maintenance.
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
@@ -64,6 +72,8 @@ Additionally, FusionAuth offers enough flexibility out of the box that our devel
 **Dan:** How do you run FusionAuth (Kubernetes, standalone tomcat server, behind a proxy, etc)?
         
 **Brittany:** We host FusionAuth in EC2 using Docker with an RDS database. It's accessed via an application load balancer.
+
+> FusionAuth has been essential in providing a unified approach to restricting our frontend, service layer, and data access layer.
 
 **Dan:** Any general feedback/areas to improve?
 
