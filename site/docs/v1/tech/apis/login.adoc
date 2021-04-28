@@ -1,7 +1,7 @@
 ---
 layout: doc
 title: Login APIs
-description: APIs for authenticating users (logging them in) or tracking an SSO login (login ping) and two factor authentication
+description: APIs for authenticating users (logging them in) or tracking an SSO login (login ping) and multi-factor authentication
 ---
 
 == Overview
@@ -10,7 +10,7 @@ The following APIs are used to authenticate and track user logins.
 
 * <<Authenticate a User>>
 * <<Authenticate a User with a one time password>>
-* <<Complete Two Factor Authentication>>
+* <<Complete Multi-Factor Authentication>>
 * <<Update Login Instant>>
 * <<Logout a User>>
 
@@ -51,7 +51,7 @@ include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-o
 
 [.api]
 [field]#fusionauth.trust# [type]#[String]# [optional]#Optional#::
-The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled. When this cookie exists on the request it will take precedence over the [field]#twoFactorTrustId# if provided in the request body.
+The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value be may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled. When this cookie exists on the request it will take precedence over the [field]#twoFactorTrustId# if provided in the request body.
 
 ==== Request Body
 
@@ -67,26 +67,7 @@ be stored in the User login history.
 [field]#loginId# [type]#[String]# [required]#Required#::
 The login identifier of the user. The login identifier can be either the [field]#email# or the [field]#username#.
 
-[field]#metaData.device.description# [type]#[String]# [optional]#Optional#::
-A human readable description of the device used during login. This meta data is used to describe the refresh token that may be generated for this login request.
-
-[field]#metaData.device.name# [type]#[String]# [optional]#Optional#::
-A human readable name of the device used during login.  This meta data is used to describe the refresh token that may be generated for this login request.
-
-[field]#metaData.device.type# [type]#[String]# [optional]#Optional#::
-The type of device used during login. The following types may be specified:
-+
-* `BROWSER`
-* `DESKTOP`
-* `LAPTOP`
-* `MOBILE`
-* `OTHER`
-* `SERVER`
-* `TABLET`
-* `TV`
-* `UNKNOWN`
-+
-This meta data is used to describe the refresh token that may be generated for this login request.
+include::docs/v1/tech/apis/_login-metadata-device.adoc[]
 
 [field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
 When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` or `refreshToken` fields, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
@@ -97,7 +78,7 @@ This optional parameter may be helpful when performing high volume authenticatio
 The user's password or an Application specific link:/docs/v1/tech/tutorials/application-authentication-tokens/[Authentication Token].
 
 [field]#twoFactorTrustId# [type]#[String]# [optional]#Optional#::
-The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled.
+The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value be may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled.
 
 [source,json]
 .Example Request JSON
@@ -167,26 +148,7 @@ be stored in the User login history.
 [field]#oneTimePassword# [type]#[String]# [required]#Required#::
 The one time password returned by the Change Password API. This value takes the place of the [field]#loginId# and the [field]#password# fields.
 
-[field]#metaData.device.description# [type]#[String]# [optional]#Optional#::
-A human readable description of the device used during login. This meta data is used to describe the refresh token that may be generated for this login request.
-
-[field]#metaData.device.name# [type]#[String]# [optional]#Optional#::
-A human readable name of the device used during login.  This meta data is used to describe the refresh token that may be generated for this login request.
-
-[field]#metaData.device.type# [type]#[String]# [optional]#Optional#::
-The type of device used during login. The following types may be specified:
-+
-* `BROWSER`
-* `DESKTOP`
-* `LAPTOP`
-* `MOBILE`
-* `OTHER`
-* `SERVER`
-* `TABLET`
-* `TV`
-* `UNKNOWN`
-+
-This meta data is used to describe the refresh token that may be generated for this login request.
+include::docs/v1/tech/apis/_login-metadata-device.adoc[]
 
 [field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
 When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` or `refreshToken` fields, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
@@ -194,7 +156,7 @@ When this value is set to true a JWT will not be issued as part of this request.
 This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
 
 [field]#twoFactorTrustId# [type]#[String]# [optional]#Optional#::
-The Two Factor Trust identifier returned by the Two Factor Login API response. This value be may be provided to bypass the Two Factor challenge when a User has Two Factor enabled.
+The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value be may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled.
 
 [source,json]
 .Example Request JSON
@@ -224,16 +186,16 @@ The encoded access token. This cookie is written in the response as an HTTP Only
 The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the JWT
 configuration for the application or the global JWT configuration.
 
-== Complete Two Factor Authentication
+== Complete Multi-Factor Authentication
 
-The Two Factor Login API is used to complete the authentication process when a `242` is returned by the Login API.
+The Multi-Factor Login API is used to complete the authentication process when a `242` status code is returned by the Login API.
 
 === Request
 
-Complete a login request when a User has Two Factor authentication enabled.
+Complete a login request when a User has Multi-Factor authentication enabled.
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Complete a Two Factor Login
+link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Complete a Multi-Factor Login
 [.endpoint]
 .URI
 --
@@ -244,9 +206,7 @@ link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[ty
 
 [.api]
 [field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#::
-The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
-generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
-if available, the request body value will take precedence.
+The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is generally preferred to specify the IP address in the request body. If it is not provided in the request body, this header value will be used if available. If provided in both places, the request body value takes precedence.
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.adoc[]
 
 ==== Request Body
@@ -256,45 +216,25 @@ include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-o
 include::docs/v1/tech/apis/_login-applicationId-parameter.adoc[]
 
 [field]#code# [type]#[String]# [required]#Required#::
-The time based one time use password, also called a Two Factor verification code.
+The Multi-Factor verification code. This may also be a recovery code.
 
 [field]#ipAddress# [type]#[String]# [optional]#Optional#::
 The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address
 of the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address
 will be stored in the User login history.
 
-[field]#metaData.device.description# [type]#[String]# [optional]#Optional#::
-A human readable description of the device represented by the `device` parameter.
-
-[field]#metaData.device.lastAccessedAddress# [type]#[String]# [optional]#Optional#::
-The IP address of this login request.
-
-[field]#metaData.device.name# [type]#[String]# [optional]#Optional#::
-A human readable name of the device represented by the `device` parameter.
-
-[field]#metaData.device.type# [type]#[String]# [optional]#Optional#::
-The type of device represented by the `device` parameter. The following types may be specified:
-+
-* `BROWSER`
-* `DESKTOP`
-* `LAPTOP`
-* `MOBILE`
-* `OTHER`
-* `SERVER`
-* `TABLET`
-* `TV`
-* `UNKNOWN`
+include::docs/v1/tech/apis/_login-metadata-device.adoc[]
 
 [field]#noJWT# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
 When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field,
 and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
 
 [field]#trustComputer# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
-When this value is set to true the response will contain a Two Factor Trust identifier. This can be used on subsequent Login requests to
-allow the Two Factor challenge to be bypassed.
+When this value is set to true the response will contain a Multi-Factor Trust identifier. This can be used on subsequent Login requests to
+allow the Multi-Factor challenge to be bypassed.
 
 [field]#twoFactorId# [type]#[String]# [required]#Required#::
-The two factor Id generated and returned in the response body during the initial authentication attempt.
+An Id generated and returned in the response body during the initial authentication attempt.
 +
 The default duration of this identifier is 5 minutes. This means that you have 5 minutes to complete the request to this API after calling the Login API. Once the identifier has expired you will need to call the Login API again to restart the process.
 +
@@ -386,8 +326,8 @@ The refresh token. This cookie is written in the response as an HTTP Only persis
 JWT configuration for the application or the global JWT configuration.
 
 [field]#fusionauth.trust# [type]#[String]#::
-The Two Factor Trust identifier. This value is returned when `trustComputer` was set to `true` on the request. This value can be used by
- subsequent login requests to bypass the Two Factor challenge. This cookie is written in the response as an HTTP Only persistent cookie.
+The Multi-Factor Trust identifier. This value is returned when `trustComputer` was set to `true` on the request. This value can be used by
+ subsequent login requests to bypass the Multi-Factor challenge. This cookie is written in the response as an HTTP Only persistent cookie.
 
 == Update Login Instant
 
