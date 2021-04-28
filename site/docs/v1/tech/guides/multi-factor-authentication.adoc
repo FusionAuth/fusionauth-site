@@ -1,0 +1,533 @@
+---
+layout: doc
+title: Multi-Factor Authentication 
+description: Enabling MFA as a developer
+---
+
+== Overview
+
+* <<Types of MFA Supported>>
+* <<Tenant Setup>>
+* <<Enabling MFA on a User>>
+** <<Generate a Shared Secret for TOTP>>
+** <<Start>>
+** <<Send>>
+* <<Login>>
+* <<Step Up Authentication>>
+* <<Disabling MFA on a User>>
+* <<Recovery codes>>
+* <<The MFA Process>>
+* <<Migration>>
+
+== Types of MFA Supported
+
+Currently there are three methods or factors of multi-factor authentication supported.
+
+* TOTP/Google Authenticator
+* Email
+* SMS, including Twilio
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+**However, the Authenticator/TOTP implementation is not a premium feature.**
+
+== Tenant Set Up
+
+For each tenant, you must enable each factor of authentication you want to allow a user to use, including any configuration around email or SMS messengers. 
+
+Below all supported methods are enabled.
+
+TBD pic tenant-settings-mfa.png
+
+Please see the link:/docs/v1/tech/core-concepts/tenants/#multi-factor[Tenant documentation for more information].
+
+== Enabling MFA on a User
+
+Once you've configured your tenant settings, you can enable one or more MFA methods on a user. Because this involves sharing secrets and verifying posession of email accounts or mobile phones, you cannot do this via the FusionAuth administrative user interface. Instead, you can use the API to do this.
+
+If you have a paid edition, users can also use the new self service account management to enable MFA for their accounts. link:/docs/v1/tech/account-management/[Learn more about that here.]
+
+This follows the same steps for every method:
+
+* If using TOTP, optionally generate a shared secret to present to the user
+* Start the MFA process by sending a code to the user
+* Build a page which can accept that code
+
+=== Generate a Shared Secret
+
+This is only used by the TOTP method. If you are using another MFA method, skip this section. 
+
+Using this API is not required, you may optionally build your own secret, the API is provided for convenienc
+
+[source,shell]
+.Generate a Shared Secret Script
+----
+API_KEY=...
+
+curl -XGET -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/secret'
+----
+
+Here's a sample response:
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Generate a Shared Secret Response JSON
+----
+{"secret":"v3wz5nxmQqz3LdfMZco8","secretBase32Encoded":"X56DHZT4MZBKZ5ZN27GGLSR4"}
+----
+
+=== Send a Code to the User For Message Based MFA
+
+You now need to verify the user has the other factor of authentication. For email and SMS methods, you send a code to the user using the Send API.
+
+[source,shell]
+.Send a Code Script
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send' -d $USER_ID -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Send a Code Script Request JSON
+----
+{ "email": "dinesh@piedpiper.com", "method": "email", "userId": "00000000-0000-0000-0000-000000000004" }
+----
+
+This will send a unique code to the user. The lifetime and length of this code can be configured by navigating to [breadcrumb]#Tenants -> Your Tenant -> Advanced# and modifying the [field]#Two-Factor One Time Code# settings.
+
+=== Present the Shared Secret to the User for TOTP Based MFA
+
+You must present the shared secret to the user for TOTP MFA. This can be presented as a QR code or a string of digits to enter into an application such as Google Authenticator or Authy. 
+
+Unless you are using the self service account management, this is a page you'll have to build in your application.
+
+=== Receive the Code
+
+Once the code has been sent or the secret shared, you must build a page to accept the user's input. In case of message based MFA methods, the user must enter the code they've been sent. In the case of TOTP, they must enter the code provided by their application after entering the shared secret.
+
+Unless you are using the self service account management, this is a page you'll have to build in your application.
+
+At this point, you can send the code to FusionAuth and enable MFA for this user.
+
+[source,shell]
+.Enable MFA Script for the Email Method
+----
+API_KEY=...
+USER_ID=00000000-0000-0000-0000-000000000004
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/two-factor/'$USER_ID -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Enable MFA for the Email Method Request JSON
+----
+{ "code": "502129", "method": "email", "email": "dinesh@piedpiper.com"}
+----
+
+If you view the user in the administrative user interface, you will see that the user has an MFA method attached to their account:
+
+PIC TBD
+
+At this point, the user has MFA enabled and will be prompted to provide another factor of authentication whenever they login.
+
+Pic TBD
+
+To enable TOTP, you use a slightly different request body, which includes a code the user provides as well as the shared secret which you have.
+
+[source,shell]
+.Enable MFA Script for TOTP Method
+----
+API_KEY=...
+USER_ID=00000000-0000-0000-0000-000000000004
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/two-factor/'$USER_ID -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Enable MFA for TOTP Method Request JSON
+----
+{
+  "code": "791896",
+  "method": "authenticator",
+  "secret": "B5ArZKKv8osX/voyLvzG"
+}
+----
+
+When this happens, the user will be prompted to choose an MFA method when it is required.
+
+Pic TBD
+
+If you view the user in the administrative user interface, you will see that the user has a second MFA method attached to their account:
+
+PIC TBD
+
+Using this process, users can attach as many MFA methods of each type to their account.
+
+=== Recovery Codes
+
+When you first add a MFA method, the response will be a set of codes:
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Recovery Codes Response JSON
+----
+{"recoveryCodes":["9W8KK-MC4M3","LYSB5-485D4","KY4XR-PLVC5","47ZBY-KZ8S3","3M66W-SV48B","67HL9-G6ZM4","RXTXH-QQFD8","LCS64-93T4H","TW4WG-P887J","9S8YG-D5JTV"]}
+----
+
+These are one time use codes. These should be presented to the user for them to save. You can also manage them via an API TBD link to recovery codes API.
+
+These recovery codes may be used anywhere a `code` parameter is required. If valid, the system will proceed as if a valid MFA code was presented and mark the code as used.
+
+== The End User Login Experience with MFA
+
+Once MFA is enabled for a user, they'll need to provide the additional factor whenever they login.
+
+=== Hosted Login Pages
+
+If you are using the hosted login pages, there are two MFA specific theme templates you'll want to modify.
+
+* The "OAuth two-factor methods" template displays the page where a user may choose between various MFA methods.
+* The "OAuth two-factor" template displays the page where a user enters a code.
+
+Here's the default "OAuth two-factor methods" template:
+
+Pic TBD
+
+Here's the default "OAuth two-factor" template.
+
+You can learn more about the themes, including the variables available for each page, in the link:/docs/v1/tech/themes/[themes documentation].
+
+=== Building Your Own Screens
+
+If you are not using the hosted login pages, you'll build your own pages using the Login API. In that case, you'll want to use the following flow:
+
+* Login 
+* Send the code
+* Completing the Login
+
+Let's walk through each of these steps.
+
+==== Log the User In
+
+Here you'll want to use the link:/docs/v1/tech/apis/login/[Login API]. Please consult that documentation for full details.
+
+[source,shell]
+.Log the User In Script
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/login' -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Log the User In Request JSON
+----
+{"loginId": "dinesh@fusionauth.io", "password": "password", "applicationId" : "85a03867-dccf-4882-adde-1a79aeec50df" }
+----
+
+You'll get back a 242 response code. This is your cue that the user has MFA enabled.
+
+You'll also get back response JSON with a list of their 
+// TODO pull this from docs/src when the two factor doc is approved (maybe)
+[source,json]
+.Log the User In Response JSON
+----
+{"methods":[{"authenticator":{"algorithm":"HmacSHA1","codeLength":6,"timeStep":30},"id":"2KSZ","method":"authenticator"},{"email":"dinesh@piedpiper.com","id":"QTLC","method":"email"}],"twoFactorId":"SV7DNLEvlEfxr233ALip7dzcMjJfokQSaYQW52waxs0"}
+----
+
+You'll need to save off the `twoFactorId` as you'll need that later. You'll also want to save the `methods` array as you'll need to present that to the end user to let them choose their preferred MFA option.
+
+You'll need to implement the page letting a user choose an MFA option.
+
+When they have done so, you'll want to send a message if they are using a message based MFA method (such as email or SMS). 
+
+==== Sending the Code
+
+This is only required if the user chooses a message based MFA method. 
+
+Here you'll want to use the link:/docs/v1/tech/apis/login/[Login API]. Please consult that documentation for full details.
+
+[source,shell]
+.Send the Code Script
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+TWO_FACTOR_ID=... # from the login response
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send?twoFactorId='$TWO_FACTOR_ID -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Send the Code Request JSON
+----
+{"methodId": "QLTC"}
+----
+
+This call will send Dinesh an email, since that is what the `QLTC` method uses. The `methodId` needs to match whatever the user chose. Note that the email address to which the code is sent is different than the `loginId` used: `dinesh@piedpiper.com` vs `dinesh@fusionauth.io`. The target email address for a MFA login need not be the same as the login Id.
+
+
+==== Completing the Login
+
+Then you'll need to collect the code. This is a page you'll need to implement.
+
+When you have the code, you can complete the two factor login by calling the Login API.
+
+[source,shell]
+.Complete the MFA Login Script
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/login' -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Complete the MFA Login Request JSON
+----
+{"code": "903983","twoFactorId":"o109sYQpnDVfilrctXWoJcEtNIB7TnXY6DWHywrwZ5o"}
+----
+
+You can pass a parameter to this request indicating you want to recieve a `twoFactorTrustId`. That can be provided at future logins to bypass the MFA process. Please consult the link:/docs/v1/tech/apis/login/[Login API] documentation for more on that.
+
+== Step Up Auth
+
+Step up authentication allows you to be extra certain that a user is who they say they are. You can use this in your application to protect sensitive actions, such as account deletion or sending money. 
+
+To do so, you need to do the following:
+
+* Start the process
+* Send the code
+* Receive the code and verify it
+
+Let's walk through each of these.
+
+
+=== Start the Process
+
+You need to kick off the process using the Start endpoint.
+
+[source,shell]
+.Start a Step Up MFA Flow
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/start' -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Start a Step Up MFA Flow Request JSON
+----
+{"loginId": "dinesh@fusionauth.io"}
+----
+
+You could specify a code if you need that managed externally. You can also provide a `state` JSON object which will be stored off and returned to you after this login completes.
+TBD could this work with facial recognition?
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Start an MFA Flow With a Code and State Request JSON
+----
+{"loginId": "dinesh@fusionauth.io", "code": "ABCDEFGHI","state": {"foo":["bar","baz"]}}
+----
+
+This returns a JSON response which includes a code:
+
+// TODO pull this from docs/src when the two factor doc is approved (maybe)
+[source,json]
+.Start an MFA Flow Response JSON
+----
+{"code":"ABCDEFGHI","methods":[{"authenticator":{"algorithm":"HmacSHA1","codeLength":6,"timeStep":30},"id":"2KSZ","method":"authenticator"},{"email":"dinesh@piedpiper.com","id":"QTLC","method":"email"}],"twoFactorId":"aXro1u9KqvwLS3I0gB1XvTZXR01LtQStz6zOYcsKvq4"}
+----
+
+You'll need to save off the `twoFactorId` as you'll need that later. You'll also want to save the `methods` array as you'll need to present that to the end user.
+
+Next, you can send the code if needed.
+
+=== Sending the Code
+
+This is only required if the user chooses a message based MFA method. 
+
+Here you'll want to use the link:/docs/v1/tech/apis/login/[Login API]. Please consult that documentation for full details.
+
+[source,shell]
+.Send the Code Script
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+TWO_FACTOR_ID=... # from the login response
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send?twoFactorId='$TWO_FACTOR_ID -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Send the Code Request JSON
+----
+{"methodId": "QLTC"}
+----
+
+This call will send Dinesh an email, since that is what the `QLTC` method uses. The `methodId` needs to match whatever the user chose. Note that the email address to which the code is sent is different than the `loginId` used: `dinesh@piedpiper.com` vs `dinesh@fusionauth.io`. The target email address for a MFA login need not be the same as the login Id.
+
+Additionally, unlike with the login API, you don't have to send the code using the send API. You only need to get the code to the user somehow. If you provided the code originally, you could, for example, build your own integration with a chat service like Slack and send the code to the user that way. Any out of band method, even https://tools.ietf.org/html/rfc1149[carrier pigeon], would work.
+
+=== Completing the Step Up
+
+Then you'll need to collect the code. You'll have to implement this input screen.
+
+When you have the code, you can complete the step up by calling the Login API. This will return back the user object when the provided code is valid or one of the other return codes documented in the Login API when it is not.
+
+[source,shell]
+.Complete the MFA Step Up Script
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/login' -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Complete the MFA Login Request JSON
+----
+{"code": "903983","twoFactorId":"o109sYQpnDVfilrctXWoJcEtNIB7TnXY6DWHywrwZ5o"}
+----
+
+If the call to this method is successful, the user has been successfully authenticated with another factor and can proceed with the dangerous action.
+
+== Disabling MFA on a User
+
+There may be times when it makes sense to disble MFA on a user. There are a number of ways to do so.
+
+You can remove it from a user using the FusionAuth administrative user interface. Navigate to [breadcrumb]#Users -> The User# and manage the user. Then go to the [breadcrumb]#Multi-Factor# tab. You can remove any of the MFA methods by clicking the red trash can icon and confirming the deletion.
+
+Pic TBD
+
+A user can also remove their own MFA methods by using the 
+new self service account management to enable MFA for their accounts (if you have a paid edition). link:/docs/v1/tech/account-management/[Learn more about that here.]
+
+Pic TBD
+
+Finally, you can also remove MFA using the API. To do so you need to:
+
+* Send the code (optionally)
+* Get a code or recovery code
+* disable MFA
+
+=== Disabling MFA via the API
+
+First you need to collect a code from the user. This can be a code provided by one of their existing MFA methods or a recovery code. You can gather their chosen MFA methods from the User object if you need to present them with a choice.
+
+==== Optionally Send a Code
+
+If they are using a message based MFA method, you can send them a code:
+
+[source,shell]
+.Send a Code For Disabling MFA Script
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send' -d $REQUEST_PAYLOAD
+----
+
+// TODO pull this from docs/src when the two factor doc is approved
+[source,json]
+.Send a Code For Disabling MFA Request JSON
+----
+{"methodId": "QTLC", "userId": "00000000-0000-0000-0000-000000000004"}
+----
+
+This will send a code using the method specified. If a user is using a TOTP method or a recovery code, you can skip this.
+
+==== Collect the Code and Disable MFA
+
+Build a page to collect the code.
+
+
+[source,shell]
+.Send a Code For Disabling MFA Script
+----
+API_KEY=...
+USER_ID=...
+CODE=...
+METHOD_ID=...
+
+curl -XDELETE -H "Authorization: $API_KEY" 'http://localhost:9011/api/user/two-factor/'$USER_ID'?&code='$CODE'&methodId='$METHOD_ID
+----
+
+Note that when you use a recovery code to disable MFA, it removes all the MFA methods for a given user and invalidates all the other recovery codes.
+
+== Resending Codes
+
+You can resend codes using message based MFA methods by calling the `/api/two-factor/send` endpoint repeatedly. This may occur from user input. For example, if a user initially requests to get an MFA to an email address, then realizes they really want to get it sent via SMS to their mobile phone.
+
+Calling the `/api/two-factor/send` endpoint sends a new code and invalidates all other codes associated with this MFA request. 
+
+== Recovery Codes
+
+Recovery codes are presented the first time an MFA method is enabled for a user. 
+
+They are one time use. If presented and valid, the system will proceed as if a valid MFA code was presented and mark the code as used. 
+
+If needed, you may retrieve them using the TBD recovery codes API.
+
+== Migration from Version 1.25
+
+To migrate from the MFA provided in FusionAuth 1.25 or earlier, consider the following:
+
+* Your edition
+* Your data
+* Your code
+
+=== Your Edition
+
+If you are not paying for FusionAuth, you are using the community edition; you can link:/pricing/editions/[learn more about the various editions]. Due to the complexity of the rewrite, SMS based MFA is no longer part of the community edition.
+
+Therefore if you want to use message based MFA or the link:/docs/v1/tech/account-management/[self service account management], you'll need to purchase a paid license. 
+
+Google Authenticator/time based one-time password MFA will continue to work in the community edition. It is even improved. You can now add multiple authenticator devices to one user account.
+
+=== Your Data
+
+If you used MFA previously, your data should be migrated transparently to the new data formats when you run the SQL upgrade migration. 
+
+This includes:
+
+* whether or not each user has MFA enabled
+* migrating existing Twilio settings to the new messenger configuration objects
+* TOTP configuration
+
+If you find data that has not migrated, https://github.com/fusionauth/fusionauth-issues/issues[please file an issue] and let us know.
+
+=== Your Code
+
+Modifying your code depends on what MFA methods you were doing.
+
+To enable MFA on a user:
+* Ensure the MFA method is allowed on the tenant.
+* Ensure any messengers are set up correctly.
+* Instead of using the [field]#delivery# field, use the [field]#method# field and the corresponding method specific field such as [field]#email#.
+
+To disable MFA on a user:
+* In addition to passing the [field]#userId# and [field]#code# fields, you also need to determine the method to disable and pass the appropriate [field]#methodId# field.
+
+When sending a code, Twilio SMS was previously your only choice. Sending codes are now differentiated based on what you are trying to do. Sending a code to enable or disable MFA on a user requires different parameters than sending a code for step up authnetication.
+
+To migrate this functionality:
+* Ensure the MFA method is allowed on the tenant.
+* Ensure any messengers are set up correctly.
+* Call the send endpoint with the correct [field]#method# field and the corresponding method specific field such as [field]#email#.
+
