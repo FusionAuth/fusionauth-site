@@ -37,6 +37,8 @@ include::docs/v1/tech/shared/_difference-two-factor-multi-factor.adoc[]
 
 For each tenant, you must enable each factor of authentication you want to allow a user to use, including any configuration around email or SMS messengers. 
 
+If you want to only use step up auth, you do not have to enable any MFA methods on the tenant.
+
 Below all supported methods are enabled. If a method is not allowed in the tenant configuration, it will not be allowed for any user in the tenant.
 
 image::guides/multi-factor-authentication/tenant-settings-mfa.png[Configuring allowed MFA methods on the tenant.,width=1200]
@@ -80,7 +82,7 @@ Here's a sample response:
 
 === Send a Code to the User For Message Based MFA
 
-You now need to verify the user has the other factor of authentication. For email and SMS methods, you send a code to the user using the Send API.
+You now need to verify the user has the other factor of authentication. For email and SMS methods, you send a code to the user using the Send API. 
 
 [source,shell]
 .Send a Code Script
@@ -248,7 +250,7 @@ When they have done so, you'll want to send a message if they are using a messag
 
 ==== Sending the Code
 
-This is only required if the user chooses a message based MFA method. 
+This is only required if the user chooses a message based MFA method. Using this invalidates any other codes previously sent to the user.
 
 Here you'll want to use the link:/docs/v1/tech/apis/login/[Login API]. Please consult that documentation for full details.
 
@@ -514,22 +516,28 @@ If you find data that has not migrated, https://github.com/fusionauth/fusionauth
 Modifying your code depends on what MFA methods you were doing.
 
 To enable MFA on a user:
+
 * Ensure the MFA method is allowed on the tenant.
 * Ensure any messengers are set up correctly.
 * Instead of using the [field]#delivery# field, use the [field]#method# field and the corresponding method specific field such as [field]#email#.
 
 To disable MFA on a user:
+
 * In addition to passing the [field]#userId# and [field]#code# fields, you also need to determine the method to disable and pass the appropriate [field]#methodId# field.
 
 When sending a code, Twilio SMS was previously your only choice. Sending codes are now differentiated based on what you are trying to do. Sending a code to enable or disable MFA on a user requires different parameters than sending a code for step up authnetication.
 
 To migrate this functionality:
+
 * Ensure the MFA method is allowed on the tenant.
 * Ensure any messengers are set up correctly.
 * Call the send endpoint with the correct [field]#method# field and the corresponding method specific field such as [field]#email#.
 
 == Integrating Other MFA Methods
 
-TBD
+If you have other MFA methods that you'd like to integrate, you have a couple of options.
 
-TBD add note about send resetting code provided with start
+* link:https://fusionauth.io/docs/v1/tech/core-concepts/roadmap/[Check out the roadmap] to see if the method is going to be added soon. If not, https://github.com/fusionauth/fusionauth-issues/issues[file an issue] explaining your use case.
+* If you can send a code out of band and compare the value, you can use step up auth to protect all the pages in your system. As soon as a user logs in, require step up auth and a code sent out of band. Users don't have to have MFA enabled to use step up.
+* If you want an additional factor that can be made available as a service and receive a webhook, you can configure your webhooks to be transactional and have a webhook sent on the login event. The service can then perform the MFA check, perhaps doing something like fingerprint recognition. If any status other than `200` is returned, the login will fail. The downside of this is that the message to the end user won't be helpful. Here is an link:/blog/2020/08/13/locking-an-account-with-breached-password/[example of a webhook stopping a login].
+
