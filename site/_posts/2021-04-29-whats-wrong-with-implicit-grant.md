@@ -30,7 +30,7 @@ Unlike the [Authorization Code grant](/docs/v1/tech/oauth/#example-authorization
 
 `https://piedpiper.com/#token-goes-here`
 
-The token is added to the redirect URL after the `#` symbol, which means it is technically the fragment portion of the URL. What this means is that wherever the OAuth server redirects the browser to, the access token is accessible to any code running in the browser. In other words, to basically everyone. 
+The token is added to the redirect URL after the `#` symbol. This places it in the fragment portion of the URL. What this means is that wherever the OAuth server redirects the browser to, the access token is accessible to any code running in the browser. In other words, to basically everyone.
 
 To be more precise, the access token is accessible to any and all JavaScript that is running in the browser (including third party libraries). Since this token allows the browser to make API calls and web requests on behalf of the user, having this token be accessible to third-party code is extremely dangerous.
 
@@ -53,11 +53,11 @@ This HTML includes two JavaScript libraries:
 * The code for the application itself (`my-spa-code-1.0.0.js`).
 * A library we found online that did something cool and we just pulled it in (`a-library-found-online-that-looked-cool-0.42.0.js`).
 
-Let's assume that our code is 100% secure and we don't have to worry about it. The issue here is that the library we pulled in is an unknown quantity. 
+Let's assume that our code is 100% secure and we don't have to worry about it. The library we pulled in, however, is an unknown quantity. 
 
-It might include other libraries as well. Remember that the DOM is dynamic. Any JavaScript can load any other JavaScript library simply by updating the DOM with more `<script>` tags. Therefore, we have very little chance of ensuring that every other line of code from third-party libraries is secure. 
+This library may include other libraries as well. Remember, the DOM is dynamic. Any JavaScript can load any other JavaScript library simply by updating the DOM with `<script>` tags. Therefore, we have very little chance of ensuring every other line of code from third-party libraries is secure. 
 
-After all, **do you** audit every javascript library and every dependency of every library every time you deploy your application? 
+After all, **do you** audit every JavaScript library and every dependency of each library every time you deploy your application? 
 
 If a third-party library wanted to steal an access token from our dummy application, all it would need to do is run this code:
 
@@ -67,14 +67,21 @@ if (window.location.hash.contains('access_token')) {
 }
 ```
 
-Three lines of code and the access token has been stolen. As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend that no one ever use this grant.
+Three lines of code and the access token has been stolen. As you can see, the risk of leaking tokens is far too high to ever consider using the Implicit grant. This is why we recommend no one ever use this grant.
 
 ## How to correctly use OAuth in a SPA
 
 Well, if you are building an awesome React, Angular, Vue or other single page application, what should you use instead of the Implicit grant?
 
-Use the Authorization Code grant. In addition:
+Use the Authorization Code grant! It's secure, safe, well tested, standardized and keeps tokens out of the URL.
 
-* Use PKCE in your SPA to make sure your application, which can't maintain a secure client secret, is not susceptible to an authorization code interception attack.
-* Run a server. It needn't be complicated. In fact, it can be as simple as a few lines of node to exchange the authorization code for an access token. Here's [an example Node application](https://github.com/fusionauth/fusionauth-example-node). 
-* Store access tokens out of reach of javascript in the browser. You could store them in a server side session, or in `secure`, `HttpOnly` cookies.
+In addition to using that grant, take these steps to secure your SPA OAuth flow:
+
+* Use [PKCE](https://tools.ietf.org/html/rfc7636) in your SPA to make sure your application, which can't maintain a secure client secret, is not susceptible to an authorization code interception attack.
+* Run a server. It needn't be complicated. In fact, it can be as simple as a few lines of node to exchange the authorization code for an access token. Here's [an example Node application](https://github.com/fusionauth/fusionauth-example-node). This is also known as the BFF, or Backend For a Frontend, pattern.
+* Store access tokens out of reach of JavaScript in the browser. You could store them in a server side session, or in `secure`, `HttpOnly` cookies.
+
+Want to learn more about the different OAuth grants? Check out [The Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/) for an in-depth look at all the different OAuth grants and how you might use them in the real world.
+
+Happy coding!
+
