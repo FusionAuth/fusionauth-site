@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: What's Wrong With the Implicit Grant?
+title: What's Wrong With the OAuth2 Implicit Grant?
 description: OAuth2 specifies an Implicit grant. What's wrong with using it?
 author: Brian Pontarelli
 image: blogs/avoid-implicit-grant/whats-wrong-with-the-oauth2-implicit-grant-header-image.png
