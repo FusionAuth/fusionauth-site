@@ -73,11 +73,10 @@ curl -XGET -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-fac
 
 Here's a sample response:
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Generate a Shared Secret Response JSON
 ----
-{"secret":"v3wz5nxmQqz3LdfMZco8","secretBase32Encoded":"X56DHZT4MZBKZ5ZN27GGLSR4"}
+include::docs/src/json/two-factor/secret/response.json[]
 ----
 
 === Send a Code to the User For Message Based MFA
@@ -93,11 +92,10 @@ REQUEST_PAYLOAD='{...}'
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send' -d $USER_ID -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Send a Code Script Request JSON
 ----
-{ "email": "dinesh@piedpiper.com", "method": "email", "userId": "00000000-0000-0000-0000-000000000004" }
+include::docs/src/json/two-factor/send/enable-userId-request.json[]
 ----
 
 This will send a unique code to the user. The lifetime and length of this code can be configured by navigating to [breadcrumb]#Tenants -> Your Tenant -> Advanced# and modifying the [field]#Two-Factor One Time Code# settings.
@@ -126,11 +124,10 @@ REQUEST_PAYLOAD='{...}'
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/two-factor/'$USER_ID -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Enable MFA for the Email Method Request JSON
 ----
-{ "code": "502129", "method": "email", "email": "dinesh@piedpiper.com"}
+include::docs/src/json/two-factor/enable-email-request.json[]
 ----
 
 If you view the user in the administrative user interface, you will see that the user has an MFA method attached to their account:
@@ -153,18 +150,13 @@ REQUEST_PAYLOAD='{...}'
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/two-factor/'$USER_ID -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Enable MFA for TOTP Method Request JSON
 ----
-{
-  "code": "791896",
-  "method": "authenticator",
-  "secret": "B5ArZKKv8osX/voyLvzG"
-}
+include::docs/src/json/two-factor/enable-authenticator-request.json[]
 ----
 
-When this happens, the user will be prompted to choose an MFA method when it is required.
+When this happens, the user will be prompted to choose an MFA method at login:
 
 image::guides/multi-factor-authentication/authentication-challenge-multiple-factors.png[MFA prompt screen at login, with multiple factors enabled.,width=1200,role=bottom-cropped]
 
@@ -178,11 +170,10 @@ Using this process, users can attach as many MFA methods of each type to their a
 
 When you first add a MFA method, the response will be a set of codes:
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Recovery Codes Response JSON
 ----
-{"recoveryCodes":["9W8KK-MC4M3","LYSB5-485D4","KY4XR-PLVC5","47ZBY-KZ8S3","3M66W-SV48B","67HL9-G6ZM4","RXTXH-QQFD8","LCS64-93T4H","TW4WG-P887J","9S8YG-D5JTV"]}
+include::docs/src/json/two-factor/response-with-recovery-codes.json[]
 ----
 
 These are one time use codes. These should be presented to the user for them to save. You can also manage them via the link:/docs/v1/tech/apis/two-factor/#retrieve-recovery-codes[Recovery Code API].
@@ -225,24 +216,21 @@ REQUEST_PAYLOAD='{...}'
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/login' -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Log the User In Request JSON
 ----
-{"loginId": "dinesh@fusionauth.io", "password": "password", "applicationId" : "85a03867-dccf-4882-adde-1a79aeec50df" }
+include::docs/src/json/login/request.json[]
 ----
 
-You'll get back a 242 response code. This is your cue that the user has MFA enabled.
+You'll get back a `242` response status code. This is your cue that the user has MFA enabled. You'll also get back response JSON with a list of their methods.
 
-You'll also get back response JSON with a list of their 
-// TODO pull this from docs/src when the two factor doc is approved (maybe)
 [source,json]
 .Log the User In Response JSON
 ----
-{"methods":[{"authenticator":{"algorithm":"HmacSHA1","codeLength":6,"timeStep":30},"id":"2KSZ","method":"authenticator"},{"email":"dinesh@piedpiper.com","id":"QTLC","method":"email"}],"twoFactorId":"SV7DNLEvlEfxr233ALip7dzcMjJfokQSaYQW52waxs0"}
+include::docs/src/json/login/login-two-factor-response.json[]
 ----
 
-You'll need to save off the `twoFactorId` as you'll need that later. You'll also want to save the `methods` array as you'll need to present that to the end user to let them choose their preferred MFA option.
+You'll need to save off the [field]#twoFactorId# as you'll need that later. You'll also want to save the `methods` array as you'll need to present that to the end user to let them choose their preferred MFA option.
 
 You'll need to implement the page letting a user choose an MFA option.
 
@@ -264,21 +252,17 @@ TWO_FACTOR_ID=... # from the login response
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send?twoFactorId='$TWO_FACTOR_ID -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Send the Code Request JSON
 ----
-{"methodId": "QLTC"}
+include::docs/src/json/two-factor/send/twoFactorId-request.json[]
 ----
 
-This call will send Dinesh an email, since that is what the `QLTC` method uses. The `methodId` needs to match whatever the user chose. Note that the email address to which the code is sent is different than the `loginId` used: `dinesh@piedpiper.com` vs `dinesh@fusionauth.io`. The target email address for a MFA login need not be the same as the login Id.
-
+This call will send an email, because that is the `methodId` provided. The email address to which the code is sent may be different than the `loginId` used. The target email address for a MFA login need not be the same as the login Id.
 
 ==== Completing the Login
 
-Then you'll need to collect the code. This is a page you'll need to implement.
-
-When you have the code, you can complete the two factor login by calling the Login API.
+Then you'll need to collect the code. This is a page you'll need to implement. When you have the code, you can complete the two factor login by calling the Login API.
 
 [source,shell]
 .Complete the MFA Login Script
@@ -289,14 +273,13 @@ REQUEST_PAYLOAD='{...}'
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/login' -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Complete the MFA Login Request JSON
 ----
-{"code": "903983","twoFactorId":"o109sYQpnDVfilrctXWoJcEtNIB7TnXY6DWHywrwZ5o"}
+include::docs/src/json/login/two-factor/request.json[]
 ----
 
-You can pass a parameter to this request indicating you want to recieve a `twoFactorTrustId`. That can be provided at future logins to bypass the MFA process. Please consult the link:/docs/v1/tech/apis/login/[Login API] documentation for more on that.
+You can pass a parameter to this request indicating you want to recieve a `twoFactorTrustId`. That value can then be provided at future logins to bypass the MFA process. Please consult the link:/docs/v1/tech/apis/login/[Login API] documentation for more on that.
 
 == Step Up Auth
 
@@ -324,40 +307,34 @@ REQUEST_PAYLOAD='{...}'
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/start' -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Start a Step Up MFA Flow Request JSON
 ----
-{"loginId": "dinesh@fusionauth.io"}
+include::docs/src/json/two-factor/start/request.json[]
 ----
 
-You could specify a code if you need that managed externally. You can also provide a `state` JSON object which will be stored off and returned to you after this login completes.
-
-// TODO pull this from docs/src when the two factor doc is approved
-[source,json]
-.Start an MFA Flow With a Code and State Request JSON
-----
-{"loginId": "dinesh@fusionauth.io", "code": "ABCDEFGHI","state": {"foo":["bar","baz"]}}
-----
+You can specify a code if you need that managed externally. You can also provide a `state` JSON object which will be stored off and returned to you after this login completes.
 
 This returns a JSON response which includes a code:
 
-// TODO pull this from docs/src when the two factor doc is approved (maybe)
 [source,json]
 .Start an MFA Flow Response JSON
 ----
-{"code":"ABCDEFGHI","methods":[{"authenticator":{"algorithm":"HmacSHA1","codeLength":6,"timeStep":30},"id":"2KSZ","method":"authenticator"},{"email":"dinesh@piedpiper.com","id":"QTLC","method":"email"}],"twoFactorId":"aXro1u9KqvwLS3I0gB1XvTZXR01LtQStz6zOYcsKvq4"}
+include::docs/src/json/two-factor/start/response-with-methods.json[]
 ----
 
 You'll need to save off the `twoFactorId` as you'll need that later. You'll also want to save the `methods` array as you'll need to present that to the end user.
 
-Next, you can send the code if needed.
+Next, you can send the code if needed. If you are providing your own code, you do not want to use FusionAuth to send the code as that will set the code to a different value.
 
 === Sending the Code
 
-This is only required if the user chooses a message based MFA method. 
+This is only required if the user chooses a message based MFA method and you want to send the message with FusionAuth. 
 
-Here you'll want to use the link:/docs/v1/tech/apis/login/[Login API]. Please consult that documentation for full details.
+[NOTE]
+====
+Using this request will reset the one time code to a different value than that provided to the start API call.
+====
 
 [source,shell]
 .Send the Code Script
@@ -369,16 +346,15 @@ TWO_FACTOR_ID=... # from the login response
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send?twoFactorId='$TWO_FACTOR_ID -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Send the Code Request JSON
 ----
-{"methodId": "QLTC"}
+include::docs/src/json/two-factor/send/twoFactorId-request.json[]
 ----
 
-This call will send Dinesh an email, since that is what the `QLTC` method uses. The `methodId` needs to match whatever the user chose. Note that the email address to which the code is sent is different than the `loginId` used: `dinesh@piedpiper.com` vs `dinesh@fusionauth.io`. The target email address for a MFA login need not be the same as the login Id.
+This call will send an email, since that is the specified method. The `methodId` needs to match whatever the user chose. The email address to which the code is sent could be different than the `loginId` used. The target email address for a MFA login need not be the same as the login Id.
 
-Additionally, unlike with the login API, you don't have to send the code using the send API. You only need to get the code to the user somehow. If you provided the code originally, you could, for example, build your own integration with a chat service like Slack and send the code to the user that way. Any out of band method, even https://tools.ietf.org/html/rfc1149[carrier pigeon], would work.
+Additionally, unlike with the login API, you don't have to send the code using the send API when doing step up auth. You only need to get the code to the user somehow. In fact, the user doesn't even need to have MFA enabled. If you provided the code originally, you could, for example, build your own integration with a chat service like Slack and send the code to the user that way. Any out of band method, even https://tools.ietf.org/html/rfc1149[carrier pigeon], would work.
 
 === Completing the Step Up
 
@@ -395,18 +371,19 @@ REQUEST_PAYLOAD='{...}'
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/login' -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Complete the MFA Login Request JSON
 ----
-{"code": "903983","twoFactorId":"o109sYQpnDVfilrctXWoJcEtNIB7TnXY6DWHywrwZ5o"}
+include::docs/src/json/login/two-factor/request.json[]
 ----
 
-If the call to this method is successful, the user has been successfully authenticated with another factor and can proceed with the dangerous action.
+If this call is successful and returns a user object, the user has been successfully authenticated with the additional factor. 
+
+Full speed ahead with the sensitive action!
 
 == Disabling MFA on a User
 
-There may be times when it makes sense to disble MFA on a user. There are a number of ways to do so.
+There may be times when it makes sense to disable MFA on a user. There are a number of ways to do so.
 
 You can remove it from a user using the FusionAuth administrative user interface. Navigate to [breadcrumb]#Users -> The User# and manage the user. Then go to the [breadcrumb]#Multi-Factor# tab. You can remove any of the MFA methods by clicking the red trash can icon and confirming the deletion.
 
@@ -441,19 +418,17 @@ REQUEST_PAYLOAD='{...}'
 curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send' -d $REQUEST_PAYLOAD
 ----
 
-// TODO pull this from docs/src when the two factor doc is approved
 [source,json]
 .Send a Code For Disabling MFA Request JSON
 ----
-{"methodId": "QTLC", "userId": "00000000-0000-0000-0000-000000000004"}
+include::docs/src/json/two-factor/send/disable-userId-request.json[]
 ----
 
 This will send a code using the method specified. If a user is using a TOTP method or a recovery code, you can skip this.
 
 ==== Collect the Code and Disable MFA
 
-Build a page to collect the code.
-
+You'll need to build a page to collect the code.
 
 [source,shell]
 .Send a Code For Disabling MFA Script
@@ -466,19 +441,20 @@ METHOD_ID=...
 curl -XDELETE -H "Authorization: $API_KEY" 'http://localhost:9011/api/user/two-factor/'$USER_ID'?&code='$CODE'&methodId='$METHOD_ID
 ----
 
-Note that when you use a recovery code to disable MFA, it removes all the MFA methods for a given user and invalidates all the other recovery codes.
+[NOTE]
+====
+When you use a recovery code to disable MFA, it removes all the MFA methods for a given user and invalidates all the other recovery codes.
+====
 
 == Resending Codes
 
-You can resend codes using message based MFA methods by calling the `/api/two-factor/send` endpoint repeatedly. This may occur from user input. For example, if a user initially requests to get an MFA to an email address, then realizes they really want to get it sent via SMS to their mobile phone.
+You can resend codes using message based MFA methods by calling the send endpoint repeatedly. This may occur because a user requests it. For example, if a user initially requests to get an MFA to an email address, then realizes they really want to get it sent via SMS to their mobile phone.
 
-Calling the `/api/two-factor/send` endpoint sends a new code and invalidates all other codes associated with this MFA request. 
+Calling the send endpoint sends a new code and invalidates all other codes associated with this MFA request. 
 
 == Recovery Codes
 
-Recovery codes are presented the first time an MFA method is enabled for a user. 
-
-They are one time use. If presented and valid, the system will proceed as if a valid MFA code was presented and mark the code as used. 
+Recovery codes are presented the first time an MFA method is enabled for a user. They are one time use. If presented and valid, the system will proceed as if a valid MFA code was presented and mark the code as used. 
 
 If needed, you may retrieve them using the link:/docs/v1/tech/apis/two-factor/#retrieve-recovery-codes[Recovery Code API].
 
@@ -540,3 +516,11 @@ If you have other MFA methods that you'd like to integrate, you have a couple of
 * If you can send a code out of band and compare the value, you can use step up auth to protect all the pages in your system. As soon as a user logs in, require step up auth and a code sent out of band. Users don't have to have MFA enabled to use step up.
 * If you want an additional factor that can be made available as a service and receive a webhook, you can configure your webhooks to be transactional and have a webhook sent on the login event. The service can then perform the MFA check, perhaps doing something like fingerprint recognition. If any status other than `200` is returned, the login will fail. The downside of this is that the message to the end user won't be helpful. Here is an link:/blog/2020/08/13/locking-an-account-with-breached-password/[example of a webhook stopping a login].
 
+TODO
+check for title equivalents
+run throgh google docs
+read aloud
+move the two factor user requests to correct location
+
+update the login two factor response code at src/json/login/login-two-factor-response.json (copy it for older doc) have it include what we have at XXX (methods)
+twilio 1.26 misnamed?
