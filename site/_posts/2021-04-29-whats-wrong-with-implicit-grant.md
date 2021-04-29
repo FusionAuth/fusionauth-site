@@ -3,7 +3,7 @@ layout: blog-post
 title: What's Wrong With the Implicit Grant?
 description: OAuth2 specifies an Implicit grant. What's wrong with using it?
 author: Brian Pontarelli
-image: blogs/securing-golang-microservice-jwt/securing-a-go-microservice-with-jwt-header-image.png
+image: blogs/avoid-implicit-grant/whats-wrong-with-the-oauth2-implicit-grant-header-image.png
 category: blog
 tags: client-javascript
 excerpt_separator: "<!--more-->"
