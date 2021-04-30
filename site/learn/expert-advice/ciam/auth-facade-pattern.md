@@ -9,7 +9,7 @@ date: 2021-04-30
 dateModified: 2021-04-30
 ---
 
-When talking about identity architectures in FusionAuth customers, there's a common deployment pattern called the "Auth Facade". This is also referred to as the "Identity Broker" pattern. 
+When talking about identity architectures in FusionAuth customers, there's a common deployment pattern called the "Auth Facade". This is also commonly referred to as the "Identity Broker" pattern. 
 
 This pattern is useful when you are deploying software to heterogeneous environments. If, for example, you are building an application which your customers will deploy on-premise, whether in a data center, air-gapped servers, or a private cloud, you should consider a facade. These environments are run by your customers, so you have limited insight into the environment configuration, but your application needs to run well.
 
@@ -47,7 +47,7 @@ Like any [facade](https://en.wikipedia.org/wiki/Facade_pattern), the auth facade
 
 {% include _image.liquid src="/assets/img/blogs/auth-facade/auth-facade-pattern.svg" alt="The identity broker architectural pattern." class="img-fluid" figure=false %}
 
-## The auth facade compared to simple federation
+## The auth facade vs federation
 
 The auth facade provides more than authentication and authorization federation. Federation is necessary, but often your application requires more than standards can give. 
 
@@ -59,7 +59,7 @@ With an auth facade, you get:
 
 Let's talk a bit more about each of these.
 
-## The developer interface
+### The developer experience
 
 Developers need an user model to control access to the application. By using the auth facade, your team integrates with one system, rather than every system your clients have. Development becomes easier and your team has more time to focus on building features in your application. 
 
@@ -74,7 +74,7 @@ In the latter case, you'll be able to use the troubleshooting and bug fixing exp
 
 Typically you need a responsive team behind the auth facade system. When issues arise, you don't want to keep your customers waiting for a fix.
 
-## The importance of APIs and data model
+### The importance of APIs and the data model
 
 If your needs are met with the lowest common denominator of authentication and authorization information, follow the OIDC and SAML standards. You'll have less code to write, less code to test, and fewer deployment complexities.
 
@@ -82,11 +82,11 @@ Often the application you are building will unfortunately need more information 
 
 Any auth facade system should provide a superior data model compared to the standards. If it doesn't, stick with the standards and federate to the upstream providers.
 
-## Documentation
+### Documenting system configuration
 
 While documentation is often useful for developers building a system, why is it so important for an auth facade? 
 
-Great configuration documentation allows you offload configuration of the connection between your appliction and upstream systems to your clients' employees. These people know and maintain those upstream systems, and are familiar with them.
+Great configuration documentation allows you offload configuration of the connection between your application and upstream systems to your clients' employees. These people know and maintain those upstream systems, and are familiar with them.
 
 Documenting the required configuration and making it as simple as possible to integrate with their system makes it easier to get your application working in your customer's environment.
 
@@ -98,7 +98,7 @@ So you need good docs. You have two choices:
 Which one is easier for your engineering team?
 
 
-## Deployable auth system
+## Deploying an embedded auth system
 
 When evaluating auth facade solutions, make sure you can deploy the system into a variety of customer environments. This rules out SaaS solutions.
 
