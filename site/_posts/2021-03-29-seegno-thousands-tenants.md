@@ -5,7 +5,7 @@ description: Seegno upgraded from their homegrown auth system and uses FusionAut
 author: Dan Moore
 image: blogs/seegno-fusionauth/seegno-manages-thousands-of-tenants-with-fusionauth-and-kubernetes-header-image.png
 category: blog
-tags: topic-community-story topic-upgrade-homegrown
+tags: topic-community-story topic-upgrade-homegrown client-javascript
 excerpt_separator: "<!--more-->"
 ---
 

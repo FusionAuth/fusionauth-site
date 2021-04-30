@@ -239,7 +239,7 @@ Now, you may wonder where to get all this information for your `.env` file. Go t
 {% include _image.liquid src="/assets/img/blogs/oauth-vuejs/oauth-configuration.png" alt="Client Id and Client Secret settings for the application." class="img-fluid" figure=false %}
 
 Below is the code for a basic Express server on an `index.js` file. 
-If Express has not created an `index.js` file for you, please create one under the `src/` folder.
+If Express has not created an `index.js` file for you, please create one under the `server/` folder (project root directory for the server).
 
 Notice we use the `dotenv` package by adding the following code inside our `index.js` file:
 
