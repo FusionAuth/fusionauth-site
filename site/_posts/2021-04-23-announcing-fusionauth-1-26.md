@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.26
-description: The FusionAuth 1.26 Release includes more debugging and SAMLv2 logout.
+description: The FusionAuth 1.26 Release includes advanced MFA, an API to manage API keys, entity management preview release and more.
 author: Dan Moore
 image: blogs/release-1-26/product-update-fusionauth-1-26.png
 category: blog
@@ -18,15 +18,19 @@ This release contained a number of enhancements and bug fixes. Please see the [r
 
 This is a premium feature requiring a [paid license](/pricing/editions/). It increases support for MFA in FusionAuth, including adding the following features:
 
-* customizable SMS templates, including localization
-* a new MFA factor: email 
-* support for multiple SMS delivery mechanisms
-* available MFA options can be specified at the tenant level
-* multiple authentication methods can be associated with an account
-* one-time use recovery codes
-* self service MFA management
+* Customizable SMS templates, including localization
+* A new MFA factor: email 
+* Support for multiple SMS delivery mechanisms
+* Available MFA options can be specified at the tenant level
+* A user can have multiple MFA methods
+* One-time use recovery codes
+* User self service MFA management
 
-It's important to note that the FusionAuth team wants every application user to have access to MFA. Therefore, TOTP/Google Authenticator based MFA remains available in the community edition. 
+The FusionAuth team wants every user to be able to use multi-factor authentication to secure their accounts, whether developers buy a premium edition or not. Therefore, support for time based one-time password MFA solutions such as Google Authenticator and Authy continues to be included in the community edition. (Take that, hackers!)
+
+{% include _callout-important.liquid content=
+"Unfortunately, these changes are not backwards compatible with the previous Two Factor implementation, so if you have built on top of that, please [review the changes carefully](/docs/v1/tech/apis/two-factor/). There is also a [1.25 -> 1.26 MFA migration guide](/docs/v1/tech/guides/multi-factor-authentication/#migration-from-version-1-25-and-earlier)."
+%}
 
 Here's a customized SMS template:
 
@@ -36,20 +40,20 @@ Here's the tenant edit view, where I am configuring available MFA methods:
 
 {% include _image.liquid src="/assets/img/blogs/release-1-26/setting-mfa-options.png" alt="Configuring allowed MFA methods." class="img-fluid" figure=false %}
 
-Unfortunately, these changes are **not backwards compatible** with the previous Two Factor implementation, so if you have built on top of it, please [review the changes carefully](/docs/v1/tech/apis/two-factor/).
-
 ## Entity Management
 
-When talking to customers, users and potential clients, we heard that they were often modelling entities beyond users and wanted to use FusionAuth. So, we built it; Entity Management is a premium feature requiring a paid license. It is currently in technology preview and may change; please provide feedback to us. 
+When talking to customers, users and potential clients, we heard that they were often modelling entities beyond users and wanted to use FusionAuth. 
+
+So we built tooling to help you do just that with Entity Management. Entity Management is a premium feature requiring a paid license. It is currently in technology preview and may change. We would love for you to try it out and see if it helps you solve this class of problem. In other words, let us know what you think!
 
 You can create distinct entity types representing classes of entities, such as "API" or "Company". You then can create permissions on these types, such as "invoke" or "manage". At that point, you create individual instantiations of these types, such as "Reminder API" or "Bachmanity". Finally, create "grant" relationships between entities, which allow you to model permissions between entities.
 
-For example, suppose I have a reminder API which needs to call a todo API to query upcoming tasks. With entity management, I can:
+For example, suppose I have a reminder API which needs to call a todo API to query upcoming tasks. With Entity Management, I can:
 
 * Create an "API" entity type with the following permissions: `query`, `execute`, and `configure`.
 * Create an "reminder API" entity
 * Set up a "todo API" entity
-* Grant the reminder API `query` permissions on the todo API
+* Grant the "reminder API" `query` permissions on the todo API
 
 When the reminder API is ready to gather upcoming tasks, it "signs in" with the Client Credentials grant. FusionAuth will, if the reminder API has the appropriate permission on the todo API, create a JWT. The reminder API can present the JWT, perhaps as a bearer token, to the todo API. The todo API can then process the request and return the needed data.
 
@@ -59,22 +63,22 @@ All of this set up and execution can be done via API, making Entity Management a
 
 ## An API to manage API keys
 
-In true Inception style, there is now an API to manage FusionAuth API keys. This was a community request last year. You can create, copy, update, and delete API keys. These keys are indistinguishable from API keys created in the user interface. 
+In true Inception style, there is now an API to manage FusionAuth API keys. This was a community request last year. You can create, copy, update, and delete API keys. When used, these keys are nearly indistinguishable from API keys created in the FusionAuth administrative user interface. To prevent unplanned privilege escalation, keys with the API key permission must be created in the admin UI; other than that, API generated keys can be used for any purpose.
 
-They can be restricted in a number of ways:
+These API keys can be restricted in a number of ways:
 
 * By tenant
 * By endpoint
 * By permission on an endpoint
 
-This feature allows interesting automation. For example, you can now generate API keys with very specific permissions, distribute and use them as needed, and then destroy them.
+You can now automate every aspect of FusionAuth. For example, you can now generate API keys with very specific permissions, distribute them as needed, and then destroy them after use.
 
 ## Other enhancements
 
 Some of the other enhancements included in this release are:
 
 * Support for FusionAuth acting as an SP for IdP initiated SAMLv2 SSO (this is a premium feature).
-* An extension to the user registration forms to allow for a user profile self service page (this is a premium feature).
+* User profile self service, which lets users to update profile data, MFA options, and passwords on their own (this is a premium feature).
 * A Prometheus endpoint for monitoring.
 * Support for licensing in air-gapped deployments.
 * The login success and failure webhook events now include the IP address.
@@ -89,7 +93,7 @@ Like I said, this was a big release!
 
 There were a couple of bugs fixed, including:
 
-* A registration for an inactive application previously couldn't be deleted; now it can be.
+* A registration for an inactive application previously couldn't be deleted. Now it can.
 * There was spurious text on the FusionAuth admin UI screen in certain scenarios. This is now gone.
 
 ## Upgrade at will
