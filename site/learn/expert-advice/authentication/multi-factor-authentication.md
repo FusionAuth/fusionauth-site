@@ -6,7 +6,7 @@ author: Dan Moore
 image: advice/mfa/expert-advice-multi-factor-authentication-for-developers-header-image.png
 category: Authentication
 date: 2021-02-19
-dateModified: 2021-02-19
+dateModified: 2021-04-26
 ---
 
 As more of our lives move online, multi-factor authentication (MFA) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep safe. 
@@ -36,6 +36,16 @@ Multi-factor authentication is best understood as requiring two or more factors 
 Multi-factor authentication isn't just for online user accounts, though. If you are accessing a safe deposit box in a bank, you need a key (something you have) and a signature (something you are) or an id (another thing you have). However, this article will focus on online MFA.
 
 The majority of user accounts have a password as a factor. You might be working in such a system right now. As engineering teams become more aware of the problem of user account hijacking and its real world consequences, more are allowing or requiring additional factors of authentication. 
+
+### What is the difference between MFA and 2FA?
+
+These terms are often used interchangably, which unfortunately blurs important differences between them.
+
+When a system supports more than one method or factor of authentication, it supports MFA. Any factor in the categories of proof mentioned above suffices. Later in this article, we'll cover different factors in more detail.
+
+2FA, on the other hand, occurs when a user provides two factors of authentication. This often happens at the moment of login, but can take place at other times. For example, when a particularly sensitive operation like account deletion occurs, an additional factor may be required. One of the two factors is typically a password, but not always.
+
+In general, MFA outlines a system's capabilities, while 2FA describes how many factors are required when authentication is needed.
 
 ## Why use multi-factor authentication (MFA)?
 
