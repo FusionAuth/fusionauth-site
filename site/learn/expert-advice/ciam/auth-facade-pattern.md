@@ -2,7 +2,7 @@
 layout: advice
 title: The Auth Facade Pattern
 description: Introducing a facade in front of customer identity providers adds implementation flexibility and gives additional control to your applications
-image: advice/challenges-of-ciam-article.png
+image: advice/auth-facade/expert-advice-the-auth-facade-pattern-header-image.png
 category: CIAM
 author: Dan Moore
 date: 2021-04-30
