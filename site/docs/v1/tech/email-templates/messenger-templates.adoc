@@ -1,0 +1,604 @@
+---
+layout: doc
+title: Messenger Templates
+description: Learn how to write and manage messenger templates
+---
+
+:sectnumlevels: 0
+
+== Overview
+
+FusionAuth will use email templates to send a Forgot Password request, and other built in workflows. You may also create your own
+email templates and send them to Users via the link:/docs/v1/tech/apis/emails#send-an-email[Send Email] API.
+
+&nbsp;
+
+* <<Managing Templates>>
+* <<Localization>>
+* <<Templates & Replacement Variables>>
+
+== Managing Templates
+
+FusionAuth ships with several templates to support Forgot Password, Setup Password, Verify Email and other workflows. You will want to modify these templates prior to using them in production.
+
+Apart from modifying them to be more cosmetically pleasing or to match your brand, you will need to ensure the URL used in the template is correct. You will need to ensure the URL is publicly accessible.
+
+When you first log into FusionAuth and navigate to [breadcrumb]#Settings -> Email Templates# you will see the following templates.
+
+image::email-templates/stock-email-templates.png[Stock Email Templates,width=1200,role=shadowed]
+
+For example, below is the email body of the Email Verification template as it is shipped with FusionAuth.
+
+image::email-templates/stock-verify-email-template.png[Stock Verify Email Template,width=1200,role=shadowed]
+
+At a minimum, you will need to update this URL to a publicly accessible URL that can reach FusionAuth.
+
+If you will be handling Email Verification yourself, you will need to update this URL to be that of your own. You will notice the one replacement variable in this template named `${verificationId}`. See the Replacement Variables section below for additional detail, but these variables will be replaced when the template is rendered.
+
+=== Base Information
+
+[.api]
+[field]#Id# [optional]#Optional#::
+The unique Id of the email template. The template Id may not be changed and will be used to interact with the template when using the Email APIs.
+
+[field]#Name# [required]#Required#::
+The name of the template. This value is for display purposes only and can be changed at any time.
+
+[field]#Default Subject# [required]#Required#::
+The default subject of the email. The default value will be used unless a localized version is found to be a better match based upon the User's preferred locales.
++
+This field supports replacement variables.
+
+[field]#From Email# [optional]#Optional#::
+The from email address used to send this template.  As of version 1.16.0, this field is optional.
+
+[field]#Default from Name# [optional]#Optional#::
+The default from name of the email. The default value will be used unless a localized version is found to be a better match based upon the User's preferred locales.
++
+This field supports replacement variables.
+
+== Localization
+
+The email template body (both HTML and text values), subject and from name fields can be localized. 
+
+You can associate these values with a locale. If a user has a preferred language, the localized template will be used when this email is sent.
+
+image::email-templates/localized-email-template.png[A localized email template for the French locale.,width=1200]
+
+== Templates & Replacement Variables
+
+The email template body (both HTML and text values), subject and from name fields support replacement variables. This means place holders can be inserted and the value will be calculated at the time the email template is rendered and sent to a user.
+
+Most templates will contain the User object as returned on the Retrieve User API. This means you can utilize any value found on the User object such as email, first name, last name, etc.
+
+Below you will find each stock template that FusionAuth ships for reference. The available replacement values will be outlined below for each template.
+
+* <<Breached Password>>
+* <<Change Password>>
+* <<Confirm Child>>
+* <<COPPA Email Plus Notice>>
+* <<COPPA Notice>>
+* <<Email Verification>>
+* <<Parent Registration Request>>
+* <<Passwordless Login>>
+* <<Registration Verification>>
+* <<Setup Password>>
+
+
+== Breached Password
+
+.HTML
+[source,text]
+----
+include::docs/src/email/breached-password.html[]
+----
+
+.Text
+[source,text]
+----
+This password was found in the list of vulnerable passwords, and is no longer secure.
+
+In order to secure your account, it is recommended to change your password at your earliest convenience.
+
+Follow this link to change your password.
+
+http://localhost:9011/password/forgot?email=${user.email}&tenantId=${user.tenantId}
+
+- FusionAuth Admin
+----
+
+=== Replacement variables
+
+[.api]
+[field]#breachResult.loginIds# [type]#[Array<String>]#::
+The breach result matching loginIds. This is an array of zero or more email addresses or usernames found in the breach result matching this user. A length of zero means only the password was matched.
+
+[field]#breachResult.match# [type]#[String]#::
+The breach result match type determined by the FusionAuth Reactor. Possible values include:
++
+    * `ExactMatch` The User's loginId and password were found exactly as entered.
+    * `SubAddressMatch` The User's loginId and password were matched, but the email address was a sub-address match. For example `joe+test@example.com` is a sub-address match for `joe@example.com`.
+    * `PasswordOnly` Only the password found, the loginId and password combination were not matched.
+    * `CommonPassword` The User's password was found to be one of the most commonly known breached passwords.
+
+[field]#user# [type]#[User]#::
+The User object, see the User API for field definitions.
+
+
+== Change Password
+
+.HTML
+[source,text]
+----
+[#setting url_escaping_charset="UTF-8"]
+To change your password click on the following link.
+<p>
+  [#-- The optional 'state' map provided on the Forgot Password API call is exposed in the template as 'state' --]
+  [#assign url = "http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}" /]
+  [#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]
+  <a href="${url}">${url}</a>
+</p>
+- FusionAuth Admin
+
+----
+
+.Text
+[source,text]
+----
+[#setting url_escaping_charset="UTF-8"]
+To change your password click on the following link.
+
+[#-- The optional 'state' map provided on the Forgot Password API call is exposed in the template as 'state' --]
+[#assign url = "http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}" /]
+[#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]
+
+${url}
+
+- FusionAuth Admin
+----
+
+=== Replacement variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.21.0#::
+The Application object, see the Application API for field definitions.
++
+*Note*:
+This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined.
+
+[field]#changePasswordId# [type]#[String]#::
+The change password Id intended to be used by the link:/docs/v1/tech/apis/users#change-a-users-password[Change a User's Password] API.
+
+[field]#state# [type]#[Object]#::
+If the `state` was provided during the Forgot Password request, it will be available to you in the email template.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions.
+
+[field]#user# [type]#[User]#::
+The User object, see the User API for field definitions of a User.
+
+
+== Confirm Child
+
+.HTML
+[source,text]
+----
+Your child has created an account with us and you need to confirm them before they are added to your family. Click the link below to confirm your child's account.
+<p>
+  <a href="http://example.com/family/confirm-child">http://example.com/family/confirm-child</a>
+</p>
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+Your child has created an account with us and you need to confirm them before they are added to your family. Click the link below to confirm your child's account.
+
+http://example.com/family/confirm-child
+
+- FusionAuth Admin
+----
+
+=== Replacement variables
+
+[.api]
+[field]#child# [type]#[User]#::
+The child User object, see the User API for field definitions of a User.
+
+[field]#parent# [type]#[User]#::
+The parent User object, see the User API for field definitions of a User.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions.
+
+[field]#user# [deprecated]#Deprecated#::
+The parent User object. This field has been deprecated, please us the `parent` object instead.
+
+
+== COPPA Email Plus Notice
+
+.HTML
+[source,text]
+----
+A while ago, you granted your child consent in our system. This email is a second notice of this consent as required by law and also to remind to that you can revoke this consent at anytime on our website or by clicking the link below:
+<p>
+  <a href="http://example.com/consent/manage">http://example.com/consent/manage</a>
+</p>
+
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+A while ago, you granted your child consent in our system. This email is a second notice of this consent as required by law and also to remind to that you can revoke this consent at anytime on our website or by clicking the link below:
+
+http://example.com/consent/manage
+
+- FusionAuth Admin
+----
+
+=== Replacement variables
+
+[.api]
+[field]#consent# [type]#[UserConsent]#::
+The User Consent object, see the Consent API for field definitions of a User consent.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions of a Tenant.
+
+[field]#user# [type]#[User]#::
+The User giving consent, see the User API for field definitions of a User.
+
+== COPPA Notice
+
+.HTML
+[source,text]
+----
+You recently granted your child consent in our system. This email is to notify you of this consent. If you did not grant this consent or wish to revoke this consent, click the link below:
+<p>
+  <a href="http://example.com/consent/manage">http://example.com/consent/manage</a>
+</p>
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+You recently granted your child consent in our system. This email is to notify you of this consent. If you did not grant this consent or wish to revoke this consent, click the link below:
+
+http://example.com/consent/manage
+
+- FusionAuth Admin
+----
+
+=== Replacement variables
+
+[.api]
+[field]#consent# [type]#[UserConsent]#::
+The User Consent object, see the Consent API for field definitions of a User consent.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions of a Tenant.
+
+[field]#user# [type]#[User]#::
+The User giving consent, see the User API for field definitions of a User.
+
+
+== Email Verification
+
+.HTML
+[source,text]
+----
+[#if user.verified]
+Pro tip, your email has already been verified, but feel free to complete the verification process to verify your verification of your email address.
+[/#if]
+
+To complete your email verification click on the following link.
+<p>
+  <a href="http://localhost:9011/email/verify/${verificationId}?tenantId=${user.tenantId}">
+    http://localhost:9011/email/verify/${verificationId}?tenantId=${user.tenantId}
+  </a>
+</p>
+
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+[#if user.verified]
+Pro tip, your email has already been verified, but feel free to complete the verification process to verify your verification of your email address.
+[/#if]
+
+To complete your email verification click on the following link.
+
+http://localhost:9011/email/verify/${verificationId}?tenantId=${user.tenantId}
+
+- FusionAuth Admin
+----
+
+=== Replacement variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.21.0#::
+The Application object, see the Application API for field definitions.
++
+*Note*:
+This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions of a Tenant.
+
+[field]#user# [type]#[User]#::
+The User object, see the User API for field definitions of a User.
+
+[field]#verificationId# [type]#[String]#::
+The verification Id intended to be used by the link:/docs/v1/tech/apis/users#verify-a-users-email[Verify Email] API.
+
+
+== Parent Registration Request
+
+.HTML
+[source,text]
+----
+Your child has created an account with us and needs you to create an account and verify them. You can sign up using the link below:
+<p>
+  <a href="http://example.com/family/confirm-child">http://example.com/family/confirm-child</a>
+</p>
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+Your child has created an account with us and needs you to create an account and verify them. You can sign up using the link below:
+
+http://example.com/family/confirm-child
+
+- FusionAuth Admin
+----
+
+
+=== Replacement variables
+
+[.api]
+[field]#child# [type]#[User]#::
+The child User object, see the User API for field definitions of a User.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions of a Tenant.
+
+
+== Passwordless Login
+
+.HTML
+[source,text]
+----
+include::docs/src/email/passwordless.html[]
+----
+
+.Text
+[source,text]
+----
+include::docs/src/email/passwordless.txt[]
+----
+
+=== Replacement variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.21.0#::
+The Application object, see the Application API for field definitions.
++
+*Note*:
+This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined.
+
+[field]#code# [type]#[String]#::
+The unique code intended to be used by the link:/docs/v1/tech/apis/passwordless#complete-a-passwordless-login[Complete a Passwordless Login] API.
+
+[field]#state# [type]#[Object]#::
+If the `state` was provided when the Passwordless request was initiated, it will be available to you in the email template.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions of a Tenant.
+
+[field]#user# [type]#[User]#::
+The User object, see the User API for field definitions of a User.
+
+
+== Registration Verification
+
+.HTML
+[source,text]
+----
+[#if registration.verified]
+Pro tip, your registration has already been verified, but feel free to complete the verification process to verify your verification of your registration.
+[/#if]
+
+To complete your registration verification click on the following link.
+<p>
+  <a href="http://localhost:9011/registration/verify/${verificationId}?tenantId=${user.tenantId}">
+    http://localhost:9011/registration/verify/${verificationId}?tenantId=${user.tenantId}
+  </a>
+</p>
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+[#if registration.verified]
+Pro tip, your registration has already been verified, but feel free to complete the verification process to verify your verification of your registration.
+[/#if]
+
+To complete your registration verification click on the following link.
+
+http://localhost:9011/registration/verify/${verificationId}?tenantId=${user.tenantId}
+
+- FusionAuth Admin
+----
+
+=== Replacement variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.21.0#::
+The Application object, see the Application API for field definitions.
+
+[field]#registration# [type]#UserRegistration#]::
+The User Registration object, see the Registration API for field definitions of a User.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions of a Tenant.
+
+[field]#user# [type]#[User]#::
+The User object, see the User API for field definitions of a User.
+
+[field]#verificationId# [type]#[String]#::
+The verification Id intended to be used by the link:/docs/v1/tech/apis/registrations#verify-a-user-registration[Verify a User Registration] API.
+
+
+
+== Setup Password
+
+.HTML
+[source,text]
+----
+Your account has been created and you must setup a password. Click on the following link to setup your password.
+<p>
+  <a href="http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}">
+    http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}
+  </a>
+</p>
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+Your account has been created and you must setup a password. Click on the following link to setup your password.
+
+http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}
+
+- FusionAuth Admin
+----
+
+=== Replacement variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.21.0#::
+The Application object, see the Application API for field definitions.
++
+*Note*:
+This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined.
+
+[field]#changePasswordId# [type]#[String]#::
+The change password Id intended to be used by the link:/docs/v1/tech/apis/users#change-a-users-password[Change a User's Password] API.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions of a Tenant.
+
+[field]#user# [type]#[User]#::
+The User object, see the User API for field definitions of a User.
+
+== Using Replacement Variables
+
+Below are some basic examples of using replacement values in your email templates.
+
+Consider the following User represented by this condensed JSON object.
+[source,json]
+----
+{
+  "email": "monica@piedpiper.com",
+  "firstName": "Monica",
+  "id": "1c592f8a-59c6-4a09-82f8-f4257e3ea4c8",
+  "lastName": "Hall"
+}
+----
+
+The following are example usages with a rendered output based upon the above mentioned example User. The replacement variables are rendered
+using https://freemarker.apache.org/docs/index.html[Apache FreeMarker] which is an HTML template language.
+
+A default value should be provided for variables that may be undefined at runtime such as `firstName`. See `firstName` in the example below
+is followed by a bang `!` and then the string `Unknown User`. This indicates that if `firstName` is undefined when the template is rendered the value
+of `Unknown User` should be used as a default value.
+
+*Template Source*
+[source,html]
+----
+Hi ${user.firstName!'Unknown User'}, welcome to Pied Piper.
+
+Please verify your email address ${user.email} by following the provided link.
+
+https://piedpiper.fusionauth.io/email/verify/${verificationId}
+- Admin
+----
+
+*Rendered Output*
+[source,html]
+----
+Hi Monica, welcome to Pied Piper.
+
+Please verify your email address monica@piedpiper.com by following the provided link.
+
+https://piedpiper.fusionauth.io/email/verify/YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4
+- Admin
+----
+
+
+== Custom Replacement Variables
+
+In addition to the variables mentioned in the previous section, when defining your own email templates to be used by the link:/docs/v1/tech/apis/emails#send-an-email[Send Email] API
+custom data may be provided on the API request to be used in the email template.
+
+On Send Email API request the contents of the `requestData` field will be made available to you when the template is rendered.
+
+For example, consider the following request to the Send API to send email template Id `1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e` to the User by Id `ce485a91-906f-4615-af75-81d37dc71e90`.
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/email/send/`1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e`#
+--
+
+[source,json]
+.Example Request JSON
+----
+{
+  "requestData": {
+    "paymentAmount": "$9.99",
+    "product": "party hat",
+    "quantity": "12"
+  },
+  "userIds": [
+    "ce485a91-906f-4615-af75-81d37dc71e90"
+  ]
+}
+----
+
+*Template Source*
+[source,html]
+----
+Hello ${user.firstName!''},
+
+Thank you for your purchase! We value your business, please come again!
+
+Product: ${requestData.product!'unknown'}
+Quantity: ${requestData.quantity!'unknown`}
+
+- Pied Piper Customer Success
+----
+
+*Rendered Output*
+[source,html]
+----
+Hello Kelly,
+
+Thank you for your purchase! We value your business, please come again!
+
+Product: party hat
+Quantity: 12
+
+- Pied Piper Customer Success
+----
