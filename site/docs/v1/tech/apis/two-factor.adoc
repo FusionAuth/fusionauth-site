@@ -26,6 +26,8 @@ include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 * <<Send a Multi-Factor Code During Login or Step Up>>
 * <<Send a Multi-Factor Code When Enabling MFA>>
 * <<Send a Multi-Factor Code When Disabling MFA>>
+* <<Generate Recovery Codes>>
+* <<Retrieve Recovery Codes>>
 
 [NOTE.info]
 ====
@@ -233,7 +235,11 @@ include::docs/src/json/two-factor/secret/response.json[]
 
 == Start Multi-Factor
 
-Starts an Multi-Factor request. This would be used for step up auth, such as when sensitive data is requested or for where you need to control the Multi-Factor Authentication process.
+Starts an Multi-Factor request. This would be used for only step up auth, such as when sensitive data is requested.
+
+If you want to provide your own code and/or deliver the code out of band using your own delivery mechanism, this is the right API call. Do not combine this with a <<Send a Multi-Factor Code During Login or Step Up>> call, as calling that API will invalidate all other codes associated with the [field]#twoFactorId#, including any you provide.
+
+To require additional factors during login, <<Enable Multi-Factor>> for the User. Then FusionAuth will handle MFA code collection automatically, if you are using the hosted login pages, or send a status code in response to the login API if you are not.
 
 === Request
 
@@ -259,7 +265,13 @@ include::docs/v1/tech/apis/_two-factor-start-response-body.adoc[]
 
 == Send a Multi-Factor Code During Login or Step Up
 
-This operation allows you to send a message with a code to finish a Multi-Factor flow, and requires an existing `twoFactorId`. No API key is required. 
+This operation allows you to send a message with a code to finish a Multi-Factor flow, and requires an existing [field]#twoFactorId#. No API key is required. 
+
+This should only be used if you want FusionAuth to send the code. Do not use this if you are sending a code out of band or are using a TOTP based authentication method.
+
+You can use this to re-send a code with the same or a different method. Using this API will invalidate all other codes previously associated with the provided [field]#twoFactorId#.
+
+Sending a code invalidates all previous codes for the provided `twoFactorId`.
 
 === Request
 
@@ -275,7 +287,7 @@ link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[ty
 
 [.api]
 [field]#twoFactorId# [type]#[String]# [required]#Required#::
-The `twoFactorId` returned by the Login API or the Start Multi-Factor request.
+The [field]#twoFactorId# returned by the Login API or the Start Multi-Factor request.
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
@@ -303,7 +315,7 @@ include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 
 == Send a Multi-Factor Code When Enabling MFA
 
-You are enabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. You are using FusionAuth as your delivery mechanism.
+You are enabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. This should only be used if you want FusionAuth to send the code. Do not use this if you are using a TOTP based authentication method.
 
 === Request
 
@@ -390,7 +402,7 @@ include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 
 == Send a Multi-Factor Code When Disabling MFA
 
-You are disabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. You are using FusionAuth as your delivery mechanism.
+You are disabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. This should only be used if you want FusionAuth to send the code. Do not use this if you are using a TOTP based authentication method.
 
 === Request
 
@@ -451,4 +463,82 @@ include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 :success_code!:
 :success_message!:
 
+== Generate Recovery Codes
 
+This API is used to generate a list of Recovery Codes. When creating new codes, any existing Recovery Codes will be cleared and the new set will become the current values.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Create Recovery Codes
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/recovery-codes/`\{userId\}`#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The unique Id of the user to assign the generated Recovery Codes to.
+
+=== Response
+
+The response for this API contains an array of size 10 of Recovery Codes that were created.
+
+:never_search_error:
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:never_search_error!:
+
+==== Response Body
+
+[.api]
+[field]#recoveryCodes# [type]#[Array<String>]#::
+The array of Recovery Codes.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/src/json/two-factor/response-with-recovery-codes.json[]
+----
+
+== Retrieve Recovery Codes
+
+This API is used to retrieve Recovery Codes for a User.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve Recovery Codes
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/recovery-codes/`\{userId\}`#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The Id of the User to retrieve Recovery Codes for.
+
+=== Response
+
+The response for this API contains the remaining Recovery Codes that are assigned to the User. Each time one is used it is removed, so this response will contain between 0 and 10 codes.
+
+:never_search_error:
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:never_search_error!:
+
+==== Response Body
+
+[.api]
+[field]#recoveryCodes# [type]#[Array<String>]#::
+The array of Recovery Codes.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/src/json/two-factor/response-with-recovery-codes.json[]
+----
