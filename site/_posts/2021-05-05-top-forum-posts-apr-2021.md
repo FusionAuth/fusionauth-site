@@ -46,11 +46,13 @@ There were a couple of alternate solutions mentioned, including rebuilding the J
 
 Post: [My user registrations keep disappearing](https://fusionauth.io/community/forum/topic/922/my-user-registrations-keep-disappearing)
 
-In this post, the registrations in orrett's FusionAuth installation kept disappearing mysteriously. FusionAuth team member Joshua had some back and forth and they discovered that orrett had configured his self service registation such that unverified users were removed. 
+In this post, the registrations in orrett's FusionAuth installation kept disappearing mysteriously. FusionAuth team member Joshua had some back and forth and they discovered that orrett had configured their self service registration such that unverified users were removed. 
 
-orrett also wondered: "However what I am wondering is if it would just delete the app registration but leave the user within the database?" To which the answer was "no". 
+orrett also wondered: "However what I am wondering is if it would just delete the app registration but leave the user within the database?" 
 
-Joshua suggested several workarounds including setting a longer timeline, such as say, 90 days, and have a script/cron job that uses APIs to track/validate/process the unverified users. Or keeping unverified users in an application and periodically run a script to clean them out.
+To which the answer was "no". 
+
+Joshua, however, suggested several workarounds including setting a longer timeline, such as say, 90 days, and have a script/cron job that uses APIs to track/validate/process the unverified users. Or keeping unverified users in an application and periodically run a script to clean them out.
 
 Deleting unverified users can be useful to keep your user database free of fake accounts, but especially during development can lead to mysterious deletion of accounts. Eventually orrett decided to disable that functionality, at least for now.
 
