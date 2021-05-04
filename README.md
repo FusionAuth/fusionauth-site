@@ -64,7 +64,7 @@ This project depends on CSS from the `fusionauth-style` project.
 If you are making changes to the CSS, you'll need to do the following:
 
 * clone that repo, make changes there on a branch
-* when your changes are done, run `sb int` which pushes up a integration build (similar to a maven snapshot) to the savant repo.
+* when your changes are done, run `sb int` which pushes up an integration build (similar to a maven snapshot) to the savant repo.
 * edit your css dependency var to be something like this (with the appropriate version number):
 ```
 fusionauthWebsiteStyleVersion = "0.2.27-{integration}"
