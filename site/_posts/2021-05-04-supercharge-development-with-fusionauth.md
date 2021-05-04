@@ -3,7 +3,7 @@ layout: blog-post
 title:  Supercharge Development with FusionAuth
 description:  FusionAuth, a secure identity and access management solution users can install on any server 
 author: Christine Preusler
-image: blogs/release-1-26/product-update-fusionauth-1-26.png
+image: blogs/supercharge-development/supercharge-development.png
 category: blog
 excerpt_separator: "<!--more-->"
 redirect_to: https://www.hostingadvice.com/blog/streamline-app-development-with-fusionauth/
