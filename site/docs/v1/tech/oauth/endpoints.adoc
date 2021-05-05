@@ -17,6 +17,7 @@ In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], http
  ** <<Resource Owner Password Credentials Grant Request>>
  ** <<Complete the Device Authorization Grant Request>>
  ** <<Refresh Token Grant Request>>
+ ** <<Client Credentials Grant Request>>
 * <<Device>>
 * <<Device Validate>>
 * <<Introspect>>
@@ -135,7 +136,7 @@ The end-user verification code.  This parameter is required on requests implemen
 
 |400
 |The request was invalid and/or malformed. The response will contain a JSON message with the specific errors or errors on the redirect URI. The error responses
-are covered in the link:#oautherror[OAuthError section] of the API documentation.
+are covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -683,8 +684,6 @@ The unique Id of the user that has been authenticated. This user Id may be used 
 
 === Refresh Token Grant Request
 
-Refresh Token Grant : Exchange a Refresh Token for an Access Token
-
 If you will be using the Refresh Token Grant, you will make a request to the Token endpoint to exchange the user's refresh token for an access token.
 
 [.endpoint]
@@ -801,6 +800,138 @@ The unique Id of the user that has been authenticated. This user Id may be used 
 }
 ----
 
+=== Client Credentials Grant Request
+
+[NOTE.since]
+====
+This functionality has been available since version 1.26.
+====
+
+If you will be using the Client Credentials grant, you will make a request to the Token endpoint to exchange the client credentials for an access token.
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/token#
+--
+
+==== Request Headers
+
+[.api]
+[field]#Content-Type# [type]#[String]# [required]#Required#::
+This value must be set to `application/x-www-form-urlencoded`.
+
+[field]#Authorization# [type]#[String]# [required]#Required#::
+You must provide client authentication using the https://tools.ietf.org/html/rfc7617#section-2[Basic Authentication Scheme] authorization header.
++
+The header value is created by taking the `clientId` and `clientSecret` properties defined in the Entity Configuration and concatenating them together using a `:` character. Here is an example of these two values concatenated.
++
+[source]
+----
+463228ba-868a-462d-b86f-6096af2d70e0:salkjdsoiu32ldslnkasglhilkja892
+----
++
+This value is then Base64 encoded. Prepend `Basic` to denote the schema type. The following is an example Authorization header using the example concatenation above.
++
+[source]
+----
+Authorization: Basic NDYzMjI4YmEtODY4YS00NjJkLWI4NmYtNjA5NmFmMmQ3MGUwOnNhbGtqZHNvaXUzMmxkc2xua2FzZ2xoaWxramE4OTI=
+----
++
+The above concatenation example and resulting Authorization header are simply for demonstration. Your actual header value will be different.
+
+==== Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body. Do not send these parameters in a query string or as JSON.
+
+[.api]
+[field]#grant_type# [type]#[String]# [required]#Required#::
+The grant type to be used. This value must be set to `client_credentials`
+
+[field]#scope# [type]#[String]# [optional]#Optional#::
+This parameter is optional. This is a space delimited set of the requested scopes for this grant request.
++
+You will typically provide a scope specifying the target entity: 
++
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_omitted.txt[]
+----
++
+You may provide append a comma separated list of permissions as well: 
++
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_single_entity.txt[]
+----
++
+You may combine multiple entities and permissions in the same [field]#scope# parameter: 
++
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_multiple_entities.txt[]
+----
++
+include::docs/v1/tech/oauth/_client_credentials_permissions_explanation.adoc[]
+
+[source,options="wrap"]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Authorization: Basic MDkyZGJkZWQtMzBhZi00MTQ5LTljNjEtYjU3OGYyYzcyZjU5OitmY1hldDlJdTJrUWk2MXlXRDlUdTRSZVoxMTNQNnlFQWtyMzJ2NldLT1E9
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+
+grant_type=client_credentials
+    &scope=target-entity%3Ae13365f1-a270-493e-bd1b-3d239d753d53%3Aread
+----
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
+
+|500
+|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
+
+|503
+|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+|===
+
+==== Response Body
+
+[.api]
+[field]#access_token# [type]#[String]#::
+The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4].  See the link:/docs/v1/tech/oauth/tokens#access-token[OAuth Tokens] documentation for more information.
+
+[field]#expires_in# [type]#[Integer]#::
+The time in seconds the token will expire from the time the response was generated.
+
+[field]#scope# [type]#[String]#::
+The scope value from the request.
+
+[field]#token_type# [type]#[String]#::
+The token type. The value will be `Bearer`.
+
+[source,json]
+.Example JSON Response
+----
+include::docs/v1/tech/oauth/_client_credentials_example_json_response.json[]
+----
+
+
 == Device
 [NOTE.since]
 ====
@@ -860,7 +991,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&scope=offline_access
 |The request was successful.
 
 |400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuthError section] of the API documentation.
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -939,7 +1070,7 @@ The end-user verification code. This is the code that a user entered during the 
 |The request was successful. No response body will be returned on successful validation.
 
 |400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuthError section] of the API documentation.
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.

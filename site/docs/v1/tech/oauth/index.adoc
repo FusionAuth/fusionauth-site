@@ -12,6 +12,7 @@ FusionAuth supports the following grant types as defined by the OAuth 2.0 framew
 * Implicit Grant
 * Password Grant (also referred to as the Resource Owner Credentials Grant)
 * Refresh Token Grant
+* Client Credentials Grant
 * Device Authorization Grant
 
 &nbsp;
@@ -19,6 +20,10 @@ FusionAuth supports the following grant types as defined by the OAuth 2.0 framew
 To begin using the FusionAuth login system, start by configuring your Application for OAuth2.
 
 * <<Configure Application OAuth Settings>>
+
+To begin using the Client Credentials grant, start by configuring Entities.
+
+* <<Configure Entities>>
 
 &nbsp;
 
@@ -28,6 +33,7 @@ It is recommended to utilize the Authorization Code Grant unless you have a tech
 * link:/docs/v1/tech/oauth/#example-implicit-grant[Example Implicit Grant]
 * link:/docs/v1/tech/oauth/#example-resource-owner-password-credentials-grant[Example Password Grant]
 * link:/docs/v1/tech/oauth/#example-refresh-token-grant[Example Refresh Token Grant]
+* link:/docs/v1/tech/oauth/#example-client-credentials-grant[Example Client Credentials Grant]
 * link:/docs/v1/tech/oauth/#example-device-authorization-grant[Example Device Authorization Grant]
 
 == Configure Application OAuth Settings
@@ -40,6 +46,7 @@ In this example you will see we have created a new Application named `Pied Piper
 
 Additional OAuth controls can be managed through link:/docs/v1/tech/core-concepts/tenants#tenant-configuration[Tenant Configuration].
 
+// TBD take screencap of this
 image::oauth-application.png[Application OAuth Configuration,width=1200,role=shadowed]
 
 === OAuth Form Fields
@@ -83,6 +90,62 @@ The OAuth grants enabled for this Application. When creating a new Application, 
 
 [field]#Device Verification URL# [optional]#Optional#::
 The URL to direct the end-user to for the user-interaction portion of the Device Authorization Grant.  This field is required if [field]#Device# is enabled in the OAuth `Enabled grants` for this Application.
+
+== Configure Entities
+
+The Client Credentials grant takes place between two Entities. You can learn more about link:/docs/v1/tech/core-concepts/entities/[Entities] in the Core Concepts section.
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+There are two entities which take part in a Client Credentials grant in FusionAuth: the recipient Entity and the target Entity. 
+
+Imagine you have a todo API which lets you create, read, update, and delete todos. You also have an email API, which lets you send emails. You can represent these both in FusionAuth as Entities.
+
+When building functionality to allow the todo API to send email reminders, grant permissions on the email API (the target Entity) to the todo API (the recipient Entity). To set up this relationship:
+
+* Create an API entity type with the following permissions: `execute` and `configure`.
+* Create a todo API entity
+* Create an email API entity
+* Grant the todo API `execute` permissions on the email API
+
+The todo API is the recipient Entity, because it receives the permissions to call the email API. The email API is the target Entity, because it will process the token. The email API is the system to which access is controlled. 
+
+The set up happens once and then the todo API can perform the client credentials grant any time it needs to call the email API. It will get a token at the end of a successful grant and can present that to the email API. 
+
+You may configure Entities and Grants via the FusionAuth API or the administrative user interface. You can specify the [field]#Client Id# and [field]#Client Secret# if desired.
+
+Below is the creation screen for an Entity:
+
+image::oauth/add-entity-client-credentials.png[Setting up an Entity,width=1200,role=bottom-cropped]
+
+Below is the management screen for an Entity where you'd add or remove Grants:
+
+image::oauth/add-grant.png[Adding a Grant to an Entity,width=1200]
+
+Here's an example of adding a Grant to an Entity via the API:
+
+[source,shell]
+.Example Grant Request
+----
+API_KEY=...
+TARGET_ENTITY_ID=e13365f1-a270-493e-bd1b-3d239d753d53
+RECIPIENT_ENTITY_ID=2934f41f-d277-4a32-b0d5-16e47dad9721
+
+curl \
+  -XPOST \
+  -H "content-type: application/json" \
+  -H "Authorization: $API_KEY"  \
+  'https://local.fusionauth.io/api/entity/'$TARGET_ENTITY_ID'/grant' -d'
+{
+  "grant": {
+    "recipientEntityId": "'$RECIPIENT_ENTITY_ID'",
+    "permissions" : ["read","write"]
+  }
+}
+'
+----
+
+Next, learn how to perform a link:/docs/v1/tech/oauth/#example-client-credentials-grant[Client Credentials Grant].
 
 
 == Example Authorization Code Grant
@@ -297,7 +360,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32
 
 == Example Refresh Token Grant
 
-An access token is designed to have a short time-to-live (TTL).  A related refresh token with a longer TTL can be used for generating new access tokens and extending a user's session.  The application's OAuth settings must be configured with "Generate refresh tokens" enabled, and "Refresh Token" enabled in as an "Enabled grant".
+An access token is designed to have a short time-to-live (TTL).  A related refresh token with a longer TTL can be used for generating new access tokens and extending a user's session.  The application's OAuth settings must be configured with "Generate refresh tokens" enabled, and "Refresh Token" as an "Enabled grant".
 
 === Exchange a refresh token for an access token
 
@@ -329,6 +392,84 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32
   "userId": "3b6d2f70-4821-4694-ac89-60333c9c4165"
 }
 ----
+
+== Example Client Credentials Grant
+
+Most OAuth grants are designed to allow users to delegate permissions. 
+
+The Client Credentials grant allows entities to authenticate and receive access tokens with no user interaction. 
+
+Therefore, unlike other grants, the Client Credentials grant isn't configured in an Application. Instead, it occurs between two Entities.
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+=== Exchange credentials for an access token
+
+An access token may be generated with a `POST` request to the Token endpoint. Below is an example HTTP request, the `grant_type` will always be `client_credentials`.
+
+Line breaks have been added for readability.
+
+[source]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Authorization: Basic MDkyZGJkZWQtMzBhZi00MTQ5LTljNjEtYjU3OGYyYzcyZjU5OitmY1hldDlJdTJrUWk2MXlXRDlUdTRSZVoxMTNQNnlFQWtyMzJ2NldLT1E9
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+
+grant_type=client_credentials
+    &scope=target-entity%3Ae13365f1-a270-493e-bd1b-3d239d753d53%3Aread
+----
+
+[source,json]
+.Example HTTP Response 
+----
+include::docs/v1/tech/oauth/_client_credentials_example_json_response.json[]
+----
+
+=== Client Credentials Scopes
+
+In order for permissions to be correctly determined, pass a [field]#scope# parameter. This parameter can have multiple values, space separated. Each value has this format:
+
+```
+target-entity:entity_id:permission
+```
+
+where `entity_id` is a required entity UUID and `permission` is an optional, comma separated list of permissions.
+
+You will typically provide a scope specifying a target entity: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_omitted.txt[]
+----
+
+You may provide append a comma separated list of permissions as well: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_single_entity.txt[]
+----
+
+You may combine multiple entities and permissions in the same [field]#scope# parameter: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_multiple_entities.txt[]
+----
+
+The [field]#scope# will be checked against previously granted permissions. If all requested permissions have been found, the grant succeeds and an `access_token` is returned.
+
+If you do not pass [field]#scope#, you will still get an `access_token` if the request is authorized. The token will omit the following claims:
+
+* `aud`
+* `permissions`
+
+include::docs/v1/tech/oauth/_client_credentials_permissions_explanation.adoc[]
+
+You can see all claims of the token in the link:/docs/v1/tech/oauth/tokens/[Token documentation].
 
 == Example Device Authorization Grant
 This example contains screenshots of our link:https://github.com/FusionAuth/fusionauth-example-device-grant[Device Grant Example] which may be a useful code reference during implementation.
