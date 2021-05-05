@@ -82,8 +82,10 @@ FusionAuth.Account.PriceCalculator.prototype = {
       return 0;
     }
 
+    // [brettp]TODO: Keep which code?  None or `mau` then every edition has the same base price
+    //               Using edition to select larger ec2 and rds gives some price distinction between
+    //               editions.
     // var size = 'medium';
-    // // [brettp]TODO: Keep this code?
     // if (mau >= 750000 && mau < 3500000) {
     //   size = 'large';
     // } else if (mau >= 3500000) {
@@ -140,7 +142,7 @@ FusionAuth.Account.PriceCalculator.prototype = {
 }
 
 Prime.Document.onReady(function() {
-  const dialog = new Prime.Widgets.HTMLDialog(Prime.Document.queryFirst('#cloud-hosting-dialog'))
+  const dialog = new Prime.Widgets.HTMLDialog(Prime.Document.queryById('cloud-hosting-dialog'))
       .initialize();
   Prime.Document.queryFirst('.hosting-option-button')
       .addEventListener('click', function () {
