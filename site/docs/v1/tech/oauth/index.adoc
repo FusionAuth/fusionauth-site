@@ -46,7 +46,7 @@ In this example you will see we have created a new Application named `Pied Piper
 
 Additional OAuth controls can be managed through link:/docs/v1/tech/core-concepts/tenants#tenant-configuration[Tenant Configuration].
 
-TBD take screencap of this
+// TBD take screencap of this
 image::oauth-application.png[Application OAuth Configuration,width=1200,role=shadowed]
 
 === OAuth Form Fields
@@ -97,32 +97,85 @@ The Client Credentials grant takes place between two Entities. You can learn mor
 
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
-There are two entities which take part in a Client Credentials grant in FusionAuth: the Recipient Entity and the Target Entity. An example is helpful. Imagine you have a todo API which lets you create, read, update, and delete todos. You also have an email API, which lets you send emails. If you are building functionality to let the todo API send email reminders, you need to allow that API to access the email API.
+There are two entities which take part in a Client Credentials grant in FusionAuth: the recipient Entity and the target Entity. 
 
-These are the steps to set up this relationship:
+Imagine you have a todo API which lets you create, read, update, and delete todos. You also have an email API, which lets you send emails. You can represent these both in FusionAuth as Entities.
+
+When building functionality to allow the todo API send email reminders, grant permissions on the email API (the target Entity) to the todo API (the recipient Entity). To set up this relationship:
 
 * Create an API entity type with the following permissions: `execute` and `configure`.
-* Set up the todo API as an entity
-* Set up the email API as an entity
+* Create a todo API entity
+* Create an email API entity
 * Grant the todo API `execute` permissions on the email API
 
-The todo API is the recipient entity, because it receives the permissions to call the email API.
+The todo API is the recipient Entity, because it receives the permissions to call the email API. The email API is the target Entity, because it will process the token. The email API is the system to which access is controlled. 
 
-The email API is the target entity, because it is what is going to be processing the token and it is what the system to which access is controlled.
+The set up happens once and then the todo API can perform the client credentials grant any time it needs to call the email API. It will get a token at the end of a successful grant and can present that to the email API. 
 
-pics TBD
+You may set up the entities via the FusionAuth API or the administrative user interface. 
 
-This happens once. You can do set up the entities via the FusionAuth API or the administrative user interface. Grants can be made between entities only via the API.
+pic TBD
 
-The todo API must have a grant to the email API to have permissions.
+Grants can be made between entities only via the API.
+
+[source,shell]
+.Example Grant Request
+----
+API_KEY=...
+TARGET_ENTITY_ID=e13365f1-a270-493e-bd1b-3d239d753d53
+RECIPIENT_ENTITY_ID=2934f41f-d277-4a32-b0d5-16e47dad9721
+
+curl \
+  -XPOST \
+  -H "content-type: application/json" \
+  -H "Authorization: $API_KEY"  \
+  'https://local.fusionauth.io/api/entity/'$TARGET_ENTITY_ID'/grant' -d'
+{
+  "grant": {
+    "recipientEntityId": "'$RECIPIENT_ENTITY_ID'",
+    "permissions" : ["read","write"]
+  }
+}
+'
+----
 
 === Client Credentials Scopes
 
-There are two scopes that play a role in teh
+In order for permissions to be correctly determined, pass a [field]#scope# parameter. This parameter can have multiple values, space separated. Each value has this format:
 
-You must provide the target entity's Id in the `scopes` parameter: `target-entity:92dbded-30af-4149-9c61-b578f2c72600`. 
+```
+target-entity:entity_id:permission
+```
 
-You may want to provide a scope specifying the permissions: `target-entity-permission:write target-entity-permission:read`. This allows you to limit the access of this grant.
+where `entity_id` is a required entity UUID and `permission` is an optional, commma separated list of permissions.
+
+You will typically provide a scope specifying a target entity: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_omitted.txt[]
+----
+
+You may provide append a comma separated list of permissions as well: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_single_entity.txt[]
+----
+
+You may combine multiple entities and permissions in the same [field]#scope# parameter: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_multiple_entities.txt[]
+----
+
+The [field]#scope# will be checked against previously granted permissions. If all requested permissions have been found, the grant succeeds and an `access_token` is returned.
+
+If you do not pass [field]#scope#, you will still get an `access_token` if the request is authorized. The token will omit the following claims:
+
+* `aud`
+* `permissions`
 
 include::docs/v1/tech/oauth/_client_credentials_permissions_explanation.adoc[]
 
@@ -375,7 +428,11 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32
 
 == Example Client Credentials Grant
 
-Most OAuth grants are designed to allow users to delegate permissions. The Client Credentials grant allows things with no user affiliation to authenticate and receive access tokens. The Client Credentials grant isn't configured in an Application. Instead, it occurs between two Entities. TBD
+Most OAuth grants are designed to allow users to delegate permissions. 
+
+The Client Credentials grant allows entities to authenticate and receive access tokens with no user interaction. 
+
+Therefore, unlike other grants, the Client Credentials grant isn't configured in an Application. Instead, it occurs between two Entities, as detailed below. 
 
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
@@ -396,19 +453,13 @@ Accept: */*
 Content-Length: 436
 
 grant_type=client_credentials
-    &scope=target-entity%3A092dbded-30af-4149-9c61-b578f2c72600%20target-entity-permission%3Awrite%20target-entity-permission%3Aread
+    &scope=target-entity%3Ae13365f1-a270-493e-bd1b-3d239d753d53%3Aread
 ----
-
-ACCESS TOKEN TBD, should include permissions.
 
 [source,json]
 .Example HTTP Response 
 ----
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImVjZWUzMTYyZjAifQ.eyJhdWQiOiI4YmY4YWIwYy1iMWNlLTQ0NjUtYmQzNy1jMTU1MThjYWU2YmQiLCJleHAiOjE1NzA0ODQwNTcsImlhdCI6MTU3MDQ4MDQ1NywiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiJhZjRiMzk2Yy01MGM4LTQwNzQtOTA5YS0zYzgwNjU0OTEzMzUiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJSRUZSRVNIX1RPS0VOIiwiZW1haWwiOiJqb2huQGRvZS5pbyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJqb2hubnkxMjMiLCJyb2xlcyI6WyJjb21tdW5pdHlfaGVscGVyIiwidXNlciJdLCJhcHBsaWNhdGlvbklkIjoiOGJmOGFiMGMtYjFjZS00NDY1LWJkMzctYzE1NTE4Y2FlNmJkIn0.laSlkKQMOwZmfI_3NT3-1F_VdpLL-ceCQZ2fRL1lvF4",
-  "expires_in": 3600,
-  "token_type": "Bearer"
-}
+include::docs/v1/tech/oauth/_client_credentials_example_json_response.json[]
 ----
 
 
