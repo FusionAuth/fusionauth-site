@@ -22,16 +22,7 @@ The SAML v2 IdP Initiated IdP initiated Identity Provider allows an external IdP
 * <<Update a SAML v2 IdP Initiated Identity Provider>>
 * <<Delete a SAML v2 IdP Initiated Identity Provider>>
 
-=== Login Operations
-
-TBD do these happen
-
-* <<Start a SAML v2 Login Request>>
-* <<Complete a SAML v2 Login>>
-
 === Integration Details
-
-TBD not sure about these.
 
 The following values will likely be required by your SAML v2 IdP Initiated Identity Provider in order to trust FusionAuth as a relying party.
 
@@ -179,75 +170,3 @@ This API does not return a JSON response body.
 :never_search_error:
 include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
 :never_search_error!:
-
-== Start a SAML v2 Login Request
-
-[NOTE.since]
-====
-This API has been available since 1.19.0
-====
-
-This API is used to initiate a SAML v2 login request when integrating without the FusionAuth hosted login pages.
-
-The SAML v2 AuthN request will require a unique request identifier. This API must be used to record this identifier prior to sending the SAML response from the IdP to FusionAuth in order to protect against SAML response replay attacks. You may optionally provide an identifier to this API if you need to generate your own identifier, or use the generated value provided in the API response.
-
-=== Request
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Start a login request
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/identity-provider/start#
---
-
-:loginProvider: SAML v2
-include::docs/v1/tech/apis/identity-providers/_identity-provider-start-request-body.adoc[]
-:loginProvider!:
-
-=== Response
-
-The response for this API contains a code that can be used to complete the login request.
-
-:loginProvider: SAML v2
-include::docs/v1/tech/apis/identity-providers/_identity-provider-start-response-body.adoc[]
-:loginProvider!:
-
-== Complete a SAML v2 Login
-
-This API allows you to complete a SAML v2 login after the user has authenticated with a SAML v2 identity provider. If you are using the FusionAuth login UI with the SAML v2 button you will not utilize this API directly.
-
-This API is intended to be used if you want to build your own login page and you have added a SAML v2 login button to this page.
-
-For example, if you built your own login page, you could add a Login with Pied Piper button to utilize a third party SAML v2 identity provider. When the user completes the SAML v2 login step, they will be redirected back to your application. This is done via a form submit (using the HTTP `POST` method). This `POST` will contain a parameter named `SAMLResponse`. Using this API you can pass the `SAMLResponse` returned from the SAML v2 provider to FusionAuth and we will complete the login workflow and reconcile the user to FusionAuth.
-
-The user does not need to exist yet in FusionAuth to utilize this API. The `SAMLResponse` returned from the SAML v2 provider will be used to retrieve the user's email address, if that user does not yet exist in FusionAuth the user will be created. If create registration has been enabled for this identity provider and the user does not yet have a registration for this application, a registration will be automatically created for the user. The user will be assigned any default roles configured for the application. If create registration has not been enabled, a registration will not be created if one does not yet exist. This last scenario is useful if you wish to manually provision users and then subsequently allow them to login with this SAML v2 identity provider.
-
-=== Request
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Complete SAML v2 Login
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/identity-provider/login#
---
-
-==== Request Headers
-
-[.api]
-[field]#X-Forwarded-For# [type]#[String]# [optional]#Optional#::
-The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used if available, the request body value will take precedence.
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.adoc[]
-
-:loginProvider: SAML v2
-include::docs/v1/tech/apis/identity-providers/_identity-provider-login-request-body.adoc[]
-:loginProvider!:
-
-=== Response
-
-The response for this API contains the User object.
-
-:loginProvider: SAML v2
-include::docs/v1/tech/apis/identity-providers/_identity-provider-login-response-body.adoc[]
-:loginProvider!:
