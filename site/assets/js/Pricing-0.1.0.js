@@ -122,21 +122,6 @@ FusionAuth.Account.PriceCalculator.prototype = {
       }
     });
 
-    // [brettp]TODO: Testing against old math...
-    var testPrice;
-    var increments = mau / 10000;
-    var edition = this.priceModel.support.tierPricing[plan];
-    if (increments < 10) {
-      testPrice = edition.BASE.pricePerUnit + (edition.TIER_2.pricePerUnit * (increments - 1));
-    } else if (increments < 100) {
-      testPrice = edition.BASE.pricePerUnit + (edition.TIER_2.pricePerUnit * 9) + (edition.TIER_3.pricePerUnit * (increments - 10));
-    } else {
-      testPrice = edition.BASE.pricePerUnit + (edition.TIER_2.pricePerUnit * 9) + (edition.TIER_3.pricePerUnit * 90) + (edition.TIER_4.pricePerUnit * (increments - 100));
-    }
-    var tmp = Math.floor(supportPrice / this.priceModel.support.usersPerUnit);
-    if (tmp !== testPrice) console.log(mau, tmp, testPrice);
-    // [brettp]END: Testing code block
-
     return supportPrice / this.priceModel.support.usersPerUnit;
   }
 }
