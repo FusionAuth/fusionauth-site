@@ -38,7 +38,7 @@ I also have extensive experience working in both enterprise and startup environm
 
 You usually have two options: roll your own solution or leverage a very expensive service. 
 
-FusionAuth provides us with a third option—a standardized solution that is robust and battle-tested, which we can self-host, configure and extend as desired, and integrate easily with SDKs and APIs. 
+FusionAuth provides us with a third option. It is a standardized solution that is robust and battle-tested. We can self-host, configure and extend it as desired and also integrate easily with SDKs and APIs. 
 
 We have been able to leverage some advanced features like JWT signing and JWKS endpoints of the platform to help us integrate with other external systems and build out best-in-class security and privacy for our platform.
 
@@ -46,7 +46,12 @@ We have been able to leverage some advanced features like JWT signing and JWKS e
 
 **Jason:** We use the Java SDK and the REST API. 
 
-Some examples of how we use it: get all users within a domain, start a forgot password flow, change password, authenticate users.
+Some examples of how we use it: 
+
+* Get all users within a domain
+* Start a forgot password flow
+* Change a user's password
+* Authenticate users
 
 > FusionAuth provides ... a standardized solution that is robust and battle-tested, which we can self-host, configure and extend as desired, and integrate easily with SDKs and APIs. 
 
