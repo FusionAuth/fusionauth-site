@@ -66,17 +66,19 @@ As for competing services, we believe FusionAuth saved us around $300-$800 per m
 
 **Jason:** As always, developer documentation is something that can be improved. Although the current documentation is very good relative to a lot of other services I’ve seen, additional improvements could be made. 
 
-Perhaps adding Swagger or documentation built into nodes would be helpful. Also, more robust examples for client libraries are always helpful. Is there a Slack group that our developers can join if they have questions for the core FusionAuth team? If not, creating a feedback channel would be incredibly useful.
+Perhaps adding Swagger or documentation built into nodes would be helpful. Also, more robust examples for client libraries are always helpful. 
 
 > FusionAuth solves a problem for Unio that many organizations often face: how do you handle user accounts, authentication, authorization, and password management? 
 
-**Dan:** "Perhaps adding Swagger or documentation built into nodes would be helpful" I don't understand what you mean. Can you explain further?
+**Dan:** I don't understand what you mean by "adding Swagger or documentation built into nodes would be helpful." Can you explain further?
 
 **Jason:** Sure, I mean adding in Swagger documentation available from the installed instance would be helpful. 
 
 If I install FusionAuth 1.24 on `192.0.0.1`, would be great if I could go to `192.0.0.1/swagger` and see the APIs that are present on that instance. 
 
 Installing 1.25 on `192.0.0.2` and then going to `192.0.0.2/swagger` would show me a completely different Swagger definition since the version is different but allows me to see right away which APIs are present on my particular version without wading through documentation. 
+
+**Jason:** Is there a Slack group that our developers can join if they have questions for the core FusionAuth team? If not, creating a feedback channel would be incredibly useful.
 
 **Dan:** We do have a [community forum](https://fusionauth.io/community/forum/) which is fairly active and we also have an [active github issues tracker](https://github.com/fusionauth/fusionauth-issues/issues) for bugs and feature requests. We love feedback from our community. 
 
