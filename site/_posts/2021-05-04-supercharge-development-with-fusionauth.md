@@ -7,6 +7,8 @@ image: blogs/supercharge-development/supercharge-development.png
 category: blog
 excerpt_separator: "<!--more-->"
 redirect_to: https://www.hostingadvice.com/blog/streamline-app-development-with-fusionauth/
+sitemap:
+  exclude: 'yes'
 ---
 
 Businesses have begun to acknowledge that the physical health of developers is an asset. As a result, many workstations now come equipped with furniture and devices designed to encourage natural posture, reduce exertion, and function within optimal reach zones. Such tools boost productivity by helping eliminate employee absences caused by repetitive strain injuries. 
