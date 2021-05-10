@@ -22,6 +22,9 @@ Here's link:/technical-support/[more information about getting technical support
 * <<Troubleshooting Themes>>
 * <<Troubleshooting Two Factor Authentication>>
 * <<Troubleshooting Database Connections>>
+* <<Troubleshooting Performance>>
+* <<Troubleshooting Kickstart>>
+* <<Troubleshooting Self Service Account Management>>
 * <<Common Errors>>
 
 == Logs
@@ -131,6 +134,24 @@ If you find that FusionAuth is unable to connect to the database, ensure you are
 
 Some MySQL services such as Microsoft Azure may require a specific version of TLS to connect successfully. At the time of writing this note, the MySQL connector will not attempt to utilize TLSv1.2 by default, so when connecting to a service that requires this version you will need to explicitly request this version of TLS on the connection string. For example, appending this `enabledTLSProtocols=TLSv1.2` to the connection string will allow you to successfully connect to an Azure managed MySQL database. See https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-using-ssl.html[MySQL Connector : Connecting Securely Using SSL] for additional information.
 
+== Troubleshooting Performance
+
+If you are not seeing the logins per second you'd expect from FusionAuth, you can take some steps to troubleshoot the issue. Generally speaking the primary bottleneck for logins per second is CPU. Hashing the password is intentionally slow. FusionAuth will not be able to perform more logins per second than your CPU can handle. The database is the other likely bottleneck.
+
+One way to identify if the password hashing is the bottleneck in load tests is to reduce the hash strength. See [breadcrumb]#Tenants -> Edit -> Password -> Cryptographic hash settings#. Set this to Salted MD5 with a factor of 1 and then enable Re-hash on login. This will cause each user to have their password re-hashed next time they login to use MD5. Salted MD5 is *not* a good password hashing strategy for a number of reasons, but is useful to test whether your system is CPU bound. Make sure you switch back after testing is done.
+
+If you can still get a lower number of logins per second than you'd expect with this configuration, then the database is likely the bottleneck and you should update your system to use a database with more resources and load test that system.
+
+If the MD5 configuration allows you to achieve a much higher logins per second, then the CPU is your bottleneck. If you are CPU bound, the only way to get more logins per second is to horizontally scale (add more nodes) or vertically scale (use larger CPUs with each node).
+
+== Troubleshooting Kickstart
+
+include::docs/v1/tech/installation-guide/_kickstart-troubleshooting.adoc[]
+
+== Troubleshooting Self Service Account Management
+
+include::docs/v1/tech/account-management/_account-management-troubleshooting.adoc[]
+
 == Common Errors
 
 === Access Denied
@@ -153,3 +174,31 @@ You can do the former with the `fusionauth-app.memory` setting. See the link:/do
 
 You may do the latter by running a larger server or running fewer competing applications. In particular, applications used by FusionAuth such as Elasticsearch or the database may be moved off to external servers.
 
+=== MapperParsingException
+
+If you are using the Elasticsearch search engine, attributes in the `user.data` and `registration.data` are indexed for you. The data fields can contain arbitrary JSON objects.
+
+If your user search is failing mysteriously and you see an error like this one in your system logs:
+
+```
+org.elasticsearch.index.mapper.MapperParsingException: failed to parse field [data.field] of type [text] in document with id 'b8f1ad7d-def0-48d1-a983-aeabf0122b90'. Preview of field's value: '{bar=123}'
+```
+
+or 
+```
+org.elasticsearch.index.mapper.MapperParsingException: Could not dynamically add mapping for field [field.email]. Existing mapping for [data.field] must be of type object but found [text].
+```
+
+This means that the type of a field in one of the data fields was changed. In this case, `data.field` was originally text, but the request causing this error message was trying to put an object into that attribute.
+
+Elasticsearch will dynamically build a schema based upon custom data, so it is critical that the schema not be modified.
+
+The fix is:
+
+* understand how the field types changed
+* find the user's Id
+* modify the problematic `data` fields via the User API to remove the mismatched fields
+
+Unfortunately, you can't search for the user by email or username or other characteristics using the User Search API. If you have the user's Id, which may be available in the error messages, you can use that. Searching by UUID doesn't use Elasticsearch. If you do not have the UUID, you should change to the database search engine to find the user. You can switch back to Elasticsearch after you have corrected the `data` field.
+
+If you have a support contract, please https://account.fusionauth.io/account/support/[open a ticket] and we'll help you out. If not, please back up your FusionAuth database and test the fix thoroughly in a staging environment before applying it to your production instance.

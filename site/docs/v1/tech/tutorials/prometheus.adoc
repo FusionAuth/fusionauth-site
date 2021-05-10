@@ -1,0 +1,49 @@
+---
+layout: doc
+title: Prometheus Setup
+description: Learn how to set up Prometheus to work with FusionAuth
+---
+
+== Prometheus Setup
+
+[NOTE.since]
+====
+Available since `1.26.0`
+====
+
+Prometheus is a tool to monitor metrics and setup alerts in the case that some metric has responded negatively for an extended period. The following types of gauges are currently available.
+
+* JVM Buffers - A set of gauges for the count, usage, and capacity of the JVM's direct and mapped buffer pools.
+* JVM class loading - A set of gauges for JVM classloader usage.
+* JVM garbage collection - A set of gauges for the counts and elapsed times of garbage collections.
+* JVM memory - A set of gauges for JVM memory usage, including stats on heap vs non-heap memory.
+* JVM threads - A set of gauges for the number of threads in their various states and deadlock detection.
+* Other JVM attributes - A Gauge implementation which queries an MBeanServerConnection for an attribute of an object.
+
+=== Setup
+Setting this up with FusionAuth is easy. The only requirement to hookup FusionAuth is to direct Prometheus to the FusionAuth Prometheus endpoints. We used the following configuration for a FusionAuth instance running locally on the docker host. (You can reach docker host ip via `host.docker.internal` on mac and windows docker.)
+
+== Configuration
+The Prometheus endpoint is configured with the YAML file. You can learn more about the Prometheus configuration link:https://prometheus.io/docs/prometheus/latest/configuration/configuration/#[here]. Prometheus does not provide functionality to authenticate using custom HTTP headers. As a workaround, we are using API key as password using "basic auth" authorization method.
+
+In order to authenticate using basic auth please use string "apikey" as the username and a valid API key as the password. The API key must have `GET` permission for the `/api/prometheus/metrics` endpoint.
+
+All other configuration is standard Prometheus scrape_config.
+
+Please refer to the link:/docs/v1/tech/apis/authentication#[Authentication] document for more details about API keys.
+
+
+[source,yaml]
+.prometheus.yaml
+----
+include::docs/src/yaml/prometheus.yaml[]
+----
+
+
+We then started Prometheus with
+[source,bash]
+----
+docker run -v $(pwd)/prometheus.yaml:/etc/prometheus/prometheus.yml -p 9090:9090 prom/prometheus
+----
+
+image::tutorials/setting-up-prometheus/prometheus-graph.png[Prometheus Graph View,width=1200,role=shadowed]

@@ -19,7 +19,7 @@ Here's the location of the tutorial: [https://fusionauth.io/docs/v1/tech/themes/
 
 And the YouTube video:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/_ro3jH5Xkgo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="_ro3jH5Xkgo" %}
 <br/>
 
 Let us know what you think about this new feature, the tutorial and the video. Also, if you need assistance building your login theme, [reach out](/contact) and we can lend a hand.

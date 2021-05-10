@@ -1,0 +1,127 @@
+
+// parameter_prefix is either blank for parameters or "search." for body
+// query_string_request is set to anything for query string requests
+// query_string_request is undefined for body requests
+// database_search_engine_type is defined if this is a database search engine entry
+// elasticsearch_search_engine_type is defined if this is a elasticsearch search engine entry
+
+[.api]
+
+[field]#{parameter_prefix}accurateTotal# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`#::
+Set this value equal to `true` to receive an accurate hit count on the API response.
++
+By default the search engine will limit the hit count to 10,000 users. This means that even if your query may match more than 10,000 users, the returned total count will be 10,000. This is adequate for many use cases such as pagination and general purpose queries. If you are looking for an accurate user count that can exceed 10,000 matches, you will want to set this value equal to `true`.
+// The only field with a different definition between body and query string is ids
+ifdef::query_string_request[]
+[field]#{parameter_prefix}ids# [type]#[UUID]# [optional]#Optional#::
+An Entity Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Entities. 
+ifdef::database_search_engine_type[]
+Using this parameter is mutually exclusive with the [field]#queryString# field and is not paginated or sorted using the [field]#sortFields# field.
+endif::[]
+ifdef::elasticsearch_search_engine_type[]
+Using this parameter is mutually exclusive with the [field]#query# and [field]#queryString# fields and is not paginated or sorted using [field]#sortFields# field.
++
+Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
+endif::[]
+endif::[]
+ifndef::query_string_request[]
+[field]#{parameter_prefix}ids# [type]#[Array<UUID>]# [optional]#Optional#::
+A list of Entity Ids to retrieve. When using this parameter, the results are not paginated or sorted using the [field]#sortFields#. 
+ifdef::database_search_engine_type[]
+The [field]#ix}ids# and [field]#queryString# parameters are mutually exclusive, they are listed here in order of precedence.
+endif::[]
+ifdef::elasticsearch_search_engine_type[]
+The [field]#ix}ids#, [field]#query#, and [field]#queryString# parameters are mutually exclusive, they are listed here in order of precedence.
++
+Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
+endif::[]
+endif::[]
+
+[field]#{parameter_prefix}numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+The number of search results to return. Used for pagination.
+
+ifdef::elasticsearch_search_engine_type[]
+[field]#{parameter_prefix}query# [type]#[String]# [optional]#Optional#::
+The raw JSON Elasticsearch query that is used to search for Entities.  The [field]#ids#, [field]#query#, and [field]#queryString#  parameters are mutually exclusive, they are listed here in order of precedence.
++
+It is necessary to use the [field]#{parameter_prefix}query# parameter when querying against [field]#grants# in order to achieve expected results, as this field is defined as a link:https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html[nested datatype] in the Elasticsearch mapping.
+endif::[]
++
+
+ifdef::database_search_engine_type[]
+[field]#{parameter_prefix}queryString# [type]#[String]# [optional]#Optional#::
+A query string that is used to search for Entities. Using this parameter is mutually exclusive with the [field]#ids# field. 
++
+Database search limits effective queries to single search terms that may match the following fields on the Entities or their Entity Type:
++
+* `clientId`
+* `name`
+* `entityType.name`
++
+The search matches against all of these fields and any entity with a matching field will be returned. The match is case-insensitive, and you may not search by prefix or suffix. Whitespace is not allowed in the search. Regular expressions may not be used. A value of `*` will match all records.
+endif::[]
+
+ifdef::elasticsearch_search_engine_type[]
+[field]#{parameter_prefix}queryString# [type]#[String]# [optional]#Optional#::
+The Elasticsearch query string that is used to search for Entities.  The [field]#ids#, [field]#query#, and [field]#queryString#  parameters are mutually exclusive, they are listed here in order of precedence.
++
+The match is case-insensitive. Whitespace is allowed in the search, but must be URL escaped; for example, using `%20` for a space character. Elasticsearch compatible regular expressions may be used, so you may search by prefix or suffix using the `*` wildcard. 
++
+You may search against specific fields like so: `name:*API`. This will match only entities with a name ending in a `API`. You may find the available fields for matching by retrieving the link:https://www.elastic.co/guide/en/elasticsearch/reference/6.3/indices-get-mapping.html[Elasticsearch mapping].
+endif::[]
+
+[field]#{parameter_prefix}startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to 0#::
+The start row within the search results to return. Used for pagination.
+
+[field]#{parameter_prefix}sortFields# [type]#[Array]# [optional]#Optional#::
+An array of sort fields used to sort the result. The order the sort fields are provided will be maintained in the sorted output.
+
+ifdef::elasticsearch_search_engine_type[]
+[field]#{parameter_prefix}sortFields[``x``].missing# [type]#[String]# [optional]#Optional# [default]#defaults to `_last`#::
+The value to substitute if this field is not defined. Two special values may be used:
++
+* `_first` When the field is not defined sort this record first.
+* `_last` When the field is not defined sort this record last.
+endif::[]
++
+
+ifdef::database_search_engine_type[]
+[field]#{parameter_prefix}sortFields[``x``].name# [type]#[String]# [required]#Required#:: 
+The name of the field to sort.
++
+[required]#Required# if [field]#sortFields# is provided. 
++
+The following field names are supported for the database search engine:
++
+* `clientId`
+* `insertInstant`
+* `lastUpdateInstant`
+* `name`
+* `parentId`
+* `tenantId`
+* `typeId`
+endif::[]
+
+ifdef::elasticsearch_search_engine_type[]
+[field]#{parameter_prefix}sortFields[``x``].name# [type]#[String]# [optional]#Optional#::
+The name of the field to sort.
++
+[required]#Required# if [field]#sortFields# is provided. 
++
+Due to how the search index is structured not all fields on the user are sortable. The following field names are currently supported.
++
+* `clientId`
+* `insertInstant`
+* `lastUpdateInstant`
+* `name`
+* `parentId`
+* `tenantId`
+* `typeId`
+endif::[]
+
+[field]#{parameter_prefix}sortFields``[x]``.order# [type]#[String]# [optional]#Optional# [default]#defaults to `asc`#::
+The order to sort the specified field. Possible values are:
++
+* `asc`
+* `desc`
+

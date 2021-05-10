@@ -1,28 +1,65 @@
 ---
 layout: doc
-title: Two Factor APIs
-description: APIs for enabling and disabling Two Factor Authentication
+title: Multi-Factor/Two Factor APIs
+description: APIs for enabling and disabling Multi-Factor Authentication
 ---
 
 == Overview
 
-* <<Enable Two Factor>>
-* <<Disable Two Factor>>
-* <<Send a Two Factor Code>>
+This API allows you to manage Multi-Factor authentication (MFA) for users. 
+
+[WARNING.warning]
+====
+This API underwent breaking changes in version 1.26. You can view the link:../two-factor-1-25[1.25 Two Factor documentation] if needed.
+====
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+**However, the Authenticator/TOTP implementation is not a premium feature.**
+
+* <<Authentication>>
+* <<TOTP Implementation>>
+* <<Enable Multi-Factor>>
+* <<Disable Multi-Factor>>
 * <<Generate a Secret>>
+* <<Start Multi-Factor>>
+* <<Send a Multi-Factor Code During Login or Step Up>>
+* <<Send a Multi-Factor Code When Enabling MFA>>
+* <<Send a Multi-Factor Code When Disabling MFA>>
+* <<Generate Recovery Codes>>
+* <<Retrieve Recovery Codes>>
 
-== Enable Two Factor
+[NOTE.info]
+====
+include::docs/v1/tech/shared/_difference-two-factor-multi-factor.adoc[]
+====
 
-This API is used to enable Two Factor authentication for a single User. To use this API the User must provide a valid
-Two Factor verification code.
+== Authentication
 
-To enable using `TextMessage` delivery, you may use the link:/docs/v1/tech/apis/two-factor#send-a-two-factor-code[Two Factor Send] API to deliver a
-code to the User, the User will then provide this code as input.
+Some of these operations can use JWT authentication instead of API key authentication. 
+
+Learn more about link:/docs/v1/tech/apis/authentication/#jwt-authentication[JWT authentication and see examples here].
+
+In some cases, when you have a valid [field]#twoFactorId#, neither a JWT nor an API key is required.
+
+== TOTP Implementation
+
+Support for Authy, Google Authenticator and other time based one-time password solutions are not premium features and are included in the community edition.
+
+include::docs/v1/tech/apis/_two-factor-totp-limits.adoc[]
+
+== Enable Multi-Factor
+
+This API is used to enable Multi-Factor authentication for a single User. To use this API the User must provide a valid
+Multi-Factor verification code.
+
+If using message based delivery, you may <<Send a Multi-Factor Code When Enabling MFA>> to deliver a
+code to the User. The User will then provide this code as input.
 
 === Request
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Enable Two Factor Authentication
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Enable Multi-Factor Authentication With a UserId 
 [.endpoint]
 .URI
 --
@@ -33,12 +70,14 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 
 [.api]
 [field]#userId# [type]#[UUID]# [required]#Required#::
-The Id of the User to enable Two Factor authentication.
+The Id of the User for whom to enable Multi-Factor authentication.
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
+include::docs/v1/tech/apis/_two-factor-enable-request-body.adoc[]
+
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Enable Two Factor Authentication
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Enable Multi-Factor Authentication Using a JWT
 [.endpoint]
 .URI
 --
@@ -47,7 +86,7 @@ link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
-include::docs/v1/tech/apis/_two-factor-request-body.adoc[]
+include::docs/v1/tech/apis/_two-factor-enable-request-body.adoc[]
 
 === Response
 
@@ -57,7 +96,73 @@ include::docs/v1/tech/apis/_two-factor-request-body.adoc[]
 |Code |Description
 
 |200
-|The request was successful. Two Factor has been enabled for the User.
+|The request was successful. Multi-Factor has been enabled for the User.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors. This status will also be returned if a paid FusionAuth license is required and is not present.
+
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication]. 
+
+|404
+|The User does not exist. The response will be empty.
+
+|421
+|The `code` request parameter is not valid. The response will be empty.
+
+|500
+|There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
+
+|503
+|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+|===
+
+
+include::docs/v1/tech/apis/_two-factor-recovery-codes-response.adoc[]
+
+== Disable Multi-Factor
+
+This API is used to disable Multi-Factor authentication for a single User. To use this API the User must provide a valid
+Multi-Factor verification code or recovery code.
+
+If using message based delivery, you may <<Send a Multi-Factor Code When Disabling MFA>> to deliver a
+code to the User. The User will then provide this code as input.
+
+If a recovery code is provided, all methods will be removed.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Disable Multi-Factor Authentication With a UserId
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/two-factor/`{userId}?code={code}&methodId={methodId}`#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+include::docs/v1/tech/apis/_two-factor-disable-request-parameters.adoc[]
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Disable Multi-Factor Authentication Using a JWT
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/user/two-factor``?code={code}&methodId={methodId}``#
+--
+
+include::docs/v1/tech/apis/_two-factor-disable-request-parameters.adoc[]
+
+=== Response
+
+[cols="1,9"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. Multi-Factor has been disabled for the User.
 
 |400
 |The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
@@ -77,196 +182,18 @@ include::docs/v1/tech/apis/_two-factor-request-body.adoc[]
 |503
 |The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
 |===
-
-== Disable Two Factor
-
-This API is used to disable Two Factor authentication for a single User. To use this API the User must provide a valid
-Two Factor verification code.
-
-If the User has configured `TextMessage` delivery, you may use the link:/docs/v1/tech/apis/two-factor#send-a-two-factor-code[Two Factor Send] API to deliver a
-code to the User, the User will then provide this code as input.
-
-=== Request
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Disable Two Factor Authentication
-[.endpoint]
-.URI
---
-[method]#DELETE# [uri]#/api/user/two-factor/`{userId}?code={code}`#
---
-
-==== Request Parameters
-
-[.api]
-[field]#userId# [type]#[UUID]# [required]#Required#::
-The Id of the User to enable Two Factor authentication.
-
-[field]#code# [type]#[String]# [required]#Required#::
-The time based one time use password, also called a Two Factor verification code.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Disable Two Factor Authentication
-[.endpoint]
-.URI
---
-[method]#DELETE# [uri]#/api/user/two-factor``?code={code}``#
---
-
-==== Request Parameters
-
-[.api]
-[field]#code# [type]#[String]# [required]#Required#::
-The time based one time use password, also called a Two Factor verification code.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-=== Response
-
-[cols="1,9"]
-.Response Codes
-|===
-|Code |Description
-
-|200
-|The request was successful. Two Factor has been disabled for the User.
-
-|400
-|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
-
-|401
-|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication].
-
-|404
-|The User does not exist. The response will be empty.
-
-|421
-|The `code` request parameter is not valid. The response will be empty.
-
-|500
-|There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
-
-|503
-|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
-|===
-
-== Send a Two Factor Code
-
-This API is used to send a Two Factor verification code to a User. This may be useful during Two Factor authentication if the initial
-code is no longer valid. It may be also used to send a code to a User to assist in enabling or disabling Two Factor authentication.
-
-To send a code to a User that already has Two Factor enabled, it is not required they have `TextMessage` set as their preferred delivery.
-As long as the User has a mobile phone defined you may send the User a code.
-
-This API requires that the link:/docs/v1/tech/integrations/twilio/[Twilio] integration is enabled and configured properly.
-
-=== Request
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Two Factor code to an existing User by Id
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/two-factor/send#
---
-
-This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication to assist in disabling Two Factor authentication. The User must already have Two Factor enabled and have a valid mobile phone for this to succeed.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-==== Request Body
-
-[.api]
-[field]#userId# [type]#[UUID]# [required]#Required#::
-The User Id of the User to send a Two Factor verification code. This User is expected to already have Two Factor enabled.
-
-[source,json]
-.Example Request JSON
-----
-include::docs/src/json/two-factor/send/request_userId.json[]
-----
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Two Factor code to a mobile phone
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/two-factor/send#
---
-
-This request is intended to be used to send a Two Factor code to a User to assist in enabling Two Factor authentication.
-
-==== Request Body
-
-[.api]
-[field]#mobilePhone# [type]#[String]# [required]#Required#::
-A mobile phone to send the Two Factor verification code.
-
-[field]#secret# [type]#[String]# [required]#Required#::
-The Two Factor secret used to generate a Two Factor verification code to send to the provided mobile phone.
-+
-You may optionally use value provided in the `secret` field returned by the link:/docs/v1/tech/apis/two-factor#generate-a-secret[Two Factor Secret] API instead of generating this value yourself.
-
-[source,json]
-.Example Request JSON
-----
-include::docs/src/json/two-factor/send/request.json[]
-----
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Send a Two Factor code to complete Two Factor Login
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/two-factor/send/`{twoFactorId}`#
---
-
-This request is intended to send additional messages to the User's mobile phone during login.
-
-==== Request Parameters
-
-[.api]
-[field]#twoFactorId# [type]#[String]# [required]#Required#::
-The `twoFactorId` returned by the Login API.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Send a Two Factor code to an authenticated User using a JWT
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/two-factor/send#
---
-
-This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication to assist
-in disabling Two Factor authentication. When using JWT authentication the User's Id is retrieved from the JWT. The User must already have
-Two Factor enabled and have a valid mobile phone for this to succeed.
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
-=== Response
-
-:success_code: 200
-:success_message: The request was successful.
-include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
-:success_code!:
-:success_message!:
 
 == Generate a Secret
 
-This API is used to generate a new Two Factor secret for use when enabling Two Factor authentication for a User. This is provided
-as a helper to assist you in enabling Two Factor authentication.
+This API is used to generate a new Multi-Factor secret for use when enabling Multi-Factor authentication for a User. This is provided
+as a helper to assist you in enabling Multi-Factor authentication.
 
-If this secret will be used with a QR code to allow the User to scan the value it will need utilize the Base32 encoded value returned in
-the response.
+If this secret will be used with a QR code to allow the User to scan the value, use the Base32 encoded value returned in the response.
 
 === Request
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Generate a Two Factor Secret
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Generate a Multi-Factor Secret
 [.endpoint]
 .URI
 --
@@ -274,7 +201,7 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 --
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Generate a Two Factor Secret
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Generate a Multi-Factor Secret
 [.endpoint]
 .URI
 --
@@ -283,7 +210,7 @@ link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas
 
 === Response
 
-The response for this API contains the a Two Factor secret.
+The response for this API contains a Multi-Factor secret suitable for an authenticator like Google Authenticator.
 
 :never_missing:
 :no_errors:
@@ -295,13 +222,323 @@ include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 
 [.api]
 [field]#secret# [type]#[String]#::
-A Base64 encoded secret that may be used to enable Two Factor authentication.
+A Base64 encoded secret that may be used to enable Multi-Factor authentication.
 
 [field]#secretBase32Encoded# [type]#[String]#::
-A Base32 encoded form of the provided secret. This useful if you need to provide a QR code to the User to enable Two Factor authentication.
+A Base32 encoded form of the provided secret. This is useful if you need to provide a QR code to the User to enable Multi-Factor authentication.
 
 [source,json]
 .Example Response JSON
 ----
 include::docs/src/json/two-factor/secret/response.json[]
+----
+
+== Start Multi-Factor
+
+Starts an Multi-Factor request. This would be used for only step up auth, such as when sensitive data is requested.
+
+If you want to provide your own code and/or deliver the code out of band using your own delivery mechanism, this is the right API call. Do not combine this with a <<Send a Multi-Factor Code During Login or Step Up>> call, as calling that API will invalidate all other codes associated with the [field]#twoFactorId#, including any you provide.
+
+To require additional factors during login, <<Enable Multi-Factor>> for the User. Then FusionAuth will handle MFA code collection automatically, if you are using the hosted login pages, or send a status code in response to the login API if you are not.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Start Multi-Factor Authentication
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/user/two-factor/start#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+include::docs/v1/tech/apis/_two-factor-start-request-body.adoc[]
+
+=== Response
+
+:missing_message: The User does not exist. The response will be empty.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:missing_message!:
+
+include::docs/v1/tech/apis/_two-factor-start-response-body.adoc[]
+
+== Send a Multi-Factor Code During Login or Step Up
+
+This operation allows you to send a message with a code to finish a Multi-Factor flow, and requires an existing [field]#twoFactorId#. No API key is required. 
+
+This should only be used if you want FusionAuth to send the code. Do not use this if you are sending a code out of band or are using a TOTP based authentication method.
+
+You can use this to re-send a code with the same or a different method. Using this API will invalidate all other codes previously associated with the provided [field]#twoFactorId#.
+
+Sending a code invalidates all previous codes for the provided `twoFactorId`.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Send a Multi-Factor code to complete Multi-Factor Login
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send/`{twoFactorId}`#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#twoFactorId# [type]#[String]# [required]#Required#::
+The [field]#twoFactorId# returned by the Login API or the Start Multi-Factor request.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#methodId# [type]#[String]# [required]#Required#::
+The Id of the MFA method to be used.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/twoFactorId-request.json[]
+----
+
+=== Response
+
+This API does not return a JSON response body.
+
+:success_code: 200
+:success_message: The request was successful.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:success_code!:
+:success_message!:
+
+== Send a Multi-Factor Code When Enabling MFA
+
+You are enabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. This should only be used if you want FusionAuth to send the code. Do not use this if you are using a TOTP based authentication method.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Multi-Factor code to an existing User by Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#email# [type]#[String]# [optional]#Optional#::
+The email to which send Multi-Factor codes. If the [field]#method# is equal to `email`, this is required.
+
+[field]#method# [type]#[String]# [required]#Required#::
+The type of the MFA method which will be added. The value provided here must be allowed in the Tenant MFA configuration as well.
++
+Valid values are:
++
+* `email`
+* `sms`
+
+[field]#mobilePhone# [type]#[String]# [optional]#Optional#::
+The mobile phone to which send Multi-Factor codes. If the [field]#method# is equal to `sms`, this is required.
+
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The User Id. 
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/enable-userId-request.json[]
+----
+
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Send a Multi-Factor code to an authenticated User using a JWT
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#email# [type]#[String]# [optional]#Optional#::
+The email to which send Multi-Factor codes. If the [field]#method# is equal to `email`, this is required.
+
+[field]#method# [type]#[String]# [required]#Required#::
+The type of the MFA method which will be added. The value provided here must be allowed in the Tenant MFA configuration as well.
++
+Valid values are:
++
+* `email`
+* `sms`
+
+[field]#mobilePhone# [type]#[String]# [optional]#Optional#::
+The mobile phone to which send Multi-Factor codes. If the [field]#method# is equal to `sms`, this is required.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/enable-jwt-request.json[]
+----
+
+=== Response
+
+This API does not return a JSON response body.
+
+:success_code: 200
+:success_message: The request was successful.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:success_code!:
+:success_message!:
+
+
+== Send a Multi-Factor Code When Disabling MFA
+
+You are disabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. This should only be used if you want FusionAuth to send the code. Do not use this if you are using a TOTP based authentication method.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Send a Multi-Factor code to an existing User by Id
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#methodId# [type]#[String]# [required]#Required#::
+The Id of the MFA method which will be removed.
+
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The User Id of the User to send a Multi-Factor verification code. This User is expected to already have Multi-Factor enabled.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/disable-userId-request.json[]
+----
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Send a Multi-Factor code to an authenticated User using a JWT
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/two-factor/send#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Body
+
+[.api]
+[field]#methodId# [type]#[String]# [required]#Required#::
+The Id of the MFA method which will be removed.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/two-factor/send/disable-jwt-request.json[]
+----
+
+=== Response
+
+This API does not return a JSON response body.
+
+:success_code: 200
+:success_message: The request was successful.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:success_code!:
+:success_message!:
+
+== Generate Recovery Codes
+
+This API is used to generate a list of Recovery Codes. When creating new codes, any existing Recovery Codes will be cleared and the new set will become the current values.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Create Recovery Codes
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/recovery-codes/`\{userId\}`#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The unique Id of the user to assign the generated Recovery Codes to.
+
+=== Response
+
+The response for this API contains an array of size 10 of Recovery Codes that were created.
+
+:never_search_error:
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:never_search_error!:
+
+==== Response Body
+
+[.api]
+[field]#recoveryCodes# [type]#[Array<String>]#::
+The array of Recovery Codes.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/src/json/two-factor/response-with-recovery-codes.json[]
+----
+
+== Retrieve Recovery Codes
+
+This API is used to retrieve Recovery Codes for a User.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve Recovery Codes
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/recovery-codes/`\{userId\}`#
+--
+
+==== Request Parameters
+
+[.api]
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The Id of the User to retrieve Recovery Codes for.
+
+=== Response
+
+The response for this API contains the remaining Recovery Codes that are assigned to the User. Each time one is used it is removed, so this response will contain between 0 and 10 codes.
+
+:never_search_error:
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:never_search_error!:
+
+==== Response Body
+
+[.api]
+[field]#recoveryCodes# [type]#[Array<String>]#::
+The array of Recovery Codes.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/src/json/two-factor/response-with-recovery-codes.json[]
 ----

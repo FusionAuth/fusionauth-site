@@ -31,4 +31,4 @@ We'll let Justin have the final word:
 
 Want to learn more about Unsupervised's decision process and savings? 
 
-[Read the case study](/resources/unsupervised-case-study.pdf){:.button .brochure .orange .text-larger}{:target="_blank"}
+[READ THE CASE STUDY](/resources/unsupervised-case-study.pdf){:.button .brochure .orange .text-larger}{:target="_blank"}

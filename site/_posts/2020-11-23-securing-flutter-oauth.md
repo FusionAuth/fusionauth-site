@@ -743,7 +743,7 @@ flutter run -d all
 
 You should see something similar to this demo:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/EklSdaT0xfw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="EklSdaT0xfw" %}
 
 ## Additional resources
 

@@ -107,7 +107,7 @@ However, make sure you have clear goalposts for when a prototype is "good enough
 
 ### Non-standard functionality
 
-There are other Auth0 features that you'll need to find alternatives for. In other words, often you can't migrate the only configuration discussed above. 
+There are other Auth0 features that you'll need to find alternatives for. In other words, often you can't migrate only the configuration discussed above, but need to find equivalent functionality too. 
 
 For example, Auth0 provides [Universal Login](https://auth0.com/docs/universal-login). This is a complex, configurable login component that works with SPAs, native apps and web applications. FusionAuth's login experience, in contrast, is less complicated. You can choose to [build your own login pages or use FusionAuth's hosted login pages](/docs/v1/tech/core-concepts/integration-points/#login-options). 
 
