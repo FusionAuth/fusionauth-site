@@ -75,28 +75,18 @@ FusionAuth.Account.PriceCalculator.prototype = {
   },
 
   _calculateHostingPrice: function(plan) {
-    var mau = this.monthlyActiveUserSlider.getValue();
     var hosting = this.hostingRadio.getSelectedValues()[0];
+    var price = 0;
 
-    if (hosting === 'self-hosted') {
-      return 0;
+    if (hosting === 'basic-cloud') {
+      price = this.priceModel.ec2['medium'] + this.priceModel.elb.base;
+    } else if (hosting === 'business-cloud') {
+      price = this.priceModel.ec2['medium'] + this.priceModel.elb.base + this.priceModel.rds['medium'];
+    } else if (hosting === 'ha-cloud') {
+      price = 2 * this.priceModel.ec2['medium'] + this.priceModel.elb.base + this.priceModel.rds['medium'];
     }
 
-    // [brettp]TODO: Keep which code?  None or `mau` then every edition has the same base price
-    //               Using edition to select larger ec2 and rds gives some price distinction between
-    //               editions.
-    // var size = 'medium';
-    // if (mau >= 750000 && mau < 3500000) {
-    //   size = 'large';
-    // } else if (mau >= 3500000) {
-    //   size = 'xlarge';
-    // }
-    var size = {
-      'basic-cloud': 'medium',
-      'business-cloud': 'large',
-      'ha-cloud': 'xlarge'
-    }[hosting];
-    return this.priceModel.ec2[size] + this.priceModel.elb.base + this.priceModel.rds[size];
+    return price;
   },
 
   _calculateSupportPrice: function(plan) {
