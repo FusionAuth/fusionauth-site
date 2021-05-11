@@ -1,11 +1,11 @@
 ---
 layout: blog-post
-title: Unio self hosts FusionAuth and saved $100k
+title: Unio self hosts FusionAuth and saves $100k
 description: Unio uses FusionAuth to handle their user accounts, authentication, authorization, and password management.
 author: Dan Moore
-image: blogs/dolphinvc-fusionauth/video-conferencing-company-dolphinvc-chose-fusionauth-for-cloud-independence-header-image.png
+image: blogs/unio-saves-100k-with-fusionauth/unio-self-hosts-fusionauth-and-saves-100k-header-image.png
 category: blog
-tags: topic-community-story
+tags: topic-community-story client-java
 excerpt_separator: "<!--more-->"
 ---
 
@@ -26,11 +26,11 @@ I also have extensive experience working in both enterprise and startup environm
 
 **Jason:** Sure. [Our website](https://getunio.com) lays out the details of the platform, but we are a business messaging and collaboration tool. We are currently in beta testing with a few organizations and are getting ready for a general product release in May.
 
-> Compared to rolling out our own authentication and authorization services, we estimate that [FusionAuth] saved us around 1000 developer hours. Using a standard $100/hour rate, that's $100k in savings. 
-
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
 **Jason:** Unio leverages FusionAuth for user management, authentication, authorization, APIs, and secure token signing.
+
+> Compared to rolling out our own authentication and authorization services, we estimate that [FusionAuth] saved us around 1000 developer hours. Using a standard $100/hour rate, that's $100k in savings. 
 
 **Dan:** What problems did we solve for you? And how were you solving them before FusionAuth?
 
@@ -53,13 +53,13 @@ Some examples of how we use it:
 * Change a user's password
 * Authenticate users
 
-> FusionAuth provides ... a standardized solution that is robust and battle-tested, which we can self-host, configure and extend as desired, and integrate easily with SDKs and APIs. 
-
 **Dan:** Why did you choose FusionAuth over the competition?
 
 **Jason:** We chose FusionAuth because of its robust feature set, flexible deployment capabilities, and cost. 
 
 We self-host, so it saves us a lot of money compared to using competing products.
+
+> FusionAuth provides ... a standardized solution that is robust and battle-tested, which we can self-host, configure and extend as desired, and integrate easily with SDKs and APIs. 
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
@@ -82,6 +82,8 @@ Perhaps adding Swagger or documentation built into nodes would be helpful. Also,
 If I install FusionAuth 1.24 on `192.0.0.1`, would be great if I could go to `192.0.0.1/swagger` and see the APIs that are present on that instance. 
 
 Installing 1.25 on `192.0.0.2` and then going to `192.0.0.2/swagger` would show me a completely different Swagger definition since the version is different but allows me to see right away which APIs are present on my particular version without wading through documentation. 
+
+**Dan:** Ah, makes sense. 
 
 **Jason:** Is there a Slack group that our developers can join if they have questions for the core FusionAuth team? If not, creating a feedback channel would be incredibly useful.
 
