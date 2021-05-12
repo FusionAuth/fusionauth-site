@@ -1,0 +1,99 @@
+---
+layout: blog-post
+title: Tucan uses FusionAuth with CockroachDB
+description: 
+author: Dan Moore
+image: blogs/unio-saves-100k-with-fusionauth/unio-self-hosts-fusionauth-and-saves-100k-header-image.png
+category: blog
+tags: topic-community-story client-java
+excerpt_separator: "<!--more-->"
+---
+
+Michael Schramm is a FusionAuth community member and CTO of Tucan.ai. He chatted with us over email about how he and his team are using FusionAuth to meet their auth needs. 
+
+<!--more-->
+
+*This interview has been lightly edited for clarity and length.*
+
+-------
+
+**Dan:** Can you tell me a bit about Tucan.ai? What is the company's mission?
+
+**Michael:** We are a small startup based in Berlin, Germany. Our mission is to become a tool for more productive meetings, including automatic transcripts, summaries and rich notes, allowing people to focus on conversations.
+
+**Dan:** Tell me about your work as CTO at Tucan.ai.
+
+**Michael:** I love building teams and creating solutions for unsolved problems. We have a great team that helps us achieve exactly this.
+
+**Dan:** Can you talk a bit more about the "unsolved" problem you are currently working on at Tucan.ai?
+
+**Michael:** The unsolved problem are meetings - for everyone involved it always boils down to do one of two things: 
+
+* Take notes and not having time to participate in the conversation
+* Participating in the conversation and not having time to take notes
+
+What we provide is to take the note taking to the next level; we transcribe the meetings and extract the topics and key phrases and provide notes for everyone.
+
+**Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
+
+**Michael:** We use Fusionauth for user management, social login is not yet enabled as there is an incompatibility with cockroachdb right now (should be fixed soon)
+
+**Dan:** What problems did we solve for you? 
+
+**Michael:** The first prototype managed passwords and JWT keys in our own application. 
+
+Mid-last year the approaching go live required us to change a lot of things with authentication to facilitate the security level that we want to provide our users. Fusionauth does most of this for us; it is not user facing but handles password less logins and JWT creation/key management.
+
+**Dan:** So you aren't using the hosted login pages (the FusionAuth provided login workflows) but instead using the APIs? And you built your own login pages and other flows?
+
+**Michael:** Exactly, we already had designed login pages as well as native apps with logins and only wanted to store those credentials in a better way. An example for a custom flow on our side would be the password less flow - we request a token and then send the authentication email ourself through send grid (as this simplifies how we design our email templates)
+
+We would like to use Social Logins - like Facebook, Google and Apple - but right now are restricted as it fails because of [one query in the connector](https://fusionauth.io/community/forum/topic/950/cockroach-compatibility-problem-on-connector-signin). I have no clue when this will be fixed in cockroachdb / changed in FusionAuth).
+
+**Dan:** How were you solving them before FusionAuth?
+
+**Michael:** We had a simple implementation in passport.js but knew that many things would need to change to provide a production grade solution.
+
+**Dan:** How did passport.js fall short? Are there a couple of things you can point to? 
+
+**Michael:** It has the capabilities to handle our use cases - but would also require more maintenance + more development time spent on having key management etc. We still use it but only now to decode the received JWTs and to handle the verification/data passing in our api middleware.
+
+**Dan:** Why did you choose FusionAuth over the alternatives?
+
+**Michael:** Everything needed to be manageable through APIs. It also needed a simple model to run within docker and Kubernetes.
+
+**Dan:** Ah, you'll probably be happy to learn about our new [API key API](https://fusionauth.io/docs/v1/tech/apis/api-keys/). 
+
+**Michael:** Yes, we are using them :)
+
+**Dan:** How much time and money would you say FusionAuth has saved you?
+
+**Michael:** There was the initial time required to use the API and migrate the existing users. We did this within one week. 
+
+The ongoing additional maintenance is something that would be hard to quantify but I would assume it to be several developer days/testing/ qa per month. 
+
+One thought in regard to security is that the cost of breaches is usually higher than the implementation cost and we think with using a battle tested solution like Fusionauth is the only way to avoid those in the future.
+
+**Dan:** How do you run FusionAuth (kubernetes, standalone tomcat server, behind a proxy, etc)?
+
+**Michael:** We run Fusionauth in Kubernetes behind a Traefik ingress.
+
+**Dan:** Why are you using CockroachDB as the backend datastore for FusionAuth?
+
+**Michael:** We choose CockroachDB as a Database because it has great failover capabilities, and almost no limits on read and write queries thanks to automated sharding. 
+
+On our Kubernetes cluster we do not want to run different sql databases because each requires dedicated knowledge to scale and operate.
+
+After initial tests we concluded that only social logins would trigger a named query that is not yet working with CockroachDB.
+
+**Dan:** Any general feedback/areas to improve?
+
+**Michael:** We'd like the ability to set custom HTTPS Headers for CDNs like AWS Cloudfront (cloudfront-forwarded-proto vs x-forwarded-proto).
+
+**Dan:** I don't understand. Where would you want to set these? Can you explain the use case a bit more?
+
+**Michael:** This is to use the FusionAuth Admin UI - when we try to log into those it would fail per default with a CSRF error - because it thinks that the request is not done with https but the request was done with https. Cloudfront handles ssl termination for us and appends `cloudfront-forwarded-proto=https`. For FusionAuth to work in this case we have a custom MiddleWare in Traefik just to set `x-forwarded-proto` to `https` all the time (because there cannot be unauthenticated requests anyway). It took a lot of time to figure this out.
+
+-------
+
+We love sharing community stories. You can check out [Tucan's website](https://tucan.ai/) if you'd like to learn more.
