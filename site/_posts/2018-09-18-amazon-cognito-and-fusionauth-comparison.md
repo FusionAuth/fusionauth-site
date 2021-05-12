@@ -68,7 +68,7 @@ FusionAuth is a small, bootstrapped company dedicated to our customers. We have 
 
 To see more details on how Cognito and FusionAuth stack up, [download this feature comparison](/resources/fusionauth-vs-cognito.pdf "Cognito and FusionAuth Feature Comparison") and please [contact us](/contact "Contact Us") if you have any questions.
 
-[Download the Cognito and FusionAuth Feature Comparison](/resources/fusionauth-vs-cognito.pdf "Cognito and FusionAuth Feature Comparison"){: .btn .btn-primary}
+[Download the Cognito and FusionAuth Feature Comparison](/resources/fusionauth-vs-cognito.pdf "Cognito and FusionAuth Feature Comparison"){:.button .brochure .orange .text-larger}
 
 ## Learn More About FusionAuth
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](/ "FusionAuth Home") about FusionAuth and download it today.
