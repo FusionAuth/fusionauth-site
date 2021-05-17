@@ -48,7 +48,7 @@ Consider the [difference between using a strong and weak algorithm](https://www.
 
 > "If you use SHA1 to hash a password, an attacker can try 10,000,000,000 passwords per second on commodity hardware. If you use PBKDF2 with many iterations, an attacker can try 10 passwords per second. That makes a big difference when brute-forcing a password."
 
-But wait! Let's look at password hashing from another angle. What if you're already using a very strong hashing algorithm? A strong hashing algorithm is more CPU intensive than a weak one. What would happen if an attacker flooded your login endpoint(s) with a ton of traffic? It's possible your servers wouldn't be able to handle the traffic, denying login to your users. Alternatively, your cloud usage (and costs) would skyrocket as more login servers were required.
+But wait! Let's look at password hashing from another angle. What if you're already using a very strong hashing algorithm? A strong hashing algorithm is more CPU intensive than a weak one. What would happen if an attacker flooded your login endpoint(s) with a ton of traffic? It's possible your servers wouldn't be able to handle the traffic, denying login to your users. Additionally, your cloud usage (and costs) would skyrocket as more login servers were required.
 
 One way to mitigate this is to [implement rate limiting](https://cloud.google.com/solutions/rate-limiting-strategies-techniques). You might choose to limit requests per IP or per specific email address.
 
@@ -57,15 +57,15 @@ When you're building your own authentication system, prepare to handle these kin
 ## Regulatory Compliance
 
 I remember when [GDPR](https://en.wikipedia.org/wiki/General_Data_Protection_Regulation) had everyone panicking. The company I was working for spent a lot of time preparing their system: 
-- new backup schedules
-- new backup retention policies
-- extra data encryption measures
-- changes to password algorithms and work-factors
-- adding functionality to allow users to export their data
-- cookie banners
-- additional staff training
+- New backup schedules
+- New backup retention policies
+- Extra data encryption measures
+- Changes to password algorithms and work-factors
+- Adding functionality to allow users to export their data
+- Cookie banners
+- Additional staff training
 
-If you've had to deal with other kinds of regulatory compliance, then you know that GDPR isn't the only one that can make such broad strokes affecting an entire company or even an industry. SOC2, PCI, HIPAA, COPPA, and ISO are all standards that can put an additional burden on your software systems. This applies especially to your authentication system, as it holds private and sensitive user data that must be protected.
+If you've had to deal with other kinds of regulatory compliance, then you know GDPR isn't the only standard that can make such broad strokes affecting an entire company or even an industry. SOC2, PCI, HIPAA, COPPA, and ISO are all standards that can put an additional burden on your software systems. This applies especially to your authentication system, as it holds private and sensitive user data that must be protected.
 
 If you're building your own auth system, you might need to build additional functionality to meet such standards, like private information export features and advanced encryption measures.
 
@@ -87,7 +87,7 @@ So, is it worth the work, time, and cost of building an auth system yourself? Ca
 
 ## Integration and Features
 
-When an organization grows to a certain point, and its software system increases in size commensurately, your larger and more established clients will start asking for more advanced security features, as well as integration with other products.
+When an organization grows to a certain point, and its software system increases in size commensurately, larger and more established clients will start asking for more advanced security features. They'll also ask for integration with other products.
 
 How are you going to authenticate requests coming from other platforms? How will other platforms validate the requests you make to them? You'll need to implement standardized auth protocols like OAuth, OpenID, and SAML to perform such third-party integrations.
 
