@@ -21,7 +21,7 @@ FusionAuth.Account.PriceCalculator = function() {
 
   // Fetch the pricing model
   this.priceModel = null;
-  new Prime.Ajax.Request(FusionAuth.accountURL + '/ajax/edition/price-model', 'GET')
+  new Prime.Ajax.Request('https://account.fusionauth.io/ajax/edition/price-model', 'GET')
       .withSuccessHandler(this._handlePriceModelResponse)
       .withErrorHandler(this._handlePriceModelResponse)
       .go();
@@ -34,7 +34,9 @@ FusionAuth.Account.PriceCalculator = function() {
   var dialogElement = Prime.Document.queryById('cloud-hosting-dialog');
   if (dialogElement !== null) {
     this.cloudHostingDialog = new Prime.Widgets.HTMLDialog(dialogElement).initialize();
-    Prime.Document.queryFirst('.hosting-option-button').addEventListener('click', this._handleHostingButtonClick);
+    Prime.Document.query('.hosting-option-button').each(function(e) {
+      e.addEventListener('click', this._handleHostingButtonClick);
+    }.bind(this));
   }
 
   Prime.Document.query('.radio-bar li').each(function(e) {
