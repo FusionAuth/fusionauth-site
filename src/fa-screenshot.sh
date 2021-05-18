@@ -5,7 +5,7 @@
 # how to run : fa-screenshot fileName tp
 # filename (optional)- name of the file to save screenshot to. extension png is automatically added.
 # tp (optional)- use tinypng instead of pngquant for compression
-# TODO: 1. add parameter parsing 2. accept parameter for destination folder
+# TODO: 1. add parameter parsing 2. accept switch for destination folder 3. switch for quieter output
 
 # Author - Sanjay
 
@@ -79,8 +79,9 @@ EOD
 
 echo
 echo "-- Creating screenshots folder on the desktop"
-if [ ! -d ~/Desktop/screenshots ]; then
-  mkdir ${HOME}/Desktop/screenshots;
+tempFolder=${HOME}/Desktop/screenshots/
+if [ ! -d ${tempFolder} ]; then
+  mkdir ${tempFolder};
 else
   echo "Screenshots folder already exists";
 fi
@@ -93,7 +94,7 @@ else
 fi
 
 
-absFile="${HOME}/Desktop/screenshots/${fileName}.png"
+absFile="${tempFolder}${fileName}.png"
 
 echo
 echo "-- Capturing screenshot to file : ${fileName}"
@@ -116,6 +117,6 @@ else
   #remove old file and rename compressed to new
   basename=`basename ${absFile} .png`
   rm ${absFile}
-  mv "${basename}-fs8.png" ${absFile}
+  mv "${tempFolder}${basename}-fs8.png" ${absFile}
   printFileAttribs
 fi
