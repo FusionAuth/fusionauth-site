@@ -9,16 +9,15 @@ FusionAuth.Account = FusionAuth.Account || {};
 FusionAuth.Account.PriceCalculator = function() {
   Prime.Utils.bindAll(this);
 
-  // Find the slider
-  this.monthlyActiveUserSlider = Prime.Document.queryById('monthly-active-users')
-      .addEventListener('input', this._handleSliderChange)
-      .addEventListener('mouseup', this._handleSliderChange);
-  this.monthlyActiveUserSliderLabel = Prime.Document.queryFirst('label[for=monthly-active-users]');
-
-  // Bail early because this isn't the pricing page
+  // Find the slider and bail early because this isn't the pricing page
+  this.monthlyActiveUserSlider = Prime.Document.queryById('monthly-active-users');
   if (this.monthlyActiveUserSlider === null) {
     return;
   }
+
+  this.monthlyActiveUserSlider.addEventListener('input', this._handleSliderChange)
+      .addEventListener('mouseup', this._handleSliderChange);
+  this.monthlyActiveUserSliderLabel = Prime.Document.queryFirst('label[for=monthly-active-users]');
 
   // Fetch the pricing model
   this.priceModel = null;
