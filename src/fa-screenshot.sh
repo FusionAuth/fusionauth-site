@@ -5,56 +5,112 @@
 # how to run : fa-screenshot fileName tp
 # filename (optional)- name of the file to save screenshot to. extension png is automatically added.
 # tp (optional)- use tinypng instead of pngquant for compression
-# TODO: 1. add parameter parsing 2. accept switch for destination folder 3. switch for quieter output
+#TODO: switch for accepting window positioning and sizing parameters.
+
 
 # Author - Sanjay
 
 
 function printFileAttribs() {
   attributes=`/usr/local/bin/identify ${absFile}`
-  echo "Current dimensions of the screenshot are : "`echo ${attributes} | cut -d' ' -f3`
-  echo "Current size of the screenshot is : "`echo ${attributes} | cut -d' ' -f7`
+  printOut "Current dimensions of the screenshot are : "`echo ${attributes} | cut -d' ' -f3`
+  printOut "Current size of the screenshot is : "`echo ${attributes} | cut -d' ' -f7`
 }
 
 function compressUsingTPNG() {
-  API_KEY=1QPDBdzWpqs2pRKK9VyJyyzhwVQJ2s5h;
-  compressedFile=`curl -s --user api:${API_KEY} --data-binary @${absFile} -i https://api.tinify.com/shrink | grep -i location | awk '{print $2}' | sed 's/.$//'`
-  echo "-- Downloading from TinyPNG : >${compressedFile}<"
-  curl -s -X GET "${compressedFile}" --output ${absFile}
+  echo "-- Using TinyPNG for compression"
+
+  API_KEY=`printenv | grep TINYPNG_API_KEY | awk -F '=' '{print $2}'`
+  if [ "${API_KEY}" == "" ]; then
+    echo "Error : TinyPNG API key not found in environment. Not compressing".
+  else
+    compressedFile=`curl -s --user api:${API_KEY} --data-binary @${absFile} -i https://api.tinify.com/shrink | grep -i location | awk '{print $2}' | sed 's/.$//'`
+    printOut "-- Downloading from TinyPNG : ${compressedFile}"
+    curl -s -X GET "${compressedFile}" --output ${absFile}
+  fi
+}
+
+function printOut() {
+  if [ ${silent} == "no" ]; then
+    echo
+    echo ${1}
+  fi
 }
 
 
-echo
-echo "-- checking if imagemagick is installed..."
+function usage() {
+  #print pretty usage and exit
+  cat <<HELP_USAGE
+
+    $0  [-s] [-t] [-d] <destination folder> [-h]
+
+   -s  Silent mode
+   -t  Use TinyPNG API instead of pngquant library
+   -d  Move screenshots to given folder
+   -h  Print this usage
+HELP_USAGE
+  exit 0;
+}
+
+
+silent="no"
+useTP="no"
+destination=""
+while getopts ":std:h" options; do
+    case "${options}" in
+        s)
+            silent="yes"
+            ;;
+        t)
+            useTP="yes"
+            ;;
+        d)
+           destination=${OPTARG}
+           if [[ "${destination}" == "" || ! -d ${destination} ]]; then
+             echo "Please specify valid destination folder"
+             exit 1;
+           fi
+           ;;
+         h)
+           usage
+           ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+
+printOut "-- checking if imagemagick is installed..."
 if [ ! -f "/usr/local/bin/convert" ]; then
   echo "Installing imagemagick..."
   brew install imagemagick;
 else
-  echo "imagemagick is installed"
+  printOut "imagemagick is installed"
 fi
 
-echo
-echo "-- Checking whether pngquant is installed"
+printOut "-- Checking whether pngquant is installed"
 if [ ! -f "/usr/local/bin/pngquant" ]; then
   echo "Installing pngquant"
   brew install pngquant
 else
-  echo "pngquant is installed"
+  printOut "pngquant is installed"
 fi
 
-echo
-echo "-- Checking whether safari is running"
+
+printOut "-- Checking whether safari is running"
 safaricount=`ps cax | grep -i "safari.app" | grep -iv grep | wc -l`;
 
 if [ "${safaricount}" == "0" ]; then
   echo "Safari is not running. Exiting..."
-  exit 0;
+  exit 1;
 else
-  echo "Safari is running"
+  printOut "Safari is running"
 fi
 
-echo
-echo "-- Resizing safari window..."
+
+printOut "-- Resizing safari window..."
 osascript <<EOD
 set theApp to "Safari"
 
@@ -77,13 +133,13 @@ tell application theApp
 end tell
 EOD
 
-echo
-echo "-- Creating screenshots folder on the desktop"
+
+printOut "-- Creating screenshots folder on the desktop"
 tempFolder=${HOME}/Desktop/screenshots/
 if [ ! -d ${tempFolder} ]; then
   mkdir ${tempFolder};
 else
-  echo "Screenshots folder already exists";
+  printOut "Screenshots folder already exists";
 fi
 
 #file name is date-time format
@@ -93,24 +149,21 @@ else
   fileName=${1}
 fi
 
-
-absFile="${tempFolder}${fileName}.png"
+fileName="${fileName}.png"
+absFile=${tempFolder}${fileName}
 
 echo
 echo "-- Capturing screenshot to file : ${fileName}"
 screencapture -l $(osascript -e 'tell app "Safari" to id of window 1') ${absFile}
 
-echo
-echo "-- Checking image properties"
+printOut "-- Checking image properties"
 printFileAttribs
 
-echo
-echo "-- Resizing screenshot"
+printOut "-- Resizing screenshot"
 /usr/local/bin/convert -geometry 1600x ${absFile} ${absFile}
 
-echo
-echo "-- Compressing png"
-if [ "${2}" == "tp" ]; then
+printOut "-- Compressing png"
+if [ "${useTP}" == "yes" ]; then
   compressUsingTPNG
 else
   /usr/local/bin/pngquant --quality=65-80 ${absFile}
@@ -120,3 +173,10 @@ else
   mv "${tempFolder}${basename}-fs8.png" ${absFile}
   printFileAttribs
 fi
+
+
+# move to desination folder
+if [ "${destination}" != "" ]; then
+    mv ${absFile} ${destination}/${fileName}
+fi
+
