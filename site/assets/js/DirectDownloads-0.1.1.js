@@ -1,10 +1,44 @@
-Prime.Document.onReady(function() {
-  var container = document.getElementById('downloads');
-  var setVersions = function(response, callback) {
+FusionAuth = FusionAuth || {};
+
+FusionAuth.DirectDownloads = function() {
+  Prime.Utils.bindAll(this);
+  this.container = Prime.Document.queryById('downloads')
+  if (!this.loadCache()) {
+    this.fetch();
+  } else {
+    this.render();
+    setTimeout(this.fetch, 1000);
+  }
+};
+
+FusionAuth.DirectDownloads.constructor = FusionAuth.DirectDownloads;
+FusionAuth.DirectDownloads.prototype = {
+  fetch: function() {
+    new Prime.Ajax.Request('https://account.fusionauth.io/api/version', 'GET')
+        .withSuccessHandler(this._parseResponse)
+        .go();
+  },
+
+  loadCache: function() {
+    var cachedResponse = localStorage.getItem('io.fusionauth.downloads');
+    if (cachedResponse === null || typeof cachedResponse === 'undefined') {
+      return false;
+    }
+
+    var response = JSON.parse(cachedResponse);
+    if (Object.keys(response).length === 0) {
+      return false;
+    }
+
+    this.versions = response.versions;
+    return this.versions !== null && typeof this.versions !== 'undefined' && this.versions.length > 0;
+  },
+
+  render: function() {
     var archived = true;
     var cutOverVersion = "1.14.0";
-    for (var i = 0; i < response.versions.length; i++) {
-      var version = response.versions[i];
+    for (var i = this.versions.length - 1; i > 0; i--) {
+      var version = this.versions[i];
 
       var idVersion = version.replace(/\./g, '_');
       var versionDiv = document.getElementById(idVersion);
@@ -16,9 +50,9 @@ Prime.Document.onReady(function() {
         archived = false;
       }
 
-      var releaseNotesLink = archived ?  "/docs/v1/tech/archive/release-notes{anchor}" : "/docs/v1/tech/release-notes{anchor}";
+      var releaseNotesLink = archived ? "/docs/v1/tech/archive/release-notes{anchor}" : "/docs/v1/tech/release-notes{anchor}";
       var div =
-          (i === response.versions.length - 1 ? '<div id="' + idVersion + '">' : '<div id="' + idVersion + '" class="mt-5">') +
+          (i === this.versions.length - 1 ? '<div id="' + idVersion + '">' : '<div id="' + idVersion + '" class="mt-5">') +
           '<h4 class="border-bottom">{version}\
              <span style="font-size: 0.5em;" class="font-weight-light"><a href=' + releaseNotesLink + '>Release Notes</a></span>\
              <span style="font-size: 0.5em;" class="font-weight-light">| <a href="/docs/v1/tech/installation-guide/packages/">Installation Guide</a></span>\
@@ -41,39 +75,22 @@ Prime.Document.onReady(function() {
             <a href="/docs/v1/tech/installation-guide/fusionauth-app#advanced-installation"> (See Advanced Installation)</a> \
            </div>';
 
-      container.insertAdjacentHTML('afterbegin', div
-          .replace(/\{version\}/g, version)
-          .replace(/\{mVersion\}/g, version.replace('-', '.'))
-          .replace(/\{anchor\}/g, '#version-' + version.replace(/\./g, '-')));
+      this.container.appendHTML(
+          div.replace(/\{version\}/g, version)
+              .replace(/\{mVersion\}/g, version.replace('-', '.'))
+              .replace(/\{anchor\}/g, '#version-' + version.replace(/\./g, '-')));
     }
+  },
 
-    if (callback) {
-      callback();
-    }
-  };
-
-  var fetchVersions = function() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'https://account.fusionauth.io/api/version');
-    xhr.onload = function() {
-      if (xhr.status === 200) {
-        // Store it off so the pages loads faster
-        localStorage.setItem('io.fusionauth.downloads', xhr.responseText);
-        var response = JSON.parse(xhr.responseText);
-        setVersions(response);
-      }
-      else {
-        console.error('Request failed.  Returned status of ' + xhr.status);
-      }
-    };
-    xhr.send();
-  };
-
-  // On page load, set the versions from the cache if possible to limit the FOUC
-  var cachedResponse = localStorage.getItem('io.fusionauth.downloads');
-  if (cachedResponse !== null && typeof cachedResponse !== 'undefined') {
-    setVersions(JSON.parse(cachedResponse), fetchVersions);
-  } else {
-    fetchVersions();
+  _parseResponse: function(xhr) {
+    // Store it off so the pages loads faster
+    localStorage.setItem('io.fusionauth.downloads', xhr.responseText);
+    var response = JSON.parse(xhr.responseText);
+    this.versions = response.versions;
+    this.render();
   }
+};
+
+Prime.Document.onReady(function() {
+  new FusionAuth.DirectDownloads();
 });
