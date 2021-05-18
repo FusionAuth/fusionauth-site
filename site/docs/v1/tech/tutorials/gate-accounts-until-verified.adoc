@@ -1,0 +1,114 @@
+---
+layout: doc
+title: Gate accounts until email is verified
+description: How to gate users' email accounts until verified.
+---
+
+== Overview
+
+As of version 1.27.0, FusionAuth can gate your users' accounts until their email has been verified. This means that while users can successfully authenticate, they won't be able to proceed further until they have verified possession of the email address. Email verification occurs when a user enters a code that has been sent to a particular email address.
+
+To enable email verification gating, you need to do the following:
+
+* Configure the tenant with your email server
+* Configure the tenant to enable email gating
+* Optionally customize the email verification template
+* Enable self service registration
+* Configure your application with a redirect URL
+
+Let's step through each of these, but first, there are some prerequisites.
+
+== Prerequisites
+
+This tutorial assumes you are running FusionAuth version 1.27.0 or greater.
+
+If you aren't, head on over to the link:/docs/v1/tech/installation-guide/[installation guide] or the link:/docs/v1/tech/installation-guide/upgrade/[upgrade guide].
+
+This tutorial also assumes you have a valid paid edition and license. If you need to buy an edition, please visit the link:/pricing/editions/[pricing page]. If you need to activate your instance, please visit the link:/docs/v1/tech/reactor/[Reactor page].
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+== Configure the Tenant Email Server
+
+First, navigate to [breadcrumb]#Tenants -> Your Tenant# and then select the [breadcrumb]#Email# tab. Scroll to the [breadcrumb]#SMTP settings# section and configure that. 
+
+Pic TBD
+
+Make sure you can send a test email. If you have any issues doing so, follow the steps in the link:/docs/v1/tech/troubleshooting/#troubleshooting-email[email troubleshooting documentation].
+
+If you are testing locally, you can use a mock email server like https://mailcatcher.me/[mailcatcher].
+
+== Enable Email Verification Gating
+
+Navigate to [breadcrumb]#Tenants -> Your Tenant# and then select the [breadcrumb]#Email# tab. Scroll to the [breadcrumb]#Email verification settings# section. 
+
+Enable [field]#Verify email#. 
+
+Choose your email template. The default template is `Email verification`. This tutorial will modify the template slightly.
+
+The [field]#Verification strategy# can be either `Clickable link` or `Form field`. The former sends an email with a link. The end user must click on the link. The latter sends a code that the user will then enter in to a form provided by FusionAuth. For this tutorial, you'll use `Clickable link`.
+
+Ensure that the [field]#Unverified behavior# value is `Gated`.
+
+Pic TBD
+
+== Customize the Email Verification Template
+
+Navigate to [breadcrumb]#Customizations -> Email Templates# and edit the `Email Verification` template by clicking on the blue Edit button.
+
+You can modify the HTML and text templates. You can also localize the messages. 
+
+Pic TBD
+
+
+== Configure the Application
+
+Applications are anything a user can log in to. To fully enable the email verification gating functionality, you'll need to configure your application.
+
+Navigate to [breadcrumb]#Applications# then edit your application by clicking on the blue Edit button. Enable self registration by selecting the [breadcrumb]#Registration# tab, and then scrolling to the [breadcrumb]#Self service registration# section. 
+
+[NOTE]
+====
+You can create a user in other ways than self service registration, such as using the API. But self service registration is the simplest way to create a user who does not have a verified email.
+====
+
+Enable self service registration and configure the displayed and required fields as desired.
+
+pic TBD
+
+Next, navigate to the [breadcrumb]#OAuth# tab. Ensure that you have entered a valid URL in the [field]#Authorized redirect URLs# field as well as that you have enabled the `Authorization Code` grant. 
+
+The redirect URL doesn't matter for this tutorial, but for production use, make sure that URL can exchange an authorization code for a token.
+
+pic TBD
+
+Finally, save the application. Click on the green View button to see the [field]#Registration URL#. It'll be something like `https://local.fusionauth.io/oauth2/register?client_id=85a03867-dccf-4882-adde-1a79aeec50df&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect`. Copy that as you'll use it in the next steps.
+
+Also note the [field]#OAuth IdP login URL#, and copy that as well.
+
+pic TBD
+
+== Test It Out
+
+The next step is to register a new account. Use a different browser or incognito mode to ensure that the admin account you used above doesn't interfere with regsitration of a new user.
+
+Visit the registration URL you copied above. You'll be prompted to register. Fill out the form with a valid email address.
+
+You'll be shown a page similar to this below:
+
+pic TBD
+
+Close your browser or open a different browser and visit the login URL. Enter the email and password for the user you just registered. You'll be sent to the same verification page.
+
+No JWT will be issued and the user will continue to see the verification prompt until they have verified their email address. If an API is being used to authenticate the user, the API will return a status code indicating that email verification has not yet occurred. Please see the link:/docs/v1/tech/apis/login/[Login API] for more status code details.
+
+Once the user has verified their email by clicking on the link, they can now login and will no longer be gated.
+
+== Next Steps
+
+Now that you've successfully set up gated email verification, you can take the next steps to integrate this functionality into your application.
+
+* Discover how to link:/docs/v1/tech/themes/[modify the theme].
+* Learn more about link:/docs/v1/tech/email-templates/[email templates].
+* Have the user submit a passcode rather than click a link.
+
