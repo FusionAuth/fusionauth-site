@@ -1,10 +1,7 @@
-"use strict";
-
 /*
  * Copyright (c) 2020, Inversoft Inc., All Rights Reserved
  */
-
-'use strict';
+"use strict";
 
 var FusionAuth = FusionAuth || {};
 FusionAuth.Account = FusionAuth.Account || {};
@@ -12,78 +9,75 @@ FusionAuth.Account = FusionAuth.Account || {};
 FusionAuth.Account.PriceCalculator = function() {
   Prime.Utils.bindAll(this);
 
-  // Setup the pricing model
-  this.priceModel = null;
-  // [brettp]TODO: CORS?
-  new Prime.Ajax.Request('https://account.fusionauth.io/ajax/edition/price-model', 'GET')
-      .withSuccessHandler(this._handlePriceModelResponse)
-      .withErrorHandler(this._handlePriceModelResponse)
-      .go();
-
+  // Find the slider
   this.monthlyActiveUserSlider = Prime.Document.queryById('monthly-active-users')
       .addEventListener('input', this._handleSliderChange)
       .addEventListener('mouseup', this._handleSliderChange);
   this.monthlyActiveUserSliderLabel = Prime.Document.queryFirst('label[for=monthly-active-users]');
 
-  this.hostingRadio = Prime.Document.queryFirst('input[type=radio][name="hosting"]');
-  Prime.Document.query('input[type=radio][name="hosting"]').each(function(e) {
+  // Bail early because this isn't the pricing page
+  if (this.monthlyActiveUserSlider === null) {
+    return;
+  }
+
+  // Fetch the pricing model
+  this.priceModel = null;
+  new Prime.Ajax.Request(FusionAuth.accountURL + '/ajax/edition/price-model', 'GET')
+      .withSuccessHandler(this._handlePriceModelResponse)
+      .withErrorHandler(this._handlePriceModelResponse)
+      .go();
+
+  this.hostingRadio = Prime.Document.queryFirst('input[type=radio][name=hosting]');
+  Prime.Document.query('input[type=radio][name=hosting]').each(function(e) {
     e.addEventListener('click', this._handleHostingChange);
   }.bind(this));
+
+  var dialogElement = Prime.Document.queryById('cloud-hosting-dialog');
+  if (dialogElement !== null) {
+    this.cloudHostingDialog = new Prime.Widgets.HTMLDialog(dialogElement).initialize();
+    Prime.Document.queryFirst('.hosting-option-button').addEventListener('click', this._handleHostingButtonClick);
+  }
+
+  Prime.Document.query('.radio-bar li').each(function(e) {
+    e.addEventListener('click', function() {
+      e.queryUp('.radio-bar').queryFirst('li.checked').removeClass('checked');
+      e.addClass('checked');
+      Prime.Document.queryFirst('.pricing-cards')
+          .removeClass('show-self-hosted show-basic-cloud show-business-cloud show-ha-cloud')
+          .addClass('show-' + e.queryFirst('input').getValue());
+    });
+  });
+
+  Prime.Document.queryById('monthly-active-users')
+      .addEventListener('input', this._changeSliderBackground)
+      .addEventListener('mouseup', this._changeSliderBackground);
+  this._changeSliderBackground();
 };
 
 FusionAuth.Account.PriceCalculator.constructor = FusionAuth.Account.PriceCalculator;
+FusionAuth.Account.hostingKeyMap = {
+  'basic-cloud': 'SINGLE',
+  'business-cloud': 'SINGLE_RDS',
+  'ha-cloud': 'HA'
+};
+FusionAuth.Account.priceKeyMap = {
+  'COMMUNITY': 'green-border',
+  'DEVELOPER': 'purple-border',
+  'PREMIUM': 'blue-border',
+  'ENTERPRISE': 'orange-border'
+};
+
 FusionAuth.Account.PriceCalculator.prototype = {
-  _handlePriceModelResponse: function(xhr) {
-    if (xhr.status === 200) {
-      this.priceModel = JSON.parse(xhr.responseText);
-    } else {
-      console.log('AJAX request for prices failed!');
-    }
-
-    // [brettp]TODO: Remove before release
-    this.priceModel = {"ec2":{"large":150,"medium":75,"regionAdjustments":{"US_EAST_1":{"medium":0,"large":0,"xlarge":0},"US_EAST_2":{"medium":0,"large":0,"xlarge":0},"US_WEST_1":{"medium":15,"large":25,"xlarge":50},"US_WEST_2":{"medium":0,"large":0,"xlarge":0},"EU_WEST_1":{"medium":15,"large":25,"xlarge":50},"EU_WEST_2":{"medium":15,"large":25,"xlarge":50},"EU_WEST_3":{"medium":15,"large":25,"xlarge":50},"EU_CENTRAL_1":{"medium":15,"large":25,"xlarge":50},"EU_NORTH_1":{"medium":15,"large":25,"xlarge":50},"AP_EAST_1":{"medium":25,"large":60,"xlarge":120},"AP_SOUTH_1":{"medium":15,"large":25,"xlarge":50},"AP_SOUTHEAST_1":{"medium":15,"large":25,"xlarge":50},"AP_SOUTHEAST_2":{"medium":15,"large":25,"xlarge":50},"AP_NORTHEAST_1":{"medium":15,"large":25,"xlarge":50},"AP_NORTHEAST_2":{"medium":15,"large":25,"xlarge":50},"SA_EAST_1":{"medium":50,"large":100,"xlarge":175},"CA_CENTRAL_1":{"medium":15,"large":25,"xlarge":50},"ME_SOUTH_1":{"medium":15,"large":25,"xlarge":50}},"xlarge":300},"elb":{"base":50,"regionAdjustments":{"US_EAST_1":0,"US_EAST_2":0,"US_WEST_1":5,"US_WEST_2":0,"EU_WEST_1":5,"EU_WEST_2":5,"EU_WEST_3":5,"EU_CENTRAL_1":5,"EU_NORTH_1":5,"AP_EAST_1":10,"AP_SOUTH_1":5,"AP_SOUTHEAST_1":5,"AP_SOUTHEAST_2":5,"AP_NORTHEAST_1":5,"AP_NORTHEAST_2":5,"SA_EAST_1":15,"CA_CENTRAL_1":5,"ME_SOUTH_1":5}},"rds":{"large":300,"medium":150,"regionAdjustments":{"US_EAST_1":{"medium":0,"large":0,"xlarge":0},"US_EAST_2":{"medium":0,"large":0,"xlarge":0},"US_WEST_1":{"medium":40,"large":50,"xlarge":85},"US_WEST_2":{"medium":0,"large":0,"xlarge":0},"EU_WEST_1":{"medium":40,"large":50,"xlarge":85},"EU_WEST_2":{"medium":40,"large":50,"xlarge":85},"EU_WEST_3":{"medium":40,"large":50,"xlarge":85},"EU_CENTRAL_1":{"medium":40,"large":50,"xlarge":85},"EU_NORTH_1":{"medium":40,"large":50,"xlarge":85},"AP_EAST_1":{"medium":70,"large":150,"xlarge":300},"AP_SOUTH_1":{"medium":40,"large":50,"xlarge":85},"AP_SOUTHEAST_1":{"medium":40,"large":50,"xlarge":85},"AP_SOUTHEAST_2":{"medium":40,"large":50,"xlarge":85},"AP_NORTHEAST_1":{"medium":40,"large":50,"xlarge":85},"AP_NORTHEAST_2":{"medium":40,"large":50,"xlarge":85},"SA_EAST_1":{"medium":100,"large":150,"xlarge":200},"CA_CENTRAL_1":{"medium":40,"large":50,"xlarge":85},"ME_SOUTH_1":{"medium":40,"large":50,"xlarge":85}},"xlarge":600},"support":{"sliderMax":1000000,"sliderStep":10000,"tierPricing":{"DEVELOPER":{"BASE":{"maximumUserCount":10000,"minimumUserCount":0,"pricePerUnit":125.00},"TIER_2":{"maximumUserCount":100000,"minimumUserCount":10001,"pricePerUnit":75.00},"TIER_3":{"maximumUserCount":1000000,"minimumUserCount":100001,"pricePerUnit":25.00},"TIER_4":{"maximumUserCount":-1,"minimumUserCount":1000001,"pricePerUnit":5.00}},"PREMIUM":{"BASE":{"maximumUserCount":10000,"minimumUserCount":0,"pricePerUnit":500.00},"TIER_2":{"maximumUserCount":100000,"minimumUserCount":10001,"pricePerUnit":125.00},"TIER_3":{"maximumUserCount":1000000,"minimumUserCount":100001,"pricePerUnit":50.00},"TIER_4":{"maximumUserCount":-1,"minimumUserCount":1000001,"pricePerUnit":10.00}},"ENTERPRISE":{"BASE":{"maximumUserCount":10000,"minimumUserCount":0,"pricePerUnit":2500.0},"TIER_2":{"maximumUserCount":100000,"minimumUserCount":10001,"pricePerUnit":250.00},"TIER_3":{"maximumUserCount":1000000,"minimumUserCount":100001,"pricePerUnit":125.00},"TIER_4":{"maximumUserCount":-1,"minimumUserCount":1000001,"pricePerUnit":25.00}}},"usersPerUnit":10000}};
-    this._handleSliderChange();
-  },
-
-  _handleHostingChange: function () {
-    this._updatePrices();
-  },
-
-  _handleSliderChange: function() {
-    var mau = this.monthlyActiveUserSlider.getValue();
-    var mauText = new Intl.NumberFormat('en').format(mau);
-    this.monthlyActiveUserSliderLabel.setTextContent(mauText);
-    this._updatePrices();
-  },
-
-  _updatePrices: function() {
-    var priceKeyMap = {
-      'COMMUNITY': 'green-border',
-      'DEVELOPER': 'purple-border',
-      'PREMIUM': 'blue-border',
-      'ENTERPRISE': 'orange-border'
-    }
-
-    for (var key in priceKeyMap) {
-      var hostingPrice = this._calculateHostingPrice(key);
-      var supportPrice = this._calculateSupportPrice(key);
-      var price = this._calculateHostingPrice(key) + this._calculateSupportPrice(key);
-      price = Math.floor(price / 5) * 5;
-      var text = price === 0 ? 'FREE' : '$' + new Intl.NumberFormat('en').format(price);
-      Prime.Document.queryFirst('.pricing-cards .' + priceKeyMap[key] + ' .amount').setTextContent(text);
-    }
-  },
-
-  _calculateHostingPrice: function(plan) {
+  _calculateHostingPrice: function() {
     var hosting = this.hostingRadio.getSelectedValues()[0];
     var price = 0;
 
     if (hosting === 'basic-cloud') {
-      price = this.priceModel.ec2['medium'] + this.priceModel.elb.base;
+      price = this.priceModel.ec2['medium'];
     } else if (hosting === 'business-cloud') {
-      price = this.priceModel.ec2['medium'] + this.priceModel.elb.base + this.priceModel.rds['medium'];
+      price = this.priceModel.ec2['medium'] + this.priceModel.rds['medium'];
     } else if (hosting === 'ha-cloud') {
-      price = 2 * this.priceModel.ec2['medium'] + this.priceModel.elb.base + this.priceModel.rds['medium'];
+      price = (2 * this.priceModel.ec2['medium']) + this.priceModel.elb.base + this.priceModel.rds['medium'];
     }
 
     return price;
@@ -98,7 +92,7 @@ FusionAuth.Account.PriceCalculator.prototype = {
     var mau = this.monthlyActiveUserSlider.getValue();
     var planTiers = Object.values(this.priceModel.support.tierPricing[plan]);
 
-    planTiers.forEach(function (tier) {
+    planTiers.forEach(function(tier) {
       var adjustment = tier.minimumUserCount === 0 ? 0 : 1;
       if (mau > tier.minimumUserCount) {
         // MAU is past this tier so add ppu times total users in tier
@@ -113,41 +107,76 @@ FusionAuth.Account.PriceCalculator.prototype = {
     });
 
     return supportPrice / this.priceModel.support.usersPerUnit;
+  },
+
+  _changeSliderBackground: function() {
+    var mau = this.monthlyActiveUserSlider.getValue();
+    var percent = 100 * (mau - 10000) / (5000000 - 10000);
+    this.monthlyActiveUserSlider.setStyle('background', 'linear-gradient(to right, #000 0%, #000 ' + percent + '%, #fff ' + percent + '%, white 100%)');
+  },
+
+  _handleHostingButtonClick: function(event) {
+    Prime.Utils.stopEvent(event);
+    this.cloudHostingDialog.open();
+    if (this.cloudHostingDialog.element.getTop() < 0) {
+      this.cloudHostingDialog.element.setTop(0);
+    }
+  },
+
+  _handlePriceModelResponse: function(xhr) {
+    if (xhr.status === 200) {
+      this.priceModel = JSON.parse(xhr.responseText);
+    } else {
+      console.log('AJAX request for prices failed!');
+    }
+
+    this._handleSliderChange();
+  },
+
+  _handleHostingChange: function() {
+    this._updatePrices();
+    this._updateDownloadLinks();
+  },
+
+  _handleSliderChange: function() {
+    var mau = this.monthlyActiveUserSlider.getValue();
+    var mauText = new Intl.NumberFormat('en').format(mau);
+    this.monthlyActiveUserSliderLabel.setTextContent(mauText);
+    this._updatePrices();
+  },
+
+  _updateDownloadLinks: function() {
+    var hosting = this.hostingRadio.getSelectedValues()[0];
+    Prime.Document.query('.community.button').each(function(element) {
+      if (hosting === 'basic-cloud' || hosting === 'business-cloud' || hosting === 'ha-cloud') {
+        element.setAttribute('href', FusionAuth.accountURL + '/account/deployment/add?deployment.architecture=' + FusionAuth.Account.hostingKeyMap[hosting] + '&deployment.size=medium&deployment.region=US_EAST_1');
+        element.setHTML('GET STARTED');
+      } else {
+        element.setAttribute('href', FusionAuth.siteURL + '/download/');
+        element.setHTML('DOWNLOAD NOW');
+      }
+    });
+    Prime.Document.query('.developer.button').each(function(element) {
+      if (hosting === 'basic-cloud' || hosting === 'business-cloud' || hosting === 'ha-cloud') {
+        element.setHTML('GET STARTED');
+      } else {
+        element.setHTML('TRY IT FREE');
+      }
+    });
+  },
+
+  _updatePrices: function() {
+    for (var key in FusionAuth.Account.priceKeyMap) {
+      var hostingPrice = this._calculateHostingPrice();
+      var supportPrice = this._calculateSupportPrice(key);
+      var price = hostingPrice + supportPrice;
+      price = Math.floor(price / 5) * 5;
+      var text = price === 0 ? 'FREE' : '$' + new Intl.NumberFormat('en').format(price);
+      Prime.Document.queryFirst('.pricing-cards .' + FusionAuth.Account.priceKeyMap[key] + ' .amount').setTextContent(text);
+    }
   }
 }
 
 Prime.Document.onReady(function() {
-  const dialog = new Prime.Widgets.HTMLDialog(Prime.Document.queryById('cloud-hosting-dialog'))
-      .initialize();
-  Prime.Document.queryFirst('.hosting-option-button')
-      .addEventListener('click', function () {
-        dialog.open();
-        if (dialog.element.getTop() < 0) {
-          dialog.element.setTop(0);
-        }
-      });
-
-  Prime.Document.query('.radio-bar li').each(function(e) {
-    e.addEventListener('click', function(event) {
-      e.queryUp('.radio-bar').queryFirst('li.checked').removeClass('checked');
-      e.addClass('checked');
-      Prime.Document.queryFirst('.pricing-cards')
-          .removeClass('show-self-hosted show-basic-cloud show-business-cloud show-ha-cloud')
-          .addClass('show-' + e.queryFirst('input').getValue());
-    });
-  });
-
-  var _changeSliderBackground = function () {
-    var monthlyActiveUserSlider = Prime.Document.queryById('monthly-active-users');
-    var mau = monthlyActiveUserSlider.getValue();
-    var percent = 100 * (mau - 10000) / (5000000 - 10000);
-    monthlyActiveUserSlider.setStyle('background', 'linear-gradient(to right, #000 0%, #000 ' + percent + '%, #fff ' + percent + '%, white 100%)');
-  };
-
-  Prime.Document.queryById('monthly-active-users')
-      .addEventListener('input', _changeSliderBackground)
-      .addEventListener('mouseup', _changeSliderBackground);
-  _changeSliderBackground();
-
   new FusionAuth.Account.PriceCalculator();
 });
