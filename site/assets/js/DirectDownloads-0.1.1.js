@@ -35,7 +35,7 @@ FusionAuth.DirectDownloads.prototype = {
   },
 
   render: function() {
-    var archived = true;
+    var archived = false;
     var cutOverVersion = "1.14.0";
     for (var i = this.versions.length - 1; i > 0; i--) {
       var version = this.versions[i];
@@ -47,7 +47,7 @@ FusionAuth.DirectDownloads.prototype = {
       }
 
       if (version === cutOverVersion) {
-        archived = false;
+        archived = true;
       }
 
       var releaseNotesLink = archived ? "/docs/v1/tech/archive/release-notes{anchor}" : "/docs/v1/tech/release-notes{anchor}";
