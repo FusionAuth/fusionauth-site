@@ -1,9 +1,9 @@
 ---
 layout: blog-post
-title: Security and privacy risks in auth system implementation
+title: Security and privacy risks when implementing an auth system
 description: When implementing an auth system, what security concerns should be on your radar?
 author: Rich Hickey
-image: blogs/unio-saves-100k-with-fusionauth/unio-self-hosts-fusionauth-and-saves-100k-header-image.png
+image: blogs/security-privacy-implementation-risks/security-and-privacy-risks-when-implementing-an-auth-system-header-image.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
