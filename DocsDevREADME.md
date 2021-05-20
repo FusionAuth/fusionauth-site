@@ -90,7 +90,7 @@ Also note that you should be resizing the image down to 1600px wide. If you are 
 ```appleScript
 set theApp to "Safari"
 
-# Docs screens
+# Docs/blog screens
 #set appHeight to 1100
 #set appWidth to 1080
 
@@ -105,10 +105,6 @@ set theApp to "Safari"
 # Maintenance Mode Screens
 #set appHeight to 1100
 #set appWidth to 900
-
-# Blog screens
-#set appHeight to 1020
-#set appWidth to 1220
 
 tell application "Finder"
 	set screenResolution to bounds of window of desktop
