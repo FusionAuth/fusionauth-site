@@ -3,10 +3,10 @@ layout: advice
 title: Common Authentication Implementation Risks and How to Mitigate Them
 description: What are risks of implementing authentication, authorization and user management, and how can you mitigate them?
 author: James Hickey
-image: advice/auth-system-scale/making-sure-your-auth-system-can-scale-header-image.png
+image: advice/common-implementation-risks/expert-advice-common-authentication-implementation-risks-and-how-to-mitigate-them-header-image.png
 category: Identity Basics
-date: 2021-05-17
-dateModified: 2021-05-17
+date: 2021-05-20
+dateModified: 2021-05-20
 ---
 
 Given the increase of [data beaches in the past few years](https://haveibeenpwned.com/PwnedWebsites), it's more important than ever for software engineering leaders to prioritize security, quality development practices, and robust governance controls. Your customers' trust is on the line—and that's the lifeblood of any business that wants to keep growing.
