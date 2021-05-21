@@ -97,6 +97,8 @@ If it is a story about an upgrade, tag it with one of these tags:
 
 As well as the competitor name if mentioned: `topic-upgrade-cognito`.
 
+Separate tags with spaces: `topic-upgrade-homegrown topic-community-story`
+
 ## Sizing Window for Screenshots
 
 When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent browser window.
