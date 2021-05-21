@@ -12,13 +12,18 @@ FusionAuth supports the following grant types as defined by the OAuth 2.0 framew
 * Implicit Grant
 * Password Grant (also referred to as the Resource Owner Credentials Grant)
 * Refresh Token Grant
+* Client Credentials Grant
 * Device Authorization Grant
 
 &nbsp;
 
-To being using the FusionAuth login system, start by configuring your Application for OAuth2.
+To begin using the FusionAuth login system, start by configuring your Application for OAuth2.
 
 * <<Configure Application OAuth Settings>>
+
+To begin using the Client Credentials grant, start by configuring Entities.
+
+* <<Configure Entities>>
 
 &nbsp;
 
@@ -28,18 +33,20 @@ It is recommended to utilize the Authorization Code Grant unless you have a tech
 * link:/docs/v1/tech/oauth/#example-implicit-grant[Example Implicit Grant]
 * link:/docs/v1/tech/oauth/#example-resource-owner-password-credentials-grant[Example Password Grant]
 * link:/docs/v1/tech/oauth/#example-refresh-token-grant[Example Refresh Token Grant]
+* link:/docs/v1/tech/oauth/#example-client-credentials-grant[Example Client Credentials Grant]
 * link:/docs/v1/tech/oauth/#example-device-authorization-grant[Example Device Authorization Grant]
 
 == Configure Application OAuth Settings
 
 Navigate to the Application configuration from the main menu, [breadcrumb]#Applications#.
 
-If you have already created a FusionAuth Application for the purpose your application, you do not need to create another, however you will still need to complete the OAuth configuration. If an application has not yet been created, click *Add* and name your application accordingly and fill out the OAuth configuration.
+If you have already created a FusionAuth Application for the purpose of your application, you do not need to create another, however you will still need to complete the OAuth configuration. If an application has not yet been created, click *Add* and name your application accordingly and fill out the OAuth configuration.
 
 In this example you will see we have created a new Application named `Pied Piper` and have filled out the fields in the OAuth Configuration tab. A FusionAuth application represents an authenticated resource that you will be using with FusionAuth.
 
 Additional OAuth controls can be managed through link:/docs/v1/tech/core-concepts/tenants#tenant-configuration[Tenant Configuration].
 
+// TBD take screencap of this
 image::oauth-application.png[Application OAuth Configuration,width=1200,role=shadowed]
 
 === OAuth Form Fields
@@ -47,7 +54,7 @@ image::oauth-application.png[Application OAuth Configuration,width=1200,role=sha
 [.api]
 [field]#Client Id# [read-only]#Read-Only#::
 The unique client identifier as defined by https://tools.ietf.org/html/rfc6749#section-2.2[RFC 6749 Section 2.2]. This value is read only,
-it is equal to unique Id of the Application.
+it is equal to the unique Id of the Application.
 
 [field]#Client secret# [read-only]#Read-Only#::
 The client secret as defined by https://tools.ietf.org/html/rfc6749#section-2.3-1[RFC 6749 Section 2.3-1].
@@ -84,6 +91,62 @@ The OAuth grants enabled for this Application. When creating a new Application, 
 [field]#Device Verification URL# [optional]#Optional#::
 The URL to direct the end-user to for the user-interaction portion of the Device Authorization Grant.  This field is required if [field]#Device# is enabled in the OAuth `Enabled grants` for this Application.
 
+== Configure Entities
+
+The Client Credentials grant takes place between two Entities. You can learn more about link:/docs/v1/tech/core-concepts/entity-management/[Entities] in the Core Concepts section.
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+There are two entities which take part in a Client Credentials grant in FusionAuth: the recipient Entity and the target Entity. 
+
+Imagine you have a todo API which lets you create, read, update, and delete todos. You also have an email API, which lets you send emails. You can represent these both in FusionAuth as Entities.
+
+When building functionality to allow the todo API to send email reminders, grant permissions on the email API (the target Entity) to the todo API (the recipient Entity). To set up this relationship:
+
+* Create an API entity type with the following permissions: `execute` and `configure`.
+* Create a todo API entity
+* Create an email API entity
+* Grant the todo API `execute` permissions on the email API
+
+The todo API is the recipient Entity, because it receives the permissions to call the email API. The email API is the target Entity, because it will process the token. The email API is the system to which access is controlled. 
+
+The set up happens once and then the todo API can perform the client credentials grant any time it needs to call the email API. It will get a token at the end of a successful grant and can present that to the email API. 
+
+You may configure Entities and Grants via the FusionAuth API or the administrative user interface. You can specify the [field]#Client Id# and [field]#Client Secret# if desired.
+
+Below is the creation screen for an Entity:
+
+image::oauth/add-entity-client-credentials.png[Setting up an Entity,width=1200,role=bottom-cropped]
+
+Below is the management screen for an Entity where you'd add or remove Grants:
+
+image::oauth/add-grant.png[Adding a Grant to an Entity,width=1200]
+
+Here's an example of adding a Grant to an Entity via the API:
+
+[source,shell]
+.Example Grant Request
+----
+API_KEY=...
+TARGET_ENTITY_ID=e13365f1-a270-493e-bd1b-3d239d753d53
+RECIPIENT_ENTITY_ID=2934f41f-d277-4a32-b0d5-16e47dad9721
+
+curl \
+  -XPOST \
+  -H "content-type: application/json" \
+  -H "Authorization: $API_KEY"  \
+  'https://local.fusionauth.io/api/entity/'$TARGET_ENTITY_ID'/grant' -d'
+{
+  "grant": {
+    "recipientEntityId": "'$RECIPIENT_ENTITY_ID'",
+    "permissions" : ["read","write"]
+  }
+}
+'
+----
+
+Next, learn how to perform a link:/docs/v1/tech/oauth/#example-client-credentials-grant[Client Credentials Grant].
+
 
 == Example Authorization Code Grant
 
@@ -103,7 +166,7 @@ Review the link:/docs/v1/tech/oauth/endpoints/#authorize[Authorization] and link
 
 Now that your FusionAuth application has been configured to use the OAuth provider, you may now point the login for your application to the FusionAuth authorize endpoint which will now handle user authentication.
 
-For the purposes of this example, I will make the assumption that FusionAuth App is running locally at `\http://localhost:9011`, the `client_id` will be found on the OAuth tab in the application configuration, the `redirect_uri` will be where you wish FusionAuth to redirect the browser when the authorization step has completed. This value will need to be pre-defined in the authorized redirect URLs in the OAuth configuration. The `response_type` will always be `code` for this grant type.  The `tenantId` will be the unique Id of the tenant this request is scoped for, the tenant's configured theme will be applied.
+For the purposes of this example, I will make the assumption that FusionAuth App is running locally at `\http://localhost:9011`, the `client_id` will be found on the OAuth tab in the application configuration, the `redirect_uri` will be where you wish FusionAuth to redirect the browser when the authorization step has completed. This value will need to be predefined in the authorized redirect URLs in the OAuth configuration. The `response_type` will always be `code` for this grant type.  The `tenantId` will be the unique Id of the tenant this request is scoped for, the tenant's configured theme will be applied.
 
 Review the link:/docs/v1/tech/oauth/endpoints/#authorize[Authorization] endpoint documentation for more detail.
 
@@ -125,7 +188,7 @@ https://www.piedpiper.com/login?code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wz
 
 === Exchange the authorization code for an access token
 
-The last step to complete the authentication process and retrieve the users Id is to exchange the returned authorization code for an
+The last step to complete the authentication process and retrieve the user's Id is to exchange the returned authorization code for an
 access token. The JSON response will contain the user Id of the authenticated user.
 
 If the authorization code grant is being implemented in a Single Page App (SPA), the token request should be made by the application server in order to keep the client secret secure from introspection of the client code.
@@ -163,13 +226,13 @@ If you only need to validate registration and User roles, this can be done by in
 property of the response body.
 
 If you require the entire User object to validate authorization, you may need to retrieve the entire User. The User may be
-retrieved in one of several ways. If you have an API key ou can retrieve the User by Id or email, these two values are returned in the JWT
+retrieved in one of several ways. If you have an API key you can retrieve the User by Id or email, these two values are returned in the JWT
 payload. The email address is returned in the `email` identity claim, and the User's Id is returned in the `sub` identity claim. You may
 also retrieve the User without an API key by utilizing the JWT as returned in the `access_token` property in the response body.
 
 See the link:/docs/v1/tech/apis/users#retrieve-a-user[Retrieve a User] API for examples.
 
-You may also choose to use the link:/docs/v1/tech/oauth/endpoints/#introspect[Introspect] or link:/docs/v1/tech/oauth/endpoints/#userinfo[Userinfo] endpoints to validate the access token returned from the Token endpoint and to provided you decode claims as a JSON object.
+You may also choose to use the link:/docs/v1/tech/oauth/endpoints/#introspect[Introspect] or link:/docs/v1/tech/oauth/endpoints/#userinfo[Userinfo] endpoints to validate the access token returned from the Token endpoint and to provide you decoded claims as a JSON object.
 
 Now that you have the user, or retrieved the roles from the JWT, you may review their roles and registration to ensure they have adequate
 authority for the intended action, and if the user is not yet registered for the requested application, you can either fail their login,
@@ -213,7 +276,7 @@ When using this grant type the access token will be returned on the URL as a fra
 If you are still not convinced, proceed at your own risk and implement this grant type using the following example.
 ====
 
-The Implicit Grant is similar to the Authorization grant, instead of exchanging a code for an access token, the token is provided on in response to the initial authorization request.
+The Implicit Grant is similar to the Authorization grant, instead of exchanging a code for an access token, the token is provided in response to the initial authorization request.
 
 === Make the authorization request to the authorization server
 
@@ -257,7 +320,7 @@ Location: https://piedpiper.com/callback#
 
 The Authorization Code Grant is nearly always preferred over the Resource Owner Password Credentials Grant. This grant is provided for compatibility with existing integrations but the use of this grant is not recommended.
 
-The use of this grant removes the delegation pattern intended in the the OAuth 2 framework. This means that you no longer will be delegating to FusionAuth to collect user credentials, instead you will be collecting the credentials and passing them to FusionAuth.
+The use of this grant removes the delegation pattern intended in the OAuth 2 framework. This means that you no longer will be delegating to FusionAuth to collect user credentials, instead you will be collecting the credentials and passing them to FusionAuth.
 ====
 
 The Resource Owner Password Credentials Grant, also referred to as the Password Grant allows you to obtain an access token by directly providing the user credentials to the Token endpoint. This grant may also be used to receive a refresh token by specifying the `offline_access` scope.
@@ -297,7 +360,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32
 
 == Example Refresh Token Grant
 
-An access token is designed to have a short time-to-live (TTL).  A related refresh token with a longer TTL can be used for generating new access tokens and extending a user's session.  The application's OAuth settings must be configured with "Generate refresh tokens" enabled, and "Refresh Token" enabled in as an "Enabled grant".
+An access token is designed to have a short time-to-live (TTL).  A related refresh token with a longer TTL can be used for generating new access tokens and extending a user's session.  The application's OAuth settings must be configured with "Generate refresh tokens" enabled, and "Refresh Token" as an "Enabled grant".
 
 === Exchange a refresh token for an access token
 
@@ -330,6 +393,84 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32
 }
 ----
 
+== Example Client Credentials Grant
+
+Most OAuth grants are designed to allow users to delegate permissions. 
+
+The Client Credentials grant allows entities to authenticate and receive access tokens with no user interaction. 
+
+Therefore, unlike other grants, the Client Credentials grant isn't configured in an Application. Instead, it occurs between two Entities. link:/docs/v1/tech/oauth/#configure-entities[Learn more about setting up Entities].
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+=== Exchange credentials for an access token
+
+An access token may be generated with a `POST` request to the Token endpoint. Below is an example HTTP request, the `grant_type` will always be `client_credentials`.
+
+Line breaks have been added for readability.
+
+[source]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Authorization: Basic MDkyZGJkZWQtMzBhZi00MTQ5LTljNjEtYjU3OGYyYzcyZjU5OitmY1hldDlJdTJrUWk2MXlXRDlUdTRSZVoxMTNQNnlFQWtyMzJ2NldLT1E9
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+
+grant_type=client_credentials
+    &scope=target-entity%3Ae13365f1-a270-493e-bd1b-3d239d753d53%3Aread
+----
+
+[source,json]
+.Example HTTP Response 
+----
+include::docs/v1/tech/oauth/_client_credentials_example_json_response.json[]
+----
+
+=== Client Credentials Scopes
+
+In order for permissions to be correctly determined, pass a [field]#scope# parameter. This parameter can have multiple values, space separated. Each value has this format:
+
+```
+target-entity:entity_id:permission
+```
+
+where `entity_id` is a required entity UUID and `permission` is an optional, comma separated list of permissions.
+
+You will typically provide a scope specifying a target entity: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_omitted.txt[]
+----
+
+You may provide append a comma separated list of permissions as well: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_single_entity.txt[]
+----
+
+You may combine multiple entities and permissions in the same [field]#scope# parameter: 
+
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_multiple_entities.txt[]
+----
+
+The [field]#scope# will be checked against previously granted permissions. If all requested permissions have been found, the grant succeeds and an `access_token` is returned.
+
+If you do not pass [field]#scope#, you will still get an `access_token` if the request is authorized. The token will omit the following claims:
+
+* `aud`
+* `permissions`
+
+include::docs/v1/tech/oauth/_client_credentials_permissions_explanation.adoc[]
+
+You can see all claims of the token in the link:/docs/v1/tech/oauth/tokens/[Token documentation].
+
 == Example Device Authorization Grant
 This example contains screenshots of our link:https://github.com/FusionAuth/fusionauth-example-device-grant[Device Grant Example] which may be a useful code reference during implementation.
 
@@ -339,7 +480,7 @@ See the <<Configure Application OAuth Settings>> section above.
 
 FusionAuth requires that the Device Verification URL be a page that you control within your application so that a required Tenant Id is provided throughout the grant flow.
 While you may host your own form on this page, FusionAuth provides a themed OAuth device template that may be redirected to from your application to complete the user-interaction portion of the Device Authorization Grant as a convenience.
-This template is located at `/oauth2/device`. With the required request parameters being `client_id` and `tenantId`. On submit of the OAuth device template the end-user is prompted to authenticate using the Authorization Grant flow.
+This template is located at `/oauth2/device`. With the required request parameters being `client_id` and `tenantId`. On submission of the OAuth device template the end-user is prompted to authenticate using the Authorization Grant flow.
 This will redirect to the configured OAuth [field]#redirect_uri# per the typical Authorization Grant flow.
 The Device Authorization Grant will be considered approved when the Authorization Grant [field]#code# has been exchanged for a token.
 
