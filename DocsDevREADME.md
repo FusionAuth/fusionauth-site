@@ -77,6 +77,26 @@ For lists:
 - Connector
 - Kickstart
 
+## Tagging
+
+Tag your blog posts.
+
+If they feature any client libraries, tag them with `client-[langname]` and they will automatically appear on the client libraries page. `client-javascript` appears on the typescript page, since that is the supported client library.
+
+If they highlight a feature, tag them with `feature-[featurename]` and if there's a feature page, they'll appear there. `feature-breached-password-detection` for example.
+
+If they are a tutorial, add `tutorial` and they will appear on the tutorials page in the docs. You can also add `tutorial-[langname]` if it focuses on a language, `tutorial-feature` if it is a FusionAuth feature (webhooks, themes, etc) and `tutorial-integration` if it is an integration tutorial (nodebb, wordpress, etc). If it is for an advanced feature/reactor feature, add `tutorial-reactor-feature`. Those are all separate sections. 
+
+If it is a community story, tag with `topic-commmunity-story`. Right now that doesn't do anything, but it will.
+
+If it is a story about an upgrade, tag it with one of these tags:
+
+* `topic-upgrade-homegrown`
+* `topic-upgrade-saas`
+* `topic-upgrade-opensource`
+
+As well as the competitor name if mentioned: `topic-upgrade-cognito`.
+
 ## Sizing Window for Screenshots
 
 When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent browser window.
