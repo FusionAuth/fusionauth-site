@@ -5,7 +5,7 @@ description: This post describes how to securely implement OAuth in a React appl
 author: Matt Boisseau
 excerpt_separator: "<!--more-->"
 image: blogs/oauth-react-fusionauth.png
-tags: client-javascript, tutorial, tutorial-react, tutorial-javascript
+tags: client-javascript tutorial tutorial-react tutorial-javascript
 category: blog
 ---
 

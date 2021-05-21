@@ -5,7 +5,7 @@ description: A detailed overview of securely integrating an Angular application 
 author: Dan Moore
 image: blogs/fusionauth-example-angular/oauth-angular-fusionauth.png
 category: blog
-tags: client-javascript,tutorial, tutorial-angular
+tags: client-javascript tutorial tutorial-angular
 excerpt_separator: "<!--more-->"
 ---
 

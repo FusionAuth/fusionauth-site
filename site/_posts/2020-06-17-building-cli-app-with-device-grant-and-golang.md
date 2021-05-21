@@ -5,7 +5,7 @@ description: Build an authenticated CLI app using FusionAuth, the Device Code gr
 author: Matt Gowie
 image: blogs/golang-cli-device-grant/fusionauth-tutorial-building-a-cli-app-with-the-device-code-grant-and-golang.png
 category: blog
-tags: client-go,tutorial-device,tutorial,tutorial-go
+tags: client-go tutorial-device-grant tutorial tutorial-go tutorial-feature
 excerpt_separator: "<!--more-->"
 ---
 

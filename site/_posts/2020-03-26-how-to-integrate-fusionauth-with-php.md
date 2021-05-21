@@ -5,7 +5,7 @@ description: A quick overview of integrating with FusionAuth using PHP. This pos
 author: Alfrick Opidi
 image: blogs/integrate-with-php.png
 category: blog
-tags: client-php, tutorial,tutorial-php
+tags: client-php tutorial tutorial-php
 excerpt_separator: "<!--more-->"
 ---
 
