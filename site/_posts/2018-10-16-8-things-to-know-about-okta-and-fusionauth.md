@@ -58,7 +58,7 @@ FusionAuth is a small, bootstrapped company dedicated to our customers. We have 
 
 These are eight of the similarities and differences between Okta and FusionAuth. [Download this feature comparison](/resources/fusionauth-vs-okta.pdf "Okta and FusionAuth Feature Comparison") for a point-by-point evaluation, and please [contact](/contact) us if you have any questions or would like a quick demo. We'd love to provide a CIAM solution so your team can focus on your revenue-generating features.
 
-[Download the Okta and FusionAuth Feature Comparison](/resources/fusionauth-vs-okta.pdf "Okta and FusionAuth Feature Comparison"){: .btn .btn-primary}
+[Download the Okta and FusionAuth Feature Comparison](/resources/fusionauth-vs-okta.pdf "Okta and FusionAuth Feature Comparison"){:.button .brochure .orange .text-larger}
 
 
 ## Learn More About FusionAuth

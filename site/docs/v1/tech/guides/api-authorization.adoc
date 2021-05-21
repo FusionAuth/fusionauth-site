@@ -20,13 +20,46 @@ The second part is validating the presented credentials. We want to ensure that 
 
 == Your options
 
-FusionAuth offers three solutions, with different strengths and weaknesses.
+FusionAuth offers four solutions, with different strengths and weaknesses.
 
+* Client Credentials Grant
 * OAuth + JWTs
 * FusionAuth API Keys
 * Authentication Tokens
 
 Let's examine each of these in turn.
+
+=== Client Credentials Grant
+
+This is the recommended approach.
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+[NOTE.since]
+====
+This grant has been available since 1.26.
+====
+
+With this choice, two entities are created in FusionAuth. One represents the Todo App and is the target entity. The other represents the Reminder App and is the recipient entity. It's called the recipient entity because it receives a grant to access the target entity. The Reminder App is granted permissions on the Todo App, which can be done via API or the administrative user interface.
+
+After these are set up, the Reminder App can use the link:/docs/v1/tech/oauth/[Client Credentials grant] to get credentials, which would be a JWT. 
+
+After the OAuth grant occurs, the access token is saved off. The Reminder App presents the JWT to the Todo API each time it needs access. If the JWT has expired, the Reminder App can make another Client Credentials grant request to FusionAuth to retrieve a new JWT. 
+
+When presented with the token, the Todo API can verify it was signed by FusionAuth, possibly using JWKS to find the correct public key. It should validate the claims in the JWT, such as the expiration of the token, the issuer, and others. This processing requires no contact between the Todo API and FusionAuth.
+
+The Todo API can alternatively call the `/oauth2/token` endpoint with the JWT to check its validity.
+
+Strengths of this approach:
+
+* OAuth is a standard and thus may be more familiar to developers. There are also libraries to parse and validate JWTs.
+* This flow is similar to what large companies such as Facebook and Google require for access to their APIs.
+* Additional information can be stored in the JWT if needed (such as roles).
+* The Todo API can check credential validity without communicating with FusionAuth. This helps performance because there are fewer network calls.
+
+Challenges of this approach:
+
+* This functionality is not available in the community edition.
 
 === OAuth + JWTs
 
@@ -100,19 +133,16 @@ Challenges of this approach:
 
 == Other considerations
 
-*Should you put the users of an API in a separate tenant?*
-
-The simplest choice is to create a separate application, such as the "Dev Center" mentioned above. Tenants might be useful if you want multiple users with the same username or email to have different passwords. Another reason to use separate tenants is to enable tenant scoped FusionAuth API keys to limit the risk of the keys provided to the Reminder App developers, should you choose that option.
-
 *Which is the best option?* 
 
-It depends on your needs. Typically we recommend the OAuth option as that is the most secure, but recognize that having a user interact to get the initial JWT and refresh token may not work for some use cases.
+It depends on your needs. Typically we recommend the Client Credentials grant as that is the most secure. This is the OAuth grant built for machine to machine communication. However, recognize that each approach has different strengths. 
 
-*Can I rotate keys? That is, I'd like to have multiple credentials valid for one user so that I can distribute the newer credentials over time?*
+*Can I rotate keys? That is, I'd like to have multiple credentials valid for one user (using the <<OAuth + JWTs>> scenario) so that I can distribute the newer credentials over time?*
 
-This is not currently possible.
+This is not currently possible. 
+
+If you are using the <<Client Credentials Grant>> you could create multiple Entities for a given API caller and rotate their access to the API.
 
 *Does FusionAuth handle features like billing and request throttling?*
 
-Nope. This document outlines options to leverage FusionAuth to handle API authorization, but FusionAuth is not a full API management solution.
-
+Nope. This document outlines options to leverage FusionAuth to handle API authorization, but FusionAuth is not a full API management solution. If you need that, it is recommended to find a solution which will allow API management functionality and use FusionAuth for its authentication and authorization.
