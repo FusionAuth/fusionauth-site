@@ -5,7 +5,7 @@ description: How can you use Flutter, OAuth and OIDC together?
 image: blogs/securing-flutter-app/securing-a-flutter-app-with-oauth.png
 author: Krissanawat Kaewsanmuang
 category: blog
-tags: client-dart 
+tags: client-dart tutorial tutorial-dart
 excerpt_separator: "<!--more-->"
 ---
 

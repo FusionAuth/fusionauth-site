@@ -5,7 +5,7 @@ description: How would
 author: Tim Kleier and Matt Anderson
 image: blogs/microservices-jwt-auth/jwt-authorization-in-a-microservices-gateway.png
 category: blog
-tags: client-javascript
+tags: client-javascript tutorial tutorial-javascript
 excerpt_separator: "<!--more-->"
 ---
 

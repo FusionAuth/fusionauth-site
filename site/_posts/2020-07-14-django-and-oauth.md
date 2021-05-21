@@ -5,7 +5,7 @@ description: In this tutorial, we'll build a basic Django web application using 
 author: Gareth Dwyer
 image: blogs/social-sign-in-django/headerimage.png
 category: blog
-tags: client-python
+tags: client-python,tutorial,tutorial-django,tutorial-python
 excerpt_separator: "<!--more-->"
 ---
 
