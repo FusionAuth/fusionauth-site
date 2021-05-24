@@ -172,7 +172,7 @@ FusionAuth.Account.PriceCalculator.prototype = {
       var supportPrice = this._calculateSupportPrice(key);
       var price = hostingPrice + supportPrice;
       price = Math.floor(price / 5) * 5;
-      var text = price === 0 ? 'FREE' : '$' + new Intl.NumberFormat('en').format(price);
+      var text = price === 0 ? 'FREE' : '$' + new Intl.NumberFormat('en').format(price) + '/mo';
       Prime.Document.queryFirst('.pricing-cards .' + FusionAuth.Account.priceKeyMap[key] + ' .amount').setTextContent(text);
     }
   }
