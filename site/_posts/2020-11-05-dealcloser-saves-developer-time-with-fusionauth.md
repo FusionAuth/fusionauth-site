@@ -29,4 +29,4 @@ We’ll let Alex have the final word:
 
 Want to learn more about dealcloser’s migration from Auth0 to FusionAuth? 
 
-[Read the case study](/resources/dealcloser-case-study.pdf){:.button .brochure .orange .text-larger}{:target="_blank"}
+[READ THE CASE STUDY](/resources/dealcloser-case-study.pdf){:.button .brochure .orange .text-larger}{:target="_blank"}

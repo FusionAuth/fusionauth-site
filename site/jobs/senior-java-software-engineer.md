@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Senior Java Software Engineer 
+title: SHA-512 (Senior) Java Software Engineer 
 description: FusionAuth is seeking a Senior Java Software Engineer to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 140000
@@ -13,7 +13,7 @@ FusionAuth is a fast growing startup headquartered in Denver Colorado. We are ex
  
 Our mission is to make authentication and authorization simple and secure for every developer. This means building the best IAM (Identity and Access Management) and CIAM (Customer Identity and Access Management) solution in the world. If you are passionate about technology and want to join a company that is moving the industry forward, FusionAuth might be a perfect fit for you. 
 
-We are recruiting a Senior Java Software Engineer who will join our engineering team to help us build the best authentication and authorization solution in the world. This exciting role will allow you to build new features, extend existing features, learn from customers to improve the product and participate in our growing developer community. For this role, you must be a creative and quantitative thinker. You should be interested in the authentication, authorization and user management space. You should be seasoned at writing secure and high-performance code. The ideal candidate will be a self-starter, fast worker and excited about growing a company from the ground up.
+We are recruiting a Senior Java Software Engineer who will join our engineering team to help us achieve these goals. This exciting role will allow you to build new features, extend existing features, learn from customers to improve the product and participate in our growing developer community. For this role, you must be a creative and quantitative thinker. You should be interested in the authentication, authorization and user management space. You should be seasoned at writing secure and high-performance code. The ideal candidate will be a self-starter, fast worker and excited about growing a company from the ground up.
 
 You will report directly to the CTO and will work from our Denver office.  
 
@@ -23,10 +23,11 @@ Your responsibilities will include:
 
 * Designing new features
 * Producing clear design documentation as needed
-* Writing high-quality, performant and secure code (primarily in Java but we use many other languages as well)
+* Writing high-quality, performant and secure code
 * Writing extensive and thorough tests
 * Writing clear, high-quality documentation for new features
-* Rotate as the on-call engineer to solve critical customer issues (these are extremely rare since we pride ourselves on high-quality and well tested code)
+* Bug fixing
+* Rotate as the on-call engineer to solve critical customer issues. While not the norm, we do have some off hours support requirements.
 * Work closely with the rest of the engineering team to architect and design the product and deployment strategies
 
 ## Requirements
@@ -49,10 +50,10 @@ The requirements for this position include:
 
 ## Technologies
 
-The requirements for this position include:
+It would be good if you have experience with most of the following:
 
-* Java
-* Ruby (or similar dynamic language
+* Java 8+
+* Ruby (or similar dynamic language)
 * HTML 5
 * CSS
 * JavaScript
@@ -60,7 +61,7 @@ The requirements for this position include:
 * MySQL and PostgreSQL (or equivalents)
 * XML
 * JSON
-* FreeMarker (or Velocity)
+* Apache FreeMarker (or Apache Velocity)
 * ORMs
 * TestNG (or JUnit)
 * Git
@@ -79,7 +80,6 @@ The requirements for this position include:
 * Savant
 * SLF4J
 * MyBatis
-* Guice
 * Prime.js
 
 ## Salary & Benefits

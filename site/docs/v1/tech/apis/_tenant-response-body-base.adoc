@@ -1,5 +1,5 @@
 [api]
-ifeval::[{base_field_name}!=tenant]
+ifeval::["{base_field_name}" != "tenant"]
 [field]#tenants# [type]#[Array]#::
 The list of Tenant objects.
 endif::[]
@@ -35,7 +35,7 @@ The default email address that emails will be sent from when a from address is n
 The default From Name used in sending emails when a from name is not provided on an individual email template. This is the display name part of the email address ( i.e. **Jared Dunn**  <jared@piedpiper.com>).
 
 [field]#{base_field_name}.emailConfiguration.forgotPasswordEmailTemplateId# [type]#[UUID]#::
-The Id of the Email Template that is used when a user is sent a forgot password email.
+The Id of the Email Template that is used when a user is sent a "forgot password" email.
 
 [field]#{base_field_name}.emailConfiguration.host# [type]#[String]# [since]#Available since 1.8.0#::
 The host name of the SMTP server that FusionAuth will use.
@@ -62,14 +62,29 @@ The type of security protocol FusionAuth will use when connecting to the SMTP se
 [field]#{base_field_name}.emailConfiguration.setPasswordEmailTemplateId# [type]#[UUID]#::
 The Id of the Email Template that is used when a user had their account created for them and they must set their password manually and they are sent an email to set their password.
 
+[field]#{base_field_name}.emailConfiguration.unverified.allowEmailChangeWhenGated# [type]#[Boolean]# [since]#Available since 1.27.0#::
+When this value is set to `true`, the user is allowed to change their email address when they are gated because they haven't verified their email address.
+
+[field]#{base_field_name}.emailConfiguration.unverified.behavior# [type]#[String]# [since]#Available since 1.27.0#::
+The desired behavior during login for a user that does not have a verified email. The possible values are:
++
+* `Allow` - the user will be allowed to complete login.
+* `Gated` - verification is required before a user can complete login.
+
 [field]#{base_field_name}.emailConfiguration.username# [type]#[String]# [since]#Available since 1.8.0#::
-An optional username FusionAuth will to authenticate with the SMTP server.
+An optional username FusionAuth will use to authenticate with the SMTP server.
 
 [field]#{base_field_name}.emailConfiguration.verificationEmailTemplateId# [type]#[UUID]#::
-The If of the Email Template that is used to send the verification emails to users. These emails are used to verify that a user's email address is valid. If either the `verifyEmail` or `verifyEmailWhenChanged` fields are `true` this field is required.
+The Id of the Email Template that is used to send the verification emails to users. These emails are used to verify that a user's email address is valid. If either the `verifyEmail` or `verifyEmailWhenChanged` fields are `true` this field is required
+
+[field]#{base_field_name}.emailConfiguration.verificationStrategy# [type]#[String]# [since]#Available since 1.27.0#::
+The process by which the user will verify their email address. The possible values are:
++
+* `ClickableLink` - send the user a code with a clickable link.
+* `FormField` - send the user a short code intended to be manually entered into a form. This is only available when [field]#tenant.emailConfiguration.unverified.behavior# has the `Gated` value.
 
 [field]#{base_field_name}.emailConfiguration.verifyEmail# [type]#[Boolean]#::
-Whether the user's email addresses are verified when the registers with your application.
+Whether the user's email addresses are verified when the user registers with your application.
 
 [field]#{base_field_name}.emailConfiguration.verifyEmailWhenChanged# [type]#[Boolean]#::
 Whether the user's email addresses are verified when the user changes them.
@@ -88,7 +103,7 @@ The transaction type that FusionAuth uses when sending these types of events to 
 include::_transaction-types.adoc[]
 
 [field]#{base_field_name}.externalIdentifierConfiguration.authorizationGrantIdTimeToLiveInSeconds# [type]#[Integer]# [since]#Available since 1.8.0#::
-The time in seconds until a OAuth authorization code in no longer valid to be exchanged for an access token. This is essentially the time allowed between the start of an Authorization request during the Authorization code grant and when you request an access token using this authorization code on the Token endpoint.
+The time in seconds until an OAuth authorization code is no longer valid to be exchanged for an access token. This is essentially the time allowed between the start of an Authorization request during the Authorization code grant and when you request an access token using this authorization code on the Token endpoint.
 +
 Value must be greater than 0 and less than or equal to 600.
 
@@ -144,7 +159,7 @@ include::_tenant-generator-type-config-rules.adoc[]
 :generator_display_name!:
 
 [field]#{base_field_name}.externalIdentifierConfiguration.emailVerificationIdTimeToLiveInSeconds# [type]#[Integer]# [since]#Available since 1.8.0#::
-The time in seconds until a email verification Id is no longer valid and cannot be used by the Verify Email API. Value must be greater than 0.
+The time in seconds until an email verification Id is no longer valid and cannot be used by the Verify Email API. Value must be greater than 0.
 
 [field]#{base_field_name}.externalIdentifierConfiguration.externalAuthenticationIdTimeToLiveInSeconds# [type]#[Integer]# [since]#Available since 1.12.0#::
 The time in seconds until an external authentication Id is no longer valid and cannot be used by the Token API. Value must be greater than 0.
@@ -188,7 +203,7 @@ include::_tenant-generator-type-config-rules.adoc[]
 [field]#{base_field_name}.externalIdentifierConfiguration.registrationVerificationIdTimeToLiveInSeconds# [type]#[Integer]# [since]#Available since 1.8.0#::
 The time in seconds until a registration verification Id is no longer valid and cannot be used by the Verify Registration API. Value must be greater than 0.
 
-[field]#tenant.externalIdentifierConfiguration.samlv2AuthNRequestIdTimeToLiveInSeconds# [type]#[Integer]# [since]#Available since 1.19.0#::
+[field]#{base_field_name}.externalIdentifierConfiguration.samlv2AuthNRequestIdTimeToLiveInSeconds# [type]#[Integer]# [since]#Available since 1.19.0#::
 The time in seconds that a SAML AuthN request Id returned by the Start SAML v2 Login Request API will be eligible to be used to complete a SAML v2 Login request.
 
 [field]#{base_field_name}.externalIdentifierConfiguration.setupPasswordIdGenerator.length# [type]#[Integer]# [since]#Available since 1.8.0#::
@@ -326,6 +341,34 @@ The password minimum age in seconds. When enabled FusionAuth will not allow a pa
 [field]#{base_field_name}.minimumPasswordAge.enabled# [type]#[Boolean]# [since]#Available since 1.8.0#::
 Indicates that the minimum password age is enabled and being enforced.
 
+[field]#{base_field_name}.multiFactorConfiguration.authenticator.algorithm# [type]#[String]# [since]#Available since 1.26.0#::
+The algorithm used by the TOTP authenticator. This value is `HmacSHA1` and read only.
+
+[field]#{base_field_name}.multiFactorConfiguration.authenticator.codeLength# [type]#[Integer]# [since]#Available since 1.26.0#::
+The length of the code generated by the TOTP. This value is `6` and read only.
+
+[field]#{base_field_name}.multiFactorConfiguration.authenticator.enabled# [type]#[Boolean]# [since]#Available since 1.26.0#::
+When enabled, users may utilize an authenticator application to complete a multi-factor authentication request. This method uses TOTP (Time-Based One-Time Password) as defined in link:https://tools.ietf.org/html/rfc6238[RFC 6238] and often uses an native mobile app such as Google Authenticator.
+
+[field]#{base_field_name}.multiFactorConfiguration.authenticator.timeStep# [type]#[Integer]# [since]#Available since 1.26.0#::
+The time-step size in seconds. This value is `30` and read only.
+
+[field]#{base_field_name}.multiFactorConfiguration.email.enabled# [type]#[Boolean]# [since]#Available since 1.26.0#::
+When enabled, users may utilize an email address to complete a two-factor authentication request.
+
+[field]#{base_field_name}.multiFactorConfiguration.email.templateId# [type]#[UUID]# [since]#Available since 1.26.0#::
+The Id of the email template that is used when notifying a user to complete a two-factor authentication request.
+
+[field]#{base_field_name}.multiFactorConfiguration.sms.enabled# [type]#[Boolean]# [since]#Available since 1.26.0#::
+When enabled, users may utilize a mobile phone number to complete a two-factor authentication request.
+
+[field]#{base_field_name}.multiFactorConfiguration.sms.messengerId# [type]#[UUID]# [since]#Available since 1.26.0#::
+The messenger that is used to deliver a SMS two-factor authentication request.
+
+[field]#{base_field_name}.multiFactorConfiguration.sms.templateId# [type]#[UUID]# [since]#Available since 1.26.0#::
+The Id of the SMS template that is used when notifying a user to complete a two-factor authentication request.
+
+
 [field]#{base_field_name}.name# [type]#[String]#::
 The unique name of the Tenant.
 
@@ -355,7 +398,7 @@ The level of severity where Reactor will consider a breach. The following are va
 * `Low` Exact match on an email or username, or the password is a common breached value
 
 [field]#{base_field_name}.passwordValidationRules.breachDetection.notifyUserEmailTemplateId# [type]#[UUID]# [since]#Available since 1.15.0#::
-The Id of the email template to use when notifying user of breached password.
+The Id of the email template to use when notifying a user of a breached password.
 
 [field]#{base_field_name}.passwordValidationRules.breachDetection.onLogin# [type]#[String]# [since]#Available since 1.15.0#::
 The behavior when detecting breaches at time of user login. The following are valid values:
@@ -404,8 +447,27 @@ Indicates that users without a verified email address will be permanently delete
 [field]#{base_field_name}.userDeletePolicy.unverified.numberOfDaysToRetain# [type]#[Integer]# [since]#Available since 1.13.0#::
 The number of days from creation users will be retained before being deleted for not completing email verification. Value must be greater than 0.
 
+[field]#{base_field_name}.usernameConfiguration.unique.enabled# [type]#[Boolean]# [since]#Available since 1.27.0#::
+When `true`, FusionAuth will handle username collisions by generating a random suffix. Users with colliding usernames will be able to use the same one, but in the admin and API interfaces, a unique username will be displayed.
+
+[field]#{base_field_name}.usernameConfiguration.unique.numberOfDigits# [type]#[Integer]# [since]#Available since 1.27.0#::
+The maximum number of digits to use when building a unique suffix for a username. A number will be randomly selected and will be 1 or more digits up to this configured value in length. For example, if this value is `5`, the suffix will be a number between `00001` and `99999`, inclusive and left padded with zeros.
+
+[field]#{base_field_name}.usernameConfiguration.unique.separator# [type]#[String]# [since]#Available since 1.27.0#::
+A single character to use as a separator from the requested username and a unique suffix that is added when a duplicate username is detected. This value can be a single non alphanumeric ASCII character.
+
+ifeval::["{base_field_name}" == "tenant"]
 [source,json]
 .Example Response JSON
 ----
 include::../../../src/json/tenants/response.json[]
 ----
+endif::[]
+
+ifeval::["{base_field_name}" != "tenant"]
+[source,json]
+.Example Response JSON for all the Tenants
+----
+include::../../../src/json/tenants/responses.json[]
+----
+endif::[]

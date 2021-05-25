@@ -524,7 +524,7 @@ return (
 The app will display one of two states, depending on whether we have an `accessToken`. Now, you we can run the app in the iOS simulator by typing `npx react-native run-ios` in your terminal:
 
 <div class="d-flex justify-content-center mb-5 mt-1 youtube">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/rmrqXT30X38" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="rmrqXT30X38" %}
 </div>
 
 You can improve the look and feel of the application modifying the `styles` object and adding more CSS, but we'll leave that as an exercise for the reader. Following best practices, notice that the mobile application opens up a system browser for user authentication, rather than a webview or embedded user-agent.
