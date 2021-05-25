@@ -30,7 +30,8 @@ This page contains the APIs that are used for retrieving and updating the system
 
 === System Status
 * <<Retrieve System Status>>
-
+* <<Retrieve System Version>>
+* <<Retrieve System Metrics Using Prometheus>>
 
 == Retrieve the System Configuration
 
@@ -115,7 +116,7 @@ The format string used to format the date and time columns in the export result.
 When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[DateTimeFormatter patterns] for additional examples.
 
 [field]#lastNBytes# [type]#[Long]# [optional]#Optional# [default]#defaults to `65,536`#::
-The number of bytes to retrieve from the end of each of the system logs.  When this value is `-1`, the entire log will be downloaded.
+The number of bytes to retrieve from the end of each of the system logs. When this value is `-1`, the entire log will be downloaded.
 
 [field]#zoneId# [type]#[String]# [optional]#Optional# [default]#defaults to **[see description]**#::
 The link:/docs/v1/tech/reference/data-types#time-zone[time zone] used to calculate the current time and build the filename.
@@ -229,12 +230,11 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 [method]#POST# [uri]#/api/logger#
 --
 
-
 ==== Request Headers
 
 [.api]
 [field]#Content-Type# [type]#[String]# [required]#Required#::
-The request body is expected to be sent using form encoded data. Ensure your HTTP client sends the the `Content-Type` request header set to `application/x-www-form-urlencoded`.
+The request body is expected to be sent using form encoded data. Ensure your HTTP client sends the `Content-Type` request header set to `application/x-www-form-urlencoded`.
 
 ==== Request Parameters
 
@@ -264,7 +264,7 @@ include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 
 [.api]
 [field]#level# [type]#[String]#::
-The logging level. If the request was successful, this value should be equal to the request value.  Possible values are:
+The logging level. If the request was successful, this value should be equal to the request value. Possible values are:
 +
 * `error`
 * `warn`
@@ -285,7 +285,7 @@ The Status API is used to retrieve the current status and metrics for FusionAuth
 
 [NOTE]
 ====
-FusionAuth also supports a system status check using Prometheus. View link:/docs/v1/tech/tutorials/prometheus/[setup instructions].
+FusionAuth also supports a system status check link:/docs/v1/tech/tutorials/prometheus/[using Prometheus].
 ====
 
 === Request
@@ -334,17 +334,17 @@ The specific contents of the JSON body are not documented here. If you choose to
 [since]#Available since 1.19.0#
 
 |453
-|The FusionAuth database connection pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which be retrieved when using an API key.
+|The FusionAuth database connection pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.
 
 [since]#Available since 1.19.0#
 
 |454
-|The FusionAuth database connectivity pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which be retrieved when using an API key.
+|The FusionAuth database connectivity pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.
 
 [since]#Available since 1.19.0#
 
 |460
-|FusionAuth is using Elasticsearch and the the search service is reporting an unhealthy cluster status. In a cluster with 2+ nodes, this mean the cluster status is being reported as `yellow` or `red`. In a single node Elasticsearch configuration this means the cluster status is `red.`
+|FusionAuth is using Elasticsearch and the search service is reporting an unhealthy cluster status. In a cluster with 2+ nodes, this means the cluster status is being reported as `yellow` or `red`. In a single-node Elasticsearch configuration this means the cluster status is `red.`
 
 [since]#Available since 1.19.0#
 
@@ -352,5 +352,103 @@ The specific contents of the JSON body are not documented here. If you choose to
 |The FusionAuth server is not functioning properly. This could indicate that the database connectivity failed or one or more services within FusionAuth failed. Consult the FusionAuth link:/docs/v1/tech/troubleshooting/[Troubleshooting] to learn more about the failure or contact FusionAuth support for assistance.
 |===
 
+== Retrieve System Version
+
+[NOTE.since]
+====
+Available Since Version 1.27.0
+====
+
+The Version API is used to retrieve the current version of FusionAuth.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:lock[type=fas]] Return the FusionAuth system version with an API key
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/system/version#
+--
+
+=== Response
+
+:never_missing:
+:never_search_error:
+:no_errors:
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+:never_search_error!:
+:never_missing!:
+
+==== Response Body
+
+[.api]
+[field]#version# [type]#[String]#::
+The version of the running FusionAuth instance.
+
+[source,json]
+.Example JSON Response
+----
+{
+  "version": "1.27.0"
+}
+----
 
 
+== Retrieve System Metrics Using Prometheus
+
+
+[NOTE]
+====
+This API has been available since 1.26.0
+====
+
+
+
+This page contains the API that is used for retrieving FusionAuth application metrics to be used with Prometheus. Please refer to the link:/docs/v1/tech/tutorials/prometheus#[Prometheus setup] guide to understand how to set up Prometheus with the FusionAuth metrics endpoint.
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve FusionAuth application metrics to use with Prometheus.
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/prometheus/metrics#
+--
+
+=== Authentication
+This endpoint can be authenticated with either API Keys or `basic auth` with API Keys authentication methods. Please refer to the link:/docs/v1/tech/apis/authentication#basic-authentication-with-api-key[Authentication] document for more details about how to use the `basic auth` authentication method with API keys.
+
+=== Request Parameters
+There are no request parameters required with this API.
+
+
+=== Response
+The response to this API call contains currently available metrics. The metrics in this response are subject to change.
+
+include::docs/v1/tech/apis/_prometheus-jvm-gauges.adoc[]
+
+
+Here is a partial response received from this endpoint.
+
+[source,text]
+.Example Prometheus Response
+----
+  # HELP jvm_memory_heap_committed Generated from Dropwizard metric import (metric=jvm.memory.heap.committed, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$8)
+# TYPE jvm_memory_heap_committed gauge
+jvm_memory_heap_committed 5.36870912E8
+# HELP jvm_memory_non_heap_used Generated from Dropwizard metric import (metric=jvm.memory.non-heap.used, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$11)
+# TYPE jvm_memory_non_heap_used gauge
+jvm_memory_non_heap_used 1.66423384E8
+# HELP jvm_memory_pools_CodeHeap__non_profiled_nmethods__used Generated from Dropwizard metric import (metric=jvm.memory.pools.CodeHeap-'non-profiled-nmethods'.used, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$17)
+# TYPE jvm_memory_pools_CodeHeap__non_profiled_nmethods__used gauge
+jvm_memory_pools_CodeHeap__non_profiled_nmethods__used 3.0334336E7
+# HELP prime_mvc___admin_group_index__requests Generated from Dropwizard metric import (metric=prime-mvc.[/admin/group/index].requests, type=com.codahale.metrics.Timer)
+# TYPE prime_mvc___admin_group_index__requests summary
+prime_mvc___admin_group_index__requests{quantile="0.5",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.75",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.95",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.98",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.99",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.999",} 0.0
+prime_mvc___admin_group_index__requests_count 1.0
+----
