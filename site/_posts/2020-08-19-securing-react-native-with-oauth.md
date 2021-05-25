@@ -5,7 +5,7 @@ description: React Native lets you build mobile applications for iOS and Android
 author: Krissanawat Kaewsanmuang
 image: blogs/react-native-oauth/securing-react-native-with-oauth.png
 category: blog
-tags: client-javascript
+tags: client-javascript tutorial tutorial-react-native tutorial-javascript
 excerpt_separator: "<!--more-->"
 ---
 
