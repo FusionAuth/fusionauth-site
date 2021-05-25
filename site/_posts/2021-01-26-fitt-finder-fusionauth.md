@@ -39,13 +39,15 @@ Trevor Robinson is a FusionAuth community member and co-founder and CTO of FITT 
 
 **Dan:** What are your plans for social sign-on and SAML SSO?
 
-**Trevor:** We don't want our users to have to create passwords if they're comfortable using social sign-on or they're coming from a third-party using SSO. For social, we've already enabled Google, and we'll likely add Apple and Facebook. We're in the process of configuring SAML v2 for the first time, but ran into a snag because FusionAuth doesn't accept the partner's 1024-bit RSA keys. Hopefully they're able to use a stronger key.
+**Trevor:** We don't want our users to have to create passwords if they're comfortable using social sign-on or they're coming from a third-party using SSO. For social, we've already enabled Google, and we'll likely add Apple and Facebook. We're in the process of configuring SAML v2 for the first time, but ran into a snag because FusionAuth doesn't accept the partner's 1024-bit RSA keys. _[Editor's note: [this was fixed in version 1.24](https://github.com/FusionAuth/fusionauth-issues/issues/1091).]_
 
 **Dan:** You mention being happy with the API. Can you elaborate? How have you used the API?
 
 **Trevor:** We use the OAuth (via my [express-jwt-fusionauth middleware](https://github.com/trevorr/express-jwt-fusionauth)), login, and registration APIs. The login API is used for embedded login within the app (as mentioned above). The registration API is used to store app-specific user data like roles and permissions in the user registration so it can be added to the JWT. 
 
-I'm actually not thrilled with this solution, as it currently leads to stale user permission data in the JWT. I would like to fetch the extra data at login, but the reconcile lambdas don't seem to support asynchrony. (So I guess that actually goes near the top of my FusionAuth feature wishlist.) For scalability and reliability, we don't use sessions or sticky load-balancing, so we rely on the JWT containing enough context for authorization decisions.
+I'm actually not thrilled with this solution, as it currently leads to stale user permission data in the JWT. I would like to fetch the extra data at login, but the reconcile lambdas don't seem to support asynchrony. So I guess that actually goes near the top of my FusionAuth feature wishlist. _[Editor's note: [this issue discusses support for AJAX requests in lambdas](https://github.com/FusionAuth/fusionauth-issues/issues/267).]_ 
+
+For scalability and reliability, we don't use sessions or sticky load-balancing, so we rely on the JWT containing enough context for authorization decisions.
 
 > I chose FusionAuth because it seemed like it would meet all of our foreseeable needs without any significant per-user costs. 
 
@@ -63,19 +65,23 @@ I'm actually not thrilled with this solution, as it currently leads to stale use
 
 **Dan:** How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
 
-**Trevor:** We run FusionAuth on AWS ECS using the official Docker image with AWS RDS (MySQL 8) as the database. (We were using AWS Elasticsearch Service for the search provider, but dropped that aspect as soon as we were able. I don't think we generally use search features of FusionAuth, though we may need to revisit that when we have more users.) We're currently running two instances load-balanced by AWS ALB.
+**Trevor:** We run FusionAuth on AWS ECS using the official Docker image with AWS RDS (MySQL 8) as the database. (We were using AWS Elasticsearch Service for the search provider, but dropped that aspect as soon as we were able. I don't think we generally use the search features of FusionAuth, though we may need to revisit that when we have more users.) We're currently running two instances load-balanced by AWS ALB.
 
 > We eventually want to scale to millions of consumers, many of whom will likely use our service for free, so the per-user costs of other auth platforms seemed prohibitive, especially for a bootstrapped start-up.
 
 **Dan:** Any general feedback/areas to improve?
 
-**Trevor:** I've been quite happy with the core functionality and API, as well as the support and community responsiveness on Slack and the forums. The minor issues I've had so far, from most important to least:
+**Trevor:** I've been quite happy with the core functionality and API, as well as the support and community responsiveness on Slack and the forums. 
 
-* There is no official support for zero-downtime upgrades. Downtime causes us contractual headaches around SLAs and personal headaches around performing upgrades during the middle of the night on a weekend. I've done this successfully at my own risk, but it will make me increasingly nervous. This feature seems doable, even in the face of schema upgrades, with some constraints (both for FA and its users) on consecutive versions.
-* As a Java-based service, the memory demands are relatively high and insufficient memory results in a JVM crash. I know [more recent JVMs](https://medium.com/adorsys/usecontainersupport-to-the-rescue-e77d6cfea712) have better support for running in a container (i.e. no more `-Xmx`), so it would be nice to see FusionAuth support this (no more `FUSIONAUTH_MEMORY`) and degrade more gracefully (fail individual operations instead of the whole JVM).
-* Better clarity about what features need or benefit from Elasticsearch, so I can know whether I really need the expense and burden of running it. (Recommended production configurations start at around $400/mo on AWS.)
+The minor issues I've had so far, from most important to least:
+
+* There is no official support for zero-downtime upgrades. Downtime causes us contractual headaches around SLAs and personal headaches around performing upgrades during the middle of the night on a weekend. I've done this successfully at my own risk, but it will make me increasingly nervous. This feature seems doable, even in the face of schema upgrades, with some constraints (both for FA and its users) on consecutive versions. _[Editor's note: [an issue](https://github.com/FusionAuth/fusionauth-issues/issues/1240) was filed based on this feedback.]_
+* As a Java-based service, the memory demands are relatively high and insufficient memory results in a JVM crash. I know more recent JVMs have better support for running in a container (i.e. no more `-Xmx`), so it would be nice to see FusionAuth support this (no more `FUSIONAUTH_MEMORY`) and degrade more gracefully (fail individual operations instead of the whole JVM). _[Editor's note: you can also use the `FUSIONAUTH_APP_ADDITIONAL_JAVA_ARGS` variable to tweak the Java settings.]_
+* Better clarity about what features need or benefit from Elasticsearch, so I can know whether I really need the expense and burden of running it. (Recommended production configurations start at around $400/mo on AWS.) _[Editor's note: you can review the differences between the [database search engine and the Elasticsearch engine](/docs/v1/tech/core-concepts/users/#user-search).]_
 * The FusionAuth UI is a bit dated looking and not always intuitive or ergonomic. For example, most of the useful operations on a table view involve tiny buttons on the right edge.
-* Make the FA core open source so users can better debug issues, more people can audit security, the community can work on issues that aren't a priority for the company, etc.
+* Make the FA core open source so users can better debug issues, more people can audit security, the community can work on issues that aren't a priority for the company, etc. _[Editor's note: you can read more about [FusionAuth and open source](https://fusionauth.io/community/forum/topic/22/why-isn-t-fusionauth-open-source).]_
+
+**Dan:** Great, thanks for the feedback!
 
 -------
 
