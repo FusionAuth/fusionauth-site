@@ -16,6 +16,12 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
 - If something is new in a version, mark it with something like this:
+- Please document all redirects as follows in the top of each doc page.
+
+```javascript
+  redirect_from:
+- /docs/v1/tech/common-errors/
+```
 
   [NOTE.since]
   ====
