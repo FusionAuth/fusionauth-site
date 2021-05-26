@@ -47,6 +47,7 @@ function usage() {
    -s  Silent mode
    -t  Use TinyPNG API instead of pngquant library
    -d  Move screenshots to given folder
+   -x  How far to move the safari window on the x axis (number). Default is 640
    -h  Print this usage
 HELP_USAGE
   exit 0;
@@ -56,13 +57,17 @@ HELP_USAGE
 silent="no"
 useTP="no"
 destination=""
-while getopts ":std:h" options; do
+xAxis=640
+while getopts ":stx:d:h" options; do
     case "${options}" in
         s)
             silent="yes"
             ;;
         t)
             useTP="yes"
+            ;;
+        x)
+            xAxis=${OPTARG}
             ;;
         d)
            destination=${OPTARG}
@@ -127,7 +132,7 @@ set screenHeight to item 4 of screenResolution
 tell application theApp
 	activate
 	reopen
-	set xAxis to 640
+	set xAxis to $xAxis
 	set yAxis to 360
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
