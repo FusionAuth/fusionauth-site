@@ -5,7 +5,7 @@ description: You can use FusionAuth LDAP connectors to authenticate users agains
 author: Dan Moore
 image: blogs/active-directory-connector/authenticating-with-aws-managed-microsoft-active-directory-and-ldap.png
 category: blog
-tags: feature-connectors feature-ldap client-netcore
+tags: feature-connectors feature-ldap client-netcore tutorial tutorial-reactor-feature 
 excerpt_separator: "<!--more-->"
 ---
 
