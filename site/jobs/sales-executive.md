@@ -32,7 +32,7 @@ Your responsibilities will include:
 * Demonstrate a clear understanding of the FusionAuth sales process
 * "Live" in HubSpot and implement prospecting strategies while providing accurate forecasts to the team
 * Engage with technical and non-technical employees of prospective customers at various levels and build a strong value proposition for FusionAuth
-* Engage with the FusionAuth Slack community and StackOverflow community
+* Engage with the FusionAuth community in Slack, StackOverflow and elsewhere
 * Work directly with the FusionAuth marketing and engineering teams to build sales campaigns that target developers
 
 ### Requirements
