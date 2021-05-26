@@ -56,5 +56,6 @@ The requirements for this position include:
 * **OTE range:** $100,000 to $150,000 (uncapped with accelerators)
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
+* **401k:** Yes!
 * **Stock options:** Yes!
 * **Vacation:** Flexible! Take what you need. :)
