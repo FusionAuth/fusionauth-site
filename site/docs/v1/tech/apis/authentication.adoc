@@ -6,124 +6,161 @@ description: Learn how the FusionAuth APIs authenticate requests
 
 == Overview
 
-The FusionAuth APIs are primarily secured using API keys, a few APIs may optionally take a JWT. Below you will find a detailed explanation of each type of authentication used in the API documentation.
+The FusionAuth APIs are primarily secured using API keys. A few APIs may use alternate credentials, such as a JWT, basic authentication. Certain APIs are accessible with no authentication. All secured APIs will return an `401 Unauthorized` response if improper credentials are provided.
+
+Each API endpoint is marked with an icon describing supported authentication methods:
 
 * icon:lock[type=fas] &nbsp;<<API Key Authentication>>
+* icon:shield-alt[type=fas] &nbsp;<<Basic Authentication With an API Key>>
 * icon:id-badge[type=fas] &nbsp;<<JWT Authentication>>
 * icon:unlock[type=fas] &nbsp;<<No Authentication Required>>
 
-{nbsp} +
+You can also learn about:
 
-API keys must be created in the FusionAuth admin user interface, this function is not available through an API for security reasons. To manage API keys navigate to [breadcrumb]#Settings -> API Keys#.
+* <<Managing API Keys>>
+* <<Making an API Request Using a Tenant Id>>
+
+Below you will find a detailed explanation of each type of authentication used in the API documentation.
+
+== API Key Authentication
+
+When an API is marked with a red locked icon such as &nbsp;&nbsp;icon:lock[type=fas,title="Supports API keys"]&nbsp; it means you are required to provide an API key. 
+
+To enable access to a secured API create one or more API keys. The API key is then supplied in the HTTP request using the Authorization header. See <<Managing API Keys>> for more information on adding additional keys.
+
+The following example demonstrates the HTTP Authorization header with an API key of `2524a832-c1c6-4894-9125-41a9ea84e013`.
+
+[source,properties]
+----
+Authorization: 2524a832-c1c6-4894-9125-41a9ea84e013
+----
+
+The following is a curl example using the Authorization header using the above API key to retrieve a user. The line breaks and spaces are for readability.
+
+[source,shell]
+----
+curl -H 'Authorization: 2524a832-c1c6-4894-9125-41a9ea84e013' \
+     'https://local.fusionauth.io/api/user?email=richard@piedpiper.com'
+----
 
 Here's a brief video covering some aspects of API keys:
 
 video::eJWRKjd4DV4[youtube,width=560,height=315]
 
-* <<Manage API Keys>>
-* <<Making an API request using a Tenant Id>>
 
-== API Key Authentication
+== Basic Authentication With an API Key
 
-When an API is marked with a red locked icon such as &nbsp;&nbsp;icon:lock[type=fas] it means you are required to provide authentication.
-FusionAuth primarily controls access to the API through the use of an API key. All secured APIs by default all APIs will return an `401 Unauthorized` response.
+When an API endpoint is marked with a shield such as &nbsp;icon:shield-alt[title="Supports Basic Auth",type=fas]&nbsp; it means you call this API and authenticate using HTTP basic authentication. HTTP basic authentication is a simple, standards based, authentication method. A username and password are supplied, separated by a `:`. It must be prefaced by the string `Basic` and a space. The `username:password` string is base64 encoded.
 
-To enable access to a secured API create one or more API keys in the FusionAuth user interface. The API key is then supplied in the HTTP
- request using the Authorization header.  See <<Manage API Keys>> for more information on adding additional keys.
+In FusionAuth, the username must be the string `apikey` (all lowercase). The password may be any API key with the appropriate permission for the endpoint being called. 
 
-[.example]
---
-The following example demonstrates the HTTP Authorization header with an API key of `2524a832-c1c6-4894-9125-41a9ea84e013`.
+Basic authentication with an API key is used by a select few FusionAuth APIs. These are typically integrated with other software packages which expect to authenticate using basic auth.
+
+[NOTE]
+====
+This authentication method has been available since 1.27.0
+====
+
+=== Authorization Header Examples
+
+The following example demonstrates the HTTP Basic Authorization header. 
 [source,properties]
 ----
-Authorization: 2524a832-c1c6-4894-9125-41a9ea84e013
+Authorization: Basic YXBpa2V5OjY5Y1dxVW8wNGhpNFdMdUdBT2IzMmRXZXQwalpkVzBtSkNjOU9yLUxEamNIUXFMSzJnR29mS3plZg==
 ----
---
 
-[.example]
---
-The following is a cURL example using the Authorization header using the same API key as above with line breaks and spaces for readability.
+The following is a curl example using the HTTP Basic Authorization header with a line break and spaces for readability.
 [source,shell]
 ----
-curl -H 'Authorization: 2524a832-c1c6-4894-9125-41a9ea84e013'
-     https://example.fusionauth.io/api/user?email=user@example.com
+curl -X GET  \
+-H 'Authorization: Basic YXBpa2V5OjY5Y1dxVW8wNGhpNFdMdUdBT2IzMmRXZXQwalpkVzBtSkNjOU9yLUxEamNIUXFMSzJnR29mS3plZg==' \
+'https://local.fusionauth.io/api/prometheus/metrics'
 ----
---
 
 == JWT Authentication
 
 When an API is marked with a blue identity icon such as &nbsp;icon:id-badge[title="Supports JWT",type=fas]&nbsp; it means you may call this API without
- an API key but instead provide a JSON Web Token (JWT) pronounced "jot". These APIs may be called with a signed token in place of an API key. A JWT is
- obtained from the Login API. The token will also be provided as an HTTP Only Session cookie. If cookies are being managed for you by the browser or some
- other RESTful client, the JWT cookie will automatically be send to FusionAuth on your behalf and you may omit the `Authorization` header.
+an API key. Instead, provide a JSON Web Token (JWT). A JWT is obtained from the Login API or an OAuth grant. The token will also be provided as an HTTP Only Session cookie. If cookies are being managed for you by the browser or some
+other RESTful client, the JWT cookie will automatically be sent to FusionAuth on your behalf. In this case, you may omit the `Authorization` header.
 
 === Authorization Header Examples
 
-[.example]
---
-The following example demonstrates the HTTP Authorization header using the Bearer schema. Prior to version `1.12.0` only the JWT schema was available.
+The following example demonstrates the HTTP Authorization header using the `Bearer` schema. Prior to version `1.12.0` only the `JWT` schema was available.
+
 [source,properties]
 ----
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo
 ----
---
 
-[.example]
---
-The following is a cURL example using the HTTP Authorization header using the Bearer schema with a line break and spaces for readability. Prior to version `1.12.0` only the JWT schema was available.
+The following is a curl example using the HTTP Authorization header using the Bearer schema with a line break and spaces for readability. Prior to version `1.12.0` only the JWT schema was available.
+
 [source,shell]
 ----
 curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo' \
      https://example.fusionauth.io/api/user
 ----
---
 
 === Cookie Example
 
-If a cookie is provided on a request that accepts an API key or an JWT, the API key will be preferred.
+If a cookie is provided on a request to an endpoint which accepts an API key or an JWT, the API key will be preferred.
 
-[.example]
---
 The following is an HTTP GET request with the JWT Access Token provided as a cookie.
+
 [source,shell]
 ----
 GET /api/user HTTP/1.1
 Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo
 ----
---
 
 == No Authentication Required
 
-When an API that is marked with a green unlocked icon such as &nbsp;icon:unlock-alt[role=green, title="No authentication required",type=fas] it means that you are not
- required to provide an `Authorization` header as part of the request. The API is either designed to be publicly accessible or the request may take a parameter that is itself secure.
+When an API that is marked with a green unlocked icon such as &nbsp;icon:unlock-alt[role=green, title="No authentication required",type=fas]&nbsp; it means that you are not required to provide an `Authorization` header as part of the request. The API is either designed to be publicly accessible or the request may take a parameter that is in itself secure.
 
-== Manage API Keys
+== Managing API Keys
 
 Navigate to [breadcrumb]#Settings -> API Keys# to manage API keys.
 
 Create as many API keys as you like, each one may be optionally limited in ability to minimize security risk.
 
-For example, the User API `/api/user` has four HTTP methods, `GET`, `POST`, `PUT` and `DELETE`. While each API may have different semantics, in a general sense you can think of these four HTTP methods as being retrieve, create, update and delete respectively. With that in mind, if you'd like to create an API key that can only retrieve users, you would limit the API key to the `GET` method on the `/api/user` API.
+For example, the User API `/api/user` has five HTTP methods, `GET`, `POST`, `PUT`, `PATCH` and `DELETE`. While each API may have different semantics, in a general sense you can think of these HTTP methods as being retrieve, create, update, partial update, and delete respectively. With that in mind, if you'd like to create an API key that can only retrieve users, limit the API key to the `GET` method on the `/api/user` API.
 
-When you create an API key the key is defaulted to a secure random value but the API key is simply a string, so you may call it `super-secret-key` if you'd like. However a long and random value makes a good API key in that it is unique and difficult to guess.
+When you create an API key, the key value is defaulted to a secure random value. However, the API key is simply a string, so you may set the key value to `super-secret-key` if you'd like. A long and random value makes a good API key in that it is unique and difficult to guess, so allowing FusionAuth to create the key value is recommended.
+
+=== Managing API Keys via the API
+
+Prior to version 1.26.0, the FusionAuth administrative user interface was the only way to create API keys. This functionality was not available through an API. Starting from version 1.26.0, API keys may be created using an API. Please refer to the link:/docs/v1/tech/apis/api-keys/[API Key API] for more information.
 
 === Create an API Key
 
-image::create-api-key.png[Create an API Key,width=1200,role=shadowed]
+image::create-api-key.png[Create an API Key,width=1200]
 
 ==== Form Fields
 
 [.api]
+[field]#Id#::
+The unique Id of this API key.
+
 [field]#Key#::
-A unique key to be utilized to authorize API requests using the `Authorization` header.
+The unique string representing the API key. This is what is presented in the `Authorization` header for requests to FusionAuth.
 
 [field]#Description#::
-An optional description of how this API key will be utilized.
+An optional description of this API key.
 
 [field]#Tenant#::
-The optional tenant to which this API key will be assigned. This value cannot be changed once the API key is created. This field is only displayed when more than one tenant exists. When you assign an API key to a tenant, you will only be able to operate on users, applications, and groups in the selected tenant.
+The optional tenant to which this API key will be assigned. This value cannot be changed once the API key is created. 
++
+When you assign an API key to a tenant, any requests made with this key will only be able to operate on users, applications, groups, and other entities in the selected tenant.
 
 [field]#Endpoints#::
-Select one or more endpoints this API key will be authorized to access. Selecting no endpoints will authorize this key to all API endpoints.
+One or more endpoints this API key will be authorized to access. 
++
+Selecting no endpoints will *authorize this key for all API endpoints*.
+
+[field]#Key Manager#::
+Enable to have this key be a key manager. When a key is a key manager, it can be used to call the link:/docs/v1/tech/apis/api-keys#[API keys APIs].
++
+Being able to create other API keys via the API is a *privileged operation*. Use it wisely.
++
+Any attempt to call the API Keys API with a non-manager key (`keyManager` set to `false`) will return a HTTP response status code `401`.
 
 include::docs/v1/tech/apis/_tenant-authentication.adoc[]
