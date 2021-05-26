@@ -26,7 +26,7 @@ Your responsibilities will include:
 * Engage with prospective customers through demonstrations, design sessions, architecture reviews, workshops, and on-boarding sessions
 * Assistance prospective customers with FusionAuth configuration, implementation, and deployment
 * Engage with technical and non-technical employees of prospective customers and various levels and build a strong value proposition for FusionAuth
-* Engage with the FusionAuth Slack community and StackOverflow community
+* Engage with the FusionAuth community in Slack, StackOverflow and elsewhere
 * Attend various meetups, conferences, and other events that developers attend to promote and sell FusionAuth   
 * Work directly with the FusionAuth marketing and engineering teams to build sales campaigns that target developers
 
