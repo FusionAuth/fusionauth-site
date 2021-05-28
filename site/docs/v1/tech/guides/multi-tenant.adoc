@@ -27,7 +27,7 @@ There also may be situations where you have settings that need to be different f
 
 XXX TODO?
 
-To make things a bit more concrete, let's use an example. Let's talk about Pied Piper video chat. It will be so much better than Slack chat with patented middle out compression. This application will have multiple tenants. Every one who signs up will get a domain name like `companyx.piedpiper.com`.
+To make things a bit more concrete, let's use an example. Let's talk about Pied Piper Video Chat (or PPVC for short). It will be so much better than Slack chat with patented middle out compression. This application will have multiple tenants. Every one who signs up will get a domain name like `companyx.piedpiper.com`.
 
 Before this guide covers how to set up multi-tenancy, let's cover what can be configured at the tenant level. There are five general categories of modifiable entities in FusionAuth:
 
@@ -101,6 +101,113 @@ The administrative user interface is also shared between tenants. There is no wa
 
 If you need separation of global configuration, or if you need true physical separation due to different regulatory regimes, you can run multiple FusionAuth instances. If you need to sync configuration between them, script your changes using the API, terraform provider, or client libraries.
 
+== Components of a Multi Tenant Setup
+
+While every application is different, there are common components to any multi tenant application.
+
+* The control plane application
+* The data plane application
+* FusionAuth tenants and applications
+* Data plane application tenant determination 
+* Initial and deferred tenant setup component
+* The tenant object
+
+Let's look at each of these briefly. I'll continue to use the example of the video chat application built by the Pied Piper corporation (with inside out compression, of course) to illustrate some of these concepts.
+
+=== The Control Plane Application
+
+When you have a multi tenant SaaS application, you need some way to manage those tenants. Unapologetically borrowing from the https://en.wikipedia.org/wiki/Control_plane[network routing analogy], you need to build a control plane application to manage user and tenant creation. This is also where you can integrate billing and general account management if you are charging for your application.
+
+Pied Piper Video Chat has to have an application of this type, which will let users sign up for Pied Piper Video Chat for their company. They need to be able to do other things like set up the PPVC url for their company, customize it, and set up billing. But this application doesn't need to support the chatting interface. This application is essentially a tenant management portal, where users can modify settings of their tenants.
+
+For PPVC, this will likely be a web application, but the actual implementation details don't really matter for the purposes of multitenancy.
+
+
+=== The Data Plane Application
+
+This is the application that your users want to offer to their users. For PPVC, that is the video chat application. This application will have users with roles and may have payment or other account options as well. But while there may be overlap, the features of this application aren't the same as that of the control plane appliation. For one thing, there is no need to create separate tenants in this application, and the users of the video chat application may be entirely seperate from that of the management application. 
+
+For PPVC, this will likely be a web application, but it could also be a mobile application as well. The actual implementation details don't really matter for the purposes of this document.
+
+Note that the control plane and data plane applications are conceptually different, but do not need to be physically different. You could, in other words, implement them in the same web application. This may make sense to do initially, because there will be database overlap between them. 
+
+As you grow, that may change. They will probably have different SLAs, it might be ok for one of them to have more downtime than the other, and they'll have different features and release cycles. So you can think about splitting them apart at some point. But for an initial implementation, it may be simpler to build them together. That's an implementation choice for you to consider.
+
+
+
+=== FusionAuth Tenants and Applications
+
+For each of the web, mobile or other applications that are built, a corresponding FusionAuth entity should be created.
+
+For example, the control plane application will have a corresponding FusionAuth tenant where the users of the control plane application will be stored. It will also have a FusionAuth application to record the configuration needed to login to that application. 
+
+Because you are building a multi tenant application, each data plane application will have a FusionAuth tenant and a FusionAuth application. 
+
+So, for the Pied Piper Video Chat control plane application, there'd be a tenant. Call it the PPVC tenant. This is where users of the SaaS application would sign up and configure their instance of the video chat application. 
+
+Each time a user signed up and created a new instance, there'd also be a new data plane tenant. Let's say that an employee at Raviga signs up for PPVC. A new FusionAuth tenant will be created for Raviga, and within that tenant a new FusionAuth application. This Raviga tenant would be where all Raviga users of the PPVC would be stored. 
+
+This configuration information must be stored somewhere. The best place is in the PPVC database. The creation of the FusionAuth configuration can, however, be automated.
+
+=== Data Plane Application Tenant Determination 
+
+The data plane application needs to differentiate between the different tenants. If everything is hosted at ppvc.com, there are a few ways to do so:
+
+* The hostname: raviga.ppvc.com would point to the Raviga instance of the application. And hooli.ppvc.com would point to the Hooli instsance. This is similiar to how Slack operates.
+* User choice: The user logs in and is presented with a list of data plane applications to which they can login (or transparently SSO into). In this case, you can present this option in the control plane application.
+* User or request attributes: If there is some way for the system to know which data plane application is associated with the user, the user may not need to be prompted. For instance, if the system can read network or user agent attributes to determine the appropriate data plane application, it should do so. 
+
+In many cases, a hostname is the easiest way to do this differentiation. Using this is memorable to the user, works well with internet standards like cookies, and scales well. That's the approach this document will take.
+
+=== Tenant Setup
+
+When a user signs up in the control plane application and creates a new tenant, there are a number of things that need to happen.
+
+The following configuration needs to occur:
+
+* Hostname setup, which can be handled with DNS wildcarding
+* Creation of a FusionAuth tenant and a FusionAuth application. This will allow the new data plane application to let users log in.
+* Any needed configuration of the data plane application. For example, the PPVC application might allow users at a premium level to have 10 chat rooms, whereas users at the basic level could only have 2. 
+
+Since the new tenant application isn't usable without these configuration settings, they should take place synchronously. 
+
+There is also some optional configuration:
+
+* Creating a user within the FusionAuth tenant for initial sign in.
+* Creating any FusionAuth roles that might be applicable, such as an `admin` role.
+* Customizing the theme of the FusionAuth hosted login pages with items like custom colors and logos.
+
+Since the new tenant application is usable without these changes, they can take place asynchronously. 
+
+=== The Tenant Object
+
+Within your control plane application's datastore, you'll want to store metadata about the tenants. This is useful both for the users to modify their information, for the data plane application to deliver proper functionality, and for reporting as your business grows. 
+
+This tenant object could have customization information.
+
+Here are some attributes you might need in your tenant object if you were implementing multitenancy with FusionAuth:
+
+* Owning user id: which user created this tenant. It could be a one to one, or one to many mapping depending on your needs.
+* Hostname: the user selected hostname to which users of the PPVC chat application for an organization will go. Something like raviga.ppvc.com
+* FusionAuth tenant id: the tenant created in FusionAuth during the setup.
+* FusionAuth client id and client secret: these are used during the login process for the data plane application.
+* Custom attributes such as a logo or background color for the hosted login pages. 
+* An API key and API key id. This is useful if the control plane application needs to modify FusionAuth configuration. This API key could even be exposed to the administrators of the data plane application to, for example, write a script to pull a list of their users.
+
+== Registration and Login Flows
+
+Let's get more concrete. Here are is the registration flow for the control plane application. 
+
+++++
+{% plantuml source: _diagrams/docs/guides/control-plane-registration.plantuml, alt: "Registration process for the control plane application." %}
+++++
+
+Here's the login flow for a data plane application. Note that apart from the lookup of the tenant configuration by hostname, this is a pretty typical Authorization Code grant.
+
+++++
+{% plantuml source: _diagrams/docs/guides/data-plane-login.plantuml, alt: "Login process for the data plane application." %}
+++++
+
 == Example Application
 
 Let's continue to build out our Pied Piper video chat application. Let's talk about what this application needs:
@@ -111,7 +218,7 @@ Let's continue to build out our Pied Piper video chat application. Let's talk ab
 * An API key, tied to a tenant. This will allow users to automate management of any users within their tenant.
 * Video chat functionality.
 
-This guide will build an application meeting all of these requirements, except for the last one. That is left as an exercise for the reader. Here's https://github.com/FusionAuth/fusionauth-example-python-multi-tenant[the GitHub repo] with working code if you'd like.
+This guide will build an application meeting all of these requirements, except for the last one. That is left as an exercise for the reader. Here's https://github.com/FusionAuth/fusionauth-example-python-multi-tenant[the GitHub repo TBD] with working code if you'd like.
 
 === Prerequisites
 
@@ -171,15 +278,211 @@ add a user class
 
 symfony console make:user
 
+Add an authorized redirect URL:
+
 http://localhost:8000/connect/fusionauth/check
 
-Let's add login with FusionAuth, without tenants. We will lay the groundwork for tenants, however.
+Let's add login with FusionAuth, without tenants. 
+
+link https://github.com/FusionAuth/fusionauth-site/pull/699/files
+
+Now that we've logged in with FusionAuth, let's create a form in Symfony to add a tenant. Users can create one tenant.
+
+[NOTE]
+====
+You could create the tenant automatically on user creation using webhooks as well. This would require capturing additional information at registration, which you could do with link:advanced-registration-forms/[Advanced Registration Forms], a reactor feature.
+====
+
+=== Create the Tenant in Symfony
+
+Create an Tenant entity and a one to one relationship between the tenant and the user.
+Add an application id, fusionauth tenant id, api key, hostname and a color. As you build this out, you could add logos or other tenant related information. The user will provide the hostname and the color, the other information will be added before the symfony tenant object is saved.
+
+ 1222  symfony console make:entity Tenant 
+ 1223  php bin/console make:migration
+ 1224  php bin/console doctrine:migrations:migrate
+
+Here's what the Tenant will look like: TBD update!
+
+----
+<?php
+
+namespace App\Entity;
+
+use App\Repository\TenantRepository;
+use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\ORM\Mapping as ORM;
+
+/**
+ * @ORM\Entity(repositoryClass=TenantRepository::class)
+ */
+class Tenant
+{
+    /**
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
+     */
+    private $id;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $applicationId;
+
+    /**
+     * @Assert\NotBlank
+     * @ORM\Column(type="string", length=255)
+     */
+    private $hostname;
+
+    /**
+     * @Assert\NotBlank
+     * @ORM\Column(type="string", length=6)
+     */
+    private $backgroundColorCode;
+
+    /**
+     * @ORM\OneToOne(targetEntity=User::class, inversedBy="tenant", cascade={"persist", "remove"})
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $user;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $fusionAuthTenantId;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $apiKey;
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getApplicationId(): ?string
+    {
+        return $this->applicationId;
+    }
+
+    public function setApplicationId(string $applicationId): self
+    {
+        $this->applicationId = $applicationId;
+
+        return $this;
+    }
+
+    public function getHostname(): ?string
+    {
+        return $this->hostname;
+    }
+
+    public function setHostname(string $hostname): self
+    {
+        $this->hostname = $hostname;
+
+        return $this;
+    }
+
+    public function getBackgroundColorCode(): ?string
+    {
+        return $this->backgroundColorCode;
+    }
+
+    public function setBackgroundColorCode(string $backgroundColorCode): self
+    {
+        $this->backgroundColorCode = $backgroundColorCode;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function getFusionAuthTenantId(): ?string
+    {
+        return $this->fusionAuthTenantId;
+    }
+
+    public function setFusionAuthTenantId(string $fusionAuthTenantId): self
+    {
+        $this->fusionAuthTenantId = $fusionAuthTenantId;
+
+        return $this;
+    }
+
+    public function getApiKey(): ?string
+    {
+        return $this->apiKey;
+    }
+
+    public function setApiKey(string $apiKey): self
+    {
+        $this->apiKey = $apiKey;
+
+        return $this;
+    }
+}
+----
+
+And then add a form
+
+and add the form to the nav when a user is logged in. We'll only be allowing one tenant per user right now.
+
+we'll set up the FusionAuth entities using a pre persist hook, an entity listener and the FusionAuth API.
+
+https://symfony.com/doc/current/doctrine/events.html
+
+
+login and add a key manager key
+
+Pic TBD
+
+create a blueprint tenant. This is where you can create all the settings for your tenants such as password complexity. These will be modifiable by the copied tenants, but will serve as a shortcut for creation.
+
+
+Then update your .env.local with the key and your config/services.yaml to add the key as a parameter and restart symfony.
+
+
+
+
+how do we know what tenant to show?
+hostname mapping.
+
+then update the tenant success field to show the login page
+
+and also an event to add a user
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 configure 
 
 Add a tenant model in symfony.
 
-Add an application id, url and a color. As you build this out, you could add logos or custom urls as well.
 
 Set up an application in FusionAuth, and add the application id and the color "gray" to symfony.
 
@@ -316,3 +619,5 @@ no, you just send the client id, and we know which tenant to holds that client i
 
 
 api key api
+
+is it multi tenant or multitenant or multi-tenant?
