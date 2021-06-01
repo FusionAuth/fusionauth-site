@@ -13,7 +13,7 @@ The FusionAuth community has an active online forum, and I wanted to highlight s
 
 <!--more-->
 
-If you want to participate, you need a free account. Or, check out [the forum](/community/forum/) without signin up to view current discussions. Here are some of the most active forum posts during May 2021.
+If you want to participate, you need a free account. Or, check out [the forum](/community/forum/) without signing up to view current discussions. Here are some of the most active forum posts during May 2021.
 
 ## NextAuth and FusionAuth
 
