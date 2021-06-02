@@ -29,7 +29,7 @@ At the end of the day, naughtly.keller posted a few times about their progress. 
 
 This is the kind of post I love to read. Forums, and learning in public in general, are great venues to share what you are stuck with, what you've tried, and the progress you've made.
 
-## SSO with the Login API
+## Single Sign-On (SSO) with the Login API
 
 Post: [Is there an example of how to authorize a user to an app and allow them to access after using the login API?](https://fusionauth.io/community/forum/topic/1002/is-there-an-example-of-how-to-authorize-a-user-to-an-app-and-allow-them-to-access-after-using-the-login-api)
 
@@ -39,7 +39,7 @@ This discussion covers a lot of ground and includes a great architecture diagram
 
 At the end of the day, fred.fred found a solution which involved making "a host portal site protected by FA login, which will issue the cookies and sessions, to allow access into protected, registered content, after successful login."
 
-## Duplicate key errors
+## Duplicate key errors with an API Gateway
 
 Post: [Facing duplicate key errors on high load](https://fusionauth.io/community/forum/topic/1005/facing-duplicate-key-errors-on-high-load)
 
