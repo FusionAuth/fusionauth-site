@@ -93,7 +93,7 @@ This approach is a logical extension of segment by segment migration. Here, each
 To implement a slow migration, FusionAuth needs to pass the user's auth credentials to the old system and expects the user information which is being migrated. You also need to modify applications to point to FusionAuth before any migration starts. A slow migration has the following benefits.
 
 * Since you are only doing a user migration at the time a user authenticates, the blast radius of a mistake is smaller; it's limited to whoever is logging in.
-* You can upgrade your password hash algorithms transparently without requiring anyone to reset their password. FusionAuth supports a link:/docs/v1/tech/reference/password-encryptors/[number of different algorithms] and you can also link:/docs/v1/tech/plugins/writing-a-plugin/[bring your own] as well.
+* You can upgrade your password hash algorithms transparently without requiring anyone to reset their password. FusionAuth supports a link:/docs/v1/tech/reference/password-hashes/[number of different algorithms] and you can also link:/docs/v1/tech/plugins/writing-a-plugin/[bring your own] as well.
 * You don't have to migrate inactive users; this lets you scrub your user base.
 * You can use this opportunity to contact any dormant application users and encourage them to log in. 
 * There's less downtime during the application cutover because you aren't moving any data, only switching where users authenticate.
@@ -174,7 +174,7 @@ The first is user ids. These identifiers are often referenced by other systems, 
 * If the original system has user ids which are link:/docs/v1/tech/reference/data-types/#uuids[FusionAuth compatible UUIDs], specify that user id when you import each user into FusionAuth.
 * If your user ids are not FusionAuth compatible, store the id in the `user.data` field under a key such as `original_user_id`. You will then be able to search on this value when you need to retrieve a user by their old id.
 
-Next, consider a user's password, and related fields such as a salt or hashing scheme. Dealing with this data depends on your migration approach. For a big bang or segment by segment migration, ensure FusionAuth userstands the original system's hashing algorithm link:/docs/v1/tech/plugins/password-encryptors/[by writing a plugin] if the password was not hashed in one of link:/docs/v1/tech/reference/password-encryptors/[FusionAuth's supported algorithms]. For a slow migration, the password will be available for FusionAuth to hash or re-hash. If you have the user's passwords in plain text, FusionAuth can also hash them on import.
+Next, consider a user's password, and related fields such as a salt or hashing scheme. Dealing with this data depends on your migration approach. For a big bang or segment by segment migration, ensure FusionAuth userstands the original system's hashing algorithm link:/docs/v1/tech/plugins/custom-password-hashing/[by writing a plugin] if the password was not hashed in one of link:/docs/v1/tech/reference/password-hashes/[FusionAuth's supported algorithms]. For a slow migration, the password will be available for FusionAuth to hash or re-hash. If you have the user's passwords in plain text, FusionAuth can also hash them on import.
 
 If you have user data in multiple systems and are planning to merge the data, map the user fields from all the old system datastores. 
 
@@ -338,7 +338,7 @@ done
 
 Consult the link:/docs/v1/tech/apis/users/#import-users[documentation for this API] for more information. 
 
-If the original system hashes passwords using an algorithm other than those link:/docs/v1/tech/reference/password-encryptors/[schemes FusionAuth supports], write and install a link:/docs/v1/tech/plugins/password-encryptors/[custom password hashing plugin]. In either case, specify the encryption scheme in the user import JSON file. 
+If the original system hashes passwords using an algorithm other than those link:/docs/v1/tech/reference/password-hashes/[schemes FusionAuth supports], write and install a link:/docs/v1/tech/plugins/custom-password-hashes/[custom password hashing plugin]. In either case, specify the scheme in the user import JSON file. (It is called an `encryptionScheme` for backwards compatibility, but is actually a hashing scheme.)
 
 In FusionAuth, duplicate emails are not allowed within the same tenant. If you may have duplicate emails, de-duplicate them before importing. If you don't want to do so, set the `validateDbConstraints` property to `true` in the import JSON. When this is done, the import API will return a user friendly error message when duplicate addresses are found. 
 
@@ -474,7 +474,7 @@ include::docs/src/json/users/login-migrated-response.json[]
 
 This is an example of all the JSON data you could return, but you can omit most fields. The only requirement is that either the `username` or the `email` field must be returned.
 
-The password is not included. That password will have been hashed according to your FusionAuth tenant password encryption scheme settings.
+The password is not included. That password will have been hashed according to your FusionAuth tenant password settings.
 
 The generated JWT will be delivered to the client to present to any resource servers (other API servers, etc). For maximum compatibility, it should have link:/docs/v1/tech/apis/jwt/[FusionAuth claim values]. 
 
