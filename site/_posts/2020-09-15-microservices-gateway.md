@@ -5,7 +5,7 @@ description: Implement authentication and authorization using FusionAuth for a g
 author: Tim Kleier
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
 category: blog
-tags: client-javascript
+tags: client-javascript tutorial tutorial-javascript
 excerpt_separator: "<!--more-->"
 ---
 

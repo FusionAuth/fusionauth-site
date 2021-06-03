@@ -5,7 +5,7 @@ description: How can you easily prevent your users from using passwords that hav
 author: Dan Moore
 image: blogs/breached-password-detection/how-to-enable-breached-password-detection-fusionauth.png
 category: blog
-tags: feature-breached-password-detection
+tags: feature-breached-password-detection tutorial tutorial-feature
 excerpt_separator: "<!--more-->"
 ---
 

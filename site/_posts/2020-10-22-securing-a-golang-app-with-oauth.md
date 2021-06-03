@@ -5,7 +5,7 @@ description: Golang lets you build web applications that are performant and easy
 author: Krissanawat Kaewsanmuang
 image: blogs/golang-oauth/securing-a-golang-app-with-oauth.png
 category: blog
-tags: client-go
+tags: client-go tutorial tutorial-go
 excerpt_separator: "<!--more-->"
 ---
 
