@@ -1,7 +1,7 @@
----
+--
 layout: doc
-title: Migration
-description: How to migrate your users to FusionAuth.
+title: Multi-tenant setup
+description: How to run multiple tenants within a single FusionAuth instance
 ---
 :page-liquid:
 
@@ -133,8 +133,6 @@ Note that the control plane and data plane applications are conceptually differe
 
 As you grow, that may change. They will probably have different SLAs, it might be ok for one of them to have more downtime than the other, and they'll have different features and release cycles. So you can think about splitting them apart at some point. But for an initial implementation, it may be simpler to build them together. That's an implementation choice for you to consider.
 
-
-
 === FusionAuth Tenants and Applications
 
 For each of the web, mobile or other applications that are built, a corresponding FusionAuth entity should be created.
@@ -157,7 +155,7 @@ The data plane application needs to differentiate between the different tenants.
 * User choice: The user logs in and is presented with a list of data plane applications to which they can login (or transparently SSO into). In this case, you can present this option in the control plane application.
 * User or request attributes: If there is some way for the system to know which data plane application is associated with the user, the user may not need to be prompted. For instance, if the system can read network or user agent attributes to determine the appropriate data plane application, it should do so. 
 
-In many cases, a hostname is the easiest way to do this differentiation. Using this is memorable to the user, works well with internet standards like cookies, and scales well. That's the approach this document will take.
+In many cases, a hostname is the easiest way to do this differentiation. Using this is memorable to the user, works well with internet standards like cookies, and scales well. That's the approach this guide will take.
 
 === Tenant Setup
 
@@ -208,398 +206,456 @@ Here's the login flow for a data plane application. Note that apart from the loo
 {% plantuml source: _diagrams/docs/guides/data-plane-login.plantuml, alt: "Login process for the data plane application." %}
 ++++
 
-== Example Application
+== Building Required Components
 
-Let's continue to build out our Pied Piper video chat application. Let's talk about what this application needs:
+When building a multi tenant application, you need the following components:
 
-* A way for users to sign up to set up a video chat space. This will include their desired hostname: `companyA.chat.piedpiper.com` or `organizationB.chat.piedpiper.com`.
-* A way for users to sign up for a given video chat space: `companyA.chat.piedpiper.com`.
-* A way for users to log in to a specific video chat space: `companyA.chat.piedpiper.com`.
-* An API key, tied to a tenant. This will allow users to automate management of any users within their tenant.
-* Video chat functionality.
+* Initial FusionAuth configuration of the control plane application.
+* A tenant object in your database, as well as CRUD methods to manage it.
+* A way to create and delete required FusionAuth configuration for the data plane applications.
+* Some way for user login, registration and logout requests to be routed to the correct FusionAuth tenant.
+* The callback handling for the authorization code.
 
-This guide will build an application meeting all of these requirements, except for the last one. That is left as an exercise for the reader. Here's https://github.com/FusionAuth/fusionauth-example-python-multi-tenant[the GitHub repo TBD] with working code if you'd like.
+Let's look at each of these. You can download, review and run a https://github.com/FusionAuth/fusionauth-example-symfony-multitenant[fully functional multi-tenant chat application].
 
-=== Prerequisites
+=== Initial FusionAuth Configuration
 
-This application will be written in using symfony, so you'll need symfony, php and a database. If you don't have that, https://symfony.com/doc/current/setup.html[install symfony], https://www.php.net/manual/en/install.php[php] and https://dev.mysql.com/doc/mysql-installation-excerpt/8.0/en/[mysql]. 
+The control plane FusionAuth application needs to be configured in FusionAuth. You can create this in its own tenant to increase isolation.
+You also need to create a Key Manager API key. Navigate to [breadcrumb]#Settings -> API Keys# and create a global API key. Make sure you enable [field]#Key manager# as this will be used to mint new tenant scoped API keys.
 
-You'll also need to create a mysql user. 
+You should enable the following:
 
+* A redirect URL
+* The authorization code grant
+* Self service registration, if desired
+* Roles, if desired
 
-https://stackoverflow.com/questions/53066962/an-exception-occurred-in-driver-sqlstatehy000-2054-the-server-requested-aut
-After you create the user, convert their password to the legacy password format
+pic TBD
 
-ALTER USER 'username'@'ip_address' IDENTIFIED WITH mysql_native_password BY 'password';
+You also need to create a Key Manager API key. Navigate to [breadcrumb]#Settings -> API Keys# and create a global API key. Make sure you enable [field]#Key manager# as this will be used to mint new tenant scoped API keys.
 
-You'll also need a running FusionAuth instance. Visit the link:/docs/v1/tech/installation-guide/[installation guides] and choose one of the many ways to install it.
+pic TBD
 
+And you'll want to create a separate tenant to serve as a blueprint for all newly created tenants. This is the tenant with the default settings for the data plane FusionAuth tenants. You can set things like email configuration, password complexity and other settings. Of course, you can customize these for each tenant, but having a blueprint to copy makes the initial new FusionAuth tenant setup easier.
 
+pic TBD
 
-=== Setting Up 
+Instead of running through these manually, you can also download this kickstart file and run it using link:/docs/v1/tech/installation-guide/kickstart[Kickstart]. TBD put here: https://github.com/fusionauth/fusionauth-example-kickstart
 
-Create the application.
+=== The Tenant Object
 
+The tenant object lives in your application. This will serve as the storage location for all tenant related information. This includes anything your application needs, such as background color, logo, plan level, or business domain specific data. It also includes FusionAuth specific information such as API keys and OAuth configuration information.
 
-symfony new piedpipervideochat --full 
+Here's a sample tenant table definition:
 
-set up the connection to the database in your .env.local file
+[source,sql,title=Tenant script]
+----
+CREATE TABLE `tenant` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `hostname` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `background_color_code` varchar(6) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fusion_auth_tenant_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `api_key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `api_key_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `client_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `client_secret` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_4E59C462A76ED395` (`user_id`),
+  CONSTRAINT `FK_4E59C462A76ED395` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+----
 
-
-This code is running symfony version 5.2.6, the latest stable release at the time.
-
-cd piedpipervideochat 
-
-require some needed libraries
-composer require symfony/orm-pack; composer require --dev symfony/maker-bundle
-symfony composer require twig
-composer require fusionauth/fusionauth-client
-symfony composer require annotations
-composer require knpuniversity/oauth2-client-bundle
-composer require jerryhopper/oauth2-fusionauth
-
-start a new tab and start the server
-
-symfony server:start
-
-=== Build the Video Application
-
-Let's build the bones of the video application. We won't build a login form, as we'll be using FusionAuth's hosted login pages. But we'll add a home page for the video application, and then a chat page. Building the middle out compression algorithm will be left as an exercise for the user.
-
-Add two controllers to the symfony applicatiion.
-
-symfony add controller home page
-
-symfony add controller chat page
-
-=== Add Login with FusionAuth
-
-add a user class
-
-symfony console make:user
-
-Add an authorized redirect URL:
-
-http://localhost:8000/connect/fusionauth/check
-
-Let's add login with FusionAuth, without tenants. 
-
-link https://github.com/FusionAuth/fusionauth-site/pull/699/files
-
-Now that we've logged in with FusionAuth, let's create a form in Symfony to add a tenant. Users can create one tenant.
+This implementation maps each tenant to a single user, becuase `user_id` is a foreign key into the local `user` table. You could choose to allow users to create multiple tenants as well. You'll need to create a CRUD interface to create this row and populate the application specific fields, such as background color and host. 
 
 [NOTE]
 ====
-You could create the tenant automatically on user creation using webhooks as well. This would require capturing additional information at registration, which you could do with link:advanced-registration-forms/[Advanced Registration Forms], a reactor feature.
+You could use link:advanced-registration-forms/[Advanced Registration Forms], a premium feature, to capture all the needed tenant eetup information, such as hostname, and then use a webhook to create the FusionAuth configuration and the tenant object in your application database too.
 ====
 
-=== Create the Tenant in Symfony
+The hostname is worth emphasizing, since it will come up repeatedly. Remember, this guide is building a video chat application. The hostname is how the application will differentiate between different tenants. raviga.ppvc.com would point to the Raviga instance of the application. And hooli.ppvc.com would point to the Hooli instsance, similiar to how Slack operates.
 
-Create an Tenant entity and a one to one relationship between the tenant and the user.
-Add an application id, fusionauth tenant id, api key, hostname and a color. As you build this out, you could add logos or other tenant related information. The user will provide the hostname and the color, the other information will be added before the symfony tenant object is saved.
+You can either let the user pick the hostname (`raviga`) or assign it (`tenant123`). In either case, it will be prepended to the domain name (`ppvc.com`) for the end user. You could of course also let the user choose an entirely different host (`chat.hooli.com`) and the same principles apply.
 
- 1222  symfony console make:entity Tenant 
- 1223  php bin/console make:migration
- 1224  php bin/console doctrine:migrations:migrate
+The FusionAuth specific fields in this table are:
 
-Here's what the Tenant will look like: TBD update!
+* `fusion_auth_tenant_id`: the UUID representing the tenant.
+* `api_key`: a tenant locked API key.
+* `api_key_id`: the Id of the tenant locked API key. This is useful if you want to manage this API key.
+* `client_id`: the client Id of the data plane FusionAuth application. Used to direct users who are interacting with FusionAuth to the correct client.
+* `client_secret`: the corresponding client secret.
 
+You'll see how to set the FusionAuth specific fields next.
+
+== Updating the Tenant Object With FusionAuth Configuration
+
+Next, you need a way to create and delete required FusionAuth configuration for the data plane applications.
+
+[NOTE]
+====
+You can use link:/docs/v1/tech/client-libraries/[any of the client libraries] to create FusionAuth configuration. This document happens to use PHP, but you should use whatever language suits your project.
+
+Client libraries are used by creating JSON objects as documented by the link:/docs/v1/tech/apis/[APIs] and then calling methods named after the operations in those same document.
+====
+
+This is going to depend on your application framework and requirements. You have a couple of options for calling the FusionAuth APIs to configure the new tenant:
+
+* In the same controller where you create the row in the tenant table, call the APIs.
+* Use a queue. Put a message on the queue when a new tenant row is added, then have a listener retrieve the message and create the configuration.
+* Use a pre-persist method to call the APIs before the tenant is saved.
+
+For the example application, I used the latter method. Before the tenant information is saved to the application database, the FusionAuth APIs are called and the needed FusionAuth configuration is created. What makes sense depends on how many new tenants you expect to be created and how much configuration you need to do. 
+
+The minimal amount of FusionAuth configuration is:
+
+* Creating the tenant. 
+* Setting up a tenant locked API key.
+* Using the new tenant locked API key, create the application.
+* Store off these values in your database.
+
+Let's take a deeper look at each of these.
+
+=== Creating the FusionAuth Tenant 
+
+The easiest way to do this is to pull the blueprint tenant, extract unchanged configuration and then create the new tenant.
+
+Here's some PHP code to do this:
+
+[source,php]
 ----
-<?php
+$fusionauthBase = 'http://login.ppvc.com/'; // or pull from config
+$client = new FusionAuthClient($fusionauthKeyManagerKey, $fusionauthBase);
 
-namespace App\Entity;
-
-use App\Repository\TenantRepository;
-use Symfony\Component\Validator\Constraints as Assert;
-use Doctrine\ORM\Mapping as ORM;
-
-/**
- * @ORM\Entity(repositoryClass=TenantRepository::class)
- */
-class Tenant
-{
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
-    private $id;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $applicationId;
-
-    /**
-     * @Assert\NotBlank
-     * @ORM\Column(type="string", length=255)
-     */
-    private $hostname;
-
-    /**
-     * @Assert\NotBlank
-     * @ORM\Column(type="string", length=6)
-     */
-    private $backgroundColorCode;
-
-    /**
-     * @ORM\OneToOne(targetEntity=User::class, inversedBy="tenant", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $user;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $fusionAuthTenantId;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $apiKey;
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function getApplicationId(): ?string
-    {
-        return $this->applicationId;
-    }
-
-    public function setApplicationId(string $applicationId): self
-    {
-        $this->applicationId = $applicationId;
-
-        return $this;
-    }
-
-    public function getHostname(): ?string
-    {
-        return $this->hostname;
-    }
-
-    public function setHostname(string $hostname): self
-    {
-        $this->hostname = $hostname;
-
-        return $this;
-    }
-
-    public function getBackgroundColorCode(): ?string
-    {
-        return $this->backgroundColorCode;
-    }
-
-    public function setBackgroundColorCode(string $backgroundColorCode): self
-    {
-        $this->backgroundColorCode = $backgroundColorCode;
-
-        return $this;
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    public function getFusionAuthTenantId(): ?string
-    {
-        return $this->fusionAuthTenantId;
-    }
-
-    public function setFusionAuthTenantId(string $fusionAuthTenantId): self
-    {
-        $this->fusionAuthTenantId = $fusionAuthTenantId;
-
-        return $this;
-    }
-
-    public function getApiKey(): ?string
-    {
-        return $this->apiKey;
-    }
-
-    public function setApiKey(string $apiKey): self
-    {
-        $this->apiKey = $apiKey;
-
-        return $this;
-    }
+$result = $client->retrieveTenant($this->blueprintTenantId);
+if (!$result->wasSuccessful()) {
+  $this->logger->error('An error occurred!');
+  $this->logger->error(var_export($result,TRUE));
+  throw new FusionAuthException("Can't save: ".var_export($result,TRUE));
 }
+
+$blueprint_tenant = $result->successResponse;
+
+// pick off what we know we want to minimize forward compatibility issues.
+
+$tenant_object = array();
+$tenant_object["name"] = $tenant->getHostname();
+$tenant_object["themeId"] = $blueprint_tenant->tenant->themeId;
+$tenant_object["issuer"] = 'https://'.$tenant->getHostname().".ppvc.com";
+
+$tenant_email_configuration = $this->convertObjectToArray($blueprint_tenant->tenant->emailConfiguration);
+$tenant_object["emailConfiguration"] = $tenant_email_configuration;
+
+$tenant_jwt_configuration = $this->convertObjectToArray($blueprint_tenant->tenant->jwtConfiguration);
+$tenant_object["jwtConfiguration"] = $tenant_jwt_configuration;
+
+$tenant_externalId_configuration = $this->convertObjectToArray($blueprint_tenant->tenant->externalIdentifierConfiguration);
+$tenant_object["externalIdentifierConfiguration"] = $tenant_externalId_configuration;
+
+$tenant_request = array();
+$tenant_request["tenant"] = $tenant_object;
+
+$result = $client->createTenant('', $tenant_request);
+if (!$result->wasSuccessful()) {
+  $this->logger->error('An error occurred!');
+  $this->logger->error(var_export($result,TRUE));
+  throw new FusionAuthException("Can't save: ".var_export($result,TRUE));
+} 
+
+$new_tenant = $result->successResponse;
+return $new_tenant->tenant->id;
 ----
 
-And then add a form
+In this code, you can see that the following configuration is extracted from the blueprint tenant:
 
-and add the form to the nav when a user is logged in. We'll only be allowing one tenant per user right now.
+* `themeId`
+* `emailConfiguration`
+* `jwtConfiguration`
+* `externalIdentifierConfiguration`
 
-we'll set up the FusionAuth entities using a pre persist hook, an entity listener and the FusionAuth API.
+There are only a few things configured differently. The name of the tenant, which is set to the hostname, and the issuer, which is set to the expected host. At this point, you could also tweak any of these settings as needed. 
 
-https://symfony.com/doc/current/doctrine/events.html
+==== The Tenant Locked API Key
 
+You should set up a tenant locked API key for two reasons:
 
-login and add a key manager key
+* You can use it for all other configuration of this FusionAuth tenant, following the principle of least privilege.
+* You can expose it to your clients to use for their own purposes, such as managing users.
 
-Pic TBD
+You could also create two different tenant locked API keys, one which can create new API keys (a key manager) and one which could be used for internal management of the FusionAuth configuration. Then, if customers needed API keys to do certain tasks such as access user data, you could issue a limited permissions key.
 
-create a blueprint tenant. This is where you can create all the settings for your tenants such as password complexity. These will be modifiable by the copied tenants, but will serve as a shortcut for creation.
+Here's code to create the tenant scoped API key:
 
+[source,php]
+----
+$apikey_object = array();
+$apikey_object["metaData"]["attributes"]["description"] = "API key for ".$hostname;
+$apikey_object["tenantId"] = $fusionauth_tenant_id;
 
-Then update your .env.local with the key and your config/services.yaml to add the key as a parameter and restart symfony.
+$apikey_request = array();
+$apikey_request["apiKey"] = $apikey_object;
 
+$result = $client->createAPIKey('', $apikey_request);
+if (!$result->wasSuccessful()) {
+  $this->logger->error('An error occurred!');
+  $this->logger->error(var_export($result,TRUE));
+  throw new FusionAuthException("Can't save: ".var_export($result,TRUE));
+}
 
+$apikey = $result->successResponse;
 
+return [$apikey->apiKey->id, $apikey->apiKey->key];
+----
 
-how do we know what tenant to show?
-hostname mapping.
+You need to store this key in your application's database. Both the key string and the Id are stored. The key string can be used to make other API calls. The API key id is used to manage the key in the future, if needed.
 
-then update the tenant success field to show the login page
+The next thing you should do after creating the API key is create a new FusionAuth client with the limited key.
 
-and also an event to add a user
+[source,php]
+----
+$fusionauthBase = 'http://login.ppvc.com/'; // or pull from config
+$client = null;
+$client = new FusionAuthClient($fusionauthTenantLockedApiKey, $fusionauthBase);
+----
 
+Then, you want to create the application. Let's look at that next.
 
+==== Creating a FusionAuth Application
 
+[source,php]
+----
+$saasRootDomain = '.ppvc.com'; // or pull from config
+$ppvc_app_base = "https://".$hostname.$saasRootDomain;
 
+$application_object = array();
+$application_object["name"] = "Default application for ".$hostname;
 
+$application_oauthconfiguration = array();
+$application_oauthconfiguration["authorizedRedirectURLs"] = [$ppvc_app_base."/login/callback"];
+$application_oauthconfiguration["enabledGrants"] = ["authorization_code"];
+$application_oauthconfiguration["logoutURL"] = $ppvc_app_base;
+$application_object["oauthConfiguration"] = $application_oauthconfiguration;
 
+$application_registrationconfiguration = array();
+$application_registrationconfiguration["enabled"] = true;
+$application_object["registrationConfiguration"] = $application_registrationconfiguration;
 
+$application_request = array();
+$application_request["application"] = $application_object;
 
+$result = $client->createApplication('', $application_request);
+if (!$result->wasSuccessful()) {
+  $this->logger->error('An error occurred!');
+  $this->logger->error(var_export($result,TRUE));
+  throw new FusionAuthException("Can't save: ".var_export($result,TRUE));
+}
 
+$application = $result->successResponse;
 
+return [$application->application->id, $application->application->oauthConfiguration->clientSecret];
+----
 
+Here you are creating an application. You can see that there is an application base url, something like `https://raviga.ppvc.com`, which is built. Next you need to configure various parts of the OAuth config.
 
+First, configure the OAuth portion of the application. 
 
+* Enable the authorization code grant with the `enabledGrants` field. (Here's an link:/docs/v1/tech/oauth/#example-authorization-code-grant[example authorization code grant]).
+* Set up the `logoutURL`. This is where FusionAuth will send the user after they have logged out.
+* Set up the `authorizedRedirectURLs`. These are URLs to which FusionAuth will send the authorization code. The controller here should exchange that code for a token. At this point the user is logged in.
 
+Remember, this is going to represent `raviga.ppvc.com`, and so the Raviga users will need to be created in this tenant in some fashion. You could:
 
-configure 
+* Allow users to sign in with a social provider.
+* Create users via the API through an automated process.
+* Allow users to sign in with a enterprise provider such as an OAuth or SAML compliant identity provider.
+* Let users sign up for an account with basic or advanced registration forms.
 
-Add a tenant model in symfony.
+Here, self service registration is enabled for this application. Any of these will work, though. If you choose a different one, you'd use different API calls to configure the application or other parts of FusionAuth. For instance, if you wanted to allow anyone to sign in with Google, you'd have to create an identity provider in the <<Initial FusionAuth Configuration>>, and then assigned the identity provider to the created FusionAuth application.
 
+Finally you are going to need the application's Id, which corresponds to the OAuth client Id, and the application's client secret, which corresponds to the OAuth client secret. These values should be stored in your application's database, just like you stored the API key.
 
-Set up an application in FusionAuth, and add the application id and the color "gray" to symfony.
+==== Other FusionAuth Configuration
 
-add symfony routes to send people to login and logout, and send to chat page
+The above is all that is required to let users log in to and register for the new FusionAuth tenant. Other FusionAuth actions you might want to take:
 
-Have a user login by going to the
+* Add a user or set of users and register the for the new application.
+* Set up roles.
+* Set up groups.
+* Assign users to groups and roles.
+* Set up specific FusionAuth API keys with limited permissions for certain purposes.
 
-=== Manually Set up a Tenant
+== Routing Requests to the Correct Tenant
 
-Let's test things out by manually creating a tenant.
+As mentioned in <<Data Plane Application Tenant Determination>>, you need to have some way to map from a request to a FusionAuth application. Each FusionAuth application lives in one and only one tenant, so mapping to the application is an easy way to map to a tenant. There may be situations where you want to map directly to the tenant and then perhaps offer a list of applications to sign in to, but that is beyond the scope of this guide.
 
-Add them to the symfony system
-create the tenant object
+Typically the hostname is used to determine the tenant. So `raviga.ppvc.com` points to the Raviga tenant and `hooli.ppvc.com` points to the Hooli tenant. 
 
-Do the fusionauth stuff
-create a tenant 
-create an application
-create an application
-enable self service registration
-create a user
-create a tenant scoped API key
-copy the theme
+=== Configure DNS and Your Web Server to Handle Wildcard Domains
 
-modify the color
-body { background-color: red; }
+You need to configure your DNS and web application web server to send all requests to a host ending in `.ppvc.com` to your web application. How to do so varies depending on your DNS provider and web application server.
 
-update the tenant object
+Consult your DNS provider documentation on how to point a wildcard DNS entry to a given host. 
 
-log the user in
+If you are developing locally, you can add multiple hostnames to your `/etc/hosts` file. 
 
-add registration link
+[source]
+----
+127.0.0.1       localhost app.ppvc.com raviga.ppvc.com hooli.ppvc.com
+----
 
-=== Automate it
+Here's an example Apache configuration to send traffic for multiple ppvc.com addresses to a given web server. Consult your web server documentation for appropriate configuration.
 
-create a key manager API key
-- use this to create a tenant scoped API key
-create a none key manager API key
-- use this for the automation, and limit the permissions
+[source]
+----
+<VirtualHost *:443>
+  ServerName app.ppvc.com
+  ServerAlias *.ppvc.com
 
-do the following steps above by using the api. do a syncrhonous webhook (with note that you might want it to be async later)
+  ProxyPreserveHost on
+  ProxyPass / http://localhost:8000/ retry=1
+  ProxyPassReverse / http://localhost:8000/ retry=1
+</VirtualHost>
+----
 
+=== Look Up the OAuth Configuration Based On the Hostname
 
-END
+Once the request is recieved by your web application, you previously stored the hostname and the client Id/secret in the tenant table in your database. When a request comes in for a login (to `https://raviga.ppvc.com/login`, for example), you can map from the hostname (`raviga`) to the appropriate client Id. Here is sample code:
 
-=== Setting Up FusionAuth Tenants
+[source,php]
+----
+$client_id = ''; 
+$client_secret = '';
+    
+if ($this->isControlPlaneHost($host)) { 
+  $client_id = $this->controlPlaneClientId;
+  $client_secret = $this->controlPlaneClientSecret;
+} else { 
+  $hostname = $this->hostname($host); // converts from raviga.ppvc.com to raviga
+  $repository = $this->entityManager->getRepository(Tenant::class);
+  $tenant = $repository->findOneBy(array('hostname'=>$hostname));
+  if ($tenant) { 
+    $client_id = $tenant->getApplicationId();
+    $client_secret = $tenant->getClientSecret();
+  } else { 
+    // throw an error, this is not a valid hostname. Doing so will allow an attacker to enumerate your supported hostnames, however.
+  }
+} 
+return [$client_id, $client_secret];
+----
 
-Let's manage FusionAuth configuration using the php client and doctrine migrations. 
+There are a couple of items worth pointing out here.
 
-First, log in to FusionAuth and create an API key. You can do this by navigating to [breadcrumb]#Settings -> API Keys#. Add a global API key with unlimited permissions, since any kind of configuration may be set here.
+First, the code checks to see if the host matches the control plane application. Remember, in this particular multi-tenant application, the web application responds to all requests for any users, both those creating video chat tenants and the users of those video chat tenants. The OAuth config for the former is static and was created in the <<Initial FusionAuth Configuration>>. The latter is dynamic, stored in the database and was created in <<Creating a FusionAuth Application>>.
 
-TBD image
+For the latter situation, you look up the tenant object by the hostname and return the client Id and client secret.
 
-Add the value to your .env.local file
+This is then used to create the login, logout and registration links. These links can be placed in your application's navigation or any other location where the user might want to login and log out.
 
-```
-FUSIONAUTH_API_KEY=...
-```
+Let's look at those next.
 
-then add the followign to your config/services.yaml
+=== Create the Links
 
-```yaml
-parameters:
-    fusionauth_api_key: '%env(FUSIONAUTH_API_KEY)%' # new line
-```
+The sample application leverages an open source library for managing and creating OAuth URLs. You'll need to provide the `client_id`. This library handles setting the `state` parameter and other niceties. If your web application framework or language has this type of library, using it is highly recommended. 
 
-This lets us pull the API key from the environment, which is less dangerous than checking it in.
+However the login link generating function can be as simple as this:
 
-FusionAuth ships with a default tenant, but to have full separation, let's add a new tenant. 
+[source,php]
+----
+$redirectURI = '...'; // discussed below.
+$fusionauthBase = 'http://login.ppvc.com/'; // or pull from config
+return $fusionauthBase . '/oauth2/authorize?client_id='.$client_id.'&redirect_uri='.$redirectURI.'&response_type=code'
+---
 
+The registration URL is the same format, but uses the path `/oauth2/register` instead of `/oauth2/authorize`.
 
-generate an empty migration
+[source,php]
+----
+$redirectURI = '...'; // discussed below.
+$fusionauthBase = 'http://login.ppvc.com/'; // or pull from config
+return $fusionauthBase . '/oauth2/register?client_id='.$client_id.'&redirect_uri='.$redirectURI.'&response_type=code'
+---
 
-php bin/console doctrine:migrations:generate 
+Finally, the logout URL. Because we configured the `logoutURL` of the FusionAuth application, FusionAuth will redirect the user to the proper location after logging the user out of FusionAuth. All you need to provide is the `clientId`.
 
-you should see output like
+[source,php]
+----
+$fusionauthBase = 'http://login.ppvc.com/'; // or pull from config
+$fusionauthBase.'/oauth2/logout?client_id='.$clientId;
+----
 
- Generated new migration class to "/Users/dan/work/fusionauth-example-python-multi-tenant/piedpipervideochat/migrations/Version20210401222131.php"
- 
- To run just this migration for testing purposes, you can use migrations:execute --up 'DoctrineMigrations\Version20210401222131'
- 
- To revert the migration you can use migrations:execute --down 'DoctrineMigrations\Version20210401222131'
+You can then use these functions whenever you present a login, registration or logout link. 
 
-edit migrations/Version20210401222131.php
+== Handling OAuth Callbacks 
 
-and add in this code
+The final piece is handling the OAuth callbacks. You may recall that in the <<Creating a FusionAuth Application>> section, you configured a FusionAuth application with a given `authorizedRedirectURLs` value. It was something like: `https://raviga.ppvc.com/login/callback`.
 
-...
+You must create a part of your web application that responds to that path. It will need to do the following things:
 
-You can then run this to see the status of the migration
+* Determine what the correct tenant is so you can use the correct client Id and client secret.
+* Exchange the authorization code for a token.
+* Log the user into your web application.
 
-php bin/console doctrine:migrations:status
+Let's look at each of these.
 
-and this to run it:
+=== Determine the Tenant's OAuth Configuration
 
-php bin/console doctrine:migrations:execute
+This is exactly the same as the <<Look Up the OAuth Configuration Based On the Hostname>> step.
 
-This will let you manage the configuration of your FusionAuth server in a version controlled manner.
+=== Exchange the Authorization Code
 
+You should leverage the OAuth libraries available. You can also use the FusionAuth client library as well:
 
-New tenant with one application created on registration via webhook, new theme, and update CSS for the theme.
+[source,php]
+----
+$fusionauthBase = 'http://login.ppvc.com/'; // or pull from config
+$noApiKeyNeeded = '';
+$client = new FusionAuthClient($noApiKeyNeeded, $fusionauthBase);
 
-Also map 
+$result = $client->exchangeOAuthCodeForAccessToken($code, $client_id, $client_secret, $redirect_uri)
+if (!$result->wasSuccessful()) {
+  $this->logger->error('An error occurred!');
+  $this->logger->error(var_export($result,TRUE));
+  throw new FusionAuthException("Can't save: ".var_export($result,TRUE));
+}
 
+$oauthResult = $result->successResponse;
 
+$token = $oauthResult->access_token;
+----
 
+=== Log the User In
 
-Python application handing the tenant hostnames as well as the oauth redirects.
+At this point you have an access token. You can examine it to see if the user is authorized for this FusionAuth application. You can also examine the roles assigned to this user in FusionAuth. 
 
-== Tenant Level Customization
+You should create a login session in your application. This is framework specific, so is left as an exercise for the reader.
 
-Customization available
-Pretty much everything. Here are the high points.
-Themes
-Should probably customize them some.
-Registration forms (with advanced reg forms)
-Password rules
-Social sign on
+You can also create or update a local user record. This can be useful if there are other parts of the application which will be tied to a user. For example, if you are going to store video chat metadata, you will want to tie the chat to each user. If you wanted to let users send video messages, you'd want to have a `messages` table referencing each user id. You can use the FusionAuth UUID provided, or you could use an internal id. Your user should store the FusionAuth user Id in the web application database. This will make correlating the two sets of data easier.
+
+After this you can redirect to the chat page for the data plane applications or a user profile page for the control plane applicatoin. Again, you can distinguish between these by checking the hostname.
+
+== Gotchas
+
+After you've set this up, there's still a fair bit more to do to build a professional grade multi-tenant SaaS application, but you have a solid foundation.
+
+Other items to consider:
+
+* Should you split out the code for control plane application (which lets users create tenant applications) and the data plane applications (the application which actually lets users use the SaaS functionality, such as a pied piper vide chat)? Both of these applications will be using the `tenant` object (the control plane to write it, the data plane to read it), so you'll need to either share a database or have some other way of syncing up that data. If you use the same web application, you'll want to gate which controllers are available based on whether the control plane or a data plane application is executing. 
+
+* Email addresses for your local user object. Often times a web framework will want a unique email address for the local user record. But FusionAuth tenants have a separate userspace. I can sign up for raviga.ppvc.com and hooli.ppvc.com with the same richard@fusionauth.io address. To address this, you can either use a compound key for the email address, or you can prepend the FusionAuth user id which is guaranteed to be unique, or you could set up some other unique string. This means that when you want to present the user's email address, either to them or for reporting or marketing purposes, you'll need to retrieve it from FusionAuth.
+
+* You should handle tenant deletion as well as creation. When a user deletes their account, you'll want to make a call to FusionAuth to remove the FusionAuth configuration as well. You are able to do that with a call to the link:/docs/v1/tech/apis/tenants/#delete-a-tenant[Delete Tenant API].
+
+
+
+deletion of tenants and api keys
+async configuration setup
+the local user table
+unique email addresses
+mapping to users in your application
+navigation
+single web app or multiple apps
+
+webapp vs fusionauth app? define at beginning
+
 
 == Limits
 Resources, primarily, but we have people running thousands of tenants in FA. 
@@ -613,11 +669,18 @@ social sign on providers (only one of those)
 https://fusionauth.io/community/forum/topic/936/newbie-question-on-urls-for-multitenant-applications
 https://fusionauth.io/community/forum/topic/900/authentication-for-an-application-with-web-client-and-mobile-front-ends/9
 
+https://github.com/fusionauth/fusionauth-issues/issues/91
+
 for fusionauth cloud
 no, you just send the client id, and we know which tenant to holds that client id
 
 
-
-api key api
+QUESTIONS
 
 is it multi tenant or multitenant or multi-tenant?
+
+ppvc.com? piedpipervideochat.com (register the latter)
+
+https://github.com/fusionauth/fusionauth-issues/issues/91
+
+diagram of applications?
