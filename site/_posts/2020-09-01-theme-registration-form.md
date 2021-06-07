@@ -5,7 +5,7 @@ description: Advanced registration forms let you easily build out multi-step reg
 author: Dan Moore
 image: blogs/theming-advanced-forms/how-to-theme-fusionauths-advanced-registration-forms.png
 category: blog
-tags: feature-advanced-registration-forms feature-themes
+tags: feature-advanced-registration-forms feature-themes tutorial tutorial-themes
 excerpt_separator: "<!--more-->"
 ---
 

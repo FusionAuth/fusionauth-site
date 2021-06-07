@@ -5,7 +5,7 @@ description: We all have them. Line of business applications that have their own
 author: Dan Moore
 image: blogs/upgrade-php-application/securing-your-legacy-php-business-application-with-oauth.png
 category: blog
-tags: client-php
+tags: client-php tutorial tutorial-php
 excerpt_separator: "<!--more-->"
 ---
 
