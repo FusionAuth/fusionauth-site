@@ -123,7 +123,7 @@ If the changes are disruptive enough, you may decide you don't want to use third
 
 
 * **Use a non SaaS solution:** SaaS solutions are great, but if you use a non-SaaS solution, where you host it yourself, you have far more control over any changes to functionality. You may have to upgrade for security or contractual reasons, but you'll be able to do it on your timeline, not the acquirer's.
-* **An open-source solution:** You'll still have to manage your own source code. You'll just be using a free and community-driven solution like [Gluu](gluu.org), [Keycloak](https://www.keycloak.org/index.html), or [OpenIAM](https://www.openiam.com/). Your team will have to explore these projects and choose the one that works best for your system.
+* **An open-source solution:** You'll still have to manage your own source code. You'll just be using a free and community-driven solution like [Gluu](gluu.org), [Keycloak](https://www.keycloak.org/index.html), or [OpenIAM](https://www.openiam.com/). Your team will have to [explore these projects](/learn/expert-advice/identity-basics/open-source-vs-commercial/) and choose the one that works best for your system.
 * **In-house custom build solution:** In some rare cases, none of the available solutions will be a good fit for your organization, and you'll decide to build a custom auth system for your product. This will require more resources to achieve but of course, when completed, you'll have a solution that works best for you and can be fine-tuned with more features in the future at your will—something you won't get anywhere else.
 
 ## Conclusion
