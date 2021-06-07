@@ -52,6 +52,7 @@ EncoderDecoder.prototype = {
     }
   }
 };
+
 Prime.Document.onReady(function() {
   new EncoderDecoder();
 });
