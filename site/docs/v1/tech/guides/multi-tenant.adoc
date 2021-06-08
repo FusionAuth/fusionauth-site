@@ -1,27 +1,28 @@
---
+---
 layout: doc
 title: Multi-tenant setup
 description: How to run multiple tenants within a single FusionAuth instance
 ---
+
 :page-liquid:
 
 == Overview
 
-This guide will help you set up a multi-tenant application in FusionAuth. Tenants are logical separations of users, applications and other entities in FusionAuth.
+This guide will help you set up a multi-tenant application in FusionAuth. Tenants allow for logical separation of users, applications and other entities in FusionAuth.
 
 TOC TODO
 
-== Why Multi-Tenant
+== Why Use Multi-Tenancy
 
-There are many reasons why you might be interested in a multi-tenant FusionAuth installation. The overriding reason is the logical separation it provides. While you have only one FusionAuth instance to manage, users, applications, and other entities are logically separated. Even FusionAuth API keys can be tied to tenants. 
+There are many reasons why you might be interested in a multi-tenant FusionAuth instance:
 
-You might be interested in building an application which you'll offer as a SaaS (Software as a Service). In this case, you can private label your application using tenants. All user information within each tenant will be entirely separate.
+* The logical separation. While you have only one FusionAuth instance to manage, users, applications, API keys, and many other configurable entities are logically distinct.
+* You might be interested in building an application which you'll offer as a service, often called SaaS (Software as a Service). In this case, each different customer can be modeled as a tenant. 
+* Managing different deployment environments. For instance, on one FusionAuth instance, you could run integration, user acceptance and developer environments. It's not recommended to run the production on the same instance as other environments, however.
+* Managing multiple developer environments. You also might want to provide a tenant for each developer on a dedicated development server. This would allow developers free reign to add, remove and modify entities in their FusionAuth tenant, while keeping them relatively insulated from each other.
+* You need different tenant level settings for clients. Examples of such settings include password rules, the issuer of JWTs, or webhook transaction levels.
 
-Another use case might be for different environments. For instance, on one FusionAuth instance, you could run integration, user acceptance and developer environments. 
-
-You also might want to provide a tenant for each developer on a dedicated development server. This would allow developers free reign to add, remove and modify entities in their FusionAuth tenant, while keeping them insulated from each other.
-
-There also may be situations where you have settings that need to be different for different sets of users. Examples of such settings include password rules, the look and feel of the login pages, or webhook transaction level.
+FusionAuth's performant, lightweight multi-tenancy
 
 == Multi-Tenant Concepts
 
@@ -644,8 +645,40 @@ Other items to consider:
 
 * You should handle tenant deletion as well as creation. When a user deletes their account, you'll want to make a call to FusionAuth to remove the FusionAuth configuration as well. You are able to do that with a call to the link:/docs/v1/tech/apis/tenants/#delete-a-tenant[Delete Tenant API].
 
+== API Calls
+
+If you are not using a tenant scoped API key, you should provide a tenant Id in all of your API calls. There are cases where the tenant can be inferred from another identifier (such as when you provide an application Id) but there are other times where it cannot (such as when you are creating a user). It's better to be consistent.
+
+Throughout the API documentation, you'll see sections like this which will specify when the header should be used.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-create-operation.adoc[]
 
 
+== Limits
+
+The main limits on tenants in FusionAuth are resources of the underlying server. The tenants are lightweight, but do take some resources. There are FusionAuth instances supporting thousands of FusionAuth tenants. At this scale the FusionAuth administrative user interface runs into some issues, so use one of the link:/docs/v1/tech/client-libraries/[client libraries] to manage the tenants and applications. There's a https://github.com/FusionAuth/fusionauth-issues/issues/374[GitHub issue] to resolve these limits in the administrative user interface.
+
+Another current limitation of FusionAuth with respect to tenants is the ability to limit users who log into the adminstrative user interface to a single tenant. This is not currently supported. There's a https://github.com/fusionauth/fusionauth-issues/issues/91[GitHub issue] to add that feature.
+
+Login records, audit logs and other log files are not separated by tenant. You may be able to query based on tenant or application Ids, but if you need true isolation of log files, you should run separate instances. There's https://github.com/FusionAuth/fusionauth-issues/issues/922[GitHub issue] to address this.
+
+Applications and other tenant scoped entities cannot be shared across tenants. If you need to keep such entities in sync, you can write scripts to sync up the configuration of multiple applications across tenants. For users, you may be able to have users federate to an external identity provider, and enable that provider for applications across tenants. This will allow your external identity provider to be the system of record for your users.
+
+The default tenant, in which the FusionAuth application resides, cannot be removed.
+
+
+== QUESTIONS TBD
+
+is it multi tenant or multitenant or multi-tenant?
+A: it is multi-tenant see https://fusionauth.io/features/architecture/
+
+ppvc.com? piedpipervideochat.com (register the latter)
+
+https://github.com/fusionauth/fusionauth-issues/issues/91
+
+diagram of applications?
+
+TBD
 deletion of tenants and api keys
 async configuration setup
 the local user table
@@ -656,31 +689,5 @@ single web app or multiple apps
 
 webapp vs fusionauth app? define at beginning
 
-
-== Limits
-Resources, primarily, but we have people running thousands of tenants in FA. 
-Access to fusionauth admin ui
-Intermixing of login records/other logs across tenants.
-I’m not aware of any other limits
-
-tenant limitations from the limitations doc
-social sign on providers (only one of those)
-
-https://fusionauth.io/community/forum/topic/936/newbie-question-on-urls-for-multitenant-applications
-https://fusionauth.io/community/forum/topic/900/authentication-for-an-application-with-web-client-and-mobile-front-ends/9
-
-https://github.com/fusionauth/fusionauth-issues/issues/91
-
 for fusionauth cloud
 no, you just send the client id, and we know which tenant to holds that client id
-
-
-QUESTIONS
-
-is it multi tenant or multitenant or multi-tenant?
-
-ppvc.com? piedpipervideochat.com (register the latter)
-
-https://github.com/fusionauth/fusionauth-issues/issues/91
-
-diagram of applications?
