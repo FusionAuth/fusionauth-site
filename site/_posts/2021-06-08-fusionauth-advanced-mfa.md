@@ -20,10 +20,10 @@ FusionAuth Advanced MFA focuses on:
 * **Step Up Authentication** – gives developers the flexibility to layer on added authentication, based on the user’s activity, even after the user is already authenticated; 
 * **Locking Down Factors** – once an authentication factor is added, it cannot be changed without another verified factor. For example, a user’s email can’t be changed until they provide an SMS authentication code; 
 * **Flexible Message Templates** - devs can build their own templates for SMS messages and emails and can localize them to any language they want for any region they serve;
-* **Flexible End Points** – allows developers to customize their MFA. Send messages through emails, SMS apps like Twilio or time-based one-time password solutions such as Google Authenticator. Flexible end points can accommodate new messaging tech as it comes on line, too. 
+* **Flexible End Points** – allows developers to customize their MFA. Send messages through emails, SMS providers like Twilio or time-based one-time password solutions such as Google Authenticator. Flexible end points can accommodate new messaging tech as it comes on line, too. 
 * **Support for Multiple End Users** – supports associating an MFA method with more than one account. Ex: if two or more users share an account, they may all want to be able to receive MFA codes in their email. 
 
-FusionAuth Advanced MFA is available now. Click here for more information: [https://fusionauth.io/docs/v1/tech/apis/two-factor/](/docs/v1/tech/apis/two-factor/)
+FusionAuth Advanced MFA is available now. Click here for more information: [https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication/](/docs/v1/tech/guides/multi-factor-authentication/).
 
 ### About FusionAuth
 
