@@ -49,7 +49,7 @@ Speaking of Identity Providers, this release includes quite a few. The new Ident
 * Sony PlayStation Network
 * Steam
 * Twitch
-* XBox
+* Xbox
 
 {% include _image.liquid src="/assets/img/blogs/release-1-28/new-identity-providers.png" alt="List of available Identity Providers" class="img-fluid" figure=false %}
 
