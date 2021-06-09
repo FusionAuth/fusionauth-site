@@ -1,4 +1,4 @@
-﻿---
+---
 layout: advice
 title: The value of standards-compliant authentication
 description: What are common auth standards and why should you consider using them in your application?
@@ -25,7 +25,7 @@ Why should you consider a standards-based protocol in the first place? There are
 
 ### Security
 
-If you try to build an authentication protocol or procedure—no matter how simple it may seem—you are putting your system at increased risk. It's often said in the context of security, "Don't roll out your own crypto." The same can be said about an authentication protocol primarily used to integrate systems.
+If you try to build an authentication protocol or procedur--no matter how simple it may seem--you are putting your system at increased risk. It's often said in the context of security, "Don't roll out your own crypto." The same can be said about an authentication protocol primarily used to integrate systems.
 
 Standardized auth protocols are like open-source software: You can trust open-source code when other experts have examined how they work and have publicly vetted them. Likewise, standardized auth protocols have been publicly vetted by experts and are openly trusted. Because of this, many organizations will trust _your_ solutions only if you are using standardized protocols such as OAuth and SAML.
 
@@ -69,7 +69,7 @@ Here's a diagram of the "implicit" OAuth flow. The official OAuth terms for diff
 
 {% include _image.liquid src="/assets/img/advice/value-standards/oauth-flow.png" class="img-fluid" alt="The OAuth Authorization Code grant." figure=false %}
 
-Today, it's safer to go with a more secure update to OAuth called [PKCE](https://oauth.net/2/pkce/ "RFC 7636 Proof Key for Code Exchange") (often pronounced "pixie"). Originally intended to enhance OAuth security for mobile applications, it can provide those extra security benefits to all clients using this updated protocol.
+Today, it's safer to go with a more secure update to OAuth called [PKCE](https://oauth.net/2/pkce/) (often pronounced "pixie"). Originally intended to enhance OAuth security for mobile applications, it can provide those extra security benefits to all clients using this updated protocol.
 
 Please don't use the implicit grant, as it is extremely vulnerable to XSS attacks. You can learn more about that in [The Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/#implicit-grant-in-oauth-20).
 
@@ -77,11 +77,11 @@ Please don't use the implicit grant, as it is extremely vulnerable to XSS attack
 
 It is important to understand OAuth is not an authentication protocol. It's an authorization protocol.
 
-> OAuth 2.0 was intentionally designed to provide authorization without providing user identity and authentication, as those problems have very different security considerations that don't necessarily overlap with those of an authorization protocol. –[OAuth.com](https://www.oauth.com/oauth2-servers/openid-connect/authorization-vs-authentication/#:~:text=OAuth%202.0%20was%20intentionally%20designed,those%20of%20an%20authorization%20protocol.)
+> OAuth 2.0 was intentionally designed to provide authorization without providing user identity and authentication, as those problems have very different security considerations that don't necessarily overlap with those of an authorization protocol. -- [OAuth.com](https://www.oauth.com/oauth2-servers/openid-connect/authorization-vs-authentication/#:~:text=OAuth%202.0%20was%20intentionally%20designed,those%20of%20an%20authorization%20protocol.)
 
 Authentication is about _proving you are you_. Authorization is about _delegating access_ or permissions to information.
 
-Historically, OAuth has been used as both a way of dealing with both authentication and authorization. However, OAuth doesn't define a standard way to provide user information to the requester—so every auth implementation is a little bit different. This removes some of the benefits of using a standardized protocol.
+Historically, OAuth has been used as both a way of dealing with both authentication and authorization. However, OAuth doesn't define a standard way to provide user information to the requeste--so every auth implementation is a little bit different. This removes some of the benefits of using a standardized protocol.
 
 Many developers may also assume that obtaining an access token from a third-party service means that your user was authenticated. But that's not true. An access token _could_ be granted to your application even if your user was not authenticated (that's 100% up to the service you are requesting access to). 
 
@@ -143,4 +143,4 @@ You've seen that using a standard authentication protocol is important. It can m
 
 Even better, by using an auth system such as FusionAuth, you don't even need to implement all of these protocols. You can use FusionAuth to manage your user authentication and it comes with support for OAuth, SAML, and OIDC out of the box.
 
- Whatever tools you choose to use, your understanding of when and why OAuth, OIDC, SAML, and FIDO are appropriate can help you choose the best authentication standard for your organization's goals, security posture, finances, and future growth.
+Whatever tools you choose to use, your understanding of when and why OAuth, OIDC, SAML, and FIDO are appropriate can help you choose the best authentication standard for your organization's goals, security posture, finances, and future growth.
