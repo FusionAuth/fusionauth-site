@@ -1,12 +1,12 @@
 ﻿---
 layout: advice
-title: The value of Standards-Compliant Authentication
+title: The value of standards-compliant authentication
 description: What are common auth standards and why should you consider using them in your application?
 author: James Hickey
 image: advice/open-source-vs-commercial/expert-advice-open-source-vs-commercial-auth-providers.png
 category: Identity Basics
-date: 2021-06-07
-dateModified: 2021-06-07
+date: 2021-06-10
+dateModified: 2021-06-10
 ---
 
 Software applications regularly need access to data from other services on behalf of their users. 
@@ -67,7 +67,7 @@ More specifically, OAuth allows an application to securely gain an access token 
 
 Here's a diagram of the "implicit" OAuth flow. The official OAuth terms for different actors in the process are in purple:
 
-[OAuth flow](https://i.imgur.com/oCc4jSN.png)
+{% include _image.liquid src="/assets/img/advice/value-standards/oauth-flow.png" class="img-fluid" alt="The OAuth Authorization Code grant." figure=false %}
 
 Today, it's safer to go with a more secure update to OAuth called [PKCE](https://oauth.net/2/pkce/ "RFC 7636 Proof Key for Code Exchange") (often pronounced "pixie"). Originally intended to enhance OAuth security for mobile applications, it can provide those extra security benefits to all clients using this updated protocol.
 
@@ -97,7 +97,7 @@ While often misunderstood as an authentication protocol, OAuth is not a standard
 
 You've seen that OAuth is a great way to gain access to resources. But it doesn't define a standard way to authenticate your user. [OpenID Connect (OIDC)](https://openid.net/connect/) solves authentication by extending the OAuth 2.0 protocol, what is technically called a "profile" of OAuth.
 
-[OIDC extends OAuth](https://i.imgur.com/5mZp3eq.png)
+{% include _image.liquid src="/assets/img/advice/value-standards/oidc-extends-oauth.png" class="img-fluid" alt="OIDC tokens build on OAuth tokens." figure=false %}
 
 OIDC adds an "ID token" to be returned from the final OAuth request in the flow. This confirms the user was in fact authenticated (unlike the access token, as discussed previously) and also gives you a way to access identity-specific information about the current user. 
 
