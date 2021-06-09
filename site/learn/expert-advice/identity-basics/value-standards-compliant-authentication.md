@@ -1,6 +1,6 @@
 ---
 layout: advice
-title: The value of standards-compliant authentication
+title: The Value of Standards-Compliant Authentication
 description: What are common auth standards and why should you consider using them in your application?
 author: James Hickey
 image: advice/open-source-vs-commercial/expert-advice-open-source-vs-commercial-auth-providers.png
