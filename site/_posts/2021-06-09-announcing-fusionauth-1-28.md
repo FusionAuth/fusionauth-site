@@ -1,11 +1,11 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.28
-description: The FusionAuth 1.28 Release includes application themes, email gating, safe links fixes and more
+description: The FusionAuth 1.28 release includes identity linking, additional Identity Providers, a lambda for the Client Credentials grant and more
 author: Dan Moore
 image: blogs/release-1-28/product-update-fusionauth-1-28.png
 category: blog
-tags: feature-application-themes
+tags: feature-identity-providers feature-client-credentials-grant
 excerpt_separator: "<!--more-->"
 ---
 
