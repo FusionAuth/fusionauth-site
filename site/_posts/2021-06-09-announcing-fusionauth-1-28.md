@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.28
-description: The FusionAuth 1.28 release includes identity linking, additional Identity Providers, a lambda for the Client Credentials grant and more
+description: The FusionAuth 1.28 release includes identity linking, additional identity providers, a lambda for the Client Credentials grant and more
 author: Dan Moore
 image: blogs/release-1-28/product-update-fusionauth-1-28.png
 category: blog
@@ -23,7 +23,7 @@ Previous to this release, whenever a user authenticated via a third party identi
 * A user account would be created in FusionAuth if they didn't exist.
 * If a user account with the email address provided by the IdP existed in the tenant, the user would be associated with that account.
 
-With account linking, the above limitations are removed. You can create an Identity Provider configuration with different behavior. There is now a link between an identity and a user, where before they were treated as a single entity. 
+With account linking, the above limitations are removed. You can create an identity provider configuration with different behavior. There is now a link between an identity and a user, where before they were treated as a single entity. 
 
 Configuration options include:
 
@@ -36,13 +36,13 @@ Configuration options include:
 
 Once a link has been created between the external identity provider and FusionAuth, the linking strategy doesn't apply to future logins.
 
-{% include _image.liquid src="/assets/img/blogs/release-1-28/identity-linking.png" alt="Configuring identity linking on the Google Identity Provider." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/release-1-28/identity-linking.png" alt="Configuring identity linking on the Google identity provider." class="img-fluid" figure=false %}
 
-You can configure linking options for every Identity Provider except for HYPR. This feature is included in the community edition.
+You can configure linking options for every identity provider except for HYPR. This feature is included in the community edition.
 
-## New Identity Providers
+## New identity providers
 
-Speaking of Identity Providers, this release includes quite a few. The new Identity Providers available in FusionAuth version 1.28 include:
+Speaking of identity providers, this release includes quite a few. The new identity providers available in FusionAuth version 1.28 include:
 
 * Epic Games
 * Nintendo (not included in 1.28.0, but planned for a patch release)
@@ -51,9 +51,9 @@ Speaking of Identity Providers, this release includes quite a few. The new Ident
 * Twitch
 * Xbox
 
-{% include _image.liquid src="/assets/img/blogs/release-1-28/new-identity-providers.png" alt="List of available Identity Providers" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/release-1-28/new-identity-providers.png" alt="List of available identity providers" class="img-fluid" figure=false %}
 
-If you are building a game and want to easily integrate with gaming platforms to ease the friction of user registration or login, we have you covered. Using these Identity Providers is a Reactor feature, requiring a paid license.
+If you are building a game and want to easily integrate with gaming platforms to ease the friction of user registration or login, we have you covered. Using these gaming specific identity providers is a Reactor feature, requiring a paid license.
 
 ## A lambda for the Client Credentials grant
 
@@ -80,8 +80,8 @@ Some of the other enhancements included in this release are:
 
 * A reindex API is available. This API rebuilds the Elasticsearch index.
 * The Email Send API now allows an email address in the To field instead of requiring FusionAuth user Ids. You can now use the FusionAuth templating system to send an email to anybody, not just users stored in FusionAuth.
-* The SAML Identity Provider supports any `NameID` format, including `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`, used by Slack.
-* The Google and Facebook Identity Providers can be configured to use either a popup or redirect style login flow. With the redirect style flow, you can use the `idp_hint` parameter to send users directly to Google or Facebook.
+* The SAML identity provider supports any `NameID` format, including `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`, used by Slack.
+* The Google and Facebook identity providers can be configured to use either a popup or redirect style login flow. With the redirect style flow, you can use the `idp_hint` parameter to send users directly to Google or Facebook.
 
 There's a lot more in this release. In total, I counted 18 GitHub issues resolved in the 1.28 release.
 
