@@ -8,7 +8,7 @@ description: How to run multiple tenants within a single FusionAuth instance
 
 == Overview
 
-This guide will help you set up a multi-tenant application in FusionAuth. Tenants allow for logical separation of users, applications and other entities in FusionAuth.
+This guide will help you set up a multi-tenant application in FusionAuth. Tenants allow for logical separation of users, applications and other objects in FusionAuth.
 
 TOC TODO
 
@@ -16,41 +16,46 @@ TOC TODO
 
 There are many reasons why you might be interested in a multi-tenant FusionAuth instance:
 
-* The logical separation. While you have only one FusionAuth instance to manage, users, applications, API keys, and many other configurable entities are logically distinct.
+* The logical separation. While you have only one FusionAuth instance to manage, users, applications, API keys, and many other configurable objects are logically distinct.
 * You might be interested in building an application which you'll offer as a service, often called SaaS (Software as a Service). In this case, each different customer can be modeled as a tenant. 
 * Managing different deployment environments. For instance, on one FusionAuth instance, you could run integration, user acceptance and developer environments. It's not recommended to run the production on the same instance as other environments, however.
-* Managing multiple developer environments. You also might want to provide a tenant for each developer on a dedicated development server. This would allow developers free reign to add, remove and modify entities in their FusionAuth tenant, while keeping them relatively insulated from each other.
+* Managing multiple developer environments. You also might want to provide a tenant for each developer on a dedicated development server. This would allow developers free reign to add, remove and modify objects in their FusionAuth tenant, while keeping them relatively insulated from each other.
 * You need different tenant level settings for clients. Examples of such settings include password rules, the issuer of JWTs, or webhook transaction levels.
 
-FusionAuth's performant, lightweight multi-tenancy
+FusionAuth's performant, lightweight multi-tenancy can help with any of these scenarios.
+
+
+XXX TODO?
+== The PiedPiper Video Chat Application
+
+To make things a bit more concrete, let's use an example. Suppose you wanted to build a Pied Piper Video Chat (or PPVC for short) SaaS application. Similar to Slack, but with a patented middle out compression algorithm. This application will have support multiple different, entirely distinct groups of users. Each user who signs up picks their own hostname, which sets up an application that can be logged into by others. 
+
+The PPVC will charge each instance a rate of $7/user/month. The creator of the PPVC application will be able to pic a hostname and a display background color. If someone from Hooli joins, they'll have `hooli.piedpipervideochat.com`, for example.
+
 
 == Multi-Tenant Concepts
 
-XXX TODO?
+However, before this guide covers how to set up a multi-tenant application with FusionAuth, let's cover what can be configured at the The FusionAuth tenant level. There are five general categories of modifiable objects in FusionAuth:
 
-To make things a bit more concrete, let's use an example. Let's talk about Pied Piper Video Chat (or PPVC for short). It will be so much better than Slack chat with patented middle out compression. This application will have multiple tenants. Every one who signs up will get a domain name like `companyx.piedpiper.com`.
+* Tenant scoped objects
+* Tenant attached objects
+* Application scoped objects
+* Application attached objects
+* Global objects
 
-Before this guide covers how to set up multi-tenancy, let's cover what can be configured at the tenant level. There are five general categories of modifiable entities in FusionAuth:
+A "scoped" object is contained within the enclosing configurable object. If the latter is deleted, the former will be as well. For instance, both users and groups are scoped to a tenant, and when that tenant is deleted, the enclosed users and groups are too. Scoped objects cannot be shared between multiple configuration objects to which they are scoped. If the PPVC application has groups for different user privileges, each tenant needs to have its own group. For example, an "Admin Group" or "Moderator Group" would have to be created in each tenant.
 
-* Tenant scoped entities
-* Tenant attached entities
-* Application scoped entities
-* Application attached entities
-* Global "things"
+An "attached" object, on the other hand, is linked to a different object, but if the latter is deleted, the former still exists. For instance, a signing key, created by using [breadcrumb]#Settings->Key Master#, can be associated with a tenant. When that tenant is deleted, the association is removed, but the signing key remains in the system. 
 
-A "scoped" entity is contained within the enclosing entity, and if the latter is deleted, the former will be as well. For instance, a user is scoped to a tenant, and if that tenant is deleted, the user will be as well. 
+Attached objects can be shared. For example, the PPVC can use the same signing key between the `hooli.piedpipervideochat.com` and the `raviga.piedpipervideochat.com` tenant configurations. In some cases attached objects support overriding configuration for different behavior.
 
-Scoped entities cannot be shared between multiple entities to which they are scoped. If the Pied Piper chat application needs groups for different user privileges, each tenant would have its own "Admin Group", "Moderator Group" and so on.
+TBD extract to share with core concepts?
 
-An "attached" entity is affiliated with an enclosing entity, but if the latter is deleted, the former will continue to exist. For instance, a signing key is associated with a tenant's JWT configuration. If that tenant is deleted, the signing key's association with the tenant is removed, but the tenant is not. 
-
-Attached entities can be re-used between entities. For example, if the Pied Piper chat application needs to add a user privilege claim to a JWT, the same Lambda can be used.
-
-TODO extract to share with core concepts?
+Let's examine each of the above categories.
 
 === Tenant Scoped 
 
-Here is a list of items that are tenant scoped:
+Here is a partial list of tenant scoped objects:
 
 * Users
 * Groups
@@ -60,7 +65,7 @@ Here is a list of items that are tenant scoped:
 
 === Tenant Attached 
 
-Here is a partial list of tenant attached items:
+Here is a partial list of tenant attached objects:
 
 * Email templates (some of them)
 * Forms (some of them)
@@ -72,93 +77,91 @@ Here is a partial list of tenant attached items:
 
 === Application Scoped
 
-Here is a list of application scoped items.
+Here is a partial list of application scoped objects:
 
 * Registrations
 * Roles
 
-Because an application is tenant scoped, the above entities are also scoped to a tenant. They cannot be used across tenants. For example, if a tenant containing the containing application is deleted, the registrations for a given application will also be deleted.
+Since an application is tenant scoped, the above entities are also tenant scoped and cannot be used between different FusionAuth tenants. For example, if an application has an "admin" role, when the tenant containing the application is deleted, the "admin" role is as well.
 
 === Application Attached
 
-Here is a partial list of application attached things:
+Here is a partial list of application attached objects:
 
 * Identity providers
 * Email templates (some of them)
 * Forms (some of them)
 * Lambdas
 
-=== Global Items
+=== Global Objects
 
-There are items global in scope. These are typically scoped under `system` in the API namespace.
+There a few objects which are globally available. These are typically available under the `system` path in the API namespace.
 
 * API Keys (optionally)
-* Login reports?
+* Login reports
 * Logs
+* CORS settings
 
-Additionally, there are configuration settings for CORS which are shared between all the tenants in an instance.
+If you need separation of global configuration, or if you need true physical separation due to different regulatory regimes, run multiple FusionAuth instances. If you need to sync configuration between them, script your changes using the API, terraform provider, or client libraries.
 
-The administrative user interface is also shared between tenants. There is no way to grant access to the FusionAuth administrative user interface but limit the user to a single tenant. There is an https://github.com/FusionAuth/fusionauth-issues/issues/91[open issue].
+== Components of a Multi-Tenant Setup
 
-If you need separation of global configuration, or if you need true physical separation due to different regulatory regimes, you can run multiple FusionAuth instances. If you need to sync configuration between them, script your changes using the API, terraform provider, or client libraries.
+While FusionAuth multi-tenancy can help with many different scenarios, as mentioned above, this section will focus on building out the Pied Piper Video Chat SaaS application.
 
-== Components of a Multi Tenant Setup
-
-While every application is different, there are common components to any multi tenant application.
+Unapologetically borrowing from https://en.wikipedia.org/wiki/Control_plane[network routing], you need to build a control plane application to manage user and tenant creation. This is also where you can integrate billing and general account management if you are charging for your application. Each application actually providing the video chat functionality will be called a data plane application. Here are common components for a multi-tenant application of this type:
 
 * The control plane application
 * The data plane application
 * FusionAuth tenants and applications
 * Data plane application tenant determination 
-* Initial and deferred tenant setup component
+* Initial and deferred tenant setup components
 * The tenant object
 
-Let's look at each of these briefly. I'll continue to use the example of the video chat application built by the Pied Piper corporation (with inside out compression, of course) to illustrate some of these concepts.
+Let's look at each of these briefly. 
 
 === The Control Plane Application
 
-When you have a multi tenant SaaS application, you need some way to manage those tenants. Unapologetically borrowing from the https://en.wikipedia.org/wiki/Control_plane[network routing analogy], you need to build a control plane application to manage user and tenant creation. This is also where you can integrate billing and general account management if you are charging for your application.
+When you have a multi tenant SaaS application, you need some way to manage those tenants. PPVC must have a web or mobile application where users can sign up for Pied Piper Video Chat for their company. The users may be able to do other tasks, like set up the PPVC hostname, customize the look and feel, and set up billing. PPVC needs to charge that $7/user/month fee. But this control plane application doesn't support video chat itself. The control plane application is a tenant management portal.
 
-Pied Piper Video Chat has to have an application of this type, which will let users sign up for Pied Piper Video Chat for their company. They need to be able to do other things like set up the PPVC url for their company, customize it, and set up billing. But this application doesn't need to support the chatting interface. This application is essentially a tenant management portal, where users can modify settings of their tenants.
+For PPVC, this will likely be a web application, but the actual implementation details matter much for the purposes of illustrating multi-tenancy.
 
-For PPVC, this will likely be a web application, but the actual implementation details don't really matter for the purposes of multitenancy.
+=== The Data Plane Applications
 
+Data plane applications offer functionality to PPVC's users users. So Hooli employees will log into `hooli.piedpipervideochat.com` to chat amongst themselves, and Raviga employees will do the same in the `raviga.piedpipervideochat.com` application. Within each data plane application, users can have roles and other accounts options such as payment or language preferences. 
 
-=== The Data Plane Application
+The features of this application aren't the same as that of the control plane application. Tenant management is not part of this application. There may be no overlap in the users of this application and the control plane application either. 
 
-This is the application that your users want to offer to their users. For PPVC, that is the video chat application. This application will have users with roles and may have payment or other account options as well. But while there may be overlap, the features of this application aren't the same as that of the control plane appliation. For one thing, there is no need to create separate tenants in this application, and the users of the video chat application may be entirely seperate from that of the management application. 
+For PPVC, the data plane application will likely be a web application, but it could also be a mobile application as well. The actual implementation details don't really matter for the purposes of this guide.
 
-For PPVC, this will likely be a web application, but it could also be a mobile application as well. The actual implementation details don't really matter for the purposes of this document.
+==== Should You Separate the Control Plane and Data Plane Applications?
 
-Note that the control plane and data plane applications are conceptually different, but do not need to be physically different. You could, in other words, implement them in the same web application. This may make sense to do initially, because there will be database overlap between them. 
+The control plane and data plane applications are conceptually different, but do not need to be physically distinct. You could, in other words, implement them within the same web application. 
 
-As you grow, that may change. They will probably have different SLAs, it might be ok for one of them to have more downtime than the other, and they'll have different features and release cycles. So you can think about splitting them apart at some point. But for an initial implementation, it may be simpler to build them together. That's an implementation choice for you to consider.
+Doing so may make sense initially. There will be database overlap between them and it may be easier to operate a single application than to create two distinct web or mobile applications.
+
+As you grow, you may want to split these apart. They will probably have different SLAs, and they'll have different features and release cycles. For an initial implementation, it will be simpler to build them as a single deployment artifact, and that's what this guide will do.
 
 === FusionAuth Tenants and Applications
 
-For each of the web, mobile or other applications that are built, a corresponding FusionAuth entity should be created.
+For each of the web, mobile or other applications that are built, corresponding FusionAuth configuration objects need to be created. The control plane application will have a corresponding FusionAuth tenant where the users of the control plane application will be stored. It will also have a FusionAuth application object which contains application specific settings, such as whether a user can self register. Each data plane application will also have a FusionAuth tenant and a FusionAuth application. 
 
-For example, the control plane application will have a corresponding FusionAuth tenant where the users of the control plane application will be stored. It will also have a FusionAuth application to record the configuration needed to login to that application. 
+For the PPVC control plane web application, a FusionAuth tenant object and FusionAuth application object must be created. Each time a user signs up and creates a new PPVC host, there'd also be a new data plane tenant. (This is similar to how Slack works--I can create a `dan1234` Slack tenant and someone else can create a `jen1234` Slack tenant.) If an employee at Raviga signs up for PPVC, a new FusionAuth tenant object will be created for Raviga, and within that tenant a new FusionAuth application object. This Raviga tenant would be where all users of the Raviga PPVC application are stored. 
 
-Because you are building a multi tenant application, each data plane application will have a FusionAuth tenant and a FusionAuth application. 
-
-So, for the Pied Piper Video Chat control plane application, there'd be a tenant. Call it the PPVC tenant. This is where users of the SaaS application would sign up and configure their instance of the video chat application. 
-
-Each time a user signed up and created a new instance, there'd also be a new data plane tenant. Let's say that an employee at Raviga signs up for PPVC. A new FusionAuth tenant will be created for Raviga, and within that tenant a new FusionAuth application. This Raviga tenant would be where all Raviga users of the PPVC would be stored. 
-
-This configuration information must be stored somewhere. The best place is in the PPVC database. The creation of the FusionAuth configuration can, however, be automated.
+The mapping between the data plane application configuration and the corresponding FusionAuth tenant and application objects must be stored somewhere. In this example, each data plane application has a hostname and background color, as well as FusionAuth configuration information. This additional metadata should be stored in the application database. This will be looked at more deeply in <<The Tenant Object>> section.
 
 === Data Plane Application Tenant Determination 
 
-The data plane application needs to differentiate between the different tenants. If everything is hosted at ppvc.com, there are a few ways to do so:
+The data plane web application needs to differentiate between the different tenants. If the code is hosted at piedpipervideochat.com, there are a few ways to send users to the appropriate tenant.
 
-* The hostname: raviga.ppvc.com would point to the Raviga instance of the application. And hooli.ppvc.com would point to the Hooli instsance. This is similiar to how Slack operates.
-* User choice: The user logs in and is presented with a list of data plane applications to which they can login (or transparently SSO into). In this case, you can present this option in the control plane application.
-* User or request attributes: If there is some way for the system to know which data plane application is associated with the user, the user may not need to be prompted. For instance, if the system can read network or user agent attributes to determine the appropriate data plane application, it should do so. 
+* The hostname: `raviga.piedpipervideochat.com` points to the Raviga instance of the application. `hooli.piedpipervideochat.com` point to the Hooli instance. As mentioned above, this is similiar to how Slack operates.
+* User choice: A user logs in and is presented with a list of data plane applications to which they can login (or transparently SSO into). In this case, you can present this option in the control plane application. This requires syncing user data between the different tenants.
+* User or request attributes: If there is an attibute of the client or incoming request which can indicate the correct tenant, that can be used to route the user to the correct location. For instance, if the system can read network information or user agent attributes to determine the appropriate data plane application, it should do so. 
 
-In many cases, a hostname is the easiest way to do this differentiation. Using this is memorable to the user, works well with internet standards like cookies, and scales well. That's the approach this guide will take.
+In many cases, a distinct hostname is the easiest way to differentiate. This is memorable to the user, works well with internet standards like cookies, and scales well. That's the approach this guide will take.
 
 === Tenant Setup
+
+STOPPED HERE
 
 When a user signs up in the control plane application and creates a new tenant, there are a number of things that need to happen.
 
@@ -682,3 +685,5 @@ webapp vs fusionauth app? define at beginning
 
 for fusionauth cloud
 no, you just send the client id, and we know which tenant to holds that client id
+
+I don't love objects, but don't want to overload the term entities.
