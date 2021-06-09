@@ -19,7 +19,7 @@ This release contained a number of enhancements and bug fixes. Please see the [r
 
 Previous to this release, whenever a user authenticated via a third party identity provider, there were a few limitations:
 
-* The identity provider needed to to provide an email address.
+* The identity provider needed to provide an email address.
 * A user account would be created in FusionAuth if they didn't exist.
 * If a user account with the email address provided by the IdP existed in the tenant, the user would be associated with that account.
 
@@ -27,12 +27,12 @@ With account linking, the above limitations are removed. You can create an Ident
 
 Configuration options include:
 
-* An anonymous link: always create a link based upon the unique Id returned by the identify provider. A username or email is not required and will not be used to link the user.
+* An anonymous link: always create a link based upon the unique Id returned by the identity provider. A username or email is not required and will not be used to link the user.
 * Create pending link: do not automatically link, instead return a pending link identifier that can be used to link to an existing user. You will then use the Link API to create the link.
 * Link on email, create the user if they do not exist: a user will be created with the email returned by the identity provider if one does not already exist. This is the previous behavior and is the backwards compatible choice.
 * Link on email, do not create the user if they do not exist: only link to an existing user based upon email. A user will not be created in FusionAuth if one does not already exist with email returned by the identity provider.
 * Link on username, create the user if they do not exist: link to an existing user based upon username. A user will be created with the username returned by the identity provider if one does not already exist.
-* Link on username, do not create the user if they do not exist: only link to an existing user based upon username. A user will not be created if one does not already exist with username returned by the identity provider.
+* Link on username, do not create the user if they do not exist: only link to an existing user based upon username. A user will not be created if one does not already exist with the username returned by the identity provider.
 
 Once a link has been created between the external identity provider and FusionAuth, the linking strategy doesn't apply to future logins.
 
