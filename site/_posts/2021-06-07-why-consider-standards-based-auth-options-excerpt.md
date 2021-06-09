@@ -1,11 +1,10 @@
 ﻿---
 layout: blog-post
 title: Why use a standardized auth protocol?
-description: Top highlights from the FusionAuth forum in May.
+description: What are the main reasons you should think about using a standarized authentication and authorization protocol such as OAuth?
 author: James Hickey
-image: blogs/may-2021-forum-highlights/nextauth-sso-with-the-login-api-and-duplicate-key-errors-header-image.png
+image: blogs/why-use-standardized-auth-protocol/why-use-a-standardized-auth-protocol-header-image.png
 category: blog
-tags: topic-forum-posts
 excerpt_separator: "<!--more-->"
 ---
 
