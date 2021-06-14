@@ -1,6 +1,6 @@
 ---
 layout: doc
-title: Multi-tenant setup
+title: Multi-tenancy in FusionAuth
 description: How to run multiple tenants within a single FusionAuth instance
 ---
 
@@ -63,7 +63,7 @@ The strengths of physical separation include:
 
 * Each tenant can live in different geographies, which may be required for compliance or data sovereignty.
 * Downtime for one tenant doesn't affect others.
-* There is no possiblility intermixing of user data.
+* There is no possibility of intermixing of user data.
 * Clients can live on different versions of your software and upgrades can be managed by them.
 
 However, there are some downsides:
@@ -82,7 +82,7 @@ The logical approach has the following benefits:
 
 There are issues with this approach as well:
 
-* It is more difficult, to have tenants on different versions. You can do this with feature flags or other custom coding; check out how https://stripe.com/blog/api-versioning[Stripe versions their APIs] for an example.
+* It is more difficult to have tenants on different versions. You can do this with feature flags or other custom coding; check out how https://stripe.com/blog/api-versioning[Stripe versions their APIs] for an example.
 * One tenant's traffic can affect other tenants; this is also known as the noisy neighbor problem.
 * Hosting data in different geographies becomes complex.
 
@@ -90,9 +90,9 @@ This guide will be discussing logical isolation of tenants. If you need physical
 
 == The PiedPiper Video Chat Application
 
-To make things a bit more concrete, let's use an example. Suppose you wanted to build a Pied Piper Video Chat (or PPVC for short) SaaS application. Similar to Slack, but with a patented middle out compression algorithm. This application will have support multiple different, entirely distinct groups of users. Each user who signs up picks their own hostname, which sets up an application that can be logged into by others. 
+To make things a bit more concrete, let's use an example. Suppose you wanted to build a Pied Piper Video Chat (or PPVC for short) SaaS application. Similar to Slack, but with a patented middle out compression algorithm. This application will support multiple different, entirely distinct groups of users. Each user who signs up picks their own hostname, which sets up an application that can be logged into by others. 
 
-The PPVC will charge each instance a rate of $7/user/month. The creator of the PPVC application will be able to pic a hostname and a display background color. If someone from Hooli joins, they'll have `hooli.piedpipervideochat.com`, for example. Slack uses hostnames to distinguish between differente tenants, and PPVC will as well.
+The PPVC will charge each instance a rate of $7/user/month. The creator of the PPVC application will be able to pick a hostname and a display background color. If someone from Hooli joins, they'll have `hooli.piedpipervideochat.com`, for example. Slack uses hostnames to distinguish between different tenants, and PPVC will as well.
 
 
 == Multi-Tenant Concepts
@@ -155,7 +155,7 @@ Here is a partial list of application attached objects:
 
 === Global Objects
 
-There a few objects which are globally available. These are typically available under the `system` path in the API namespace.
+There are a few objects which are globally available. These are typically available under the `system` path in the API namespace.
 
 * API Keys (optionally)
 * Login reports
@@ -187,7 +187,7 @@ For PPVC, this will likely be a web application, but the actual implementation d
 
 === The Data Plane Applications
 
-Data plane applications offer functionality to PPVC's users users. So Hooli employees will log into `hooli.piedpipervideochat.com` to chat amongst themselves, and Raviga employees will do the same in the `raviga.piedpipervideochat.com` application. Within each data plane application, users can have roles and other accounts options such as payment or language preferences. 
+Data plane applications offer functionality to PPVC's users' users. So Hooli employees will log into `hooli.piedpipervideochat.com` to chat amongst themselves, and Raviga employees will do the same in the `raviga.piedpipervideochat.com` application. Within each data plane application, users can have roles and other account options such as payment or language preferences. 
 
 The features of this application aren't the same as that of the control plane application. Tenant management is not part of this application. There may be no overlap in the users of this application and the control plane application either. 
 
@@ -213,9 +213,9 @@ The mapping between the data plane application configuration and the correspondi
 
 The data plane web application needs to differentiate between the different tenants. If the code is hosted at piedpipervideochat.com, there are a few ways to send users to the appropriate tenant.
 
-* The hostname: `raviga.piedpipervideochat.com` points to the Raviga instance of the application. `hooli.piedpipervideochat.com` point to the Hooli instance. As mentioned above, this is similiar to how Slack operates.
+* The hostname: `raviga.piedpipervideochat.com` points to the Raviga instance of the application. `hooli.piedpipervideochat.com` points to the Hooli instance. As mentioned above, this is similar to how Slack operates.
 * User choice: A user logs in and is presented with a list of data plane applications to which they can login (or transparently SSO into). In this case, you can present this option in the control plane application. This requires syncing user data between the different tenants.
-* User or request attributes: If there is an attibute of the client or incoming request which can indicate the correct tenant, that can be used to route the user to the correct location. For instance, if the system can read network information or user agent attributes to determine the appropriate data plane application, it should do so. 
+* User or request attributes: If there is an attribute of the client or incoming request which can indicate the correct tenant, that can be used to route the user to the correct location. For instance, if the system can read network information or user agent attributes to determine the appropriate data plane application, it should do so. 
 
 In many cases, a distinct hostname is the easiest way to differentiate. This is memorable to the user, works well with internet standards like cookies, and scales well. That's the approach this guide will take.
 
@@ -228,9 +228,9 @@ When a user signs up in the control plane application, they will provide some in
 * Creating any FusionAuth roles that might be applicable, such as an `admin` role.
 * Customizing the theme of the FusionAuth hosted login pages with items like custom colors and logos.
 * Possibly creating an initial user in the FusionAuth tenant.
-* Any needed metadata of the data plane application not modifiable by the end user. For example, the PPVC application might allow users at a premium level to have ten chat rooms, whereas users at the basic level could only have two. 
+* Any needed metadata of the data plane application the end user cannot modify. For example, the PPVC application might allow users at a premium level to have ten chat rooms, whereas users at the basic level could only have two. 
 
-Since the application is not useable for the new tenant without these configuration settings, this configuration should take place at the moment of signup, or the user should be notified both that the application is being created and when the creation is done.
+Since the application is not usable for the new tenant without these configuration settings, this configuration should take place at the moment of signup, or the user should be notified both that the application is being created and when the creation is done.
 
 There may be other optional configuration that needs to occur, such as loading a list of users. If needed, that can be performed asynchronously.
 
@@ -239,7 +239,7 @@ There may be other optional configuration that needs to occur, such as loading a
 Within your control plane application's database, store metadata about each tenant in a table. This metadata:
 
 * Allows your users to customize their application without your intervention
-* Lets the data plane application deliver proper functionality. The `raviga` tenant might be on a premium plan and be allowed ten chat rooms, whereas the `hooli` tenant might be on a basic plan and have a lower limit.
+* Configures the data plane application to deliver proper functionality. The `raviga` tenant might be on a premium plan and be allowed ten chat rooms, whereas the `hooli` tenant might be on a basic plan and have a lower limit.
 * Can be used for reporting as your business grows. 
 
 Some attributes you might need in your tenant object when implementing multi-tenancy with FusionAuth:
@@ -270,7 +270,7 @@ This guide will walk through pieces of creating the control plane application th
 
 image::guides/multi-tenant/control-plane-view.png[The control plane application interface.,width=1200,role=bottom-cropped]
 
-The users of the multi-tenant application will then be able to register or log in at a different hostname into a dataplane appliation and see the chat window (or at least a note about the chat functionality that will later be built out).
+The users of the multi-tenant application will then be able to register or log in at a different hostname into a dataplane application and see the chat window (or at least a note about the chat functionality that will later be built out).
 
 image::guides/multi-tenant/data-plane-logged-in-view.png[The data plane application interface.,width=1200,role=bottom-cropped]
 
@@ -337,9 +337,9 @@ CREATE TABLE `tenant` (
 ) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ----
 
-This implementation maps each tenant to a single user, becuase `user_id` is a foreign key into the local `user` table. As mentioned above, you could choose to allow users to create multiple tenants. 
+This implementation maps each tenant to a single user, because `user_id` is a foreign key into the local `user` table. As mentioned above, you could choose to allow users to create multiple tenants. 
 
-You'll need to create a user interface interface to create this data as well populate the application specific fields like the background color and host. 
+You'll need to create a user interface to manage this data as well populate the application specific fields like the background color and host. 
 
 [NOTE]
 ====
@@ -457,7 +457,7 @@ Next, let's create an API key.
 
 You should set up a tenant locked API key for two reasons:
 
-* You can use the new key for all other configuration of this FusionAuth tenant. This follows the principle of least privilege and ensures you won't accidentally affect any other tenants.
+* You can use the new key for further configuration of this FusionAuth tenant. This follows the principle of least privilege and ensures you won't accidentally affect any other tenants.
 * You can display it to your clients. They can then write scripts against FusionAuth for their own purposes, such as managing users. This is a low-cost value add that will increase the stickiness of your application.
 
 Here's code to create the tenant scoped API key:
@@ -499,7 +499,7 @@ Next, create the FusionAuth application.
 
 ==== Creating a FusionAuth Application
 
-At this point, you are creating the configuration for the FusionAuth application. An application is anything a user can log in to. In this case, the users logging into this application will be using the video chat. So users like Patrice or Jason Winter might be loggging into the Hooli instance of the PPVC application. The hostname (`hooli` or `raviga`) is required for application configuration.
+At this point, you are creating the configuration for the FusionAuth application. An application is anything a user can log in to. In this case, the users logging into this application will be using the video chat. So users like Patrice or Jason Winter might be logging into the Hooli instance of the PPVC application. The hostname (`hooli` or `raviga`) is required for application configuration.
 
 [source,php]
 ----
@@ -546,7 +546,7 @@ Once this application is live, the Raviga or Hoolise users need to be created in
 
 * Allow users to sign in with a social provider.
 * Create users via the FusionAuth API and an automated process.
-* Allow users to sign in with a enterprise provider such as an OAuth or SAML compatible identity provider.
+* Allow users to sign in with an enterprise provider such as an OAuth or SAML compatible identity provider.
 * Let users sign up for an account.
 
 Self service registration is enabled for this example application. Any of the above options will work when configured, though. For instance, if you wanted to allow users to sign in with Google, you'd have to create an identity provider in the <<Initial FusionAuth Configuration>>, and then assign the identity provider when creating the FusionAuth configuration for a new data plane application.
@@ -557,7 +557,7 @@ After the FusionAuth configuration is set up, store the application's Id, which 
 
 What you just walked through is all the required configuration to allow someone to sign up or log in to the PPVC application. However, there might be other FusionAuth configuration depending on your application. You might want to:
 
-* Add a user or set of users and register the for the new application.
+* Add a user or set of users and register them for the FusionAuth application, so they'll be able to log in.
 * Set up roles.
 * Set up groups.
 * Assign users to groups and roles.
@@ -595,11 +595,11 @@ Below is an example Apache configuration file to send traffic for multiple piedp
 </VirtualHost>
 ----
 
-Make sure you are passing the `Host` header through to the application code, since that is what is going look up the tenant object based on the hostname.
+Make sure you are passing the `Host` header through to the application code, since that is what is going to look up the tenant object based on the hostname.
 
 ==== Look Up the OAuth Configuration Based On the Hostname
 
-Once the request is recieved by your application, you can look up the Client Id and Secret in the tenant table in your database based on the incoming request's hostname. When a request comes in (to `https://raviga.piedpipervideochat.com/login`, for example), you can map from the hostname (`raviga`) to the appropriate Client Id. Here is some sample code:
+Once the request is received by your application, you can look up the Client Id and Secret in the tenant table in your database based on the incoming request's hostname. When a request comes in (to `https://raviga.piedpipervideochat.com/login`, for example), you can map from the hostname (`raviga`) to the appropriate Client Id. Here is some sample code:
 
 [source,php]
 ----
@@ -674,7 +674,7 @@ You must create a part of your web application to respond to requests for the re
 
 * Determine the tenant from the hostname to retrieve the correct Client Id and Client Secret.
 * Exchange the authorization code for a token.
-* Log the user in to your web application.
+* Log the user into your web application.
 
 Let's look at each of these steps.
 
@@ -710,7 +710,7 @@ $token = $oauthResult->access_token;
 
 === Log the User In
 
-At this point you have an access token and a user who has successfully authenticated. You can examine the token see if the user is authorized for this FusionAuth application. You can also examine the roles assigned to this user.
+At this point you have an access token and a user who has successfully authenticated. You can examine the token to determine if the user is authorized for this FusionAuth application. You can also examine the roles assigned to this user and expose or prohibit functionality based on them.
 
 At this point, your next step depends on the application framework or programming language you are using. Create a login session in your application. This is specific to your implementation, so is left as an exercise for the reader.
 
@@ -742,7 +742,7 @@ If you use the same web application, limit access to the controllers based on wh
 
 === Framework Specific User Objects
 
-Often times a web framework will require a local record of the user. This will be used for permissions checks within the framework. They may even require a unique email address.
+Oftentimes a web framework will require a local record of the user. This will be used for permissions checks within the framework. They may even require a unique email address.
 
 However, FusionAuth tenants have a separate userspace. In other words, I can sign up for `raviga.piedpipervideochat.com` and `hooli.piedpipervideochat.com` with the same `richard@fusionauth.io` email address. 
 
