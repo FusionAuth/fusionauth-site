@@ -33,22 +33,26 @@ _June 7rd, 2021_
 
 Release notes are in progress&hellip;
 
-:warning_message: pass:normal[The FusionAuth identity providers have undergone a significant improvement to add additional flexibility and support for 3rd parties. Please take time to test this upgrade with your existing configuration to ensure compatibility.  of the features in these release are in tech-preview.]
+:warning_message: pass:normal[The FusionAuth identity providers have undergone a significant improvement to add additional flexibility and support for 3rd parties. Please take time to test this upgrade with your existing configuration to ensure compatibility. Some of the features in this release are in tech-preview.]
 include::docs/v1/tech/__general-migration-warning.adoc[]
 
 include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === Changed
 * You may no longer build a synthetic email address using a lambda for an OpenID Connect identity provider. This has been removed because you may now link a user by username or create a link w/out a username or an email to an existing FusionAuth user. If you are using this feature, you may need to plan for a migration to this new behavior. If you have a support contract with FusionAuth, please reach out and ask for additional information.
+* When using FusionAuth as a SAML IdP, FusionAuth will now accept `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent` in addition to `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`. This should allow FusionAuth to work with SAML v2 service providers that only support the persistent NameID format.
+* Tokens returned by IdPs are no longer stored on the User Registration object in the `tokens` field. Each token is now stored with the IdP link for the User and the IdP. See the Link API for additional details.
 
 === New
 * Reindex API
-** See The Reindex API for usage.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1232[GitHub Issue #1232]
+** See the link:/docs/v1/tech/apis/system/#rebuild-the-elasticsearch-index[Reindex API] for usage.
 * Account Link API
 ** This API will allow you to link and un-link users in 3rd party identity providers with a FusionAuth user.
 * IdP Linking options
 ** Each Identity Provider may now be configured with a linking strategy. The strategies will include linking by email, username, anonymous or a link to an existing user.
 ** Linking by username is now supported. There is a higher risk of account takeover using this strategy, you should use caution when using this feature.
+** Tokens from identity providers should now be retrieved from the link, rather than the registration.
 * Email Send API allows an email address in the To field instead of only allowing FusionAuth userIds
 ** See the Email Send API for additional details.
 * SAML Identity Provider can now be configured to use any NameID format. Previously only the Email NameID format was utilized.
@@ -57,16 +61,45 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 === Enhanced
 * When FusionAuth is acting as a SAML Identity Provider, you may now send a NameID format of Email or Persistent.
 ** This should allow FusionAuth to work with additional SAML service providers such as Slack.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/522[GitHub Issue #522]
 * The Email Send API now allows you to send to a user that does not yet exist in FusionAuth by allowing you to specify an email address for the `To:` field.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/743[GitHub Issue #743]
 ** See the  link:/docs/v1/tech/apis/login[Email Send API] for additional details.
+* The Facebook and Google Identity Providers will now default to using a redirect instead of a popup for login. All existing configurations will be migrated to use the popup dialog to remain consistent with the previous behavior. With this update you may now also use the `idp_hint` parameter to login with Facebook and Google.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/909[GitHub Issue #909]
+* Additional PKCE and Client Authentication configuration
+** You may now optionally configure PKCE as required, not required, or required when not using a confidential client. This offers better compatibility when multiple client types (a webapp and a mobile app, for example) are authenticating against a single FusionAuth application.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1152[GitHub #1152]
+* Add the currently selected Two Factor method object to the Themed Two Factor page `/oauth2/two-factor`
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1237[GitHub Issue #1237], thanks to one of our MVPs - https://github.com/flangfeldt[@flangfeldt] for the suggestion!
+* Allow using IdP buttons on the Themed registration page
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/554[GitHub Issue #554], thanks to https://github.com/gordody[@gordody] for the request!
+* When using email verification required with the gated configuration, optionally send the user another email before entering the gated page if the user does not have an existing verification email that is not expired.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1247[GitHub Issue #1247], thanks to https://github.com/lliu-20200701[@lliu-20200701] for the suggestion.
 
 === Fixed
-- Coming...
+* Do not add the `NotBefore` assertion on the SAML AuthN response on the subject confirmation.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1215[GitHub #1215], thanks to https://github.com/pakomp[@pakomp] for pointing out this issue!
+* When importing users with `passwordChangeRequired=true` w/out specifying the change reason an exception may occur during login.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1245[GitHub Issue #1245], thanks to https://github.com/lliu-20200701[@lliu-20200701] for finding this bug.
+* When using the email verification gate and self-service registration if a user requires their email to be verified and is forced through the complete registration flow they will not be correctly gated.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1246[GitHub Issue #1246], thanks to https://github.com/lliu-20200701[@lliu-20200701] for reporting!
+* Fix a JavaScript bug that may cause some of the themed pages to render incorrectly in the view window.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1228[GitHub Issue #1228], thanks to https://github.com/flangfeldt[@flangfeldt] for reporting!
 
 === Tech Preview
 * New IdPs for EpicGames, Nintendo, Sony PlayStation Network, Steam, Twitch, Xbox
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1205[GitHub Issue #1205] - Sony Playstation Network
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1206[GitHub Issue #1206] - Nintendo
+*** Note, the Nintendo IdP is not yet fully functional. This will be completed in a patch release.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1207[GitHub Issue #1207] - Twitch
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1208[GitHub Issue #1208] - Steam
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1209[GitHub Issue #1209] - Epic Games
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1210[GitHub Issue #1210] - Xbox
 * Development kickstart reset. When you are running in `development` runtime mode, you'll see a `Reset` menu item in the System navigation menu.
 ** See [breadcrumb]#System -> Reset#
+* There is now a JWT populate lambda for the Client Credentials Grant
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1233[GitHub Issue #1233]
 
 [role=release-note]
 
@@ -102,7 +135,7 @@ _May 7th, 2021_
 == Version 1.27.0
 _May 5th, 2021_
 
-:warning_message: pass:normal[Some of the features in these release are in tech-preview. Please give us feedback and let us know how they work for you!]
+:warning_message: pass:normal[Some of the features in this release are in tech-preview. Please give us feedback and let us know how they work for you!]
 
 include::docs/v1/tech/__general-migration-warning.adoc[]
 
