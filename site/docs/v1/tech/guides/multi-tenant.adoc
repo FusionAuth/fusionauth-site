@@ -10,7 +10,37 @@ description: How to run multiple tenants within a single FusionAuth instance
 
 This guide will help you set up a multi-tenant application in FusionAuth. Tenants allow for logical separation of users, applications and other objects in FusionAuth.
 
-TOC TODO
+* <<Overview>>
+* <<Why Use Multi-Tenancy>>
+* <<Levels of Isolation>>
+* <<The PiedPiper Video Chat Application>>
+* <<Multi-Tenant Concepts>>
+** <<Tenant Scoped>>
+** <<Tenant Attached>>
+** <<Application Scoped>>
+** <<Application Attached>>
+** <<Global Objects>>
+* <<Components of a Multi-Tenant Setup>>
+** <<The Control Plane Application>>
+** <<The Data Plane Applications>>
+** <<FusionAuth Tenants and Applications>>
+** <<Data Plane Application Tenant Determination>>
+** <<Tenant Setup>>
+** <<The Tenant Object>>
+* <<Registration and Login Flows>>
+* <<Setting Up the Multi-Tenant System>>
+** <<Initial FusionAuth Configuration>>
+** <<Defining The Tenant Object>>
+** <<Updating the Tenant Object With FusionAuth Configuration>>
+** <<Routing Requests to the Correct Tenant>>
+** <<Handling OAuth Callbacks>>
+** <<Log the User In>>
+* <<API Calls>>
+* <<Additional Considerations>>
+** <<Control Plane Codebase Vs Data Plane Codebase>>
+** <<Framework Specific User Objects>>
+* <<Limits>>
+
 
 == Why Use Multi-Tenancy
 
@@ -58,7 +88,6 @@ There are issues with this approach as well:
 
 This guide will be discussing logical isolation of tenants. If you need physical isolation with FusionAuth, run different instances. You can also link:/learn/expert-advice/identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions/[read this article for more information]. 
 
-XXX TBD
 == The PiedPiper Video Chat Application
 
 To make things a bit more concrete, let's use an example. Suppose you wanted to build a Pied Piper Video Chat (or PPVC for short) SaaS application. Similar to Slack, but with a patented middle out compression algorithm. This application will have support multiple different, entirely distinct groups of users. Each user who signs up picks their own hostname, which sets up an application that can be logged into by others. 
@@ -82,11 +111,9 @@ An "attached" object, on the other hand, is linked to a different object, but if
 
 Attached objects can be shared. For example, the PPVC can use the same signing key between the `hooli.piedpipervideochat.com` and the `raviga.piedpipervideochat.com` tenant configurations. In some cases attached objects support overriding configuration for different behavior.
 
-TBD extract to share with core concepts?
-
 Let's examine each of the above categories.
 
-=== Tenant Scoped 
+=== Tenant Scoped
 
 Here is a partial list of tenant scoped objects:
 
@@ -96,7 +123,7 @@ Here is a partial list of tenant scoped objects:
 * Applications
 * Entities
 
-=== Tenant Attached 
+=== Tenant Attached
 
 Here is a partial list of tenant attached objects:
 
@@ -182,7 +209,7 @@ For the PPVC control plane web application, a FusionAuth tenant object and Fusio
 
 The mapping between the data plane application configuration and the corresponding FusionAuth tenant and application objects must be stored somewhere. In this example, each data plane application has a hostname and background color, as well as FusionAuth configuration information. This additional metadata should be stored in the application database. This will be looked at more deeply in <<The Tenant Object>> section.
 
-=== Data Plane Application Tenant Determination 
+=== Data Plane Application Tenant Determination
 
 The data plane web application needs to differentiate between the different tenants. If the code is hosted at piedpipervideochat.com, there are a few ways to send users to the appropriate tenant.
 
@@ -215,7 +242,7 @@ Within your control plane application's database, store metadata about each tena
 * Lets the data plane application deliver proper functionality. The `raviga` tenant might be on a premium plan and be allowed ten chat rooms, whereas the `hooli` tenant might be on a basic plan and have a lower limit.
 * Can be used for reporting as your business grows. 
 
-Some attributes you might need in your tenant object when implementing multitenancy with FusionAuth:
+Some attributes you might need in your tenant object when implementing multi-tenancy with FusionAuth:
 
 * Owning user: which user created this tenant. Depending on your business model, there could be a one to one or one to many mapping between tenants in your control plane application database and users in the application.
 * Hostname: a hostname to which users of the PPVC chat application for an organization will go. Something like `raviga.piedpipervideochat.com` or `raviga` if you will always append the domain name.
@@ -238,6 +265,18 @@ Here's the login flow for a data plane application. This would happen after a us
 ++++
 {% plantuml source: _diagrams/docs/guides/data-plane-login.plantuml, alt: "Login process for the data plane application." %}
 ++++
+
+This guide will walk through pieces of creating the control plane application that a user can log in to and create or view details of their tenant:
+
+image::guides/multi-tenant/control-plane-view.png[The control plane application interface.,width=1200,role=bottom-cropped]
+
+The users of the multi-tenant application will then be able to register or log in at a different hostname into a dataplane appliation and see the chat window (or at least a note about the chat functionality that will later be built out).
+
+image::guides/multi-tenant/data-plane-logged-in-view.png[The data plane application interface.,width=1200,role=bottom-cropped]
+
+Each of the data plane applications will be in a different FusionAuth tenant. Different users can have the same email address, as you can see in the below screenshot, where the `jian@fusionauth.io` user exists in the default tenant and the `ppvctest2` tenant:
+
+image::guides/multi-tenant/users-dashboard-fusionauth.png[FusionAuth user dashboard.,width=1200,role=bottom-cropped]
 
 == Setting Up the Multi-Tenant System
 
@@ -321,7 +360,7 @@ The FusionAuth specific fields in the above table are:
 
 Let's discuss how to obtain the FusionAuth configuration values and update the tenant row in your web application next.
 
-== Updating the Tenant Object With FusionAuth Configuration
+=== Updating the Tenant Object With FusionAuth Configuration
 
 To keep FusionAuth and your application in sync, you need to be able to create and delete required FusionAuth configuration for the data plane applications, as they are created and removed.
 
@@ -336,7 +375,7 @@ How you do this depends on your application framework and requirements. Options 
 
 * In the same controller where you create the row in the tenant table, call the APIs and wait for the values to return.
 * Use a queue. Put a message on the queue when a new tenant row is added, then have a listener retrieve the message and create the configuration.
-* Use a pre-persist method to call the APIs before the tenant is saved.
+* Use a framework specific method to call the APIs before the tenant is saved or deleted.
 
 For the example application, the latter method is used. Before the tenant information is saved to the application database, the FusionAuth APIs are called and the FusionAuth configuration objects are created. However, what makes sense depends on how many new tenants you expect to be created and how much configuration you need to do; if large numbers of users were being imported, asynchronous execution would work better. 
 
@@ -348,7 +387,7 @@ The minimal amount of FusionAuth configuration required:
 
 After these are created, the generated configuration values should be stored in the data plane applications tenant object for future reference. Let's take a deeper look at each of these.
 
-==== Creating the FusionAuth Tenant 
+==== Creating the FusionAuth Tenant
 
 The easiest way to do this is to pull the blueprint tenant, extract the default configuration and then create the new tenant. 
 
@@ -606,7 +645,7 @@ The login link uses FusionAuth's well documented OAuth endpoints as well as the 
 $redirectURI = '...'; // discussed below.
 $fusionauthBase = 'http://login.piedpipervideochat.com/'; // or pull from config
 return $fusionauthBase . '/oauth2/authorize?client_id='.$client_id.'&redirect_uri='.$redirectURI.'&response_type=code'
----
+----
 
 The registration URL is the same format, but uses the path `/oauth2/register` instead of `/oauth2/authorize`.
 
@@ -615,7 +654,7 @@ The registration URL is the same format, but uses the path `/oauth2/register` in
 $redirectURI = '...'; // discussed below.
 $fusionauthBase = 'http://login.piedpipervideochat.com/'; // or pull from config
 return $fusionauthBase . '/oauth2/register?client_id='.$client_id.'&redirect_uri='.$redirectURI.'&response_type=code'
----
+----
 
 Because `logoutURL` was configured in the FusionAuth application configuration, FusionAuth will redirect the user to that location when the user logs out:
 
@@ -627,13 +666,13 @@ $fusionauthBase.'/oauth2/logout?client_id='.$clientId;
 
 This logout URL works with browsers. If you are using APIs for a mobile application, you should revoke the refresh token instead of using the `/oauth2/logout` endpoint.
 
-=== Handling OAuth Callbacks 
+=== Handling OAuth Callbacks
 
-The final auth specific functionality for supporting multiple tenants is handling the OAuth callback. You may recall that in the <<Creating a FusionAuth Application>> section, you configured a FusionAuth application with a given `authorizedRedirectURLs` value. It was something like: `https://raviga.piedpipervideochat.com/login/callback`.
+The final auth specific functionality for supporting multiple tenants is handling the OAuth callback. You may recall that in the <<Creating a FusionAuth Application>> section, you configured a FusionAuth application with a given `authorizedRedirectURLs` value. It was something like: `https://raviga.piedpipervideochat.com/login/callback`. And in the most recent section, you saw code that looked like `$redirectURI = '...';`, which is the same value.
 
-You must create a part of your web application to responds to requests for that path. It will need to do the following:
+You must create a part of your web application to respond to requests for the redirectURI path. The code must do the following:
 
-* Determine the tenant from the hostname to retrieve the correct Client Id and Client secret.
+* Determine the tenant from the hostname to retrieve the correct Client Id and Client Secret.
 * Exchange the authorization code for a token.
 * Log the user in to your web application.
 
@@ -681,61 +720,42 @@ Another example is letting users send video messages; in this case a `messages` 
 
 After you have set up a session in your application based on successful authentication, redirect to the chat page for the data plane application or a user profile page for the control plane application. Distinguish between these by checking the hostname again.
 
-== Gotchas
-
-After you've set this up, there's still more to do to build a professional grade multi-tenant SaaS application, but you have a solid foundation and your user's users will be able to login using FusionAuth.
-
-TODO STOPPED HERE 
-Other items to consider:
-
-* Should you split out the code for control plane application (which lets users create tenant applications) and the data plane applications (the application which actually lets users use the SaaS functionality, such as a pied piper vide chat)? Both of these applications will be using the `tenant` object (the control plane to write it, the data plane to read it), so you'll need to either share a database or have some other way of syncing up that data. If you use the same web application, you'll want to gate which controllers are available based on whether the control plane or a data plane application is executing. 
-
-* Email addresses for your local user object. Often times a web framework will want a unique email address for the local user record. But FusionAuth tenants have a separate userspace. I can sign up for raviga.ppvc.com and hooli.ppvc.com with the same richard@fusionauth.io address. To address this, you can either use a compound key for the email address, or you can prepend the FusionAuth user id which is guaranteed to be unique, or you could set up some other unique string. This means that when you want to present the user's email address, either to them or for reporting or marketing purposes, you'll need to retrieve it from FusionAuth.
-
-* You should handle tenant deletion as well as creation. When a user deletes their account, you'll want to make a call to FusionAuth to remove the FusionAuth configuration as well. You are able to do that with a call to the link:/docs/v1/tech/apis/tenants/#delete-a-tenant[Delete Tenant API].
-
 == API Calls
 
-If you are not using a tenant scoped API key, you should provide a tenant Id in all of your API calls. There are cases where the tenant can be inferred from another identifier (such as when you provide an application Id) but there are other times where it cannot (such as when you are creating a user). It's better to be consistent.
+If you are not using a tenant scoped API key, provide a tenant Id when you call the FusionAuth API. There are cases where the tenant can be inferred from another identifier (such as when you provide an application Id) but there are other times where it cannot (such as when you are creating a user). It's better to be consistent and present the tenant Id every time.
 
-Throughout the API documentation, you'll see sections like this which will specify when the header should be used.
+Throughout the API documentation, you'll see sections referencing `X-FusionAuth-TenantId` which will specify when the header should be used.
 
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-create-operation.adoc[]
+== Additional Considerations
 
+After you've set up multiple tenants, there's still more work to build a professional grade multi-tenant SaaS application, but you have a solid foundation. Your users will be able to create their own data plane applications. And your user's users will be able to log in using FusionAuth.
+
+Other items to consider:
+
+=== Control Plane Codebase Vs Data Plane Codebase
+
+Should you create the control plane application (which lets users create tenant applications) and the data plane applications (the application which actually lets users use the SaaS functionality, such as the PPVC) as two separate applications with different codebases? 
+
+Both of these applications will be using the `tenant` object (the control plane to write it, the data plane to read it), so you'll need to either share a database or have some other way of syncing up that data. 
+
+If you use the same web application, limit access to the controllers based on whether the control plane or a data plane application is executing. 
+
+=== Framework Specific User Objects
+
+Often times a web framework will require a local record of the user. This will be used for permissions checks within the framework. They may even require a unique email address.
+
+However, FusionAuth tenants have a separate userspace. In other words, I can sign up for `raviga.piedpipervideochat.com` and `hooli.piedpipervideochat.com` with the same `richard@fusionauth.io` email address. 
+
+To handle this discrepancy, you can:
+
+* Use a compound value of email address and tenant Id for the email address.
+* Prepend the FusionAuth user id to the email address. This is guaranteed to be unique, since it is a UUID. 
+* Pick any other unique string. 
+
+In addition, add a field in the local user object referencing the FusionAuth user Id. For FusionAuth, you may also want to add a `data.frameworkUserId` field, which will store the identifier for the local user object. This will let you map back and forth between the local user representation and the one stored in FusionAuth, as needed. 
+
+When you need the user's email address, retrieve it from FusionAuth.
 
 == Limits
 
 include::docs/v1/tech/guides/_multi-tenant-limitations.adoc[]
-
-== QUESTIONS TBD
-
-is it multi tenant or multitenant or multi-tenant?
-A: it is multi-tenant see https://fusionauth.io/features/architecture/
-
-ppvc.com? piedpipervideochat.com (register the latter)
-
-https://github.com/fusionauth/fusionauth-issues/issues/91
-
-diagram of applications?
-
-TBD
-deletion of tenants and api keys
-async configuration setup
-the local user table
-unique email addresses
-mapping to users in your application
-navigation
-single web app or multiple apps
-
-webapp vs fusionauth app? define at beginning
-
-for fusionauth cloud
-no, you just send the client id, and we know which tenant to holds that client id
-
-I don't love objects, but don't want to overload the term entities.
-
-set up page for piedpipervideochat.com
-
-client secret/client id capitalization
-
-do I need some images for the sample application?
