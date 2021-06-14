@@ -60,6 +60,15 @@ For blog posts:
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
+- If appropriate, use tags. Here are the following tag types. They are separated with spaces. These are freeform, so feel free to add multiple and choose what works.
+-- `client-<langname>` if the post refers to a specific language we have a client library for (use `client-javascript` for JS even though our client lib is typescript). These show up on the client libraries page.
+-- `tutorial` for tutorials. These show up on the tutorial page.
+-- `tutorial-<langname>`, `tutorial-<framework>` for a tutorial in a specific language or framework.
+-- `tutorial-feature` for a tutorial for a given feature (how to use a lambda, for example)
+-- `tutorial-integration` for a tutorial doing an integration with another software package (nodebb, for example)
+-- `topic-<topic>` for general topics. 
+-- `topic-community-story` for any community stories you do.
+-- `feature-<topic>` for specific features. These will show up on the feature page.
 
 For documentation posts:
 - Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
