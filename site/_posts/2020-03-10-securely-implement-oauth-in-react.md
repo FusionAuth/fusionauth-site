@@ -1128,4 +1128,7 @@ In all of these cases, remember what you learned from this example:
 
 Check out the [FusionAuth APIs](https://fusionauth.io/docs/v1/tech/apis/) for even more options.
 
+**Update June 15 2021:** If you want to add step up authentication to your react application, check out this blog post which improves the React application built here. TBD add link
+
+
 Happy coding!
