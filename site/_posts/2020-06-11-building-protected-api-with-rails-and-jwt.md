@@ -4,7 +4,7 @@ title: Securing a Ruby on Rails API with JWTs
 description: We'll build a Rails API and control access to it with JSON Web Tokens (JWTs).
 author: Dan Moore
 image: blogs/securing-rails-api-jwt/securing-ruby-on-rails-api-with-jwts-fusionauth.png
-tags: client-ruby
+tags: client-ruby tutorial tutorial-rails tutorial-ruby
 category: blog
 excerpt_separator: "<!--more-->"
 ---

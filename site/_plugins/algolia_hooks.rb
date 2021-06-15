@@ -10,8 +10,8 @@ module Jekyll
       end
 
       def self.should_be_excluded?(filepath)
-        return false if filepath =~ %r{^landing}
-        true
+        return true if filepath =~ %r{^landing}
+        false
       end
     end
   end

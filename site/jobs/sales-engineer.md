@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Sales Engineer
+title: MD5 (Sales) Engineer
 description: FusionAuth is seeking a Sales Engineer to join our team. Learn about this position and apply today.
 department: Sales
 baseSalary: 100000
@@ -26,7 +26,7 @@ Your responsibilities will include:
 * Engage with prospective customers through demonstrations, design sessions, architecture reviews, workshops, and on-boarding sessions
 * Assistance prospective customers with FusionAuth configuration, implementation, and deployment
 * Engage with technical and non-technical employees of prospective customers and various levels and build a strong value proposition for FusionAuth
-* Engage with the FusionAuth Slack community and StackOverflow community
+* Engage with the FusionAuth community in Slack, StackOverflow and elsewhere
 * Attend various meetups, conferences, and other events that developers attend to promote and sell FusionAuth   
 * Work directly with the FusionAuth marketing and engineering teams to build sales campaigns that target developers
 
@@ -51,5 +51,6 @@ The requirements for this position include:
 * **Salary range:** $120,000 to $180,000 (depending on experience)
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
+* **401k:** Yes!
 * **Stock options:** Yes!
 * **Vacation:** Flexible! Take what you need. :)

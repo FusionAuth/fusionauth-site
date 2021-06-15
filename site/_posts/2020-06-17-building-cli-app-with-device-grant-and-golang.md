@@ -5,7 +5,7 @@ description: Build an authenticated CLI app using FusionAuth, the Device Code gr
 author: Matt Gowie
 image: blogs/golang-cli-device-grant/fusionauth-tutorial-building-a-cli-app-with-the-device-code-grant-and-golang.png
 category: blog
-tags: client-go
+tags: client-go tutorial-device-grant tutorial tutorial-go tutorial-feature
 excerpt_separator: "<!--more-->"
 ---
 
@@ -298,7 +298,7 @@ Great stuff, we send off our JWT to FusionAuth, FusionAuth's go-client intellige
 Now, since this is a post about using FusionAuth and not about the Giphy API, I won't dig into the `fetch` command. I'll leave that to you but suffice to say it's pretty simple. Feel free to [check out the code](https://github.com/FusionAuth/fusionauth-example-go-device-code-grant/blob/master/cmd/fetch.go). Here is the whole flow in action:
 
 <div class="d-flex justify-content-center mb-5 mt-1 youtube">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/czV-yVnjIUc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="czV-yVnjIUc" %}
 </div>
 
 ## Final Words
