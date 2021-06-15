@@ -113,7 +113,7 @@ This page is used after a user has verified their email address by clicking the 
 [field]#Email verification re-sent# [required]#Required#::
 This page is used after a user has asked for the verification email to be resent. This can happen if the URL in the email expired and the user clicked it. In this case, the user can provide their email address again and FusionAuth will resend the email. After the user submits their email and FusionAuth re-sends a verification email to them, the browser is redirected to this page.
 +
-[uri]#/email/send#
+[uri]#/email/sent#
 
 [field]#Email verification required# [required]#Required# [since]#Since 1.27.0#::
 This page is rendered when a user is required to verify their email address prior to being allowed to proceed with login. This occurs when [field]#Unverified behavior# is set to `Gated` in email verification settings on the Tenant.
@@ -125,10 +125,22 @@ This page is rendered when a user clicks the URL from the verification email and
 +
 [uri]#/email/verify#
 
+[field]#Index# [required]#Required#  [since]#Since 1.27.0#::
+This is the landing page that is rendered when the root URL `/` is accessed.
++
+Prior to version `1.27.0`, navigating to this URL would redirect to `/admin` and would subsequently render the FusionAuth admin login page.
++
+[uri]#/#
+
 [field]#OAuth authorize# [required]#Required#::
 This is the main login page for FusionAuth and is used for all interactive OAuth2 and OpenID Connect workflows.
 +
 [uri]#/oauth2/authorize#
+
+[field]#OAuth authorized not registered# [required]#Required# [since]#Since 1.28.0#::
+This page is rendered when a user is not registered and the Application configuration requires registration before FusionAuth will complete the redirect.
++
+[uri]#/oauth2/authorized-not-registered#
 
 [field]#OAuth child registration not allowed# [required]#Required#::
 This page contains a form where a child must provide their parent's email address to ask their parent to create an account for them in a Consent workflow.
@@ -180,7 +192,7 @@ This page is used if the user has two-factor authentication enabled and they nee
 +
 [uri]#/oauth2/two-factor#
 
-[field]#OAuth two-factor methods# [required]#Required#::
+[field]#OAuth two-factor methods# [required]#Required# [since]#Since 1.26.0#::
 This page contains a form providing a user with their configured multi-factor authentication options that they may use to complete the authentication challenge.
 +
 [uri]#/oauth2/two-factor-methods#
@@ -218,7 +230,7 @@ This page is used after a user has verified their email address for a specific a
 [field]#Verify registration #re-sent [required]#Required#::
 This page is used after a user has asked for the application specific verification email to be resent. This can happen if the URL in the email expired and the user clicked it. In this case, the user can provide their email address again and FusionAuth will resend the email. After the user submits their email and FusionAuth re-sends a verification email to them, the browser is redirected to this page.
 +
-[uri]#/registration/send#
+[uri]#/registration/sent#
 
 [field]#Verify registration required# [required]#Required#  [since]#Since 1.27.0#::
 This page is rendered when a user is required to verify their registration prior to being allowed to proceed with the registration flow. This occurs when [field]#Unverified behavior# is set to `Gated` in registration verification settings on the Application.
@@ -299,11 +311,25 @@ All of the page templates use these macros, which makes it much easier to style 
 
 In addition to the section helpers, the `_helpers.ftl` template also contains a few additional macros that can be used to setup social and alternative logins. Currently, FusionAuth supports these social login providers:
 
+* Apple
+* Epic Games
 * Facebook
 * Google
+* HYPR
+* LinkedIn
+* Sony PlayStation Network
+* Steam
+* Twitch
 * Twitter
+* Xbox
 * Generic OpenID Connect
 * Generic SAML v2
+* Generic SAML v2 Identity Provider Initiated
+
+This macro can be included on the Authorize or Register page.
+
+* `/oauth2/authorize`
+* `/oauth2/register`, available since 1.28.0
 
 Once you have configured your alternative logins (called identity providers in the interface and API), they will appear on the FusionAuth stock login form. This is because our stock login form includes this code:
 
@@ -332,9 +358,16 @@ First, you need to remove the `[@helpers.alternativeLogins]` macro call.
 
 Second, you need to use a specific `id` or `class` on your HTML element for the button. Here are the `id` s or `class` es for each identity provider:
 
+* `id="apple-login-button"` is used for Apple
+* `id="epicgames-login-button"` is used for Epic Games
 * `id="google-login-button"` is used for Google
 * `id="facebook-login-button"` is used for Facebook
+* `id="linkedin-login-button"` is used for LinkedIn
+* `id="sonypsn-login-button"` is used for Sony PlayStation Network
+* `id="steam-login-button"` is used for Steam
+* `id="twitch-login-button"` is used for Twitch
 * `id="twitter-login-button"` is used for Twitter
+* `id="xbox-login-button"` is used for Xbox
 * `class="openid login-button"` is used for Generic OpenID Connect
 * `class="samlv2 login-button"` is used for Generic SAML v2
 
@@ -659,7 +692,7 @@ No page specific variables.
 
 [.endpoint]
 --
-[uri]#/email/send#
+[uri]#/email/sent#
 --
 
 ==== Variables
@@ -693,7 +726,7 @@ When `true`, an additional form is displayed to allow the user to update their e
 When `true`, a form input is displayed to allow a user to enter the verification code. This occurs when [field]#Verification strategy# is set to `FormField` under email verification settings on the Tenant.
 
 [field]#verificationId# [type]#[String]#::
-The verification id that was included on as a URL parameter.
+The verification id that was included on as a URL parameter. This is the high entropy value that will be paired with the low entropy one time code to complete email verification.
 
 === Email verification
 
@@ -745,7 +778,9 @@ The OAuth v2.0 `response_type` parameter.
 The OAuth v2.0 `scope` parameter.
 
 [field]#showPasswordField# [type]#[Boolean]#::
-A boolean that controls whether or not the `password` field is shown if there are domain-based identity providers. If there are domain based identity providers and the user types in an email address that is not managed by the identity provider, FusionAuth will then re-render this template with this variable set to `true`. This will indicate that the password field should be shown so that the user can complete their login. If you need an example of this behavior, check out the login page at https://www.pivotaltracker.com/signin.
+A boolean that controls whether or not the `password` field is shown if there are domain-based identity providers. If there are domain based identity providers and the user types in an email address that is not managed by the identity provider, FusionAuth will then re-render this template with this variable set to `true`. This will indicate that the password field should be shown so that the user can complete their login.
++
+If you need an example of this behavior, check out the login page at https://www.pivotaltracker.com/signin.
 
 [field]#state# [type]#[String]#::
 The OAuth v2.0 `state` parameter.
@@ -959,19 +994,13 @@ The OAuth v2.0 `client_id` parameter. This is synonymous with FusionAuth's Appli
 [field]#code# [type]#[String]#::
 The value of the `code` form field on the page. This will be available only after the user has submitted the form.
 
-[field]#grant_type# [type]#[String]#::
-The OAuth v2.0 `grant_type` parameter.
-
-[field]#method# [type]#[String]#::
-The two-factor method. The possible values are:
+[field]#method# [type]#[TwoFactorMethod]# [since]#Available since 1.26.0#::
+The currently selected two-factor method. This may be helpful if you want to communicate to the end user their currently selected method.
 +
-* `authenticator`
-* `email`
-* `sms`
-+
+For example, `method.method` will indicate the type of method, `authenticator`, `email` or `sms`. Based upon the method, the `method.email` or `method.mobilePhone` will indicate which transport is being used to send the user a code.
 
-[field]#methodId# [type]#[String]#::
-The method id.
+[field]#methodId# [type]#[String]# [since]#Available since 1.26.0#::
+The method Id. This id if defined will represent the currently selected method, or last used method.
 
 [field]#pushEnabled# [type]#[Boolean]# [deprecated]#Deprecated#::
 Whether or not FusionAuth has pushed (SMS) enabled for two-factor.
@@ -998,10 +1027,10 @@ The OAuth v2.0 `response_type` parameter.
 The OAuth v2.0 `scope` parameter.
 
 [field]#showResendOrSelectMethod# [type]#[Boolean]#::
-Whether or not to display a link to allow the user to select a different method or resend the code.
+Whether or not to display a link to allow the user to select a different method or resend the code. This value will be `true` when more than one option exist for the user to select, or the available method is `email` or `sms` which will allow for a resend option.
 
 [field]#trustComputer# [type]#[Boolean]#::
-The value of the "Trust this computer" form field. This will be available only after the user has submitted the form. Otherwise, it defaults to false.
+The value of the "Trust this computer" form field. This will be available only after the user has submitted the form. Otherwise, it defaults to false. When the user checks this box, a cookie is dropped so that two-factor authentication can be skipped on this computer.
 
 [field]#state# [type]#[String]#::
 The OAuth v2.0 `state` parameter.
@@ -1016,10 +1045,6 @@ The unique id of the current multi-factor authentication attempt.
 Whether or not the user is capable of receiving push notifications for two-factor. This means that the user has a mobile phone number.
 +
 [.deprecated]#Removed in version 1.26.0#.
-
-[field]#user# [type]#[User]#::
-The current user performing multi-factor authentication.
-
 
 === OAuth two-factor methods
 
@@ -1039,26 +1064,20 @@ Available Since Version 1.26.0.
 [field]#availableMethodsMap# [type]#[Map<String, TwoFactorMethod>]#::
 A map of two-factor methods that the user has configured. The key into the map is the unique [field]#methodId#. The value is the two-factor method.
 
-[field]#method# [type]#[String]#::
-The two-factor method. The possible values are:
-+
-* `authenticator`
-* `email`
-* `sms`
-+
+[field]#client_id# [type]#[String]#::
+The OAuth v2.0 `client_id` parameter. This is synonymous with FusionAuth's Application Id.
 
 [field]#methodId# [type]#[String]#::
-The method id.
+The method Id. This id if defined will represent the currently selected method, or last used method.
 
 [field]#recoverCodesAvailable# [type]#[Integer]#::
 The total number of recovery codes that the user has available to use.
 
+[field]#timezone# [type]#[String]#::
+The timezone that the user is in. This is normally guessed by the timezone JavaScript library (or something similar) and then stored in a hidden input field on the login form.
+
 [field]#twoFactorId# [type]#[String]#::
 The unique id of the current multi-factor authentication attempt.
-
-[field]#user# [type]#[User]#::
-The current user performing multi-factor authentication.
-
 
 === OAuth wait
 
@@ -1167,7 +1186,7 @@ No page specific variables.
 
 [.endpoint]
 --
-[uri]#/registration/send#
+[uri]#/registration/sent#
 --
 
 ==== Variables
@@ -1192,7 +1211,7 @@ Available Since Version 1.27.0.
 
 [.endpoint]
 --
-[uri]#/registration/verification-required
+[uri]#/registration/verification-required#
 --
 
 ==== Variables
@@ -1202,7 +1221,7 @@ Available Since Version 1.27.0.
 When `true`, a form input is displayed to allow a user to enter the verification code. This occurs when [field]#Verification strategy# is set to `FormField` under email verification settings on the Application.
 
 [field]#verificationId# [type]#[String]#::
-The verification id that was included on as a URL parameter.
+The verification id that was included on as a URL parameter. This is the high entropy value that will be paired with the low entropy one time code to complete registration verification.
 
 
 === Verify registration
