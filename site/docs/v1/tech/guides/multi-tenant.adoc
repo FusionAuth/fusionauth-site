@@ -50,7 +50,7 @@ There are many reasons why you might be interested in a multi-tenant FusionAuth 
 * Provide logical separation for configuration. With only one FusionAuth instance to manage, users, applications, API keys, and other configurable objects are kept logically distinct.
 * To support building an application which you'll offer as a service, often called SaaS (Software as a Service). Each customer can be modeled as a tenant in FusionAuth.
 * Managing different deployment environments. For instance, on one FusionAuth instance, you could run integration, user acceptance and developer environments. It's not recommended to run production in the same instance as other environments, however.
-* To easily manage multiple developer environments. Having each developer use a tenant on a dedicated development server allows developers free reign to add, remove and modify configuration, while keeping them relatively insulated from each other.
+* To easily manage multiple developer environments. Having each developer use a tenant on a dedicated development server allows developers free reign to add, remove and modify configuration, while keeping them relatively isolated from each other.
 * Per-client custom tenant level settings are needed. Examples of such settings include password rules, the issuer of JWTs, or webhook transaction levels.
 
 FusionAuth's performant, lightweight multi-tenancy can help with any of these scenarios. If you want to learn more about FusionAuth tenants, there's an entire link:/docs/v1/tech/core-concepts/tenants/[Tenant core concepts section].
@@ -105,7 +105,7 @@ The creator of a PPVC tenant will be able to pick a hostname and a display backg
 The word application is unfortunately overloaded when discussing multi-tenancy. There are actually multiple things which could all be called an "application".
 
 * The entire PPVC application, which is the combination of all the functionality built to support the chat application. This will be referred to below as the PPVC application.
-* The codebase and datastore providing features, written in some programming language. This will be called the "web application" or the "web application codebase".
+* The codebase and datastore implementing features, written in some programming language. This will be called the "web application" or the "web application codebase".
 * The applications where users will sign up for the PPVC and also the place where their users will go to access the chat functionality. These all have separate users and functionality. These could live in the same codebase or in separate code bases. These will be referred to as "control plane" or "data plane" applications, unapologetically borrowing from https://en.wikipedia.org/wiki/Control_plane[network routing].
 * The FusionAuth application configuration, stored in FusionAuth and managed by the FusionAuth UI or API. This includes OAuth, registration and other configuration. These will be called "FusionAuth application configuration" or the "FusionAuth application object".
 ====
@@ -116,7 +116,7 @@ While FusionAuth multi-tenancy can help with many different scenarios, as mentio
 
 A control plane application manages user and tenant creation. You can integrate billing and general account management in the control plane application. This is the Slack application where you sign up for Slack itself. 
 
-Users will video chat through one of the data plane applications. This is analogus to `foo.slack.com`.
+Users will video chat through one of the data plane applications. This is analogous to `foo.slack.com`.
 
 Here are common components for a multi-tenant SaaS application:
 
@@ -131,7 +131,9 @@ Let's look at each of these.
 
 === The Control Plane Application
 
-When you have a multi tenant SaaS program, you need a way to manage tenants. For our example, PPVC must have a web or mobile application where users can sign up for Pied Piper Video Chat for their company. The users may be able to do other tasks, like set up the hostname, customize the look and feel, and set up billing. PPVC needs to charge per user per month fee, after all, otherwise you won't be able to afford a car with doors that open by going up. But this control plane application doesn't allow video chat. The control plane application is basically a tenant management portal.
+When you have a multi tenant SaaS program, you need a way to manage tenants. For our example, PPVC must have a web or mobile application where users can sign up for Pied Piper Video Chat for their company. The users may be able to do other tasks, like set up the hostname, customize the look and feel, and set up billing. If you are building the PPVC application, you must charge that per user per month fee, after all, otherwise you won't be able to afford a car with doors that open by going up. 
+
+But the control plane application doesn't enable video chat between users. Instead, the control plane application is basically a tenant management portal.
 
 For PPVC, this app will likely deliver functionality over the web. However, the actual implementation details don't matter much for the purposes of illustrating multi-tenancy concepts.
 
@@ -155,7 +157,7 @@ The mapping between the data plane application and the corresponding FusionAuth 
 
 === Data Plane Application Tenant Determination
 
-The data plane application needs to differentiate between different tenants. If the codebase is hosted at `piedpipervideochat.com`, there are a few ways to send incoming request to the appropriate tenant.
+The data plane application needs to differentiate between different tenants. If the codebase is hosted at `piedpipervideochat.com`, there are a few ways to send incoming requests to the appropriate tenant.
 
 * The hostname: `hooli.piedpipervideochat.com` can point to the Hooli data plane application. As mentioned above, this is similar to how Slack operates.
 * User choice: A user logs in and is presented with a list of data plane applications to which they can login. In this case, present this option outside of the data plane applications, perhaps in the control plane application.
@@ -187,7 +189,7 @@ Within your control plane application's database, store metadata about each tena
 Some attributes you might need in this object when implementing multi-tenancy with FusionAuth:
 
 * The owning user: which user created this tenant. Depending on your business model, there could be a one to one or one to many mapping between users and tenants in your control plane application datastore.
-* Hostname: a hostname which users of a given organization will access to get to the their data plane application. Something like `hooli.piedpipervideochat.com` or `hooli` if you will always append a domain name.
+* Hostname: a hostname which users of a given organization will access to get to their data plane application. Something like `hooli.piedpipervideochat.com` or `hooli` if you will always append a domain name.
 * FusionAuth tenant Id: the tenant created in FusionAuth during setup.
 * FusionAuth Client Id and Client Secret: this allows you to build links for users to log into the data plane application.
 * Customization attributes: such as a logo or background color for the hosted login pages. 
@@ -212,11 +214,11 @@ Here's the login flow for a data plane application. Such a login would happen af
 {% plantuml source: _diagrams/docs/guides/data-plane-login.plantuml, alt: "Login process for the data plane application." %}
 ++++
 
-The users of data plane app can register or log in and see the chat window (or at least a note about the chat functionality that will later be built out). 
+The users of each data plane application can register or log in and see the chat window (or at least a note about the chat functionality that will later be built out). 
 
 image::guides/multi-tenant/data-plane-logged-in-view.png[The data plane application interface.,width=1200,role=bottom-cropped]
 
-Each of the data plane applications have a correspoding different FusionAuth tenant configuration. Different users can have the same email address, as you can see in the below screenshot, where the `jian@fusionauth.io` user exists in the default tenant and the `ppvctest2` tenant:
+Each of the data plane applications have a corresponding FusionAuth tenant configuration. Different users can have the same email address, as you can see in the below screenshot, where the `jian@fusionauth.io` user exists in the default tenant and the `ppvctest2` tenant:
 
 image::guides/multi-tenant/users-dashboard-fusionauth.png[FusionAuth user dashboard.,width=1200,role=bottom-cropped]
 
@@ -224,13 +226,13 @@ image::guides/multi-tenant/users-dashboard-fusionauth.png[FusionAuth user dashbo
 
 Let's cover the steps to build the PPVC using an external identity provider like FusionAuth. FusionAuth will be used as the user database for the control plane application as well as all related data plane applications. Here are the tasks to set up an application skeleton, configure FusionAuth and integrate them both.
 
-* Configure an control plane application object in FusionAuth and set up your control plane application up to use that FusionAuth configuration for user sign up and login.
+* Configure a control plane application object in FusionAuth and set up your control plane application up to use that FusionAuth configuration for user sign up and login.
 * Create a `tenant` table in your database, an object in your web application codebase, and CRUD methods to manage it.
 * A way to create, modify, and delete FusionAuth configuration for each data plane application.
 * Building the URLs to allow user login, registration and logout requests to be routed to the correct FusionAuth tenant.
 * The callback handling for the Authorization Code grant within your web application codebase.
 
-Let's look at each of these from the perspective of PPVC. If you'd prefer, you can download, review and run a https://github.com/FusionAuth/fusionauth-example-symfony-multitenant[fully functional multi-tenant chat application], video chat functionality not included.
+Let's look at each of these from the perspective of PPVC. If you'd prefer, you can download, review and run a https://github.com/FusionAuth/fusionauth-example-symfony-multitenant[fully functional multi-tenant chat application], actual video chat functionality not included.
 
 === Initial FusionAuth Configuration
 
@@ -315,7 +317,7 @@ To keep FusionAuth and your application in sync, you need to be able to create a
 
 [NOTE]
 ====
-You can use link:/docs/v1/tech/client-libraries/[any of the client libraries] to create FusionAuth configuration. This document happens to use PHP, but use whatever language your web application codebase uses.
+You can use link:/docs/v1/tech/client-libraries/[any of the client libraries] to create FusionAuth configuration. This document happens to use PHP, but feel free to use whatever language makes the most sense in the context of your development.
 
 You can manipulate FusionAuth with client libraries by creating JSON objects as documented by the link:/docs/v1/tech/apis/[APIs] and then calling the corresponding operation.
 ====
@@ -450,7 +452,7 @@ Then, create the FusionAuth application configuration.
 
 ==== Creating a FusionAuth Application
 
-At this point, you are creating the FusionAuth application configuration. A FusionAuth application configuration is required for anything user can log in to using FusionAuth. Users like Patrice or Jason Winter might be logging into the Hooli instance of the PPVC application. The hostname (`hooli`) is required for proper FusionAuth application object configuration, as there are a number of URLs which must be configured.
+At this point, you are creating the FusionAuth application configuration. A FusionAuth application configuration is required for anything a user can log in to. Users like Patrice or Jason Winter might be logging into the Hooli instance of the PPVC application. The hostname (`hooli`) is required for proper FusionAuth application object configuration, as there are a number of URLs which must be configured.
 
 [source,php]
 ----
@@ -599,7 +601,7 @@ Each FusionAuth application object lives in one and only one FusionAuth tenant o
 The sample PPVC application leverages an open source library for managing and creating OAuth URLs. This library handles setting the `state` parameter and other niceties. If your web application framework or language has such a library, using it is highly recommended.
 ====
 
-The simplifed login link generation, without using a library, uses FusionAuth's well documented OAuth endpoints as well as the retrieved `client_id`:
+The simplified login link generation, without using a library, uses FusionAuth's well documented OAuth endpoints as well as the retrieved `client_id`:
 
 [source,php]
 ----
@@ -629,9 +631,9 @@ This logout URL works with browsers. If you are using APIs for a mobile applicat
 
 === Handling OAuth Callbacks
 
-The final auth specific functionality for supporting multiple tenants is handling the OAuth callback. You may recall that in the <<Creating a FusionAuth Application>> section, you configured a FusionAuth application object with a given `authorizedRedirectURLs` value. It was something like: `https://hooli.piedpipervideochat.com/login/callback`. And in the most recent section, you saw code that looked like `$redirectURI = '...';`. These are the same value.
+The final auth specific functionality for supporting multiple tenants is handling the OAuth callback. You may recall that in the <<Creating a FusionAuth Application>> section, you configured a FusionAuth application object with a given `authorizedRedirectURLs` value. It was something like: `https://hooli.piedpipervideochat.com/login/callback`. And in the most recent section, you saw code that looked like `$redirectURI = '...';`. These are the same values.
 
-You must create a part of your web application codebase to respond to OAuth redirection requests. The code must do the following:
+You must create a part of your web application codebase to respond to OAuth redirect requests. The code must do the following:
 
 * Determine the tenant from the hostname to retrieve the correct Client Id and Client Secret.
 * Exchange the authorization code for a token.
@@ -693,7 +695,7 @@ There are a few other specific things worth considering, however.
 
 The control plane and data plane applications are conceptually different, but do not need to be physically distinct. You could, in other words, implement them within the same web application, as this guide did.
 
-Doing so makes sense initially. There will be database overlap between them and it may be easier to operate a single web application than to create two distinct web or mobile applications. Both the control plane and data plane applications will be using `tenant` data. The control plane application will to write it and the data plane application will read it. You'll need to either share a database or have some other way of syncing up that data if you create separate web applications for the control and data plane applications. 
+Doing so makes sense initially. There will be database overlap between them and it may be easier to operate a single web application than to create two distinct web or mobile applications. Both the control plane and data plane applications will be using `tenant` data. The control plane application will write the data and the data plane application will read it. You'll need to either share a database or have some other way of syncing up that data if you create separate web applications for the control and data plane applications. 
 
 If you use the same web application for both the control and data planes, limit access to functionality based on whether the host indicates the control plane or a data plane application is executing. 
 
@@ -790,7 +792,7 @@ If you need separate global configuration, run multiple FusionAuth instances. If
 
 == Example Applications
 
-You can download, review and run a https://github.com/FusionAuth/fusionauth-example-symfony-multitenant[fully functional multi-tenant application] modeled on the PPVC application discussed in this guide. It is written in PHP and the Symfony framework; video chat functionality not included.
+You can download, review and run a https://github.com/FusionAuth/fusionauth-example-symfony-multitenant[fully functional multi-tenant application] modeled on the PPVC application discussed in this guide. It is written in PHP and the Symfony framework. Actual video chat functionality is not included.
 
 If you want a simpler multi-tenant application, here's https://github.com/FusionAuth/fusionauth-example-node-multi-tenant[one written in node].
 
