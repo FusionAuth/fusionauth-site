@@ -33,7 +33,7 @@ We believe in open source or "free as in beer" when possible, and hosting everyt
 
 I understand that is not everyone's experience in IT. I have had some colleagues from an acquisition who didn't share the same ideas and outsourced everything possible. It didn't take long to realize they chose that path because they had little to no skill or even knowledge of how to do it themselves. They had no confidence and wanted a cushion of blame to fall on. 
 
-In the end what they really lost was control and tons of $$ and their systems are a disorganized wreck where no one really knows how the system is cobbled together. Obviously size of business and scope of project play a key role in deciding on self hosting or using an off the shelf solution. For all the small to medium sized businesses I have worked for, self hosting has been a huge win in control, productivity and cost. 
+In the end what they really lost was control and tons of $$. Their systems are a disorganized wreck where no one really knows how the system is cobbled together. Obviously size of business and scope of project play a key role in deciding on self hosting or using an off the shelf solution. For all the small to medium sized businesses I have worked for, self hosting has been a huge win in control, productivity and cost. 
 
 Also, it is SUPER FUN and unimaginably rewarding to build the infrastructure yourself.
 
@@ -113,7 +113,7 @@ Compare that to the months spent trying to set up and even understand GLUU. Mone
 
 **Matthew:** Currently we have a single OpenNebula KVM virtual machine of Debian 10 running FusionAuth with the builtin Elasticsearch. We have a separate PostgreSQL VM for all our custom postgres databases including FusionAuth. We have not yet experimented with a high availability setup for FusionAuth but it's coming soon. FusionAuth is sitting behind an Debian 10 HAProxy load balancer which performs SSL termination and proxies into the FusionAuth HTTP port 9011 with proper `X-Forwarded` headers. 
 
-Once an app authenticates via haproxy->FusionAuth we receive a JWT that is then used in all API requests. Those API requests are NOT sent through haproxy but directly to the Kong API Gateway (a separate external IP) where JWT validation and specific backend access is tightly controlled. Kong and Konga are on a separate Debian 10 KVM virtual machine but share the same PostgreSQL VM with its own "kong" database. All web farms are Debian 10 and nginx. API code utilizes PostgreSQL, MySQL and MongoDB for databases and Redis for caching and pub/sub queues.
+Once an app authenticates via haproxy->FusionAuth we receive a JWT that is then used in all API requests. Those API requests are NOT sent through haproxy but directly to the Kong API Gateway (a separate external IP) where JWT validation and specific backend access is tightly controlled. Kong and Konga are on a separate Debian 10 KVM virtual machine but share the same PostgreSQL VM with its own "kong" database. All web farms are Debian 10 and nginx. API code utilizes PostgreSQL, MySQL and MongoDB for databases and Redis for caching and messaging queues.
 
 **Dan:** Any general feedback/areas to improve?
 
