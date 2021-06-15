@@ -77,7 +77,7 @@ For lists:
 - Capitalize the first word.
 - Have a period on the end if it is a sentence, otherwise don't.
 
-### Proper names
+### Proper names and other verbiage
 - macOS
 - Elasticsearch
 - .NET Core
@@ -85,6 +85,9 @@ For lists:
 - Identity Provider
 - Connector
 - Kickstart
+- multi-factor authentication
+- multi-tenancy/multi-tenant
+
 
 ## Tagging
 
