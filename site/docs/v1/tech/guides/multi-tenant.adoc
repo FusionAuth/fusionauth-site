@@ -98,13 +98,13 @@ This will be similar to Slack in terms of how users sign up and how hostnames ar
 
 This sets up an application that can be logged into by other users. Just as you can sign up for `foo.slack.com` and share it with your organization, PPVC will be built to let someone sign up for `foo.piedpipervideochat.com` and share the awesome video chat with their colleagues.
 
-The creator of a PPVC tenant will be able to pick a hostname and a display background color. If someone from Hooli joins, they could set up `hooli.piedpipervideochat.com`, for example. As mentioned above, Slack uses hostnames to differentiate tenants, and PPVC will as well.
+The creator of a PPVC tenant will be able to pick a hostname and a display background color. If someone from Hooli joins, they could set up `hooli.piedpipervideochat.com`, for example. As mentioned above, Slack uses hostnames to differentiate tenants, and PPVC will as well. If you are familiar with Slack, you may have noticed that the URL to access Slack is `your-company.slack.com`. This pattern allows Slack to route your request based upon the hostname portion of the URL, `your-company`. It also provides each customer with a unique URL which makes life simple for everyone.
 
 [NOTE]
 ====
-The word application is unfortunately overloaded. There are actually four things which could all be called an "application".
+The word application is unfortunately overloaded when discussing multi-tenancy. There are actually multiple things which could all be called an "application".
 
-* The PPVC application, which is the combination of all the functionality built to support the chat application. This will be referred to as the PPVC application.
+* The entire PPVC application, which is the combination of all the functionality built to support the chat application. This will be referred to below as the PPVC application.
 * The codebase and datastore providing features, written in some programming language. This will be called the "web application" or the "web application codebase".
 * The applications where users will sign up for the PPVC and also the place where their users will go to access the chat functionality. These all have separate users and functionality. These could live in the same codebase or in separate code bases. These will be referred to as "control plane" or "data plane" applications, unapologetically borrowing from https://en.wikipedia.org/wiki/Control_plane[network routing].
 * The FusionAuth application configuration, stored in FusionAuth and managed by the FusionAuth UI or API. This includes OAuth, registration and other configuration. These will be called "FusionAuth application configuration" or the "FusionAuth application object".
@@ -267,20 +267,23 @@ The tenant object exists in your control plane and data plane applications. As o
 
 [source,sql,title=Tenant object creation DDL]
 ----
-CREATE TABLE `tenant` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `hostname` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `background_color_code` varchar(6) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `fusion_auth_tenant_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `api_key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `api_key_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `client_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `client_secret` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `UNIQ_4E59C462A76ED395` (`user_id`),
-  CONSTRAINT `FK_4E59C462A76ED395` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+ CREATE TABLE tenant
+             (
+                          id                    INT NOT NULL auto_increment,
+                          user_id               INT NOT NULL,
+                          hostname              VARCHAR(255) collate utf8mb4_unicode_ci NOT NULL,
+                          background_color_code VARCHAR(6) COLLATE utf8mb4_unicode_ci NOT NULL,
+                          fusion_auth_tenant_id VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+                          api_key               VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+                          api_key_id            VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+                          client_id             VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+                          client_secret         VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+                          PRIMARY KEY (id),
+                          UNIQUE KEY uniq_4e59c462a76ed395 (user_id),
+                          UNIQUE KEY uniq_6459cd6da86ed443 (hostname),
+                          CONSTRAINT fk_4e59c462a76ed395 FOREIGN KEY (user_id) REFERENCES user (id)
+             )
+             engine=innodb DEFAULT charset=utf8mb4 COLLATE=utf8mb4_unicode_ci 
 ----
 
 This implementation maps each tenant to a single user, since `user_id` is a foreign key into the local `user` table. As mentioned above, you could choose to allow users to create multiple tenants as well. 
@@ -292,9 +295,7 @@ You'll need to create a user interface to manage this data.
 You could use link:advanced-registration-forms/[Advanced Registration Forms], a premium feature, to capture tenant setup information, such as hostname, on user registration. Then you could use a webhook to create the FusionAuth configuration and the tenant object in your web application's database. This is an alternative implementation.
 ====
 
-The `hostname` is an important field which will repeatedly be used in the PPVC application. The `hostname` is how the code differentiates between different data plane applications/tenants.
-
-You may either let the user pick the hostname (such as `hooli`) or assign it (`tenant123`). In either case, the `hostname` will typically be prepended to the domain name (in this case, `piedpipervideochat.com`) to create an address that end users of PPVC can visit to chat their hearts out. 
+The `hostname` is an important field which will repeatedly be used in the PPVC application. The `hostname` is how the code differentiates between different data plane applications/tenants. `hostname` is forced to be unique. You may either let the user pick the hostname (such as `hooli`) or assign it (`tenant123`). In either case, the `hostname` will typically be prepended to the domain name (in this case, `piedpipervideochat.com`) to create an address that end users of PPVC can visit to chat their hearts out. 
 
 You could of course also let the user choose an entirely different host and domain name (`chat.hooli.com`). That is a great premium feature, but requires more setup, so this guide will leave that as an exercise for the reader.
 
@@ -395,7 +396,11 @@ There are only a few different values between the new data plane tenant and the 
 * The name of the tenant, which is set to the hostname.
 * The issuer, which is set to the expected host. 
 
-You could also tweak any other tenant settings as needed. For example, if your tenants had different password complexity rules, setting them when the FusionAuth tenant object is created would ensure they were consistently applied. Don't forget to store the FusionAuth tenant Id in your database in the `tenant` table.
+An alternative implementation would be to copy the blueprint tenant and then patch the differences.
+
+Either way, you could tweak any other FusionAuth tenant settings as needed. For example, if your tenants had different password complexity rules, setting them when the FusionAuth tenant object is created would ensure they were consistently applied. 
+
+Don't forget to store the FusionAuth tenant Id in your database in the `tenant` table.
 
 Next, let's create an API key.
 
@@ -495,7 +500,17 @@ Once this data plane application is live, the Hooli users need to be created. Yo
 * Allow users to sign in with an enterprise SSO provider such as an OAuth or SAML compatible identity provider.
 * Let users sign up for an account.
 
-In this case, self service registration is enabled. Any of the above options will work when configured, though. For instance, if you wanted to allow users to sign in with Google, create an identity provider in the <<Initial FusionAuth Configuration>>, and then assign the identity provider to the FusionAuth application configuration for a new data plane application.
+In this code, basic self service registration is enabled:
+
+```php
+//...
+$application_registrationconfiguration = array();
+$application_registrationconfiguration["enabled"] = true;
+$application_object["registrationConfiguration"] = $application_registrationconfiguration;
+//...
+```
+
+If needed, any of the above options could be configured. For instance, to allow users to sign in with Google, you would create an identity provider and assign the identity provider to the FusionAuth application configuration for a new data plane application during the <<Initial FusionAuth Configuration>> step.
 
 After the FusionAuth configuration is set up, store the FusionAuth application's Id and Client Secret. These values will be needed later.
 
