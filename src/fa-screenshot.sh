@@ -42,7 +42,7 @@ function usage() {
   #print pretty usage and exit
   cat <<HELP_USAGE
 
-    $0  [-s] [-t] [-d] <destination folder> [-h]
+    $0  [-s] [-t] [-d destination folder] [-h]
 
    -s  Silent mode
    -t  Use TinyPNG API instead of pngquant library
@@ -128,6 +128,13 @@ end tell
 
 set screenWidth to item 3 of screenResolution
 set screenHeight to item 4 of screenResolution
+
+tell application theApp to activate
+delay 0.1
+tell application "System Events" to tell process theApp
+    key code 29 using {command down} -- this resets the size to the default zoom
+    delay 0.1
+end tell
 
 tell application theApp
 	activate
