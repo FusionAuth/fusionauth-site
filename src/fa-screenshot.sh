@@ -38,7 +38,7 @@ function usage() {
   #print pretty usage and exit
   cat <<HELP_USAGE
 
-    $0  [-s] [-t] [-d destination folder] [-f filename] [-h] 
+    $0  [-s] [-t] [-d destination folder] [-f filename] [-u url] [-h] 
 
    -s  Silent mode
    -t  Use TinyPNG API instead of pngquant library
@@ -55,7 +55,8 @@ useTP="no"
 filename=`date +'%y%m%d-%H%M%S'`
 destination=""
 xAxis=640
-while getopts ":stx:f:d:h" options; do
+url=""
+while getopts ":stx:f:u:d:h" options; do
     case "${options}" in
         s)
             silent="yes"
@@ -65,6 +66,9 @@ while getopts ":stx:f:d:h" options; do
             ;;
         x)
             xAxis=${OPTARG}
+            ;;
+        u)
+            url=${OPTARG}
             ;;
         f)
            filename=${OPTARG}
@@ -144,6 +148,13 @@ tell application theApp
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
 EOD
+
+if [ url != "" ]; then
+  osascript<<EOD
+tell application "Safari" to set the URL of the front document to "$url"
+delay 1
+EOD
+fi
 
 
 printOut "-- Creating screenshots folder on the desktop"
