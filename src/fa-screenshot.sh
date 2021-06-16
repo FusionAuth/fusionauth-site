@@ -2,11 +2,7 @@
 
 # Script to take screenshots in the correct format
 
-# how to run : fa-screenshot fileName tp
-# filename (optional)- name of the file to save screenshot to. extension png is automatically added.
-# tp (optional)- use tinypng instead of pngquant for compression
-#TODO: switch for accepting window positioning and sizing parameters.
-
+# how to run : fa-screenshot 
 
 # Author - Sanjay
 
@@ -42,10 +38,11 @@ function usage() {
   #print pretty usage and exit
   cat <<HELP_USAGE
 
-    $0  [-s] [-t] [-d destination folder] [-h]
+    $0  [-s] [-t] [-d destination folder] [-f filename] [-h] 
 
    -s  Silent mode
    -t  Use TinyPNG API instead of pngquant library
+   -f  Filename for screenshot. If not provided, defaults to datetime
    -d  Move screenshots to given folder
    -x  How far to move the safari window on the x axis (number). Default is 640
    -h  Print this usage
@@ -53,12 +50,12 @@ HELP_USAGE
   exit 0;
 }
 
-
 silent="no"
 useTP="no"
+filename=`date +'%y%m%d-%H%M%S'`
 destination=""
 xAxis=640
-while getopts ":stx:d:h" options; do
+while getopts ":stx:f:d:h" options; do
     case "${options}" in
         s)
             silent="yes"
@@ -69,6 +66,9 @@ while getopts ":stx:d:h" options; do
         x)
             xAxis=${OPTARG}
             ;;
+        f)
+           filename=${OPTARG}
+           ;;
         d)
            destination=${OPTARG}
            if [[ "${destination}" == "" || ! -d ${destination} ]]; then
@@ -154,18 +154,11 @@ else
   printOut "Screenshots folder already exists";
 fi
 
-#file name is date-time format
-if [ "${1}" == "" ]; then
-  fileName=`date +'%y%m%d-%H%M%S'`
-else
-  fileName=${1}
-fi
-
-fileName="${fileName}.png"
-absFile=${tempFolder}${fileName}
+filename="${filename}.png"
+absFile=${tempFolder}${filename}
 
 echo
-echo "-- Capturing screenshot to file : ${fileName}"
+echo "-- Capturing screenshot to file : ${filename}"
 screencapture -l $(osascript -e 'tell app "Safari" to id of window 1') ${absFile}
 
 printOut "-- Checking image properties"
@@ -189,6 +182,6 @@ fi
 
 # move to desination folder
 if [ "${destination}" != "" ]; then
-    mv ${absFile} ${destination}/${fileName}
+    mv ${absFile} ${destination}/${filename}
 fi
 
