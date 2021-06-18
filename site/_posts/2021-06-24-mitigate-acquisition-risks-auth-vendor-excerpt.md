@@ -29,19 +29,19 @@ It's also important to think about how this contract might be expected to change
 
 Take a close look at how your business solutions integrate with and use your auth vendor's services right now. Figure out the features you use that are absolutely crucial and which of them are proprietary features. 
 
-Are they following [standard auth protocols](/learn/expert-advice/identity-basics/value-standards-compliant-authentication/)? How many of your apps are using this vendor? At minimum, answering these questions will enable you to know what you need from your next vendor should you need to migrate. 
+Are they following [standard auth protocols](/learn/expert-advice/identity-basics/value-standards-compliant-authentication/)? How many of your apps are using this vendor? At a minimum, answering these questions will keep you well informed should you need to migrate to another vendor.
 
 ## Talk to your account manager
 
-It's time to talk to your account manager about your business relationship. Give them a call or an email and try to negotiate a long-term contract that will protect your business interests and guarantee you some stability. The research into the contract you did previously? Now it the time to reference it.
+It's time to talk to your account manager about your business relationship. Give them a call or an email and try to negotiate a long-term contract that will protect your business interests and guarantee a level of stability. The research into the contract you did previously? Now it the time to reference it.
 
-Don't forget to ask about migration timelines while you're at it, so you know how soon you need to be prepared for what transitions.
+Don't forget to ask about migration timelines while you're at it, so you know how soon you need to be prepared and for what changes.
 
 If you don't have an account manager, send an email to the sales or support team. They may send you elsewhere, but are a good starting point.
 
 ## Evaluate What It Would Take to Switch Vendors
  
-Budget some dev team time to look into other options to see what could be a better alternative in case it becomes necessary to move. Discuss the possibility with your partners or stakeholders, touching base with [everyone you discussed the issue with during the initial decision process](/learn/expert-advice/identity-basics/outsource-auth-system-blueprint/), so that everyone understands what it would take to make the switch. 
+Budget dev team time to look into other options in case it becomes necessary to move. Discuss the possibility with your partners or stakeholders, touching base with [everyone you discussed the issue with during the initial decision process](/learn/expert-advice/identity-basics/outsource-auth-system-blueprint/), so that everyone understands what it would take to make the switch. 
 
 Even if you stick with your vendor through the acquisition, at least now you know more, and you're prepared for whatever comes afterward. 
 
@@ -55,8 +55,8 @@ It's best to discuss this with your stakeholders, again so that everyone is on t
 
 If the changes are disruptive enough, you may decide you don't want to use third-party solutions anymore. You have a few other options:
 
-* **Use a non SaaS solution:** SaaS solutions are great, but if you use a non-SaaS solution, where you host it yourself, you have far more control over any changes to functionality. You may have to upgrade for security or contractual reasons, but you'll be able to do it on your timeline, not the acquirer's.
+* **Use a non SaaS solution:** SaaS solutions are great, but if you use a non-SaaS solution, where you host it yourself, you have far more control over any changes to functionality. You may have to upgrade for security or contractual reasons, but you'll be able to do it on your timeline, not the acquirer's. FusionAuth can be self-hosted and has a community version that is free for unlimited users.
 * **An open-source solution:** You'll still have to manage your own source code. You'll just be using a free and community-driven solution like [Gluu](gluu.org), [Keycloak](https://www.keycloak.org/index.html), or [OpenIAM](https://www.openiam.com/). Your team will have to [explore these projects](/learn/expert-advice/identity-basics/open-source-vs-commercial/) and choose the one that works best for your system.
-* **In-house custom build solution:** In some rare cases, none of the available solutions will be a good fit for your organization, and you'll decide to build a custom auth system for your product. This will require more resources to achieve but of course, when completed, you'll have a solution that works best for you and can be fine-tuned with more features in the future at your will—something you won't get anywhere else.
+* **In-house custom build solution:** In some rare cases, none of the available solutions will be a good fit for your organization, and you'll decide to build a custom auth system for your product. This will require more resources to achieve but of course, when completed, you'll have a solution that works best for you. Further, such a choice can be fine-tuned with more features in the future at your will (and expense)--something you won't get anywhere else.
 
 To learn about more about vendor acquisitions, such as short-term and long-term benefits and risks, read [What to Do When Your Auth System Vendor Gets Acquired](/learn/expert-advice/identity-basics/what-to-do-when-auth-system-vendor-acquired/).
