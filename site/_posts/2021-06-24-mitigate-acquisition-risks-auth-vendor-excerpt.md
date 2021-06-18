@@ -1,9 +1,9 @@
 ﻿---
 layout: advice
 title: How to mitigate risk when your auth vendor gets acquired
-description: Authentication is an integral part of your application, and as such the acquisition of your auth vendor isn't like other acquisitions.
+description: What risk mitigation steps can you take when your auth vendor is acquired?
 author: Eze Sunday Eze
-image: advice/open-source-vs-commercial/expert-advice-open-source-vs-commercial-auth-providers.png
+image: blogs/mitigate-risks-auth-vendor-acquired/how-to-mitigate-risk-when-your-auth-vendor-gets-acquired-header-image.png
 category: Identity Basics
 date: 2021-06-24
 dateModified: 2021-06-24
