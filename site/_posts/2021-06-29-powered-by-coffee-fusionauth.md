@@ -9,7 +9,7 @@ tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 
-Stewart Ritchie is a FusionAuth partner and founder and managing director at Powered By Coffee. He chatted with us over email about how he and his team are using FusionAuth to meet the auth needs of their clients. 
+Stewart Ritchie is a FusionAuth partner as well as founder and managing director at the agency Powered By Coffee. He chatted with us over email about how he and his team are using FusionAuth to meet the auth needs of their clients. 
 
 <!--more-->
 
@@ -71,7 +71,7 @@ Second, the reduction in developer time, having simple, straightforward API's to
 
 **Dan:** Any general feedback/areas to improve?
 
-**Stewart:** You know, I'd love to be able to trigger a backup myself on the enterprise support plan.
+**Stewart:** You know, I'd love to be able to trigger a database backup myself on the enterprise support plan. _[Editor's note: this is on the roadmap.]_
 
 -------
 
