@@ -206,9 +206,13 @@ include::docs/v1/tech/apis/_user-response-body.adoc[]
 
 == Update a User
 
-This API is used to update an existing User. You must specify the Id of the User you are updating on the URI. You must specify all of the properties of the User when calling this API. This API doesn't merge the existing User and your new data. It replaces the existing User with your new data.
+This API is used to update an existing User. You must specify the Id of the User you are updating on the URI.
 
-If you specify a new password for the User, it will be encrypted and stored. However, if you do not provide a new password, the User's old password will be preserved. This is the only field that is merged during an update.
+When using the `PUT` HTTP method, you must specify all of the properties of the User when calling this API. This API doesn't merge the existing User and your new data. It replaces the existing User with your new data.
+
+Utilize the `PATCH` HTTP method to send only changes to merge into an existing User.
+
+If you specify a new password for the User, it will be encrypted and stored. However, if you do not provide a new password, the User's old password will be preserved. This is the only field that is merged during an update with `PUT`.
 
 === Request
 
@@ -248,7 +252,11 @@ include::docs/v1/tech/apis/_user-response-body.adoc[]
 
 == Delete a User
 
-This API is used to delete a User. You must specify the Id of the User on the URI. You can also specify whether or not the User is soft or hard deleted. Soft deleted Users are marked as inactive but not deleted from FusionAuth.
+This API is used to delete a User. You must specify the Id of the User on the URI. You can also specify whether or not the User is soft or hard deleted. A soft delete deactivates the User. A hard delete permanently deletes a User's data.
+
+Soft deleted users are marked as inactive but not deleted from FusionAuth. Deactivated users have their data retained but they are unable to authenticate. Users who have been deactivated can be reactivated; see <<Reactivate a User>> for more.
+
+The data of a User who has been hard deleted is permanently removed from FusionAuth. The User's data cannot be restored via the FusionAuth API or the administrative user interface. If you need to restore the User's data, you must retrieve it from a database backup.
 
 === Request
 
@@ -484,7 +492,7 @@ include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 Available Since Version 1.19.0
 ====
 
-THis API is used to import refresh tokens from an external system, this would generally be done during an initial user import or as an auxiliary step during a migration strategy.
+This API is used to import refresh tokens from an external system, this would generally be done during an initial user import or as an auxiliary step during a migration strategy.
 
 Before using this API, create the Users, Applications and User Registrations. A validation error will be returned if the user does not exist, or is not registered for the application.
 
@@ -559,13 +567,13 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 
 ==== Request Parameters
 
-:query_string_request: 
+:query_string_request:
 :database_search_engine_type:
-:parameter_prefix: 
+:parameter_prefix:
 include::docs/v1/tech/apis/_user-search-request-parameters.adoc[]
 :query_string_request!:
-:database_search_engine_type!: 
-:parameter_prefix!: 
+:database_search_engine_type!:
+:parameter_prefix!:
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
@@ -586,8 +594,8 @@ include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[
 :parameter_prefix: search.
 include::docs/v1/tech/apis/_user-search-request-parameters.adoc[]
 :query_string_request!:
-:database_search_engine_type!: 
-:parameter_prefix!: 
+:database_search_engine_type!:
+:parameter_prefix!:
 
 ===== Request Body Examples
 
@@ -631,13 +639,13 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 
 ==== Request Parameters
 
-:query_string_request: 
+:query_string_request:
 :elasticsearch_search_engine_type:
-:parameter_prefix: 
+:parameter_prefix:
 include::docs/v1/tech/apis/_user-search-request-parameters.adoc[]
 :query_string_request!:
-:elasticsearch_search_engine_type!: 
-:parameter_prefix!: 
+:elasticsearch_search_engine_type!:
+:parameter_prefix!:
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
@@ -658,8 +666,8 @@ include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[
 :parameter_prefix: search.
 include::docs/v1/tech/apis/_user-search-request-parameters.adoc[]
 :query_string_request!:
-:elasticsearch_search_engine_type!: 
-:parameter_prefix!: 
+:elasticsearch_search_engine_type!:
+:parameter_prefix!:
 
 ===== Request Body Examples
 
@@ -785,8 +793,21 @@ link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[ty
 ==== Request Parameters
 
 [.api]
-[field]#verificationId# [type]#[String]# [required]#Required#::
+[field]#verificationId# [type]#[String]# [required]#Required# [deprecated]#Deprecated#::
+The verification Id generated by FusionAuth used to verify the User's registration is valid by ensuring they have access to the provided email address.
++
+[deprecated]#Using this field in the URL segment is deprecated as of version 1.27.0 and may be removed in the future. This API now takes this field in the request body.#
+
+==== Request Body
+
+[.api]
+[field]#oneTimeCode# [type]#[String]# [optional]#Optional# [since]#Available since 1.27.0#::
+The short code used to verify the User's account is valid by ensuring they have access to the provided email address. This field is required when the email [field]#verification strategy# on the Tenant is set to `Form field`.
+
+[field]#verificationId# [type]#[String]# [required]#Required# [since]#Available since 1.27.0#::
 The verification Id generated by FusionAuth used to verify the User's account is valid by ensuring they have access to the provided email address.
++
+When using the `Form field` strategy for Email verification, this value is used along with the `oneTimeCode` as a pair to verify the email address.
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
@@ -861,6 +882,16 @@ include::docs/v1/tech/apis/_standard-put-response-codes.adoc[]
 The email verification Id that was generated by this API request. This identifier may be used by the <<verify-a-users-email,Verify a User's Email>> API.
 This field is only returned in the JSON response body if the request was authenticated using an API key, if an API key is not used no response body is returned.
 
+[field]#verificationOneTimeCode# [type]#[String]#::
+Depending on your tenant configuration, this may be returned. The verification One Time Code is used with the gated Email Verification workflow. The user enters this code to verify their email.
++
+:premium_feature: gated email
+include::docs/v1/tech/shared/_premium-edition-blurb-api.adoc[]
++
+:premium_feature!:
++
+
+
 [source,json]
 .Example Response JSON
 ----
@@ -880,7 +911,7 @@ You may optionally authenticate this request with an API key to allow for some a
 
 [NOTE]
 ====
-If FusionAuth sends an email to the user, it will either use the `email` top level property on the user or it will use a custom data attribute named `email` as well (i.e. `data.email`). This allows you to have a user that has no email address for login or have user's that share email addresses.
+If FusionAuth sends an email to the user, it will either use the `email` top level property on the user or it will use a custom data attribute named `email` as well (i.e. `data.email`). This allows you to have a user that has no email address for login or allow distinct users to share email addresses.
 ====
 
 === Request
@@ -900,6 +931,9 @@ include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-ambiguous-operation.ad
 [.api]
 [field]#loginId# [type]#[String]# [required]#Required#::
 The login identifier of the user. The login identifier can be either the `email` or the `username`. The username is not case sensitive.
+
+[field]#state# [type]#[Object]# [optional]#Optional#::
+An optional object that will be returned un-modified when you complete the forgot password request. This may be useful to return the user to particular state once they complete the password change.
 
 [source,json]
 .Example Request JSON
@@ -931,6 +965,9 @@ The login identifier of the user. The login identifier can be either the `email`
 [field]#sendForgotPasswordEmail# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `true`#::
 Whether or not calling this API should attempt to send the user an email using the Forgot Password Email Template. Setting this to
 false will skip the email attempt and only set the `changePasswordId` for the user.
+
+[field]#state# [type]#[Object]# [optional]#Optional#::
+An optional object that will be returned un-modified when you complete the forgot password request. This may be useful to return the user to particular state once they complete the password change.
 
 [source,json]
 .Example Request JSON

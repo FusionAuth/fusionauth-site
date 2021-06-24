@@ -5,7 +5,7 @@ description: If you want to add authentication to your Gatsby site, FusionAuth c
 author: Karl Hughes
 image: blogs/oauth-gatsby/fusionauth-tutorial-using-oauth-and-pkce-to-add-authentication-to-your-gatsby-site.png
 category: blog
-tags: client-javascript
+tags: client-javascript tutorial tutorial-javascript
 excerpt_separator: "<!--more-->"
 ---
 

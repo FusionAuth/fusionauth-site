@@ -33,7 +33,7 @@ Because change is hard and many applications that store user credentials were no
 **Watch the video below to see it in action.**
 
 <div class="d-flex justify-content-center mb-5 mt-1 youtube">
-<iframe src="https://www.youtube.com/embed/hMqxo68ZJlw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="hMqxo68ZJlw" %}
 </div>
 
 ## Fixes & Updates

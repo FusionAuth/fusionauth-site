@@ -5,7 +5,7 @@ description: You can leverage multi-tenant features to easily separate users, th
 author: Dan Moore
 image: blogs/private-label-with-tenants/how-to-use-fusionauths-multi-tenant-feature-to-create-a-private-label-offering.png
 category: blog
-tags: api-tenants feature-themes
+tags: api-tenants feature-themes tutorial tutorial-feature
 excerpt_separator: "<!--more-->"
 ---
 

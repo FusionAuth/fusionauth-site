@@ -5,7 +5,7 @@ description: Implement authentication and authorization using FusionAuth to allo
 image: blogs/controlling-hotspot/controlling-a-hotspot-with-fusionauth-authentication.png
 author: Mauro Viola
 category: blog
-tags: client-python 
+tags: client-python tutorial tutorial-python tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
 

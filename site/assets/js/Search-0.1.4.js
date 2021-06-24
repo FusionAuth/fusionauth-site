@@ -2,7 +2,6 @@ var FusionAuth = FusionAuth || {};
 
 FusionAuth.Search = function() {
   Prime.Utils.bindAll(this);
-
   Prime.Document.query('a.search').each(function(e) {
     e.addEventListener('click', this._handleSearchButtonClick);
   }.bind(this));

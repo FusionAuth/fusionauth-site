@@ -5,7 +5,7 @@ description: How can you use Flutter, OAuth and OIDC together?
 image: blogs/securing-flutter-app/securing-a-flutter-app-with-oauth.png
 author: Krissanawat Kaewsanmuang
 category: blog
-tags: client-dart 
+tags: client-dart tutorial tutorial-dart
 excerpt_separator: "<!--more-->"
 ---
 
@@ -743,7 +743,7 @@ flutter run -d all
 
 You should see something similar to this demo:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/EklSdaT0xfw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+{% include _youtube-video.liquid youtubeid="EklSdaT0xfw" %}
 
 ## Additional resources
 

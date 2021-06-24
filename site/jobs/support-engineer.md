@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Support Engineer 
+title: SHA-1 (Support) Engineer 
 description: FusionAuth is seeking a Support Engineer to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 60000
@@ -75,5 +75,6 @@ In general, you can expect the following during your interview process.
 * **Salary range:** $50,000 to $80,000 (depending on experience) 
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
+* **401k:** Yes!
 * **Stock options:** Yes!
 * **Vacation:** Flexible! Take what you need. :)
