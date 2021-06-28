@@ -5,6 +5,7 @@ description: Identiverse is an annual identity and IAM conference. FusionAuth sh
 author: Dan Moore
 image: blogs/disclosure-2020/disclosure-conference-report.png
 category: blog
+tags: conference-report
 excerpt_separator: "<!--more-->"
 ---
 
@@ -12,71 +13,78 @@ Identiverse is an annual, vendor agnostic identity and access management (IAM) c
 
 <!--more-->
 
-It was three days long. Here's the [agenda for the 2021 conference](https://identiverse.com/idv2021/). I don't believe the videos are going to be available to the public, but if you attended, you should be able to [view them until the end of July](https://twitter.com/Identiverse/status/1408466566346199046) in the same platform used to view the agenda and contact attendees.
+It was three days long; here's [the agenda](https://identiverse.com/idv2021/). I don't believe videos are available to the public, but if you attended, you can [view them until the end of July](https://twitter.com/Identiverse/status/1408466566346199046) using the same Identiverse application you may have used to view the agenda during the event or to ask questions of speakers.
 
-## Covid
+## Covid concerns
 
-I want to address the elephant in the room. This was an in-person conference, the first major technology conference that I've heard of since the pandemic started. I confess I was a bit spooked when I thought about attending. I reviewed their [Covid-19 FAQ page](https://identiverse.com/faq/) carefully and was impressed by what they said they'd do to make sure attendees were safe.
+First, I want to address the elephant in the room. Identiverse was an in-person conference, the first major technology conference that I've heard of since the pandemic started. I was a bit spooked when I thought about attending. I reviewed their [Covid-19 FAQ page](https://identiverse.com/faq/) carefully and was impressed by how they were planning to make sure attendees were safe.
 
-And they did take steps. I saw some things I expect to see at most conferences in the next few years:
+During the conference, I saw some things I expect to see at most conferences in the next few years:
 
-* Hand sanitizer everywhere. Thanks Google Cloud for sponsoring those.
-* More spacing everywhere, including in sessions. 
+* Hand sanitizer everywhere. Thank you Google Cloud for sponsoring those.
+* Seats were spaced out for all sessions.
 * There were few, if any, attendees from outside the USA.
-* All sessions with food and drink were outside. 
-* There were fewer attendees than in the past. Unsure if that was due to event limits or other factors.
-* There were a large number of virtual talks, both "live" and pre-recorded.
-* A number of attendees were virtual. I don't know how that experience was.
+* Meals and happy hours were outside. 
+* There were fewer attendees than in the past, according to other conference goers who had been to previous Identiverses.
+* There were a large number of virtual talks, both live and pre-recorded.
+* A number of attendees were virtual. (I don't know how that experience was.)
 
 IMAGE TBD
 
-I'd expect all of these will change the unit economics of event organizing in the future. Anecdotally, I didn't see anybody checking vaccination status (no rapid testing station, for example). I didn't see that many attendees wearing masks, though many of the staff were. I shook hands with a few folks, but there were plenty of hand waves instead. Believe you me, I kept some social distance and avoided large groups.
+I'd expect these changes to affect the unit economics of event organizing. Anecdotally, I didn't see anybody checking vaccination status; there was no rapid testing station, for example. I also didn't see many attendees wearing masks, though many of the staff were. I shook hands with a few folks, but there were plenty of hand waves instead. Believe you me, I typically kept social distance and avoided large groups.
 
-I also think that the in-person talks were much more fun than the virtual ones. Easier to ask questions, far easier to interact with fellow attendees, and more spontaneous. One speaker even said, "well, since I'm not being recorded..." and proceeded to give us an unvarnished opinion about a dicey matter. This experience reinforced to me that while I don't think virtual events are going away, I think that in-person events will come back strong too, as the experience is simply higher-bandwidth and more fun.
+The in-person talks were much more fun than the virtual ones. It was easier to ask questions, to interact with fellow attendees, and in general felt more spontaneous. One speaker said, "well, since I'm not being recorded..." and proceeded to give an unvarnished opinion about a dicey matter. While I don't think virtual events are going away, in-person events will come back strong, as the experience is simply higher-bandwidth and more fun.
 
-At the end of the conference, I felt like they'd done a great job.
+At the end of the conference, I felt like they'd done a great job handling my covid concerns.
 
-## Content
+## What about the actual conference, Dan?
 
-As at any conference, there was a plethora of great content and I couldn't attend all of it. But from what I saw, there were several themes. 
+As at any conference, there was a plethora of great content and I couldn't attend all the talks. But from what I saw, there were several themes. 
 
-### Identity Proofing
+### Identity proofing
 
-First, identity proofing is still an unsolved problem, but one that a lot of people are working on. Identity proofing is the process of knowing who someone is before you grant them an account on your system. It can also be used for account recovery. For some applications this is unimportant; an e-commerce site will happily take give me an account (and take my money) without knowing who I actually am. But for many online systems, this is really important. There was one talk about how the New York Air National Guard used identity proofing and digital identity products to allow access to sensitive systems for authorized people. As Covid forced large numbers of employees to remote work, proving folks are who they say they are at scale becomes more important.
+First, affordable identity proofing at scale is still an unsolved problem; one that a lot of people are working on. Identity proofing is the process of knowing who someone is before you grant them a user account. It can also be used for account recovery. 
+
+For some applications identity proofing is unimportant; a typical ecommerce site will happily provide an account and take my money without knowing who I actually am. But for many online systems, such as unemployment insurance or business accounts, tying the user to a real identity is really important. There was a talk about how the New York Air National Guard used identity proofing and digital identity products to allow access to sensitive systems for a set of authorized people. As covid forced large numbers of employees toware remote work, knowing folks are who they say they are at scale becomes more critical.
 
 The solutions in this space seem to focus on:
 
-* Automatic recognition of paper, government issued documents.
-* Facial recognition, including measure to thwart presentation of photos in place of real people.
-* Ensuring there is a manual fallback for people when machine learning fails, or when the user has issues.
+* Automatic recognition of government issued paper documents.
+* Facial recognition, including measures to thwart presentation of photos in place of real people.
+* Ensuring there are manual fallbacks for people when machine learning fails, or when the user has can't present all the required documentation.
 
-This was interesting to me because it is a step before the authentication and authorization process which FusionAuth handles well. While you can certainly do identity proofing out of band using one of the many solutions out there, if you'd like tighter integration with FusionAuth, I [filed a tracking issue](https://github.com/FusionAuth/fusionauth-issues/issues/1280) which you can upvote.
+This is a step before the authentication and authorization process which is the focus of FusionAuth. While you can identity proof out of band using one of the many solutions out there, if you'd like tighter integration with FusionAuth, I [filed a tracking issue](https://github.com/FusionAuth/fusionauth-issues/issues/1280) which you can upvote.
 
 ### FIDO
 
-There were numerous sessions on [FIDO](https://fidoalliance.org/). In particular, I attended one where folks from Intuit and T-Mobile talked about their rollout. It was a continuation of a discussion panel with the same attendees two years ago. FIDO is an alliance of a number of technology vendors who are working to provide strong passwordless authentication in a way that consumers and application users will use. This includes hardware items such as Yubikeys, biometric solutions such as FaceID, and others. 
-
-In particular, the FIDO non-profit does three things:
+There were numerous sessions on [FIDO](https://fidoalliance.org/). FIDO is an alliance of technology vendors working to provide strong passwordless authentication in a way that consumers and application users can easily use. This includes hardware items such as Yubikeys, biometric solutions such as FaceID, and others. In particular, the FIDO non-profit organization does three things:
 
 - Manages an open technical specification for strong passwordless authentication.
-- Runs a certification program to allow companies to certify their solution.
-- Runs programs to facilitate adoption of the FIDO standard. This is an increasing portion of their effort now.
+- Runs a certification program allowing companies to certify their solution.
+- Runs programs to facilitate adoption of the standard. According to their executive director and CMO, this is an increasing portion of their effort now.
 
-FIDO adoption doesn't mean the death of passwords, but during this rollout they found that large numbers of users (>80%) prefer to authenticate with FIDO enabled methods. T-Mobile even uses FIDO to authenticate you before you even call customer service via 611. Intuit has rolled it out across of their major mobile applications.
+I attended one session where presenters from Intuit and T-Mobile talked about rollouts of FIDO enabled applications. This panel was a continuation of a discussion with the same attendees two years ago, which is an interesting way to close the loop at a conference.
 
-FIDO also plays into the continuous evaluation of authorization. The T-Mobile representative mentioned that the discussion was evolving from a "what is the best second factor discussion" to a multi-factor world where you are mapping out the right set of authenticators for the action that the user is trying to take. In other words, use strong authentication where the risk suggests it.
+FIDO adoption doesn't necessarily mean the death of passwords. But during this rollout they found large numbers of users (>80%) preferred to authenticate with FIDO enabled methods. T-Mobile uses FIDO to authenticate you before a call to customer service via 611 connects. Intuit has rolled it out across their major mobile applications.
 
-### The Kitchen Sink
+FIDO also plays in continuous evaluation of authorization. The T-Mobile representative stated the discussion was evolving from a "what is the best second factor discussion," which was common a few years ago, to a multi-factor world where you are mapping the right set of authenticators for the current user action. Some situations call for strong recent authentication, such as changing payment information, while others, like checking the minutes, require less assurances.
 
-There was a large amount of other content that didn't fall into one of the two themes above. There was a certification program announced, diversity and inclusion discussions, a talk on mobile application best practices, the multitude of AWS identity solutions, and more. 
+### The rest of it
 
-One thing that was a bit of a suprise to me was how little code I saw. Even in the talk on mobile application best practices, I didn't see code displayed. Maybe I missed the code-heavy sessions, but this seemed like a conference for IAM admins rather than developers.
+There was a lot of other content which didn't fall into one of the two common themes above:
 
-However, I talked to several people who were doing interesting things with identity. One had an idea to leverage DNS to help solve the digital identity rollout problem. Another ran identity for over one hundred hospitals and had some unique challenges due to that. We talked a bit about he planned rollouts in the hospital environment, which sounded challenging. 
+* An [IAM certification program](https://idpro.org/cidpro/) was announced.
+* There was more than one diversity and inclusion discussion.
+* An interesting talk on OAuth and secure mobile applications
+* An overview of all the ways you can authenticate with AWS
+* And more.
 
-Someone else I talked to handled a merger of several hospitals by using a vendor's solution which let you create virtual LDAP directories. After a physical merge was required due to EMR compliance concerns, they still use the virtual LDAP directories to control access for SaaS applications.
+One surprise to me was how little code I saw. Even in the mobile application security session, I didn't see much code displayed. Maybe I simply missed the code-heavy sessions, but this seemed like a conference for IAM admins rather than devs.
 
-And the complexity is immense. One person I chatted with at a happy hour commented that they had so many custom applications and identity store that consolidating everything with "unlimited budget" would take 3-5 years. And of course, they didn't have that.
+However, it was fantastic for learning more about the wide world of IAM. I talked to many people who were doing interesting things with identity. One wanted to leverage DNS to enable a rollout of digital identity. Another ran identity for over one hundred hospitals and had some unique challenges. We talked a bit about how he planned rollouts in the hospital environment; these are sensitive environments in so many respects.
 
-In general, it was a great place to chat with people about their identity challenges and solutions.
+Another attendee I chatted with handled an enterprise identity integration project during a merger of several hospitals through a solution which allows creation of virtual LDAP directories. After a physical LDAP directory merger was required due to EMR compliance concerns, they still use virtual LDAP directories to control access for SaaS applications.
 
+The complexity of IAM is immense. One person I chatted with at a happy hour commented that they had so many custom applications and identity stores that consolidating everything, even with an unlimited budget, would take 3-5 years. And of course, they didn't have that budget.
+
+All in all, Identiverse was a great place to chat with people about their identity challenges and solutions.
