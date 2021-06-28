@@ -55,7 +55,7 @@ Similarly, these users don't need to have logins to WordPress anymore, hugely im
 
 We've continued to use and recommend FusionAuth because we find it very pleasant to use as developers.  There are lots of options for API access, different ways we can integrate FusionAuth in our projects and support is always there when we need a little extra help.
 
-It's great to see the product continue to evolve and the road map be published. It gives us more options to support our own clients.
+It's great to see the product continue to evolve and the roadmap be published. It gives us more options to support our own clients.
 
 **Dan:** How much time and money would you say FusionAuth has saved you and your clients?
 
