@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Powered By Coffee helps WordPress scale with FusionAuth
-description: Powered By Coffee is an agency specialising in the media industry and helps media companies, organisations who rely on memberships and subscriptions and indie startups who create mass content.
+description: Powered By Coffee is an agency that specializes in WordPress and helps organizations such as media companies with their subscription and membership models.
 author: Dan Moore
 image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
 category: blog
@@ -19,13 +19,13 @@ Stewart Ritchie is a FusionAuth partner as well as founder and managing director
 
 **Dan:** Tell me a bit about your work at Powered By Coffee. What kind of clients do you typically work with?
 
-**Stewart:** We're a WordPress development agency and we specialise in the media industry, helping media companies, organisations who rely on memberships and subscriptions and indie startups who create mass content.
+**Stewart:** We're a WordPress development agency that specialises in the media industry. We help media companies, organisations that rely on memberships and subscriptions, and indie startups that create mass content.
 
-> We've continued to use and recommend Fusion Auth because we find it very pleasant to use as developers.  
+> We've continued to use and recommend FusionAuth because we find it very pleasant to use as developers.  
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
-**Stewart:** We use Fusion Auth to:
+**Stewart:** We use FusionAuth to:
 
 * Centralise user data and identity so profiles can be used across products and services.
 * Manage access to content on membership sites.
@@ -43,31 +43,31 @@ To do this, we used these features:
 
 **Stewart:** FusionAuth solved a problem of scale and access for us. WordPress is a great CMS but it's a terrible user manager.
 
-By using FusionAuth to handle User authentication and access control we can bypass the WordPress User system and handle Authentication entirely client side. That means we can be much more aggressive with our caching, improving overall performance. 
+By using FusionAuth to handle User authentication and access control we can bypass the WordPress User system and handle Authentication entirely on the client side. That means we can be much more aggressive with our caching, improving overall performance. 
 
-Similarly, these users don't need to have logins to WordPress anymore, hugely improving overall performance as we take a user table down from hundreds of thousands of users, down to a few hundred authors and editors.
+Similarly, these users don't need to have logins to WordPress anymore, hugely improving overall performance as we decrease the size of a WordPress user table from hundreds of thousands of users to the few hundred users who are authors and editors.
 
-> I think the cost savings purely from helping optimise caching and performance on high traffic WordPress sites, massively reducing the number of servers needed to run a performant site, is massive.
+> I think the cost savings purely from helping optimise caching and performance on high traffic WordPress sites, drastically reducing the number of servers needed to run a performant site, is massive.
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
-**Stewart:** In our case we were introduced to Fusion Auth by a client who had already decided to use it.
+**Stewart:** In our case we were introduced to FusionAuth by a client who had already decided to use it.
 
-We've continued to use and recommend Fusion Auth because we find it very pleasant to use as developers.  There are lots of options for API access, different ways we can integrate FA in our projects and support is always there when we need a little extra help.
+We've continued to use and recommend FusionAuth because we find it very pleasant to use as developers.  There are lots of options for API access, different ways we can integrate FusionAuth in our projects and support is always there when we need a little extra help.
 
 It's great to see the product continue to evolve and the road map be published. It gives us more options to support our own clients.
 
 **Dan:** How much time and money would you say FusionAuth has saved you and your clients?
 
-**Stewart:** Impossible to say I'm afraid. I think the cost savings purely from helping optimise caching and performance on high traffic WordPress sites, massively reducing the number of servers needed to run a performant site, is massive.
+**Stewart:** Impossible to say I'm afraid. I think the cost savings purely from helping optimise caching and performance on high traffic WordPress sites, drastically reducing the number of servers needed to run a performant site, is massive.
 
-Second, the reduction in developer time, having simple, straightforward API's to share that user profile and access information in multiple accessory applications is beyond calculation.
+Second, the reduction in developer time and having simple, straightforward API's to share user profile and access information in multiple accessory applications is beyond calculation.
 
 > WordPress is a great CMS but it's a terrible user manager.
 
 **Dan:** How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
 
-**Stewart:** We run a couple of different Fusion Auth setups; we have a managed Fusion Auth instance that Fusion Auth lookafter for production work and we also have FusionAuth running as a Docker Container in our Development Network. We've also run FusionAuth as a service in a Docker Compose driven project.
+**Stewart:** We run a couple of different FusionAuth setups; we have a managed FusionAuth Cloud instance for production work. We also have FusionAuth running in a Docker Container in our development network. We've also run FusionAuth as a service in a Docker Compose project.
 
 **Dan:** Any general feedback/areas to improve?
 
