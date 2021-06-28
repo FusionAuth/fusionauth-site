@@ -81,7 +81,9 @@ There was a lot of other content which didn't fall into one of the two common th
 
 One surprise to me was how little code I saw. Even in the mobile application security session, I didn't see much code displayed. Maybe I simply missed the code-heavy sessions, but this seemed like a conference for IAM admins rather than devs.
 
-However, it was fantastic for learning more about the wide world of IAM. I talked to many people who were doing interesting things with identity. One wanted to leverage DNS to enable a rollout of digital identity. Another ran identity for over one hundred hospitals and had some unique challenges. We talked a bit about how he planned rollouts in the hospital environment; these are sensitive environments in so many respects.
+However, it was fantastic for learning more about the wide world of IAM. I talked to many people who were doing interesting things with identity. One wanted to leverage DNS to enable a rollout of digital identity. I got a chance to chat in person with a couple of the IAM personalities that are "big names" in the space.
+
+I also sat next to a person at breakfast who ran identity for over one hundred hospitals and had some unique challenges. We talked a bit about how he planned rollouts in the hospital environment; these are sensitive environments in so many respects.
 
 Another attendee I chatted with handled an enterprise identity integration project during a merger of several hospitals through a solution which allows creation of virtual LDAP directories. After a physical LDAP directory merger was required due to EMR compliance concerns, they still use virtual LDAP directories to control access for SaaS applications.
 
