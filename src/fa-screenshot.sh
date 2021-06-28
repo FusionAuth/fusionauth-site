@@ -2,11 +2,7 @@
 
 # Script to take screenshots in the correct format
 
-# how to run : fa-screenshot fileName tp
-# filename (optional)- name of the file to save screenshot to. extension png is automatically added.
-# tp (optional)- use tinypng instead of pngquant for compression
-#TODO: switch for accepting window positioning and sizing parameters.
-
+# how to run : fa-screenshot 
 
 # Author - Sanjay
 
@@ -42,23 +38,26 @@ function usage() {
   #print pretty usage and exit
   cat <<HELP_USAGE
 
-    $0  [-s] [-t] [-d] <destination folder> [-h]
+    $0  [-s] [-t] [-d destination folder] [-f filename] [-u url] [-h] 
 
-   -s  Silent mode
-   -t  Use TinyPNG API instead of pngquant library
-   -d  Move screenshots to given folder
-   -x  How far to move the safari window on the x axis (number). Default is 640
+   -s  Silent mode.
+   -t  Use TinyPNG API instead of pngquant library. Set the TINYPNG_API_KEY env variable with a TinyPNG API key.
+   -f  Filename for screenshot. If not provided, defaults to datetime.
+   -u  URL to open before taking screenshot. Will cause a slight delay.
+   -d  Move screenshots to given folder.
+   -x  How far to move the safari window on the x axis (number). Default is 640.
    -h  Print this usage
 HELP_USAGE
   exit 0;
 }
 
-
 silent="no"
 useTP="no"
+filename=`date +'%y%m%d-%H%M%S'`
 destination=""
 xAxis=640
-while getopts ":stx:d:h" options; do
+url=""
+while getopts ":stx:f:u:d:h" options; do
     case "${options}" in
         s)
             silent="yes"
@@ -69,6 +68,12 @@ while getopts ":stx:d:h" options; do
         x)
             xAxis=${OPTARG}
             ;;
+        u)
+            url=${OPTARG}
+            ;;
+        f)
+           filename=${OPTARG}
+           ;;
         d)
            destination=${OPTARG}
            if [[ "${destination}" == "" || ! -d ${destination} ]]; then
@@ -129,6 +134,13 @@ end tell
 set screenWidth to item 3 of screenResolution
 set screenHeight to item 4 of screenResolution
 
+tell application theApp to activate
+delay 0.1
+tell application "System Events" to tell process theApp
+    key code 29 using {command down} -- this resets the size to the default zoom
+    delay 0.1
+end tell
+
 tell application theApp
 	activate
 	reopen
@@ -137,6 +149,13 @@ tell application theApp
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
 EOD
+
+if [ url != "" ]; then
+  osascript<<EOD
+tell application "Safari" to set the URL of the front document to "$url"
+delay 1
+EOD
+fi
 
 
 printOut "-- Creating screenshots folder on the desktop"
@@ -147,18 +166,11 @@ else
   printOut "Screenshots folder already exists";
 fi
 
-#file name is date-time format
-if [ "${1}" == "" ]; then
-  fileName=`date +'%y%m%d-%H%M%S'`
-else
-  fileName=${1}
-fi
-
-fileName="${fileName}.png"
-absFile=${tempFolder}${fileName}
+filename="${filename}.png"
+absFile=${tempFolder}${filename}
 
 echo
-echo "-- Capturing screenshot to file : ${fileName}"
+echo "-- Capturing screenshot to file : ${filename}"
 screencapture -l $(osascript -e 'tell app "Safari" to id of window 1') ${absFile}
 
 printOut "-- Checking image properties"
@@ -182,6 +194,6 @@ fi
 
 # move to desination folder
 if [ "${destination}" != "" ]; then
-    mv ${absFile} ${destination}/${fileName}
+    mv ${absFile} ${destination}/${filename}
 fi
 
