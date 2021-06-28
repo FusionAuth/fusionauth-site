@@ -3,7 +3,7 @@ layout: blog-post
 title: Powered By Coffee helps WordPress scale with FusionAuth
 description: Powered By Coffee is an agency that specializes in WordPress and helps organizations such as media companies with their subscription and membership models.
 author: Dan Moore
-image: blogs/become-education-story/become-education-chooses-fusionauth-for-idaas.png
+image: blogs/wordpress-powered-by-coffee-fusionauth/powered-by-coffee-helps-wordpress-scale-with-fusionauth-header-image.png
 category: blog
 tags: topic-community-story
 excerpt_separator: "<!--more-->"
