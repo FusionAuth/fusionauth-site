@@ -29,8 +29,6 @@ During the conference, I saw some things I expect to see at most conferences in 
 * There were a large number of virtual talks, both live and pre-recorded.
 * A number of attendees were virtual. (I don't know how that experience was.)
 
-IMAGE TBD
-
 I'd expect these changes to affect the unit economics of event organizing. Anecdotally, I didn't see anybody checking vaccination status; there was no rapid testing station, for example. I also didn't see many attendees wearing masks, though many of the staff were. I shook hands with a few folks, but there were plenty of hand waves instead. Believe you me, I typically kept social distance and avoided large groups.
 
 The in-person talks were much more fun than the virtual ones. It was easier to ask questions, to interact with fellow attendees, and in general felt more spontaneous. One speaker said, "well, since I'm not being recorded..." and proceeded to give an unvarnished opinion about a dicey matter. While I don't think virtual events are going away, in-person events will come back strong, as the experience is simply higher-bandwidth and more fun.
