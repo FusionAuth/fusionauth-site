@@ -9,7 +9,7 @@ tags: conference-report
 excerpt_separator: "<!--more-->"
 ---
 
-Identiverse is an annual, vendor agnostic identity and access management (IAM) conference. I attended the 2021 incarnation in person and wanted to share a few takeaways. 
+Identiverse is an annual, vendor agnostic identity and access management (IAM) conference. I attended the 2021 incarnation in person last week and wanted to share a few takeaways. 
 
 <!--more-->
 
