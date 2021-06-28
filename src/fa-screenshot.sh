@@ -40,11 +40,12 @@ function usage() {
 
     $0  [-s] [-t] [-d destination folder] [-f filename] [-u url] [-h] 
 
-   -s  Silent mode
-   -t  Use TinyPNG API instead of pngquant library
-   -f  Filename for screenshot. If not provided, defaults to datetime
-   -d  Move screenshots to given folder
-   -x  How far to move the safari window on the x axis (number). Default is 640
+   -s  Silent mode.
+   -t  Use TinyPNG API instead of pngquant library. Set the TINYPNG_API_KEY env variable with a TinyPNG API key.
+   -f  Filename for screenshot. If not provided, defaults to datetime.
+   -u  URL to open before taking screenshot. Will cause a slight delay.
+   -d  Move screenshots to given folder.
+   -x  How far to move the safari window on the x axis (number). Default is 640.
    -h  Print this usage
 HELP_USAGE
   exit 0;
