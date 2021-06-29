@@ -3,7 +3,7 @@ layout: blog-post
 title: ! 'Takeaways from Identiverse 2021: Covid thoughts, FIDO and more'
 description: Identiverse is an annual identity and IAM conference. FusionAuth showed up and took notes so you don't have to.
 author: Dan Moore
-image: blogs/disclosure-2020/disclosure-conference-report.png
+image: blogs/takeaways-identiverse-2021/takeaways-from-identiverse-2021-covid-thoughts-fido-and-more-header-image.png
 category: blog
 tags: conference-report
 excerpt_separator: "<!--more-->"
@@ -23,7 +23,7 @@ During the conference, I saw some things I expect to see at most conferences in 
 
 * Hand sanitizer everywhere. Thank you Google Cloud for sponsoring those.
 * Seats were spaced out for all sessions.
-* There were few, if any, attendees from outside the USA.
+* There were few, if any, attendees from outside the USA. I believe that was because of covid travel restrictions.
 * Meals and happy hours were outside. 
 * There were fewer attendees than in the past, according to other conference goers who had been to previous Identiverses.
 * There were a large number of virtual talks, both live and pre-recorded.
@@ -43,15 +43,15 @@ As at any conference, there was a plethora of great content and I couldn't atten
 
 First, affordable identity proofing at scale is still an unsolved problem; one that a lot of people are working on. Identity proofing is the process of knowing who someone is before you grant them a user account. It can also be used for account recovery. 
 
-For some applications identity proofing is unimportant; a typical ecommerce site will happily provide an account and take my money without knowing who I actually am. But for many online systems, such as unemployment insurance or business accounts, tying the user to a real identity is really important. There was a talk about how the New York Air National Guard used identity proofing and digital identity products to allow access to sensitive systems for a set of authorized people. As covid forced large numbers of employees toware remote work, knowing folks are who they say they are at scale becomes more critical.
+For some applications identity proofing is unimportant; a typical ecommerce site will happily provide an account and take my money without knowing who I actually am. But for many online systems, such as unemployment insurance or business accounts, tying the user to a real identity is really important. There was a talk about how the New York Air National Guard used identity proofing and digital identity products to allow access to sensitive systems for a set of authorized people. As covid forced large numbers of employees toward remote work, knowing folks are who they say they are at scale becomes more critical.
 
 The solutions in this space seem to focus on:
 
 * Automatic recognition of government issued paper documents.
-* Facial recognition, including measures to thwart presentation of photos in place of real people.
-* Ensuring there are manual fallbacks for people when machine learning fails, or when the user has can't present all the required documentation.
+* Facial recognition, including fraud detection. Photos of someone shouldn't be accepted when the person needs to be present.
+* Ensuring there are manual fallbacks when machine learning fails, or when the user can't present all the required documentation.
 
-This is a step before the authentication and authorization process which is the focus of FusionAuth. While you can identity proof out of band using one of the many solutions out there, if you'd like tighter integration with FusionAuth, I [filed a tracking issue](https://github.com/FusionAuth/fusionauth-issues/issues/1280) which you can upvote.
+This is a step before the authentication and authorization process (the focus of FusionAuth). While you can identity proof out of band using one of the many solutions out there, if you'd like tighter integration with FusionAuth, I [filed a tracking issue](https://github.com/FusionAuth/fusionauth-issues/issues/1280) which you can upvote.
 
 ### FIDO
 
@@ -63,7 +63,7 @@ There were numerous sessions on [FIDO](https://fidoalliance.org/). FIDO is an al
 
 I attended one session where presenters from Intuit and T-Mobile talked about rollouts of FIDO enabled applications. This panel was a continuation of a discussion with the same attendees two years ago, which is an interesting way to close the loop at a conference.
 
-FIDO adoption doesn't necessarily mean the death of passwords. But during this rollout they found large numbers of users (>80%) preferred to authenticate with FIDO enabled methods. T-Mobile uses FIDO to authenticate you before a call to customer service via 611 connects. Intuit has rolled it out across their major mobile applications.
+FIDO adoption doesn't necessarily mean the death of passwords. But during this rollout they found large numbers of users (>80%) preferred to authenticate with FIDO enabled methods. T-Mobile uses FIDO to authenticate a customer service caller. Intuit has rolled it out across their major mobile applications.
 
 FIDO also plays in continuous evaluation of authorization. The T-Mobile representative stated the discussion was evolving from a "what is the best second factor discussion," which was common a few years ago, to a multi-factor world where you are mapping the right set of authenticators for the current user action. Some situations call for strong recent authentication, such as changing payment information, while others, like checking the minutes, require less assurances.
 
@@ -83,7 +83,7 @@ However, it was fantastic for learning more about the wide world of IAM. I talke
 
 I also sat next to a person at breakfast who ran identity for over one hundred hospitals and had some unique challenges. We talked a bit about how he planned rollouts in the hospital environment; these are sensitive environments in so many respects.
 
-Another attendee I chatted with handled an enterprise identity integration project during a merger of several hospitals through a solution which allows creation of virtual LDAP directories. After a physical LDAP directory merger was required due to EMR compliance concerns, they still use virtual LDAP directories to control access for SaaS applications.
+Another attendee I chatted with handled an enterprise identity integration project. This project was driven by a merger of several hospitals, and their conflicting identity stores were "merged" using virtual LDAP directories. Even after merging the stores into one LDAP directory, which was required for EMR compliance concerns, this company still uses the virtual LDAP solution to manage SaaS application access.
 
 The complexity of IAM is immense. One person I chatted with at a happy hour commented that they had so many custom applications and identity stores that consolidating everything, even with an unlimited budget, would take 3-5 years. And of course, they didn't have that budget.
 
