@@ -29,7 +29,15 @@ FusionAuth.Search = function() {
             showLoadingIndicator: false
           }
       )
-  );
+  ),
+
+  this.search.use(() => ({
+    onStateChange({ uiState }) {
+      sendEventDebounced(uiState);
+    },
+    subscribe() {},
+    unsubscribe() {},
+  })),
 
   this.search.addWidget(
       instantsearch.widgets.hits(
@@ -45,6 +53,46 @@ FusionAuth.Search = function() {
 
   this.search.start();
 };
+
+// from https://stackoverflow.com/questions/36548451/underscore-debounce-vs-vanilla-javascript-settimeout
+const debounce = function(func, wait, immediate) {
+    var timeout;
+    return function() {
+        var context = this, args = arguments;
+        var later = function() {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    };
+};
+
+const sendEventDebounced = debounce((uiState) => {
+  console.log("in debounce");
+  
+  console.log(uiState);
+  //window.ga('set', 'page', window.location.pathname + window.location.search);
+  //window.ga('send', 'pageView');
+
+  let query = "";
+  if (uiState && uiState.website && uiState.website.query) {
+    query = uiState.website.query;
+  }
+
+  //window._paq.push(['trackSiteSearch',
+    // Search keyword searched for
+    //query
+    // Search category selected in your search engine. If you do not need this, set to false
+    //false,
+    // Number of results on the Search results page. Zero indicates a 'No Result Search Keyword'. Set to false if you don't know
+    //0
+  //]);
+}, 3000);
+
+
 
 FusionAuth.Search.constructor = FusionAuth.Search;
 FusionAuth.Search.prototype = {
