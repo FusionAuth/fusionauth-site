@@ -31,13 +31,6 @@ FusionAuth.Search = function() {
       )
   ),
 
-  this.search.use(() => ({
-    onStateChange({ uiState }) {
-      sendEventDebounced(uiState);
-    },
-    subscribe() {},
-    unsubscribe() {},
-  })),
 
   this.search.addWidget(
       instantsearch.widgets.hits(
@@ -51,12 +44,9 @@ FusionAuth.Search = function() {
       )
   );
 
-  this.search.start();
-};
-
-// from https://stackoverflow.com/questions/36548451/underscore-debounce-vs-vanilla-javascript-settimeout
-// lets us call a function multiple times over a period and only invoke it once
-const debounce = function(func, wait, immediate) {
+  // from https://stackoverflow.com/questions/36548451/underscore-debounce-vs-vanilla-javascript-settimeout
+  // lets us call a function multiple times over a period and only invoke it once
+  this.debounce = function(func, wait, immediate) {
     var timeout;
     return function() {
         var context = this, args = arguments;
@@ -69,25 +59,28 @@ const debounce = function(func, wait, immediate) {
         timeout = setTimeout(later, wait);
         if (callNow) func.apply(context, args);
     };
-};
+  };
 
-const sendEventDebounced = debounce((uiState) => {
-
-  let query = "";
-  if (uiState && uiState.website && uiState.website.query) {
-    query = uiState.website.query;
-  }
+  this.sendEventDebounced = this.debounce((uiState) => {
+      let query = "";
+      if (uiState && uiState.website && uiState.website.query) {
+        query = uiState.website.query;
+      }
  
-  window._paq.push(['trackSiteSearch',
-    // Search keyword searched for
-    query,
-    // Search category selected in your search engine. If you do not need this, set to false
-    false,
-    // Number of results on the Search results page. Zero indicates a 'No Result Search Keyword'. Set to false if you don't know
-    false
-  ]);
-}, 2000);
+      if (window._paq) {
+          window._paq.push(['trackSiteSearch',
+              // Search keyword searched for
+              query,
+              // Search category selected in your search engine. If you do not need this, set to false
+              false,
+              // Number of results on the Search results page. Zero indicates a 'No Result Search Keyword'. Set to false if you don't know
+              false
+          ]);
+      }
+  }, 2000);
 
+  this.search.start();
+};
 
 FusionAuth.Search.constructor = FusionAuth.Search;
 FusionAuth.Search.prototype = {
@@ -169,5 +162,14 @@ FusionAuth.Search.prototype = {
 };
 
 Prime.Document.onReady(function() {
-  new FusionAuth.Search();
+  const search = new FusionAuth.Search();
+
+  // have to do this here because otherwise we don't have a handle to sendEventDebounced
+  search.search.use(() => ({
+      onStateChange({ uiState }) {
+          search.sendEventDebounced(uiState);
+      },
+      subscribe() {},
+      unsubscribe() {},
+  }));
 });
