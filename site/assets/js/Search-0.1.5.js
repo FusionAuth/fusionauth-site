@@ -55,6 +55,7 @@ FusionAuth.Search = function() {
 };
 
 // from https://stackoverflow.com/questions/36548451/underscore-debounce-vs-vanilla-javascript-settimeout
+// lets us call a function multiple times over a period and only invoke it once
 const debounce = function(func, wait, immediate) {
     var timeout;
     return function() {
@@ -71,27 +72,21 @@ const debounce = function(func, wait, immediate) {
 };
 
 const sendEventDebounced = debounce((uiState) => {
-  console.log("in debounce");
-  
-  console.log(uiState);
-  //window.ga('set', 'page', window.location.pathname + window.location.search);
-  //window.ga('send', 'pageView');
 
   let query = "";
   if (uiState && uiState.website && uiState.website.query) {
     query = uiState.website.query;
   }
-
-  //window._paq.push(['trackSiteSearch',
+ 
+  window._paq.push(['trackSiteSearch',
     // Search keyword searched for
-    //query
+    query,
     // Search category selected in your search engine. If you do not need this, set to false
-    //false,
+    false,
     // Number of results on the Search results page. Zero indicates a 'No Result Search Keyword'. Set to false if you don't know
-    //0
-  //]);
-}, 3000);
-
+    false
+  ]);
+}, 2000);
 
 
 FusionAuth.Search.constructor = FusionAuth.Search;
