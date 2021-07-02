@@ -44,7 +44,7 @@ This migration has three phases, from the perspective of the user signing in: be
 
 During the migration, there is no authentication allowed. Data is moved from the old datastore to the new datastore. The migration process pulls the data from the old datastore, cleans and processes it if needed, and pushes it to the new one.
 
-{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-big-bang.plantuml, alt: "The user auth process during the big bang migration." %}
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-big-bang.plantuml, alt: "The migration process during the big bang migration." %}
 
 You have downtime because you don't want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. You could run a degraded system as well, letting users authenticate but not update any user data. Depending on your availability needs, you could also choose to do writes to both systems during that period, though this may lead to additional complexity and edge cases.
 

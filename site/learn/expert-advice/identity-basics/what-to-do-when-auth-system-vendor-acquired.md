@@ -13,14 +13,14 @@ Authentication is an integral part of your application, and as such the acquisit
 
 Will your new provider give you the same support? Pricing? Integration options? All of these might change for better or for worse.
 
-Consider [the acquisition of Auth0 by Okta](/blog/2021/03/04/congrats-auth0-okta-acquisition): Auth0 customers praised them for their top-notch customer support, however, Okta customers have lamented their lackluster customer service [in online forums](https://news.ycombinator.com/item?id=26336270).
+Consider [the acquisition of Auth0 by Okta](/blog/2021/03/04/congrats-auth0-okta-acquisition). Auth0 customers praised them for their top-notch customer support. However, Okta customers have lamented their lackluster customer service [in online forums](https://news.ycombinator.com/item?id=26336270).
 
 
 > "We moved from Okta a few years ago after we received almost no actual real support for a bunch of issues, even though we were paying a premium cost. 
 
-> "Nobody cares about issues on their GitHub... The kicker was when we received a support response as suddenly something was no longer working after an update, we got help in the form of 'We have no plans to address this anytime soon' when asking for an ETA."
+> "Nobody cares about issues on [Okta's] GitHub... The kicker was when we received a support response as suddenly something was no longer working after an update, we got help in the form of 'We have no plans to address this anytime soon' when asking for an ETA."
 
-> "We ended up switching to Auth0 after we had a few calls with them. We shaved a decent amount off our costs with Auth0's Enterprise plan, and their webtask based rules worked. While the migration sucked for a bit, in the end, we were much happier."
+> "We ended up switching to Auth0 after we had a few calls with [Okta]. We shaved a decent amount off our costs with Auth0's Enterprise plan, and their webtask based rules worked. While the migration sucked for a bit, in the end, we were much happier."
 
 While clearly an acquisition is cause for concern, it might not be all bad. In this article, we'll discuss red flags to be on the lookout for when your auth vendor is acquired, short-term as well as long-term concerns, and how your engineering team can best handle them.
 

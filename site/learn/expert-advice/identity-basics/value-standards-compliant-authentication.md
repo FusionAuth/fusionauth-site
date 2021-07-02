@@ -67,11 +67,11 @@ More specifically, OAuth allows an application to securely gain an access token 
 
 Here's a diagram of the "implicit" OAuth flow. The official OAuth terms for different actors in the process are in purple:
 
-{% include _image.liquid src="/assets/img/advice/value-standards/oauth-flow.png" class="img-fluid" alt="The OAuth Authorization Code grant." figure=false %}
+{% include _image.liquid src="/assets/img/advice/value-standards/oauth-flow.png" class="img-fluid" alt="The OAuth Implicit grant." figure=false %}
 
-Today, it's safer to go with a more secure update to OAuth called [PKCE](https://oauth.net/2/pkce/) (often pronounced "pixie"). Originally intended to enhance OAuth security for mobile applications, it can provide those extra security benefits to all clients using this updated protocol.
+It can be useful to look at the implicit flow to understand the concepts. However, please don't use the implicit grant, as it is extremely vulnerable to XSS attacks. You can learn more about that in [The Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/#implicit-grant-in-oauth-20).
 
-Please don't use the implicit grant, as it is extremely vulnerable to XSS attacks. You can learn more about that in [The Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/#implicit-grant-in-oauth-20).
+Today, it's safer to go with a more secure update to OAuth called [PKCE](https://oauth.net/2/pkce/) (often pronounced "pixie") and the Authorization Code grant. Originally intended to enhance OAuth security for mobile applications, this combination provides extra security benefits to all clients using this updated protocol.
 
 #### Authentication vs. Authorization
 
