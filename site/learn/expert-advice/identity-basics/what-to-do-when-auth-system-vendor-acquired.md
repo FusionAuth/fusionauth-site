@@ -68,7 +68,7 @@ Customers were upset, and some even threatened lawsuits. That didn't do much to 
 
 While this was not an auth system, the same logic can be made by an acquirer. A more auth specific example is what happened with Stormpath and Okta in 2017, where customers were given [six months to migrate from the former to the latter](https://techcrunch.com/2017/03/06/okta-stormpath/).
 
-What's the use of an auth system that's not maintained or supported? Maybe you could live with an unmaintained software package if it wasn't under regular threat, but that doesn't describe an auth system. Authentication is critical to your customers' privacy and the all application functionality. You don't want a security vulnerability in your auth system to shake customer confidence in your application.
+What's the use of an auth system that's not maintained or supported? Maybe you could live with an unmaintained software package if it wasn't under regular threat, but that doesn't describe an auth system. Authentication is critical to your customers' privacy and all application functionality. You don't want a security vulnerability in your auth system to shake customer confidence in your application.
 
 ### Product Is Milked and Prices Rise
 
@@ -99,7 +99,7 @@ Are they following [standard auth protocols](/learn/expert-advice/identity-basic
 ### Talk to Your Account Manager
 
 
-It's time to talk to your account manager about your business relationship. Give them a call or an email and try to negotiate a long-term contract that will protect your business interests and guarantee a level of stability. The research into the contract you did previously? Now it the time to reference it.
+It's time to talk to your account manager about your business relationship. Give them a call or an email and try to negotiate a long-term contract that will protect your business interests and guarantee a level of stability. The research into the contract you did previously? Now is the time to reference it.
 
 Don't forget to ask about migration timelines while you're at it, so you know how soon you need to be prepared and for what changes.
 
@@ -123,7 +123,7 @@ If the changes are disruptive enough, you may decide you don't want to use third
 
 
 * **Use a non SaaS solution:** SaaS solutions are great, but if you use a non-SaaS solution, where you host it yourself, you have far more control over any changes to functionality. You may have to upgrade for security or contractual reasons, but you'll be able to do it on your timeline, not the acquirer's. FusionAuth can be self-hosted and has a community version that is free for unlimited users.
-* **An open-source solution:** You'll still have to manage your own source code. You'll just be using a free and community-driven solution like [Gluu](gluu.org), [Keycloak](https://www.keycloak.org/index.html), or [OpenIAM](https://www.openiam.com/). Your team will have to [explore these projects](/learn/expert-advice/identity-basics/open-source-vs-commercial/) and choose the one that works best for your system.
+* **An open-source solution:** You'll still have to manage your own source code. You'll just be using a free and community-driven solution like [Gluu](https://gluu.org), [Keycloak](https://www.keycloak.org/index.html), or [OpenIAM](https://www.openiam.com/). Your team will have to [explore these projects](/learn/expert-advice/identity-basics/open-source-vs-commercial/) and choose the one that works best for your system.
 * **In-house custom build solution:** In some rare cases, none of the available solutions will be a good fit for your organization, and you'll decide to build a custom auth system for your product. This will require more resources to achieve but of course, when completed, you'll have a solution that works best for you. Further, such a choice can be fine-tuned with more features in the future at your will (and expense)--something you won't get anywhere else.
 
 ## Conclusion

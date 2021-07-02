@@ -97,7 +97,7 @@ If your company has the time, money, and people to invest, and considers authent
 
 If you're considering using a third-party vendor, then you need to make sure you perform due diligence in [assessing how appropriate and risky that vendor is](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors/). Many regulatory programs like SOC2 require some kind of controls around vendor risk management.
 
-While this article has already touched on areas of risk in implementing an authsystem, like application security, financials, and performance, assessing a vendor is where the rubber meets the road. It's where you apply all your knowledge about risk in authentication implementation.
+While this article has already touched on areas of risk in implementing an auth system, like application security, financials, and performance, assessing a vendor is where the rubber meets the road. It's where you apply all your knowledge about risk in authentication implementation.
 
 For example, you'll want to consider how coupled you'll become to a vendor's solution (otherwise known as [vendor lock-in](https://www.factioninc.com/blog/vendor-lock-in/)). You may want the freedom to replace a vendor in the future, perhaps having found a better auth service that's cheaper or supports a compliance program your current vendor does not. Does the vendor you are considering now make it easy or difficult to switch?
 

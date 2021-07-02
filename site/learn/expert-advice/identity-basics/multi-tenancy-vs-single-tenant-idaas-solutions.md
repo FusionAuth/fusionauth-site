@@ -24,7 +24,7 @@ Simply put, multi-tenant is an architecture where multiple companies store their
 
 **Automatic upgrades** - Multi-tenant systems ensure that software updates, including security patches, are rolled out to all customers simultaneously. This standardizes software versions utilized by customers and eliminates version control issues.
 
-**Instant on-boarding** - In most cases, new customers can be setup by creating a new logical tenant. No new servers are provisioned and software installation is not required, which makes this process instantaneous.
+**Instant on-boarding** - In most cases, new customers can be set up by creating a new logical tenant. No new servers are provisioned and software installation is not required, which makes this process instantaneous.
 
 ### Drawbacks
 **Performance** - One tenant's heavy use or load spike may impact the quality of service provided to other tenants. In addition, when software or hardware issues are found on a multi-tenant database, it can cause an outage for all customers.
@@ -52,7 +52,7 @@ In a single-tenant architecture each company, or tenant, has their own instance,
 **Data recovery** - Data extraction is an important consideration that is often overlooked. If a service is acquired or shutdown it's wise to consider how you will retrieve your data in advance; it is easier to export data from an isolated, single-tenant cloud.
 
 ### Drawbacks
-**Cost** - Since this is not a shared infrastructure, customers have to pay the cost of the entire system (hardware and software). However, with the rise of low-cost hosting providers like AWS and Azure, single-tenant solution platforms can have very affordable [pricing options](/pricing "FusionAuth Pricing"). In light of of these considerations technology advisors TechTarget stated their support of single-tenant solutions: "Concerns over security in multi-tenant environments have led to many organizations choosing to switch to single-tenant infrastructure as a service to mitigate the risks of co-located data. Despite the extra cost, this is a sensible and advisable solution."
+**Cost** - Since this is not a shared infrastructure, customers have to pay the cost of the entire system (hardware and software). However, with the rise of low-cost hosting providers like AWS and Azure, single-tenant solution platforms can have very affordable [pricing options](/pricing "FusionAuth Pricing"). In light of these considerations technology advisors TechTarget stated their support of single-tenant solutions: "Concerns over security in multi-tenant environments have led to many organizations choosing to switch to single-tenant infrastructure as a service to mitigate the risks of co-located data. Despite the extra cost, this is a sensible and advisable solution."
 
 **Provisioning** - To set up new customers, servers must be provisioned and the software must be installed on each server. This process has been made simpler through the use of APIs provided by hosting providers and tools such as Docker, Kubernetes, and Chef.
 
@@ -98,11 +98,11 @@ For this use case, we don't have multiple clients, but instead we have a single 
 
 In addition to production, we need separate environments for development, staging and QA. One option is to stand up a separate deployment of the identity platform for each of these environments. This ensures that the development environment doesn't impact the staging environment, which doesn't impact the QA environment, and so on.
 
-Most SaaS identity products don't solve this problem directly (or easily). Instead, they force you to sign up for multiple accounts, one for each environment. That approach works, but now you have multiple accounts that may or may have a subscription fee associated with each of them. Plus, each account has separate configuration, credentials, and URLs that need to be maintained separately. And if you need to setup an additional environment, it could take quite a bit of work to get it configured properly.
+Most SaaS identity products don't solve this problem directly (or easily). Instead, they force you to sign up for multiple accounts, one for each environment. That approach works, but now you have multiple accounts that may or may have a subscription fee associated with each of them. Plus, each account has separate configuration, credentials, and URLs that need to be maintained separately. And if you need to set up an additional environment, it could take quite a bit of work to get it configured properly.
 
 Leveraging tenants in this scenario is a big win because it allows a single instance to service multiple environments, which reduces complexity, infrastructure costs, maintenance and more. You could go as far as letting each developer have their own tenant so they can each develop, create and delete users without affecting the rest of their team.
 
-Here is a specific and common scenario: a customer has completed their integration, written all of their code, written all of their tests and are ready to move into production. If this same customer now wants to use tenants only for staging, test and QA, they can do so without any code change.
+Here is a specific and common scenario: a customer has completed their integration, written all of their code, written all of their tests and is ready to move into production. If this same customer now wants to use tenants only for staging, test and QA, they can do so without any code change.
 
 This approach is possible when you can authenticate an API request for a particular tenant with a unique API key. This way, none of your API requests change, none of your code changes, you simply load your API key from an environment variable or inject it based on your runtime mode. Locking an API key to a tenant means that only Users, Groups and Applications in that tenant will be visible to that API key.
 

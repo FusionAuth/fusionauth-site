@@ -25,7 +25,7 @@ Why should you consider a standards-based protocol in the first place? There are
 
 ### Security
 
-If you try to build an authentication protocol or procedur--no matter how simple it may seem--you are putting your system at increased risk. It's often said in the context of security, "Don't roll out your own crypto." The same can be said about an authentication protocol primarily used to integrate systems.
+If you try to build an authentication protocol or procedure--no matter how simple it may seem--you are putting your system at increased risk. It's often said in the context of security, "Don't roll out your own crypto." The same can be said about an authentication protocol primarily used to integrate systems.
 
 Standardized auth protocols are like open-source software: You can trust open-source code when other experts have examined how they work and have publicly vetted them. Likewise, standardized auth protocols have been publicly vetted by experts and are openly trusted. Because of this, many organizations will trust _your_ solutions only if you are using standardized protocols such as OAuth and SAML.
 
@@ -81,7 +81,7 @@ It is important to understand OAuth is not an authentication protocol. It's an a
 
 Authentication is about _proving you are you_. Authorization is about _delegating access_ or permissions to information.
 
-Historically, OAuth has been used as both a way of dealing with both authentication and authorization. However, OAuth doesn't define a standard way to provide user information to the requeste--so every auth implementation is a little bit different. This removes some of the benefits of using a standardized protocol.
+Historically, OAuth has been used as both a way of dealing with both authentication and authorization. However, OAuth doesn't define a standard way to provide user information to the requester--so every auth implementation is a little bit different. This removes some of the benefits of using a standardized protocol.
 
 Many developers may also assume that obtaining an access token from a third-party service means that your user was authenticated. But that's not true. An access token _could_ be granted to your application even if your user was not authenticated (that's 100% up to the service you are requesting access to). 
 
