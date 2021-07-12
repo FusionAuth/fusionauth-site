@@ -3,7 +3,7 @@ layout: blog-post
 title: How to Protect Your Organization From Auth Vendor Lock-In
 description: When considering an auth provider, you should pick the best one for your current needs. But how can you avoid implementation pain if your needs change?
 author: Cameron Pavey
-image: blogs/takeaways-identiverse-2021/takeaways-from-identiverse-2021-covid-thoughts-fido-and-more-header-image.png
+image: vendor-lockin/how-to-protect-your-organization-from-auth-vendor-lock-in-header-image.png
 category: blog
 tags: conference-report
 excerpt_separator: "<!--more-->"
