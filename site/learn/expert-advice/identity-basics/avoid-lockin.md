@@ -47,19 +47,19 @@ When implementing an authentication system (and various other services provided 
 
 It is usually a good idea to write this code so that the vendor is insulated away from your application code. Often, vendors will provide an SDK for interfacing with their service. By wrapping the usage of this SDK and abstracting it with a more generic interface, we can have greater control over how the vendor ties into our application.
 
-If the vendor uses Open Standards as described above, this makes things easier. We can build an interface that describes how we would ideally like to interact with our authentication service and then implement this interface with a wrapper around the vendor's SDK. In the future, if things go south and we need to break away from the vendor, we can just re-implement this interface with an integration for a new provider, and with any luck, things will transition smoothly.
+If the vendor uses Open Standards as described above, this makes things easier. We can build an interface that describes how we would ideally like to interact with our authentication service and then implement this interface with a wrapper around the vendor's SDK. In the future, if things go south and we need to break away from the vendor, we can just re-implement this interface. We'll write an integration for a new provider, and with any luck (and plenty of testing), things will transition smoothly.
 
 {% include _image.liquid src="/assets/img/advice/avoid-lockin/facade-diagram.jpg" alt="Diagram of Authentication Interface example." class="img-fluid" figure=false %}
 
 As you can see in this simple diagram, by having your core services rely on a generic abstraction of an authentication system rather than a concrete implementation of one, you can retain the freedom to reimplement the interface with code to communicate with whatever provider you like. If you built a concrete dependency on one particular provider instead, you would have lots of refactoring and retesting to do when switching implementations. Naturally, even with a well-abstracted interface, you will still need thorough testing.
 
-It's crucial to build integration tests around this kind of abstraction. Having integration tests in place to give you confidence in your abstraction and interface is always good, but especially so when there is the possibility of re-implementing the underlying code at some point. As long as the new implementation holds to the interface, you will have a good level of confidence that things are working as expected and that your application still works after a migration.
+It's crucial to build integration tests around this kind of abstraction. Having integration tests in place to give you confidence in your abstraction and interface is always good, but especially so when there is the possibility of re-implementing the underlying code at some point. As long as the new implementation holds to the interface, you will have a good level of confidence that things are working as expected and that your application will continue to work after a migration.
 
 ## Have a Backup Plan
 
 Generally, you don't implement one solution while actively planning to swap it out in the future. Because of this, it is easy to accidentally put on the proverbial blinders and only focus on what is right in front of you without seeing the bigger picture and the long-term ramifications of certain design decisions. 
 
-This can lead to situations where implementations become too specific to the current vendor and are prohibitively expensive to change in the future. "If only we had known we were going to switch providers, we would have done things differently." Factoring in and budgeting for a Plan B or future migration can mitigate such tunnel vision
+This can lead to situations where implementations become too specific to the current vendor and are prohibitively expensive to change in the future. "If only we had known we were going to switch providers, we would have done things differently." Factoring in and budgeting for a Plan B or future migration can mitigate such tunnel vision.
 
 This works by identifying an alternative solution - whether it be another provider or building it in-house - and keeping it in mind when designing things and makings decisions. You should work it into your project's future budget and just accept it as potentially necessary.
 
@@ -70,6 +70,5 @@ This is a similar principle to the test-first mindset. If you write your code wi
 
 ## Wrapping Up
 
-There will always be the potential for issues when switching out something as central to your application as Authentication , no matter how much you plan and prepare in advance. This risk can be reduced or eliminated by following practices like those described above to protect your application from the uncertainty inherent to third-party integrations. The value that using a service like this brings is not to be understated, as long as you understand the risks and take appropriate measures to minimize them.
-
+There will always be the potential for issues when switching out something as central to your application as authentication, no matter how much you plan and prepare in advance. This risk can be reduced or eliminated by following practices like those described above to protect your application from the uncertainty inherent to third-party integrations. The value that using a service like this brings is not to be understated, as long as you understand the risks and take appropriate measures to minimize them.
 
