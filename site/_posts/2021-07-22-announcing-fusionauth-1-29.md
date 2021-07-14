@@ -42,20 +42,15 @@ This release extends this functionality to:
 
 Previous to this release, any errors in the templates would cause nasty ugly exceptions to be displayed. With this release, a more useful message is logged to the aforementioned Event Log, including the expression, the line number, the template name and the theme Id. Reviewing these messages should shorten the debugging time required to fix any template bugs.
 
-Building themes is critical to most users of FusionAuth and we're happy to improve the developer experience in this way.
+Building and customizing themes is critical to many users of FusionAuth and we're happy to improve the developer experience in this way.
 
-## Other enhancements
+## The rest of it
 
-Some of the other enhancements included in this release are:
+Some of the other enhancements and fixes included in this release:
 
-* Upgrading our JDBC connection pooling
-
-
-* The Email Send API now allows an email address in the To field instead of requiring FusionAuth user Ids. You can now use the FusionAuth templating system to send an email to anybody, not just users stored in FusionAuth.
-* The SAML identity provider supports any `NameID` format, including `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`, used by Slack.
-* The Google and Facebook identity providers can be configured to use either a popup or redirect style login flow. With the redirect style flow, you can use the `idp_hint` parameter to send users directly to Google or Facebook.
-
-There's a lot more in this release. In total, I counted 18 GitHub issues resolved in the 1.29 release.
+* Upgrading our JDBC connection and connection pooling libraries
+* Other SAML changes
+* Fixing themeability of a webhook error page
 
 ## Upgrade at will
 
