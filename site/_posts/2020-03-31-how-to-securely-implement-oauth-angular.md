@@ -48,7 +48,7 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options (rpm, deb, etc) if you don't have Docker installed.
+Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options (rpm, deb, etc) if you don't have Docker installed. 
 
 After you sign in as a FusionAuth administrator, create a new application. I named mine 'Secure Angular', and will refer to this throughout the tutorial.
 
@@ -66,7 +66,7 @@ Then click the green magnifying glass in the list view for your newly created ap
 - Client ID
 - Client Secret
 
-If you edit your new application, your application settings should look like this:
+Now, go back and click on the green 'edit' icon. Your application settings should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-angular/admin-application-configuration.png" alt="Application configuration" class="img-fluid" figure=false %}
 
@@ -77,7 +77,7 @@ The email address doesn't have to be valid because we're not going to send any e
 
 Next, add an API key. This will be used for updating and reading user information. Operations using the API key are not part of the OAuth standard, but are included to showcase other capabilities of FusionAuth. This API key needs to be kept secret and thus will not be used outside of the express middleware.
 
-Navigate to `Settings` then `API keys` and add a new API key. Give it a name such as `For Secure Angular app`. Copy the value of the key to the same text file where you saved the Application ID, Client ID and Client Secret. Scroll down and enable `GET` and `PATCH` for the `/api/user/registration` Endpoint. No other permissions are needed for this tutorial.
+Navigate to `Settings` then `API keys` and add a new API key. Leave the Id field blank, and give it a description such as `For Secure Angular app`. Copy the value of the key to the same text file where you saved the Application ID, Client ID and Client Secret. Scroll down and enable `GET` and `PATCH` for the `/api/user/registration` Endpoint. No other permissions are needed for this tutorial.
 
 Now FusionAuth is set up and ready to roll. Next, let's set up a basic Angular application.
 
@@ -567,20 +567,6 @@ Finally, add a login link to `src/app/home/home.component.html`. Replace the exi
 </div>
 ```
 
-You can also change the user variable initialization statement in `src/app/home/home.component.ts` from
-
-```typescript
-user = {'email':'test@example.com'}
-```
-  
-To
-
-```typescript
-user = {}
-```
-
-This will avoid a flickering 'hello' message that might otherwise appear while the user data is being loaded.
-
 Now you can click the 'login' link and are redirected to the FusionAuth login screen. After entering the correct username and password (created when you set up FusionAuth), you arrive back at the home screen, with your email address displayed.
 
 ## Sign out
@@ -642,7 +628,7 @@ If all you are looking for is Angular and OAuth2 authentication, this tutorial i
 
 FusionAuth has the ability to store data about users. One field called, aptly enough, `data`, can be used for any kind of textual data. We're going to write to and read from that field.
 
-First, we're going to create an express route to write the field for a signed in user. Then we're going to create an angular component which lets the user modify the field, and finally we'll allow the user to see and modify the data when the user is logged in.
+First, we're going to create an express route to write to the field for a signed in user. Then we're going to create an angular component which lets the user modify the field, and finally we'll allow the user to see and modify the data when the user is logged in.
 
 Add the express route to `server/index.js`:
 
@@ -830,7 +816,7 @@ We inject the `userDataService` into this code so we can make service calls. We 
 
 The userdata field can be set from outside the component, which is why it has a [`@Input` decorator](https://angular.io/api/core/Input). We set it because the parent component is already retrieving the data (from the `/user` endpoint) so we'll want that to be the default value displayed (the 'user data' default string is there just in case the network call fails).
 
-Now let's look at the html component:
+Now let's look at the user-data-form html component:
 
 ```html
 <div>
@@ -860,32 +846,17 @@ Now let's look at the html component:
 
 The first div is displayed when the component isn't submitted, and the second is displayed when the form has been submitted: we show the user's input. We also use the ngModel attribute to tie the input field value to the appropriate model member variable.
 
-Finally, let's add this into our home component, updating the div we display for a logged in user to:
+Finally, let's add this into our home html component, updating the div we display for a logged in user to:
 
 ```html
 <div *ngIf="user['email'] != null">
   Hello {{ "{{user['email']" }}}}
   <br/>
-  <app-user-data-form userdata="{{ "{{user['registration']['data']['userData']" }}}}"></app-user-data-form>
+  <br/><app-user-data-form userdata='{{user["data"]}}'></app-user-data-form>
   <br/>
   <a href='http://localhost:3000/logout'>Log me out</a>
 </div>
 ...
-```
-
-Because we are reaching deep into the user object in the html, we need to set a sane default in `src/app/home/home.component.ts`. Update `ngOnInit` to:
-
-```typescript
-ngOnInit(): void {
-  this.userService.get().subscribe((data: any) => {
-    console.log(data);
-
-    // sane default for user data
-    data.registration.data = data.registration.data || {};
-    this.user = data;
-  });
-}
-// ...
 ```
 
 Now you are able to sign in and update your data field. If you sign in using a different browser, you will see your updated user data field.
