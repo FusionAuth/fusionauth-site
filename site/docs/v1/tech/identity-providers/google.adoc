@@ -8,7 +8,7 @@ description: Login with Google using the Google Identity Provider
 
 == Overview
 
-Adding a Login with Google button to FusionAuth is simple, and this guide will walk you through the steps necessary to collect the credentials from Google in order to enable this Social login.
+Adding a Login with Google button to FusionAuth is a matter of procedure only, and this guide will walk you through the steps necessary to collect the credentials from Google in order to enable this Social login.
 
 * <<Create a Google Cloud Account>>
 * <<Create Google OAuth client credentials>>
@@ -43,28 +43,38 @@ If you see an alert indicating you first need to configure the content screen, d
 
 image::identity-providers/google-cloud-configure-consent.png[Configure Consent,width=1200,role=shadowed bottom-cropped]
 
-On this panel, you will need to fill out the required fields and then click `Save`. Once this is complete you may return the `Credentials` tab to complete creating the OAuth credentials.
+You will be promoted to define a consent type.  A more common option is `External`.
+
+image::identity-providers/google-cloud-configure-consent-internal-external.png[Configure Consent,width=1200,role=shadowed bottom-cropped]
+
+On this panel, you will need to fill out the required fields and then click `Save`.
 
 In this example I have set the following fields.
 
 * Application name
+* User support email (not shown)
+* App logo (not shown)
 * Authorized domains
 * Application Homepage link
 * Application Privacy Policy link
 * Application Terms of Service link
+* Developer contact information
 
 image::identity-providers/google-cloud-configure-consent-screen.png[Configure Consent Screen,width=1200,role=shadowed top-cropped]
 
+Once this is complete Google will direct you to complete or update scopes.  It is typical to select userinfo.email and userinfo.profile as well as openid, but feel free to require any that you would like.  Remember these same scopes should be referenced in the IdP in FusionAuth (see details below)
+
+image::identity-providers/google-cloud-configure-scopes.png[Configure Scopes,width=1200,role=shadowed top-cropped]
+
 Now you may return to the Credential section, click on `Create credentials` and select `OAuth client ID`.
 
-On this panel, select `Web application`, specify the name of the credential and fill out the `Authorized JavaScript origins` field. This value should be the origin of your application login page. In this example I have specified `\https://login.piedpiper.com` because this is the URL of FusionAuth for Pied Piper.
+On this panel, select `Web application`, specify the name of the credential and fill out the `Authorized JavaScript origins` field. This value should be the origin of your application login page. In this example I have specified `\https://login.piedpiper.com` because this is the URL of FusionAuth for Pied Piper.  Additionally, you will want to set the redirect URI to `your_host_name` + `/oauth2/callback/` as shown if you set the Google Identity Provier (below) to `
 
 image::identity-providers/google-cloud-create-client-id.png[Create OAuth Client credentials,width=1200,role=shadowed bottom-cropped]
 
 Now you have completed creating a Google OAuth client credential. If you select the newly created credential, you will be provided with the `Client ID` and `Client secret` necessary for the next step.
 
 image::identity-providers/google-cloud-client-credentials.png[OAuth Client credentials,width=1200,role=shadowed]
-
 
 == Create a Google Identity Provider
 
@@ -74,14 +84,9 @@ This will take you to the `Add Google` panel, and you'll fill out the `Client Id
 
 :identity_provider: Google
 include::docs/v1/tech/identity-providers/_idp_application_configuration.adoc[]
-:identity_provider!: 
-
-////
-TODO : Needs updated screenshot
-////
+:identity_provider!:
 
 image::identity-providers/identity-provider-google-add.png[Add Google,width=1200,role=shadowed]
-
 
 === Form Fields
 
@@ -95,8 +100,22 @@ The Google Client Secret found in your Google credentials settings in the `Clien
 [field]#Button text# [required]#Required#::
 The text to be displayed in the button on the login form. This value is defaulted to `Login with Google` but it may be modified to your preference.
 
+[field]#Login Method# [optional]#Optional#::
+User interaction behavior after clicking on the IdP button (`Login with Google`, for instance).
++
+* `Use redirect for login` - if selected, the user is redirected to a google login page.  Once authenticated, the user is redirected back to FusionAuth.
+If selected, the redirect URL *must* be set to `your_host_name` + `/oauth2/callback/` in the Google console for your application.
++
+image::identity-providers/google-redirect-page.png[Google Redirect,width=400,role=custom]
++
+* `User popup for login` - if selected, a popup is displayed to the user to login with google.  Once authenticated, the window is closed.
+If selected, the `Authorized JavaScript origins` URL *must* be allowed for `your_host_name` in the Google console for your application.
++
+image::identity-providers/google-popup-page.png[Google Redirect,width=400,role=custom]
++
+
 [field]#Scope# [optional]#Optional#::
-This optional field defines the scope you're requesting from the user during login. See the Google login documentation for further information.
+This optional field defines the scope you're requesting from the user during login. See the Google login documentation for further information.  Three common scopes to include are `email profile openid`.
 
 [field]#Reconcile lambda# [optional]#Optional# [since]#Available since 1.17.0#::
 A lambda may be utilized to map custom claims returned from Google.
