@@ -44,7 +44,7 @@ This migration has three phases, from the perspective of the user signing in: be
 
 During the migration, there is no authentication allowed. Data is moved from the old datastore to the new datastore. The migration process pulls the data from the old datastore, cleans and processes it if needed, and pushes it to the new one.
 
-{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-big-bang.plantuml, alt: "The user auth process during the big bang migration." %}
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/slow-migration/auth-during-big-bang.plantuml, alt: "The migration process during the big bang migration." %}
 
 You have downtime because you don't want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. You could run a degraded system as well, letting users authenticate but not update any user data. Depending on your availability needs, you could also choose to do writes to both systems during that period, though this may lead to additional complexity and edge cases.
 
@@ -138,7 +138,7 @@ The last issue would be splitting the `phone_num` field into an `area_code` and 
 
 As this example shows, getting ready for a migration consists of many tiny choices and design decisions. Make sure you understand the data model for your users before you start the migration. 
 
-If you have the option of storing arbitrary key value data in the new system, serialize the user object from the old system and store it there. The old user model may be helpful in the future because if there were data that mistranslated, you'll have the original copy.
+If you have the option of storing arbitrary key value data in the new system, serialize the user object from the old system and store it there. The old user model may be helpful in the future because if there was mistranslated data, you'll have the original copy.
 
 You'll also want to think about relationships between users and other objects. Groups, roles, historical data, and anything else the old system has tied to users. Make sure you know where this data is coming from, if it can be discarded, and if not, where it will end up. Perhaps it will be migrated to the new system, perhaps to a different datastore.
 
