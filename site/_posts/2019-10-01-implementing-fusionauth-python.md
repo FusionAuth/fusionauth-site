@@ -10,7 +10,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-Welcome to our FusionAuth Python Library introduction tutorial! Today we will take a tour of the FusionAuth client library for Python and get to know the basics of FusionAuth. This step-by-step guide will walk you through FusionAuth setup to building your first functional Python application with FusionAuth and then retrieving user profile information.
+Welcome to our FusionAuth Python Library introduction tutorial! Today we will take a tour of the FusionAuth Python client library and get to know the basics of FusionAuth. This step-by-step guide will walk you through FusionAuth setup to building your first functional Python application with FusionAuth and then retrieving user profile information.
 
 <!--more-->
 
@@ -27,7 +27,7 @@ section [Deactivating, Reactivating, and Deleting A FusionAuth User in Python](/
 1. Registering a User to an Application through the FusionAuth Admin UI
 1. Installing Python PIP Package Manager
 1. Installing VENV Virtual Environment for Python
-1. Installing the FusionAuth client library for for Python
+1. Installing the FusionAuth Python client library
 1. Creating and Executing a Python app to retrieve user profile information
 1. Creating a new FusionAuth User and Registering them to an Application with Python
 1. Troubleshooting Common Errors
@@ -271,15 +271,15 @@ deactivate
 _Learn more about [using venv](https://docs.python.org/3/library/venv.html)
 and [installing other Python modules](https://docs.python.org/3/installing/index.html)._
 
-## Installing the FusionAuth client library for Python
+## Installing the FusionAuth Python client library
 
-With VENV now installed, let's proceed to install the FusionAuth client library for Python inside our Virtual Environment. If venv is deactivated, let's activate it first.
+With VENV now installed, let's proceed to install the FusionAuth Python client library inside our Virtual Environment. If venv is deactivated, let's activate it first.
 
 ```zsh
 source venv/bin/activate
 ```
 
-Now, let's install the FusionAuth client library for Python:
+Now, let's install the FusionAuth Python client library:
 
 ```zsh
 pip install fusionauth-client
@@ -405,7 +405,7 @@ If successful, your application should return a client response like this:
 }
 ```
 
-Congrats, you've just created your first Python application with the FusionAuth cloent library for Python!
+Congrats, you've just created your first Python application with the FusionAuth Python client library!
 
 ## Creating a new FusionAuth user and registering them to an application with Python
 
@@ -626,7 +626,7 @@ Didn't find your error here? Visit [https://fusionauth.io/docs/v1/tech/apis/user
 
 ## Summary
 
-Hopefully your first test application was a success! We covered how to install and set up FusionAuth, Python, and the FusionAuth client library for Python. We explored code examples, wrote, and executed a Python application in the Python Virtual Environment (venv) for retrieving user profile information from FusionAuth, and we covered how to create Applications and API Keys. We also looked at creating a User and registering them to an application with Python!
+Hopefully your first test application was a success! We covered how to install and set up FusionAuth, Python, and the FusionAuth Python client library. We explored code examples, wrote, and executed a Python application in the Python Virtual Environment (venv) for retrieving user profile information from FusionAuth, and we covered how to create Applications and API Keys. We also looked at creating a User and registering them to an application with Python!
 
 Now that we've covered some of the basics, let's move on to some code examples for actions we can perform using the FusionAuth client library which will allow us to work with registered users within FusionAuth! **Next: [Deactivating, Reactivating, and Deleting A FusionAuth User in Python](/blog/2019/10/08/deactivating-reactivating-deleting-user-fusionauth-python)**
 
