@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Implementing FusionAuth with Python - From Setup to First App
+title: Implementing FusionAuth with Python - from setup to first app
 description: This is a step-by-step guide to building your first functional Python application and retrieving user profile information with FusionAuth.
 author: Amy Martin
 updated_date: 2021-07-01
