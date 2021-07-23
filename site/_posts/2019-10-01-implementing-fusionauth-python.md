@@ -37,11 +37,11 @@ section [Deactivating, Reactivating, and Deleting A FusionAuth User in Python](/
 
 - [MySQL](/docs/v1/tech/installation-guide/database#install-mysql)
 - [FusionAuth](/download)
-- [Python](https://www.python.org/downloads/) (this tutorial uses Python 3.5.2)
+- [Python](https://www.python.org/downloads/) (this tutorial uses Python 3.7.1)
 - [Python PIP Package Manager](https://pypi.org/project/pip/)
 - [Python3 VENV Virtual Environment Package](https://docs.python.org/3/library/venv.html)
 - Text Editor or [Favorite Python IDE](https://atom.io/)
-- Terminal Access (this tutorial uses Ubuntu 16.04.6 LTS)
+- Terminal Access
 - Web Browser
 
 _For a complete list of system requirements for FusionAuth, [visit our documentation](/docs/v1/tech/installation-guide/system-requirements)._
