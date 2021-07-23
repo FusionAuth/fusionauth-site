@@ -19,7 +19,7 @@ There were a few items worth calling out.
 
 ## More SAML debugging
 
-SAML is a critical standard to support for single sign-on, but there are many subtle differences between providers. FusionAuth already provides some SAML debugging help, but this release increases the amount of information availalble. 
+SAML is a critical standard for single sign-on, but there are many subtle differences between providers. FusionAuth already provides some SAML debugging help, but this release increases the amount of information available. 
 
 In particular, turning on debugging when using a [SAML Identity Provider](/docs/v1/tech/identity-providers/samlv2/) will now log `AuthN` details, including:
 
@@ -27,7 +27,7 @@ In particular, turning on debugging when using a [SAML Identity Provider](/docs/
 * The query string
 * The encoded request
 * The relay state
-* The entire unecoded XML value
+* The entire unencoded XML value
 
 Enabling this will help all FusionAuth users using SAML to more easily debug any issues. It's always a good idea to turn this off in production or once the debugging is done, however. It will fire for every user who authenticates using the SAML provider, and may have a performance impact; it will definitely spam the [Event Log](/docs/v1/tech/troubleshooting/#event-log).
 
@@ -35,7 +35,7 @@ Enabling this will help all FusionAuth users using SAML to more easily debug any
 
 The last release included identity linking, where you could link one or more external accounts, managed by other identity providers, to one FusionAuth user account. This release extends identity linking functionality to:
 
-* Allow you to retrieve a FusionAuth user by an Identity Provider Id and the unique Id maintained at that Identity Provider. This API allows you to a user who registered in FusionAuth using the Facebook Identity Provider to modify or delete them. Provide the [Facebook Identity Provider Id](/docs/v1/tech/apis/identity-providers/facebook/) and the user's Facebook user Id, and you can find the FusionAuth user to modify to your heart's content.
+* Allow you to retrieve a FusionAuth user by an Identity Provider Id and the unique Id maintained at that Identity Provider. This API allows you to find a user who registered in FusionAuth using the Facebook Identity Provider to modify or delete them. Provide the [Facebook Identity Provider Id](/docs/v1/tech/apis/identity-providers/facebook/) and the user's Facebook user Id, and you can find the FusionAuth user to modify to your heart's content.
 * Allow the IdP Login API to be passed a request parameter indicating a link should not be established. This is useful if you wish to determine if an identity link exists first before starting a workflow such as a device grant with a linking token.
 
 ## Freemarker debugging improvements
