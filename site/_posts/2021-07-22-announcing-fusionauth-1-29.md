@@ -1,23 +1,27 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.29
-description: The FusionAuth 1.29 release includes identity linking, additional identity providers, a lambda for the Client Credentials grant and more
+description: The FusionAuth 1.29 release includes identity linking improvements, better SAML and Freemarker debugging, and more.
 author: Dan Moore
 image: blogs/release-1-29/product-update-fusionauth-1-29.png
 category: blog
-tags: feature-identity-providers feature-client-credentials-grant
+tags: topic-troubleshooting
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.29 of FusionAuth. This shipped on June 7, 2021, with follow on point releases planned shortly. This version resolves issues for FusionAuth community members and customers on versions 1.28 and older. 
+We're excited to announce the release of version 1.29 of FusionAuth. This shipped on July 10, 2021. This version resolves issues for FusionAuth community members and customers on versions 1.28 or earlier. 
 
 <!--more-->
 
-This release contained a number of enhancements and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-29-0) for a full breakdown of the changes between 1.28 and 1.29. There were a few items to which it is worth paying close attention.
+This release contained a number of enhancements and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-29-0) for a full breakdown of the changes between 1.28 and 1.29. 
+
+There were a few items worth calling out.
 
 ## More SAML debugging
 
-SAML is a critical standard to support for single sign-on, but there are a lot of subtle differences between providers. FusionAuth already provides debugging, but this release increases the amount of debugging availalble. In particular, turning on debugging when using a [SAML Identity Provider](/docs/v1/tech/identity-providers/samlv2/) will now log `AuthN` details, including:
+SAML is a critical standard to support for single sign-on, but there are many subtle differences between providers. FusionAuth already provides some SAML debugging help, but this release increases the amount of information availalble. 
+
+In particular, turning on debugging when using a [SAML Identity Provider](/docs/v1/tech/identity-providers/samlv2/) will now log `AuthN` details, including:
 
 * The configured binding 
 * The query string
@@ -25,32 +29,32 @@ SAML is a critical standard to support for single sign-on, but there are a lot o
 * The relay state
 * The entire unecoded XML value
 
-Enabling this will help all FusionAuth users with SAML integrations more easily debug any issues they find. It's always a good idea to turn this off in production or once the debugging is done, since it will fire for every user who authenticates using the SAML provider. Such debugging may have a performance impact and will definitely spam the [Event Log](/docs/v1/tech/troubleshooting/#event-log).
+Enabling this will help all FusionAuth users using SAML to more easily debug any issues. It's always a good idea to turn this off in production or once the debugging is done, however. It will fire for every user who authenticates using the SAML provider, and may have a performance impact; it will definitely spam the [Event Log](/docs/v1/tech/troubleshooting/#event-log).
 
 ## Identity linking enhancements
 
-The last release included identity linking, where you could link one or more external accounts, managed by other identity providers, to one FusionAuth user account.
+The last release included identity linking, where you could link one or more external accounts, managed by other identity providers, to one FusionAuth user account. This release extends identity linking functionality to:
 
-This release extends this functionality to:
-
-* Allow you to retrieve a FusionAuth user by an Identity Provider Id and the unique Id maintained at that Identity Provider. So if you wanted to find a user who registered in FusionAuth using the Facebook Identity Provider to, for instance, delete them, you could. Simply provide the [Facebook Identity Provider Id](/docs/v1/tech/apis/identity-providers/facebook/) and the user's Facebook Id, and you can find the FusionAuth user.
-* Allow the IdP Login API to be passed a request parameter to indicate a link should not be established and return a 404 instead. This is useful if you wish to identify if a identity link exists first before starting a workflow such as a device grant with a linking token.
+* Allow you to retrieve a FusionAuth user by an Identity Provider Id and the unique Id maintained at that Identity Provider. This API allows you to a user who registered in FusionAuth using the Facebook Identity Provider to modify or delete them. Provide the [Facebook Identity Provider Id](/docs/v1/tech/apis/identity-providers/facebook/) and the user's Facebook user Id, and you can find the FusionAuth user to modify to your heart's content.
+* Allow the IdP Login API to be passed a request parameter indicating a link should not be established. This is useful if you wish to determine if an identity link exists first before starting a workflow such as a device grant with a linking token.
 
 ## Freemarker debugging improvements
 
-[Apache Freemarker](https://freemarker.apache.org/) is the technology primarily used to customize [FusionAuth themes](/docs/v1/tech/themes/). Themes control every aspect of the user interface for the [hosted login pages](/docs/v1/tech/core-concepts/integration-points/#hosted-login-pages). These hosted login pages take care of ten plus common login workflows. FusionAuth provides a default theme, but for most implementations, you'll want to brand these pages to look like your application.
+[Apache Freemarker](https://freemarker.apache.org/) is the technology used to customize [FusionAuth themes](/docs/v1/tech/themes/). Themes control every aspect of the user interface for the [hosted login pages](/docs/v1/tech/core-concepts/integration-points/#hosted-login-pages). These hosted login pages take care of common login workflows. FusionAuth provides a default theme, but for most implementations, you'll want to brand these pages to look like your application.
 
-Previous to this release, any errors in the templates would cause nasty ugly exceptions to be displayed. With this release, a more useful message is logged to the aforementioned Event Log, including the expression, the line number, the template name and the theme Id. Reviewing these messages should shorten the debugging time required to fix any template bugs.
+Previous to this release, errors in the templates would cause ugly exceptions to be displayed to the end user. With this release, a more useful message is logged to the aforementioned Event Log, including debugging info such as the expression, the line number, the template name and the theme Id. When the runtime mode is `production`, the full error is never logged to the end user.
 
-Building and customizing themes is critical to many users of FusionAuth and we're happy to improve the developer experience in this way.
+{% include _image.liquid src="/assets/img/blogs/release-1-29/freemarker-exception.png" alt="Example of the end user experience with a theme that has a Freemarker exception." class="img-fluid" figure=false %}
+
+Reviewing these messages should shorten the debugging time required to fix any template bugs. Building and customizing themes is critical to users of FusionAuth and we're happy to improve the developer experience in this way.
 
 ## The rest of it
 
 Some of the other enhancements and fixes included in this release:
 
 * Upgrading our JDBC connection and connection pooling libraries
-* Other SAML changes
-* Fixing themeability of a webhook error page
+* Other SAML changes including fixing a regression around `NameID`
+* Ensuring themeability of a webhook error page
 
 ## Upgrade at will
 
