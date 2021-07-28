@@ -5,7 +5,7 @@ description: Advanced registration forms let you easily build out multi-step reg
 author: Dan Moore
 image: blogs/flask-oauth-portal/building-a-user-profile-portal-with-flask-oauth-and-apis.png
 category: blog
-updated_date: 2021-05-21
+updated_date: 2021-07-26
 tags: feature-advanced-registration-forms client-python tutorial-python tutorial tutorial-reactor-feature
 excerpt_separator: "<!--more-->"
 ---
@@ -26,13 +26,15 @@ This is part of a three part series. Here are all the posts:
 1. [How to theme FusionAuth's advanced registration forms](/blog/2020/09/01/theme-registration-form)
 1. Building a user profile portal with Flask, OAuth, and APIs (this one)
 
+**Most recently updated July 26, 2021.**
+
 ## Overview
 
 Before jumping into the code, let's outline what this blog post will cover. You'll learn how to set up a Flask application to use FusionAuth as a user data store. This post will only have one application and one tenant, but FusionAuth supports multiple tenants and applications out of the box, so if you need that logical separation, you got it.
 
 The Flask application will let users log in or register. After a user has been authenticated, it will display their profile information. This data will be retrieved in two ways, using both a standards based python OAuth library, `requests_oauthlib`, and with the FusionAuth [open source python client library](https://github.com/fusionauth/fusionauth-python-client).
 
-Why two ways? If all you need is data that is provided by an OpenID Connect (aka OIDC), then you should stick with standards, as this will give you maximal portability. `requests_oauthlib` can easily retrieve an access token that your software can present to other services which expect credentials. These may be APIs you build or any other applications which use JWTs for authorization decisions.
+Why two ways? If all you need is data that is provided by an OpenID Connect (aka OIDC), then you should stick with standards, as this will give you maximal portability. While `requests_oauthlib` can easily retrieve an access token that your software can present to other services which expect credentials. These may be APIs you build or any other applications which use JWTs for authorization decisions.
 
 > What's the difference between OAuth and OIDC? OAuth is a standardized framework for authorization which delivers tokens to present to other systems to gain access. OIDC is another standardized framework built on top of OAuth which provides user data and authentication information.
 
@@ -42,12 +44,26 @@ At the end of the day, you'll end up with a self service portal like this:
 
 {% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/final-screen.png" alt="The self service profile management portal." class="img-fluid" figure=false %}
 
-## Prerequisites
+## What we'll cover
 
-You'll need the following pieces of software installed before you start this tutorial:
+1. FusionAuth setup
+1. Setting up the python virtual environment
+1. Setting up the home page
+1. Setting up OAuth
+1. Editing profile data
+1. Putting it all together
+1. Next steps
+1. Conclusion
 
-* python3
-* pip3
+## What you'll need
+
+- [FusionAuth](/download)
+- [Python](https://www.python.org/downloads/) (this tutorial uses Python 3.5.2)
+- [Python PIP Package Manager](https://pypi.org/project/pip/)
+- [Python3 VENV Virtual Environment Package](https://docs.python.org/3/library/venv.html)
+- Text Editor or [Favorite Python IDE](https://atom.io/)
+- Terminal Access
+- Web Browser
 
 And of course you'll need to have a registration form and FusionAuth set up. If you want to be walked through that process, check out the previous post on [advanced registration forms](/blog/2020/08/27/advanced-registration-form) and [on theming the form](/blog/2020/09/01/theme-registration-form). If you already have a form set up, full speed ahead!
 
@@ -69,32 +85,38 @@ These changes ensure that after the user signs in to FusionAuth, they can be sen
 
 ## Setting up the python virtual environment
 
-Make a directory for this codebase. You could call it something flashy, but I'm going to create one called `flask`. `cd` into it, as that's where you'll create the entire portal application. To set up your virtual environment in this tutorial, you're going to use `venv`: `python3 -m venv venv`. This lets us install libraries locally.
+Make a directory for this codebase. You could call it something flashy, but I'm going to create one called `flask`. Once created, `cd` into it, as that is where you'll create the entire portal application. To set up your virtual environment in this tutorial, you're going to use `venv`: `python3 -m venv venv`. This will let us install libraries locally.
 
 Next, activate this virtual environment by running this command: `. venv/bin/activate`. You should now see `(venv)` in front of your shell prompt:
 
-```shell
-(venv) dan@MacBook-Pro flask % 
+```zsh
+(venv) flask $ 
 ```
 
 > There are other python tools out there which provide similar functionality to `venv`, such as `pyenv` and `pipenv`.
 
 Next, let's install needed libraries. First, you're going to install flask, which is an extremely lightweight python framework for building applications. You'll be using `pip` for all the library installation.
 
-```shell
+```zsh
 pip3 install Flask
 ```
 
 Next, install an OAuth library, `requests_oauthlib`. You can read [more about it](https://requests-oauthlib.readthedocs.io/en/latest/), but this library makes it easy to interact with any standards compliant OAuth or OIDC implementation. You'll use it to build standard URLs and retrieve the access token:
 
-```shell
+```zsh
 pip3 install requests_oauthlib
 ```
 
 Finally, while some data is available from OIDC endpoints, retrieving profile data stored in the `registration.data` field requires the FusionAuth client library. To install it, use this command:
 
-```shell
+```zsh
 pip3 install fusionauth-client
+```
+
+We also need to install the `requests` library to enable the HTTP requests. You can run the following command:
+
+```zsh
+pip3 install requests
 ```
 
 The setup is all done. Let's get to coding.
@@ -127,7 +149,9 @@ if __name__ == "__main__":
   app.run(debug=True)
 ```
 
-You are going to use flask templates to create the HTML pages. Create a directory called `templates` and a file called `index.html` in that directory. Put the following markup in there:
+At this point we have not created the `settings.txt` file so you will need to comment out the line `app.config.from_object('settings.Config')`.
+
+Moving on, you are going to use flask templates to create the HTML pages. Create a directory called `templates` and a file called `index.html` in that directory. Put the following markup in there:
 
 ```html
 <!doctype html>
@@ -141,14 +165,14 @@ This is a sample OAuth/Flask application.
 
 Start the application by running this command in your terminal:
 
-```shell
+```zsh
 FLASK_APP=oauth.py python3 -m flask run
 ```
 
 You should see this output:
 
 ```
- * Serving Flask app "oauth.py"
+ * Serving Flask app "oauth.py" (lazy loading)
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
    Use a production WSGI server instead.
@@ -156,11 +180,11 @@ You should see this output:
  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
 
-Heed that warning! What you'll be using during this tutorial is a development server, please don't put it into production. If you visit `http://localhost:5000` with your browser, you'll see this:
+Heed that warning! What you'll be using during this tutorial is a development server, please do not put this into production. Now, if you visit `http://localhost:5000` with your browser, you'll see this:
 
 {% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/simple-app-screen.png" alt="The initial Flask page." class="img-fluid" figure=false %}
 
-What you just did was start up flask and having it display a rendered template. Not too much logic in there, so next, let's add in some OAuth action and provide a login and registration link.
+What you just did was start up flask and have it display a rendered template. Not too much logic in there, so next, let's add in some OAuth action and provide a login and registration link.
 
 ## Setting up OAuth
 
@@ -177,7 +201,7 @@ class Config(object):
   REDIRECT_URI='http://localhost:5000/callback'
 ```
 
-`CLIENT_ID` and `CLIENT_SECRET` are both available in the application you created in previous tutorials. To retrieve them now, navigate to "Applications" and click the green magnifying glass to view these values:
+`CLIENT_ID` and `CLIENT_SECRET` are both available in the application you created in FusionAuth in the previous tutorials. To retrieve them now, navigate to "Applications" and click the green magnifying glass to view these values:
 
 {% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/application-screen-fusionauth.png" alt="Finding the client id and client secret values." class="img-fluid" figure=false %}
 
@@ -212,9 +236,9 @@ This is a sample OAuth/Flask application.
 ```
 {% endraw %}
 
-In this template, if the `user` variable exists, the user's email address is shown. Otherwise it displays login or registration links. 
+In this template, if the `user` variable exists, the user's email address is shown. Otherwise it displays login and registration links. 
 
-Finally, update `oauth.py` to provide the routes you added to the template. Below is the entire updated file, but we'll examine each method one at a time after the code block:
+Finally, update `oauth.py` to provide the routes you added to the template. Now that we have set up our `settings.txt` file let's be sure to uncomment out the line we commented out previously `app.config.from_object('settings.Config')`. Below is the entire updated file, but we'll examine each method one at a time after the code block:
 
 ```python
 from requests_oauthlib import OAuth2Session
@@ -340,19 +364,19 @@ All of these build links when called, and then send a redirect to the generated 
 
 > You don't need these routes. You could hard code URLs into the template. But doing this makes for a more maintainable application, as well as nicer looking URLs.
 
-The `/login` route uses the `requests_oauthlib` library to generate a proper authorization URL. The parameters for this URL are all defined by the [RFC](https://tools.ietf.org/html/rfc6749). When the link is clicked, the end user will be shown the FusionAuth themable hosted pages, where they may log in. 
+The `/login` route uses the `requests_oauthlib` library to generate a proper authorization URL. The parameters for this URL are all defined by the [RFC](https://tools.ietf.org/html/rfc6749). When the link is clicked, the end user will be shown the FusionAuth themeable hosted pages, where they may log in. 
 
 `/logout` deletes the user's session and calls the FusionAuth `logout` endpoint. This ensures that the systems where user state is maintained, your application and FusionAuth, have logged out the user. 
 
 The `/register` route uses the `requests_oauthlib` library to generate the URL, just like the `/login` route. But it also modifies the URL: `registration_url = authorization_url.replace("authorize","register", 1)`. What's going on there? 
 
-This code works because the registration process in FusionAuth is embedded in an OAuth Authorization Code grant. The `register` endpoint takes the same parameters. When someone is done registering for an application, they are in the same state as if they'd logged in:
+This code works because the registration process in FusionAuth is embedded in an OAuth Authorization Code grant. The `/register` endpoint takes the same parameters. When someone is done registering for an application, they are in the same state as if they had logged in:
 
 * A valid `redirect_uri` must be provided.
 * The callback code at the `redirect_uri` can call the `token` endpoint to receive a JWT. It also receives and should check the `state` parameter.
 * The user is authenticated. 
 
-Let's look at the callback route, which the authorization server, FusionAuth, will redirect the browser to after the user signs in:
+Let's look at the callback route which the authorization server, FusionAuth, will redirect the browser to after the user signs in:
 
 ```python
 # ...
@@ -374,7 +398,7 @@ def callback():
 # ...
 ```
 
-This code checks to see that the `state` parameter is the same value as was sent when the user signed up or signed in. Then it fetches the access token using the authorization code. This is embedded in `request.url` and parsed out by the library with no effort on our part.
+This code checks to see that the `state` parameter is the same value as was sent when the user signed up or signed in. Then it fetches the access token using the authorization code. This is embedded in `request.url` and parsed out by the library with no effort on your part.
 
 Finally, we set some session variables and then redirect to the home page route. That page re-renders the template, providing the user object.
 
@@ -416,7 +440,7 @@ class Config(object):
   FORM_ID='7a7e08db-5aee-4c28-b5b7-7ec7f7cedf14'
 ```
 
-The changes add an API key (which you added when configuring FusionAuth) and the form id for the advanced registration form. The latter was created in the [initial blog post](/blog/2020/08/27/advanced-registration-form). To find the `FORM_ID`, navigate to "Customizations" then "Forms". You'll see the form identifier on the list of forms:
+The changes add an API key (which you added when configuring FusionAuth) and the form id for the advanced registration form. The latter was created in the [initial blog post](/blog/2020/08/27/advanced-registration-form). To find the `FORM_ID` in FusionAuth, navigate to "Customizations" then "Forms". You'll see the form identifier on the list of forms:
 
 {% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/form-id-display.png" alt="Finding the form id for your advanced registration form." class="img-fluid" figure=false %}
 
@@ -550,7 +574,7 @@ The code which builds a form for updating is also worth checking out:
 ```
 {% endraw %}
 
-This builds a form from the same `registration_data` array. But it does something else which you might find intriguing. Let's take a deeper look at the maximum price form field, which has some additional newlines added below:
+This builds a form from the same `registration_data` array. But it does something else which you might find intriguing. Let's take a deeper look at the maximum home price form field, which has some additional newlines added below:
 
 {% raw %}
 ```jinja
@@ -597,6 +621,8 @@ def homepage():
     client_response = fusionauth_api_client.retrieve_registration(user_id, application_id)
     if client_response.was_successful():
       registration_data = client_response.success_response['registration'].get('data')
+      # make sure minprice and maxprice are numbers not strings
+      registration_data['maxprice'], registration_data['minprice'] = int(registration_data['maxprice']), int(registration_data['minprice'])
       fields = get_fields(fusionauth_api_client)
     else:
       print(client_response.error_response)
@@ -717,6 +743,8 @@ def homepage():
     client_response = fusionauth_api_client.retrieve_registration(user_id, application_id)
     if client_response.was_successful():
       registration_data = client_response.success_response['registration'].get('data')
+      # make sure minprice and maxprice are numbers not strings
+      registration_data['maxprice'], registration_data['minprice'] = int(registration_data['maxprice']), int(registration_data['minprice'])
       fields = get_fields(fusionauth_api_client)
     else:
       print(client_response.error_response)
@@ -747,7 +775,7 @@ def get_fields(fusionauth_api_client):
   return fields
 ```
 
-This looks at the form and retrieves ids of all fields on the second step: `['form']['steps'][1]`. It then gets all each field configuration. 
+This looks at the form and retrieves ids of all fields on the second step: `['form']['steps'][1]`. It then gets each field configuration. 
 
 The code then adds that form field configuration information to a dictionary, keyed off of the key of the field. A key is a string like `registration.data.minprice`. This dictionary is what is used to build certain attributes of the update form, as shown above. This would need to be modified to loop over steps if you had more than one step collecting profile data.
 
@@ -819,6 +847,6 @@ If you want to take this tutorial further, here are some improvements:
 
 The code in this application uses both standard OAuth and OIDC to retrieve data. It also uses the FusionAuth APIs. The flask application you built can retrieve and modify users' data, allowing them to make changes to the data provided at registration.
 
-We've reached the end of this blog series about registration forms. You have all the pieces to put together a registration flow for custom applications. You can create the registration form, theme it and provide your user a way to update their profile data.
+We've reached the end of this blog series about registration forms. You now have all the pieces to put together a registration flow for custom applications. You can create the registration form, theme it, and provide your user a way to update their profile data.
 
 Happy coding!
