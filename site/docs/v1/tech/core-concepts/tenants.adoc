@@ -31,6 +31,7 @@ This page describes the Admin UI for creating and configuring a Tenant.
 * <<Connectors>>
 * <<Email>>
 * <<Family>>
+* <<Multi-Factor>>
 * <<OAuth>>
 * <<JWT>>
 * <<Password>>
@@ -47,7 +48,7 @@ image::create-tenant.png[Create a Tenant,width=1200,role=shadowed]
 A majority of your FusionAuth configuration is managed at the Tenant-level.  Some of these configuration options act as defaults and can be overridden by the Application.
 
 ==== General
-image::tenant-configuration-general.png[Tenant Configuration - General,width=1200,role=shadowed]
+image::core-concepts/tenant-configuration-general.png[Tenant Configuration - General,width=1200,role=shadowed]
 
 ===== Form Fields
 
@@ -66,6 +67,22 @@ The form that will be used in the FusionAuth UI for adding and editing users.
 +
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
+===== Username settings
+
+Enable [field]#Unique usernames# to allow multiple users suggest the same username. If there are any collisions, FusionAuth will transparently create a unique username by appending a suffix. The user will continue to use the username without the suffix.
+
+[.api]
+[field]#Unique usernames# [optional]#Optional# [default]#defaults to `false`# [since]#Available since 1.27.0#::
+When `true`, FusionAuth will handle username collisions.
++
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+[field]#Number of digits# [optional]#Optional# [default]#defaults to `5`# [since]#Available since 1.27.0#::
+The maximum number of digits to use when building a unique suffix for a username. A number will be randomly selected and may be 1 or more digits up to this configured value. The value of this field must be greater than or equal to `3` and less than or equal to `10`.
+
+[field]#Separator character# [optional]#Optional# [default]#defaults to `["&#35;"]`# [since]#Available since 1.27.0#::
+A single character to use as a separator from the requested username and a unique suffix that is added when a duplicate username is detected. This value can be a single non alphanumeric ASCII character.
+
 ==== Connectors
 
 Connectors can be enabled on a per tenant basis with a Connector policy.
@@ -81,7 +98,7 @@ If you click on the `Add policy` button on this page you will be presented with 
 [.dialog-screenshot]
 --
 =====
-image::tenant-configuration-connector-add-policy.png[Add Connector Policy,width=300,role=box-shadow]
+image::core-concepts/tenant-configuration-connector-add-policy.png[Add Connector Policy,width=300,role=box-shadow]
 =====
 --
 
@@ -101,16 +118,18 @@ When selected, migrate the user from the Connector into FusionAuth so that futur
 
 Once you have configured your email settings, you may test your configuration with the "Send test email" button.
 
-image::tenant-configuration-smtp-settings.png[Tenant Configuration - SMTP settings,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-smtp-settings.png[Tenant Configuration - SMTP settings,width=1200,role=shadowed top-cropped]
 
 ===== SMTP settings
 
 [.api]
-[field]#Host# [required]#Required#::
-The IP address of the outgoing SMTP mail server.
+[field]#Host# [optional]#Optional# [default]#defaults to `localhost`#::
+The hostname of the SMTP server. This will be provided by your SMTP provider.
 
-[field]#Port# [required]#Required#::
-The port of the outgoing SMTP mail server.
+[field]#Port# [optional]#Optional# [default]#defaults to `25`#::
+The port of the SMTP server. This will be provided by your SMTP provider. Ports `25`, `465` and `587` are the well known ports used by SMTP, it is possible your provider will utilize a different port.
++
+In most cases you will be using TLS to connect to your SMTP server, and the port will generally be `587` or `465`.
 
 [field]#Username# [optional]#Optional#::
 The username of the outgoing SMTP mail server authentication.
@@ -119,10 +138,16 @@ The username of the outgoing SMTP mail server authentication.
 When enabled, you may modify the SMTP password, when the [field]#Password# field is not displayed the current password will not be modified.
 
 [field]#Password# [required]#Required#::
-The new password to use for the outgoing SMTP mail server authentication.
+The new password to use for the outgoing SMTP mail server authentication. This field is only required when [field]#Change password# is checked.
 
-[field]#Security# [optional]#Optional#::
-The preferred encryption protocol used by your SMTP server, this is generally documented by your SMTP service provider.
+[field]#Security# [optional]#Optional# [default]#defaults to `None`#::
+The security type when using an SSL connection to the SMTP server. This value should be provided by your SMTP provider.
++
+Generally speaking, if using port `25` you will select `None`, if using port of `465` you will select `SSL` and if using port `587` you will select `TLS`. It is possible your provider will be different, follow your providers instruction.
++
+* `None`
+* `SSL`
+* `TLS`
 
 [field]#Default from address# [optional]#Optional#::
 The default email address that emails will be sent from when a from address is not provided on an individual email template. This is the address part email address (i.e.  Jared Dunn  <**jared@piedpiper.com**>).
@@ -130,7 +155,7 @@ The default email address that emails will be sent from when a from address is n
 [field]#Default from name# [optional]#Optional#::
 The default From Name used in sending emails when a from name is not provided on an individual email template. This is the display name part of the email address ( i.e. **Jared Dunn**  <jared@piedpiper.com>).
 
-image::tenant-configuration-email-verification-settings.png[Tenant Configuration - Email verification settings,width=1200,role=shadowed]
+image::core-concepts/tenant-configuration-email-verification-settings.png[Tenant Configuration - Email verification settings,width=1200,role=shadowed]
 
 ===== Email verification settings
 
@@ -146,6 +171,15 @@ The email template to use when accounts are created to verify the User's email a
 +
 Required when the [field]#Verify email# toggle is enabled.
 
+[field]#Verification strategy# [optional]#Optional# [since]#Available since 1.27.0#::
+The process by which the user will verify their email address. Using the "Form Field" method works only when the [field]#Unverified behavior# is `Gated`.
+
+[field]#Unverified behavior# [optional]#Optional# [since]#Available since 1.27.0#::
+The way a user is handled during the login process when they do not have a verified email address.
+
+[field]#Allow email change when gated# [optional]#Optional# [since]#Available since 1.27.0#::
+When enabled, the user is allowed to change their email address when they are gated because they haven't verified their email address.
+
 [field]#Delete unverified users# [optional]#Optional#::
 When enabled, users who have not verified their email address after a configurable duration since being created will be permanently deleted.
 
@@ -155,7 +189,7 @@ The duration since creation that a user must exist before being deleted for havi
 Required when the [field]#Delete unverified users# toggle is enabled.
 
 
-image::tenant-configuration-template-settings.png[Tenant Configuration - Email template settings,width=1200,role=shadowed]
+image::core-concepts/tenant-configuration-template-settings.png[Tenant Configuration - Email template settings,width=1200,role=shadowed]
 
 ===== Template settings
 
@@ -171,7 +205,7 @@ The template to use to send the link for passwordless login requests.
 
 
 ==== Family
-image::tenant-configuration-family-settings.png[Tenant Configuration - Family,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-family-settings.png[Tenant Configuration - Family,width=1200,role=shadowed top-cropped]
 
 ===== Form Fields
 
@@ -181,9 +215,13 @@ When enabled, you may model parent-child user relationships, and observe parenta
 
 [field]#Maximum child age# [required]#Required#::
 The maximum age a user can be to be considered a child.
++
+Required when the [field]#Enabled# toggle is enabled.
 
 [field]#Minimum owner age# [required]#Required#::
 The minimum age a user must be to create a family.
++
+Required when the [field]#Enabled# toggle is enabled.
 
 [field]#Allow child registrations# [required]#Required#::
 When enabled, allow children to register themselves without requiring a parent to create their account for them.
@@ -208,9 +246,53 @@ The number of days before a child account that has not yet been verified by a pa
 +
 Required when the [field]#Delete unverified children# toggle is enabled.
 
+==== Multi-Factor
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+**However, the Authenticator/TOTP implementation is not a premium feature.**
+
+image::core-concepts/tenant-configuration-mfa-authenticator-settings.png[Tenant Configuration - MFA authenticator settings,width=1200,bottom-cropped top-cropped]
+
+===== Authenticator settings
+
+[.api]
+[field]#Enabled# [optional]#Optional#::
+When enabled, users may use an authenticator application to complete a multi-factor authentication request.
+
+image::core-concepts/tenant-configuration-mfa-email-settings.png[Tenant Configuration - MFA email settings,width=1200,bottom-cropped top-cropped]
+
+===== Email settings
+
+[.api]
+[field]#Enabled# [optional]#Optional#::
+When enabled, users may use an email address to complete a multi-factor authentication request.
+
+[field]#Template# [required]#Required#::
+The email template to use when a multi-factor authentication request is sent to the User's email address.
++
+Required when the [field]#Enabled# toggle is enabled.
+
+image::core-concepts/tenant-configuration-mfa-sms-settings.png[Tenant Configuration - MFA SMS settings,width=1200,bottom-cropped top-cropped]
+
+===== SMS settings
+
+[.api]
+[field]#Enabled# [optional]#Optional#::
+When enabled, users may use a mobile phone number to complete a multi-factor authentication request.
+
+[field]#Messenger# [required]#Required#::
+The Messenger used to deliver the template.
++
+Required when the [field]#Enabled# toggle is enabled.
+
+[field]#Template# [required]#Required#::
+The SMS template to use when a multi-factor authentication request is sent to the User's mobile phone number.
++
+Required when the [field]#Enabled# toggle is enabled.
 
 ==== OAuth
-image::tenant-configuration-oauth.png[Tenant Configuration - OAuth,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-oauth.png[Tenant Configuration - OAuth,width=1200,role=shadowed top-cropped]
 
 ===== Form Fields
 
@@ -223,7 +305,7 @@ The URL the user is redirected to upon logout.
 
 
 ==== JWT
-image::tenant-configuration-jwt.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-jwt.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
 
 ===== Form Fields
 
@@ -242,7 +324,7 @@ The key used to sign the Id token JWT.
 
 
 ==== Password
-image::tenant-configuration-password-failed-authentication-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-password-failed-authentication-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
 
 ===== Failed authentication settings
 
@@ -263,7 +345,7 @@ The length of time the selected action is applied to the user before the action 
 The time unit the [field]#Action duration# is measured in.
 
 
-image::tenant-configuration-password-breach-detection-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed]
+image::core-concepts/tenant-configuration-password-breach-detection-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed]
 
 ===== Breach detection settings
 
@@ -278,7 +360,7 @@ The login Id and password match constraints to qualify as a breach match.
 The action to perform during login for breach detection.  Performing breach detection during login may increase the time it takes to complete authentication.
 
 
-image::tenant-configuration-password-validation-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed]
+image::core-concepts/tenant-configuration-password-validation-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed]
 
 ===== Password settings
 
@@ -326,7 +408,7 @@ Required when the [field]#Reject previous passwords# toggle is enabled.
 When enabled the user's password will be validated during login. If the password does not meet the currently configured validation rules the user will be required to change their password.
 
 
-image::tenant-configuration-password-cryptographic-hash-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed]
+image::core-concepts/tenant-configuration-password-cryptographic-hash-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed]
 
 ===== Cryptographic hash settings
 
@@ -342,37 +424,16 @@ When enabled the user's password hash will be modified if it does not match the 
 
 
 ==== Webhooks
-image::tenant-configuration-webhooks-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-webhooks-settings.png[Tenant Configuration - Webhooks,width=1200,role=top-cropped]
 
-===== Table columns
+===== Table Columns
 
-[.api]
-[field]#Event#::
-The event type, this value will be present in the JSON request to identify the message.
-[field]#Enabled#::
-When enabled this event can be sent by one or more webhook. You will also need to enable the event for a specific webhook to receive the event.
-+
-This toggle allows you to optionally disable an event for all webhooks all at once.
-[field]#Transaction setting#::
-The transaction setting for this event. This setting will apply to all webhooks consuming this event type.
-+
---
-    [field]#No Webhooks are required to succeed#::
-    The event will succeed regardless of the webhook response status code. Use this setting when it is not important for a webhook to succeed or provide confirmation that the event has been received and processed successfully.
-    [field]#Any single Webhook must succeed#::
-    The event will succeed as long as one or more of the webhooks respond with a status code between `200` and `299` (inclusive).
-    [field]#A simple majority of Webhooks must succeed#::
-    The event will succeed if at least half of the webhooks respond with a status code between `200` and `299` (inclusive). This means 50% or more of the webhooks must respond successfully.
-    [field]#A two-thirds majority of Webhooks must succeed#::
-    The event will succeed if a super majority of the webhooks respond with a status code between `200` and `299` (inclusive). A super majority is two-thirds (66.7%) or more of the configured webhooks.
-    [field]#All of the Webhooks must succeed#::
-    The event will succeed if every configured webhook responds with a status code between `200` and `299` (inclusive). Use this setting when it is critical for every configured webhook to receive and process the event before considering it complete.
---
+include::docs/v1/tech/events-webhooks/_tenant-webhooks-table.adoc[]
 
 
 ==== Advanced
 
-image::tenant-configuration-extId-durations.png[Tenant Configuration - External Identifier Durations,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-extId-durations.png[Tenant Configuration - External Identifier Durations,width=1200,role=shadowed top-cropped]
 
 ===== External identifier durations Form Fields
 
@@ -411,7 +472,7 @@ The number of seconds before the Two Factor Trust is no longer valid and the use
 The number of seconds before the device_code and user_code are no longer valid to be used to complete the Device Code grant.
 
 
-image::tenant-configuration-extId-generation.png[Tenant Configuration - External Identifier Generation,width=1200,role=shadowed]
+image::core-concepts/tenant-configuration-extId-generation.png[Tenant Configuration - External Identifier Generation,width=1200,role=shadowed]
 
 ===== External identifier generation Form Fields
 
@@ -440,5 +501,3 @@ The length and type of characters of the generated user code used in the Device 
 [.api]
 [field]#Additional properties# [optional]#Optional#::
 The custom SMTP configuration properties that may be necessary in some cases.
-
-

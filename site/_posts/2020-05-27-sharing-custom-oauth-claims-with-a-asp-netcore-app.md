@@ -5,7 +5,7 @@ description: We'll configure FusionAuth and extend the ASP.NET Core web applicat
 author: Dan Moore
 image: blogs/adding-more-claims-asp-net/fusionauth-asp-net-core-with-custom-claims.png
 category: blog
-tags: client-netcore
+tags: client-netcore tutorial tutorial-netcore
 excerpt_separator: "<!--more-->"
 ---
 

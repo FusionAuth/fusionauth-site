@@ -5,17 +5,17 @@ description: The FusionAuth Customer License Agreement
 ---
 
 <style>
-ol {
+main .container ol {
   counter-reset: item;
   margin-bottom: 10px;
   margin-top: 10px;
 }
-li {
+main .container li {
   display: block;
   margin-bottom: 5px;
   margin-top: 5px;
 }
-li:before {
+main .container li:before {
   content: counters(item, ".") ". ";
   counter-increment: item;
 }

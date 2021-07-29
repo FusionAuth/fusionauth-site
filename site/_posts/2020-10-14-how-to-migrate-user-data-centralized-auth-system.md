@@ -5,7 +5,7 @@ description: How can you safely and easily migrate your user's data from a legac
 author: Dan Moore
 image: blogs/migrating-users-legacy-datastore/how-to-migrate-your-legacy-user-data-to-a-centralized-auth-system.png
 category: blog
-tags: client-php feature-connectors
+tags: client-php feature-connectors tutorial tutorial-php tutorial tutorial-reactor-feature
 excerpt_separator: "<!--more-->"
 ---
 

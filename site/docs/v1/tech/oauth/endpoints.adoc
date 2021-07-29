@@ -9,14 +9,15 @@ description: A description of each of the OAuth endpoints provided by FusionAuth
 In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], https://tools.ietf.org/html/rfc8628[OAuth 2.0 IETF RFC 8628], https://tools.ietf.org/html/rfc7517[JWK IETF RFC 7517], and https://tools.ietf.org/html/rfc7662[OAuth 2.0 IETF RFC 7662], the following endpoints are provided.
 
 * <<Authorize>>
- ** <<Authorization Code Grant Request>>
- ** <<Implicit Grant Request>>
+** <<Authorization Code Grant Request>>
+** <<Implicit Grant Request>>
 * <<Logout>>
 * <<Token>>
- ** <<Complete the Authorization Code Grant Request>>
- ** <<Resource Owner Password Credentials Grant Request>>
- ** <<Complete the Device Authorization Grant Request>>
- ** <<Refresh Token Grant Request>>
+** <<Complete the Authorization Code Grant Request>>
+** <<Resource Owner Password Credentials Grant Request>>
+** <<Complete the Device Authorization Grant Request>>
+** <<Refresh Token Grant Request>>
+** <<Client Credentials Grant Request>>
 * <<Device>>
 * <<Device Validate>>
 * <<Introspect>>
@@ -49,10 +50,12 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 
 [.api]
 [field]#client_id# [type]#[String]# [required]#Required#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 
 [field]#code_challenge# [type]#[String]# [optional]#Optional# [since]#Available since 1.8.0#::
-The `code_challenge` parameter as described in the https://tools.ietf.org/html/rfc7636[Proof Key for Code Exchange by OAuth Public Clients (PKCE)] specification. When this parameter is provided during the Authorization request, a corresponding [field]#code_verifier# parameter is required on the subsequent `POST` to the `/oauth2/token` endpoint.
+The `code_challenge` parameter as described in the https://tools.ietf.org/html/rfc7636[Proof Key for Code Exchange by OAuth Public Clients (PKCE)] specification.
+When this parameter is provided during the Authorization request, a corresponding [field]#code_verifier# parameter is required on the subsequent `POST` to the `/oauth2/token` endpoint.
 
 [field]#code_challenge_method# [type]#[String]# [optional]#Optional# [since]#Available since 1.8.0# [default]#default is `S256`#::
 The `code_challenge_method` parameter as described in the https://tools.ietf.org/html/rfc7636[Proof Key for Code Exchange by OAuth Public Clients (PKCE)] specification.
@@ -67,58 +70,69 @@ An optional unique Identity Provider Id that can allow you to bypass the FusionA
 Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the "Login with Pied Piper" button, or entering their email address when using the IdP configuration with managed domains.
 
 [field]#locale# [type]#[String]# [optional]#Optional#::
-The link:/docs/v1/tech/reference/data-types/#locales[locale] to be used to render the login page. This is useful if you already know the user's preferred locale before redirecting the user to FusionAuth. See the link:/docs/v1/tech/themes/localization/[Theme Localization] documentation for more information.
+The link:/docs/v1/tech/reference/data-types/#locales[locale] to be used to render the login page.
+This is useful if you already know the user's preferred locale before redirecting the user to FusionAuth.
+See the link:/docs/v1/tech/themes/localization/[Theme Localization] documentation for more information.
 
 [field]#login_hint# [type]#[String]# [optional]#Optional# [since]#Available since 1.19.0#::
 An optional email address or top level domain that can allow you to bypass the FusionAuth login page when using managed domains.
 +
 If using managed domains, adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end entering their email address when using the IdP configuration with managed domains.
-+ 
++
 If not using managed domains, providing an email address using this parameter prepopulates the email address in the login page.
 
 [field]#metaData.device.description# [type]#[String]# [optional]#Optional#::
-A human readable description of the device used during login. This metadata is used to describe the refresh token that may be generated for this login request.
+A human readable description of the device used during login.
+This metadata is used to describe the refresh token that may be generated for this login request.
 
 [field]#nonce# [type]#[String]# [optional]#Optional# [since]#Available since 1.5.0#::
-The `nonce` parameter as described in the https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification. When this parameter is provided during the Authorization request, the value will be returned in the `id_token`.
+The `nonce` parameter as described in the https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification.
+When this parameter is provided during the Authorization request, the value will be returned in the `id_token`.
 
 [field]#redirect_uri# [type]#[String]# [required]#Required#::
-The URI to redirect to upon a successful request. This URI must have been configured previously in the FusionAuth Application OAuth
-configuration. See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
+The URI to redirect to upon a successful request.
+This URI must have been configured previously in the FusionAuth Application OAuth configuration.
+See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
 
 [field]#response_mode# [type]#[String]# [optional]#Optional# [since]#Available since 1.11.0#::
-Determines how the result parameters are to be returned to the caller. When this parameter is not provided the default response mode will be used based upon the [field]#response_type# field.
+Determines how the result parameters are to be returned to the caller.
+When this parameter is not provided the default response mode will be used based upon the [field]#response_type# field.
 +
 The default when the [field]#response_type# is set to `code` is `query`, the default when the [field]#response_type# is set to `token`, `token id_token` or `id_token` is `fragment`.
 +
 The possible values are:
 +
-    * `form_post`
-    * `fragment`
-    * `query` - This response mode can only be used when the [field]#response_type# is set to `code`.
+* `form_post`
+* `fragment`
+* `query` - This response mode can only be used when the [field]#response_type# is set to `code`.
 +
 In general, you only need to provide this parameter when you wish to use the `form_post` response mode.
 
 [field]#response_type# [type]#[String]# [required]#Required#::
-The requested response type. For the Authorization Code Grant, this value must be set to `code`.
+The requested response type.
+For the Authorization Code Grant, this value must be set to `code`.
 
 [field]#scope# [type]#[String]# [optional]#Optional#::
-If you are using OpenID Connect, the request must contain this parameter and at minimum it must contain `openid`. This parameter may contain multiple scopes space separated. For example, the value of `openid offline_access` provides two scopes on the request.
+If you are using OpenID Connect, the request must contain this parameter and at minimum it must contain `openid`.
+This parameter may contain multiple scopes space separated.
+For example, the value of `openid offline_access` provides two scopes on the request.
 +
 Available scopes:
 +
-    * `openid` - This scope is used to request an `id_token` be returned in the response
-    * `offline_access` - This scope is used to request a `refresh_token` be returned in the response
+* `openid` - This scope is used to request an `id_token` be returned in the response
+* `offline_access` - This scope is used to request a `refresh_token` be returned in the response
 
 [field]#state# [type]#[String]# [optional]#Optional#::
-The optional state parameter, this is generally used as a Cross Site Request Forgery (CSRF) token. Any value provided in this field will be returned on a successful redirect. See https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification for additional information on how this parameter may be utilized.
+The optional state parameter, this is generally used as a Cross Site Request Forgery (CSRF) token.
+Any value provided in this field will be returned on a successful redirect.
+See https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification for additional information on how this parameter may be utilized.
 
 [field]#tenantId# [type]#[UUID]# [required]#Required#  [since]#Available since 1.8.0#::
 The unique Tenant Id used for applying the proper theme.
 
 [field]#user_code# [type]#[String]# [optional]#Optional# [since]#Available since 1.11.0#::
-The end-user verification code.  This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
-
+The end-user verification code.
+This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
 
 === Response
 
@@ -135,7 +149,7 @@ The end-user verification code.  This parameter is required on requests implemen
 
 |400
 |The request was invalid and/or malformed. The response will contain a JSON message with the specific errors or errors on the redirect URI. The error responses
-are covered in the link:#oautherror[OAuthError section] of the API documentation.
+are covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -168,19 +182,21 @@ Location: https://piedpiper.com/callback?
 The authorization code.
 
 [field]#locale# [type]#[String]#::
-The link:/docs/v1/tech/reference/data-types/#locales[locale] that was to render the login page, or a previously selected locale by the user during a previous session. This may be useful to know in your own application so you can continue to localize the interface for the language the user selected while on the FusionAuth login page. See the link:/docs/v1/tech/themes/localization/[Theme Localization] documentation for more information.
+The link:/docs/v1/tech/reference/data-types/#locales[locale] that was to render the login page, or a previously selected locale by the user during a previous session.
+This may be useful to know in your own application so you can continue to localize the interface for the language the user selected while on the FusionAuth login page.
+See the link:/docs/v1/tech/themes/localization/[Theme Localization] documentation for more information.
 
 [field]#state# [type]#[String]#::
-The state that was provided on the Authorization request.  This parameter will be omitted if the [field]#state# parameter was not provided on the initial authentication request.
+The state that was provided on the Authorization request.
+This parameter will be omitted if the [field]#state# parameter was not provided on the initial authentication request.
 
 [field]#userState# [type]#[String]#::
 The FusionAuth user state.
 +
 The possible values are:
 +
-    * `Authenticated` - The user is successfully authenticated for the requested application.
-    * `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
-
+* `Authenticated` - The user is successfully authenticated for the requested application.
+* `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
 
 === Implicit Grant Request
 
@@ -196,7 +212,8 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
 
 [.api]
 [field]#client_id# [type]#[String]# [required]#Required#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 
 [field]#idp_hint# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.19.0#::
 An optional unique Identity Provider Id that can allow you to bypass the FusionAuth login page.
@@ -204,32 +221,37 @@ An optional unique Identity Provider Id that can allow you to bypass the FusionA
 Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the "Login with Pied Piper" button, or entering their email address when using the IdP configuration with managed domains.
 
 [field]#locale# [type]#[String]#::
-The link:/docs/v1/tech/reference/data-types/#locales[locale] to be used to render the login page. This is useful if you already know the user's preferred locale before redirecting the user to FusionAuth.  See the link:/docs/v1/tech/themes/localization/[Theme Localization] documentation for more information.
+The link:/docs/v1/tech/reference/data-types/#locales[locale] to be used to render the login page.
+This is useful if you already know the user's preferred locale before redirecting the user to FusionAuth.
+See the link:/docs/v1/tech/themes/localization/[Theme Localization] documentation for more information.
 
 [field]#login_hint# [type]#[String]# [optional]#Optional# [since]#Available since 1.19.0#::
 An optional email address or top level domain that can allow you to bypass the FusionAuth login page when using managed domains.
 +
 If using managed domains, adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end entering their email address when using the IdP configuration with managed domains.
-+ 
++
 If not using managed domains, providing an email address using this parameter prepopulates the email address in the login page.
 
 [field]#nonce# [type]#[String]# [optional]#Optional# [since]#Available since 1.5.0#::
-The `nonce` parameter as described in the https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification. When this parameter is provided during the Authorization request, the value will be returned in the `id_token` if requested by the `response_type` parameter.
+The `nonce` parameter as described in the https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification.
+When this parameter is provided during the Authorization request, the value will be returned in the `id_token` if requested by the `response_type` parameter.
 
 [field]#redirect_uri# [type]#[String]# [required]#Required#::
-The URI to redirect to upon a successful request. This URI must have been configured previously in the FusionAuth Application OAuth
-configuration. See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
+The URI to redirect to upon a successful request.
+This URI must have been configured previously in the FusionAuth Application OAuth configuration.
+See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
 
 [field]#response_mode# [type]#[String]# [optional]#Optional# [since]#Available since 1.11.0#::
-Determines how the result parameters are to be returned to the caller. When this parameter is not provided the default response mode will be used based upon the [field]#response_type# field.
+Determines how the result parameters are to be returned to the caller.
+When this parameter is not provided the default response mode will be used based upon the [field]#response_type# field.
 +
 The default when the [field]#response_type# is set to `code` is `query`, the default when the [field]#response_type# is set to `token`, `token id_token` or `id_token` is `fragment`.
 +
 The possible values are:
 +
-    * `form_post`
-    * `fragment`
-    * `query` - This response mode can only be used when the [field]#response_type# is set to `code`.
+* `form_post`
+* `fragment`
+* `query` - This response mode can only be used when the [field]#response_type# is set to `code`.
 +
 In general, you only need to provide this parameter when you wish to use the `form_post` response mode.
 
@@ -238,31 +260,35 @@ The requested response type, this value determines which tokens will be returned
 +
 For the Implicit Grant, this value must be set to one of the following values:
 +
-    * `token` - Return an `access_token`
-    * `token id_token` - Return both the `access_token` and the `id_token`
-    * `id_token` - Return an `id_token`
+* `token` - Return an `access_token`
+* `token id_token` - Return both the `access_token` and the `id_token`
+* `id_token` - Return an `id_token`
 +
-The `token` response type is not supported when using OpenID Connect. This means that if you specify the `openid` scope the `token` response type is not allowed.
+The `token` response type is not supported when using OpenID Connect.
+This means that if you specify the `openid` scope the `token` response type is not allowed.
 
 [field]#nonce# [type]#[String]# [optional]#Optional# [since]#Available since 1.5.0#::
-The `nonce` parameter as described in the https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification. When this parameter is provided during the Authorization request, the value will be returned in the `id_token` if requested by the `response_type` parameter.
+The `nonce` parameter as described in the https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification.
+When this parameter is provided during the Authorization request, the value will be returned in the `id_token` if requested by the `response_type` parameter.
 
 [field]#scope# [type]#[String]# [optional]#Optional#::
 If you are using OpenID Connect, the request must contain this parameter and at minimum it must contain `openid`.
 +
 Available scopes:
 +
-    * `openid` - This scope is used to request an `id_token` be returned in the response
+* `openid` - This scope is used to request an `id_token` be returned in the response
 
 [field]#state# [type]#[String]# [optional]#Optional#::
-The optional state parameter, this is generally used as a Cross Site Request Forgery (CSRF) token. Any value provided in this field will be returned on a successful redirect. See https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification for additional information on how this parameter may be utilized.
+The optional state parameter, this is generally used as a Cross Site Request Forgery (CSRF) token.
+Any value provided in this field will be returned on a successful redirect.
+See https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect core] specification for additional information on how this parameter may be utilized.
 
 [field]#tenantId# [type]#[UUID]# [required]#Required#  [since]#Available since 1.8.0#::
 The unique Tenant Id.
 
 [field]#user_code# [type]#[String]# [optional]#Optional# [since]#Available since 1.11.0#::
-The end-user verification code.  This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
-
+The end-user verification code.
+This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
 
 === Response
 
@@ -290,7 +316,8 @@ are covered in the link:#oautherror[OAuth Error section] of the API documentatio
 
 &nbsp;
 
-The following is an example HTTP 302 redirect, line breaks added to improve readability. The redirect from an Implicit Grant will contain parameters after the fragment `#`.
+The following is an example HTTP 302 redirect, line breaks added to improve readability.
+The redirect from an Implicit Grant will contain parameters after the fragment `#`.
 
 [source]
 .Example HTTP Redirect Response
@@ -313,31 +340,40 @@ Location: https://piedpiper.com/callback#
 
 [.api]
 [field]#access_token# [type]#[String]#::
-The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4].  This request parameter will be omitted if an access token was not requested in the [field]#response_type# request parameter.  See the link:/docs/v1/tech/oauth/tokens#access-token[OAuth Tokens] documentation for more information.
+The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4].
+This request parameter will be omitted if an access token was not requested in the [field]#response_type# request parameter.
+See the link:/docs/v1/tech/oauth/tokens#access-token[OAuth Tokens] documentation for more information.
 
 [field]#expires_in# [type]#[String]#::
-The number of seconds the access token will remain active.  This request parameter will be omitted if an access token was not requested in the [field]#response_type# request parameter.
+The number of seconds the access token will remain active.
+This request parameter will be omitted if an access token was not requested in the [field]#response_type# request parameter.
 
 [field]#id_token# [type]#[String]#::
-The OpenID Id Token. This token is represented as a JSON Web Token (JWT).  This request parameter will be omitted if an id token was not requested in the [field]#response_type# request parameter.  See the link:/docs/v1/tech/oauth/tokens#id-token[OAuth Tokens] documentation for more information.
+The OpenID Id Token.
+This token is represented as a JSON Web Token (JWT).
+This request parameter will be omitted if an id token was not requested in the [field]#response_type# request parameter.
+See the link:/docs/v1/tech/oauth/tokens#id-token[OAuth Tokens] documentation for more information.
 
 [field]#locale# [type]#[String]#::
-The link:/docs/v1/tech/reference/data-types/#locales[locale] that was to render the login page, or a previously selected locale by the user during a previous session. This may be useful to know in your own application so you can continue to localize the interface for the language the user selected while on the FusionAuth login page.  See the link:/docs/v1/tech/themes/localization/[Theme Localization] documentation for more information.
+The link:/docs/v1/tech/reference/data-types/#locales[locale] that was to render the login page, or a previously selected locale by the user during a previous session.
+This may be useful to know in your own application so you can continue to localize the interface for the language the user selected while on the FusionAuth login page.
+See the link:/docs/v1/tech/themes/localization/[Theme Localization] documentation for more information.
 
 [field]#state# [type]#[String]#::
-The state that was provided on the Authorization request.  This parameter will be omitted if the [field]#state# request parameter was not provided.
+The state that was provided on the Authorization request.
+This parameter will be omitted if the [field]#state# request parameter was not provided.
 
 [field]#token_type# [type]#[String]#::
-The token type.  The value will be `Bearer` if an access token was requested in the [field]#response_type# request parameter, this request parameter will otherwise be omitted.
+The token type.
+The value will be `Bearer` if an access token was requested in the [field]#response_type# request parameter, this request parameter will otherwise be omitted.
 
 [field]#userState# [type]#[String]#::
 The FusionAuth user state.
 +
 The possible values are:
 +
-    * `Authenticated` - The user is successfully authenticated for the requested application.
-    * `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
-
+* `Authenticated` - The user is successfully authenticated for the requested application.
+* `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
 
 == Logout
 
@@ -349,6 +385,7 @@ Additionally, the logoutUrl used for each application is determined as follows: 
 === Request
 
 Log the User out of the FusionAuth SSO session
+
 [.endpoint]
 .URI
 --
@@ -359,28 +396,35 @@ Log the User out of the FusionAuth SSO session
 
 [.api]
 [field]#client_id# [type]#[String]# [optional]#Optional#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are requesting to logout, this value is used to identify the correct redirect URI.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are requesting to logout, this value is used to identify the correct redirect URI.
 +
 Generally speaking this parameter is required, if you are using the [field]#id_token_hint#, this parameter becomes redundant because the application can be identified based upon the `id_token`.
 +
-If you do not provide the [field]#id_token_hint# and you also omit this parameter, the request will not fail, but the logout URL defined in the Tenant configuration will be utilized. If the Tenant logout URL is not defined, the request will result in a redirect to the current base URL at the root path of `/`.
+If you do not provide the [field]#id_token_hint# and you also omit this parameter, the request will not fail, but the logout URL defined in the Tenant configuration will be utilized.
+If the Tenant logout URL is not defined, the request will result in a redirect to the current base URL at the root path of `/`.
 
 [field]#id_token_hint# [type]#[String]# [optional]#Optional# [since]#Available since 1.10.0#::
-The `id_token_hint` parameter as described in the https://openid.net/specs/openid-connect-session-1_0.html#RPLogout[OpenID Connect Session Management] specification. Previously issued ID Token passed to the logout endpoint as a hint about the End-User's current authenticated session with the Client.
+The `id_token_hint` parameter as described in the https://openid.net/specs/openid-connect-session-1_0.html#RPLogout[OpenID Connect Session Management] specification.
+Previously issued ID Token passed to the logout endpoint as a hint about the End-User's current authenticated session with the Client.
 +
 This parameter is only used if `client_id` is not provided.
 
 [field]#post_logout_redirect_uri# [type]#[String]# [optional]#Optional# [since]#Available since 1.10.0#::
-The URI to redirect to upon a successful logout. This URI must have been configured previously in the FusionAuth Application OAuth configuration as an [field]#Authorized Redirect URL#. See the link:/docs/v1/tech/core-concepts/applications/#oauth[Core Concepts OAuth section] for additional information on configuring redirect URIs.
+The URI to redirect to upon a successful logout.
+This URI must have been configured previously in the FusionAuth Application OAuth configuration as an [field]#Authorized Redirect URL#.
+See the link:/docs/v1/tech/core-concepts/applications/#oauth[Core Concepts OAuth section] for additional information on configuring redirect URIs.
 +
-If this parameter is omitted, the logout URL defined in the Application OAuth configuration will be utilized. If an Application OAuth logout URL is not defined, the logout URL defined in the Tenant configuration will be utilized. If the Tenant logout URL is not defined, the request will result in a redirect to the current base URL at the root path of `/`.
+If this parameter is omitted, the logout URL defined in the Application OAuth configuration will be utilized.
+If an Application OAuth logout URL is not defined, the logout URL defined in the Tenant configuration will be utilized.
+If the Tenant logout URL is not defined, the request will result in a redirect to the current base URL at the root path of `/`.
 
 [field]#state# [type]#[String]# [optional]#Optional# [since]#Available since 1.10.0#::
-The `state` parameter as described in the https://openid.net/specs/openid-connect-session-1_0.html#RPLogout[OpenID Connect Session Management] specification. Opaque value used to maintain state between the logout request and the callback.
+The `state` parameter as described in the https://openid.net/specs/openid-connect-session-1_0.html#RPLogout[OpenID Connect Session Management] specification.
+Opaque value used to maintain state between the logout request and the callback.
 
 [field]#tenantId# [type]#[UUID]# [required]#Required# [since]#Available since 1.8.0#::
 The unique Tenant Id used for applying the proper theme.
-
 
 === Response
 
@@ -407,7 +451,6 @@ covered in the link:#oautherror[OAuth Error section] of the API documentation.
 |503
 |The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
 |===
-
 
 == Token
 
@@ -439,12 +482,16 @@ Ensure you are sending these parameters as form encoded data in the request body
 
 [.api]
 [field]#client_id# [type]#[String]# [optional]#Optional#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 +
-This parameter is optional when the `Authorization` header is provided. When the `Authorization` header is not provided, this parameter is then required. Prior to version `1.3.1` this parameter was always required.
+This parameter is optional when the `Authorization` header is provided.
+When the `Authorization` header is not provided, this parameter is then required.
+Prior to version `1.3.1` this parameter was always required.
 
 [field]#client_secret# [type]#[String]# [optional]#Optional# [since]#Available since 1.5.0#::
-The client secret. This value may optionally be provided in the request body instead of the `Authorization` header documented above.
+The client secret.
+This value may optionally be provided in the request body instead of the `Authorization` header documented above.
 
 [field]#code# [type]#[String]# [required]#Required#::
 The authorization code returned on the `/oauth2/authorize` response.
@@ -455,11 +502,13 @@ The `code_verifier` parameter as described in the https://tools.ietf.org/html/rf
 This parameter is required to complete this request when the [field]#code_challenge# parameter was provided on the initial Authorize request.
 
 [field]#grant_type# [type]#[String]# [required]#Required#::
-The grant type to be used. This value must be set to `authorization_code`
+The grant type to be used.
+This value must be set to `authorization_code`
 
 [field]#redirect_uri# [type]#[String]# [required]#Required#::
-The URI to redirect to upon a successful request. This URI must have been configured previously in the FusionAuth Application OAuth configuration. See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
-
+The URI to redirect to upon a successful request.
+This URI must have been configured previously in the FusionAuth Application OAuth configuration.
+See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
 
 [source]
 .Example HTTP Request
@@ -498,18 +547,24 @@ Ensure you are sending these parameters as form encoded data in the request body
 
 [.api]
 [field]#client_id# [type]#[String]# [optional]#Optional#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 +
-This parameter is optional when the `Authorization` header is provided. When the `Authorization` header is not provided, this parameter is then required. Prior to version `1.3.1` this parameter was always required.
+This parameter is optional when the `Authorization` header is provided.
+When the `Authorization` header is not provided, this parameter is then required.
+Prior to version `1.3.1` this parameter was always required.
 
 [field]#client_secret# [type]#[String]# [optional]#Optional# [since]#Available since 1.5.0#::
-The client secret. This value may optionally be provided in the request body instead of the `Authorization` header documented above.
+The client secret.
+This value may optionally be provided in the request body instead of the `Authorization` header documented above.
 
 [field]#grant_type# [type]#[String]# [required]#Required#::
-The grant type to be used. This value must be set to `password`
+The grant type to be used.
+This value must be set to `password`
 
 [field]#metaData.device.description# [type]#[String]# [optional]#Optional# [since]#Available since 1.20.1#::
-A human readable description of the device used during login. This metadata is used to describe the refresh token that may be generated for this login request.
+A human readable description of the device used during login.
+This metadata is used to describe the refresh token that may be generated for this login request.
 +
 For example:
 +
@@ -517,9 +572,9 @@ For example:
 Erlich's iPhone
 +
 
-
 [field]#metaData.device.name# [type]#[String]# [optional]#Optional# [since]#Available since 1.20.1#::
-A human readable description of the device used during login. This metadata is used to name the refresh token that may be generated for this login request.
+A human readable description of the device used during login.
+This metadata is used to name the refresh token that may be generated for this login request.
 +
 For example:
 +
@@ -528,7 +583,8 @@ iOS Safari
 +
 
 [field]#metaData.device.type# [type]#[String]# [optional]#Optional# [since]#Available since 1.20.1#::
-The type of device used during login. This metadata is used to describe the type of device represented by the refresh token that may be generated for this login request.
+The type of device used during login.
+This metadata is used to describe the type of device represented by the refresh token that may be generated for this login request.
 +
 * `BROWSER`
 * `DESKTOP`
@@ -541,22 +597,25 @@ The type of device used during login. This metadata is used to describe the type
 * `UNKNOWN`
 
 [field]#username# [type]#[String]# [required]#Required#::
-The login identifier of the user. The login identifier can be either the `email` or the `username`.
+The login identifier of the user.
+The login identifier can be either the `email` or the `username`.
 
 [field]#password# [type]#[String]# [required]#Required#::
 The user's password.
 
 [field]#scope# [type]#[String]# [optional]#Optional#::
-The optional scope you are requesting during this grant. This parameter may contain multiple scopes space separated. For example, the value of `openid offline_access` provides two scopes on the request.
+The optional scope you are requesting during this grant.
+This parameter may contain multiple scopes space separated.
+For example, the value of `openid offline_access` provides two scopes on the request.
 +
 Available grant types:
 +
-    * `openid` - This scope is used to request an `id_token` be returned in the response
-    * `offline_access` - This scope scope is used to request a `refresh_token` be returned in the response
+* `openid` - This scope is used to request an `id_token` be returned in the response
+* `offline_access` - This scope scope is used to request a `refresh_token` be returned in the response
 
 [field]#user_code# [type]#[String]# [optional]#Optional# [since]#Available since 1.11.0#::
-The end-user verification code.  This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
-
+The end-user verification code.
+This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
 
 [source,options="wrap"]
 .Example HTTP Request
@@ -570,10 +629,12 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=password&loginId=bisho
 ----
 
 === Complete the Device Authorization Grant Request
+
 [NOTE.since]
 ====
 This API has been available since 1.11.0
 ====
+
 This is the Device Access Token Request portion of the https://tools.ietf.org/html/rfc8628#section-3.4[Device Authorization Grant Specification].
 
 [.endpoint]
@@ -593,21 +654,25 @@ This value must be set to `application/x-www-form-urlencoded`.
 ==== Request Parameters
 
 Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
 [.api]
 [field]#client_id# [type]#[String]# [optional]#Optional#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 +
-This parameter is optional when the `Authorization` header is provided. When the `Authorization` header is not provided, this parameter is then required.
+This parameter is optional when the `Authorization` header is provided.
+When the `Authorization` header is not provided, this parameter is then required.
 
 [field]#client_secret# [type]#[String]# [optional]#Optional#::
-The client secret. This value may optionally be provided in the request body instead of the `Authorization` header documented above.
+The client secret.
+This value may optionally be provided in the request body instead of the `Authorization` header documented above.
 
 [field]#device_code# [type]#[String]# [required]#Required#::
 
 
 [field]#grant_type# [type]#[String]# [required]#Required#::
-The grant type to be used. This value must be set to `urn:ietf:params:oauth:grant-type:device_code`
-
+The grant type to be used.
+This value must be set to `urn:ietf:params:oauth:grant-type:device_code`
 
 [source,options="wrap"]
 .Example HTTP Request
@@ -646,27 +711,32 @@ The following response applies to the <<Complete the Authorization Code Grant Re
 
 [.api]
 [field]#access_token# [type]#[String]#::
-The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4].  See the link:/docs/v1/tech/oauth/tokens#access-token[OAuth Tokens] documentation for more information.
+The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4].
+See the link:/docs/v1/tech/oauth/tokens#access-token[OAuth Tokens] documentation for more information.
 
 [field]#expires_in# [type]#[Integer]#::
 The time in seconds the token will expire from the time the response was generated.
 
 [field]#id_token# [type]#[String]#::
-The OpenID Id Token. This token is represented as a JSON Web Token (JWT).  See the link:/docs/v1/tech/oauth/tokens#id-token[OAuth Tokens] documentation for more information.
+The OpenID Id Token.
+This token is represented as a JSON Web Token (JWT).
+See the link:/docs/v1/tech/oauth/tokens#id-token[OAuth Tokens] documentation for more information.
 +
 This field will be returned in the response when `openid` scope was requested.
 
 [field]#refresh_token# [type]#[String]#::
 The refresh token as described by https://tools.ietf.org/html/rfc6749#section-1.5[RFC 6749 Section 1.5]
 +
-This field will be returned in the response when `offline_access` scope was requested unless refresh tokens have been disabled for this application. See `oauthConfiguration.generateRefreshTokens` in the link:/docs/v1/tech/apis/applications/[Application API] or the `Generate refresh tokens` toggle in the FusionAuth UI when editing an application.
+This field will be returned in the response when `offline_access` scope was requested unless refresh tokens have been disabled for this application.
+See `oauthConfiguration.generateRefreshTokens` in the link:/docs/v1/tech/apis/applications/[Application API] or the `Generate refresh tokens` toggle in the FusionAuth UI when editing an application.
 
 [field]#token_type# [type]#[String]#::
-The token type as defined by https://tools.ietf.org/html/rfc6749#section-7.1[RFC 6749 Section 7.1]. This value will always be `Bearer`.
+The token type as defined by https://tools.ietf.org/html/rfc6749#section-7.1[RFC 6749 Section 7.1].
+This value will always be `Bearer`.
 
 [field]#userId# [type]#[String]#::
-The unique Id of the user that has been authenticated. This user Id may be used to retrieve the entire user object using the /api/user API.
-
+The unique Id of the user that has been authenticated.
+This user Id may be used to retrieve the entire user object using the /api/user API.
 
 [source,json]
 .Example JSON Response
@@ -683,8 +753,6 @@ The unique Id of the user that has been authenticated. This user Id may be used 
 
 === Refresh Token Grant Request
 
-Refresh Token Grant : Exchange a Refresh Token for an Access Token
-
 If you will be using the Refresh Token Grant, you will make a request to the Token endpoint to exchange the user's refresh token for an access token.
 
 [.endpoint]
@@ -699,7 +767,9 @@ include::docs/v1/tech/oauth/_authorization-header.adoc[]
 
 [.api]
 [field]#access_token# [type]#[String]# [optional]#Optional# [since]#Available since 1.16.0#::
-The previously issued encoded access token.  When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field. If both the cookie and request parameter are provided, the cookie will take precedence.
+The previously issued encoded access token.
+When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
+If both the cookie and request parameter are provided, the cookie will take precedence.
 
 ==== Request Headers
 
@@ -713,28 +783,35 @@ Ensure you are sending these parameters as form encoded data in the request body
 
 [.api]
 [field]#access_token# [type]#[String]# [optional]#Optional# [since]#Available since 1.16.0#::
-The previously issued encoded access token.  When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
+The previously issued encoded access token.
+When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
 
 [field]#client_id# [type]#[String]# [optional]#Optional#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 +
-This parameter is optional when the `Authorization` header is provided. When the `Authorization` header is not provided, this parameter is then required. Prior to version `1.3.1` this parameter was always required.
+This parameter is optional when the `Authorization` header is provided.
+When the `Authorization` header is not provided, this parameter is then required.
+Prior to version `1.3.1` this parameter was always required.
 
 [field]#client_secret# [type]#[String]# [optional]#Optional# [since]#Available since 1.5.0#::
-The client secret. This value may optionally be provided in the request body instead of the `Authorization` header documented above.
+The client secret.
+This value may optionally be provided in the request body instead of the `Authorization` header documented above.
 
 [field]#grant_type# [type]#[String]# [required]#Required#::
-The grant type to be used. This value must be set to `refresh_token`
+The grant type to be used.
+This value must be set to `refresh_token`
 
 [field]#refresh_token# [type]#[String]# [required]#Required#::
 The refresh token that you would like to use to exchange for an access token.
 
 [field]#scope# [type]#[String]# [optional]#Optional#::
-This parameter is optional and if omitted, the same scope requested during the authorization request will be used. If provided the scopes must match those requested during the initial authorization request.
+This parameter is optional and if omitted, the same scope requested during the authorization request will be used.
+If provided the scopes must match those requested during the initial authorization request.
 
 [field]#user_code# [type]#[String]# [optional]#Optional# [since]#Available since 1.11.0#::
-The end-user verification code. This code is required if using this endpoint to approve the Device Authorization.
-
+The end-user verification code.
+This code is required if using this endpoint to approve the Device Authorization.
 
 [source,options="wrap"]
 .Example HTTP Request
@@ -772,22 +849,26 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=refresh_token&refresh_
 
 [.api]
 [field]#access_token# [type]#[String]#::
-The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4].  See the link:/docs/v1/tech/oauth/tokens#access-token[OAuth Tokens] documentation for more information.
+The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4].
+See the link:/docs/v1/tech/oauth/tokens#access-token[OAuth Tokens] documentation for more information.
 
 [field]#expires_in# [type]#[Integer]#::
 The time in seconds the token will expire from the time the response was generated.
 
 [field]#id_token# [type]#[String]#::
-The OpenID Id Token. This token is represented as a JSON Web Token (JWT).  See the link:/docs/v1/tech/oauth/tokens#id-token[OAuth Tokens] documentation for more information.
+The OpenID Id Token.
+This token is represented as a JSON Web Token (JWT).
+See the link:/docs/v1/tech/oauth/tokens#id-token[OAuth Tokens] documentation for more information.
 +
 This field will be returned in the response when `openid` scope was requested during the initial authentication request when the refresh token was generated.
 
 [field]#token_type# [type]#[String]#::
-The token type as defined by https://tools.ietf.org/html/rfc6749#section-7.1[RFC 6749 Section 7.1]. This value will always be `Bearer`.
+The token type as defined by https://tools.ietf.org/html/rfc6749#section-7.1[RFC 6749 Section 7.1].
+This value will always be `Bearer`.
 
 [field]#userId# [type]#[String]#::
-The unique Id of the user that has been authenticated. This user Id may be used to retrieve the entire user object using the /api/user API.
-
+The unique Id of the user that has been authenticated.
+This user Id may be used to retrieve the entire user object using the /api/user API.
 
 [source,json]
 .Example JSON Response
@@ -801,13 +882,155 @@ The unique Id of the user that has been authenticated. This user Id may be used 
 }
 ----
 
+=== Client Credentials Grant Request
+
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+[NOTE.since]
+====
+This functionality has been available since version 1.26.
+====
+
+If you will be using the Client Credentials grant, you will make a request to the Token endpoint to exchange the client credentials for an access token.
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/token#
+--
+
+==== Request Headers
+
+[.api]
+[field]#Content-Type# [type]#[String]# [required]#Required#::
+This value must be set to `application/x-www-form-urlencoded`.
+
+[field]#Authorization# [type]#[String]# [required]#Required#::
+You must provide client authentication using the https://tools.ietf.org/html/rfc7617#section-2[Basic Authentication Scheme] authorization header.
++
+The header value is created by taking the `clientId` and `clientSecret` properties defined in the Entity Configuration and concatenating them together using a `:` character.
+Here is an example of these two values concatenated.
++
+[source]
+----
+463228ba-868a-462d-b86f-6096af2d70e0:salkjdsoiu32ldslnkasglhilkja892
+----
++
+This value is then Base64 encoded.
+Prepend `Basic` to denote the schema type.
+The following is an example Authorization header using the example concatenation above.
++
+[source]
+----
+Authorization: Basic NDYzMjI4YmEtODY4YS00NjJkLWI4NmYtNjA5NmFmMmQ3MGUwOnNhbGtqZHNvaXUzMmxkc2xua2FzZ2xoaWxramE4OTI=
+----
++
+The above concatenation example and resulting Authorization header are simply for demonstration.
+Your actual header value will be different.
+
+==== Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body.
+Do not send these parameters in a query string or as JSON.
+
+[.api]
+[field]#grant_type# [type]#[String]# [required]#Required#::
+The grant type to be used.
+This value must be set to `client_credentials`
+
+[field]#scope# [type]#[String]# [optional]#Optional#::
+This parameter is optional.
+This is a space delimited set of the requested scopes for this grant request.
++
+You will typically provide a scope specifying the target entity:
++
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_omitted.txt[]
+----
++
+You may provide append a comma separated list of permissions as well:
++
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_single_entity.txt[]
+----
++
+You may combine multiple entities and permissions in the same [field]#scope# parameter:
++
+[source]
+----
+include::docs/v1/tech/oauth/_client_credentials_scopes_multiple_entities.txt[]
+----
++
+include::docs/v1/tech/oauth/_client_credentials_permissions_explanation.adoc[]
+
+[source,options="wrap"]
+.Example HTTP Request
+----
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Authorization: Basic MDkyZGJkZWQtMzBhZi00MTQ5LTljNjEtYjU3OGYyYzcyZjU5OitmY1hldDlJdTJrUWk2MXlXRDlUdTRSZVoxMTNQNnlFQWtyMzJ2NldLT1E9
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+
+grant_type=client_credentials
+    &scope=target-entity%3Ae13365f1-a270-493e-bd1b-3d239d753d53%3Aread
+----
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
+
+|500
+|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
+
+|503
+|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
+|===
+
+==== Response Body
+
+[.api]
+[field]#access_token# [type]#[String]#::
+The OAuth access token as described by https://tools.ietf.org/html/rfc6749#section-1.4[RFC 6749 Section 1.4].
+See the link:/docs/v1/tech/oauth/tokens#access-token[OAuth Tokens] documentation for more information.
+
+[field]#expires_in# [type]#[Integer]#::
+The time in seconds the token will expire from the time the response was generated.
+
+[field]#scope# [type]#[String]#::
+The scope value from the request.
+
+[field]#token_type# [type]#[String]#::
+The token type.
+The value will be `Bearer`.
+
+[source,json]
+.Example JSON Response
+----
+include::docs/v1/tech/oauth/_client_credentials_example_json_response.json[]
+----
+
 == Device
+
 [NOTE.since]
 ====
 This endpoint been available since 1.11.0
 ====
 
-This is an implementation of the Device Authorization endpoint as defined by the https://tools.ietf.org/html/rfc8628#section-3.1[IETF RFC 8628 Section 3.1]. To begin the Device Authorization Grant you will make a request to the Device Authorization endpoint from the device.
+This is an implementation of the Device Authorization endpoint as defined by the https://tools.ietf.org/html/rfc8628#section-3.1[IETF RFC 8628 Section 3.1].
+To begin the Device Authorization Grant you will make a request to the Device Authorization endpoint from the device.
 
 [.endpoint]
 .URI
@@ -827,16 +1050,17 @@ Ensure you are sending these parameters as form encoded data in the request body
 
 [.api]
 [field]#client_id# [type]#[String]# [required]#Required#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 
 [field]#scope# [type]#[String]# [optional]#Optional#::
-This parameter may contain multiple scopes space separated. For example, the value of `openid offline_access` provides two scopes on the request.
+This parameter may contain multiple scopes space separated.
+For example, the value of `openid offline_access` provides two scopes on the request.
 +
 Available scopes:
 +
-    * `openid` - This scope is used to request an `id_token` be returned in the response
-    * `offline_access` - This scope is used to request a `refresh_token` be returned in the eventual <<Token>> response.
-
+* `openid` - This scope is used to request an `id_token` be returned in the response
+* `offline_access` - This scope is used to request a `refresh_token` be returned in the eventual <<Token>> response.
 
 [source]
 .Example HTTP Request
@@ -860,7 +1084,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&scope=offline_access
 |The request was successful.
 
 |400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuthError section] of the API documentation.
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -882,14 +1106,17 @@ The number of seconds the [field]#device_code# and [field]#user_code# tokens ret
 The minimum amount of time in seconds that the client should wait between polling requests to the token endpoint.
 
 [field]#user_code# [type]#[String]#::
-The end-user verification code. This value will generally be displayed on the device for the user to read and enter into an activation form.
+The end-user verification code.
+This value will generally be displayed on the device for the user to read and enter into an activation form.
 
 [field]#verification_uri# [type]#[String]#::
-The end-user verification URI on the authorization server. This value will generally be displayed on the device to instruct the user where to navigate in order to find the form where they may enter the provided [field]#user_code#.
+The end-user verification URI on the authorization server.
+This value will generally be displayed on the device to instruct the user where to navigate in order to find the form where they may enter the provided [field]#user_code#.
 
 [field]#verification_uri_complete# [type]#[String]#::
-A verification URI that includes the [field]#user_code#. This is the same value as returned in the [field]#verification_uri# with the [field]#user_code# appended as a request parameter. This can be used to build a QR code or provide a clickable link that may pre-populate a form with the [field]#user_code#.
-
+A verification URI that includes the [field]#user_code#.
+This is the same value as returned in the [field]#verification_uri# with the [field]#user_code# appended as a request parameter.
+This can be used to build a QR code or provide a clickable link that may pre-populate a form with the [field]#user_code#.
 
 [source,json]
 .Example JSON Response
@@ -905,12 +1132,15 @@ A verification URI that includes the [field]#user_code#. This is the same value 
 ----
 
 == Device Validate
+
 [NOTE.since]
 ====
 This endpoint has been available since 1.11.0
 ====
 
-This endpoint validates the end-user provided [field]#user_code# from the user-interaction of the Device Authorization Grant. If you build your own activation form you should validate the user provided code prior to beginning the Authorization grant. If you choose to redirect to the FusionAuth provided form `/oauth2/device` then it is not necessary for you to validate the [field]#user_code#.
+This endpoint validates the end-user provided [field]#user_code# from the user-interaction of the Device Authorization Grant.
+If you build your own activation form you should validate the user provided code prior to beginning the Authorization grant.
+If you choose to redirect to the FusionAuth provided form `/oauth2/device` then it is not necessary for you to validate the [field]#user_code#.
 
 [.endpoint]
 .URI
@@ -922,11 +1152,12 @@ This endpoint validates the end-user provided [field]#user_code# from the user-i
 
 [.api]
 [field]#client_id# [type]#[String]# [required]#Required#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
 
 [field]#user_code# [type]#[String]# [required]#Required#::
-The end-user verification code. This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
-
+The end-user verification code.
+This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
 
 === Response
 
@@ -939,7 +1170,7 @@ The end-user verification code. This is the code that a user entered during the 
 |The request was successful. No response body will be returned on successful validation.
 
 |400
-|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuthError section] of the API documentation.
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -955,6 +1186,7 @@ This is an implementation of the Introspect endpoint as defined by the https://t
 === Request
 
 Inspect an access token issued by this OAuth provider
+
 [.endpoint]
 .URI
 --
@@ -973,11 +1205,11 @@ Ensure you are sending these parameters as form encoded data in the request body
 
 [.api]
 [field]#client_id# [type]#[String]# [required]#Required#::
-The unique client identifier. The client Id is the Id of the FusionAuth Application for which this token was generated.
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application for which this token was generated.
 
 [field]#token# [type]#[String]# [required]#Required#::
 The access token returned by this OAuth provider as the result of a successful authentication.
-
 
 [source,options="wrap"]
 .Example HTTP Request
@@ -1014,12 +1246,12 @@ covered in the link:#oautherror[OAuth Error section] of the API documentation.
 |The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
 |===
 
-
 ==== Response Body
 
 [.api]
 [field]#active# [type]#[String]#::
-When this value is `true` the token is valid and additional claims will be provided in the response body. When this value is
+When this value is `true` the token is valid and additional claims will be provided in the response body.
+When this value is
 `false` no claims will be provided in the response body.
 
 [field]#applicationId# [type]#[UUID]#::
@@ -1029,28 +1261,29 @@ The unique Id of the Application for which the User has been authenticated.
 The `client_id` that was used to request the access token.
 
 [field]#authenticationType# [type]#[String]#::
-The method used to authenticate the User which resulted in this JWT being generated. The possible values are:
+The method used to authenticate the User which resulted in this JWT being generated.
+The possible values are:
 +
-    * `APPLE` - The User was authenticated using Apple. [since]#Available since 1.17.0#
-    * `APPLICATION_TOKEN` - The User was authenticated using an link:/docs/v1/tech/tutorials/application-authentication-tokens/[Application Authentication Token].
-    * `FACEBOOK` - The User was authenticated using Facebook. &nbsp; [since]#Available since 1.1.0#
-    * `FEDERATED_JWT` - The User was authenticated using a JWT from an external Identity Provider.
-    * `GENERIC_CONNECTOR` - The user was authenticated using a generic connector.  &nbsp; [since]#Available since 1.18.0#
-    * `GOOGLE` - The User was authenticated using Google. [since]#Available since 1.1.0#
-    * `HYPR` - The User was authenticated using HYPR provider. [since]#Available since 1.12.0#
-    * `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
-    * `LDAP_CONNECTOR` -  The user was authenticated using an LDAP connector.  &nbsp; [since]#Available since 1.18.0#
-    * `LINKEDIN` -  The user was authenticated using LinkedIn.  &nbsp; [since]#Available since 1.23.0#
-    * `ONE_TIME_PASSWORD` The User was authenticated using a one time password. &nbsp; [since]#Available since 1.5.0#
-    * `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. [since]#Available since 1.1.0#
-    * `PASSWORD` - The User was authenticated using a loginId and password combination.
-    * `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; [since]#Available since 1.5.0#
-    * `PING` - The user was authenticated using the PING API w/ a valid JWT.
-    * `REGISTRATION` - The user was created using the Registration API.  &nbsp; [since]#Available since 1.16.0#
-    * `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
-    * `SAMLv2` - The User was authenticated using an external SAMLv2 provider. [since]#Available since 1.6.0#
-    * `TWITTER` - The User was authenticated using Twitter. [since]#Available since 1.1.0#
-    * `USER_CREATE` - The user was created using the User API. &nbsp; [since]#Available since 1.16.0#
+* `APPLE` - The User was authenticated using Apple. [since]#Available since 1.17.0#
+* `APPLICATION_TOKEN` - The User was authenticated using an link:/docs/v1/tech/tutorials/application-authentication-tokens/[Application Authentication Token].
+* `FACEBOOK` - The User was authenticated using Facebook. &nbsp; [since]#Available since 1.1.0#
+* `FEDERATED_JWT` - The User was authenticated using a JWT from an external Identity Provider.
+* `GENERIC_CONNECTOR` - The user was authenticated using a generic connector.  &nbsp; [since]#Available since 1.18.0#
+* `GOOGLE` - The User was authenticated using Google. [since]#Available since 1.1.0#
+* `HYPR` - The User was authenticated using HYPR provider. [since]#Available since 1.12.0#
+* `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
+* `LDAP_CONNECTOR` - The user was authenticated using an LDAP connector.  &nbsp; [since]#Available since 1.18.0#
+* `LINKEDIN` - The user was authenticated using LinkedIn.  &nbsp; [since]#Available since 1.23.0#
+* `ONE_TIME_PASSWORD` The User was authenticated using a one time password. &nbsp; [since]#Available since 1.5.0#
+* `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. [since]#Available since 1.1.0#
+* `PASSWORD` - The User was authenticated using a loginId and password combination.
+* `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; [since]#Available since 1.5.0#
+* `PING` - The user was authenticated using the PING API w/ a valid JWT.
+* `REGISTRATION` - The user was created using the Registration API.  &nbsp; [since]#Available since 1.16.0#
+* `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
+* `SAMLv2` - The User was authenticated using an external SAMLv2 provider. [since]#Available since 1.6.0#
+* `TWITTER` - The User was authenticated using Twitter. [since]#Available since 1.1.0#
+* `USER_CREATE` - The user was created using the User API. &nbsp; [since]#Available since 1.16.0#
 
 
 [field]#email# [type]#[String]#::
@@ -1075,8 +1308,8 @@ The username of the User whose claims are represented by this JWT.
 The roles assigned to the User in the authenticated Application.
 
 [field]#sub# [type]#[UUID]#::
-The subject of the access token. This value is equal to the User's unique Id in FusionAuth.
-
+The subject of the access token.
+This value is equal to the User's unique Id in FusionAuth.
 
 [source,json]
 .Example JSON Response for a valid token
@@ -1106,7 +1339,6 @@ The subject of the access token. This value is equal to the User's unique Id in 
 }
 ----
 
-
 == Userinfo
 
 This is an implementation of the OpenId Connect Userinfo endpoint as defined by the http://openid.net/specs/openid-connect-core-1_0.html#UserInfo[OpenId Connect Section 5.3].
@@ -1115,6 +1347,7 @@ This endpoint may be called using the `GET` or the `POST` HTTP method.
 === Request
 
 Returns the Claims about the authenticated End-User.
+
 [.endpoint]
 .URI
 --
@@ -1122,6 +1355,7 @@ Returns the Claims about the authenticated End-User.
 --
 
 Returns the Claims about the authenticated End-User.
+
 [.endpoint]
 .URI
 --
@@ -1135,11 +1369,9 @@ Returns the Claims about the authenticated End-User.
 The access token issued by FusionAuth as a result of completing one of the supported authorization grants.
 +
 Example header:
+
 [quote]
 `Authorization: Bearer <access_token>`
-
-
-
 
 === Response
 
@@ -1172,7 +1404,8 @@ covered in the link:#oautherror[OAuth Error section] of the API documentation.
 The unique Id of the Application for which the User has been authenticated.
 
 [field]#birthdate# [type]#[String]# [since]#Available since 1.1.0#::
-The birthDate of the User if available. Format will be in `YYYY-MM-DD` as defined by the OpenID Connect core specification.
+The birthDate of the User if available.
+Format will be in `YYYY-MM-DD` as defined by the OpenID Connect core specification.
 
 [field]#email# [type]#[String]#::
 The email address of the User.
@@ -1202,8 +1435,8 @@ A URL to a picture of the User if available.
 The roles assigned to the User in the authenticated Application.
 
 [field]#sub# [type]#[UUID]#::
-The subject of the access token. This value is equal to the User's unique Id in FusionAuth.
-
+The subject of the access token.
+This value is equal to the User's unique Id in FusionAuth.
 
 [source,json]
 .Example JSON Response
@@ -1233,13 +1466,23 @@ Available Since Version 1.4.0
 
 === Request
 
-Returns public keys generated by FusionAuth, used to cryptographically verify JWTs using the JSON Web Key format. You may also use the link:/docs/v1/tech/apis/jwt#retrieve-public-keys[JWT Public Key] API to retrieve these keys in PEM format.
+Returns public keys generated by FusionAuth, used to cryptographically verify JWTs using the JSON Web Key format.
+You may also use the link:/docs/v1/tech/apis/jwt#retrieve-public-keys[JWT Public Key] API to retrieve these keys in PEM format.
 
 [.endpoint]
 .URI
 --
 [method]#GET# [uri]#/.well-known/jwks.json#
 --
+
+[NOTE]
+====
+You must add an asymmetric key to FusionAuth to have keys at this endpoint.
+A default FusionAuth installation has no public/private keypairs.
+
+You may add keys using the admin UI by navigating to [breadcrumb]#Settings -> Key Master# and generating or importing them.
+You may also use the link:/docs/v1/tech/apis/keys/[Keys API] to generate or import keys.
+====
 
 === Response
 
@@ -1258,6 +1501,7 @@ The OpenID metadata describing the configuration as defined by https://openid.ne
 === Request
 
 Returns the well known OpenID Configuration JSON document
+
 [.endpoint]
 .URI
 --
@@ -1268,8 +1512,8 @@ Returns the well known OpenID Configuration JSON document
 
 [.api]
 [field]#tenantId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.8.0#::
-The tenant identifier. If provided then a specific issuer will be returned.
-
+The tenant identifier.
+If provided then a specific issuer will be returned.
 
 === Response
 
@@ -1282,10 +1526,13 @@ include::docs/src/json/openid/configuration/response.json[]
 ----
 
 == OAuthError
+
 Errors are either returned in a JSON response body, or as redirect parameters depending on expected response type.
 
 === JSON Response
-When an error is returned from an OAuth endpoint as a JSON body the following structure can be expected in the response. The `change_password_id` field will only be present on the response if a password change is required.
+
+When an error is returned from an OAuth endpoint as a JSON body the following structure can be expected in the response.
+The `change_password_id` field will only be present on the response if a password change is required.
 
 [source,json]
 .Example JSON Response
@@ -1299,6 +1546,7 @@ When an error is returned from an OAuth endpoint as a JSON body the following st
 ----
 
 === Redirect Parameters
+
 When an error is returned from an OAuth endpoint as a redirect, the errors are put on the redirect as query parameters.
 
 [source]
@@ -1314,84 +1562,93 @@ Location: https://piedpiper.com/callback?
 
 === Error Fields
 
-Regardless of the way the error is returned to your, the field definitions are the same. Each possible value [field]#error# and [field]#error_reason# is documented below.
+Regardless of the way the error is returned to your, the field definitions are the same.
+Each possible value [field]#error# and [field]#error_reason# is documented below.
 
 ==== Error Parameters
 
 [.api]
 [field]#error# [type]#[String]#::
-The OAuth error response type. In most cases these values are defined or suggested by an RFC or other specification.
+The OAuth error response type.
+In most cases these values are defined or suggested by an RFC or other specification.
 +
 The possible values are:
 +
-    * `authorization_pending`
-    * `change_password_required`
-    * `expired_token`
-    * `invalid_grant`
-    * `invalid_request`
-    * `invalid_scope`
-    * `invalid_token`
-    * `server_error`
-    * `two_factor_required`
-    * `unauthorized_client`
-    * `unsupported_grant_type`
-    * `unsupported_response_type`
+* `authorization_pending`
+* `change_password_required`
+* `expired_token`
+* `invalid_grant`
+* `invalid_request`
+* `invalid_scope`
+* `invalid_token`
+* `server_error`
+* `two_factor_required`
+* `unauthorized_client`
+* `unsupported_grant_type`
+* `unsupported_response_type`
 
 [field]#error_description# [type]#[String]#::
-The human-readable OAuth error description. This description should describe the error condition and it may contain a parameter value that caused the error.
+The human-readable OAuth error description.
+This description should describe the error condition and it may contain a parameter value that caused the error.
 
 [field]#error_reason# [type]#[String]#::
-The OAuth error reason. These reason codes are defined by FusionAuth to provide you a specific reason code so that you may identify the specific reason the request failed. The defined [field]#error# codes as defined by OAuth2 or OpenID Connect only provide general indications such as an invalid request that may be caused by more than one parameter. Each of the values returned in this field will represent a specific error.
+The OAuth error reason.
+These reason codes are defined by FusionAuth to provide you a specific reason code so that you may identify the specific reason the request failed.
+The defined [field]#error# codes as defined by OAuth2 or OpenID Connect only provide general indications such as an invalid request that may be caused by more than one parameter.
+Each of the values returned in this field will represent a specific error.
 +
 The possible values are:
 +
-    * `access_token_expired`
-    * `access_token_failed_processing`
-    * `access_token_malformed`
-    * `access_token_unavailable_for_processing`
-    * `auth_code_not_found`
-    * `change_password_administrative`
-    * `change_password_breached`
-    * `change_password_expired`
-    * `change_password_validation`
-    * `client_authentication_missing`
-    * `client_id_mismatch`
-    * `grant_type_disabled`
-    * `invalid_additional_client_id`
-    * `invalid_client_authentication_scheme`
-    * `invalid_client_authentication`
-    * `invalid_client_id`
-    * `invalid_device_code`
-    * `invalid_grant_type`
-    * `invalid_id_token_hint`
-    * `invalid_origin`
-    * `invalid_pkce_code_challenge_method`
-    * `invalid_pkce_code_challenge`
-    * `invalid_pkce_code_verifier`
-    * `invalid_post_logout_redirect_uri`
-    * `invalid_redirect_uri`
-    * `invalid_response_mode`
-    * `invalid_response_type`
-    * `invalid_user_code`
-    * `invalid_user_credentials`
-    * `login_prevented`
-    * `missing_client_id`
-    * `missing_code`
-    * `missing_device_code`
-    * `missing_grant_type`
-    * `missing_redirect_uri`
-    * `missing_refresh_token`
-    * `missing_response_type`
-    * `missing_token`
-    * `missing_user_code`
-    * `missing_verification_uri`
-    * `refresh_token_not_found`
-    * `unknown`
-    * `user_code_expired`
-    * `user_expired`
-    * `user_locked`
-    * `user_not_found`
+* `access_token_expired`
+* `access_token_failed_processing`
+* `access_token_malformed`
+* `access_token_unavailable_for_processing`
+* `auth_code_not_found`
+* `change_password_administrative`
+* `change_password_breached`
+* `change_password_expired`
+* `change_password_validation`
+* `client_authentication_missing`
+* `client_id_mismatch`
+* `grant_type_disabled`
+* `invalid_additional_client_id`
+* `invalid_client_authentication_scheme`
+* `invalid_client_authentication`
+* `invalid_client_id`
+* `invalid_device_code`
+* `invalid_grant_type`
+* `invalid_id_token_hint`
+* `invalid_origin`
+* `invalid_pkce_code_challenge_method`
+* `invalid_pkce_code_challenge`
+* `invalid_pkce_code_verifier`
+* `invalid_post_logout_redirect_uri`
+* `invalid_redirect_uri`
+* `invalid_response_mode`
+* `invalid_response_type`
+* `invalid_user_code`
+* `invalid_user_credentials`
+* `login_prevented`
+* `missing_client_id`
+* `missing_code`
+* `missing_code_challenge`,
+* `missing_code_verifier`,
+* `missing_device_code`
+* `missing_grant_type`
+* `missing_redirect_uri`
+* `missing_refresh_token`
+* `missing_response_type`
+* `missing_token`
+* `missing_user_code`
+* `missing_verification_uri`
+* `refresh_token_not_found`
+* `unknown`
+* `user_code_expired`
+* `user_expired`
+* `user_locked`
+* `user_not_found`
 
 [field]#state# [type]#[String]#::
-The state that was provided on the Authorization request. This parameter is only returned during an HTTP redirect if it was provided on the initial request.
+The state that was provided on the Authorization request.
+This parameter is only returned during an HTTP redirect if it was provided on the initial request.
 
