@@ -3,7 +3,7 @@ layout: blog-post
 title: CurrentDesk saved thousands of dollars by choosing FusionAuth
 description: CurrentDesk, a financial technology provider, choose FusionAuth for affordability, flexibility and developer friendliness.
 author: Dan Moore
-image: blogs/seegno-fusionauth/seegno-manages-thousands-of-tenants-with-fusionauth-and-kubernetes-header-image.png
+image: blogs/currentdesk-fusionauth/currentdesk-saved-thousands-of-dollars-by-choosing-fusionauth-header-image.png
 category: blog
 tags: topic-community-story 
 excerpt_separator: "<!--more-->"
