@@ -46,7 +46,7 @@ Internal applications also had their own authorization tools, though there was n
 
 **Dan:** Why choose FusionAuth over the alternatives?
 
-**Sergey and Ilya:** First we experimented with other solutions by trying to build an authorization system. But it didn’t go beyond internal testing: the API was poorly documented, updating it was an issue, and the admin panel was not user-friendly. We also experienced a lack of support and community resources.
+**Sergey and Ilya:** First we experimented with other solutions by trying to build an authorization system. But it didn't go beyond internal testing: the API was poorly documented, updating it was an issue, and the admin panel was not user-friendly. We also experienced a lack of support and community resources.
 
 Ultimately, we switched to FusionAuth for the following reasons:
 
@@ -60,7 +60,7 @@ Ultimately, we switched to FusionAuth for the following reasons:
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
-**Sergey and Ilya:** It’s not easy to estimate, but for us the main advantage of FusionAuth is that we outsource authorization to a separate service with a clear structure, reasonable update policies and a good level of support.
+**Sergey and Ilya:** It's not easy to estimate, but for us the main advantage of FusionAuth is that we outsource authorization to a separate service with a clear structure, reasonable update policies and a good level of support.
 
 **Dan:** How do you run FusionAuth (Kubernetes, standalone tomcat server, behind a proxy, etc)?
 
