@@ -36,7 +36,7 @@ FusionAuth.DirectDownloads.prototype = {
 
   render: function() {
     var archived = false;
-    var cutOverVersion = "1.13.2";
+    var cutOverVersion = "1.22.2";
     for (var i = this.versions.length - 1; i > 0; i--) {
       var version = this.versions[i];
 
