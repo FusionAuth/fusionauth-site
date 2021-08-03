@@ -1,26 +1,26 @@
 ---
 layout: doc
-title: Rotate Keys
+title: Key Rotation
 description: Learn how to rotate keys
 ---
 
-== Key Rotation
+Keys are used to sign or access parts of your infrastructure. In FusionAuth, there are two types of keys, API keys and JWT signing keys.
 
-Keys are used to sign or access parts of your infrastructure. In FusionAuth, there are two main kinds of keys, API keys and JWT signing keys.
+Rotating keys regularly is part of a defense-in-depth strategy. Rotation ensures that even if a key is compromised, the length of time it is useful to attackers is limited. In addition, if you regularly rotate keys, you will have built automated systems which will allow you to rotate keys at will. You might do so if you suspect an attack, at regular intervals as prescribed by best practices, or when an employee departs.
 
-Rotating keys regularly is part of a defense-in-depth strategy. Rotation ensures that even if a key is compromised, the length of time it is useful to attackers is limited. In addition, if you regularly rotate keys, you will have built automated systems which will allow you to rotate keys at will. You might do so if you suspect an attack or if an employee departs.
+== Types of Keys to Rotate
 
-=== Types of Keys to Rotate
+As mentioned above, in FusionAuth, there are two kinds of keys: API keys and JWT signing keys.
 
-As mentioned above, in FusionAuth, there are two main kinds of keys: API keys and JWT signing keys.
-
-API keys are used to manage FusionAuth. They are arbitrary strings that can be tied to a tenant. They are managed using the link:/docs/v1/tech/apis/api-keys/[API Keys API].
+API keys manage FusionAuth. They are arbitrary strings which can be tied to a tenant. They are managed using the link:/docs/v1/tech/apis/api-keys/[API Keys API].
 
 JWT signing keys are used to sign JWTs. These are cryptographic keys stored in FusionAuth. They are managed using the link:/docs/v1/tech/apis/keys/[Keys API].
 
-=== Examples of Key Rotation
+== Examples of Key Rotation
 
-The different types of keys are rotate differently. 
+The different types of keys are rotated differently.
+
+=== API Key Rotation
 
 Suppose you are using API key `A` to manage FusionAuth. To rotate this API key, do the following:
 
@@ -29,6 +29,8 @@ Suppose you are using API key `A` to manage FusionAuth. To rotate this API key, 
 * Update all applications, scripts and processes which use `A` to use `B`.
 * Remove key `A`.
 * Store off information for key `B`, including when it was brought into service.
+
+=== JWT Signing Key Rotation
 
 In contrast, suppose you are rotating a JWT signing key, `JS1`. To rotate such a key, follow these steps:
 
@@ -53,7 +55,7 @@ To handle this scenario:
 
 The major difference in this scenario is the need to update other systems for the new key.
 
-=== Challenges of Key Rotation
+== Challenges of Key Rotation
 
 There are a couple of challenges when rotating keys in FusionAuth.
 
@@ -71,9 +73,11 @@ Another challenge is determining when a key should be rotated. With FusionAuth, 
 
 You can either store this information in a FusionAuth `data` field. For the latter option, store the following information in JSON:
 
-```json
-{"apikeys" : 
-  [ 
+[source,json]
+.Storing key rotation data
+----
+{
+  "apikeys" : [ 
     { 
       "id" : "41e6deca-0e39-46e7-804b-68b0bc94a761",
       "inserted" : 1628022201033,
@@ -88,17 +92,17 @@ You can either store this information in a FusionAuth `data` field. For the latt
     }
   ]
 }
-```
+----
 
-Whenever a key rotation runs, it:
+Whenever a key rotation occurs, the rotating program:
 
-* Retrieves this data structure
-* Finds expired keys
-* Creates copies of them
-* Distribute them or notifies clients that rotation is imminent
-* Mark them for deletion. 
+* Retrieves the entire data structure
+* Walks it and find expired keys
+* Creates copies of the key or a new key, as needed
+* Distributes the keys or somehow notifies clients that rotation is imminent
+* Mark them for deletion
 
-You could also run a separate script to remove any keys that were ready for deletion (that had outlived their grace period).
+Run a separate script to remove any keys that were ready for deletion, that is, those which outlived their grace period.
 
 Rather than use a FusionAuth `data` field, you could also use a table in a relational database to store this metadata.
 
