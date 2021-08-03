@@ -2,7 +2,7 @@
 layout: blog-post
 title: Step up authentication with JavaScript and FusionAuth
 description: What is step up authentication and how can you use it to secure your app?
-author: Dan Moore
+author: TODO
 image: blogs/currentdesk-fusionauth/currentdesk-saved-thousands-of-dollars-by-choosing-fusionauth-header-image.png
 category: blog
 tags: client-javascript
