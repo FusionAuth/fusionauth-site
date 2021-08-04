@@ -39,25 +39,25 @@ Now that the OAuth grants have been briefly covered, let's discuss step-up authe
 
 One of the best defenses we have against attacks against authentication is adding multiple layers to our authentication process. Multi-factor authentication (MFA) is a commonly used process. With MFA, an application requires more than one factor to prove a user is who they say they are. These additional factors could be a code, biometric proof, or other means. For more about MFA, you can check out our [MFA expert advice article](/learn/expert-advice/authentication/multi-factor-authentication/).
 
-Step-up authentication is another option that can add defense in depth. Step-up is a good compromise between users being able to quickly authenticate and limiting access to sensitive data. It uses a set of dynamic rules to determine when a user should need further authentication to access private resources. 
+Step-up authentication is another option that can add defense in depth. With step-up, when a user undertakes a privileged action, an additional authentication factor is required. Step-up is a good compromise between users being able to quickly authenticate and limiting access to sensitive data. It uses a set of dynamic rules to determine when a user should need further authentication to access private resources. 
 
 In many cases, users want to access data that is less sensitive regularly. To continuously authenticate using multiple factors would be a roadblock for them.
 
 When implemented correctly, step-up adds extra security to make it more difficult for attackers to access more privileged functionality. The tricky part is when step-up isn't implemented the right way. This can lead to adding friction to the app for users or potentially giving away more access than intended. Step-up is a practical choice for apps for which always requiring MFA for access doesn't make sense or for those that need more security. 
 
-For example, if someone logs into their bank app, they can check their balance by logging in. When they want to do more than check that balance, the app can require additional authentication. This would help prevent an unauthorized privileged action, such as transferring money, from happening.
+For example, if someone logs in to their bank app, they can check their balance by logging in. When they want to do more than check that balance, the app can require additional authentication. This would help prevent an unauthorized privileged action, such as transferring money, from happening.
 
 This pattern lets users easily see the info they want. At the same time, it provides additional protection against attackers harming users by sending money to a different account or changing sensitive account information like a mailing address. Having this extra layer of security in place can save users' from account fraud. It doesn't have to take long to implement. 
 
 There are plenty of tools available to add OAuth authentication to your app. For this tutorial we'll be using FusionAuth to handle our Authorization Code and step-up implementations.
 
-## Setting Up the Authentication Project
+## Getting started
 
 You can start by [downloading the self-hosted version of FusionAuth](/download/). You will need a license key to take fully follow along with this tutorial. An emailed code, the additional factor of authentication we'll be using to add step-up auth in just a bit requires a valid license. However, if you only want to use Google authenticator MFA (TOTP), you won't need a license. 
 
 Since the purpose of this article is implementing step-up, we'll do a brief overview of how the Authorization Code grant implementation works. For more information check out the [Modern Guide to OAuth](fusionauth.io/learn/expert-advice/oauth/modern-guide-to-oauth/).
 
-### Authorization Code Overview
+### Authorization Code overview
 
 As mentioned earlier, the Authorization Code grant is the most secure way to implement OAuth. Here's pseudocode outlining the steps that are taken in a normal authorization code flow.
 
@@ -67,17 +67,15 @@ As mentioned earlier, the Authorization Code grant is the most secure way to imp
 * This authorization code is then exchanged for an access token through a token endpoint. For FusionAuth, this endpoint is `/oauth2/token`.
 * Lastly, the token is verified by the application by checking the user information stored in the token. Based on the values in this token, the user either receives or is denied access to the app.
 
-## Set up
+## The application
 
-The sample application is in this [GitHub repo](https://github.com/flippedcoder/blog-examples) TODO update repo TODO in the `step-up-auth` directory. 
+This application is based on the app created in a [React and OAuth tutorial](/blog/2020/03/10/securely-implement-oauth-in-react/). Please review that tutorial if you want a deeper walkthrough of the Authorization Code grant implementation.
 
-It's based on the app created in a [React and OAuth tutorial](/blog/2020/03/10/securely-implement-oauth-in-react/). Please review that tutorial if you want a deeper walkthrough of the Authorization Code grant implementation.
+Similarly to the previous tutorial, you'll need node installed if you want to run thorugh this tutorial. Since this post builds on the previous tutorial, let's set up the original project first.
 
-Similarly to the previous tutorial, you'll need node installed if you want to run thorugh this tutorial. Since this post builds on the previous tutorial, set up the original project first.
+### Set up FusionAuth
 
-#### Set up FusionAuth
-
-If you don't already have FusionAuth installed, I recommend the Docker Compose option for the quickest setup:
+If you don't already have FusionAuth installed, the Docker Compose option is the quickest setup:
 
 ```zsh
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
@@ -85,15 +83,15 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-(Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options.)
+Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options.
 
-Once FusionAuth is running (by default at http://localhost:9011), create a new Application. Do so by logging into the administrative user interface and then navigating to "Applications". The only configurations you need to change are "Authorized redirect URLs" and "Logout URL" on the "OAuth" tab. 
+Once FusionAuth is running (by default at \http://localhost:9011), create a new Application. Do so by logging into the administrative user interface and then navigating to "Applications". The only configurations you need to change are "Authorized redirect URLs" and "Logout URL" on the "OAuth" tab. 
 
 These are basically links used by FusionAuth during the only two times we redirect off our app entirely: login and logout. After a user logs in, FusionAuth will redirect them back to our app on one of the "Authorized Redirect URLs". After a user logs out, FusionAuth will redirect them to the "Logout URL".
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-edit-application.png" class="img-fluid" figure=false alt="FusionAuth application edit page" %} TODO
 
-Enter `http://localhost:9000/oauth-callback` for the "Authorized Redirect URL" (a point on our Express server) and `http://localhost:8080` for the "Logout URL" (the only endpoint on our single page client). Click the blue "Save" button in the top-right to finish the configuration.
+Enter `http://localhost:9000/oauth-callback` for the "Authorized Redirect URL" (a endpoint on our Express server) and `http://localhost:8080` for the "Logout URL" (the only endpoint on our single page client). Click the blue "Save" button in the top-right to finish the configuration.
 
 A login feature isn't very useful with zero users. It's possible to register users from your app or using FusionAuth's self-service registration feature, but we'll manually add a user for this example. Navigate to "Users". You should see your own account; it's already registered to FusionAuth, which is why you can use it to log into the admin panel.
 
@@ -101,27 +99,23 @@ A login feature isn't very useful with zero users. It's possible to register use
 
 Select "Manage" and go to the "Registrations" tab. Click on "Add Registration", pick your new application, and then `Save` to register yourself.
 
-An alternative you can use instead of clicking around all of this is to use this Kickstart file (which initializes an empty FusionAuth instance to known state):
+The initial FusionAuth configuration is now complete. Leave this tab open, though; we'll be copy/pasting some key values out of it in a minute.
 
-TODO build and maybe include?
+### Run the application without step-up
 
-For more on using Kickstart to set up FusionAuth instance state, review the Kickstart guide.
+The easiest way to do this is to clone [this project](https://github.com/FusionAuth/fusionauth-example-react). Change your directory to `client` and run `npm install`. Change your directory to `server` and run `npm install`.
 
-FusionAuth configuration is now complete. Leave this tab open, though; we'll be copy/pasting some key values out of it in a minute.
+Update the top-level `config.js` to share constants across both the client and server apps. Storing configuration this way saves us from a lot of pain when changing things.
 
-### Set up the application without step-up
+The OAuth and FusionAuth configuration below will not match your application. I copied it out of my FusionAuth admin panel. The best place to find your values is this `View` button in the Applications page:
 
-The easiest way to do this is to clone this project (TODO need to create a copy of the react project as it exists TODO) 
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-view-application.png" class="img-fluid" figure=false %} TODO
 
-Change your directory to `client` and run `npm install`.
-
-Change your directory to `server` and run `npm install`.
-
-Update the top-level `config.js` to share constants across both the client and server apps:
+The file should look similar to this, but again with your own `clientID` and other information.
 
 ```js
 module.exports = {
-  // OAuth info (copied from the FusionAuth application config)
+  // OAuth info (copied from the FusionAuth application config above)
   clientID: '85a03867-dccf-4882-adde-1a79aeec50df',
   clientSecret: 'JNlTw3c9B5NrVhF-cz3m0fp_YiBg-70hcDoiQ2Ot30I',
   redirectURI: 'http://localhost:9000/oauth-callback',
@@ -137,17 +131,9 @@ module.exports = {
 };
 ```
 
-Storing configuration this way saves us from a lot of pain when changing things.
-
-The OAuth and FusionAuth configuration above will not match your application. I copied it out of my FusionAuth admin panel. The best place to find your values is this `View` button in the Applications page:
-
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-view-application.png" class="img-fluid" figure=false %}
-
-(Also, if you do want to copy/paste everything, just [clone the GitHub repo](https://github.com/FusionAuth/fusionauth-example-react-stepup-base) with everything already in it. You'll still have to change this config file, though. No way around that).
-
 One thing we don't cover here is creating an API key in FusionAuth and copying it over to our `config.js` file. This process is simple and you can read our [API Authentication](/docs/v1/tech/apis/authentication) documentation to learn more.
 
-#### Start up the application without step-up
+### Start up the application without step-up
 
 Open up two more terminal windows. Change to the `client` directory in one and the `server` directory in the other. Run:
 
@@ -157,14 +143,36 @@ npm start
 
 in each one. You should be able to open an incognito browser window, visit `http://localhost:8080` and log in to your application with the user you created when you set up FusionAuth. Hurrah! Now that the original code works, let's discuss the changes you will make to enable step-up auth.
 
-### Step-up application overview
+## Enabling step-up
 
-Let's walk through the components of this application. If you want to just get the updated application running, download the [GitHub repo](https://github.com/flippedcoder/blog-examples) TODO update repo TODO. Otherwise, follow along below.
+### FusionAuth configuration changes
+
+Return to the FusionAuth administrative user interface. 
+
+You'll need to enable MFA, since the additional factor is what enables the user to step up. For this tutorial you'll use email MFA. Note that this requires a paid license but you can get a [two week free trial](/pricing/) of Developer edition. If you don't want to get a license, you can use the community edition with Google authenticator as the additional factor.
+
+You'll need to do the following:
+
+* Enter the license into the Reactor page (optional). [Instructions are here](/docs/v1/tech/reactor/).
+* Enable the MFA methods of your choice in your tenant.
+* If using email MFA, ensure that your tenant's email delivery settings are configured correctly. If you don't want to run a mail server, you can use [mailcatcher](https://mailcatcher.me/).
+* Turn on MFA for your user.
+
+Here is [a detailed guide to setting up Email MFA](/docs/v1/tech/account-management/two-factor-email/). 
+
+If you are using Google authenticator with the community edition, you'll need to enable MFA using the API. The [MFA guide has some sample curl scripts](/docs/v1/tech/guides/multi-factor-authentication/#enabling-mfa-on-a-user) to help you do so.
+
+An alternative you can use instead of clicking around all of this is to use this Kickstart file (which initializes an empty FusionAuth instance to a known state):
+
+TODO build and maybe include?
+
+For more on using Kickstart to set up FusionAuth instance state, review the [Kickstart guide](/docs/v1/tech/installation-guide/kickstart/).
+
+### Overview of the new application
+
+Let's walk through the components of this application. If you want to just get the updated application running, download the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-javascript-stepup). Otherwise, follow along below.
 
 In the `client` directory, you have a front-end React app. It's a very basic layout that just shows the user some data after they log in.
-
-TODO IMAGE
-{% include _image.liquid src="/assets/img/blogs/step-up-auth/0_react-app-w-login.png" alt="The client-side app after logging in." class="img-fluid" figure=false %}
 
 The server-side is where all of the heavy-lifting of the implementation lies. In the `server` directory, you have a little Express app with several routes that handle different parts of the OAuth process. There are routes to handle logging in, logging out, reading user data, and writing user data. This is where we start to use the FusionAuth endpoints.
 
@@ -180,7 +188,6 @@ We'll add another route to the server-side code. This will handle our step-up fl
 
 First, we need to start the process with one of FusionAuth's endpoints in a new file in the `server/routes` directory called `step-up-start.js`.
 
-TODO can we include from markdown? TODO
 ```javascript
 const express = require("express");
 const router = express.Router();
@@ -245,7 +252,7 @@ module.exports = router;
 
 This code covers a lot, so let's break it down. We're checking to see if the user is already logged in. If not, then they won't even have access to request permission for our advanced functionality. Then we call the `two-factor/start` endpoint. This is where we pass in the parameters needed by FusionAuth in the `form` to start the step-up request.
 
-The response will look something like this.
+The response will look something like this:
 
 ```json
 {
@@ -268,7 +275,7 @@ Although the `code` here is generated by FusionAuth, you do have the option to s
 
 Before we jump to the front-end though, let's finish the needed changes on the back-end. Make another file called `step-up-fin.js`. This will handle the rest of the step-up authentication after a user has entered their code. After we have that, we need to verify the correct code was provided. TODO we vs you ? TODO
 
-Here are the contents of `step-up-fin.js`.
+Here are the contents of `step-up-fin.js`:
 
 ```javascript
 const express = require("express");
