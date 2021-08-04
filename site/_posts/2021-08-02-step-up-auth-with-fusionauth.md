@@ -471,7 +471,9 @@ You might hear step-up authentication and MFA referred to interchangeably, but t
 
 Having step-up authentication in place helps protect users even if someone's credentials are stolen. Since it requires additional authentication, unless the attacker had control of the additional factors, they wouldn't be able to perform privileged actions like transfering money or getting credit card information. Step-up authentication allows you to add another layer of protection to such sensitive actions.
 
-The functionality that requires this extra authentication is based on different conditions that can change dynamically depending on a user's roles and permissions. Or, you could build a preset list of actions that need the additional step-up. For this tutorial, only one action was protected, but you could protect others. In addition, you should code the server side API to check for successful step-up auth as well. You can do this by setting a value on the user's session in the `step-up-fin` route TODO or how else?
+The functionality that requires this extra authentication is based on different conditions that can change dynamically depending on a user's roles and permissions. Or, you could build a preset list of actions that need the additional step-up.
+
+Additionally, this tutorial simplified things a bit. For example, only one action was protected, but in a real application you would protect more than one route. In addition, you should code the server side API to check for successful step-up auth as well. You can do this by setting a value on the user's session in the `step-up-fin` route and then having the "send a singing telegram" endpoint check that value to ensure that the step-up auth has occurred.
 
 One of the biggest benefits of using step-up auth is that it makes the user experience better. Although users will have to set up MFA, which can lead to some grumbling, they won't have to go through the MFA process as often. And you'll still keep the level of security you wanted around privileged functionality.
 
