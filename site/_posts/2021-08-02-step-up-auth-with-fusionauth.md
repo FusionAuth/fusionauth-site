@@ -2,7 +2,7 @@
 layout: blog-post
 title: Step up authentication with JavaScript and FusionAuth
 description: What is step up authentication and how can you use it to secure your app?
-author: TODO
+author: Milecia McGregor
 image: blogs/currentdesk-fusionauth/currentdesk-saved-thousands-of-dollars-by-choosing-fusionauth-header-image.png
 category: blog
 tags: client-javascript
@@ -11,9 +11,7 @@ excerpt_separator: "<!--more-->"
 
 Broken authentication is the second most prevalent security risk for web applications according to the [OWASP Top 10](https://owasp.org/www-project-top-ten/). When it isn't implemented correctly, it leaves your app vulnerable to attacks that could leak highly sensitive information, like a user's banking information.
 
-
 Since JavaScript is widely used on both the front-end and back-end, it's important to know how we handle security risks and some of the packages that are commonly used.
-
 
 On the front-end, we do things like form validation and make sure we aren't storing any credentials or secret tokens in the code. On the back-end, we check for packages that have known vulnerabilities, do additional data validation, and handle user roles. Some packages that are widely used for security on the front-end and back-end include: [validatorjs](https://www.npmjs.com/package/validatorjs), [retirejs](https://retirejs.github.io/retire.js/), [helmetjs](https://helmetjs.github.io/), and [csrf](https://www.npmjs.com/package/csurf).
 
@@ -39,7 +37,7 @@ Now that the OAuth grants have been briefly covered, let's discuss step-up authe
 
 ## Background on step-up authentication
 
-One of the best defenses we have against attacks against authentication is adding multiple layers to our authentication process. Multi-factor authentication (MFA) is a commonly used process. With MFA, an application requires more than one factor to prove a user is who they say they are. These additional factors could be a code, biometric proof, or other means. For more about MFA, check out TODO link to MFA expert advice TODO.
+One of the best defenses we have against attacks against authentication is adding multiple layers to our authentication process. Multi-factor authentication (MFA) is a commonly used process. With MFA, an application requires more than one factor to prove a user is who they say they are. These additional factors could be a code, biometric proof, or other means. For more about MFA, you can check out our [MFA expert advice article](/learn/expert-advice/authentication/multi-factor-authentication/).
 
 Step-up authentication is another option that can add defense in depth. Step-up is a good compromise between users being able to quickly authenticate and limiting access to sensitive data. It uses a set of dynamic rules to determine when a user should need further authentication to access private resources. 
 
@@ -57,7 +55,7 @@ There are plenty of tools available to add OAuth authentication to your app. For
 
 You can start by [downloading the self-hosted version of FusionAuth](/download/). You will need a license key to take fully follow along with this tutorial. An emailed code, the additional factor of authentication we'll be using to add step-up auth in just a bit requires a valid license. However, if you only want to use Google authenticator MFA (TOTP), you won't need a license. 
 
-Since the purpose of this article is implementing step-up, we'll do a brief overview of how the Authorization Code grant implementation works. For more information check out the TODO link authentication flows TODO.
+Since the purpose of this article is implementing step-up, we'll do a brief overview of how the Authorization Code grant implementation works. For more information check out the [Modern Guide to OAuth](fusionauth.io/learn/expert-advice/oauth/modern-guide-to-oauth/).
 
 ### Authorization Code Overview
 
@@ -77,33 +75,87 @@ It's based on the app created in a [React and OAuth tutorial](/blog/2020/03/10/s
 
 Similarly to the previous tutorial, you'll need node installed if you want to run thorugh this tutorial. Since this post builds on the previous tutorial, set up the original project first.
 
+#### Set up FusionAuth
+
+If you don't already have FusionAuth installed, I recommend the Docker Compose option for the quickest setup:
+
+```zsh
+curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
+docker-compose up
+```
+
+(Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options.)
+
+Once FusionAuth is running (by default at http://localhost:9011), create a new Application. Do so by logging into the administrative user interface and then navigating to "Applications". The only configurations you need to change are "Authorized redirect URLs" and "Logout URL" on the "OAuth" tab. 
+
+These are basically links used by FusionAuth during the only two times we redirect off our app entirely: login and logout. After a user logs in, FusionAuth will redirect them back to our app on one of the "Authorized Redirect URLs". After a user logs out, FusionAuth will redirect them to the "Logout URL".
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-edit-application.png" class="img-fluid" figure=false alt="FusionAuth application edit page" %} TODO
+
+Enter `http://localhost:9000/oauth-callback` for the "Authorized Redirect URL" (a point on our Express server) and `http://localhost:8080` for the "Logout URL" (the only endpoint on our single page client). Click the blue "Save" button in the top-right to finish the configuration.
+
+A login feature isn't very useful with zero users. It's possible to register users from your app or using FusionAuth's self-service registration feature, but we'll manually add a user for this example. Navigate to "Users". You should see your own account; it's already registered to FusionAuth, which is why you can use it to log into the admin panel.
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-manage-user.png" class="img-fluid" figure=false %} TODO
+
+Select "Manage" and go to the "Registrations" tab. Click on "Add Registration", pick your new application, and then `Save` to register yourself.
+
+An alternative you can use instead of clicking around all of this is to use this Kickstart file (which initializes an empty FusionAuth instance to known state):
+
+TODO build and maybe include?
+
+For more on using Kickstart to set up FusionAuth instance state, review the Kickstart guide.
+
+FusionAuth configuration is now complete. Leave this tab open, though; we'll be copy/pasting some key values out of it in a minute.
+
 ### Set up the application without step-up
 
 The easiest way to do this is to clone this project (TODO need to create a copy of the react project as it exists TODO) 
 
-Change directory to `client` and run `npm install`.
+Change your directory to `client` and run `npm install`.
 
-Change directory to `server` and run `npm install`.
+Change your directory to `server` and run `npm install`.
 
-#### Set up FusionAuth
+Update the top-level `config.js` to share constants across both the client and server apps:
 
-TODO pull from reactjs tutorial and add a kickstart
+```js
+module.exports = {
+  // OAuth info (copied from the FusionAuth application config)
+  clientID: '85a03867-dccf-4882-adde-1a79aeec50df',
+  clientSecret: 'JNlTw3c9B5NrVhF-cz3m0fp_YiBg-70hcDoiQ2Ot30I',
+  redirectURI: 'http://localhost:9000/oauth-callback',
+  applicationID: '85a03867-dccf-4882-adde-1a79aeec50df',
+
+  // our FusionAuth api key
+  apiKey: 'o9WngMh2AAp3zH7gvMYtML9sGG31A9xVY1bi3Oui-_Y',
+
+  // ports
+  clientPort: 8080,
+  serverPort: 9000,
+  fusionAuthPort: 9011
+};
+```
+
+Storing configuration this way saves us from a lot of pain when changing things.
+
+The OAuth and FusionAuth configuration above will not match your application. I copied it out of my FusionAuth admin panel. The best place to find your values is this `View` button in the Applications page:
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-view-application.png" class="img-fluid" figure=false %}
+
+(Also, if you do want to copy/paste everything, just [clone the GitHub repo](https://github.com/FusionAuth/fusionauth-example-react-stepup-base) with everything already in it. You'll still have to change this config file, though. No way around that).
+
+One thing we don't cover here is creating an API key in FusionAuth and copying it over to our `config.js` file. This process is simple and you can read our [API Authentication](/docs/v1/tech/apis/authentication) documentation to learn more.
 
 #### Start up the application without step-up
 
-Open up two terminals. Change to the `client` directory in one and the `server` directory in the other.
-
-Run 
+Open up two more terminal windows. Change to the `client` directory in one and the `server` directory in the other. Run:
 
 ```
 npm start
 ```
 
-in each one.
-
-You should be able to open an incognito browser window, visit `http://localhost:3000` and login to your application.
-
-Now that the original code works, let's discuss the changes you will make.
+in each one. You should be able to open an incognito browser window, visit `http://localhost:8080` and log in to your application with the user you created when you set up FusionAuth. Hurrah! Now that the original code works, let's discuss the changes you will make to enable step-up auth.
 
 ### Step-up application overview
 
@@ -127,8 +179,6 @@ This is where step-up shines.
 We'll add another route to the server-side code. This will handle our step-up flow.
 
 First, we need to start the process with one of FusionAuth's endpoints in a new file in the `server/routes` directory called `step-up-start.js`.
-
-TODO have we set up FusionAuth yet? need kickstart too TODO
 
 TODO can we include from markdown? TODO
 ```javascript
@@ -288,8 +338,6 @@ Second, we'll take the code we get from the user's input and submit it with thei
 
 If the code is correct we'll get a user object back. We send the front-end a boolean,`isStepUpAuthed`, based on whether or not that user object is returned. Then the front-end can give them access to the "send singing telegram" functionality, or not.
 
-TODO send singing telegram endpoint? TODO
-
 ### Updating the Front-end
 
 There's not much we need to add to the front-end, just a button for requesting more access, a dropdown to hold the MFA methods, and a component to allow the user to submit the code.
@@ -304,7 +352,7 @@ In the `LogInOut.js` file, add the following lines to add a new button next to t
 </a>
 ```
 
-This is how a user will kick off the step-up auth flow. Once they've done this, we'll get back the `twoFactorId` and the array with the MFA methods they have available.
+This link, allowing the user to start a privileged action, is how a user will kick off the step-up auth flow. Once they've done this, we'll get back the `twoFactorId` and the array with the MFA methods they have available.
 
 Next, we need to modify the `index.js` file in the `client/app` directory. This is where we'll add the MFA dropdown and be able to give users the ability to update their data.
 
@@ -411,23 +459,21 @@ class App extends React.Component {
 ReactDOM.render(<App />, document.querySelector("#Container"));
 ```
 
-TODO install react? TODO
-
 The majority of this file is the same as the original from the tutorial referenced earlier. We've just added a couple of methods and elements. The `showMethods` function shows the dropdown list. The `finStepUp` method is what we call once a user has selected an MFA option.
 
 Inside the `render` method, we've added the dropdown list and a condition to show the ability to edit user data. The dropdown list takes the array we received in the `step-up-start` call and maps all of the options for us and is only displayed if the user has requested more access.
 
 If the code they entered for MFA is correct, we receive a boolean that displays the element that allows them to change user data.
 
-## Additional Security Considerations
+## Additional security considerations
+
+You might hear step-up authentication and MFA referred to interchangeably, but they aren't the same thing. MFA refers to any authentication method that involves more than one method of authentication. Typically a username and password are the first method and MFA layers on another. It uses other methods like emailed links or biometrics. Step-up authentication is the act of requiring an additional layer of authentication when certain actions are requested. The initial login process is unaffected by the choice to implement step-up authentication.
 
 Having step-up authentication in place helps protect users even if someone's credentials are stolen. Since it requires additional authentication, unless the attacker had control of the additional factors, they wouldn't be able to perform privileged actions like transfering money or getting credit card information. Step-up authentication allows you to add another layer of protection to such sensitive actions.
 
-The functionality that requires this extra authentication is based on different conditions that can change dynamically depending on a user's roles and permissions. Or, you could build a preset list of actions that need the additional step-up.
+The functionality that requires this extra authentication is based on different conditions that can change dynamically depending on a user's roles and permissions. Or, you could build a preset list of actions that need the additional step-up. For this tutorial, only one action was protected, but you could protect others. In addition, you should code the server side API to check for successful step-up auth as well. You can do this by setting a value on the user's session in the `step-up-fin` route TODO or how else?
 
 One of the biggest benefits of using step-up auth is that it makes the user experience better. Although users will have to set up MFA, which can lead to some grumbling, they won't have to go through the MFA process as often. And you'll still keep the level of security you wanted around privileged functionality.
-
-You might hear step-up authentication and MFA referred to interchangeably, but they aren't the same thing. MFA refers to any authentication method that involves more than one method of authentication. Typically a username and password are the first method and MFA layers on another. It uses other methods like emailed links or biometrics. Step-up authentication is the act of requiring an additional layer of authentication when certain actions are requested. The initial login process is unaffected by the choice to implement step-up authentication.
 
 ## Conclusion
 
