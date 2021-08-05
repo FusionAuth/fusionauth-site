@@ -3,7 +3,7 @@ layout: blog-post
 title: When to self-host critical application components
 description: Should you self-host critical parts of your application or use a SaaS provider?
 author: Matthew Fuller
-image: blogs/currentdesk-fusionauth/currentdesk-saved-thousands-of-dollars-by-choosing-fusionauth-header-image.png
+image: blogs/when-to-self-host/when-to-self-host-critical-application-components-header-image.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
