@@ -29,7 +29,7 @@ Danilo Polani is a FusionAuth community member and senior software engineer at W
 
 My work is mainly on the backend side. One year ago we started splitting our big Node.js monolith into several services and Catalog is the only one (currently) written in Laravel. There's a huge amount of work under the hood: we have an internal (home made) page builder that our marketing team can use with a simple drag and drop interface. It lets them reuse components, duplicate pages and modify the content of those pages. 
 
-The Catalog APIs take care of injecting dynamic values from the database, return pages applying special rules (e.g. "enable this block only at that time"), and checking that header and footer URLs are valid (with a daily cron job). Most importantly, the Catalog APIs collect information through RabbitMQ from different services, such as user bookings or travels planning.  
+The Catalog APIs take care of injecting dynamic values from the database, return pages applying special rules (e.g. "enable this block only at that time"), and checking that header and footer URLs are valid (with a daily cron job). Most importantly, the Catalog APIs collect information through RabbitMQ from different services, such as user bookings or travel planning.  
 
 > Having a centralized user management and login platform is truly amazing. 
 
@@ -71,7 +71,7 @@ When thinking about time saved, it's not easily estimated. We would have needed 
 
 **Danilo:** We have deployed our FusionAuth instance with Kubernetes on Google Cloud Platform, just like our other services. 
 
-It's not really my field, but our DevOps folks makes it look simple.
+It's not really my field, but our DevOps folks make it look simple.
 
 **Dan:** Any general feedback/areas to improve?
 
