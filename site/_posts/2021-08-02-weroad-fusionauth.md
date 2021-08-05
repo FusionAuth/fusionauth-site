@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: WeRoad migrated to FusionAuth from Auth0
+title: WeRoad migrated from Auth0 to FusionAuth
 description: WeRoad brings travelers together for live-changing travel and used FusionAuth to simplify their auth infrastructure.
 author: Dan Moore
 image: blogs/currentdesk-fusionauth/currentdesk-saved-thousands-of-dollars-by-choosing-fusionauth-header-image.png
