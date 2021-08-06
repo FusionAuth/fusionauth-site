@@ -27,12 +27,12 @@ Michael Schramm is a FusionAuth community member and CTO of Tucan.ai. He chatted
 
 **Dan:** Can you talk a bit more about the "unsolved" problem you are currently working on at Tucan.ai?
 
-**Michael:** The unsolved problem are meetings. For everyone involved it always boils down to do one of two things: 
+**Michael:** The unsolved problem is meetings. For everyone involved it always boils down to do one of two things: 
 
 * Take notes and not having time to participate in the conversation
 * Participating in the conversation and not having time to take notes
 
-What we provide is to take the note taking to the next level. We transcribe the meetings and extract the topics and key phrases and provide notes for everyone.
+What we do is take note taking to the next level. We transcribe the meetings and extract the topics and key phrases and provide notes for everyone.
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
@@ -46,7 +46,7 @@ Mid-last year the approaching go live required us to change a lot of things with
 
 **Dan:** So you aren't using the hosted login pages (the FusionAuth provided login workflows) but instead using the APIs? And you built your own login pages and other flows?
 
-**Michael:** Exactly, we already had designed login pages as well as native apps with logins and only wanted to store those credentials in a better way. An example for a custom flow on our side would be the password less flow. We request a token and then send the authentication email ourself through SendGrid. This simplifies how we design our email templates.
+**Michael:** Exactly, we already had designed login pages as well as native apps with logins and only wanted to store those credentials in a better way. An example for a custom flow on our side would be the password less flow. We request a token and then send the authentication email through SendGrid, rather than via FusionAuth. This simplifies how we design our email templates.
 
 We would like to use Social Logins, like Facebook, Google and Apple, but right now are restricted as it fails because of [one query in the connector](https://fusionauth.io/community/forum/topic/950/cockroach-compatibility-problem-on-connector-signin). I have no clue when this will be fixed in cockroachdb or changed in FusionAuth.
 
@@ -74,7 +74,7 @@ We still use it but only now to decode the received JWTs and to handle the verif
 
 The ongoing additional maintenance is something that would be hard to quantify but I would assume it to be several developer/testing/QA days per month. 
 
-One thought in regard to security is that the cost of breaches is usually higher than the implementation cost. We think with using a battle tested solution like Fusionauth is the only way to avoid such breaches in the future.
+One thought in regard to security is that the cost of breaches is usually higher than the implementation cost. Using a battle tested solution like Fusionauth is the only way to avoid such breaches in the future.
 
 **Dan:** How do you run FusionAuth (kubernetes, standalone tomcat server, behind a proxy, etc)?
 
