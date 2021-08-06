@@ -27,16 +27,16 @@ Michael Schramm is a FusionAuth community member and CTO of Tucan.ai. He chatted
 
 **Dan:** Can you talk a bit more about the "unsolved" problem you are currently working on at Tucan.ai?
 
-**Michael:** The unsolved problem are meetings - for everyone involved it always boils down to do one of two things: 
+**Michael:** The unsolved problem are meetings. For everyone involved it always boils down to do one of two things: 
 
 * Take notes and not having time to participate in the conversation
 * Participating in the conversation and not having time to take notes
 
-What we provide is to take the note taking to the next level; we transcribe the meetings and extract the topics and key phrases and provide notes for everyone.
+What we provide is to take the note taking to the next level. We transcribe the meetings and extract the topics and key phrases and provide notes for everyone.
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
-**Michael:** We use Fusionauth for user management, social login is not yet enabled as there is an incompatibility with cockroachdb right now (should be fixed soon)
+**Michael:** We use Fusionauth for user management, social login is not yet enabled as there is an incompatibility with cockroachdb right now. It should be fixed soon, [here's the bug](https://github.com/cockroachdb/cockroach/issues/40963).
 
 **Dan:** What problems did we solve for you? 
 
@@ -46,33 +46,35 @@ Mid-last year the approaching go live required us to change a lot of things with
 
 **Dan:** So you aren't using the hosted login pages (the FusionAuth provided login workflows) but instead using the APIs? And you built your own login pages and other flows?
 
-**Michael:** Exactly, we already had designed login pages as well as native apps with logins and only wanted to store those credentials in a better way. An example for a custom flow on our side would be the password less flow - we request a token and then send the authentication email ourself through send grid (as this simplifies how we design our email templates)
+**Michael:** Exactly, we already had designed login pages as well as native apps with logins and only wanted to store those credentials in a better way. An example for a custom flow on our side would be the password less flow. We request a token and then send the authentication email ourself through SendGrid. This simplifies how we design our email templates.
 
-We would like to use Social Logins - like Facebook, Google and Apple - but right now are restricted as it fails because of [one query in the connector](https://fusionauth.io/community/forum/topic/950/cockroach-compatibility-problem-on-connector-signin). I have no clue when this will be fixed in cockroachdb / changed in FusionAuth).
+We would like to use Social Logins, like Facebook, Google and Apple, but right now are restricted as it fails because of [one query in the connector](https://fusionauth.io/community/forum/topic/950/cockroach-compatibility-problem-on-connector-signin). I have no clue when this will be fixed in cockroachdb or changed in FusionAuth.
 
 **Dan:** How were you solving them before FusionAuth?
 
-**Michael:** We had a simple implementation in passport.js but knew that many things would need to change to provide a production grade solution.
+**Michael:** We had a simple auth implementation in passport.js but knew that many things would need to change to provide a production grade solution.
 
 **Dan:** How did passport.js fall short? Are there a couple of things you can point to? 
 
-**Michael:** It has the capabilities to handle our use cases - but would also require more maintenance + more development time spent on having key management etc. We still use it but only now to decode the received JWTs and to handle the verification/data passing in our api middleware.
+**Michael:** It has the capabilities to handle our use cases but would also require more maintenance and more development time spent on having key management etc. 
+
+We still use it but only now to decode the received JWTs and to handle the verification/data passing in our api middleware.
 
 **Dan:** Why did you choose FusionAuth over the alternatives?
 
-**Michael:** Everything needed to be manageable through APIs. It also needed a simple model to run within docker and Kubernetes.
+**Michael:** Everything needed to be manageable through APIs. It also needed to run within docker and Kubernetes.
 
 **Dan:** Ah, you'll probably be happy to learn about our new [API key API](https://fusionauth.io/docs/v1/tech/apis/api-keys/). 
 
-**Michael:** Yes, we are using them :)
+**Michael:** Yes, we are using them :).
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
 **Michael:** There was the initial time required to use the API and migrate the existing users. We did this within one week. 
 
-The ongoing additional maintenance is something that would be hard to quantify but I would assume it to be several developer days/testing/ qa per month. 
+The ongoing additional maintenance is something that would be hard to quantify but I would assume it to be several developer/testing/QA days per month. 
 
-One thought in regard to security is that the cost of breaches is usually higher than the implementation cost and we think with using a battle tested solution like Fusionauth is the only way to avoid those in the future.
+One thought in regard to security is that the cost of breaches is usually higher than the implementation cost. We think with using a battle tested solution like Fusionauth is the only way to avoid such breaches in the future.
 
 **Dan:** How do you run FusionAuth (kubernetes, standalone tomcat server, behind a proxy, etc)?
 
@@ -82,7 +84,7 @@ One thought in regard to security is that the cost of breaches is usually higher
 
 **Michael:** We choose CockroachDB as a Database because it has great failover capabilities, and almost no limits on read and write queries thanks to automated sharding. 
 
-On our Kubernetes cluster we do not want to run different sql databases because each requires dedicated knowledge to scale and operate.
+On our Kubernetes cluster, we do not want to run different SQL databases because each requires dedicated knowledge to scale and operate.
 
 After initial tests we concluded that only social logins would trigger a named query that is not yet working with CockroachDB.
 
@@ -92,7 +94,11 @@ After initial tests we concluded that only social logins would trigger a named q
 
 **Dan:** I don't understand. Where would you want to set these? Can you explain the use case a bit more?
 
-**Michael:** This is to use the FusionAuth Admin UI - when we try to log into those it would fail per default with a CSRF error - because it thinks that the request is not done with https but the request was done with https. Cloudfront handles ssl termination for us and appends `cloudfront-forwarded-proto=https`. For FusionAuth to work in this case we have a custom MiddleWare in Traefik just to set `x-forwarded-proto` to `https` all the time (because there cannot be unauthenticated requests anyway). It took a lot of time to figure this out.
+**Michael:** This is to use the FusionAuth Admin UI. When we try to log into those it would fail per default with a CSRF error because it thinks that the request is not made with https, but the request *was* performed with https. Cloudfront handles ssl termination for us and appends `cloudfront-forwarded-proto=https`. 
+
+For FusionAuth to work in this case we have a custom MiddleWare in Traefik just to set `x-forwarded-proto` to `https` all the time (because there cannot be unauthenticated requests anyway). 
+
+It took a lot of time to figure this out. _[Editor's note: [issue #1218](https://github.com/FusionAuth/fusionauth-issues/issues/1218) tracks this request.]_
 
 -------
 
