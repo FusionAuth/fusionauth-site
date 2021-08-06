@@ -67,6 +67,22 @@ The form that will be used in the FusionAuth UI for adding and editing users.
 +
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
+===== Username settings
+
+Enable [field]#Unique usernames# to allow multiple users suggest the same username. If there are any collisions, FusionAuth will transparently create a unique username by appending a suffix. The user will continue to use the username without the suffix.
+
+[.api]
+[field]#Unique usernames# [optional]#Optional# [default]#defaults to `false`# [since]#Available since 1.27.0#::
+When `true`, FusionAuth will handle username collisions.
++
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+[field]#Number of digits# [optional]#Optional# [default]#defaults to `5`# [since]#Available since 1.27.0#::
+The maximum number of digits to use when building a unique suffix for a username. A number will be randomly selected and may be 1 or more digits up to this configured value. The value of this field must be greater than or equal to `3` and less than or equal to `10`.
+
+[field]#Separator character# [optional]#Optional# [default]#defaults to `["&#35;"]`# [since]#Available since 1.27.0#::
+A single character to use as a separator from the requested username and a unique suffix that is added when a duplicate username is detected. This value can be a single non alphanumeric ASCII character.
+
 ==== Connectors
 
 Connectors can be enabled on a per tenant basis with a Connector policy.
@@ -107,11 +123,13 @@ image::core-concepts/tenant-configuration-smtp-settings.png[Tenant Configuration
 ===== SMTP settings
 
 [.api]
-[field]#Host# [required]#Required#::
-The IP address of the outgoing SMTP mail server.
+[field]#Host# [optional]#Optional# [default]#defaults to `localhost`#::
+The hostname of the SMTP server. This will be provided by your SMTP provider.
 
-[field]#Port# [required]#Required#::
-The port of the outgoing SMTP mail server.
+[field]#Port# [optional]#Optional# [default]#defaults to `25`#::
+The port of the SMTP server. This will be provided by your SMTP provider. Ports `25`, `465` and `587` are the well known ports used by SMTP, it is possible your provider will utilize a different port.
++
+In most cases you will be using TLS to connect to your SMTP server, and the port will generally be `587` or `465`.
 
 [field]#Username# [optional]#Optional#::
 The username of the outgoing SMTP mail server authentication.
@@ -120,10 +138,16 @@ The username of the outgoing SMTP mail server authentication.
 When enabled, you may modify the SMTP password, when the [field]#Password# field is not displayed the current password will not be modified.
 
 [field]#Password# [required]#Required#::
-The new password to use for the outgoing SMTP mail server authentication.
+The new password to use for the outgoing SMTP mail server authentication. This field is only required when [field]#Change password# is checked.
 
-[field]#Security# [optional]#Optional#::
-The preferred encryption protocol used by your SMTP server, this is generally documented by your SMTP service provider.
+[field]#Security# [optional]#Optional# [default]#defaults to `None`#::
+The security type when using an SSL connection to the SMTP server. This value should be provided by your SMTP provider.
++
+Generally speaking, if using port `25` you will select `None`, if using port of `465` you will select `SSL` and if using port `587` you will select `TLS`. It is possible your provider will be different, follow your providers instruction.
++
+* `None`
+* `SSL`
+* `TLS`
 
 [field]#Default from address# [optional]#Optional#::
 The default email address that emails will be sent from when a from address is not provided on an individual email template. This is the address part email address (i.e.  Jared Dunn  <**jared@piedpiper.com**>).
@@ -146,6 +170,15 @@ When enabled, users will be required to verify their email address upon update.
 The email template to use when accounts are created to verify the User's email address.
 +
 Required when the [field]#Verify email# toggle is enabled.
+
+[field]#Verification strategy# [optional]#Optional# [since]#Available since 1.27.0#::
+The process by which the user will verify their email address. Using the "Form Field" method works only when the [field]#Unverified behavior# is `Gated`.
+
+[field]#Unverified behavior# [optional]#Optional# [since]#Available since 1.27.0#::
+The way a user is handled during the login process when they do not have a verified email address.
+
+[field]#Allow email change when gated# [optional]#Optional# [since]#Available since 1.27.0#::
+When enabled, the user is allowed to change their email address when they are gated because they haven't verified their email address.
 
 [field]#Delete unverified users# [optional]#Optional#::
 When enabled, users who have not verified their email address after a configurable duration since being created will be permanently deleted.
@@ -391,32 +424,11 @@ When enabled the user's password hash will be modified if it does not match the 
 
 
 ==== Webhooks
-image::core-concepts/tenant-configuration-webhooks-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-webhooks-settings.png[Tenant Configuration - Webhooks,width=1200,role=top-cropped]
 
-===== Table columns
+===== Table Columns
 
-[.api]
-[field]#Event#::
-The event type, this value will be present in the JSON request to identify the message.
-[field]#Enabled#::
-When enabled this event can be sent by one or more webhook. You will also need to enable the event for a specific webhook to receive the event.
-+
-This toggle allows you to optionally disable an event for all webhooks all at once.
-[field]#Transaction setting#::
-The transaction setting for this event. This setting will apply to all webhooks consuming this event type.
-+
---
-    [field]#No Webhooks are required to succeed#::
-    The event will succeed regardless of the webhook response status code. Use this setting when it is not important for a webhook to succeed or provide confirmation that the event has been received and processed successfully.
-    [field]#Any single Webhook must succeed#::
-    The event will succeed as long as one or more of the webhooks respond with a status code between `200` and `299` (inclusive).
-    [field]#A simple majority of Webhooks must succeed#::
-    The event will succeed if at least half of the webhooks respond with a status code between `200` and `299` (inclusive). This means 50% or more of the webhooks must respond successfully.
-    [field]#A two-thirds majority of Webhooks must succeed#::
-    The event will succeed if a super majority of the webhooks respond with a status code between `200` and `299` (inclusive). A super majority is two-thirds (66.7%) or more of the configured webhooks.
-    [field]#All of the Webhooks must succeed#::
-    The event will succeed if every configured webhook responds with a status code between `200` and `299` (inclusive). Use this setting when it is critical for every configured webhook to receive and process the event before considering it complete.
---
+include::docs/v1/tech/events-webhooks/_tenant-webhooks-table.adoc[]
 
 
 ==== Advanced
@@ -489,5 +501,3 @@ The length and type of characters of the generated user code used in the Device 
 [.api]
 [field]#Additional properties# [optional]#Optional#::
 The custom SMTP configuration properties that may be necessary in some cases.
-
-

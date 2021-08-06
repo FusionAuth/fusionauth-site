@@ -13,9 +13,6 @@ endif::[]
 ifeval::["{loginProvider}" == "Facebook"]
 For the {loginProvider} identity provider, this value will always be `56abdcc7-8bd9-4321-9621-4e9bbebae494`.
 endif::[]
-ifeval::["{loginProvider}" == "Google"]
-For the {loginProvider} identity provider, this value will always be `82339786-3dff-42a6-aac6-1f1ceecb6c46`.
-endif::[]
 ifeval::["{loginProvider}" == "HYPR"]
 For the {loginProvider} identity provider, this value will always be `778985b7-6fd8-414d-acf2-94f18fb7c7e0`.
 endif::[]
@@ -24,6 +21,9 @@ For the {loginProvider} identity provider, this value will always be `6177c09d-3
 endif::[]
 ifeval::["{loginProvider}" == "Twitter"]
 For the {loginProvider} identity provider, this value will always be `45bb233c-0901-4236-b5ca-ac46e2e0a5a5`.
+endif::[]
+ifdef::idp_id[]
+For the {idp_display_name} identity provider, this value will always be `{idp_id}`.
 endif::[]
 
 [field]#ipAddress# [type]#[String]# [optional]#Optional#::
@@ -45,12 +45,33 @@ The Apple `id_token` returned during Sign in with Apple.
 The authorized redirect URI from your Sign in with Apple configuration. This value will be the publicly available URL of FusionAuth with the `/oauth2/callback` suffix.
 endif::[]
 ifeval::["{loginProvider}" == "Facebook"]
-[field]#data.token# [type]#[String]# [required]#Required#::
-The Facebook access token returned from their login API. This token will be sent to the Facebook Me Graph API as the `access_token` parameter.
+[field]#data.code# [type]#[String]# [optional]#Optional#::
+When using the authorization code grant, Facebook will have returned an authorization code. To complete the login request, provide the `code` and the `redirect_uri` parameters to allow FusionAuth to complete this grant by exchanging the authorization code for an `access_token`.
++
+When using `code` you must also supply `redirect_uri`. If `code` is not provided, then `token` will be required.
+
+[field]#data.redirect_uri# [type]#[String]# [optional]#Optional#::
+The redirect URI that was provided to the Facebook Authorization endpoint. This value will be sent to the Token Info API as the `redirect_uri` parameter.
+
+[field]#data.token# [type]#[String]# [optional]#Optional#::
+When using a popup or other login mode where Facebook has already returned you an `accessToken` through a JavaScript callback or other mechanism, you will send this value in the `token` parameter. FusionAuth will use this value to request user details and then complete the login.
++
+When using `token` you do not have to supply `redirect_uri`. If `token` is not provided, then `code` will be required.
+
 endif::[]
-ifeval::["{loginProvider}" == "Google"]
-[field]#data.token# [type]#[String]# [required]#Required#::
-The Google id token returned from their login API. This token will be sent to the Google OAuth Token Info API as the `id_token` parameter.
+ifeval::["{idp_type}" == "Google"]
+[field]#data.code# [type]#[String]# [optional]#Optional#::
+When using the authorization code grant, Google will have returned an authorization code. To complete the login request, provide the `code` and the `redirect_uri` parameters to allow FusionAuth to complete this grant by exchanging the authorization code for an `access_token`.
++
+When using `code` you must also supply `redirect_uri`. If `code` is not provided, then `token` will be required.
+
+[field]#data.redirect_uri# [type]#[String]# [optional]#Optional#::
+The redirect URI that was provided to the Google Authorization endpoint. This value will be sent to the Token Info API as the `redirect_uri` parameter.
+
+[field]#data.token# [type]#[String]# [optional]#Optional#::
+When using a popup or other login mode where Google has already returned you an `id_token` through a JavaScript callback or other mechanism, you will send this value in the `token` parameter. FusionAuth will use this value to request user details and then complete the login.
++
+When using `token` you do not have to supply `redirect_uri`. If `token` is not provided, then `code` will be required.
 endif::[]
 ifeval::["{loginProvider}" == "HYPR"]
 [field]#data.code# [type]#[String]# [required]#Required#::
@@ -63,6 +84,10 @@ endif::[]
 ifeval::["{loginProvider}" == "SAML v2"]
 [field]#data.samlResponse# [type]#[String]# [required]#Required#::
 The `SAMLResponse` parameter from the form submit (via a `POST` request) from the SAML v2 identity provider.
+endif::[]
+ifeval::["{loginProvider}" == "SAML v2 IdP Initiated"]
+[field]#data.samlResponse# [type]#[String]# [required]#Required#::
+The `SAMLResponse` parameter from the form submit (via a `POST` request) from the SAML v2 IdP Initiated identity provider.
 endif::[]
 ifeval::["{loginProvider}" == "Twitter"]
 [field]#data.oauth_token# [type]#[String]# [required]#Required#::
@@ -89,6 +114,17 @@ The authorization code, this is the `code` parameter that was returned on the Au
 
 [field]#data.redirect_uri# [type]#[String]# [required]#Required#::
 The redirect URI that was provided to the OpenID Connect Authorization endpoint. This value will be sent to the Token endpoint as the `redirect_uri` parameter.
+endif::[]
+ifeval::["{idp_token_or_code}" == "code"]
+[field]#data.code# [type]#[String]# [required]#Required#::
+The authorization code, this is the `code` parameter that was returned on the Authorization redirect URI. This code will be sent to the Token endpoint as the `code` parameter. If `code` is not provided, then the `token` will be required.
+
+[field]#data.redirect_uri# [type]#[String]# [required]#Required#::
+The redirect URI that was provided to the {idp_display_name} Authorization endpoint. This value will be sent to the Token endpoint as the `redirect_uri` parameter.
+endif::[]
+ifeval::["{idp_token_or_code}" == "token"]
+[field]#data.oauth# [type]#[String]# [required]#Required#::
+The Steam oauth token returned from their login API. This token will be sent to the Steam Token Details API as the `access_token` parameter.
 endif::[]
 
 [field]#metaData.device.description# [type]#[String]# [optional]#Optional#::
@@ -118,32 +154,41 @@ When this value is set to true a JWT will not be issued as part of this request.
 +
 This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
 
-[source,json]
-.Example Request JSON
-----
+[field]#noLink# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available since 1.29.0#::
+When this value is set to `true`, if a link does not yet exist to a FusionAuth user, a `404` status code will be returned instead of using the requested linking strategy. This may be useful if you want to identify if a link exists before starting a full interactive workflow with the user to complete a link.
+
 ifeval::["{loginProvider}" == "Apple"]
-include::../../../../src/json/identity-providers/login/apple-request.json[]
+:idp_request: apple
 endif::[]
 ifeval::["{loginProvider}" == "Facebook"]
-include::../../../../src/json/identity-providers/login/facebook-request.json[]
+:show_code_and_token_examples:
+:idp_request: facebook
 endif::[]
-ifeval::["{loginProvider}" == "Google"]
-include::../../../../src/json/identity-providers/login/google-request.json[]
+ifeval::["{idp_type}" == "Google"]
+:show_code_and_token_examples:
 endif::[]
 ifeval::["{loginProvider}" == "HYPR"]
-include::../../../../src/json/identity-providers/login/hypr-request.json[]
+:idp_request: hypr
 endif::[]
 ifeval::["{loginProvider}" == "LinkedIn"]
-include::../../../../src/json/identity-providers/login/linkedin-request.json[]
+:idp_request: linkedin
 endif::[]
 ifeval::["{loginProvider}" == "Twitter"]
-include::../../../../src/json/identity-providers/login/twitter-request.json[]
+:idp_request: twitter
 endif::[]
 ifeval::["{loginProvider}" == "OpenID Connect"]
-include::../../../../src/json/identity-providers/login/openid-connect-request.json[]
+:idp_request: openid-connect
 endif::[]
 ifeval::["{loginProvider}" == "SAML v2"]
-include::../../../../src/json/identity-providers/login/samlv2-request.json[]
+:idp_request: samlv2
 endif::[]
-----
+ifeval::["{loginProvider}" == "SAML v2 IdP Initiated"]
+:idp_request: samlv2
+endif::[]
+ifdef::idp_lowercase[]
+:idp_request: {idp_lowercase}
+endif::[]
 
+include::_identity-provider-login-request-example.adoc[]
+:show_code_and_token_examples!:
+:idp_request!:

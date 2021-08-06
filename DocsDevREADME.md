@@ -48,8 +48,9 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 ```
 
 For API docs:
-- We have many APIs which return the same objects either singley (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicate.
+- We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
+- If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
 
 For blog posts:
 - Indent all code with two spaces per level.
@@ -60,6 +61,15 @@ For blog posts:
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
+- If appropriate, use tags. Here are the following tag types. They are separated with spaces. These are freeform, so feel free to add multiple and choose what works.
+-- `client-<langname>` if the post refers to a specific language we have a client library for (use `client-javascript` for JS even though our client lib is typescript). These show up on the client libraries page.
+-- `tutorial` for tutorials. These show up on the tutorial page.
+-- `tutorial-<langname>`, `tutorial-<framework>` for a tutorial in a specific language or framework.
+-- `tutorial-feature` for a tutorial for a given feature (how to use a lambda, for example)
+-- `tutorial-integration` for a tutorial doing an integration with another software package (nodebb, for example)
+-- `topic-<topic>` for general topics. 
+-- `topic-community-story` for any community stories you do.
+-- `feature-<topic>` for specific features. These will show up on the feature page.
 
 For documentation posts:
 - Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
@@ -68,7 +78,7 @@ For lists:
 - Capitalize the first word.
 - Have a period on the end if it is a sentence, otherwise don't.
 
-### Proper names
+### Proper names and other verbiage
 - macOS
 - Elasticsearch
 - .NET Core
@@ -76,6 +86,31 @@ For lists:
 - Identity Provider
 - Connector
 - Kickstart
+- multi-factor authentication
+- multi-tenancy/multi-tenant
+
+
+## Tagging
+
+Tag your blog posts.
+
+If they feature any client libraries, tag them with `client-[langname]` and they will automatically appear on the client libraries page. `client-javascript` appears on the typescript page, since that is the supported client library.
+
+If they highlight a feature, tag them with `feature-[featurename]` and if there's a feature page, they'll appear there. `feature-breached-password-detection` for example.
+
+If they are a tutorial, add `tutorial` and they will appear on the tutorials page in the docs. You can also add `tutorial-[langname]` if it focuses on a language, `tutorial-feature` if it is a FusionAuth feature (webhooks, themes, etc) and `tutorial-integration` if it is an integration tutorial (nodebb, wordpress, etc). If it is for an advanced feature/reactor feature, add `tutorial-reactor-feature`. Those are all separate sections. 
+
+If it is a community story, tag with `topic-commmunity-story`. Right now that doesn't do anything, but it will.
+
+If it is a story about an upgrade, tag it with one of these tags:
+
+* `topic-upgrade-homegrown`
+* `topic-upgrade-saas`
+* `topic-upgrade-opensource`
+
+As well as the competitor name if mentioned: `topic-upgrade-cognito`.
+
+Separate tags with spaces: `topic-upgrade-homegrown topic-community-story`
 
 ## Sizing Window for Screenshots
 
@@ -90,7 +125,7 @@ Also note that you should be resizing the image down to 1600px wide. If you are 
 ```appleScript
 set theApp to "Safari"
 
-# Docs screens
+# Docs/blog screens
 #set appHeight to 1100
 #set appWidth to 1080
 
@@ -105,10 +140,6 @@ set theApp to "Safari"
 # Maintenance Mode Screens
 #set appHeight to 1100
 #set appWidth to 900
-
-# Blog screens
-#set appHeight to 1020
-#set appWidth to 1220
 
 tell application "Finder"
 	set screenResolution to bounds of window of desktop
@@ -143,6 +174,27 @@ end tell
 - To size and compress images without losing too much quality, follow these steps:
 	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
 	2. Use https://tinypng.com/ to compress the image
+  
+
+## Shell script for capturing sceenshots 
+fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
+- Sizing and moving Safari window
+- Capturing screenshot 
+- Resizing the screenshot image
+- Compressing the image using either pngquant or Tiny PNG
+- Moving the image to an appropriate folder
+ 
+```bash
+
+    ./fa-screenshot.sh  [-s] [-t] [-d] <destination folder> [-h]
+
+   -s  Silent mode
+   -t  Use TinyPNG API instead of pngquant library
+   -d  Move screenshots to given folder
+   -h  Print this usage
+```
+
+
 
 Converting terminalizer gifs to videos
 ----

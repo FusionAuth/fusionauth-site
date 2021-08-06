@@ -5,7 +5,7 @@ description: Who are the players you'll need to work with to make an outsourced 
 image: blogs/sso-example/setting-up-single-sign-on-sso-with-fusionauth-header-image.png
 author: Dan Moore
 category: blog
-tags: feature-sso
+tags: feature-sso tutorial tutorial-feature
 excerpt_separator: "<!--more-->"
 ---
 

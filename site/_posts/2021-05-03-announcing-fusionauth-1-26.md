@@ -5,6 +5,7 @@ description: The FusionAuth 1.26 Release includes advanced MFA, an API to manage
 author: Dan Moore
 image: blogs/release-1-26/product-update-fusionauth-1-26.png
 category: blog
+tags: feature-entity-management
 excerpt_separator: "<!--more-->"
 ---
 

@@ -55,11 +55,20 @@ The tenant in which to create this Application.
 +
 This field is only displayed once multiple tenants exist in FusionAuth. When only a single tenant exists, the Application will always be created in the default tenant.
 
+[field]#Theme# [optional]#Optional# [since]#Available since 1.27.0#::
+When a theme is selected, it will be used for this application instead of the tenant theme.
++
+:premium_feature: application themes
+include::docs/v1/tech/shared/_premium-edition-blurb-api.adoc[]
++
+:premium_feature!:
+// This comment breaks the DL so Roles renders correctly
+
 === Roles
 
 The Roles tab will only be available on the Add Application form. To manage roles after the Application has been created you will use the Manage Roles action.
 
-==== Table columns
+==== Table Columns
 
 include::docs/v1/tech/core-concepts/_role_attributes.adoc[]
 
@@ -73,7 +82,6 @@ The OAuth tab allows you to configure the OAuth2 and OpenID Connect settings spe
 
 image::core-concepts/application-oauth.png[Application OAuth configuration,width=1200,role=top-cropped]
 
-
 ==== Form Fields
 
 [.api]
@@ -85,10 +93,21 @@ The read only client secret used for client authentication. When you enable Requ
 +
 You may optionally regenerate the client secret if you think it has been compromised.
 
-[field]#Require authentication# [optional]#Optional#::
-When enabled access to the Token endpoint will require the use of the `client_secret` parameter. In most cases you will not want to disable this setting.
+[field]#Client Authentication# [optional]#Optional#::
+This selector allows you to set a rule for accessing the link:/docs/v1/tech/oauth/endpoints/#token[Token endpoint].
 +
-There may be scenarios where you have a requirement to make a request to the Token endpoint where you cannot safely secure a client secret. In these scenarios you may need to disable client authentication. This includes native mobile applications and single page applications (SPAs) running in a browser. In these scenarios it is recommended you use PKCE.
+* Required - The `client_secret` parameter must be used. This is the default setting. In most cases you will not want to change this setting.
+* Not required - Use of the `client_secret` parameter is optional.
+* Not required when using PKCE - Requires the use of the `client_secret` parameter unless a valid PKCE link:https://datatracker.ietf.org/doc/html/rfc7636#section-4.1[code_verifier] parameter is used. This is useful for scenarios where you have a requirement to make a request to the Token endpoint where you cannot safely secure a client secret such as native mobile applications and single page applications (SPAs) running in a browser. In these scenarios it is recommended you use PKCE.
++
+See the link:/docs/v1/tech/oauth/endpoints/#token[Token endpoint] for more information.
+
+[field]#PKCE# [optional]#Optional#::
+This selector allows you to set a rule for link:https://datatracker.ietf.org/doc/html/rfc7636[Proof Key for Code Exchange] (or PKCE) requirements when using the authorization code grant.
++
+* Required - The `code_verifier` parameter must be used.
+* Not required - Use of the `code_verifier` parameter is optional. This is the default setting.
+* Not required when using client authentication - Requires the use of the `code_verifier` parameter unless a valid `client_secret` parameter is used.
 
 [field]#Generate refresh tokens# [optional]#Optional#::
 When enabled, FusionAuth will return a refresh token when the `offline_access` scope has been requested. When this setting is disabled refresh tokens will not be generated even if the `offline_access` scope is requested.
@@ -135,6 +154,9 @@ The enabled OAuth2 grants. If a grant is not enabled and a client requests this 
     * Refresh Token
 +
 See The link:/docs/v1/tech/oauth/[OAuth 2.0 & OpenID Connect Overview] for additional information on each of these grants.
+
+[field]#Require registration# [optional]#Optional# [default]#Defaults to `false`#::
+When enabled the user will be required to be registered, or complete registration before redirecting to the configured callback in the authorization code grant or the implicit grant. This configuration does not affect any other grant, and does not affect the API usage.
 
 When you enable the `Device` grant you will be shown one additional configuration field:
 
@@ -235,7 +257,7 @@ The [field]#Refresh token usage# may be reusable or one time use. By default, a 
 
 === Multi-Factor
 
-The multi-factor configuration allows you to provide Application specific multi-factor settings.  
+The multi-factor configuration allows you to provide Application specific multi-factor settings.
 
 image::core-concepts/application-mfa.png[Multi-Factor Authentication configuration,width=1200,role=bottom-cropped top-cropped]
 
@@ -250,7 +272,7 @@ When a template is selected, it will be used to send a multi-factor authenticati
 
 === Registration
 
-The registration configuration allows you to provide Application specific registration configuration. 
+The registration configuration allows you to provide Application specific registration configuration.
 
 image::core-concepts/application-registration-verify.png[Application Registration,width=1200,role=bottom-cropped top-cropped]
 
@@ -276,7 +298,7 @@ Required when [field]#Delete unverified registrations# field toggle has been ena
 
 ==== Self Service Registration
 
-Self service registration allows users to register for this application themselves. If this is not enabled, users must be created using the APIs or the administrative user interface. 
+Self service registration allows users to register for this application themselves. If this is not enabled, users must be created using the APIs or the administrative user interface.
 
 There are two types of self service registration, basic and advanced.
 
@@ -319,9 +341,9 @@ image::core-concepts/application-registration-advanced.png[Advanced Self Service
 
 ==== Advanced Self Service Registration
 
-Advanced self service registration allows you to create a custom registration form, including validation, custom form fields, and multiple steps. link:/features/advanced-registration-forms/[Learn more in the guide].
-
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+Advanced self service registration allows you to create a custom registration form, including validation, custom form fields, and multiple steps. link:/features/advanced-registration-forms/[Learn more in the guide].
 
 [.api]
 [field]#Enabled# [optional]#Optional#::
@@ -436,7 +458,7 @@ The URL where you want to receive the LogoutRequest from FusionAuth.
 This field is required when [field]#Enable single logout# is enabled.
 
 [field]#Signing key# [optional]#Optional# [default]#defaults to the value of the authentication response signing key# [since]#Available since 1.25.0#::
-The Key used to sign the SAML Single Logout response. 
+The Key used to sign the SAML Single Logout response.
 
 [field]#Signature canonicalization method# [optional]#Optional# [default]#defaults to `Exclusive with comments`# [since]#Available since 1.25.0#::
 The XML signature canonicalization method. If you are unsure which method to select, leave the default and begin testing, or contact your service provider for configuration assistance.
@@ -482,7 +504,7 @@ When enabled, allow users to request login using a link sent via email. Enabling
 
 [.api]
 [field]#Enabled# [optional]#Optional#::
-When enabled, allow users to optionally authenticate using an Application specific token in place of their password. This should only be used when the security requirements are low and the user's normal password is not a good option for authentication. 
+When enabled, allow users to optionally authenticate using an Application specific token in place of their password. This should only be used when the security requirements are low and the user's normal password is not a good option for authentication.
 +
 For example, if a password needs to be stored in an external configuration and the exposure risk is low, a token can be used in place of the user's password. This token may only be used for authorization for this application.
 
