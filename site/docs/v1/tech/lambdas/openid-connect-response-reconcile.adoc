@@ -37,48 +37,19 @@ Navigate to [breadcrumb]#Settings -> Identity Providers# and select your existin
 
 == Example lambda
 
-Here is an example of a simple Lambda that assists FusionAuth to reconcile the User from a successful GitHub login request.
-
-[source,javascript]
-----
-function reconcile(user, registration, jwt) {
-  // This is an example lambda function reconcile the GitHub login
-
-  // Set GitHub Avatar URL to the FusionAuth imageURL
-  user.imageUrl = jwt.avatar_url;
-
-  // Update the registration username to the GitHub short name
-  registration.username = jwt.login;
-
-  // Store the company and location returned from GitHub in custom user data.
-  user.data = user.data || {};
-  user.data.company = jwt.company;
-  user.data.location = jwt.location;
-
-  // Create an event log of type 'Debug' when the lambda has Debug enabled
-  console.debug('FusionAuth reconciled a User from GitHub and I helped!');
-}
-----
-
-During development if you want to get a better idea of what your IdP is returning in the `jwt` object, you may print the contents of this object to the Event Log to help you write the lambda. Add the following line of code to your lambda to dump the entire object to an informational event log.
-
-[source,javascript]
-----
-// Pretty print the jwt object to the Event Log
-console.info(JSON.stringify(jwt, null, 2));
-----
+include::/docs/v1/tech/lambdas/_openid-connect-example-lambda.adoc[]
 
 === Workarounds
 
 If the JWT from the OIDC identity provider does not come back with an email claim you can add your own. This claim is `email` by default but may be changed with the `oauth2.emailClaim` as documented in the link:/docs/v1/tech/apis/identity-providers/openid-connect/[API docs].
 
-If the Userinfo response available to you in the lambda has unique user information, you can build a fake email address from it. 
+If the Userinfo response available to you in the lambda has unique user information, you can build a fake email address from it.
 
 Here, the `sub` claim is the unique user id, and we're building an email address:
 
 ```javascript
 function(user, registration, jwt) {
-  // The user's unique Id is the 'sub' claim. 
+  // The user's unique Id is the 'sub' claim.
   user.email = jwt.sub + '@no-email-present.example.com';
 }
 ```
