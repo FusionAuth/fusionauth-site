@@ -5,7 +5,7 @@ description: While working on a consulting project building an ecommerce platfor
 author: Dan Moore
 image: blogs/softozor-fusionauth-story/softozor-integrated-fusionauth-with-hasura-and-kubernetes-and-saved-development-effort.png
 category: blog
-tags: topic-community-story topic-upgrade-keycloak
+tags: topic-community-story topic-upgrade-keycloak topic-kubernetes
 excerpt_separator: "<!--more-->"
 ---
 
