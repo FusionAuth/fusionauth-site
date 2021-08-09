@@ -3,9 +3,9 @@ layout: blog-post
 title: Tucan uses FusionAuth with CockroachDB
 description: 
 author: Dan Moore
-image: blogs/unio-saves-100k-with-fusionauth/unio-self-hosts-fusionauth-and-saves-100k-header-image.png
+image: blogs/tucan-fusionauth-cockroachdb/tucan-uses-fusionauth-with-cockroachdb-header-image.png
 category: blog
-tags: topic-community-story client-java
+tags: topic-community-story client-java topic-kubernetes
 excerpt_separator: "<!--more-->"
 ---
 
