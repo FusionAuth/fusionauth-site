@@ -83,6 +83,11 @@ These changes ensure that after the user signs in to FusionAuth, they can be sen
 
 {% include _image.liquid src="/assets/img/blogs/flask-oauth-portal/oauth-tab-of-application.png" alt="Configuring the FusionAuth application for the flask portal." class="img-fluid" figure=false %}
 
+## Setting up FusionAuth using a Kickstart file
+
+Instead of manually setting up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use Kickstart here [https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/). Here's an example Kickstart file [https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-flask-registration-forms.json](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-flask-registration-forms.json) which sets up FusionAuth for this tutorial.
+
+
 ## Setting up the python virtual environment
 
 Make a directory for this codebase. You could call it something flashy, but I'm going to create one called `flask`. Once created, `cd` into it, as that is where you'll create the entire portal application. To set up your virtual environment in this tutorial, you're going to use `venv`: `python3 -m venv venv`. This will let us install libraries locally.
