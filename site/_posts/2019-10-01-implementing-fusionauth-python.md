@@ -167,6 +167,10 @@ From here, we will want to select our test application, "pythonapp". We will mat
 
 Once you're done, hit "Save". Now that we are finished setting up our user, it's time to finish configuring the rest of our testing environment.
 
+## Setting up FusionAuth using a Kickstart file
+
+Instead of manually setting up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use Kickstart here [https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/). Here's an example Kickstart file [https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-first-app.json](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
+
 ## Installing Python PIP package manager
 
 Let's open up a terminal connection to FusionAuth. First, we want to verify our current version of Python and that it's installed.
