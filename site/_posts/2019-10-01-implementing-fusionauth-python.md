@@ -169,7 +169,7 @@ Once you're done, hit "Save". Now that we are finished setting up our user, it's
 
 ## Setting up FusionAuth using a Kickstart file
 
-Instead of manually setting up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use Kickstart here [https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/). Here's an example Kickstart file [https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-first-app.json](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
+Instead of manually setting up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
 
 ## Installing Python PIP package manager
 
@@ -443,7 +443,7 @@ application_id = '595795e0-6766-43b0-8508-aba15aa44e61'
 Now, let's create our user. Here, we can specify optional user roles in our application. We are also telling FusionAuth to neither verify the user's email nor send the user an email they can use to set their password. If we wanted to enable either of these, we would simply switch the argument to `True`.
 
 {% include _callout-tip.liquid content=
-"Roles must be defined in FusionAuth in order to be assigned to a user."
+"Roles must be defined in FusionAuth to be assigned to a user. You can add roles by going to 'Applications' and then 'Manage Roles' for your application."
 %}
 
 ```python
