@@ -29,7 +29,8 @@ FusionAuth.Search = function() {
             showLoadingIndicator: false
           }
       )
-  );
+  ),
+
 
   this.search.addWidget(
       instantsearch.widgets.hits(
@@ -42,6 +43,41 @@ FusionAuth.Search = function() {
           }
       )
   );
+
+  // from https://stackoverflow.com/questions/36548451/underscore-debounce-vs-vanilla-javascript-settimeout
+  // lets us call a function multiple times over a period and only invoke it once
+  this.debounce = function(func, wait, immediate) {
+    var timeout;
+    return function() {
+        var context = this, args = arguments;
+        var later = function() {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    };
+  };
+
+  this.sendEventDebounced = this.debounce((uiState) => {
+      let query = "";
+      if (uiState && uiState.website && uiState.website.query) {
+        query = uiState.website.query;
+      }
+ 
+      if (window._paq) {
+          window._paq.push(['trackSiteSearch',
+              // Search keyword searched for
+              query,
+              // Search category selected in your search engine. If you do not need this, set to false
+              false,
+              // Number of results on the Search results page. Zero indicates a 'No Result Search Keyword'. Set to false if you don't know
+              false
+          ]);
+      }
+  }, 2000);
 
   this.search.start();
 };
@@ -126,5 +162,14 @@ FusionAuth.Search.prototype = {
 };
 
 Prime.Document.onReady(function() {
-  new FusionAuth.Search();
+  const search = new FusionAuth.Search();
+
+  // have to do this here because otherwise we don't have a handle to sendEventDebounced
+  search.search.use(() => ({
+      onStateChange({ uiState }) {
+          search.sendEventDebounced(uiState);
+      },
+      subscribe() {},
+      unsubscribe() {},
+  }));
 });

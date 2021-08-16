@@ -89,6 +89,11 @@ For lists:
 - multi-factor authentication
 - multi-tenancy/multi-tenant
 
+## Git
+
+* Open a PR with changes. Tag someone to review it.
+* Merge using the GitHub interface or using a merge commit.
+* Don't `push -f` in general. Unless you know what you are doing.
 
 ## Tagging
 

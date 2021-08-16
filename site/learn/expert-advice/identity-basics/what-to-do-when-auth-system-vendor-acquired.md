@@ -13,14 +13,14 @@ Authentication is an integral part of your application, and as such the acquisit
 
 Will your new provider give you the same support? Pricing? Integration options? All of these might change for better or for worse.
 
-Consider [the acquisition of Auth0 by Okta](/blog/2021/03/04/congrats-auth0-okta-acquisition): Auth0 customers praised them for their top-notch customer support, however, Okta customers have lamented their lackluster customer service [in online forums](https://news.ycombinator.com/item?id=26336270).
+Consider [the acquisition of Auth0 by Okta](/blog/2021/03/04/congrats-auth0-okta-acquisition). Auth0 customers praised them for their top-notch customer support. However, Okta customers have lamented their lackluster customer service [in online forums](https://news.ycombinator.com/item?id=26336270).
 
 
 > "We moved from Okta a few years ago after we received almost no actual real support for a bunch of issues, even though we were paying a premium cost. 
 
-> "Nobody cares about issues on their GitHub... The kicker was when we received a support response as suddenly something was no longer working after an update, we got help in the form of 'We have no plans to address this anytime soon' when asking for an ETA."
+> "Nobody cares about issues on [Okta's] GitHub... The kicker was when we received a support response as suddenly something was no longer working after an update, we got help in the form of 'We have no plans to address this anytime soon' when asking for an ETA."
 
-> "We ended up switching to Auth0 after we had a few calls with them. We shaved a decent amount off our costs with Auth0's Enterprise plan, and their webtask based rules worked. While the migration sucked for a bit, in the end, we were much happier."
+> "We ended up switching to Auth0 after we had a few calls with [Okta]. We shaved a decent amount off our costs with Auth0's Enterprise plan, and their webtask based rules worked. While the migration sucked for a bit, in the end, we were much happier."
 
 While clearly an acquisition is cause for concern, it might not be all bad. In this article, we'll discuss red flags to be on the lookout for when your auth vendor is acquired, short-term as well as long-term concerns, and how your engineering team can best handle them.
 
@@ -68,7 +68,7 @@ Customers were upset, and some even threatened lawsuits. That didn't do much to 
 
 While this was not an auth system, the same logic can be made by an acquirer. A more auth specific example is what happened with Stormpath and Okta in 2017, where customers were given [six months to migrate from the former to the latter](https://techcrunch.com/2017/03/06/okta-stormpath/).
 
-What's the use of an auth system that's not maintained or supported? Maybe you could live with an unmaintained software package if it wasn't under regular threat, but that doesn't describe an auth system. Authentication is critical to your customers' privacy and the all application functionality. You don't want a security vulnerability in your auth system to shake customer confidence in your application.
+What's the use of an auth system that's not maintained or supported? Maybe you could live with an unmaintained software package if it wasn't under regular threat, but that doesn't describe an auth system. Authentication is critical to your customers' privacy and all application functionality. You don't want a security vulnerability in your auth system to shake customer confidence in your application.
 
 ### Product Is Milked and Prices Rise
 
@@ -99,7 +99,7 @@ Are they following [standard auth protocols](/learn/expert-advice/identity-basic
 ### Talk to Your Account Manager
 
 
-It's time to talk to your account manager about your business relationship. Give them a call or an email and try to negotiate a long-term contract that will protect your business interests and guarantee a level of stability. The research into the contract you did previously? Now it the time to reference it.
+It's time to talk to your account manager about your business relationship. Give them a call or an email and try to negotiate a long-term contract that will protect your business interests and guarantee a level of stability. The research into the contract you did previously? Now is the time to reference it.
 
 Don't forget to ask about migration timelines while you're at it, so you know how soon you need to be prepared and for what changes.
 
@@ -123,7 +123,7 @@ If the changes are disruptive enough, you may decide you don't want to use third
 
 
 * **Use a non SaaS solution:** SaaS solutions are great, but if you use a non-SaaS solution, where you host it yourself, you have far more control over any changes to functionality. You may have to upgrade for security or contractual reasons, but you'll be able to do it on your timeline, not the acquirer's. FusionAuth can be self-hosted and has a community version that is free for unlimited users.
-* **An open-source solution:** You'll still have to manage your own source code. You'll just be using a free and community-driven solution like [Gluu](gluu.org), [Keycloak](https://www.keycloak.org/index.html), or [OpenIAM](https://www.openiam.com/). Your team will have to [explore these projects](/learn/expert-advice/identity-basics/open-source-vs-commercial/) and choose the one that works best for your system.
+* **An open-source solution:** You'll still have to manage your own source code. You'll just be using a free and community-driven solution like [Gluu](https://gluu.org), [Keycloak](https://www.keycloak.org/index.html), or [OpenIAM](https://www.openiam.com/). Your team will have to [explore these projects](/learn/expert-advice/identity-basics/open-source-vs-commercial/) and choose the one that works best for your system.
 * **In-house custom build solution:** In some rare cases, none of the available solutions will be a good fit for your organization, and you'll decide to build a custom auth system for your product. This will require more resources to achieve but of course, when completed, you'll have a solution that works best for you. Further, such a choice can be fine-tuned with more features in the future at your will (and expense)--something you won't get anywhere else.
 
 ## Conclusion
