@@ -7,22 +7,15 @@ description: APIs for creating, retrieving, updating and deleting IP Access Cont
 
 == Overview
 
-An IP ACL (Access Control List) is a list of IP ranges that are either allowed or blocked.
-Along with one `*` or everything range that defines the default behavior.
-
-Block example?  Allow example?  Or put that someplace else like the UI?
-
-An IP ACL may be assigned to an Tenant, an Application, and what else?
+An IP ACL (Access Control List) is a list of IP ranges that are either allowed or blocked. Along with one `*` or everything range that defines the default behavior. An IP ACL may be assigned to an API Key, a Tenant, or an Application. When an IP ACL is assigned at the application level this is the only one that will be used and the tenant IP ACL will not be checked.
 
 The following APIs are provided to manage IP ACLs.
 
 * <<Create an IP ACL>>
 * <<Retrieve an IP ACL>>
+* <<Search for IP ACLs>>
 * <<Update an IP ACL>>
 * <<Delete an IP ACL>>
-
-The following APIs (are there any extras for ACLs?) allow you to...
-- Links to assignment APIs? like Tenant
 
 == Create an IP ACL
 
@@ -64,17 +57,9 @@ include::docs/v1/tech/apis/_ip-acl-response-body.adoc[]
 
 == Retrieve an IP ACL
 
-This API is used to retrieve a single IP ACL by unique Id or all of the configured IP ACLs.
+This API is used to retrieve a single IP ACL by unique Id.
 
 === Request
-
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve all of the IP ACLs
-[.endpoint]
-.URI
---
-[method]#GET# [uri]#/api/ip-acl#
---
 
 [.api-authentication]
 link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve an IP ACL by Id
@@ -92,15 +77,91 @@ The unique Id of the IP ACL to retrieve.
 
 === Response
 
-The response for this API contains either a single IP ACL or all of the IP ACLs. When you call this API with an Id the response will
-contain a single IP ACL. When you call this API without an Id the response will contain all of the IP ACLs. Both response types are
-defined below along with an example JSON response.
-
 include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 
 include::docs/v1/tech/apis/_ip-acl-response-body.adoc[]
 
-include::docs/v1/tech/apis/_ip-acl-all-response-body.adoc[]
+== Search for IP ACLs
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Searches the IP ACLs using the given search criteria
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/ip-acl/search``?name=\{name\}``#
+--
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, only the IP ACL specific parameter is shown, however you may add any of the documented request parameters to the URL.
+
+==== Request Parameters
+
+[.api]
+[field]#name# [type]#[String]# [optional]#Optional#::
+The string to match all or part of the IP ACL name. This can contain wildcards using the asterisk or percent characters (* or %).
+
+[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+The number of results to return from the search.
+
+[field]#orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `name ASC`#::
+The database column to order the search results on plus the order direction.
++
+The possible values are:
++
+* `id` - the id of the IP ACL
+* `insertInstant` - the link:/docs/v1/tech/reference/data-types/#instants[instant] when the IP ACL was created
+* `lastUpdateInstant` - the last link:/docs/v1/tech/reference/data-types/#instants[instant] that the IP ACL was updated
+* `name` - the name of the IP ACL
++
+For example, to order the results by the insert instant in descending order, the value would be provided as `insertInstant DESC`. The final string is optional, can be set to `ASC` or `DESC`, or omitted and will default to `ASC`.
+
+[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#::
+The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Searches the IP ACLs using the given search criteria
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/ip-acl/search#
+--
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+==== Request Body
+
+[.api]
+[field]#search.name# [type]#[String]# [optional]#Optional#::
+The string to match all or part of the IP ACL name. This can contain wildcards using the asterisk or percent characters (* or %).
+
+[field]#search.numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+The number of results to return from the search.
+
+[field]#search.orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `insertInstant DESC`#::
+The database column to order the search results on plus the order direction.
++
+The possible values are:
++
+* `id` - the id of the IP ACL
+* `insertInstant` - the link:/docs/v1/tech/reference/data-types/#instants[instant] when the IP ACL was created
+* `lastUpdateInstant` - the last link:/docs/v1/tech/reference/data-types/#instants[instant] that the IP ACL was updated
+* `name` - the name of the IP ACL
++
+For example, to order the results by the insert instant in descending order, the value would be provided as `insertInstant DESC`. The final string is optional, can be set to `ASC` or `DESC`, or omitted and will default to `ASC`.
+
+[field]#search.startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#::
+The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+
+=== Response
+
+The response for this API contains the IP ACLs matching the search criteria in paginated format.
+
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+
+==== Response Body
+
+include::docs/v1/tech/apis/_ip-acl-search-response-body.adoc[]
 
 == Update an IP ACL
 
@@ -139,7 +200,7 @@ include::docs/v1/tech/apis/_ip-acl-response-body.adoc[]
 
 == Delete an IP ACL
 
-This API is used to permanently delete an IP ACL. Deleting an IP ACL will [do what to the thing(s) it was assigned to?].
+This API is used to permanently delete an IP ACL. Deleting an IP ACL will remove it from any tenants and/or applications it was assigned.
 
 === Request
 
