@@ -194,15 +194,41 @@ image::core-concepts/tenant-configuration-template-settings.png[Tenant Configura
 ===== Template settings
 
 [.api]
-[field]#Setup password# [optional]#Optional#::
-The email template to use when accounts are created and the user needs to setup their password.
+[field]#Email update# [optional]#Optional#::
+The email template to use when notifying a user that their email address has been updated.
 
 [field]#Forgot password# [optional]#Optional#::
-The template to use for the forgot password workflow that uses emails.
+The email template to use for the forgot password workflow that uses emails.
+
+[field]#Login Id duplicate on create# [optional]#Optional#::
+The email template to use when notifying a user that another user has attempted to register with the same username or email address.
+
+[field]#Login Id duplicate on update# [optional]#Optional#::
+The email template to use when notifying a user that another user has attempted to change their username or email address.
+
+[field]#Login with new device# [optional]#Optional#::
+The email template to use when notifying a user that a new device was used to login.
+
+[field]#Suspicious login# [optional]#Optional#::
+The email template to use when notifying a user that a login occurred and it was determined to be of interest or suspect due to the location, IP address or other factors.
+
+[field]#Password reset success# [optional]#Optional#::
+The email template to use when notifying a user that their password has been successfully updated using the reset workflow.
+
+[field]#Password update# [optional]#Optional#::
+The email template to use when notifying a user that their password has been successfully updated.
 
 [field]#Passwordless login# [optional]#Optional#::
 The template to use to send the link for passwordless login requests.
 
+[field]#Setup password# [optional]#Optional#::
+The email template to use when accounts are created and the user needs to setup their password.
+
+[field]#Two-factor method added# [optional]#Optional#::
+The email template to use when notifying a user that a new two-factor method has been successfully added.
+
+[field]#Two-factor method removed# [optional]#Optional#::
+The email template to use when notifying a user that a previously configured two-factor method has been successfully removed.
 
 ==== Family
 image::core-concepts/tenant-configuration-family-settings.png[Tenant Configuration - Family,width=1200,role=shadowed top-cropped]
@@ -303,17 +329,17 @@ The length of time an SSO session can be inactive before it is closed.
 [field]#Logout URL# [optional]#Optional#::
 The URL the user is redirected to upon logout.
 
+[field]#Client credentials populate lambda# [optional]#Optional#::
+The lambda that will be called to populate the JWT during a client credentials grant.
+
 
 ==== JWT
 image::core-concepts/tenant-configuration-jwt.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
 
-===== Form Fields
+===== JSON Web Token settings
 
 [.api]
-[field]#Refresh token duration# [required]#Required#::
-The length of time the refresh token is valid. Refresh tokens are typically long lived.
-
-[field]#JWT Duration# [required]#Required#::
+[field]#JWT duration# [required]#Required#::
 The length of time the issued token (access token and Id token) is valid.  JWT tokens are typically short lived.
 
 [field]#Access token signing key# [optional]#Optional#::
@@ -321,6 +347,23 @@ The key used to sign the access token JWT.
 
 [field]#Id token signing key# [optional]#Optional#::
 The key used to sign the Id token JWT.
+
+===== Refresh Token settings
+
+[.api]
+[field]#Refresh token duration# [required]#Required#::
+The length of time the refresh token is valid. Refresh tokens are typically long lived.
+
+[field]#Refresh token expiration# [optional]#Optional#::
+The [field]#Refresh token expiration# may be either a fixed or sliding window. By default the expiration of a refresh token is a fixed length of time from when it was originally issued. With a sliding window expiration, the expiration is calculated from the last time the refresh token was used.
++
+For instance, if a refresh token is issued at 1:00pm and has a duration of 60 minutes, if the expiration is fixed, the token will expire at 2:00pm. If, instead, the expiration is a sliding window, then if the refresh token is used at 1:55pm, it would then expire at 2:55pm. If it were then used at 2:50pm, it would expire at 3:50 pm.
+
+[field]#Refresh token usage# [optional]#Optional#::
+The [field]#Refresh token usage# may be reusable or one time use. By default, a token is reusable and the token does not change after it was issued. With a one time use token, the token value will be changed each time the token is used to refresh a JWT. This means the client must store the new value after each use.
+
+[field]#Refresh token revocation# [optional]#Optional#::
+The event or events that will cause refresh tokens to be revoked.
 
 
 ==== Password
@@ -424,11 +467,68 @@ When enabled the user's password hash will be modified if it does not match the 
 
 
 ==== Webhooks
-image::core-concepts/tenant-configuration-webhooks-settings.png[Tenant Configuration - Webhooks,width=1200,role=top-cropped]
+image::core-concepts/tenant-configuration-webhooks-settings.png[Tenant Configuration - Webhooks,width=1200,role=shadowed]
 
 ===== Table Columns
 
 include::docs/v1/tech/events-webhooks/_tenant-webhooks-table.adoc[]
+
+==== Security
+
+image::core-concepts/tenant-configuration-security-acl-catpcha.png[Tenant Configuration - Security: ACL and Captcha,width=1200,role=bottom-cropped]
+
+===== Login API settings
+
+[.api]
+[field]#Require an API key# [optional]#Optional#::
+When enabled the Login API will require an API key. This is functionally equivalent to requiring client authentication during OAuth2.
+
+===== Access control lists settings
+
+[.api]
+[field]#Access control list# [optional]#Optional#::
+The IP access control list that will be applied to this tenant.
+
+===== Captcha settings
+
+[.api]
+[field]#Enabled# [optional]#Optional#::
+When enabled, Captcha is used to help increase security of a form submission on the FusionAuth themed pages.
+
+[field]#Method# [required]#Required#::
+The type of Captcha to use. FusionAuth supports `Google reCAPTCHA v2`, `Google reCAPTCHA v3`, `hCaptcha`, and `hCaptcha Enterprise`.
+
+[field]#Secret key# [required]#Required#::
+The secret key for this Captcha service.
+
+[field]#Site key# [required]#Required#::
+The site key for this Captcha service.
+
+[field]#Site key# [optional]#Optional#::
+The threat score threshold for this Captcha service if required. If it is not used by this Captcha service then the value will be ignored.
+
+image::core-concepts/tenant-configuration-security-domains-rate-limiting.png[Tenant Configuration - Security: Blocked domains and rate limiting,width=1200,role=top-cropped]
+
+===== Blocked domain settings
+
+[.api]
+[field]#Blocked domains# [optional]#Optional#::
+One or more line separated domains that are not allowed to register when self service is enabled. For example, you may wish to disallow your company domain to prevent users employees using the self-service registration form, or to prevent end users from attempting to create an account using a company email address.
+
+===== Rate limit settings
+
+[.api]
+[field]#Action#::
+The action to be rate limited.
+
+[field]#Enabled#::
+When enabled, the corresponding action will be rate limited when the [field]#limit# value has been exceeded within the specified [field]#time period#.
+
+[field]#Limit#::
+The number of allowed attempts within the [field]#time period# before an action will be rate limited
+
+[field]#Time period#::
+The window of time that the [field]#limit# is evaluated against when determining if an action should be rate limited.
 
 
 ==== Advanced
@@ -444,6 +544,9 @@ The number of seconds before the OAuth2 Authorization Code is no longer valid to
 [field]#Change Password# [required]#Required#::
 The number of seconds before the Change Password identifier is no longer valid to complete the Change Password request.
 
+[field]#Device Grant Codes# [required]#Required#::
+The number of seconds before the device_code and user_code are no longer valid to be used to complete the Device Code grant.
+
 [field]#Email Verification# [required]#Required#::
 The number of seconds before the Email Verification identifier is no longer valid to complete the Email Verification request.
 
@@ -456,8 +559,14 @@ The number of seconds before the One Time Password identifier is no longer valid
 [field]#Passwordless Login# [required]#Required#::
 The number of seconds before the Passwordless Login identifier is no longer valid to complete a Login request.
 
+[field]#Pending account link# [required]#Required#::
+The number of seconds before the Pending account link is no longer valid to complete an account link request.
+
 [field]#Registration Verification# [required]#Required#::
 The number of seconds before the Registration Verification identifier is no longer valid to complete the Registration Verification request.
+
+[field]#SAMLv2 AuthN request# [required]#Required#::
+The number of seconds before the SAMLv2 AuthN request is no longer valid to complete the SAMLv2 login request.
 
 [field]#Setup Password# [required]#Required#::
 The number of seconds before the Setup Password identifier is no longer valid to complete the Change Password request.
@@ -465,11 +574,11 @@ The number of seconds before the Setup Password identifier is no longer valid to
 [field]#Two Factor Login# [required]#Required#::
 The number of seconds before the Two Factor identifier is no longer valid to complete a Two Factor login request.
 
+[field]#Two Factor one-time code# [required]#Required#::
+The number of seconds before the Two Factor one-time code used to enable or disable a two-factor method is no longer valid.
+
 [field]#Two Factor Trust# [required]#Required#::
 The number of seconds before the Two Factor Trust is no longer valid and the user will be prompted for Two Factor during login.
-
-[field]#Device Grant Codes# [required]#Required#::
-The number of seconds before the device_code and user_code are no longer valid to be used to complete the Device Code grant.
 
 
 image::core-concepts/tenant-configuration-extId-generation.png[Tenant Configuration - External Identifier Generation,width=1200,role=shadowed]
@@ -483,17 +592,26 @@ The length and type of characters of the generated code used in the Change Passw
 [field]#Email Verification# [required]#Required#::
 The length and type of characters of the generated code used in the Email Verification flow.
 
+[field]#Email Verification one-time code# [required]#Required#::
+The length and type of characters of the generated code used for Email Verification one-time codes.
+
 [field]#Passwordless Login# [required]#Required#::
 The length and type of characters of the generated code used in the Passwordless Login flow.
 
 [field]#Registration Verification# [required]#Required#::
 The length and type of characters of the generated code used in the Registration Verification flow.
 
+[field]#Registration Verification one-time code# [required]#Required#::
+The length and type of characters of the generated code used for Registration Verification one-time codes.
+
 [field]#Setup Password# [required]#Required#::
 The length and type of characters of the generated code used in the Setup Password flow.
 
 [field]#Device Grant User Code# [required]#Required#::
 The length and type of characters of the generated user code used in the Device Authorization Grant flow.
+
+[field]#Two-Factor one-time code# [required]#Required#::
+The length and type of characters of the generated code used for Two-Factor one-time codes.
 
 
 ===== SMTP Settings Form Fields
