@@ -266,3 +266,13 @@ or, if you want to see everything:
 ```
 bundle exec jekyll algolia --dry-run --verbose
 ```
+
+## Data Driven Pages
+
+Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file. 
+
+Examples of that are the customers page and the quotes widget.
+
+You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps.
+
+The theme pages are kinda complex becuase they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
