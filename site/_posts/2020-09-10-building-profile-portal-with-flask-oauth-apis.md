@@ -85,7 +85,7 @@ These changes ensure that after the user signs in to FusionAuth, they can be sen
 
 ## Setting up FusionAuth using a Kickstart file
 
-Instead of manually setting up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use Kickstart here [https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/). Here's an example Kickstart file [https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-flask-registration-forms.json](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-flask-registration-forms.json) which sets up FusionAuth for this tutorial.
+Instead of manually setting up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use Kickstart here [https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/). Here's an example Kickstart file [https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-flask-registration-forms.json](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/python-flask-registration-forms.json) which sets up FusionAuth for this tutorial.
 
 
 ## Setting up the python virtual environment
