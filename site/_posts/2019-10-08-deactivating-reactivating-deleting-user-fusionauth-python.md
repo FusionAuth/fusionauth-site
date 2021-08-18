@@ -94,6 +94,10 @@ Copy it into a text editor and set it off to the side. We'll be using it in a mo
 
 {% include _image.liquid src="/assets/img/blogs/terry-test-account.png" alt="Terry test user info" class="img-fluid" figure=false %}
 
+## Setting up FusionAuth using a Kickstart file
+
+Instead of manually setting up FusionAuth, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/matt/kickstart-python/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
+
 ## How to deactivate a user with FusionAuth Python client library
 
 Now that we have our test user Id credentials, open up another instance of your text editor or open your favorite Python IDE and let's create a new application. We'll call this application `deactivate.py`.
