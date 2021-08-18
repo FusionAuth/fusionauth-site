@@ -183,20 +183,14 @@ end tell
 
 ## Shell script for capturing sceenshots 
 fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
-- Sizing and moving Safari window
-- Capturing screenshot 
+- Sizing and moving the Safari window
+- Capturing the screenshot 
 - Resizing the screenshot image
 - Compressing the image using either pngquant or Tiny PNG
 - Moving the image to an appropriate folder
  
 ```bash
-
-    ./fa-screenshot.sh  [-s] [-t] [-d] <destination folder> [-h]
-
-   -s  Silent mode
-   -t  Use TinyPNG API instead of pngquant library
-   -d  Move screenshots to given folder
-   -h  Print this usage
+./fa-screenshot.sh -h # for usage info
 ```
 
 
