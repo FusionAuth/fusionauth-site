@@ -23,7 +23,7 @@ There are scenarios where a user does not yet exist, or is in the process of bei
 
 To solve this, we have created the possibility of opening an API that allows a JWT to be created with a payload defined by the API called.  This would require an API key, so the caller must be privileged.  
 
-Here is an example of the endpoint at work: 
+When you call the endpoint with the below input: , you'll get back a signed JWT, which, when decoded and validated, will look like the below output: "
 
 Endpoint: /api/jwt
 
@@ -37,39 +37,41 @@ Endpoint: /api/jwt
 }
 ```
 
-Using this ability, a new user on your app can start interacting with the app as a unique user, before needing to create an account. Then, once they do create an account, their unique Id is translated onto their profile. 
+Using this ability, a new user on your app can start interacting with the app as a unique user, before needing to create an account. Then, once they do create an account, the unique Id can be used to ensure any saved profile data is retained. 
 
 ## Threat Detection Feature
 
+This is a paid feature, available to enterprise-level customers only. If you already on enterprise, turning this feature on requires a support ticket, as we are rolling this out over time. 
+
 Flagging and responding to suspicious behavior is a huge advantage in any cybersecurity product, so naturally, we incorporated this functionality into the ever-evolving FusionAuth platform. In this release of FusionAuth, we use IP location data, user fingerprinting, and other indicators around user events to signal suspicious behavior. 
 
-While the entirety of this feature is too large to cover here, we want to call out a few notable aspects:
+While the entirety of this feature is too large to cover here, we want to call out a few notable aspects.
 
 Customizable rate limiting per user for specific requests such as:
- - Failed login
- - Forgot password
- - Send email verification
- - Send passwordless login
- - Send registration verification
- - Send two-factor
+ - Failed login.
+ - Forgot password.
+ - Send email verification.
+ - And more.
 
  {% include _image.liquid src="/assets/img/blogs/release-1-30/rate-limiting-2.png" alt="Example of the rate limiting settings on the admin dashboard." class="img-fluid" figure=false %}
  
 Captcha - Uses additional (re)captcha to guard against brute force attacks. 
-- Adds a (re)captcha for login pages which use an email/password combination
-- Adds support for Google ReCaptcha v2, Google ReCaptcha v3, HCaptcha and Hcaptcha Enterprise
+- Adds a (re)captcha for login pages.
+- Includes support for Google ReCaptcha v2, Google ReCaptcha v3, HCaptcha and Hcaptcha Enterprise.
 
-IP Location Services
-- Includes the IP address of the geographic location where a Forgot/Reset Password email was created, so the recipient can identify if the location is genuinely their request or not. 
-- Flags suspicious IP addresses on login and sends an email to notify the user of a new login with the IP's approximate location
+Location aware security
+- Includes the geographic location where a Forgot/Reset Password email was created, so the recipient can identify if the location is genuinely their request or not. 
+- Flags suspicious IP addresses on login and sends an email to notify the user of a new login with the IP's approximate location.
 - Calculates 'impossible travel' to see if a user could realistically login in different locations around the globe in a reasonable time frame. (This does not provide support if your user is a quantum being...)
-- With unexpected IP addresses, sends a user an email to notify them of a new login with an approximate location of the IP address. 
+- When a login request occurs from an unexpected IP addresses, sends a user an email to notify them of a new login with an approximate location of the IP address. 
 
 To learn more, you can take a look at our [release notes](/docs/v1/tech/release-notes/#version-1-30-0). 
 
 ## Webhook Events
 
 We've added 38 webhook events to help you monitor what is going on with your app.  These webhooks cover an entire breadth of creating, updating, and deleting a user, as well as the user registration and password reset lifecycle. Lastly, we've added some webhook events to monitor any kickstart files you may create and also webhooks to monitor the behavior of JWTs. 
+
+We're working on the documentation for these webhooks, which will be available [here](https://fusionauth.io/docs/v1/tech/apis/webhooks/#overview) shortly.
 
 ## The rest of it
 
