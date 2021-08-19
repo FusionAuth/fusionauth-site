@@ -25,6 +25,7 @@ section [Deactivating, Reactivating, and Deleting A FusionAuth User in Python](/
 1. Configuring FusionAuth, creating an application and API key
 1. Creating a new user through the FusionAuth admin UI
 1. Registering a user to an application through the FusionAuth admin UI
+1. Setting up FusionAuth using a Kickstart file
 1. Installing Python PIP package manager
 1. Installing VENV virtual environment for Python
 1. Installing the FusionAuth Python client library
