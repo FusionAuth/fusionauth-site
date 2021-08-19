@@ -254,9 +254,9 @@ Update the `relatedTag` value to match the tag added to the blog post.
 
 ## Search
 
-We use algolia to search.
+We use algolia to search. This only searches content on the public site, so if you are running locally, it won't fully work. (It'll find local versions of public content, but not unpublished content.)
 
-To do a dry run:
+To do a dry run of the search indexing to see what will content be indexed on the next push:
 
 ```
 bundle exec jekyll algolia --dry-run 
