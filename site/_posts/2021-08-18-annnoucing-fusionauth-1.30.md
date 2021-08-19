@@ -45,13 +45,15 @@ Flagging and responding to suspicious behavior is a huge advantage in any cybers
 
 While the entirety of this feature is too large to cover here, we want to call out a few notable aspects:
 
-Rate limiting per user for specific requests such as:
+Customizable rate limiting per user for specific requests such as:
  - Failed login
  - Forgot password
  - Send email verification
  - Send passwordless
  - Send registration verification
  - Send two-factor
+
+ {% include _image.liquid src="/assets/img/blogs/release-1-30/rate-limiting-2.png" alt="Example of the rate limiting settings on the admin dashboard." class="img-fluid" figure=false %}
  
 Captcha - Uses additional (re)captcha to guard against brute force attacks. 
 - Adds a (re)captcha for login pages which use an email/password combination
