@@ -49,7 +49,7 @@ Customizable rate limiting per user for specific requests such as:
  - Failed login
  - Forgot password
  - Send email verification
- - Send passwordless
+ - Send passwordless login
  - Send registration verification
  - Send two-factor
 
