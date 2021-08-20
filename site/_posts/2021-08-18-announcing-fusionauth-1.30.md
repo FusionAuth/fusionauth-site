@@ -5,7 +5,7 @@ description: The FusionAuth 1.30 releases a robust suite of Advanced Threat Dete
 author: Akira Brand
 image: blogs/release-1-30/product-update-fusionauth-1-30.png
 category: blog
-tags: topic-troubleshooting, feature-advanced-threat-detection
+tags: topic-troubleshooting feature-advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 
