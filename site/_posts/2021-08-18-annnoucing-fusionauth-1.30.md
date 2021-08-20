@@ -53,7 +53,7 @@ Customizable rate limiting per user for specific requests such as:
  - Send email verification.
  - And more.
 
- {% include _image.liquid src="/assets/img/blogs/release-1-30/rate-limiting-2.png" alt="Example of the rate limiting settings on the admin dashboard." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/release-1-30/rate-limiting.png" alt="Example of the rate limiting settings on the admin dashboard." class="img-fluid" figure=false %}
  
 Captcha - Uses additional (re)captcha to guard against brute force attacks. 
 - Adds a (re)captcha for login pages.
