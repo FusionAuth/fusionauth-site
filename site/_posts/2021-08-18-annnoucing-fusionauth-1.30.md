@@ -23,18 +23,30 @@ There are scenarios where a user does not yet exist, or is in the process of bei
 
 To address this, the new release includes an API allowing a JWT to be created without a corresponding user.   
 
-When you call the `/api/jwt` endpoint, you'll get back a signed JWT, which, when decoded and validated, will look like the below output:  
+When you call the `/api/jwt` endpoint with a JSON payload, you'll get back a signed JWT, which, when decoded and validated, will look like the below output:  
 
-Endpoint: /api/jwt
+```
+// header 
+{
+  "alg": "HS256",
+  "typ": "JWT",
+  "kid": "vEp2zjZX45e1SvPuVaZfbkIv_V6vpVPs"
+}
+// payload
+{
+  "exp": 1629495785,
+  "iat": 1629495485,
+  "iss": "piedpiper.com",
+  "jti": "09c723b1-cb85-4130-bd27-e435eb4f35c3",
+  "id": "cksknqcp90002au664j1j1cul"
+}
 
 ```
 
-{
-  "claims": {
-     "roles": [ "awesome" ],
-     "id": 42
-   }
-}
+If you want to try this out, we wrote a curl script for you, which you need to modify with your own FusionAuth API key, a URL to your FusionAuth app, and a payload of your choosing.  
+
+```
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: ..." 'https://local.fusionauth.io/api/jwt/vend' -d '{"claims": {"id":"cksknqcp90002au664j1j1cul", "iss": "piedpiper.com"}, "timeToLiveInSeconds":300}'
 ```
 
 Using this ability, a new user on your app can start interacting with the app as a unique user, before needing to create an account. Then, once they do create an account, the unique Id can be used to ensure any saved profile data is retained. 
