@@ -1,20 +1,30 @@
 ---
 layout: doc
-title: Gate Users Until They Verify Their Email
-description: How to gate users' email accounts until verified.
+title: Gate Users Application Registration
+description: How to gate users on the application level until verified.
 ---
 
 == Overview
 
-As of version 1.27.0, FusionAuth can be configured to gate users' accounts until their email has been verified. While users successfully authenticate, they won't be able to proceed further until they have verified possession of the email address they registered with.
+As of version 1.27.0, FusionAuth can be configured to gate users' accounts until they verify by clicking a link allowing them into an application. While users successfully authenticate, they won't be able to proceed further until they have verified their registration via email.
 
-To enable email verification gating, do the following:
+=== Why do I need this?
+
+
+Most folks will be happy to have email verification gating(see adjacent tutorial link:/docs/v1/tech/tutorials/gate-accounts-until-verified[here]).  However, there are times when you want to enforce opt-in behavior to specific applications. A good example of this might be Google. A YouTube user and a Drive user are part of the same parent company (tenant, to follow our metaphor within FusionAuth).  However, Google will require a user to complete an application registration to allow the same user on YouTube access to Drive.  Without this step, users may find it alarming their logins work for both Youtube and Drive.
+
+image::tutorials/gate-accounts-until-verified/application-registration-google.png[Google Applications Web,width=600,role=bottom-cropped custom]
+
+=== To Enable
+
+To enable registration verification gating, do the following:
 
 * Configure the tenant with your email server
-* Configure the tenant to enable email gating
-* Optionally customize the email verification template
+* Configure the application to enable registration gating
+* Optionally customize the registration verification template
 * Enable self service registration
 * Configure your application with a redirect URL (OAuth tab)
+
 
 Let's step through each of these, but first, there are some required prerequisites.
 
@@ -38,28 +48,21 @@ Ensure a test email is delivered. If you have any issues, follow the steps in th
 
 Save the configuration.
 
-== Enable Email Verification Gating
+== Enable Registration Verification Gating
 
-Navigate to [breadcrumb]#Tenants -> Your Tenant# and then select the [breadcrumb]#Email# tab. Scroll to the [breadcrumb]#Email verification settings# section.
+Navigate to [breadcrumb]#Applications-> Your Application# and then select the [breadcrumb]#Registration# tab. Scroll to the [breadcrumb]#Registration verification settings# section.
 
-* Enable [field]#Verify email#.
-* Choose your email template. The default template is `Email verification`, and that will work fine for this tutorial.
-* Update the [field]#Verification strategy#. This can be either `ClickableLink` or `FormField`. The former sends an email with a link to verify the user's address. The latter emails a code which the user will provide to FusionAuth. For this tutorial, use `ClickableLink`.
+* Enable [field]#Verify registration#.
+* Choose your email template. The default template is `Registration verification`, and that will work fine for this tutorial.
+* Update the [field]#Verification strategy#. This can be either `ClickableLink` or `FormField`. The former sends an email with a link to verify the user's address and intent to register for your application. The latter emails a code which the user will provide to FusionAuth. For this tutorial, use `ClickableLink`.
 * Ensure that the [field]#Unverified behavior# value is `Gated`.
 
 After these steps, you should end up with a configuration screen that looks like this:
 
+// TODO : JOSH : Update photo
 image::tutorials/gate-accounts-until-verified/tenant-email-verification-settings.png[Tenant email verification settings,width=1200,role=bottom-cropped]
 
 Make sure you save the configuration.
-
-== Customize the Email Verification Template
-
-Navigate to [breadcrumb]#Customizations -> Email Templates#. Edit the `Email Verification` template by clicking on the blue "Edit" button.
-
-Modify the HTML and text templates as desired and then save them. You can also localize the messages.
-
-image::tutorials/gate-accounts-until-verified/email-template-customization.png[Customizing the email verification email template,width=1200]
 
 == Configure the Application
 
@@ -69,7 +72,7 @@ Enable self registration by selecting the [breadcrumb]#Registration# tab, and th
 
 [NOTE]
 ====
-You can create a user with an unverified email address in other ways than self service registration. However, self service registration is the simplest way to create a user without a verified email.
+You can create a user with an unverified registration in other ways than self service registration. However, self service registration is the simplest way to create a user without a verified registration.
 ====
 
 Enable self service registration and configure the displayed and required fields as desired.
@@ -90,30 +93,44 @@ Look for the [field]#Registration URL#. It'll be something like `https://local.f
 
 At the same time, find the [field]#OAuth IdP login URL#, and copy that as well.
 
+== Customize the Registration Verification Template
+
+Navigate to [breadcrumb]#Customizations -> Email Templates#. Edit the `Registration Verification` template by clicking on the blue "Edit" button.
+
+Modify the HTML and text templates as desired and then save them. You can also localize the messages.
+
+// TODO : JOSH : Update photo
+image::tutorials/gate-accounts-until-verified/registration-template-customization.png[Customizing the registration verification email template,width=1200]
+
+
 == Test It Out
 
 Now, test out the functionality. Register a new account. Make sure to use a different browser or incognito mode so that the admin account you logged in with while configuring FusionAuth doesn't interfere with new user registration.
 
-Visit the registration URL copied above. You'll be prompted to register. Fill out the form with a valid email address. After registration is complete, you'll receive an email prompting you to verify the email address.
+Visit the registration URL copied above. You'll be prompted to register. Fill out the form with a valid email address. After registration is complete, you'll receive an email prompting you to verify the registration.
 
 Here is the email in the mailcatcher user interface:
 
-image::tutorials/gate-accounts-until-verified/verification-email-mailcatcher.png[Verification email in mailcatcher,width=1200,role=bottom-cropped]
+// TODO : JOSH : Update photo
+image::tutorials/gate-accounts-until-verified/verification-registration-email-mailcatcher.png[Verification email in mailcatcher,width=1200,role=bottom-cropped]
 
-This user account will be gated and unable to completely log in if you have registered but not yet verified the email address. In your browser where you registered, you'll see a page similar to below:
+This user account will be gated and unable to completely log in if you have not verified the registration by verifiying through email. In your browser where you registered, you'll see a page similar to below:
 
-image::tutorials/gate-accounts-until-verified/email-verification-gate-screen-clickable-link.png[Clickable link default email verification gate screen,width=1200,role=bottom-cropped]
+// TODO : JOSH : Update photo
+image::tutorials/gate-accounts-until-verified/registration-verification-gate-screen-clickable-link.png[Clickable link default registratiohn verification gate screen,width=1200,role=bottom-cropped]
 
 To test the gating, open a different browser (not a window, but an entirely different browser) and visit the login URL copied above. Enter the email and password for the user you just registered.
 
-You'll be sent to the same email verification gate page.
+You'll be sent to the same registration verification gate page.
 
-No matter which API or hosted login page you use, no JWT will be issued until the user has been verified. The user will continue to see the verification prompt when they log in until then.
+No matter which API or hosted login page you use, no JWT will be issued until the user registration has been verified. The user will continue to see the verification prompt when they log in until then.
 
-If an API is being used to authenticate the user, the API will return a status code indicating email verification has not yet occurred. Please see the link:/docs/v1/tech/apis/login/[Login API] for more details.
+If an API is being used to authenticate the user, the API will return a status code indicating registration verification has not yet occurred. Please see the link:/docs/v1/tech/apis/login/[Login API] for more details.
 
-If you view the user in the administrative user interface, you'll see a question mark next to their email address. This indicates that their email has not yet been verified.
+If you view the user in the administrative user interface, and click on the `source` tab you should see the following attributes on the user.
 
+
+// TODO : JOSH : Update photo
 image::tutorials/gate-accounts-until-verified/unverified-user-details-screen.png[Unverified user details screen,width=1200,role=bottom-cropped]
 
 Once you have verified the email address by clicking on the link, you can now login and will be sent to the configured redirect URL.
@@ -127,3 +144,5 @@ Now that you've successfully set up gated email verification, take the next step
 * Have the user submit a passcode rather than click a link. With this option, the user will be prompted with a screen similar to the below image.
 
 image::tutorials/gate-accounts-until-verified/email-verification-gate-screen-code-entry.png[Code entry default email gate screen,width=1200,role=bottom-cropped]
+
+include::/docs/v1/tech/tutorials/_gated_workflows_troubleshooting.adoc
