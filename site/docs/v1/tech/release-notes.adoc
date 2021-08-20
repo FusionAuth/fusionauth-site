@@ -38,10 +38,13 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 === Fixed
 * Unable to enable `user.action` event at the tenant using the UI. If you encounter this issue, you may work around it by using the Tenant API.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1307[GitHub Issue #1307]
-* If you make ann API request to `/api/two-factor/login` with an empty JSON body, an exception will occur instead of a validation error being returned with a `400` status code.
+* If you make an API request to `/api/two-factor/login` with an empty JSON body, an exception will occur instead of a validation error being returned with a `400` status code.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1330[GitHub Issue #1330]
 * When using an IdP with a linking mode other than Create Pending Link, the token may not correctly be stored. If you previously had been using the token stored on the User Registration, and are now looking for it in the Identity Provider Link, you may not find it. This fix resolves the issue.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1341[GitHub Issue #1341]
+* When you are using FusionAuth as a SAML v2 IdP with Redirect bindings, you were unable to use idp_hint to bypass the login page to federate to another provider.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1331[GitHub Issue #1331]
+
 
 === Changed
 * New themed page added for Unauthorized access.
@@ -49,7 +52,17 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === New
 * JWT Vending machine
-* IP Access Control. Requires Threat Detection feature.
+** This allows a JWT to be created for a not-yet-existing user with a payload defined by the API caller.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/525[GitHub Issue #525]
+* Modified a core macro in the theme - [@helpers.input] to accept a checkbox. This will break anyone who tries to copy paste the checkbox usage without modifying their _helpers.ftl. 
+* FusionAuth wasn't awesome enough, so we added a robust Threat Detection feature for enterprise customers. This feature includes: 
+* IP Access Control for API keys
+** This allows domains or API addresses to be safelisted to use an API key.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/933[GitHub Issue #933]
+*** Rate Limiting
+*** Captcha
+*** IP Access Control Lists/blocking
+*** Blocked domains
 * Rate limiting per user for the following requests:
 ** Failed login (only used if Failed Login configuration is not in use)
 ** Forgot password
@@ -57,13 +70,51 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Send passwordless
 ** Send registration verification
 ** Send two-factor
-* Captcha. Requires Threat Detection feature.
-** Support for Google ReCaptcha v2, Google ReCaptcha v3, HCaptcha and HCaptcha Enterprise
-* IP location. Requires Threat Detection feature.
-* Impossible travel calculation during login. Requires Threat Detection feature.
-* More emails
-* More webhook events
-** Kickstart Success `kickstart.success`
+* Captcha - uses additional (re)captca to guard against brute force attacks.
+** This adds (re)captcha for login pages using an email/password combination. 
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/278[GitHub Issue #278]
+** Add support for Google ReCaptcha v2, Google ReCaptcha v3, HCaptcha and HCaptcha Enterprise
+* IP location 
+** Includes IP address in Forgot/Reset Password emails so the recipient can know where the request originated in case they did not request it. 
+** Flags suspicious IP addresses and sends an email to notify user of a new login with the IP's approximate location
+** With unexpected IP addresses, such as with geography, sends an email to notify the user of a new login with the approximate location of the IP address
+* Lamda to limit registrations - ie limit self-service registration in a tenant or application for an email domain. This allows you to limit end users registering with your company's email domain.
+* Device fingerprinting and analysis
+** Include IP addresses in Forgot/Reset Password emails so the recipient can know where the request originated from in case they did not request it. 
+** Limit sessions per device - ie user can only log in on one device at a time
+* FusionAuth Cloud Features
+** Enhanced DDoS monitoring and mitigation
+** Rules based response to DDoS threats
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/905[GitHub Issue #905]
+* Webhook events: 
+** User Actions - when a moderator or admin takes an action on a user
+** User Bulk Create - when multiple users are created as the result of the Import API
+** User Create - when a user is created
+** User Update - when a user is updated
+** User Deactivate - when a user is deactivated
+** User Reactivate - when a user is reactivated
+** User Delete - when a user is deleted
+** User Email Verified - when a user verifies their email address
+** User Login Success - when a user successfully completes login
+** User Login Failure - when a user fails to complete login
+** User Password Breach - when Reactor detects a user is using a potentially breached password
+** User Registration Create - when a new user registration is created
+** User Registration Update - when a user registration is updated
+** User Registration Delete - when a user registration is deleted
+** User Registration Verified - when a user completes registration verification
+** JWT Public Key Update - when a JWT RSA Public / Private keypair used for signing may have been updated.
+** JWT Refresh - when an access token is refreshed using a refresh token
+** JWT Refresh Token Revoke - when a refresh token (or multiple tokens) are revoked
+** User Password Updated - when the user API modifies a password 
+** User Password Reset Started - when the forgot password API was called
+** User Password Reset Sent - when the email is sent with a reset link or code
+** User Password Reset Landed - when then user arrives on the password reset page
+** User Password Reset Success - when the password has been updated using the one time code
+** Kickstart Success - when a kickstart file is fully executed
+** See the link:/docs/v1/tech/#eventswebhooks/[Event Webhooks] documentation for additional details. 
+* Issues resolved by these webhook events: 
+** User Password Reset Flow - https://github.com/FusionAuth/fusionauth-issues/issues/1308[GitHub Issue #1308]
+** Kickstart - https://github.com/FusionAuth/fusionauth-issues/issues/1178[GitHub Issue #1178]
 
 === Enhancements
 * Search on `oldValue`, `newValue` and `reason` in the Audit Log.
@@ -72,6 +123,10 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** See the link:/docs/v1/tech/themes/#oauth-device-complete[Device Complete] themed page documentation for additional details.
 * More themed pages will have access to the currently logged in user using the `currentUser` variable.
 ** See the link:/docs/v1/tech/themes/[Theme] documentation for additional details.
+* Alert on unusual user behaviour around password reset
+* Add an IP ACL to an API key
+** Allows you to assign an IP ACL to an existing API key which limits the usage by IP address.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1325[GitHub Issue #1325]
 
 [role=release-note]
 
@@ -195,7 +250,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 === Changed
 * You may no longer build a synthetic email address using a lambda for an OpenID Connect identity provider. This has been removed because you may now link a user by username or create a link w/out a username or an email to an existing FusionAuth user. If you are using this feature, you may need to plan for a migration to this new behavior. If you have a support contract with FusionAuth, please reach out and ask for additional information.
 * When using FusionAuth as a SAML IdP, FusionAuth will now accept `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent` in addition to `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`. This should allow FusionAuth to work with SAML v2 service providers that only support the persistent NameID format.
-* Tokens returned by IdPs are no longer stored on the User Registration object in the `tokens` field. Each token is now stored with the IdP link for the User and the IdP. See the Link API for additional details.
+* Tokens returned by IdPs are no longer stored on the User Registration object in the `tokens` field. Each token is now stored with the IdP link for the User and the IdP. See the link:/docs/v1/tech/apis/identity-providers/links/[Link API] for additional details.
 
 === New
 * Reindex API
@@ -203,13 +258,13 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** See the link:/docs/v1/tech/apis/system/#rebuild-the-elasticsearch-index[Reindex API] for usage.
 * Account Link API
 ** This API will allow you to link and un-link users in 3rd party identity providers with a FusionAuth user.
-** See the link:/docs/v1/tech/apis/identity-providers/links/[Link APIs] for usage.
+** See the link:/docs/v1/tech/apis/identity-providers/links/[Link API] for usage.
 * IdP Linking options
 ** Each Identity Provider may now be configured with a linking strategy. The strategies will include linking by email, username, anonymous or a link to an existing user.
 ** Linking by username is now supported. There is a higher risk of account takeover using this strategy, you should use caution when using this feature.
-** Tokens from identity providers should now be retrieved from the link, rather than the registration.
+** Tokens from identity providers should now be retrieved from the link, rather than the registration. More information can be found under `identityProviderLink.token` response value link:/docs/v1/tech/apis/identity-providers/links/#retrieve-a-link[here]
 * Email Send API allows an email address in the To field instead of only allowing FusionAuth userIds
-** See the Email Send API for additional details.
+** See the link:https://fusionauth.io/docs/v1/tech/apis/emails/#send-an-email[Email Send API] for additional details.
 * SAML Identity Provider can now be configured to use any NameID format. Previously only the Email NameID format was utilized.
 ** This should allow the SAML identity provider configuration to be more flexible and work with additional SAML identity providers.
 
@@ -217,7 +272,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * When FusionAuth is acting as a SAML Identity Provider, you may now send a NameID format of Email or Persistent.
 ** This should allow FusionAuth to work with additional SAML service providers such as Slack.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/522[GitHub Issue #522]
-* The Email Send API now allows you to send to a user that does not yet exist in FusionAuth by allowing you to specify an email address for the `To:` field.
+* The link:https://fusionauth.io/docs/v1/tech/apis/emails/#send-an-email[Email Send API] now allows you to send to a user that does not yet exist in FusionAuth by allowing you to specify an email address for the `To:` field.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/743[GitHub Issue #743]
 ** See the  link:/docs/v1/tech/apis/login[Email Send API] for additional details.
 * The Facebook and Google Identity Providers will now default to using a redirect instead of a popup for login. All existing configurations will be migrated to use the popup dialog to remain consistent with the previous behavior. With this update you may now also use the `idp_hint` parameter to login with Facebook and Google.
@@ -243,7 +298,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1228[GitHub Issue #1228], thanks to https://github.com/flangfeldt[@flangfeldt] for reporting!
 
 === Tech Preview
-* New IdPs for EpicGames, Nintendo, Sony PlayStation Network, Steam, Twitch, Xbox
+* New IdPs for EpicGames, Nintendo, Sony PlayStation Network, Steam, Twitch, Xbox - see link:/docs/v1/tech/identity-providers/[link] for more information
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1205[GitHub Issue #1205] - Sony Playstation Network
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1206[GitHub Issue #1206] - Nintendo
 *** Note, the Nintendo IdP is not yet fully functional. This will be completed in a patch release.
@@ -253,7 +308,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1210[GitHub Issue #1210] - Xbox
 * Development kickstart reset. When you are running in `development` runtime mode, you'll see a `Reset` menu item in the System navigation menu.
 ** See [breadcrumb]#System -> Reset#
-* There is now a JWT populate lambda for the Client Credentials Grant
+* There is now a JWT populate lambda for the Client Credentials Grant. See link:/docs/v1/tech/lambdas/client-credentials-jwt-populate/[link] for more information.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1233[GitHub Issue #1233]
 
 [role=release-note]
