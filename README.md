@@ -3,7 +3,7 @@
 https://fusionauth.io
 
 
-The FusionAuth site is open source, found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
+The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
 
 Thanks!
  - FusionAuth team
@@ -30,7 +30,7 @@ Install these programs:
 
 ### Setup Savant
 
-We use the Savant build tool, in order to build and run this project, you'll need to first setup Savant.
+We use the Savant build tool. In order to build and run this project, you'll need to first setup Savant.
 
 Linux or macOS
 
@@ -71,7 +71,7 @@ fusionauthWebsiteStyleVersion = "0.2.27-{integration}"
 ```
 * then you can commit this and other folks can pull down your changes
 
-Each time you make a css change, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
+Each time you make a CSS change, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
 
 #### Releasing CSS changes
 
