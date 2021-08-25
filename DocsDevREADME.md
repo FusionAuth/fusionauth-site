@@ -40,8 +40,9 @@ Here are some guidelines to follow when writing documentation (everything under 
     ```
 
 
-- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_`.
+- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
 - If you are including a file in the docs/asciidoctor, do not prepend the include file path with `/`. Instead, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
+- If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers. See the 5 minute guide for an example.
 - If a doc gets long consider adding a table of contents in the top section or breaking it into multiple documents. To generate a table of contents from section headers, run this script:
 ```
 egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
@@ -50,6 +51,11 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 For API docs:
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
+- If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
+  ```
+  This field is required when [field]#theOtherField.enabled# is set to true.
+  ```
+- If a feature is only available when using a paid edition, use the `shared/_premium-edition-blurb-api.adoc` fragment for API fields, and `shared/_premium-edition-blurb.adoc` for any other location where the feature is mentioned in docs.
 - If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
 
 For blog posts:
@@ -253,9 +259,9 @@ Update the `relatedTag` value to match the tag added to the blog post.
 
 ## Search
 
-We use algolia to search.
+We use algolia to search. This only searches content on the public site, so if you are running locally, it won't fully work. (It'll find local versions of public content, but not unpublished content.)
 
-To do a dry run:
+To do a dry run of the search indexing to see what will content be indexed on the next push:
 
 ```
 bundle exec jekyll algolia --dry-run 
