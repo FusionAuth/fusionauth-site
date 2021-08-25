@@ -31,7 +31,7 @@ FusionAuth also recently launched its [Advanced Multi-Factor Authentication](/do
 
 ### About FusionAuth
 
-FusionAuth is a complete identity and access management platform designed and built by security and identity experts to save development teams time and resources. It installs in minutes and lets devs implement complex standards and powerful features including login, registration, SSO, MFA, emails, localization, reporting, and much more. FusionAuth has been battle-tested in high-volume industries from finance to gaming and deployed on servers around the globe. Learn more at [www.fusionauth.io](/) 
+FusionAuth is a complete identity and access management platform designed and built by security and identity experts to save development teams time and resources. It installs in minutes and lets devs implement complex standards and powerful features including login, registration, SSO, MFA, emails, localization, reporting, and much more. FusionAuth has been battle-tested in high-volume industries from finance to gaming and deployed on servers around the globe. Learn more at [fusionauth.io](/) 
 
 ### Media Contact
 
