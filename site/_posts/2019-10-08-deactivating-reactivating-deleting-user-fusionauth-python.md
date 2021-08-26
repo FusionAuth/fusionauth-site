@@ -40,6 +40,9 @@ Did you know that you can deactivate, reactivate, or delete a user within your a
 - Terminal Access
 - Web Browser
 
+{% include _callout-tip.liquid content=
+"This tutorial has been updated and tested to work with version 1.28.0."
+%}
 
 ## Introduction to FusionAuth user management in Python
 
