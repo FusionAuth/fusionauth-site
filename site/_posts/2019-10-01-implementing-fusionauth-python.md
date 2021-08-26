@@ -3,7 +3,7 @@ layout: blog-post
 title: Implementing FusionAuth with Python - from setup to first app
 description: This is a step-by-step guide to building your first functional Python application and retrieving user profile information with FusionAuth.
 author: Amy Martin
-updated_date: 2021-07-01
+updated_date: 2021-08-23
 image: blogs/implementing-fusionauth-python/implementing-fusionauth-with-python-from-setup-to-first-app-header-image.png
 tags: client-python tutorial tutorial-python
 category: blog
@@ -17,7 +17,7 @@ Welcome to our FusionAuth Python Library introduction tutorial! Today we will ta
 Our goal is to demonstrate the basics of FusionAuth and let you verify your API credentials before diving into functional FusionAuth client library web applications using Python frameworks and micro frameworks like Django and Flask. Of course if you're already familiar with FusionAuth and have these libraries and dependencies installed, you can go ahead and skip to the next
 section [Deactivating, Reactivating, and Deleting A FusionAuth User in Python](/blog/2019/10/08/deactivating-reactivating-deleting-user-fusionauth-python)!
 
-**Most recently updated July 1, 2021.**
+**Most recently updated August 23, 2021.**
 
 ## What we'll cover
 
