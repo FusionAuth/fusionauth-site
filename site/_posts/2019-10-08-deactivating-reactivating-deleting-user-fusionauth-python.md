@@ -3,10 +3,10 @@ layout: blog-post
 title: Deactivating, reactivating, and deleting a FusionAuth user in Python
 description: This is a step-by-step guide to deactivate, reactivate, or delete a user within your applications using API calls from the FusionAuth Python client library.
 author: Amy Martin
-image: blogs/python-fusionauth-deactivate.png
+image: blogs/deactivating-reactivating-deleting-user-fusionauth-python/deactivating-reactivating-deleting-user-fusionauth-python-header-image.png
 tags: client-python tutorial tutorial-python
 category: blog
-updated_date: 2021-07-23
+updated_date: 2021-08-23
 excerpt_separator: "<!--more-->"
 ---
 
@@ -14,13 +14,15 @@ Did you know that you can deactivate, reactivate, or delete a user within your a
 
 <!--more-->
 
-**Most recently updated July 23, 2021.**
+**Most recently updated August 23, 2021.**
 
 ## What we'll cover
 
 1. Introduction to FusionAuth user management in Python
 1. Verifying server applications, libraries, and dependencies
 1. Obtaining a test user account Id
+1. Setting up FusionAuth using a Kickstart file
+1. Defining user actions
 1. How to deactivate a user
 1. How to reactivate a user
 1. How to delete a user
@@ -98,6 +100,14 @@ Copy it into a text editor and set it off to the side. We'll be using it in a mo
 
 Instead of manually setting up FusionAuth, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
 
+## Defining user actions
+
+**Deactivate:** Also known as a soft delete/account locking, will allow you to temporarily disable a user from logging in.
+
+**Reactivate:** Removes the locked status from the user.
+
+**Delete:** Also known as a hard delete, will remove all data for the user and cannot be undone. Beware!
+
 ## How to deactivate a user with FusionAuth Python client library
 
 Now that we have our test user Id credentials, open up another instance of your text editor or open your favorite Python IDE and let's create a new application. We'll call this application `deactivate.py`.
@@ -147,6 +157,8 @@ Save the program to your server, make sure that `venv` is running, and execute t
 Now, let's head on over to a web browser, and browse to "Users" so that we can check out our user. You should notice that the account associated with the user Id we provided is now locked. It will look something like this:
 
 {% include _image.liquid src="/assets/img/blogs/terry-example-locked.png" alt="Terry is now locked" class="img-fluid" figure=false %}
+
+When a user is locked, they can no longer log in to any applications, but they are not removed from the system. This is useful if you want to re-enable them later (perhaps after they've paid their bill).
 
 If your application was successful, congratulations! Continue on with user reactivation. If not, check your steps or review the error codes below.
 
@@ -230,7 +242,7 @@ Pop open your Python editor, and create a new file called `delete.py`. Import th
 from fusionauth.fusionauth_client import FusionAuthClient
 
 # You must supply your API key and URL here
-client = FusionAuthClient('YOUR-API', 'http://localhost:9011')
+client = FusionAuthClient('YOUR-API-KEY', 'http://localhost:9011')
 ```
 
 Now, add this section to the application, again replacing the `YOUR-USER-ID` with your test user's Id:
@@ -246,7 +258,7 @@ else:
 
 Save and execute your `delete.py` application. (**Caution:** Executing this action will actually delete the user.)
 
-If successful, you will get a response of `None` and the user will now be deleted from FusionAuth. You can test this again by refreshing the "Users" page in your browser.  
+If successful, you will get a response of `None` and the user will now be deleted from FusionAuth. You can test this again by refreshing the "Users" page in your browser and seeing that the user is no longer present.  
 
 ## Troubleshooting common errors
 
@@ -306,7 +318,7 @@ python test.py
 ```
 
 ### Additional error codes
-Didn't find your error here? Visit [https://fusionauth.i/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/troubleshooting](/docs/v1/tech/troubleshooting) for more troubleshooting suggestions. You can also ask a question on the [FusionAuth Forum](https://fusionauth.io/community/forum/) or open an issue on [Github](https://github.com/FusionAuth/fusionauth-issues/issues/new/choose). As always, if you have a support contract feel free to [contact FusionAuth support](mailto:support@fusionauth.io).
+Didn't find your error here? Visit [https://fusionauth.i/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/troubleshooting](/docs/v1/tech/troubleshooting) for more troubleshooting suggestions. You can also ask a question on the [FusionAuth Forum](https://fusionauth.io/community/forum/). As always, if you have a support contract feel free to [contact FusionAuth support](https://account.fusionauth.io/account/support).
 
 
 ## Summary
