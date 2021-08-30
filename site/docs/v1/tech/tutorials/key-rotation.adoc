@@ -4,7 +4,7 @@ title: Key Rotation
 description: Learn how to rotate keys
 ---
 
-In FusionAuth, there are two types of keys, API keys and JWT signing keys. 
+In FusionAuth, there are multiple types of keys, including API keys and JWT signing keys. In addition, the client secret value for your application and entities can be considered a key to be rotated as well.
 
 Rotating these keys regularly is an important part of a defense-in-depth strategy. Such rotation ensures even if a key is compromised, the length of time it will be useful to attackers is limited. In addition, when you regularly rotate keys, you will necessarily have built systems allowing you to rotate keys at will. This might be a good idea if you suspect an attack or when an employee departs.
 
@@ -12,6 +12,7 @@ Rotating these keys regularly is an important part of a defense-in-depth strateg
 * <<Examples of Key Rotation Processes>>
 ** <<API Key Rotation>>
 ** <<JWT Signing Key Rotation>>
+** <<Client Secret Rotation>>
 * <<Challenges of Key Rotation>>
 ** <<Ensuring Clients' Keys Are Updated>>
 ** <<Determining Key Age>>
@@ -19,15 +20,19 @@ Rotating these keys regularly is an important part of a defense-in-depth strateg
 
 == Types of Keys to Rotate
 
-As mentioned above, in FusionAuth, there are two kinds of keys: API keys and JWT signing keys. These are both types of keys, but are used for different purposes.
+As mentioned above, in FusionAuth, there are multiple kinds of keys: API keys, JWT signing keys, and client secrets. These are used for different purposes.
 
 API keys manage FusionAuth functionality and are used by scripts or applications to authenticate with FusionAuth and perform actions like adding users or updating tenant configuration. API keys are arbitrary strings. They are managed using the link:/docs/v1/tech/apis/api-keys/[API Keys API] or in the [breadcrumb]#Settings -> API Keys# area of the administrative user interface. You can also learn more about them in the link:/docs/v1/tech/apis/authentication/#api-key-authentication[API Key authentication documentation].
 
 JWT signing keys, on the other hand, are used to sign JSON web tokens (JWTs). These keys are then used by anything consuming the JWT to verify the signature. This assures the consuming application that FusionAuth did indeed sign the token. JWT signing keys are cryptographic keys stored in FusionAuth. They are managed using the link:/docs/v1/tech/apis/keys/[Keys API] or in the [breadcrumb]#Settings -> Key Master# area of the administrative user interface. You can also learn more about JWT signing in the link:/learn/expert-advice/tokens/[JWT expert advice section].
 
+Client secrets are used by confidential OAuth clients to authenticate with FusionAuth during one of the OAuth grants, such as the authorization code grant or the client credentials grant. They are also used to sign OIDC `id_token`s. If used for user logins, they are managed using the link:/docs/v1/tech/apis/applications/[Applications API] or in the [breadcrumb]#Applications# area of the administrative user interface. If used for entity management and the client credentials grant, they are managed using the link:/docs/v1/tech/apis/entities/[Entities API] or in the [breadcrumb]#Entity Management -> Entities# area of the administrative user interface. You can also learn more about client secrets in the link:/docs/v1/tech/oauth/[OAuth documentation].
+
 == Examples of Key Rotation Processes
 
-Each type of key has a slightly different rotation process.
+Each type of key has a slightly different rotation process. Rotation steps for time-based rotations are outlined below.
+
+If you suspect or know of a key compromise, the criteria of whether to rotate a key changes, but the rotation steps are the same.
 
 === API Key Rotation
 
@@ -54,7 +59,7 @@ In contrast, suppose you are rotating a JWT signing key, `JS1`. To rotate such a
 
 In this case, FusionAuth is assumed to be the only process that is using `JS1` or `JS2`. If there are external dependencies (for example, if the `JS1` and `JS2` keys are RSA asymmetric keys and the private keys are externally managed or need to be synced with other software), then the process gets a little more complicated.
 
-You need to both import the key, instead of create it, and update other systems which use `JS1` to use `JS2`.
+You need to import the key, instead of create it, and update other systems which use `JS1` to use `JS2`.
 
 To handle the scenario where `JS2` needs to be imported to FusionAuth:
 
@@ -65,6 +70,17 @@ To handle the scenario where `JS2` needs to be imported to FusionAuth:
 * Wait until all keys signed by `JS1` have expired. The exact length of time depends on your configured JWT lifetime. For instance, if your JWTs last for five minutes, wait for ten minutes to allow for clock skew.
 * Delete key `JS1`.
 * Note when `JS2` entered into service.
+
+=== Client Secret Rotation
+
+Suppose you are using client secret `A` for an application. The application uses the authorization code grant. To rotate this client secret, you need to perform the following steps.
+
+* Find information about `A`, including when the FusionAuth Application was configured to use it and what that corresponding Application Id is.
+* Determine how long it has been in use. If it has been in use long enough to rotate, proceed. Otherwise ignore it.
+* Create a new random string, `B`. In general, this string should be high entropy and long enough to be a good candidate for an HMAC secret. This is because a client secret may be part of the process to sign an `id_token`. See the link:https://openid.net/specs/openid-connect-core-1_0.html#SymmetricKeyEntropy[OIDC specification for more].
+* Store off all needed metadata for key `B`, including when the application was updated to use it.
+* Update all web applications, mobile applications, scripts and programs which use client secret `A` to use `B`.
+* Update the correct FusionAuth Application configuration. Use `PATCH` or `PUT` to update the [field]#application.oauthConfiguration.clientSecret# value.
 
 == Challenges of Key Rotation
 
@@ -78,7 +94,10 @@ First, you want to ensure that no valid client is using an old API key before yo
 * Automate the pushing of secrets to all clients that need the key.
 * Allow for a grace period to allow clients to update their key before deleting it.
 
+For client secrets, this problem is magnified because while you can have multiple API keys, you cannot have multiple client secrets for any given application or entity. In this case, you may be able work around this by having your client support multiple different client secrets and trying them in sequence. There's also an https://github.com/FusionAuth/fusionauth-issues/issues/1361[open issue] to have FusionAuth support a grace period for client secrets.
+
 This problem doesn't arise in the same manner for JWT signing keys because they have a built in grace period: the expiration of the JWTs. You can definitely cause issues by removing a JWT signing key before all the keys it has signed have expired, but because JWT signing keys are only used by FusionAuth to sign JWTs and have a built-in expiration time, it is easy to use the grace period option above.
+
 
 === Determining Key Age
 
@@ -91,7 +110,7 @@ Therefore, you must store the creation and age data separately. To be able to ro
 * `id`. This is the identifier of the key and is used to manipulate and delete keys via the API.
 * `inserted`. The instant when the key was created.
 * `expires`. The instant when the key expires. Storing this value allows different keys to be valid for different durations.
-* `deleteAfter`. The instant after which this key should be removed. This value may be the same as the `expires` value. Having this value be after the `expires` instant is useful as a grace period during which the a key shouldn't be used, but will still work.
+* `deleteAfter`. The instant after which this key should be removed. This value may be the same as the `expires` value. Having this value be after the `expires` instant is useful as a grace period during which the key shouldn't be used, but will still work.
 
 You can either store this information in an external datastore or in a FusionAuth `data` field. For the latter option, store the information in JSON, on an object like the tenant, a specific user, or an entity. The latter two options are good choices when you are using the Elasticsearch search engine because you can then leverage the respective Search APIs, as the `data` field is indexed. This allows you to keep everything contained within FusionAuth.
 
