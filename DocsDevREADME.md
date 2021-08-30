@@ -189,20 +189,14 @@ end tell
 
 ## Shell script for capturing sceenshots 
 fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
-- Sizing and moving Safari window
-- Capturing screenshot 
+- Sizing and moving the Safari window
+- Capturing the screenshot 
 - Resizing the screenshot image
 - Compressing the image using either pngquant or Tiny PNG
 - Moving the image to an appropriate folder
  
 ```bash
-
-    ./fa-screenshot.sh  [-s] [-t] [-d] <destination folder> [-h]
-
-   -s  Silent mode
-   -t  Use TinyPNG API instead of pngquant library
-   -d  Move screenshots to given folder
-   -h  Print this usage
+./fa-screenshot.sh -h # for usage info
 ```
 
 
@@ -272,3 +266,13 @@ or, if you want to see everything:
 ```
 bundle exec jekyll algolia --dry-run --verbose
 ```
+
+## Data Driven Pages
+
+Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file. 
+
+Examples of that are the customers page and the quotes widget.
+
+You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps.
+
+The theme pages are kinda complex becuase they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
