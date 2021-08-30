@@ -26,14 +26,62 @@ If we change the version for archive, update 'cutOverVersion' in the `_download.
 
 Looking for release notes older than 1.23.0? Look in the link:/docs/v1/tech/archive/release-notes/[release notes archive].
 
+
+[role=release-note]
+
+== Version 1.30.1
+_August 25th, 2021_
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Fixed
+* The Text MIME type of an email may not render unicode correctly when the host system does not have `UTF-8` set as the default character set.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1122[GitHub Issue #1122], thanks to https://github.com/soullivaneuh[@soullivaneuh] for the report!
+* Unable to assign an IP ACl to an application if one is not already assigned to the tenant.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1349[GitHub Issue #1349]
+* Unable to delete an IP ACL in use by a tenant
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1350[GitHub Issue #1350]
+
+=== Enhancements
+* General performance improvements for login, OAuth2 grants, and user create and registration.
+* Add the User Two Factor methods to the Elasticsearch index.
+** If you have existing users with Two-Factor enabled, you will want to perform a re-index in order to search on two-factor configuration.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1352[GitHub Issue #1352], thanks to one of our favorite FusionAuth users https://github.com/flangfeldt[@flangfeldt] for making the request.
+
+=== Internal
+* Performance improvements
+
 [role=release-note]
 
 == Version 1.30.0
 _August 12th, 2021_
 
-_Note, release notes in progress&hellip;_
+:warning_message: pass:normal[Many of the new features in this release will only be available in the Enterprise edition of FusionAuth and will require the Threat Detection feature to be enabled. Contact sales for more information. \
+{nbsp} + \
+{nbsp} + \
+Features that require the Threat Detection feature: \
+{nbsp} + \
+- CAPTCHA \
+{nbsp} + \
+- Domain blocking in registration \
+{nbsp} + \
+- IP access control lists \
+{nbsp} + \
+- IP location \
+{nbsp} + \
+- Some of the new events and transactional emails \
+{nbsp} + \
+- Rate limiting]
+include::docs/v1/tech/__general-migration-warning.adoc[]
+
 
 include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Known issue
+* If you are referencing any Reconcile Lambda Ids using the syntax `FUSIONAUTH_LAMBDA{type}_ID` - this may no longer work due to a change in how these default lambdas are initialized.
+** The current work around is to modify your kickstart to build your own version of this lambda instead of using the FusionAuth default.
+** You will find a copy of the default lambdas shipped with FusionAuth in the link:/docs/v1/tech/lambdas/[Lambda] documentation that you may use to copy into your kickstart.
+** The issue is being tracked here https://github.com/FusionAuth/fusionauth-issues/issues/1373[GitHub Issue #1373]
 
 === Fixed
 * Unable to enable `user.action` event at the tenant using the UI. If you encounter this issue, you may work around it by using the Tenant API.
@@ -50,7 +98,6 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * New themed page added for Unauthorized access.
 ** See the link:/docs/v1/tech/apis/themes/[Theme API] and the link:/docs/v1/tech/themes/[Theme] documentation for additional details.
 
-
 === New
 * JWT Vending machine
 ** This allows a JWT to be created for a not-yet-existing user with a payload defined by the API caller.
@@ -58,12 +105,11 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * Modified a core macro, `[@helpers.input]`, in the Helpers theme to accept a checkbox value. This will break anyone who tries to copy and paste the checkbox usage without modifying their `_helpers.ftl` file. Review the link:docs/v1/tech/themes/#upgrading[Upgrading] section on the link:docs/v1/tech/themes/[Themes] page for information on how to resolve potential breaking changes.
 * FusionAuth wasn't awesome enough, so we added a robust Threat Detection feature for enterprise customers. This feature includes: 
 * IP Access Control for API keys
-** This allows domains or API addresses to be safelisted to use an API key.
+** This allows support for an API key to be further restricted by the origin IP address.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/933[GitHub Issue #933]
-*** Rate Limiting
-*** Captcha
-*** IP Access Control Lists/blocking
-*** Blocked domains
+* IP Access Control for SSO and self service forms
+** This allows you to limit access to the FusionAuth SSO or a particular application login through SSO by IP address
+* Blocked domain configuration to limit registrations from specific email domains
 * Rate limiting per user for the following requests:
 ** Failed login (only used if Failed Login configuration is not in use)
 ** Forgot password
@@ -71,63 +117,55 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Send passwordless
 ** Send registration verification
 ** Send two-factor
-* Captcha - uses additional (re)captca to guard against brute force attacks.
-** This adds (re)captcha for login pages using an email/password combination. 
+* Captcha - add CAPTCHA to login and other end user forms to help ensure only humans are submitting forms.
+** Support for Google ReCaptcha v2, Google ReCaptcha v3, HCaptcha and HCaptcha Enterprise
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/278[GitHub Issue #278]
-** Add support for Google ReCaptcha v2, Google ReCaptcha v3, HCaptcha and HCaptcha Enterprise
-* IP location 
-** Includes IP address in Forgot/Reset Password emails so the recipient can know where the request originated in case they did not request it. 
-** Flags suspicious IP addresses and sends an email to notify user of a new login with the IP's approximate location
-** With unexpected IP addresses, such as with geography, sends an email to notify the user of a new login with the approximate location of the IP address
-* Lamda to limit registrations - ie limit self-service registration in a tenant or application for an email domain. This allows you to limit end users registering with your company's email domain.
-* Device fingerprinting and analysis
-** Include IP addresses in Forgot/Reset Password emails so the recipient can know where the request originated from in case they did not request it. 
-** Limit sessions per device - ie user can only log in on one device at a time
-* FusionAuth Cloud Features
-** Enhanced DDoS monitoring and mitigation
-** Rules based response to DDoS threats
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/905[GitHub Issue #905]
-* Webhook events: 
-** User Actions - when a moderator or admin takes an action on a user
-** User Bulk Create - when multiple users are created as the result of the Import API
-** User Create - when a user is created
-** User Update - when a user is updated
-** User Deactivate - when a user is deactivated
-** User Reactivate - when a user is reactivated
-** User Delete - when a user is deleted
-** User Email Verified - when a user verifies their email address
-** User Login Success - when a user successfully completes login
-** User Login Failure - when a user fails to complete login
-** User Password Breach - when Reactor detects a user is using a potentially breached password
-** User Registration Create - when a new user registration is created
-** User Registration Update - when a user registration is updated
-** User Registration Delete - when a user registration is deleted
-** User Registration Verified - when a user completes registration verification
-** JWT Public Key Update - when a JWT RSA Public / Private keypair used for signing may have been updated.
-** JWT Refresh - when an access token is refreshed using a refresh token
-** JWT Refresh Token Revoke - when a refresh token (or multiple tokens) are revoked
-** User Password Updated - when the user API modifies a password 
-** User Password Reset Started - when the forgot password API was called
-** User Password Reset Sent - when the email is sent with a reset link or code
-** User Password Reset Landed - when then user arrives on the password reset page
-** User Password Reset Success - when the password has been updated using the one time code
-** Kickstart Success - when a kickstart file is fully executed
-** See the link:/docs/v1/tech/#eventswebhooks/[Event Webhooks] documentation for additional details. 
-* Issues resolved by these webhook events: 
-** User Password Reset Flow - https://github.com/FusionAuth/fusionauth-issues/issues/1308[GitHub Issue #1308]
-** Kickstart - https://github.com/FusionAuth/fusionauth-issues/issues/1178[GitHub Issue #1178]
+* IP location.
+** When possible, an IP address will be resolved to include city, country, region, zip code, longitude and latitude.
+** IP location will be included in login records and will be available in some email templates and webhook events
+** Used to calculate impossible travel between login locations
+* New Webhook events:
+** Audit Log Create `audit-log.create`
+** Event Log Create `event-log.create`
+** Kickstart Success `kickstart.success`
+** User Create Complete `user.create.complete`
+** User Delete Complete `user.delete.complete`
+** User Update Complete `user.update.complete`
+** User LoginId Duplicate On Create `user.loginId.duplicate.create`
+** User LoginId Duplicate Update `user.loginId.duplicate.update`
+** User Email Update `user.email.update`
+** User Login New Device `user.login.new-device`
+** User Login Suspicious `user.login.suspicious`
+** User Password Reset Success `user.password.reset.success`
+** User Password Reset Send `user.password.reset.send`
+** User Password Reset Start `user.password.reset.start`
+** User Password Update `user.password.update`
+** User Registration Create Complete `user.registration.create.complete`
+** User Registration Delete Complete `user.registration.delete.complete`
+** User Registration Update Complete `user.registration.update.complete`
+** User Two Factor Method Added `user.two-factor.method.add`
+** User Two Factor Method Removed `user.two-factor.method.remove`
+** See the link:/docs/v1/tech/#eventswebhooks/[Event Webhooks] documentation for additional details.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1308[GitHub Issue #1308], thanks to https://github.com/adoliver[@adoliver] for the suggestion!
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1178[GitHub Issue #1178]
+* New transactional emails:
+** Email update
+** Login Id duplicate on create
+** Login Id duplicate on update
+** Login with new device
+** Suspicious login
+** Password reset success
+** Password update
+** Two-factor method added
+** Two-factor method removed
 
 === Enhancements
 * Search on `oldValue`, `newValue` and `reason` in the Audit Log.
 ** See the link:/docs/v1/tech/apis/audit-logs/#search-the-audit-log[Audit Log Search API] for additional details on searching on `oldValue`, `newValue` and `reason` in the audit log.
-* When using IdP linking in conjunction with the Oauth2 Device Grant, the recently completed links will be available on the Device complete themed page.
+* When using IdP linking in conjunction with the Oauth2 Device Grant, the recently completed links will be available on the Device complete themed page by using the `completedLinks` variable.
 ** See the link:/docs/v1/tech/themes/#oauth-device-complete[Device Complete] themed page documentation for additional details.
 * More themed pages will have access to the currently logged in user using the `currentUser` variable.
 ** See the link:/docs/v1/tech/themes/[Theme] documentation for additional details.
-* Alert on unusual user behaviour around password reset
-* Add an IP ACL to an API key
-** Allows you to assign an IP ACL to an existing API key which limits the usage by IP address.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1325[GitHub Issue #1325]
 
 [role=release-note]
 
