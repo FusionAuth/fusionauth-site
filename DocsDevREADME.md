@@ -12,9 +12,12 @@ Here are some guidelines to follow when writing documentation (everything under 
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - Use single backticks when specifying a value that is not a field.
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
+- References to `http://127.0.0.1` should be updated to `[http://localhost` and remove hyperlinks to `localhost`
+- The class used for images should be updated to `class="img-fluid"`.
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
+- All code snippets within any documents should have indenting formatted to 2 spaces
 - If something is new in a version, mark it with something like this:
 
   [NOTE.since]
@@ -68,6 +71,7 @@ For blog posts:
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
 - If appropriate, use tags. Here are the following tag types. They are separated with spaces. These are freeform, so feel free to add multiple and choose what works.
+- All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
 -- `client-<langname>` if the post refers to a specific language we have a client library for (use `client-javascript` for JS even though our client lib is typescript). These show up on the client libraries page.
 -- `tutorial` for tutorials. These show up on the tutorial page.
 -- `tutorial-<langname>`, `tutorial-<framework>` for a tutorial in a specific language or framework.
