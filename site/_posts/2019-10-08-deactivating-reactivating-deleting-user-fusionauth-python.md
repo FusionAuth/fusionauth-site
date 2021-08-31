@@ -22,7 +22,7 @@ Did you know that you can deactivate, reactivate, or delete a user within your a
 1. Verifying server applications, libraries, and dependencies
 1. Obtaining a test user account Id
 1. Setting up FusionAuth using a Kickstart file
-1. Defining user actions
+1. Defining terms
 1. How to deactivate a user
 1. How to reactivate a user
 1. How to delete a user
@@ -103,7 +103,7 @@ Copy it into a text editor and set it off to the side. We'll be using it in a mo
 
 Instead of manually setting up FusionAuth, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
 
-## Defining user actions
+## Defining terms
 
 **Deactivate:** Also known as a soft delete/account locking, will allow you to temporarily disable a user from logging in.
 
