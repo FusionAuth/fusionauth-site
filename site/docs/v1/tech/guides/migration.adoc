@@ -20,6 +20,8 @@ This guide will help you migrate existing users into FusionAuth. It covers the t
 ** <<Big Bang Implementation>>
 ** <<Segment By Segment Implementation>>
 ** <<Slow Migration Implementation>>
+* <<Special Cases>>
+** <<Social Login>>
 * <<Additional Resources>>
 
 == Types of Migrations
@@ -384,6 +386,22 @@ Another option is to not use the Import API. Instead, import these users one by 
 
 Note that both methods rely on sending an email to these users. It's worth reviewing how many users will fall into this bucket and to ensure that your email sending infrastructure is capable of handling the requests.
 
+==== Users With Social Logins
+
+Migrating users with social logins such as Apple or Facebook requires that you have the existing social provider user identifier. What Id looks like depends on the particular social provider.
+
+Configure the appropriate FusionAuth Identity Provider with the same values as the original system (`client_id`, etc).
+
+Import users with the link:/docs/v1/tech/apis/users/#import-users[Import API], assigning each user with a social login a random password. Then, for each user, link:/docs/v1/tech/apis/identity-providers/links/[use the Link API] to create a link with the appropriate User Id, Identity Provider Id and Identity Provider User Id.
+
+* The User Id is the Id of the recently created FusionAuth User.
+* The Identity Provider Id is found on the corresponding link:/docs/v1/tech/apis/identity-providers/[Identity Provider API documentation]. Look for [field]#identityProvider.id#.
+* The Identity Provider User Id is the existing social provider user identifier exported or otherwise extracted from the original system.
+
+You do not need to migrate the social network token, which may or may not be accessible. During the first login of a newly migrated user, FusionAuth finds the unique user in the social login provider based on the migrated Identity Provider User Id, and completes the login. During this process, FusionAuth stores a token on the Link if the social provider returned one. 
+
+Depending on the configuration of the social provider, users may see a prompt asking if they want to allow FusionAuth to have access to user data such as email address. 
+ 
 ==== Testing
 
 Test this import process with as large of a dataset as possible. If you can, use your entire user dataset. Testing with a realistic sized load lets you know you how long your import will take. Real world data will reveal edge cases, such as duplicate emails or incorrectly formatted user attributes.
