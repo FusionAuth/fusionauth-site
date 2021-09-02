@@ -11,9 +11,14 @@ As of version 1.27.0, FusionAuth can be configured to gate users' accounts until
 === Why do I need this?
 
 
-Most folks will be happy to have email verification gating(see adjacent tutorial link:/docs/v1/tech/tutorials/gate-accounts-until-verified[here]).  However, there are times when you want to enforce opt-in behavior to specific applications. A good example of this might be Google. A YouTube user and a Drive user are part of the same parent company (tenant, to follow our metaphor within FusionAuth).  However, Google will require a user to complete an application registration to allow the same user on YouTube access to Drive.  Without this step, users may find it alarming their logins work for both Youtube and Drive.
+[NOTE]
+====
+Make sure you select the correct gating strategy that makes the most sense for your business.  Most folks will only require an Email Verification Gate for their business needs.
+====
 
-image::tutorials/gate-accounts-until-verified/application-registration-google.png[Google Applications Web,width=600,role=bottom-cropped custom]
+Most folks will find email verification gating sufficient for their business needs (see adjacent tutorial link:/docs/v1/tech/tutorials/gate-accounts-until-verified[here]).  However, there are times when you want to enforce opt-in behavior to specific applications. A good real world example of this might be Google. A user might have access to YouTube and Drive which are both part of the same parent company (or tenant, to follow our metaphor within FusionAuth).  However, Google requires separate registrations to allow access to both YouTube and Drive through the same account.  Without this step, users may find it alarming their logins work for both YouTube and Drive (without their express consent, especially if they did not know about the parent relationship).
+
+image::tutorials/registration-gate-accounts-until-verified/application-registration-google.png[Google Applications Web,width=600,role=bottom-cropped custom]
 
 === To Enable
 
@@ -21,7 +26,7 @@ To enable registration verification gating, do the following:
 
 * Configure the tenant with your email server
 * Configure the application to enable registration gating
-* Optionally customize the registration verification template
+* Optionally customize the registration verification template (FusionAuth ships with a default template)
 * Enable self service registration
 * Configure your application with a redirect URL (OAuth tab)
 
@@ -34,11 +39,11 @@ include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
 This tutorial assumes you are running FusionAuth version 1.27.0 or greater. If you aren't, head on over to the link:/docs/v1/tech/installation-guide/[installation guide] or the link:/docs/v1/tech/installation-guide/upgrade/[upgrade guide] to update to a version with support for this feature.
 
-This tutorial also assumes you have a paid edition and valid license. If you need to buy an edition, please visit the link:/pricing/editions/[pricing page]. If you need to activate your instance, please visit the link:/docs/v1/tech/reactor/[Reactor page].
+This tutorial also assumes you have a paid edition and a valid license. If you need to buy an edition, please visit the link:/pricing/editions/[pricing page]. If you need to activate your instance, please visit the link:/docs/v1/tech/reactor/[Reactor page].
 
 == Configure the Tenant Email Server
 
-Log in to the FusionAuth administrative user interface. You could do all of this configuration with the API or kickstart, but for this tutorial you'll use the UI.
+Log in to the FusionAuth administrative user interface. You could do all of this configuration with the API or kickstart, but for this tutorial, you'll use the UI.
 
 Navigate to [breadcrumb]#Tenants -> Your Tenant# and then select the [breadcrumb]#Email# tab. Scroll to the [breadcrumb]#SMTP settings# section. Configure this with your SMTP server information. If you are testing locally, you can use a mock email server like https://mailcatcher.me/[mailcatcher].
 
@@ -52,36 +57,30 @@ Save the configuration.
 
 Navigate to [breadcrumb]#Applications-> Your Application# and then select the [breadcrumb]#Registration# tab. Scroll to the [breadcrumb]#Registration verification settings# section.
 
-* Enable [field]#Verify registration#.
+* Enable [field]#Verify registrations#.
 * Choose your email template. The default template is `Registration verification`, and that will work fine for this tutorial.
 * Update the [field]#Verification strategy#. This can be either `ClickableLink` or `FormField`. The former sends an email with a link to verify the user's address and intent to register for your application. The latter emails a code which the user will provide to FusionAuth. For this tutorial, use `ClickableLink`.
 * Ensure that the [field]#Unverified behavior# value is `Gated`.
 
+
 After these steps, you should end up with a configuration screen that looks like this:
 
-// TODO : JOSH : Update photo
-image::tutorials/gate-accounts-until-verified/tenant-email-verification-settings.png[Tenant email verification settings,width=1200,role=bottom-cropped]
+image::tutorials/registration-gate-accounts-until-verified/application-registration-verification-settings.png[Application registration verification settings,width=1200,role=bottom-cropped]
 
-Make sure you save the configuration.
-
-== Configure the Application
-
-Navigate to [breadcrumb]#Applications#. Edit your application by clicking on the blue "Edit" button.
-
-Enable self registration by selecting the [breadcrumb]#Registration# tab, and then scrolling to the [breadcrumb]#Self service registration# section.
+Lastly, enable self service registration and configure the displayed and required fields as desired.
 
 [NOTE]
 ====
 You can create a user with an unverified registration in other ways than self service registration. However, self service registration is the simplest way to create a user without a verified registration.
 ====
 
-Enable self service registration and configure the displayed and required fields as desired.
+image::tutorials/registration-gate-accounts-until-verified/application-enable-self-registration.png[Enabling application self registration,width=1200]
 
-image::tutorials/gate-accounts-until-verified/application-enable-self-registration.png[Enabling application self registration,width=1200]
+Make sure you save the configuration.
 
 Next, navigate to the [breadcrumb]#OAuth# tab. Enable the `Authorization Code` grant.
 
-In addition, ensure you have entered a valid URL in the [field]#Authorized redirect URLs# field. (The value of this redirect URL doesn't really matter for this tutorial. But for production use, ensure the code at that endpoint can exchange an authorization code for a token.)
+In addition, ensure you have entered a valid URL in the [field]#Authorized redirect URLs# field. (The value of this redirect URL doesn't matter for this tutorial. But for production use, ensure the code at that endpoint can exchange an authorization code for a token.)
 
 Save the application configuration. You'll be returned to the list of applications.
 
@@ -99,9 +98,7 @@ Navigate to [breadcrumb]#Customizations -> Email Templates#. Edit the `Registrat
 
 Modify the HTML and text templates as desired and then save them. You can also localize the messages.
 
-// TODO : JOSH : Update photo
-image::tutorials/gate-accounts-until-verified/registration-template-customization.png[Customizing the registration verification email template,width=1200]
-
+image::tutorials/registration-gate-accounts-until-verified/registration-template-customization.png[Customizing the registration verification email template,width=1200]
 
 == Test It Out
 
@@ -111,13 +108,11 @@ Visit the registration URL copied above. You'll be prompted to register. Fill ou
 
 Here is the email in the mailcatcher user interface:
 
-// TODO : JOSH : Update photo
-image::tutorials/gate-accounts-until-verified/verification-registration-email-mailcatcher.png[Verification email in mailcatcher,width=1200,role=bottom-cropped]
+image::tutorials/registration-gate-accounts-until-verified/verification-registration-email-mailcatcher.png[Verification email in mailcatcher,width=1200,role=bottom-cropped]
 
-This user account will be gated and unable to completely log in if you have not verified the registration by verifiying through email. In your browser where you registered, you'll see a page similar to below:
+This user account will be gated and unable to completely log in if you have not verified the registration through email. In your browser where you registered, you'll see a page similar to below:
 
-// TODO : JOSH : Update photo
-image::tutorials/gate-accounts-until-verified/registration-verification-gate-screen-clickable-link.png[Clickable link default registratiohn verification gate screen,width=1200,role=bottom-cropped]
+image::tutorials/registration-gate-accounts-until-verified/registration-verification-gate-screen-clickable-link.png[Clickable link default registratiohn verification gate screen,width=1200,role=bottom-cropped]
 
 To test the gating, open a different browser (not a window, but an entirely different browser) and visit the login URL copied above. Enter the email and password for the user you just registered.
 
@@ -127,13 +122,15 @@ No matter which API or hosted login page you use, no JWT will be issued until th
 
 If an API is being used to authenticate the user, the API will return a status code indicating registration verification has not yet occurred. Please see the link:/docs/v1/tech/apis/login/[Login API] for more details.
 
-If you view the user in the administrative user interface, and click on the `source` tab you should see the following attributes on the user.
+If you view the user in the administrative user interface and click on the `source` tab you should see the following attributes on the user.
 
+image::tutorials/registration-gate-accounts-until-verified/unverified-user-registration-details-screen.png[Unverified user details screen,width=1200,role=bottom-cropped]
 
-// TODO : JOSH : Update photo
-image::tutorials/gate-accounts-until-verified/unverified-user-details-screen.png[Unverified user details screen,width=1200,role=bottom-cropped]
+Once you have verified the email address by clicking on the link, you can now log in and will be sent to the configured redirect URL.
 
-Once you have verified the email address by clicking on the link, you can now login and will be sent to the configured redirect URL.
+== Troubleshooting Email and Registration Verification
+
+include::docs/v1/tech/tutorials/gating/_troubleshooting_gating.adoc[]
 
 == Next Steps
 
@@ -143,6 +140,6 @@ Now that you've successfully set up gated email verification, take the next step
 * Learn more about link:/docs/v1/tech/email-templates/[email templates] and how to customize them.
 * Have the user submit a passcode rather than click a link. With this option, the user will be prompted with a screen similar to the below image.
 
-image::tutorials/gate-accounts-until-verified/email-verification-gate-screen-code-entry.png[Code entry default email gate screen,width=1200,role=bottom-cropped]
+image::tutorials/registration-gate-accounts-until-verified/registration-verification-gate-screen-code-entry.png[Code entry default email gate screen,width=1200,role=bottom-cropped]
 
 include::/docs/v1/tech/tutorials/_gated_workflows_troubleshooting.adoc
