@@ -4,19 +4,33 @@ title: Gate Users Application Registration
 description: How to gate users on the application level until verified.
 ---
 
+
 == Overview
 
 As of version 1.27.0, FusionAuth can be configured to gate users' accounts until they verify by clicking a link allowing them into an application. While users successfully authenticate, they won't be able to proceed further until they have verified their registration via email.
 
-=== Why do I need this?
+=== Table of Contents
 
+* <<Why do I need this?>>
+* <<To Enable>>
+* <<Prerequisites>>
+* <<Configure the Tenant Email Server>>
+* <<Enable Registration Verification Gating>>
+* <<Customize the Registration Verification Template>>
+* <<Test It Out>>
+* <<The User Object>>
+* <<Common Questions>>
+* <<Troubleshooting Email and Registration Verification>>
+* <<Next Steps>>
+
+=== Why do I need this?
 
 [NOTE]
 ====
-Make sure you select the correct gating strategy that makes the most sense for your business.  Most folks will only require an Email Verification Gate for their business needs.
+Make sure you select the correct gating strategy that makes the most sense for your business.  Most folks will only require email verification gate for their business needs.
 ====
 
-Most folks will find email verification gating sufficient for their business needs (see adjacent tutorial link:/docs/v1/tech/tutorials/gate-accounts-until-verified[here]).  However, there are times when you want to enforce opt-in behavior to specific applications. A good real world example of this might be Google. A user might have access to YouTube and Drive which are both part of the same parent company (or tenant, to follow our metaphor within FusionAuth).  However, Google requires separate registrations to allow access to both YouTube and Drive through the same account.  Without this step, users may find it alarming their logins work for both YouTube and Drive (without their express consent, especially if they did not know about the parent relationship).
+Most folks will find email verification gating sufficient for their business needs (see adjacent tutorial link:/docs/v1/tech/tutorials/gate-accounts-until-verified[here]).  However, there are times when you want to enforce opt-in behavior to specific applications. A good real-world example of this might be Google. A `bob@alphabet.com` might have access to YouTube and Drive which are both part of the same parent company (or tenant, to follow our metaphor within FusionAuth).  However, Google requires separate registrations to allow access to both YouTube and Drive through the same account.  Without this step, users may find it alarming their logins (`bob@alphabet.com`) work for both YouTube and Drive (without their express consent, especially if they did not know about the parent company relationship).
 
 image::tutorials/registration-gate-accounts-until-verified/application-registration-google.png[Google Applications Web,width=600,role=bottom-cropped custom]
 
@@ -47,7 +61,7 @@ Log in to the FusionAuth administrative user interface. You could do all of this
 
 Navigate to [breadcrumb]#Tenants -> Your Tenant# and then select the [breadcrumb]#Email# tab. Scroll to the [breadcrumb]#SMTP settings# section. Configure this with your SMTP server information. If you are testing locally, you can use a mock email server like https://mailcatcher.me/[mailcatcher].
 
-image::tutorials/gate-accounts-until-verified/tenant-smtp-settings.png[Tenant SMTP settings,width=1200,role=bottom-cropped]
+image::tutorials/email-gate-accounts-until-verified/tenant-smtp-settings.png[Tenant SMTP settings,width=1200,role=bottom-cropped]
 
 Ensure a test email is delivered. If you have any issues, follow the steps in the link:/docs/v1/tech/troubleshooting/#troubleshooting-email[email troubleshooting documentation].
 
@@ -86,7 +100,7 @@ Save the application configuration. You'll be returned to the list of applicatio
 
 Click on the green "View" button of your application to see the details of your application.
 
-image::tutorials/gate-accounts-until-verified/view-application-details.png[View application details to see the relevant URLs,width=1200]
+image::tutorials/email-gate-accounts-until-verified/view-application-details.png[View application details to see the relevant URLs,width=1200]
 
 Look for the [field]#Registration URL#. It'll be something like `https://local.fusionauth.io/oauth2/register?client_id=85a03867-dccf-4882-adde-1a79aeec50df&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect`. Copy that value as you'll use it below.
 
@@ -112,7 +126,7 @@ image::tutorials/registration-gate-accounts-until-verified/verification-registra
 
 This user account will be gated and unable to completely log in if you have not verified the registration through email. In your browser where you registered, you'll see a page similar to below:
 
-image::tutorials/registration-gate-accounts-until-verified/registration-verification-gate-screen-clickable-link.png[Clickable link default registratiohn verification gate screen,width=1200,role=bottom-cropped]
+image::tutorials/registration-gate-accounts-until-verified/registration-verification-gate-screen-clickable-link.png[Clickable link default registration verification gate screen,width=1200,role=bottom-cropped]
 
 To test the gating, open a different browser (not a window, but an entirely different browser) and visit the login URL copied above. Enter the email and password for the user you just registered.
 
@@ -128,6 +142,58 @@ image::tutorials/registration-gate-accounts-until-verified/unverified-user-regis
 
 Once you have verified the email address by clicking on the link, you can now log in and will be sent to the configured redirect URL.
 
+== The User Object
+
+A point of confusion is how the user object looks before, during, and after the registration verification (and subsequent gate) is enabled.
+
+If a user is created and registration verification is turned off, the user object will read as `verified: true` as in below:
+
+```
+//...
+ "registrations" : [ {
+    "applicationId" : "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+    "id" : "44ae6427-60fc-4d4b-bef4-97274a6d29a6",
+    "insertInstant" : 1630520102750,
+    "lastLoginInstant" : 1630639038934,
+    "lastUpdateInstant" : 1630520102750,
+    "roles" : [ "admin" ],
+    "usernameStatus" : "ACTIVE",
+    "verified" : true
+  }
+  ]
+//...
+```
+
+If a user is created while registration verification is turned on, then the user object will read as `verified: false` as in below:
+
+```
+//...
+ "registrations" : [ {
+    "applicationId" : "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+    "id" : "44ae6427-60fc-4d4b-bef4-97274a6d29a6",
+    "insertInstant" : 1630520102750,
+    "lastLoginInstant" : 1630639038934,
+    "lastUpdateInstant" : 1630520102750,
+    "roles" : [ "admin" ],
+    "usernameStatus" : "ACTIVE",
+    "verified" : false
+  }
+  ]
+//...
+```
+
+Naturally, this will turn to `verified: true` once the user verifies their application registration.
+
+[NOTE]
+====
+Users imported through the import API will have whatever attributes are initially set regardless of verification settings.
+====
+
+
+== Common Questions
+
+include::docs/v1/tech/tutorials/gating/_common_questions_gating.adoc[]
+
 == Troubleshooting Email and Registration Verification
 
 include::docs/v1/tech/tutorials/gating/_troubleshooting_gating.adoc[]
@@ -141,5 +207,3 @@ Now that you've successfully set up gated email verification, take the next step
 * Have the user submit a passcode rather than click a link. With this option, the user will be prompted with a screen similar to the below image.
 
 image::tutorials/registration-gate-accounts-until-verified/registration-verification-gate-screen-code-entry.png[Code entry default email gate screen,width=1200,role=bottom-cropped]
-
-include::/docs/v1/tech/tutorials/_gated_workflows_troubleshooting.adoc
