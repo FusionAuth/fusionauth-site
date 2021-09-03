@@ -2,7 +2,9 @@ Migrating users with social logins such as Apple or Facebook requires that you h
 
 Configure the appropriate FusionAuth Identity Provider with the same values (`client_id`, etc) as the original user management system you are migrating away from.
 
-Import users with the link:/docs/v1/tech/apis/users/#import-users[Import API], assigning each user with a social login a random password such as a UUID. Then, for each user, use the link:/docs/v1/tech/apis/identity-providers/links/[Link API] to create a link with the appropriate User Id, Identity Provider Id and Identity Provider User Id.
+Import users with the link:/docs/v1/tech/apis/users/#import-users[Import API], assigning each user with a social login a random password such as a UUID. 
+
+Your next step depends on if whether the social login provider's unique identifier is available. If you have the social login provider's unique identifier, for each user, use the link:/docs/v1/tech/apis/identity-providers/links/[Link API] to create a link with the appropriate User Id, Identity Provider Id and Identity Provider User Id.
 
 * The User Id is the Id of the recently created FusionAuth User.
 * The Identity Provider Id is found on the corresponding link:/docs/v1/tech/apis/identity-providers/[Identity Provider API documentation]. Look for [field]#identityProvider.id#.
@@ -12,3 +14,15 @@ You do not need to migrate the social network token, which may or may not be acc
 
 Depending on the configuration of the social provider, users may see a prompt asking if they want to allow FusionAuth to have access to user data such as email address. 
  
+[NOTE.since]
+====
+IdP Linking Stratgies are available since version 1.28.0. Before that version, users were linked on email.
+====
+
+If you do not have the social login provider's identifier, you need to decide if you want to transparently link the two accounts, which is easier for the end user, or if you want to ask the user to manually link the accounts, which is more accurate, but may be confusing.
+
+To transparently link the accounts, choose a linking strategy of `Link On Email` or `Link On Username`, which will create the user if they don't exist. However, if the user has a social provider email address (`richard@gmail.com`) which differs from the email address that was used to sign up for your application and which you imported to FusionAuth (`richard@fusionauth.io`). (The same holds true for usernames.) This will cause two accounts to be created.
+
+To prompt the user to link the accounts, choose a linking strategy of `Pending`, which will prompt the end user to sign into FusionAuth after they sign into the social provider, authoritatively linking the two accounts.
+
+Here's more information about link:/docs/v1/tech/identity-providers/#linking-strategies[IdP Linking Strategies]
