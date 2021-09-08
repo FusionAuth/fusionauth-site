@@ -46,10 +46,11 @@ target(name: "clean", description: "cleans the project", dependsOn: ["css"]) {
 
 target(name: "compile", description: "builds the project", dependsOn: ["css"]) {
   if (switches.has("drafts")) {
-    cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts"])
-
+    cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts"], false)
+  } else if (switches.has("production")) {
+    cleanExecute(["bundle", "exec", "jekyll", "build"], true)
   } else {
-    cleanExecute(["bundle", "exec", "jekyll", "build"])
+    cleanExecute(["bundle", "exec", "jekyll", "build"], false)
   }
 }
 
@@ -69,7 +70,7 @@ target(name: "push", description: "Push the site to fusionauth.io") {
   // Skip checking Git if we are forced to do so (use the force Luke)
   if (!switches.has("force")) {
     output.infoln("Checking git")
-    if (!cleanExecute(["git", "diff-index", "--quiet", "origin/master", "--"])) {
+    if (!cleanExecute(["git", "diff-index", "--quiet", "origin/master", "--"], false)) {
       output.infoln("You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
       exit 1
     }
@@ -79,7 +80,7 @@ target(name: "push", description: "Push the site to fusionauth.io") {
   // TODO : I wonder if we should move this to the `deploy.sh` script ? Does Algolia have REST API we could use for this?
   //        Then this would only run on the server during a deploy and we wouldn't have to have the API key configured locally.
   if (!switches.has("skipReindex")) {
-    cleanExecute(["bundle", "exec", "jekyll", "algolia"])
+    cleanExecute(["bundle", "exec", "jekyll", "algolia"], false)
   }
 
   // Allow the command line switch --user to specify a different user on the SSH command
@@ -89,12 +90,16 @@ target(name: "push", description: "Push the site to fusionauth.io") {
   }
 
   output.infoln("Deploying...")
-  cleanExecute(["ssh", "-t", host, "sudo -H -u www-data -g www-data /var/git/fusionauth-site/src/deploy.sh"])
+  cleanExecute(["ssh", "-t", host, "sudo -H -u www-data -g www-data /var/git/fusionauth-site/src/deploy.sh"], false)
 }
 
-boolean cleanExecute(List<String> args) {
+boolean cleanExecute(List<String> args, boolean prod) {
   ProcessBuilder pb = new ProcessBuilder(args).inheritIO().directory(new File('.'))
   clearEnvironment(pb)
+
+  if (prod) {
+    pb.environment().put("JEKYLL_ENV", "production")
+  }
 
   def process = pb.start()
   process.consumeProcessOutput(System.out, System.err)
