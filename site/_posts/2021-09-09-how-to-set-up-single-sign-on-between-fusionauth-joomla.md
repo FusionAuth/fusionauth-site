@@ -44,12 +44,18 @@ Once you have installed all the required ingredients above, log into your Fusion
 In the FusionAuth administrative user interface, navigate to Applications. Click the green **+** button to add a new application to your FusionAuth instance. Follow these steps to create your OAuth application to use with your Joomla site:
 
 * Add a name for your application. You’ll need this when you configure the Joomla plugin.
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/fusionauth-add-application-screen.jpg" alt="The Add Application screen in FusionAuth." class="img-fluid" figure=false %}
 * Leave most of the settings at their default values.
 * You will need to add your URL to both the Authorized redirect URLs field and the Authorized request origin URLs fields
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/fusionauth-application-settings.jpg" alt="Additional Application settings authorizing your website." class="img-fluid" figure=false %}
-* Save the application via the icon at the top of the application page.
-* You’ll now be returned to your application list. Click **Edit** to now return to the settings for the application where you can now see the ID that has been generated. You will need this to configure the OAuth client in Joomla in the next step.
+
+This is what your configuration might look like:
+
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/fusionauth-joomla-sso-application-configuration.png" alt="Setting up the FusionAuth Joomla SSO Application configuration." class="img-fluid" figure=false %}
+
+Save the application via the icon at the top of the application page.
+
+You'll now be returned to your application list. Click **Edit** to return to the settings for the application where you can now see the generated Id and secret. You will need this to configure the OAuth client in Joomla in the next step.
+
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/fusionauth-joomla-sso-application-edit.png" alt="Getting the FusionAuth Joomla SSO Application client Id and secret." class="img-fluid" figure=false %}
 
 ### Setting up FusionAuth using Kickstart
 
