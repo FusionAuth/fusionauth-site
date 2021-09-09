@@ -19,7 +19,8 @@ Regardless of industry, all organizations should take steps to protect their sys
 
 ## 1. DevSecOps (Shift Left)
 
-![DevSecOps integration in your DevOps pipeline](https://i.imgur.com/FmJRNr0.png)
+{% include _image.liquid src="/assets/img/advice/steps-secure-auth-system/devsecopsdiagram.png" alt="DevSecOps integration in your DevOps pipeline." class="img-fluid" figure=false %}
+
 Ensure DevSecOps standards are set in place to allow for security testing during the early stages of development.
 
 Traditional security testing happens just before or after the release. This can be too late for security testing. It can also lead to unexpected delays to critical deadlines if there are security issues to be found later.
@@ -78,7 +79,7 @@ Logs are also critical for monitoring. If you see unusual server traffic from an
 
 **Frequency**: auditing access logs should be frequent, using monitoring or some automation tool.
 
-##8. Implement Brute-force Protection
+## 8. Implement Brute-force Protection
 
 Hackers tend to use brute-force techniques to log in into your system. One of the most common techniques against this is IP-based user rate limiting. This requires preventing hackers from manipulating their IP address. If a user has made an attempt to log in several times, ask a user to complete a [CAPTCHA](https://en.wikipedia.org/wiki/CAPTCHA) test.
 
