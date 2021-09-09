@@ -5,7 +5,7 @@ description: In this tutorial, you’ll be learning how to implement OAuth SSO f
 author: Patrick Jackson
 image: blogs/advanced-threat-detection-launch/fusionauth-introduces-advanced-threat-detection-to-help-safeguard-user-identity-header-image.png
 category: blog
-tags: tutorial tutorial-php client-php
+tags: tutorial tutorial-php client-php tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
 
