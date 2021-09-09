@@ -81,12 +81,12 @@ Once installed you now need to configure the OAuth Client so it can connect to F
 
 * Navigate to "Components", then "miniOrange OAuth Client", then choose "Configure OAuth".
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/configure-joomla-oauth-client-menu.jpg" alt="Configure the OAuth client." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/configure-joomla-oauth-client-menu.png" alt="Configure the OAuth client." class="img-fluid" figure=false %}
 
 * Optionally take the tour of the plugin, or click "Skip Tour" if you’re just following this tutorial. All of the settings you need to configure for the standard (free) version of the plugin are on the Configure OAuth tab.
 * To configure OAuth using FusionAuth, choose "Custom OAuth", which is at the bottom of the screen.
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/custom-oauth-selection-button.jpg" alt="Configure OAuth options." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/custom-oauth-selection-button.png" alt="Configure OAuth options." class="img-fluid" figure=false %}
 
 There are several items that you need to copy from your FusionAuth application settings and then paste them into the various fields in the Configure OAuth Application:
 
@@ -103,11 +103,11 @@ Next there are four fields that need to be completed with values that tell the p
 			    
 Finally, you can optionally set the checkboxes to specify what the appearance of your SSO link will be. Checking “Show link on login page” will insert a link on your login form that has “Click here for SSO”. Uncheck this box if you would like to have a different button for your SSO sign in, which is described in the next section.
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/joomla-custom-oauth-settings.jpg" alt="Custom Joomla OAuth configuration Settings." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/joomla-custom-oauth-settings.png" alt="Custom Joomla OAuth configuration Settings." class="img-fluid" figure=false %}
 
 Once you’ve completed all this part of the configuration click on "Save Settings". To confirm whether the information is all correct, click on "Test Configuration". This will open a new window with a Test Successful message:
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/test-oauth-configuration.jpg" alt="Joomla OAuth Test Result screen." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/test-oauth-configuration.png" alt="Joomla OAuth Test Result screen." class="img-fluid" figure=false %}
 
 Scrolling through this page, you’ll see various attributes and the values that are returned by FusionAuth that the OAuth Client then processes for the SSO.
 
@@ -116,7 +116,7 @@ You will need to identify two Attributes in the list in order to complete the At
 * For the Email Attribute returned by FusionAuth use the attribute name `email`.
 * For the Username Attribute returned by FusionAuth use the attribute name `preferred_username`.
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/attribute-mapping-joomla-oauth.jpg" alt="Joomla Attribute Mapping settings." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/attribute-mapping-joomla-oauth.png" alt="Joomla Attribute Mapping settings." class="img-fluid" figure=false %}
 
 Click "Save Attribute Mapping" to save these values.
 
@@ -140,7 +140,7 @@ You can paste that code into various places on your Joomla website to make the S
 * Post-text field in the Joomla Login module to have it appear below the login box.
 * Place the code in a Custom HTML module that you can then position in other places on the site.
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/sso-login-options.jpg" alt="Joomla SSO Login Options." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/sso-login-options.png" alt="Joomla SSO Login Options." class="img-fluid" figure=false %}
 
 ### Adding an SSO button to your administrator login screen
 
@@ -164,7 +164,7 @@ The miniOrange OAuth Client plugin currently doesn’t add a button for the Admi
 
 When you log out you should now see the FusionAuth SSO button on your login screen:
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/joomla-fusionauth-sso-button.jpg" alt="Administrator login with FusionAuth SSO login button." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/joomla-fusionauth-sso-button.png" alt="Administrator login with FusionAuth SSO login button." class="img-fluid" figure=false %}
 
 #### Shared sessions
 
@@ -176,11 +176,11 @@ To enable this feature, in the backend of your website navigate to "System", the
 
 Visit your Joomla front end and you should now see your login form with a FusionAuth SSO button (or a button with whatever label you’ve put on it for your site).
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/login-form-joomla.jpg" alt="Front end login example." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/login-form-joomla.png" alt="Front end login example." class="img-fluid" figure=false %}
 
 Clicking on the FusionAuth SSO button should log you straight into the website.
 
-{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/logout-button-joomla.jpg" alt="Front end logout example." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/joomla-sso-fusionauth/logout-button-joomla.png" alt="Front end logout example." class="img-fluid" figure=false %}
 
 Clicking Log out will then log you out of the site and you’ll see the Login form once more.
 
