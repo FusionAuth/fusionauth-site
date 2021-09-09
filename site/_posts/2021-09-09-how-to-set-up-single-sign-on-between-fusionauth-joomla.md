@@ -51,6 +51,12 @@ In the FusionAuth administrative user interface, navigate to Applications. Click
 * Save the application via the icon at the top of the application page.
 * You’ll now be returned to your application list. Click **Edit** to now return to the settings for the application where you can now see the ID that has been generated. You will need this to configure the OAuth client in Joomla in the next step.
 
+## Setting up FusionAuth using a Kickstart file
+
+Instead of manually setting up FusionAuth using the admin UI, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/joomla-sso.json) which sets up FusionAuth for this tutorial. 
+
+You'll need to edit that Kickstart file and update the application name and redirect URLs.
+
 ### Configuring users
 
 When a user logs into a site with SSO, they first log into FusionAuth. Then, FursionAuth passes their authorization details back to the Joomla website to allow access.
