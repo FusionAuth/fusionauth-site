@@ -135,90 +135,85 @@ The green arrow points to a custom button for the SSO option. You can customise 
 You can paste that code into various places on your Joomla website to make the SSO login button appear on the site. 
 
 
-				    Examples include:
+Examples include:
 
 
-				    * Pre-text field for the Joomla Login module. 
-				    * Post-text field in the Joomla Login module to have it appear below the login box.
-				    * Place the code in a Custom HTML module that you can then position in other places on the site.
+* Pre-text field for the Joomla Login module. 
+* Post-text field in the Joomla Login module to have it appear below the login box.
+* Place the code in a Custom HTML module that you can then position in other places on the site.
 
 
-				    ![SSO Login Options](https://imgur.com/pYd0KQ1.jpg)
+![SSO Login Options](https://imgur.com/pYd0KQ1.jpg)
 
 
-				    ### Adding an SSO Button to Your Administrator Login Screen
+### Adding an SSO button to your administrator login screen
+
+There are two ways to provide administrator access to your site via SSO.
 
 
-				    There are two ways to provide administrator access to your site via SSO.
+#### Administrator login
 
 
-				    #### Administrator Login
+The miniOrange OAuth Client plugin currently doesn’t add a button for the Administrator login page for Joomla. But you can easily add your own button by creating an Administrator Custom HTML module.
 
 
-				    The miniOrange OAuth Client plugin currently doesn’t add a button for the Administrator login page for Joomla. But you can easily add your own button by creating an Administrator Custom HTML module.
+* In the backend of the site, go to "Extensions" and then "Modules".
+* Change the filter from `Site` to `Administrator`.
+* Create a new Module, selecting `Custom HTML` as the module type.
+* Switch to code view and paste the following code into the editor:
+
+```html
+<a class="btn btn-primary btn-block btn-large login-button" href="?morequest=oauthredirect&amp;app_name=other">FusionAuth SSO</a>`
+```
+
+* Set the module position to `Login`.
+* Save and close the module.
 
 
-				    * In the backend of the site, go to **Extensions > Modules**
-				    * Change the filter from Site to Administrator
-				    * Create a new Module, selecting **Custom HTML** as the module type
-				    * Switch to code view and paste the following code into the editor:
+When you log out you should now see the FusionAuth SSO button on your login screen:
 
-				    `<a class="btn btn-primary btn-block btn-large login-button" href="?morequest=oauthredirect&amp;app_name=other">FusionAuth SSO</a>`
+![Administrator login with FusionAuth SSO login button](https://imgur.com/oqNFoLh.jpg)
 
 
-				    * Set the module position to Login
-				    * Save and close the module
+#### Shared sessions
 
 
-				    When you log out you should now see the FusionAuth SSO button on your login screen:
+Joomla has a feature where you can share sessions between the front and back end of the website. Turning on this feature will mean that to access your backend, you just need to log into your front end first and vice versa.
+
+To enable this feature, in the backend of your website navigate to "System", then "Global Configuration", then the System tab. Then scroll down to "Session Settings" and set "Shared Sessions" to `Yes`. Finally, save your Global Configuration.
+
+### Testing Your SSO login 
 
 
-				    ![Administrator login with FusionAuth SSO login button](https://imgur.com/oqNFoLh.jpg)
+Visit your Joomla front end and you should now see your login form with a FusionAuth SSO button (or a button with whatever label you’ve put on it for your site).
 
 
-				    #### Shared Sessions
+![Front end login example](https://imgur.com/zWtG0oZ.jpg)
 
 
-				    Joomla has a feature where you can share sessions between the front and back end of the website. Turning on this feature will mean that to access your backend, you just need to log into your front end first and vice versa.
+Clicking on the FusionAuth SSO button should log you straight into the website.
 
 
-				    To enable this feature, in the backend of your website go to **System > Global Configuration > System Tab**, scroll down to **Session Settings**, then set **Shared Sessions** to **Yes** and save your Global Configuration.
+![Front End logout button](https://imgur.com/UpVOISY.jpg)
 
 
-				    ### Testing Your SSO Login 
+Clicking Log out will then log you out of the site and you’ll see the Login form once more.
 
 
-				    Visit your Joomla front end and you should now see your login form with a FusionAuth SSO button (or a button with whatever label you’ve put on it for your site).
+### Troubleshooting
 
 
-				    ![Front end login example](https://imgur.com/zWtG0oZ.jpg)
+FusionAuth has made troubleshooting easy. If you’ve missed a setting in your OAuth configuration, you will most likely see an error message come back telling you what you’ve missed. Check back through the settings above to make sure you have copied the correct information over from FusionAuth, and that you have saved both the OAuth settings as well as the Attribute Mapping in the miniOrange OAuth Client.
+
+You might find that after a restart or a long time between logins, your FusionAuth instance will log out. When that happens, clicking the FusionAuth SSO button on your login form will add an additional step for you to log into your FusionAuth instance again so that it can access the SSO credentials. Once logged in, the SSO service goes back to a single click to authorize your access the next time you want to log in using SSO.
 
 
-				    Clicking on the FusionAuth SSO button should log you straight into the website.
+The miniOrange plugin uses cURL to process the OAuth authorization. So you won’t be able to connect FusionAuth up to remote sites using FusionAuth running locally, at, for instance, \http://localhost:9011. If you run a local FusionAuth server and are looking to use it to authorize connections for a remote website, use NAT routing to configure your local server so it’s accessible to the internet or a service like ngrok.
+
+## Conclusion
 
 
-				    ![Front End logout button](https://imgur.com/UpVOISY.jpg)
+From speeding up access to sites you manage, through to creating a community of users and granting them access using SSO to multiple sites, there are many advantages to looking at enabling SSO for Joomla websites.
 
 
-				    Clicking Log out will then log you out of the site and you’ll see the Login form once more.
-
-
-				    ### Troubleshooting
-
-
-				    FusionAuth has made troubleshooting easy. If you’ve missed a setting in your OAuth configuration, you will most likely see an error message come back telling you what you’ve missed. Check back through the settings above to make sure you have copied the correct information over from FusionAuth, and that you have saved both the OAuth settings as well as the Attribute Mapping in the miniOrange OAuth Client.
-
-
-				    You might find that after a restart or a long time between logins, your FusionAuth instance will log out. When that happens, clicking the FusionAuth SSO button on your login form will add an additional step for you to log into your FusionAuth instance again so that it can access the SSO credentials. Once logged in, the SSO service goes back to a single click to authorize your access the next time you want to log in using SSO.
-
-
-				    The miniOrange plugin uses cURL to process the OAuth authorization. So you won’t be able to connect FusionAuth up to remote sites using http://localhost:9011 URLS. If  you run a local FusionAuth server and are looking to use it to authorize connections for a remote website, use NAT routing to configure your local server so it’s accessible to the internet.
-
-
-				    ## Conclusion
-
-
-				    From speeding up access to sites you manage, through to creating a community of users and granting them access using SSO to multiple sites, there are many advantages to looking at enabling SSO for Joomla websites.
-
-
-				    OAuth is just one feature of FusionAuth, but you can see how easily you can set it up to make your login process more streamlined. Joomla site developers can look more at FusionAuth’s advanced features as a solution for user management and enhancing Joomla’s access control capabilities as well as provide ways to seamlessly interact with other applications sharing SSO through your FusionAuth application pool. Find out more about FusionAuth at [www.fusionauth.io](www.fusionauth.io).
+OAuth is just one feature of FusionAuth, but you can see how easily you can set it up to make your login process more streamlined. Joomla site developers can look more at FusionAuth’s advanced features as a solution for user management and enhancing Joomla’s access control capabilities as well as provide ways to seamlessly interact with other applications sharing SSO through your FusionAuth application pool. Find out more about FusionAuth at [www.fusionauth.io](www.fusionauth.io).
