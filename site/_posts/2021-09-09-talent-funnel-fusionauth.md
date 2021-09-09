@@ -1,11 +1,11 @@
 ---
 layout: blog-post
-title: Talent Funnel
-description: Talent Funnel
+title: Talent Funnel handles millions of users with FusionAuth
+description: Talent Funnel runs the premier UK student job site and uses FusionAuth for their auth needs.
 author: Dan Moore
-image: blogs/sunfinity-fusionauth-python/sunfinity-self-hosts-fusionauth-for-a-huge-win-in-control-productivity-and-cost-header-image.png
+image: blogs/...
 category: blog
-tags: topic-community-story topic-upgrade-homegrown
+tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 
@@ -23,6 +23,8 @@ David Billings is a FusionAuth community member and CTO at Talent Funnel. He cha
 
 We are currently rebuilding our entire platform from scratch and centralising all of our services onto one platform to provide a seamless, tailored experience for both candidates and recruiters. The platform will drive our ATS, client career sites and our own job search engine and allow us to better use our data to help people find the most suitable jobs, faster. We are also using the rebuild to add modern features such as video responses from candidates, video interview functionality from within the ATS and candidate recommendations for employers, so they can be proactive in recruitment rather than having to wait for candidates to apply to them.
 
+> There is a real 'developer' feel to the team and they are not locked away behind a wall of support staff and account managers which is so refreshing!
+
 **Dan:** I'm always interested to hear about people rebuilding platforms from scratch. Can you share a bit more about what went into that decision? Was it because of velocity, architectural constraints, technology choices, team dynamics, or something else?
 
 **David:** We decided to rebuild the platform from scratch as our old ATS was quickly facing scalability issues and was using a deprecated technology stack. It was deemed that trying to slowly move over functionality to a new platform had a large potential to introduce bugs, other issues and would have led to carrying over baggage from the old system. By cutting the cord and having a fresh start we were able to choose the absolute best technologies with no compromises and thus increase performance and development speed.
@@ -31,7 +33,9 @@ We are currently rebuilding our entire platform from scratch and centralising al
 
 **David:** We're using FusionAuth to power authentication for our entire platform. We have both power users for our ATS platform as well as a very large volume of 'low activity' users who may log in a couple of times a year. 
 
-We use FusionAuth to provide standard user accounts, 2 Factor Authentication with Google Authenticator and social sign ons which is a very important feature to reduce friction for registrations on our system. Our legacy system used it's own custom built authentication system which we wanted to move away from, we're not in the authentication business so why waste time implementing your own security, leave it to the experts! We tried many competitors but either the technology didn't fit our use-case or the billing would have been astronomical for the types of users we have.
+We use FusionAuth to provide standard user accounts, Two Factor Authentication with Google Authenticator and social sign ons which is a very important feature to reduce friction for registrations on our system. Our legacy system used it's own custom built authentication system which we wanted to move away from, we're not in the authentication business so why waste time implementing your own security, leave it to the experts! We tried many competitors but either the technology didn't fit our use-case or the billing would have been astronomical for the types of users we have.
+
+> A lot of authentication providers seem to overcomplicate the process, something I found was not the case with FusionAuth.
 
 **Dan:** Radically varying activity makes total sense. Did any of the seasonal variation surprise you? Do you scale your servers accordingly too?
 
@@ -40,6 +44,8 @@ We use FusionAuth to provide standard user accounts, 2 Factor Authentication wit
 **Dan:** Which social signon have you found to be the most important or used?
 
 **David:** A lot of our candidates like to use FaceBook to login. Obviously FaceBook isn't as popular with the younger generation so we're monitoring feedback and market forces to see what other social channels will become important soon.  
+
+> After a lot of comparisons I happened upon FusionAuth and I was impressed right away. 
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
@@ -58,6 +64,8 @@ After a lot of comparisons I happened upon FusionAuth and I was impressed right 
 **Dan:** How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
 
 **David:** We run FusionAuth on a cloud VM behind a HAProxy Load Balancer. I would love to see a guide on running FusionAuth behind Google Clouds firewall, which due to Google documentation is a bit of a pain to configure. 
+
+> We currently use the community version of FusionAuth so in terms of money it's saved thousands of dollars. 
 
 **Dan:** Any general feedback/areas to improve?
 
