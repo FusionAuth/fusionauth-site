@@ -150,7 +150,7 @@ tell application theApp
 end tell
 EOD
 
-if [ $url != "" ]; then
+if [ "x$url" != "x" ]; then
   osascript<<EOD
 tell application "Safari" to set the URL of the front document to "$url"
 delay 1
