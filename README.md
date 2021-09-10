@@ -86,14 +86,24 @@ Before you merge your site changes with CSS dependencies to master:
 
 ## Deploying
 
-This section is only useful if you have access to the FusionAuth web server(s).
+This section is only useful if you work for FusionAuth. Sorry!
 
-Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard. This key is used to push any changes to the index at build time.
+Only `master` is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to `master` before you release. On every project, including this site, `master` should always be completely clean and able to be released at anytime.
 
-Only master is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to master before you release. Master on every project should always be completely clean and able to be released at anytime.
+You may want to run `bundle install` to ensure that you have all the needed gems.
 
-After master contains what you want to release, there is a Savant build target called push. When you run `sb push` it will pull master, re-build and updates the website.
+Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard. This key is used to push any changes to the index at build time. This takes some time, so you can avoid it with the `--skipReindex` switch.
 
-If your user is different on the webserver than on your localhost, you'll want to use the --user switch:
+Make sure that java8 is the first java in your path. If you have the standard FusionAuth setup, you can do this temporarily by running this command: `export PATH=~/dev/java/current8/bin/:$PATH`.
 
-`sb push --user=yourremoteusername`
+You need to have AWS credentials (access key, secret access key) with permissions to access the S3 bucket and CloudFront distribution. You need to make those available to the process. I use environment variables, but any method outlined here: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html will work.
+
+After `master` contains what you want to release, there is a Savant build target called `push`. When you run `sb push` it will pull `master`, re-build and update the website.
+
+### Example
+
+If you are doing everything via environment variables:
+
+```
+ALGOLIA_API_KEY=... PATH=~/dev/java/current8/bin/:$PATH AWS_ACCESS_KEY_ID=AKIA... AWS_SECRET_ACCESS_KEY=Jffp... sb push
+```
