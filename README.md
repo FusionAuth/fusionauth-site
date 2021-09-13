@@ -107,3 +107,32 @@ If you are doing everything via environment variables:
 ```
 ALGOLIA_API_KEY=... PATH=~/dev/java/current8/bin/:$PATH AWS_ACCESS_KEY_ID=AKIA... AWS_SECRET_ACCESS_KEY=Jffp... sb push
 ```
+
+### Troubleshooting
+
+If you see an error message like:
+
+```
+Exception in thread "main" java.lang.ExceptionInInitializerError
+	at org.jruby.Ruby.newInstance(Ruby.java:266)
+	at s3.website.Ruby$.rubyRuntime$lzycompute(Ruby.scala:4)
+	at s3.website.Ruby$.rubyRuntime(Ruby.scala:4)
+	at s3.website.model.Config$$anonfun$15.apply(Config.scala:229)
+	at s3.website.model.Config$$anonfun$15.apply(Config.scala:227)
+	at scala.util.Try$.apply(Try.scala:192)
+	at s3.website.model.Config$.erbEval(Config.scala:227)
+	at s3.website.model.Site$$anonfun$2.apply(Site.scala:28)
+	at s3.website.model.Site$$anonfun$2.apply(Site.scala:27)
+	at scala.util.Success.flatMap(Try.scala:231)
+	at s3.website.model.Site$.parseConfig(Site.scala:27)
+	at s3.website.model.Site$.loadSite(Site.scala:100)
+	at s3.website.Push$.push(Push.scala:62)
+	at s3.website.Push$.main(Push.scala:40)
+	at s3.website.Push.main(Push.scala)
+Caused by: java.lang.RuntimeException: unsupported Java version: 15
+	at org.jruby.RubyInstanceConfig.initGlobalJavaVersion(RubyInstanceConfig.java:1878)
+	at org.jruby.RubyInstanceConfig.<clinit>(RubyInstanceConfig.java:1585)
+	... 15 more
+```
+
+You are running the wrong version of java. Doublecheck your path.
