@@ -23,13 +23,15 @@ Jean Rousseau Franco is a FusionAuth community member and CTO at Maila Networks 
 
 Our mission is to provide the best experience to our customers mixing the service and connectivity offerings, both being delivered with security in mind.
 
+> [FusionAuth solved] the authentication, logging and searching problems that we had.
+
 **Dan:** Tell me about your work as CTO at Maila Networks.
 
 **Jean Rousseau:** It's a big responsibility but it comes with a lot of joy. I'm involved in many different areas, from technical to design. I'm even in the field with the technicians to grasp their problems and understand their needs.
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
         
-**Jean Rousseau:** We started using for a simple project and replaced the Coovachilli hotspot. Nowadays I'm experimenting it in other areas to integrate all logins with a single application.
+**Jean Rousseau:** We started using it for a simple project and replaced the Coovachilli hotspot. Nowadays I'm experimenting it in other areas to integrate all logins with a single application.
 
 **Dan:** What applications are you planning to integrate with FusionAuth?
 
@@ -39,9 +41,11 @@ Our mission is to provide the best experience to our customers mixing the servic
 
 **Jean Rousseau:** The authentication, logging and searching problems that we had.
 
+> We're running [FusionAuth] on a OpenStack cluster...
+
 **Dan:** What kind of searching do you find FusionAuth to be helpful for? Can you give an example?
 
-**Jean Rousseau:** When we had different servers, we had to go through login logs in different servers. That was time consuming.
+**Jean Rousseau:** When we had different servers, we had to go through logs in different servers. That was time consuming.
 
 **Dan:** How were you solving these problems before FusionAuth?
 
@@ -52,6 +56,8 @@ With FusionAuth everything is concentrated in a single app. We can scale by addi
 **Dan:** Why did you choose FusionAuth over the alternatives?
 
 **Jean Rousseau:** The price was the main factor. As the company itself puts it: it's transparent.
+
+> [FusionAuth] saved us from having to build our own application.
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
