@@ -23,6 +23,7 @@ Every deployment is separated, both logically and physically, from every other d
 ** <<Managing Your Deployments>>
 ** <<Upgrading a Deployment>>
 ** <<Destroying a Deployment>>
+** <<Migrating a Deployment>>
 * <<Modifying Deployments>>
 * <<Accessing User Data>>
 ** <<Restoring From Backup>>
@@ -256,6 +257,65 @@ image::installation-guides/cloud/deployments-destroying.png[The deployment is be
 
 After the deployment is completely removed, it will have a "Destroyed" state on the [breadcrumb]#Deployments# tab. At this point you will no longer be charged for this deployment.
 
+=== Migrating a Deployment
+
+You can migrate your user data to a FusionAuth Cloud deployment or from FusionAuth Cloud to a self-hosted FusionAuth instance. 
+
+If you are interested in migrating from an auth system other than FusionAuth, you're looking for our link:/docs/v1/tech/guides/migration/[Migration Guide].
+
+==== Migrating To FusionAuth Cloud
+
+To migrate from a self-hosted instance to FusionAuth Cloud:
+
+* You must be running PostgreSQL. If you are running MySQL, please migrate to a PostgreSQL database locally. Here's a link:https://fusionauth.io/community/forum/topic/985/migrating-from-mysql-to-postgresql[forum post on how to do this]. This has been provided by the community and is not supported nor endorsed by FusionAuth.
+* Export your FusionAuth database to a file. When you run the `pg_dump` command, please use the following options: `--format=c` and `--compress 9` to minimize the file size.
+* Encrypt the export file with a symmetric solution such as gpg.
+* Purchase a FusionAuth Cloud deployment that meets your needs. Select the version of FusionAuth that is the same as your local installation. You will be able to upgrade FusionAuth later; see <<Upgrading a Deployment>> for more.
+* link:https://account.fusionauth.io/account/support/[Open a support ticket] and provide the database export file, the version of PostgreSQL you are running, and the name of the new FusionAuth deployment.
+* Provide the password for the database export through another channel. You can mention the channel you'd prefer in the support ticket. Slack, email and a separate support ticket are all options.
+
+Within 1-2 business days, we will upload your data to your FusionAuth Cloud deployment.
+
+After your data is uploaded, upgrade your deployment to any subsequent FusionAuth, if desired. See <<Upgrading a Deployment>> for more.
+
+.Migration checklist
+[cols="1,10"]
+|===
+| Done? 
+| Task
+
+| +++<i class="far fa-square"></i>+++
+| Confirmed running Postgres for local instance.
+
+| +++<i class="far fa-square"></i>+++
+| Found FusionAuth version for local instance.
+
+| +++<i class="far fa-square"></i>+++
+| Created a new deployment. Instructions: <<Creating a Deployment>>. 
+
+| +++<i class="far fa-square"></i>+++
+| Ensured the FusionAuth Cloud deployment and the local instance are running the same version of FusionAuth.
+
+| +++<i class="far fa-square"></i>+++
+| Communicated the version of Postgres used in the export file.
+
+| +++<i class="far fa-square"></i>+++
+| Encrypted the database export.
+
+| +++<i class="far fa-square"></i>+++
+| Provided the decryption password via a separate communication channel.
+
+|===
+
+
+==== Migrating Away From FusionAuth Cloud
+
+To migrate from FusionAuth Cloud to a self-hosted instance, please request a database export, as documented in <<Accessing User Data>>. After you have the data, install it in a PostgreSQL database and configure your self-hosted instance to point to that database. 
+
+Ensure your self-hosted instance uses the same FusionAuth and database versions as those used by your Cloud deployment. You can view your FusionAuth version in the administrative user interface. To find your deployment's database version, the best way currently is to open a support ticket. There's an https://github.com/FusionAuth/fusionauth-issues/issues/1390[open issue] to display the database version in the administrative user interface.
+
+Once you've tested your self-hosted installation, destroy your FusionAuth Cloud deployment as outlined here: <<Destroying a Deployment>>
+
 == Modifying Deployments
 
 Open a https://account.fusionauth.io/account/support/[support ticket] to change any of the following attributes of your deployment:
@@ -369,7 +429,7 @@ When you are load testing against FusionAuth Cloud instances:
 * Store configuration as scripts which you can apply to your FusionAuth instance. This allows you to easily stand up and tear down different deployments to see what meets your needs.
 * If you have an edition with support, please link:https://account.fusionauth.io/account/support/[open a support ticket] if you'd like additional support or guidance on sizing or testing.
 
-Please don't use a FusionAuth Cloud Basic deployment to load test. Instances on this tier of FusionAuth Cloud run on a single compute node, so the node is running FusionAuth, Elasticsearch and a PostgreSQL database. The node is therefore very resource constrained, and attempting to run load tests on this type of system is not recommended. The numbers you get from this type of test will not be valuable to you in context of planning your production deployment.
+Please don't use a FusionAuth Cloud Basic deployment to load test. Instances on this tier of FusionAuth Cloud run on a single compute node, so the node is running FusionAuth, Elasticsearch and a PostgreSQL database. The node is therefore very resource constrained, and attempting to run load tests on this type of system is not recommended. The numbers you get from this type of test will not be valuable to you in planning your production deployment.
 
 Testing on a Business Cloud or High-Availability Cloud plan will provide more useful results. If you cannot achieve your target request per second with a standard setup, you can create a deployment with larger node sizes. You can spin up a deployment, apply your configuration, perform load testing, and tear it down. You'll only be charged for the time the instance is running. 
 
@@ -382,7 +442,7 @@ FusionAuth Cloud has the same link:/docs/v1/tech/reference/limitations/[limitati
 * You cannot change any of the link:/docs/v1/tech/reference/configuration/[FusionAuth configuration options].
 * You cannot downgrade the version of a FusionAuth Cloud deployment.
 * You cannot run a link:/docs/v1/tech/installation-guide/kickstart/[Kickstart file] on a FusionAuth Cloud deployment.
-* There is no support for proxy customization. You can add your own proxy layer such, as CloudFlare, with FusionAuth Cloud as an origin.
+* There is no support for proxy customization. You can add your own proxy layer, such as CloudFlare, with FusionAuth Cloud as an origin.
 * Use of port 25 is not allowed. To connect to an SMTP server such as Mailgun or SES, use a different port.
 * The IP addresses of a FusionAuth Cloud deployment are not fixed. Whenever possible, use the domain name, which is fixed. If you need IP addresses of the deployment nodes for purposes such as a network firewall allow list, please open a https://account.fusionauth.io/acccount/support/[support ticket].
 * If you are on FusionAuth Cloud and you find that some requests are failing, it is possible you are being rate limited. This isn't intentional, but an automated part of our infrastructure to ensure FusionAuth Cloud performance and security. If you are rate limited but need these requests to occur, please open a https://account.fusionauth.io/acccount/support/[support ticket] with details.
