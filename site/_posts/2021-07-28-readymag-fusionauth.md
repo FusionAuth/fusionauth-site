@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Readymag outsources their auth to FusionAuth
-description: Readymag uses FusionAuth because of its clear structure, reasonable update policies and support.
+title: Readymag chose FusionAuth because of the well-structured API, Typescript SDK, and helpful support
+description: Readymag, a browser-based design tool that helps create websites, portfolios and online publications uses FusionAuth because of its clear structure, reasonable update policies and support.
 author: Dan Moore
 image: blogs/currentdesk-fusionauth/currentdesk-saved-thousands-of-dollars-by-choosing-fusionauth-header-image.png
 category: blog
@@ -62,10 +62,10 @@ Ultimately, we switched to FusionAuth for the following reasons:
 
 **Sergey and Ilya:** It's not easy to estimate, but for us the main advantage of FusionAuth is that we outsource authorization to a separate service with a clear structure, reasonable update policies and a good level of support.
 
-**Dan:** How do you run FusionAuth (Kubernetes, standalone tomcat server, behind a proxy, etc)?
-
 > [FusionAuth has] well-prepared documentation.
         
+**Dan:** How do you run FusionAuth (Kubernetes, standalone tomcat server, behind a proxy, etc)?
+
 **Sergey and Ilya:** We use a cluster of docker instances with load balancing in a cloud infrastructure provider.
 
 **Dan:** Any general feedback/areas to improve?
