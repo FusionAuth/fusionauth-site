@@ -321,7 +321,7 @@ python test.py
 ```
 
 ### Additional error codes
-Didn't find your error here? Visit [https://fusionauth.i/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/troubleshooting](/docs/v1/tech/troubleshooting) for more troubleshooting suggestions. You can also ask a question on the [FusionAuth Forum](https://fusionauth.io/community/forum/). As always, if you have a support contract feel free to [contact FusionAuth support](https://account.fusionauth.io/account/support).
+Didn't find your error here? Visit [https://fusionauth.io/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/troubleshooting](/docs/v1/tech/troubleshooting) for more troubleshooting suggestions. You can also ask a question on the [FusionAuth Forum](https://fusionauth.io/community/forum/). As always, if you have a support contract feel free to [contact FusionAuth support](https://account.fusionauth.io/account/support).
 
 
 ## Summary
