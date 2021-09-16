@@ -191,7 +191,7 @@ else:
 
 Save and execute the `reactivate.py` application on your server. Upon success, you'll get a client response that should look something like this, displaying the user's profile information:
 
-```zsh
+```python
 {
   'user': {
     'fullName': 'Terry Example',
