@@ -23,7 +23,7 @@ This version has account verification gating. With this feature you can block a 
 
 {% include _image.liquid src="/assets/img/blogs/release-1-27/email-verification-gate-screen-code-entry.png" alt="The email verification code entry screen." class="img-fluid" figure=false %}
 
-You can learn how to [set up email gating with this tutorial](/docs/v1/tech/tutorials/gate-accounts-until-verified/).
+You can learn how to [set up email gating with this tutorial](/docs/v1/tech/tutorials/gate-accounts-until-user-email-verified/).
 
 ## Application themes
 
