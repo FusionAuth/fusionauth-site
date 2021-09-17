@@ -37,3 +37,27 @@ FusionAuth App to make requests to the search index.
 To access the FusionAuth UI you'll need to open port `9011`. If you have more than one instance of FusionAuth installed you will need
 to ensure that each instance of FusionAuth Backend can communicate on port `9011`.
 
+== Custom Certificates
+
+FusionAuth ships with the default `cacerts` file from OpenJDK. There are times when you need to add a certificate to the keystore. This might occur if:
+
+* You are using a self signed certificate.
+* Your certificate authority does not ship with the version of Java that FusionAuth uses.
+
+In some cases, such as with link:/docs/v1/tech/events-webhooks/securing/[webhooks], you may provide your own certificate via the FusionAuth API or UI, but you may need to install the certificate globally. 
+
+To add this, we need to use `keytool` to augment the Java keystore. First, find the Java installation that is running FusionAuth. This is typically at `FA_INSTALL_DIR/java/` where `FA_INSTALL_DIR` is where you installed FusionAuth. This is often at `/usr/local/fusionauth` but may vary.
+
+For this documentation, if your Java installation is at `/usr/local/fusionauth/java/current/`, the `/usr/local/fusionauth/java/current/lib/security/cacerts` file should be modified. Let's also assume the new certificate authority public key file is located at `newcacert.pem`, and that you haven't changed your keystore password from the default value, which is `changeit`.
+
+Import the certificate with this command:
+
+[source,sh]
+====
+/usr/local/fusionauth/java/current/bin/keytool -importcert -file cert.pem -keystore fusionauth/java/current/lib/security/cacerts -storepass changeit  -alias faselfsignedcert
+====
+
+Then, restart FusionAuth.
+
+If you are using the docker image, you'll have to build a custom dockerfile based on the FusionAuth dockerfile which runs the keytool import command above. The base FusionAuth dockerfile is available in the https://github.com/fusionauth/fusionauth-containers[fusionauth-containers repo].
+
