@@ -4,7 +4,7 @@ title: Zendesk Single Sign-on (SSO) with FusionAuth and HYPR
 description: Learn how to set up Zendesk to authenticate with FusionAuth and HYPR.
 author: Dan Moore
 image: blogs/zendesk-sso-hypr-webinar/fusionauth-hypr-single-sign-on-sso-webinar.jpg
-category: blog,tutorial,tutorial-zendesk,tutorial-integration
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 
@@ -25,4 +25,3 @@ After that, we'll take questions.
 If you'd like to see how easy it is to configure FusionAuth to serve as an centralized authentication and authorization service, HYPR and FusionAuth are hosting a webinar on Thursday, July 16 2020. 
 
 [Sign up for the webinar](https://get.hypr.com/fusionauth-webcast){:.button .brochure .orange .text-larger}
-

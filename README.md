@@ -3,7 +3,7 @@
 https://fusionauth.io
 
 
-The FusionAuth site is open source, found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
+The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
 
 Thanks!
  - FusionAuth team
@@ -30,7 +30,7 @@ Install these programs:
 
 ### Setup Savant
 
-We use the Savant build tool, in order to build and run this project, you'll need to first setup Savant.
+We use the Savant build tool. In order to build and run this project, you'll need to first setup Savant.
 
 Linux or macOS
 
@@ -71,7 +71,7 @@ fusionauthWebsiteStyleVersion = "0.2.27-{integration}"
 ```
 * then you can commit this and other folks can pull down your changes
 
-Each time you make a css change, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
+Each time you make a CSS change, you can run `sb int` in `fusionauth-style` and then `sb css` in this project to pull down the latest CSS.
 
 #### Releasing CSS changes
 
@@ -86,14 +86,53 @@ Before you merge your site changes with CSS dependencies to master:
 
 ## Deploying
 
-This section is only useful if you have access to the FusionAuth web server(s).
+This section is only useful if you work for FusionAuth. Sorry!
 
-Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard. This key is used to push any changes to the index at build time.
+Only `master` is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to `master` before you release. On every project, including this site, `master` should always be completely clean and able to be released at anytime.
 
-Only master is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to master before you release. Master on every project should always be completely clean and able to be released at anytime.
+You may want to run `bundle install` to ensure that you have all the needed gems.
 
-After master contains what you want to release, there is a Savant build target called push. When you run `sb push` it will pull master, re-build and updates the website.
+Make certain that you set the `ALGOLIA_API_KEY` environment variable to the `Admin API Key` value found in the Algolia dashboard. This key is used to push any changes to the index at build time. This takes some time, so you can avoid it with the `--skipReindex` switch.
 
-If your user is different on the webserver than on your localhost, you'll want to use the --user switch:
+Make sure that java8 is the first java in your path. If you have the standard FusionAuth setup, you can do this temporarily by running this command: `export PATH=~/dev/java/current8/bin/:$PATH`.
 
-`sb push --user=yourremoteusername`
+You need to have AWS credentials (access key, secret access key) with permissions to access the S3 bucket and CloudFront distribution. You need to make those available to the process. I use environment variables, but any method outlined here: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html will work.
+
+After `master` contains what you want to release, there is a Savant build target called `push`. When you run `sb push` it will pull `master`, re-build and update the website.
+
+### Example
+
+If you are doing everything via environment variables:
+
+```
+ALGOLIA_API_KEY=... PATH=~/dev/java/current8/bin/:$PATH AWS_ACCESS_KEY_ID=AKIA... AWS_SECRET_ACCESS_KEY=Jffp... sb push
+```
+
+### Troubleshooting
+
+If you see an error message like:
+
+```
+Exception in thread "main" java.lang.ExceptionInInitializerError
+	at org.jruby.Ruby.newInstance(Ruby.java:266)
+	at s3.website.Ruby$.rubyRuntime$lzycompute(Ruby.scala:4)
+	at s3.website.Ruby$.rubyRuntime(Ruby.scala:4)
+	at s3.website.model.Config$$anonfun$15.apply(Config.scala:229)
+	at s3.website.model.Config$$anonfun$15.apply(Config.scala:227)
+	at scala.util.Try$.apply(Try.scala:192)
+	at s3.website.model.Config$.erbEval(Config.scala:227)
+	at s3.website.model.Site$$anonfun$2.apply(Site.scala:28)
+	at s3.website.model.Site$$anonfun$2.apply(Site.scala:27)
+	at scala.util.Success.flatMap(Try.scala:231)
+	at s3.website.model.Site$.parseConfig(Site.scala:27)
+	at s3.website.model.Site$.loadSite(Site.scala:100)
+	at s3.website.Push$.push(Push.scala:62)
+	at s3.website.Push$.main(Push.scala:40)
+	at s3.website.Push.main(Push.scala)
+Caused by: java.lang.RuntimeException: unsupported Java version: 15
+	at org.jruby.RubyInstanceConfig.initGlobalJavaVersion(RubyInstanceConfig.java:1878)
+	at org.jruby.RubyInstanceConfig.<clinit>(RubyInstanceConfig.java:1585)
+	... 15 more
+```
+
+You are running the wrong version of java. Doublecheck your path.

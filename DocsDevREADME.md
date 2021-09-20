@@ -12,9 +12,12 @@ Here are some guidelines to follow when writing documentation (everything under 
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - Use single backticks when specifying a value that is not a field.
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
+- References to `http://127.0.0.1` should be updated to `[http://localhost` and remove hyperlinks to `localhost`
+- The class used for images should be updated to `class="img-fluid"`.
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
+- All code snippets within any documents should have indenting formatted to 2 spaces
 - If something is new in a version, mark it with something like this:
 
   [NOTE.since]
@@ -40,8 +43,9 @@ Here are some guidelines to follow when writing documentation (everything under 
     ```
 
 
-- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_`.
+- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
 - If you are including a file in the docs/asciidoctor, do not prepend the include file path with `/`. Instead, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
+- If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers. See the 5 minute guide for an example.
 - If a doc gets long consider adding a table of contents in the top section or breaking it into multiple documents. To generate a table of contents from section headers, run this script:
 ```
 egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
@@ -50,6 +54,11 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 For API docs:
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
+- If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
+  ```
+  This field is required when [field]#theOtherField.enabled# is set to true.
+  ```
+- If a feature is only available when using a paid edition, use the `shared/_premium-edition-blurb-api.adoc` fragment for API fields, and `shared/_premium-edition-blurb.adoc` for any other location where the feature is mentioned in docs.
 - If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
 
 For blog posts:
@@ -62,6 +71,7 @@ For blog posts:
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
 - If appropriate, use tags. Here are the following tag types. They are separated with spaces. These are freeform, so feel free to add multiple and choose what works.
+- All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
 -- `client-<langname>` if the post refers to a specific language we have a client library for (use `client-javascript` for JS even though our client lib is typescript). These show up on the client libraries page.
 -- `tutorial` for tutorials. These show up on the tutorial page.
 -- `tutorial-<langname>`, `tutorial-<framework>` for a tutorial in a specific language or framework.
@@ -89,6 +99,11 @@ For lists:
 - multi-factor authentication
 - multi-tenancy/multi-tenant
 
+## Git
+
+* Open a PR with changes. Tag someone to review it.
+* Merge using the GitHub interface or using a merge commit.
+* Don't `push -f` in general. Unless you know what you are doing.
 
 ## Tagging
 
@@ -178,20 +193,14 @@ end tell
 
 ## Shell script for capturing sceenshots 
 fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
-- Sizing and moving Safari window
-- Capturing screenshot 
+- Sizing and moving the Safari window
+- Capturing the screenshot 
 - Resizing the screenshot image
 - Compressing the image using either pngquant or Tiny PNG
 - Moving the image to an appropriate folder
  
 ```bash
-
-    ./fa-screenshot.sh  [-s] [-t] [-d] <destination folder> [-h]
-
-   -s  Silent mode
-   -t  Use TinyPNG API instead of pngquant library
-   -d  Move screenshots to given folder
-   -h  Print this usage
+./fa-screenshot.sh -h # for usage info
 ```
 
 
@@ -248,9 +257,9 @@ Update the `relatedTag` value to match the tag added to the blog post.
 
 ## Search
 
-We use algolia to search.
+We use algolia to search. This only searches content on the public site, so if you are running locally, it won't fully work. (It'll find local versions of public content, but not unpublished content.)
 
-To do a dry run:
+To do a dry run of the search indexing to see what will content be indexed on the next push:
 
 ```
 bundle exec jekyll algolia --dry-run 
@@ -261,3 +270,13 @@ or, if you want to see everything:
 ```
 bundle exec jekyll algolia --dry-run --verbose
 ```
+
+## Data Driven Pages
+
+Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file. 
+
+Examples of that are the customers page and the quotes widget.
+
+You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps.
+
+The theme pages are kinda complex because they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
