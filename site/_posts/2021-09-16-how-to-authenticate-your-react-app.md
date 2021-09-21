@@ -31,8 +31,7 @@ FusionAuth is a complete auth platform that saves your team time and resources b
 
 There are a few things that you need to have in place before you get started:
 
-* You need to have either a FusionAuth Cloud account or install their self-hosted version, available for free. Follow the [FusionAuth 5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide/) to get started with your installation.
-* You will need a boilerplate project already created with `create-react-app`.  We'll call this project `ReactAuth`.  
+* You need to have either a FusionAuth Cloud account or install their self-hosted version, available for free. Follow the [FusionAuth 5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide/) to get started with your installation.  
 * Make sure your Node version is at least 14.17.6, as we use this version in this tutorial.  
 * We use React 17.0.2, and suggest you use the same or most recent stable build.
 
@@ -50,7 +49,7 @@ So, from here, navigate to the administrative user interface, and go to Applicat
 
 * Add a name for your application. I'm calling mine `React Auth`, and I suggest you do the same.
 * Under the `OAuth` tab, configure the “Authorized redirect URL” to where you want FusionAuth to send your users *after* they have completed login.  In this case, enter `http://localhost:3000/oauth-callback`
-* Under the same `OAuth` tab, configure the “Logout URL” to where FusionAuth sends the user after they (surprise!) log out. Enter in `http://localhost:3000/logout`.
+* Under the same `OAuth` tab, configure the “Logout URL” to where FusionAuth sends the user after they (surprise!) log out. Enter in `http://localhost:8080/logout`.
 
 Click the blue save button in the top-right to finish the configuration.
 
@@ -75,13 +74,7 @@ For the next step, we will link a user to your brand-new FusionAuth app, ReactAu
 
 Well done! You now have at least one user that is linked to your `React Auth` app. Not bad for your app being in development.
 
-### Issuer and Signing Key
-
-Do I need to do this?
-
-There are two more attributes we want to configure in FusionAuth. The first attribute is the named issuer value used to sign tokens. We will use this value when verifying the access token during login. To do this, navigate to “Tenants” on the left-nav bar and then click the “Edit” button that corresponds to the “Default” tenant. Set the “Issuer” field under the “General” tab. The value of the issuer is typically the hostname of the identity provider. Since this is a demo, we’ll use the value fusionauth.io.
-
-### Setting up FusionAuth using Kickstart
+## Setting up FusionAuth using Kickstart
 
 Instead of manually setting up FusionAuth using the admin UI, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/path-to-kickstart-here) which sets up FusionAuth for this tutorial.
 
@@ -89,7 +82,60 @@ You'll need to edit that Kickstart file and update the application name and redi
 
 ## Write the React Application
 
-Coming tomorrow
+We're going to use both Express and React for this application, so let's start with our folder structure. From the command line, run the following commands:
+
+Make a parent folder called `reactauthapp`:
+
+```
+mkdir reactauthapp
+```
+
+This folder will hold both the front and back end files.
+
+`cd` into that parent folder, and then run:
+```
+npx create-react-app client
+```
+This creates a React app inside the parent directory.
+
+Now, make a `server.js` file in the parent directory with:
+
+```
+touch server.js
+```
+
+This will hold our Express server.
+
+Lastly, in the `reactauthapp` folder, run:
+
+```bash
+npm init -y
+```
+Confirm that a package.json was created in the root `reactauthapp` folder.
+
+At the end, your folder structure should look like this:
+
+```
+reactauthapp
+  client
+  server.js
+  package.json
+```
+
+To cover all of your bases, I recommend `cd`-ing into your `client` folder and running
+
+```
+npm start
+```
+
+to make sure your React app starts up correctly.
+
+
+## Write the Express Server
+
+*"Wait", you may say, "why do I need an Express server? Can't I just use Router?"*
+
+Again, a good question. You need an Express server, because there needs to be somewhere for the access token to be stored that isn't on the browser to pass
 
 ## Testing Your Login and Logout
 
