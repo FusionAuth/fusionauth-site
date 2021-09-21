@@ -23,7 +23,6 @@ In short, authentication is the process of a client proving that they are who th
 
 While it is possible to write your own authentication solutions, it is often best to use an open source tool or external service like FusionAuth with enterprise projects, as authentication servers are complex and require a decent amount of maintenance, and if you are not able to dedicate a good amount of developer hours and knowledge to maintaining your auth workflows, they can become easily exploited and result in data loss.  You can also use an 'identity provider', which is a way of authenticating users with an external trusted service such as Facebook or Google, however, this is outside the scope of this tutorial.
 
-
 ## What is FusionAuth?
 
 FusionAuth is a complete auth platform that saves your team time and resources by handling everything to do with authentication and identity access management. It allows you to quickly implement complex standards like OAuth, OpenID Connect, and SAML and build out additional login features to meet compliance requirements, such as integrating with external identity providers (IDPs).
@@ -41,7 +40,7 @@ Once you have installed all the required components listed above, log into your 
 
 ## Configure an Application in FusionAuth
 
-Now, you must configure an application in FusionAuth as well as register the user account with which you’ll log in.
+Now, you must configure an application in FusionAuth as well as link the user account with which you’ll log in.
 
 *"But wait a minute!" you may ask. "Why do I have to make another app in FusionAuth? Don't I already have a React App? What is this extra application all about?  I thought I could just import FusionAuth functionality into my React app?"*
 
@@ -53,15 +52,15 @@ So, from here, navigate to the administrative user interface, and go to Applicat
 * Under the `OAuth` tab, configure the “Authorized redirect URL” to where you want FusionAuth to send your users *after* they have completed login.  In this case, enter `http://localhost:3000/oauth-callback`
 * Under the same `OAuth` tab, configure the “Logout URL” to where FusionAuth sends the user after they (surprise!) log out. Enter in `http://localhost:3000/logout`.
 
-Click the blue Save button in the top-right to finish the configuration.
+Click the blue save button in the top-right to finish the configuration.
 
 This is what your configuration might look like:
 
-{% include _image.liquid src="/assets/img/blogs/path/to/png/here" alt="Setting up the FusionAuth React configuration." class="img-fluid" figure=false %}
+picture here
 
 Congratulations! You now have a FusionAuth app to use with your React app.  
 
-## Create a User and Link them to Your FusionAuth app
+## Create a User and Link them to Your FusionAuth App
 
 For the next step, we will link a user to your brand-new FusionAuth app, ReactAuth, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store', aka a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users from your app if you want to build that functionality in later on, but that is beyond this tutorial's scope.  
 
@@ -72,12 +71,13 @@ For the next step, we will link a user to your brand-new FusionAuth app, ReactAu
 * Click the `save` icon on the top right.
 * Go back to `users`.
 * Select `manage` under the `action` tab for your new user.
-* Select `add registration`. In the dropdown menu, select `React Auth`. If you don't see it double check that you remembered to push `save` when you created your application.
+* Select `add registration`. In the dropdown menu, select `React Auth`. If you don't see it, double check that you remembered to push `save` when you created your application.
 
 Well done! You now have at least one user that is linked to your `React Auth` app. Not bad for your app being in development.
 
-
 ### Issuer and Signing Key
+
+Do I need to do this?
 
 There are two more attributes we want to configure in FusionAuth. The first attribute is the named issuer value used to sign tokens. We will use this value when verifying the access token during login. To do this, navigate to “Tenants” on the left-nav bar and then click the “Edit” button that corresponds to the “Default” tenant. Set the “Issuer” field under the “General” tab. The value of the issuer is typically the hostname of the identity provider. Since this is a demo, we’ll use the value fusionauth.io.
 
@@ -87,19 +87,9 @@ Instead of manually setting up FusionAuth using the admin UI, you can also use K
 
 You'll need to edit that Kickstart file and update the application name and redirect URLs.
 
-## Configuring users
-
-Now, when a user logs into your site, what they are actually doing is logging into FusionAuth. Then, FusionAuth passes their authorization details back to the React website to allow access.
-
-For ease of testing, your FusionAuth administrator account details should also be the Super Admin user details for your Joomla site.
-
-When configuring additional users you need to set up two user accounts: one in FusionAuth and then the second in your Joomla website for it to match and authorize. The Joomla account will determine what access the user account has on the site.
-
-Automatic user creation is a feature that requires the registered version of the miniOrange plugin.
-
 ## Write the React Application
 
-Coming tomorrow 
+Coming tomorrow
 
 ## Testing Your Login and Logout
 
