@@ -4,13 +4,27 @@ title: FusionAuth Cluster Setup
 description: Setting up a multi node FusionAuth cluster
 ---
 
-== Using Clustered FusionAuth
+== Overview
 
 FusionAuth is stateless and typically CPU bound. Clustering FusionAuth nodes improves performance and redundancy. You can run as many FusionAuth nodes in a cluster as you'd like.
 
 include::docs/v1/tech/installation-guide/_shared-state.adoc[]
 
 FusionAuth can be run in multiple architectures; see the link:/docs/v1/tech/installation-guide/server-layout/[Server Layout] documentation for more.
+
+* <<Using Clustered FusionAuth>>
+** <<Requirements>>
+** <<FusionAuth Installation>>
+** <<Verification>>
+* <<Cluster Operation>>
+** <<Security>>
+** <<Monitoring>>
+** <<Log Files>>
+** <<Adding and Removing Nodes>>
+** <<How Many Instances Should I Run?>>
+* <<Cluster Upgrades>>
+
+== Using Clustered FusionAuth
 
 === Requirements
 
@@ -32,6 +46,7 @@ When building a FusionAuth cluster, consider:
 * What level of security and network isolation do you need? Build the architecture that suits your needs. You can run FusionAuth in a private network and have all HTTP connections proceed through the load balancer, with SSH connections happening through a jump box, for example.
 * What version of FusionAuth will you be running? All nodes must be on the same version for correct functionality.
 * How will you manage link:/docs/v1/tech/reference/configuration/[FusionAuth configuration]? All nodes must have the same configuration or undetermined behavior will occur. Ensure that configuration changes are replicated to every node.
+* Will you use a custom password hashing plugin? If so, plan to distribute the plugin to every node, distribute to a shared filesystem, or otherwise make it available.
 * With a standalone database you must use the link:/docs/v1/tech/installation-guide/fusionauth-app/#advanced-installation[advanced database installation] and run the database creation and migration scripts outside of FusionAuth. How will you manage this? Do you have in-house tools you can leverage to do so?
 
 === FusionAuth Installation
@@ -48,7 +63,7 @@ Build your link:/docs/v1/tech/reference/configuration/[FusionAuth configuration]
 * Set `database.username` to the database user name recorded above.
 * Update `database.password` as the database password noted above.
 
-Distribute your FusionAuth configuration to all nodes. You can do this by setting environment variables, Java system properties, or by pushing the `fusionauth.properties` file to each server. 
+Distribute your FusionAuth configuration to all nodes. They must all have the same configuration. You can do this by setting environment variables, Java system properties, or by pushing the `fusionauth.properties` file to each server. If you have a password hashing plugin, make sure it is distributed or available to all the nodes as well.
 
 Restart the instances to ensure configuration changes are picked up.
 
@@ -63,7 +78,7 @@ Configure the load balancer to forward the following headers to FusionAuth:
 
 You can see community submitted proxy configurations in link:https://github.com/FusionAuth/fusionauth-contrib/tree/master/Reverse%20Proxy%20Configurations[the fusionauth-contrib repo].
 
-==== Troubleshooting installation
+==== Troubleshooting Installation
 
 If you have difficulty installing FusionAuth in a cluster, you can set up a cluster with one node. Set up your load balancer to point to only one server, and get this working before adding any other nodes. This will narrow down any issues you may encounter.
 
@@ -89,9 +104,14 @@ You may also lock down the FusionAuth nodes to only accept traffic from the load
 
 If your load balancer supports health checks, call the link:/docs/v1/tech/apis/system#system-status[status API]. A `GET` request against the `/api/status` endpoint will return a status code. It'll either be `200` if the system is operating as expected or non `200` value if there are any issues with the node.
 
-There's https://github.com/FusionAuth/fusionauth-issues/issues/362[an open issue to add a Prometheus endpoint] but Prometheus is not currently supported.
+[NOTE.since]
+====
+Available since 1.27, you can use a link:/docs/v1/tech/tutorials/prometheus/[Prometheus endpoint] to monitor your instances. 
+====
 
 You can ingest the link:/docs/v1/tech/apis/system/#export-system-logs[system log output], link:/docs/v1/tech/apis/event-logs/[event logs] and link:/docs/v1/tech/apis/audit-logs/#export-audit-logs[audit logs] into a log management system via API calls. 
+
+See the link:/docs/v1/tech/installation-guide/monitor/[Monitoring documentation] for more information.
 
 === Log Files 
 
@@ -110,6 +130,7 @@ To add more nodes to the cluster, do the following:
 
 * Stand up new FusionAuth servers.
 * Provide the same FusionAuth configuration as the existing nodes. In particular, provide the same connection info for the database. 
+* Add any custom password hashing plugins, if used. You can either use a shared filesystem or copy the plugin jar file to the correct location.
 * Update your load balancer to send traffic to the new node.
 
 To remove nodes, simply:
@@ -151,13 +172,4 @@ If you'd prefer detailed architecture or design guidance customized to your situ
 
 == Cluster Upgrades
 
-To upgrade your cluster, first schedule a downtime window. During that window: 
-
-* Take down all the nodes.
-* Upgrade the database schema by running the migration SQL scripts.
-* Upgrade FusionAuth on each node.
-* Start all the nodes.
-
-The recommendation is to automate this process using whatever scripting or configuration management tool you like. This will minimize the downtime. 
-
-As a point of reference, for our hosted solutions FusionAuth uses a configuration management tool and typically sees downtime on the order of seconds.
+include::docs/v1/tech/installation-guide/_downtime-upgrade-limitation.adoc[]

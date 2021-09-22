@@ -5,7 +5,7 @@ description: A detailed overview of securely integrating an Ruby on Rails applic
 author: Brett Guy 
 image: blogs/fusionauth-example-rails/how-to-securely-implement-oauth-in-ruby-on-rails-header-image.png
 category: blog
-tags: client-ruby
+tags: client-ruby tutorial tutorial-rails tutorial-ruby
 excerpt_separator: "<!--more-->"
 ---
 

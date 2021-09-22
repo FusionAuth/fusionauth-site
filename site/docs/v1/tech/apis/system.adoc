@@ -19,6 +19,11 @@ dd p.deprecated {
 
 This page contains the APIs that are used for retrieving and updating the system configuration.
 
+[WARNING.warning]
+====
+Documentation for this API has been updated for version 1.30 and above. For previous versions, you can view the link:../../archive/apis/system[Pre 1.30 System documentation] if needed.
+====
+
 === System Configuration
 * <<Retrieve the System Configuration>>
 * <<Update the System Configuration>>
@@ -27,11 +32,13 @@ This page contains the APIs that are used for retrieving and updating the system
 * <<Export System Logs>>
 * <<Retrieve the Logging Level>>
 * <<Update the Logging Level>>
+* <<Rebuild the Elasticsearch index>>
+* <<Retrieve the status of an index rebuild>>
 
 === System Status
 * <<Retrieve System Status>>
 * <<Retrieve System Version>>
-
+* <<Retrieve System Metrics Using Prometheus>>
 
 == Retrieve the System Configuration
 
@@ -61,7 +68,11 @@ include::docs/v1/tech/apis/_system-configuration-response-body.adoc[]
 
 == Update the System Configuration
 
-This API is used to update System Configuration.
+:extra_id_verbiage: No Id is required to update this object.
+:capitalized_object_name: System Configuration
+include::docs/v1/tech/apis/_generic-update-explanation-fragment.adoc[]
+:capitalized_object_name!:
+:extra_id_verbiage!:
 
 === Request
 
@@ -87,11 +98,6 @@ include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 include::docs/v1/tech/apis/_system-configuration-response-body.adoc[]
 
 == Export System Logs
-
-[NOTE.since]
-====
-Available Since Version 1.16.0
-====
 
 This API is used to export the System Logs, the response will be a compressed zip archive containing the logs from the configured log directory. When running FusionAuth on Docker or other container service where logs are written to `stdout` and not written to the file system, this API will return an empty archive.
 
@@ -279,6 +285,59 @@ The logging level. If the request was successful, this value should be equal to 
 include::docs/src/json/logger/response.json[]
 ----
 
+== Rebuild the Elasticsearch index
+
+
+This API is used to rebuild the Elasticsearch index. In general you do not need to rebuild the search index at runtime, and doing will cause additional CPU and I/O overhead to FusionAuth until the request has completed. Please be careful with this API.
+
+This API may be useful if you are building a new FusionAuth environment from an existing database w/out moving over an existing search index. In this scenario you will need to rebuild the search index from the database in order see the Users show up in the UI or use any of the Search APIs.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Rebuild the Elasticsearch index
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/system/reindex#
+--
+
+include::docs/v1/tech/apis/_reindex-request-body.adoc[]
+
+=== Response
+
+:never_missing:
+:success_code: 202
+:success_message: The request was successful. The re-index request has been started. No response body will be returned.
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:never_missing!:
+:success_code!:
+:success_message!:
+
+== Retrieve the status of an index rebuild
+
+This API is used to retrieve the status of a reindex request. This may be useful to identify if an existing re-index operation has been completed.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve the status the Elasticsearch reindex operation
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/system/reindex#
+--
+
+=== Response
+
+:missing_message: A re-index operation is not currently in progress. No response body will be returned.
+:success_code: 202
+:success_message: A re-index operation is currently in progress.
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+:missing_message!:
+:success_code!:
+:success_message!:
+
 == Retrieve System Status
 
 The Status API is used to retrieve the current status and metrics for FusionAuth. This is useful for health checks and monitoring.
@@ -331,22 +390,18 @@ The specific contents of the JSON body are not documented here. If you choose to
 |452
 | The FusionAuth is failing to make a JDBC connection to the configured database.
 
-[since]#Available since 1.19.0#
 
 |453
 |The FusionAuth database connection pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.
 
-[since]#Available since 1.19.0#
 
 |454
 |The FusionAuth database connectivity pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.
 
-[since]#Available since 1.19.0#
 
 |460
 |FusionAuth is using Elasticsearch and the search service is reporting an unhealthy cluster status. In a cluster with 2+ nodes, this means the cluster status is being reported as `yellow` or `red`. In a single-node Elasticsearch configuration this means the cluster status is `red.`
 
-[since]#Available since 1.19.0#
 
 |500
 |The FusionAuth server is not functioning properly. This could indicate that the database connectivity failed or one or more services within FusionAuth failed. Consult the FusionAuth link:/docs/v1/tech/troubleshooting/[Troubleshooting] to learn more about the failure or contact FusionAuth support for assistance.
@@ -354,10 +409,6 @@ The specific contents of the JSON body are not documented here. If you choose to
 
 == Retrieve System Version
 
-[NOTE.since]
-====
-Available Since Version 1.27.0
-====
 
 The Version API is used to retrieve the current version of FusionAuth.
 
@@ -392,4 +443,51 @@ The version of the running FusionAuth instance.
 {
   "version": "1.27.0"
 }
+----
+
+
+== Retrieve System Metrics Using Prometheus
+
+
+
+
+This page contains the API that is used for retrieving FusionAuth application metrics to be used with Prometheus. Please refer to the link:/docs/v1/tech/tutorials/prometheus#[Prometheus setup] guide to understand how to set up Prometheus with the FusionAuth metrics endpoint.
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#basic-authentication-using-an-api-key[icon:shield-alt[type=fas]] link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve FusionAuth application metrics to use with Prometheus.
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/prometheus/metrics#
+--
+
+=== Request Parameters
+There are no request parameters required with this API.
+
+=== Response
+The response to this API call contains currently available metrics. The metrics in this response are subject to change.
+
+include::docs/v1/tech/apis/_prometheus-jvm-gauges.adoc[]
+
+[source,text]
+.Example Prometheus Response
+----
+  # HELP jvm_memory_heap_committed Generated from Dropwizard metric import (metric=jvm.memory.heap.committed, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$8)
+# TYPE jvm_memory_heap_committed gauge
+jvm_memory_heap_committed 5.36870912E8
+# HELP jvm_memory_non_heap_used Generated from Dropwizard metric import (metric=jvm.memory.non-heap.used, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$11)
+# TYPE jvm_memory_non_heap_used gauge
+jvm_memory_non_heap_used 1.66423384E8
+# HELP jvm_memory_pools_CodeHeap__non_profiled_nmethods__used Generated from Dropwizard metric import (metric=jvm.memory.pools.CodeHeap-'non-profiled-nmethods'.used, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$17)
+# TYPE jvm_memory_pools_CodeHeap__non_profiled_nmethods__used gauge
+jvm_memory_pools_CodeHeap__non_profiled_nmethods__used 3.0334336E7
+# HELP prime_mvc___admin_group_index__requests Generated from Dropwizard metric import (metric=prime-mvc.[/admin/group/index].requests, type=com.codahale.metrics.Timer)
+# TYPE prime_mvc___admin_group_index__requests summary
+prime_mvc___admin_group_index__requests{quantile="0.5",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.75",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.95",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.98",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.99",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.999",} 0.0
+prime_mvc___admin_group_index__requests_count 1.0
 ----

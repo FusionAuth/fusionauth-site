@@ -36,6 +36,7 @@ This page describes the Admin UI for creating and configuring a Tenant.
 * <<JWT>>
 * <<Password>>
 * <<Webhooks>>
+* <<Security>>
 * <<Advanced>>
 
 === Create a Tenant
@@ -66,6 +67,22 @@ The Theme associated with this Tenant; determines which templates to render for 
 The form that will be used in the FusionAuth UI for adding and editing users.
 +
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+===== Username settings
+
+Enable [field]#Unique usernames# to allow multiple users suggest the same username. If there are any collisions, FusionAuth will transparently create a unique username by appending a suffix. The user will continue to use the username without the suffix.
+
+[.api]
+[field]#Unique usernames# [optional]#Optional# [default]#defaults to `false`# [since]#Available since 1.27.0#::
+When `true`, FusionAuth will handle username collisions.
++
+include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+[field]#Number of digits# [optional]#Optional# [default]#defaults to `5`# [since]#Available since 1.27.0#::
+The maximum number of digits to use when building a unique suffix for a username. A number will be randomly selected and may be 1 or more digits up to this configured value. The value of this field must be greater than or equal to `3` and less than or equal to `10`.
+
+[field]#Separator character# [optional]#Optional# [default]#defaults to `["&#35;"]`# [since]#Available since 1.27.0#::
+A single character to use as a separator from the requested username and a unique suffix that is added when a duplicate username is detected. This value can be a single non alphanumeric ASCII character.
 
 ==== Connectors
 
@@ -107,11 +124,13 @@ image::core-concepts/tenant-configuration-smtp-settings.png[Tenant Configuration
 ===== SMTP settings
 
 [.api]
-[field]#Host# [required]#Required#::
-The IP address of the outgoing SMTP mail server.
+[field]#Host# [optional]#Optional# [default]#defaults to `localhost`#::
+The hostname of the SMTP server. This will be provided by your SMTP provider.
 
-[field]#Port# [required]#Required#::
-The port of the outgoing SMTP mail server.
+[field]#Port# [optional]#Optional# [default]#defaults to `25`#::
+The port of the SMTP server. This will be provided by your SMTP provider. Ports `25`, `465` and `587` are the well known ports used by SMTP, it is possible your provider will utilize a different port.
++
+In most cases you will be using TLS to connect to your SMTP server, and the port will generally be `587` or `465`.
 
 [field]#Username# [optional]#Optional#::
 The username of the outgoing SMTP mail server authentication.
@@ -120,10 +139,16 @@ The username of the outgoing SMTP mail server authentication.
 When enabled, you may modify the SMTP password, when the [field]#Password# field is not displayed the current password will not be modified.
 
 [field]#Password# [required]#Required#::
-The new password to use for the outgoing SMTP mail server authentication.
+The new password to use for the outgoing SMTP mail server authentication. This field is only required when [field]#Change password# is checked.
 
-[field]#Security# [optional]#Optional#::
-The preferred encryption protocol used by your SMTP server, this is generally documented by your SMTP service provider.
+[field]#Security# [optional]#Optional# [default]#defaults to `None`#::
+The security type when using an SSL connection to the SMTP server. This value should be provided by your SMTP provider.
++
+Generally speaking, if using port `25` you will select `None`, if using port of `465` you will select `SSL` and if using port `587` you will select `TLS`. It is possible your provider will be different, follow your providers instruction.
++
+* `None`
+* `SSL`
+* `TLS`
 
 [field]#Default from address# [optional]#Optional#::
 The default email address that emails will be sent from when a from address is not provided on an individual email template. This is the address part email address (i.e.  Jared Dunn  <**jared@piedpiper.com**>).
@@ -147,6 +172,18 @@ The email template to use when accounts are created to verify the User's email a
 +
 Required when the [field]#Verify email# toggle is enabled.
 
+[field]#Verification complete template# [optional]#Optional# [since]#Available since 1.30.0#::
+The email template to use when notifying a user that email address has been verified.
+
+[field]#Verification strategy# [optional]#Optional# [since]#Available since 1.27.0#::
+The process by which the user will verify their email address. Using the "Form Field" method works only when the [field]#Unverified behavior# is `Gated`.
+
+[field]#Unverified behavior# [optional]#Optional# [since]#Available since 1.27.0#::
+The way a user is handled during the login process when they do not have a verified email address.
+
+[field]#Allow email change when gated# [optional]#Optional# [since]#Available since 1.27.0#::
+When enabled, the user is allowed to change their email address when they are gated because they haven't verified their email address.
+
 [field]#Delete unverified users# [optional]#Optional#::
 When enabled, users who have not verified their email address after a configurable duration since being created will be permanently deleted.
 
@@ -160,15 +197,7 @@ image::core-concepts/tenant-configuration-template-settings.png[Tenant Configura
 
 ===== Template settings
 
-[.api]
-[field]#Setup password# [optional]#Optional#::
-The email template to use when accounts are created and the user needs to setup their password.
-
-[field]#Forgot password# [optional]#Optional#::
-The template to use for the forgot password workflow that uses emails.
-
-[field]#Passwordless login# [optional]#Optional#::
-The template to use to send the link for passwordless login requests.
+include::docs/v1/tech/core-concepts/_email-templates.adoc[]
 
 
 ==== Family
@@ -270,17 +299,17 @@ The length of time an SSO session can be inactive before it is closed.
 [field]#Logout URL# [optional]#Optional#::
 The URL the user is redirected to upon logout.
 
+[field]#Client credentials populate lambda# [optional]#Optional# [since]#Available since 1.28.0#::
+The lambda that will be called to populate the JWT during a client credentials grant.
+
 
 ==== JWT
 image::core-concepts/tenant-configuration-jwt.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
 
-===== Form Fields
+===== JSON Web Token settings
 
 [.api]
-[field]#Refresh token duration# [required]#Required#::
-The length of time the refresh token is valid. Refresh tokens are typically long lived.
-
-[field]#JWT Duration# [required]#Required#::
+[field]#JWT duration# [required]#Required#::
 The length of time the issued token (access token and Id token) is valid.  JWT tokens are typically short lived.
 
 [field]#Access token signing key# [optional]#Optional#::
@@ -289,6 +318,10 @@ The key used to sign the access token JWT.
 [field]#Id token signing key# [optional]#Optional#::
 The key used to sign the Id token JWT.
 
+===== Refresh Token settings
+
+:page: tenant
+include::docs/v1/tech/core-concepts/_refresh-token-settings.adoc[]
 
 ==== Password
 image::core-concepts/tenant-configuration-password-failed-authentication-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
@@ -391,32 +424,92 @@ When enabled the user's password hash will be modified if it does not match the 
 
 
 ==== Webhooks
-image::core-concepts/tenant-configuration-webhooks-settings.png[Tenant Configuration - JWT,width=1200,role=shadowed top-cropped]
+image::core-concepts/tenant-configuration-webhooks-settings.png[Tenant Configuration - Webhooks,width=1200,role=shadowed]
 
-===== Table columns
+===== Table Columns
+
+include::docs/v1/tech/events-webhooks/_tenant-webhooks-table.adoc[]
+
+==== Security
+
+image::core-concepts/tenant-configuration-security-acl-catpcha.png[Tenant Configuration - Security: ACL and Captcha,width=1200,role=bottom-cropped]
+
+===== Login API settings
 
 [.api]
-[field]#Event#::
-The event type, this value will be present in the JSON request to identify the message.
+[field]#Require an API key# [optional]#Optional# [default]#Defaults to `true`#::
+This indicates how to authenticate the Login API when an `applicationId` is not provided.
++
+When an `applicationId` is provided, the application configuration will take precedence. In almost all cases you will want to leave this enabled to require the use of an API key.
+
+===== Access control lists settings
+
+include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
+
+[.api]
+[field]#Access control list# [optional]#Optional#::
+The IP access control list that will be used to restrict or allow access to hosted login pages in FusionAuth. For example, it may be configured to only allow specific IP addresses to access authentication pages (login, forgot password, etc) for all applications on that tenant.
++
+When [field]#Access control list# is configured on an application within the tenant, the application value will override the tenant value for that application.
+
+===== Captcha settings
+
+include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
+
+[.api]
+[field]#Enabled# [optional]#Optional# [default]#Defaults to `false`#::
+When enabled, Captcha is used to help increase security of a form submission on the FusionAuth themed pages.
+
+[field]#Method# [required]#Optional# [default]#Defaults to `GoogleRecaptchaV3`#::
+The type of Captcha to use. FusionAuth supports `Google reCAPTCHA v2`, `Google reCAPTCHA v3`, `hCaptcha`, and `hCaptcha Enterprise`.
++
+Required when `enabled` is set to `true`.
+
+[field]#Secret key# [required]#Required#::
+The secret key for this Captcha service.
++
+Required when `enabled` is set to `true`.
+
+[field]#Site key# [required]#Required#::
+The site key for this Captcha service.
++
+Required when `enabled` is set to `true`.
+
+[field]#Threat score threshold# [optional]#Optional#::
+The threat score threshold for this Captcha service if required. If it is not used by this Captcha service then the value will be ignored.
+
+image::core-concepts/tenant-configuration-security-domains-rate-limiting.png[Tenant Configuration - Security: Blocked domains and rate limiting,width=1200,role=top-cropped]
+
+===== Blocked domain settings
+
+include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
+
+[.api]
+[field]#Blocked domains# [optional]#Optional#::
+One or more newline separated email domains for which self service registration will be prohibited.. For example, enter your company email domain (`piedpiper.com`) to prevent employees from using the self-service registration form, or to prevent end users from attempting to create an account using a company email address.
++
+This configuration is applied to all registration API requests and self-service registration pages for all applications in this tenant.
+
+===== Rate limit settings
+
+include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
+
+The Rate limit settings allow you to set a number of times an action can be attempted within a specific time frame. When the limit is exceeded, that action is unavailable until the configured time frame elapses without a failed attempt. The settings are evaluated and enforced per user.
+
+[.api]
+[field]#Action#::
+The action to be rate limited.
++
+*Note:* For the `Failed login` action, rate limiting can be used in combination with <<Failed authentication settings>>. When enabled, and rate limiting conditions have been exceeded, login requests will be denied and bypass the login flow until conditions are no longer exceeded. [field]#Failed attempts# will only be incremented when requests are not being rate limited.
+
 [field]#Enabled#::
-When enabled this event can be sent by one or more webhook. You will also need to enable the event for a specific webhook to receive the event.
-+
-This toggle allows you to optionally disable an event for all webhooks all at once.
-[field]#Transaction setting#::
-The transaction setting for this event. This setting will apply to all webhooks consuming this event type.
-+
---
-    [field]#No Webhooks are required to succeed#::
-    The event will succeed regardless of the webhook response status code. Use this setting when it is not important for a webhook to succeed or provide confirmation that the event has been received and processed successfully.
-    [field]#Any single Webhook must succeed#::
-    The event will succeed as long as one or more of the webhooks respond with a status code between `200` and `299` (inclusive).
-    [field]#A simple majority of Webhooks must succeed#::
-    The event will succeed if at least half of the webhooks respond with a status code between `200` and `299` (inclusive). This means 50% or more of the webhooks must respond successfully.
-    [field]#A two-thirds majority of Webhooks must succeed#::
-    The event will succeed if a super majority of the webhooks respond with a status code between `200` and `299` (inclusive). A super majority is two-thirds (66.7%) or more of the configured webhooks.
-    [field]#All of the Webhooks must succeed#::
-    The event will succeed if every configured webhook responds with a status code between `200` and `299` (inclusive). Use this setting when it is critical for every configured webhook to receive and process the event before considering it complete.
---
+When enabled, the corresponding action will be rate limited when the [field]#limit# value has been exceeded within the specified [field]#time period#.
+
+[field]#Limit#::
+The number of allowed attempts within the [field]#time period# before an action will be rate limited. When an action is rate limited, it will not succeed.
+
+[field]#Time period#::
+The window of time that the [field]#limit# is evaluated against when determining if an action should be rate limited.
 
 
 ==== Advanced
@@ -432,6 +525,9 @@ The number of seconds before the OAuth2 Authorization Code is no longer valid to
 [field]#Change Password# [required]#Required#::
 The number of seconds before the Change Password identifier is no longer valid to complete the Change Password request.
 
+[field]#Device Grant Codes# [required]#Required#::
+The number of seconds before the `device_code` and `user_code` are no longer valid to be used to complete the Device Code grant.
+
 [field]#Email Verification# [required]#Required#::
 The number of seconds before the Email Verification identifier is no longer valid to complete the Email Verification request.
 
@@ -444,8 +540,14 @@ The number of seconds before the One Time Password identifier is no longer valid
 [field]#Passwordless Login# [required]#Required#::
 The number of seconds before the Passwordless Login identifier is no longer valid to complete a Login request.
 
+[field]#Pending account link# [required]#Required#::
+The number of seconds before the Pending account link is no longer valid to complete an account link request.
+
 [field]#Registration Verification# [required]#Required#::
 The number of seconds before the Registration Verification identifier is no longer valid to complete the Registration Verification request.
+
+[field]#SAMLv2 AuthN request# [required]#Required#::
+The number of seconds before the SAMLv2 AuthN request is no longer valid to complete the SAMLv2 login request.
 
 [field]#Setup Password# [required]#Required#::
 The number of seconds before the Setup Password identifier is no longer valid to complete the Change Password request.
@@ -453,11 +555,11 @@ The number of seconds before the Setup Password identifier is no longer valid to
 [field]#Two Factor Login# [required]#Required#::
 The number of seconds before the Two Factor identifier is no longer valid to complete a Two Factor login request.
 
+[field]#Two Factor one-time code# [required]#Required#::
+The number of seconds before the Two Factor one-time code used to enable or disable a two-factor method is no longer valid.
+
 [field]#Two Factor Trust# [required]#Required#::
 The number of seconds before the Two Factor Trust is no longer valid and the user will be prompted for Two Factor during login.
-
-[field]#Device Grant Codes# [required]#Required#::
-The number of seconds before the device_code and user_code are no longer valid to be used to complete the Device Code grant.
 
 
 image::core-concepts/tenant-configuration-extId-generation.png[Tenant Configuration - External Identifier Generation,width=1200,role=shadowed]
@@ -471,17 +573,30 @@ The length and type of characters of the generated code used in the Change Passw
 [field]#Email Verification# [required]#Required#::
 The length and type of characters of the generated code used in the Email Verification flow.
 
+[field]#Email Verification one-time code# [required]#Required#::
+The length and type of characters of the generated code used for Email Verification one-time codes.
++
+The one-time code for email verification is only used with email verification gating and when using a form field configuration instead of the clickable link.
+
 [field]#Passwordless Login# [required]#Required#::
 The length and type of characters of the generated code used in the Passwordless Login flow.
 
 [field]#Registration Verification# [required]#Required#::
 The length and type of characters of the generated code used in the Registration Verification flow.
 
+[field]#Registration Verification one-time code# [required]#Required#::
+The length and type of characters of the generated code used for Registration Verification one-time codes.
++
+The one-time code for registration verification is only used with registration verification gating and when using a form field configuration instead of the clickable link.
+
 [field]#Setup Password# [required]#Required#::
 The length and type of characters of the generated code used in the Setup Password flow.
 
-[field]#Device Grant User Code# [required]#Required#::
+[field]#Device grant user code# [required]#Required#::
 The length and type of characters of the generated user code used in the Device Authorization Grant flow.
+
+[field]#Two-Factor one-time code# [required]#Required#::
+The length and type of characters of the generated code used for Two-Factor one-time codes.
 
 
 ===== SMTP Settings Form Fields
@@ -489,5 +604,3 @@ The length and type of characters of the generated user code used in the Device 
 [.api]
 [field]#Additional properties# [optional]#Optional#::
 The custom SMTP configuration properties that may be necessary in some cases.
-
-

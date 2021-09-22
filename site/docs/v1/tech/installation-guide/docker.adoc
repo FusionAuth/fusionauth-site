@@ -51,120 +51,28 @@ docker-compose up
 
 The stock `.env` file will contain the following values, you will want to modify the `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` values are correct. You may also override any of these values using environment variables.
 
-```
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-# Prior to version 1.19.0, using DATABASE_USER
-# DATABASE_USER=fusionauth
-# >= 1.19.0, using DATABASE_USERNAME
-DATABASE_USERNAME=fusionauth
-DATABASE_PASSWORD=hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3
-
-ES_JAVA_OPTS=-Xms512m -Xmx512m
-
-# Prior to version 1.19.0, using FUSIONAUTH_MEMORY
-# FUSIONAUTH_MEMORY=512M
-# >= 1.19.0, using FUSIONAUTH_APP_MEMORY
-FUSIONAUTH_APP_MEMORY=512M
-```
+[source,shell,title=The .env file]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env[]
+----
 
 === Docker Compose Examples
 
 ==== FusionAuth
 The following is an example `docker-compose.yml` file configuring FusionAuth without the Elasticsearch engine. For the most recent version of this example find this file on https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub].
-```yaml
-version: '3'
 
-services:
-  db:
-    image: postgres:11.9-alpine
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-# Un-comment to access the db service directly
-#    ports:
-#      - 5432:5432
-    networks:
-      - db
-    restart: unless-stopped
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-  fusionauth:
-    image: fusionauth/fusionauth-app:latest
-    depends_on:
-      - db
-    environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-      SEARCH_TYPE: database
-      FUSIONAUTH_APP_URL: http://fusionauth:9011
-    networks:
-     - db
-    restart: unless-stopped
-    ports:
-      - 9011:9011
-    volumes:
-      - fa_config:/usr/local/fusionauth/config
-
-networks:
-  db:
-    driver: bridge
-
-volumes:
-  db_data:
-  fa_config:
-```
+[source,yaml,title=docker-compose.yml]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml[]
+----
 
 ==== FusionAuth with Elasticsearch
 The following is an example `docker-compose-override.yml` which may be included in your working directory next to the above `docker-compose.yml` to install and configure Elasticsearch. For the most recent version of this example find this file on https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub].
-```yaml
-version: '3'
 
-services:
-
-  search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.1
-    environment:
-      cluster.name: fusionauth
-      bootstrap.memory_lock: "true"
-      discovery.type: single-node
-      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
-    # Un-comment to access the search service directly
-    # ports:
-    #  - 9200:9200
-    #  - 9300:9300
-    networks:
-      - search
-    restart: unless-stopped
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - es_data:/usr/share/elasticsearch/data
-
-  fusionauth:
-    depends_on:
-      - search
-    environment:
-      SEARCH_TYPE: elasticsearch
-      SEARCH_SERVERS: http://search:9200
-    networks:
-      - search
-
-networks:
-  search:
-    driver: bridge
-
-volumes:
-  es_data:
-```
+[source,yaml,title=docker-compose-overrride.yml]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml[]
+----
 
 == Configuration
 Review the link:/docs/v1/tech/reference/configuration/[Configuration - Environment Variables] documentation to customize your deployment.
@@ -280,15 +188,15 @@ Using Docker with Kickstart is a powerful combination. Using these technologies 
 
 All the normal limitations of Kickstart apply (the Kickstart will not run if the database has already been set up with an API key, for example).
 
-It's easy to get started with Kickstart, but you'll need to tweak your Docker Compose files a bit. Before you being, you'll need a valid `kickstart.json` file. Note that this file could be called anything, `kickstart.json` is simply a convention. Check out the link:/docs/v1/tech/installation-guide/kickstart/[Kickstart documentation] for more information on writing one.
+It's easy to get started with Kickstart, but you'll need to tweak your Docker Compose files a bit. Before you begin, you'll need a valid `kickstart.json` file. Note that this file could be called anything, `kickstart.json` is simply a convention. Check out the link:/docs/v1/tech/installation-guide/kickstart/[Kickstart documentation] for more information on writing one.
 
 Once you have a valid `kickstart.json` file, create a subdirectory in the location of your `docker-compose.yml` file. It can be named anything; this documentation will use a directory called `kickstart`. Next, you'll mount this directory and set the `FUSIONAUTH_APP_KICKSTART_FILE` variable in the `docker-compose.yml` file. 
 
 Here are the steps to do so:
 
 * In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`
-* Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. The path refers to what the docker container expects.
-* Configure `docker-compose.yml` to pass the environment variable set by `.env` into the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
+* Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the docker container expects, not the path on the host.
+* Configure `docker-compose.yml` to pass the environment variable set by `.env` to the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to use a `kickstart.json` at startup. 
 
@@ -343,6 +251,17 @@ volumes:
   db_data:
   fa_config:
 ```
+
+After running `docker-compose up` you should see a line like this in the output:
+
+[source]
+----
+io.fusionauth.api.service.system.kickstart.KickstartRunner - Summary
+----
+
+This indicates that Kickstart completed and provides a summary of the configuration changes made by it.
+
+You may also want to check out https://github.com/FusionAuth/fusionauth-example-scripts/tree/master/isolated-docker-setup[the Isolated Docker Setups] if you want the ability to rapidly stand up different versions and configurations of FusionAuth.
 
 == Accessing the Host Machine
 

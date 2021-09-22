@@ -31,9 +31,9 @@ Let's examine each of these in turn.
 
 === Client Credentials Grant
 
-This is the recommended approach.
-
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+
+This is the recommended approach.
 
 [NOTE.since]
 ====
@@ -89,24 +89,30 @@ Challenges of this approach:
 
 Another option is to use link:/docs/v1/tech/apis/authentication#manage-api-keys[FusionAuth API keys].
 
-To distribute the key, you would log in to the FusionAuth admin user interface, then create an API key and provide it to the Reminder App developer. 
+To distribute the key, you would log in to the FusionAuth admin user interface (or use the API Key API), create an API key and provide it to the Reminder App developer.
 
-The Reminder App would present this API key to the Todo App every time they needed access. 
+When using this approach, ensure the FusionAuth API key is narrowly scoped. You should limit the API endpoints and methods this key is authorized for, so if it is compromised, there are no negative implications beyond unauthorized access to the Todo API. A narrow scope that might work well would be to grant read-only access to a FusionAuth endpoint you never plan to use. 
 
-To validate this credential, the Todo API would make a call against a FusionAuth API endpoint with the key. If the call succeeds, the Todo API returns the requested data. If, instead, FusionAuth responds with a 401 response, the Todo API denies access.
+Pick an endpoint that you wouldn't actually want to ever use for your testbed. For example, you could create an application called `API Test Application` and create multiple API keys with permissions against the `/api/application` endpoint.
 
-When using this approach, ensure the FusionAuth API key is narrowly scoped. You should limit the API endpoints and methods this key is authorized for, so if it is compromised, there are no negative implications beyond unauthorized access to the Todo API. A narrow scope that might work well would be to grant read-only access to a FusionAuth feature you never plan to use. 
+The Reminder App would present an API key to the Todo App every time they needed access. 
+
+To validate this credential, the Todo API would make a call against a FusionAuth `/api/application` endpoint with the key and the HTTP method with the Id of the `API Test Application`. 
+
+If the call succeeds, the Todo API considers the Reminder App client valid and returns the requested data. If, instead, FusionAuth responds with a 401 response, the Todo API denies access.
 
 Strengths of this approach:
 
-* There is only one secret to distribute per client application, and distribution is straightforward. The Reminder App developers get the API key one time and it is good forever.
-* There is no browser interaction required to acquire credentials.
+* There is only one secret to distribute per client application, and distribution is straightforward. The Reminder App developers get the API key one time and it is good until revoked.
+* There is no browser or user interaction required to acquire credentials.
+* As of version 1.26, you can manage API keys using the link:/docs/v1/tech/apis/api-keys/[API Key API], including creating and revoking the keys.
 
 Challenges of this approach:
 
-* There is no easy way to automatically expire the credentials. FusionAuth API keys are valid until deleted. Such deletion is a manual process.
-* Similarly, there is no programmatic way to create these keys (except for link:/docs/v1/tech/installation-guide/kickstart/[Kickstart&#8482;], which only applies at FusionAuth installation). A human being must log in to the administrative user interface to manage these keys.
-* With this approach, a FusionAuth API key is being used for business logic. This isn't really what these API keys are designed for.
+* While you can control key lifetime with the API Key API, you must manage it in your own code. There's no automatic expiration.
+* With this approach, the validity of a FusionAuth API key is being used for business logic. This isn't really what these API keys are designed for.
+* If you want permissions beyond the five methods supported by API keys, you need to build those out and manage them yourself.
+* There's no fine grained way to distinguish between different clients. They can have different API keys, but they'll all authenticate against the same API endpoint with the same five methods.
 
 === Authentication Tokens
 

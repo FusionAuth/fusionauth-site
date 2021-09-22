@@ -5,7 +5,7 @@ description: This feature simplifies creating and managing fine-grained permissi
 author: David Polstra
 image: blogs/entity-management-launch/fusionauth-launches-entity-managemen-applications-header-image.png
 category: blog
-tags: topic-entity-management
+tags: feature-entity-management
 excerpt_separator: "<!--more-->"
 ---
 
@@ -27,7 +27,7 @@ FusionAuth Entity Management is available now. [Click here for more information]
 
 ### About FusionAuth
 
-FusionAuth is a complete identity and access management platform that saves development teams time and resources. Built for developers, FusionAuth is 100% API-first and lets devs implement complex standards like OAuth, OpenID Connect, and SAML and build out additional login features to meet compliance requirements. It can be deployed anywhere and integrate in minutes, saving developers wasted hours trying to build home-grown solutions. Learn more at [www.fusionauth.io](/) 
+FusionAuth is a complete identity and access management platform that saves development teams time and resources. Built for developers, FusionAuth is 100% API-first and lets devs implement complex standards like OAuth, OpenID Connect, and SAML and build out additional login features to meet compliance requirements. It can be deployed anywhere and integrate in minutes, saving developers wasted hours trying to build home-grown solutions. Learn more at [fusionauth.io](/) 
 
 ### Contact
 

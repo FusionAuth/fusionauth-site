@@ -5,7 +5,7 @@ description: Webhooks let you take actions based on events in FusionAuth. For in
 author: Dan Moore
 image: blogs/breached-password-webhook/breached-password-detection-how-to-lock-user-accounts-with-a-webhook.png
 category: blog
-tags: feature-breached-password-detection client-php feature-webhooks
+tags: feature-breached-password-detection client-php feature-webhooks tutorial tutorial-feature tutorial-webhooks
 excerpt_separator: "<!--more-->"
 ---
 
