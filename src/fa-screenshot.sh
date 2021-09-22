@@ -42,7 +42,7 @@ function usage() {
 
    -s  Silent mode.
    -t  Use TinyPNG API instead of pngquant library. Set the TINYPNG_API_KEY env variable with a TinyPNG API key.
-   -f  Filename for screenshot. If not provided, defaults to datetime.
+   -f  Filename for screenshot. If not provided, defaults to datetime. No suffix needed, a .png suffix will be appended.
    -u  URL to open before taking screenshot. Will cause a slight delay.
    -d  Move screenshots to given folder.
    -x  How far to move the safari window on the x axis (number). Default is 640.
