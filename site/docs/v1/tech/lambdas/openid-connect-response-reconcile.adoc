@@ -16,7 +16,7 @@ When you create a new lambda using the FusionAuth UI we will provide you an empt
 
 [source,javascript]
 ----
-function reconcile(user, registration, jwt) {
+function reconcile(user, registration, jwt, idToken) {
   // Lambda code goes here
 }
 ----
@@ -26,8 +26,9 @@ This lambda must contain a function named `reconcile` that takes three parameter
 * `user` - the FusionAuth User object
 * `registration` - the FusionAuth UserRegistration object
 * `jwt` - the JSON payload returned from the OpenID Connect Userinfo endpoint
+* `idToken (optional)` - the JSON id_token returned from the OpenID Connect Token endpoint. It will only be available if it can be validated using the client secret.
 
-The two FusionAuth objects are well documented here in the link:/docs/v1/tech/apis/users/[User API] and link:/docs/v1/tech/apis/registrations/[Registration API] documentation. The JWT object that contains the payload from the Userinfo endpoint may contain well known OpenID Connect registered claims as well as any custom claims defined by the identity provider.
+The two FusionAuth objects are well documented here in the link:/docs/v1/tech/apis/users/[User API] and link:/docs/v1/tech/apis/registrations/[Registration API] documentation. The JWT object that contains the payload from the Userinfo endpoint may contain well known OpenID Connect registered claims as well as any custom claims defined by the identity provider. The optional idToken object contains the id_token from the Token endpoint. It also contains well known OpenID Connect registered claims as well as any custom claims defined by the identity provider.
 
 == Assigning the lambda
 
@@ -45,12 +46,22 @@ If the JWT from the OIDC identity provider does not come back with an email clai
 
 If the Userinfo response available to you in the lambda has unique user information, you can build a fake email address from it.
 
-Here, the `sub` claim is the unique user id, and we're building an email address:
+Also, if the id_token from the token endpoint can be validated using the client secret then it will be available and may contain the email as well.
+
+Here, we check for an email in the idToken first, then fallback on using the `sub` claim as the unique user id, and build an email address:
 
 ```javascript
-function(user, registration, jwt) {
-  // The user's unique Id is the 'sub' claim.
-  user.email = jwt.sub + '@no-email-present.example.com';
+function(user, registration, jwt, idToken) {
+  // OR you can possibly get it from the idToken if available
+  if (idToken && idToken.email) {
+    console.info('email from id_token: ' + idToken.email);
+    user.email = idToken.email;
+  }
+  else {
+    // The user's unique Id is the 'sub' claim.
+    user.email = jwt.sub + '@no-email-present.example.com';
+  }
+
 }
 ```
 
