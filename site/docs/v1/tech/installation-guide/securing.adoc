@@ -49,18 +49,39 @@ FusionAuth ships with the default `cacerts` file from OpenJDK, which contains a 
 This operation affects the security of your FusionAuth installation. Ensure that you know the provenance of this certificate and trust the issuer.
 ====
 
-In some cases, such as with link:/docs/v1/tech/events-webhooks/securing/[webhooks], you may provide your own certificate via the FusionAuth API or UI, but you may need to install a certificate authority globally. You'll have to import the certificate representing this authority in every one of your FusionAuth instances.
+In some cases, such as with link:/docs/v1/tech/events-webhooks/securing/[webhooks], you may provide your own certificate via the FusionAuth API or UI, but you may need to install a certificate authority globally. 
+
+You have two options, specifying a custom keystore and truststore in the Java runtime arguments or importing the certificate into the default keystore that is used by FusionAuth.
+
+=== Custom Keystore
+
+To specify it in the Java runtime arguments with a custom keystore, use the `fusionauth-app.additional-java-args` and `fusionauth-search.additional-java-args` configuration parameters. 
+
+Create a keystore and truststore as documented by the https://docs.oracle.com/javase/9/tools/keytool.htm[Java documentation]. Let's assume you have created a keystore called `my-keystore` and a truststore called `my-truststore`, and placed them both at `/usr/local/fusionauth/config/` using a configuration management tool with the passwords of `changeit`. With this setup, here is an example the property you might add to the `fusionauth.properties` file.
+
+[source,properties]
+----
+fusionauth-app.additional-java-args="-Djavax.net.ssl.keyStore=/usr/local/fusionauth/config/my-keystore -Djavax.net.ssl.keyStorePassword=changeit -Djavax.net.ssl.trustStore=/usr/local/fusionauth/config/my-truststore -Djavax.net.ssl.trustStorePassword=changeit"
+----
+
+Learn more about link:/docs/v1/tech/reference/configuration/[configuration options].
+
+If you are using the docker image, you'll have to put the keystore and truststore in a file location accessible to the docker image, as well as define the configuration options using the environment variable syntax. 
+
+=== Importing Into the FusionAuth Keystore
+
+To import it into the standard keystore, import the certificate representing this authority in every one of your FusionAuth instances. 
 
 To add a certificate authority, use the `keytool` to add a value to the Java keystore. First, find the Java installation that is running FusionAuth. This is typically at `FA_INSTALL_DIR/java/` where `FA_INSTALL_DIR` is where you installed FusionAuth. This is typically located at `/usr/local/fusionauth` but may vary.
 
-For this documentation, if your Java installation is at `/usr/local/fusionauth/java/current/`, the `/usr/local/fusionauth/java/current/lib/security/cacerts` file should be modified. Let's also assume the new certificate authority public key file is located at `newcacert.pem`, and that you haven't changed your keystore password from the default value, which is `changeit`.
+If your Java installation is at `/usr/local/fusionauth/java/current/`, the `/usr/local/fusionauth/java/current/lib/security/cacerts` file should be modified. Let's also assume the new certificate authority public key file is located at `newcacert.pem`, and that you haven't changed your keystore password from the default value, which is `changeit`.
 
 Import the certificate with this command:
 
 [source,sh]
-====
+----
 /usr/local/fusionauth/java/current/bin/keytool -importcert -file newcacert.pem -keystore fusionauth/java/current/lib/security/cacerts -storepass changeit  -alias faselfsignedcert
-====
+----
 
 Then, restart FusionAuth. 
 
