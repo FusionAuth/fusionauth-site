@@ -2,6 +2,8 @@
 
 # sets up savant
 
+mkdir -p ~/.savant/plugins
+
 if [ ! -d ~/dev/savant ]; then
 
   # Savant
@@ -11,7 +13,6 @@ if [ ! -d ~/dev/savant ]; then
   tar -xzf savant-1.0.0.tar.gz
   ln -s savant-1.0.0 current
   rm savant-1.0.0.tar.gz
-  mkdir -p ~/.savant/plugins
 
 fi
 
@@ -26,9 +27,11 @@ if [ ! -d ~/dev/groovy ]; then
   unzip -qq apache-groovy-sdk-2.5.5.zip
   rm apache-groovy-sdk-2.5.5.zip
   GROOVY_HOME=${HOME}/dev/groovy
-  echo -e "2.4=${GROOVY_HOME}/groovy-2.4.6\n2.5=${GROOVY_HOME}/groovy-2.5.5" > ~/.savant/plugins/org.savantbuild.plugin.groovy.properties
 
 fi
+
+# always set this up, it's lightweight
+echo -e "2.4=${GROOVY_HOME}/groovy-2.4.6\n2.5=${GROOVY_HOME}/groovy-2.5.5" > ~/.savant/plugins/org.savantbuild.plugin.groovy.properties
 
 # Java
 echo -e "14=${JAVA_HOME}" > ~/.savant/plugins/org.savantbuild.plugin.java.properties
