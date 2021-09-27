@@ -72,7 +72,7 @@ While Okta plans to run Auth0 as an independent unit, integration between two la
 
 We applaud Auth0 on its accomplishments and congratulate Okta on its acquisition. While we admire what's been done and continue to believe that CIAM will be important for applications and companies going forward, our strategy differs in two key areas. 
 
-First, we believe in the freedom to run your auth provider anywhere. Options provide flexibility to meet different application needs. If you want us to run your auth system, we're happy to do so with [FusionAuth Cloud](/pricing/cloud/). If you want to [download FusionAuth and run your auth system](/download/), you can do so, whether in your cloud VPC, your data center, or even on your kiosk. Use our software to secure your user data, wherever you want to keep it.
+First, we believe in the freedom to run your auth provider anywhere. Options provide flexibility to meet different application needs. If you want us to run your auth system, we're happy to do so with [FusionAuth Cloud](/pricing/). If you want to [download FusionAuth and run your auth system](/download/), you can do so, whether in your cloud VPC, your data center, or even on your kiosk. Use our software to secure your user data, wherever you want to keep it.
 
 Second, we believe no one should be priced out of world class authentication. While Auth0 has a solid free tier, as soon as you grow and need more features like SAML integrations, OIDC connections, or custom rules, prices increase, sometimes rapidly. In addition, the cliff in pricing when you reach the end of the free tier can be an unpleasant surprise depending on the number of users you have. 
 
