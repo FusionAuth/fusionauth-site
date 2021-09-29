@@ -231,19 +231,19 @@ password   requisite    pam_cracklib.so retry=3 minlen=10 difok=3 ucredit=-1 lcr
 
 The configuration options are as follows:
 
-* Allow 3 retries to type a new password twice before giving up (retry=3)
-* Passwords must be at least 10 characters long (minlen=10)
-* The new password must differ from the old password by 3 characters (difok=3)
-* The new password must contain at least 1 uppercase character (ucredit=-1)
-* The new password must contain at least 2 lowercase characters (lcredit=-2)
-* The new password must contain at least 1 digit/number (dcredit=-1)
-* The new password must contain at least 1 symbol (ocredit=-1)
+* Allow 3 retries to type a new password twice before giving up (`retry=3`)
+* Passwords must be at least 10 characters long (`minlen=10`)
+* The new password must differ from the old password by 3 characters (`difok=3`)
+* The new password must contain at least 1 uppercase character (`ucredit=-1`)
+* The new password must contain at least 2 lowercase characters (`lcredit=-2`)
+* The new password must contain at least 1 digit/number (`dcredit=-1`)
+* The new password must contain at least 1 symbol (`ocredit=-1`)
 
 You can change these values if you wish, but you should ensure users are selecting complex passwords that are hard to brute force attack.
 
 ### 3.5. Locking Sudo {#locking-sudo}
 
-Some standard Linux installations allow passwordless sudo superuser access using the `sudo` command. Often this capability is provided to users in the `sudo` group. One potential issue with passwordless superuser access is that if a hacker gains access to a ordinary user account on your server, and that odrinary user account is in the correct group, then the hacker can become the root user without knowing the user's password.
+Some standard Linux installations allow passwordless sudo superuser access using the `sudo` command. Often this capability is provided to users in the `sudo` group. One potential issue with passwordless superuser access is that if a hacker gains access to a ordinary user account on your server, and that ordinary user account is in the correct group, then the hacker can become the root user without knowing the user's password.
 
 To prevent this, we will lock down the `sudo` command to require all users to type their password in before the `sudo` command will grant them superuser privileges.
 
