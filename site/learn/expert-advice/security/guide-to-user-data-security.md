@@ -875,8 +875,8 @@ For Slack integration, configure an Incoming Webhook using these steps:
 1. Open your Slack interface and click on the name in the top left corner.
 2. Select "Administration" -> "Manage Apps".
 3. Click "Custom Integrations" on the right menu.
-4. Click "Incoming WebHooks" and then click the "Add Configuration" button on the left.
-  * Here you'll select the channel you want to post to and then create the WebHook. On the next page, you'll have some other options to set if you want. All you need from here is the integration URL.
+4. Click "Incoming Webhooks" and then click the "Add Configuration" button on the left.
+  * Here you'll select the channel you want to post to and then create the Webhook. On the next page, you'll have some other options to set if you want. All you need from here is the integration URL.
 5. Copy and paste that URL into the variable `slack_webhook_url` in the script above.
 
 To ensure the Ruby script above will run properly, make sure you have Ruby installed and the script is executable by executing these commands:
