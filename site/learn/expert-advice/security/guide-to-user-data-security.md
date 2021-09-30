@@ -18,7 +18,7 @@ dateModified: 2019-11-04
   <div class="collapsible-content">
     <ol class="numbered">
       <li><a href="#overview">Overview</a></li>
-      <li><a href="#tldr">tl;dr</a></li>
+      <li><a href="#tldr">tldr</a></li>
       <li><a href="#server-security">Server Security</a>
         <ol class="numbered">
           <li><a href="#server-architecture">Server Architecture</a></li>
@@ -81,7 +81,7 @@ This guide is for the software developer, architect or system administrator who 
 
 There are two parts to the guide: Server Security and Application Security. We don't see one as more important than the other, so we strongly encourage readers to digest both sections with equal attention. We provide a series of guidelines and steps to harden the servers/applications and protect against direct attacks. This isn't a "Why" kind of guide; this is a "How" guide. We trust that those interested in the "Why" will find plenty of other resources to satisfy their curiosity. For those of you interested in the "How", let's get started.
 
-## 2. TL;DR {#tldr}
+## 2. TLDR {#tldr}
 
 If you would rather not read our entire security guide (though we suggest you do), check out the Github project created around this guide. This project contains a set of scripts you can execute from your local computer to secure a remote server. The scripts perform most of the steps listed in this guide. The Github project also contains full configuration files based on the configuration detailed below that are deployed to the server by the scripts.
 
