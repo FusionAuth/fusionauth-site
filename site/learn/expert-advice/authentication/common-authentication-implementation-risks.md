@@ -7,6 +7,8 @@ image: advice/common-implementation-risks/expert-advice-common-authentication-im
 category: Identity Basics
 date: 2021-05-20
 dateModified: 2021-05-20
+redirect_from:
+  - /learn/expert-advice/identity-basics/common-authentication-implementation-risks/
 ---
 
 Given the increase of [data beaches in the past few years](https://haveibeenpwned.com/PwnedWebsites), it's more important than ever for software engineering leaders to prioritize security, quality development practices, and robust governance controls. Your customers' trust is on the line—and that's the lifeblood of any business that wants to keep growing.

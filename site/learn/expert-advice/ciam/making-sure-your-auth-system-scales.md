@@ -7,6 +7,8 @@ image: advice/auth-system-scale/making-sure-your-auth-system-can-scale-header-im
 category: Identity Basics
 date: 2021-03-11
 dateModified: 2021-03-11
+redirect_from:
+  - /learn/expert-advice/identity-basics/making-sure-your-auth-system-scales/
 ---
 
 Have you ever worked on a software system that stored passwords in plain text? I once worked on a product that stored encrypted plain-text passwords. Thankfully, this system was eventually fixed to store hashed passwords!
