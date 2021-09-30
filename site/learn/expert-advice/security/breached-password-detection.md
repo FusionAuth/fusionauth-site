@@ -116,7 +116,7 @@ You should enable checks on the first three events to prevent known compromised 
 
 The last one deserves a bit of explanation. Suppose a user signs up on Example.com with a great password. Then they come to your site and sign up with the same great password. They continue to use your site for months, but forget about Example.com. 
 
-Then, Example.com is breached. They may send out a notice, but your user may not receive it or may not change their password. This [study from 2020 (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) covers a small dataset, approximately 250 users over two years. It found that of the 60ish users who had accounts on breached domains, only 13% changed their password within three months of the breach announcement.
+Then, Example.com is breached. They may send out a notice, but your user may not receive it or may not change their password. This [study from 2020 (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) covers a small dataset, approximately 250 users over two years. It found that of the approximatly 60 users who had accounts on breached domains, only 13% changed their password within three months of the breach announcement.
 
 If you only check for compromise when the password is created at registration or modified by the end user, you'll end up with users who have credentials that have been leaked by breaches external to your system after account creation. The Example.com breach affected your system through the vector of the reused password. Detect breached passwords whenever a user logs in.
 

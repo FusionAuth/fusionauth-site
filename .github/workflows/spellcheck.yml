@@ -1,9 +1,12 @@
 # This is workflow for spell checking using PySpelling lib (https://pypi.org/project/pyspelling/)
-name: Spellcheck
-# Controls when the action will run.
-on: [push, pull_request]
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+name: spellcheck_website
+on: 
+  # run once a weekday at ~noon MT 
+  schedule:
+    - cron: '31 17 * * 1,2,3,4,5'
+  # can run on push too, but takes too long right now https://github.com/tj-actions/changed-files might help, but then we need to convert from the changed source files to html directories. might be a nice project in the future.
+  # push:
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -12,7 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Spellcheck
       - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+      - name: Build website for spellcheck
+        run: |
+          bundle exec jekyll build || true 
+        shell: bash
+      # Spellcheck
       - uses: igsekor/pyspelling-any@v0.0.2
         name: Spellcheck

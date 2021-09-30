@@ -47,7 +47,7 @@ By using FusionAuth to handle User authentication and access control we can bypa
 
 Similarly, these users don't need to have logins to WordPress anymore, hugely improving overall performance as we decrease the size of a WordPress user table from hundreds of thousands of users to the few hundred users who are authors and editors.
 
-> I think the cost savings purely from helping optimise caching and performance on high traffic WordPress sites, drastically reducing the number of servers needed to run a performant site, is massive.
+> I think the cost savings purely from helping optimize caching and performance on high traffic WordPress sites, drastically reducing the number of servers needed to run a performant site, is massive.
 
 **Dan:** Why did you choose FusionAuth over the competition?
 
@@ -59,7 +59,7 @@ It's great to see the product continue to evolve and the roadmap be published. I
 
 **Dan:** How much time and money would you say FusionAuth has saved you and your clients?
 
-**Stewart:** Impossible to say I'm afraid. I think the cost savings purely from helping optimise caching and performance on high traffic WordPress sites, drastically reducing the number of servers needed to run a performant site, is massive.
+**Stewart:** Impossible to say I'm afraid. I think the cost savings purely from helping optimize caching and performance on high traffic WordPress sites, drastically reducing the number of servers needed to run a performant site, is massive.
 
 Second, the reduction in developer time and having simple, straightforward API's to share user profile and access information in multiple accessory applications is beyond calculation.
 
