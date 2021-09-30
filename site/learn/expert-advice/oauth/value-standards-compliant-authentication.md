@@ -7,6 +7,8 @@ image: advice/value-standards/the-value-of-standards-compliant-authentication-he
 category: Identity Basics
 date: 2021-06-10
 dateModified: 2021-06-10
+redirect_from:
+  - /learn/expert-advice/identity-basics/value-standards-compliant-authentication/
 ---
 
 Software applications regularly need access to data from other services on behalf of their users. 
