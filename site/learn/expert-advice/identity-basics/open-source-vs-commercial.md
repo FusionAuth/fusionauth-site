@@ -17,7 +17,7 @@ Let's take a more in-depth look at the pros and cons of open-source and commerci
 
 ## Open-Source Authentication Providers
 
-Open-source authentication providers are popular because anyone can review much or all of the code that powers them. This availability can be especially helpful in evaluating whether a particular authentication provider will work for your use case. In addition, if you want the source code for any number of reasons (eg, the provider could go out of business or get acquired), open source is basically tailor-made for that. 
+Open-source authentication providers are popular because anyone can review much or all of the code that powers them. This availability can be especially helpful in evaluating whether a particular authentication provider will work for your use case. In addition, if you want the source code for any number of reasons (e.g., the provider could go out of business or get acquired), open source is basically tailor-made for that. 
 
 But while open-source providers do have some benefits over proprietary authentication providers, there are some downsides as well.
 
