@@ -9,7 +9,7 @@ tags: tutorial-react tutorial-javascript client-react client-javascript tutorial
 excerpt_separator: "<!--more-->"
 ---
 
-Whenever you create a website that allows a user to create and interact with their own account, an authentication component is must-have.  The problem, however, is that most hand-rolled authorization servers are not robust enough to keep up with the most current, secure authentication workflows. Whats more, since security is not always seen as a business priority, hand-rolled authorization servers can quickly become an internal tool that is not often touched, prone to disrepair and easy hacker exploitation.  
+Whenever you create a website that allows a user to create and interact with their own account, an authentication component is a must-have.  The problem, however, is that most hand-rolled authorization servers are not robust enough to keep up with the most current, secure authentication workflows. What's more, since security is not always seen as a business priority, hand-rolled authorization servers can quickly become an internal tool that is not often touched, prone to disrepair and easy hacker exploitation.  
 
 <!--more-->
 
@@ -21,7 +21,7 @@ You use authentication every day, whether you realize it or not. Every time you 
 
 In short, authentication is the process of a client proving that they are who they say they are to an external server so that they can access resources specific to them. Think of it like showing a passport to a customs agent to visit another country. In order to enter, you must present valid, verified proof from your country’s government that verifies you are who you say you are.  Authorization workflows such as OAuth 2.0 make similar use of verified, trusted objects such as tokens, which are passed around between clients, authorization servers, and resource servers to prove that a user is who they say they are. Only once that proof is verified is the user allowed to access the resource they want, such as a bank account, social media homepage, or email.
 
-While it is possible to write your own authentication/authorization solutions, it is often best to use an open source tool or external service like FusionAuth with enterprise projects, as authorization servers are complex and require a decent amount of maintenance, and if you are not able to dedicate a good amount of developer hours and knowledge to maintaining your auth workflows, they can become easily exploited and result in data loss.  You can also use an external 'identity provider', which is a way of authenticating users with an external trusted service such as Facebook, Google, Spotify, or (surprise!) FusionAuth, however, this is outside the scope of this tutorial.
+While it is possible to write your own authentication/authorization solutions, it is often best to use an open source tool or external service like FusionAuth with enterprise projects, as authorization servers are complex and require a decent amount of maintenance, and if you are not able to dedicate a good amount of developer hours and knowledge to maintaining your auth workflows, they can become easily exploited and result in data loss.  You can also use an external 'identity provider', which is a way of authenticating users with an external trusted service such as Facebook, Google, Spotify, or (surprise!) FusionAuth. However, this is outside the scope of this tutorial.
 
 ## What is Authorization?
 
@@ -85,7 +85,7 @@ Congratulations! You now have a FusionAuth app to use with your React app.
 
 ### Create a User and Link them to Your FusionAuth App
 
-For the next step, we will link a user to your brand-new FusionAuth app, ReactAuth, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store', aka a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users from your app if you want to build that functionality in later on, but that is beyond this tutorial's scope.  
+For the next step, we will link a user to your brand-new FusionAuth app, ReactAuth, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store', aka a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users from your app if you want to build that functionality later on, but that is beyond this tutorial's scope.  
 
 * Select `users` from the left-hand side menu.
 * Select the green plus sign on the top left to add a user. I used `test@fusionauth.io`
@@ -270,21 +270,26 @@ ReactDOM.render(<App/>, document.querySelector('#main'));
 
 This is a relitively simple conditional rendering: if the user is logged in, a welcome message displays. If not, then a 'please log in' message displays.
 
-Now, let's set state based on a call to our Express server. But first, we need to set up that server!
+Now, let's set the state based on a call to our Express server. But first, we need to set up that server!
 
 ## Create the Express Server
 
 *"Wait", you may say, "why do I need an Express server? Can't I just use Router?"*
 
-Again, a good question. This has to do with the authorization code grant, which is the OAuth grant are using in this tutorial. This grant relies on a user interacting with a browser, but still needs a server-side component to handle passing tokens and authorization codes to and from the authorization server, aka FusionAuth.  This keeps all of your sensitive access objects on the server-side of your app, and makes them far less likely to be intercepted and hacked.  If you want to learn more about the nuts and bolts of how the authorization code grant works, check out the [Modern Guide to OAuth](https://fusionauth.io/learn/expert-advice/oauth/modern-guide-to-oauth/).
+Again, a good question. This has to do with the authorization code grant. This grant relies on a user interacting with a browser, but still needs a server-side component to handle passing tokens and authorization codes to and from the authorization server, aka FusionAuth.  This keeps all of your sensitive access objects on the server-side of your app, and makes them far less likely to be intercepted and hacked.  If you want to learn more about the nuts and bolts of how the authorization code grant works, check out the [Modern Guide to OAuth](https://fusionauth.io/learn/expert-advice/oauth/modern-guide-to-oauth/).
 
 ### Configure the folders and packages
 
-First off, install express in your dependency.  In your root folder, install:
+First off, install your dependencies.
+```
+npm install express cors express-session request
+```
 
-```
-npm i express
-```
+What did you just install?
+- cors, so that you can avoid CORS errors.
+- express, so that you can use the Express package.
+- express-session, so that you can save data in a server-side session.
+- request, so that you can format HTTP requests in an organized fashion
 
 Then, create a script in `sever/package.json` that starts our web server when we start it with `npm start`
 
@@ -296,28 +301,9 @@ Then, create a script in `sever/package.json` that starts our web server when we
 ...
 ```
 
-First
-```
-npm init -y
-```
-
-to create a `package.json`:
-
-Second, run
-
-```
-npm install express cors express-session request
-```
-
-What did you just install?
-- cors, so that you can avoid CORS errors.
-- express, so that you can use the Express package.
-- express-session, so that you can save data in a server-side session.
-- request, so that you can format HTTP requests in an organized fashion.
-
 ### Write the Express Server
 
-First, lets draw a `user` route in server/routes/user.js:
+First, let's draw a `user` route in server/routes/user.js:
 
 ```js
 // server/routes/user.js
@@ -458,7 +444,7 @@ Awesome! So if you go to localhost:3000, you should see the user displayed, righ
 User sign-in is one of the key features of FusionAuth.  Let’s see how it works.
 
 Redirecting to FusionAuth
-First thing’s first: we need a “log in” button in the React client:
+First thing’s first: we need a “login” button in the React client:
 
 client
 └─app
