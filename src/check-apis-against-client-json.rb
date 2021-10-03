@@ -4,31 +4,46 @@ require 'json'
 require 'net/http'
 require 'uri'
 require 'optparse'
+require 'yaml'
 
+# option handling
 options = {}
+
+# defaults
+options[:siteurl] = "https://fusionauth.io"
+options[:clientlibdir] = "../../fusionauth-client-builder"
+
 OptionParser.new do |opts|
   opts.banner = "Usage: check-apis-against-client-json.rb [options]"
 
-  opts.on("-v", "--verbose", "Run verbosely") do |v|
-    options[:verbose] = v
+  opts.on("-s", "--site SITEURL", "Provide an alternate site, like https://site-local.fusionauth.io, to run the check against. Default is https://fusionauth.io.") do |siteurl|
+    options[:siteurl] = siteurl
   end
 
-# base url )so can run against localhost
-# base client lib dir
-# blog pattern (so we can run against one)
+  opts.on("-p", "--file-prefix FILEPREFIX", "Provide a file prefix to run for, like 'AuditLog'. This runs the check for only one file, 'AuditLog.json' in the example. Default is to use what is in the config file.") do |fileprefix|
+    options[:fileprefix] = fileprefix
+  end
+
+  opts.on("-c", "--clientlibdir CLIENT_LIB_DIR", "Provide an alternate client library directory to run the check against. Default is ../../fusionauth-client-builder (peer to this fusionauth-site checkout).") do |clientlibdir|
+    options[:clientlibdir] = clientlibdir
+  end
+
+  opts.on("-f", "--config-file CONFIG_FILE", "Provide a YAML config file to load. Right now config file can contain a list of files to check under the key 'files'.") do |configfile|
+    options[:configfile] = configfile
+  end
+
 # add in config file
-# add in fusionauth app so we can look for text in .properties file
+# run in gh workflow
 
-  opts.on("-v", "--verbose", "Run verbosely") do |v|
+  opts.on("-v", "--verbose", "Run verbosely.") do |v|
     options[:verbose] = v
   end
 
-  opts.on("-h", "--help", "Prints this help") do
+  opts.on("-h", "--help", "Prints this help.") do
     puts opts
     exit
   end
 end.parse!
-
 
 # this requires you to have fusionauth-client-builder checked out in the grandparent directory (../..)
 
@@ -62,7 +77,7 @@ def downcase(string)
 end
 
 
-def process_file(fn, missing_fields, prefix = "", type = nil, page_content = nil)
+def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set" ]
   f = File.open(fn)
   fs = f.read
@@ -88,7 +103,8 @@ def process_file(fn, missing_fields, prefix = "", type = nil, page_content = nil
   end
   unless page_content
     # we are in leaf object, we don't need to pull the page content
-    api_url = "https://fusionauth.io/docs/v1/tech/apis/"+todash(t)+"s/"
+
+    api_url = options[:siteurl] + "/docs/v1/tech/apis/"+todash(t)+"s/"
     page_content = open(api_url)
   end
   #p api_url
@@ -123,7 +139,7 @@ def process_file(fn, missing_fields, prefix = "", type = nil, page_content = nil
           # okay to have tenantId missing, as that is handled implicitly via API key locking or header if there is more than one tenant
           # other fields in this regexp ok to omit as well
           # p field_name + " MISSING, looked for "+full_field_name 
-          missing_fields.append(full_field_name)
+          missing_fields.append({full_field_name: full_field_name, type: field_type})
         end
       end
     else
@@ -131,7 +147,7 @@ def process_file(fn, missing_fields, prefix = "", type = nil, page_content = nil
       files = Dir.glob("../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
       file = files[0]
       if file
-        process_file(file, missing_fields, t, field_name, page_content)
+        process_file(file, missing_fields, options, t, field_name, page_content)
       else
         p "couldn't find file for "+field_type
       end
@@ -139,33 +155,50 @@ def process_file(fn, missing_fields, prefix = "", type = nil, page_content = nil
   end
 end
 
+if options[:fileprefix]
+  files = Dir.glob("../../fusionauth-client-builder/src/main/domain/*"+options[:fileprefix]+".json")
+elsif options[:configfile]
+  config = YAML.load(File.read(options[:configfile])) 
+  files = []
+  filenames = config["files"]
+  filenames.each do |f|
+    files.append(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain."+f)
+  end
+else
+  # default files to check
+  files = [
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.Group.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.AuditLog.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.UserAction.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.Theme.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.Key.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.APIKey.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.Webhook.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.Lambda.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.Application.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.Tenant.json",
+    options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.User.json",
+  ]
+end
 
-#files = Dir.glob("../../fusionauth-client-builder/src/main/domain/*AuditLog.json")
-
-files = [
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.Group.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.AuditLog.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.UserAction.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.Theme.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.Key.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.APIKey.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.Webhook.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.Lambda.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.Application.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.Tenant.json",
-  "../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.User.json",
-]
+if options[:verbose] 
+  puts "Checking files: "
+  puts files
+end
 
 missing_fields = []
 
 files.each do |fn|
-  process_file(fn, missing_fields)
+  process_file(fn, missing_fields, options)
 end
 
-puts "\n\nMISSING FIELDS"
-puts missing_fields
 
 if missing_fields.length > 0 
+  if options[:verbose]
+    puts "\n\n"
+  end
+  puts "MISSING FIELDS"
+  puts missing_fields
   exit(false)
 else
   exit(true)
