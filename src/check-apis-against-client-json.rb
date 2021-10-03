@@ -101,6 +101,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     # add previous objects if present
     t = prefix+"."+t
   end
+
   if options[:verbose]
     puts "processing " + t
   end
