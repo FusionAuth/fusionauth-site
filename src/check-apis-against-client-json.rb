@@ -20,7 +20,7 @@ OptionParser.new do |opts|
     options[:siteurl] = siteurl
   end
 
-  opts.on("-p", "--file-prefix FILEPREFIX", "Provide a file prefix to run for, like 'AuditLog'. This runs the check for only one file, 'AuditLog.json' in the example. Default is to use what is in the config file.") do |fileprefix|
+  opts.on("-p", "--file-prefix FILEPREFIX", "Provide a file prefix to run for, like 'AuditLog'. This runs the check for only one file, 'AuditLog.json' in the example. Exclusive with -f. Default is to check a standard set of files.") do |fileprefix|
     options[:fileprefix] = fileprefix
   end
 
@@ -28,7 +28,7 @@ OptionParser.new do |opts|
     options[:clientlibdir] = clientlibdir
   end
 
-  opts.on("-f", "--config-file CONFIG_FILE", "Provide a YAML config file to load. Right now config file can contain a list of files to check under the key 'files'.") do |configfile|
+  opts.on("-f", "--config-file CONFIG_FILE", "Provide a YAML config file to load. Right now config file can contain a list of files to check under the key 'files'. Exclusive with -p.") do |configfile|
     options[:configfile] = configfile
   end
 
