@@ -110,8 +110,9 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     api_url = options[:siteurl] + "/docs/v1/tech/apis/"+todash(t)+"s/"
     page_content = open(api_url)
   end
-  #p api_url
-  #p page_content
+  if options[:verbose]
+    puts "retrieving " + api_url
+  end
   
   fields = json["fields"]
   extends = json["extends"]
@@ -121,7 +122,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     unless fields && fields.length > 0
       fields = {}
     end
-    files = Dir.glob(Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+ex["type"]+".json")
+    files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+ex["type"]+".json")
     file = files[0]
     ef = File.open(file)
     efs = ef.read
@@ -147,7 +148,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       end
     else
       #p "need to look up other object for type " + field_type
-      files = Dir.glob(Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
+      files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
       file = files[0]
       if file
         process_file(file, missing_fields, options, t, field_name, page_content)
