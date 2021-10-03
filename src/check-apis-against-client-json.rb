@@ -1,6 +1,34 @@
+#!/usr/bin/env ruby
+
 require 'json'
 require 'net/http'
 require 'uri'
+require 'optparse'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: check-apis-against-client-json.rb [options]"
+
+  opts.on("-v", "--verbose", "Run verbosely") do |v|
+    options[:verbose] = v
+  end
+
+# base url )so can run against localhost
+# base client lib dir
+# blog pattern (so we can run against one)
+# add in config file
+# add in fusionauth app so we can look for text in .properties file
+
+  opts.on("-v", "--verbose", "Run verbosely") do |v|
+    options[:verbose] = v
+  end
+
+  opts.on("-h", "--help", "Prints this help") do
+    puts opts
+    exit
+  end
+end.parse!
+
 
 # this requires you to have fusionauth-client-builder checked out in the grandparent directory (../..)
 
@@ -55,7 +83,9 @@ def process_file(fn, missing_fields, prefix = "", type = nil, page_content = nil
     # add previous objects if present
     t = prefix+"."+t
   end
-  puts "processing " + t
+  if options[:verbose]
+    puts "processing " + t
+  end
   unless page_content
     # we are in leaf object, we don't need to pull the page content
     api_url = "https://fusionauth.io/docs/v1/tech/apis/"+todash(t)+"s/"
