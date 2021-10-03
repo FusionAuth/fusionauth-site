@@ -109,10 +109,11 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     # we are in leaf object, we don't need to pull the page content
 
     api_url = options[:siteurl] + "/docs/v1/tech/apis/"+todash(t)+"s/"
+    if options[:verbose]
+      puts "retrieving " + api_url
+    end
+
     page_content = open(api_url)
-  end
-  if options[:verbose]
-    puts "retrieving " + api_url
   end
   
   fields = json["fields"]
