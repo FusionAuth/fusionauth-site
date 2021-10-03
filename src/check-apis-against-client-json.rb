@@ -45,8 +45,6 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-# this requires you to have fusionauth-client-builder checked out in the grandparent directory (../..)
-
 def todash(camel_cased_word)
   camel_cased_word.to_s.gsub(/::/, '/').
   gsub(/([A-Z]+)([A-Z][a-z])/,'\1-\2').
@@ -79,6 +77,11 @@ end
 
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set" ]
+
+  if options[:verbose]
+    puts "opening: "+fn
+  end
+
   f = File.open(fn)
   fs = f.read
   json = JSON.parse(fs)
@@ -118,7 +121,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     unless fields && fields.length > 0
       fields = {}
     end
-    files = Dir.glob("../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.*"+ex["type"]+".json")
+    files = Dir.glob(Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+ex["type"]+".json")
     file = files[0]
     ef = File.open(file)
     efs = ef.read
@@ -144,7 +147,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       end
     else
       #p "need to look up other object for type " + field_type
-      files = Dir.glob("../../fusionauth-client-builder/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
+      files = Dir.glob(Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
       file = files[0]
       if file
         process_file(file, missing_fields, options, t, field_name, page_content)
@@ -156,7 +159,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
 end
 
 if options[:fileprefix]
-  files = Dir.glob("../../fusionauth-client-builder/src/main/domain/*"+options[:fileprefix]+".json")
+  files = Dir.glob(options[:clientlibdir]+"/src/main/domain/*"+options[:fileprefix]+".json")
 elsif options[:configfile]
   config = YAML.load(File.read(options[:configfile])) 
   files = []
