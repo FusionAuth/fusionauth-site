@@ -28,7 +28,7 @@ OptionParser.new do |opts|
     options[:clientlibdir] = clientlibdir
   end
 
-  opts.on("-f", "--config-file CONFIG_FILE", "Provide a YAML config file to load. Right now config file can contain a list of files to check under the key 'files'. Exclusive with -p.") do |configfile|
+  opts.on("-f", "--config-file CONFIG_FILE", "Provide a YAML config file to load. Right now config file can contain a list of files to check under the key 'files'. Each file name will be globbed and appended with '.json'. Exclusive with -p.") do |configfile|
     options[:configfile] = configfile
   end
 
@@ -168,7 +168,10 @@ elsif options[:configfile]
   files = []
   filenames = config["files"]
   filenames.each do |f|
-    files.append(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain."+f)
+    matching_files = Dir.glob(options[:clientlibdir]+"/src/main/domain/*"+f+".json")
+    matching_files.each do |mf| 
+      files.append(mf)
+    end
   end
 else
   # default files to check
