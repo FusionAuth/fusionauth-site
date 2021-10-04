@@ -6,6 +6,7 @@ author: Dan Moore
 image: blogs/authorization-code-grant-asp-net/securing-asp-net-app-oauth.png
 category: blog
 tags: client-netcore tutorial tutorial-netcore
+updated_date: 2021-09-30
 excerpt_separator: "<!--more-->"
 ---
 
