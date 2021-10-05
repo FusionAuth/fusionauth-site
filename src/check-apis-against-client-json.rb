@@ -165,11 +165,41 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     else
       #p "need to look up other object for type " + field_type
       files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
-      file = files[0]
+      if options[:verbose] && files.length > 1
+        puts "for field_type: "+ field_type+ ", found " + files.length.to_s + " files, picking closest one"
+        puts files
+      end
+      if files.length == 1
+        file = files[0]
+      else
+        ancestor_type = t.gsub(/^\..*/,'')
+        if options[:verbose]
+          puts "looking for matching inner class"
+        end
+        files.each do |mf|
+          if mf.upcase.include?(ancestor_type.upcase)
+            # inner class, use this one
+            file = mf
+            break
+          end
+        end
+        unless file
+          if options[:verbose]
+            puts "no inner class found, looking for all other classes, but avoiding other inner classes"
+          end
+          # grab the one without the $ in name, no other inner classes should work
+          files.each do |mf|
+            unless mf.include?('$')
+              file = mf
+              break
+            end
+          end
+        end
+      end
       if file
         process_file(file, missing_fields, options, t, field_name, page_content)
       else
-        p "couldn't find file for "+field_type
+        puts "couldn't find file for "+field_type
       end
     end
   end
