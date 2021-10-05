@@ -3,10 +3,10 @@ layout: advice
 title: What is Identity Proofing?
 description: What is identity proofing and why might you need it?
 author: Deborah Ruck
-image: advice/try-before-you-buy/expert-advice-the-value-of-trying-your-auth-provider-before-you-commit-header-image.png
+image: advice/identity-proofing/expert-advice-what-is-identity-proofing-header-image.png
 category: Identity Basics
-date: 2021-10-01
-dateModified: 2021-10-01
+date: 2021-10-05
+dateModified: 2021-10-05
 ---
 
 Identity theft is on the rise. In 2020, the [reported cases of identity theft](https://www.ftc.gov/reports/consumer-sentinel-network-data-book-2020) rose to 1,387,615, more than double the 650,572 cases reported in 2019. The COVID-19 pandemic accelerated the use of online transactions as businesses leveraged digital technologies to take advantage of new business opportunities. This resulted in the increase of sensitive information stored in the cloud and an elevated risk of identity theft. 
