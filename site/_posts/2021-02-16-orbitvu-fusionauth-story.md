@@ -59,7 +59,7 @@ Another thing about flexibility, where the competition is far behind, is the pos
 
 Another important factor that we considered was migration from our old solution to the new one. Again, FusionAuth fit our needs perfectly and made it possible to migrate user password hashes from the Django-based system to FusionAuth flawlessly (initially we've created our own password encryptor to handle this but turned out the provided ones handled our needs).
 
-Last but not least, we love open source at Orbitvu and we use it a lot. With FusionAuth, we like that, while not open source, the product feels like an open source project due to its development style with Github's issue tracker.
+Last but not least, we love open source at Orbitvu and we use it a lot. With FusionAuth, we like that, while not open source, the product feels like an open source project due to its development style with GitHub's issue tracker.
 
 > We're integrating with FusionAuth using its API and it works flawlessly.
 
@@ -75,7 +75,7 @@ Last but not least, we love open source at Orbitvu and we use it a lot. With Fus
 
 **Maciej:** We use the standalone tomcat server. Our production and staging instances are built to be highly available. There are two FusionAuth instances in a cluster, running behind a load balancer (Nova ADC) and using ElasticSearch cluster (3 nodes) with Postgresql database (managed, the highly available solution from the hosting provider).
 
-> Last but not least, we love open source at Orbitvu and we use it a lot. With FusionAuth, we like that, while not open source, the product feels like an open source project due to its development style with Github's issue tracker.
+> Last but not least, we love open source at Orbitvu and we use it a lot. With FusionAuth, we like that, while not open source, the product feels like an open source project due to its development style with GitHub's issue tracker.
 
 **Dan:** Any general feedback/areas to improve?
 
