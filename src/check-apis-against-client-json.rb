@@ -11,6 +11,8 @@ IGNORED_FIELD_REGEXPS = [
   /user\.salt/, # never send user.salt, only used by Import API
   /application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
   /application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
+  /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
+  /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
 ]
 # option handling
 options = {}
