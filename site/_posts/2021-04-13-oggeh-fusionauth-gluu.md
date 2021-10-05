@@ -55,7 +55,7 @@ Securing OGGEH Cloud Platform customers is one of our main focuses, so we do not
 
 Earlier, we had to replicate the authentication server for each customer (Cloud App) just to customize the login theme and email templates. We also had to use separate servers on each due to the high resource requirements to start and operate. Scaling servers is far more complex and comes with a greater financial cost.
 
-> Literarily 40% of our expenses [are] just gone [after adopting FusionAuth]. 
+> Literally 40% of our expenses [are] just gone [after adopting FusionAuth]. 
 
 **Dan:** Do your customers have the ability to customize the themes and email templates or is that something you take care of for them?
 
@@ -71,7 +71,7 @@ To be honest, that was the moment where I decided to get rid of Gluu. There were
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
-**Ahmed:** A tremendous amount! Literarily 40% of our expenses just gone. No more unnecessary high resources for Gluu. FusionAuth works just fine on our auto-scaled stack.
+**Ahmed:** A tremendous amount! Literally 40% of our expenses just gone. No more unnecessary high resources for Gluu. FusionAuth works just fine on our auto-scaled stack.
 
 > [FusionAuth's] footprint is remarkably small and does not require great CPU or memory resources to operate.
 
