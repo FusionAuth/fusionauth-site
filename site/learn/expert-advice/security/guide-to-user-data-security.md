@@ -18,7 +18,7 @@ dateModified: 2019-11-04
   <div class="collapsible-content">
     <ol class="numbered">
       <li><a href="#overview">Overview</a></li>
-      <li><a href="#tldr">tl;dr</a></li>
+      <li><a href="#tldr">tldr</a></li>
       <li><a href="#server-security">Server Security</a>
         <ol class="numbered">
           <li><a href="#server-architecture">Server Architecture</a></li>
@@ -81,7 +81,7 @@ This guide is for the software developer, architect or system administrator who 
 
 There are two parts to the guide: Server Security and Application Security. We don't see one as more important than the other, so we strongly encourage readers to digest both sections with equal attention. We provide a series of guidelines and steps to harden the servers/applications and protect against direct attacks. This isn't a "Why" kind of guide; this is a "How" guide. We trust that those interested in the "Why" will find plenty of other resources to satisfy their curiosity. For those of you interested in the "How", let's get started.
 
-## 2. TL;DR {#tldr}
+## 2. TLDR {#tldr}
 
 If you would rather not read our entire security guide (though we suggest you do), check out the Github project created around this guide. This project contains a set of scripts you can execute from your local computer to secure a remote server. The scripts perform most of the steps listed in this guide. The Github project also contains full configuration files based on the configuration detailed below that are deployed to the server by the scripts.
 
@@ -231,19 +231,19 @@ password   requisite    pam_cracklib.so retry=3 minlen=10 difok=3 ucredit=-1 lcr
 
 The configuration options are as follows:
 
-* Allow 3 retries to type a new password twice before giving up (retry=3)
-* Passwords must be at least 10 characters long (minlen=10)
-* The new password must differ from the old password by 3 characters (difok=3)
-* The new password must contain at least 1 uppercase character (ucredit=-1)
-* The new password must contain at least 2 lowercase characters (lcredit=-2)
-* The new password must contain at least 1 digit/number (dcredit=-1)
-* The new password must contain at least 1 symbol (ocredit=-1)
+* Allow 3 retries to type a new password twice before giving up (`retry=3`)
+* Passwords must be at least 10 characters long (`minlen=10`)
+* The new password must differ from the old password by 3 characters (`difok=3`)
+* The new password must contain at least 1 uppercase character (`ucredit=-1`)
+* The new password must contain at least 2 lowercase characters (`lcredit=-2`)
+* The new password must contain at least 1 digit/number (`dcredit=-1`)
+* The new password must contain at least 1 symbol (`ocredit=-1`)
 
 You can change these values if you wish, but you should ensure users are selecting complex passwords that are hard to brute force attack.
 
 ### 3.5. Locking Sudo {#locking-sudo}
 
-Some standard Linux installations allow passwordless sudo superuser access using the `sudo` command. Often this capability is provided to users in the `sudo` group. One potential issue with passwordless superuser access is that if a hacker gains access to a ordinary user account on your server, and that odrinary user account is in the correct group, then the hacker can become the root user without knowing the user's password.
+Some standard Linux installations allow passwordless sudo superuser access using the `sudo` command. Often this capability is provided to users in the `sudo` group. One potential issue with passwordless superuser access is that if a hacker gains access to a ordinary user account on your server, and that ordinary user account is in the correct group, then the hacker can become the root user without knowing the user's password.
 
 To prevent this, we will lock down the `sudo` command to require all users to type their password in before the `sudo` command will grant them superuser privileges.
 
@@ -875,8 +875,8 @@ For Slack integration, configure an Incoming Webhook using these steps:
 1. Open your Slack interface and click on the name in the top left corner.
 2. Select "Administration" -> "Manage Apps".
 3. Click "Custom Integrations" on the right menu.
-4. Click "Incoming WebHooks" and then click the "Add Configuration" button on the left.
-  * Here you'll select the channel you want to post to and then create the WebHook. On the next page, you'll have some other options to set if you want. All you need from here is the integration URL.
+4. Click "Incoming Webhooks" and then click the "Add Configuration" button on the left.
+  * Here you'll select the channel you want to post to and then create the Webhook. On the next page, you'll have some other options to set if you want. All you need from here is the integration URL.
 5. Copy and paste that URL into the variable `slack_webhook_url` in the script above.
 
 To ensure the Ruby script above will run properly, make sure you have Ruby installed and the script is executable by executing these commands:
@@ -1741,7 +1741,7 @@ Here's a scene from the movie Hackers that illustrates this concept:
 
 Of course, you'll want to ensure your "BLT drive" is secure, but in this case you need to ensure that your application prevents your employees from falling prey to social hacks.
 
-The best way to prevent social hacking is to ensure that employees, more specifically customer service representatives, don't have too much power. For example, customer service representatives should not be able to change user passwords. Instead, they should only be allowed to send password reset emails to users so that the user can change their own password. You can also use push services like Twillio to send a code (also known as a one-time password) to the user's mobile phone. The user then has to read the code back to the employee, who types it into your backend in order to be granted access to the user's account.
+The best way to prevent social hacking is to ensure that employees, more specifically customer service representatives, don't have too much power. For example, customer service representatives should not be able to change user passwords. Instead, they should only be allowed to send password reset emails to users so that the user can change their own password. You can also use push services like Twilio to send a code (also known as a one-time password) to the user's mobile phone. The user then has to read the code back to the employee, who types it into your backend in order to be granted access to the user's account.
 
 ## 5. Summary {#summary}
 
