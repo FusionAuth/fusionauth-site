@@ -28,11 +28,37 @@ A User is scoped to a Tenant.  A User existing within a Tenant can be registered
 
 == User Sessions
 
-Users have sessions in FusionAuth. Sessions are equivalent to refresh tokens. Their lifetime is controlled by the Tenant or Application refresh token settings. These appear in the administrative user interface under the [breadcrumb]#Sessions# tab (you may need to scroll if your screen is small):
+Users have sessions in FusionAuth. Sessions are equivalent to refresh tokens. Their lifetime is controlled by the Tenant or Application refresh token settings. 
+
+These appear in the administrative user interface under the [breadcrumb]#Sessions# tab (you may need to scroll if your screen is small):
 
 image::core-concepts/user-session.png[User session screen in the adminstrative user interface.,width=1200,role=bottom-cropped]
 
-This session can only be started via a Login API call or an OAuth code flow that requests a refresh token. Any other kind of login doesn't have a session, because there is no way to get a new JWT short of the user logging in again. This session can end or or deleted via the link:/docs/v1/tech/apis/jwt/#revoke-refresh-tokens[JWT APIs]. When a session is no longer valid, the associated refresh token can't be used to create new JWTs. The JWTs themselves are valid until they expire.
+There are two primary types sessions shown in this table:
+
+* Normal refresh tokens.
+* SSO token. While technically a refresh token, it is special, and fully managed by FusionAuth. You may safely ignore this.
+
+=== Session Details
+
+A session can be created by using the Login API, as long as [field]#link:/docs/v1/tech/core-concepts/applications/#security[Generate refresh tokens]# is enabled, or by completing the link:/docs/v1/tech/oauth/#example-authorization-code-grant[OAuth Authorization Code grant] when the `offline_access` scope is requested. 
+
+A session will end when:
+
+* It expires.
+* It is deleted using the link:/docs/v1/tech/apis/jwt/#revoke-refresh-tokens[JWT APIs].
+* Optionally, as a result of a user changing their password or having their account locked. 
+
+These can be configured in the link:/docs/v1/tech/core-concepts/tenants/#jwt[Tenant Refresh Token settings] or the link:/docs/v1/tech/core-concepts/applications/#jwt[Application Refresh Token settings].
+
+[NOTE.note]
+====
+Sessions are not ended, nor are associated refresh tokens revoked by the link:/docs/v1/tech/oauth/endpoints/#logout[front channel logout].
+====
+
+When a session is no longer valid, the associated refresh token can't be used to create new JWTs.
+
+The JWTs themselves are valid until they expire.
 
 == What Makes a User Active
 
