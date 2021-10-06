@@ -1,10 +1,11 @@
 ---
 layout: blog-post
-title: Securing an ASP.NET Core Razor Pages app with OAuth
+title: Securing an ASP.NET Core Razor Pages app with OAuth, Updated
 description: We'll build a web application using ASP.NET Core and control page access using FusionAuth and the Authorization Code grant.
 author: Dan Moore
 image: blogs/authorization-code-grant-asp-net/securing-asp-net-app-oauth.png
 category: blog
+tags: client-netcore tutorial tutorial-netcore
 excerpt_separator: "<!--more-->"
 ---
 
@@ -12,7 +13,7 @@ Previously, we used .NET Core to [build a command line tool](https://fusionauth.
 
 <!--more-->
 
-{% include _callout-important.liquid content="This code and tutorial will not work with FusionAuth version greater than 1.23, due to changes in the contents of the access token. The [tutorial has been updated](/blog/2021/10/14/securing-asp-netcore-razor-pages-app-with-oauth-update/) to work with more recent versions of FusionAuth. "%}
+{% include _callout-tip.liquid content="This code and tutorial is an updated version of this [tutorial](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth/) and works with more recent versions of FusionAuth. "%}
 
 ## Configuring FusionAuth
 
@@ -42,7 +43,7 @@ Click the blue "Save" icon to save all the settings you just configured. We're d
 
 ## Set up a basic ASP.NET Razor Pages application
 
-Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/pre-1-24-code) available if you want to download it and take a look.
+Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore) available if you want to download it and take a look.
 
 First, let's create a new web application using the `dotnet` CLI and go to that directory:
 
@@ -123,11 +124,7 @@ Don't forget to add a navigation element to `Pages/Shared/_Layout.cshtml` after 
 ...
 ```
 
-Hit `control-C` to exit the application. Then republish it and start it up again. Visit `http://localhost:5000` and view your new page: click on "Secure".
-
-If you are looking at the GitHub repository, you can see the application at this point by looking at the [`setup-application` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/setup-application).
-
-We've added a page, but it sure isn't secure ... yet. Let's do that next.
+Hit `control-C` to exit the application. Then republish it and start it up again. Visit `http://localhost:5000` and view your new page: click on "Secure". We've added a page, but it sure isn't secure ... yet. Let's do that next.
 
 ## Login
 
@@ -367,8 +364,6 @@ After you've signed in, you'll end up at the "Secure" page and will see all clai
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net//successful-login-secure-page-display.png" alt="The secure page." class="img-fluid" figure=false %}
 
-You can see the source of the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-authentication).
-
 ## Logout
 
 Awesome, now you can log in with valid user credentials. However, right now there's no way to log out. The JWT is stored in a session cookie. When we're ready to leave, we want to log out of our ASP.NET Core session and of the FusionAuth session. So, we need to add a logout page, remove the session cookie, and redirect to the FusionAuth OAuth logout endpoint. FusionAuth will destroy its session and then redirect back to the configured `Logout URL`. We'll add a Logout page to do all of this.
@@ -443,8 +438,6 @@ Finally, we need to change the `Startup.cs` file to use the new cookie name.
 ```
 
 Great! Now you can both sign in and sign out of your application.
-
-(If you are interested, you can see the application's current code by looking at the [`add-logout` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-logout).
 
 ## Next steps
 
