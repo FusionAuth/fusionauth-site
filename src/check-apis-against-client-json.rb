@@ -58,6 +58,13 @@ def make_api_path(type)
   return type + "s"
 end
 
+def make_on_page_field_name(type)
+  if type == "formField"
+    return "field"
+  end
+  return type
+end
+
 def todash(camel_cased_word)
   camel_cased_word.to_s.gsub(/::/, '/').
   gsub(/([A-Z]+)([A-Z][a-z])/,'\1-\2').
@@ -109,9 +116,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     t = json["type"]
     t = downcase(t)
   end
-  #unless t == "authenticationTokenConfiguration" || t == "application"
-    #return
-  #end
+
   if prefix != "" 
     # add previous objects if present
     t = prefix+"."+t
@@ -154,7 +159,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     field_name = fi[0].to_s
     full_field_name = "xxxxxxx"
     if known_types.include? field_type
-      full_field_name = t.to_s + "." + field_name
+      full_field_name = make_on_page_field_name(t)+ "." + field_name
       if ! page_content.include? full_field_name 
         ignore = false
         IGNORED_FIELD_REGEXPS.each do |re|
