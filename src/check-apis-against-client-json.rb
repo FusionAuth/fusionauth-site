@@ -6,10 +6,18 @@ require 'uri'
 require 'optparse'
 require 'yaml'
 
+IGNORED_FIELD_REGEXPS = [
+  /[^.]*\.tenantId/, # toplevel tenantId always ignored, as that is handled implicitly via API key locking or header if there is more than one tenant
+  /user\.salt/, # never send user.salt, only used by Import API
+  /application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
+  /application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
+  /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
+  /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
+]
 # option handling
 options = {}
 
-# defaults
+# default options
 options[:siteurl] = "https://fusionauth.io"
 options[:clientlibdir] = "../../fusionauth-client-builder"
 
@@ -141,21 +149,57 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     if known_types.include? field_type
       full_field_name = t.to_s + "." + field_name
       if ! page_content.include? full_field_name 
-        unless /[^.]*\.tenantId/.match(full_field_name) || /user\.salt/.match(full_field_name)
+        ignore = false
+        IGNORED_FIELD_REGEXPS.each do |re|
+          ignore = re.match(full_field_name)
+          if ignore
+            break
+          end
+        end
+        unless ignore
           # okay to have tenantId missing, as that is handled implicitly via API key locking or header if there is more than one tenant
           # other fields in this regexp ok to omit as well
-          # p field_name + " MISSING, looked for "+full_field_name 
           missing_fields.append({full_field_name: full_field_name, type: field_type})
         end
       end
     else
       #p "need to look up other object for type " + field_type
       files = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.*"+field_type+".json")
-      file = files[0]
+      if options[:verbose] && files.length > 1
+        puts "for field_type: "+ field_type+ ", found " + files.length.to_s + " files, picking closest one"
+        puts files
+      end
+      if files.length == 1
+        file = files[0]
+      else
+        ancestor_type = t.gsub(/^\..*/,'')
+        if options[:verbose]
+          puts "looking for matching inner class"
+        end
+        files.each do |mf|
+          if mf.upcase.include?(ancestor_type.upcase)
+            # inner class, use this one
+            file = mf
+            break
+          end
+        end
+        unless file
+          if options[:verbose]
+            puts "no inner class found, looking for all other classes, but avoiding other inner classes"
+          end
+          # grab the one without the $ in name, no other inner classes should work
+          files.each do |mf|
+            unless mf.include?('$')
+              file = mf
+              break
+            end
+          end
+        end
+      end
       if file
         process_file(file, missing_fields, options, t, field_name, page_content)
       else
-        p "couldn't find file for "+field_type
+        puts "couldn't find file for "+field_type
       end
     end
   end

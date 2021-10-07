@@ -46,7 +46,7 @@ The requirements for this position include:
 * Analytical mind and strong quantitative skills
 * BSc in Computer Science or similar field (or equivalent work experience)
 
-## Salary & Benefits
+### Salary & Benefits
 
 * **Salary range:** $120,000 to $180,000 (depending on experience)
 * **Benefits:** Medical, dental, and vision
