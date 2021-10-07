@@ -159,6 +159,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     field_name = fi[0].to_s
     full_field_name = "xxxxxxx"
     if known_types.include? field_type
+      # we are at a leaf. We should see if we have any fields missing
       full_field_name = make_on_page_field_name(t)+ "." + field_name
       if ! page_content.include? full_field_name 
         ignore = false
@@ -209,7 +210,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         end
       end
       if file
-        process_file(file, missing_fields, options, t, field_name, page_content)
+        process_file(file, missing_fields, options, make_on_page_field_name(t), field_name, page_content)
       else
         puts "couldn't find file for "+field_type
       end
