@@ -5,6 +5,7 @@ description: We'll build a web application using ASP.NET Core and control page a
 author: Dan Moore
 image: blogs/authorization-code-grant-asp-net/securing-asp-net-app-oauth.png
 category: blog
+tags: client-netcore tutorial tutorial-netcore
 updated_date: 2021-10-14
 excerpt_separator: "<!--more-->"
 ---
@@ -40,6 +41,12 @@ Next, go to the JWT tab. We need to enable JSON Web Token signing and tell Fusio
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-jwt-screen.png" alt="The JWT settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
 Click the blue "Save" icon to save all the settings you just configured. We're done with FusionAuth. (Unless you need to add a user, in which case, go to the "Users" section and add one. Make sure to add them to the "dotnetcore" application by creating the appropriate user registration.)
+
+### Configuring FusionAuth with Kickstart
+
+Instead of manually configuring up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth.
+
+You can learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). If you want to give it a try, here's an [example Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/asp-net-razor-pages.json) which sets up FusionAuth for this tutorial.
 
 ## Set up a basic ASP.NET Razor Pages application
 
