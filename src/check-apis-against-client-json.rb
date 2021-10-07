@@ -53,6 +53,11 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+def make_api_path(type)
+  # planning for families or other non normal pluralizations.
+  return type + "s"
+end
+
 def todash(camel_cased_word)
   camel_cased_word.to_s.gsub(/::/, '/').
   gsub(/([A-Z]+)([A-Z][a-z])/,'\1-\2').
@@ -84,7 +89,9 @@ end
 
 
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
-  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set" ]
+
+  # these are leafs of the tree and aren't fields with possible subfields.
+  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers" ]
 
   if options[:verbose]
     puts "opening: "+fn
@@ -115,7 +122,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   end
   unless page_content
     # we are in leaf object, we don't need to pull the page content
-
+    special_api_path = make_api_path(todash(t))
     api_url = options[:siteurl] + "/docs/v1/tech/apis/"+todash(t)+"s/"
     if options[:verbose]
       puts "retrieving " + api_url
