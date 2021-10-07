@@ -27,16 +27,16 @@ First, we're going to create a new signing key. There's a list of [supported alg
 To generate the key, go to "Settings" then to "Key Master". In the upper right hand corner, click on the dropdown next to "Import Public Key" and choose "Generate RSA". Use a descriptive name like "For dotnetcore" and leave the rest of defaults and click "Submit". 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-keypair.png" alt="A new RSA keypair in FusionAuth." class="img-fluid" figure=false %}
 
-Next, we'll be modifying the previously created "dotnetcore"' application settings. Edit that application, then go to the OAuth tab. Make the following changes:
+Next, we'll be modifying the previously created "dotnetcore"' application settings. Edit that application, then go to the "OAuth" tab. Make the following changes:
 
-* Add an Authorized Redirect URL of `http://localhost:5000/signin-oidc`. 
-* Add a Logout URL of `http://localhost:5000`. 
+* Add an "Authorized Redirect URL" of `http://localhost:5000/signin-oidc`. 
+* Add a "Logout URL" of `http://localhost:5000`. 
 
-The web application we are going to build is going to be on port 5000, and `signin-oidc` is an endpoint provided by the authentication library. We're setting things up so that the Authorization Code grant will work. Write down the `Client ID` and `Client Secret`, as we'll need that information later. When you are done configuring this section, the OAuth tab of your application should look like this:
+The web application we are going to build is going to be on port 5000, and `signin-oidc` is an endpoint provided by the authentication library. We're setting things up so that the Authorization Code grant will work. Write down the `Client Id` and `Client Secret`, as we'll need that information later. When you are done configuring this section, the OAuth tab of your application should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-oauth-setup-screen.png" alt="The OAuth settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
-Next, go to the JWT tab. We need to enable JSON Web Token signing and tell FusionAuth to use the previously generated RSA keypair. Update the "Access token signing key" and "Id token signing key" to point to that keypair. When you are done, the JWT tab should look like this:
+Next, go to the "JWT" tab. We need to enable JSON Web Token signing and tell FusionAuth to use the previously generated RSA keypair. Update the "Access token signing key" and "Id token signing key" to point to that keypair. When you are done, the JWT tab should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-jwt-screen.png" alt="The JWT settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
@@ -44,7 +44,7 @@ Click the blue "Save" icon to save all the settings you just configured. We're d
 
 ### Configuring FusionAuth with Kickstart
 
-Instead of manually configuring up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth.
+Instead of manually configuring FusionAuth as above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth.
 
 You can learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). If you want to give it a try, here's an [example Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/asp-net-razor-pages.json) which sets up FusionAuth for this tutorial.
 
@@ -505,6 +505,11 @@ options.TokenValidationParameters = new TokenValidationParameters
   ValidAudience = Configuration["SampleApp:ClientId"]
 };
 ```
+## Troubleshooting
+
+If you run into an issue with cookies on Chrome or other browsers, you might need to run the ASP.NET application under SSL.
+
+Luckily, ASP.NET ships with certificates and you can access this application at `https://localhost:5001`. If you do this, make sure to add an "Authorized Redirect URL" of `https://localhost:5001/signin-oidc`. To do so, log into the administrative user interface, navigate to "Applications", then edit "dotnetcore", then to the "OAuth" tab. You can have more than one URL, so feel free to add it.
 
 ## Next steps
 
