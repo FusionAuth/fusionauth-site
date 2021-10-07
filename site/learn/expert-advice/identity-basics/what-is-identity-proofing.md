@@ -19,7 +19,7 @@ In this article, we’ll explain why identity proofing is important and look at 
 
 ## The Importance of Identity Proofing 
 
-Identity proofing is crucial for organizations that want to protect themselves and their users from security threats. According to [Javelin Strategy & Research’s 2020 Identity Fraud Study](https://www.javelinstrategy.com/coverage-area/2020-identity-fraud-study-genesis-identity-fraud-crisis), the total cost of identity fraud reached almost $17 billion USD in 2019. This is the combined cost of compromised data, lost resources, and fines for privacy regulation breaches per the General Data Protection Regulation (GDPR) in the EU and the California Consumer Privacy Act (CCPA) in the US. 
+Identity proofing is crucial for organizations that want to protect themselves and their users from security threats. According to [Javelin Strategy & Research’s 2020 Identity Fraud Study](https://www.javelinstrategy.com/coverage-area/2020-identity-fraud-study-genesis-identity-fraud-crisis), the total cost of identity fraud reached almost $17 billion (US)in 2019. This is the combined cost of compromised data, lost resources, and fines for privacy regulation breaches per the General Data Protection Regulation (GDPR) in the EU and the California Consumer Privacy Act (CCPA) in the US. 
 
 Even large organizations like Facebook and Marriott aren’t immune. Both organizations suffered [recent data breaches](https://edition.cnn.com/2019/07/30/tech/biggest-hacks-in-history/index.html) that compromised hundreds of millions of accounts. 
 
@@ -65,7 +65,7 @@ Businesses needing to establish real-world identity with online users can verify
 
 Knowledge-based authentication (KBA) verifies identity by asking a person a set of security questions with answers only that person should know, e.g., “What is the middle name of your oldest sibling?” or “What is your father’s middle name?” Questions cannot be answered with a yes or no, and sometimes there is a time limit on answering the question.
 
-There are two types of KBA: static and dynamic. Static KBA asks the user questions from a set repository of questions in a company’s database. Both questions and answers are stored in the database and presented to the user when identity needs to be confirmed, such as for a  password reset. Static KBA is part of [multifactor authentication or MFA](https://searchsecurity.techtarget.com/definition/multifactor-authentication-MFA) and satisfies the “something you know” factor, but the answers to these questions can be easily discovered through social engineering. 
+There are two types of KBA: static and dynamic. Static KBA asks the user questions from a set repository of questions in a company’s database. Both questions and answers are stored in the database and presented to the user when identity needs to be confirmed, such as for a  password reset. Static KBA is part of [multi-factor authentication or MFA](https://searchsecurity.techtarget.com/definition/multifactor-authentication-MFA) and satisfies the “something you know” factor, but the answers to these questions can be easily discovered through social engineering. 
 
 Dynamic KBA uses security questions automatically generated from a variety of different data sources, including the user’s credit history and public records. This is information only a legitimate user could give but is more difficult for a hacker to find out. 
 
