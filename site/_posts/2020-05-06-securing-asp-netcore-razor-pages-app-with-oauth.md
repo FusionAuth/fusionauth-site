@@ -5,6 +5,7 @@ description: We'll build a web application using ASP.NET Core and control page a
 author: Dan Moore
 image: blogs/authorization-code-grant-asp-net/securing-asp-net-app-oauth.png
 category: blog
+updated_date: 2021-10-14
 excerpt_separator: "<!--more-->"
 ---
 
@@ -12,7 +13,7 @@ Previously, we used .NET Core to [build a command line tool](https://fusionauth.
 
 <!--more-->
 
-{% include _callout-important.liquid content="This code and tutorial will not work with FusionAuth version greater than 1.23, due to changes in the contents of the access token. The [tutorial has been updated](/blog/2021/10/14/securing-asp-netcore-razor-pages-app-with-oauth-update/) to work with more recent versions of FusionAuth. "%}
+{% include _callout-important.liquid content="This code and tutorial has been updated in October 2021. There is also a [new tutorial](/blog/2021/10/14/securing-asp-netcore-razor-pages-app-with-oauth-update/). "%}
 
 ## Configuring FusionAuth
 
@@ -42,7 +43,7 @@ Click the blue "Save" icon to save all the settings you just configured. We're d
 
 ## Set up a basic ASP.NET Razor Pages application
 
-Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/pre-1-24-code) available if you want to download it and take a look.
+Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore/) available if you want to download it and take a look.
 
 First, let's create a new web application using the `dotnet` CLI and go to that directory:
 
@@ -309,6 +310,8 @@ Finally, we set up our previously referenced authentication provider, `"oidc"`. 
 
     options.ClientId = Configuration["SampleApp:ClientId"];
     options.ClientSecret = Configuration["SampleApp:ClientSecret"];
+    options.Scope.Add("openid");
+    options.ClaimActions.Remove("aud");
 
     options.ResponseType = "code";
     options.RequireHttpsMetadata = false;
@@ -445,6 +448,56 @@ Finally, we need to change the `Startup.cs` file to use the new cookie name.
 Great! Now you can both sign in and sign out of your application.
 
 (If you are interested, you can see the application's current code by looking at the [`add-logout` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-logout).
+
+## Checking claims
+
+You should check the claims of the token to be sure that you know that you should be consuming the token. If the token was intended for another audience, say a different application with different roles, you don't want to inadvertantly provide escalated or incorrect access.
+
+First, add a `services.AddAuthorization` clause, which will check the claims of the provided token. Add it after the `JwtSecurityTokenHandler.DefaultMapInboundClaims` line. 
+
+In FusionAuth, the `aud` claim is the same as the `ClientId` or application Id. We'll check that these are the same.
+
+```csharp
+//...
+JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+
+// Configure your policies
+services.AddAuthorization(options =>
+  options.AddPolicy("Registered", policy => policy.RequireClaim("aud", Configuration["SampleApp:ClientId"])));
+
+services.AddRazorPages();
+
+//...
+```
+
+Then, because the `aud` claim is by default not available, you need to add `options.ClaimActions.Remove("aud");` to the `AddOpenIdConnect` options section.
+
+```csharp
+.AddOpenIdConnect("oidc", options =>
+{
+  options.Authority = Configuration["SampleApp:Authority"];
+  options.ClientId = Configuration["SampleApp:ClientId"];
+  options.ClientSecret = Configuration["SampleApp:ClientSecret"];
+  options.Scope.Add("openid");
+
+  options.ClaimActions.Remove("aud");
+
+  options.ResponseType = "code";
+  options.RequireHttpsMetadata = false;
+//...
+```
+
+Finally, you can add one or more token validation parameters. These will let the framework automatically verify the audience. This is slightly duplicative of the `AddAuthorization` clause above, but this check applies everywhere, whereas the `AddAuthorization` clause can be more flexible. For instance, you could examine claims other than `aud`, such as roles, when protecting a page.
+
+```csharp
+//...
+options.RequireHttpsMetadata = false;
+options.TokenValidationParameters = new TokenValidationParameters
+{
+  ValidateAudience = true,
+  ValidAudience = Configuration["SampleApp:ClientId"]
+};
+```
 
 ## Next steps
 
