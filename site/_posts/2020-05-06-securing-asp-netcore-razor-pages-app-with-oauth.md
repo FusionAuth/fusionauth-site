@@ -511,6 +511,11 @@ If you run into an issue with cookies on Chrome or other browsers, you might nee
 
 Luckily, ASP.NET ships with certificates and you can access this application at `https://localhost:5001`. If you do this, make sure to add an "Authorized Redirect URL" of `https://localhost:5001/signin-oidc`. To do so, log into the administrative user interface, navigate to "Applications", then edit "dotnetcore", then to the "OAuth" tab. You can have more than one URL, so feel free to add it.
 
+This tutorial doesn't use any new .NET functionality, so should work on any version of ASP.NET. The code has been tested with 3.1 and 5.0:
+
+* https://github.com/FusionAuth/fusionauth-example-asp-netcore 
+* https://github.com/FusionAuth/fusionauth-example-asp-netcore5
+
 ## Next steps
 
 If you want to explore more, you can add more pages to the application, limit a page to a certain user, or customize the FusionAuth login page theme.
