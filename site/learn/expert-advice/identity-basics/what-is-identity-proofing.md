@@ -73,7 +73,7 @@ Dynamic KBA uses security questions automatically generated from a variety of di
 
 Out-of-band (OOB) authentication uses another channel besides an online process to authenticate an individual. OOB is commonly used for online banking to perform certain processes, such as logging in or changing the account to add a payee or change a password. When performing these types of actions, an authentication code is sent via SMS to the mobile device of the account holder.
 
-OOB, also a form of MFA, increases security by requiring the person to have acces to an external account or  another device in their possession. Using a separate channel makes it more difficult for an attacker to circumvent or intercept the proofing process  because the attacker would have to access and compromise two separate communication mechanisms.
+OOB, also a form of MFA, increases security by requiring the person to have access to an external account or  another device in their possession. Using a separate channel makes it more difficult for an attacker to circumvent or intercept the proofing process  because the attacker would have to access and compromise two separate communication mechanisms.
 
 ### Biometric Verification
 
