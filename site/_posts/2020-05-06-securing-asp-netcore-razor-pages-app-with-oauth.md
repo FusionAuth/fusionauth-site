@@ -77,7 +77,7 @@ I can hit `control-C` to exit out of this application. I also like to open up a 
 dotnet publish -r win-x64 && bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
 ```
 
-If I visit `http://localhost:5000` I'm redirected to an https address and get a warning from my browser. While that might make sense in production, unless we terminated TLS before traffic gets to this application, we don't need this behavior in development. To avoid this, simply remove `app.UseHttpsRedirection();` from `Startup.cs`, which is the main configuration file for our web application. 
+If I visit `http://localhost:5000` I'm redirected to an https address and get a warning from my browser. While that might make sense in production, unless we terminate TLS before traffic gets to this application, we don't need this behavior in development. To avoid this, simply remove `app.UseHttpsRedirection();` from `Startup.cs`, which is the main configuration file for our web application. 
 
 We'll also want to add a page to be secured, which we'll aptly call "Secure". Add `Secure.cshtml` and `Secure.cshtml.cs` to the `SampleApp/Pages` directory. Give them the following content:
 
@@ -336,7 +336,7 @@ app.UseAuthentication();
 
 Wait, I thought we were preventing users from accessing certain pages? Isn't that authorization, not authentication? When we first set up the application, we didn't have any authentication scheme configured. And, in this case, we're actually prohibiting access to any anonymous user, so any authenticated user is authorized.
 
-For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of `Configure` method. This makes it easier to see [errors in the OAuth flow](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII). But for production code, please remove it.
+For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of the `Configure` method. This makes it easier to see [errors in the OAuth flow](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII). But for production code, please remove it.
 
 ```csharp
 // ...
@@ -458,7 +458,7 @@ Great! Now you can both sign in and sign out of your application.
 
 ## Checking claims
 
-You should check the claims of the token to be sure that you know that you should be consuming the token. If the token was intended for another audience, say a different application with different roles, you don't want to inadvertantly provide escalated or incorrect access.
+You should check the claims of the token to be sure that you know that you should be consuming the token. If the token was intended for another audience, say a different application with different roles, you don't want to inadvertently provide escalated or incorrect access.
 
 First, add a `services.AddAuthorization` clause, which will check the claims of the provided token. Add it after the `JwtSecurityTokenHandler.DefaultMapInboundClaims` line. 
 
