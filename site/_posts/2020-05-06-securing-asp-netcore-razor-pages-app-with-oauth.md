@@ -513,8 +513,8 @@ Luckily, ASP.NET ships with certificates and you can access this application at 
 
 This tutorial doesn't use any new .NET functionality, so should work on any version of ASP.NET. The code has been tested with 3.1 and 5.0:
 
-* https://github.com/FusionAuth/fusionauth-example-asp-netcore 
-* https://github.com/FusionAuth/fusionauth-example-asp-netcore5
+* [3.1 repo](https://github.com/FusionAuth/fusionauth-example-asp-netcore)
+* [5.0 repo](https://github.com/FusionAuth/fusionauth-example-asp-netcore5)
 
 ## Next steps
 
