@@ -15,33 +15,45 @@ Previously, we used .NET Core to [build a command line tool](https://fusionauth.
 
 {% include _callout-tip.liquid content="This code and tutorial is an updated version of this [tutorial](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth/) and works with more recent versions of FusionAuth. "%}
 
-## Configuring FusionAuth
+## Configuring FusionAuth by hand
 
 You should already have FusionAuth up and running. If you don't, head over to the previous post "[Creating a user in FusionAuth with a .NET Core CLI Client](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client)" for instructions on downloading and installing FusionAuth. You'll also need to create the application. After that, if you want to skip building the CLI client, you can just create a user in the admin user interface.
 
 We are going to make a few changes to the FusionAuth configuration to allow integration with the ASP.Net Core web application.
 
-First, we're going to create a new signing key. There's a list of [supported algorithms](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/Supported-Algorithms) that work with the open source identity project we're using, but currently [symmetric algorithms are not supported](https://github.com/IdentityModel/IdentityModel.AspNetCore/issues/102)--I love the honesty of the library maintainer: "Don't use symmetric keys is the easy answer." Using the default HMAC key resulted in a `SecurityTokenSignatureKeyNotFoundException` and there was no easy way to change the `SignatureProvider`. Luckily, FusionAuth supports [different key types](https://fusionauth.io/docs/v1/tech/apis/keys#generate-a-key), so let's generate an asymmetric key to use to sign our JSON Web Tokens (JWTs). 
+First, we're going to create a new signing key. There's a list of [supported algorithms](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/Supported-Algorithms) that work with the open source identity project we're using, but currently [symmetric algorithms are not supported](https://github.com/IdentityModel/IdentityModel.AspNetCore/issues/102)--I love the honesty of the library maintainer: "Don't use symmetric keys is the easy answer." 
+
+Using the default HMAC key resulted in a `SecurityTokenSignatureKeyNotFoundException` and there was no easy way to change the `SignatureProvider`. Luckily, FusionAuth supports [different key types](/docs/v1/tech/apis/keys#generate-a-key), so let's generate an asymmetric key to use to sign our JSON Web Tokens (JWTs). 
 
 To generate the key, go to "Settings" then to "Key Master". In the upper right hand corner, click on the dropdown next to "Import Public Key" and choose "Generate RSA". Use a descriptive name like "For dotnetcore" and leave the rest of defaults and click "Submit". 
-{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-keypair.png" alt="A new RSA keypair in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net-update/aspnet-keypair.png" alt="A new RSA keypair in FusionAuth." class="img-fluid" figure=false %}
 
-Next, we'll be modifying the previously created "dotnetcore"' application settings. Edit that application, then go to the OAuth tab. Make the following changes:
+Next, we'll be modifying the previously created application settings. Edit that application, then go to the OAuth tab. Make the following changes:
 
 * Add an Authorized Redirect URL of `http://localhost:5000/signin-oidc`. 
 * Add a Logout URL of `http://localhost:5000`. 
 
 The web application we are going to build is going to be on port 5000, and `signin-oidc` is an endpoint provided by the authentication library. We're setting things up so that the Authorization Code grant will work. Write down the `Client ID` and `Client Secret`, as we'll need that information later. When you are done configuring this section, the OAuth tab of your application should look like this:
 
-{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-oauth-setup-screen.png" alt="The OAuth settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net-update/aspnet-application-oauth-setup-screen.png" alt="The OAuth settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
-Next, go to the JWT tab. We need to enable JSON Web Token signing and tell FusionAuth to use the previously generated RSA keypair. Update the "Access token signing key" and "Id token signing key" to point to that keypair. When you are done, the JWT tab should look like this:
+Next, go to the JWT tab. We need to enable JSON Web Token signing and tell FusionAuth to use the previously generated RSA keypair. Update the "Access token signing key" field to point to that keypair. 
 
-{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-jwt-screen.png" alt="The JWT settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
+When you are done, the JWT tab should look like this:
+
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net-update/aspnet-application-jwt-screen.png" alt="The JWT settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
 Click the blue "Save" icon to save all the settings you just configured. We're done with FusionAuth. (Unless you need to add a user, in which case, go to the "Users" section and add one. Make sure to add them to the "dotnetcore" application by creating the appropriate user registration.)
 
+## Configuring FusionAuth with Kickstart
+
+Instead of manually configuring up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth.
+
+You can learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). If you want to give it a try, here's an [example Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/asp-net-razor-pages.json) which sets up FusionAuth for this tutorial.
+
 ## Set up a basic ASP.NET Razor Pages application
+
+TODO stopped here. Let's update the app to use netcore 5?
 
 Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore) available if you want to download it and take a look.
 
