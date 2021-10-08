@@ -61,11 +61,14 @@ def make_api_path(type)
   if type == "ldap-connector-configuration"
     return "connectors/ldap/"
   end
+  if type == "email-template"
+    return "emails/"
+  end
   # planning for families or other non normal pluralizations.
   return type + "s/"
 end
 
-# what our type is -> what the variable is on the page
+# what our type is -> what the variable is on the doc page
 def make_on_page_field_name(type)
   if type == "formField"
     return "field"
