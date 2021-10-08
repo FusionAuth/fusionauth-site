@@ -58,6 +58,9 @@ def make_api_path(type)
   if type == "generic-connector-configuration"
     return "connectors/generic/"
   end
+  if type == "ldap-connector-configuration"
+    return "connectors/ldap/"
+  end
   # planning for families or other non normal pluralizations.
   return type + "s/"
 end
@@ -68,6 +71,9 @@ def make_on_page_field_name(type)
     return "field"
   end
   if type == "genericConnectorConfiguration"
+    return "connector"
+  end
+  if type == "ldapConnectorConfiguration"
     return "connector"
   end
   return type
@@ -91,6 +97,8 @@ def downcase(string)
     dcs = "jwt"+string[3..-1]
   elsif string[0..3] == "APIK"
     dcs = "apiK"+string[4..-1]
+  elsif string[0..4] == "LDAPC"
+    dcs = "ldapC"+string[5..-1]
   else 
     first_lc = string.index(/[a-z]/)
     if first_lc
