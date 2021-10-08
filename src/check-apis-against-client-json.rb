@@ -117,7 +117,7 @@ end
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
   # these are leafs of the tree and aren't fields with possible subfields.
-  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers" ]
+  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double" ]
 
   if options[:verbose]
     puts "opening: "+fn
