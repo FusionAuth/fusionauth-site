@@ -53,14 +53,22 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+# what our dashed type is -> what the path is in the url
 def make_api_path(type)
+  if type == "generic-connector-configuration"
+    return "connectors/generic/"
+  end
   # planning for families or other non normal pluralizations.
-  return type + "s"
+  return type + "s/"
 end
 
+# what our type is -> what the variable is on the page
 def make_on_page_field_name(type)
   if type == "formField"
     return "field"
+  end
+  if type == "genericConnectorConfiguration"
+    return "connector"
   end
   return type
 end
@@ -127,8 +135,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   end
   unless page_content
     # we are in leaf object, we don't need to pull the page content
-    special_api_path = make_api_path(todash(t))
-    api_url = options[:siteurl] + "/docs/v1/tech/apis/"+todash(t)+"s/"
+    api_url = options[:siteurl] + "/docs/v1/tech/apis/"+make_api_path(todash(t))
     if options[:verbose]
       puts "retrieving " + api_url
     end
