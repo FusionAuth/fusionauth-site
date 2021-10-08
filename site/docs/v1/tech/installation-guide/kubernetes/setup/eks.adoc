@@ -1,0 +1,192 @@
+---
+layout: doc
+title: Provision Amazon Elastic Kubernetes Service (EKS)
+description: Provision an EKS cluster in AWS
+keywords: docker kubernetes k8s container aws
+---
+
+== Overview
+
+This guide will show you how to quickly setup an EKS cluster in AWS. When completed, you will have a fully functional Kubernetes cluster ready to deploy FusionAuth to. The following method uses the default settings when provisioning the EKS cluster with the required resources and services. It is recommended that you consult link:https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html[Getting started with Amazon EKS] for full EKS documentation.
+
+== Required tools
+
+* `AWS CLI` - Amazon Command Line Interface. This allows users to interact with AWS resources and services from the command-line. For more information, see link:https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html[Installing, updating, and uninstalling the AWS CLI]. This will need to be installed and configured with link:https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.htmlrequired IAM permissions].
+* `eksctl` - For this guide, we will use `eksctl`, a command line tool for managing EKS clusters. For installation information, see link:https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html[The eksctl command line utility].
+* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
+We will be using version `1.22` for this guide.
+
+== Architecture
+
+The resulting EKS cluster will use a dedicated VPC with two availability zones, each consisting of a public and private subnet. It will use an autoscaling node group with a node (Linux EC2 instance) in each private subnet. Additionally, we will provision a Postgres RDS instance to satisfy installation requirements of FusionAuth.
+
+**Note**: For the remainder of this guide, the value used for region will be `us-west-2`.
+
+image::installation-guides/kubernetes/eksctl-architecture.png[EKS Architecture,width=1200,role=shadowed]
+
+== Create an EKS cluster
+
+Prior to creating the cluster, its a good idea to either create a new key pair or have an existing pair on hand. This is because its necessary to provide a key along with the create command such that SSH is allowed on the nodes once they are created. If a key is not provided, this can not be changed later.
+
+```bash
+aws ec2 create-key-pair --region us-west-1 --key-name eksExampleKeyPair
+```
+
+If executed successfully, your new key credentials will be printed to standard out.
+
+Now create a new EKS cluster.
+
+```
+eksctl create cluster \
+--name fusionauth-example \
+--region us-west-1 \
+--with-oidc \
+--ssh-access \
+--ssh-public-key eksExampleKeyPair
+```
+
+This command uses CloudFormation to provision all of the necessary resources that your EKS cluster needs. You should see output that looks something like this.
+
+```
+2021-10-05 14:18:03 [ℹ]  eksctl version 0.66.0
+2021-10-05 14:18:03 [ℹ]  using region us-west-1
+2021-10-05 14:18:03 [ℹ]  setting availability zones to [us-west-1a us-west-1c us-west-1a]
+2021-10-05 14:18:03 [ℹ]  subnets for us-west-1a - public:192.168.0.0/19 private:192.168.96.0/19
+2021-10-05 14:18:03 [ℹ]  subnets for us-west-1c - public:192.168.32.0/19 private:192.168.128.0/19
+2021-10-05 14:18:03 [ℹ]  subnets for us-west-1a - public:192.168.64.0/19 private:192.168.160.0/19
+2021-10-05 14:18:03 [ℹ]  nodegroup "ng-3fa00736" will use "" [AmazonLinux2/1.20]
+2021-10-05 14:18:03 [ℹ]  using EC2 key pair %!q(*string=<nil>)
+2021-10-05 14:18:03 [ℹ]  using Kubernetes version 1.20
+2021-10-05 14:18:03 [ℹ]  creating EKS cluster "fusionauth-example" in "us-west-1" region with managed nodes
+2021-10-05 14:18:03 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2021-10-05 14:18:03 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-west-1 --cluster=fusionauth-example'
+2021-10-05 14:18:03 [ℹ]  CloudWatch logging will not be enabled for cluster "fusionauth-example" in "us-west-1"
+2021-10-05 14:18:03 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-west-1 --cluster=fusionauth-example'
+2021-10-05 14:18:03 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "fusionauth-example" in "us-west-1"
+2021-10-05 14:18:03 [ℹ]  2 sequential tasks: { create cluster control plane "fusionauth-example", 3 sequential sub-tasks: { 4 sequential sub-tasks: { wait for control plane to become ready, associate IAM OIDC provider, 2 sequential sub-tasks: { create IAM role for serviceaccount "kube-system/aws-node", create serviceaccount "kube-system/aws-node" }, restart daemonset "kube-system/aws-node" }, 1 task: { create addons }, create managed nodegroup "ng-3fa00736" } }
+2021-10-05 14:18:03 [ℹ]  building cluster stack "eksctl-fusionauth-example-cluster"
+2021-10-05 14:18:04 [ℹ]  deploying stack "eksctl-fusionauth-example-cluster"
+2021-10-05 14:31:07 [ℹ]  waiting for CloudFormation stack "eksctl-fusionauth-example-cluster"
+2021-10-05 14:35:10 [ℹ]  building iamserviceaccount stack "eksctl-fusionauth-example-addon-iamserviceaccount-kube-system-aws-node"
+2021-10-05 14:35:11 [ℹ]  deploying stack "eksctl-fusionauth-example-addon-iamserviceaccount-kube-system-aws-node"
+2021-10-05 14:35:11 [ℹ]  waiting for CloudFormation stack "eksctl-fusionauth-example-addon-iamserviceaccount-kube-system-aws-node"
+2021-10-05 14:35:27 [ℹ]  waiting for CloudFormation stack "eksctl-fusionauth-example-addon-iamserviceaccount-kube-system-aws-node"
+2021-10-05 14:35:44 [ℹ]  waiting for CloudFormation stack "eksctl-fusionauth-example-addon-iamserviceaccount-kube-system-aws-node"
+2021-10-05 14:35:45 [ℹ]  serviceaccount "kube-system/aws-node" already exists
+2021-10-05 14:35:45 [ℹ]  updated serviceaccount "kube-system/aws-node"
+2021-10-05 14:35:45 [ℹ]  daemonset "kube-system/aws-node" restarted
+2021-10-05 14:37:46 [ℹ]  building managed nodegroup stack "eksctl-fusionauth-example-nodegroup-ng-3fa00736"
+2021-10-05 14:37:46 [ℹ]  deploying stack "eksctl-fusionauth-example-nodegroup-ng-3fa00736"
+2021-10-05 14:37:46 [ℹ]  waiting for CloudFormation stack "eksctl-fusionauth-example-nodegroup-ng-3fa00736"
+2021-10-05 14:41:48 [ℹ]  waiting for the control plane availability...
+2021-10-05 14:41:48 [✔]  saved kubeconfig as "/Users/brettguy/.kube/config"
+2021-10-05 14:41:48 [ℹ]  no tasks
+2021-10-05 14:41:48 [✔]  all EKS cluster resources for "fusionauth-example" have been created
+2021-10-05 14:41:48 [ℹ]  nodegroup "ng-3fa00736" has 2 node(s)
+2021-10-05 14:41:48 [ℹ]  node "ip-192-168-45-153.us-west-1.compute.internal" is ready
+2021-10-05 14:41:48 [ℹ]  node "ip-192-168-91-228.us-west-1.compute.internal" is ready
+2021-10-05 14:41:48 [ℹ]  waiting for at least 2 node(s) to become ready in "ng-3fa00736"
+2021-10-05 14:41:48 [ℹ]  nodegroup "ng-3fa00736" has 2 node(s)
+2021-10-05 14:41:48 [ℹ]  node "ip-192-168-45-153.us-west-1.compute.internal" is ready
+2021-10-05 14:41:48 [ℹ]  node "ip-192-168-91-228.us-west-1.compute.internal" is ready
+2021-10-05 14:43:50 [ℹ]  kubectl command should work with "/Users/brettguy/.kube/config", try 'kubectl get nodes'
+2021-10-05 14:43:50 [✔]  EKS cluster "fusionauth-example" in "us-west-1" region is ready
+```
+
+We now have a fully functional provisioned EKS cluster. For good measure, view the nodes that have been created.
+This is where `kubectl` comes in handy. Looking at the previous log, you will notice that one of the last things `etsctl` did was update our `~/.kube` file with our new cluster configuration. We can now go ahead and use `kubectl` to make requests to the Kubernetes API Server.
+
+```
+kubectl get nodes -o wide
+```
+
+Output
+```
+NAME                                           STATUS   ROLES    AGE     VERSION              INTERNAL-IP      EXTERNAL-IP    OS-IMAGE         KERNEL-VERSION                CONTAINER-RUNTIME
+ip-192-168-45-153.us-west-1.compute.internal   Ready    <none>   4m57s   v1.20.7-eks-135321   192.168.45.153   50.18.29.248   Amazon Linux 2   5.4.149-73.259.amzn2.x86_64   docker://20.10.7
+ip-192-168-91-228.us-west-1.compute.internal   Ready    <none>   4m54s   v1.20.7-eks-135321   192.168.91.228   3.101.73.65    Amazon Linux 2   5.4.149-73.259.amzn2.x86_64   docker://20.10.7
+```
+
+Great! We have two instances in a `READY` status.
+
+=== Create a Database
+
+For this setup, we will create a Postgres RDS instance required for FusionAuth installation. For simplicity, this database will be created in the same VPC and configured with the same security groups applied to our private subnets. Finally, we will modify the inbound rules to the security group to allow traffic on Postgres port 5432. This will enable our worker nodes to communicate with the database successfully!
+
+TODO - Might need to create a DB subgroup
+```
+create database subnet group
+```
+
+We will want to find the security group Id before prior to moving forward. This can be found via the AWS console, CloudFormation, or by the following AWS CLI command.
+
+```
+aws ec2 describe-security-groups
+```
+
+Look through the response for the security group with the description as seen in the output below. Once we have found the security group, find the "GroupId" value.
+```
+            "Description": "Communication between all nodes in the cluster",
+            "GroupName": "eksctl-fusionauth-example-cluster-ClusterSharedNodeSecurityGroup-HUG7Y357BA9C",
+            "OwnerId": "172023253951",
+            "GroupId": "sg-08b95dbacc02ba628",
+                ...
+```
+
+Now create the database.
+
+```
+aws rds create-db-instance \
+    --db-instance-identifier fusionauth-eks-example \
+    --allocated-storage 20 \
+    --db-instance-class db.m6g.large \
+    --engine postgres \
+    --master-username postgres \
+    --master-user-password foobarbaz \
+    --no-publicly-accessible \
+    --vpc-security-group-ids sg-08b95dbacc02ba628 \
+    --db-subnet-group default-vpc-08da2a4800ea6e0e2 \
+    --availability-zone us-west-1c \
+    --port 5432
+```
+
+Add an inbound rule to the security group to allow nodes to access our database.
+
+```
+aws ec2 authorize-security-group-ingress \
+    --group-id sg-08b95dbacc02ba628 \
+    --protocol tcp \
+    --port 5432 \
+    --source-group sg-08b95dbacc02ba628
+```
+
+We are done! To confirm the database has been created, we can simply ask AWS using the `db-instance-identifier` we used on the creation step.
+
+**NOTE**: It may take a few minutes for the provisioning process to complete.
+
+```
+aws rds describe-db-instances --db-instance-identifier fusionauth-eks-example
+```
+
+The resulting output should contain an `Endpoint` attribute. This value will be necessary when configuring your FusionAuth deployment.
+```
+{
+    "DBInstances": [
+        {
+            "DBInstanceIdentifier": "fusionauth-eks-example",
+            "DBInstanceClass": "db.m6g.large",
+            "Engine": "postgres",
+            "DBInstanceStatus": "available",
+            "MasterUsername": "postgres",
+            "Endpoint": {
+                "Address": "fusionauth-eks-example.sadkjl222.us-west-1.rds.amazonaws.com",
+                "Port": 5432
+            },
+```
+
+== Next Steps
+
+We now have all the necessary infrastructure to deploy containerized applications to EKS.
+
+Next up, link:../deploy[Deploy FusionAuth in Kubernetes].
+

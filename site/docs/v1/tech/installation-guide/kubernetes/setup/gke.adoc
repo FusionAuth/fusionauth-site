@@ -1,0 +1,145 @@
+---
+layout: doc
+title: Provision Google Kubernetes Engine (GKE)
+description: Provision a GKE cluster in Google Cloud (GCP)
+keywords: docker kubernetes k8s container aws
+---
+
+== Overview
+
+This guide will show you how to quickly setup a GKE cluster on Google Cloud Platform, commonly referred to as GCP. When completed, you will have a fully functional Kubernetes cluster ready to deploy FusionAuth as well as a supporting Postgres database using GCP's Cloud SQL.
+The following method uses the default settings when provisioning the GKE cluster with the required resources and services. It is recommended that you consult link:https://cloud.google.com/kubernetes-engine/docs[Google Kubernetes Engine] for full GKE documentation.
+
+== Requirements
+
+* A Google Cloud Platform account with sufficient IAM permissions to create resources and enable the following APIs:
+** link:https://console.cloud.google.com/apis/library/container.googleapis.com?q=kubernetes%20engine[Kubernetes Engine API]
+** link:https://console.cloud.google.com/apis/library/sqladmin.googleapis.com[Cloud SQL Admin API]
+* `gcloud` - Command Line tool used to manage resources in Google Cloud. For installation instructions, see link:https://cloud.google.com/sdk/docs/install[Installing Cloud SDK].
+* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
+We will be using version `1.22` for this guide.
+
+== Architecture
+
+The resulting GKE cluster will use a VPC-native cluster in the `us-west1` region of which is comprised of three availability zones (`us-west1-a`, `us-west1-b`, and `us-west1-c`). We will provision a Cloud SQL Postgres instance to satisfy installation requirements of FusionAuth.
+
+GCP provides a number of configuration options designed to meet specific needs based on cluster availability and workload types. For this example, we will use the link:https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture[Standard mode of operation].
+
+image::https://cloud.google.com/kubernetes-engine/images/cluster-architecture.svg[GKE Architecture,width=1200,role=shadowed]
+
+== Create a GKE cluster
+
+To create a new cluster, execute the following.
+
+```
+$ gcloud container clusters create fusionauth-cluster \
+--num-nodes=1 \
+--region=us-west1 \
+--enable-ip-alias \
+--cluster-version=1.21.4-gke.2300 \
+--cluster-ipv4-cidr=10.44.0.0/14 \
+--services-ipv4-cidr=10.48.0.0/20
+```
+
+* `num-nodes` - The number of nodes to be created in each zone. In this example, we specify the region of which consists of three zones. Therefore we will have a total of `3` nodes.
+* `region` - The region to create the cluster.
+* `enable-ip-alias` - Indicates to create a link:https://cloud.google.com/kubernetes-engine/docs/concepts/alias-ips[VPC-native cluster]. This greatly simplifies network connectivity when communicating with the database by making pod IP addresses natively routable within the cluster's VPC network.
+* `cluster-version` - The Kubernetes version to use. [optional]
+* `cluster-ipv4-cidr` - Used to create the subnet's secondary IP address range for Pods. [optional]
+* `service-ip-range` - Used to create the subnet's secondary IP address range for Services. [optional]
++
+For more information on the link:https://cloud.google.com/sdk/gcloud/reference/container/clusters/create[create] command, see link:https://cloud.google.com/sdk/gcloud/reference/container/clusters/create[gcloud container clusters create] documentation.
+
+=== Update Kubernetes Configuration
+
+If link:https://cloud.google.com/sdk/gcloud/reference/container/clusters/create[create] completed successfully, the last thing `create` will do is update your local `~/.kube` file. If necessary, `gcloud` provides the following to update your configuration and set the newly created cluster as the active context.
+
+```
+gcloud container clusters get-credentials fusionauth-cluster
+```
+
+=== Verify Cluster
+
+Execute the link:https://cloud.google.com/sdk/gcloud/reference/container/clusters/list[list] command to see GKE clusters that have been configured.
+
+```
+$ gcloud container clusters list
+```
+
+Output
+```
+NAME                LOCATION  MASTER_VERSION   MASTER_IP     MACHINE_TYPE  NODE_VERSION     NUM_NODES  STATUS
+fusionauth-cluster  us-west1  1.21.4-gke.2300  34.83.218.38  e2-medium     1.21.4-gke.2300  3          RUNNING
+```
+
+We now have a fully functional provisioned EKS cluster. For good measure, view the nodes that have been created.
+Use `kubectl` to make requests to the Kubernetes API Server.
+
+```
+$ kubectl get nodes -o wide
+```
+
+Output
+```
+NAME                                                STATUS   ROLES    AGE   VERSION            INTERNAL-IP   EXTERNAL-IP      OS-IMAGE                             KERNEL-VERSION   CONTAINER-RUNTIME
+gke-fusionauth-cluster-default-pool-2a2e7af5-nrrb   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.23   35.203.183.157   Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
+gke-fusionauth-cluster-default-pool-30c935b6-0mt4   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.24   35.185.202.53    Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
+gke-fusionauth-cluster-default-pool-431a5f55-rf11   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.22   34.145.99.163    Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
+```
+
+Great! We have a three nodes in a `READY` status.
+
+== Create a Database
+
+Create the database.
+
+```
+$ gcloud beta sql instances create fusionauth-test-db \
+--project=fusionauth-gke \
+--database-version=POSTGRES_12 \
+--tier=db-g1-small  \
+--region=us-west1 \
+--network=default \
+--no-assign-ip
+```
+
+* `project` - The Id of the shared VPC service.
+* `database-version` - Database engine type and version.
+* `tier` - Machine type for a shared-core instance.
+* `region` - The region to create the cluster.
+* `network` - Network in the current project that the instance will be part of.
+* `no-assign-ip` -
+
++
+For more information on the link:https://cloud.google.com/sdk/gcloud/reference/beta/sql/instances/create[create] command, see link:https://cloud.google.com/sdk/gcloud/reference/beta/sql/instances/create[gcloud beta sql instances create] documentation.
+
+=== Configure the Default User
+
+Google cloud SQL requires that you execute the following to configure the `postgres` user.
+
+```
+$ gcloud sql users set-password postgres \
+--instance=fusionauth-test-db \
+--password=fooBarBaz2021
+```
+
+=== Verify Database
+
+```
+$ gcloud sql instances list
+```
+
+Output
+
+```
+NAME                 DATABASE_VERSION  LOCATION    TIER               PRIMARY_ADDRESS  PRIVATE_ADDRESS  STATUS
+fusionauth-test-db3  POSTGRES_12       us-west1-a  db-g1-small        -                10.50.144.5      RUNNABLE
+
+```
+
+== Next Steps
+
+We now have all the necessary infrastructure to deploy containerized applications to GKE.
+
+Next up, link:../deploy[Deploy FusionAuth in Kubernetes].
+

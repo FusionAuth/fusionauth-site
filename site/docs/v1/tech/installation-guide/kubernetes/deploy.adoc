@@ -1,0 +1,169 @@
+---
+layout: doc
+title: FusionAuth Deployment
+description: Deploy and test FusionAuth in a Kubernetes cluster
+keywords: docker kubernetes k8s container
+---
+
+== FusionAuth Deployment in a Kubernetes cluster
+
+Kubernetes is an extensible and open-source container-orchestration system used for automating application deployments. Some of the most notable features it provides includes self-healing, auto-scaling, and automated rollouts and rollbacks.
+
+With FusionAuth, we can easily configure and deploy any number of instances that fit your requirements across your Kubernetes cluster. In this guide, we will walk through configuration and deployment of FusionAuth to a Kubernetes cluster.
+
+=== Requirements
+
+* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
+We will be using version `1.22` for this guide.
+* `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, we will be using a Helm chart to install FusionAuth on our Kubernetes cluster. For more information, see link:https://helm.sh/docs/intro/install/[Installing Helm].
+* An available Kubernetes cluster. For our detailed guides, See link:../[Provisioning a Kubernetes cluster].
+
+== Configuration
+
+To get started, the first thing you will want to do is add the FusionAuth helm repository. This can be done with the following.
+
+```
+$ helm repo add fusionauth https://fusionauth.github.io/charts
+```
+
+Before we install, we will want to configure the `values.yaml` that corresponds to the helm chart. The majority of the values for this chart come recommended by FusionAuth but we will want to modify some application specific attributes.
+
+Retrieve a copy of `values.yaml` for the FusionAuth helm chart.
+
+```
+$ curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
+```
+
+=== FusionAuth image and replicas
+
+By default, the "replicas" value is set to `1`. This means that when we deploy our application to the cluster, Kubernetes will monitor the cluster to ensure that at least `1` instance of FusionAuth is running at all times.
+
+```
+# replicaCount -- The number of fusionauth-app instances to run
+replicaCount: 1
+```
+
+The most current helm chart will always point to the latest version of FusionAuth. For this guide, we are on version `1.30.1`.
+
+```
+image:
+  # image.repository -- The name of the docker repository for fusionauth-app
+  repository: fusionauth/fusionauth-app
+  # image.repository -- The docker tag to pull for fusionauth-app
+  tag: 1.30.1
+  # image.pullPolicy -- Kubernetes image pullPolicy to use for fusionauth-app
+  pullPolicy: IfNotPresent
+```
+
+=== Database Configuration
+
+Now that we have our helm `values.yaml`, the first thing you will want to do is configure the database. Each of our FusionAuth pods will use this configuration when communicating with the database.
+
+```
+database:
+  # database.protocol -- Should either be postgresql or mysql. Protocol for jdbc connection to database
+  protocol: postgresql
+  # database.host -- Hostname or ip of the database instance
+  host: ""
+  # database.host -- Port of the database instance
+  port: 5432
+  # database.tls -- Configures whether or not to use tls when connecting to the database
+  tls: false
+  # database.tlsMode -- If tls is enabled, this configures the mode
+  tlsMode: require
+  # database.name -- Name of the fusionauth database
+  name: fusionauth
+
+  # To use an existing secret, set `existingSecret` to the name of the secret. We expect at most two keys: `password` is required. `rootpassword` is only required if `database.root.user` is set.
+  # database.existingSecret -- The name of an existing secret that contains the database passwords
+  existingSecret: ""
+  # database.user -- Database username for fusionauth to use in normal operation
+  user: ""
+  # database.password -- Database password for fusionauth to use in normal operation - not required if database.existingSecret is configured
+  password: ""
+  # These credentials are used for bootstrapping the database
+  root:
+    # database.root.user -- Database username for fusionauth to use during initial bootstrap - not required if you have manually bootstrapped your database
+    user: ""
+    # database.root.password -- Database password for fusionauth to use during initial bootstrap - not required if database.existingSecret is configured
+    password: ""
+```
+
+At this point, the required fields that need to be populated include `host`, `user`, `password`, `root.user`, and `root.password`. It is important to retrieve these attributes when you initially setup your database.
+
+
+
+=== Addons
+
+In order to use the Horizontal Pod Autoscaler, we will need to install `metrics-server`
+
+```
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+
+Check hpa
+```bash
+kubectl get hpa
+```
+
+Output
+```
+NAME         REFERENCE               TARGETS           MINPODS   MAXPODS   REPLICAS   AGE
+fusionauth   Deployment/fusionauth   43%/65%, 2%/65%   1         15        1          9m19s
+```
+
+viola!
+
+And the Dashboard because its totes ballz
+
+```
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml
+```
+
+Create a service account for the dashboard that we can assign permissions to retrieve data from the API Server
+```
+kubectl create serviceaccount dashboard-admin-sa
+```
+
+Assign an admin role to the dashboard service account
+```
+kubectl create clusterrolebinding dashboard-admin-sa --clusterrole=cluster-admin --serviceaccount=default:dashboard-admin-sa
+```
+
+Check the sweet dashboard
+We need to use a proxy as we have not configured the cluster for external inbound traffic
+```bash
+kubectl proxy
+```
+View the dashboard
+```
+http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+```
+
+When we created the service account, a secret was created for it.
+View secrets
+```
+kubectl get secrets
+```
+
+Get the access token for kubernetes-dashboard so we can login
+```
+kubectl describe secret dashboard-admin-sa-token-r867x
+```
+
+
+Edit helm chart database instance
+
+=== Network Load Balancer
+
+So we can access FusionAuth
+
+*Note:* Kubernetes link:https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/[Stateful sets] could be considered as a database deployment option. I prefer a managed service like RDS.
+
+[Step by step]
+1.  Setup roles, policies, and all the worst parts
+https://docs.aws.amazon.com/eks/latest/userguide/getting-started-console.html
+
+
+
+

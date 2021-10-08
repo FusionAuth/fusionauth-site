@@ -1,0 +1,151 @@
+---
+layout: doc
+title: Provision Microsoft AKS (Azure Kubernetes Service)
+description: Provision an AKS cluster in Microsoft Azure
+keywords: docker kubernetes k8s container aws
+---
+
+== Overview
+
+This guide will show you how to quickly setup an AKS cluster on Microsoft Azure. When completed, you will have a fully functional Kubernetes cluster ready to deploy FusionAuth as well as a supporting Azure Database for PostgresSQL.
+The following method uses the default settings when provisioning an AKS cluster with the required resources and services. It is recommended that you consult link:https://docs.microsoft.com/en-us/azure/aks/[Azure Kubernetes Service] for full AKS documentation.
+
+== Requirements
+
+* A link:https://portal.azure.com/[Microsoft Azure account] with sufficient permissions to create resources.
+* `az` - Azure command Line tool used to manage resources on Azure. For installation instructions, see link:https://docs.microsoft.com/en-us/cli/azure/install-azure-cli[How to install the Azure CLI].
+* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
+We will be using version `1.22` for this guide.
+
+== Architecture
+
+TODO
+
+//image::https://cloud.google.com/kubernetes-engine/images/cluster-architecture.svg[GKE Architecture,width=1200,role=shadowed]
+
+== Create an AKS cluster
+
+=== Create a resource group
+
+Before we create the cluster, we need to first create a link:https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/overview[Resource Group], a logical grouping of Azure resources. A resource group location is where resources will run by default when a region is not provided on creation.
+
+Create a resource group.
+
+```bash
+$ az group create --name fusionauthResourceGroup --location eastus
+```
+
+Output
+```
+{
+  "id": "/subscriptions/fa2713cf-00cf-45f1-95a4-f87c48947da1/resourceGroups/fusionauthResourceGroup",
+  "location": "westus",
+  "managedBy": null,
+  "name": "fusionauthResourceGroup",
+  "properties": {
+    "provisioningState": "Succeeded"
+  },
+  "tags": null,
+  "type": "Microsoft.Resources/resourceGroups"
+}
+```
+
+=== Create the cluster
+
+```bash
+$ az aks create \
+  --resource-group fusionauthResourceGroup \
+  --name fusionauthCluster --node-count 3 \
+  --enable-addons monitoring \
+  --generate-ssh-keys
+```
+
+* `resource-group` - The name of the resource group where the cluster will be created.
+* `name` - The name of the cluster.
+* `enable-addons` - The Kubernetes addons to enable.
+* `generate-ssh-keys` - Generates SSH public and private key files in the ~/.ssh directory.
++
+For more information on the link:https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create[create] command, see link:https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create[az aks create] documentation.
+
+Output
+```
+```
+
+=== Update Kubernetes configuration
+
+```bash
+$ az aks get-credentials \
+  --resource-group fusionauthResourceGroup \
+  --name fusionauthCluster
+```
+
+=== Verify Cluster
+
+Execute the link:https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_list[list] command to see AKS clusters that have been configured.
+
+```bash
+$ az aks list
+```
+
+Output
+```
+[]
+```
+
+We now have a fully functional provisioned AKS cluster. For good measure, view the nodes that have been created.
+Use `kubectl` to make requests to the Kubernetes API Server.
+
+```bash
+$ kubectl get nodes -o wide
+```
+
+Output
+```
+```
+
+Great! We have a three nodes in a `READY` status.
+
+== Create a Database
+
+Create the database.
+
+```bash
+$ az postgres flexible-server create \
+  --resource-group fusionauthResourceGroup \
+  --name fusionauth-db \
+  --location westus \
+  --admin-user postgres \
+  --admin-password fooBarBaz2021 \
+  --version 12 \
+  --public-access 0.0.0.0
+```
+
+* `resource-group` - The name of the resource group where the cluster will be created.
+* `name` - The name of the database.
+* `location` - The location.
+* `admin-user` - The database admin user.
+* `admin-password` - The database admin user password.
+* `version` - The version of PostgreSQL to install.
+* `public-access` - Determines public access in firewall rules. `0.0.0.0` allows public access from any resources deployed in Azure.
+
++
+For more information on the link:https://docs.microsoft.com/en-us/cli/azure/postgres/flexible-server?view=azure-cli-latest#az_postgres_flexible_server_create[create] command, see link:https://docs.microsoft.com/en-us/cli/azure/postgres/flexible-server?view=azure-cli-latest#az_postgres_flexible_server_create[az postgres flexible-server create] documentation.
+
+=== Verify Database
+
+```bash
+$ az postgres flexible-server list
+```
+
+Output
+
+```
+[]
+```
+
+== Next Steps
+
+We now have all the necessary infrastructure to deploy containerized applications to AKS.
+
+Next up, link:../deploy[Deploy FusionAuth in Kubernetes].
+
