@@ -29,15 +29,15 @@ image::installation-guides/kubernetes/eksctl-architecture.png[EKS Architecture,w
 Prior to creating the cluster, its a good idea to either create a new key pair or have an existing pair on hand. This is because its necessary to provide a key along with the create command such that SSH is allowed on the nodes once they are created. If a key is not provided, this can not be changed later.
 
 ```bash
-aws ec2 create-key-pair --region us-west-1 --key-name eksExampleKeyPair
+$ aws ec2 create-key-pair --region us-west-1 --key-name eksExampleKeyPair
 ```
 
 If executed successfully, your new key credentials will be printed to standard out.
 
 Now create a new EKS cluster.
 
-```
-eksctl create cluster \
+```bash
+$ eksctl create cluster \
 --name fusionauth-example \
 --region us-west-1 \
 --with-oidc \
@@ -94,10 +94,10 @@ This command uses CloudFormation to provision all of the necessary resources tha
 ```
 
 We now have a fully functional provisioned EKS cluster. For good measure, view the nodes that have been created.
-This is where `kubectl` comes in handy. Looking at the previous log, you will notice that one of the last things `etsctl` did was update our `~/.kube` file with our new cluster configuration. We can now go ahead and use `kubectl` to make requests to the Kubernetes API Server.
+This is where `kubectl` comes in handy. Looking at the previous log, you will notice that one of the last things `etsctl` did was update our `~/.kube/config` file with our new cluster configuration. We can now go ahead and use `kubectl` to make requests to the Kubernetes API Server.
 
-```
-kubectl get nodes -o wide
+```bash
+$ kubectl get nodes -o wide
 ```
 
 Output
@@ -114,29 +114,30 @@ Great! We have two instances in a `READY` status.
 For this setup, we will create a Postgres RDS instance required for FusionAuth installation. For simplicity, this database will be created in the same VPC and configured with the same security groups applied to our private subnets. Finally, we will modify the inbound rules to the security group to allow traffic on Postgres port 5432. This will enable our worker nodes to communicate with the database successfully!
 
 TODO - Might need to create a DB subgroup
-```
-create database subnet group
+```bash
+$ create database subnet group
 ```
 
 We will want to find the security group Id before prior to moving forward. This can be found via the AWS console, CloudFormation, or by the following AWS CLI command.
 
-```
-aws ec2 describe-security-groups
+```bash
+$ aws ec2 describe-security-groups
 ```
 
 Look through the response for the security group with the description as seen in the output below. Once we have found the security group, find the "GroupId" value.
-```
-            "Description": "Communication between all nodes in the cluster",
-            "GroupName": "eksctl-fusionauth-example-cluster-ClusterSharedNodeSecurityGroup-HUG7Y357BA9C",
-            "OwnerId": "172023253951",
-            "GroupId": "sg-08b95dbacc02ba628",
-                ...
+
+```json
+  "Description": "Communication between all nodes in the cluster",
+  "GroupName": "eksctl-fusionauth-example-cluster-ClusterSharedNodeSecurityGroup-HUG7Y357BA9C",
+  "OwnerId": "172023253951",
+  "GroupId": "sg-08b95dbacc02ba628",
+  ...
 ```
 
 Now create the database.
 
-```
-aws rds create-db-instance \
+```bash
+$ aws rds create-db-instance \
     --db-instance-identifier fusionauth-eks-example \
     --allocated-storage 20 \
     --db-instance-class db.m6g.large \
@@ -152,24 +153,25 @@ aws rds create-db-instance \
 
 Add an inbound rule to the security group to allow nodes to access our database.
 
-```
-aws ec2 authorize-security-group-ingress \
+```bash
+$ aws ec2 authorize-security-group-ingress \
     --group-id sg-08b95dbacc02ba628 \
     --protocol tcp \
     --port 5432 \
     --source-group sg-08b95dbacc02ba628
 ```
 
-We are done! To confirm the database has been created, we can simply ask AWS using the `db-instance-identifier` we used on the creation step.
+We are done! To confirm the database has been created, we can simply ask AWS using the [field]#db-instance-identifier# we used on the creation step.
 
 **NOTE**: It may take a few minutes for the provisioning process to complete.
 
-```
-aws rds describe-db-instances --db-instance-identifier fusionauth-eks-example
+```bash
+$ aws rds describe-db-instances --db-instance-identifier fusionauth-eks-example
 ```
 
 The resulting output should contain an `Endpoint` attribute. This value will be necessary when configuring your FusionAuth deployment.
-```
+
+```json
 {
     "DBInstances": [
         {
@@ -188,5 +190,5 @@ The resulting output should contain an `Endpoint` attribute. This value will be 
 
 We now have all the necessary infrastructure to deploy containerized applications to EKS.
 
-Next up, link:../deploy[Deploy FusionAuth in Kubernetes].
+Next up, link:../../[Deploy FusionAuth in Kubernetes].
 

@@ -4,24 +4,23 @@ title: Deploy FusionAuth in a Kubernetes Cluster
 description: Deploy FusionAuth in a Kubernetes Cluster
 keywords: docker kubernetes k8s container aws
 ---
-Kubernetes is an extensible and open-source container-orchestration system used for automating application deployments. Some of the most notable features it provides includes self-healing, auto-scaling, and automated rollouts and rollbacks.
+Kubernetes is an extensible and open-source container-orchestration system used for automating application deployments. Some of the most notable features it provides include self-healing, auto-scaling, and automated rollouts and rollbacks.
 
 Since the Kubernetes container runtime supports link:../docker[Docker], FusionAuth link:../docker[Docker] containers can be deployed to any Kubernetes cluster.
 
-The following example demonstrates how to deploy FusionAuth containers using link:using link:https://kubernetes.io/docs/tasks/tools/[kubectl], the Kubernetes command-line tool that enables you to send commands to a cluster through the link:https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/[API server].
+The following example demonstrates how to deploy FusionAuth containers using link:https://kubernetes.io/docs/tasks/tools/[kubectl], the Kubernetes command-line tool that enables you to send commands to a cluster through the link:https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/[API server].
 Before proceeding, it is required that you have a running Kubernetes cluster and link:https://kubernetes.io/docs/tasks/tools/[kubectl] configured to communicate with that cluster. If you need to setup a cluster, we have provided the following installation guides to get you up and running as fast as possible.
 
 * link:setup/eks[Amazon Elastic Kubernetes Service (EKS)]
 * link:setup/aks[Microsoft Azure Kubernetes Service (AKS)]
 * link:setup/gke[Google Kubernetes Engine (GKE)]
-* link:setup/minikube[Minikube]
 
 == Requirements
 
 * `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
 We will be using version `1.22` for this guide.
 * `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, we will be using a Helm chart to install FusionAuth on our Kubernetes cluster. For more information, see link:https://helm.sh/docs/intro/install/[Installing Helm].
-* An available Kubernetes cluster. For our detailed guides, See link:../[Provisioning a Kubernetes cluster].
+* An available Kubernetes cluster. See guides above.
 
 == Configuration
 
@@ -40,7 +39,7 @@ fusionauth	https://fusionauth.github.io/charts
 To search repos, use the `helm search repo <repo name>` command:
 ```
 $ helm search repo fusionauth
-...
+
 NAME                 	CHART VERSION	APP VERSION	DESCRIPTION
 fusionauth/fusionauth	0.10.5       	1.30.1     	Helm chart for fusionauth
 ```
@@ -59,9 +58,9 @@ Open `values.yaml` with your favorite text editor.
 
 ==== Replicas
 
-The `replicaCount` value indicates the number of instances of FusionAuth to run in a link:https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[ReplicaSet].
+The [field]#replicaCount# value indicates the number of instances of FusionAuth to run in a link:https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[ReplicaSet].
 
-By default, the "replicas" value is set to `1`. This means that when we deploy our application to the cluster, Kubernetes will monitor the cluster to ensure that at least `1` instance of FusionAuth is running at all times.
+By default, the [field]#replicaCount# value is set to `1`. This means that when we deploy our application to the cluster, Kubernetes will monitor the cluster to ensure that at least `1` instance of FusionAuth is running at all times.
 
 ```yaml
 # replicaCount -- The number of fusionauth-app instances to run
@@ -114,9 +113,14 @@ database:
     user: ""
     # database.root.password -- Database password for fusionauth to use during initial bootstrap - not required if database.existingSecret is configured
     password: ""
+
+search:
+  # search.engine -- Defines backend for fusionauth search capabilities. Valid values for engine are 'elasticsearch' or 'database'.
+  engine: database
 ```
 
-At this point, the required fields that need to be provided are `host`, `user`, `password`, `root.user`, and `root.password`. It is important to retrieve these attributes when you initially setup your database.
+At this point, the required fields that need to be provided are [field]#host#, [field]#user#, [field]#password#, [field]#root.user#, and [field]#root.password#. It is important to retrieve these attributes when you initially setup your database.
+We are also going to set [field]#search.engine# field to `database`.
 
 == Deploy FusionAuth to the cluster
 
@@ -134,8 +138,8 @@ $ helm install my-release fusionauth/fusionauth -f values.yaml
 
 Alternatively, values can be overridden using the `set` command using key/value pairs.
 
-```
-helm install my-release fusionauth/fusionauth                                                                                             ✔  4s  brett@fusionauth.io@fusionauth-example.us-west-1.eksctl.io ○
+```bash
+$ helm install my-release fusionauth/fusionauth \                                                                                            ✔  4s  brett@fusionauth.io@fusionauth-example.us-west-1.eksctl.io ○
   --set replicaCount=1 \
   --set database.host=fusionauth-eks-example.ceeh9yeyi3hf.us-west-1.rds.amazonaws.com \
   --set database.user=fusionauth \
@@ -180,7 +184,7 @@ Finally, its time to verify our deployment via the browser. As instructed by the
 Forwarding from 127.0.0.1:9011 -> 9011
 ```
 
-Navigate to http://127.0.0.1:9011
+Navigate to http://localhost:9011
 
 image::installation-guides/kubernetes/fa-success.png[FusionAuth index,width=1200,role=shadowed]
 

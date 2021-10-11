@@ -17,12 +17,6 @@ The following method uses the default settings when provisioning an AKS cluster 
 * `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
 We will be using version `1.22` for this guide.
 
-== Architecture
-
-TODO
-
-//image::https://cloud.google.com/kubernetes-engine/images/cluster-architecture.svg[GKE Architecture,width=1200,role=shadowed]
-
 == Create an AKS cluster
 
 === Create a resource group
@@ -32,11 +26,11 @@ Before we create the cluster, we need to first create a link:https://docs.micros
 Create a resource group.
 
 ```bash
-$ az group create --name fusionauthResourceGroup --location eastus
+$ az group create --name fusionauthResourceGroup --location westus
 ```
 
 Output
-```
+```json
 {
   "id": "/subscriptions/fa2713cf-00cf-45f1-95a4-f87c48947da1/resourceGroups/fusionauthResourceGroup",
   "location": "westus",
@@ -55,7 +49,7 @@ Output
 ```bash
 $ az aks create \
   --resource-group fusionauthResourceGroup \
-  --name fusionauthCluster --node-count 3 \
+  --name fusionauthCluster --node-count 1 \
   --enable-addons monitoring \
   --generate-ssh-keys
 ```
@@ -67,11 +61,9 @@ $ az aks create \
 +
 For more information on the link:https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create[create] command, see link:https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create[az aks create] documentation.
 
-Output
-```
-```
-
 === Update Kubernetes configuration
+
+The following retrieves credentials for the newly created cluster and then configures your `~/.kube/config` file so that you can use `kubectl`.
 
 ```bash
 $ az aks get-credentials \
@@ -87,27 +79,21 @@ Execute the link:https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-l
 $ az aks list
 ```
 
-Output
-```
-[]
-```
-
 We now have a fully functional provisioned AKS cluster. For good measure, view the nodes that have been created.
 Use `kubectl` to make requests to the Kubernetes API Server.
 
 ```bash
 $ kubectl get nodes -o wide
+
+NAME                                STATUS   ROLES   AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
+aks-nodepool1-13281124-vmss000000   Ready    agent   8m42s   v1.20.9   10.240.0.4    <none>        Ubuntu 18.04.6 LTS   5.4.0-1059-azure   containerd://1.4.9+azure
 ```
 
-Output
-```
-```
-
-Great! We have a three nodes in a `READY` status.
+Great! We have a node in a `READY` status.
 
 == Create a Database
 
-Create the database.
+For this setup, we will create a Postgres database required for FusionAuth installation.
 
 ```bash
 $ az postgres flexible-server create \
@@ -131,21 +117,27 @@ $ az postgres flexible-server create \
 +
 For more information on the link:https://docs.microsoft.com/en-us/cli/azure/postgres/flexible-server?view=azure-cli-latest#az_postgres_flexible_server_create[create] command, see link:https://docs.microsoft.com/en-us/cli/azure/postgres/flexible-server?view=azure-cli-latest#az_postgres_flexible_server_create[az postgres flexible-server create] documentation.
 
-=== Verify Database
+Upon successful completion, the response will output a JSON object that contains important information about your newly created database.
 
-```bash
-$ az postgres flexible-server list
-```
-
-Output
-
-```
-[]
+```json
+{
+  "connectionString": "postgresql://postgres:foobarbaz@fusionauth-db-2.postgres.database.azure.com/postgres?sslmode=require",
+  "databaseName": "flexibleserverdb",
+  "firewallName": "AllowAllAzureServicesAndResourcesWithinAzureIps_2021-10-10_23-34-29",
+  "host": "fusionauth-db-2.postgres.database.azure.com",
+  "id": "/subscriptions/af1327fc-cf00-45f1-a22b-e78c489741ad/resourceGroups/fusionauthResourceGroup/providers/Microsoft.DBforPostgreSQL/flexibleServers/fusionauth-db-2",
+  "location": "West US",
+  "password": "foobarbaz",
+  "resourceGroup": "fusionauthResourceGroup",
+  "skuname": "Standard_D2s_v3",
+  "username": "postgres",
+  "version": "12"
+}
 ```
 
 == Next Steps
 
 We now have all the necessary infrastructure to deploy containerized applications to AKS.
 
-Next up, link:../deploy[Deploy FusionAuth in Kubernetes].
+Next up, link:link:../../[Deploy FusionAuth in Kubernetes].
 
