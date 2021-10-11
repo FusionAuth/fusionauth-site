@@ -89,11 +89,51 @@ This command uses CloudFormation to provision all of the necessary resources tha
 2021-10-05 14:41:48 [ℹ]  nodegroup "ng-3fa00736" has 2 node(s)
 2021-10-05 14:41:48 [ℹ]  node "ip-192-168-45-153.us-west-1.compute.internal" is ready
 2021-10-05 14:41:48 [ℹ]  node "ip-192-168-91-228.us-west-1.compute.internal" is ready
-2021-10-05 14:43:50 [ℹ]  kubectl command should work with "/Users/brettguy/.kube/config", try 'kubectl get nodes'
+2021-10-05 14:43:50 [ℹ]  kubectl command should work with "/Users/myuser/.kube/config", try 'kubectl get nodes'
 2021-10-05 14:43:50 [✔]  EKS cluster "fusionauth-example" in "us-west-1" region is ready
 ```
 
-We now have a fully functional provisioned EKS cluster. For good measure, view the nodes that have been created.
+We now have a fully functional provisioned EKS cluster. To get detailed information, particularly VPC, subnet ids, and security group id that we will need later on in this guide, use the CLI to describe our newly created cluster.
+
+```bash
+$ aws eks describe-cluster --name fusionauth-example
+```
+
+```json
+{
+    "cluster": {
+        "name": "fusionauth-example",
+        "arn": "arn:aws:eks:us-west-1:172023253951:cluster/fusionauth-example",
+        "createdAt": "2021-10-05T14:19:21.612000-06:00",
+        "version": "1.20",
+        "endpoint": "https://EC8E2DC8514200E91A4748FA6EE525A4.yl4.us-west-1.eks.amazonaws.com",
+        "roleArn": "arn:aws:iam::172023253951:role/eksctl-fusionauth-example-cluster-ServiceRole-1EED6M5NXUF3",
+        "resourcesVpcConfig": {
+            "subnetIds": [
+                "subnet-091347798a21eabe2",
+                "subnet-0cb7540073e8b30aa",
+                "subnet-052f8750345045581",
+                "subnet-040e32678cf7a85da"
+            ],
+            "securityGroupIds": [
+                "sg-00d13e92c29ed1ecf"
+            ],
+            "clusterSecurityGroupId": "sg-07cf61370371ba323",
+            "vpcId": "vpc-08da2a4800ea6e0e2",
+            "endpointPublicAccess": true,
+            "endpointPrivateAccess": false,
+            "publicAccessCidrs": [
+                "0.0.0.0/0"
+            ]
+        },
+        "kubernetesNetworkConfig": {
+            "serviceIpv4Cidr": "10.100.0.0/16"
+        }
+}
+```
+
+
+Now review the Kubernetes nodes that have been created.
 This is where `kubectl` comes in handy. Looking at the previous log, you will notice that one of the last things `etsctl` did was update our `~/.kube/config` file with our new cluster configuration. We can now go ahead and use `kubectl` to make requests to the Kubernetes API Server.
 
 ```bash
@@ -113,28 +153,17 @@ Great! We have two instances in a `READY` status.
 
 For this setup, we will create a Postgres RDS instance required for FusionAuth installation. For simplicity, this database will be created in the same VPC and configured with the same security groups applied to our private subnets. Finally, we will modify the inbound rules to the security group to allow traffic on Postgres port 5432. This will enable our worker nodes to communicate with the database successfully!
 
-TODO - Might need to create a DB subgroup
-```bash
-$ create database subnet group
-```
-
-We will want to find the security group Id before prior to moving forward. This can be found via the AWS console, CloudFormation, or by the following AWS CLI command.
+Since an RDS instance needs to be assigned to a database subnet group, you may either assign it to an existing group with subnets in the same VPC or create a new one.
+Here, we create a new subnet group using the subnets assigned to our cluster in the cluster creation step.
 
 ```bash
-$ aws ec2 describe-security-groups
+$ aws rds create-db-subnet-group \
+--db-subnet-group-name fusionauth-example-db-group \
+--db-subnet-group-description "FusionAuth example database subnet group" \
+--subnet-ids "subnet-091347798a21eabe2" "subnet-0cb7540073e8b30aa" "subnet-052f8750345045581" "subnet-040e32678cf7a85da"
 ```
 
-Look through the response for the security group with the description as seen in the output below. Once we have found the security group, find the "GroupId" value.
-
-```json
-  "Description": "Communication between all nodes in the cluster",
-  "GroupName": "eksctl-fusionauth-example-cluster-ClusterSharedNodeSecurityGroup-HUG7Y357BA9C",
-  "OwnerId": "172023253951",
-  "GroupId": "sg-08b95dbacc02ba628",
-  ...
-```
-
-Now create the database.
+Now create the database. You can retrieve the necessary [field]#db-subnet-group# and [field]#vpc-security-group-ids# referring to previous creation steps above.
 
 ```bash
 $ aws rds create-db-instance \
@@ -146,7 +175,7 @@ $ aws rds create-db-instance \
     --master-user-password foobarbaz \
     --no-publicly-accessible \
     --vpc-security-group-ids sg-08b95dbacc02ba628 \
-    --db-subnet-group default-vpc-08da2a4800ea6e0e2 \
+    --db-subnet-group fusionauth-example-db-group \
     --availability-zone us-west-1c \
     --port 5432
 ```
