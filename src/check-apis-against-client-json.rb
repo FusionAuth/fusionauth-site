@@ -14,6 +14,7 @@ IGNORED_FIELD_REGEXPS = [
   /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
   /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
   /tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
+  /user\.uniqueUsername/, # this is a derived, internal field
 ]
 # option handling
 options = {}
