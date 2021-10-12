@@ -13,6 +13,8 @@ IGNORED_FIELD_REGEXPS = [
   /application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
   /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
   /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
+  /tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
+  /user\.uniqueUsername/, # this is a derived, internal field
 ]
 # option handling
 options = {}
@@ -53,14 +55,31 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+# what our dashed type is -> what the path is in the url
 def make_api_path(type)
+  if type == "generic-connector-configuration"
+    return "connectors/generic/"
+  end
+  if type == "ldap-connector-configuration"
+    return "connectors/ldap/"
+  end
+  if type == "email-template"
+    return "emails/"
+  end
   # planning for families or other non normal pluralizations.
-  return type + "s"
+  return type + "s/"
 end
 
+# what our type is -> what the variable is on the doc page
 def make_on_page_field_name(type)
   if type == "formField"
     return "field"
+  end
+  if type == "genericConnectorConfiguration"
+    return "connector"
+  end
+  if type == "ldapConnectorConfiguration"
+    return "connector"
   end
   return type
 end
@@ -83,6 +102,8 @@ def downcase(string)
     dcs = "jwt"+string[3..-1]
   elsif string[0..3] == "APIK"
     dcs = "apiK"+string[4..-1]
+  elsif string[0..4] == "LDAPC"
+    dcs = "ldapC"+string[5..-1]
   else 
     first_lc = string.index(/[a-z]/)
     if first_lc
@@ -98,7 +119,7 @@ end
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
   # these are leafs of the tree and aren't fields with possible subfields.
-  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers" ]
+  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double" ]
 
   if options[:verbose]
     puts "opening: "+fn
@@ -127,8 +148,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   end
   unless page_content
     # we are in leaf object, we don't need to pull the page content
-    special_api_path = make_api_path(todash(t))
-    api_url = options[:siteurl] + "/docs/v1/tech/apis/"+todash(t)+"s/"
+    api_url = options[:siteurl] + "/docs/v1/tech/apis/"+make_api_path(todash(t))
     if options[:verbose]
       puts "retrieving " + api_url
     end
