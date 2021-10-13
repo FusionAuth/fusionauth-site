@@ -5,4 +5,249 @@ description: Using Minikube for local testing of FusionAuth kubernetes deploymen
 keywords: docker kubernetes k8s container aws
 ---
 
-== Minikube
+== Overview
+
+Having the capability to deploy applications in a local Kubernetes environment allows engineers to quickly develop, test, and demo without the operational overhead of a full-blown cluster. This is precisely what link:https://minikube.sigs.k8s.io/docs[minikube] is designed for by creating a single-node cluster within a virtual machine.
+
+This guide will show you how to create and configure all the infrastructure necessary to run FusionAuth locally in a link:https://minikube.sigs.k8s.io/docs[minikube] cluster.
+
+== Requirements
+
+Before you begin, you will need to have the following installed.
+
+* link:https://docs.docker.com/get-docker/[Docker Desktop] - The virtual machine environment we will use to run minikube.
+* `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, we will be using a Helm chart to install FusionAuth, a Postgresql database, and Elasticsearch cluster. For more information, see link:https://helm.sh/docs/intro/install/[Installing Helm].
+* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
+
+== Install minikube
+
+Navigate to link:https://minikube.sigs.k8s.io/docs/start/[minikube start] and complete step one by selecting the options that apply to your local machine.
+
+For example, if you are running on `macOS` with `x86-64` architecture, Homebrew is a popular [field]#installer type#:
+
+```bash
+$ brew install minikube
+```
+
+=== Start minikube
+
+Since we will be deploying multiple applications, we will want to start minikube using some additional resource considerations.
+
+[WARNING.warning]
+====
+Before proceeding, make sure Docker Desktop has sufficient resources allocated. These settings can be found in Docker Desktop by navigating to *Preferences* and then clicking on *Resources* in the side menu bar.
+====
+
+Start minikube by additionally specifying [field]#cpus# and [field]#memory#:
+
+```bash
+$ minikube start --cpus 4 --memory 5g
+```
+
+When the command finishes, it will configure `kubectl` to point to the minikube cluster. We can confirm this by checking the status:
+
+```bash
+$ minikube status
+```
+
+Or by running a command to view pods running on the cluster:
+
+```bash
+$ kubectl get pods -A
+```
+
+== Deploy Postgresql
+
+Start by adding the link:https://artifacthub.io/packages/helm/bitnami/postgresql[bitnami helm repository] that contains the Postgresql chart:
+
+```bash
+$ helm repo add bitnami https://charts.bitnami.com/bitnami
+
+$ helm repo list
+
+NAME      	URL
+bitnami   	https://charts.bitnami.com/bitnami
+```
+
+Install the chart additionally setting the password for the `postgres` user. In this example, the [field]#release# field is set to `pg-test`:
+```bash
+$ helm install pg-test bitnami/postgresql --set postgresqlPassword=fooBarBaz
+```
+
+When completed successfully, the output will contain some useful information about our deployment:
+```
+** Please be patient while the chart is being deployed **
+
+PostgreSQL can be accessed via port 5432 on the following DNS names from within your cluster:
+
+    pg-test-postgresql.default.svc.cluster.local - Read/Write connection
+
+To get the password for "postgres" run:
+
+    export POSTGRES_PASSWORD=$(kubectl get secret --namespace default pg-test-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
+
+To connect to your database run the following command:
+
+    kubectl run pg-test-postgresql-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:11.13.0-debian-10-r40 --env="PGPASSWORD=$POSTGRES_PASSWORD" --command -- psql --host pg-test-postgresql -U postgres -d postgres -p 5432
+
+
+
+To connect to your database from outside the cluster execute the following commands:
+
+    kubectl port-forward --namespace default svc/pg-test-postgresql 5432:5432 &
+    PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 -U postgres -d postgres -p 5432
+```
+
+When we deploy FusionAuth, we will need to use the DNS name `pg-test-postgresql.default.svc.cluster.local` as seen above and the password that we set in the install command.
+
+Confirm our deployment by retrieving active pods in the cluster. The following command requests pods in the `default` namespace with output (`-o`) containing additional information such as [field]#IP Address#:
+
+```bash
+$ kubectl get pods -n default -o wide
+```
+
+The resulting output will show `1/1` pg-test-postgresql pod in a `READY` state:
+
+```
+NAME                   READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+pg-test-postgresql-0   1/1     Running   0          8m33s   172.17.0.3   minikube   <none>           <none>
+```
+
+== Deploy Elasticsearch
+
+Start by adding the link:https://artifacthub.io/packages/helm/elastic/elasticsearch[Elasticsearch Helm Chart] repository:
+
+```bash
+$ helm repo add elastic https://helm.elastic.co
+
+$ helm repo list
+
+NAME      	URL
+bitnami   	https://charts.bitnami.com/bitnami
+elastic   	https://helm.elastic.co
+```
+
+Before installing, we will download a copy of a recommended configuration for minikube virtual machines:
+
+```bash
+$ curl -O https://raw.githubusercontent.com/elastic/Helm-charts/master/elasticsearch/examples/minikube/values.yaml
+```
+
+The contents of this configuration uses a smaller JVM heap, smaller memory per pods requests, and smaller persistent volumes:
+
+```yaml
+# Permit co-located instances for solitary minikube virtual machines.
+antiAffinity: "soft"
+
+# Shrink default JVM heap.
+esJavaOpts: "-Xmx128m -Xms128m"
+
+# Allocate smaller chunks of memory per pod.
+resources:
+  requests:
+    cpu: "100m"
+    memory: "512M"
+  limits:
+    cpu: "1000m"
+    memory: "512M"
+
+# Request smaller persistent volumes.
+volumeClaimTemplate:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: "standard"
+  resources:
+    requests:
+      storage: 100M
+```
+
+Now install the chart using the minikube yaml configuration:
+
+```bash
+helm install es-example elastic/elasticsearch -f values.yaml
+```
+
+Confirm our deployment by retrieving active pods in the cluster.
+
+```bash
+$ kubectl get pods -n default -o wide
+```
+
+The resulting output will show three pods
+
+```
+NAME                     READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+elasticsearch-master-0   1/1     Running   0          7m17s   172.17.0.5   minikube   <none>           <none>
+elasticsearch-master-1   1/1     Running   0          7m17s   172.17.0.4   minikube   <none>           <none>
+elasticsearch-master-2   1/1     Running   0          7m17s   172.17.0.6   minikube   <none>           <none>
+pg-test-postgresql-0     1/1     Running   0          39m     172.17.0.3   minikube   <none>           <none>
+```
+
+Finally, we will need the host IP address for the Elasticsearch master node when deploying FusionAuth. To retrieve it:
+
+```bash
+$ kubectl get services
+
+elasticsearch-master            ClusterIP   10.106.59.11    <none>        9200/TCP,9300/TCP   10m
+```
+
+
+=== Deploy FusionAuth
+
+Now that we have a Kubernetes cluster actively running a database and Elasticsearch, we can go ahead and configure FusionAuth and deploy it to the cluster.
+
+There are a few values we will want to recall from previous sections:
+
+* *host* - `pg-test-postgresql.default.svc.cluster.local`
+* *database user* - `postgres` (created by default on install)
+* *database password* - `fooBarBaz`
+* *elasticsearch host* - `10.106.59.11`
+
+Deploy FusionAuth by using the default helm chart and overriding the required settings:
+
+*NOTE*: `database.password` will be auto-generated when the FusionAuth schema is applied to the database. This field is required by the chart so we provide a placeholder.
+
+```bash
+helm install fa-minikube fusionauth/fusionauth \
+  --set replicaCount=1 \
+  --set database.host=pg-test-postgresql.default.svc.cluster.local \
+  --set database.user=fusionauth \
+  --set database.password="xxxxxxxx" \
+  --set database.root.user=postgres \
+  --set database.root.password=fooBarBaz \
+  --set search.host=10.106.59.11
+```
+
+On success, the resulting output will describe how to access FusionAuth using `kubectl` port-forwarding:
+
+```
+Get the application URL by running these commands:
+  export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=fa-minikube" -o jsonpath="{.items[0].metadata.name}")
+  echo "Visit http://127.0.0.1:9011 to use your application"
+  kubectl port-forward svc/$SVC_NAME 9011:9011
+```
+
+After applying port forwarding to port 9011, we will be presented with FusionAuth Setup Wizard!
+
+image::installation-guides/kubernetes/fa-initial-config.png[FusionAuth Setup Wizard,,width=1200,role=shadowed]
+
+At this point, we should have a total of 5 `READY` pods including FusionAuth!
+
+```bash
+$ kubectl get pods -n default -o wide
+NAME                                      READY   STATUS    RESTARTS   AGE    IP           NODE       NOMINATED NODE   READINESS GATES
+elasticsearch-master-0                    1/1     Running   0          86m    172.17.0.5   minikube   <none>           <none>
+elasticsearch-master-1                    1/1     Running   0          86m    172.17.0.4   minikube   <none>           <none>
+elasticsearch-master-2                    1/1     Running   0          86m    172.17.0.6   minikube   <none>           <none>
+fa-minikube-fusionauth-5b9df77774-xm7rs   1/1     Running   0          66m    172.17.0.7   minikube   <none>           <none>
+pg-test-postgresql-0                      1/1     Running   0          119m   172.17.0.3   minikube   <none>           <none>
+```
+
+Congratulations! You are now running FusionAuth locally on a Kubernetes cluster.
+
+
+
+
+
+
+
+
