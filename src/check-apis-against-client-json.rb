@@ -60,6 +60,9 @@ def make_api_path(type)
   if type == "generic-connector-configuration"
     return "connectors/generic/"
   end
+  if type == "family"
+    return "families/"
+  end
   if type == "ldap-connector-configuration"
     return "connectors/ldap/"
   end
