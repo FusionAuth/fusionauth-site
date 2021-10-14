@@ -109,7 +109,7 @@ $ kubectl get pods -n default -o wide
 The resulting output will show `1/1` pg-minikube-postgresql pod in a `READY` state:
 
 ```
-NAME                   READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+NAME                       READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
 pg-minikube-postgresql-0   1/1     Running   0          8m33s   172.17.0.3   minikube   <none>           <none>
 ```
 
@@ -163,7 +163,7 @@ volumeClaimTemplate:
 Now install the chart using the minikube yaml configuration:
 
 ```bash
-helm install es-example elastic/elasticsearch -f values.yaml
+$ helm install es-example elastic/elasticsearch -f values.yaml
 ```
 
 Confirm our deployment by retrieving active pods in the cluster.
@@ -210,13 +210,13 @@ There are a few values we will want to recall from previous sections that we wil
 Deploy FusionAuth by using the FusionAuth helm chart using the [field]#set# flag to apply override values. We will also use the `-f` option providing the path to our minikube `values.yaml`:
 
 ```bash
-helm install fa-minikube fusionauth/fusionauth -f ./values.yaml \
+$ helm install fa-minikube fusionauth/fusionauth -f ./values.yaml \
   --set database.host=pg-minikube-postgresql.default.svc.cluster.local \
   --set database.root.password=fooBarBaz \
   --set search.host=10.106.59.11
 ```
 
-The resulting output will describe how to access FusionAuth using `kubectl` port-forwarding. This method tunnels traffic from the specified port on localhost to the target Kubernetes service and port. This can be useful for debugging.
+At this point we can now access FusionAuth using `kubectl` port-forwarding. This method tunnels traffic from the specified port on localhost to the target Kubernetes service and port. This can be useful for debugging.
 
 ```
 Get the application URL by running these commands:
@@ -258,31 +258,27 @@ spec:
 
 The rules for this Ingress resource indicate that requests from `localhost` root path context, or `/`, should be directed to the `fa-minikube-fusionauth` service.
 
-The last thing we need is the link:link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller]. For that, we will use the NGINX Ingress controller provided as an addon to minikube.
+The last thing we need is the link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller]. For that, we will use the NGINX Ingress controller.
 
-To enable the the Ingress controller, run the following command:
+To install the the Ingress controller, add the repo and install the Helm chart by running the following commands:
 
 ```bash
-$ minikube addons enable ingress
+$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 
-💡  After the addon is enabled, please run "minikube tunnel" and your ingress resources would be available at "127.0.0.1"
-    ▪ Using image k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.0
-    ▪ Using image k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.0
-    ▪ Using image k8s.gcr.io/ingress-nginx/controller:v1.0.0-beta.3
-🔎  Verifying ingress addon...
+$ helm install fa-loadbalancer ingress-nginx/ingress-nginx
 ```
 
-As directed, run the following to activate the minikube tunnel:
+Use the minikube tunnel to use the newly created Ingress controller service:
 
 ```bash
-minikube tunnel
-
-❗  The service/ingress fusionauth-minikube-ingress-nginx-controller requires privileged ports to be exposed: [80 443]
+$ minikube tunnel
+❗  The service/ingress fa-loadbalancer-ingress-nginx-controller requires privileged ports to be exposed: [80 443]
 🔑  sudo permission will be asked for it.
-🏃  Starting tunnel for service fusionauth-minikube-ingress-nginx-controller.
+🏃  Starting tunnel for service fa-loadbalancer-ingress-nginx-controller.
 ❗  The service/ingress fa-minikube-fusionauth requires privileged ports to be exposed: [80 443]
-Password:🔑  sudo permission will be asked for it.
-🏃  Starting tunnel for service fa-minikube-fusionauth.
+🔑  sudo permission will be asked for it.
+Password:🏃
+Starting tunnel for service fa-minikube-fusionauth.
 ```
 
 Navigating to `localhost` in the browser will now direct us to FusionAuth running on the cluster.
