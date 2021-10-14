@@ -65,6 +65,15 @@ def make_api_path(type)
   if type == "family"
     return "families/"
   end
+  if type == "entity"
+    return "entity-management/entities/"
+  end
+  if type == "entity-type"
+    return "entity-management/entity-types/"
+  end
+  if type == "grant"
+    return "entity-management/grants/"
+  end
   if type == "ldap-connector-configuration"
     return "connectors/ldap/"
   end
