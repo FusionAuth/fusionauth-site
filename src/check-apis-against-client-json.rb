@@ -18,6 +18,7 @@ IGNORED_FIELD_REGEXPS = [
   /theme\.templates\.emailSend/, # this is a derived, internal field
   /theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
   /entity\.type/, # we delegate in the doc to the entity type api.
+  /grant\.entity/, # we delegate in the doc to the grant api.
 ]
 # option handling
 options = {}
@@ -72,7 +73,7 @@ def make_api_path(type)
   if type == "entity-type"
     return "entity-management/entity-types/"
   end
-  if type == "grant"
+  if type == "entity-grant"
     return "entity-management/grants/"
   end
   if type == "ldap-connector-configuration"
@@ -92,6 +93,9 @@ def make_on_page_field_name(type)
   end
   if type == "genericConnectorConfiguration"
     return "connector"
+  end
+  if type == "entityGrant"
+    return "grant"
   end
   if type == "ldapConnectorConfiguration"
     return "connector"
@@ -198,6 +202,8 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       full_field_name = make_on_page_field_name(t)+ "." + field_name
       if ! page_content.include? full_field_name 
         ignore = false
+        # okay to have tenantId missing, as that is handled implicitly via API key locking or header if there is more than one tenant
+        # other fields in this regexp ok to omit as well
         IGNORED_FIELD_REGEXPS.each do |re|
           ignore = re.match(full_field_name)
           if ignore
@@ -205,8 +211,6 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
           end
         end
         unless ignore
-          # okay to have tenantId missing, as that is handled implicitly via API key locking or header if there is more than one tenant
-          # other fields in this regexp ok to omit as well
           missing_fields.append({full_field_name: full_field_name, type: field_type})
         end
       end
