@@ -69,9 +69,9 @@ NAME      	URL
 bitnami   	https://charts.bitnami.com/bitnami
 ```
 
-Install the chart additionally setting the password for the `postgres` user. In this example, the [field]#release# field is set to `pg-test`:
+Install the chart additionally setting the password for the `postgres` user. In this example, the [field]#release# field is set to `pg-minikube`:
 ```bash
-$ helm install pg-test bitnami/postgresql --set postgresqlPassword=fooBarBaz
+$ helm install pg-minikube bitnami/postgresql --set postgresqlPassword=fooBarBaz
 ```
 
 When completed successfully, the output will contain some useful information about our deployment:
@@ -80,25 +80,25 @@ When completed successfully, the output will contain some useful information abo
 
 PostgreSQL can be accessed via port 5432 on the following DNS names from within your cluster:
 
-    pg-test-postgresql.default.svc.cluster.local - Read/Write connection
+    pg-minikube-postgresql.default.svc.cluster.local - Read/Write connection
 
 To get the password for "postgres" run:
 
-    export POSTGRES_PASSWORD=$(kubectl get secret --namespace default pg-test-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
+    export POSTGRES_PASSWORD=$(kubectl get secret --namespace default pg-minikube-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
 
 To connect to your database run the following command:
 
-    kubectl run pg-test-postgresql-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:11.13.0-debian-10-r40 --env="PGPASSWORD=$POSTGRES_PASSWORD" --command -- psql --host pg-test-postgresql -U postgres -d postgres -p 5432
+    kubectl run pg-minikube-postgresql-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:11.13.0-debian-10-r40 --env="PGPASSWORD=$POSTGRES_PASSWORD" --command -- psql --host pg-minikube-postgresql -U postgres -d postgres -p 5432
 
 
 
 To connect to your database from outside the cluster execute the following commands:
 
-    kubectl port-forward --namespace default svc/pg-test-postgresql 5432:5432 &
+    kubectl port-forward --namespace default svc/pg-minikube-postgresql 5432:5432 &
     PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 -U postgres -d postgres -p 5432
 ```
 
-When we deploy FusionAuth, we will need to use the DNS name `pg-test-postgresql.default.svc.cluster.local` as seen above and the password that we set in the install command.
+When we deploy FusionAuth, we will need to use the DNS name `pg-minikube-postgresql.default.svc.cluster.local` as seen above and the password that we set in the install command.
 
 Confirm our deployment by retrieving active pods in the cluster. The following command requests pods in the `default` namespace with output (`-o`) containing additional information such as [field]#IP Address#:
 
@@ -106,11 +106,11 @@ Confirm our deployment by retrieving active pods in the cluster. The following c
 $ kubectl get pods -n default -o wide
 ```
 
-The resulting output will show `1/1` pg-test-postgresql pod in a `READY` state:
+The resulting output will show `1/1` pg-minikube-postgresql pod in a `READY` state:
 
 ```
 NAME                   READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
-pg-test-postgresql-0   1/1     Running   0          8m33s   172.17.0.3   minikube   <none>           <none>
+pg-minikube-postgresql-0   1/1     Running   0          8m33s   172.17.0.3   minikube   <none>           <none>
 ```
 
 == Deploy Elasticsearch
@@ -172,14 +172,14 @@ Confirm our deployment by retrieving active pods in the cluster.
 $ kubectl get pods -n default -o wide
 ```
 
-The resulting output will show three pods
+The resulting output will show three pods for each elasticsearch node:
 
 ```
-NAME                     READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
-elasticsearch-master-0   1/1     Running   0          7m17s   172.17.0.5   minikube   <none>           <none>
-elasticsearch-master-1   1/1     Running   0          7m17s   172.17.0.4   minikube   <none>           <none>
-elasticsearch-master-2   1/1     Running   0          7m17s   172.17.0.6   minikube   <none>           <none>
-pg-test-postgresql-0     1/1     Running   0          39m     172.17.0.3   minikube   <none>           <none>
+NAME                         READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+elasticsearch-master-0       1/1     Running   0          7m17s   172.17.0.5   minikube   <none>           <none>
+elasticsearch-master-1       1/1     Running   0          7m17s   172.17.0.4   minikube   <none>           <none>
+elasticsearch-master-2       1/1     Running   0          7m17s   172.17.0.6   minikube   <none>           <none>
+pg-minikube-postgresql-0     1/1     Running   0          39m     172.17.0.3   minikube   <none>           <none>
 ```
 
 Finally, we will need the host IP address for the Elasticsearch master node when deploying FusionAuth. To retrieve it:
@@ -195,29 +195,28 @@ elasticsearch-master            ClusterIP   10.106.59.11    <none>        9200/T
 
 Now that we have a Kubernetes cluster actively running a database and Elasticsearch, we can go ahead and configure FusionAuth and deploy it to the cluster.
 
-There are a few values we will want to recall from previous sections:
+Start by downloading the example `values.yaml` for this guide:
 
-* *host* - `pg-test-postgresql.default.svc.cluster.local`
-* *database user* - `postgres` (created by default on install)
+```bash
+$ curl -O https://raw.githubusercontent.com/FusionAuth/charts/master/chart/examples/minikube/values.yaml
+```
+
+There are a few values we will want to recall from previous sections that we will use as overrides in our `values.yaml`:
+
+* *host* - `pg-minikube-postgresql.default.svc.cluster.local`
 * *database password* - `fooBarBaz`
 * *elasticsearch host* - `10.106.59.11`
 
-Deploy FusionAuth by using the default helm chart and overriding the required settings:
-
-*NOTE*: `database.password` will be auto-generated when the FusionAuth schema is applied to the database. This field is required by the chart so we provide a placeholder.
+Deploy FusionAuth by using the FusionAuth helm chart using the [field]#set# flag to apply override values. We will also use the `-f` option providing the path to our minikube `values.yaml`:
 
 ```bash
-helm install fa-minikube fusionauth/fusionauth \
-  --set replicaCount=1 \
-  --set database.host=pg-test-postgresql.default.svc.cluster.local \
-  --set database.user=fusionauth \
-  --set database.password="xxxxxxxx" \
-  --set database.root.user=postgres \
+helm install fa-minikube fusionauth/fusionauth -f ./values.yaml \
+  --set database.host=pg-minikube-postgresql.default.svc.cluster.local \
   --set database.root.password=fooBarBaz \
   --set search.host=10.106.59.11
 ```
 
-On success, the resulting output will describe how to access FusionAuth using `kubectl` port-forwarding:
+The resulting output will describe how to access FusionAuth using `kubectl` port-forwarding. This method tunnels traffic from the specified port on localhost to the target Kubernetes service and port. This can be useful for debugging.
 
 ```
 Get the application URL by running these commands:
@@ -226,20 +225,82 @@ Get the application URL by running these commands:
   kubectl port-forward svc/$SVC_NAME 9011:9011
 ```
 
-After applying port forwarding to port 9011, we will be presented with FusionAuth Setup Wizard!
+The common approach for directing external traffic to your cluster involves using an link:https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress], a component that defines how external traffic should be handled, and an link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] that implements those rules.
+
+The FusionAuth Helm chart installs an link:https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress] resource on the cluster when the [field]#ingress.enabled# property is set to `true` in our `values.yaml`. Here is the resource definition for this guide:
+
+```yaml
+# Source: fusionauth/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fa-minikube-fusionauth
+  labels:
+    app.kubernetes.io/name: fusionauth
+    helm.sh/chart: fusionauth-0.10.5
+    app.kubernetes.io/instance: fa-minikube
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: "localhost"
+      http:
+        paths:
+          - path: "/"
+            pathType: "Prefix"
+            backend:
+              service:
+                name: fa-minikube-fusionauth
+                port:
+                  name: https
+```
+
+The rules for this Ingress resource indicate that requests from `localhost` root path context, or `/`, should be directed to the `fa-minikube-fusionauth` service.
+
+The last thing we need is the link:link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller]. For that, we will use the NGINX Ingress controller provided as an addon to minikube.
+
+To enable the the Ingress controller, run the following command:
+
+```bash
+$ minikube addons enable ingress
+
+💡  After the addon is enabled, please run "minikube tunnel" and your ingress resources would be available at "127.0.0.1"
+    ▪ Using image k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.0
+    ▪ Using image k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.0
+    ▪ Using image k8s.gcr.io/ingress-nginx/controller:v1.0.0-beta.3
+🔎  Verifying ingress addon...
+```
+
+As directed, run the following to activate the minikube tunnel:
+
+```bash
+minikube tunnel
+
+❗  The service/ingress fusionauth-minikube-ingress-nginx-controller requires privileged ports to be exposed: [80 443]
+🔑  sudo permission will be asked for it.
+🏃  Starting tunnel for service fusionauth-minikube-ingress-nginx-controller.
+❗  The service/ingress fa-minikube-fusionauth requires privileged ports to be exposed: [80 443]
+Password:🔑  sudo permission will be asked for it.
+🏃  Starting tunnel for service fa-minikube-fusionauth.
+```
+
+Navigating to `localhost` in the browser will now direct us to FusionAuth running on the cluster.
 
 image::installation-guides/kubernetes/fa-initial-config.png[FusionAuth Setup Wizard,,width=1200,role=shadowed]
 
-At this point, we should have a total of 5 `READY` pods including FusionAuth!
+At this point, we should have a total of 6 `READY` pods including FusionAuth!
 
 ```bash
 $ kubectl get pods -n default -o wide
-NAME                                      READY   STATUS    RESTARTS   AGE    IP           NODE       NOMINATED NODE   READINESS GATES
-elasticsearch-master-0                    1/1     Running   0          86m    172.17.0.5   minikube   <none>           <none>
-elasticsearch-master-1                    1/1     Running   0          86m    172.17.0.4   minikube   <none>           <none>
-elasticsearch-master-2                    1/1     Running   0          86m    172.17.0.6   minikube   <none>           <none>
-fa-minikube-fusionauth-5b9df77774-xm7rs   1/1     Running   0          66m    172.17.0.7   minikube   <none>           <none>
-pg-test-postgresql-0                      1/1     Running   0          119m   172.17.0.3   minikube   <none>           <none>
+NAME                                                            READY   STATUS    RESTARTS   AGE     IP            NODE       NOMINATED NODE   READINESS GATES
+curl                                                            1/1     Running   0          7h39m   172.17.0.10   minikube   <none>           <none>
+elasticsearch-master-0                                          1/1     Running   0          23h     172.17.0.5    minikube   <none>           <none>
+elasticsearch-master-1                                          1/1     Running   0          23h     172.17.0.4    minikube   <none>           <none>
+elasticsearch-master-2                                          1/1     Running   0          23h     172.17.0.6    minikube   <none>           <none>
+fa-minikube-fusionauth-864b9f95f9-clsfd                         1/1     Running   0          7m31s   172.17.0.7    minikube   <none>           <none>
+fusionauth-minikube-ingress-nginx-controller-5899f64867-g4nk5   1/1     Running   0          129m    172.17.0.8    minikube   <none>           <none>
+pg-minikube-postgresql-0                                        1/1     Running   0          24h     172.17.0.3    minikube   <none>           <none>
 ```
 
 Congratulations! You are now running FusionAuth locally on a Kubernetes cluster.
