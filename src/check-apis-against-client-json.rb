@@ -17,6 +17,7 @@ IGNORED_FIELD_REGEXPS = [
   /user\.uniqueUsername/, # this is a derived, internal field
   /theme\.templates\.emailSend/, # this is a derived, internal field
   /theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
+  /entity\.type/, # we delegate in the doc to the entity type api.
 ]
 # option handling
 options = {}
