@@ -15,6 +15,8 @@ IGNORED_FIELD_REGEXPS = [
   /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
   /tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
   /user\.uniqueUsername/, # this is a derived, internal field
+  /theme\.templates\.emailSend/, # this is a derived, internal field
+  /theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
 ]
 # option handling
 options = {}
@@ -59,6 +61,9 @@ end.parse!
 def make_api_path(type)
   if type == "generic-connector-configuration"
     return "connectors/generic/"
+  end
+  if type == "family"
+    return "families/"
   end
   if type == "ldap-connector-configuration"
     return "connectors/ldap/"
