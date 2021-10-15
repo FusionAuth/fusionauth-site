@@ -17,8 +17,6 @@ IGNORED_FIELD_REGEXPS = [
   /user\.uniqueUsername/, # this is a derived, internal field
   /theme\.templates\.emailSend/, # this is a derived, internal field
   /theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
-  /entity\.type/, # we delegate in the doc to the entity type api.
-  /grant\.entity/, # we delegate in the doc to the grant api.
 ]
 # option handling
 options = {}
@@ -140,6 +138,9 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   # these are leafs of the tree and aren't fields with possible subfields.
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double" ]
 
+  # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
+  nested_attributes = ["grant.entity", "entity.type"]
+
   if options[:verbose]
     puts "opening: "+fn
   end
@@ -196,10 +197,10 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   fields && fields.length > 0 && fields.each do |fi| 
     field_type = fi[1]["type"]
     field_name = fi[0].to_s
-    full_field_name = "xxxxxxx"
+    
+    full_field_name = make_on_page_field_name(t)+ "." + field_name
     if known_types.include? field_type
       # we are at a leaf. We should see if we have any fields missing
-      full_field_name = make_on_page_field_name(t)+ "." + field_name
       if ! page_content.include? full_field_name 
         ignore = false
         # okay to have tenantId missing, as that is handled implicitly via API key locking or header if there is more than one tenant
@@ -212,6 +213,19 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         end
         unless ignore
           missing_fields.append({full_field_name: full_field_name, type: field_type})
+        end
+      end
+    elsif nested_attributes.include? full_field_name
+      if options[:verbose]
+        puts "not traversing #{full_field_name}, but checking if it is in the content"
+      end
+      if ! page_content.include? full_field_name 
+        missing_fields.append({full_field_name: full_field_name, type: field_type})
+      end
+      if full_field_name == "entity.type"
+        # special case for entity.type.id
+        if ! page_content.include? full_field_name + ".id"
+          missing_fields.append({full_field_name: full_field_name + ".id"})
         end
       end
     else
