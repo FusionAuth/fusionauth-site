@@ -33,7 +33,7 @@ This is the flow we are going to use to authenticate our users.  In this particu
 
 Using an authorization code grant has many advantages, including keeping communication about users on the trusted, server-side of web applications, and exchanging access codes for tokens also on that same trusted server side.  
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/openweb.png" alt="login screen" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/openweb.png" alt="graphic showing the client and server side of the app" class="img-fluid" figure=false %}
 
 ## What is FusionAuth?
 
@@ -87,7 +87,7 @@ Currently, we don't have a React SDK, therefore you can't directly import Fusion
 
 This is what your configuration might look like:
 
-  {% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/application-config.png" alt="login screen" class="img-fluid" figure=false %}
+  {% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/application-config.png" alt="application configuration UI screen" class="img-fluid" figure=false %}
 
 Congratulations! You now have a FusionAuth app to use with your React app.  
 
@@ -183,7 +183,7 @@ You also will need to generate an API key. To do so, navigate to `Settings -> AP
 
 Here is what the page you will get this info from looks like:
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/react-app-details.png" alt="login screen" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/react-app-details.png" alt="details of the react application in FusionAuth" class="img-fluid" figure=false %}
 
 And here is what your file may look like.  Remember, you must use your own app's details!
 
@@ -605,10 +605,11 @@ We could write a link directly to FusionAuth, but I think it’s cleaner to go t
 import LogInOut from './components/LogInOut.js';
 
 // ...
+```
 
 Also update your `client/index.js` like so:
 
-
+```js
 <header>
   <h1>FusionAuth Example: React</h1>
   <Greeting body={this.state.body}/>
@@ -664,14 +665,8 @@ const config = require('./config.js');
 
 ReactDOM.render(<App/>, document.querySelector('#main'));
 ```
- Remember the structure we detailed earlier:
 
- //add the graphic here
-
-React client <-> Express server <-> FusionAuth
-(mostly UI)      (our code)         (pre-made auth)
-
-We’ll use this principle and add in another Route to our Express application to start the login process and *redirect the browser over to FusionAuth*.  We do this on the server side, because the communication between our server and FusionAuth is over a trusted network, not over the open web. This is a very important component of building secure login experiences.
+During the login process, we add a route to our Express server that *redirects the browser over to FusionAuth*.  We do this on the server side, because the communication between our server and FusionAuth is over a trusted network, not over the open web. This is a very important component of building secure login experiences.
 
 We’ll add our new login route to handle this:
 
@@ -755,9 +750,9 @@ If that URI looks a bit messy, it’s because of the additional query parameters
 
 This is all standard OAuth auth code grant flow.
 
-Try navigating to `localhost:3001/login`. You should see a FusionAuth login form:
+Try navigating to `localhost:3001/login`. If you see a FusionAuth login form, you're all set!
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/loginscreen.png" alt="login screen" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/login.png" alt="login screen" class="img-fluid" figure=false %}
 
 When you successfully authenticate, you’ll just see Cannot GET /oauth-callback, because /oauth-callback doesn’t exist, yet. Remember you added `localhost:3001/oauth-callback` as an Authorized redirect URL in the FusionAuth admin panel, *and* as our redirectURI in `config.js`. This is the location that where FusionAuth redirects the browser back to after authentication in order to complete the OAuth workflow.  
 
@@ -773,12 +768,14 @@ Add the /oauth-callback route:
 touch server/routes/oauth-callback.js
 ```
 
+```
 server
 ├─routes
 │ ├─login.js
 │ ├─oauth-callback.js*
 │ └─user.js
 └─index.js
+```
 
 In `server.js/index.js`...
 
@@ -886,7 +883,7 @@ app.use(session(
 );
 ```
 
-// ...
+
 
 #  Displaying User Data
 Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. Its like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.' We can get additional user-specific info from `/registration` as well.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
