@@ -31,7 +31,8 @@ image::https://cloud.google.com/kubernetes-engine/images/cluster-architecture.sv
 
 To create a new cluster, execute the following.
 
-```
+[source,shell,title=Create GKE cluster]
+----
 $ gcloud container clusters create fusionauth-cluster \
 --num-nodes=1 \
 --region=us-west1 \
@@ -39,7 +40,7 @@ $ gcloud container clusters create fusionauth-cluster \
 --cluster-version=1.21.4-gke.2300 \
 --cluster-ipv4-cidr=10.44.0.0/14 \
 --services-ipv4-cidr=10.48.0.0/20
-```
+----
 
 * `num-nodes` - The number of nodes to be created in each zone. In this example, we specify the region of which consists of three zones. Therefore we will have a total of `3` nodes.
 * `region` - The region to create the cluster.
@@ -54,38 +55,35 @@ For more information on the link:https://cloud.google.com/sdk/gcloud/reference/c
 
 If link:https://cloud.google.com/sdk/gcloud/reference/container/clusters/create[create] completed successfully, the last thing `create` will do is update your local `~/.kube` file. If necessary, `gcloud` provides the following to update your configuration and set the newly created cluster as the active context.
 
-```
-gcloud container clusters get-credentials fusionauth-cluster
-```
+[source,shell,title=Get and update Kubeconfig]
+----
+$ gcloud container clusters get-credentials fusionauth-cluster
+----
 
 === Verify Cluster
 
 Execute the link:https://cloud.google.com/sdk/gcloud/reference/container/clusters/list[list] command to see GKE clusters that have been configured.
 
-```
+[source,shell,title=Get cluster information]
+----
 $ gcloud container clusters list
-```
 
-Output
-```
 NAME                LOCATION  MASTER_VERSION   MASTER_IP     MACHINE_TYPE  NODE_VERSION     NUM_NODES  STATUS
 fusionauth-cluster  us-west1  1.21.4-gke.2300  34.83.218.38  e2-medium     1.21.4-gke.2300  3          RUNNING
-```
+----
 
 We now have a fully functional provisioned EKS cluster. For good measure, view the nodes that have been created.
 Use `kubectl` to make requests to the Kubernetes API Server.
 
-```
+[source,shell,title=Get list of nodes running on the cluster]
+----
 $ kubectl get nodes -o wide
-```
 
-Output
-```
 NAME                                                STATUS   ROLES    AGE   VERSION            INTERNAL-IP   EXTERNAL-IP      OS-IMAGE                             KERNEL-VERSION   CONTAINER-RUNTIME
 gke-fusionauth-cluster-default-pool-2a2e7af5-nrrb   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.23   35.203.183.157   Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
 gke-fusionauth-cluster-default-pool-30c935b6-0mt4   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.24   35.185.202.53    Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
 gke-fusionauth-cluster-default-pool-431a5f55-rf11   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.22   34.145.99.163    Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
-```
+----
 
 Great! We have a three nodes in a `READY` status.
 
@@ -93,7 +91,8 @@ Great! We have a three nodes in a `READY` status.
 
 Create the database.
 
-```
+[source,shell,title=Create Cloud SQL for PostgreSQL instance]
+----
 $ gcloud beta sql instances create fusionauth-test-db \
 --project=fusionauth-gke \
 --database-version=POSTGRES_12 \
@@ -101,7 +100,7 @@ $ gcloud beta sql instances create fusionauth-test-db \
 --region=us-west1 \
 --network=default \
 --no-assign-ip
-```
+----
 
 * `project` - The Id of the shared VPC service.
 * `database-version` - Database engine type and version.
@@ -117,25 +116,22 @@ For more information on the link:https://cloud.google.com/sdk/gcloud/reference/b
 
 Google cloud SQL requires that you execute the following to configure the `postgres` user.
 
-```
+[source,shell,title=Set admin user password]
+----
 $ gcloud sql users set-password postgres \
 --instance=fusionauth-test-db \
 --password=fooBarBaz2021
-```
+----
 
 === Verify Database
 
-```
+[source,shell,title=Get list of Cloud SQL instances in the current project]
+----
 $ gcloud sql instances list
-```
 
-Output
-
-```
 NAME                 DATABASE_VERSION  LOCATION    TIER               PRIMARY_ADDRESS  PRIVATE_ADDRESS  STATUS
 fusionauth-test-db3  POSTGRES_12       us-west1-a  db-g1-small        -                10.50.144.5      RUNNABLE
-
-```
+----
 
 == Next Steps
 

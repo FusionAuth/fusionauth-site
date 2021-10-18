@@ -4,6 +4,9 @@ title: Deploy FusionAuth in a Kubernetes Cluster
 description: Deploy FusionAuth in a Kubernetes Cluster
 keywords: docker kubernetes k8s container aws
 ---
+
+:prewrap!:
+
 Kubernetes is an extensible and open-source container-orchestration system used for automating application deployments. Some of the most notable features it provides include self-healing, auto-scaling, and automated rollouts and rollbacks.
 
 Since the Kubernetes container runtime supports link:../docker[Docker], FusionAuth link:../docker[Docker] containers can be deployed to any Kubernetes cluster.
@@ -26,33 +29,39 @@ We will be using version `1.22` for this guide.
 
 To get started, the first thing to do is add the FusionAuth Helm Chart repository. This can be done with the following.
 
-```bash
+[source,shell,title=Add a chart repository]
+----
 $ helm repo add fusionauth https://fusionauth.github.io/charts
-```
+----
 
-To view the list of repos that we have added, use the `helm repo list` command:
-```
+To view the list of repositories that you have added use the following command:
+
+[source,text,title=List chart repositories]
+----
 NAME      	URL
 fusionauth	https://fusionauth.github.io/charts
-```
+----
 
-To search repos, use the `helm search repo <repo name>` command:
-```
+To search repositories:
+
+[source,shell,title=Search chart repositories]
+----
 $ helm search repo fusionauth
 
 NAME                 	CHART VERSION	APP VERSION	DESCRIPTION
 fusionauth/fusionauth	0.10.5       	1.30.1     	Helm chart for fusionauth
-```
+----
 
 === Helm Chart configuration
 
-Before we install, configure the `values.yaml` file contents used by the Helm Chart. The majority of the values for this chart have defaults recommended by FusionAuth but you will want to modify some application specific attributes.
+Before you install, configure the `values.yaml` file contents used by the Helm Chart. The majority of the values for this chart have defaults recommended by FusionAuth but you will want to modify some application specific attributes.
 
 Retrieve a copy of `values.yaml` for the FusionAuth helm chart.
 
-```bash
+[source,shell,title=Download chart values]
+----
 $ curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
-```
+----
 
 Open `values.yaml` with your favorite text editor.
 
@@ -60,18 +69,20 @@ Open `values.yaml` with your favorite text editor.
 
 The [field]#replicaCount# value indicates the number of instances of FusionAuth to run in a link:https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[ReplicaSet].
 
-By default, the [field]#replicaCount# value is set to `1`. This means that when we deploy our application to the cluster, Kubernetes will monitor the cluster to ensure that at least `1` instance of FusionAuth is running at all times.
+By default, the [field]#replicaCount# value is set to `1`. This means that when you deploy the application to the cluster, Kubernetes will monitor the cluster to ensure that at least `1` instance of FusionAuth is running at all times.
 
-```yaml
+[source,yaml,title=Replica count example configuration]
+----
 # replicaCount -- The number of fusionauth-app instances to run
 replicaCount: 1
-```
+----
 
 ==== Docker image
 
 The most current helm chart will always point to the latest version of FusionAuth. For this guide, we are on version `1.30.1`.
 
-```yaml
+[source,yaml,title=Image configuration example]
+----
 image:
   # image.repository -- The name of the docker repository for fusionauth-app
   repository: fusionauth/fusionauth-app
@@ -79,13 +90,14 @@ image:
   tag: 1.30.1
   # image.pullPolicy -- Kubernetes image pullPolicy to use for fusionauth-app
   pullPolicy: IfNotPresent
-```
+----
 
 ==== Database Configuration
 
 Now that we have our helm `values.yaml`, the first thing you will want to do is configure the database. Each of our FusionAuth pods will use this configuration when communicating with the database.
 
-```yaml
+[source,yaml,title=Database and search example configuration]
+----
 database:
   # database.protocol -- Should either be postgresql or mysql. Protocol for jdbc connection to database
   protocol: postgresql
@@ -117,7 +129,7 @@ database:
 search:
   # search.engine -- Defines backend for fusionauth search capabilities. Valid values for engine are 'elasticsearch' or 'database'.
   engine: database
-```
+----
 
 At this point, the required fields that need to be provided are [field]#host#, [field]#user#, [field]#password#, [field]#root.user#, and [field]#root.password#. It is important to retrieve these attributes when you initially setup your database.
 We are also going to set [field]#search.engine# field to `database`.
@@ -126,19 +138,22 @@ We are also going to set [field]#search.engine# field to `database`.
 
 Now that the desired `values.yaml` configuration has been set, its time to install the chart on our cluster. The `helm install` command is used to install a chart by name and can be applied using the syntax:
 
-```
-helm install [CHART NAME] [CHART] [flags]
-```
+[source,shell,title=Helm install format]
+----
+$ helm install [CHART NAME] [CHART] [flags]
+----
 
 Here we will install a chart including the `-f` flag to override the default values.
 
-```bash
+[source,shell,title=Install the FusionAuth chart]
+----
 $ helm install my-release fusionauth/fusionauth -f values.yaml
-```
+----
 
 Alternatively, values can be overridden using the `set` command using key/value pairs.
 
-```bash
+[source,shell,title=Install the FusionAuth chart using overrides]
+----
 $ helm install my-release fusionauth/fusionauth \
   --set replicaCount=1 \
   --set database.host=fusionauth-eks-example.ceeh9yeyi3hf.us-west-1.rds.amazonaws.com \
@@ -147,7 +162,7 @@ $ helm install my-release fusionauth/fusionauth \
   --set database.root.user=postgres \
   --set database.root.password=foobarbaz \
   --set search.engine=database \
-```
+----
 
 [NOTE.info]
 ====
@@ -156,7 +171,8 @@ Include the flag `--dry-run` if you would like to view the generated template be
 
 If the previous command was successful, you should see output similar to the following.
 
-```
+[source,text,title=Example output]
+----
 NAME: my-release
 LAST DEPLOYED: Sun Oct 10 19:23:41 2021
 NAMESPACE: default
@@ -167,22 +183,24 @@ NOTES:
   export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="{.items[0].metadata.name}")
   echo "Visit http://127.0.0.1:9011 to use your application"
   kubectl port-forward svc/$SVC_NAME 9011:9011
-```
+----
 
 We can also get the status of our deployment by using `kubectl`.
 
-```
+[source,shell,title=Get a list of deployments running on the cluster]
+----
 $ kubectl get deployments -o wide
-...
+
 NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                             SELECTOR
 my-release-fusionauth   1/1     1            1           4m16s   fusionauth   fusionauth/fusionauth-app:1.30.1   app.kubernetes.io/instance=my-release,app.kubernetes.io/name=fusionauth
-```
+----
 
 Finally, its time to verify our deployment via the browser. As instructed by the output above, we will create a proxy enabling us to connect to the cluster from localhost.
 
-```
+[source,shell,title=Example output]
+----
 Forwarding from 127.0.0.1:9011 -> 9011
-```
+----
 
 Navigate to http://localhost:9011
 

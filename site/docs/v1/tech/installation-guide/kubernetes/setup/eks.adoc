@@ -31,26 +31,29 @@ image::installation-guides/kubernetes/eksctl-architecture.png[EKS Architecture,w
 
 Prior to creating the cluster, its a good idea to either create a new key pair or have an existing pair on hand. This is because its necessary to provide a key along with the create command such that SSH is allowed on the nodes once they are created. If a key is not provided, this can not be changed later.
 
-```bash
+[source,shell,title=Create key pair]
+----
 $ aws ec2 create-key-pair --region us-west-1 --key-name eksExampleKeyPair
-```
+----
 
 If executed successfully, your new key credentials will be printed to standard out.
 
 Now create a new EKS cluster.
 
-```bash
+[source,shell,title=Create EKS cluster]
+----
 $ eksctl create cluster \
 --name fusionauth-example \
 --region us-west-1 \
 --with-oidc \
 --ssh-access \
 --ssh-public-key eksExampleKeyPair
-```
+----
 
 This command uses CloudFormation to provision all of the necessary resources that your EKS cluster needs. You should see output that looks something like this.
 
-```
+[source,text,title=CloudFormation output]
+----
 2021-10-05 14:18:03 [ℹ]  eksctl version 0.66.0
 2021-10-05 14:18:03 [ℹ]  using region us-west-1
 2021-10-05 14:18:03 [ℹ]  setting availability zones to [us-west-1a us-west-1c us-west-1a]
@@ -94,15 +97,17 @@ This command uses CloudFormation to provision all of the necessary resources tha
 2021-10-05 14:41:48 [ℹ]  node "ip-192-168-91-228.us-west-1.compute.internal" is ready
 2021-10-05 14:43:50 [ℹ]  kubectl command should work with "/Users/myuser/.kube/config", try 'kubectl get nodes'
 2021-10-05 14:43:50 [✔]  EKS cluster "fusionauth-example" in "us-west-1" region is ready
-```
+----
 
 We now have a fully functional provisioned EKS cluster. To get detailed information, particularly VPC, subnet ids, and security group id that we will need later on in this guide, use the CLI to describe our newly created cluster.
 
-```bash
+[source,shell,title=Get cluster information]
+----
 $ aws eks describe-cluster --name fusionauth-example
-```
+----
 
-```json
+[source,json,title=JSON output]
+----
 {
     "cluster": {
         "name": "fusionauth-example",
@@ -133,22 +138,19 @@ $ aws eks describe-cluster --name fusionauth-example
             "serviceIpv4Cidr": "10.100.0.0/16"
         }
 }
-```
-
+----
 
 Now review the Kubernetes nodes that have been created.
 This is where `kubectl` comes in handy. Looking at the previous log, you will notice that one of the last things `etsctl` did was update our `~/.kube/config` file with our new cluster configuration. We can now go ahead and use `kubectl` to make requests to the Kubernetes API Server.
 
-```bash
+[source,shell,title=Get EKS cluster nodes]
+----
 $ kubectl get nodes -o wide
-```
 
-Output
-```
 NAME                                           STATUS   ROLES    AGE     VERSION              INTERNAL-IP      EXTERNAL-IP    OS-IMAGE         KERNEL-VERSION                CONTAINER-RUNTIME
 ip-192-168-45-153.us-west-1.compute.internal   Ready    <none>   4m57s   v1.20.7-eks-135321   192.168.45.153   50.18.29.248   Amazon Linux 2   5.4.149-73.259.amzn2.x86_64   docker://20.10.7
 ip-192-168-91-228.us-west-1.compute.internal   Ready    <none>   4m54s   v1.20.7-eks-135321   192.168.91.228   3.101.73.65    Amazon Linux 2   5.4.149-73.259.amzn2.x86_64   docker://20.10.7
-```
+----
 
 Great! We have two instances in a `READY` status.
 
@@ -159,16 +161,18 @@ For this setup, we will create a Postgres RDS instance required for FusionAuth i
 Since an RDS instance needs to be assigned to a database subnet group, you may either assign it to an existing group with subnets in the same VPC or create a new one.
 Here, we create a new subnet group using the subnets assigned to our cluster in the cluster creation step.
 
-```bash
+[source,shell,title=Create DB subnet group]
+----
 $ aws rds create-db-subnet-group \
 --db-subnet-group-name fusionauth-example-db-group \
 --db-subnet-group-description "FusionAuth example database subnet group" \
 --subnet-ids "subnet-091347798a21eabe2" "subnet-0cb7540073e8b30aa" "subnet-052f8750345045581" "subnet-040e32678cf7a85da"
-```
+----
 
 Now create the database. You can retrieve the necessary [field]#db-subnet-group# and [field]#vpc-security-group-ids# referring to previous creation steps above.
 
-```bash
+[source,shell,title=Create Postgresql DB instance]
+----
 $ aws rds create-db-instance \
     --db-instance-identifier fusionauth-eks-example \
     --allocated-storage 20 \
@@ -181,17 +185,18 @@ $ aws rds create-db-instance \
     --db-subnet-group fusionauth-example-db-group \
     --availability-zone us-west-1c \
     --port 5432
-```
+----
 
 Add an inbound rule to the security group to allow nodes to access our database.
 
-```bash
+[source,shell,title=Create inbound rule]
+----
 $ aws ec2 authorize-security-group-ingress \
     --group-id sg-08b95dbacc02ba628 \
     --protocol tcp \
     --port 5432 \
     --source-group sg-08b95dbacc02ba628
-```
+----
 
 We are done! To confirm the database has been created, we can simply ask AWS using the [field]#db-instance-identifier# we used on the creation step.
 
@@ -200,13 +205,15 @@ We are done! To confirm the database has been created, we can simply ask AWS usi
 It may take a few minutes for the provisioning process to complete.
 ====
 
-```bash
+[source,shell,title=Get DB instance information]
+----
 $ aws rds describe-db-instances --db-instance-identifier fusionauth-eks-example
-```
+----
 
 The resulting output should contain an `Endpoint` attribute. This value will be necessary when configuring your FusionAuth deployment.
 
-```json
+[source,json,title=JSON output]
+----
 {
     "DBInstances": [
         {
@@ -219,13 +226,15 @@ The resulting output should contain an `Endpoint` attribute. This value will be 
                 "Address": "fusionauth-eks-example.sadkjl222.us-west-1.rds.amazonaws.com",
                 "Port": 5432
             },
-```
+    ...
+----
 
 === Create an AWS Elasticsearch Domain
 
 Define a policy that will enable EKS to talk to the Elasticsearch domain. Copy the following JSON, replacing the value for [field]#ACCOUNT_ID#, to a local file and save it as `eks-policy.json`:
 
-```json
+[source,json,title=Policy JSON]
+----
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -238,27 +247,30 @@ Define a policy that will enable EKS to talk to the Elasticsearch domain. Copy t
     }
   ]
 }
-```
+----
 
 Create the policy:
 
-```bash
+[source,shell,title=Create access policy]
+----
 $ aws iam create-policy \
 --policy-name fusionauth-es-policy \
 --policy-document file://eks-policy.json
-```
+----
 
 Attach the policy to the service role that assigned to our EKS cluster:
 
-```bash
+[source,shell,title=Assign policy to EKS role]
+----
 $ aws iam attach-role-policy \                                                                                                                                                                               ✔
   --policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/fusionauth-es-policy \
   --role-name eksctl-fusionauth-example-cluster-ServiceRole-1EED6M5NXUF3
-```
+----
 
 Create a domain access policy to be assigned to the new Elasticsearch cluster. Copy the following, replacing the value for [field]#ACCOUNT_ID#, to a local file and save it as `access-policy.json`:
 
-```json
+[source,json,title=Create Elasticsearch domain access policy]
+----
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -272,11 +284,12 @@ Create a domain access policy to be assigned to the new Elasticsearch cluster. C
     }
   ]
 }
-```
+----
 
 Create a new cluster:
 
-```bash
+[source,shell,title=Create the Elasticsearch cluster]
+----
 aws es create-elasticsearch-domain \
 --domain-name fusionauth-es-2 \
 --elasticsearch-version 7.10 \
@@ -284,7 +297,7 @@ aws es create-elasticsearch-domain \
 --vpc-options SubnetIds=subnet-040e32678cf7a85da,SecurityGroupIds=sg-08b95dbacc02ba628 \
 --ebs-options EBSEnabled=true,VolumeType=standard,VolumeSize=10 \
 --access-policies file://access-policy.json
-```
+----
 
 === Create an Ingress Controller
 
@@ -292,19 +305,25 @@ The last thing we need is an link:https://kubernetes.io/docs/concepts/services-n
 
 To install the the Ingress controller, add the repo and install the Helm chart by running the following commands:
 
-```bash
+[source,shell,title=Add ingress-nginx chart repository]
+----
 $ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+----
 
+[source,shell,title=Install ingress-nginx chart]
+----
 $ helm install fa-loadbalancer ingress-nginx/ingress-nginx
-```
+----
 
 When completed, get the active services running on the EKS cluster:
 
-```bash
+[source,shell,title=Get services information]
+----
 $ kubectl get services
+
 NAME                                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)                      AGE
 fusionauth-ingress-nginx-controller             LoadBalancer   10.100.246.131   a4413292c6477456b8c1cde8f5260513-137482286.us-west-1.elb.amazonaws.com       80:30048/TCP,443:32484/TCP   37m
-```
+----
 
 A new service will be available of type `LoadBalancer` and containing an external IP value corresponding to a newly provisioned Elastic Load Balancer host name. External traffic will now be directed to the EKS cluster via this ingress.
 
