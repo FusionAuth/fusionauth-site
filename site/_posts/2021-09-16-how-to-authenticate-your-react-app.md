@@ -17,11 +17,11 @@ In this tutorial, you will learn how to integrate a React app with FusionAuth to
 
 We'll start with downloading and configuring FusionAuth, then create a login/logout React component, then finish by building login/logout functionality with our Express server and React in tandem. We will use an API-first approach so that you can have more freedom and control of how your app looks on the login and logout page.
 
-## What is Authentication?
+## What is authentication?
 
 *Authentication* is the process of a user proving they are who they say they are to an external resource server so that they can access resources specific to them. Think of it like moving through customs when you visit another country. In order to enter, you must present valid, verified documentation in the form of a passport that proves you are who you say you are.  Authorization workflows such as OAuth 2.0 make similar use of verified, trusted objects such as tokens, which are passed between clients, authorization servers, and resource servers to prove that a user is who they say they are. Only once that proof is verified is the user allowed to access the resources they want, such as a bank account, social media homepage, or email inbox.
 
-## What is Authorization?
+## What is authorization?
 
 While authentication is proving you are who you say you are, *authorization* is the process of allowing a user to access certain things based on their credentials.  Back to the passport analogy, a traveler may have an extra stamp in their passport that proves they are a diplomat or a journalist. Because of those stamps, they can now enter zones that are off-limits to regular travelers, such as conflict areas or diplomatic buildings.  In a similar fashion, if a user is a website administrator, they can access certain parts of that website that a regular user cannot.  An 'authorization server', like FusionAuth, is a server that provides services to both authenticate and authorize users.
 
@@ -70,7 +70,7 @@ Instead of manually setting up FusionAuth using the admin UI, you can use Kickst
 
 You'll need to edit that Kickstart file and update the application name, API Key, and redirect URLs with your specific app's data.
 
-### Manual Configuration
+### Manual configuration
 
 Now, you must configure an application in FusionAuth as well as link the user account with which you’ll log in.
 
@@ -91,7 +91,7 @@ This is what your configuration might look like:
 
 Congratulations! You now have a FusionAuth app to use with your React app.  
 
-### Create a User and Link them to Your FusionAuth App
+### Create a user and link them to your FusionAuth app
 
 Now, we will link a user to your FusionAuth app via the dashboard. You can manage all of your users from this centralized location. Of course, you can register users from your app if you want to build that functionality later on, but that is beyond the scope of this tutorial.
 
@@ -108,9 +108,9 @@ Now, we will link a user to your FusionAuth app via the dashboard. You can manag
 
 Well done! You now have at least one user that is linked to your `React Auth` app. Not bad for your app being in development.
 
-## Create the ReactUI
+## Create the React UI
 
-### Set up the Project Folders and Configuration
+### Set up the project folders and configuration
 
 We're going to use both Express and React for this application, so let's start with our folder structure. From the command line, run the following commands:
 
@@ -208,7 +208,7 @@ module.exports = {
 };
 ```
 
-### Write the React Application
+### Write the React application
 
 Now, we're going to write the React frontend.
 
@@ -318,7 +318,7 @@ Now, let's set the state of this email based on a call to our Express server.
 
 First, we need to set up that server!
 
-## Create the Express Server
+## Create the Express server
 
 *"Wait", you may say, "why do I need an Express server again?"*
 
@@ -375,7 +375,7 @@ Your completed `package.json` should look like this:
 }
 ```
 
-### Write the Express Server
+### Write the Express server
 
 We need to draw some routes for our Express server to use.  
 
@@ -758,7 +758,7 @@ When you successfully authenticate, you’ll just see Cannot GET /oauth-callback
 
 But why specify this? Because without specifying where to send the app after authenticating, a bad actor can come in and redirect your app to their malicious server once a user has logged in. That would be no good!
 
-### Exchange the Auth Code for an Access Token
+### Exchange the auth code for an access token
 
 An Authorization Code isn’t enough to access the user’s resources, though. For that, we need an Access Token. This is standard OAuth, not something unique to FusionAuth. This step is called the Code Exchange, because we send the auth code to FusionAuth’s `/token` endpoint and receive an `access_token` in exchange.  Then that access token is passed to the resource server in exchange for the desired resources.  
 
@@ -885,7 +885,7 @@ app.use(session(
 
 
 
-#  Displaying User Data
+#  Displaying user data
 Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. Its like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.' We can get additional user-specific info from `/registration` as well.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
 
 If there’s a token in session storage, we’ll call `/introspect` to get info out of that token. Part of the info returned from `/introspect` is the boolean property `active`, which is true until the Access Token expires (you can configure how long Access Tokens live in the FusionAuth admin panel). If the token is still good, we’ll call `/registration` and return the JSON from both requests.
@@ -977,7 +977,7 @@ Now, go through the login process, and you should see “Welcome, [your email ad
 
 That’s login sorted. The next thing you’ll probably want to tackle is logout.
 
-## Logging Out
+## Logging out
 Just like `/login`, we’ll create a `/logout` route to make logging out easily accessible anywhere in our React client:
 
 ```bash
@@ -1048,7 +1048,7 @@ FusionAuth has made troubleshooting easy. If you’ve missed a setting in your O
 
 You might find that after a restart or a long time between logins, your FusionAuth instance will log out. When that happens, clicking the login on your login form will add an additional step for you to log into your FusionAuth instance again so that it can access the needed credentials.
 
-## Take it Further
+## Take it further
 
 Some areas that you may want explore further::
   - Using PKCE (pronounced 'Pixie') to give an additional layer of security to your React app's login workflows.
