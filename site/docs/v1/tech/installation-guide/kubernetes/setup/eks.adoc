@@ -106,11 +106,11 @@ $ aws eks describe-cluster --name fusionauth-example
 {
     "cluster": {
         "name": "fusionauth-example",
-        "arn": "arn:aws:eks:us-west-1:172023253951:cluster/fusionauth-example",
+        "arn": "arn:aws:eks:us-west-1:<ACCOUNT_ID>:cluster/fusionauth-example",
         "createdAt": "2021-10-05T14:19:21.612000-06:00",
         "version": "1.20",
         "endpoint": "https://EC8E2DC8514200E91A4748FA6EE525A4.yl4.us-west-1.eks.amazonaws.com",
-        "roleArn": "arn:aws:iam::172023253951:role/eksctl-fusionauth-example-cluster-ServiceRole-1EED6M5NXUF3",
+        "roleArn": "arn:aws:iam::<ACCOUNT_ID>:role/eksctl-fusionauth-example-cluster-ServiceRole-1EED6M5NXUF3",
         "resourcesVpcConfig": {
             "subnetIds": [
                 "subnet-091347798a21eabe2",
@@ -220,6 +220,92 @@ The resulting output should contain an `Endpoint` attribute. This value will be 
                 "Port": 5432
             },
 ```
+
+=== Create an AWS Elasticsearch Domain
+
+Define a policy that will enable EKS to talk to the Elasticsearch domain. Copy the following JSON, replacing the value for [field]#ACCOUNT_ID#, to a local file and save it as `eks-policy.json`:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "es:*"
+      ],
+      "Resource": "arn:aws:es:us-west-1:<ACCOUNT_ID>:domain/fusionauth-es",
+      "Effect": "Allow"
+    }
+  ]
+}
+```
+
+Create the policy:
+
+```bash
+aws iam create-policy \
+--policy-name fusionauth-es-policy \
+--policy-document file://eks-policy.json
+```
+
+Attach the policy to the service role that assigned to our EKS cluster:
+
+```bash
+aws iam attach-role-policy \                                                                                                                                                                               ✔
+  --policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/fusionauth-es-policy \
+  --role-name eksctl-fusionauth-example-cluster-ServiceRole-1EED6M5NXUF3
+```
+
+Create a domain access policy to be assigned to the new Elasticsearch cluster. Copy the following, replacing the value for [field]#ACCOUNT_ID#, to a local file and save it as `access-policy.json`:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:*",
+      "Resource": "arn:aws:es:us-west-1:<ACCOUNT_ID>:domain/fusionauth-es/*"
+    }
+  ]
+}
+```
+
+Create a new cluster:
+
+```bash
+aws es create-elasticsearch-domain \
+--domain-name fusionauth-es \
+--elasticsearch-version 7.10 \
+--elasticsearch-cluster-config InstanceType=m5.large.search,InstanceCount=1 \
+--ebs-options EBSEnabled=true,VolumeType=standard,VolumeSize=10 \
+--access-policies file://access-policy.json
+```
+
+=== Create an Ingress Controller
+
+The last thing we need is an link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller]. We will use the NGINX Ingress controller for this.
+
+To install the the Ingress controller, add the repo and install the Helm chart by running the following commands:
+
+```bash
+$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+
+$ helm install fa-loadbalancer ingress-nginx/ingress-nginx
+```
+
+When completed, get the active services running on the EKS cluster:
+
+```
+kubectl get services
+NAME                                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)                      AGE
+fusionauth-ingress-nginx-controller             LoadBalancer   10.100.246.131   a4413292c6477456b8c1cde8f5260513-137482286.us-west-1.elb.amazonaws.com       80:30048/TCP,443:32484/TCP   37m
+```
+
+A new service will be available of type `LoadBalancer` and containing an external IP value corresponding to a newly provisioned Elastic Load Balancer host name. External traffic will now be directed to the EKS cluster via this ingress.
 
 == Next Steps
 
