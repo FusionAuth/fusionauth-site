@@ -32,9 +32,10 @@ Navigate to link:https://minikube.sigs.k8s.io/docs/start/[minikube start] and co
 
 For example, if you are running on `macOS` with `x86-64` architecture, Homebrew is a popular [field]#installer type#:
 
-```bash
+[source,shell,title=Install minikube]
+----
 $ brew install minikube
-```
+----
 
 === Start minikube
 
@@ -47,9 +48,10 @@ Before proceeding, make sure Docker Desktop has sufficient resources allocated. 
 
 Start minikube by additionally specifying [field]#cpus# and [field]#memory#.
 
-```bash
+[source,shell,title=Start minikube]
+----
 $ minikube start --cpus 4 --memory 5g
-```
+----
 
 [NOTE.note]
 ====
@@ -58,7 +60,8 @@ This minikube setting is a general recommendation that has been tested for this 
 
 When the command finishes, it will configure `kubectl` to point to the minikube cluster. We can confirm this by checking the status:
 
-```bash
+[source,shell,title=Get minikube status]
+----
 $ minikube status
 
 minikube
@@ -67,11 +70,12 @@ host: Running
 kubelet: Running
 apiserver: Running
 kubeconfig: Configured
-```
+----
 
 Or by running a command to view pods running on the cluster:
 
-```bash
+[source,shell,title=Get all pods deployed on the cluster]
+----
 $ kubectl get pods -A
 
 NAMESPACE     NAME                               READY   STATUS    RESTARTS       AGE
@@ -82,29 +86,36 @@ kube-system   kube-controller-manager-minikube   1/1     Running   0            
 kube-system   kube-proxy-2h8b2                   1/1     Running   0              9m38s
 kube-system   kube-scheduler-minikube            1/1     Running   0              9m51s
 kube-system   storage-provisioner                1/1     Running   1 (9m8s ago)   9m50s
-```
+----
 
 == Deploy Postgresql
 
 Start by adding the link:https://artifacthub.io/packages/helm/bitnami/postgresql[bitnami helm repository] that contains the Postgresql chart:
 
-```bash
+[source,shell,title=Add postgresql helm repo]
+----
 $ helm repo add bitnami https://charts.bitnami.com/bitnami
+----
 
+[source,shell,title=List chart repositories]
+----
 $ helm repo list
 
 NAME      	URL
 bitnami   	https://charts.bitnami.com/bitnami
-```
+----
 
 Install the chart using `helm`. Set the [field]#postgresqlPassword# value using the `set` flag for the `postgres` user. In this example, the [field]#release# field is set to `pg-minikube`:
 
-```bash
+[source,shell,title=Install the postgresql helm chart]
+----
 $ helm install pg-minikube bitnami/postgresql --set postgresqlPassword=fooBarBaz
-```
+----
 
 When completed successfully, the output will contain some useful information about our deployment:
-```
+
+[source,helmtext,title=Helm output]
+----
 ** Please be patient while the chart is being deployed **
 
 PostgreSQL can be accessed via port 5432 on the following DNS names from within your cluster:
@@ -119,38 +130,39 @@ To connect to your database run the following command:
 
     kubectl run pg-minikube-postgresql-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:11.13.0-debian-10-r40 --env="PGPASSWORD=$POSTGRES_PASSWORD" --command -- psql --host pg-minikube-postgresql -U postgres -d postgres -p 5432
 
-
-
 To connect to your database from outside the cluster execute the following commands:
 
     kubectl port-forward --namespace default svc/pg-minikube-postgresql 5432:5432 &
     PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 -U postgres -d postgres -p 5432
-```
+----
 
 When we deploy FusionAuth, we will need to use the DNS name `pg-minikube-postgresql.default.svc.cluster.local` as seen above and the password that we set in the install command.
 
 Confirm our deployment by retrieving active pods in the cluster. The following command requests pods in the `default` namespace with output (`-o`) containing additional information such as [field]#IP Address#:
 
-```bash
+[source,shell,title=Get pods in the default namespace]
+----
 $ kubectl get pods -n default -o wide
-```
+----
 
 The resulting output will show `1/1` pg-minikube-postgresql pod in a `READY` state:
 
-```
+[source,shell,title=Output]
+----
 NAME                       READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
 pg-minikube-postgresql-0   1/1     Running   0          8m33s   172.17.0.3   minikube   <none>           <none>
-```
+----
 
 We can also retrieve active services on the cluster. A Kubernetes link:https://kubernetes.io/docs/concepts/services-networking/service/[Service] exposes applications running on a pod as a network service. The following command will display the new service exposing the Postgresql application with an IP address running on port `5432`:
 
-```bash
+[source,shell,title=Get services]
+----
 $ kubectl get services -n default
 
 NAME                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
 pg-minikube-postgresql            ClusterIP   10.108.174.128   <none>        5432/TCP   27m
 pg-minikube-postgresql-headless   ClusterIP   None             <none>        5432/TCP   27m
-```
+----
 
 [NOTE.note]
 ====
@@ -161,25 +173,31 @@ You might have noticed the additional postgresql service `pg-minikube-postgresql
 
 Start by adding the link:https://artifacthub.io/packages/helm/elastic/elasticsearch[Elasticsearch Helm Chart] repository:
 
-```bash
+[source,shell,title=Add elasticsearch helm repo]
+----
 $ helm repo add elastic https://helm.elastic.co
+----
 
+[source,shell,title=List chart repositories]
+----
 $ helm repo list
 
 NAME      	URL
 bitnami   	https://charts.bitnami.com/bitnami
 elastic   	https://helm.elastic.co
-```
+----
 
 Before installing, we will download a copy of a recommended configuration for minikube virtual machines:
 
-```bash
+[source,shell,title=Download example minikube configuration]
+----
 $ curl -O https://raw.githubusercontent.com/elastic/Helm-charts/master/elasticsearch/examples/minikube/values.yaml
-```
+----
 
 The contents of this configuration uses a smaller JVM heap, smaller memory per pods requests, and smaller persistent volumes:
 
-```yaml
+[source,helmyaml,title=Configuration details]
+----
 # Permit co-located instances for solitary minikube virtual machines.
 antiAffinity: "soft"
 
@@ -202,39 +220,43 @@ volumeClaimTemplate:
   resources:
     requests:
       storage: 100M
-```
+----
 
 Now install the chart using the minikube yaml configuration:
 
-```bash
+[source,shell,title=Install elasticsearch chart]
+----
 $ helm install es-minikube elastic/elasticsearch -f values.yaml
-```
+----
 
 Confirm our deployment by retrieving active pods in the cluster:
 
-```bash
+[source,shell,title=Get pods]
+----
 $ kubectl get pods -n default -o wide
-```
+----
 
 The resulting output will show three pods for each elasticsearch node:
 
-```
+[source,shell,title=Output]
+----
 NAME                         READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
 elasticsearch-master-0       1/1     Running   0          7m17s   172.17.0.5   minikube   <none>           <none>
 elasticsearch-master-1       1/1     Running   0          7m17s   172.17.0.4   minikube   <none>           <none>
 elasticsearch-master-2       1/1     Running   0          7m17s   172.17.0.6   minikube   <none>           <none>
 pg-minikube-postgresql-0     1/1     Running   0          39m     172.17.0.3   minikube   <none>           <none>
-```
+----
 
 The installed chart also exposes the `elasticsearch-master` link:https://kubernetes.io/docs/concepts/services-networking/service/[Service] running at a dedicated IP address on port `9200`:
 
-```bash
+[source,shell,title=Get services]
+----
 $ kubectl get services -n default
 
 NAME                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
 elasticsearch-master              ClusterIP   10.99.4.16       <none>        9200/TCP,9300/TCP   13m
 elasticsearch-master-headless     ClusterIP   None             <none>        9200/TCP,9300/TCP   13m
-```
+----
 
 === Kubernetes DNS
 
@@ -255,33 +277,37 @@ Now that we have a Kubernetes cluster actively running a database and Elasticsea
 
 Start by downloading the example `values.yaml` for this guide:
 
-```bash
+[source,shell,title=Download example FusionAuth configuration]
+----
 $ curl -O https://raw.githubusercontent.com/FusionAuth/charts/master/chart/examples/minikube/values.yaml
-```
+----
 
 Deploy FusionAuth by using the FusionAuth helm chart using the [field]#set# flag to apply override values. We will also use the `-f` option providing the path to our minikube `values.yaml`:
 
-```bash
+[source,shell,title=Install FusionAuth chart]
+----
 $ helm install fa-minikube fusionauth/fusionauth -f ./values.yaml \
   --set database.host=pg-minikube-postgresql.default.svc.cluster.local \
   --set database.root.password=fooBarBaz \
   --set search.host=elasticsearch-master.default.svc.cluster.local
-```
+----
 
 At this point we can now access FusionAuth using `kubectl` port-forwarding. This method tunnels traffic from the specified port on localhost to the target Kubernetes service and port. This can be useful for debugging.
 
-```
+[source,helmtext,title=Output]
+----
 Get the application URL by running these commands:
   export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=fa-minikube" -o jsonpath="{.items[0].metadata.name}")
   echo "Visit http://127.0.0.1:9011 to use your application"
   kubectl port-forward svc/$SVC_NAME 9011:9011
-```
+----
 
 The common approach for directing external traffic to your cluster involves using an link:https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress], a component that defines how external traffic should be handled, and an link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] that implements those rules.
 
 The FusionAuth Helm chart installs an link:https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress] resource on the cluster when the [field]#ingress.enabled# property is set to `true` in our `values.yaml`. Here is the resource definition for this guide:
 
-```yaml
+[source,helmyaml,title=FusionAuth Ingress]
+----
 # Source: fusionauth/templates/ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -306,7 +332,7 @@ spec:
                 name: fa-minikube-fusionauth
                 port:
                   name: https
-```
+----
 
 The rules for this Ingress resource indicate that requests from `localhost` root path context, or `/`, should be directed to the `fa-minikube-fusionauth` service.
 
@@ -314,17 +340,22 @@ The last thing we need is an link:https://kubernetes.io/docs/concepts/services-n
 
 To install the the Ingress controller, add the repo and install the Helm chart by running the following commands:
 
-```bash
+[source,shell,title=Add ingress-nginx chart]
+----
 $ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+----
 
+[source,shell,title=Install ingress-nginx chart]
+----
 $ helm install fa-loadbalancer ingress-nginx/ingress-nginx
-```
+----
 
 When completed, you will see a new service of type `LoadBalancer` and external IP value of `<pending`. Once we allow external traffic to reach minikube, the external IP address will be set to `127.0.0.1`, or `localhost`, as defined in our FusionAuth ingress definition.
 
 Use minikube tunnel to direct external network traffic to the cluster:
 
-```bash
+[source,shell,title=minikube tunnel]
+----
 $ minikube tunnel
 ❗  The service/ingress fa-loadbalancer-ingress-nginx-controller requires privileged ports to be exposed: [80 443]
 🔑  sudo permission will be asked for it.
@@ -333,7 +364,7 @@ $ minikube tunnel
 🔑  sudo permission will be asked for it.
 Password:🏃
 Starting tunnel for service fa-minikube-fusionauth.
-```
+----
 
 Navigating to `localhost` in the browser will now direct us to FusionAuth running on the cluster.
 
@@ -341,7 +372,8 @@ image::installation-guides/kubernetes/fa-initial-config.png[FusionAuth Setup Wiz
 
 At this point, we should have a total of 6 `READY` pods including FusionAuth!
 
-```bash
+[source,shell,title=Get pods]
+----
 $ kubectl get pods -n default -o wide
 NAME                                                            READY   STATUS    RESTARTS   AGE     IP            NODE       NOMINATED NODE   READINESS GATES
 curl                                                            1/1     Running   0          7h39m   172.17.0.10   minikube   <none>           <none>
@@ -351,7 +383,7 @@ elasticsearch-master-2                                          1/1     Running 
 fa-minikube-fusionauth-864b9f95f9-clsfd                         1/1     Running   0          7m31s   172.17.0.7    minikube   <none>           <none>
 fusionauth-minikube-ingress-nginx-controller-5899f64867-g4nk5   1/1     Running   0          129m    172.17.0.8    minikube   <none>           <none>
 pg-minikube-postgresql-0                                        1/1     Running   0          24h     172.17.0.3    minikube   <none>           <none>
-```
+----
 
 Congratulations! You are now running FusionAuth locally on a Kubernetes cluster.
 
