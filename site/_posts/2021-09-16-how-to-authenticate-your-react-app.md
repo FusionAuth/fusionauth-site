@@ -89,7 +89,7 @@ This is what your configuration might look like:
 
   {% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/application-config.png" alt="application configuration UI screen" class="img-fluid" figure=false %}
 
-Congratulations! You now have a FusionAuth app to use with your React app.  
+Congratulations! You have configured FusionAuth to work with your React app. Now, let's set up the user who will actually log in.
 
 ### Create a user and link them to your FusionAuth app
 
