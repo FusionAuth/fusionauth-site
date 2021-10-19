@@ -411,7 +411,7 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-Why is this in an object? The reason is FusionAuth will ultimately send us the user object when a user logs in, so we are configuring our server to be able to  handle that.
+Why is this in an object? The reason is FusionAuth will ultimately send us the user object when a user logs in. We are starting out by using mock data. Our server will send the email address, and then our react application can display it.
 
 * A note about the user object: the user object has several properties that it automatically ships with. Email is one of them, and of course username, etc.  For more information on what sorts of data you can get on a user, check out our [user API docs](https://fusionauth.io/docs/v1/tech/apis/users/#retrieve-a-user).
 
