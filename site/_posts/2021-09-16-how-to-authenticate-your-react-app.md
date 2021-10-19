@@ -44,7 +44,7 @@ FusionAuth is a complete auth platform that saves your team time and resources b
 
 There are a few things that you need to have in place before you get started:
 
-* You need to have either a FusionAuth Cloud account or install their self-hosted version, available for free. Follow the [FusionAuth 5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide/) to get started with your installation.  
+* You need to have either a FusionAuth Cloud account or install their self-hosted version, available for free. Follow the [FusionAuth 5-Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide/) to get started with your installation.  
 * Your Node version should be at least 14.17.6. We use this version in this tutorial.  
 * We use React 17.0.2 and suggest you use the same or most recent stable build.
 
