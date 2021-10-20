@@ -33,7 +33,7 @@ $ az group create --name fusionauthResourceGroup --location westus
 [source,json,title=JSON output]
 ----
 {
-  "id": "/subscriptions/fa2713cf-00cf-45f1-95a4-f87c48947da1/resourceGroups/fusionauthResourceGroup",
+  "id": "/subscriptions/2683a458-c361-4b5e-87d9-a4e5237d5b91/resourceGroups/fusionauthResourceGroup",
   "location": "westus",
   "managedBy": null,
   "name": "fusionauthResourceGroup",
@@ -139,13 +139,13 @@ Upon successful database creation, you will receive a JSON object that contains 
 [source,json,title=JSON output]
 ----
 {
-  "connectionString": "postgresql://postgres:foobarbaz@fusionauth-db-example.postgres.database.azure.com/postgres?sslmode=require",
+  "connectionString": "postgresql://postgres:<your-password>@fusionauth-db-example.postgres.database.azure.com/postgres?sslmode=require",
   "databaseName": "flexibleserverdb",
   "firewallName": "AllowAllAzureServicesAndResourcesWithinAzureIps_2021-10-10_23-34-29",
   "host": "fusionauth-db-example.postgres.database.azure.com",
-  "id": "/subscriptions/af1327fc-cf00-45f1-a22b-e78c489741ad/resourceGroups/fusionauthResourceGroup/providers/Microsoft.DBforPostgreSQL/flexibleServers/fusionauth-db-example",
+  "id": "/subscriptions/2683a458-c361-4b5e-87d9-a4e5237d5b91/resourceGroups/fusionauthResourceGroup/providers/Microsoft.DBforPostgreSQL/flexibleServers/fusionauth-db-example",
   "location": "West US",
-  "password": "foobarbaz",
+  "password": "your-password",
   "resourceGroup": "fusionauthResourceGroup",
   "skuname": "Standard_D2s_v3",
   "username": "postgres",
@@ -159,6 +159,104 @@ Take note of the database username, password and hostname, as those will be need
 ----
 $ az postgres flexible-server list
 ----
+
+== Install the Elastic Stack (ELK)
+
+Recall the resource group created in the first steps of this guide link:<<Create a resource group>>
+The first step will be to create a resource group if you have not already done so.
+
+[source,shell,title=Create a resource group]
+----
+$ az group create --name fusionauthRG --location eastus
+----
+
+Next you will need to create a virtual machine to run Elasticsearch on. You will want to supply your public SSH key so that you can access the VM once it has been provisioned.
+
+[source,shell,title=Create an Azure VM]
+----
+$ az vm create \
+  --resource-group fusionauthRG \
+  --name esVM \
+  --image UbuntuLTS \
+  --admin-username fusionauth-admin \
+  --ssh-key-values ~/.ssh/fusionauth.pub
+----
+
+[source,shell,title=Output]
+----
+{
+  "fqdns": "",
+  "id": "/subscriptions/2683a458-c361-4b5e-87d9-a4e5237d5b91/resourceGroups/fusionauthRG/providers/Microsoft.Compute/virtualMachines/esVM",
+  "location": "eastus",
+  "macAddress": "00-0D-3A-56-04-E9",
+  "powerState": "VM running",
+  "privateIpAddress": "10.0.0.4",
+  "publicIpAddress": "20.106.243.22",
+  "resourceGroup": "fusionauthRG",
+  "zones": ""
+}
+----
+
+SSH to the VM:
+
+[source,shell,title=SSH to the VM]
+----
+$ ssh fusionauth-admin@20.106.243.22
+----
+
+[source,shell,title=Add Elasticsearch signing key]
+----
+$ wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+----
+
+[source,shell,title=Update APT sources for Elasticsearch 7 package repository]
+----
+$ echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+----
+
+Using Java 11 as it is the most widely compatible version with Elasticsearch versions.
+
+[source,shell,title=Install Java]
+----
+$ sudo apt update && sudo apt install openjdk-11-jre-headless
+----
+
+[source,shell,title=Set JAVA_HOME]
+----
+$export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+----
+
+[source,shell,title=Start Elasticsearch]
+----
+$ sudo systemctl start elasticsearch.service
+----
+
+[source,shell,title=Verify Elasticsearch is running]
+----
+$ sudo curl -XGET 'localhost:9200/
+----
+
+[source,json,title=Output]
+----
+{
+  "name" : "esVM",
+  "cluster_name" : "elasticsearch",
+  "cluster_uuid" : "JSZ-tynwTL6-lmAUIYjXmg",
+  "version" : {
+    "number" : "7.15.1",
+    "build_flavor" : "default",
+    "build_type" : "deb",
+    "build_hash" : "83c34f456ae29d60e94d886e455e6a3409bba9ed",
+    "build_date" : "2021-10-07T21:56:19.031608185Z",
+    "build_snapshot" : false,
+    "lucene_version" : "8.9.0",
+    "minimum_wire_compatibility_version" : "6.8.0",
+    "minimum_index_compatibility_version" : "6.0.0-beta1"
+  },
+  "tagline" : "You Know, for Search"
+}
+----
+
 
 == Next Steps
 
