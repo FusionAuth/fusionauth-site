@@ -15,6 +15,7 @@ IGNORED_FIELD_REGEXPS = [
   /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
   /tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
   /user\.uniqueUsername/, # this is a derived, internal field
+  /entity\.parentId/, # not currently documenting until this is further built out
   /theme\.templates\.emailSend/, # this is a derived, internal field
   /theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
 ]
