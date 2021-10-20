@@ -179,7 +179,7 @@ touch config.js
 
 Inside of that config file, you are going to copy the OAuth info from the FusionAuth admin panel of your application, React Auth. To do so, on `localhost:9011`, navigate to `Applications -> React Auth -> View`  *You must copy in your own info!*
 
-You also will need to generate an API key. To do so, navigate to `Settings -> API Keys` and click the green `+` button to add an API key. You can leave the ID field blank, FusionAuth will auto-generate an ID for you. For now, don't select any endpoint methods to create this as a super user key, which has access to all endpoints.
+You also will need to generate an API key. To do so, navigate to `Settings -> API Keys` and click the green `+` button to add an API key. You can leave the Id field blank, FusionAuth will auto-generate an Id for you. For now, don't select any endpoint methods to create this as a super user key, which has access to all endpoints.
 
 Here is what the page you will get this info from looks like:
 
@@ -500,7 +500,7 @@ export default class Greeting extends React.Component {
 
 If you navigate to `localhost:3000` now, you'll see an `undefined` error in regard to the user object.  Let's fix that by replacing our fake user with a real one. Before we do that, let’s set up our React app to fetch the user from `/user` whenever the page loads (or “when the component mounts” in React lingo):
 
-`client/src/index.js`
+In `client/src/index.js`:
 
 ```js
 
@@ -769,7 +769,6 @@ Try navigating to `localhost:3001/login`. If you see a FusionAuth login form, yo
 When you successfully authenticate, you’ll just see `Cannot GET /oauth-callback`, because the `/oauth-callback` route doesn’t exist, yet. Remember you added `localhost:3001/oauth-callback` as an "Authorized redirect URL" in the FusionAuth admin panel, *and* as our `redirectURI` in `config.js`. This is the location that where FusionAuth redirects the browser back to after authentication in order to complete the OAuth grant.   
 
 But why specify this? Because without specifying where to send the app after authenticating, a bad actor could put in their own redirect URL, sending the browser to to their malicious server and gaining access to a token that could be used to view resources as a user. That would be no good!
-
 ### Exchange the auth code for an access token
 
 An Authorization Code isn’t enough to access the user’s resources, though. For that, we need an Access Token. This is standard OAuth, not something unique to FusionAuth. This step is called the Code Exchange, because we send the auth code to FusionAuth’s `/token` endpoint and receive an Access Token in exchange.  Then that Access Token is passed to the resource server in exchange for the desired resources.  
@@ -900,11 +899,15 @@ app.use(session(
 
 
 #  Displaying user data
-Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. Its like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.' We can get additional user-specific info from `/registration` as well.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
+Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. Its like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.'
+
+We can get additional user-specific info from `/registration` as well.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
 
 If there’s a token in session storage, we’ll call `/introspect` to get info out of that token. Part of the info returned from `/introspect` is the boolean property `active`, which is true until the Access Token expires (you can configure how long Access Tokens live in the FusionAuth admin panel). If the token is still good, we’ll call `/registration` and return the JSON from both requests.
 
 If there’s no token in session storage, or if the token has expired, we’ll return an empty object. Our React components use the existence of `this.props.body.user` to determine whether a user is logged in, so an empty body means there’s no active user.
+
+Note that this step doesn’t actually require an Access Token. The data from FusionAuth’s `/api/user/registration` API can be retrieved for any user, including one that isn’t logged in. You could use this endpoint to show info on a user’s profile or other public page. This API in FusionAuth is not part of the OAuth specification but we added it to our example to show a more complete user data interaction. Also, this API requires that you pass in a FusionAuth API key in the Authorization header. Our example is pulling the FusionAuth API key from our global `config.js` file.
 
 Below is our new and improved `/user` route; it’s a lot like `/oauth-callback`, but with a layer of nesting. It looks like a lot, but we’ll break it up piece-by-piece.
 
@@ -979,11 +982,9 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-First, the POST request to `/introspect`: this endpoint requires our Client ID and, of course, the Access Token we want to decode. Just like the token endpoint, this endpoint access form encoded data, so we are using the form option.
+First, the POST request to `/introspect`: this endpoint requires our Client Id and, of course, the `access_token` we want to more information on. Just like the token endpoint, this endpoint access form encoded data, so we are using the `form` option.
 
-In the callback from that request, we’ll parse the body into usable JSON and check that active value. If it’s good, we’ll go ahead and make the `/registration` request, which requires a User ID (“subscriber” or sub in OAuth jargon) and our Client ID—we need both, because one user can have different data in each FusionAuth application.
-
-Note that this step doesn’t actually require an Access Token. The data from FusionAuth’s `/api/user/registration` API can be retrieved for any user, including one that isn’t logged in. You could use this endpoint to show info on a user’s profile or other public page. This API in FusionAuth is not part of the OAuth specification but we added it to our example to show a more complete user data interaction. Also, this API requires that you pass in a FusionAuth API key in the Authorization header. Our example is pulling the FusionAuth API key from our global `config.js` file.
+In the callback from that request, we’ll parse the body into usable JSON and check that active value. If it’s good, we’ll go ahead and make the `/api/user/registration/` request, which requires a User Id (“subscriber” or sub in OAuth jargon) and our Application Id—we need both, because one user can have different data in each FusionAuth application.
 
 Finally, in the registration callback, we’ll parse the body returned from `/registration` and `res.send` everything back to the React client.
 
