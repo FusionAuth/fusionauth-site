@@ -1,20 +1,20 @@
 ---
 layout: doc
-title: Minikube
-description: Using Minikube for local testing of FusionAuth kubernetes deployments
+title: Local Kubernetes Cluster Setup With minikube
+description: Provision minikube for local development and testing of FusionAuth kubernetes deployments
 keywords: docker kubernetes k8s container aws
 ---
 :page-liquid:
 
 == Overview
 
-Having the capability to deploy applications in a local Kubernetes environment allows engineers to quickly develop, test, and demo without the operational overhead of a full-blown cluster. This is precisely what link:https://minikube.sigs.k8s.io/docs[minikube] is designed for by creating a single-node cluster within a virtual machine.
+Having the capability to deploy applications in a local Kubernetes environment allows engineers to quickly develop, test, and demo without the operational overhead of a full-blown cluster. This is precisely what https://minikube.sigs.k8s.io/docs[minikube] is designed for by creating a single-node cluster within a virtual machine.
 
-This guide will show you how to create and configure all the infrastructure necessary to run FusionAuth locally in a link:https://minikube.sigs.k8s.io/docs[minikube] cluster.
+This guide will show you how to create and configure all the infrastructure necessary to run FusionAuth locally in a https://minikube.sigs.k8s.io/docs[minikube] cluster.
 
-The cluster will consist of three link:https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[Replica Sets], one for each deployment of Elasticsearch, Postgresql, and FusionAuth. Each will have one link:https://kubernetes.io/docs/concepts/workloads/pods/[Pod], with exception of Elasticsearch which will have three. We could scale it down to one pod, but for simplicity, we will use the default settings for the Elasticsearch chart.
-Each deployment exposes a link:https://kubernetes.io/docs/concepts/services-networking/service/[Service] which exposes each application as a network service.
-Finally, we will use an link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] of type link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Load Balancer] that allows external traffic, or in this case, traffic from `localhost` to the cluster.
+The cluster will consist of three https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[Replica Sets], one for each deployment of Elasticsearch, Postgresql, and FusionAuth. Each will have one https://kubernetes.io/docs/concepts/workloads/pods/[Pod], with exception of Elasticsearch which will have three. You could scale it down to one pod, but for simplicity, you will use the default settings for the Elasticsearch chart.
+Each deployment exposes a https://kubernetes.io/docs/concepts/services-networking/service/[Service] which exposes each application as a network service.
+Finally, you will use an https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] of type https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Load Balancer] that allows external traffic, or in this case, traffic from `localhost` to the cluster.
 
 image::installation-guides/kubernetes/fa-minikube.png[FusionAuth Minikube Architecture,width=1200,role=shadowed]
 
@@ -22,13 +22,13 @@ image::installation-guides/kubernetes/fa-minikube.png[FusionAuth Minikube Archit
 
 Before you begin, you will need to have the following installed.
 
-* link:https://docs.docker.com/get-docker/[Docker Desktop] - The virtual machine environment we will use to run minikube.
-* `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, we will be using a Helm chart to install FusionAuth, a Postgresql database, and Elasticsearch cluster. For more information, see link:https://helm.sh/docs/intro/install/[Installing Helm].
-* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
+* https://docs.docker.com/get-docker/[Docker Desktop] - The virtual machine environment you will use to run minikube.
+* `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, you will be using a Helm chart to install FusionAuth, a Postgresql database, and Elasticsearch cluster. For more information, see https://helm.sh/docs/intro/install/[Installing Helm].
+* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found https://kubernetes.io/docs/tasks/tools/[here].
 
 == Install minikube
 
-Navigate to link:https://minikube.sigs.k8s.io/docs/start/[minikube start] and complete step one by selecting the options that apply to your local machine.
+Navigate to https://minikube.sigs.k8s.io/docs/start/[minikube start] and complete step one by selecting the options that apply to your local machine.
 
 For example, if you are running on `macOS` with `x86-64` architecture, Homebrew is a popular [field]#installer type#:
 
@@ -39,7 +39,7 @@ $ brew install minikube
 
 === Start minikube
 
-Since we will be deploying multiple applications, we will want to start minikube using some additional resource considerations.
+Since you will be deploying multiple applications, you will want to start minikube using some additional resource considerations.
 
 [WARNING.warning]
 ====
@@ -58,7 +58,7 @@ $ minikube start --cpus 4 --memory 5g
 This minikube setting is a general recommendation that has been tested for this guide based on resource requirements of FusionAuth, Postgresql, and Elasticsearch.
 ====
 
-When the command finishes, it will configure `kubectl` to point to the minikube cluster. We can confirm this by checking the status:
+When the command finishes, it will configure `kubectl` to point to the minikube cluster. You can confirm this by checking the status:
 
 [source,shell,title=Get minikube status]
 ----
@@ -90,7 +90,7 @@ kube-system   storage-provisioner                1/1     Running   1 (9m8s ago) 
 
 == Deploy Postgresql
 
-Start by adding the link:https://artifacthub.io/packages/helm/bitnami/postgresql[bitnami helm repository] that contains the Postgresql chart:
+Start by adding the https://artifacthub.io/packages/helm/bitnami/postgresql[bitnami helm repository] that contains the Postgresql chart:
 
 [source,shell,title=Add PostgreSQL chart repository]
 ----
@@ -136,7 +136,7 @@ To connect to your database from outside the cluster execute the following comma
     PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 -U postgres -d postgres -p 5432
 ----
 
-When we deploy FusionAuth, we will need to use the DNS name `pg-minikube-postgresql.default.svc.cluster.local` as seen above and the password that we set in the install command.
+When you deploy FusionAuth, you will need to use the DNS name `pg-minikube-postgresql.default.svc.cluster.local` as seen above and the password that you set in the install command.
 
 Confirm our deployment by retrieving active pods in the cluster. The following command requests pods in the `default` namespace with output (`-o`) containing additional information such as [field]#IP Address#:
 
@@ -153,7 +153,7 @@ NAME                       READY   STATUS    RESTARTS   AGE     IP           NOD
 pg-minikube-postgresql-0   1/1     Running   0          8m33s   172.17.0.3   minikube   <none>           <none>
 ----
 
-We can also retrieve active services on the cluster. A Kubernetes link:https://kubernetes.io/docs/concepts/services-networking/service/[Service] exposes applications running on a pod as a network service. The following command will display the new service exposing the Postgresql application with an IP address running on port `5432`:
+You can also retrieve active services on the cluster. A Kubernetes https://kubernetes.io/docs/concepts/services-networking/service/[Service] exposes applications running on a pod as a network service. The following command will display the new service exposing the Postgresql application with an IP address running on port `5432`:
 
 [source,shell,title=Get services]
 ----
@@ -166,12 +166,12 @@ pg-minikube-postgresql-headless   ClusterIP   None             <none>        543
 
 [NOTE.note]
 ====
-You might have noticed the additional postgresql service `pg-minikube-postgresql-headless`. This is what is known in Kubernetes as a link:pg-minikube-postgresql-headless[Headless Service]. To read more about these types of services, see the official Kubernetes documentation link:link:pg-minikube-postgresql-headless[here].
+You might have noticed the additional postgresql service `pg-minikube-postgresql-headless`. This is what is known in Kubernetes as a link:pg-minikube-postgresql-headless[Headless Service]. To read more about these types of services, see the official Kubernetes documentation link:pg-minikube-postgresql-headless[here].
 ====
 
 == Deploy Elasticsearch
 
-Start by adding the link:https://artifacthub.io/packages/helm/elastic/elasticsearch[Elasticsearch Helm Chart] repository:
+Start by adding the https://artifacthub.io/packages/helm/elastic/elasticsearch[Elasticsearch Helm Chart] repository:
 
 [source,shell,title=Add Elasticsearch chart repository]
 ----
@@ -187,7 +187,7 @@ bitnami   	https://charts.bitnami.com/bitnami
 elastic   	https://helm.elastic.co
 ----
 
-Before installing, we will download a copy of a recommended configuration for minikube virtual machines:
+Before installing, you will need to download a copy of a recommended configuration for minikube virtual machines:
 
 [source,shell,title=Download example minikube configuration]
 ----
@@ -247,7 +247,7 @@ elasticsearch-master-2       1/1     Running   0          7m17s   172.17.0.6   m
 pg-minikube-postgresql-0     1/1     Running   0          39m     172.17.0.3   minikube   <none>           <none>
 ----
 
-The installed chart also exposes the `elasticsearch-master` link:https://kubernetes.io/docs/concepts/services-networking/service/[Service] running at a dedicated IP address on port `9200`:
+The installed chart also exposes the `elasticsearch-master` https://kubernetes.io/docs/concepts/services-networking/service/[Service] running at a dedicated IP address on port `9200`:
 
 [source,shell,title=Get services]
 ----
@@ -260,20 +260,20 @@ elasticsearch-master-headless     ClusterIP   None             <none>        920
 
 === Kubernetes DNS
 
-The default installation of minikube enables link:https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/dns[kube-dns], a link:https://kubernetes.io/docs/concepts/services-networking/service/[Service] that automatically assigns dns names to other services in the cluster.
+The default installation of minikube enables https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/dns[kube-dns], a https://kubernetes.io/docs/concepts/services-networking/service/[Service] that automatically assigns dns names to other services in the cluster.
 
-When we installed <<Deploy Postgresql, Postgresql>> and <<Deploy Elasticsearch, Elasticsearch>>, each service that was created was assigned the following dns names respectively:
+When you installed <<Deploy Postgresql, Postgresql>> and <<Deploy Elasticsearch, Elasticsearch>>, each service that was created was assigned the following dns names respectively:
 
 * `pg-minikube-postgresql.default.svc.cluster.local`
 * `elasticsearch-master.default.svc.cluster.local`
 
-We will use these values when deploying FusionAuth in the next section.
+You will use these values when deploying FusionAuth in the next section.
 
-For more information on DNS see Kubernetes documentation for link:https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods].
+For more information on DNS see Kubernetes documentation for https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods].
 
 === Deploy FusionAuth
 
-Now that we have a Kubernetes cluster actively running a database and Elasticsearch, we can go ahead and configure FusionAuth and deploy it to the cluster.
+Now that you have a Kubernetes cluster actively running a database and Elasticsearch, you can go ahead and configure FusionAuth and deploy it to the cluster.
 
 Start by downloading the example `values.yaml` for this guide:
 
@@ -282,7 +282,7 @@ Start by downloading the example `values.yaml` for this guide:
 $ curl -O https://raw.githubusercontent.com/FusionAuth/charts/master/chart/examples/minikube/values.yaml
 ----
 
-Deploy FusionAuth by using the FusionAuth chart using the [field]#set# flag to apply override values. We will also use the `-f` option providing the path to our minikube `values.yaml`:
+Deploy FusionAuth by using the FusionAuth chart using the [field]#set# flag to apply override values. You will also use the `-f` option providing the path to our minikube `values.yaml`:
 
 [source,shell,title=Install FusionAuth chart]
 ----
@@ -292,7 +292,7 @@ $ helm install fa-minikube fusionauth/fusionauth -f ./values.yaml \
   --set search.host=elasticsearch-master.default.svc.cluster.local
 ----
 
-At this point we can now access FusionAuth using `kubectl` port-forwarding. This method tunnels traffic from the specified port on localhost to the target Kubernetes service and port. This can be useful for debugging.
+At this point you can now access FusionAuth using `kubectl` port-forwarding. This method tunnels traffic from the specified port on localhost to the target Kubernetes service and port. This can be useful for debugging.
 
 [source,helmtext,title=Output]
 ----
@@ -302,9 +302,9 @@ Get the application URL by running these commands:
   kubectl port-forward svc/$SVC_NAME 9011:9011
 ----
 
-The common approach for directing external traffic to your cluster involves using an link:https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress], a component that defines how external traffic should be handled, and an link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] that implements those rules.
+The common approach for directing external traffic to your cluster involves using an https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress], a component that defines how external traffic should be handled, and an https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] that implements those rules.
 
-The FusionAuth chart installs an link:https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress] resource on the cluster when the [field]#ingress.enabled# property is set to `true` in our `values.yaml`. Here is the resource definition for this guide:
+The FusionAuth chart installs an https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress] resource on the cluster when the [field]#ingress.enabled# property is set to `true` in our `values.yaml`. Here is the resource definition for this guide:
 
 [source,helmyaml,title=FusionAuth Ingress]
 ----
@@ -336,7 +336,7 @@ spec:
 
 The rules for this Ingress resource indicate that requests from `localhost` root path context, or `/`, should be directed to the `fa-minikube-fusionauth` service.
 
-The last thing we need is an link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller]. We will use the NGINX Ingress controller for this.
+The last thing you need is an https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller]. You will use the NGINX Ingress controller for this.
 
 To install the the Ingress controller, add the repo and install the chart by running the following commands:
 
@@ -350,7 +350,7 @@ $ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 $ helm install fa-loadbalancer ingress-nginx/ingress-nginx
 ----
 
-When completed, you will see a new service of type `LoadBalancer` and external IP value of `<pending>`. Once we allow external traffic to reach minikube, the external IP address will be set to `127.0.0.1`, or `localhost`, as defined in our FusionAuth ingress definition.
+When completed, you will see a new service of type `LoadBalancer` and external IP value of `<pending>`. Once you allow external traffic to reach minikube, the external IP address will be set to `127.0.0.1`, or `localhost`, as defined in our FusionAuth ingress definition.
 
 Use minikube tunnel to direct external network traffic to the cluster:
 
@@ -370,7 +370,7 @@ Navigating to `localhost` in the browser will now direct us to FusionAuth runnin
 
 image::installation-guides/kubernetes/fa-initial-config.png[FusionAuth Setup Wizard,,width=1200,role=shadowed]
 
-At this point, we should have a total of 6 `READY` pods including FusionAuth!
+At this point, you should have a total of 6 `READY` pods including FusionAuth!
 
 [source,shell,title=Get pods]
 ----

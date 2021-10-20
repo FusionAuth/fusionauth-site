@@ -1,42 +1,42 @@
 ---
 layout: doc
-title: Provision Amazon Elastic Kubernetes Service (EKS)
+title: Provision an Amazon Elastic Kubernetes Service (EKS) Kubernetes Cluster
 description: Provision an EKS cluster in AWS
 keywords: docker kubernetes k8s container aws
 ---
 
 == Overview
 
-This guide will show you how to quickly setup an EKS cluster in AWS. When completed, you will have a fully functional Kubernetes cluster ready to deploy FusionAuth to. The following method uses the default settings when provisioning the EKS cluster with the required resources and services. It is recommended that you consult link:https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html[Getting started with Amazon EKS] for full EKS documentation.
+This guide will show you how to quickly set up an EKS cluster in AWS. When completed, you will have a fully functional Kubernetes cluster ready for a FusionAuth deployment. The following method uses the default settings when provisioning the EKS cluster with the required resources and services. It is recommended that you consult https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html[Getting started with Amazon EKS] for more EKS documentation, including needed customization for your situation.
 
 == Required tools
 
-* `AWS CLI` - Amazon Command Line Interface. This allows users to interact with AWS resources and services from the command-line. For more information, see link:https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html[Installing, updating, and uninstalling the AWS CLI]. This will need to be installed and configured with link:https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.htmlrequired IAM permissions].
-* `eksctl` - For this guide, we will use `eksctl`, a command line tool for managing EKS clusters. For installation information, see link:https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html[The eksctl command line utility].
-* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found link:https://kubernetes.io/docs/tasks/tools/[here].
-We will be using version `1.22` for this guide.
+* `AWS CLI` - Amazon Command Line Interface. This allows users to interact with AWS resources and services from the command-line. For more information, see link:https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html[Installing, updating, and uninstalling the AWS CLI]. This will need to be installed and the credentials used must have https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelastickubernetesservice.html[IAM permissions to manage EKS].
+* `eksctl` - For this guide, you will use `eksctl`, a command line tool for managing EKS clusters. For installation information, see https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html[The eksctl command line utility].
+* `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the installation documentation that corresponds to your platform found https://kubernetes.io/docs/tasks/tools/[here].
+This guide will be using version `1.22`.
 
 == Architecture
 
-The resulting EKS cluster will use a dedicated VPC with two availability zones, each consisting of a public and private subnet. It will use an autoscaling node group with a node (Linux EC2 instance) in each private subnet. Additionally, we will provision a Postgres RDS instance to satisfy installation requirements of FusionAuth.
+The resulting EKS cluster will use a dedicated VPC with two availability zones, each consisting of a public and private subnet. It will use an autoscaling node group with a node (Linux EC2 instance) in each private subnet. Additionally, you will provision a PostgreSQL RDS instance to satisfy installation requirements of FusionAuth.
 
-[NOTE.info]
+[NOTE.note]
 ====
 For the remainder of this guide, the value used for region will be `us-west-1`.
 ====
 
-image::installation-guides/kubernetes/eksctl-architecture.png[EKS Architecture,width=1200,role=shadowed]
+image::installation-guides/kubernetes/eksctl-architecture.png[EKS Architecture,width=1200]
 
 == Create an EKS cluster
 
-Prior to creating the cluster, its a good idea to either create a new key pair or have an existing pair on hand. This is because its necessary to provide a key along with the create command such that SSH is allowed on the nodes once they are created. If a key is not provided, this can not be changed later.
+Prior to creating the cluster, either create a new key pair or have an existing pair on hand. This is because providing a key when running the create command configures EKS to allow SSH access to the created compute nodes. If a key is not provided, this can not be changed later. Having SSH access allows for easier troubleshooting.
 
 [source,shell,title=Create key pair]
 ----
 $ aws ec2 create-key-pair --region us-west-1 --key-name eksExampleKeyPair
 ----
 
-If executed successfully, your new key credentials will be printed to standard out.
+If successful, information about your new key will be displayed. Store the private key for future use.
 
 Now create a new EKS cluster.
 
@@ -99,7 +99,7 @@ This command uses CloudFormation to provision all of the necessary resources tha
 2021-10-05 14:43:50 [✔]  EKS cluster "fusionauth-example" in "us-west-1" region is ready
 ----
 
-We now have a fully functional provisioned EKS cluster. To get detailed information, particularly VPC, subnet ids, and security group id that we will need later on in this guide, use the CLI to describe our newly created cluster.
+We now have a fully functional provisioned EKS cluster. You will need additional information, in particular the VPC Id, subnet Ids, and security group Id, all of which are used later in this guide. Use the CLI to describe our newly created cluster to retrieve this configuration data.
 
 [source,shell,title=Get cluster information]
 ----
@@ -137,11 +137,14 @@ $ aws eks describe-cluster --name fusionauth-example
         "kubernetesNetworkConfig": {
             "serviceIpv4Cidr": "10.100.0.0/16"
         }
+    }
 }
 ----
 
+Note the VPC Id, subnet Ids, and security group Id.
+
 Now review the Kubernetes nodes that have been created.
-This is where `kubectl` comes in handy. Looking at the previous log, you will notice that one of the last things `etsctl` did was update our `~/.kube/config` file with our new cluster configuration. We can now go ahead and use `kubectl` to make requests to the Kubernetes API Server.
+This is where `kubectl` comes in handy. Looking at the previous log, you will notice that one of the last things `eksctl` did was update the `~/.kube/config` file with the new cluster configuration. Go ahead and use `kubectl` to make requests to the Kubernetes API Server.
 
 [source,shell,title=Get EKS cluster nodes]
 ----
@@ -156,10 +159,10 @@ Great! We have two instances in a `READY` status.
 
 === Create a Database
 
-For this setup, we will create a Postgres RDS instance required for FusionAuth installation. For simplicity, this database will be created in the same VPC and configured with the same security groups applied to our private subnets. Finally, we will modify the inbound rules to the security group to allow traffic on Postgres port 5432. This will enable our worker nodes to communicate with the database successfully!
+Create a Postgres RDS instance required for FusionAuth installation. For simplicity, this database will be created in the same VPC and configured with the same security groups applied to the private subnets. Finally, you will modify the inbound rules to the security group to allow traffic on port 5432. This will enable our worker nodes to communicate with the database successfully!
 
 Since an RDS instance needs to be assigned to a database subnet group, you may either assign it to an existing group with subnets in the same VPC or create a new one.
-Here, we create a new subnet group using the subnets assigned to our cluster in the cluster creation step.
+Here, you create a new subnet group using the subnets assigned to your cluster in the cluster creation step.
 
 [source,shell,title=Create DB subnet group]
 ----
@@ -169,7 +172,7 @@ $ aws rds create-db-subnet-group \
 --subnet-ids "subnet-091347798a21eabe2" "subnet-0cb7540073e8b30aa" "subnet-052f8750345045581" "subnet-040e32678cf7a85da"
 ----
 
-Now create the database. You can retrieve the necessary [field]#db-subnet-group# and [field]#vpc-security-group-ids# referring to previous creation steps above.
+Now create the database. Set [field]#db-subnet-group# and [field]#vpc-security-group-ids# to the values for the subnet Id and the VPC Id from the above creation steps.
 
 [source,shell,title=Create Postgresql DB instance]
 ----
@@ -179,7 +182,7 @@ $ aws rds create-db-instance \
     --db-instance-class db.m6g.large \
     --engine postgres \
     --master-username postgres \
-    --master-user-password foobarbaz \
+    --master-user-password changeMeToSomethingMoreSecure \
     --no-publicly-accessible \
     --vpc-security-group-ids sg-08b95dbacc02ba628 \
     --db-subnet-group fusionauth-example-db-group \
@@ -187,7 +190,7 @@ $ aws rds create-db-instance \
     --port 5432
 ----
 
-Add an inbound rule to the security group to allow nodes to access our database.
+Add an inbound rule to the security group to allow nodes to access the database. Again, use the security group Id from above.
 
 [source,shell,title=Create inbound rule]
 ----
@@ -198,9 +201,9 @@ $ aws ec2 authorize-security-group-ingress \
     --source-group sg-08b95dbacc02ba628
 ----
 
-We are done! To confirm the database has been created, we can simply ask AWS using the [field]#db-instance-identifier# we used on the creation step.
+You are done! To confirm the database has been created, simply ask AWS using the [field]#db-instance-identifier# used on the creation step.
 
-[NOTE.info]
+[NOTE.note]
 ====
 It may take a few minutes for the provisioning process to complete.
 ====
@@ -258,7 +261,7 @@ $ aws iam create-policy \
 --policy-document file://eks-policy.json
 ----
 
-Attach the policy to the service role that assigned to our EKS cluster:
+Attach the policy to the service role that assigned to your EKS cluster:
 
 [source,shell,title=Assign policy to EKS role]
 ----
@@ -299,37 +302,9 @@ aws es create-elasticsearch-domain \
 --access-policies file://access-policy.json
 ----
 
-=== Create an Ingress Controller
-
-The last thing we need is an link:https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller]. We will use the NGINX Ingress controller for this.
-
-To install the the Ingress controller, add the repo and install the Helm chart by running the following commands:
-
-[source,shell,title=Add ingress-nginx chart repository]
-----
-$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-----
-
-[source,shell,title=Install ingress-nginx chart]
-----
-$ helm install fa-loadbalancer ingress-nginx/ingress-nginx
-----
-
-When completed, get the active services running on the EKS cluster:
-
-[source,shell,title=Get services information]
-----
-$ kubectl get services
-
-NAME                                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)                      AGE
-fusionauth-ingress-nginx-controller             LoadBalancer   10.100.246.131   a4413292c6477456b8c1cde8f5260513-137482286.us-west-1.elb.amazonaws.com       80:30048/TCP,443:32484/TCP   37m
-----
-
-A new service will be available of type `LoadBalancer` and containing an external IP value corresponding to a newly provisioned Elastic Load Balancer host name. External traffic will now be directed to the EKS cluster via this ingress.
-
 == Next Steps
 
-We now have all the necessary infrastructure to deploy containerized applications to EKS.
+You now are running all the necessary infrastructure to deploy a containerized application to EKS.
 
 Next up, link:../../[Deploy FusionAuth in Kubernetes].
 

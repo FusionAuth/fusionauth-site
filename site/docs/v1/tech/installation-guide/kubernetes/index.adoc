@@ -1,29 +1,29 @@
 ---
 layout: doc
-title: Deploy FusionAuth in a Kubernetes Cluster
+title: Deploy FusionAuth to a Kubernetes Cluster
 description: Deploy FusionAuth in a Kubernetes Cluster
 keywords: docker kubernetes k8s container aws
 ---
-
-:prewrap!:
 
 Kubernetes is an extensible and open-source container-orchestration system used for automating application deployments. Some of the most notable features it provides include self-healing, auto-scaling, and automated rollouts and rollbacks.
 
 Since the Kubernetes container runtime supports link:../docker[Docker], FusionAuth link:../docker[Docker] containers can be deployed to any Kubernetes cluster.
 
-The following guide demonstrates how to deploy FusionAuth containers using link:https://kubernetes.io/docs/tasks/tools/[kubectl], the Kubernetes command-line tool that enables you to send commands to a cluster through the link:https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/[API server].
-Before proceeding, it is required that you have a running Kubernetes cluster and link:https://kubernetes.io/docs/tasks/tools/[kubectl] configured to communicate with that cluster. If you need to setup a cluster, we have provided the following installation guides to get you up and running as fast as possible.
-
-* link:setup/eks[Amazon Elastic Kubernetes Service (EKS)]
-* link:setup/gke[Google Kubernetes Engine (GKE)]
-* link:setup/aks[Microsoft Azure Kubernetes Service (AKS)]
+The following guide demonstrates how to deploy FusionAuth containers using https://kubernetes.io/docs/tasks/tools/[kubectl], the Kubernetes command-line tool that enables you to send commands to a cluster through the https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/[API server].
+You'll need a cluster running to work through this guide.
 
 == Requirements
 
 * `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the https://kubernetes.io/docs/tasks/tools/[installation documentation that corresponds to your platform].
-We will be using version `1.22` for this guide.
-* `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, we will be using a Helm chart to install FusionAuth on our Kubernetes cluster. For more information, see link:https://helm.sh/docs/intro/install/[Installing Helm].
-* An available Kubernetes cluster. See guides above.
+This guide will be using version `1.22`.
+* `helm` - Package manager used for installing and managing Kubernetes applications. In this guide, you will be using a Helm chart to install FusionAuth on our Kubernetes cluster. For more information, see https://helm.sh/docs/intro/install/[Installing Helm].
+This guide will be using version `3.6.4`.
+* An available Kubernetes cluster. If you need to set up a cluster, we have provided the below installation guides for both local development environments and the major cloud providers. Each provide step-by-step instructions intended to get you up and running as fast as possible.
++
+** link:setup/minikube[Local setup using minikube]
+** link:setup/eks[Amazon Elastic Kubernetes Service (EKS)]
+** link:setup/gke[Google Kubernetes Engine (GKE)]
+** link:setup/aks[Microsoft Azure Kubernetes Service (AKS)]
 
 == Configuration
 
@@ -56,18 +56,18 @@ fusionauth/fusionauth	0.10.5       	1.30.1     	Helm chart for fusionauth
 
 Before you install, configure the `values.yaml` file contents used by the Helm Chart. The majority of the values for this chart have defaults recommended by FusionAuth but you will want to modify some application specific attributes.
 
-Retrieve a copy of `values.yaml` for the FusionAuth helm chart.
+To update this file, first download it:
 
 [source,shell,title=Download chart values]
 ----
 $ curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
 ----
 
-Open `values.yaml` with your favorite text editor.
+Open `values.yaml` with your favorite text editor and modify it as outlined below.
 
 ==== Replicas
 
-The [field]#replicaCount# value indicates the number of instances of FusionAuth to run in a link:https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[ReplicaSet].
+The [field]#replicaCount# value indicates the number of instances of FusionAuth to run in a https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/[ReplicaSet].
 
 By default, the [field]#replicaCount# value is set to `1`. This means that when you deploy the application to the cluster, Kubernetes will monitor the cluster to ensure that at least `1` instance of FusionAuth is running at all times.
 
@@ -79,7 +79,7 @@ replicaCount: 1
 
 ==== Docker image
 
-The most current helm chart will always point to the latest version of FusionAuth. For this guide, we are on version `1.30.1`.
+The most current helm chart will always point to the latest version of FusionAuth. For this guide, FusionAuth version `1.30.1` is used.
 
 [source,yaml,title=Image configuration example]
 ----
@@ -94,7 +94,7 @@ image:
 
 ==== Database Configuration
 
-Now that we have our helm `values.yaml`, the first thing you will want to do is configure the database. Each of our FusionAuth pods will use this configuration when communicating with the database.
+Now that you have your helm `values.yaml`, the first thing you will want to do is configure the database. Each of our FusionAuth pods will use this configuration when communicating with the database.
 
 [source,yaml,title=Database and search example configuration]
 ----
@@ -119,7 +119,7 @@ database:
   user: ""
   # database.password -- Database password for fusionauth to use in normal operation - not required if database.existingSecret is configured
   password: ""
-  # These credentials are used for bootstrapping the database
+  # These credentials are used for bootstrapping the database and creating it if needed. This can be useful for ephemeral clusters used for testing and dev.
   root:
     # database.root.user -- Database username for fusionauth to use during initial bootstrap - not required if you have manually bootstrapped your database
     user: ""
@@ -131,19 +131,19 @@ search:
   engine: database
 ----
 
-At this point, the required fields that need to be provided are [field]#host#, [field]#user#, [field]#password#, [field]#root.user#, and [field]#root.password#. It is important to retrieve these attributes when you initially setup your database.
-We are also going to set [field]#search.engine# field to `database`.
+For this guide, the required fields are [field]#host#, [field]#user#, [field]#password#, [field]#root.user#, and [field]#root.password#. It is important to retrieve these attributes when you initially setup your database.
+You are also going to set [field]#search.engine# field to `database`.
 
 == Deploy FusionAuth to the cluster
 
-Now that the desired `values.yaml` configuration has been set, its time to install the chart on our cluster. The `helm install` command is used to install a chart by name and can be applied using the syntax:
+Now that `values.yaml` is updated, it is time to install the chart on our cluster. The `helm install` command is used to install a chart by name and can be applied using the syntax:
 
 [source,shell,title=Helm install format]
 ----
 $ helm install [CHART NAME] [CHART] [flags]
 ----
 
-Here we will install a chart including the `-f` flag to override the default values.
+Here you will install a chart including the `-f` flag to override the default values.
 
 [source,shell,title=Install the FusionAuth chart]
 ----
@@ -164,7 +164,7 @@ $ helm install my-release fusionauth/fusionauth \
   --set search.engine=database \
 ----
 
-[NOTE.info]
+[NOTE.note]
 ====
 Include the flag `--dry-run` if you would like to view the generated template before installing the template.
 ====
@@ -185,7 +185,7 @@ NOTES:
   kubectl port-forward svc/$SVC_NAME 9011:9011
 ----
 
-We can also get the status of our deployment by using `kubectl`.
+You can also get the status of our deployment by using `kubectl`.
 
 [source,shell,title=Get a list of deployments running on the cluster]
 ----
@@ -195,15 +195,43 @@ NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IM
 my-release-fusionauth   1/1     1            1           4m16s   fusionauth   fusionauth/fusionauth-app:1.30.1   app.kubernetes.io/instance=my-release,app.kubernetes.io/name=fusionauth
 ----
 
-Finally, its time to verify our deployment via the browser. As instructed by the output above, we will create a proxy enabling us to connect to the cluster from localhost.
+Finally, it's time to verify the deployment via the browser. As instructed by the success message output above, create a proxy enabling us to connect to the cluster from `localhost`.
 
 [source,shell,title=Example output]
 ----
 Forwarding from 127.0.0.1:9011 -> 9011
 ----
 
-Navigate to http://localhost:9011
+Navigate to `\http://localhost:9011`
 
-image::installation-guides/kubernetes/fa-success.png[FusionAuth index,width=1200,role=shadowed bottom-cropped]
+image::installation-guides/kubernetes/fa-success.png[FusionAuth index,width=1200,role=bottom-cropped]
 
 Congratulations! You have now successfully deployed FusionAuth to a Kubernetes cluster.
+
+== Create an Ingress Controller
+
+In order to enable HTTP requests to FusionAuth from outside of the cluster, you will need to install an https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller]. You will use the NGINX Ingress controller for this.
+
+To install the the Ingress controller, add the https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx[nginx-ingress] repository and install the Helm chart by running the following commands:
+
+[source,shell,title=Add ingress-nginx chart repository]
+----
+$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+----
+
+[source,shell,title=Install ingress-nginx chart]
+----
+$ helm install fa-loadbalancer ingress-nginx/ingress-nginx
+----
+
+When completed, get the active services running on the EKS cluster:
+
+[source,shell,title=Get services information]
+----
+$ kubectl get services
+
+NAME                                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)                      AGE
+fusionauth-ingress-nginx-controller             LoadBalancer   10.100.246.131   a4413292c6477456b8c1cde8f5260513-137482286.us-west-1.elb.amazonaws.com       80:30048/TCP,443:32484/TCP   37m
+----
+
+A new service will be available of type `LoadBalancer` and will contain an external IP value corresponding to a newly provisioned Elastic Load Balancer host name. External traffic will now be directed to the EKS cluster via this ingress.
