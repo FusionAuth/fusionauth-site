@@ -54,7 +54,7 @@ fusionauth/fusionauth	0.10.5       	1.30.1     	Helm chart for fusionauth
 
 === Helm Chart configuration
 
-Before you install, configure the `values.yaml` file contents used by the Helm Chart. The majority of the values for this chart have defaults recommended by FusionAuth but you will want to modify some application specific attributes.
+Before you install, configure the `values.yaml` file contents used by the Helm Chart. The majority of the values for this chart have defaults recommended by FusionAuth but you will want to review and modify the configuration to meet your specific requirements.
 
 To update this file, first download it:
 
@@ -95,6 +95,8 @@ image:
 ==== Database Configuration
 
 Now that you have your helm `values.yaml`, the first thing you will want to do is configure the database. Each of our FusionAuth pods will use this configuration when communicating with the database.
+
+The following is an example of what you will see upon opening `values.yaml` for modification:
 
 [source,yaml,title=Database and search example configuration]
 ----
@@ -141,14 +143,19 @@ search:
   password: ""
 ----
 
-For this guide, the following attributes need to be retrieved from your database and Elasticsearch deployments and included in your `values.yaml` configuration.
+For this guide, the following attributes need to be retrieved from your database and Elasticsearch deployments and updated in your `values.yaml` configuration.
 
-* database.host
-* database.root.user
-* database.root.password
-* search.host
-* search.user
-* search.password
+* `database.host`
+* `database.root.user`
+* `database.root.password`
+
+If [field]#search.engine# is set to `elasticsearch`:
+
+* `search.host`
+* `search.protocol` - If you are using Elasticsearch service through AWS or Google, this will be `https`
+* `search.port` - If you are using Elasticsearch service through AWS or Google, this will be `443`
+* `search.user`
+* `search.password`
 
 == Deploy FusionAuth to the cluster
 
@@ -166,19 +173,10 @@ Here you will install a chart including the `-f` flag to override the default va
 $ helm install my-release fusionauth/fusionauth -f values.yaml
 ----
 
+[NOTE.note]
+====
 include::/docs/v1/tech/installation-guide/kubernetes/_set-flag.adoc[]
-
-[source,shell,title=Install the FusionAuth chart using overrides]
-----
-$ helm install my-release fusionauth/fusionauth \
-  --set replicaCount=1 \
-  --set database.host=fusionauth-eks-example.ceeh9yeyi3hf.us-west-1.rds.amazonaws.com \
-  --set database.user=fusionauth \
-  --set database.password=hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3 \
-  --set database.root.user=postgres \
-  --set database.root.password=foobarbaz \
-  --set search.engine=database \
-----
+====
 
 [NOTE.note]
 ====
@@ -228,14 +226,13 @@ $ export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/na
 Forwarding from 127.0.0.1:9011 -> 9011
 ----
 
-Navigate to `\http://localhost:9011`
+Navigate to `\http://localhost:9011` and you will land on the FusionAuth Setup Wizard.
 
-image::installation-guides/kubernetes/fa-success.png[FusionAuth index,width=1200,role=bottom-cropped]
+image::installation-guides/kubernetes/fa-initial-config.png[FusionAuth bootstrap,width=1200,role=bottom-cropped]
 
+== Create an Ingress
 
-== Create an Ingress Controller
-
-The last thing you need to do is to configure the cluster to be able to receive external requests. To direct external traffic to your cluster, you will use an https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress], a component that defines how external traffic should be handled, and an https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] that implements those rules.
+If you want to expose external traffic to FusionAuth, the last thing you need to do is to configure the cluster to be able to receive external requests. To direct external traffic to your cluster, you will use an https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress], a component that defines how external traffic should be handled, and an https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] that implements those rules.
 
 === Deploy Ingress Resource
 
