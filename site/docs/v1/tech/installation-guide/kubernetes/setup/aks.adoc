@@ -23,7 +23,7 @@ The resulting architecture for this guide centers around creating an AKS cluster
 
 The following reference architecture shows an example application deployed in AKS.
 
-image::installation-guides/kubernetes/aks.png[EKS Architecture,width=1200,role=shadowed]
+image::installation-guides/kubernetes/aks.png[EKS Architecture,width=1200]
 
 == Create an AKS cluster
 
@@ -31,10 +31,9 @@ image::installation-guides/kubernetes/aks.png[EKS Architecture,width=1200,role=s
 
 Before you create the cluster, you need to first create a https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/overview[Resource Group], a logical grouping of Azure resources. A resource group location is where resources will run by default when a region is not provided on creation.
 
-
 [source,shell,title=Create a new resource group]
 ----
-$ az group create --name fusionauthResourceGroup --location westus
+az group create --name fusionauthResourceGroup --location westus
 ----
 
 [source,json,title=JSON output of the resource group creation command]
@@ -56,7 +55,7 @@ $ az group create --name fusionauthResourceGroup --location westus
 
 [source,shell,title=Create a new AKS cluster]
 ----
-$ az aks create \
+az aks create \
   --resource-group fusionauthResourceGroup \
   --name fusionauthCluster \
   --node-count 1 \
@@ -80,7 +79,7 @@ The following retrieves credentials for the newly created cluster and then confi
 
 [source,shell,title=Get access credentials and update Kubeconfig]
 ----
-$ az aks get-credentials \
+az aks get-credentials \
   --resource-group fusionauthResourceGroup \
   --name fusionauthCluster
 ----
@@ -91,7 +90,7 @@ Execute the https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest
 
 [source,shell,title=Get list of AKS clusters]
 ----
-$ az aks list
+az aks list
 ----
 
 You now have a fully functional provisioned AKS cluster. For good measure, view the nodes that have been created.
@@ -99,7 +98,7 @@ Use `kubectl` to make requests to the Kubernetes API Server.
 
 [source,shell,title=Get list of nodes running on the cluster]
 ----
-$ kubectl get nodes -o wide
+kubectl get nodes -o wide
 
 NAME                                STATUS   ROLES   AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
 aks-nodepool1-13281124-vmss000000   Ready    agent   8m42s   v1.20.9   10.240.0.4    <none>        Ubuntu 18.04.6 LTS   5.4.0-1059-azure   containerd://1.4.9+azure
@@ -118,7 +117,7 @@ Azure database names are globally unique and you may encounter the error, "Speci
 
 [source,shell,title=Create a PostgreSQL flexible server]
 ----
-$ az postgres flexible-server create \
+az postgres flexible-server create \
   --resource-group fusionauthResourceGroup \
   --name fusionauth-db-<my-organization> \
   --location westus \
@@ -164,106 +163,54 @@ Take note of the database username, password and hostname, as those will be need
 
 [source,shell,title=List available flexible servers]
 ----
-$ az postgres flexible-server list
+az postgres flexible-server list
 ----
 
-== Install the Elastic Stack (ELK)
+== Deploy Elasticsearch using Elastic Cloud
 
-Recall the resource group created in the first steps of this guide link:<<Create a Resource Group>>
-Create a resource group if you have not already done so.
+Azure offers its Elasticsearch Service through Elastic Cloud. This section will guide you through setting up your account and deploying an Elasticsearch cluster.
 
-[source,shell,title=Create a resource group]
-----
-$ az group create --name fusionauthRG --location eastus
-----
+From the Azure Portal home screen, enter a search for "Elasticsearch" and click on the Elasticsearch (Elastic Cloud) service.
 
-Next you will need to create a virtual machine to run Elasticsearch on. You will want to supply your public SSH key using the `--ssh-key-values` argument so that you can access the VM once it has been provisioned.
+image::installation-guides/kubernetes/az-es-start.png[Navigate to Elasticsearch service,width=1200,role=top-cropped bottom-cropped]
 
-[source,shell,title=Create an Azure VM]
-----
-$ az vm create \
-  --resource-group fusionauthRG \
-  --name esVM \
-  --image UbuntuLTS \
-  --admin-username fusionauth-admin \
-  --ssh-key-values ~/.ssh/fusionauth.pub
-----
+Click on the **Create Elasticsearch (Elastic Cloud)** button.
 
-[source,shell,title=Output of creation of an Azure VM]
-----
-{
-  "fqdns": "",
-  "id": "/subscriptions/2683a458-c361-4b5e-87d9-a4e5237d5b91/resourceGroups/fusionauthRG/providers/Microsoft.Compute/virtualMachines/esVM",
-  "location": "eastus",
-  "macAddress": "00-0D-3A-56-04-E9",
-  "powerState": "VM running",
-  "privateIpAddress": "10.0.0.4",
-  "publicIpAddress": "20.106.243.22",
-  "resourceGroup": "fusionauthRG",
-  "zones": ""
-}
-----
+image::installation-guides/kubernetes/az-es-create.png[Create Elasticsearch,width=1200,role=top-cropped bottom-cropped]
 
-SSH to the VM:
+Create an Elastic Resource by selecting the resource group you created in the first section of this guide and a name for the resource. Click on **Review + Create** after providing the required fields.
 
-[source,shell,title=SSH to the VM]
-----
-$ ssh fusionauth-admin@20.106.243.22
-----
+image::installation-guides/kubernetes/az-es-create-resource.png[Create resource screen,width=1200,role=top-cropped bottom-cropped]
 
-[source,shell,title=Add Elasticsearch signing key]
-----
-$ wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-----
+Review your selections and press the **Create** button when ready.
 
-[source,shell,title=Update APT sources for Elasticsearch 7 package repository]
-----
-$ echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
-----
+image::installation-guides/kubernetes/az-es-review-create.png[Review and create screen,width=1200,role=top-cropped bottom-cropped]
 
-Using Java 11 as it is the most widely compatible version with Elasticsearch versions.
+Your deployment will now be in-progress as indicated on the next screen. This may take a few minutes to complete.
 
-[source,shell,title=Install Java]
-----
-$ sudo apt update && sudo apt install openjdk-11-jre-headless
-----
+image::installation-guides/kubernetes/az-es-in-progress.png[In-progress screen,width=1200,role=top-cropped bottom-cropped]
 
-[source,shell,title=Set JAVA_HOME]
-----
-$ export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-----
+When the deployment is complete, click on **Go to resource group** and then click on the Elasticsearch resource that you just created.
 
-[source,shell,title=Start Elasticsearch]
-----
-$ sudo systemctl start elasticsearch.service
-----
+image::installation-guides/kubernetes/az-es-resource-group.png[Resources screen,width=1200,role=top-cropped bottom-cropped]
 
-[source,shell,title=Verify Elasticsearch is running]
-----
-$ sudo curl -XGET 'localhost:9200/
-----
+Click on the **Manage changes in Elastic Cloud** link.
 
-[source,json,title=Output]
-----
-{
-  "name" : "esVM",
-  "cluster_name" : "elasticsearch",
-  "cluster_uuid" : "JSZ-tynwTL6-lmAUIYjXmg",
-  "version" : {
-    "number" : "7.15.1",
-    "build_flavor" : "default",
-    "build_type" : "deb",
-    "build_hash" : "83c34f456ae29d60e94d886e455e6a3409bba9ed",
-    "build_date" : "2021-10-07T21:56:19.031608185Z",
-    "build_snapshot" : false,
-    "lucene_version" : "8.9.0",
-    "minimum_wire_compatibility_version" : "6.8.0",
-    "minimum_index_compatibility_version" : "6.0.0-beta1"
-  },
-  "tagline" : "You Know, for Search"
-}
-----
+image::installation-guides/kubernetes/az-es-example.png[Elasticsearch resource detail screen,width=1200,role=top-cropped bottom-cropped]
 
+You will be directed to your Elastic Cloud dashboard and will see your new deployment listed.
+
+Click on the name of your deployment to manage it. On the next page, you have access to all of the necessary endpoint information you will need to connect to your deployment.
+Under **Applications**, click on the `Copy endpoint` link next to **Elasticsearch** to copy the URL to your clipboard. You will need to save this URL for use when link:../../[deploying FusionAuth] to your AKS cluster.
+Next, click on the **Security** link seen on the left navigation panel.
+
+image::installation-guides/kubernetes/az-es-copy-endpoint.png[Example dashboard on Elastic Cloud,width=1200,role=top-cropped bottom-cropped]
+
+Click on the **Reset Password** button to set your administrative credentials for your cluster.
+
+image::installation-guides/kubernetes/az-es-security.png[Security screen,width=1200,role=top-cropped bottom-cropped]
+
+You now have your Elasticsearch cluster deployed and the required credentials to connect to it.
 
 == Next Steps
 

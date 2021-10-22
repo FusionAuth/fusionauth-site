@@ -12,6 +12,18 @@ Since the Kubernetes container runtime supports link:../docker[Docker], FusionAu
 The following guide demonstrates how to deploy FusionAuth containers using https://kubernetes.io/docs/tasks/tools/[kubectl], the Kubernetes command-line tool that enables you to send commands to a cluster through the https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/[API server].
 You'll need a cluster running to work through this guide.
 
+* <<Requirements>>
+* <<Configuration>>
+* <<Helm Chart configuration>>
+** <<Replicas>>
+** <<Docker image>>
+** <<Database Configuration>>
+* <<Deploy FusionAuth To the Cluster>>
+** <<Create an Ingress>>
+** <<Deploy an Ingress Resource>>
+** <<Install an Ingress Controller>>
+* <<Next Steps>>
+
 == Requirements
 
 * `kubectl` - Command line tool that interacts with the Kubernetes API server and is useful for managing Kubernetes clusters. Before proceeding, follow the https://kubernetes.io/docs/tasks/tools/[installation documentation that corresponds to your platform].
@@ -31,12 +43,17 @@ To get started, the first thing to do is add the FusionAuth Helm Chart repositor
 
 [source,shell,title=Add a chart repository]
 ----
-$ helm repo add fusionauth https://fusionauth.github.io/charts
+helm repo add fusionauth https://fusionauth.github.io/charts
 ----
 
 To view the list of repositories that you have added use the following command:
 
 [source,text,title=List chart repositories]
+----
+helm repo list
+----
+
+[source,text,title=Output from listing chart repositories]
 ----
 NAME      	URL
 fusionauth	https://fusionauth.github.io/charts
@@ -46,8 +63,11 @@ To search repositories:
 
 [source,shell,title=Search chart repositories]
 ----
-$ helm search repo fusionauth
+helm search repo fusionauth
+----
 
+[source,shell,title=Output from search]
+----
 NAME                 	CHART VERSION	APP VERSION	DESCRIPTION
 fusionauth/fusionauth	0.10.5       	1.30.1     	Helm chart for fusionauth
 ----
@@ -60,7 +80,7 @@ To update this file, first download it:
 
 [source,shell,title=Download chart values]
 ----
-$ curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
+curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
 ----
 
 Open `values.yaml` with your favorite text editor and modify it. This guide covers configuration values which must be updated to deploy FusionAuth. You should review the entire configuration to understand all the possible options.
@@ -155,8 +175,6 @@ FusionAuth requires an external database and, optionally an external Elasticsear
 If [field]#search.engine# is set to `elasticsearch`:
 
 * `search.host`
-* `search.protocol` - If you are using Elasticsearch service through AWS or Google, this will be `https`
-* `search.port` - If you are using Elasticsearch service through AWS or Google, this will be `443`
 * `search.user`
 * `search.password`
 
@@ -166,14 +184,14 @@ Now that `values.yaml` is updated, it is time to install the chart on the cluste
 
 [source,shell,title=Helm install format]
 ----
-$ helm install [CHART NAME] [CHART] [flags]
+helm install [CHART NAME] [CHART] [flags]
 ----
 
 Here you will install a chart including the `-f` flag to override the default values.
 
 [source,shell,title=Install the FusionAuth chart]
 ----
-$ helm install my-release fusionauth/fusionauth -f values.yaml
+helm install my-release fusionauth/fusionauth -f values.yaml
 ----
 
 [NOTE.note]
@@ -206,7 +224,7 @@ You can get the status of your deployment with `kubectl`.
 
 [source,shell,title=Get a list of deployments running on the cluster]
 ----
-$ kubectl get deployments -o wide
+kubectl get deployments -o wide
 ----
 
 [source,text,title=Output]
@@ -215,11 +233,11 @@ NAME                    READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IM
 my-release-fusionauth   1/1     1            1           4m16s   fusionauth   fusionauth/fusionauth-app:1.30.1   app.kubernetes.io/instance=my-release,app.kubernetes.io/name=fusionauth
 ----
 
-Finally, it's time to verify the deployment via the browser. As instructed by the success message output above, create a proxy enabling you to connect to the cluster from `localhost`:
+As instructed by the success message output above, you can create a proxy enabling you to connect to the cluster from `localhost`:
 
 [source,shell,title=Setup port-forwarding proxy]
 ----
-$ export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="{.items[0].metadata.name}")
+export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="{.items[0].metadata.name}")
   echo "Visit http://127.0.0.1:9011 to use your application"
   kubectl port-forward svc/$SVC_NAME 9011:9011
 ----
@@ -229,7 +247,7 @@ $ export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/na
 Forwarding from 127.0.0.1:9011 -> 9011
 ----
 
-Navigate to `\http://localhost:9011` and you will land on the FusionAuth Setup Wizard.
+Navigate to `\http://localhost:9011` and you will land on the FusionAuth Setup Wizard. For a complete tutorial walking you through the initial FusionAuth configuration, see https://fusionauth.io/docs/v1/tech/tutorials/setup-wizard/[Setup Wizard & First Login].
 
 image::installation-guides/kubernetes/fa-initial-config.png[FusionAuth bootstrap,width=1200,role=bottom-cropped]
 
@@ -248,37 +266,32 @@ Create a file named `ingress.yaml` and copy and paste the following resource con
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: my-release-fusionauth
+  labels:
+    app.kubernetes.io/name: fusionauth
+    app.kubernetes.io/instance: my-release-fusionauth
   annotations:
     kubernetes.io/ingress.class: nginx
-    meta.helm.sh/release-name: my-release
-    meta.helm.sh/release-namespace: default
-  labels:
-    app.kubernetes.io/instance: my-release
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: fusionauth
-    helm.sh/chart: fusionauth-0.0.0_dev
-  name: my-release-fusionauth
-  namespace: default
 spec:
   rules:
-  - http:
+    - http:
       paths:
-      - backend:
-          service:
-            name: my-release-fusionauth
-            port:
-              number: 9011
-        path: /
-        pathType: Prefix
+        - path: "/"
+          pathType: "Prefix"
+          backend:
+            service:
+              name: my-release-fusionauth
+              port:
+                name: https
 ----
 
-The rules for this Ingress resource indicate that requests from `localhost` root path context, or `/`, should be directed to the `fa-minikube-fusionauth` service.
+The rules for this Ingress resource indicate that requests from the root path context, or `/`, should be directed to the `my-release-fusionauth` service.
 
 Now apply this configuration on the cluster:
 
 [source,shell,title=Apply Ingress resource]
 ----
-$ kubectl apply -f ./ingress.yaml
+kubectl apply -f ./ingress.yaml
 ----
 
 === Install an Ingress Controller
@@ -287,19 +300,19 @@ For this guide, you will use the NGINX Ingress controller. To install the the In
 
 [source,shell,title=Add ingress-nginx chart repository]
 ----
-$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 ----
 
 [source,shell,title=Install ingress-nginx chart]
 ----
-$ helm install fa-loadbalancer ingress-nginx/ingress-nginx
+helm install fa-loadbalancer ingress-nginx/ingress-nginx
 ----
 
 When completed, get the active services running on the cluster:
 
 [source,shell,title=Get services information]
 ----
-$ kubectl get services
+kubectl get services
 ----
 
 [source,text,title=Services response output]
@@ -308,7 +321,12 @@ NAME                                            TYPE           CLUSTER-IP       
 fusionauth-ingress-nginx-controller             LoadBalancer   10.100.246.131   a4413292c6477456b8c1cde8f5260513-137482286.us-west-1.elb.amazonaws.com       80:30048/TCP,443:32484/TCP   37m
 ----
 
-A new service will be available of type `LoadBalancer` and will contain an external IP or host name corresponding to a newly provisioned Elastic Load Balancer host name. External traffic will now be directed to the EKS cluster via this ingress.
+A new service will be available of type `LoadBalancer` and will contain an external IP or host name corresponding to a newly provisioned Elastic Load Balancer host name. External traffic will now be directed to the Kubernetes cluster via this ingress.
+
+[NOTE.note]
+====
+If you have completed this tutorial using Minikube, you can access the ingress by creating a network route to your cluster by executing the command `minikube tunnel`. For documentation on this, see https://minikube.sigs.k8s.io/docs/handbook/accessing/#using-minikube-tunnel[Using minikube tunnel].
+====
 
 Congratulations! You now have a fully functional Kubernetes environment running FusionAuth.
 

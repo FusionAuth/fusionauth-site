@@ -33,7 +33,7 @@ Prior to creating the cluster, either create a new key pair or have an existing 
 
 [source,shell,title=Create key pair]
 ----
-$ aws ec2 create-key-pair --region us-west-1 --key-name eksExampleKeyPair
+aws ec2 create-key-pair --region us-west-1 --key-name eksExampleKeyPair
 ----
 
 If successful, information about your new key will be displayed. Store the private key for future use.
@@ -42,7 +42,7 @@ Now create a new EKS cluster.
 
 [source,shell,title=Create EKS cluster]
 ----
-$ eksctl create cluster \
+eksctl create cluster \
 --name fusionauth-example \
 --region us-west-1 \
 --with-oidc \
@@ -103,7 +103,7 @@ We now have a fully functional provisioned EKS cluster. You will need additional
 
 [source,shell,title=Get cluster information]
 ----
-$ aws eks describe-cluster --name fusionauth-example
+aws eks describe-cluster --name fusionauth-example
 ----
 
 [source,json,title=Cluster information JSON output]
@@ -115,7 +115,7 @@ $ aws eks describe-cluster --name fusionauth-example
         "createdAt": "2021-10-05T14:19:21.612000-06:00",
         "version": "1.20",
         "endpoint": "https://EC8E2DC8514200E91A4748FA6EE525A4.yl4.us-west-1.eks.amazonaws.com",
-        "roleArn": "arn:aws:iam::<ACCOUNT_ID>:role/eksctl-fusionauth-example-cluster-ServiceRole-1EED6M5NXUF3",
+        "roleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<role-name>",
         "resourcesVpcConfig": {
             "subnetIds": [
                 "subnet-091347798a21eabe2",
@@ -148,7 +148,7 @@ This is where `kubectl` comes in handy. Looking at the previous log, you will no
 
 [source,shell,title=Get EKS cluster nodes]
 ----
-$ kubectl get nodes -o wide
+kubectl get nodes -o wide
 
 NAME                                           STATUS   ROLES    AGE     VERSION              INTERNAL-IP      EXTERNAL-IP    OS-IMAGE         KERNEL-VERSION                CONTAINER-RUNTIME
 ip-192-168-45-153.us-west-1.compute.internal   Ready    <none>   4m57s   v1.20.7-eks-135321   192.168.45.153   50.18.29.248   Amazon Linux 2   5.4.149-73.259.amzn2.x86_64   docker://20.10.7
@@ -166,7 +166,7 @@ Here, you create a new subnet group using the subnets assigned to your cluster i
 
 [source,shell,title=Create DB subnet group]
 ----
-$ aws rds create-db-subnet-group \
+aws rds create-db-subnet-group \
 --db-subnet-group-name fusionauth-example-db-group \
 --db-subnet-group-description "FusionAuth example database subnet group" \
 --subnet-ids "subnet-091347798a21eabe2" "subnet-0cb7540073e8b30aa" "subnet-052f8750345045581" "subnet-040e32678cf7a85da"
@@ -176,7 +176,7 @@ Now create the database. Set [field]#db-subnet-group# and [field]#vpc-security-g
 
 [source,shell,title=Create Postgresql DB instance]
 ----
-$ aws rds create-db-instance \
+aws rds create-db-instance \
     --db-instance-identifier fusionauth-eks-example \
     --allocated-storage 20 \
     --db-instance-class db.m6g.large \
@@ -194,7 +194,7 @@ Add an inbound rule to the security group to allow nodes to access the database.
 
 [source,shell,title=Create inbound rule]
 ----
-$ aws ec2 authorize-security-group-ingress \
+aws ec2 authorize-security-group-ingress \
     --group-id sg-08b95dbacc02ba628 \
     --protocol tcp \
     --port 5432 \
@@ -210,7 +210,7 @@ It may take a few minutes for the provisioning process to complete.
 
 [source,shell,title=Get DB instance information]
 ----
-$ aws rds describe-db-instances --db-instance-identifier fusionauth-eks-example
+aws rds describe-db-instances --db-instance-identifier fusionauth-eks-example
 ----
 
 The resulting output should contain an `Endpoint` attribute. This value will be necessary when configuring your FusionAuth deployment.
@@ -256,7 +256,7 @@ Create the policy:
 
 [source,shell,title=Create access policy]
 ----
-$ aws iam create-policy \
+aws iam create-policy \
 --policy-name fusionauth-es-policy \
 --policy-document file://eks-policy.json
 ----
@@ -265,9 +265,9 @@ Attach the policy to the service role that assigned to your EKS cluster:
 
 [source,shell,title=Assign policy to EKS role]
 ----
-$ aws iam attach-role-policy \                                                                                                                                                                               ✔
+aws iam attach-role-policy \                                                                                                                                                                               ✔
   --policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/fusionauth-es-policy \
-  --role-name eksctl-fusionauth-example-cluster-ServiceRole-1EED6M5NXUF3
+  --role-name <role-name>
 ----
 
 Create a domain access policy to be assigned to the new Elasticsearch cluster. Copy the following, replacing the value for [field]#ACCOUNT_ID#, to a local file and save it as `access-policy.json`:
