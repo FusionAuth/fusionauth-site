@@ -95,7 +95,7 @@ image:
 
 Now, configure the database connection. Each of our FusionAuth pods will use this configuration when communicating with the database.
 
-The following is an example of what you will see upon opening `values.yaml` for modification:
+The following is an example of the `database` configuration section in `values.yaml`:
 
 [source,yaml,title=Database and search example configuration]
 ----
@@ -144,6 +144,10 @@ search:
 
 For this guide, the following attributes need to be retrieved from your database and Elasticsearch deployments and updated in your `values.yaml` configuration.
 
+[NOTE.note]
+====
+FusionAuth requires an external database and, optionally an external Elasticsearch cluster. Setting these up is outside of the scope of this document.
+====
 * `database.host`
 * `database.root.user`
 * `database.root.password`
@@ -156,9 +160,9 @@ If [field]#search.engine# is set to `elasticsearch`:
 * `search.user`
 * `search.password`
 
-== Deploy FusionAuth to the cluster
+== Deploy FusionAuth To the Cluster
 
-Now that `values.yaml` is updated, it is time to install the chart on our cluster. The `helm install` command is used to install a chart by name and can be applied using the syntax:
+Now that `values.yaml` is updated, it is time to install the chart on the cluster. The `helm install` command is used to install a chart by name and can be applied using the syntax:
 
 [source,shell,title=Helm install format]
 ----
@@ -182,7 +186,7 @@ include::/docs/v1/tech/installation-guide/kubernetes/_set-flag.adoc[]
 Include the flag `--dry-run` if you would like to view the generated template before installing the template.
 ====
 
-If the previous command was successful, you should see output similar to the following.
+If the previous command was successful, you should see output similar to the following:
 
 [source,text,title=Example output]
 ----
@@ -220,7 +224,7 @@ $ export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/na
   kubectl port-forward svc/$SVC_NAME 9011:9011
 ----
 
-[source,text,title=Example output]
+[source,text,title=Example output of kubectl proxying command]
 ----
 Forwarding from 127.0.0.1:9011 -> 9011
 ----
@@ -231,9 +235,11 @@ image::installation-guides/kubernetes/fa-initial-config.png[FusionAuth bootstrap
 
 == Create an Ingress
 
-If you want to expose external traffic to FusionAuth, the last thing you need to do is to configure the cluster to be able to receive external requests. To direct external traffic to your cluster, you will use an https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress], a component that defines how external traffic should be handled, and an https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] that implements those rules.
+If you want to connect FusionAuth with an external network, the last thing you need to do is to configure the cluster to be able to receive external requests. You might do this if you were using FusionAuth to authenticate users connecting to applications from the internet. On the other hand, you might not do this if you were using FusionAuth solely within your kubernetes cluster. 
 
-=== Deploy Ingress Resource
+To direct external traffic to your cluster, you will use an https://kubernetes.io/docs/concepts/services-networking/ingress/[Ingress], a component that defines how external traffic should be handled, and an https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/[Ingress Controller] that implements those rules.
+
+=== Deploy an Ingress Resource
 
 Create a file named `ingress.yaml` and copy and paste the following resource configuration:
 
@@ -275,7 +281,7 @@ Now apply this configuration on the cluster:
 $ kubectl apply -f ./ingress.yaml
 ----
 
-=== Install Ingress Controller
+=== Install an Ingress Controller
 
 For this guide, you will use the NGINX Ingress controller. To install the the Ingress controller, add the https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx[nginx-ingress] repository and install the Helm chart by running the following commands:
 
@@ -289,14 +295,14 @@ $ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 $ helm install fa-loadbalancer ingress-nginx/ingress-nginx
 ----
 
-When completed, get the active services running on the EKS cluster:
+When completed, get the active services running on the cluster:
 
 [source,shell,title=Get services information]
 ----
 $ kubectl get services
 ----
 
-[source,text,title=Output]
+[source,text,title=Services response output]
 ----
 NAME                                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)                      AGE
 fusionauth-ingress-nginx-controller             LoadBalancer   10.100.246.131   a4413292c6477456b8c1cde8f5260513-137482286.us-west-1.elb.amazonaws.com       80:30048/TCP,443:32484/TCP   37m
