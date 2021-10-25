@@ -6,6 +6,12 @@ require 'uri'
 require 'optparse'
 require 'yaml'
 
+
+# TODO
+# support checking example JSON
+# support warning for fields that exist in html but not in the json and vice versa
+
+
 IGNORED_FIELD_REGEXPS = [
   /[^.]*\.tenantId/, # toplevel tenantId always ignored, as that is handled implicitly via API key locking or header if there is more than one tenant
   /user\.salt/, # never send user.salt, only used by Import API
