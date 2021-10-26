@@ -12,7 +12,7 @@ redirect_from:
 
 This document will help you migrate off of Auth0. If you are looking to compare FusionAuth and Auth0, link:/blog/2018/10/19/auth0-and-fusionauth-a-tale-of-two-solutions/[this document may help]. 
 
-This guide assumes you have installed FusionAuth. If you have not, please link:/docs/v1/tech/installation-guide/[view our installation guides] and install FusionAuth before you begin. For more general migration information, please view the link:/docs/v1/tech/guides/migration/[FusionAuth migration guide].
+This guide assumes you have installed FusionAuth. If you have not, please link:/docs/v1/tech/installation-guide/[view our installation guides] and install FusionAuth before you begin. For more general migration information, please view the link:../general/[FusionAuth migration guide].
 
 * <<Planning Considerations>>
 ** <<Obtaining User Data>>
@@ -36,7 +36,7 @@ This guide assumes you have installed FusionAuth. If you have not, please link:/
 * <<What to Do Next>>
 * <<Additional Support>>
 
-There are a number of different ways applications can be integrated with Auth0, and it would be difficult to cover them all. This guide mentions the typical parts of a migration and in particular focuses on migrating user data from an Auth0 managed user database into FusionAuth. 
+There are a number of different ways applications can be integrated with Auth0, and it would be difficult to cover them all. This guide mentions the typical parts of a bulk migration and focuses on migrating user data from an Auth0 managed user database into FusionAuth. 
 
 == Planning Considerations
 
@@ -233,7 +233,7 @@ The next step is to create an API key. This will be used by the import script. T
 
 image::guides/auth0-migration/add-api-key.png[Adding an API key,width=1200]
 
-This key needs to have the permission to run a bulk import of users. In the spirit of the principle of least privilege, give it the permission to `POST` to the `/api/user/import` endpoint. Record the API key string, as you'll use it below.
+This key needs to have the permission to run a bulk import of users. In the spirit of the principle of least privilege, give it the permission to `POST` to the `/api/user/import` endpoint. (If you are also importing social logins, you'll need more privileges: `/api/identity-provider/link` and `/api/user/search`). Record the API key string, as you'll use it below.
 
 image::guides/auth0-migration/set-api-key-permissions.png[Setting API key permissions,width=1200]
 
@@ -271,9 +271,15 @@ If you have `bundler` installed, run `bundle install` in the `auth0` directory. 
 
 You can see the output of the script by running it with the `-h` option:
 
+[source,sh,title=Running the import script with the help command line switch]
+----
+ruby ./import.rb -h
+----
+
+The output will be similar to this:
+
 [source,sh,title=The help output of the import.rb script]
 ----
-$ ruby ./import.rb -h
 Usage: import.rb [options]
     -l, --link-social-accounts       Link social accounts, if present, after import. This operation is slower than an import.
     -r APPLICATION_IDS,              A comma separated list of existing applications Ids. All users will be registered for these applications.
@@ -307,7 +313,7 @@ If you are loading social users, you must create the social providers in FusionA
 The social account linking functionality will only work with FusionAuth versions above or equal to 1.28. The `fusionauth_client` library must be >= 1.28 as well.
 ====
 
-You may or may not want to use the `-m` switch, which takes the auth0 Id for non social users and turns that into the FusionAuth user Id. If you have external systems reliant on the Auth0 user identifier, set this. Doing so ensures imported users have the same Id as they did in Auth0. Otherwise, you can omit this switch.
+You may or may not want to use the `-m` switch, which takes the Auth0 Id for users without a social login and uses the same value for the FusionAuth user Id. If you have external systems reliant on the Auth0 user identifier, set this. Doing so ensures imported users have the same Id as they did in Auth0. Otherwise, you can omit this switch.
 
 When you run the script, you'll see output like:
 
@@ -315,7 +321,7 @@ When you run the script, you'll see output like:
 ----
 $ ruby ./import.rb -f http://localhost:9011 -k '...' -s secrets.json -u user-data.json
 FusionAuth Importer : Auth0
- > User file: users.json
+ > User file: user-data.json
  > User secrets file: secrets.json
  > Call FusionAuth to import users
  > Import success
@@ -333,6 +339,7 @@ You may also want to migrate additional data. Currently, the following attribute
 * `username`
 * `insertInstant`
 * the password hash and supporting attributes, if available
+* `registrations`, if supplied
 
 The migrated user will have the Auth0 tenant Id and original user Id stored on the `user.data` object. If you have additional user attributes to migrate, review and modify the `map_user` method. 
 
