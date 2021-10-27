@@ -20,7 +20,7 @@ Mr. Bergal comes to FusionAuth with more than 30 years of B2B tech experience wi
 
 ### About FusionAuth
 
-FusionAuth is the authentication and authorization platform built for developers, by developers. It solves the problem of building essential user security without adding risk or distracting from the primary application. For developers and technical leaders creating products for external users, FusionAuth puts them in the driver's seat, with control, flexibility and developer ergonomics. FusionAuth tames the risk and complexity that comes with typical identity systems. With self-hosted or cloud software, extensive documentation, free options, fast deployment and a no-hassle process, it eliminates the business hurdles that make it hard for developers to meet their authentication and authorization requirements.  Learn more at [fusionauth.io](/) 
+FusionAuth is the authentication and authorization platform built for developers, by developers. It solves the problem of building essential user security without adding risk or distracting from the primary application. For developers and technical leaders creating products for external users, FusionAuth puts them in the driver's seat, with control, flexibility and developer ergonomics. FusionAuth tames the risk and complexity that comes with typical identity systems. With self-hosted or cloud software, extensive documentation, free options, fast deployment and a no-hassle process, it eliminates the business hurdles that make it hard for developers to meet their authentication and authorization requirements.  Learn more at [fusionauth.io](/).
 
 ### Media Contact
 
