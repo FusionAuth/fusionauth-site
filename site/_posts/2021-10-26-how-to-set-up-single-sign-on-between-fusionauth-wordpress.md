@@ -15,7 +15,7 @@ User authentication is one of the most important parts of building any applicati
 
 Let's say you're building a photo-sharing application that lets a user sign up with a username and password to share their pictures. Your team might later decide to [create a forum using WordPress](https://wordpress.com/go/tutorials/create-a-forum-with-wordpress-com/) to help support your app, but this new project isn't tied to your original application. It uses an entirely different tech stack, database, and hosting setup.
 
-This means your users need to sign up _again_ on this second website and remember another set of usernames and passwords. Giving users two entirely different sets of credentials is not ideal at, so that's where Single Sign-On comes in.
+This means your users need to sign up _again_ on this second website and remember another set of usernames and passwords. Giving users two entirely different sets of credentials is not ideal, so that's where Single Sign-On comes in.
 
 Single Sign-On, commonly known as SSO, is an authentication mechanism that enables users to use a single set of credentials to log in to multiple different applications or websites. In a typical SSO setup, you have a service provider—the application the user is trying to log in to—and an identity provider like [FusionAuth](https://fusionauth.io), which handles the authentication. This means your users need only one set of credentials to log into all of your applications.
 
