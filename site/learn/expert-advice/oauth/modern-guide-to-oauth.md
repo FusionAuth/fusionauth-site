@@ -175,7 +175,7 @@ You might be wondering if the **Third-party login and registration** mode can wo
 1. TWGTL's OAuth server redirects the user back to the TWGTL application.
 1. The user is logged into TWGTL.
 
-> What does "reconcile out" mean? OAuth has its jargon, oh yes. To reconcile a user with a remote system means optionally creating a local account and then attaching data and identity from a remote data source like Facebooik to that account. The remote account is the authority and the local account is modified as needed to reflect remote data.
+> What does "reconcile out" mean? OAuth has its jargon, oh yes. To reconcile a user with a remote system means optionally creating a local account and then attaching data and identity from a remote data source like Facebook to that account. The remote account is the authority and the local account is modified as needed to reflect remote data.
 
 The nice part about this workflow is that TWGTL doesn't have to worry about integrating with Facebook (or any other provider) or reconciling the user's account. That's handled by the OAuth server. It's also possible to delegate to additional OAuth servers, easily adding "Login with Google" or "Login with Apple". You can also nest deeper than the 2 levels illustrated here.
 

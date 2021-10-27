@@ -192,7 +192,7 @@ A user's phone isn't limited to running a TOTP application, accepting a phone ca
 
 The user proves they received the notification by sharing that code with the auth system. The server can encrypt the code before sending it and the application can decrypt it on the phone to ensure the code can't be tampered with or read. Such systems can be very effective. In 2019, Google researchers found that such on-device prompts ["helped block 100% of automated bots, 99% of bulk phishing attacks, and 90% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
 
-Similar to phone call and text messages's dependence on the phone network providers, the security of the push notification in transit systems is up to the provider of the push notification. However, I hear Apple and Google are pretty good at this security thing.
+Similar to the dependence of phone call and text message security on the phone network providers, the security of the push notification in transit systems is up to the provider of the push notification. However, I hear Apple and Google are pretty good at this security thing.
 
 With any of the above MFA options using a smartphone as part of the factor, encourage your users to configure the device to require authentication, like a pin, before applications or notifications on the phone can be accessed. 
 

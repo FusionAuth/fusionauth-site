@@ -22,7 +22,7 @@ So, let's get started!
 ## Requirements
 
 Some tools you need to have before starting this tutorial:
-* VScode or any other Text Editor
+* VSCode or any other Text Editor
 * Git
 * Xcode, for iOS
 * iPhone simulator or real iOS device
@@ -102,7 +102,7 @@ cd $HOME/dev
 flutter create fusionauth_demo
 ```
 
-After the installation process completes, we will see that the `fusionauth_demo` directory contains all the flutter starter app configuration. We can open the project directory with VScode by running the following command:
+After the installation process completes, we will see that the `fusionauth_demo` directory contains all the flutter starter app configuration. We can open the project directory with VSCode by running the following command:
 
 ```shell
 code fusionauth_demo
