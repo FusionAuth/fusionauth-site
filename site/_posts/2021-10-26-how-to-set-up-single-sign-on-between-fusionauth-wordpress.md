@@ -183,9 +183,9 @@ You can also click the "Create an account" link and register a new user.
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/fusionauth-wp-registration-screen.png" alt="FusionAuth registration screen." class="img-fluid" figure=false %}
 
-{% include _callout-tip.liquid content= "All FusionAuth user facing pages can be themed to look like the other application pages. [Learn more here](/docs/v1/tech/themes/)." %}
-
 Once successfully authenticated, you will be redirected back to the WordPress site's admin homepage. 
+
+{% include _callout-tip.liquid content= "All FusionAuth user facing pages can be themed to look like the other application pages. [Learn more here](/docs/v1/tech/themes/)." %}
 
 You can confirm that this is indeed the user you logged in with by looking at the display name, which should be the email of your FusionAuth user.
 
