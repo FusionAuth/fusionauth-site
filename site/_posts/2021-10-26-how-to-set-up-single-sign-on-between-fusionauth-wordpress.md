@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: How to Set Up Single Sign-On Between FusionAuth and Wordpress
+title: How to Set Up Single Sign-On Between FusionAuth and WordPress
 description: In this tutorial, you'll be learning how to implement OAuth SSO for Joomla users.
 author: Aniket Bhattacharyea
 image: blogs/joomla-sso-fusionauth/how-to-set-up-single-sign-on-sso-between-fusionauth-and-joomla-header-image.png
@@ -73,24 +73,25 @@ Once FusionAuth and WordPress have been installed, you can proceed with adding F
 
 ### Installing the plugin
 
-For this tutorial, you will use the [OAuth Single Sign-On – SSO (OAuth Client)](https://wordpress.org/plugins/miniorange-login-with-eve-online-google-facebook/) by [miniOrange](http://miniorange.com/), but any OpenID compatible plugin should do.
+For this tutorial, you will use the [OpenID Connect Generic plugin](https://github.com/oidc-wp/openid-connect-generic).
 
-{% include _callout-tip.liquid content="There are certain limitations with the free version of the 'OAuth Single Sign-On – SSO (OAuth Client)' plugin. There are paid versions that offer more flexibility, but this free version should be functional to demonstrate and implement SSO." %}
+Go to your WordPress Admin Dashboard at `localhost:8030/wp-admin` and click on the "Plugins" page from the sidebar. Click on the "Add New" button, and on the next page, search for "OpenID Connect Generic".
 
-Go to your WordPress Admin Dashboard at `localhost:8030/wp-admin` and click on the "Plugins" page from the sidebar. Click on the "Add New" button, and on the next page, search for "OAuth Single Sign On – SSO (OAuth Client)".
+The plugin should be the first one in the search results. You want the one by `daggerhart`. Install and activate the plugin.
 
-The plugin should be the first one in the search results. Install and activate the plugin.
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/select-plugin.png" alt="Selecting the WordPress OIDC plugin." class="img-fluid" figure=false %}
 
-{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/select-miniorange-plugin.png" alt="Selecting the MiniOrange WordPress OIDC plugin." class="img-fluid" figure=false %}
+Once the plugin is activated, choose "Settings" and then "OpenID Connect Client" from the left menu. This is where you will be able to configure the plugin to work with FusionAuth.
 
-Once the plugin is activated, you should have an option labeled "miniOrange OAuth" in your left sidebar. This is where you will be able to configure the plugin to work with FusionAuth.
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/configure-oidc-generic-client-settings-start.png" alt="Configuring the WordPress OIDC plugin." class="img-fluid" figure=false %}
 
+But first, let's set up FusionAuth. After you do that, you'll return to finish configuring this WordPress plugin.
 
 ### Configuring FusionAuth
 
-To get started with SSO, you need to create an application in FusionAuth. An application represents the resource where users will log in to, in your case, the WordPress site. Each website, mobile app, or any other application should be created as an application in FusionAuth.
+To get started with SSO, you need to create an application in FusionAuth. An application represents the resource where users will log in to, in your case, the WordPress site. Each website, mobile app, or any other application should be created as an application in FusionAuth. Users can use the same username and password to log in to all such applications managed by FusionAuth.
 
-You can click on the "Applications" menu from the sidebar and then the green plus ("+") button in the top-right corner.
+Click on the "Applications" menu from the sidebar and then the green plus ("+") button in the top-right corner.
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/application-list.png" alt="Applications list." class="img-fluid" figure=false %}
 
@@ -98,15 +99,21 @@ In the "Add Application" screen, provide a name for your app. This is just for d
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/create-application-initial-screen.png" alt="Initial create application screen." class="img-fluid" figure=false %}
 
-Now, click on the OAuth tab. The default settings should suffice. The only thing you need to provide is the "Authorized redirect URLs" value. These are the URLs where users will be redirected after they're authenticated. In this case, the URL is provided and handled by the plugin, and the default value is your WordPress URL. So, enter `http://localhost:8030/`.
+Now, click on the OAuth tab. The default settings should suffice. The only thing you need to provide is the "Authorized redirect URLs" value. These are the URLs where users will be redirected after they're authenticated. In this case, both URLs are provided and handled by the plugin. Enter these two URLs:
+
+* `http://localhost:8030/wp-admin/admin-ajax.php?action=openid-connect-authorize`. This is the URL FusionAuth will redirect to after the user has logged in.
+* `http://localhost:8030/wp-login.php?loggedout=true&wp_lang=en_US` This is the URL FusionAuth will redirect to after the user has logged out.
+
+{% include _callout-tip.liquid content= "Your `wp_lang` value may vary if you use a different locale." %}
+
+Once you move this application into production, be sure to update the authorized redirect URLs!
+This is what the "OAuth" tab should look like after you are done:
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/create-application-oauth-screen.png" alt="Create application OAuth tab." class="img-fluid" figure=false %}
 
-Once you move this application into production, be sure to update the authorized redirect URLs!
+By default, FusionAuth provides login functionality. You will need to manually create new users through the admin panel or via API. This is useful if you're building an internal site where you do not want users to register themselves, but in this tutorial, users should be able to create an account. 
 
-By default, FusionAuth will only provide login functionality. You will need to manually create new users through the admin panel. This is useful if you're building an internal site where you do not want users to register themselves, but in this tutorial, we want users to be able to create an account.
-
-To enable user registration, click on the "Registration" tab and turn on "Self service registration." Select the "Login type" as "Username.” Keep the other default settings unchanged.
+To enable user registration, click on the "Registration" tab and turn on "Self service registration." Keep the default settings unchanged.
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/create-application-registration-screen.png" alt="Create application registration tab." class="img-fluid" figure=false %}
 
@@ -122,60 +129,71 @@ A popup will open with the details about your application.
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/application-view-screen.png" alt="Application details view." class="img-fluid" figure=false %}
 
- Keep this window open as you'll need to do a bit of copy-pasting from here in the next step.
+Look for the "OAuth configuration" section. You may need to scroll down a bit:
+
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/application-view-screen-oauth-configuration.png" alt="Application details view with OAuth info." class="img-fluid" figure=false %}
+
+Keep this window open as you'll need to do a bit of copy-pasting from here in the next step.
 
 ## Configuring the Plugin
 
-In another tab, navigate to your WordPress admin dashboard and click on the "miniOrange OAuth" option from the sidebar. The plugin comes preconfigured with many Identity Providers. Unfortunately, FusionAuth is not one of them, so scroll down and select the "Custom OAuth 2.0 App" option.
+Return to your WordPress admin dashboard where you had the WordPress plugin information stored.
 
-{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/miniorange-custom-app-option.png" alt="The custom OAuth 2.0 App option" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/configure-oidc-generic-client-settings-start.png" alt="Configuring the WordPress OIDC plugin." class="img-fluid" figure=false %}
 
-On the next page, enter "FusionAuth" in the App Name field. This will be shown to your users when logging in.
+You should see this configuration screen:
 
-Go back to the FusionAuth page and copy the "Client Id" and "Client Secret" from the popup window (you might have to scroll down a bit). Paste them in "Client Id" and "Client Secret" fields in the plugin configuration page respectively.
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/configure-oidc-generic-client-settings-start.png" alt="Configure the OpenID Connect Generic Client." class="img-fluid" figure=false %}
+
+Go back to the FusionAuth screen and copy the "Client Id" and "Client Secret" from the popup window (you might have to scroll down a bit). 
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/application-view-client-id-client-secret.png" alt="Finding the Client Id and Client Secret." class="img-fluid" figure=false %}
 
-Now fill the following fields in the :
+Now, flip back to the WordPress plugin configuration screen and begin entering values. 
 
-1. In the "Authorize Endpoint", put `<your-fusionauth-domain>/oauth2/authorize`. In our case, it will be `http://localhost:9011/oauth2/authorize`.
-2. In the "Access Token Endpoint", put `<your-fusionauth-domain>/oauth2/token`. In our case, it should be `http://localhost:9011/oauth2/token`, however since we're running in a Docker container, WordPress can't reach FusionAuth through `localhost`, so the URL should be `http://fusionauth:9011/oauth2/token`. Docker-Compose is taking care of the local DNS resolution.
-3. In the "Get User Info Endpoint", put `<your-fusionauth-domain>/oauth2/userinfo`. In our case, for the same reason, it will be `http://fusionauth:9011/oauth2/userinfo`.
+* Paste the values "Client Id" and "Client Secret" fields in the configuration form.
+* Put `openid` in the "OpenID Scope" field.
+* In the "Login Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/authorize`. In our case, it will be `http://localhost:9011/oauth2/authorize`.
+* In the "Userinfo Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/userinfo`, however since we're running in a Docker container, WordPress can't reach FusionAuth through `localhost`, so the URL should be `http://fusionauth:9011/oauth2/userinfo`. Docker is taking care of the local DNS resolution.
+* In the "Token Validation Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/token`. In our case, it should be `http://localhost:9011/oauth2/token` . In our case, for the same reason, it will be `http://fusionauth:9011/oauth2/token`.
+* In the "End Session Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/logout`. In our case, it will be `http://localhost:9011/oauth2/logout`.
+* Check "Disable SSL Verify" since none of our docker instances are running HTTPS.
+* Change the "Identity Key" and "Nickname Key" values to `sub`. This is what WordPress will use as Ids internally.
+* Change the "Display Name Formatting" to `{email}`. This is what will be displayed to the user in the WordPress admin screen.
+* Check "Link Existing Users" if users in your local WordPress database have the same emails as users in your FusionAuth database; otherwise you'll see an error when those users try to log in. 
 
 Note that the "Authorize Endpoint" need not be changed since that will be opened in the browser. If you're not using Docker, you should keep all the URLs pointed at `localhost`.
 
-Finally, put "openid" in the "Scope" field and click on the "Save settings" button.
+Finally click on the "Save Changes" button. Here's what a filled out form will look like after you have filled it out:
 
-{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/miniorange-plugin-final-configuration.png" alt="Final miniOrange plugin configuration." class="img-fluid" figure=false %}
-
-The last step is "Attribute mapping." This tells WordPress which attribute in the returned user object is the username so it can create users in WordPress and authenticate them appropriately. You set the "Login Type" to "Username" in the registration form, which means FusionAuth will collect usernames in the registration form.
-
-To enable attribute mapping, you have to test the configuration first. Log out of FusionAuth and click on the "Test Configuration" button. This will open up a new window with the FusionAuth login page.
-
-Click on "Create an account" and enter a username and password to register a new account.
-
-{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/user-registration-page.png" alt="Registering a user." class="img-fluid" figure=false %}
-
-Here you can log in with your credentials. On success, it will display a table containing your information. 
-
-Now you can click on "Proceed To Attribute/Role Mapping" in the WordPress admin panel. On the next page, tell WordPress which among these fields is the username by selecting `preferred_username`. This is the OIDC claim that FusionAuth places the username field in. To learn more about the various claims, please review [the FusionAuth token documentation](/docs/v1/tech/oauth/tokens/).
-
-Finally, click on "Save Settings" to complete the configuration process.
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/configure-oidc-generic-client-settings-saved.png" alt="Final plugin configuration." class="img-fluid" figure=false %}
 
 ## Testing
 
-To test the whole login flow, log out of the WordPress dashboard. Navigate to the WordPress login page (`http://localhost:8030/wp-login.php`) where you should see a "Login with FusionAuth" button below the usual login fields.
+To test the whole login flow, log out of the WordPress dashboard or use an incognito window. Navigate to the WordPress login page: `http://localhost:8030/wp-login.php`. You should see a "Login with OpenID Connect" button above the usual login fields.
 
-{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/wordpress-login-screen.png" alt="Wordpress login screen with FusionAuth login enabled." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/wordpress-login-screen.png" alt="WordPress login screen with FusionAuth login enabled." class="img-fluid" figure=false %}
 
-Clicking on that button will take you to the FusionAuth login page, where you can log in with your credentials.
+Clicking on that button will take you to the FusionAuth login page. You can login with your FusionAuth credentials, for instance the user you first created.
 
-Once successfully authenticated, you will be redirected back to the WordPress site's homepage. You can confirm that this is indeed the user you logged in with by looking at the username, which should be that of your FusionAuth user.
 
-Congratulations, you have successfully implemented SSO with FusionAuth in your WordPress site.
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/fusionauth-wp-login-screen.png" alt="FusionAuth login screen." class="img-fluid" figure=false %}
+
+You can also click the "Create an account" link and register a new user.
+
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/fusionauth-wp-registration-screen.png" alt="FusionAuth registration screen." class="img-fluid" figure=false %}
+
+{% include _callout-tip.liquid content= "All FusionAuth user facing pages can be themed to look like the other application pages. [Learn more here](/docs/v1/tech/themes/)." %}
+
+Once successfully authenticated, you will be redirected back to the WordPress site's admin homepage. 
+
+You can confirm that this is indeed the user you logged in with by looking at the display name, which should be the email of your FusionAuth user.
+
+{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/new-user-wp-admin-screen.png" alt="FusionAuth registration screen." class="img-fluid" figure=false %}
+
+Congratulations, you have successfully implemented SSO with FusionAuth in your WordPress site. Users can successfully sign up and log in.
 
 ## Conclusion
 
 In this tutorial, you learned how SSO can make the lives of your WordPress users easier by allowing them to use a single set of credentials to log into all your applications. You learned how FusionAuth can serve as your identity provider and how to integrate it with WordPress by leveraging an SSO plugin.
-
 
