@@ -9,7 +9,7 @@ tags: tutorial-react tutorial-javascript client-react client-javascript tutorial
 excerpt_separator: "<!--more-->"
 ---
 
-Whenever you build a website that allows a user to create their own account, a secure authentication and authorization flow is a must-have.  The problem is that most handmade authentication and authorization solutions are not robust enough to keep up with the most current and secure workflows. What's more, since security is not always seen as a business priority, in-house authorization solutions can quickly become an internal tool that is not often touched, prone to disrepair and exploitation by bad actors.  
+Whenever you build a website that allows a user to create their own account, a secure authentication and authorization grant is a must-have.  The problem is that most handmade authentication and authorization solutions are not robust enough to keep up with the most current and secure workflows. What's more, since security is not always seen as a business priority, in-house authorization solutions can quickly become an internal tool that is not often touched, prone to disrepair and exploitation by bad actors.  
 
 <!--more-->
 
@@ -19,19 +19,21 @@ We'll start with downloading and configuring FusionAuth, then create a login/log
 
 ## What is authentication?
 
-*Authentication* is the process of a user proving they are who they say they are to an external resource server so that they can access resources specific to them. Think of it like moving through customs when you visit another country. In order to enter, you must present valid, verified documentation in the form of a passport that proves you are who you say you are.  Authorization workflows such as OAuth 2.0 make similar use of verified, trusted objects such as tokens, which are passed between clients, authorization servers, and resource servers to prove that a user is who they say they are. Only once that proof is verified is the user allowed to access the resources they want, such as a bank account, social media homepage, or email inbox.
+You use authentication every day, whether you realize it or not. Every time you log in to a website, you have authenticated. Every time you use Facebook or Google to sign on to another service, you have used authentication. As a React developer, you most likely write web apps with a login or sign up feature. Then you display certain data based on the user's credentials. All of this functionality makes heavy use of authentication. But what exactly is authentication?
+
+In short, authentication is the process of a client proving that they are who they say they are to an external server so that they can access resources specific to them. Think of it like showing a passport to a customs agent to visit another country. In order to enter, you must present valid, verified proof from your country’s government that verifies you are who you say you are. Standards such as OAuth 2.0 give you a digital passport. Components of this system include tokens, which are passed around, authorization servers, and resource servers. Only once that user is verified are they allowed to access the resource they want, such as a bank account, social media homepage, or email.
 
 ## What is authorization?
 
 While authentication is proving you are who you say you are, *authorization* is the process of allowing a user to access certain things based on their credentials.  Back to the passport analogy, a traveler may have an extra stamp in their passport that proves they are a diplomat or a journalist. Because of those stamps, they can now enter zones that are off-limits to regular travelers, such as conflict areas or diplomatic buildings.  In a similar fashion, if a user is a website administrator, they can access certain parts of that website that a regular user cannot.  An 'authorization server', like FusionAuth, is a server that provides services to both authenticate and authorize users.
 
-While it is possible to write your own authentication and authorization tools, it is often best to use an open source tool or external service like FusionAuth, as authorization servers are complex and require a decent amount of maintenance. If you are not able to dedicate developer hours and knowledge to maintaining your auth tools, they can be exploited and result in data loss and a whole host of other issues.
+While it is possible to write your own solution, it is often best to use an open source tool or external service like FusionAuth, as this component is surprisingly complex and requires a decent amount of maintenance. If you are not able to dedicate a good amount of developer hours and knowledge to maintaining your auth workflows, they can be exploited with resulting data loss. You can also use an external 'identity provider', which is a way of authenticating users with an external trusted service such as Facebook, Google, or Spotify. However, setting up such a connection is outside the scope of this tutorial.
 
 ## What is the OAuth 2.0 Authorization Code grant?
 
-This is the flow we are going to use to authenticate our users.  In this particular grant, FusionAuth generates and passes validated access tokens to the React app, which then presents those tokens to the Express backend to gain access to the requested resources. The tokens are never stored on the browser, but are instead stored on the server. This is called the "backend for frontend" pattern, or BFF. If you want to learn more, take a look at our [Modern Guide to OAuth](https://fusionauth.io/learn/expert-advice/oauth/modern-guide-to-oauth/).
+This is the grant we are going to use to authenticate our users.  In this particular grant, FusionAuth generates and passes validated access tokens to the React app, which then presents those tokens to the Express backend to gain access to the requested resources. The tokens are never stored on the browser, but are instead stored on the server. This is called the "backend for frontend" pattern, or BFF. If you want to learn more, take a look at our [Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/)
 
-Using an Authorization Code grant has many advantages, including being more secure than the Implicit Grant.  Whereas an implicit grant will grant a user access to resources based on a simple username and password being present in a user data store, the Authorization Code grant adds an extra layer of security by exchanging an Authorization Code for an Access Token before the user can gain access to their resources.  To see a deep dive into this flow that is language-agnostic, take a look at our [Example Authoriation Code Grant](https://fusionauth.io/docs/v1/tech/oauth/#example-authorization-code-grant).  
+Using an Authorization Code grant has many advantages, including being more secure than the Implicit Grant.  Whereas an implicit grant will grant a user access to resources based on a simple username and password being present in a user data store, the Authorization Code grant adds an extra layer of security by exchanging an Authorization Code for an Access Token before the user can gain access to their resources.  To see a deep dive into this grant that is language-agnostic, take a look at our [Example Authoriation Code Grant](https://fusionauth.io/docs/v1/tech/oauth/#example-authorization-code-grant).  
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/openweb.png" alt="graphic showing the client and server side of the app" class="img-fluid" figure=false %}
 
@@ -76,14 +78,17 @@ If you choose not to use kickstart, you must configure an application in FusionA
 
 *"But wait a minute!" you may ask. "Why do I have to make another app in FusionAuth? Don't I already have a React App?  I thought I could just import FusionAuth functionality into my React app?"*
 
-You can't directly import FusionAuth functionality into your JavaScript or React projects.  Instead, FusionAuth is a separate server that developers interact with via API calls.  So, instead of being something like a JavaScript library, FusionAuth actually is an entirely separate application that you configure to work with your React app and server of your choosing via API calls.  Think of it like MongoDB or a Postgres database, but which handles auth, rather than storing data.
+You can't directly import FusionAuth functionality into your JavaScript or React projects.  Instead,  FusionAuth is a separate server that developers can interact with via API calls.  So, instead of being something like a JavaScript library that you include into your own JavaScript projects and pull functionality from, FusionAuth actually is an entire application that you configure to work with your React app and server of your choosing via API calls. (Those API calls can be made by a library such as `passport.js`, however.)  Think of it like a MongoDB or Postgres database, but which handles auth, rather than storing data.   This does have some benefits, however, such as far more layers of security, and more control over using FusionAuth as a user data store.  You can learn more from our [expert advice](/learn/expert-advice/identity-basics/complete-authentication-system/).
 
 * Navigate to the administrative user interface, and go to "Applications".
 * Click the green **+** button to add a new application to your FusionAuth instance.
 * Add a name for your application. I'm calling mine `React Auth`.
-* Under the `OAuth` tab, configure the “Authorized Redirect URL” to `http://localhost:3001/oauth-callback`. This is where you want FusionAuth to redirect the Authorization Code. We explicitly send the Authorization Code to your app's Express backend. You need to configure the redirect URL because the standard requires you to. This prevents a class of attacks where the a hacker changes the location of the redirect URL to steal the Authorization Code, and then retrieves a token associated with a user. That token can then be used to access resources as that user, including possibly sensitive data.
+* Under the `OAuth` tab, configure the “Authorized redirect URL”. This is where you want FusionAuth to redirect the browser with the authorization code after a user successfully authenticates. We are redirecting to your app's Express backend. You need to configure this for two reasons:
+* If you *don't* and a hacker later steals your Authorization Code by providing their own redirect URL, they can exchange that for a token and act on your behalf.
+* FusionAuth requires a redirect URL, as does the OAuth standard.
+So, to avoid that mess, enter `http://localhost:3000/oauth-callback`. We'll build this route later.
 * Under the same `OAuth` tab, configure the “Logout URL” to where FusionAuth should send the user after they (surprise!) log out. Enter in `http://localhost:3001/logout`.
-* Click the blue save button in the top-right to finish the configuration.
+* Click the blue "save" button in the top-right to finish the configuration.
 
 This is what your configuration might look like:
 
@@ -91,20 +96,20 @@ This is what your configuration might look like:
 
 Congratulations! You have configured FusionAuth to work with your React app. Now, let's set up the user who will actually log in.
 
-### Create a User and link them to your FusionAuth app
+### Create a User and Register Them
 
-Now, we will link a user to your FusionAuth app via the dashboard. You can manage all of your users from this centralized location. Of course, you can register users from your app if you want to build that functionality later on, but that is beyond the scope of this tutorial.
+For the next step, we will link a user to your brand-new FusionAuth app, ReactAuth, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store'. This is a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users with FusionAuth from your React app if you want to build that functionality later on, but that is beyond this tutorial's scope.  
 
-* Select `users` from the left-hand side menu.
+* Select "Users" from the left-hand side menu.
 * Select the green plus sign on the top left to add a user. I used `test@fusionauth.io`
-* Give the user a dummy email and deselect `send email to setup password`.
+* Give the user a dummy email and deselect "send email to setup password".
 * Give the user a simple password. May I suggest `password`?
-* Click the `save` icon on the top right.
+* Click the "Save" icon on the top right.
 * Go back to "Users".
-* Select "Manage" under the `action` tab for your new user.
+* Select "Manage" under the "action" tab for your new user.
 * Select "Add registration".
-* In the dropdown menu, select `React Auth`. If you don't see it, double check that you remembered to push `save` when you created your application.
-* Click `save`.
+* In the dropdown menu, select `React Auth`. If you don't see it, double check that you remembered to push "Save" when you created your application.
+* Click "Save".
 
 Well done! You now have at least one user that is registered to your `React Auth` app. Not bad for your app being in development.
 
@@ -246,7 +251,7 @@ class App extends React.Component {
 ReactDOM.render(<App/>, document.querySelector('#root'));
 ```
 
-Navigate to `localhost:3000` and confirm that everything is working properly.  React automatically re-renders based on changes you have made, so there is no need to start or restart your server as long as you have kept it running from earlier.  If you are not seeing a re-render, check your console for any errors, or confirm that your react server is still running with `npm start`.
+Navigate to `localhost:3000` and confirm that everything is working properly.  React automatically re-renders based on changes you have made, so there is no need to start or restart your server as long as you have kept it running from earlier.  If you are not seeing a re-render, check your console for any errors, or confirm that your react server is still running with `npm start`.  Also, be sure that the HTML container in `client/public/index.html` is set to the id of `root`! (This ships automatically with `create-react-app`)
 
 Now we will work on some conditional rendering, to make sure our state is updating properly. If a user is logged in, we are going to display their email with a greeting. We won't send a request to the Express server quite yet, we will just mock this at first to create the necessary components.
 
@@ -334,7 +339,7 @@ First, we need to set up that server!
 
 *"Wait", you may say, "why do I need an Express server again?"*
 
-This has to do with the Authorization Code grant. This grant relies on a user interacting with a browser, but still needs a server-side component to handle passing Tokens and Authorization Codes to and from the Authorization Server, aka FusionAuth.  This keeps all of your sensitive data on the server-side of your app, and makes this data far less likely to be intercepted and hacked.  This is called the 'backend for frontend' pattern, and is used in the OAuth 2.0 auth code grant flow.
+Again, a good question. This has to do with the Authorization Code grant. This grant relies on a user interacting with a browser, but still needs a server-side component to handle passing tokens and authorization codes to and from the authorization server, aka FusionAuth.  This keeps all of your sensitive access objects on the server-side of your app, and makes them far less likely to be intercepted and hacked.  If you want to learn more about the nuts and bolts of how the Authorization Code grant works, check out the [Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/).
 
 ### Configure the folders and packages
 
@@ -403,7 +408,7 @@ Create a file called `user.js` in that folder
 touch reactauthapp/server/routes/user.js
 ```
 
-Now, open that new file and draw a `user` route in `server/routes/user.js`:
+Now, open that new file and create a `user` route in `server/routes/user.js`:
 
 ```js
 // server/routes/user.js
@@ -425,9 +430,9 @@ module.exports = router;
 
 Why is this in an object? The reason is FusionAuth will ultimately send us the user object when a user logs in. We are starting out by using mock data. Our server will send the email address, and then our react application can display it.
 
-* A note about the user object: the user object has several properties that are always present. Email is one of them. For more information on what sorts of data you can get on a user, check out our [user API docs](https://fusionauth.io/docs/v1/tech/apis/users/#retrieve-a-user).
+* A note about the user object: the user object has several properties that are always present. Email is one of them. For more information on what sorts of data you can get on a user, check out our [user API docs](/docs/v1/tech/apis/users/#retrieve-a-user).
 
-Next, in `server/index.js` let's import & use express with `const app = express()`, call our first route, `/user`, and then start our server. Remember, you're using port 3001 because port 3000 has been automatically taken by `create-react-app`.
+Next, in `server/index.js` let's import & use express with `const app = express()`, define our first route, `/user`, and then start our server. Remember, you're using port 3001 because port 3000 has been automatically taken by `create-react-app`.  We will add `cors` a little later on after we discover why we need it!
 
 ```js
 const express = require('express');
@@ -523,7 +528,9 @@ componentDidMount() {
 
 One thing to note about our code above is that we need to specify `credentials: 'include'` option to `fetch`. This is required since eventually you will be hooking up to a server-side session and without this setting, the browser won’t send over the cookie that Express uses for server-side sessions.
 
-Now you can try the React client again. *Depending on your setup, you might have gotten a CORS error*; check the browser console. Fortunately, you thought of this, and installed the `cors` package. Use it in your `server/index.js` by updating the first lines of your file like so:
+Now you can try the React client again. Don't see anything? Check the console, you *might have an infamous CORS error!*
+
+Now, to fix this, it's time to use your `cors` package! Use it in your `server/index.js` by updating the first lines of your file like so:
 
 ```js
 const userRoute = (require('./routes/user'));
@@ -547,7 +554,7 @@ app.use(cors({
 // ...
 ```
 
-Awesome! So if you go to `localhost:3000`, you should see the user displayed! Now let's make it dynamic with an actual login/logout flow!
+Awesome! So if you go to `localhost:3000`, you should see the user displayed! Now let's make it dynamic with an actual login/logout!
 
 ## Logging in
 
@@ -604,9 +611,9 @@ export default class LogInOut extends React.Component {
 
 Good question. This has to do with the magic of OAuth and FusionAuth.
 
-In order to leverage FusionAuth’s OAuth system and the Authorization Code grant, you have to redirect the browser over to FusionAuth, which is the auth server.  Why redirect to FusionAuth? So that you can keep all of your sensitive data transmitted on the secure, trusted server-side.
+In order to leverage FusionAuth’s OAuth system with the Authorization Code Grant, we have to redirect the browser over to FusionAuth. While you might want to avoid redirecting away from the React app, this workflow is easy to understand, works no matter the browser's security settings, and separates the concerns. You can style the FusionAuth login page to look like your application, which means the user won’t even realize they’ve been redirected.
 
-We could write a link directly to FusionAuth, but it’s cleaner to go through the Express app, because the FusionAuth OAuth workflow requires a somewhat complex URL to start.
+We could write a link directly to FusionAuth, but it’s cleaner to go through the Express app, because the FusionAuth OAuth grant requires a somewhat complex URL to start.
 
   Next, import `LogInOut` in your `client/index.js`:
 
@@ -678,7 +685,7 @@ const config = require('./config.js');
 ReactDOM.render(<App/>, document.querySelector('#main'));
 ```
 
-During the login process, we add a route to our Express server that *redirects the browser over to FusionAuth*.  We do this on the server side because it is easier to set up that URL there rather than in the React component.
+During the login process, we add a route to our Express server that *redirects the browser over to FusionAuth*.  We do this on the server side because it is easier and makes the client code less tied to FusionAuth. If any configuration changes were required to the login URL, such as adding PKCE or a `state` parameter, the client would remain unchanged.
 
 We’ll add our new login route to handle this:
 
@@ -769,17 +776,18 @@ Try navigating to `localhost:3001/login`. If you see a FusionAuth login form, yo
 When you successfully authenticate, you’ll just see `Cannot GET /oauth-callback`, because the `/oauth-callback` route doesn’t exist, yet. Remember you added `localhost:3001/oauth-callback` as an "Authorized redirect URL" in the FusionAuth admin panel, *and* as our `redirectURI` in `config.js`. This is the location that where FusionAuth redirects the browser back to after authentication in order to complete the OAuth grant.   
 
 But why specify this? Because without specifying where to send the app after authenticating, a bad actor could put in their own redirect URL, sending the browser to to their malicious server and gaining access to a token that could be used to view resources as a user. That would be no good!
-### Exchange the auth code for an access token
+
+### Exchange the Authorization Code for an Access Token
 
 An Authorization Code isn’t enough to access the user’s resources, though. For that, we need an Access Token. This is standard OAuth, not something unique to FusionAuth. This step is called the Code Exchange, because we send the auth code to FusionAuth’s `/token` endpoint and receive an Access Token in exchange.  Then that Access Token is passed to the resource server in exchange for the desired resources.  
 
-Add the /oauth-callback route file:
+Add the `/oauth-callback` route file:
 
 ```bash
 touch server/routes/oauth-callback.js
 ```
 
-Your file tree in `server` should look like this:
+For reference, your file tree in `server` should look like this:
 
 ```
 server
@@ -864,9 +872,9 @@ You can check the FusionAuth docs to see what every endpoint expects to be sent,
 
 - The `client_id` and `client_secret` identify and authenticate our app, like a username and password. They are drawn from the FusionAuth configuration.
 - The `code` is the Authorization Code we got from FusionAuth.
-- The `grant_type` tells FusionAuth we’re using the The OAuth Authorization Code Flow (as opposed to an implicit grant or PKCE).
+- The `grant_type` tells FusionAuth we’re using the The OAuth Authorization Code Grant (as opposed to an Implicit Grant or any other grant).
 - The `redirect_uri`  is a value from the "Authorized Redirect URLs" configuration. Requiring this is another way for FusionAuth to know that this request came from the server it expected (our express server).
-- The callback lambda is invoked after FusionAuth receives our request and responds. We’re expecting to receive an `access_token`, which will come through in that body argument. We’ll save the `access_token` to session storage and redirect back to the React client.
+- The callback lambda is invoked after FusionAuth receives our request and responds. We’re expecting to receive an `access_token`, which will come through in that `body` argument. We’ll save the `access_token` to session storage and redirect back to the React client.
 
 Remember that request-followed-by-callback structure, because we’ll be using it again.
 
@@ -901,9 +909,9 @@ app.use(session(
 #  Displaying user data
 Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. Its like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.'
 
-We can get additional user-specific info from `/registration` as well.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
+We can get additional user-specific info from `/registration` as well, which is a FusionAuth specific API endpoint.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
 
-If there’s a token in session storage, we’ll call `/introspect` to get info out of that token. Part of the info returned from `/introspect` is the boolean property `active`, which is true until the Access Token expires (you can configure how long Access Tokens live in the FusionAuth admin panel). If the token is still good, we’ll call `/registration` and return the JSON from both requests.
+If there’s a token in session storage, we’ll call `/introspect` to get info out of that token. Part of the info returned from `/introspect` is the boolean property `active`, which is true until the Access Token expires (you can configure how long Access Tokens live in the FusionAuth admin panel). If the token is still good, we’ll call `/registration` and return the JSON from both requests.  Keep in mind, `/introspect` is standard OAuth, and `/registration` is a FusionAuth API endpoint.
 
 If there’s no token in session storage, or if the token has expired, we’ll return an empty object. Our React components use the existence of `this.props.body.user` to determine whether a user is logged in, so an empty body means there’s no active user.
 
