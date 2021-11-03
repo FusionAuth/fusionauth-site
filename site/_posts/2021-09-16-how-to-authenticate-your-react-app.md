@@ -25,7 +25,7 @@ In short, authentication is the process of a client proving that they are who th
 
 ## What is authorization?
 
-While authentication is proving you are who you say you are, *authorization* is the process of allowing a user to access certain things based on their credentials.  Back to the passport analogy, a traveler may have an extra stamp in their passport that proves they are a diplomat or a journalist. Because of those stamps, they can now enter zones that are off-limits to regular travelers, such as conflict areas or diplomatic buildings.  In a similar fashion, if a user is a website administrator, they can access certain parts of that website that a regular user cannot.  An 'authorization server', like FusionAuth, is a server that provides services to both authenticate and authorize users.
+While authentication is proving you are who you say you are, authorization is the process of allowing a user to access only certain things.  Back to the passport analogy: a traveler may present a passport to a customs agent that proves they are who they say they are, and they may have an extra stamp in their passport that proves they are a diplomat or a journalist. Because of those certain stamps, they can now enter zones that are off-limits to regular travelers, such as conflict areas or diplomatic buildings. In a similar fashion, if a user is an admin, they can access certain parts of that website that a regular user cannot.  An auth server, such as FusionAuth, is a server that can both authenticate and authorize users.
 
 While it is possible to write your own solution, it is often best to use an open source tool or external service like FusionAuth, as this component is surprisingly complex and requires a decent amount of maintenance. If you are not able to dedicate a good amount of developer hours and knowledge to maintaining your auth workflows, they can be exploited with resulting data loss. You can also use an external 'identity provider', which is a way of authenticating users with an external trusted service such as Facebook, Google, or Spotify. However, setting up such a connection is outside the scope of this tutorial.
 
@@ -54,9 +54,8 @@ Once you have installed all the required components, log into your FusionAuth in
 
 We will do the following in this tutorial:
 
-- Set up FusionAuth.
-- Create a user in FusionAuth.
-- Create a basic React UI.
+- [Set up FusionAuth.](#configuring-fusionAuth)
+- [Create a basic React UI.](#create-the-react-UI)
 - Create an Express backend server.
 - Link all three of these components together using API calls and the Authorization Code grant.
 - Log a user in.
@@ -66,9 +65,11 @@ All of this is going to happen using the OAuth 2.0 Authorization Code grant.
 
 ## Configuring FusionAuth
 
+You have two options to configure FusionAuth, either manually or with Kickstart.
+
 ### Use Kickstart
 
-Instead of manually setting up FusionAuth using the admin UI, you can use Kickstart. This tool allows you to get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/path-to-kickstart-here) which sets up FusionAuth for this tutorial.  We recommend only doing this after you have a little experience manually configuring FusionAuth, as manual configuration will teach you more about authorization and what is happening under the hood.
+Instead of manually setting up FusionAuth using the admin UI, you can use Kickstart. This tool allows you to get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/path-to-kickstart-here) which sets up FusionAuth for this tutorial.
 
 You'll need to edit that Kickstart file and update the application name, API Key, and redirect URLs with your specific app's data.
 
@@ -182,9 +183,13 @@ Lastly, it is useful to create a config file in your `client/src` directory.  In
 touch config.js
 ```
 
-Inside of that config file, you are going to copy the OAuth info from the FusionAuth admin panel of your application, React Auth. To do so, on `localhost:9011`, navigate to `Applications -> React Auth -> View`  *You must copy in your own info!*
+Inside of that config file, you are going to copy the OAuth info from the FusionAuth admin panel of your application, React Auth. To do so, on `localhost:9011`, navigate to "Applications", then the "React Auth" configuration, then click the "View" button.  
 
-You also will need to generate an API key. To do so, navigate to `Settings -> API Keys` and click the green `+` button to add an API key. You can leave the Id field blank, FusionAuth will auto-generate an Id for you. For now, don't select any endpoint methods to create this as a super user key, which has access to all endpoints.
+You must copy in your unique versions of the following:
+- clientID
+- clientSecret
+- redirectURI
+- applicationID
 
 Here is what the page you will get this info from looks like:
 
@@ -196,10 +201,9 @@ We are going to specify some ports here.
 * Express will run on port 3001.
 * FusionAuth will run on port 9011.
 
-Here is what your file should look like.  Remember, you must use your own app's details!
+You also will need to generate an API key. To do so, navigate to "Settings" and click on "API Keys" and click the green "+" button to add an API key. You can leave the Id field blank, FusionAuth will auto-generate an Id for you. For now, don't select any endpoint methods to create this as a super user key, which has access to all endpoints.  Then click on the green "view" (spyglass) button and copy your api key into your `config.js` file as well.
 
-`client/src/config.js`
-
+Here's a completed config file you can use as a template. But remember, you must paste in your own application's unique values!
 
 ```js
 module.exports = {
@@ -773,9 +777,9 @@ Try navigating to `localhost:3001/login`. If you see a FusionAuth login form, yo
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/login.png" alt="login screen" class="img-fluid" figure=false %}
 
-When you successfully authenticate, you’ll just see `Cannot GET /oauth-callback`, because the `/oauth-callback` route doesn’t exist, yet. Remember you added `localhost:3001/oauth-callback` as an "Authorized redirect URL" in the FusionAuth admin panel, *and* as our `redirectURI` in `config.js`. This is the location that where FusionAuth redirects the browser back to after authentication in order to complete the OAuth grant.   
+When you successfully authenticate, you’ll just see `Cannot GET /oauth-callback`, because the `/oauth-callback` route doesn’t exist yet. Remember you added `localhost:3001/oauth-callback` as an "Authorized redirect URL" in the FusionAuth admin panel, *and* as our `redirectURI` in `config.js`. This is the location where FusionAuth redirects the browser back to after authentication in order to complete the OAuth grant.   
 
-But why specify this? Because without specifying where to send the app after authenticating, a bad actor could put in their own redirect URL, sending the browser to to their malicious server and gaining access to a token that could be used to view resources as a user. That would be no good!
+But why specify this? Because without specifying where to send the app after authenticating, a bad actor could put in their own redirect URL, sending the browser to their malicious server and gaining access to a token that could be used to view resources as a user. That would be no good!
 
 ### Exchange the Authorization Code for an Access Token
 
@@ -907,7 +911,7 @@ app.use(session(
 
 
 #  Displaying user data
-Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. Its like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.'
+Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. It's like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.'
 
 We can get additional user-specific info from `/registration` as well, which is a FusionAuth specific API endpoint.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
 
@@ -990,7 +994,7 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-First, the POST request to `/introspect`: this endpoint requires our Client Id and, of course, the `access_token` we want to more information on. Just like the token endpoint, this endpoint access form encoded data, so we are using the `form` option.
+First, the POST request to `/introspect`: this endpoint requires our Client Id and, of course, the `access_token`. Just like the token endpoint, this endpoint accesses form encoded data, so we are using the `form` option.
 
 In the callback from that request, we’ll parse the body into usable JSON and check that active value. If it’s good, we’ll go ahead and make the `/api/user/registration/` request, which requires a User Id (“subscriber” or sub in OAuth jargon) and our Application Id—we need both, because one user can have different data in each FusionAuth application.
 
