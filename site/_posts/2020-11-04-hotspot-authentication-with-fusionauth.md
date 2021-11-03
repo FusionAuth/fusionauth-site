@@ -228,7 +228,7 @@ Now that you are logged in as the FusionAuth administrator, navigate to "Applica
 
 This URL will also need to be set in the Python scripts. Warning! It must be identical! Both here and in Python scripts: if it ends with `/` here it must end with `/` in the `.py` scripts.
 
-Set the logout URL to `http://192.168.144.133` which is the address of the Apache server. We'll set this up later, but it will serve up a static html file to make logging in and out easier. Apache can run on this CentOS server, but it is not mandatory to use Apache, as all it is doing is serving up that html file with convenient links. You could use NGinx or any other web server you prefer. Don't forget, the IPs I use may be different from yours; make the appropriate changes.
+Set the logout URL to `http://192.168.144.133` which is the address of the Apache server. We'll set this up later, but it will serve up a static html file to make logging in and out easier. Apache can run on this CentOS server, but it is not mandatory to use Apache, as all it is doing is serving up that html file with convenient links. You could use NGINX or any other web server you prefer. Don't forget, the IPs I use may be different from yours; make the appropriate changes.
 
 {% include _image.liquid src="/assets/img/blogs/hotspot-with-fusionauth/adding-application.png" alt="Adding the WEBAuth application." class="img-fluid" figure=false %}
 
