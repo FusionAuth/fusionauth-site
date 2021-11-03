@@ -13,16 +13,23 @@ Most templates will contain the User object as returned on the Retrieve User API
 Below you will find each stock template that FusionAuth ships for reference. The available replacement values will be outlined below for each template.
 
 * <<Breached Password>>
-* <<Change Password>>
 * <<Confirm Child>>
 * <<COPPA Email Plus Notice>>
 * <<COPPA Notice>>
 * <<Email Verification>>
+* <<Forgot Password>>
 * <<Parent Registration Request>>
 * <<Passwordless Login>>
 * <<Registration Verification>>
 * <<Setup Password>>
+* <<Threat Detected>>
 * <<Two Factor Authentication>>
+
+[WARNING.warning]
+====
+If you create a template with content and template variables for one type of email template (Forgot Password), but assign it to another type of email template (Passwordless Login), the email will not be sent as expected. Instead, the attempt will fail and there will be an error added to the Event Log.
+====
+
 
 == Breached Password
 
@@ -68,59 +75,6 @@ The breach result match type determined by the FusionAuth Reactor. Possible valu
 
 [field]#user# [type]#[User]#::
 The User object, see the User API for field definitions.
-
-== Change Password
-
-.HTML
-[source,text]
-----
-[#setting url_escaping_charset="UTF-8"]
-To change your password click on the following link.
-<p>
-  [#-- The optional 'state' map provided on the Forgot Password API call is exposed in the template as 'state' --]
-  [#assign url = "http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}" /]
-  [#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]
-  <a href="${url}">${url}</a>
-</p>
-- FusionAuth Admin
-
-----
-
-.Text
-[source,text]
-----
-[#setting url_escaping_charset="UTF-8"]
-To change your password click on the following link.
-
-[#-- The optional 'state' map provided on the Forgot Password API call is exposed in the template as 'state' --]
-[#assign url = "http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}" /]
-[#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]
-
-${url}
-
-- FusionAuth Admin
-----
-
-=== Replacement Variables
-
-[.api]
-[field]#application# [type]#[Application]# [since]#Available since 1.21.0#::
-The Application object, see the Application API for field definitions.
-+
-*Note*:
-This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined.
-
-[field]#changePasswordId# [type]#[String]#::
-The change password Id intended to be used by the link:/docs/v1/tech/apis/users#change-a-users-password[Change a User's Password] API.
-
-[field]#state# [type]#[Object]#::
-If the `state` was provided during the Forgot Password request, it will be available to you in the email template.
-
-[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
-The Tenant object, see the Tenant API for field definitions.
-
-[field]#user# [type]#[User]#::
-The User object, see the User API for field definitions of a User.
 
 == Confirm Child
 
@@ -290,6 +244,61 @@ The verification Id intended to be used by the link:/docs/v1/tech/apis/users#ver
 
 [field]#verificationOneTimeCode# [type]#[String]#::
 The verification One Time Code (OTP) to be used with the gated Email Verification workflow. The user enters this code to verify their email.
+
+== Forgot Password
+
+This is also known as the "Change Password" template.
+
+.HTML
+[source,text]
+----
+[#setting url_escaping_charset="UTF-8"]
+To change your password click on the following link.
+<p>
+  [#-- The optional 'state' map provided on the Forgot Password API call is exposed in the template as 'state' --]
+  [#assign url = "http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}" /]
+  [#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]
+  <a href="${url}">${url}</a>
+</p>
+- FusionAuth Admin
+
+----
+
+.Text
+[source,text]
+----
+[#setting url_escaping_charset="UTF-8"]
+To change your password click on the following link.
+
+[#-- The optional 'state' map provided on the Forgot Password API call is exposed in the template as 'state' --]
+[#assign url = "http://localhost:9011/password/change/${changePasswordId}?tenantId=${user.tenantId}" /]
+[#list state!{} as key, value][#if key != "tenantId" && value??][#assign url = url + "&" + key?url + "=" + value?url/][/#if][/#list]
+
+${url}
+
+- FusionAuth Admin
+----
+
+=== Replacement Variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.21.0#::
+The Application object, see the Application API for field definitions.
++
+*Note*:
+This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined.
+
+[field]#changePasswordId# [type]#[String]#::
+The change password Id intended to be used by the link:/docs/v1/tech/apis/users#change-a-users-password[Change a User's Password] API.
+
+[field]#state# [type]#[Object]#::
+If the `state` was provided during the Forgot Password request, it will be available to you in the email template.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the Tenant API for field definitions.
+
+[field]#user# [type]#[User]#::
+The User object, see the User API for field definitions of a User.
 
 == Parent Registration Request
 
@@ -497,10 +506,89 @@ ${code}
 [field]#application# [type]#[Application]# [since]#Available since 1.28.0#::
 The Application object, see the link:/docs/v1/tech/apis/applications/[Application API] for field definitions.
 
-[field]#code# [type]#[Number]#::
+[field]#code# [type]#[String]#::
 A code that the user must provide to complete multi-factor authentication.
 
-[field]#tenant# [type]#[Tenant]# [since]#::
+[field]#tenant# [type]#[Tenant]#[since]#Available since 1.18.2#::
+The Tenant object, see the link:/docs/v1/tech/apis/tenants/[Tenant API] for field definitions.
+
+[field]#user# [type]#[User]#::
+The User object, see the link:/docs/v1/tech/apis/users/[User API] for field definitions of a User.
+
+== Threat Detected
+
+.HTML
+[source,text]
+----
+[#setting url_escaping_charset="UTF-8"]
+[#if event.type == "UserLoginSuspicious"]
+A suspicious login was made on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.
+[#elseif event.type == "UserLoginNewDevice"]
+A login from a new device was detected on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.
+[#else]
+Suspicious activity has been observed on your account. In order to secure your account, it is recommended to change your password at your earliest convenience.
+[/#if]
+
+Device details
+
+* Device name: ${(event.info.deviceName)!'&mdash;'}
+* Device description: ${(event.info.deviceDescription)!'&mdash;'}
+* Device type: ${(event.info.deviceType)!'&mdash;'}
+* User agent: ${(event.info.userAgent)!'&mdash;'}
+
+Event details
+
+* IP address: ${(event.info.ipAddress)!'-'}
+* City: ${(event.info.location.city)!'-'}
+* Country: ${(event.info.location.country)!'-'}
+* Zipcode: ${(event.info.location.zipcode)!'-'}
+* Lat/long: ${(event.info.location.latitude)!'-'}/${(event.info.location.longitude)!'-'}
+
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+[#setting url_escaping_charset="UTF-8"]
+[#if event.type == "UserLoginSuspicious"]
+  <p>A suspicious login was made on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.</p>
+[#elseif event.type == "UserLoginNewDevice"]
+  <p>A login from a new device was detected on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.</p>
+[#else]
+  <p>Suspicious activity has been observed on your account. In order to secure your account, it is recommended to change your password at your earliest convenience.</p>
+[/#if]
+
+<p>Device details</p>
+<ul>
+  <li><strong>Device name:</strong> ${(event.info.deviceName)!'&mdash;'}</li>
+  <li><strong>Device description:</strong> ${(event.info.deviceDescription)!'&mdash;'}</li>
+  <li><strong>Device type:</strong> ${(event.info.deviceType)!'&mdash;'}</li>
+  <li><strong>User agent:</strong> ${(event.info.userAgent)!'&mdash;'}</li>
+</ul>
+
+<p>Event details</p>
+<ul>
+  <li><strong>IP address:</strong> ${(event.info.ipAddress)!'&mdash;'}</li>
+  <li><strong>City:</strong> ${(event.info.location.city)!'&mdash;'}</li>
+  <li><strong>Country:</strong> ${(event.info.location.country)!'&mdash;'}</li>
+  <li><strong>Zipcode:</strong> ${(event.info.location.zipcode)!'&mdash;'}</li>
+  <li><strong>Lat/long:</strong> ${(event.info.location.latitude)!'&mdash;'}/${(event.info.location.longitude)!'&mdash;'}</li>
+</ul>
+
+- FusionAuth Admin
+----
+
+=== Replacement Variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.28.0#::
+The Application object, see the link:/docs/v1/tech/apis/applications/[Application API] for field definitions.
+
+[field]#event.info# [type]#[EventInfo]#::
+The EventInfo object, see the link:/docs/v1/tech/events-webhooks/events/user-login-suspicious/[User Login Suspicious] event definition for example field definitions.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
 The Tenant object, see the link:/docs/v1/tech/apis/tenants/[Tenant API] for field definitions.
 
 [field]#user# [type]#[User]#::

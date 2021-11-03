@@ -17,7 +17,7 @@ We are recruiting a Staff Java Software Engineer who will join our engineering t
 
 You will report directly to the CTO and will work from our Denver office.  
 
-## Responsibilities
+### Responsibilities
 
 Your responsibilities will include:
 
@@ -28,7 +28,7 @@ Your responsibilities will include:
 * Rotate as the on-call engineer to solve critical customer issues. While not the norm, we do have some off hours support requirements.
 * Work closely with the rest of the engineering team to architect and design the product and deployment strategies
 
-## Requirements
+### Requirements
 
 The requirements for this position include:
 
@@ -41,7 +41,7 @@ The requirements for this position include:
 * Ability to learn new technologies and skills quickly
 * Comfortable and excited about working on our open source projects
 
-## Technologies
+### Technologies
 
 It would be good if you have experience with most of the following:
 
@@ -59,7 +59,7 @@ It would be good if you have experience with most of the following:
 * TestNG (or JUnit)
 * Git
 
-## Beneficial Skills
+### Beneficial Skills
 
 * Open source committer
 * Be familiar with other languages for the JVM
@@ -67,7 +67,7 @@ It would be good if you have experience with most of the following:
 * In-depth knowledge of multi-threading
 * In-depth knowledge of file systems
 
-## Beneficial Technologies
+### Beneficial Technologies
 
 * Elasticsearch
 * Savant
@@ -75,7 +75,7 @@ It would be good if you have experience with most of the following:
 * MyBatis
 * Prime.js
 
-## Salary & Benefits
+### Salary & Benefits
 
 * **Salary range:** $85,000 to $135,000 (depending on experience) 
 * **Benefits:** Medical, dental, and vision

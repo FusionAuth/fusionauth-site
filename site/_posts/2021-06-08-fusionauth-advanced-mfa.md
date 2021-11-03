@@ -27,7 +27,7 @@ FusionAuth Advanced MFA is available now. Click here for more information: [http
 
 ### About FusionAuth
 
-FusionAuth is a complete identity and access management platform that saves development teams time and resources. Built for developers, FusionAuth is 100% API-first and lets devs implement complex standards like OAuth, OpenID Connect, and SAML and build out additional login features to meet compliance requirements. It can be deployed anywhere and integrate in minutes, saving developers wasted hours trying to build home-grown solutions. Learn more at [www.fusionauth.io](/)
+FusionAuth is a complete identity and access management platform that saves development teams time and resources. Built for developers, FusionAuth is 100% API-first and lets devs implement complex standards like OAuth, OpenID Connect, and SAML and build out additional login features to meet compliance requirements. It can be deployed anywhere and integrate in minutes, saving developers wasted hours trying to build home-grown solutions. Learn more at [fusionauth.io](/)
 
 ### Contact
 

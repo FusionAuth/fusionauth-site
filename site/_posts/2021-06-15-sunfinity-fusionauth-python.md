@@ -73,7 +73,7 @@ Instead we create our own Python API proxy/passthrough/translation abstraction l
 
 **Dan:** How do you map between the roles in FusionAuth and the permissions derived from the roles in the python API? What is an example of this?
 
-First thing many people ask is WHY? Why aren't the roles in a JWT enough? Because they are not low level enough to control code in a way where code never has to change again. 
+**Matthew:** The first thing many people ask is WHY? Why aren't the roles in a JWT enough? Because they are not low level enough to control code in a way where code never has to change again. 
 
 An example: you have a role in FusionAuth called `post_manager`. You have an API, and an Angular Frontend. Both front and back permission logic MUST be the same. So for both apps, what does `post_manager` mean? Can they edit a post? Can they delete and rename, etc...? If `post_manager` is all you have then the logic of "WHAT" they can do must be coded in both apps directly. If `post_manager` means "show edit button" (or in the API, "allow edit of a post"), fine, that works. 
 
