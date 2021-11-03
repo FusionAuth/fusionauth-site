@@ -191,7 +191,8 @@ end tell
 - To size and compress images without losing too much quality, follow these steps:
 	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
 	2. Use https://tinypng.com/ to compress the image
-  
+- Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/fusionauth/kickstart-development.json )
+- Make sure that the same character is used for every screenshot on a page (unless you are demonstrating a view from the admin and also user perspective)
 
 ## Shell script for capturing sceenshots 
 fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
