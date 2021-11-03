@@ -56,10 +56,11 @@ We will do the following in this tutorial:
 
 - [Set up FusionAuth.](#configuring-fusionAuth)
 - [Create a basic React UI.](#create-the-react-UI)
-- Create an Express backend server.
-- Link all three of these components together using API calls and the Authorization Code grant.
-- Log a user in.
-- Log a user out.
+- [Create an Express backend server.](#create-the-express-server)
+- [Link all three of these components together using API calls and the Authorization Code grant.](#logging-in)
+- [Log a user in.](#logging-in)
+- [Display A User's Data](#display-a-users-data)
+- [Log a user out.](#logging-out)
 
 All of this is going to happen using the OAuth 2.0 Authorization Code grant.  
 
@@ -910,7 +911,7 @@ app.use(session(
 
 
 
-#  Displaying user data
+##  Displaying user data
 Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. It's like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.'
 
 We can get additional user-specific info from `/registration` as well, which is a FusionAuth specific API endpoint.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
