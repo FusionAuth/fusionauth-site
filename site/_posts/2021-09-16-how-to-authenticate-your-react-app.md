@@ -55,11 +55,10 @@ Once you have installed all the required components, log into your FusionAuth in
 We will do the following in this tutorial:
 
 - [Set up FusionAuth.](#configuring-fusionAuth)
-- [Create a basic React UI.](#create-the-react-UI)
+- [Create a basic React UI.](#create-the-react-ui)
 - [Create an Express backend server.](#create-the-express-server)
-- [Link all three of these components together using API calls and the Authorization Code grant.](#logging-in)
 - [Log a user in.](#logging-in)
-- [Display A User's Data](#display-a-users-data)
+- [Display A User's Data.](#display-a-users-data)
 - [Log a user out.](#logging-out)
 
 All of this is going to happen using the OAuth 2.0 Authorization Code grant.  
