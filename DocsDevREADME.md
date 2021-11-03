@@ -99,6 +99,7 @@ For lists:
 - Kickstart
 - multi-factor authentication
 - multi-tenancy/multi-tenant
+- two-factor
 
 ## Git
 
