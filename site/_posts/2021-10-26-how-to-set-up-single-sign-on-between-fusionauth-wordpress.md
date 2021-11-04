@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: How to Set Up Single Sign-On Between FusionAuth and WordPress
-description: In this tutorial, you'll be learning how to implement OAuth SSO for Joomla users.
+description: In this tutorial, you'll be learning how to implement OAuth SSO for WordPress users.
 author: Aniket Bhattacharyea
 image: blogs/wordpress-sso-fusionauth/how-to-set-up-single-sign-on-sso-between-fusionauth-and-wordpress-header-image.png
 category: blog
@@ -9,11 +9,11 @@ tags: tutorial tutorial-php client-php tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
 
-User authentication is one of the most important parts of building any application, and almost every application features some sort of authentication. However, it quickly gets difficult to manage when you have multiple related but independent applications to maintain.
+User authentication is one of the most important parts of building any application, and almost every application features some sort of authentication. However, it quickly gets difficult to manage authentication when you have multiple related but independent applications to maintain.
 
 <!--more-->
 
-Let's say you're building a photo-sharing application that lets a user sign up with a username and password to share their pictures. Your team might later decide to [create a forum using WordPress](https://wordpress.com/go/tutorials/create-a-forum-with-wordpress-com/) to help support your app, but this new project isn't tied to your original application. It uses an entirely different tech stack, database, and hosting setup.
+Let's say you're building a photo-sharing application that lets a user sign up with a username and password to share their pictures. Your team might later decide to [create a forum using WordPress](https://wordpress.com/go/tutorials/create-a-forum-with-wordpress-com/) to help answer your users' questions, but this new project isn't tied to your original application. It uses an entirely different tech stack, database, and hosting setup.
 
 This means your users need to sign up _again_ on this second website and remember another set of usernames and passwords. Giving users two entirely different sets of credentials is not ideal, so that's where Single Sign-On comes in.
 
@@ -25,7 +25,9 @@ To use SSO, you need to choose an Identity provider which will handle the authen
 
 FusionAuth is fully customizable and is available as a stand-alone package for Linux, Mac, and Windows, so you can self-host FusionAuth on any server. You can even get started for free, so there's no need to enter your credit card number to follow along with this tutorial.
 
-If you are building a website with WordPress and you need to incorporate user management, you can leverage SSO. It provides a more flexible solution for users and saves them from managing multiple credentials. In this tutorial, you'll learn how to set up Single Sign-On in WordPress using FusionAuth with the help of an [OpenID Connect WordPress plugin](https://wordpress.org/plugins/miniorange-login-with-eve-online-google-facebook/).
+If you are building a website with WordPress and you need to incorporate user management, you can leverage SSO. It provides a more flexible solution for users and saves them from managing multiple credentials. Continuing the example above, with SSO a user can sign into the photo-sharing application and the forum application with the same username and password.
+
+In this tutorial, you'll learn how to set up Single Sign-On in WordPress using FusionAuth with the help of an [OpenID Connect WordPress plugin](https://wordpress.org/plugins/miniorange-login-with-eve-online-google-facebook/).
 
 ## Prerequisites
 
@@ -91,6 +93,8 @@ But first, let's set up FusionAuth. After you do that, you'll return to finish c
 
 To get started with SSO, you need to create an application in FusionAuth. An application represents the resource where users will log in to, in your case, the WordPress site. Each website, mobile app, or any other application should be created as an application in FusionAuth. Users can use the same username and password to log in to all such applications managed by FusionAuth.
 
+We aren't going to build a photo-sharing application in this tutorial; that is left as an exercise for you, dear reader. Let's assume you have an existing photo-sharing application and want to add SSO into a WordPress application, like the forum mentioned above.
+
 Click on the "Applications" menu from the sidebar and then the green plus ("+") button in the top-right corner.
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/application-list.png" alt="Applications list." class="img-fluid" figure=false %}
@@ -106,7 +110,11 @@ Now, click on the OAuth tab. The default settings should suffice. The only thing
 
 {% include _callout-tip.liquid content= "Your `wp_lang` value may vary if you use a different locale." %}
 
-Once you move this application into production, be sure to update the authorized redirect URLs!
+Once you move this application into production, be sure to update the authorized redirect URLs with the real hostnames. If your WordPress site lives at `forum.photosharing.com`, the URLs would be:
+
+* `https://forum.photosharing.com/wp-admin/admin-ajax.php?action=openid-connect-authorize`. This is the URL FusionAuth will redirect to after the user has logged in.
+* `https://forum.photosharing.com/wp-login.php?loggedout=true&wp_lang=en_US` This is the URL FusionAuth will redirect to after the user has logged out.
+
 This is what the "OAuth" tab should look like after you are done:
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/create-application-oauth-screen.png" alt="Create application OAuth tab." class="img-fluid" figure=false %}
@@ -154,7 +162,7 @@ Now, flip back to the WordPress plugin configuration screen and begin entering v
 * Paste the values "Client Id" and "Client Secret" fields in the configuration form.
 * Put `openid` in the "OpenID Scope" field.
 * In the "Login Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/authorize`. In our case, it will be `http://localhost:9011/oauth2/authorize`.
-* In the "Userinfo Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/userinfo`, however since we're running in a Docker container, WordPress can't reach FusionAuth through `localhost`, so the URL should be `http://fusionauth:9011/oauth2/userinfo`. Docker is taking care of the local DNS resolution.
+* In the "Userinfo Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/userinfo`. However since we're running in a Docker container, WordPress can't reach FusionAuth through `localhost`, so the URL should be `http://fusionauth:9011/oauth2/userinfo`. Docker is taking care of the local DNS resolution.
 * In the "Token Validation Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/token`. In our case, it should be `http://localhost:9011/oauth2/token` . In our case, for the same reason, it will be `http://fusionauth:9011/oauth2/token`.
 * In the "End Session Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/logout`. In our case, it will be `http://localhost:9011/oauth2/logout`.
 * Check "Disable SSL Verify" since none of our docker instances are running HTTPS.
@@ -162,7 +170,7 @@ Now, flip back to the WordPress plugin configuration screen and begin entering v
 * Change the "Display Name Formatting" to `{email}`. This is what will be displayed to the user in the WordPress admin screen.
 * Check "Link Existing Users" if users in your local WordPress database have the same emails as users in your FusionAuth database; otherwise you'll see an error when those users try to log in. 
 
-Note that the "Authorize Endpoint" need not be changed since that will be opened in the browser. If you're not using Docker, you should keep all the URLs pointed at `localhost`.
+Note that the "Authorize Endpoint" need not be changed since that will be opened in the browser. As mentioned above, for URLs like the "Token Validation Endpoint URL", if you are using Docker, you will need to use a docker resolveable hostname like `fusionauth`. If you're not using Docker, you should keep all the URLs pointed at `localhost`.
 
 Finally click on the "Save Changes" button. Here's what a filled out form will look like after you have filled it out:
 
