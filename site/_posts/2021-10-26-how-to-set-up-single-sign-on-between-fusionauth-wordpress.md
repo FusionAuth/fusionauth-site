@@ -143,11 +143,9 @@ Look for the "OAuth configuration" section. You may need to scroll down a bit:
 
 Keep this window open as you'll need to do a bit of copy-pasting from here in the next step.
 
-## Configuring the Plugin
+## Configuring the plugin
 
 Return to your WordPress admin dashboard where you had the WordPress plugin information stored.
-
-{% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/configure-oidc-generic-client-settings-start.png" alt="Configuring the WordPress OIDC plugin." class="img-fluid" figure=false %}
 
 You should see this configuration screen:
 
