@@ -17,7 +17,7 @@ Let's say you're building a photo-sharing application that lets a user sign up w
 
 This means your users need to sign up _again_ on this second website and remember another set of usernames and passwords. Giving users two entirely different sets of credentials is not ideal, so that's where Single Sign-On comes in.
 
-Single Sign-On, commonly known as SSO, is an authentication mechanism that enables users to use a single set of credentials to log in to multiple different applications or websites. In a typical SSO setup, you have a service provider—the application the user is trying to log in to—and an identity provider like [FusionAuth](https://fusionauth.io), which handles the authentication. This means your users need only one set of credentials to log into all of your applications.
+Single Sign-On, commonly known as SSO, is an authentication mechanism that enables users to use a single set of credentials to log in to multiple different applications or websites. In a typical SSO setup, you have a service provider-the application the user is trying to log in to-and an identity provider like [FusionAuth](https://fusionauth.io), which handles the authentication. This means your users need only one set of credentials to log into all of your applications.
 
 ## Using FusionAuth for SSO
 
@@ -170,7 +170,7 @@ Now, flip back to the WordPress plugin configuration screen and begin entering v
 * Change the "Display Name Formatting" to `{email}`. This is what will be displayed to the user in the WordPress admin screen.
 * Check "Link Existing Users" if users in your local WordPress database have the same emails as users in your FusionAuth database; otherwise you'll see an error when those users try to log in. 
 
-Note that the "Authorize Endpoint" need not be changed since that will be opened in the browser. As mentioned above, for URLs like the "Token Validation Endpoint URL", if you are using Docker, you will need to use a docker resolveable hostname like `fusionauth`. If you're not using Docker, you should keep all the URLs pointed at `localhost`.
+Note that the "Authorize Endpoint" need not be changed since that will be opened in the browser. As mentioned above, for URLs like the "Token Validation Endpoint URL", if you are using Docker, you will need to use a docker resolvable hostname like `fusionauth`. If you're not using Docker, you should keep all the URLs pointed at `localhost`.
 
 Finally click on the "Save Changes" button. Here's what a filled out form will look like after you have filled it out:
 
