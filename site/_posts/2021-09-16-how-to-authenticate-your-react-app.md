@@ -201,6 +201,8 @@ We are going to specify some ports here.
 * Express will run on port 3001.
 * FusionAuth will run on port 9011.
 
+### Generate an API key
+
 You also will need to generate an API key. To do so, navigate to "Settings" and click on "API Keys" and click the green "+" button to add an API key. You can leave the Id field blank, FusionAuth will auto-generate an Id for you. For now, don't select any endpoint methods to create this as a super user key, which has access to all endpoints.  Then click on the green "view" (spyglass) button and copy your api key into your `config.js` file as well.
 
 Here's a completed config file you can use as a template. But remember, you must paste in your own application's unique values!
