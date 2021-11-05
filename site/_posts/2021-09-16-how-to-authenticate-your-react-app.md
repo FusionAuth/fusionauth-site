@@ -876,7 +876,7 @@ The OAuth token endpoint requires form encoded data, which is why we are using t
 
 You can check the FusionAuth docs to see what every endpoint expects to be sent, but here’s the gist of this request:
 
-- The `client_id` and `client_secret` identify and authenticate our app, like a username and password. They are drawn from the FusionAuth configuration.
+- The `client_id` and `client_secret` identify and authenticate our app, like a username and password. They are drawn from the FusionAuth configuration and ensure that only code that FusionAuth knows about can obtain a token.
 - The `code` is the Authorization Code we got from FusionAuth.
 - The `grant_type` tells FusionAuth we’re using the The OAuth Authorization Code Grant (as opposed to an Implicit Grant or any other grant).
 - The `redirect_uri`  is a value from the "Authorized Redirect URLs" configuration. Requiring this is another way for FusionAuth to know that this request came from the server it expected (our express server).
