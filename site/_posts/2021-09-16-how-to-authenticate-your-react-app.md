@@ -915,7 +915,7 @@ app.use(session(
 ##  Displaying user data
 Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. It's like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.'
 
-We can get additional user-specific info from `/registration` as well, which is a FusionAuth specific API endpoint.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
+We can get additional user-specific info from the `registration` endpoint as well, which is a FusionAuth specific API.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
 
 If there’s a token in session storage, we’ll call `/introspect` to get info out of that token. Part of the info returned from `/introspect` is the boolean property `active`, which is true until the Access Token expires (you can configure how long Access Tokens live in the FusionAuth admin panel). If the token is still good, we’ll call `/registration` and return the JSON from both requests.  Keep in mind, `/introspect` is standard OAuth, and `/registration` is a FusionAuth API endpoint.
 
