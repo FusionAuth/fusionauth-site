@@ -176,7 +176,6 @@ npm start
 ```
 If your React app automatically boots up in the browser at `localhost:3000`, then everything is working properly.
 
-
 Lastly, it is useful to create a config file in your `client/src` directory.  In your `client/src` folder, create a `config.js` like so:
 
 ```bash
