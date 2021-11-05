@@ -33,7 +33,7 @@ While it is possible to write your own solution, it is often best to use an open
 
 This is the grant we are going to use to authenticate our users.  In this particular grant, FusionAuth generates and passes validated access tokens to the React app, which then presents those tokens to the Express backend to gain access to the requested resources. The tokens are never stored on the browser, but are instead stored on the server. This is called the "backend for frontend" pattern, or BFF. If you want to learn more, take a look at our [Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/)
 
-Using an Authorization Code grant has many advantages, including being more secure than the Implicit Grant.  Whereas an implicit grant will grant a user access to resources based on a simple username and password being present in a user data store, the Authorization Code grant adds an extra layer of security by exchanging an Authorization Code for an Access Token before the user can gain access to their resources.  To see a deep dive into this grant that is language-agnostic, take a look at our [Example Authoriation Code Grant](https://fusionauth.io/docs/v1/tech/oauth/#example-authorization-code-grant).  
+Using an Authorization Code grant has many advantages, including being more secure than alternatives such as the Implicit grant.  Whereas an Implicit grant authenticates against FusionAuth but exposes the resulting Access Token in the URL, the Authorization Code grant adds an extra layer of security by exchanging an Authorization Code for an Access Token before the user can gain access to their resources.  To see a deep dive into this grant that is language-agnostic, take a look at our [example Authorization Code grant](https://fusionauth.io/docs/v1/tech/oauth/#example-authorization-code-grant).  
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/openweb.png" alt="graphic showing the client and server side of the app" class="img-fluid" figure=false %}
 
@@ -46,7 +46,7 @@ FusionAuth is a complete auth platform that saves your team time and resources b
 
 There are a few things that you need to have in place before you get started:
 
-* You need to have either a FusionAuth Cloud account or install their self-hosted version, available for free. Follow the [FusionAuth 5-Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide/) to get started with your installation.  
+* You need to have either a FusionAuth Cloud account or install a self-hosted version, available for free. Follow the [FusionAuth 5-Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide/) to get started with your installation.  
 * Your Node version should be at least 14.17.6. We use this version in this tutorial.  
 * We use React 17.0.2 and suggest you use the same or most recent stable build.
 
@@ -79,7 +79,7 @@ If you choose not to use kickstart, you must configure an application in FusionA
 
 *"But wait a minute!" you may ask. "Why do I have to make another app in FusionAuth? Don't I already have a React App?  I thought I could just import FusionAuth functionality into my React app?"*
 
-You can't directly import FusionAuth functionality into your JavaScript or React projects.  Instead,  FusionAuth is a separate server that developers can interact with via API calls.  So, instead of being something like a JavaScript library that you include into your own JavaScript projects and pull functionality from, FusionAuth actually is an entire application that you configure to work with your React app and server of your choosing via API calls. (Those API calls can be made by a library such as `passport.js`, however.)  Think of it like a MongoDB or Postgres database, but which handles auth, rather than storing data.   This does have some benefits, however, such as far more layers of security, and more control over using FusionAuth as a user data store.  You can learn more from our [expert advice](/learn/expert-advice/identity-basics/complete-authentication-system/).
+You can't directly import FusionAuth functionality into your JavaScript or React projects. Instead, FusionAuth is a separate server that developers can interact with via API calls. So, instead of being something like a JavaScript library that you include into your own JavaScript projects and pull functionality from, FusionAuth actually is an entire application that you configure to work with your React app and server of your choosing via API calls. (Those API calls can be made by a library such as `passport.js`, however.) Think of it like a MongoDB or Postgres database, but which handles auth, rather than storing data. This does have some benefits, however, such as far more layers of security, and more control over using FusionAuth as a user data store. You can learn more from our [expert advice](/learn/expert-advice/identity-basics/complete-authentication-system/).
 
 * Navigate to the administrative user interface, and go to "Applications".
 * Click the green **+** button to add a new application to your FusionAuth instance.
@@ -99,7 +99,7 @@ Congratulations! You have configured FusionAuth to work with your React app. Now
 
 ### Create a User and Register Them
 
-For the next step, we will link a user to your brand-new FusionAuth app, ReactAuth, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store'. This is a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users with FusionAuth from your React app if you want to build that functionality later on, but that is beyond this tutorial's scope.  
+For the next step, we will link a user to your brand-new FusionAuth app, `React Auth`, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store'. This is a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users with FusionAuth from your React app if you want to build that functionality later on, but that is beyond this tutorial's scope.  
 
 * Select "Users" from the left-hand side menu.
 * Select the green plus sign on the top left to add a user. I used `test@fusionauth.io`
@@ -176,16 +176,15 @@ npm start
 ```
 If your React app automatically boots up in the browser at `localhost:3000`, then everything is working properly.
 
-
 Lastly, it is useful to create a config file in your `client/src` directory.  In your `client/src` folder, create a `config.js` like so:
 
 ```bash
 touch config.js
 ```
 
-Inside of that config file, you are going to copy the OAuth info from the FusionAuth admin panel of your application, React Auth. To do so, on `localhost:9011`, navigate to "Applications", then the "React Auth" configuration, then click the "View" button.  
+Inside of that config file, you are going to copy the OAuth info from the FusionAuth admin panel of your application, `React Auth`. To do so, on `localhost:9011`, navigate to "Applications", then the "React Auth" configuration, then click the "View" button.  
 
-You must copy in your unique versions of the following:
+You must copy in your unique values of the following:
 - clientID
 - clientSecret
 - redirectURI
@@ -349,7 +348,7 @@ Again, a good question. This has to do with the Authorization Code grant. This g
 
 ### Configure the folders and packages
 
-Now, you need to add a package.json in your `server` folder. Do that by navigating to the `server` folder and running
+Now, you need to add a package.json in your `server` folder. Do that by navigating to the `server` folder and running:
 
 `npm init -y`
 
@@ -564,7 +563,7 @@ Awesome! So if you go to `localhost:3000`, you should see the user displayed! No
 
 ## Logging in
 
-User sign-in is one of the key features of FusionAuth.  Let’s see how it works.
+User sign-in is one of the key features of FusionAuth. Let’s see how it works.
 
 First things first: we need a “login” button in the React client:
 
@@ -915,7 +914,7 @@ app.use(session(
 ##  Displaying user data
 Our React app looks for a user in `/user`. The Access Token that is granted to our Express server from FusionAuth isn’t human-readable, but we can pass it to FusionAuth’s `/introspect` endpoint to get a User Object (JSON like we showed earlier) from it. It's like saying 'Hey FusionAuth, you gave us this access token and so we can use that to access a user's data from you, because you trust your own access tokens.'
 
-We can get additional user-specific info from `/registration` as well, which is a FusionAuth specific API endpoint.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
+We can get additional user-specific info from the `registration` endpoint as well, which is a FusionAuth specific API.  Then we can display whatever we want to the end user based on that user object (well, anything that the object gives us access to) which is what we are going to do now.
 
 If there’s a token in session storage, we’ll call `/introspect` to get info out of that token. Part of the info returned from `/introspect` is the boolean property `active`, which is true until the Access Token expires (you can configure how long Access Tokens live in the FusionAuth admin panel). If the token is still good, we’ll call `/registration` and return the JSON from both requests.  Keep in mind, `/introspect` is standard OAuth, and `/registration` is a FusionAuth API endpoint.
 
