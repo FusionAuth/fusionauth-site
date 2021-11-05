@@ -348,7 +348,7 @@ Again, a good question. This has to do with the Authorization Code grant. This g
 
 ### Configure the folders and packages
 
-Now, you need to add a package.json in your `server` folder. Do that by navigating to the `server` folder and running
+Now, you need to add a package.json in your `server` folder. Do that by navigating to the `server` folder and running:
 
 `npm init -y`
 
