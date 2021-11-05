@@ -83,12 +83,12 @@ You can't directly import FusionAuth functionality into your JavaScript or React
 
 * Navigate to the administrative user interface, and go to "Applications".
 * Click the green **+** button to add a new application to your FusionAuth instance.
-* Add a name for your application. I'm calling mine `React Auth`.
-* Under the `OAuth` tab, configure the “Authorized redirect URL”. This is where you want FusionAuth to redirect the browser with the authorization code after a user successfully authenticates. We are redirecting to your app's Express backend. You need to configure this for two reasons:
-* If you *don't* and a hacker later steals your Authorization Code by providing their own redirect URL, they can exchange that for a token and act on your behalf.
-* FusionAuth requires a redirect URL, as does the OAuth standard.
+* Add a name for your application. I'm calling mine "React Auth".
+* Under the "OAuth" tab, configure the “Authorized redirect URL”. This is where you want FusionAuth to redirect the browser with the authorization code after a user successfully authenticates. We are redirecting to your app's Express backend. You need to configure this for two reasons:
+1. If you *don't* and a hacker later steals your Authorization Code by providing their own redirect URL, they can exchange that for a token and act on your behalf.
+2. FusionAuth requires a redirect URL, as does the OAuth standard.
 So, to avoid that mess, enter `http://localhost:3000/oauth-callback`. We'll build this route later.
-* Under the same `OAuth` tab, configure the “Logout URL” to where FusionAuth should send the user after they (surprise!) log out. Enter in `http://localhost:3001/logout`.
+* Under the same "OAuth" tab, configure the “Logout URL” to where FusionAuth should send the user after they (surprise!) log out. Enter in `http://localhost:3001/logout`.
 * Click the blue "save" button in the top-right to finish the configuration.
 
 This is what your configuration might look like:
@@ -99,20 +99,20 @@ Congratulations! You have configured FusionAuth to work with your React app. Now
 
 ### Create a User and Register Them
 
-For the next step, we will link a user to your brand-new FusionAuth app, `React Auth`, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store'. This is a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users with FusionAuth from your React app if you want to build that functionality later on, but that is beyond this tutorial's scope.  
+For the next step, we will link a user to your brand-new FusionAuth app, "React Auth", via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store'. This is a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users with FusionAuth from your React app if you want to build that functionality later on, but that is beyond this tutorial's scope.  
 
 * Select "Users" from the left-hand side menu.
-* Select the green plus sign on the top left to add a user. I used `test@fusionauth.io`
+* Select the green plus sign on the top left to add a user. I used "test@fusionauth.io"
 * Give the user a dummy email and deselect "send email to setup password".
-* Give the user a simple password. May I suggest `password`?
+* Give the user a simple password. May I suggest "password"?
 * Click the "Save" icon on the top right.
 * Go back to "Users".
 * Select "Manage" under the "action" tab for your new user.
 * Select "Add registration".
-* In the dropdown menu, select `React Auth`. If you don't see it, double check that you remembered to push "Save" when you created your application.
+* In the dropdown menu, select "React Auth". If you don't see it, double check that you remembered to push "Save" when you created your application.
 * Click "Save".
 
-Well done! You now have at least one user that is registered to your `React Auth` app. Not bad for your app being in development.
+Well done! You now have at least one user that is registered to your "React Auth" app. Not bad for your app being in development.
 
 ## Create the React UI
 
