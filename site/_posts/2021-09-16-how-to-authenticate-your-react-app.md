@@ -184,7 +184,7 @@ touch config.js
 
 Inside of that config file, you are going to copy the OAuth info from the FusionAuth admin panel of your application, `React Auth`. To do so, on `localhost:9011`, navigate to "Applications", then the "React Auth" configuration, then click the "View" button.  
 
-You must copy in your unique versions of the following:
+You must copy in your unique values of the following:
 - clientID
 - clientSecret
 - redirectURI
