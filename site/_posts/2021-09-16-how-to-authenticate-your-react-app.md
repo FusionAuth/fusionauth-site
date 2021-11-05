@@ -9,7 +9,7 @@ tags: tutorial-react tutorial-javascript client-react client-javascript tutorial
 excerpt_separator: "<!--more-->"
 ---
 
-Whenever you build a website that allows a user to create their own account, a secure authentication and authorization grant is a must-have.  The problem is that most handmade authentication and authorization solutions are not robust enough to keep up with the most current and secure workflows. What's more, since security is not always seen as a business priority, in-house authorization solutions can quickly become an internal tool that is not often touched, prone to disrepair and exploitation by bad actors.  
+Whenever you build a website that allows a user to create their own account, secure authentication and authorization is a must-have.  The problem is that most handmade authentication and authorization solutions are not robust enough to keep up with the most current and secure workflows. What's more, since security is not always seen as a business priority, in-house authorization solutions can quickly become an internal tool that is not often touched, prone to disrepair and exploitation by bad actors.  
 
 <!--more-->
 
