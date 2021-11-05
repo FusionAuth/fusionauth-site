@@ -1085,4 +1085,4 @@ Some areas that you may want explore further::
   - Using an iFrame to have a custom login screen with no redirects.
 
 
-Now you know how to integrate a react application with an OAuth server like FusionAuth. By delegating authentication to such a server, your react application can focus on building features, not auth.  
+Now you know how to integrate a React application with an OAuth server like FusionAuth. By delegating authentication to such a server, your react application can focus on building features, not auth.  
