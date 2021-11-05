@@ -563,7 +563,7 @@ Awesome! So if you go to `localhost:3000`, you should see the user displayed! No
 
 ## Logging in
 
-User sign-in is one of the key features of FusionAuth.  Let’s see how it works.
+User sign-in is one of the key features of FusionAuth. Let’s see how it works.
 
 First things first: we need a “login” button in the React client:
 
