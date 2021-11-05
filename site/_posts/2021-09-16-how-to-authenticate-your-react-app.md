@@ -99,7 +99,7 @@ Congratulations! You have configured FusionAuth to work with your React app. Now
 
 ### Create a User and Register Them
 
-For the next step, we will link a user to your brand-new FusionAuth app, ReactAuth, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store'. This is a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users with FusionAuth from your React app if you want to build that functionality later on, but that is beyond this tutorial's scope.  
+For the next step, we will link a user to your brand-new FusionAuth app, `React Auth`, via the dashboard. This is where another useful feature of FusionAuth comes into play, as a 'user data store'. This is a centralized location where you can manage all the users of your app in a friendly UI environment. Of course, you can register users with FusionAuth from your React app if you want to build that functionality later on, but that is beyond this tutorial's scope.  
 
 * Select "Users" from the left-hand side menu.
 * Select the green plus sign on the top left to add a user. I used `test@fusionauth.io`
