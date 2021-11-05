@@ -84,11 +84,11 @@ You can't directly import FusionAuth functionality into your JavaScript or React
 * Navigate to the administrative user interface, and go to "Applications".
 * Click the green **+** button to add a new application to your FusionAuth instance.
 * Add a name for your application. I'm calling mine "React Auth".
-* Under the "OAuth" tab, configure the “Authorized redirect URL”. This is where you want FusionAuth to redirect the browser with the authorization code after a user successfully authenticates. We are redirecting to your app's Express backend. You need to configure this for two reasons:
+* Under the "OAuth" tab, configure the “Authorized redirect URL”. This is where you want FusionAuth to redirect the browser with the authorization code after a user successfully authenticates. We are redirecting to your app's Express backend, which will be on port 3001. You need to configure this for two reasons:
 1. If you *don't* and a hacker later steals your Authorization Code by providing their own redirect URL, they can exchange that for a token and act on your behalf.
 2. FusionAuth requires a redirect URL, as does the OAuth standard.
-So, to avoid that mess, enter `http://localhost:3000/oauth-callback`. We'll build this route later.
-* Under the same "OAuth" tab, configure the “Logout URL” to where FusionAuth should send the user after they (surprise!) log out. Enter in `http://localhost:3001/logout`.
+So, to avoid that mess, enter `http://localhost:3001/oauth-callback`. We'll build this route later.
+* Under the same "OAuth" tab, configure the “Logout URL” to where FusionAuth should send the user after they (surprise!) log out. Enter in `http://localhost:3000/logout`.  This will ultimately send the user to your React frontend, which will be on port 3000, when they are logged out.
 * Click the blue "save" button in the top-right to finish the configuration.
 
 This is what your configuration might look like:
