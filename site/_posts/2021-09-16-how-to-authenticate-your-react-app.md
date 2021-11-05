@@ -1084,6 +1084,5 @@ Some areas that you may want explore further::
   - Exploring roles and self-registration.
   - Using an iFrame to have a custom login screen with no redirects.
 
-We're working on a tutorial on iFrame as well as exploring roles in your React app, so keep your eyes peeled for those in the upcoming months!
 
 Now you know how to integrate a react application with an OAuth server like FusionAuth. By delegating authentication to such a server, your react application can focus on building features, not auth.  
