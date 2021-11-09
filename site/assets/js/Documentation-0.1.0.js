@@ -20,8 +20,7 @@ FusionAuth.Documentation = function() {
   }
 
   this.scrollNav = Prime.Document.queryById('scroll-nav');
-  this.scrollNavTitles = Prime.Document.queryById('scroll-nav-titles');
-  if (this.scrollNav !== null && this.scrollNavTitles !== null) {
+  if (this.scrollNav !== null) {
     this._setupScrollNav();
   }
 
@@ -42,7 +41,7 @@ FusionAuth.Documentation.prototype = {
     setTimeout(this._resetScrollingState, 1500);
   },
 
-  _handleNavClick: function(event) {
+  _handleNavMenuClick: function(event) {
     Prime.Utils.stopEvent(event);
     if (this.scrollNavTitles.isVisible()) {
       this.scrollNavTitles.hide();
@@ -51,11 +50,21 @@ FusionAuth.Documentation.prototype = {
     }
   },
 
+  _handleNavTitleClick: function(event) {
+    // Prime.Utils.stopEvent(event);
+    setTimeout(function() {
+      this.scrollNavTitles.hide();
+    }.bind(this), 500);
+  },
+
   _setupScrollNav: function() {
-    this.scrollNav.addEventListener('click', this._handleNavClick);
+    this.scrollNavMenu = this.scrollNav.query('div')[0];
+    this.scrollNavMenu.addEventListener('click', this._handleNavMenuClick);
+
+    this.scrollNavTitles = this.scrollNav.query('ul')[0];
+    this.scrollNavTitles.addEventListener('click', this._handleNavTitleClick);
     var headers = Prime.Document.query('article H2, article H3');
     var titleList = '';
-    // var titleList = Prime.Document.queryById('scroll-nav-titles');
 
     var needsClosing = false;
     for (var i = 0; i < headers.length; i++) {
