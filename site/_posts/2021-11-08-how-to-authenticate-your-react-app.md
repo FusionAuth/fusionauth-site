@@ -766,19 +766,42 @@ Now, lets configure our `server/routes/login.js` file to do just that:
 const express = require('express');
 const router = express.Router();
 const config = require('../../client/src/config');
+const crypto = require('crypto');
+
+router.base64URLEncode = function (str) {
+  return str.toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
 
 router.get('/', (req, res) => {
-  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code`);
+  var state = router.base64URLEncode(crypto.randomBytes(64));
+    req.session.oauthState = state;
+  res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code&state=${state}`);
+
 });
+//
+router.get('/oauth-callback', (req, res, next) => {
+ // Verify the state
+ const reqState = req.query.state;
+ const state = req.session.oauthState;
+ if (reqState !== state) {
+ res.redirect('/', 302); // Start over
+ return;
+ }
+});
+
 
 module.exports = router;
 ```
 
 If that URI looks a bit messy, it’s because of the additional query parameters, which FusionAuth needs to process our request:
 
-- `client_id` tells FusionAuth which app is making the request
-- `redirect_uri` tells FusionAuth where to redirect the user to after login
-- `response_type` tells FusionAuth which OAuth grant we’re using (Authorization Code in this example)
+- "client_id" tells FusionAuth which app is making the request.
+- "redirect_uri" tells FusionAuth where to redirect the user to after login.
+- "response_type" tells FusionAuth which OAuth grant we’re using (Authorization Code in this example).
+- "state" is there for CSRF protection.  ]This parameter is encoded, sent along with the initial request, and then echoed back to your application by the OAuth server. 
 
 This is all part of the standard OAuth Authorization Code grant.
 
