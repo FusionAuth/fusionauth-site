@@ -337,7 +337,7 @@ If not, then a 'You're not logged in' message displays.  Go ahead and comment ou
 
 `this.state = {
     email: 'test@fusionauth.io'
-  };`
+  };
 
 block. Now, confirm a 'You're not logged in' message appears.
 
