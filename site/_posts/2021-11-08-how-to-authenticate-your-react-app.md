@@ -8,6 +8,7 @@ category: blog
 tags: tutorial-react tutorial-javascript client-react client-javascript tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
+*Please Note:* This tutorial reworks an earlier tutorial on implementing OAuth in React, which can be found [here](/blog/2020/03/10/securely-implement-oauth-in-react/).
 
 Whenever you build a website that allows a user to create their own account, secure authentication and authorization is a must-have.  The problem is that most handmade authentication and authorization solutions are not robust enough to keep up with the most current and secure workflows. What's more, since security is not always seen as a business priority, in-house authorization solutions can quickly become an internal tool that is not often touched, prone to disrepair and exploitation by bad actors.
 
@@ -801,7 +802,7 @@ If that URI looks a bit messy, it’s because of the additional query parameters
 - "client_id" tells FusionAuth which app is making the request.
 - "redirect_uri" tells FusionAuth where to redirect the user to after login.
 - "response_type" tells FusionAuth which OAuth grant we’re using (Authorization Code in this example).
-- "state" is there for CSRF protection.  ]This parameter is encoded, sent along with the initial request, and then echoed back to your application by the OAuth server. 
+- "state" is there for CSRF protection.  ]This parameter is encoded, sent along with the initial request, and then echoed back to your application by the OAuth server.
 
 This is all part of the standard OAuth Authorization Code grant.
 
