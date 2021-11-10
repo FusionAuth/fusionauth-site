@@ -2,7 +2,7 @@
 
 Here are some guidelines to follow when writing documentation (everything under `/site/docs`.
 
-- Do not manually wrap long lines. Use the soft wrap in your editor to view while editing. 
+- Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` when describing a unique identifier
 - Use `logged in` instead of `logged-in`
 - Don't use complex breadcrumbs styling. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`
@@ -28,7 +28,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
 
 - When writing posts, you have access to callouts.
-  
+
   ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
   ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
   ![tip-call](https://user-images.githubusercontent.com/16090626/112875862-f7f2d680-9081-11eb-845f-09c37a7bcf6d.png)
@@ -77,7 +77,7 @@ For blog posts:
 -- `tutorial-<langname>`, `tutorial-<framework>` for a tutorial in a specific language or framework.
 -- `tutorial-feature` for a tutorial for a given feature (how to use a lambda, for example)
 -- `tutorial-integration` for a tutorial doing an integration with another software package (nodebb, for example)
--- `topic-<topic>` for general topics. 
+-- `topic-<topic>` for general topics.
 -- `topic-community-story` for any community stories you do.
 -- `feature-<topic>` for specific features. These will show up on the feature page.
 
@@ -113,7 +113,7 @@ If they feature any client libraries, tag them with `client-[langname]` and they
 
 If they highlight a feature, tag them with `feature-[featurename]` and if there's a feature page, they'll appear there. `feature-breached-password-detection` for example.
 
-If they are a tutorial, add `tutorial` and they will appear on the tutorials page in the docs. You can also add `tutorial-[langname]` if it focuses on a language, `tutorial-feature` if it is a FusionAuth feature (webhooks, themes, etc) and `tutorial-integration` if it is an integration tutorial (nodebb, wordpress, etc). If it is for an advanced feature/reactor feature, add `tutorial-reactor-feature`. Those are all separate sections. 
+If they are a tutorial, add `tutorial` and they will appear on the tutorials page in the docs. You can also add `tutorial-[langname]` if it focuses on a language, `tutorial-feature` if it is a FusionAuth feature (webhooks, themes, etc) and `tutorial-integration` if it is an integration tutorial (nodebb, wordpress, etc). If it is for an advanced feature/reactor feature, add `tutorial-reactor-feature`. Those are all separate sections.
 
 If it is a community story, tag with `topic-commmunity-story`. Right now that doesn't do anything, but it will.
 
@@ -135,7 +135,7 @@ Note that you must have at least `1100` pixels of screen height. If you do not, 
 
 You will also want to ensure that you do not have scroll bars omni-present, this will affect the UI when taking screenshots. See `System Preferences > General > Show scroll bars` and ensure `When scrolling` is selected.
 
-Also note that you should be resizing the image down to 1600px wide. If you are resizing up, something is wrong and your images will be fuzzy. 
+Also note that you should be resizing the image down to 1600px wide. If you are resizing up, something is wrong and your images will be fuzzy.
 
 ```appleScript
 set theApp to "Safari"
@@ -180,8 +180,8 @@ end tell
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
    - If you only want a portion of the screen, crop it. See Application Core Concepts for an example.
 - Crop top/bottom if necessary (don't crop sides).
-   - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the 
-     class may not be necessary if there is adequate spacing below. When text continues below or right above you will need 
+   - If you crop the bottom or top, use the `bottom-cropped` or `top-cropped` class on the image. In some cases the
+     class may not be necessary if there is adequate spacing below. When text continues below or right above you will need
      the class.
 - If you crop the image, don't use the `box-shadow` role. And vice versa.
 - Highlight sections using image preview editor
@@ -189,16 +189,16 @@ end tell
 - To size and compress images without losing too much quality, follow these steps:
 	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
 	2. Use https://tinypng.com/ to compress the image
-  
 
-## Shell script for capturing sceenshots 
+
+## Shell script for capturing sceenshots
 fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
 - Sizing and moving the Safari window
-- Capturing the screenshot 
+- Capturing the screenshot
 - Resizing the screenshot image
 - Compressing the image using either pngquant or Tiny PNG
 - Moving the image to an appropriate folder
- 
+
 ```bash
 ./fa-screenshot.sh -h # for usage info
 ```
@@ -262,7 +262,7 @@ We use algolia to search. This only searches content on the public site, so if y
 To do a dry run of the search indexing to see what will content be indexed on the next push:
 
 ```
-bundle exec jekyll algolia --dry-run 
+bundle exec jekyll algolia --dry-run
 ```
 
 or, if you want to see everything:
@@ -273,10 +273,19 @@ bundle exec jekyll algolia --dry-run --verbose
 
 ## Data Driven Pages
 
-Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file. 
+Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file.
 
 Examples of that are the customers page and the quotes widget.
 
 You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps.
 
 The theme pages are kinda complex because they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
+
+## Where to put Expert Advice articles and supporting assets
+
+The Expert Advice articles are stored in a separate place from the regular blogs.
+
+Expert Advice posts:	`/fusionauth-site/site/learn/expert-advice/security` 
+Images: `site/assets/img/advice/<subdir>`
+Stamps: `site/assets/img/stamps`
+UML diagrams: `site/_diagrams/learn/expert-advice/<subdir>`
