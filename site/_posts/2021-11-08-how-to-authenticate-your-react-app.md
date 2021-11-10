@@ -1029,7 +1029,7 @@ First, the POST request to `/introspect`: this endpoint requires our Client Id a
 
 In the callback from that request, we’ll parse the body into usable JSON and check that active value. If it’s good, we’ll go ahead and make the `/api/user/registration/` request, which requires a User Id (“subscriber” or sub in OAuth jargon) and our Application Id—we need both, because one user can have different data in each FusionAuth application.
 
-Finally, in the registration callback, we’ll parse the body returned from `/registration` and `res.send` everything back to the React client.
+Finally, in the registration callback, we’ll parse the body returned from `/api/user/registration` and `res.send` everything back to the React client.
 
 Now, go through the login process, and you should see “Welcome, [your email address]!”.
 
