@@ -802,7 +802,7 @@ If that URI looks a bit messy, it’s because of the additional query parameters
 - "client_id" tells FusionAuth which app is making the request.
 - "redirect_uri" tells FusionAuth where to redirect the user to after login.
 - "response_type" tells FusionAuth which OAuth grant we’re using (Authorization Code in this example).
-- "state" is there for CSRF protection.  ]This parameter is encoded, sent along with the initial request, and then echoed back to your application by the OAuth server.
+- "state" is there for CSRF protection. This parameter is encoded, sent along with the initial request, and then echoed back to your application by the OAuth server.
 
 This is all part of the standard OAuth Authorization Code grant.
 
