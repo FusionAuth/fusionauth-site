@@ -229,7 +229,7 @@ module.exports = {
 
 Now, we're going to write the React frontend.
 
-First off, let's get React to display a simple greeting. Inside of `client/src/index.js`:
+First off, let's get React to display a simple greeting. Inside of `client/src/index.jsx`:
 
 ```js
 import React from 'react';
@@ -276,7 +276,7 @@ mkdir components
 And in `client/src/components`, create a new `Greeting` component.
 
 ```bash
-touch client/src/components/Greeting.js
+touch client/src/components/Greeting.jsx
 ```
 
 Go into the Greeting component and and add the following:
@@ -301,7 +301,7 @@ export default class Greeting extends React.Component {
 }
 ```
 
-Now, update `index.js`:
+Now, update `index.jsx`:
 
 
 ```js
@@ -468,7 +468,7 @@ When our React client sends a request to `localhost:3001/user`, it will get a re
 
 Next, let's update our React UI so that we are not using the mock user email anymore, but from our Express server:
 
-`client/src/index.js`
+`client/src/index.jsx`
 
 ```js
 
@@ -519,7 +519,7 @@ export default class Greeting extends React.Component {
 
 If you navigate to `localhost:3000` now, you'll see an `undefined` error in regard to the user object.  Let's fix that by replacing our fake user with a real one. Before we do that, let’s set up our React app to fetch the user from `/user` whenever the page loads (or “when the component mounts” in React lingo):
 
-In `client/src/index.js`:
+In `client/src/index.jsx`:
 
 ```js
 
@@ -580,9 +580,9 @@ First things first: we need a “login” button in the React client:
 client
 └─app
   ├─components
-  │ ├─Greeting.js
-  │ └─LogInOut.js*
-  └─index.js
+  │ ├─Greeting.jsx
+  │ └─LogInOut.jsx*
+  └─index.jsx
 ```
 
 Just like we did in Greeting, we’ll use `this.props.body.user` to determine whether or not the user is logged in. We can use this to make a link to either `localhost:3001/login` or `localhost:3001/logout`, the former of which we’ll set up momentarily.
@@ -592,7 +592,7 @@ Let's create the `LogInOut` component to start.
 Make a new file in `client/src/components`.
 
 ```bash
-touch client/src/components/LogInOut.js
+touch client/src/components/LogInOut.jsx
 ```
 
 Then, create a simple login and logout component in this new file:
@@ -629,18 +629,18 @@ In order to leverage FusionAuth’s OAuth system with the Authorization Code Gra
 
 We could write a link directly to FusionAuth, but it’s cleaner to go through the Express app, because the FusionAuth OAuth grant requires a somewhat complex URL to start.
 
-  Next, import `LogInOut` in your `client/index.js`:
+  Next, import `LogInOut` in your `client/index.jsx`:
 
 ```js
 
 // ...
 
-import LogInOut from './components/LogInOut.js';
+import LogInOut from './components/LogInOut.jsx';
 
 // ...
 ```
 
-Also update your `client/index.js` like so:
+Also update your `client/index.jsx` like so:
 
 ```js
 <header>
@@ -652,7 +652,7 @@ Also update your `client/index.js` like so:
 // ...
 ```
 
-Your full `src/index.js`  should look like this:
+Your full `src/index.jsx`  should look like this:
 
 ```js
 import React from 'react';
