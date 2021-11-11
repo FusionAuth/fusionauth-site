@@ -776,7 +776,7 @@ router.base64URLEncode = function (str) {
 }
 
 router.get('/', (req, res) => {
-  var state = router.base64URLEncode(crypto.randomBytes(64));
+  const state = router.base64URLEncode(crypto.randomBytes(64));
   req.session.oauthState = state;
   res.redirect(`http://localhost:${config.fusionAuthPort}/oauth2/authorize?client_id=${config.clientID}&redirect_uri=${config.redirectURI}&response_type=code&state=${state}`);
 
