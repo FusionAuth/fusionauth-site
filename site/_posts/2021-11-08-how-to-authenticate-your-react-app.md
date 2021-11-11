@@ -787,7 +787,7 @@ router.get('/oauth-callback', (req, res, next) => {
  const reqState = req.query.state;
  const state = req.session.oauthState;
  if (reqState !== state) {
- res.redirect('/', 302); // Start over
+   res.redirect('/', 302); // Start over
  return;
  }
 });
