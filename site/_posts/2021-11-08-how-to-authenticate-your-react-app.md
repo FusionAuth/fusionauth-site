@@ -335,7 +335,6 @@ If the user is logged in, a welcome message displays.
 
 If not, then a 'You're not logged in' message displays.  Go ahead and comment out `email: 'test@fusionauth.io'` in the
 
-`this.state = {
     email: 'test@fusionauth.io'
   };
 
