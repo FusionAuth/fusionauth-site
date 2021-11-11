@@ -443,7 +443,7 @@ module.exports = router;
 
 Why is this in an object? The reason is FusionAuth will ultimately send us the user object when a user logs in. We are starting out by using mock data. Our server will send the email address, and then our react application can display it.
 
-* A note about the user object: the user object has several properties that are always present. Email is one of them. For more information on what sorts of data you can get on a user, check out our [user API docs](/docs/v1/tech/apis/users/#retrieve-a-user).
+* A note about the user object: the user object has several properties that are typically present. Email is one of them. For more information on what sorts of data you can get on a user, check out our [user API docs](/docs/v1/tech/apis/users/#retrieve-a-user).
 
 Next, in `server/index.js` let's import & use express with `const app = express()`, define our first route, `/user`, and then start our server. Remember, you're using port 3001 because port 3000 has been automatically taken by `create-react-app`.  We will add `cors` a little later on after we discover why we need it!
 
