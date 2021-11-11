@@ -379,7 +379,7 @@ What did you just install?
 - "express", so that you can use the Express package.
 - "express-session", so that you can save data in a server-side session.
 - "request", so that you can format HTTP requests in an organized fashion
-- "crypto", so that you can encode a random string to use in CSRF protection
+- "crypto", so that you can encode a random string to use for CSRF protection
 
 Your completed `package.json` should look like this:
 
