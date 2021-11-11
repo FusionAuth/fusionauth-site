@@ -8,7 +8,6 @@ category: blog
 tags: tutorial-react tutorial-javascript client-react client-javascript tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
-*Please Note:* This tutorial reworks an earlier tutorial on implementing OAuth in React, which can be found [here](/blog/2020/03/10/securely-implement-oauth-in-react/).
 
 Whenever you build a website that allows a user to create their own account, secure authentication and authorization is a must-have.  The problem is that most handmade authentication and authorization solutions are not robust enough to keep up with the most current and secure workflows. What's more, since security is not always seen as a business priority, in-house authorization solutions can quickly become an internal tool that is not often touched, prone to disrepair and exploitation by bad actors.
 
@@ -17,6 +16,10 @@ Whenever you build a website that allows a user to create their own account, sec
 In this tutorial, you will learn how to integrate a React app with FusionAuth to implement an OAuth 2.0 compliant Authorization Code grant.  This abstracts all of the problems of making and maintaining an auth solution away from you and onto FusionAuth.
 
 We'll start with downloading and configuring FusionAuth, then create a login/logout React component, then finish by building login/logout functionality with our Express server and React in tandem.
+
+{% include _callout-tip.liquid content=
+"*Please Note:* This tutorial reworks an earlier tutorial on implementing OAuth in React, which can be found [here](/blog/2020/03/10/securely-implement-oauth-in-react/)."
+%}
 
 ## What is authentication?
 
@@ -52,12 +55,13 @@ Once you have installed all the required components, log into your FusionAuth in
 
 We will do the following in this tutorial:
 
-- [Configure FusionAuth.](#configuring-fusionAuth)
-- [Create a basic React UI.](#create-the-react-ui)
-- [Create an Express backend server.](#create-the-express-server)
-- [Log a user in.](#logging-in)
-- [Display A User's Data.](#display-a-users-data)
-- [Log a user out.](#logging-out)
+- [Configure FusionAuth](#configuring-fusionauth)
+- [Create a basic React UI](#create-the-react-ui)
+- [Create an Express backend server](#create-the-express-server)
+- [Log a user in](#logging-in)
+- [Exchange an Authorization Code for an Access Token](#exchange-the-authorization-code-for-an-access-token)
+- [Display a User's data](#displaying-user-data)
+- [Log a user out](#logging-out)
 
 All of this is going to happen using the OAuth 2.0 Authorization Code grant.
 
@@ -164,7 +168,7 @@ reactauthapp
   client
   - public
   - src
-  ...
+  ... // all extra folders inside of your React app
   server
   - index.js
   package.json
@@ -331,18 +335,15 @@ ReactDOM.render(<App/>, document.querySelector('#root'));
 
 If the user is logged in, a welcome message displays.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/test-photo" alt="greets the user test@fusionauth.io" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/test-photo.png" alt="greets the user test@fusionauth.io" class="img-liquid" figure=false %}
 
-If not, then a 'You're not logged in' message displays.  Go ahead and comment out `email: 'test@fusionauth.io'` in the
+Let's make sure a user gets a "you're not logged in" message if they are not logged in.  To do so, comment out `email: 'test@fusionauth.io'`.
 
-    email: 'test@fusionauth.io'
-  };
+Next, confirm a 'You're not logged in' message appears.
 
-block. Now, confirm a 'You're not logged in' message appears.
+{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/not-logged-in.png" alt="greets the user test@fusionauth.io" class="img-liquid" figure=false %}
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react-2021/not-logged-in" alt="greets the user test@fusionauth.io" class="img-fluid" figure=false %}
-
-Now, let's set the state of this email based on a call to our Express server.
+Fantastic!  We've confirmed a user can have a message displayed to them based on if they are "logged in" or not. Let's make this more realistic now, and set the state of this email based on a call to our Express server.
 
 First, we need to set up that server!
 
@@ -813,7 +814,7 @@ When you successfully authenticate, you’ll just see `Cannot GET /oauth-callbac
 
 But why specify this? Because without specifying where to send the app after authenticating, a bad actor could put in their own redirect URL, sending the browser to their malicious server and gaining access to a token that could be used to view resources as a user. That would be no good!
 
-### Exchange the Authorization Code for an Access Token
+## Exchange the Authorization Code for an Access Token
 
 An Authorization Code isn’t enough to access the user’s resources, though. For that, we need an Access Token. This is standard OAuth, not something unique to FusionAuth. This step is called the Code Exchange, because we send the auth code to FusionAuth’s `/token` endpoint and receive an Access Token in exchange.  Then that Access Token is passed to the resource server in exchange for the desired resources.
 
