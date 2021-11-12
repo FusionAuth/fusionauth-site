@@ -1,4 +1,15 @@
-In this tiny byte, you’ll learn the difference between SSL and TLS, when they are used, and why you should use them.
+---
+layout: advice
+title: SSL vs. TLS
+description: In this blog, you’ll learn the difference between SSL and TLS, when they are used, and why you should use them.
+author: Akira Brand
+image: advice/steps-secure-auth-system/expert-advice-ten-steps-to-secure-your-authentication-system-header-image.png
+category: Security
+date: 2021-11-12
+dateModified: 2021-11-12
+---
+
+In this blog, you’ll learn the difference between SSL and TLS, when they are used, and why you should use them.
 
 *What are SSL and TLS?*
 
@@ -27,7 +38,9 @@ Now, the overall process of this handshake protocol looks like this:
 4. A secret key is exchanged.  The client sends a shared secret key to be used between the client and the server.  The secret key is encrypted with the server’s public key.
 5. The client sends a “finished” message to the server, which is encrypted with the secret key.  This confirms that the client section of the handshake protocol is completed.
 6. The server responds with a “finished” message, encrypted with the secret key. This indicates the server part of the handshake protocol is finished.  
-7. The client and server now exchange messages that are symmetrically encrypted with the shared secret key.  
+7. The client and server now exchange messages that are symmetrically encrypted with the shared secret key.
+
+{% include _image.liquid src="/site/_diagrams/learn/expert-advice/ssl-vs-tls/ssl-handshake.plantuml" alt="SSL/TLS handshake protocol" class="img-fluid" figure=false %}  
 
 Tl;dr, the entire purpose of the handshake is to verify the validity of the server, as well as securely exchange a shared secret key, which is used to encrypt and decrypt messages sent between the client and the server.
 
