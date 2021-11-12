@@ -40,7 +40,8 @@ Now, the overall process of this handshake protocol looks like this:
 6. The server responds with a “finished” message, encrypted with the secret key. This indicates the server part of the handshake protocol is finished.  
 7. The client and server now exchange messages that are symmetrically encrypted with the shared secret key.
 
-{% include _image.liquid src="/site/_diagrams/learn/expert-advice/ssl-vs-tls/ssl-handshake.plantuml" alt="SSL/TLS handshake protocol" class="img-fluid" figure=false %}  
+
+{% plantuml source: _diagrams/learn/expert-advice/ssl-vs-tls/ssl-handshake.plantuml, alt: "The SSL/TLS handshake protocol." %}
 
 Tl;dr, the entire purpose of the handshake is to verify the validity of the server, as well as securely exchange a shared secret key, which is used to encrypt and decrypt messages sent between the client and the server.
 
