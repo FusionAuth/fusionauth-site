@@ -42,7 +42,7 @@ Now, the overall process of this handshake protocol looks like this:
 
 {% plantuml source: _diagrams/learn/expert-advice/ssl-vs-tls/ssl-handshake.plantuml, alt: "The SSL/TLS handshake protocol." %}
 
-Tl;dr, the entire purpose of the handshake is to verify the validity of the server, as well as securely exchange a shared secret key, which is used to encrypt and decrypt messages sent between the client and the server.
+Tl;dr, the entire purpose of the handshake is to verify the validity of the server, as well as securely exchange a shared secret key, which is used to encrypt and decrypt messages sent between the client and the server. Encryption with a shared secret is much faster, but the handshake with the asymmetric keys is required to safely share that secret.
 
 *Why should I care?*
 
