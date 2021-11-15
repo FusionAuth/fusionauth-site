@@ -21,7 +21,7 @@ There isn’t a difference, actually.  TLS actually replaced SSL, but since SSL 
 
 *When do you use SSL? I mean TLS, I mean..wait, what?*
 
-You use TLS, formally known as SSL, mainly when you send data between a client and a server.
+You use TLS, formerly known as SSL, mainly when you send data between a client and a server.
 
 *Ok, I get it. TLS used to be SSL. But how does it work?*
 
