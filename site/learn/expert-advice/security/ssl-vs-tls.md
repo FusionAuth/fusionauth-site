@@ -31,7 +31,6 @@ In this way, an eavesdropper cannot read or manipulate any of the data sent betw
 
 Now, the overall process of this handshake protocol looks like this:
 
-
 1. The client sends a “clienthello” message to the server.  This message includes information like SSL/TLS version, and the cryptographic algorithm and data compression methods that the client can support.  
 2. The server responds with a “serverhello” message. This message includes cryptographic algorithms that the server has chosen from the list provided by the client. In this way, an algorithm that both sides support is chosen. The server also sends a session Id, its digital certificate, and its public key.
 3. The client contacts the server’s certificate authority to verify the validity of the server’s certificate. This confirms the authenticity of the web server.
