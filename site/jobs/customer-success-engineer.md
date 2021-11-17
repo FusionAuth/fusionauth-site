@@ -1,7 +1,7 @@
 ---
 layout: job
-title: SHA-1 (Support) Engineer 
-description: FusionAuth is seeking a Support Engineer to join our team. Learn about this position and apply today.
+title: SHA-1 (Customer Success) Engineer 
+description: FusionAuth is seeking a Customer Success Engineer to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 60000
 id: 3
@@ -13,7 +13,7 @@ FusionAuth is a fast growing startup headquartered in Denver Colorado. We are ex
  
 Our mission is to make authentication and authorization simple and secure for every developer. This means building the best IAM (Identity and Access Management) and CIAM (Customer Identity and Access Management) solution in the world. If you are passionate about technology and want to join a company that is moving the industry forward, FusionAuth might be a perfect fit for you. 
 
-We are recruiting a Support Engineer who will join our engineering team to help us build the best authentication and authorization solution in the world. This exciting role will allow you to help support our expanding community and help them get the most out of FusionAuth. You will work closely with the software engineers to learn the product and the standard protocols commonly used to integrate with FusionAuth. For this role, you must be a creative and quantitative thinker. You should be interested in the authentication, authorization and user management space. The ideal candidate will be a self-starter, fast worker and excited about growing a company from the ground up.
+We are recruiting a Customer Success Engineer who will join our engineering team to help us build the best authentication and authorization solution in the world. This exciting role will allow you to help support our expanding community and help them get the most out of FusionAuth. You will work closely with the software engineers to learn the product and the standard protocols commonly used to integrate with FusionAuth. For this role, you must be a creative and quantitative thinker. You should be interested in the authentication, authorization and user management space. The ideal candidate will be a self-starter, fast worker and excited about growing a company from the ground up.
 
 You will report directly to the CTO and will work from our Denver office.  
 
@@ -23,13 +23,14 @@ Your responsibilities will include:
 
 * Initial response and triage for our various support channels.
 * Identify and correct gaps or typos in our technical documentation.  
-* Work closely with the rest of the engineering team to identify how to best serve our customers
+* Work closely with the rest of the engineering team to identify how to best serve our customers.
+* Supporting both FusionAuth and the sister product CleanSpeak.
 
 ### Opportunities
 
 * Technical writing
 * Squashing bugs
-* Development example applications to demonstrate recommended FusionAuth integration concepts
+* Development example applications to demonstrate recommended CleanSpeak and FusionAuth integration concepts
 
 ### Requirements
 
@@ -53,6 +54,7 @@ The requirements for this position include:
 ### Beneficial Skills
 
 * Technical writing
+* Knowledge of filtering
 * Knowledge of OAuth2 and OpenID Connect
 
 ### Beneficial Technologies
@@ -60,7 +62,6 @@ The requirements for this position include:
 * Git
 * Java
 * JavaScript or Node.js
-* HTML
 
 ### Interviewing details
 
