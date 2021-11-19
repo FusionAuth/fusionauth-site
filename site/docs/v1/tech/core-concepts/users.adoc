@@ -13,6 +13,7 @@ FusionAuth is all about users, and it is helpful to fully understand how FusionA
 The User itself is easy enough to understand, it represents your end user, your employee, or your client.
 
 * <<User Scope>>
+* <<User Sessions>>
 * <<What Makes a User Active>>
 * <<User Search>>
 
@@ -25,6 +26,42 @@ video::cXvvcOOAp6U[youtube,width=560,height=315]
 
 A User is scoped to a Tenant.  A User existing within a Tenant can be registered to, and use the same credentials to authenticate to multiple applications within that Tenant.
 
+== User Sessions
+
+Users have sessions in FusionAuth. Sessions are equivalent to refresh tokens. Their lifetime is controlled by the Tenant or Application refresh token settings. 
+
+These appear in the administrative user interface under the [breadcrumb]#Sessions# tab (you may need to scroll if your screen is small):
+
+image::core-concepts/user-session.png[User session screen in the adminstrative user interface.,width=1200,role=bottom-cropped]
+
+There are two primary types of sessions/tokens shown in this table:
+
+* Normal refresh tokens.
+* SSO token. While technically a refresh token, it is special, and fully managed by FusionAuth. You may safely ignore this.
+
+=== Session Details
+
+A session can be created by using the Login API, as long as [field]#link:/docs/v1/tech/core-concepts/applications/#security[Generate refresh tokens]# is enabled, or by completing the link:/docs/v1/tech/oauth/#example-authorization-code-grant[OAuth Authorization Code grant] when the `offline_access` scope is requested. 
+
+A session will end when:
+
+* It expires.
+* It is deleted using the link:/docs/v1/tech/apis/jwt/#revoke-refresh-tokens[JWT APIs].
+* Optionally, as a result of a user changing their password or having their account locked. 
+
+These can be configured in the link:/docs/v1/tech/core-concepts/tenants/#jwt[Tenant Refresh Token settings] or the link:/docs/v1/tech/core-concepts/applications/#jwt[Application Refresh Token settings].
+
+An SSO session will end if you log out of SSO.
+
+[NOTE.note]
+====
+Normal sessions are not ended, nor are associated refresh tokens revoked, by link:/docs/v1/tech/oauth/endpoints/#logout[front channel logout].
+====
+
+When a session is no longer valid, the associated refresh token can't be used to create new JWTs.
+
+The JWTs themselves are valid until they expire.
+
 == What Makes a User Active
 
 FusionAuth includes reporting on the number of daily and monthly active users. What makes a User active during a time period is any of these events:
@@ -35,10 +72,14 @@ FusionAuth includes reporting on the number of daily and monthly active users. W
 * A JWT is refreshed using a Refresh Token.
 * SSO is used; this calls the login ping.
 
+[NOTE.note]
+====
+Users imported with the link:/docs/v1/tech/apis/users/#import-users[Import API] do not count as a monthly active user (MAU).
+====
+
 There are many different ways to log in using FusionAuth, but all of the below trigger a login event:
 
 include::docs/v1/tech/shared/_login_events.adoc[]
-
 
 == User Search
 
@@ -72,7 +113,7 @@ The database search engine enables fuzzy search against the following fields of 
 * `email`
 * `username`
 
-image::user-search-database.png[User Search with Database Search Engine,width=1200,role=shadowed bottom-cropped]
+image::core-concepts/user-search-database.png[User Search with Database Search Engine,width=1200,role=bottom-cropped]
 
 To learn more about the database search engine in general, view the link:/docs/v1/tech/core-concepts/search[search core concepts section].
 
@@ -90,12 +131,12 @@ Additionally, you may enter Elasticsearch query strings or raw JSON queries into
 
 The following screenshot shows a query string being constructed to search for users that belong to the `Moderators` group and are in the `Default` tenant:
 
-image::user-search-query-string.png[User Search by Query String,width=1200,role=shadowed top-cropped]
+image::core-concepts/user-search-query-string.png[User Search by Query String,width=1200,role=bottom-cropped]
 
 When searching for users by application or any fields on an application, it is necessary to construct a JSON query due to the way the Elasticsearch mapping is defined.
 
-The following screenshot shows an Elasticsearch JSON query being constructed to search for users that match the email pattern `*@fusionauth.io`, are registered to the `Pied Piper` application, and are assigned the `admin` role:
+The following screenshot shows an Elasticsearch JSON query being constructed to search for users that match the email pattern `*@fusionauth.io`, are registered to the `Pied Piper` application, and are assigned the `dev` role:
 
-image::user-search-json-query.png[User Search by JSON Query,width=1200,role=shadowed top-cropped]
+image::core-concepts/user-search-json-query.png[User Search with JSON Query.,width=1200]
 
 To learn more about the Elasticsearch search engine in general, view the link:/docs/v1/tech/core-concepts/search[search core concepts section].

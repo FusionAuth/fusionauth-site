@@ -30,3 +30,5 @@ gem "haml", "5.1.2"
 gem "pygments.rb", "1.2.1"
 gem "sassc", "2.3.0"
 gem "tilt", "2.0.10"
+
+gem "s3_website", "~> 3.4"

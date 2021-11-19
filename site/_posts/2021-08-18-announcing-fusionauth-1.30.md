@@ -51,6 +51,10 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: ..." 'https:/
 
 Using this ability, a new user on your app can start interacting with the app as a unique user, before needing to create an account. Then, once they do create an account, the unique Id can be used to ensure any saved profile data is retained. 
 
+Here's a video showing how to use this feature.
+
+{% include _youtube-video.liquid youtubeid="Kd6l5NPd_L0" %}
+
 ## Threat Detection Feature
 
 Flagging and responding to suspicious behavior is a part of any cybersecurity product, so naturally, we incorporated this functionality into the ever-evolving FusionAuth platform. We created advanced threat detection, a feature that brings best-practice functionality to help you deal with bizarre, possibly malicious behaviour around logins, registrations, user creation, and user updates. 

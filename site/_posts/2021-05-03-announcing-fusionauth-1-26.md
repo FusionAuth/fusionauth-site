@@ -17,7 +17,7 @@ This release contained a number of enhancements and bug fixes. Please see the [r
 
 ## Advanced multi-factor authentication (MFA)
 
-This is a premium feature requiring a [paid license](/pricing/editions/). It increases support for MFA in FusionAuth, including adding the following features:
+This is a premium feature requiring a [paid license](/pricing/). It increases support for MFA in FusionAuth, including adding the following features:
 
 * Customizable SMS templates, including localization
 * A new MFA factor: email 

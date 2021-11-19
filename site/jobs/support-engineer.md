@@ -17,7 +17,7 @@ We are recruiting a Support Engineer who will join our engineering team to help 
 
 You will report directly to the CTO and will work from our Denver office.  
 
-## Responsibilities
+###Responsibilities
 
 Your responsibilities will include:
 
@@ -25,13 +25,13 @@ Your responsibilities will include:
 * Identify and correct gaps or typos in our technical documentation.  
 * Work closely with the rest of the engineering team to identify how to best serve our customers
 
-## Opportunities
+### Opportunities
 
 * Technical writing
 * Squashing bugs
 * Development example applications to demonstrate recommended FusionAuth integration concepts
 
-## Requirements
+### Requirements
 
 An ideal candidate will have most of the following qualities or experiences:
 
@@ -44,25 +44,25 @@ An ideal candidate will have most of the following qualities or experiences:
 * Experience interacting directly with customers
 * A good sense of humor
 
-## Technologies
+### Technologies
 
 The requirements for this position include:
 
 * Experience in at least one programming language
 
-## Beneficial Skills
+### Beneficial Skills
 
 * Technical writing
 * Knowledge of OAuth2 and OpenID Connect
 
-## Beneficial Technologies
+### Beneficial Technologies
 
 * Git
 * Java
 * JavaScript or Node.js
 * HTML
 
-## Interviewing details
+### Interviewing details
 
 In general, you can expect the following during your interview process. 
 
@@ -70,11 +70,12 @@ In general, you can expect the following during your interview process.
 * A take home exercise will be assigned and a follow up meeting scheduled to review.
 * A yes or no answer within a week of the take home review meeting.
 
-## Salary & Benefits
+### Salary & Benefits
 
 * **Salary range:** $50,000 to $80,000 (depending on experience) 
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
 * **401k:** Yes!
+* **Education benefit:** Yes!
 * **Stock options:** Yes!
 * **Vacation:** Flexible! Take what you need. :)

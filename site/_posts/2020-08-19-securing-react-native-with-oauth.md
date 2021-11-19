@@ -22,7 +22,7 @@ This is a lot, but the ride will be fun. Ready to get going?
 Here's what you need to get started:
 
 * NodeJS version >= 8.0
-* VScode or any other text editor
+* VSCode or any other text editor
 * `git`
 * `npx` 
 * Xcode, if building for iOS

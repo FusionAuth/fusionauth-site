@@ -17,7 +17,7 @@ We are recruiting a Senior Java Software Engineer who will join our engineering 
 
 You will report directly to the CTO and will work from our Denver office.  
 
-## Responsibilities
+### Responsibilities
 
 Your responsibilities will include:
 
@@ -30,7 +30,7 @@ Your responsibilities will include:
 * Rotate as the on-call engineer to solve critical customer issues. While not the norm, we do have some off hours support requirements.
 * Work closely with the rest of the engineering team to architect and design the product and deployment strategies
 
-## Requirements
+### Requirements
 
 The requirements for this position include:
 
@@ -48,7 +48,7 @@ The requirements for this position include:
 * Comfortable and excited about working on our open source projects
 * Able to write new frameworks, libraries and tools to meet specific needs
 
-## Technologies
+### Technologies
 
 It would be good if you have experience with most of the following:
 
@@ -66,7 +66,7 @@ It would be good if you have experience with most of the following:
 * TestNG (or JUnit)
 * Git
 
-## Beneficial Skills
+### Beneficial Skills
 
 * Open source committer
 * Be familiar with other languages for the JVM
@@ -74,7 +74,7 @@ It would be good if you have experience with most of the following:
 * In-depth knowledge of multi-threading
 * In-depth knowledge of file systems
 
-## Beneficial Technologies
+### Beneficial Technologies
 
 * Elasticsearch
 * Savant
@@ -82,11 +82,12 @@ It would be good if you have experience with most of the following:
 * MyBatis
 * Prime.js
 
-## Salary & Benefits
+### Salary & Benefits
 
 * **Salary range:** $120,000 to $180,000 (depending on experience) 
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
 * **401k:** Yes!
+* **Education benefit:** Yes!
 * **Stock options:** Yes!
 * **Vacation:** Flexible! Take what you need. :)
