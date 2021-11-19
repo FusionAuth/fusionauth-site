@@ -3,7 +3,7 @@ layout: blog-post
 title: Talent Funnel chose FusionAuth because it was API first and developer friendly
 description: Talent Funnel runs the premier UK student job site and uses FusionAuth for their auth needs, including MFA, social sign-on and registration.
 author: Dan Moore
-image: blogs/...
+image: blogs/talent-funnel-api-first/talent-funnel-chose-fusionauth-because-it-was-api-first-and-developer-friendly-header-image.png
 category: blog
 tags: topic-community-story topic-upgrade-homegrown
 excerpt_separator: "<!--more-->"
