@@ -19,30 +19,12 @@ This document will help you migrate off of Amazon Cognito. If you are looking to
 
 This guide assumes you have installed FusionAuth. If you have not, please link:/docs/v1/tech/installation-guide/[view our installation guides] and install FusionAuth before you begin. For more general migration information, please view the link:../general/[FusionAuth migration guide].
 
-* <<Planning Considerations>>
-** <<Obtaining User Data>>
-** <<Mapping User Attributes>>
-** <<Identity Pools>>
-** <<Other Entities>>
-* <<Exporting Users>>
-* <<Importing Users>>
-** <<Set Up FusionAuth>>
-** <<Verify the Import>>
-** <<The Final Destination of Imported Users>>
-* <<Bulk Migration>>
-* <<What to Do Next>>
-* <<Additional Support>>
+TODO add TOC
+TODO add pictures
 
 There are a number of different ways applications can be integrated with Cognito, and it would be difficult to cover them all. 
 
-Additionally, Cognito https://forums.aws.amazon.com/thread.jspa?threadID=296932&tstart=0[does not allow for exporting of password hashes]. This means that you will need to perform a slow migration in order to not reset all user passwords. 
-
-If you need to leave Cognito quickly, you can do a bulk migration and then force everyone to reset their passwords. This option will be covered, but the primary focus of this guide will be on setting up a migration that does not require users to change their password.
-
-TODO 
-update applications client id/secretsy
-update applications login urls
-everything in notes
+Additionally, Cognito https://forums.aws.amazon.com/thread.jspa?threadID=296932&tstart=0[does not allow for password hash export]. You will need to perform a slow migration if you don't want to force your users to reset their passwords. If you need to leave Cognito quickly, you can do a bulk migration and then force everyone to reset their passwords. This option will be covered, but the primary focus of this guide will be on setting up a migration that does not require users to change their password.
 
 == Planning Considerations
 
@@ -54,7 +36,7 @@ Slow migrations use Connectors, which are a paid feature.
 
 Learn more about link:/docs/v1/tech/migration-guide/general/#types-of-migrations[types of migrations].
 
-If on the other hand, you are okay with resetting user passwords, a <<Bulk Migration>> might work for you. Review that section for more details on the required steps. You may also perform a bulk migration after a slow migration has run for a few months. At that time, your active users will have been transparently migrated and the other users may be okay with resetting their passwords.
+If on the other hand, you are okay with resetting user passwords, a <<Bulk Migration>> might work for you. Review that section for more details on the required steps. You may also perform a bulk migration after a slow migration has run for a few months. At that time, active users will have been transparently migrated and the other users may be okay with resetting their passwords.
 
 === Mapping User Attributes
 
@@ -87,8 +69,6 @@ include::docs/v1/tech/migration-guide/_other-entities-intro.adoc[]
 * Refresh tokens allow JWTs to be refreshed without a user logging in. These can be migrated from Cognito using the link:/docs/v1/tech/apis/users/#import-refresh-tokens[Import Refresh Tokens API].
 * Cognito allows for custom attributes, but they must be configured at User Pool creation. In FusionAuth, custom user attributes are stored on the `user.data` field and are dynamic, searchable and unlimited in size. Any valid JSON value may be stored in this field.
 * Cognito supports MFA. FusionAuth also link:/docs/v1/tech/guides/multi-factor-authentication/[supports MFA], which may be enabled for a tenant and configured for a user at any time.
-
-TODO how do you migrate MFA?
 
 [NOTE]
 ====
@@ -385,6 +365,15 @@ You have now set up a slow migration of users from Cognito. You can skip to <<Wh
 
 As mentioned above, a bulk migration of Cognito users requires all imported users to reset their passwords since password hashes are inaccessible. This is typically a poor choice as it negatively affects your users. However, if a slow migration won't work because of timing or for other reasons, you can move all user information other than passwords from Cognito to FusionAuth.
 
+The benefits of a bulk migration:
+
+* You can move your users all at once.
+* You no longer have a dependency on Cognito.
+
+The downsides of a bulk import:
+
+* You must require all users to reset their password. You can do this in bulk via API calls. Or you can simply tell every user they need to reset their password on your login page before they can login.
+
 To bulk migrate users, you need to do the following:
 
 * Set up FusionAuth
@@ -395,11 +384,13 @@ To bulk migrate users, you need to do the following:
 
 Let's look at each of these steps in more detail.
 
-=== Set up FusionAuth
+=== Set Up FusionAuth For a Bulk Migration
 
-TODO
+You need to set up FusionAuth. This is similar to how you you would do it for the slow migration documented above.
 
+:extra_permissions_text: Also, give the key permissions to `POST` to the API endpoint `/api/user/change-password`.
 include::docs/v1/tech/migration-guide/_create-api-key.adoc[]
+:!extra_permissions_text:
 
 include::docs/v1/tech/migration-guide/_create-test-tenant.adoc[]
 
@@ -543,7 +534,7 @@ After you have transformed your data into the format expected by the Import User
 include::_user-import-shell-script.sh[]
 ----
 
-Now you need to reset the passwords of all these users.
+Now you need to reset the passwords of all these users. Ouch. Don't worry, you can script it.
 
 === Reset Passwords
 
@@ -551,10 +542,10 @@ Now you need to reset the passwords of all these users.
 ====
 This will send an email for every user in your system. Ensure your SMTP settings, in [breadcrumb]#Tenants -> Your Tenant -> Email# can handle the number of messages. 
 
-You also may want to change the length of time the token is good for the initial password reset time period. You can find that in [breadcrumb]#Tenants -> Your Tenant -> Advanced -> External identifier durations#. Modify the [field]#Change password# field value.
+You also may want to change the password reset token lifetime. Find that in [breadcrumb]#Tenants -> Your Tenant -> Advanced -> External identifier durations#. Modify the [field]#Change password# field value.
 ====
 
-Create an API key with the `POST` permission to the API endpoint `/api/user/change-password`.
+Use the API key created above in <<Set Up FusionAuth For a Bulk Migration>>.
 
 Review the "Change Password" template to ensure the messaging is correct. Here is link:/docs/v1/tech/email-templates/templates-replacement-variables/#forgot-password[more information on modifying the templates].
 
@@ -589,22 +580,13 @@ done
 
 Users may also reset their password using the 'Forgot Password' link on the hosted login pages.
 
-=== Bulk Migration Considerations
-
-The benefits of a bulk migration:
-
-* You can move your users all at once.
-* You no longer have a dependency on Cognito.
-
-The downsides of a bulk import:
-
-* You must require all users to reset their password, either via the API calls above or when they try to log in.
-
 == What to Do Next
 
 include::docs/v1/tech/migration-guide/_what-next.adoc[]
 
 If you want to migrate client credentials grants, you'll need to create entities which correspond to each Cognito App Client. In addition, the scopes within FusionAuth are currently constrained to a certain format. link:/docs/v1/tech/core-concepts/entity-management/[Learn more about Entity Management].
+
+You can migrate each of your Cognito App clients to a FusionAuth application using the link:/docs/v1/tech/apis/applications/#create-an-application[Application API], which allows you to set your Client Id and Client Secret. Doing this will minimize the impact on any applications which use the OAuth Authorization Code grant or Implicit grant.
 
 === Estimate How Long to Run a Slow Migration
 
@@ -615,6 +597,7 @@ include::docs/v1/tech/migration-guide/_slow-migration-timeline.adoc[]
 After this period of time, you may want to bulk migrate the rest of the users, or treat them as inactive and not migrate them.
 
 Learn more about link:/docs/v1/tech/migration-guide/general/#slow-migration-implementation[general slow migration considerations].
+
 
 == Additional Support
 
