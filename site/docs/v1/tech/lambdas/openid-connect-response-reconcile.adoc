@@ -26,8 +26,9 @@ This lambda must contain a function named `reconcile` that takes three parameter
 * `user` - the FusionAuth User object
 * `registration` - the FusionAuth UserRegistration object
 * `jwt` - the JSON payload returned from the OpenID Connect Userinfo endpoint
+* `id_token` - the JSON payload returned in the `id_token` when available.
 
-The two FusionAuth objects are well documented here in the link:/docs/v1/tech/apis/users/[User API] and link:/docs/v1/tech/apis/registrations/[Registration API] documentation. The JWT object that contains the payload from the Userinfo endpoint may contain well known OpenID Connect registered claims as well as any custom claims defined by the identity provider.
+The two FusionAuth objects are well documented here in the link:/docs/v1/tech/apis/users/[User API] and link:/docs/v1/tech/apis/registrations/[Registration API] documentation. The JWT object that contains the payload from the Userinfo endpoint may contain well known OpenID Connect registered claims as well as any custom claims defined by the identity provider. The `id_token` will be provided to the Lambda when it is returned by the Identity Provider and it has been signed using the `client_secret` and an HMAC algorithm. If the `id_token` is signed using an asymmetric key-pair it will not be available to the Lambda.
 
 == Assigning the lambda
 
@@ -40,13 +41,6 @@ Navigate to [breadcrumb]#Settings -> Identity Providers# and select your existin
 include::docs/v1/tech/lambdas/_openid-connect-example-lambda.adoc[]
 
 === Workarounds
-
-[WARNING.warning]
-====
-As of 1.28.0 the recommended method of handling an OIDC identity provider without an email or username claim is to use the anonymous link strategy.
-
-This code will not work for versions 1.28.0 and later.
-====
 
 If the JWT from the OIDC identity provider does not come back with an email claim you can add your own. This claim is `email` by default but may be changed with the `oauth2.emailClaim` as documented in the link:/docs/v1/tech/apis/identity-providers/openid-connect/[API docs].
 
@@ -63,8 +57,5 @@ function(user, registration, jwt) {
 
 Make sure you pick an email address for a domain you control to avoid malicious attacks. This will run your lambda twice.
 
-This workaround only is available on versions of FusionAuth between 1.18.7 and 1.27.
+This capability is available beginning in version `1.31.0`.
 
-=== Limitations
-
-include::docs/v1/tech/lambdas/_idp_limitations.adoc[]
