@@ -115,10 +115,6 @@ include::docs/v1/tech/migration-guide/_create-test-tenant.adoc[]
 
 include::docs/v1/tech/migration-guide/_create-test-application.adoc[]
 
-==== Add an API Key
-
-include::docs/v1/tech/migration-guide/_create-api-key.adoc[]
-
 === Set Up AWS Components
 
 There are two main components you need to set up. The first is an App Client. The second is an API Gateway/Lambda configuration which will accept login requests from FusionAuth and proxy them to Cognito.
@@ -129,16 +125,30 @@ You must set up both of these components for each Cognito User Pool whose users 
 
 FusionAuth will send login requests to Cognito. You need to configure a special App Client to receive these requests. This guide will walk through configuration using the AWS Console, but you can also configure this using CloudFormation, Terraform or any other IAC tool.
 
-Visit the user pool configuration containing the users you want to migrate. Navigate to [breadcrumb]#General settings -> App clients# and create a new App client. Give it a name, such as "FusionAuth migration". Disable the [field]#Generate client secret# checkbox. Uncheck all the [breadcrumb]#Auth Flows Configuration# values, but check [field]#Enable username password based authentication (ALLOW_USER_PASSWORD_AUTH)#. This is the form of authentication FusionAuth will use to migrate over your users.
+[NOTE]
+====
+These instructions are for the new Cognito interface released in fall of 2021. 
+====
 
-At the end, you'll end up with an App client configuration similar to this:
+Visit the Cognito user pool configuration containing the users you want to migrate. Navigate to the [breadcrumb]#Create app client# screen. 
 
-pic TODO
+Select `Other` for the [field]#App type#. Give it a name, such as `FusionAuth migration`. Ensure [field]#Client secret# field is set to not create a secret. 
 
-Save by clicking "Create app client".
+For the [breadcrumb]#Authentication flows# field, check `ALLOW_USER_PASSWORD_AUTH` to enable username password based authentication. This is the form of authentication FusionAuth will use to migrate over your users. 
 
-Next, you'll need to set up an API Gateway and Lambda to receive the login requests from FusionAuth, submit the credentials to this App client and return a FusionAuth friendly JSON object.
+You must enter a value in the [field]#Allowed callback URLs#, but this won't be used. You can use a value like `https://example.com`.
 
+Make sure the client can read attributes you want to migrate over, but include the username or email address at a minimum.
+
+Everything else can be left with the default values. At the end, you'll end up with an app client configuration similar to this:
+
+image::migration-guide/{migration_source_dir}/cognito-app-client-configuration.png[Configuring an app client for migration.,width=1200]
+
+Save the new configuration. Record the client Id. This will be a value like `5pmi4ct0o4n6ulqj7vlnkm6nhh`.
+
+image::migration-guide/{migration_source_dir}/cognito-app-client-list.png[Finding the app client id.,width=1200]
+
+Next, you'll need to set up an API Gateway and Lambda to receive the login requests from FusionAuth, submit the credentials to this app client and return a FusionAuth friendly JSON object.
 
 ==== Configuring the API Gateway/Lambda
 
@@ -159,12 +169,15 @@ Make sure to modify the constants at the top:
 ----
 const clientId = // the value of the App Client Id you created above
 const region = // the AWS region where your user pool exists
-const fusionAuthTenantId = // the Id of the FusionAuth tenant you are importing users into
-const fusionAuthApplicationId = // the Id of the FusionAuth application to which you want to register the users automatically
+const fusionAuthApplicationId = // the Id of the FusionAuth application to which you want to register the users automatically. Must exist in the tenant.
 const authorizationHeaderValue = // a random string to ensure that only the Connector can execute this lambda
 ----
 
-You should also modify the `processUserJSON` function. This function converts the JSON of the Cognito `getUser` response, shown below, to the FusionAuth User object response. The logic of this function will depend on your UserPool custom attributes and business logic.
+You should also modify the `processUserJSON` function. This converts the JSON returned from Cognito into JSON FusionAuth expects. You can see samples of both below.
+
+The logic of this function will depend on your UserPool custom attributes and business logic. You could, for example, give users certain FusionAuth roles, register them for more than one application or add them to a previously created FusionAuth group.
+
+The lambda will call the https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_GetUser.html[GetUser] API. Here is some sample data.
 
 [source,json]
 .Sample User Data Response from Cognito
@@ -196,13 +209,21 @@ You should also modify the `processUserJSON` function. This function converts th
       "Name": "email",
       "Value": "test@example.com"
     }
-  ],
+  ]
 }
 ----
 
-Once you have the lambda code customized, you need to deploy the API.
+The `processUserJSON` will transfrom the above into a FusionAuth compatible format, as displayed below:
 
-==== Deploying the API
+[source,json]
+.Sample Successful Login JSON
+----
+include::docs/src/json/users/login-migrated-response.json[]
+----
+
+Once you have the lambda code customized, it is time to deploy the AWS API.
+
+==== Deploying the AWS API
 
 You have a number of options here. It's probably simplest to deploy this with CloudFormation, but pick the option that works for you.
 
@@ -215,10 +236,10 @@ Here's the full template:
 [source,yaml]
 .CloudFormation API Gateway
 ----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-cdk-cognito-migration/cloudformation/cloudformation.yaml[]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-cdk-cognito-migration/main/cloudformation/cloudformation.yaml[]
 ----
 
-You'll have to modify the lambda code to reflect changes made above. Find a JavaScript minifier online and run the customized lambda code through it. Then replace the line after `ZipFile: |` with your code.
+You must modify the lambda code to reflect changes made above. Find a JavaScript minifier online and run the customized lambda code through it. Then replace the line after `ZipFile: |` with your code.
 
 [source,yaml]
 .CloudFormation API Lambda Code Customization
@@ -246,6 +267,7 @@ Here's an https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html[intr
 If you already have an API gateway setup or want to build from scratch, use the lambda (tested with the node14 runtime). It doesn't need any special permissions other than Cloudwatch logs. When you deploy this, ensure that the lambda code is called for `POST`s only. 
 
 Here's the https://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started.html[AWS documentation about setting up an API gateway with a lambda].
+
 ==== Testing The Deployed API
 
 Now that you've deployed the API, you should have a URL that looks something like `\https://j2xbdwi6hf.execute-api.us-east-2.amazonaws.com/prod/`.
@@ -255,7 +277,7 @@ Now, login with a user whose username and password you know.
 [source,shell]
 .Testing the API Gateway and Lambda Configuration with Curl
 ----
-curl -XPOST -H 'Authorization: <the value of authorizationHeaderValue>' 
+curl -XPOST -H 'Authorization: <the value of authorizationHeaderValue>' \
 https://j2xbdwi6hf.execute-api.us-east-2.amazonaws.com/prod/  -H 'Content-type: application/json' -d '{
   "loginId": "test@example.com",
   "password": "password"
@@ -288,9 +310,11 @@ If the user is authenticated correctly, you should receive a response like:
 }
 ----
 
-If the authorization or credentials are incorrect, an empty body and a HTTP status code will be returned. 
+If the authorization or credentials are incorrect, an empty body and a HTTP status code will be returned. You can see those by running `curl` with the `-vv` switch.
 
 === Set Up the Connector
+
+XXX stopped here
 
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
@@ -331,17 +355,24 @@ PIC TODO
 
 === Log In as a Test User
 
-In order to test that a migration occured correctly, you'll need to log in as a test user via the FusionAuth interface. To do so, navigate to the list of applications. View the test application by clicking the magnifying glass and scroll to the [field]#OAuth IdP login URL#. 
+In order to test that a migration occured correctly, you'll need to log in as a test user via the FusionAuth interface. When you set up the test application, you recorded the [field]#OAuth IdP login URL#.
 
-TODO picture
+image::migration-guide/{migration_source_dir}/find-login-url.png[Finding the login URL.,width=1200]
 
 Copy and paste this URL and open it in a new incognito browser window. You should see the login screen.
 
-TODO picture
+image::migration-guide/{migration_source_dir}/user-login.png[The login page.,width=1200]
 
 Enter the credentials that you would use to login with Cognito (the email address or username and the password).
 
-The user should be transparently migrated over to FusionAuth. Let's verify the import process succeeded.
+The user should be transparently migrated over to FusionAuth. Let's verify the import succeeded by viewing the user in the administrative user interface.
+
+[NOTE]
+====
+After the test login, the user will be redirected to a URL like `\https://fusionauth.io/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`. This happens because you haven't set up a web application to handle the authorization code redirect.
+
+That is an important next step but is beyond the scope of this document. Consult the link:/docs/v1/tech/5-minute-setup-guide/[5 minute setup guide] for an example of how to do this.
+====
 
 === Verify the Migration
 
@@ -586,7 +617,7 @@ include::docs/v1/tech/migration-guide/_what-next.adoc[]
 
 If you want to migrate client credentials grants, you'll need to create entities which correspond to each Cognito App Client. In addition, the scopes within FusionAuth are currently constrained to a certain format. link:/docs/v1/tech/core-concepts/entity-management/[Learn more about Entity Management].
 
-You can migrate each of your Cognito App clients to a FusionAuth application using the link:/docs/v1/tech/apis/applications/#create-an-application[Application API], which allows you to set your Client Id and Client Secret. Doing this will minimize the impact on any applications which use the OAuth Authorization Code grant or Implicit grant.
+You can migrate each of your Cognito app clients to a FusionAuth application using the link:/docs/v1/tech/apis/applications/#create-an-application[Application API], which allows you to set your Client Id and Client Secret. Doing this will minimize the impact on any applications which use the OAuth Authorization Code grant or Implicit grant.
 
 === Estimate How Long to Run a Slow Migration
 
