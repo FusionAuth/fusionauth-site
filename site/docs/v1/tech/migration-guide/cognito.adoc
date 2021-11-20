@@ -314,7 +314,7 @@ If the authorization or credentials are incorrect, an empty body and a HTTP stat
 
 === Set Up the Connector
 
-XXX stopped here
+Now you need to set up a Connector to use the AWS API you created. Log back in to the FusionAuth adminstrative user interface.
 
 include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
@@ -331,11 +331,17 @@ After you have a license you need to do two things:
 
 First, create and configure the Connector. Navigate to [breadcrumb]#Settings -> Connectors# and add a new Generic Connector.
 
-TODO picture
+image::migration-guide/{migration_source_dir}/add-generic-connector.png[Adding a Generic Connector.,width=1200]
 
-Set the [field]#Authentication URL# to the value of the API gateway endpoint you created above. Navigate to the [breadcrumb]#Headers# tab and add the custom header you configured your API gateway to require.
+Configure the Connectory:
 
-TODO picture
+* Add a name like `Cognito migration`.
+* Set the [field]#Authentication URL# to the value of the API gateway endpoint you created above.
+* Navigate to the [breadcrumb]#Headers# tab and add the custom header you configured your API to require.
+
+At the end, you should have a screen like this:
+
+image::migration-guide/{migration_source_dir}/configured-generic-connector.png[Configuring a Generic Connector.,width=1200]
 
 Save the Connector.
 
@@ -343,15 +349,17 @@ Next, you need to configure your test tenant to use this Connector.
 
 ==== Configuring the Tenant
 
-Navigate to your tenant settings: [breadcrumb]#Tenants -> Test Tenant -> Connectors#. Add a new policy. 
+Navigate to your tenant settings: [breadcrumb]#Tenants -> Cognito import Tenant -> Connectors#. Click the [field]#Add policy# button. 
 
-PIC TODO
+image::migration-guide/{migration_source_dir}/connector-policies.png[Connector policies for this Tenant.,width=1200]
 
-The [field]#Connector# value should be the name of the Connector you created previously. You can restrict the email domains for which this Connector is used, but that isn't needed right now. Make sure that [field]#Migrate user# is enabled. Save this value.
+The [field]#Connector# value should be the name of the Connector you created previously. You can restrict the email domains for which this Connector is used, but that isn't needed right now. Make sure that [field]#Migrate user# is enabled. It should look similar to:
 
-Then, ensure that this Connector policy is at the top of the list by using the arrows in the administrative user interface. This ensures that all users will be checked against this Connector the first time they are seen. They'll then be migrated to the FusionAuth user database.
+image::migration-guide/{migration_source_dir}/add-connector-policy.png[Add Connector policy.,width=1200]
 
-PIC TODO
+Save this configuration. Ensure that this Connector policy is at the top of the list by using the arrows in the administrative user interface. If so, all users will be checked against this Connector the first time they are seen. They'll then be migrated to the FusionAuth user database.
+
+image::migration-guide/{migration_source_dir}/connector-policy-list-after-adding.png[Cognito Connector policy added and in list.,width=1200]
 
 === Log In as a Test User
 
@@ -359,13 +367,16 @@ In order to test that a migration occured correctly, you'll need to log in as a 
 
 image::migration-guide/{migration_source_dir}/find-login-url.png[Finding the login URL.,width=1200]
 
-Copy and paste this URL and open it in a new incognito browser window. You should see the login screen.
+Copy and paste this URL and open it in a new incognito browser window. (If you don't use an incognito window, the admin user session will interfere with the test.) 
+
+You should see the login screen.
 
 image::migration-guide/{migration_source_dir}/user-login.png[The login page.,width=1200]
 
 Enter the credentials that you would use to login with Cognito (the email address or username and the password).
+The user should be transparently migrated over to FusionAuth.
 
-The user should be transparently migrated over to FusionAuth. Let's verify the import succeeded by viewing the user in the administrative user interface.
+If the user was not migrated or the login was unsuccessful, check the [field]#Debug enabled# field in the Connector configuration by navigating to [breadcrumb]#Settings -> Connectors# and editing the Generic Connector. Navigate to [field]#System -> Event Log# and look for useful messages.
 
 [NOTE]
 ====
@@ -374,13 +385,15 @@ After the test login, the user will be redirected to a URL like `\https://fusion
 That is an important next step but is beyond the scope of this document. Consult the link:/docs/v1/tech/5-minute-setup-guide/[5 minute setup guide] for an example of how to do this.
 ====
 
+Let's verify the import succeeded by viewing the user in the administrative user interface.
+
 === Verify the Migration
 
 include::docs/v1/tech/migration-guide/_verify-import.adoc[]
 
 === The Final Destination of Imported Users
 
-After you are done testing, you can choose to migrate users into the default tenant or a new tenant. Whichever you choose, configure the Connector policy correctly and update the configuration of the AWS lambda to ensure that the user JSON has the correct tenant Id.
+After you are done testing, you can choose to migrate users into the default tenant or a new tenant. Whichever you choose, configure the Connector policy of the destination tenant.
 
 If you aren't keeping users in the test tenant, delete it.
 
@@ -518,7 +531,6 @@ aws cognito-idp list-users --user-pool-id us-east-2_ud90QwSeF
 
 You may need to paginate your users. In this case, you'll receive a `NextToken` value in the JSON output.
 
-
 [source,json,title=NextToken sample value]
 ----
 {
@@ -565,24 +577,28 @@ After you have transformed your data into the format expected by the Import User
 include::_user-import-shell-script.sh[]
 ----
 
+You can also look at the https://github.com/FusionAuth/fusionauth-import-scripts[Import scripts repository] for examples that process other provider's input data. Pull requests to add Cognito compatibility are welcome!
+
 Now you need to reset the passwords of all these users. Ouch. Don't worry, you can script it.
 
 === Reset Passwords
 
+Users may reset their password using the `Forgot Password` link on the login page, or you can use the API calls below to do it for them.
+
 [WARNING.warning]
 ====
-This will send an email for every user in your system. Ensure your SMTP settings, in [breadcrumb]#Tenants -> Your Tenant -> Email# can handle the number of messages. 
+This script will send an email for every imported user. Ensure your SMTP server, configured in [breadcrumb]#Tenants -> Your Tenant -> Email#, can handle the volume. 
 
 You also may want to change the password reset token lifetime. Find that in [breadcrumb]#Tenants -> Your Tenant -> Advanced -> External identifier durations#. Modify the [field]#Change password# field value.
 ====
 
+Review the `Change Password` template to ensure the messaging is correct. Here is link:/docs/v1/tech/email-templates/templates-replacement-variables/#forgot-password[more information on modifying the templates].
+
+You'll want to pull the `loginId` from the Cognito JSON export files. This will either be the username or the email address. For each user on this list, you'll want to call the link:/docs/v1/tech/apis/users/#start-forgot-password-workflow[forgot password API]. 
+
 Use the API key created above in <<Set Up FusionAuth For a Bulk Migration>>.
 
-Review the "Change Password" template to ensure the messaging is correct. Here is link:/docs/v1/tech/email-templates/templates-replacement-variables/#forgot-password[more information on modifying the templates].
-
-You'll want to pull the `loginId` from the Cognito JSON export files. This will either be the username or the email address. For each user on this list, you'll want to call the 'forgot password' API. 
-
-This shell script send a 'password reset' do that for you, assuming you have the `loginId`s in a single file. It sleeps periodically to avoid overloading the SMTP server.
+This shell script will do that for you, assuming you have the `loginId`s in a single file. It sleeps periodically to avoid overloading the SMTP server.
 
 [source,sh]
 .Example User Password Reset
@@ -609,8 +625,6 @@ for loginId in `cat $LOGIN_ID_FILE`; do
 done
 ----
 
-Users may also reset their password using the 'Forgot Password' link on the hosted login pages.
-
 == What to Do Next
 
 include::docs/v1/tech/migration-guide/_what-next.adoc[]
@@ -619,7 +633,7 @@ If you want to migrate client credentials grants, you'll need to create entities
 
 You can migrate each of your Cognito app clients to a FusionAuth application using the link:/docs/v1/tech/apis/applications/#create-an-application[Application API], which allows you to set your Client Id and Client Secret. Doing this will minimize the impact on any applications which use the OAuth Authorization Code grant or Implicit grant.
 
-=== Estimate How Long to Run a Slow Migration
+=== Estimate the Slow Migration Timeline
 
 You can estimate how many accounts will be migrated in a given period of time.
 
