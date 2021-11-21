@@ -17,7 +17,7 @@ We are recruiting a Customer Success Engineer who will join our engineering team
 
 You will report directly to the CTO and will work from our Denver office.  
 
-###Responsibilities
+### Responsibilities
 
 Your responsibilities will include:
 
