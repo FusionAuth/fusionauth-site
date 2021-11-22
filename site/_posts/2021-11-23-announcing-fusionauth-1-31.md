@@ -21,7 +21,7 @@ There are a few items worth calling out.
 
 FusionAuth lambdas are JavaScript functions that run at specific points in the authentication or authorization process. Identity Providers are external sources of account data, such as Facebook, Google, SAML or OIDC servers. Identity Provider reconcile lambdas run when an Identity Provider returns after a succesful login. 
 
-Previous to this release, with a few exceptions, the username and email claims could not be modified in a reconcile lambda. This increases flexibility when you have a remote identity datasource which does not provide either an email or a username. Sometimes identity linking can suffice, but there are other times when it does not. However, any time code can modify login Ids, make sure you threat model out the ramifications, particularly the danger of inadvertent account takeover.
+Previous to this release, with a few exceptions, the username and email claims could not be modified in a reconcile lambda. This increases flexibility when you have a remote identity datasource which does not provide either an email or a username. Sometimes identity linking can suffice, but there are other times when it does not. However, any time code can modify login Ids, make sure you threat model out the ramifications, particularly the danger of inadvertent account takeover. Your lambda may be called two times if you modify these claims as well.
 
 
 ## Access to the id_token in the OIDC reconcile lambda
@@ -36,7 +36,8 @@ Some of the other 20+ enhancements and fixes included in this release:
 
 * Performance improvements were made in the 1.30 point releases. In testing, FusionAuth handled over 2,000 registrations per second on properly sized hardware. These improvements are included in this release.
 * A subtle bug in the SAML implementation, relating to the casing of URL encoded characters in a query string, was squashed.
-* Often you'll want to send users directly to an Identity Provider, skipping the FusionAuth login screen. With this release, you can now do that, using the `idp_hint` parameter, for the Twitter and Apple Identity Providers. They join the Google, Facebook, OIDC and SAML Identity Providers in supporting this parameter.
+* Often you'll want to send users directly to an Identity Provider, skipping the FusionAuth login screen. With this release, you can now do that, using the `idp_hint` parameter, for the Twitter and Apple Identity Providers. They join the other Identity Providers, as link:/docs/v1/tech/identity-providers/#hints[documented here], in supporting this parameter.
+* Locale handling has been overhauled and improved to support locales such as `es_419`.
 
 ## Upgrade at will
 
