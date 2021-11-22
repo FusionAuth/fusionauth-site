@@ -81,5 +81,6 @@ It would be good if you have experience with most of the following:
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
 * **401k:** Yes!
+* **Education benefit:** Yes!
 * **Stock options:** Yes!
 * **Vacation:** Flexible! Take what you need. :)
