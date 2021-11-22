@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-AWS re:Invent is one of the largest technical conferences. In the cloud space, it is the go-to event. In 2019, there were north of 50,000 attendees; this year the number of attendees is lower, but there'll still be a lot of folks in Las Vegas, NV the week after Thanksgiving. The FusionAuth team will be among them, and we'd love to see you.
+AWS re:Invent is one of the largest technical conferences in the world. In the cloud space, it is the go-to event. This year there will be tens of thousands of attendees in Las Vegas, NV the week after Thanksgiving. The FusionAuth team will be among them, and we'd love to see you.
 
 <!--more-->
 
