@@ -1,7 +1,7 @@
 ---
 layout: advice
 title: SSL vs. TLS
-description: In this blog, you’ll learn the difference between SSL and TLS, when they are used, and why you should use them.
+description: In this blog, you’ll learn the difference between SSL and TLS, how they are used, and why you should use them.
 author: Akira Brand
 image: advice/steps-secure-auth-system/expert-advice-ten-steps-to-secure-your-authentication-system-header-image.png
 category: Security
@@ -34,7 +34,7 @@ Now, the overall process of this handshake protocol looks like this:
 
 1. The client sends a “clienthello” message to the server. This message includes information like SSL/TLS version, and the cryptographic algorithm and data compression methods that the client can support.  
 2. The server responds with a “serverhello” message. This message includes cryptographic algorithms that the server has chosen from the list provided by the client. In this way, an algorithm that both sides support is chosen. The server also sends a session Id, its digital certificate, and its public key.
-3. The client verifies the validity of the server’s certificate with the server's public key. This confirms the authenticity of the web server.
+3. The client verifies the validity of the server’s certificate with the entity that issued it. It does so by first checking to ensure that the server's certificate is not expired and the domain name or IP address on the certificate matches the server's information. Then, the client attempts to verify that the server's certificate has been properly signed by the certificate authority who authorized it. It does so by verifying that the signature on the certificate has been signed by the certificate authority's public key. This all serves to confirm the authenticity of the web server.
 4. A secret key is exchanged. The client sends a shared secret key to be used between the client and the server. The secret key is encrypted with the server’s public key.
 5. If required, the server verifies the client's certificate.
 6. The client sends a “finished” message to the server, which is encrypted with the secret key. This confirms that the client section of the handshake protocol is completed.
