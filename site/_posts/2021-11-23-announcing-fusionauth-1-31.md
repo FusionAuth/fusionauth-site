@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.31
-description: 
+description: This release includes a number of bug fixes as well as enhancements to reconcile lambda functionality.
 author: Dan Moore
 image: blogs/release-1-31/product-update-fusionauth-1-31.png
 category: blog
@@ -9,7 +9,7 @@ tags: topic-troubleshooting feature-advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.31.0 of FusionAuth. This version shipped on August 18, 2021. 1.31.0 includes a ton of bug fixes and improvements to the Identity Providers feature.
+We're excited to announce the release of version 1.31.0 of FusionAuth. This version shipped on November 18, 2021. 1.31.0 includes a ton of bug fixes and improvements to the Identity Providers feature.
 
 <!--more-->
 
