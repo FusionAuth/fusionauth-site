@@ -24,10 +24,10 @@ Of course, it isn't all education. There's also fun to be had! One activity wort
 
 ## Meet Up With FusionAuth
 
-If you want to meet up with the FusionAuth team at re:Invent, we'd love to see you. Find us in a couple of places:
+If you want to meet up with the FusionAuth team at re:Invent, we're around and ready to chat. Find us in a couple of places:
 
 * We're having a [TopGolf party on Monday](https://www.eventbrite.com/e/aws-reinvent-kickoff-party-with-fusionauth-at-topgolf-tickets-186103098377). It's currently full, but please join the waitlist.
 * We have a booth right across from the Developer Lounge in the Expo hall. There's no map for the 2021 re:Invent Expo yet, but [here's the page](https://reinvent.awsevents.com/learn/expo/). Brave the madness and come say hi for a demo, to chat about the intricacies of the Authorization Code grant, or to sign up for a couple of giveaways.
-* Finally, we'll be out and about as well. Send us a note via our [contact form](/contact/) or tweet/DM a team member active on Twitter: [Dan](https://twitter.com/mooreds), [Akira](https://twitter.com/theakirati), [Brian](https://twitter.com/bpontarelli), or [Daniel](https://twitter.com/robotdan220). We'd love to hear from you.
+* Finally, we'll be out and about as well. Send us a note via our [contact form](/contact/) or tweet/DM a team member active on Twitter: [Dan](https://twitter.com/mooreds), [Akira](https://twitter.com/theakirati), [Brian](https://twitter.com/bpontarelli), or [Daniel](https://twitter.com/robotdan220).
 
 Happy re:Inventing!
