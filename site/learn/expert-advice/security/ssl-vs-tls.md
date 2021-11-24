@@ -39,7 +39,7 @@ Now, the overall process of this handshake protocol looks like this:
 
 1. The client sends a “clienthello” message to the server. This message includes information like SSL/TLS version, and the cryptographic algorithm and data compression methods that the client can support.  
 2. The server responds with a “serverhello” message. This message includes cryptographic algorithms that the server has chosen from the list provided by the client. In this way, an algorithm that both sides support is chosen. The server also sends a session Id, its digital certificate, and its public key.
-3. The client verifies the validity of the server’s certificate with the entity that issued it. It does so by first checking to ensure that the server's certificate is not expired and the domain name or IP address on the certificate matches the server's information. Then, the client attempts to verify that the server's certificate has been signed by the [certificate authority](#what-is-a-certificate-authority?) who authorized it. It does so by verifying that the signature on the certificate has been signed by the certificate authority's public key.
+3. The client verifies the validity of the server’s certificate with the entity that issued it. It does so by first checking to ensure that the server's certificate is not expired and the domain name or IP address on the certificate matches the server's information. Then, the client attempts to verify that the server's certificate has been signed by the certificate authority who authorized it. It does so by verifying that the signature on the certificate has been signed by the certificate authority's public key.
 4. A secret key is exchanged. The client sends a shared secret key to be used between the client and the server. The secret key is encrypted with the server’s public key.
 5. If required, the server verifies the client's certificate.
 6. The client sends a “finished” message to the server, which is encrypted with the secret key. This confirms that the client section of the handshake protocol is completed.
@@ -49,6 +49,7 @@ Now, the overall process of this handshake protocol looks like this:
 {% plantuml source: _diagrams/learn/expert-advice/ssl-vs-tls/ssl-handshake.plantuml, alt: "The SSL/TLS handshake protocol." %}
 
 *What is a Certificate Authority?*
+
 A certificate authority (CA) is a trusted organization that verifies websites. The reason for that is so that you can know that a website is actually the website it claims to be, instead of a imposter. A certificate authority acts almost like a passport office, for a small fee, a certificate authority will verify your website and issue a digital certificate, which tan then be examined by other entities to verify the validity of your site, such as in the handshake protocol.
 
 Tl;dr, the entire purpose of the handshake is to verify the validity of the server. The handshake also securely exchanges a shared secret key, which is used to encrypt and decrypt messages sent between the client and the server.
