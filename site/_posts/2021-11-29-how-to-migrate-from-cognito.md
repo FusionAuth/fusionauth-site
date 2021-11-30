@@ -9,7 +9,7 @@ tags: topic-upgrade-cognito
 excerpt_separator: "<!--more-->"
 ---
 
-Amazon Cognito is a serverless CIAM service with deep integration into the AWS environment. It offers authentication and authorization with a variety of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant. This blog post will discuss why and how you might migrate off of Amazon Cognito.
+Amazon Cognito is a serverless CIAM service with deep AWS integration. It offers authentication and authorization with a variety of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant. This blog post will discuss why and how you might choose to migrate off of Amazon Cognito.
 
 <!--more-->
 
@@ -17,9 +17,10 @@ Amazon Cognito is a serverless CIAM service with deep integration into the AWS e
 
 While Amazon Cognito is a low cost auth service and a far better choice than rolling your own solution, it has some downsides:
 
-* There is only one deployment model, SaaS, in the geographies AWS supports
-* The user interface is inflexible
-* It doesn't support localization
+* There is only one deployment model, SaaS
+* You can run it only in the geographies AWS supports
+* The interface presented to your customers or users is inflexible
+* It doesn't support localization #TODO
 * You can't backup or export all of your user data, including password hashes
 * SAML users are expensive once you have more than the 50 provided by the free tier
 
