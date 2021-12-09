@@ -10,7 +10,7 @@ description: An overview of the lambda support of FusionAuth
 
 A FusionAuth lambda is a JavaScript function that can be used to augment or modify runtime behavior.
 
-FusionAuth leverages lambdas to handle different events that occur inside it as well as customize tokens and messages that FusionAuth sends such as JWTs or SAML responses. A lambda may optionally configured to be invoked when these events occur. Developers can write lambdas in the FusionAuth UI or can upload lambdas via the API.
+FusionAuth leverages lambdas to handle different events that occur inside it as well as customize tokens and messages that FusionAuth sends such as JWTs or SAML responses. A lambda may optionally be invoked when these events occur. Developers can write lambdas in the FusionAuth UI or can upload lambdas via the API.
 
 Here's a brief video covering some aspects of lambdas:
 
@@ -26,7 +26,7 @@ function populate(jwt, user, registration) {
 }
 ----
 
-Lambdas a typed according to their intended purpose, the following lambdas are currently supported:
+Lambdas are typed according to their intended purpose. The following lambdas are currently supported:
 
 // Don't add a new lambda here. Add it to the site/_data/lambdas.yaml file and the list will be generated.
 {% include docs/_lambda_toc.liquid %}
@@ -48,7 +48,7 @@ Available methods:
 
 The `log`, `info` and `error` will always cause Event Log entries to be created as a result of the lambda invocation. The `log` method is an alias to the `info` method. Messages created using the `debug` method will only be added to the Event Log when you have enabled [field]#Debug# in your lambda configuration.
 
-Message of each type are accumulated during the lambda invocation and a maximum of one event log of each type will be created as a result of the lambda invocation. This means making multiple requests to `console.info` in the lambda function body will result in a single event log of type Information.
+Messages of each type are accumulated during the lambda invocation and a maximum of one event log of each type will be created as a result of the lambda invocation. This means making multiple requests to `console.info` in the lambda function body will result in a single event log of type Information.
 
 When logging objects, you'll need to stringify them to see their data.
 
@@ -71,10 +71,31 @@ https://docs.oracle.com/javase/8/docs/technotes/guides/scripting/nashorn/
 
 == Limitations
 
+If the Identity Provider linking strategy is set to `Link Anonymously`, no lambdas will be used by FusionAuth. More information about the link:/docs/v1/tech/identity-providers/#linking-strategies[Identity Provider linking strategies is available here].
+
 The FusionAuth lambdas do not have full access to JavaScript modules and libraries. They also cannot import, require or load other libraries currently. These features might be added to our lambda support in the future but Nashorn does not support them currently.
 
-Please note, if the linking strategy is set to `Link Anonymously`, no lambdas will be used by FusionAuth.
+`console.log` and other `console` methods only take one argument; this differs from the `console` method available in web browsers.
+
+Only the populate or reconcile function is allowed on the top level of a lambda. If you want to have additional functions, create them as function objects inside the main function. For example:
+
+[source,javascript]
+----
+function populate(jwt, user, registration) {
+  var object2String = function(obj) {
+    if (typeof obj === 'number' || typeof obj === 'bigint' || typeof obj === 'boolean') return ('' + obj);
+    if (typeof obj === 'string') return ('"' + obj.replace('"', '\\"') + '"');
+    if (typeof obj === 'function') return ('[function]');
+    if (obj === null) return 'null';
+    if (obj === undefined) return 'undefined';
+    if (Array.isArray(obj)) return '[' + obj.map(function(elem) { return  object2String(elem); }).join(', ') + ']';
+    return '{ ' + Object.keys(obj).map(function (key) { return '"' + key + '": ' + object2String(obj[key]); }).join(', ') + ' }';
+  };
+  console.info('Lambda called');
+  console.info('jwt:' + object2String(jwt));
+----
+
 
 == Future engines
 
-The Nashorn engine is being phased out of Java in favor of more robust and advanced engines. At any point in the future, we might switch from Nashorn to another JavaScript engine like V8. Therefore, use Nashorn features at your own risk.
+The Nashorn engine is being phased out of Java in favor of more robust and advanced engines. At any point in the future, we might switch from Nashorn to another JavaScript engine like V8. Therefore, use Nashorn features at your own risk. Please https://github.com/FusionAuth/fusionauth-issues/issues/571[review this GitHub issue for more details].
