@@ -3,7 +3,7 @@ layout: blog-post
 title: "log4j CVE: How it affects FusionAuth (TLDR: It doesn't)"
 description: FusionAuth does not use log4j and is not affected by CVE-2021-44228
 author: Dan Moore
-image: blogs/fusionauth-log4j/product-update-fusionauth-1-31.png
+image: blogs/fusionauth-log4j-cve/log4j-cve-how-it-affects-fusionauth-tldr-it-doesnt-header-image.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
