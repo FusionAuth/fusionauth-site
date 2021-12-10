@@ -18,7 +18,7 @@ FusionAuth is not affected by this vulnerability in log4j. FusionAuth uses a dif
 
 log4j is a popular logging framework and is used in many Java projects, both open source and commercial. When a CVE like this comes out, it makes sense to check all of your applications for the issue. Security is important to us and we understand why customers and users would reach out about this.
 
-Beyond not using the log4j framework, recent FusionAuth releases run on Java versions that are not susceptible to this. The 1.32 release runs Java 17 and previous releases ran Java 14.
+Beyond not using the log4j framework, recent FusionAuth releases run on Java versions that are not susceptible to this CVE. FusionAuth 1.32 release runs Java 17 and previous releases used Java 14.
 
 In conclusion, FusionAuth is *not affected by the log4j vulnerability*.
 
