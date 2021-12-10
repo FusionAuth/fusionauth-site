@@ -78,7 +78,7 @@ FusionAuth.DirectDownloads.prototype = {
             <br>\
             <br>\
             <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-database-schema-{version}.zip">fusionauth-database-schema-{version}.zip</a>\
-            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth--database-schema-{version}.zip.sha256">sha256</a>]</span>\
+            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-database-schema-{version}.zip.sha256">sha256</a>]</span>\
             &nbsp;(<a href="/docs/v1/tech/installation-guide/fusionauth-app#advanced-installation">See Advanced Installation</a>) \
            </div>';
 
