@@ -26,11 +26,12 @@ To learn more about the CVE, you can:
 
 * visit the [NIST CVE description](https://nvd.nist.gov/vuln/detail/CVE-2021-44228)
 * a [detailed report about the vulnerability](https://www.lunasec.io/docs/blog/log4j-zero-day/)
-* the [hackernews discussion](https://news.ycombinator.com/item?id=29504755)
+* the [HackerNews discussion](https://news.ycombinator.com/item?id=29504755)
+* [a message from the logback maintainers about this issue](http://mailman.qos.ch/pipermail/announce/2021/000163.html)
 
 ## A bit more about security and FusionAuth
 
-Beyond this specific vulnerability, I want to assure readers that FusionAuth takes security very seriously. 
+Beyond this specific vulnerability, we want to assure readers that FusionAuth takes security very seriously. 
 
 This commitment includes, but is not limited to:
 
