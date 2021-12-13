@@ -29,6 +29,20 @@ To learn more about the CVE, you can:
 * the [HackerNews discussion](https://news.ycombinator.com/item?id=29504755)
 * [a message from the logback maintainers about this issue](http://mailman.qos.ch/pipermail/announce/2021/000163.html)
 
+## What about Elasticsearch
+
+ElasticSearch is used by many FusionAuth installations. However, in general the ElasticSearch service is not publicly accessible, if [following the recommended security guidance](/docs/v1/tech/installation-guide/securing/). This would mean that any attacker trying to reach ElasticSearch to exploit the log4j issue would require a valid FusionAuth API key. 
+
+{% include _callout-important.liquid content="You should never allow internet connections to ElasticSearch." %}
+
+Per the [ElasticSearch documentation](https://discuss.elastic.co/t/apache-log4j2-remote-code-execution-rce-vulnerability-cve-2021-44228-esa-2021-31/291476):
+
+> Elasticsearch is not susceptible to remote code execution with this vulnerability due to our use of the Java Security Manager. Elasticsearch on JDK8 or below is susceptible to an information leak via DNS which is fixed by a simple JVM property change.
+
+If self hosting FusionAuth, please review the ElasticSearch guidance and your ElasticSearch configuration to ensure you aren't vulnerable.
+
+There is no vulnerability if you are running in FusionAuth Cloud. Deployments there do not allow external access to the ElasticSearch servers. Depending on the version of FusionAuth, the runtime is either Java 14 or Java 17.
+
 ## A bit more about security and FusionAuth
 
 Beyond this specific vulnerability, we want to assure readers that FusionAuth takes security very seriously. 
