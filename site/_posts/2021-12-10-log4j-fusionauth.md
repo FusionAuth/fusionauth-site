@@ -39,7 +39,7 @@ Per the [ElasticSearch documentation](https://discuss.elastic.co/t/apache-log4j2
 
 > Elasticsearch is not susceptible to remote code execution with this vulnerability due to our use of the Java Security Manager. Elasticsearch on JDK8 or below is susceptible to an information leak via DNS which is fixed by a simple JVM property change.
 
-There is no vulnerability if you are running in FusionAuth Cloud. Deployments there do not allow external access to the ElasticSearch servers. Depending on the version of FusionAuth, the runtime is either Java 14 or Java 17.
+There is no vulnerability if you are running in FusionAuth Cloud. Deployments there do not allow external access to the ElasticSearch servers. FusionAuth versions below 1.16.0 are running Java 8. FusionAuth versions between 1.16 and 1.31 are running Java 14. FusionAuth versions 1.32 or greater are running Java 17. If you need specific version information, please [open a support ticket](https://account.fusionauth.io/account/support/).
 
 If you are self-hosting FusionAuth, please review the ElasticSearch guidance and your ElasticSearch and Java configurations to ensure you aren't vulnerable.
 
