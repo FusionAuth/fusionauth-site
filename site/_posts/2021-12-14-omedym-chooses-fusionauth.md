@@ -3,7 +3,7 @@ layout: blog-post
 title: Omedym Chooses FusionAuth Customer Identity and Access Management to Scale Customer Growth; Replaces Former Cloud Provider
 description: Omeydm's need for multi-tenancy, SSO and a powerful API drove the company to choose FusionAuth over other vendors.
 author: David Polstra
-image: blogs/fusionauth-enterprise-kubernetes-support/press-release-fusionauth-adds-enterprise-kubernetes-support.png
+image: blogs/omedym-chooses-fusionauth-ciam/press-release-omedym-chooses-fusionauth-customer-identity-and-access-management-to-scale-customer-growth-replaces-former-cloud-provider.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
