@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-The recent announcement of [CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228), which allows for "arbitrary code loaded from LDAP servers when message lookup substitution is enabled" through a vulnerability in log4J has many people double checking the dependencies of their Java applications.
+The recent announcement of [CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228), which allows for "arbitrary code loaded from LDAP servers when message lookup substitution is enabled" through a vulnerability in log4J has many people double checking the dependencies of their Java applications. This CVE is also known as the "Log4Shell" vulnerability.
 
 FusionAuth is not affected by this vulnerability in Log4j. FusionAuth uses a different logging framework, [Logback](http://logback.qos.ch/), so there is no way that any FusionAuth applications could be compromised. 
 
