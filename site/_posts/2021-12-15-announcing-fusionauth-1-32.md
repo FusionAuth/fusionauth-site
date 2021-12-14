@@ -1,47 +1,59 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.32
-description: This release includes a number of bug fixes as well as enhancements to reconcile lambda functionality.
+description: This release includes custom email headers, identity provider link limits, and more.
 author: Dan Moore
-image: blogs/release-1-31/product-update-fusionauth-1-31.png
+image: blogs/release-1-32/product-update-fusionauth-1-32.png
 category: blog
 tags: topic-troubleshooting feature-advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.31.0 of FusionAuth. This version shipped on November 18, 2021. 1.31.0 includes a ton of bug fixes and improvements to the Identity Providers feature.
+We're excited to announce the release of version 1.32 of FusionAuth. This version shipped the week of December 13, 2021. 1.32 includes a ton of bug fixes and improvements to the Identity Providers feature.
 
 <!--more-->
 
-This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-31-0) for a full breakdown of the changes between 1.30 and 1.31. 
+This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-32-1) for a full breakdown of the changes between 1.31 and 1.32. 
 
-There are a few items worth calling out.
+There are a few improvements worth highlighting.
 
-## Modify the username and email in a reconcile lambda
+## Limit the number of links for any user
 
-FusionAuth lambdas are JavaScript functions that run at specific points in the authentication or authorization process. Identity Providers are external sources of account data, such as Facebook, Google, SAML or OIDC servers. Identity Provider reconcile lambdas run when an Identity Provider returns after a succesful login. 
+Recent versions of FusionAuth support identity linking. This lets you link accounts in FusionAuth to accounts in remote user data stores, whether social, SAML or OIDC based. Here are some [examples of linking](/docs/v1/tech/identity-providers/#linking-strategy-examples) that can be useful to understand this feature.
 
-Previous to this release, with a few exceptions, the username and email claims could not be modified in a reconcile lambda. This increases flexibility when you have a remote identity datasource which does not provide either an email or a username. Sometimes identity linking can suffice, but there are other times when it does not. However, any time code can modify login Ids, make sure you threat model out the ramifications, particularly the danger of inadvertent account takeover. Your lambda may be called two times if you modify these claims as well.
+With the 1.32 release, you can limit the number of links per identity provider, per user. This is configured in the identity provider, but can vary between tenants.
 
+{% include _image.liquid src="/assets/img/blogs/release-1-32/limit-links.png" alt="Limit the number of links for the Google identity provider." class="img-fluid" figure=false %}
 
-## Access to the id_token in the OIDC reconcile lambda
+An example situation where this might be useful is if you have an application which lets people log in via Google, but you want to ensure that each user is tied to at most one Google account. You can now configure the links per user for the Google Identity Provider to be `1`, and this business rule is now enforced by FusionAuth. 
 
-The OIDC process returns not a single token, but two. The Access Token and the Id Token. Previously, the OIDC reconcile lambda only provided the Access Token. With this release, the JavaScript code running in your lambda now has access to the Id Token. As with the Access Token, the lambda can examine the properties of the Id Token and modify the user or registration based on those properties. An example of data available in the Id Token is Azure AD group membership.
+## Custom email headers
 
-If there is no Id Token available, or if it is signed with an asymmetric key, it will not be available. Your lambda code should be able to handle either case.
- 
+FusionAuth sends a [lot of email](/docs/v1/tech/email-templates/templates-replacement-variables/) on your behalf. Whether a breached password notification, an email to allow a user to reset their password or an address verification, FusionAuth lets you [manage these templates via an API](/docs/v1/tech/apis/emails/) and [localize them](/docs/v1/tech/email-templates/email-templates/#localization) to provide the language your users expect. You can even turn on SMTP debugging to see what happens if you have issues with emails being delivered.
+
+{% include _image.liquid src="/assets/img/blogs/release-1-32/additional-email-headers.png" alt="Configure additional email headers." class="img-fluid" figure=false %}
+
+However, there are certain situations where you want to add custom email headers. For instance, when using Amazon Simple Email Service, you may want to [specify a SES configuration](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/using-configuration-sets.html) set using a header. You can add as many headers as you want.
+
+This option is configured on the tenant. The headers are added to every email sent by FusionAuth and are not dynamic.
+
+## Java 17 support
+
+FusionAuth now runs on Java 17. 
+
+Java 17 is an [LTS version of Java](https://www.oracle.com/java/technologies/java-se-support-roadmap.html) and will be supported for many years. The upgrade is primarily an internal one, though you may see a [performance increase](https://www.optaplanner.org/blog/2021/09/15/HowMuchFasterIsJava17.html) depending on your use case.
+
 ## The rest of it
 
-Some of the other 20+ enhancements and fixes included in this release:
+Some of the other enhancements and fixes included in this release:
 
-* Performance improvements were made in the 1.30 point releases. In testing, FusionAuth handled over 2,000 registrations per second on properly sized hardware. These improvements are included in this release.
-* A subtle bug in the SAML implementation, relating to the casing of URL encoded characters in a query string, was squashed.
-* Often you'll want to send users directly to an Identity Provider, skipping the FusionAuth login screen. With this release, you can now do that, using the `idp_hint` parameter, for the Twitter and Apple Identity Providers. They join the other Identity Providers, as link:/docs/v1/tech/identity-providers/#hints[documented here], in supporting this parameter.
-* Locale handling has been overhauled and improved to support locales such as `es_419`.
+* Application URIs such as `android-app://com.example` are now valid authorized request origins.
+* You can disable implicit email verification.
+* A bug where the registration count rollup was incorrect was fixed.
 
 ## Upgrade at will
 
-The [release notes](/docs/v1/tech/release-notes/#version-1-31-0) are a guide of the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
+The [release notes](/docs/v1/tech/release-notes/#version-1-32-1) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
 
 If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). 
 
