@@ -79,7 +79,7 @@ Other than our private information, it's all [publicly available](https://github
 
 **Dan:** Any general feedback/areas to improve?
 
-**Atakan:** Some of the features are well hidden, and it's not easy to understand how to find them: in particular, adding roles to an application. Every time we want to do this, we search around and thinkg "where's that roles menu item? It was here last time". Then we realize after a few minutes that we need to exit "app edit mode" and click on the user-shaped icon to get into the roles. You manage every important thing about an app on the "app edit" screen, except role management.
+**Atakan:** Some of the features are well hidden, and it's not easy to understand how to find them: in particular, adding roles to an application. Every time we want to do this, we search around and think "where's that roles menu item? It was here last time". Then we realize after a few minutes that we need to exit "app edit mode" and click on the user-shaped icon to get into the roles. You manage every important thing about an app on the "app edit" screen, except role management.
 
 On the admin dashboard, I still have to search for action buttons (you usually put them in the upper right corner). It's somewhat contrary to standard UX.
 
