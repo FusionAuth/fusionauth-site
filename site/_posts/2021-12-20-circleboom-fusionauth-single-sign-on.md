@@ -37,9 +37,9 @@ We have two products on the market:
 
 **Atakan:** In 2021, we released our second product, Circleboom Publish. Before that, our only need for authentication was Twitter's "Login with Twitter (OAuth)" to land Twitter users on our dashboard; it's the only network that product supports. 
 
-With the inception of Circleboom Publish, which supports four other social media networks, we realized that we need a standalone SSO system to help our users log in and use different tools we create without a hitch. So, our search for a robust single sign-on solution began.
+With the inception of Circleboom Publish, which supports four other social media networks, we realized that we need a standalone SSO system to help our users login and use different tools we create without a hitch. So, our search for a robust single sign-on solution began.
 
-We put FusionAuth at the core of our auth systems and use it for OAuth, user, and role management. All of our products, including our iOS app, the web apps mentioned above, and management tools use FusionAuth. We created our own forms (views) and consume the FusionAuth API via REST calls for the iOS mobile application. Even our GraphQL and REST systems use the tokens and claims provided by FusionAuth to authenticate our customers against our backend.
+We put FusionAuth at the core of our auth systems and use it for OAuth, user, and role management. All of our products, including our iOS app, the web apps mentioned above, and management tools use FusionAuth. We created our own forms (views) and consumed the FusionAuth API via REST calls for the iOS mobile application. Even our GraphQL and REST systems use the tokens and claims provided by FusionAuth to authenticate our customers against our backend.
 
 Apart from the products we developed, we use FusionAuth to manage users and roles in our own customer support system. We're also considering integrating the Strapi marketing web CMS with FusionAuth.
 
