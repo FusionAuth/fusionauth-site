@@ -3,7 +3,7 @@ layout: blog-post
 title: Circleboom chose FusionAuth for single sign-on across their products
 description: Circleboom helps people strengthen their social media circles by creating easy-to-use, intuitive design applications. They chose FusionAuth over several evaluated alternatives to offer a unified login experience to their customers.
 author: Dan Moore
-image: blogs/weroad-left-auth0-for-fusionauth/weroad-migrated-from-auth0-to-fusionauth-header-image.png
+image: blogs/circleboom-fusionauth-single-sign-on/circleboom-chose-fusionauth-for-single-sign-on-across-their-products-header-image(1).png
 category: blog
 tags: topic-community-story
 excerpt_separator: "<!--more-->"
