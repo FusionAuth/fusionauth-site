@@ -69,13 +69,13 @@ I didn't even give Azure AD a try, even though I spent half of my career using M
 
 From my previous experience, I can easily say it saved more than a couple of man/months and tens of thousands of dollars.
 
+> Finding an easy-to-use yet powerful auth system is challenging. But you provide this effortlessly and inexpensively.
+
 **Dan:** How do you run FusionAuth (kubernetes, standalone tomcat server, behind a proxy, etc)?
 
 **Atakan:** We followed FusionAuth's guidelines on creating Docker systems and improved it by adding Caddy as a reverse proxy. We created an environment (.env) file to be used in the "docker-compose" file and put our private variables in it. 
 
 Other than our private information, it's all [publicly available](https://github.com/circleboom/docker-circleboom-fusionauth). Check it out!
-
-> Finding an easy-to-use yet powerful auth system is challenging. But you provide this effortlessly and inexpensively.
 
 **Dan:** Any general feedback/areas to improve?
 
@@ -84,6 +84,9 @@ Other than our private information, it's all [publicly available](https://github
 On the admin dashboard, I still have to search for action buttons (you usually put them in the upper right corner). It's somewhat contrary to standard UX.
 
 Even though I love the product, I think it needs a user experience overhaul.
+
+**Dan:** Thanks for the feedback!
+
 -------
 
 We love sharing community stories. You can check out [Circleboom's website](https://circleboom.com/) if you'd like to learn more about them.
