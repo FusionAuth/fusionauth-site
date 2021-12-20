@@ -35,7 +35,7 @@ As CTO, I am responsible for the high-level design and implementation of all inf
 
 **Dan:** Any unexpected benefits from having one view of the customer with your single identity platform?
 
-**Brad:** FusionAuth saves time and adds security to our SOC team members since they often have to access multiple customers security platforms.
+**Brad:** FusionAuth saves time and adds security to our SOC team members since they often have to access multiple customers' security platforms.
 
 Without FusionAuth, we would have to manage separate staff accounts within each security platform and staff would often get passwords muddled up. It makes both customer and staff account management far more streamlined (e.g. when employees leave).
 
@@ -45,13 +45,13 @@ Without FusionAuth, we would have to manage separate staff accounts within each 
 
 **Dan:** What problems did we solve for you? And how were you solving them before FusionAuth?
 
-**Brad:** FusionAuth provided us with a solution to unify the authentication and authorisation mechanisms across all our customers' solutions. Previously, each of our customer solutions would have locally managed user credentials.
+**Brad:** FusionAuth provided us with a solution to unify the authentication and authorisation mechanisms across all our customers' solutions.
 
-If a member of staff no longer worked for a customer, there would be no way automatically disabling access.
+Previously, each of our customer solutions would have locally managed user credentials. If a member of staff no longer worked for a customer, there would be no way to automatically disable access.
 
-With FusionAuth being able to federate against a customer's own identity platform (such as Office 365), joiners and leavers automatically get access to the relevant platforms, reducing our support costs and improving security.
+With FusionAuth able to federate against a customer's own identity platform (such as Office 365), joiners and leavers automatically get access to the relevant platforms, reducing our support costs and improving security.
 
-> ... [using FusionAuth] meant that we could save on development costs, and bring an overall improvement to the customer experience in a much shorter timeframe [than developing the functionality ourselves].
+> ... [using FusionAuth] meant that we could save on development costs, and bring an overall improvement to the customer experience in a much shorter time frame [than developing the functionality ourselves].
 
 **Dan:** Were there any technical hurdles or difficulties in the unification process?
 
@@ -69,13 +69,13 @@ FusionAuth was the only product that provided the right mix of features to enabl
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
-**Brad:** While developing our own Authentication and Authorisation platform was certainly an option that we considered, the fact that we could deploy and start using FusionAuth rapidly meant that we could save on development costs, and bring an overall improvement to the customer experience in a much shorter timeframe.
+**Brad:** While developing our own Authentication and Authorisation platform was certainly an option that we considered, the fact that we could deploy and start using FusionAuth rapidly meant that we could save on development costs, and bring an overall improvement to the customer experience in a much shorter time frame.
 
 > ... it has just worked. Apart from the occasional upgrade [FusionAuth] requires little food and water.
 
 **Dan:** How do you run FusionAuth (k8s, standalone tomcat server, behind a proxy, etc)?
  
-**Brad:** We run FusionAuth behind a reverse proxy, providing multi-layered security. As our solutions are PCI-DSS compliant, being able to deploy on-prem and manage access within our own datacenter was an important facter, as the cloud-based security providers we evaluated were not able to demonstrate PCI-DSS compliance, so our solutions could not use them.
+**Brad:** We run FusionAuth behind a reverse proxy, providing multi-layered security. As our solutions are PCI-DSS compliant, being able to deploy on-prem and manage access within our own datacenter was an important factor, as the cloud-based security providers we evaluated were not able to demonstrate PCI-DSS compliance, so our solutions could not use them.
 
 **Dan:** It sounds like being able to run FusionAuth in your own datacenter was a key part of your selection. Have you run into any issues with running and managing FusionAuth, or has it been boring tech (in a good way)?
 
@@ -83,7 +83,7 @@ FusionAuth was the only product that provided the right mix of features to enabl
 
 **Dan:** Any general feedback/areas to improve?
 
-**Brad:** Group or Role based application assignments would be hugely beneficial, as currently this is still a user-by-user permission setting that has to be configured by our staff, rather than by group membership of a user.
+**Brad:** Group or Role based application assignments would be hugely beneficial, as currently this is still a user-by-user permission setting that has to be configured by our staff, rather than by group membership of a user. _[Ed: this feature request is [being tracked here](https://github.com/FusionAuth/fusionauth-issues/issues/1533).]_
 
 -------
 
