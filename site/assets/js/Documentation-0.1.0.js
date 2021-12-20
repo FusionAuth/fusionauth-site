@@ -19,6 +19,11 @@ FusionAuth.Documentation = function() {
     this.scrollTop.hide();
   }
 
+  this.scrollNav = Prime.Document.queryById('scroll-nav');
+  if (this.scrollNav !== null) {
+    this._setupScrollNav();
+  }
+
   this._replaceBreadcrumbsWithGlyphs();
 }
 
@@ -34,6 +39,52 @@ FusionAuth.Documentation.prototype = {
     window.scrollTo(0, 0);
 
     setTimeout(this._resetScrollingState, 1500);
+  },
+
+  _handleNavMenuClick: function(event) {
+    Prime.Utils.stopEvent(event);
+    if (this.scrollNavTitles.isVisible()) {
+      this.scrollNavTitles.hide();
+    } else {
+      this.scrollNavTitles.show();
+    }
+  },
+
+  _handleNavTitleClick: function(event) {
+    // Prime.Utils.stopEvent(event);
+    setTimeout(function() {
+      this.scrollNavTitles.hide();
+    }.bind(this), 500);
+  },
+
+  _setupScrollNav: function() {
+    this.scrollNavMenu = this.scrollNav.query('div')[0];
+    this.scrollNavMenu.addEventListener('click', this._handleNavMenuClick);
+
+    this.scrollNavTitles = this.scrollNav.query('ul')[0];
+    this.scrollNavTitles.addEventListener('click', this._handleNavTitleClick);
+    var headers = Prime.Document.query('article H2, article H3');
+    var titleList = '';
+
+    var needsClosing = false;
+    for (var i = 0; i < headers.length; i++) {
+      var id = headers[i].getId();
+      if (id !== '') {
+        if (headers[i].getTagName() === 'H2' && i > 0 && needsClosing) {
+          titleList += '</ul>';
+          needsClosing = false;
+        }
+        if (headers[i].getTagName() === 'H3' && !needsClosing) {
+          titleList += '<ul>';
+          needsClosing = true;
+        }
+        titleList += '<li><a href="#' + id + '">' + headers[i].getHTML() + '</a></li>';
+      }
+    }
+    if (needsClosing) {
+      titleList += '</ul>';
+    }
+    this.scrollNavTitles.setHTML(titleList).hide();
   },
 
   _resetScrollingState: function() {

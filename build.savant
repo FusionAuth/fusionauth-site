@@ -2,15 +2,21 @@
  * Copyright (c) 2016-2021, FusionAuth, All Rights Reserved
  */
 
-fusionauthWebsiteStyleVersion = "0.3.36"
+fusionauthWebsiteStyleVersion = "0.3.42"
 
 project(group: "io.fusionauth", name: "fusionauth-site", version: "3.0.0", licenses: ["ApacheV2_0"]) {
   workflow {
-    standard()
+    fetch {
+      cache()
+      url(url: "https://repository.savantbuild.org")
+    }
+    publish {
+      cache()
+    }
   }
 
   publishWorkflow {
-    subversion(repository: "http://svn.inversoft.org/savant")
+    subversion(repository: "https://svn.savantbuild.org")
   }
 
   dependencies {
@@ -34,12 +40,12 @@ target(name: "css", description: "Copies the CSS into place") {
     dependencies(group: "css", transitive: false, fetchSource: true)
   }
 
+  file.copyFile(file: "site/assets/css/fusionauth-website-style-${fusionauthWebsiteStyleVersion}.css", to: "site/assets/css/fusionauth-login-style.css")
+
   file.rename {
     fileSet(dir: "site/assets/css", includePatterns: [~/fusionauth-website.+/])
     filter(token: "-{integration}", value: "")
   }
-
-  file.copyFile(file: "site/assets/css/fusionauth-website-style-${fusionauthWebsiteStyleVersion}.css", to: "site/assets/css/fusionauth-login-style.css")
 }
 
 target(name: "clean", description: "cleans the project", dependsOn: ["css"]) {
@@ -82,7 +88,6 @@ target(name: "push", description: "Push the site to fusionauth.io", dependsOn: [
     output.infoln("jekyll didn't build correctly. Review output to see what went wrong.")
     exit 1
   }
-  
 
   // Refresh the algolia index.
   if (!switches.has("skipReindex")) {

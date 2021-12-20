@@ -58,27 +58,28 @@ FusionAuth.DirectDownloads.prototype = {
              <span style="font-size: 0.5em;" class="font-weight-light">| <a href="/docs/v1/tech/installation-guide/packages/">Installation Guide</a></span>\
           </h4>\
             <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app-{version}.zip">fusionauth-app-{version}.zip</a>\
-            [<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app-{version}.zip.sha256">SHA256</a>]\
+            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app-{version}.zip.sha256">sha256</a>]</span>\
             <br>\
             <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app_{version}-1_all.deb">fusionauth-app_{version}-1_all.deb</a>\
-            [<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app_{version}-1_all.deb.sha256">SHA256</a>]\
+            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app_{version}-1_all.deb.sha256">sha256</a>]</span>\
             <br>\
             <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app-{mVersion}-1.noarch.rpm">fusionauth-app-{mVersion}-1.noarch.rpm</a>\
-            [<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app-{mVersion}-1.noarch.rpm.sha256">SHA256</a>]\
+            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app-{mVersion}-1.noarch.rpm.sha256">sha256</a>]</span>\
             <br>\
             <br>\
             <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search-{version}.zip">fusionauth-search-{version}.zip</a>\
-            [<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search-{version}.zip.sha256">SHA256</a>]\
+            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search-{version}.zip.sha256">sha256</a>]</span>\
             <br>\
             <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search_{version}-1_all.deb">fusionauth-search_{version}-1_all.deb</a>\
-            [<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search_{version}-1_all.deb.sha256">SHA256</a>]\
+            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search_{version}-1_all.deb.sha256">sha256</a>]</span>\
             <br>\
             <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search-{mVersion}-1.noarch.rpm">fusionauth-search-{mVersion}-1.noarch.rpm</a>\
-            [<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search-{mVersion}-1.noarch.rpm.sha256">SHA256</a>]\
+            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search-{mVersion}-1.noarch.rpm.sha256">sha256</a>]</span>\
             <br>\
             <br>\
             <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-database-schema-{version}.zip">fusionauth-database-schema-{version}.zip</a>\
-            <a href="/docs/v1/tech/installation-guide/fusionauth-app#advanced-installation"> (See Advanced Installation)</a> \
+            &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-database-schema-{version}.zip.sha256">sha256</a>]</span>\
+            &nbsp;(<a href="/docs/v1/tech/installation-guide/fusionauth-app#advanced-installation">See Advanced Installation</a>) \
            </div>';
 
       this.container.appendHTML(
