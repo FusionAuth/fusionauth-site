@@ -9,62 +9,67 @@ tags: topic-upgrade-cognito
 excerpt_separator: "<!--more-->"
 ---
 
-Amazon Cognito is a serverless CIAM service with deep AWS integration. It offers authentication and authorization with a variety of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant. This blog post will discuss why and how you might choose to migrate off of Amazon Cognito.
+Amazon Cognito is a serverless CIAM service from Amazon Web Services with deep AWS integration. It offers authentication and authorization and supports a number of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant. This blog post covers why and how you might choose to migrate from Amazon Cognito to another solution.
 
 <!--more-->
 
-## Cognito downsides
+## Weaknesses of Amazon Cognito 
 
-While Amazon Cognito is a low cost auth service and a far better choice than rolling your own auth solution, it has some downsides:
+While [Amazon Cognito](https://aws.amazon.com/cognito/) is a low cost auth service and a far better choice than rolling your own auth solution, it has some downsides. These include:
 
-* There is only one deployment model, SaaS
-* You can run it only in the geographies AWS supports
-* The interface presented to your customers or users is inflexible
-* It doesn't support localization #TODO
-* You can't backup or export all of your user data, including password hashes
-* SAML users are expensive once you have more than the 50 provided by the free tier
-* It has received relatively few improvements in the last few years
+* There is only one deployment model, a SaaS offering on AWS.
+* The user pool and identity pool concepts can be difficult to grasp.
+* The user interface presented to your customers is inflexible and hard to customize.
+* You can run Cognito only in the geographies supported by AWS.
+* It doesn't support localization of messages or the user interface.
+* You can't backup or export all user data, notably password hashes.
+* SAML accounts are expensive after you grow beyond the free tier.
+* Possibly most concerning, Amazon Cognito has been relatively static and has received few recent improvements.
 
-These limitations may be acceptable initially, but after a time you may need a feature not provided by Amazon Cognito, such as a unique login provider or the OAuth device grant. Or perhaps you want more control over the login user interface your customers will see. 
+These limitations may be acceptable initially, but eventually you may need a feature not provided by Amazon Cognito, such as a unique login provider or the OAuth device grant. Or perhaps you want more control over the user interface your customers will see. 
 
 For whatever reason, you may decide you need to move your customer and user data from Amazon Cognito. Let's take a look at how you might do so.
 
 ## When you shouldn't migrate
 
-Amazon Cognito has strengths as well as weaknesses, and if your application depends on unique features or the upsides outweigh the downsides, you should remain on Cognito.
+Amazon Cognito has strengths as well as weaknesses, and when your application depends on unique features or if the upsides outweigh the downsides, continue to run on Cognito.
 
-If you have usage in the free tier, with under 50,000 normal MAUs, and the user interface and other limitations of Amazon Cognito are acceptable, migration may not make sense. Cognito's serverless nature makes it very easy to "set and forget" and let you focus on other aspects of your application.
+For example, if your usage is free, under 50,000 MAUs, and the user interface and other limitations of Amazon Cognito are acceptable, migration doesn't make sense. The fact that Cognito is serverless makes it easy to "set and forget" and allows you to focus on other aspects of your application. You know, the features your users want.
 
-In addition, if you need Cognito's unique deep integration with AWS, including its ability to grant authenticated users AWS credentials to access resources such as an S3 bucket or rows in a DynamoDB table, migration won't sense. No other auth provider will provide such access natively, though you may be able to generate temporary credentials and share them with your users with custom code.
+If you need Cognito's unique deep integration with AWS, including the ability to grant authenticated users temporary AWS credentials to access an S3 bucket or specific rows in a DynamoDB table, migration won't make sense. No other auth provider can provide such access natively, though you may be able to generate temporary credentials and share them with your users via custom coding.
 
 ## How to migrate
 
-When you are thinking about migrating off of Amazon Cognito, the very first decision after you've committed to a migration is "Am I okay with forcing all my users to reset their passwords?".
+After you have decided to migrate from Amazon Cognito, the first decision you'll need to make is "Am I okay with forcing all my users to reset their passwords?" This unfortunate choice is required since Cognito won't allow you to export password hash.
 
 {% include _callout-note.liquid content="This blog post gives general guidance on migration off of Amazon Cognito. If you are looking for step by step instructions on how to migrate from Amazon Cognito to FusionAuth, please review our [Amazon Cognito migration guide](/docs/v1/tech/migration-guide/cognito/)." %}
 
-If the answer is yes, then you are looking at a straightforward bulk migration. 
+If the answer is yes, then you have the option of a point-in-time bulk migration. 
 
-If the answer is no, then you will be instead looking at a phased or "slow" migration.
+If the answer is no, then you will be instead looking at a phased or "slow" migration, where users are migrated one at a time as they log in.
 
-In general, the more users you have and the less they are required to use your application, the less impact you'll want to have on them, and the more likely it is you won't want to force them to reset their passwords. However, a slow migration is more complex operationally (some users will exist in the new system, some in Cognito). One option is to run a test on a small portion of your userbase and see what effect requiring a password change has on engagement and conversion.
+In general, the more users you have and the less they need your application, the less you'll want to impact them by forcing a password reset. However, a slow migration is more complex operationally (some users will exist in the new system, some in Cognito). 
 
-Let's look at a bulk migration first.
+If you aren't sure, you have the option of segmenting your user base and migrating one section. This will allow you to see what effect requiring a password change has on engagement and conversion.
 
-## Bulk migration
+You should also run a proof of concept or trial with any new auth providers you are considering. This is out of scope for this document, but please [read this article for more information on how to run a successful trial](/learn/expert-advice/identity-basics/try-before-you-buy/).
+
+Once you have decided how you want to migrate, you'll proceed with either a bulk migration of users or a slow migration. Let's look at the steps for a bulk migration first.
+
+## Bulk migration from Amazon Cognito
 
 The basic steps of a bulk migration are:
 
-* Set up the new system. Make sure you map all functionality and data from Cognito to the new system.
-* Retrieve all available user data from Cognito. You can do this using the AWS CLI or any other AWS API client such as boto3.
-* Massage it into a format acceptable to your new provider, using whatever data transformation tools you are comfortable with.
-* Upload it to the new provider. If you must provide a password, set it to a random string.
-* Create configuration in the new provider corresponding to the client configuration set up in Amazon Cognito.
-* Update your applications to have users log in to the new system.
-* Mark all uploaded users as needing a new password. Notify them in some manner of this fact.
-* Disable the Cognito user pools to ensure that all users are using the new system.
+* Set up the new auth system. Make sure you map all functionality and data from Cognito to the new system.
+* Retrieve all available user data from Cognito. You can do this with the AWS CLI or any other AWS API client such as boto.
+* Massage the exported user data into a format acceptable to your new provider, using whatever data transformation tools you are comfortable with.
+* Upload the user data to the new provider. If you must provide a password when importing users, set it to a random high entropy string.
+* Create configuration in the new auth system corresponding to the client configuration previously set up in Amazon Cognito. You should also customize the user interface, messages, MFA methods and any other Cognito specific settings that are relevant.
+* Update your custom, COTS or OSS applications to point to the new auth system.
+* Mark all uploaded users as needing a new password and notify them. The details of this are specific to the new system.
+* [Delete the Cognito user pools](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cognito-idp/delete-user-pool.html) to ensure that all of your users are authenticating against the new system. You could also use a lambda to disable logins.
 
-You could notify the users in bulk, via email or other communication mechanism. You could also update your login screens to indicate to users that they might need to reset their password in the new system.
+You could notify the users in bulk via email or update your login screens with a message to users that they will need to reset their password to gain access.
 
 Here's the login flow before the bulk migration:
 
@@ -74,45 +79,46 @@ Here's the login flow after the bulk migration, when Amazon Cognito no longer is
 
 {% plantuml source: _diagrams/docs/guides/bulk-migration-after.plantuml, alt: "Bulk migration login request flow after the migration." %}
 
-
 The benefits of a bulk migration include:
 
-* You can move your users all at once. Having a single source of truth for your customer data is generally beneficial.
+* You can move all your users at one time. Having a single source of truth for customer data is typically beneficial.
 * You no longer have a dependency on Cognito; the transition is quick.
 
-The downsides of a bulk import:
+The downsides of a bulk import are:
 
-* You must require all users to reset their password. In general, this requirement is frustrating to your users and may impact their usage of your application.
-* You'll have to build a script to retrieve the data from Cognito and push it to the new system.
+* You must require all users to reset their password.
+* You'll have to build a script to retrieve the data from Cognito, modify it, and push it to the new system.
+* There may be some downtime in the migration process.
 
 ## A slow migration from Amazon Cognito
 
-With a slow or phased migration, users don't reset their password. Instead, they log in to the new system, provide their username and password which is then forwarded to Amazon Cognito. If the credentials are correct, the user is logged in. Since the new system has the user's password in plaintext during the login process, it can rehash and store the password. 
+With a slow, or phased, migration, users are not required to reset their password. Instead, they log in to the new system, provide their username and password, which is then forwarded to Amazon Cognito. (This must be a secure connection and should be augmented with IP restrictions, custom headers or client certificates; you don't want anyone to be able to pass credentials to Amazon Cognito.) If the credentials are correct, the user is logged in. The new system can rehash and store the password along with other user data.
+
+Here's a diagram of an initial user login during a slow migration:
 
 {% plantuml source: _diagrams/docs/guides/slow-migration.plantuml, alt: "Slow migration initial login request flow." %}
 
-After the initial login, Cognito is no longer the system of record for that user.
+After the initial login, Cognito is no longer the system of record for that user. Any changes to this user, whether made by themselves, automated processes or customer service team members, will need to be made in the new system.
 
-Any changes to this user, whether made by themselves, automated processes or customer service reps, will need to be made in the new system.
+In subsequent logins, the original Cognito system is never consulted.
 
 {% plantuml source: _diagrams/docs/guides/slow-migration-subsequent.plantuml, alt: "Slow migration subsequent login request flow." %}
 
 The basic steps of a slow migration are:
 
 * Set up the new system. Make sure you map all functionality and data from Cognito to the new system.
-* Determine what constitutes "done" for this migration, since it is unlikely that every single user will login and be migrated for any given period of time. You can see [more details on how to calculate that here](/docs/v1/tech/migration-guide/general/#migration-timeline).
+* Determine what constitutes "done" for this migration, since it is unlikely that every single user will log in and be migrated, no matter how long you run these two systems in parallel. You can see [more details on how to calculate that](/docs/v1/tech/migration-guide/general/#migration-timeline).
 * Set up a way for the new system to present user credentials to Amazon Cognito for an authentication event. The exact method will depend on new system features. This can be done with an AWS Lambda; see [this document](/docs/v1/tech/migration-guide/cognito/#set-up-aws) for an example which works with FusionAuth.
-* Create configuration in the new provider corresponding to the client configuration set up in Amazon Cognito.
-* Update your applications to have users log in to the new system.
-* Wait, running reports periodically to determine if you've migrated enough users to call it a success.
-* Decide what to do with users that have not been migrated. You can abandon them, bulk migrate them, or contact them to try to get them to log in.
+* Create configuration in the new auth system corresponding to the client configuration previously set up in Amazon Cognito. You should also customize the user interface, messages, MFA methods and any other Cognito specific settings that are relevant.
+* Update your custom, COTS or OSS applications to point to the new auth system.
+* Wait, running reports periodically to determine if you've migrated enough users to shut down the slow migration.
+* Decide what to do with unmigrated users. Options include abandoning them, a bulk migration, or contacting them to encourage a sign-in.
+* Eventually, [delete the Cognito user pools](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/cognito-idp/delete-user-pool.html) to ensure that all of your users are authenticating against the new system. You could also use a lambda to disable logins.
 
-Slow migrations have less impact on your users, but more impact on your systems and employees. 
-
-For instance, if a customer service rep needs to reset a password, they will have to determine if the user has been migrated to the new system or not before they can determine where to process this password reset request. 
+Slow migrations have less impact on your users, but more impact on your systems and employees and take more time. For instance, if a customer service representative needs to reset a password, they will have to determine if the user has been migrated to the new system or not before they can process the request. 
 
 ## Conclusion
 
-This blog post provided an overview of an Amazon Cognito migration. No matter what the new target system is, you'll need to decide between the bulk or slow migration, as well as pursue the specific steps.
+This blog post offers an overview of an Amazon Cognito migration. No matter what the new target system is, you'll need to decide between the bulk or slow migration, as well take specific steps to move your data and settings.
 
-If you are looking for step by step instructions on how to move to FusionAuth from Amazon Cognito, please take a look at our [Amazon Cognito migration guide](/docs/v1/tech/migration-guide/cognito/).
+If you are looking for step by step instructions on how to move to FusionAuth from Amazon Cognito, please check out our [Amazon Cognito migration guide](/docs/v1/tech/migration-guide/cognito/).
