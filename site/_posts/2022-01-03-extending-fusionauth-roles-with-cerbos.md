@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Circleboom chose FusionAuth for single sign-on across their products
-description: Circleboom helps people strengthen their social media circles by creating easy-to-use, intuitive design applications. They chose FusionAuth over several evaluated alternatives to offer a unified login experience to their customers.
+title: Extending FusionAuth roles with Cerbos
+description: Sometimes RBAC isn't enough and you need more fine-grained permissions. FusionAuth seamlessly integrates with Cerbos to provide that option.
 author: Dan Moore
 image: blogs/circleboom-fusionauth-single-sign-on/circleboom-chose-fusionauth-for-single-sign-on-across-their-products-header-image.png
 category: blog
@@ -17,9 +17,9 @@ However, there are times when this authorization model isn’t granular enough. 
 
 ## Roles in FusionAuth
 
-Anything a person can log into, whether custom web applications, mobile applications, APIs or  commercial off the shelf apps, is represented as an application in FusionAuth. Part of the application configuration is the list of roles:
-                 
-IMAGE of roles in FA admin screen TODO
+Anything a person can log into, whether custom web applications, mobile applications, APIs or commercial off the shelf apps, is represented as an application in FusionAuth. Part of the application configuration is the list of roles, which are simply strings with a few pieces of metadata:
+
+{% include _image.liquid src="/assets/img/blogs/cerbos-authorization/creating-role-fusionauth.png" alt="Adding a new role in FusionAuth." class="img-fluid" figure=false %}
 
 Each application in FusionAuth can have an [unlimited number of roles](/docs/v1/tech/core-concepts/roles/). Each role is a string. Roles can either be marked as default and attached to every user registered to an application, or designated a super-user role, indicating administrative privileges. If you need a lot of roles, or fine-grained permissions in your application, you can create as many roles in FusionAuth as you’d like, perhaps using the API to automate the process.
 
