@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-CodeMash is a tech stack agnostic technical conference and has been around since 2014. This year there will be hundreds of attendees in Sandusky, OH, learning about topics ranging from creating Alexa skills to mob programming to accessibility to testing. 
+CodeMash is a tech stack agnostic technical conference and has been around since 2014. This year there will be hundreds of attendees in Sandusky, OH, learning about topics ranging from creating Alexa skills to mob programming to accessibility to testing. All the fun happens next week, starting Tuesday, January 11.
 
 The FusionAuth team will be among them, and we'd love to see you.
 
