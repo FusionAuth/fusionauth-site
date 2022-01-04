@@ -12,7 +12,7 @@ AWS re:Invent is one of the largest technical conferences in the world. In the c
 
 <!--more-->
 
-## Why The Team is Attending
+## Why the team is attending
 
 We're going to re:Invent for many reasons. Both FusionAuth and our clients often develop and deploy on the public AWS cloud. Some use vanilla EC2 instances with RDS, others deploy on solutions like EKS and Fargate (yes, [FusionAuth supports Kubernetes](https://fusionauth.io/docs/v1/tech/installation-guide/kubernetes/fusionauth-deployment/)). re:Invent is an opportunity to meet fellow developers, both during talks and in the everpresent hallway track. We look forward to exchanging AWS knowledge and ideas.
 
@@ -22,7 +22,7 @@ We're also looking forward to specific sessions. Some exciting ones are "What's 
 
 Of course, it isn't all education. There's also fun to be had! One activity worth attending is [Corey Quinn's nature walk](https://twitter.com/QuinnyPig/status/1461533923855331329) where he skewers Expo vendors. There are also numerous parties. If you registered, chances are at least one vendor has emailed you with an invite. This Twitter account, [@reInventParties](https://twitter.com/reInventParties/), is a great way to discover them. Finally, if getting into nature is more your thing, we've heard [Red Rock Canyon](https://www.blm.gov/programs/national-conservation-lands/nevada/red-rock-canyon) is a great place to check out.
 
-## Meet Up With FusionAuth
+## Meet up with FusionAuth
 
 If you want to meet up with the FusionAuth team at re:Invent, we're around and ready to chat. Find us in a couple of places:
 
