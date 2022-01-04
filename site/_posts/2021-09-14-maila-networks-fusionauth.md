@@ -31,7 +31,7 @@ Our mission is to provide the best experience to our customers mixing the servic
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
         
-**Jean Rousseau:** We started using it for a simple project and replaced the Coovachilli hotspot. Nowadays I'm experimenting it in other areas to integrate all logins with a single application.
+**Jean Rousseau:** We started using it for a simple project and replaced the Coovachilli hotspot. Nowadays I'm experimenting with it in other areas to integrate all logins with a single application.
 
 **Dan:** What applications are you planning to integrate with FusionAuth?
 
@@ -41,11 +41,11 @@ Our mission is to provide the best experience to our customers mixing the servic
 
 **Jean Rousseau:** The authentication, logging and searching problems that we had.
 
-> We're running [FusionAuth] on a OpenStack cluster...
+> We're running [FusionAuth] on an OpenStack cluster...
 
 **Dan:** What kind of searching do you find FusionAuth to be helpful for? Can you give an example?
 
-**Jean Rousseau:** When we had different servers, we had to go through logs in different servers. That was time consuming.
+**Jean Rousseau:** When we had different servers, we had to go through logs on different servers. That was time consuming.
 
 **Dan:** How were you solving these problems before FusionAuth?
 
@@ -61,7 +61,7 @@ With FusionAuth everything is concentrated in a single app. We can scale by addi
 
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
-**Jean Rousseau:** I haven't being able to measure it (yet), but it saved us from having to build our own application.
+**Jean Rousseau:** I haven't been able to measure it (yet), but it saved us from having to build our own application.
 
 **Dan:** How long would you estimate it would have taken you to build your own application? 
 
@@ -69,12 +69,13 @@ With FusionAuth everything is concentrated in a single app. We can scale by addi
 
 **Dan:** How do you run FusionAuth (Kubernetes, standalone tomcat server, behind a proxy, etc)?
         
-**Jean Rousseau:** We're running on a OpenStack cluster and we have a Nginx Server in front of it.
+**Jean Rousseau:** We're running on an OpenStack cluster and we have a Nginx Server in front of it.
 
 **Dan:** Any general feedback/areas to improve?
 
-**Jean Rousseau:** I would recommend a few additions on the installation tutorial. They're simple to get, but we never install some of the required packages unless we really need them: tar, zip, unzip and curl.
+**Jean Rousseau:** I would recommend a few additions to the installation tutorial. They're simple to get, but we never install some of the required packages unless we really need them: tar, zip, unzip and curl.
 
+**Dan:** Thanks!
 -------
 
 We love sharing community stories. You can check out [Maila Networks' website](https://maila.com.br/) if you'd like to learn more about them.
