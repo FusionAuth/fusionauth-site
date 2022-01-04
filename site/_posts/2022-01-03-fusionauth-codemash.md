@@ -3,7 +3,7 @@ layout: blog-post
 title: We'll see you at CodeMash
 description: FusionAuth is going to CodeMash. Stop by and see us!
 author: Dan Moore
-image: blogs/fusionauth-aws-reinvent-2021/see-you-at-aws-reinvent-header-image.png
+image: blogs/fusionauth-codemash-2021/well-see-you-at-codemash-header-image.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
