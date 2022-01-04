@@ -3,7 +3,7 @@ layout: blog-post
 title: How to migrate from Amazon Cognito
 description: How can you migrate away from Amazon Cognito?
 author: Dan Moore
-image: blogs/release-1-31/product-update-fusionauth-1-31.png
+image: blogs/migrate-from-cognito/how-to-migrate-from-amazon-cognito-header-image.png
 category: blog
 tags: topic-upgrade-cognito
 excerpt_separator: "<!--more-->"
@@ -42,7 +42,7 @@ If you need Cognito's unique deep integration with AWS, including the ability to
 
 After you have decided to migrate from Amazon Cognito, the first decision you'll need to make is "Am I okay with forcing all my users to reset their passwords?" This unfortunate choice is required since Cognito won't allow you to export password hash.
 
-{% include _callout-note.liquid content="This blog post gives general guidance on migration off of Amazon Cognito. If you are looking for step by step instructions on how to migrate from Amazon Cognito to FusionAuth, please review our [Amazon Cognito migration guide](/docs/v1/tech/migration-guide/cognito/)." %}
+{% include _callout-note.liquid content="This blog post gives general guidance on migration off of Amazon Cognito to any other auth provider. If you are looking for step by step instructions on how to migrate from Amazon Cognito to FusionAuth, please review our [Amazon Cognito migration guide](/docs/v1/tech/migration-guide/cognito/)." %}
 
 If the answer is yes, then you have the option of a point-in-time bulk migration. 
 
