@@ -4,7 +4,7 @@ title: Making Sure Your Auth System Can Scale
 description: What steps do you need to take to ensure your authentication system can scale?
 author: James Hickey
 image: advice/auth-system-scale/making-sure-your-auth-system-can-scale-header-image.png
-category: Identity Basics
+category: CIAM
 date: 2021-03-11
 dateModified: 2021-03-11
 redirect_from:

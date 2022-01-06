@@ -4,7 +4,7 @@ title: The Value of Standards-Compliant Authentication
 description: What are common auth standards and why should you consider using them in your application?
 author: James Hickey
 image: advice/value-standards/the-value-of-standards-compliant-authentication-header-image.png
-category: Identity Basics
+category: OAuth
 date: 2021-06-10
 dateModified: 2021-06-10
 redirect_from:

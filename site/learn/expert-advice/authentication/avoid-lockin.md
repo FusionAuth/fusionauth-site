@@ -4,7 +4,7 @@ title: Avoiding Authentication System Lock-in
 description: What steps do you need to take to ensure your authentication system can scale?
 author: Cameron Pavey
 image: advice/vendor-lockin/expert-advice-avoiding-authentication-system-lock-in-header-image.png
-category: Identity Basics
+category: Authentication
 date: 2021-07-12
 dateModified: 2021-07-12
 redirect_from:
