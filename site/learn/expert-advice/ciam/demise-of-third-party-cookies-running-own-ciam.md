@@ -5,8 +5,8 @@ description: What is the future of third party cookies and how does that tie int
 author: Kuntal Chakraborty
 image: advice/auth-system-scale/making-sure-your-auth-system-can-scale-header-image.png
 category: CIAM
-date: 2021-03-11
-dateModified: 2021-03-11
+date: 2022-01-07
+dateModified: 2022-01-07
 ---
 
 Third-party cookies track user information like browsing habits, purchases, and other interactions, which helps companies know how to market to their target demographic. By utilizing third-party cookies, companies can track users across multiple websites. However, the collection of personal information raises concern about online privacy. As a result, more and more browsers are allowing users to block third-party cookies.
