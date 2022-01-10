@@ -3,7 +3,7 @@ layout: advice
 title: The Demise of Third-Party Cookies and Why You Need to Run Your Own CIAM System
 description: What is the future of third party cookies and how does that tie into customer identity and access management?
 author: Kuntal Chakraborty
-image: advice/auth-system-scale/making-sure-your-auth-system-can-scale-header-image.png
+image: advice/demise-third-party-cookies/demise-of-third-party-cookies-why-you-need-your-own-ciam-system.png
 category: CIAM
 date: 2022-01-07
 dateModified: 2022-01-07
