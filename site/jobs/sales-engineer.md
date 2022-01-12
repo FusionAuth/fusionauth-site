@@ -11,47 +11,45 @@ dateValidThrough: 2020-12-31
 
 ### Overview
 
-FusionAuth is a fast growing startup headquartered in Denver Colorado. We are expanding our team to help accelerate our growth and take FusionAuth to the next level.
- 
-Our mission is to make authentication and authorization simple and secure for every developer. This means building the best IAM (Identity and Access Management) and CIAM (Customer Identity and Access Management) solution in the world. If you are passionate about technology and want to join a company that is moving the industry forward, FusionAuth might be a perfect fit for you. 
+FusionAuth is a fast growing, privately held startup headquartered in Denver Colorado. We are expanding our team to help accelerate our growth and take FusionAuth to the next level.
 
-We are recruiting a Sales Engineer who will assist in the sales process with new prospective customers. This role will work directly with inbound sales leads to demonstrate the value FusionAuth provides and walk them through the entire sales process. Since our target customers are often technical (developers, engineers, CTOs), nearly all sales calls involve technical questions and deep technical dives. Therefore, as a sales engineer, you will lead the sales calls, demos and the sales process. Ideally, you should be capable of coding and have knowledge of the industry including OAuth, SAML, OIDC, SSO, MFA, and other IAM standards. 
+Our mission is to make authentication and authorization simple and secure for every developer, and to make developers successful integrating FusionAuth to their applications.  If you have development experience and want to move to a customer facing, business oriented role, FusionAuth might be a perfect fit for you. This is an opportunity for you to make a difference.
 
-You will report directly to the CEO and will work from our Denver office.
+We are recruiting a Sales Engineer who will assist new prospective customers. This role will work directly with inbound sales leads to demonstrate the value FusionAuth provides and be a trusted resource through the sales process.  Our customers are usually technical, and you will lead technical interactions,  demos and problem solving to determine feasibility. You’ll need to bring your coding background with Java (or similar) experience building back end systems. Helpful will be experience setting up authentication, and some knowledge of OAuth, SAML, OIDC, SSO, MFA, and other IAM standards.
+
+You will report directly to the VP of Sales and will work mostly remote from home, with occasional visits to our Denver office (dependent on your location).  
 
 ### Responsibilities
 
 Your responsibilities will include:
 
 * Engage with prospective customers through demonstrations, design sessions, architecture reviews, workshops, and on-boarding sessions
-* Assistance prospective customers with FusionAuth configuration, implementation, and deployment
+* Assist prospective customers with FusionAuth configuration, implementation, and deployment
 * Engage with technical and non-technical employees of prospective customers and various levels and build a strong value proposition for FusionAuth
-* Engage with the FusionAuth community in Slack, StackOverflow and elsewhere
-* Attend various meetups, conferences, and other events that developers attend to promote and sell FusionAuth   
+* Engage with the FusionAuth Community Forum, Slack, StackOverflow and elsewhere
+* Attend various meetups, conferences, and other events that developers attend to promote and sell FusionAuth
 * Work directly with the FusionAuth marketing and engineering teams to build sales campaigns that target developers
 
 ### Requirements
 
 The requirements for this position include:
 
-* Ability to code and write simple example applications that leverage FusionAuth
-* Ability to write scripts
-* Ability to document complex interactions and integrations as needed using standard diagrams (workflow, UML, object, interaction, etc)
-* Strong written and verbal communication skills
-* Experience in market analysis
-* Strong presentation skills
-* Working knowledge of OAuth, SAML, OIDC, MFA, SSO
-* Keen eye for detail
-* Creativity
-* Analytical mind and strong quantitative skills
-* BSc in Computer Science or similar field (or equivalent work experience)
+Ability to code and write simple example applications and scripts that leverage FusionAuth
+Ability to document complex interactions and integrations as needed using standard diagrams (workflow, UML, object, interaction, etc)
+Strong written and verbal communication skills
+Strong presentation skills
+Working knowledge of OAuth, SAML, OIDC, MFA, SSO
+Great customers service skills, and a desire to help people
+BSc in Computer Science or similar field (or equivalent work experience)
+
 
 ### Salary & Benefits
 
-* **Salary range:** $120,000 to $180,000 (depending on experience)
+* **Salary + sales commission range:** $110,000 to $180,000 (depending on experience)
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
 * **401k:** Yes!
 * **Education benefit:** Yes!
 * **Stock options:** Yes!
 * **Vacation:** Flexible! Take what you need. :)
+
