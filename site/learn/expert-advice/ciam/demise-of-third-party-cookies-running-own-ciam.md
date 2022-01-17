@@ -62,7 +62,7 @@ The latest CIAM solutions can offer adaptive authentication features. The proces
 
 #### Authorization
 
-Successful authorizations lets businesses confirm that customers have the correct rights to access an application, service, or website. Note that this differs from *authentication* —think of authentication as proving that the key a user holds belongs to them, and authorization as having the correct key to get through the door a user wants to open. A CIAM system usually hasrole-based or group-based authorization, and sometimes offers granular permission management.
+Successful authorizations lets businesses confirm that customers have the correct rights to access an application, service, or website. Note that this differs from *authentication* —think of authentication as proving that the key a user holds belongs to them, and authorization as having the correct key to get through the door a user wants to open. A CIAM system usually has role-based or group-based authorization, and sometimes offers granular permission management.
 
 #### Self-Service
 
@@ -102,7 +102,7 @@ A robust CIAM solution can protect against hacks or frauds, as well as provide c
 
 CIAM is not the only solution for the obsolescence of third-party cookies. Quite a few other solutions exist, although none as robust as a CIAM.
 
-For example, interest-based advertising, [Federated Learning of Cohorts (FLOC)](https://github.com/WICG/floc), is one alternative solution to third-party cookies without resorting to your own CIAM system. FloC is a proposed browser standard, created by Google, that provides interest-based ads without letting advertisers know your identity. Users are categorized into *cohorts*—groups of users based on similar interests. The groups are large enough to make a user semi-anonymous to advertisers.
+For example, interest-based advertising, [Federated Learning of Cohorts (FLoC)](https://github.com/WICG/floc), is one alternative solution to third-party cookies without resorting to your own CIAM system. FloC is a proposed browser standard, created by Google, that provides interest-based ads without letting advertisers know your identity. Users are categorized into *cohorts*—groups of users based on similar interests. The groups are large enough to make a user semi-anonymous to advertisers.
 
 FloC however, isn't as glorious a solution as it claims to be. The question with FloC is, "Do you trust Google?" Given that they have an ocean of information about millions of internet users, the answer is probably no. Beyond that, [fingerprinting and other tracking methods](https://www.eff.org/deeplinks/2021/03/googles-floc-terrible-idea) can still make a user stand out in a cohort.
 
