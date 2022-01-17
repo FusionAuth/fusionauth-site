@@ -82,7 +82,7 @@ Location aware security
 - When a login request occurs from an unexpected IP address, a user receives an email to notify them of a new login with an approximate location of the IP address. 
 
 Webhooks
-- Adds a number of threat detection webhooks to track and respond to important events around Passwords, MFA, and Login.
+- Adds a number of threat detection webhooks to track and respond to important events around passwords, MFA, and login.
 
 To learn more, you can take a look at our [release notes](/docs/v1/tech/release-notes/#version-1-30-0). 
 
