@@ -22,7 +22,7 @@ FusionAuth's Advanced Threat Detection includes:
 * **IP Access Control Lists:** flexible rules to examine IP addresses and block malicious requests while allowing valid access;   
 * **Rate Limiting:** limits common requests (failed login, forgotten password, send email verification and more) to prevent user login spamming, credential stuffing, and bot access;
 * **Registration Locking by Domain:** prevents emails from certain domains from being used to register accounts, which can prevent account spoofing; 
-* **Additional Webhooks** track important events around Passwords, MFA, and Login.
+* **Expanded Webhook Events** enables tracking important events around Passwords, MFA, and Login.
 * **Captcha:** requires users to prove they are human to log in or register with support for Google ReCaptcha V2 and V3, hCaptcha and hCaptcha Enterprise;
 * **Impossible Travel Calculations:** prevents insecure access from geographically distant login requests by calculating whether travel between login locations is physically possible. 
 
