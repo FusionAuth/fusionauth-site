@@ -23,7 +23,7 @@ Anything a person can log into, whether custom web applications, mobile applicat
 
 Each application in FusionAuth can have an [unlimited number of roles](/docs/v1/tech/core-concepts/roles/). Each role is a string. Roles can either be marked as default and attached to every user registered to an application, or designated a super-user role, indicating administrative privileges. If you need a lot of roles, or fine-grained permissions in your application, you can create as many roles in FusionAuth as you’d like, perhaps using the API to automate the process.
 
-But this approach has negative consequences. Many roles make it more difficult to assign proper ones to individual users, even using groups. It also is more difficult to modify accounts as users change positions within your organization. Finally, it can lead to complexity as your application must handle an exploding number of roles in code.
+But this approach can have challenges in some cases. Many roles make it more difficult to assign proper ones to individual users, even using groups. It also is more difficult to modify accounts as users change positions within your organization. Finally, it can lead to complexity as your application must handle an exploding number of roles in code.
 
 There are also some authorization decisions that simply can’t be handled in an RBAC system like FusionAuth. These include:
 
@@ -37,9 +37,9 @@ Some concrete examples of authorization decisions which fall into this category,
 
 * As a manager, I can edit my timesheet and those of my team, but not my superiors’ or any other employee
 * As an employee, I can edit my timesheet for 24 hours after I submit it, but no longer
-* Accounting team members can edit any timesheet at any time
+* Accounting team members can edit any timesheet, but only during business hours
 
-All of these are complex authorization decisions that RBAC offloads to the timesheet application. This is fine when the decisions are relatively simple and few in number, but as they grow, this business logic benefits from being extracted.
+All of these are complex authorization decisions that RBAC offloads to the timesheet application. This is fine when the decisions are relatively simple and few in number, but as they grow, this business logic benefits from being extracted and centralized.
 
 ## Enter an authorization server
 
