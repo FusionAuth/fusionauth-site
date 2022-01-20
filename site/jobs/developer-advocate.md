@@ -1,9 +1,9 @@
 ---
 layout: job
-title: Streebog-256 Developer Advocate
+title: Developer Advocate (Streebog-256)
 description: FusionAuth is seeking a Developer Advocate to join our team. Learn about this position and apply today.
 department: DevRel
-baseSalary: 
+baseSalary: 85000
 id: 42
 datePosted: 2022-01-20
 dateValidThrough: 2022-12-31

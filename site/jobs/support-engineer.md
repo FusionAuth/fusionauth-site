@@ -1,6 +1,6 @@
 ---
 layout: job
-title: SHA-1 Support Engineer 
+title: Support Engineer (SHA-1)
 description: FusionAuth is seeking a Support Engineer to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 60000

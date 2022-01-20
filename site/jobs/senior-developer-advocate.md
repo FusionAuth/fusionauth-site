@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Streebog-512 Senior Developer Advocate
+title: Senior Developer Advocate (Streebog-512)
 description: FusionAuth is seeking a Senior Developer Advocate to join our team. Learn about this position and apply today.
 department: DevRel
 baseSalary: 

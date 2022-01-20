@@ -1,6 +1,6 @@
 ---
 layout: job
-title: SHA-512 Senior Java Software Engineer 
+title: Senior Java Software Engineer (SHA-512)
 description: FusionAuth is seeking a Senior Java Software Engineer to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 140000

@@ -1,6 +1,6 @@
 ---
 layout: job
-title: SHA-384 Staff Java Software Engineer 
+title: Staff Java Software Engineer (SHA-384)
 description: FusionAuth is seeking a Staff Java Software Engineer to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 110000

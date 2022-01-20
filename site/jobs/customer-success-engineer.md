@@ -1,6 +1,6 @@
 ---
 layout: job
-title: SHA-1 Customer Success Engineer 
+title: Customer Success Engineer (SHA-1)
 description: FusionAuth is seeking a Customer Success Engineer to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 60000
