@@ -1,9 +1,9 @@
 ---
 layout: job
-title: MD5 (Sales) Engineer
+title: Sales Engineer (MD5)
 description: FusionAuth is seeking a Sales Engineer to join our team. Learn about this position and apply today.
 department: Sales
-baseSalary: 100000
+baseSalary: 110000
 id: 1
 datePosted: 2020-04-21
 dateValidThrough: 2020-12-31
