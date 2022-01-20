@@ -69,7 +69,7 @@ In addition, you will have:
 
 ### Salary & Benefits
 
-* **Salary range:** $120,000 to $180,000 (depending on experience) 
+* **Salary range:** $85,000 to $135,000
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
 * **401k:** Yes!
