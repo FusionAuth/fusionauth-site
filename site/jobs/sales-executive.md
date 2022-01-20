@@ -1,6 +1,6 @@
 ---
 layout: job
-title: MD5 (Sales) Executive
+title: MD5 Sales Executive
 description: FusionAuth is seeking a Sales Executive to join our team. Learn about this position and apply today.
 department: Sales
 baseSalary: 70000
