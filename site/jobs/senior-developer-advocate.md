@@ -17,6 +17,10 @@ We are recruiting a Developer Advocate to help promote FusionAuth’s solution t
 
 You will report directly to the CEO. You can work remotely anywhere in the USA.
 
+### Why join FusionAuth?
+
+{% include _youtube-video.liquid youtubeid="c5xEz4iozLI" %}
+
 ### Responsibilities
 
 Create compelling written content including blog posts, long form articles and diagrams. This content will be technical in nature. The level of the content will be intermediate to advanced. You should own this content from conception to delivery/publishing. Expectation when fully up to speed is 1-4 pieces of content a month.
