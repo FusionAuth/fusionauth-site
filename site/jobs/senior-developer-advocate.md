@@ -60,6 +60,7 @@ You should have experience with most of the following:
 * AWS
 * Git
 * Screencasting software such as Quicktime
+* One of the languages for which FusionAuth has a client library
 
 In addition, you will have: 
 
