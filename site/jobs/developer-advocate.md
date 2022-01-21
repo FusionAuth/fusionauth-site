@@ -34,6 +34,7 @@ Additionally, you will:
 * Speaking at meetups.
 * Be aware of sales opportunities with community members and pass interested parties off to the sales team.
 * Update and revise technical documentation.
+* Edit blog posts provided by third parties.
 * Explore other forms of content creation, including video.
 
 At the end of 30 days you will have published 1-2 tutorials. At the end of 90 days you will have published a guide and spoken at a meetup.
