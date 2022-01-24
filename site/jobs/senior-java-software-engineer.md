@@ -6,7 +6,7 @@ department: Engineering
 baseSalary: 140000
 id: 2
 datePosted: 2020-04-21
-dateValidThrough: 2020-12-31
+dateValidThrough: 2022-12-31
 ---
 
 FusionAuth is a fast growing startup headquartered in Denver Colorado. We are expanding our team to help accelerate our growth and take FusionAuth to the next level.

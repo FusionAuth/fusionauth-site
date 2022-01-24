@@ -6,7 +6,7 @@ department: Sales
 baseSalary: 110000
 id: 1
 datePosted: 2020-04-21
-dateValidThrough: 2020-12-31
+dateValidThrough: 2022-12-31
 ---
 
 ### Overview
