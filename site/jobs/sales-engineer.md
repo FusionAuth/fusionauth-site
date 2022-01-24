@@ -19,6 +19,10 @@ We are recruiting a Sales Engineer who will assist new prospective customers. Th
 
 You will report directly to the VP of Sales and will work mostly remote from home, with occasional visits to our Denver office (dependent on your location).  
 
+### Why join FusionAuth?
+
+{% include _youtube-video.liquid youtubeid="o8R7XYbyT90" %}
+
 ### Responsibilities
 
 Your responsibilities will include:
