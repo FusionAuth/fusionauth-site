@@ -15,7 +15,7 @@ At FusionAuth, we talk to potential customers who are interested in migrating aw
 
 <!--more-->
 
-This blog post will explain why and how you might choose to migrate from Amazon Cognito to another solution.
+This blog post will explain why and how you might choose to migrate from Amazon Cognito to another solution. This is more complicated than it might seem because you cannot access the password hashes of users in Cognito, which has impacts the way you can migrate their authentication experience.
 
 ## Weaknesses of Amazon Cognito 
 
