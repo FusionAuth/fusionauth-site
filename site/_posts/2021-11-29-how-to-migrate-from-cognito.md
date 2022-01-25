@@ -9,9 +9,13 @@ tags: topic-upgrade-cognito
 excerpt_separator: "<!--more-->"
 ---
 
-Amazon Cognito is a serverless CIAM service from Amazon Web Services with deep AWS integration. It offers authentication and authorization and supports a number of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant. This blog post covers why and how you might choose to migrate from Amazon Cognito to another solution.
+Amazon Cognito is a serverless CIAM service from Amazon Web Services with deep AWS integration. It offers authentication and authorization and supports a number of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant.
+
+At FusionAuth, we talk to potential customers who are interested in migrating away from Cognito because of limitations, typically of UX, functionality or data control.
 
 <!--more-->
+
+This blog post will explain why and how you might choose to migrate from Amazon Cognito to another solution.
 
 ## Weaknesses of Amazon Cognito 
 
