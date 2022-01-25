@@ -1,9 +1,9 @@
 ---
 layout: job
-title: Developer Advocate (Streebog-256)
-description: FusionAuth is seeking a Developer Advocate to join our team. Learn about this position and apply today.
+title: Solution Architect (SWIFFT)
+description: FusionAuth is seeking a Solution Architect to join our team. Learn about this position and apply today.
 department: Engineering
-baseSalary: 85000
+baseSalary: 150000
 id: 42
 datePosted: 2022-01-20
 dateValidThrough: 2022-12-31
@@ -30,7 +30,7 @@ Additionally, you will:
 * Reify customer questions and feedback into documentation, feature requests (on GitHub), case studies and quickstarts.
 * Be aware of upsell opportunities and pass them off to the sales team.
 
-At the end of 30 days you will own the transition process and have familiarized yourself with FusionAuth's capabilities. At the end of 90 days you will have published sample guide and spoken at a meetup.
+At the end of 30 days you will own the transition process and have familiarized yourself with FusionAuth's capabilities. At the end of 90 days you will have published a sample architecture and coded up one or more proof of concepts.
 
 ### Requirements
 
