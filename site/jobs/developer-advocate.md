@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Developer Advocate (Streebog-256)
+title: SHA-1 Developer Advocate
 description: FusionAuth is seeking a Developer Advocate to join our team. Learn about this position and apply today.
 department: DevRel
 baseSalary: 85000

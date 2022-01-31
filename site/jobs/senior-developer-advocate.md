@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Senior Developer Advocate (Streebog-512)
+title: SHA-256 Senior Developer Advocate
 description: FusionAuth is seeking a Senior Developer Advocate to join our team. Learn about this position and apply today.
 department: DevRel
 baseSalary: 

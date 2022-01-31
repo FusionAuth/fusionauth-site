@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Senior Java Software Engineer (SHA-512)
+title: SHA-384 Staff Software Engineer
 description: FusionAuth is seeking a Senior Java Software Engineer to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 140000
@@ -84,7 +84,7 @@ It would be good if you have experience with most of the following:
 
 ### Salary & Benefits
 
-* **Salary range:** $120,000 to $180,000 (depending on experience) 
+* **Salary range:** $140,000 to $200,000 (depending on experience) 
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
 * **401k:** Yes!

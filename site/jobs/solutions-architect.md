@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Solution Architect (SWIFFT)
+title: SHA-1 Solution Architect
 description: FusionAuth is seeking a Solution Architect to join our team. Learn about this position and apply today.
 department: Engineering
 baseSalary: 150000

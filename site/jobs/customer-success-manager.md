@@ -1,6 +1,6 @@
 ---
 layout: job
-title: Customer Success Manager (FSB-256)
+title: Customer Success Manager
 description: FusionAuth is seeking a Customer Success Manager to join our team. Learn about this position and apply today.
 department: Sales
 baseSalary: 75000

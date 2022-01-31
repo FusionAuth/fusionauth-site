@@ -1,9 +1,9 @@
 ---
 layout: job
-title: Customer Success Engineer (SHA-1)
+title: SHA-1 Customer Success Engineer
 description: FusionAuth is seeking a Customer Success Engineer to join our team. Learn about this position and apply today.
 department: Engineering
-baseSalary: 60000
+baseSalary: 50000
 id: 3
 datePosted: 2021-02-02
 dateValidThrough: 2022-12-31
@@ -73,7 +73,7 @@ In general, you can expect the following during your interview process.
 
 ### Salary & Benefits
 
-* **Salary range:** $50,000 to $80,000 (depending on experience) 
+* **Salary range:** $50,000 to $90,000 (depending on experience) 
 * **Benefits:** Medical, dental, and vision
 * **Bonus:** Up to 10% depending on how well the company performs
 * **401k:** Yes!
