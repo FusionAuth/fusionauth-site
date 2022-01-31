@@ -21,43 +21,38 @@ You will report directly to the CTO and will work from our Denver office or remo
 
 Your responsibilities will include:
 
-* Designing new features
-* Producing clear design documentation as needed
-* Writing high-quality, performant and secure code
-* Writing extensive and thorough tests
-* Writing clear, high-quality documentation for new features
-* Bug fixing
+* Write code 
+* Test code that you write
+* Write more tests for the code that you wrote
+* Write tests for code you didn't write
+* Assist with design and code reviews
+* Document new features, and fix existing doc as you find errors
+* Bug fixing... Most of us aren't perfect 🪲
 * Rotate as the on-call engineer to solve critical customer issues. While not the norm, we do have some off hours support requirements.
-* Work closely with the rest of the engineering team to architect and design the product and deployment strategies
 
 ### Requirements
 
 The requirements for this position include:
 
-* Highly proficient in all aspects of software engineering
-* Highly proficient in OO design and implementation
-* Understanding of the full web stack (HTTP, TCP/IP, REST, etc)
+* You should know how to write code. Ideally Java, or something similar to that. 
+* If you can't write Java code, you should be interested to learn Java.
+* Understand how REST APIs work and how to design them
+* Have an understanding of the full web stack (HTTP, TCP/IP, REST, etc)
 * Ability to work on Linux, Windows, Mac (and in virtual machines)
-* Knowledge of high-availability, high-performance, high-scalability application development
-* In-depth knowledge of good API design
-* In-depth knowledge of unit testing
-* Self starter
 * Ability to learn new technologies and skills quickly
 * Able to jump into new or existing code bases quickly
-* Able to use and participate in non-mainstream open source technologies
-* Comfortable and excited about working on our open source projects
-* Able to write new frameworks, libraries and tools to meet specific needs
+* Ability to self-manage yourself
 
 ### Technologies
 
-It would be good if you have experience with most of the following:
+It would be good if you have experience with at least some of the following:
 
 * Java 8+
 * Ruby (or similar dynamic language)
 * HTML 5
 * CSS
 * JavaScript
-* Guice (or Spring)
+* Guice (or Spring) or similar DI framework
 * MySQL and PostgreSQL (or equivalents)
 * XML
 * JSON

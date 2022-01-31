@@ -15,6 +15,8 @@ Our mission is to make authentication and authorization simple and secure for ev
 
 We are recruiting a Customer Success Engineer who will join our engineering team to help us build the best authentication and authorization solution in the world. This exciting role will allow you to help support our expanding community and help them get the most out of FusionAuth. You will work closely with the software engineers to learn the product and the standard protocols commonly used to integrate with FusionAuth. For this role, you must be a creative and quantitative thinker. You should be interested in the authentication, authorization and user management space. The ideal candidate will be a self-starter, fast worker and excited about growing a company from the ground up.
 
+This is not a level 1 support position. If you are familiar with support organizations, think of this as a level 2 or level 3 position. This position is an entry level position designed to expose a candidate to the product and feed into the engineering team.     
+
 You will report directly to the CTO and will work from our Denver office or remotely from anywhere in the USA.  
 
 ### Responsibilities
@@ -25,11 +27,15 @@ Your responsibilities will include:
 * Identify and correct gaps or typos in our technical documentation.  
 * Work closely with the rest of the engineering team to identify how to best serve our customers.
 * Supporting both FusionAuth and the sister product CleanSpeak.
+* Advocate for the end-user
+* Develop a strong understanding of the product and assist or perform technical on-boarding for new clients
+
+This position is not limited to what is listed here. Your abilities will be put to good use and this position is intended as a feeder into the engineering team. Career paths include product engineering, developer relations or sales engineer. 
 
 ### Opportunities
 
 * Technical writing
-* Squashing bugs
+* Dig into source code, submitting PRs for bug fixes, or small features.
 * Development example applications to demonstrate recommended CleanSpeak and FusionAuth integration concepts
 
 ### Requirements
