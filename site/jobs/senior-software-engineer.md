@@ -34,6 +34,7 @@ Your responsibilities will include:
 
 The requirements for this position include:
 
+* 5+ years of professional software development
 * Highly proficient in all aspects of software engineering
 * Highly proficient in OO design and implementation
 * Understanding of the full web stack (HTTP, TCP/IP, REST, etc)

@@ -34,6 +34,7 @@ Your responsibilities will include:
 
 The requirements for this position include:
 
+* 2+ years of professional software development 
 * You should know how to write code. Ideally Java, or something similar to that. 
 * If you can't write Java code, you should be interested to learn Java.
 * Understand how REST APIs work and how to design them
