@@ -37,15 +37,16 @@ If you wanted to print images from your Pinterest account without downloading th
 
 You can do this using OAuth2:
 
-DIAGRAM 
+{% plantuml source: _diagrams/learn/expert-advice/oauth/what-is-oauth-authorization-code-grant.plantuml, alt: "Example of the Authorization Code grant" %}
 
-1. The printing website (third-party app or client) redirects you to Pinterest (which is the resource server, as it has access to the images you are trying to print). 
-2. You log in (since Pinterest needs to know who you are) to an authorization server, also probably managed by Pinterest. 
-3. As part of the logon process, the authorization server asks you if you  want to give access to a third-party application. If you say yes, it sends an authorization code to   the third-party application.
-4. The app uses this authorization code and some previously agreed upon credentials which are tied to the application, to get an access token from the authorization server. So the authorization server has the authorization code, which represents the choices the user made, and the application credentials. It verifies both of these and generates an access token.
-5. The printing website app receives the access token and stores it safely.
-6. The app sends the access token to the Pinterest resource server with a request for the images
-7. The images are returned.
+1. The Printing Website (third-party app or client) redirects you to Pinterest Photo Service (which is the resource server, as it has access to the images you are trying to print). 
+2. You log in (since Pinterest needs to know who you are) to the Pinterest Login Service (also called an authorization server).
+3. As part of the logon process, the authorization server asks you if you want to give access to a third-party application. 
+4. If you say yes and grant the permissions the printing website asks for, the authorization server sends an authorization code to   the third-party application.
+5. The app uses this authorization code, and some previously agreed upon credentials which are tied to the application, to get an access token from the authorization server. The authorization server has the authorization code, which represents the choices the user made, and the application credentials. It verifies both of these and generates an access token.
+6. The printing website app receives the access token and stores it safely.
+7. The app sends the access token to the Pinterest resource server with a request for the images
+8. The images are returned.
 
 In these steps, the user never shares their credentials with the third-party app, instead the app gains access based on the authorization server which confirms the user identity. 
 
