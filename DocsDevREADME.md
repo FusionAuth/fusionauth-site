@@ -14,6 +14,8 @@ Here are some guidelines to follow when writing documentation (everything under 
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - References to `http://127.0.0.1` should be updated to `[http://localhost` and remove hyperlinks to `localhost`
 - The class used for images should be updated to `class="img-fluid"`.
+- Always provide an alt text for images. It should always be a full sentence describing the content of the image.
+- If possible use an SVG for images. Otherwise a PNG that has been properly minified is acceptable.
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
@@ -64,6 +66,7 @@ For API docs:
 
 For blog posts:
 - Indent all code with two spaces per level.
+- If applicable, use _includes/_what-is-fusionauth.liquid to introduce FusionAuth in a standard way.
 - Single spaces should be used instead of double spaces after a period.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
 - Blog post headers should have only the first word and any proper nouns are capitalized.
