@@ -33,7 +33,7 @@ This article uses the [OpenID Connect](https://openid.net/connect/) (OIDC) proto
 
 When a client like `kubectl` wants to connect to the Kubernetes API, it will use the Authorization Code grant to get an access and refresh token from FusionAuth. This token will be used to authenticate with the Kubernetes API. Then the API server will talk to FusionAuth to verify that the client-provided token is valid. Finally, it will use the roles of the authenticated user to validate whether the client is allowed to perform the operation or not.
 
-{% include _image.liquid src="/assets/img/blog/rbac-kubernetes/oauth-kubernetes-oidc.svg" alt="Architecture diagram of K8s using OIDC for RBAC." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/oauth-kubernetes-oidc.svg" alt="An architecture diagram of K8s when using OIDC for RBAC." class="img-fluid" figure=true %}
 
 ## What is FusionAuth?
 
@@ -358,15 +358,15 @@ The final step in configuring FusionAuth is to create an application. Visit the 
 
 The "Roles" tab is where you can create new roles for this application. Go ahead and create two roles, `admin` and `viewer`. Later, you’ll map these roles to Kubernetes roles to enable RBAC.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-roles.png" alt="Adding roles to a new application." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-roles-tab.png" alt="Adding roles to a new application." class="img-fluid" figure=false %}
 
 In the "OAuth" tab, add `http://localhost:8000` and `http://localhost:18000` in the "Authorized redirect URLs" field. These URLs are used by the `oidc-login` Kubernetes plugin to redirect the user after authentication.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-oauth.png" alt="Configuring the OAuth settings for a new application." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-oauth-tab.png" alt="Configuring the OAuth settings for a new application." class="img-fluid" figure=false %}
 
 In the "JWT" tab, first enable JWT creation by toggling the switch. In the "Id Token signing key" dropdown, select the RS256 key you created above. In the "Id Token populate lambda" dropdown, select the lambda you created earlier.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-jwt.png" alt="Configuring the JWT settings for a new application." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-jwt-tab.png" alt="Configuring the JWT settings for a new application." class="img-fluid" figure=false %}
 
 Finally, save the application.
 
@@ -374,7 +374,9 @@ For demonstration, let's create two users. One will be given the `admin` role, a
 
 Visit the "Users" page, and add a new user. Enter `admin@fusionauth.local` in the email field and disable "Send email to setup password" Enter a password for this new user and save it.
 
-Click the **Add registration** button, select the `Kubernetes` application and the `admin` role, and save the registration.
+{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/create-admin-user.png" alt="Adding an admin user." class="img-fluid" figure=false %}
+
+Click the "Add registration" button, select the `Kubernetes` application and the `admin` role, and save the registration.
 
 {% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/add-admin-user-registration.png" alt="Adding a registration for the Kubernetes application for the admin user." class="img-fluid" figure=false %}
 
@@ -411,7 +413,9 @@ Restart the minikube cluster with additional API server flags. Replace `<YOUR_CL
             --extra-config=apiserver.authorization-mode=Node,RBAC
 ```
 
-Using the `--extra-config` flags, the new configurations will be passed to the cluster. Here is an the explanations of each of the flags used:
+Using the `--extra-config` flags, the new configurations will be passed to the cluster.
+
+Here are explanations of each of the flags used:
 
 * `--oidc-issuer-url`: sets the OIDC issuer URL (`https://fusionauth.local`)
 * `--oidc-client-id`: the application's client Id; provide the client Id copied in the previous step
