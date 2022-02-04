@@ -204,7 +204,7 @@ Now the page looks like this:
 
 We are going to store the user's choice of plan with their registration. FusionAuth supports single sign on. You can have multiple applications and your users can sign into each using the same credentials. The association between the user and the application is stored as a registration. So it makes sense to store application specific data with the registration for that app.
 
-We are going to use these to API endpoints, [retrieve user registration](https://fusionauth.io/docs/1.x/tech/apis/registrations#retrieve-a-user-registration "Jump to FusionAuth Docs") and [update user registration](https://fusionauth.io/docs/1.x/tech/apis/registrations#update-a-user-registration "Jump to FusionAuth Docs"). (If you wanted, you could store the data under their user. In which case you user the [retrieve user](https://fusionauth.io/docs/1.x/tech/apis/users#retrieve-a-user "Jump to FusionAuth Docs") and [update user](https://fusionauth.io/docs/1.x/tech/apis/users#update-a-user "Jump to FusionAuth Docs") endpoints.)
+We are going to use these to API endpoints, [retrieve user registration](/docs/1.x/tech/apis/registrations#retrieve-a-user-registration "Jump to FusionAuth Docs") and [update user registration](/docs/1.x/tech/apis/registrations#update-a-user-registration "Jump to FusionAuth Docs"). (If you wanted, you could store the data under their user. In which case you user the [retrieve user](/docs/1.x/tech/apis/users#retrieve-a-user "Jump to FusionAuth Docs") and [update user](/docs/1.x/tech/apis/users#update-a-user "Jump to FusionAuth Docs") endpoints.)
 
 First we are going to retrieve the registration for the logged in user, so we can see what plan, if any, they have chosen.
 

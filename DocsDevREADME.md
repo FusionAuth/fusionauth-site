@@ -251,7 +251,7 @@ Then, wherever you want the related posts to show up, add this text:
 ```
 ++++
 {% capture relatedTag %}api-tenants{% endcapture %}
-{% include _doc_related_posts.liquid %}
+{% include _doc-related-posts.liquid %}
 ++++
 ```
 

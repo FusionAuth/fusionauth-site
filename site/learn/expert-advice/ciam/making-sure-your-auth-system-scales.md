@@ -7,13 +7,11 @@ image: advice/auth-system-scale/making-sure-your-auth-system-can-scale-header-im
 category: CIAM
 date: 2021-03-11
 dateModified: 2021-03-11
-redirect_from:
-  - /learn/expert-advice/identity-basics/making-sure-your-auth-system-scales/
 ---
 
 Have you ever worked on a software system that stored passwords in plain text? I once worked on a product that stored encrypted plain-text passwords. Thankfully, this system was eventually fixed to store hashed passwords!
 
-To make password hashes harder to compute, a standard technique is to [hash passwords thousands of times](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy/) before storing them in a database. But there's a trade-off: you get better security at the cost of a performance hit.
+To make password hashes harder to compute, a standard technique is to [hash passwords thousands of times](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy) before storing them in a database. But there's a trade-off: you get better security at the cost of a performance hit.
 
 This trade-off lies at the heart of authentication. More robust security often means changes to how scalable your solution is. An increase in web traffic might expose these performance issues. If you've split your system into microservices, then you'll be faced with other kinds of challenges, like how to authenticate services-to-service HTTP requests and share authentication logic across services. In fact, the second item on both current OWASP [Web Application Security Top Ten Risks](https://www.cloudflare.com/learning/security/threats/owasp-top-10/) and [API Security Top Ten Risks](https://owasp.org/www-project-api-security/) is *broken authentication*. 
 

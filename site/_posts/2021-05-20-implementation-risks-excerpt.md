@@ -12,7 +12,7 @@ Given the increase of data beaches in the past few years, it's more important th
 
 <!--more-->
 
-_This blog post is an excerpt from [Common Authentication Implementation Risks and How to Mitigate Them](/learn/expert-advice/identity-basics/common-authentication-implementation-risks/)._
+_This blog post is an excerpt from [Common Authentication Implementation Risks and How to Mitigate Them](/learn/expert-advice/authentication/common-authentication-implementation-risks)._
 
 Your authentication system is one of the areas of your software system that you absolutely have to ensure is secure. Not only could a poorly implemented authentication system cause a loss of customer trust, it could also have major implications for your company's finances, overall reputation, and regulatory compliance.
 
@@ -37,4 +37,4 @@ A major part of this plan should be to bake security controls directly into your
 
 If your organization is compliant with one of the major security standards, like [SOC 2](https://www.imperva.com/learn/data-security/soc-2-compliance/), then you know that even seemingly insignificant elements of your organization—such as how your team shares code, automated code linting, and having clear coding standards—can impact your system's overall security. To avoid leaks, consider implementing some of the policies in the list above.
 
-To learn about other risks including performance concerns, regulatory compliance, opportunity cost and more, read [Common Authentication Implementation Risks and How to Mitigate Them](/learn/expert-advice/identity-basics/common-authentication-implementation-risks/).
+To learn about other risks including performance concerns, regulatory compliance, opportunity cost and more, read [Common Authentication Implementation Risks and How to Mitigate Them](/learn/expert-advice/authentication/common-authentication-implementation-risks).

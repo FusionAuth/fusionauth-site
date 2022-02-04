@@ -15,15 +15,15 @@ After people register, you will want to enrich or change their profile. Sometime
 
 <!--more-->
 
-Let's set the stage. Suppose you created a custom registration form for a real estate search application, as outlined in [this blog post series](/blog/2020/08/27/advanced-registration-form/). But you now want to update user profiles as they move through the home buying process.
+Let's set the stage. Suppose you created a custom registration form for a real estate search application, as outlined in [this blog post series](/blog/2020/08/27/advanced-registration-form). But you now want to update user profiles as they move through the home buying process.
 
-As of [FusionAuth version 1.20](/blog/2020/10/27/announcing-fusionauth-1-20/), you can now manage such data from within the administrative user interface. In this post, we'll walk through how to set this up and why you might want to.
+As of [FusionAuth version 1.20](/blog/2020/10/27/announcing-fusionauth-1-20), you can now manage such data from within the administrative user interface. In this post, we'll walk through how to set this up and why you might want to.
 
 ## Prerequisites
 
-This post assumes you've installed FusionAuth and created a custom registration form, as outlined in the above blog posts. If blog posts aren't your jam, you can also read the [Advanced Registration Form guide](/docs/v1/tech/guides/advanced-registration-forms/) to learn how to set up your form.
+This post assumes you've installed FusionAuth and created a custom registration form, as outlined in the above blog posts. If blog posts aren't your jam, you can also read the [Advanced Registration Form guide](/docs/v1/tech/guides/advanced-registration-forms) to learn how to set up your form.
 
-*Please note that advanced registration forms are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing/).*
+*Please note that advanced registration forms are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing).*
 
 ## Why use custom admin forms?
 
@@ -123,7 +123,7 @@ This account doesn't have access to any FusionAuth functionality beyond user man
 
 If you were paying attention, you might have thought I was pulling a fast one. You will have noticed that the title of the newly added field is `registration.data.userstatus` in the form.
 
-This is suboptimal but it is happening because the field name hasn't been added to the messages, which is where all the text UI elements are retrieved from. You can update that by editing the messages properties. This is covered in more detail in [this blog post](/blog/2020/09/01/theme-registration-form/), which updated the properties file for other custom fields.
+This is suboptimal but it is happening because the field name hasn't been added to the messages, which is where all the text UI elements are retrieved from. You can update that by editing the messages properties. This is covered in more detail in [this blog post](/blog/2020/09/01/theme-registration-form), which updated the properties file for other custom fields.
 
 If you need to take action when a user's registration data is changed, you could [use a webhook](/docs/v1/tech/events-webhooks/) to listen for that particular event. For example, you could automatically send flowers to the home buyer whenever their status is changed to "Closed". This would require knowing the new home's address as well as an integration with an online flower seller, but is left as an exercise for the reader.
 

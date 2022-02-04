@@ -7,8 +7,6 @@ image: advice/value-standards/the-value-of-standards-compliant-authentication-he
 category: OAuth
 date: 2021-06-10
 dateModified: 2021-06-10
-redirect_from:
-  - /learn/expert-advice/identity-basics/value-standards-compliant-authentication/
 ---
 
 Software applications regularly need access to data from other services on behalf of their users. 
@@ -71,7 +69,7 @@ Here's a diagram of the "implicit" OAuth flow. The official OAuth terms for diff
 
 {% include _image.liquid src="/assets/img/advice/value-standards/oauth-flow.png" class="img-fluid" alt="The OAuth Implicit grant." figure=false %}
 
-It can be useful to look at the implicit flow to understand the concepts. However, please don't use the implicit grant, as it is extremely vulnerable to XSS attacks. You can learn more about that in [The Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/#implicit-grant-in-oauth-20).
+It can be useful to look at the implicit flow to understand the concepts. However, please don't use the implicit grant, as it is extremely vulnerable to XSS attacks. You can learn more about that in [The Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth#implicit-grant-in-oauth-20).
 
 Today, it's safer to go with a more secure update to OAuth called [PKCE](https://oauth.net/2/pkce/) (often pronounced "pixie") and the Authorization Code grant. Originally intended to enhance OAuth security for mobile applications, this combination provides extra security benefits to all clients using this updated protocol.
 
