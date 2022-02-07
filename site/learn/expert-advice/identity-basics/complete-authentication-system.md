@@ -72,7 +72,7 @@ The effort to manually implement SAML (and OIDC, to a lesser extent) are quite h
 
 Which category of solution you should implement will have a lot to do with your specific requirements and what you expect out of an auth provider. That said, if you are expecting that you will need some of the more advanced functionality down the line, it is hard to go wrong with the full-featured approach. 
 
-Even if you start with a more straightforward system, like a DIY approach or a drop-in script, there is no reason why you cannot migrate to a more advanced system later. Migrating between auth systems naturally brings its own challenges, but there are steps you can take to [avoid vendor lock-in](/learn/expert-advice/identity-basics/avoid-lockin/) to make the transition smoother when the time comes.
+Even if you start with a more straightforward system, like a DIY approach or a drop-in script, there is no reason why you cannot migrate to a more advanced system later. Migrating between auth systems naturally brings its own challenges, but there are steps you can take to [avoid vendor lock-in](/learn/expert-advice/authentication/avoid-lockin) to make the transition smoother when the time comes.
 
 Returning to the example of Cotter and FusionAuth, if you were graduating from one to the other, you would be able to export your users from Cotter in CSV format and then import them into FusionAuth. As with any migration, there is the potential for unexpected setbacks depending on your configuration, but generally speaking, it should be pretty manageable.
 

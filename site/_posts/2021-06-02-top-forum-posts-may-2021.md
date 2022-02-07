@@ -17,7 +17,7 @@ If you want to participate, you need a free account. Or, check out [the forum](/
 
 ## NextAuth and FusionAuth
 
-Post: [FusionAuth + NextAuth refresh tokens](https://fusionauth.io/community/forum/topic/1011/fusionauth-nextauth-refresh-tokens)
+Post: [FusionAuth + NextAuth refresh tokens](/community/forum/topic/1011/fusionauth-nextauth-refresh-tokens)
 
 In this post, naughtly.keller is sharing how they are building an application with Next.js, NextAuth, FusionAuth and Hasura. In particular they are wondering about refresh tokens and how they work in this context. They also learned about lambdas, mapping claims, the userinfo endpoint, and the introspect endpoint. FusionAuth team member Joshua also chimed in with some helpful feedback and links.
 
@@ -31,7 +31,7 @@ This is the kind of post I love to read. Forums, and learning in public in gener
 
 ## Single Sign-On (SSO) with the Login API
 
-Post: [Is there an example of how to authorize a user to an app and allow them to access after using the login API?](https://fusionauth.io/community/forum/topic/1002/is-there-an-example-of-how-to-authorize-a-user-to-an-app-and-allow-them-to-access-after-using-the-login-api)
+Post: [Is there an example of how to authorize a user to an app and allow them to access after using the login API?](/community/forum/topic/1002/is-there-an-example-of-how-to-authorize-a-user-to-an-app-and-allow-them-to-access-after-using-the-login-api)
 
 In this post, fred.fred is asking about how to integrate an existing SSO system and FusionAuth. FusionAuth team member Joshua offers suggestions and clarifying questions. The discussion also highlights the difference in functionality (particularly around SSO) between the hosted login pages and the login API.
 
@@ -41,9 +41,9 @@ At the end of the day, fred.fred found a solution which involved making "a host 
 
 ## Duplicate key errors with an API Gateway
 
-Post: [Facing duplicate key errors on high load](https://fusionauth.io/community/forum/topic/1005/facing-duplicate-key-errors-on-high-load)
+Post: [Facing duplicate key errors on high load](/community/forum/topic/1005/facing-duplicate-key-errors-on-high-load)
 
-jm.oliver is using an API Gateway and FusionAuth. The API Gateway, as the name implies, protects APIs. It does so by extracting credentials from the client request, exchanging them for a JWT from FusionAuth, and using that token for further requests from that same client. (This type of architecture is a common pattern; here's a [blog post about JWT authorization in a microservices gateway](/blog/2020/11/12/jwt-authorization-microservices-gateway/).) This system is also using [Connectors](/docs/v1/tech/connectors/) to verify the presented credentials.
+jm.oliver is using an API Gateway and FusionAuth. The API Gateway, as the name implies, protects APIs. It does so by extracting credentials from the client request, exchanging them for a JWT from FusionAuth, and using that token for further requests from that same client. (This type of architecture is a common pattern; here's a [blog post about JWT authorization in a microservices gateway](/blog/2020/11/12/jwt-authorization-microservices-gateway).) This system is also using [Connectors](/docs/v1/tech/connectors/) to verify the presented credentials.
 
 After a bit of back and forth, this forum post resulted in [an issue](https://github.com/FusionAuth/fusionauth-issues/issues/1231) being filed.
 
@@ -51,4 +51,4 @@ This topic illustrates one of the benefits of the FusionAuth community. When peo
 
 ## Join us in the forum
 
-If you have a question about how to use FusionAuth, a blog post you'd like to share, or want to give feedback, please check out the [FusionAuth forums](https://fusionauth.io/community/forum/).
+If you have a question about how to use FusionAuth, a blog post you'd like to share, or want to give feedback, please check out the [FusionAuth forums](/community/forum/).

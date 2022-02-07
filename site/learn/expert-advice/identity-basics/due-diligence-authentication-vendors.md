@@ -67,7 +67,7 @@ Authentication providers need to keep this in mind while selling you on their se
 ## Pricing
 Authentication-as-a-Service (AaaS) can be very economical if you don't want to be in the datacenter business. But before you onboard a provider, you need to understand your own business model. For example, if you have free users and scale overnight, you need to be able to cover those expenses.
 
-Conducting due diligence on pricing is every bit as critical as the previous elements covered in this article. You don't want surprises as your application grows. [AWS Cognito](https://aws.amazon.com/cognito/pricing/) is a perfect example when it comes to pricing transparency. Here are some questions to keep in mind when you're considering an AaaS's pricing:
+Conducting due diligence on pricing is every bit as critical as the previous elements covered in this article. You don't want surprises as your application grows. [AWS Cognito](https://aws.amazon.com/cognito/pricing) is a perfect example when it comes to pricing transparency. Here are some questions to keep in mind when you're considering an AaaS's pricing:
 
 1. For out-of-the-box solutions, what is the pricing per authentication?
 1. Have some understanding of your expected user base size and how that will affect the price of the service.

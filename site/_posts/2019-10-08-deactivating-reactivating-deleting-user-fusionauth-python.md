@@ -101,7 +101,7 @@ Copy it into a text editor and set it off to the side. We'll be using it in a mo
 
 ## Setting up FusionAuth using a Kickstart file
 
-Instead of manually setting up FusionAuth, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
+Instead of manually setting up FusionAuth, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
 
 ## Defining terms
 
@@ -121,7 +121,7 @@ Now, we will import the FusionAuth Python client library just like we did in the
 from fusionauth.fusionauth_client import FusionAuthClient
 ```
 
-Below this, we will want to tell our app to make the appropriate API calls to FusionAuth. **Add your own API key and server information**. You can use the same API key created in the previous tutorial. If you do not have an API key you must [create one](https://fusionauth.io/blog/2019/10/01/implementing-fusionauth-python/#creating-an-api-key).
+Below this, we will want to tell our app to make the appropriate API calls to FusionAuth. **Add your own API key and server information**. You can use the same API key created in the previous tutorial. If you do not have an API key you must [create one](/blog/2019/10/01/implementing-fusionauth-python#creating-an-api-key).
 
 ```python
 #  You must supply your API key and URL here
@@ -321,7 +321,7 @@ python test.py
 ```
 
 ### Additional error codes
-Didn't find your error here? Visit [https://fusionauth.io/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/troubleshooting](/docs/v1/tech/troubleshooting) for more troubleshooting suggestions. You can also ask a question on the [FusionAuth Forum](https://fusionauth.io/community/forum/). As always, if you have a support contract feel free to [contact FusionAuth support](https://account.fusionauth.io/account/support).
+Didn't find your error here? Visit [https://fusionauth.io/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/admin-guide/troubleshooting](/docs/v1/tech/admin-guide/troubleshooting) for more troubleshooting suggestions. You can also ask a question on the [FusionAuth Forum](/community/forum/). As always, if you have a support contract feel free to [contact FusionAuth support](https://account.fusionauth.io/account/support).
 
 
 ## Summary

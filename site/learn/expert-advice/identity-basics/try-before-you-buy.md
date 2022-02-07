@@ -29,7 +29,7 @@ When making any significant purchase that your development team will use as part
 
 If the developers start testing a potential API and they find they can build a relatively simple prototype to prove the API can support all your use cases, then you can be confident that a larger-scale implementation will work as well. Not only will this give you more confidence that the product you're buying is the right one for your business, it will also help your developers work more quickly when they do move to a larger-scale implementation because they will already have experience working with the API.
 
-For example, you may be looking at a few different authentication providers and have one that you've decided is the best candidate for your application. After all, it checks all the boxes! But when your developers start reading the documentation and actually build out a small prototype, they may find the library for your application's language doesn't support [passwordless authentication](/docs/v1/tech/guides/passwordless/). If you had committed to this authentication provider before discovering this, you might have already heavily integrated it into your application—which needs passwordless authentication.
+For example, you may be looking at a few different authentication providers and have one that you've decided is the best candidate for your application. After all, it checks all the boxes! But when your developers start reading the documentation and actually build out a small prototype, they may find the library for your application's language doesn't support [passwordless authentication](/docs/v1/tech/guides/passwordless). If you had committed to this authentication provider before discovering this, you might have already heavily integrated it into your application—which needs passwordless authentication.
 
 This would be a huge problem leading to a major rewrite or possibly having to drop a key feature of your app. However, if you had built a prototype using a free trial and discovered this limitation ahead of time, you could have simply moved on to choosing a different provider.
 
@@ -87,4 +87,4 @@ If you don't already have a QA environment, this can be a great chance to create
 
 Trying a full version of an authentication provider that you're considering is a very important step in making a final purchasing decision. Because authentication is a crucial component of any application, it's not a decision you want to be forced to reverse down the road. That would not only be costly in terms of dollars but also in developer time that could be spent working on new features for your product.
 
-If you're looking for an authentication provider you can get running in five minutes with an unlimited free plan, check out and download [FusionAuth](https://fusionauth.io/download/).
+If you're looking for an authentication provider you can get running in five minutes with an unlimited free plan, check out and download [FusionAuth](/download).

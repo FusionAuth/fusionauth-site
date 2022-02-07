@@ -13,7 +13,7 @@ Gatsby is one of the most popular JavaScript static site generators available. W
 
 <!--more-->
 
-In this blog post, you'll learn how to create a Gatsby site that uses FusionAuth to allow users to log in and access their profile securely. This application will use an [OAuth Authorization Code workflow and the PKCE extension](https://fusionauth.io/learn/expert-advice/oauth/definitive-guide-to-oauth-2#52-code-flow--pkce) to log users in and a Node application to store your access token securely. PKCE stands for Proof Key for Code Exchange, and is often pronounced "pixie".
+In this blog post, you'll learn how to create a Gatsby site that uses FusionAuth to allow users to log in and access their profile securely. This application will use an [OAuth Authorization Code workflow and the PKCE extension](/learn/expert-advice/oauth/modern-guide-to-oauth#authorization-code-grant) to log users in and a Node application to store your access token securely. PKCE stands for Proof Key for Code Exchange, and is often pronounced "pixie".
 
 At a high level, the authorization process looks like this:
 
@@ -29,15 +29,15 @@ In this tutorial, you'll walk through the process step-by-step, but if you want 
 5. Conclusion and next steps
 
 ## What you'll need
-- [FusionAuth](https://fusionauth.io/download)
+- [FusionAuth](/download)
 - [Node JS](https://nodejs.org/en/) (10+ preferred)
 - [npm](https://www.npmjs.com/) package manager
 - Web browser
 
 ## Setting up FusionAuth
-Before you start writing any code, download FusionAuth and get it running on your local machine. FusionAuth is available [for all major operating systems](https://fusionauth.io/download) or it can be [run in Docker](https://fusionauth.io/docs/v1/tech/installation-guide/docker).
+Before you start writing any code, download FusionAuth and get it running on your local machine. FusionAuth is available [for all major operating systems](/download) or it can be [run in Docker](/docs/v1/tech/installation-guide/docker).
 
-Once you have FusionAuth running, log into the admin panel and create a new Application. This process [is outlined here](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide), but you'll need to add your application's URLs to the OAuth configuration:
+Once you have FusionAuth running, log into the admin panel and create a new Application. This process [is outlined here](/docs/v1/tech/5-minute-setup-guide), but you'll need to add your application's URLs to the OAuth configuration:
 
 - Add `http://localhost:9000/oauth-callback` to the "Authorized redirect URLs".
 - Add `http://localhost:9000` to the "Authorized request origin URLs".
@@ -71,7 +71,7 @@ This project will use two separate applications: a Node app to securely store yo
 You'll create all the endpoints first, and then you'll see how to call them from Gatsby.
 
 ### Setting up the Node app
-Before you get started, you need to create a new subdirectory and initialize an Express app. Use a [similar structure to the one outlined here](https://fusionauth.io/blog/2020/03/10/securely-implement-oauth-in-react):
+Before you get started, you need to create a new subdirectory and initialize an Express app. Use a [similar structure to the one outlined here](/blog/2020/03/10/securely-implement-oauth-in-react):
 
 ```
 fusionauth-gatsby
@@ -222,7 +222,7 @@ module.exports = router;
 Now when users visit `localhost:9000/login` the Node app will generate a PKCE verifier and challenge, save the verifier to session storage, and redirect the user to FusionAuth with the challenge in the URL. The FusionAuth app will store this challenge and make sure that the verifier sent in the OAuth callback is valid.
 
 ### Creating the OAuth callback
-Once the user has entered their username and password, the FusionAuth server will check their credentials and redirect them to your Node app's OAuth callback endpoint with an authorization code. Your app will use that code and the PKCE verifier generated in the previous step to request a [long-lived access token](https://fusionauth.io/docs/v1/tech/oauth/tokens).
+Once the user has entered their username and password, the FusionAuth server will check their credentials and redirect them to your Node app's OAuth callback endpoint with an authorization code. Your app will use that code and the PKCE verifier generated in the previous step to request a [long-lived access token](/docs/v1/tech/oauth/tokens).
 
 Again, adding PKCE adds another layer of security by proving that the entity which sent the challenge is now requesting an access token. Your Node app will store the access token returned by FusionAuth in session storage and redirect the user to the Gatsby profile page we'll create in the next step.
 
@@ -269,7 +269,7 @@ Your app now authenticates users and stores their access tokens in session stora
 Why not omit the Node application? Storing the access token in the browser is, in general, insecure. It's vulnerable to cross site scripting attacks. If you must store the access token in the browser, make sure it is stored as a `Secure` `HttpOnly` cookie. 
 
 ### Creating the current user route
-FusionAuth includes an [`introspect` endpoint](https://fusionauth.io/docs/v1/tech/oauth/endpoints#introspect) that decodes the access token (represented by a JWT) and returns details about the current user. You will call this endpoint through your Node application by attaching the authorization token stored in the session.
+FusionAuth includes an [`introspect` endpoint](/docs/v1/tech/oauth/endpoints#introspect) that decodes the access token (represented by a JWT) and returns details about the current user. You will call this endpoint through your Node application by attaching the authorization token stored in the session.
 
 Create a new route file called `user.js`:
 
@@ -346,7 +346,7 @@ module.exports = router;
 Assuming the call is successful, this endpoint will return a decoded token object, which includes the current user's ID, email address, and authentication details. You will use this endpoint for the profile page in Gatsby.
 
 ### Creating the logout route
-The last endpoint in your Node app allows users to log out. To fully log out of the application, you need to both destroy the Node application's session and redirect users to the FusionAuth [logout endpoint](https://fusionauth.io/docs/v1/tech/oauth/endpoints#logout).
+The last endpoint in your Node app allows users to log out. To fully log out of the application, you need to both destroy the Node application's session and redirect users to the FusionAuth [logout endpoint](/docs/v1/tech/oauth/endpoints#logout).
 
 Create a new route called `logout.js` and add the following:
 

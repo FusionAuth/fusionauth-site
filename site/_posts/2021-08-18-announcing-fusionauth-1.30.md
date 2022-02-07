@@ -13,7 +13,7 @@ We're excited to announce the release of version 1.30.0 of FusionAuth. This vers
 
 <!--more-->
 
-This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-30-0) for a full breakdown of the changes between 1.29 and 1.30.0. 
+This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes#version-1-30-0) for a full breakdown of the changes between 1.29 and 1.30.0. 
 
 There are a few items worth calling out.
 
@@ -81,7 +81,10 @@ Location aware security
 - Calculates 'impossible travel' to see if a user could realistically login at different locations around the globe in a reasonable time frame. (This does not provide support if your user is a quantum being...)
 - When a login request occurs from an unexpected IP address, a user receives an email to notify them of a new login with an approximate location of the IP address. 
 
-To learn more, you can take a look at our [release notes](/docs/v1/tech/release-notes/#version-1-30-0). 
+Webhooks
+- Adds a number of threat detection webhooks to track and respond to important events around passwords, MFA, and login.
+
+To learn more, you can take a look at our [release notes](/docs/v1/tech/release-notes#version-1-30-0). 
 
 ## Webhook Events
 
@@ -89,7 +92,7 @@ We've added 38 webhook events to help you monitor what is going on with your app
 
 Lastly, we've added some webhook events to notify you of the completion of any kickstart files that you run, and also webhooks to audit the behavior of JWTs. 
 
-We're working on the documentation for these webhooks, which will be available [here](https://fusionauth.io/docs/v1/tech/apis/webhooks/#overview) shortly.
+We're working on the documentation for these webhooks, which will be available [here](/docs/v1/tech/apis/webhooks#overview) shortly.
 
 ## The rest of it
 
@@ -102,10 +105,10 @@ Some of the other enhancements and fixes included in this release:
 
 ## Upgrade at will
 
-The [release notes](/docs/v1/tech/release-notes/#version-1-30-0) are a guide of the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
+The [release notes](/docs/v1/tech/release-notes#version-1-30-0) are a guide of the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
 
-If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). 
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
 If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/){:target="_blank"} and upgrade your servers. If you have any questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/){:target="_blank"}.
 
-Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing/).
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).
