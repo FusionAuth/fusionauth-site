@@ -55,7 +55,7 @@ Authentication, which ensures that a system knows who the user is, and authoriza
 
 If your users have only one factor of authentication, it can be stolen, especially if it is a password. At that point, you as a developer will have limited ability to stop the thief. Your system will have to notice suspicious behavior to determine who is legitimate and who is not. This can be done, but is complex to do at scale. If you can't determine illicit access, the thief will have the same privileges as the user whose stolen credentials are being used; they will be indistinguishable from that user.
 
-Unfortunately, passwords are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection/) and users can protect themselves by practicing good password hygiene, requiring another factor increases the obstacles to a bad actor.
+Unfortunately, passwords are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection) and users can protect themselves by practicing good password hygiene, requiring another factor increases the obstacles to a bad actor.
 
 In particular, if another factor is required as part of the login process, account security can increase dramatically. Microsoft researchers found that accounts are ["99.9% less likely to be compromised"](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/your-pa-word-doesn-t-matter/ba-p/731984) if MFA is used.
 

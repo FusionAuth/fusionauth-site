@@ -170,7 +170,7 @@ Once you're done, hit "Save". Now that we are finished setting up our user, it's
 
 ## Setting up FusionAuth using a Kickstart file
 
-Instead of manually setting up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
+Instead of manually setting up FusionAuth above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/python-first-app.json) which sets up FusionAuth for this tutorial.
 
 ## Installing Python PIP package manager
 
@@ -627,7 +627,7 @@ python test.py
 
 ### Other errors?
 
-Didn't find your error here? Visit [https://fusionauth.io/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/troubleshooting](/docs/v1/tech/troubleshooting) for more troubleshooting suggestions. You can also ask a question on the [FusionAuth Forum](https://fusionauth.io/community/forum/) or open an issue on [Github](https://github.com/FusionAuth/fusionauth-issues/issues/new/choose). As always, if you have a support contract, feel free to [contact FusionAuth support](https://account.fusionauth.io/account/support).
+Didn't find your error here? Visit [https://fusionauth.io/docs/v1/tech/apis/users](/docs/v1/tech/apis/users) for more response codes, or visit [https://fusionauth.io/docs/v1/tech/admin-guide/troubleshooting](/docs/v1/tech/admin-guide/troubleshooting) for more troubleshooting suggestions. You can also ask a question on the [FusionAuth Forum](/community/forum/) or open an issue on [Github](https://github.com/FusionAuth/fusionauth-issues/issues/new/choose). As always, if you have a support contract, feel free to [contact FusionAuth support](https://account.fusionauth.io/account/support).
 
 ## Summary
 

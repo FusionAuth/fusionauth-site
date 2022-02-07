@@ -13,7 +13,7 @@ We're excited to announce the release of version 1.32 of FusionAuth. This versio
 
 <!--more-->
 
-This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-32-1) for a full breakdown of the changes between 1.31 and 1.32. 
+This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes#version-1-32-1) for a full breakdown of the changes between 1.31 and 1.32. 
 
 There are a few improvements worth highlighting.
 
@@ -29,7 +29,7 @@ An example situation where this might be useful is if you have an application wh
 
 ## Custom email headers
 
-FusionAuth sends a [lot of email](/docs/v1/tech/email-templates/templates-replacement-variables/) on your behalf. Whether a breached password notification, an email to allow a user to reset their password or an address verification, FusionAuth lets you [manage these templates via an API](/docs/v1/tech/apis/emails/) and [localize them](/docs/v1/tech/email-templates/email-templates/#localization) to provide the language your users expect. You can even turn on SMTP debugging to see what happens if you have issues with emails being delivered.
+FusionAuth sends a [lot of email](/docs/v1/tech/email-templates/templates-replacement-variables) on your behalf. Whether a breached password notification, an email to allow a user to reset their password or an address verification, FusionAuth lets you [manage these templates via an API](/docs/v1/tech/apis/emails) and [localize them](/docs/v1/tech/email-templates/email-templates#localization) to provide the language your users expect. You can even turn on SMTP debugging to see what happens if you have issues with emails being delivered.
 
 {% include _image.liquid src="/assets/img/blogs/release-1-32/additional-email-headers.png" alt="Configure additional email headers." class="img-fluid" figure=false %}
 
@@ -53,10 +53,10 @@ Some of the other enhancements and fixes included in this release:
 
 ## Upgrade at will
 
-The [release notes](/docs/v1/tech/release-notes/#version-1-32-1) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
+The [release notes](/docs/v1/tech/release-notes#version-1-32-1) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
 
-If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). 
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
 If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/){:target="_blank"} and upgrade your servers. If you have any questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/){:target="_blank"}.
 
-Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing/).
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

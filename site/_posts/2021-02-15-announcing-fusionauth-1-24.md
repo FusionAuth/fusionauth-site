@@ -12,7 +12,7 @@ We're excited to announce the release of version 1.24 of FusionAuth. This releas
 
 <!--more-->
 
-This was primarily a bug fix release and small enhancement release. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-24-0) for the full breakdown of the changes between 1.23 and 1.24. 
+This was primarily a bug fix release and small enhancement release. Please see the [release notes](/docs/v1/tech/release-notes#version-1-24-0) for the full breakdown of the changes between 1.23 and 1.24. 
 
 ## Enhancements released
 
@@ -21,7 +21,7 @@ Some of the enhancements included in this release are:
 * More consistent use of the `Cache-Control` header for the FusionAuth administrative user interface
 * Support for certificates with key lengths of 1024 to support certain SAML integrations
 * Adding entity counts to pages such as Tenants, Lambdas and Consents
-* A new [User Search API](/docs/v1/tech/apis/users/#search-for-users) parameter, `accurateTotal` which allows you to retrieve the exact user count
+* A new [User Search API](/docs/v1/tech/apis/users#search-for-users) parameter, `accurateTotal` which allows you to retrieve the exact user count
 * Improvements to the webhooks screen to make enabling and disabling them en masse easier
 * Removing unneeded claims from the `id_token`; neither the `applicationId` nor the `roles` claims will be present
 
@@ -36,8 +36,8 @@ There were multiple bugs fixed, including:
 
 ## Commence upgrading
 
-If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). 
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
 If you have a FusionAuth Cloud deployment, open a [support request from your account dashboard](https://account.fusionauth.io/account/support/){:target="_blank"} and we'll get your servers upgraded! 
 
-Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing/).
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

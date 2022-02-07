@@ -29,7 +29,7 @@ If you're a bit hazy on the Device Code grant, then here is a quick refresher fr
 
 First things first, to follow along you'll need golang obviously. If you don't already have golang on your local machine, *go* ahead and [install it over here](https://golang.org/doc/install).
 
-Next, we need to set up FusionAuth on our local machine to properly be able to test our CLI app. If you haven't already played around with FusionAuth then I suggest checking out their [5 minute setup guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) and stopping after you've completed step #3. That should get you set up with a running FusionAuth server with which our CLI app can authenticate.
+Next, we need to set up FusionAuth on our local machine to properly be able to test our CLI app. If you haven't already played around with FusionAuth then I suggest checking out their [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide) and stopping after you've completed step #3. That should get you set up with a running FusionAuth server with which our CLI app can authenticate.
 
 Once you've got FusionAuth running, we'll need to create our CLI app's FusionAuth Application. Follow these steps to do so:
 
@@ -305,4 +305,4 @@ Now, since this is a post about using FusionAuth and not about the Giphy API, I 
 
 In this post, we went through how we could authenticate a CLI application using the Device Code grant, FusionAuth, and the FusionAuth golang client library. We got into all the gritty details in `login.go` so you as the reader can walk away and implement this flow in your own golang application. And finally, we saw it all working with a sweet gopher gif at the end!
 
-Now this post shows off one grant type that FusionAuth supports, so if you're interested in others then I suggest checking out [the FusionAuth documentation](https://fusionauth.io/docs/) as there is a lot more possible! And if you're interested in learning more about the Golang client library then be sure to [check out the code](https://github.com/FusionAuth/go-client) and [the corresponding godoc](https://pkg.go.dev/github.com/FusionAuth/go-client/pkg/fusionauth?tab=doc) as both are easy to read and understand!
+Now this post shows off one grant type that FusionAuth supports, so if you're interested in others then I suggest checking out [the FusionAuth documentation](/docs/) as there is a lot more possible! And if you're interested in learning more about the Golang client library then be sure to [check out the code](https://github.com/FusionAuth/go-client) and [the corresponding godoc](https://pkg.go.dev/github.com/FusionAuth/go-client/pkg/fusionauth?tab=doc) as both are easy to read and understand!

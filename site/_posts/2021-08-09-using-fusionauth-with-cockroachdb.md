@@ -48,7 +48,7 @@ Mid-last year the approaching go live required us to change a lot of things with
 
 **Michael:** Exactly, we already had designed login pages as well as native apps with logins and only wanted to store those credentials in a better way. An example for a custom flow on our side would be the password less flow. We request a token and then send the authentication email through SendGrid, rather than via FusionAuth. This simplifies how we design our email templates.
 
-We would like to use Social Logins, like Facebook, Google and Apple, but right now are restricted as it fails because of [one query in the connector](https://fusionauth.io/community/forum/topic/950/cockroach-compatibility-problem-on-connector-signin). I have no clue when this will be fixed in cockroachdb or changed in FusionAuth.
+We would like to use Social Logins, like Facebook, Google and Apple, but right now are restricted as it fails because of [one query in the connector](/community/forum/topic/950/cockroach-compatibility-problem-on-connector-signin). I have no clue when this will be fixed in cockroachdb or changed in FusionAuth.
 
 **Dan:** How were you solving them before FusionAuth?
 
@@ -64,7 +64,7 @@ We still use it but only now to decode the received JWTs and to handle the verif
 
 **Michael:** Everything needed to be manageable through APIs. It also needed to run within docker and Kubernetes.
 
-**Dan:** Ah, you'll probably be happy to learn about our new [API key API](https://fusionauth.io/docs/v1/tech/apis/api-keys/). 
+**Dan:** Ah, you'll probably be happy to learn about our new [API key API](/docs/v1/tech/apis/api-keys). 
 
 **Michael:** Yes, we are using them :).
 

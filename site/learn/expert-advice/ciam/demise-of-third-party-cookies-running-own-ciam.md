@@ -58,7 +58,7 @@ The latest CIAM solutions can offer adaptive authentication features. The proces
 
 #### Registration and Single Sign-On
 
-[Single sign-on (SSO)](https://www.cloudflare.com/learning/access-management/what-is-sso/) enables users to sign up and log in to your app or service via an account they already own in a different service known as an identity provider. SSO enhances customer satisfaction by eliminating the need for a separate password while still maintaining proper security. It also saves your users time while logging in. A CIAM system like [FusionAuth](https://fusionauth.io/) provides an [SSO feature](https://fusionauth.io/features/single-sign-on/) that can be integrated with numerous applications like WordPress or Shopify.
+[Single sign-on (SSO)](https://www.cloudflare.com/learning/access-management/what-is-sso/) enables users to sign up and log in to your app or service via an account they already own in a different service known as an identity provider. SSO enhances customer satisfaction by eliminating the need for a separate password while still maintaining proper security. It also saves your users time while logging in. A CIAM system like [FusionAuth](https://fusionauth.io/) provides an [SSO feature](/features/single-sign-on) that can be integrated with numerous applications like WordPress or Shopify.
 
 #### Authorization
 
@@ -74,7 +74,7 @@ The user management aspect of a CIAM system enables administrators to update use
 
 To ensure user privacy, it’s important to limit who can see customer information. Allowing customers to manage their own identity reduces the necessity of company admins having access to that data. A CIAM system can also integrate with other applications (like CRMs) or data stores and provide a single centralised view of your customers.
 
-With the flexible architecture of a CIAM system, you don't have to worry about spending time and money on a separate identity management solution. FusionAuth, for example, provides an [intuitive user management feature](https://fusionauth.io/features/user-management-reporting/).
+With the flexible architecture of a CIAM system, you don't have to worry about spending time and money on a separate identity management solution. FusionAuth, for example, provides an [intuitive user management feature](/features/user-management).
 
 #### Profile Management
 

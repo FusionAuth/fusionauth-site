@@ -13,14 +13,14 @@ In a recent article, we set up an API gateway with microservices for an eCommerc
 
 <!--more-->
 
-In this article, we'll build on the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) from that article, focusing on tightening up security by implementing [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT) authorization. This is a critical security concern because we don't want to allow just any application to call our microservices. You may want to re-read the [Centralized Authentication with a Microservices Gateway](/blog/2020/09/15/microservices-gateway/) post to refresh your memory. And we've created a new [sample project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway-jwtauth) with updated source code based on this article.
+In this article, we'll build on the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) from that article, focusing on tightening up security by implementing [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT) authorization. This is a critical security concern because we don't want to allow just any application to call our microservices. You may want to re-read the [Centralized Authentication with a Microservices Gateway](/blog/2020/09/15/microservices-gateway) post to refresh your memory. And we've created a new [sample project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway-jwtauth) with updated source code based on this article.
 
 Even though we're allowing public access to the Product Catalog, we still want that traffic to come through our gateway application. That will ensure centralized access to our Product Catalog, and our microservices will be more protected.
 
 So here's what we'll do:
 
 * Add the `jsonwebtoken` package to our gateway and microservices.
-* Utilize FusionAuth's HMAC default signing key to create [signed JWTs](/learn/expert-advice/tokens/building-a-secure-jwt/) for the gateway to pass to the microservices.
+* Utilize FusionAuth's HMAC default signing key to create [signed JWTs](/learn/expert-advice/tokens/building-a-secure-jwt) for the gateway to pass to the microservices.
 * Add roles to this JWT if the user is present.
 * Decode that JWT in each of the microservices, using the same signing key, to verif the request.
 
@@ -60,7 +60,7 @@ const jwt = require('jsonwebtoken');
 // ...
 ```
 
-Next, we'll add a function at the end of that file to get the gateway `Bearer` token which will then be forwarded to the microservices. In this case, we are setting the token to expire in ten minutes. This is a common duration of the JWT, but you may want to reduce it for security concerns, as described in FusionAuth's article on [Revoking JWTs & JWT Expiration](https://fusionauth.io/learn/expert-advice/tokens/revoking-jwts/).
+Next, we'll add a function at the end of that file to get the gateway `Bearer` token which will then be forwarded to the microservices. In this case, we are setting the token to expire in ten minutes. This is a common duration of the JWT, but you may want to reduce it for security concerns, as described in FusionAuth's article on [Revoking JWTs & JWT Expiration](/learn/expert-advice/tokens/revoking-jwts).
 
 ```javascript
 // ...
