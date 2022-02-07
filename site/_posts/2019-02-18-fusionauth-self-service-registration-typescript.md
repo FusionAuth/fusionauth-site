@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth 1.4 was just released and is available for [direct download](/download) and through our [FastPath one-line install](/). It includes new features, a few changes, and some minor fixes for issues discovered by our excellent community and QA testers. Get the brief overview below, and visit our [release notes](/docs/v1/tech/release-notes#version-1-4-0) for the full details.
+FusionAuth 1.4 was just released and is available for [direct download](/download) and through our [FastPath one-line install](/). It includes new features, a few changes, and some minor fixes for issues discovered by our excellent community and QA testers. Get the brief overview below, and visit our [release notes](/docs/v1/tech/archive/release-notes#version-1-4-0) for the full details.
 
 <!--more-->
 

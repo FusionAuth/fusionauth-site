@@ -9,7 +9,7 @@ if [ ! -d ~/dev/savant ]; then
   # Savant
   mkdir -p ~/dev/savant
   cd ~/dev/savant
-  curl http://savant.inversoft.org/org/savantbuild/savant-core/1.0.0/savant-1.0.0.tar.gz > savant-1.0.0.tar.gz
+  curl -fSL http://savant.inversoft.org/org/savantbuild/savant-core/1.0.0/savant-1.0.0.tar.gz > savant-1.0.0.tar.gz
   tar -xzf savant-1.0.0.tar.gz
   ln -s savant-1.0.0 current
   rm savant-1.0.0.tar.gz
@@ -20,10 +20,10 @@ if [ ! -d ~/dev/groovy ]; then
   # Groovy
   mkdir -p ~/dev/groovy
   cd ~/dev/groovy
-  curl https://archive.apache.org/dist/groovy/2.4.6/distribution/apache-groovy-sdk-2.4.6.zip > apache-groovy-sdk-2.4.6.zip
+  curl -fSL https://archive.apache.org/dist/groovy/2.4.6/distribution/apache-groovy-sdk-2.4.6.zip > apache-groovy-sdk-2.4.6.zip
   unzip -qq apache-groovy-sdk-2.4.6.zip
   rm apache-groovy-sdk-2.4.6.zip
-  curl https://archive.apache.org/dist/groovy/2.5.5/distribution/apache-groovy-sdk-2.5.5.zip > apache-groovy-sdk-2.5.5.zip
+  curl -fSL https://archive.apache.org/dist/groovy/2.5.5/distribution/apache-groovy-sdk-2.5.5.zip > apache-groovy-sdk-2.5.5.zip
   unzip -qq apache-groovy-sdk-2.5.5.zip
   rm apache-groovy-sdk-2.5.5.zip
   GROOVY_HOME=${HOME}/dev/groovy

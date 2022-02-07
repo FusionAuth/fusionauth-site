@@ -34,9 +34,9 @@ We made this change because in order to run on `alpine` without including the GN
 
 ### Additional admin user management forms
 
-In version 1.18, FusionAuth added [custom registration forms](/features/advanced-registration-forms/) for users with a paid edition.
+In version 1.18, FusionAuth added [custom registration forms](/platform/registration-forms) for users with a paid edition.
 
-In this release, we've added a few new forms. These customizations are also only available to customers with a paid edition. (Learn more about [purchasing a paid edition](/pricing/).) 
+In this release, we've added a few new forms. These customizations are also only available to customers with a paid edition. (Learn more about [purchasing a paid edition](/pricing).) 
 
 This new feature allows you to customize the form used to add or edit a user from the FusionAuth admin UI. These forms can be configured on a per tenant basis. For instance, you can now require a mobile phone number or require one or many custom fields when a FusionAuth admin is creating a user.
 
@@ -50,6 +50,6 @@ When combined with FusionAuth's granular roles, which allow you to create users 
 
 ## Bugs squashed
 
-In addition to these features, there were over ten other bugs squashed and GitHub issues resolved as well. These fixes include changes to JWT contents in certain situations, dashboard user counts, and superfluous log messages. Please see the [release notes](/docs/v1/tech/release-notes/) for the full breakdown of the changes between 1.19 and 1.20. 
+In addition to these features, there were over ten other bugs squashed and GitHub issues resolved as well. These fixes include changes to JWT contents in certain situations, dashboard user counts, and superfluous log messages. Please see the [release notes](/docs/v1/tech/release-notes) for the full breakdown of the changes between 1.19 and 1.20. 
 
-If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). If you have a FusionAuth Cloud deployment, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} or [use our contact form](/contact){:target="_blank"} and we'll get your servers upgraded! Or, if you'd like to download and use FusionAuth, [check out your options](/pricing/).
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). If you have a FusionAuth Cloud deployment, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} or [use our contact form](/contact){:target="_blank"} and we'll get your servers upgraded! Or, if you'd like to download and use FusionAuth, [check out your options](/pricing).

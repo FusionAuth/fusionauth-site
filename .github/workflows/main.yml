@@ -16,33 +16,53 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
+    # Global environment
+    env:
+      ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      JEKYLL_ENV: production
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Setup the system with the repository code, Java, and Ruby
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        name: Cache savant build
-        with: 
-          path: |
-            ~/dev
-            ~/.savant/cache
-          key: ${{ runner.os }}-${{ hashFiles('**/.github/scripts/setup.sh') }}-${{ hashFiles('**/.savant/plugins/*') }}-${{ hashFiles('**/build.savant') }}
       - uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
+          # s3_website ruby/java uploader does not support 11. :-(
           java-version: '8'
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-      # Runs a set of commands using the runners shell
-      - env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID}}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
-        name: Deploy website
+          ruby-version: '2.7.5'
+
+      # Set the env vars. These default to dev and if the branch is `master` then this changes to use the production keys
+      - name: Set dev env vars based on branch
         run: |
-          .github/scripts/setup.sh
-          bundle exec jekyll build || true # have to do this first or we miss files and the savant push barfs. Never want to fail.
-          sleep 1
-          ~/dev/savant/current/bin/sb push
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_ACCESS_KEY_ID }}" >> ${GITHUB_ENV}
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_SECRET_ACCESS_KEY }}" >> ${GITHUB_ENV}
         shell: bash
+      - name: Set prod env vars based on branch
+        if: startsWith(github.ref, 'refs/heads/master')
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ${GITHUB_ENV} 
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ${GITHUB_ENV}
+        shell: bash
+
+      # Run the deployment
+      - name: Deploy website
+        run: |
+          bundle exec jekyll build || true
+          bundle exec jekyll build --trace
+          bundle exec s3_website push
+          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront describe-function --name fusionauth-website-request-handler --query 'ETag' --output text)
+          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront update-function --name fusionauth-website-request-handler --function-code fileb://src/cloudfront/fusionauth-website-request-handler.js --function-config Comment="Request handler for the FusionAuth website",Runtime="cloudfront-js-1.0" --if-match ${CLOUDFRONT_FUNCTION_ETAG} --query 'ETag' --output text)
+          aws cloudfront publish-function --name fusionauth-website-request-handler --if-match ${CLOUDFRONT_FUNCTION_ETAG}
+        shell: bash
+
+      # Update the Algolia search index if this is `master`
+#      - name: Deploy website
+#        if: startsWith(github.ref, 'refs/heads/master')
+#        run: |
+#          bundle exec jekyll algolia
+#        shell: bash

@@ -11,16 +11,16 @@ Available since 1.26.0
 
 == Set Up a Generic Messenger
 
-Currently, messengers can only be configured to send messages via a SMS protocol. If you need to connect to an SMS provider other than Twilio, you can use the Generic messenger configuration.
+Currently, built-in messengers can only be configured to send messages via a Twilio. If you need to connect to a provider other than Twilio, whether you want to send SMS messages or use a different transport layer such as push notifications, you can use the Generic messenger configuration.
 
-The generic messenger allows for a simple JSON REST API integration which allows you to receive a message from FusionAuth and then make an API call to any third party SMS provider you wish.
+The generic messenger allows for a simple JSON REST API integration which allows you to receive a message from FusionAuth to an arbitrary URL. The Generic Message Receiver at this URL may then make an API call to any third party messaging provider.
 
 image::messengers/add-messenger.png[Messenger Home Screen, width=1200]
 
+=== Add Generic Messenger
+
 To create a new generic messenger, navigate to [breadcrumb]#Settings -> Messengers#. +
 Click `Add Generic Messenger`
-
-=== Add Generic Messenger
 
 image::messengers/add-generic-messenger-home-crop.png[Add Generic Messenger Home, role=bottom-cropped, width=1200]
 
@@ -80,3 +80,51 @@ In these fields, you can add custom key and value pairs to augment your headers.
 image::messengers/configuration-test-generic.png[Test Configuration Generic, role=top-cropped, width=1200]
 
 You also can test your generic messenger configuration. By hitting `Test generic configuration` FusionAuth will fire a JSON message to the messenger just created to ensure everything is set up correctly.
+
+== Writing the Generic Message Receiver
+
+You need to write a server side component, a receiver, which will be deployed at a URL to consume the message sent from FusionAuth. At that point, it can proxy the request to any third party messaging service.
+In other words, a FusionAuth Generic Messenger is a thin coordination layer between FusionAuth and other messaging services. An application with the proper permissions, code and configuration to relay a message must exist at the configured URL.
+This receiver component may be written in any language that can consume a JSON message.
+
+The request to your endpoint will be delivered as JSON.
+When your application receives this message from FusionAuth, it should take whatever steps necessary to send the message, such as:
+
+* call into a SDK provided by the third party
+* make an API request to a vendor provided endpoint
+* call multiple internal APIs
+* anything else that may be required
+
+=== Request 
+
+[.api]
+[field]#phoneNumber# [type]#[String]#::
+The phone number of the user to which this message should be sent.
+
+[field]#textMessage# [type]#[String]#::
+The message text to send. This is built from the configured link:/docs/v1/tech/email-templates/message-templates[message template] and is localized.
+
+[field]#type# [type]#[String]#::
+The type of the message. This will always be `SMS`.
+
+[source,json]
+.Example Message Payload JSON
+----
+include::docs/src/json/messengers/generic-message-request.json[]
+----
+
+=== Response 
+
+If the message was processed successfully, return a status code in the `200` to `299` range. No further processing will be performed by FusionAuth.
+
+If the receiver is unsuccessful at sending the message, for whatever reason, return a status code outside of that range.
+
+== Securing the Generic Message Receiver
+
+:request_entity: Generic Message Receiver
+:request_entity_lc: generic-messenger
+:ssl_certificate_sentence: This must be an SSL certificate in PEM format
+include::docs/v1/tech/shared/_securing_http_requests.adoc[]
+:request_entity!:
+:request_entity_lc!:
+

@@ -16,7 +16,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - The class used for images should be updated to `class="img-fluid"`.
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
-- All `link`s should be fully-qualified and always include a slash at the end (i.e. `link:/docs/v1/tech/apis/users/` not `link:users`)
+- All `link`s should be fully-qualified and never include a slash at the end (i.e. `link:/docs/v1/tech/apis/users` not `link:users`)
 - All code snippets within any documents should have indenting formatted to 2 spaces
 - If something is new in a version, mark it with something like this:
 
@@ -251,7 +251,7 @@ Then, wherever you want the related posts to show up, add this text:
 ```
 ++++
 {% capture relatedTag %}api-tenants{% endcapture %}
-{% include _doc_related_posts.liquid %}
+{% include _doc-related-posts.liquid %}
 ++++
 ```
 
@@ -280,6 +280,6 @@ Some sections are better suited to being driven by data. Jekyll makes this easy 
 
 Examples of that are the customers page and the quotes widget.
 
-You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps.
+You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps. Note that you can't use liquid syntax in any include files. See https://github.com/asciidoctor/jekyll-asciidoc/issues/166 for more details about this issue.
 
 The theme pages are kinda complex because they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.

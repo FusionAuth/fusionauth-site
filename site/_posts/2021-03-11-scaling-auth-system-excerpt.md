@@ -14,7 +14,7 @@ Modern authentication is built on hashing passwords using computationally expens
 
 To be a responsible and effective software engineer, you need to know how to deal with these scalability concerns while keeping your application's authentication secure. Let's look at a few of these challenges, including hashing performance, chattiness, additional security, and uptime.
 
-_This blog post is an excerpt from [Making Sure Your Auth System Can Scale](/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales/)._
+_This blog post is an excerpt from [Making Sure Your Auth System Can Scale](/learn/expert-advice/ciam/making-sure-your-auth-system-scales)._
 
 ### Hashing Performance
 
@@ -62,5 +62,5 @@ If your authentication functionality is unavailable for any given time, it inevi
 
 This makes authentication a difficult problem: not only must it be secure and scalable, _but highly available, too._ Again, this means more hardware, more servers, and more money.
 
-To learn about how you can can effectively scale your auth system, read [Making Sure Your Auth System Can Scale](/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales/).
+To learn about how you can can effectively scale your auth system, read [Making Sure Your Auth System Can Scale](/learn/expert-advice/ciam/making-sure-your-auth-system-scales).
 
