@@ -32,4 +32,4 @@ In addition to these features, there were over ten other bugs squashed and GitHu
 
 This release includes a substantial data migration, so if you have a large number of users, make sure you test the upgrade process; testing upgrades with 3M+ users took approximately 3-5 minutes on bare metal with an SSD. 
 
-If you'd like to upgrade your FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you. Or, if you'd like to download and use FusionAuth, [check out your options](/pricing).
+If you'd like to upgrade your FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you. Or, if you'd like to download and use FusionAuth, [check out your options](/pricing).

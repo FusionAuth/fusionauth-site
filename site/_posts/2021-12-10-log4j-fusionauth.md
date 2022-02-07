@@ -31,7 +31,7 @@ To learn more about the CVE, you can:
 
 ## What about Elasticsearch
 
-Elasticsearch is used by many FusionAuth installations. However, in general the Elasticsearch service is not publicly accessible, if [following the recommended security guidance](/docs/v1/tech/installation-guide/securing/).
+Elasticsearch is used by many FusionAuth installations. However, in general the Elasticsearch service is not publicly accessible, if [following the recommended security guidance](/docs/v1/tech/admin-guide/securing).
 
 {% include _callout-important.liquid content="You should never allow internet connections to Elasticsearch." %}
 
@@ -53,8 +53,8 @@ Beyond this specific vulnerability, we want to assure readers that FusionAuth ta
 
 This commitment includes, but is not limited to:
 
-* a [responsible disclosure program](/security/)
+* a [responsible disclosure program](/security)
 * regular penetration tests
-* security disclosures in our extensive [release notes](/docs/v1/tech/release-notes/)
+* security disclosures in our extensive [release notes](/docs/v1/tech/release-notes)
 
 

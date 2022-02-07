@@ -25,8 +25,8 @@ At the end of this tutorial, you will have a working Ruby on Rails application t
 
 The code is available under an Apache2 license [on Github](https://github.com/FusionAuth/fusionauth-example-rails-oauth).
 
-In a [previous post](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/), we demonstrated how to encode, decode, and verify the authenticity
-of a JWT to [secure a Ruby on Rails API](https://fusionauth.io/blog/2020/06/11/building-protected-api-with-rails-and-jwt/).
+In a [previous post](/blog/2020/06/11/building-protected-api-with-rails-and-jwt), we demonstrated how to encode, decode, and verify the authenticity
+of a JWT to [secure a Ruby on Rails API](/blog/2020/06/11/building-protected-api-with-rails-and-jwt).
 In this post, we will leverage those same concepts with FusionAuth being the authentication provider issuing the token. 
 
 ## Prerequisites
@@ -41,12 +41,12 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-If you prefer to install FusionAuth locally, see the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide/) to get up and running.  
+If you prefer to install FusionAuth locally, see the [5-Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide) to get up and running.  
 
 Once you have FusionAuth installed, it should be running at [localhost:9011](http://localhost:9011). Navigate there and finish the setup steps. 
 When those are completed, login as the administrator that you just created. Now we are ready to rock!
 
-A [FusionAuth Application](https://fusionauth.io/docs/v1/tech/core-concepts/applications/) is simply something a user can log in to.
+A [FusionAuth Application](/docs/v1/tech/core-concepts/applications) is simply something a user can log in to.
 As such, we want to create a new application in FusionAuth for our Rails app.
 
 ### Create an application
@@ -242,7 +242,7 @@ end
 # ...
 ```
 
-The login process begins when the user clicks on the "sign in" link we created. As seen in the sequence diagram above, we will want to direct this request to FusionAuth which is in charge of validating user credentials. In turn, the user will be presented with a default login page including username and password fields. FusionAuth provides the flexibility to customize the style of this form via [themes](https://fusionauth.io/docs/v1/tech/themes/) but for this tutorial, we will stick with the default. 
+The login process begins when the user clicks on the "sign in" link we created. As seen in the sequence diagram above, we will want to direct this request to FusionAuth which is in charge of validating user credentials. In turn, the user will be presented with a default login page including username and password fields. FusionAuth provides the flexibility to customize the style of this form via [themes](/docs/v1/tech/themes/) but for this tutorial, we will stick with the default. 
 
 The following method uses the "OAuth2" client to construct the "authorize_url" and redirects the request accordingly. 
 
@@ -269,7 +269,7 @@ In summary, `oauth_callback` in our app does a few things:
 4. Saves the access token/JWT on the session to indicate that the user has successfully authenticated.
 
 The next step in the OAuth flow will be to exchange our authorization code for an access token.
-For that, we will make an additional [code exchange](https://fusionauth.io/docs/v1/tech/oauth/endpoints/#complete-the-authorization-code-grant-request) request. 
+For that, we will make an additional [code exchange](/docs/v1/tech/oauth/endpoints#complete-the-authorization-code-grant-request) request. 
 Using the [oauth2](https://github.com/oauth-xx/oauth2) gem, we construct a client and then make the request passing the authorization code and 
 redirect URI.
 
@@ -427,9 +427,9 @@ Let us now assume that we are now done interacting with the application and are 
 
 ## Next steps
 Now that we have the OAuth flow working, our foundation is set to expand as needed. Here are a few ideas to tackle next:
-* Add and assign user [roles](https://fusionauth.io/docs/v1/tech/core-concepts/roles/#overview) such that functionality in our Rails application can be shown or hidden accordingly.
-* Customize the FusionAuth login page with a look and feel of our application using [themes](https://fusionauth.io/docs/v1/tech/themes/).
-* Use [Identity Providers](https://fusionauth.io/docs/v1/tech/core-concepts/identity-providers/#overview) to add "Login with Google" or "Login with Facebook" social login buttons.
+* Add and assign user [roles](/docs/v1/tech/core-concepts/roles#overview) such that functionality in our Rails application can be shown or hidden accordingly.
+* Customize the FusionAuth login page with a look and feel of our application using [themes](/docs/v1/tech/themes/).
+* Use [Identity Providers](/docs/v1/tech/core-concepts/identity-providers#overview) to add "Login with Google" or "Login with Facebook" social login buttons.
 
 ## What did we learn?
 Using the Authorization Code grant in Rails lets you use any OAuth compatible identity provider to secure your application. The example code can be found on Github [here](https://github.com/FusionAuth/fusionauth-example-rails-oauth). 
