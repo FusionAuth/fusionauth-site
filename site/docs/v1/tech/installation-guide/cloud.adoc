@@ -30,6 +30,7 @@ Every deployment is separated, both logically and physically, from every other d
 * <<Support>>
 * <<Custom FusionAuth Cloud Features>>
 * <<SLAs and Availability>>
+* <<Deployment IP Addresses>>
 * <<Load Testing>>
 * <<Limits>>
 
@@ -444,6 +445,64 @@ For high availability deployments with purchased support:
 
 * The FusionAuth engineering team will consult on product implementation and can offer "best practices" advice to further ensure system stability.
 * We size the instance properly for expected traffic, in consultation with the customer.
+
+== Deployment IP Addresses
+
+You may need to know the IP addresses of the instances in your FusionAuth Cloud deployment. There are any number of reasons you might need this information, including:
+
+* Adding the IP addresses to the allow list of an email deliverability vendor.
+* Punching a hole in a corporate firewall to allow for webhook delivery.
+* Adding the IP address to a network access control list to enable access to an on-premises LDAP directory with a connector.
+
+[WARNING.warning]
+====
+The IP addresses of FusionAuth Cloud instances may change at any time. Prepare for this by scripting this procedure, running it regularly, and updating the allow list.
+
+Hostnames are immutable, and if you can use them instead of IP addresses, that will require less maintenance.
+====
+
+You can find the IP addresses for your deployment, but be aware that these addresses may change at any time.
+
+Use `dig` to find the address, based on your deployment hostname. Use the default hostname ending in `fusionauth.io`, not any custom domains you have added. Deployment nodes are named in a standardized manner.
+
+If you registered `piedpiper.fusionauth.io` and it is an HA deployment, there are two nodes. For this deployment, the instance hostnames are `piedpiper-1.instance.fusionauth.io` and `piedpiper-2.instance.fusionauth.io`.
+
+A single node deployment will only have the hostname `piedpiper-1.instance.fusionauth.io`.
+
+Once you know your hostname, find the IP addresses by using the `dig` command like this:
+
+[source,shell]
+-----
+dig piedpiper-1.instance.fusionauth.io
+-----
+
+This will output something similar to this:
+
+[source,shell]
+-----
+; <<>> DiG 9.10.6 <<>> piedpiper-1.instance.fusionauth.io
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 34994
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;piedpiper-1.instance.fusionauth.io. IN	A
+
+;; ANSWER SECTION:
+piedpiper-1.instance.fusionauth.io. 120 IN A	11.11.11.11
+
+;; Query time: 59 msec
+;; SERVER: 192.168.0.1#53(192.168.0.1)
+;; WHEN: Tue Feb 01 18:05:29 MST 2022
+;; MSG SIZE  rcvd: 77
+-----
+
+Look in the `ANSWER SECTION` for your IP address. Above, it is `11.11.11.11`. Repeat this for each node if needed.
+
+There is an open issue to https://github.com/FusionAuth/fusionauth-issues/issues/1393[allow FusionAuth deployments to have static IP addresses]. If this is important to you, please upvote the issue.
 
 == Load Testing
 
