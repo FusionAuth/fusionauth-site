@@ -152,7 +152,7 @@ function calculateRedirect(uri) {
 }
 
 function calculateURI(uri) {
-  var s3Prefixes = ['/assets/', '/blog/', '/direct-download', '/docs/', '/learn', '/legal/', '/resources/'];
+  var s3Prefixes = ['/assets/', '/blog/', '/direct-download', '/docs/', '/learn', '/legal/', '/license', '/resources/'];
   for (var i = 0; i < s3Prefixes.length; i++) {
     if (uri.startsWith(s3Prefixes[i])) {
       var slashIndex = uri.lastIndexOf('/');
