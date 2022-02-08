@@ -25,6 +25,7 @@ While [Amazon Cognito](https://aws.amazon.com/cognito/) is a low cost auth servi
 * The user pool and identity pool concepts can be difficult to grasp.
 * The user interface presented to your customers is inflexible and hard to customize.
 * You can run Cognito only in the geographies supported by AWS.
+* Cognito pools are not multi-region. If the AWS region that your pool is in is unavailable, you have few options.
 * It doesn't support localization of messages or the user interface.
 * You can't backup or export all user data, notably password hashes.
 * SAML accounts are expensive after you grow beyond the free tier.
