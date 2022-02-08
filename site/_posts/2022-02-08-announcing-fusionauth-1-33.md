@@ -9,7 +9,7 @@ tags: tbd topic-troubleshooting feature-advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.33 of FusionAuth. This version shipped Feburary 7, 2022. 1.33 includes a ton of bug fixes, official Docker support for a number of architectures, and improvements to the MFA process.
+We're excited to announce the release of version 1.33 of FusionAuth. This version shipped February 7, 2022. 1.33 includes a ton of bug fixes, official Docker support for a number of architectures, and improvements to the MFA process.
 
 <!--more-->
 
@@ -27,7 +27,7 @@ Community members have been experimenting with FusionAuth on other architectures
 * linux/ppc64le
 * linux/s390x
 
-You can pull an architecture specific build using `docker pull --platform <platform> fusionauth/fusionauth-app:latest`. These images have been generated back to FusionAuth 1.24, at a community member request.
+You can pull an architecture specific build using `docker pull --platform <platform> fusionauth/fusionauth-app:latest`. These images have been generated back to FusionAuth 1.24, at a community member's request.
 
 This support is exciting for two reasons:
 
@@ -59,6 +59,14 @@ With version 1.30, FusionAuth included, for the first time, features only availa
 Unfortunately our licensing error messages were not correctly updated. This caused some confusion. Customers with paid licenses were seeing messages indicating that they needed a paid license to enable these Enterprise only features like webhooks on a user password change or rate limiting the requesting of two-factor codes. Sorry about that!
 
 In this release, error messages have been made clearer.
+
+## Multi-factor and the Change Password API
+
+If you are using 2FA and the Change Password API, there is a breaking change related to security that you will want to be aware of. 
+
+If you use the FusionAuth themed pages, there is no change required on your part, but if you use the API directly there will be a modification required to your integration.
+
+You can learn more about that HERE TODO.
 
 ## The rest of it
 
