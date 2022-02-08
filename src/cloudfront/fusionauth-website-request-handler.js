@@ -107,7 +107,7 @@ function removeSlash(uri) {
     '/learn/expert-advice/security/': true,
     '/learn/expert-advice/tokens/': true
   }
-  return indexPages[uri] !== true;
+  return indexPages[uri] !== true && !uri.startsWith('/blog/page');
 }
 
 function calculateRedirect(uri) {
