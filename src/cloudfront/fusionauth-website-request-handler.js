@@ -35,7 +35,7 @@ function handler(event) {
     };
   }
 
-  if (uri.endsWith('/') && removeSlash(uri)) {
+  if (uri.endsWith('/') && !uri.startsWith('//') && removeSlash(uri)) {
     return {
       statusCode: 301,
       statusDescription: 'Moved',
