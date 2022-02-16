@@ -4,11 +4,9 @@ title: Common Authentication Implementation Risks and How to Mitigate Them
 description: What are risks of implementing authentication, authorization and user management, and how can you mitigate them?
 author: James Hickey
 image: advice/common-implementation-risks/expert-advice-common-authentication-implementation-risks-and-how-to-mitigate-them-header-image.png
-category: Identity Basics
+category: Authentication
 date: 2021-05-20
 dateModified: 2021-05-20
-redirect_from:
-  - /learn/expert-advice/identity-basics/common-authentication-implementation-risks/
 ---
 
 Given the increase of [data beaches in the past few years](https://haveibeenpwned.com/PwnedWebsites), it's more important than ever for software engineering leaders to prioritize security, quality development practices, and robust governance controls. Your customers' trust is on the line—and that's the lifeblood of any business that wants to keep growing.
@@ -71,7 +69,7 @@ If you've had to deal with other kinds of regulatory compliance, then you know G
 
 If you're building your own auth system, you might need to build additional functionality to meet such standards, like private information export features and advanced encryption measures.
 
-Again, using a reputable third-party authentication service can take some of the load off. They already need to have a high standard of compliance since they're in the business of dealing with private information. For example, FusionAuth is [GDPR, HIPAA, and COPPA](/features/security-data-compliance/) compliant. You don't need to worry about having to manage the compliance in your auth system with a reputable and compliant third-party vendor.
+Again, using a reputable third-party authentication service can take some of the load off. They already need to have a high standard of compliance since they're in the business of dealing with private information. For example, FusionAuth is [GDPR, HIPAA, and COPPA](/security-data-compliance) compliant. You don't need to worry about having to manage the compliance in your auth system with a reputable and compliant third-party vendor.
 
 ## Cost and Time
 
@@ -97,7 +95,7 @@ If your company has the time, money, and people to invest, and considers authent
 
 ## Vendor Assessment
 
-If you're considering using a third-party vendor, then you need to make sure you perform due diligence in [assessing how appropriate and risky that vendor is](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors/). Many regulatory programs like SOC2 require some kind of controls around vendor risk management.
+If you're considering using a third-party vendor, then you need to make sure you perform due diligence in [assessing how appropriate and risky that vendor is](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors). Many regulatory programs like SOC2 require some kind of controls around vendor risk management.
 
 While this article has already touched on areas of risk in implementing an auth system, like application security, financials, and performance, assessing a vendor is where the rubber meets the road. It's where you apply all your knowledge about risk in authentication implementation.
 

@@ -85,7 +85,7 @@ The peace of mind from having dedicated support can be one of the most important
 
 Unlike with open-source providers, it may be difficult to know how often updates for commercial providers are released, especially if all of the provider's infrastructure lives in the cloud and updates don't require any action from the customer. They may release their software multiple times per day, or it may be months between public releases.
 
-This is one of the questions you can ask the sales team when evaluating different providers, but commercial providers don't always have the transparency associated with open-source providers. You can't always just go and look up previous release dates and research update progress yourself. However, some providers, such as FusionAuth, do offer [comprehensive release notes](https://fusionauth.io/docs/v1/tech/release-notes/) to aid you in your evaluation.
+This is one of the questions you can ask the sales team when evaluating different providers, but commercial providers don't always have the transparency associated with open-source providers. You can't always just go and look up previous release dates and research update progress yourself. However, some providers, such as FusionAuth, do offer [comprehensive release notes](/docs/v1/tech/release-notes) to aid you in your evaluation.
 
 ### Relicensing
 
@@ -109,7 +109,7 @@ If you are worried about access to the source code if the commercial vendor goes
 
 As with maintenance responsibility, the responsibility for the security of a commercial product is on the vendor. They will be the ones applying patches and performing frequent security audits to ensure their product is secure. These could include running internal security reviews, a bug bounty program, or hiring a pentesting firm to test the product's security.
 
-It may take longer to find bugs than it would with an open-source product where more people from all sorts of different backgrounds are invested in the security of the product and review it frequently. While the security responsibility may not be on you as a customer, you _do_ have the responsibility to [perform due diligence on any potential vendor](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors/) and ensure that they take the security of their product seriously. One way to do that is to examine the vendor's public security policy. Another is to look at the [CVE database](https://cve.mitre.org/) and see how vulnerabilities are handled.
+It may take longer to find bugs than it would with an open-source product where more people from all sorts of different backgrounds are invested in the security of the product and review it frequently. While the security responsibility may not be on you as a customer, you _do_ have the responsibility to [perform due diligence on any potential vendor](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors) and ensure that they take the security of their product seriously. One way to do that is to examine the vendor's public security policy. Another is to look at the [CVE database](https://cve.mitre.org/) and see how vulnerabilities are handled.
 
 ### Cost
 

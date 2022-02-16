@@ -2,7 +2,7 @@
  * Copyright (c) 2016-2021, FusionAuth, All Rights Reserved
  */
 
-fusionauthWebsiteStyleVersion = "0.3.42"
+fusionauthWebsiteStyleVersion = "0.3.43"
 
 project(group: "io.fusionauth", name: "fusionauth-site", version: "3.0.0", licenses: ["ApacheV2_0"]) {
   workflow {
@@ -27,7 +27,6 @@ project(group: "io.fusionauth", name: "fusionauth-site", version: "3.0.0", licen
   }
 }
 
-release = loadPlugin(id: "org.savantbuild.plugin:release-git:1.0.0")
 dependency = loadPlugin(id: "org.savantbuild.plugin:dependency:1.0.2")
 file = loadPlugin(id: "org.savantbuild.plugin:file:1.0.2")
 
@@ -66,35 +65,6 @@ target(name: "serve", description: "Build and watch the project", dependsOn: ["c
 
 target(name: "watch", description: "Build and watch the project", dependsOn: ["css"]) {
   cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts", "--future", "--incremental", "--watch"], false)
-}
-
-target(name: "release", description: "Releases a full version of the project", dependsOn:["clean", "compile"]) {
-  release.release()
-}
-
-target(name: "push", description: "Push the site to fusionauth.io", dependsOn: ["clean"]) {
-  // Skip checking Git if we are forced to do so (use the force Luke)
-  if (!switches.has("force")) {
-    output.infoln("Checking git")
-    cleanExecute(["git", "status"], false) // Clear any local oddities
-    if (!cleanExecute(["git", "diff-index", "--quiet", "origin/master", "--"], false)) {
-      output.infoln("You must commit and push your changes before running this command. (Use --force to skip this check, but keep in mind that your local changes won't be visible until they are pushed)")
-      exit 1
-    }
-  }
-
-  // Build for production deployment
-  if (!cleanExecute(["bundle", "exec", "jekyll", "build","--trace"], true)) {
-    output.infoln("jekyll didn't build correctly. Review output to see what went wrong.")
-    exit 1
-  }
-
-  // Refresh the algolia index.
-  if (!switches.has("skipReindex")) {
-    cleanExecute(["bundle", "exec", "jekyll", "algolia"], false)
-  }
-
-  cleanExecute(["bundle", "exec", "s3_website", "push"], false)
 }
 
 boolean cleanExecute(List<String> args, boolean prod) {

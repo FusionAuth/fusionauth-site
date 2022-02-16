@@ -13,7 +13,7 @@ Breached password detection may be the wave of the future, but some third-party 
 
 <!--more-->
 
-*These best practices originally appeared in our Breached Password Detection White Paper. To learn about the severity of the problem, what NIST recommends and more, [download it today](https://fusionauth.io/resources/breached-password-detection-white-paper/).*
+*These best practices originally appeared in our Breached Password Detection White Paper. To learn about the severity of the problem, what NIST recommends and more, [download it today](/resources/breached-password-detection-white-paper.pdf).*
 
 ## Prioritize ease of setup, implementation, and use
 

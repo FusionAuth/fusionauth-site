@@ -12,7 +12,7 @@ We're excited to announce the release of version 1.25 of FusionAuth. This releas
 
 <!--more-->
 
-This release contained a number of enhancements and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-25-0) for the full breakdown of the changes between 1.24 and 1.25. 
+This release contained a number of enhancements and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes#version-1-25-0) for the full breakdown of the changes between 1.24 and 1.25. 
 
 While there were numerous enhancements, one has me especially excited.
 
@@ -50,8 +50,8 @@ Overall there were 14 issues resolved in this release.
 
 ## Upgrade at will
 
-If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). 
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
 If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/){:target="_blank"} and upgrade your servers. If you have questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/){:target="_blank"}.
 
-Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing/).
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

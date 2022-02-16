@@ -65,30 +65,31 @@ OptionParser.new do |opts|
 end.parse!
 
 # what our dashed type is -> what the path is in the url
+# no hash at end of url as of feb 2022
 def make_api_path(type)
   if type == "generic-connector-configuration"
-    return "connectors/generic/"
+    return "connectors/generic"
   end
   if type == "family"
-    return "families/"
+    return "families"
   end
   if type == "entity"
-    return "entity-management/entities/"
+    return "entity-management/entities"
   end
   if type == "entity-type"
-    return "entity-management/entity-types/"
+    return "entity-management/entity-types"
   end
   if type == "entity-grant"
-    return "entity-management/grants/"
+    return "entity-management/grants"
   end
   if type == "ldap-connector-configuration"
-    return "connectors/ldap/"
+    return "connectors/ldap"
   end
   if type == "email-template"
-    return "emails/"
+    return "emails"
   end
   # planning for families or other non normal pluralizations.
-  return type + "s/"
+  return type + "s"
 end
 
 # what our type is -> what the variable is on the doc page

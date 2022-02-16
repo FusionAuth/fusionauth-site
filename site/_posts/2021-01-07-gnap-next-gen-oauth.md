@@ -43,7 +43,7 @@ A final issue with OAuth2 is complexity. Here are some of the RFCs that you may 
 
 {% include _image.liquid src="/assets/img//blogs/gnap-oauth2-next-gen/oauth2-spec-pyramid.svg" alt="The pyramid of OAuth2 specifications" class="img-fluid" figure=false %}
 
-GNAP isn't alone in trying to fix some of these issues. [OAuth 2.1](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/) is addressing some of them as well. From my research, including reading the draft spec and reviewing discussion on the mailing list, GNAP aims to address these problems in a more cohesive manner. 
+GNAP isn't alone in trying to fix some of these issues. [OAuth 2.1](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1) is addressing some of them as well. From my research, including reading the draft spec and reviewing discussion on the mailing list, GNAP aims to address these problems in a more cohesive manner. 
 
 ## Things that excite me about GNAP
 
@@ -256,7 +256,7 @@ With GNAP, one endpoint begins all interactions between the requesting client an
 
 Whew. That's a lot of new functionality. What should you do about the GNAP release?
 
-First, if OAuth2 works for you, keep using it. Of course, make sure you use it properly, with all the security improvements documented in [OAuth 2.1](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/). OAuth2 is not going anywhere.
+First, if OAuth2 works for you, keep using it. Of course, make sure you use it properly, with all the security improvements documented in [OAuth 2.1](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1). OAuth2 is not going anywhere.
 
 Twitter recently updated from OAuth1, which was published as a standard in 2010. It's likely that systems will still be running OAuth2 in three years. In fact, my colleagues laughed when I mentioned three years; they think it'll be more like a decade. Auth is so foundational that when it works, breaking upgrades take a long time to roll out.
 

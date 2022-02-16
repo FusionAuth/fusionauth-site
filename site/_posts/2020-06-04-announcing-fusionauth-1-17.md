@@ -22,6 +22,6 @@ All [identity providers](/docs/v1/tech/identity-providers/) now have [lambdas](/
 
 And of course there are 8 other bugs squashed and GitHub issues resolved as well. 
 
-Please see the [release notes](/docs/v1/tech/release-notes#version-1-17-0) for the full breakdown of the changes between 1.16 and 1.17.
+Please see the [release notes](/docs/v1/tech/archive/release-notes#version-1-17-0) for the full breakdown of the changes between 1.16 and 1.17.
 
-If you'd like to upgrade your FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you. Or, if you'd like to download and use FusionAuth, [check out your options](/pricing).
+If you'd like to upgrade your FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you. Or, if you'd like to download and use FusionAuth, [check out your options](/pricing).

@@ -76,6 +76,7 @@ With FusionAuth everything is concentrated in a single app. We can scale by addi
 **Jean Rousseau:** I would recommend a few additions to the installation tutorial. They're simple to get, but we never install some of the required packages unless we really need them: tar, zip, unzip and curl.
 
 **Dan:** Thanks!
+
 -------
 
 We love sharing community stories. You can check out [Maila Networks' website](https://maila.com.br/) if you'd like to learn more about them.

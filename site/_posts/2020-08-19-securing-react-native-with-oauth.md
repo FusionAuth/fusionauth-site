@@ -52,7 +52,7 @@ Next up, let's configure the OAuth server and set up our coding environment.
 
 ## Setting up FusionAuth as your auth provider
 
-In order to set up FusionAuth, follow the [5-minute setup guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). It is simple and quick. By default, the OAuth server will run at the address `http://localhost:9011`.
+In order to set up FusionAuth, follow the [5-minute setup guide](/docs/v1/tech/5-minute-setup-guide). It is simple and quick. By default, the OAuth server will run at the address `http://localhost:9011`.
 
 ### Configure the FusionAuth application
 

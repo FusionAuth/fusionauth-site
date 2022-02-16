@@ -31,7 +31,7 @@ In this tutorial, you'll learn how to set up Single Sign-On in WordPress using F
 
 ## Prerequisites
 
-To integrate FusionAuth with WordPress, you need two things: a WordPress instance with admin permissions and a FusionAuth account. If you'd like to run FusionAuth yourself, you can [download it for free](https://fusionauth.io/download/).
+To integrate FusionAuth with WordPress, you need two things: a WordPress instance with admin permissions and a FusionAuth account. If you'd like to run FusionAuth yourself, you can [download it for free](/download/).
 
 If you want to follow along with this tutorial and do not want to bother about launching a WordPress instance or a FusionAuth instance, you can use the [Docker Compose script here](https://github.com/FusionAuth/fusionauth-example-wordpress-sso) to quickly set up a WordPress and FusionAuth instance. If you already have a WordPress instance and FusionAuth account, you can skip to [Adding FusionAuth to WordPress](#adding-fusionauth-sso-to-wordpress).
 

@@ -4,11 +4,9 @@ title: Avoiding Authentication System Lock-in
 description: What steps do you need to take to ensure your authentication system can scale?
 author: Cameron Pavey
 image: advice/vendor-lockin/expert-advice-avoiding-authentication-system-lock-in-header-image.png
-category: Identity Basics
+category: Authentication
 date: 2021-07-12
 dateModified: 2021-07-12
-redirect_from:
-  - /learn/expert-advice/identity-basics/avoid-lockin/
 ---
 
 Years ago your team decided to use a third-party authentication system to avoid the time and cost of building one in-house. But now a better option has hit the market and you're wanting to make the switch. Except, hold on, your old system is so deeply ingrained into your organization that you're practically locked-in to your current vendor.
@@ -33,7 +31,7 @@ Another primary concern with any third-party service is portability. If you need
 
 Auth services store varying amounts of data depending on how you have them configured. Still, most of them will maintain at minimum a list of all authenticated users and their supported authentication mechanisms (social logins, enterprise logins, email/password, etc.).
  
-In some cases, you have more control over how this data is handled and might even be able to provide a self-managed database for the provider to use for data storage. Having this option is good, as the data stays with you, but it isn't always an option or viable to do so. At a bare minimum, you want to be able to export your data from one provider if you decide to leave, and ideally have a way to import it elsewhere easily. Some third-party services will provide resources on how to do these migrations, as is the case with [FusionAuth, when migrating from Auth0](https://fusionauth.io/resources/auth0-migration/).
+In some cases, you have more control over how this data is handled and might even be able to provide a self-managed database for the provider to use for data storage. Having this option is good, as the data stays with you, but it isn't always an option or viable to do so. At a bare minimum, you want to be able to export your data from one provider if you decide to leave, and ideally have a way to import it elsewhere easily. Some third-party services will provide resources on how to do these migrations, as is the case with [FusionAuth, when migrating from Auth0](/auth0-migration).
 
 If you end up going with a provider who doesn't offer full-data exports, you may be in trouble down the line. Data like Rules and Roles might need to be manually reconfigured in most cases, or scripted with [something like Terraform](https://registry.terraform.io/providers/alexkappa/auth0/latest/docs). User data - including password hashes - will be much more problematic if you cannot get it out of the system when you need it, so be sure to check on this before making a decision.
 

@@ -33,7 +33,7 @@ FusionAuth is a complete identity and access management tool that saves your tea
 
 There are a few things that you need to have in place before you get started:
 
-* You need to have either a FusionAuth Cloud account or install their self-hosted version, available for free. Follow the [FusionAuth 5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide/) to get started with your installation.
+* You need to have either a FusionAuth Cloud account or install their self-hosted version, available for free. Follow the [FusionAuth 5-Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide) to get started with your installation.
 * You need a Joomla installation to then install the plugin so you can configure SSO. If you need assistance with creating a Joomla installation, visit www.joomla.org to find out more.
 * You need to download and install an OAuth plugin for Joomla. This tutorial demonstrates the process using the [miniOrange Joomla OAuth Client](https://plugins.miniorange.com/joomla-oauth-client). You can install the extension by going to "Extensions" and then "Install" in your Joomla site.
 
@@ -59,7 +59,7 @@ You'll now be returned to your application list. Click **Edit** to return to the
 
 ### Setting up FusionAuth using Kickstart
 
-Instead of manually setting up FusionAuth using the admin UI, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart/). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/joomla-sso.json) which sets up FusionAuth for this tutorial. 
+Instead of manually setting up FusionAuth using the admin UI, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart). Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/joomla-sso.json) which sets up FusionAuth for this tutorial. 
 
 You'll need to edit that Kickstart file and update the application name and redirect URLs.
 

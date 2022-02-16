@@ -12,7 +12,7 @@ Software applications regularly need to gain access to data from other services 
 
 <!--more-->
 
-_This blog post is an excerpt from [The Value of Standards-Compliant Authentication](/learn/expert-advice/identity-basics/value-standards-compliant-authentication/)._
+_This blog post is an excerpt from [The Value of Standards-Compliant Authentication](/learn/expert-advice/oauth/value-standards-compliant-authentication)._
 
 How can you make sure your systems are giving proper access to other systems and verify access requests from other applications? Are there easy and trusted ways to build these integrations? 
 
@@ -52,4 +52,4 @@ Standards have been used by many different organizations and systems in many dif
 
 By leveraging a standard, you will gain the benefits of all that knowledge and experience.
 
-To learn about details of particular authentication and authorization standards, read [The Value of Standards-Compliant Authentication](/learn/expert-advice/identity-basics/value-standards-compliant-authentication/).
+To learn about details of particular authentication and authorization standards, read [The Value of Standards-Compliant Authentication](/learn/expert-advice/oauth/value-standards-compliant-authentication).
