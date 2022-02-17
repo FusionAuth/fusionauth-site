@@ -70,12 +70,7 @@ If you are using 2FA and the Change Password API, there is a breaking change rel
 
 If you use the FusionAuth themed pages, there is no change required on your part, but if you use the API directly there will be a modification required to your integration.
 
-Beginning in this release, to use the Change Password API for a user with Two-Factor enabled, you must obtain a Trust Token from the Two Factor Login API. This is potentially a breaking change, but the decision was made due to the enhanced security provided.
-
-In 1.32
-
-In 1.33
-
+Beginning in this release, to use the Change Password API for a user with Two-Factor enabled, you must obtain a Trust Token from the Two Factor Login API. This is potentially a breaking change, but the decision was made due to the enhanced security provided. Please review the release notes for more information.
 
 ## The rest of it
 
