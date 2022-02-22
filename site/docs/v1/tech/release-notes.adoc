@@ -56,29 +56,81 @@ Looking for release notes older than 1.23.0? Look in the link:/docs/v1/tech/arch
 [role=release-note]
 
 == Version 1.33.0
-_February 7th, 2021_
+_February 7th, 2022_
 
 include::docs/v1/tech/__database-migration-warning.adoc[]
 
-Release notes in progress&hellip;
-
-https://github.com/FusionAuth/fusionauth-issues/milestone/97
-
-////
 === Security
-
-=== Fixed
+* Add `-Dlog4j2.formatMsgNoLookups=true` to the `fusionauth-search` bundled version of Elasticsearch.
+** Please note, that if you are running a standalone version of Elasticsearch, this will not affect you, and you should still complete any suggested mitigation steps for your Elasticsearch instance. This VM argument added to the `fusionauth-search` bundle is only added to make people feel warm and fuzzy. FusionAuth Cloud users are not vulnerable to https://nvd.nist.gov/vuln/detail/CVE-2021-44228[CVE-2021-44228], and even if you are self-hosting FusionAuth and utilizing the Elasticsearch bundled with `fusionauth-search` you are not vulnerable if you have followed our suggested securing steps. Also due to the version of Java we are using to run Elasticsearch, you are not vulnerable. But we all like to put on our tinfoil hats sometimes, so we are making this change for good measure.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1520[GitHub Issue #1520]
+* Updated PostgreSQL JDBC driver from version `42.2.22` to `42.3.2`.
+** This update is only pertinent to you if you are using a PostgreSQL database. If you are using MySQL, you are not vulnerable.
+** FusionAuth Cloud users are not affected. If you are self-hosting FusionAuth you are only vulnerable if you allow un-authorized modifications to your JDBC connection string used by FusionAuth to connect to the database. I hope you are not doing this. 😉 Please read the following CVE to better understand the vulnerability to see how it may or may not affect you.
+** https://nvd.nist.gov/vuln/detail/CVE-2022-21724[CVE-2022-21724].
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1535[GitHub Issue #1535]
+* Proactively upgrade Logback. Instead of Log4J, FusionAuth uses Logback. In response to the recent vulnerabilities in Log4J, the Logback team has proactively added some additional hardening to their library to ensure similar vulnerabilities are not found.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1530[GitHub #1530]
+* Better protection against malicious actors that have access to configuring Themed templates.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1549[GitHub Issue #1549]
+* Ensure we enforce a Two-Factor challenge before changing a password using the Change Password API.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1591[GitHub Issue #1591]
 
 === Changed
+* If you are using the Change Password API with users that have Two-Factor enabled you may need to adjust your integration. Beginning in this release, to use the Change Password API for a user with Two-Factor enabled, you will need to obtain a Trust Token from the Two Factor Login API in order to complete this request. This is potentially a breaking change, the decision was made to make this potentially breaking change due to the enhanced security provided by this change.
+
+** See https://github.com/FusionAuth/fusionauth-issues/issues/1591[GitHub Issue #1591]
 
 === Fixed
+* The FastPath install may fail to download Java on versions `>= 1.32.0`. The issue was that the `curl` request needed to be configured to follow a redirect with the new URLs for the Java download.  See the linked issue for a workaround if you want to use FastPath for an older version.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1519[GitHub Issue #1519]
+* Ensure we are able to handle Login records that may contain more than one IP address. When passing through a proxy, the `X-Forwarded-For` HTTP request header may contain more than one IP address. This fix ensures we parse this header correctly and handle existing Login records that may have been recorded with more than one value.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1521[GitHub Issue #1521]
+* Using the Login with Apple button on a themed login or registration page may fail when using Safari on iOS 12. A workaround is documented in the linked GitHub issue if you are unable to upgrade FusionAuth.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1526[GitHub Issue #1526]
+* The Event Log, Audit Log, Login Records search feature in the FusionAuth Admin UI may not reset the pagination correctly when beginning a new search request.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1501[GitHub Issue #1501]
+* Group Membership may not be preserved after the first login request when using a Connector without migration.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1432[GitHub Issue #1432]
+* The `jwt.refresh-token.revoke` event may not be sent during a request to the Logout API (`/api/logout`).
+** Resolves   https://github.com/FusionAuth/fusionauth-issues/issues/1522[GitHub Issue #1522], thanks to https://github.com/TimVanHerwijnen[@TimVanHerwijnen] for all the help!
+* A consent added to a self-service registration form may show up incorrectly during a complete registration step during login.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1259[GitHub #1259]
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1261[GitHub #1261]
+* Better support for `user.birthDate` when using Advanced self-service registration when Family is enabled with child registration.
+** https://github.com/FusionAuth/fusionauth-issues/issues/1490[GitHub #1490]
+* When configuring more than one preferred language in the FusionAuth Admin UI on the User or User Registration, the order may not be preserved. For example, if you configured `French, English` where `French` is the preferred languages, with a second option of `English`, when saving the form, the serialized value will become `English, French` and will not likely be saved in the order you expect.
+** https://github.com/FusionAuth/fusionauth-issues/issues/1131[GitHub Issue #1131]
+* Fix a potential memory leak in the Email services. If you are sending a lot of email through FusionAuth, this error may cause your FusionAuth service to run out of memory. Restarting the service periodically can mitigate this potential if you are unable to upgrade. This issue was most likely introduced in version `1.30.2`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1548[GitHub Issue #1548]
+* When completing a Family workflow where a parent joins a child to a family, the `parentEmail` field may not be properly updated in the search index.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1550[GitHub #1550]
+* If you have previously configured Basic Self-Service registration, and then begin using Advanced Self-Service it is possible that a validation may occur that you did not expect.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1560[GitHub #1560]
+* Some edge cases exist when using the Async Tenant Delete API or deleting a Tenant in the FusionAuth Admin UI where a tenant may get stuck in the Pending Delete state.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1559[GitHub #1559]
 
 === Enhancements
-
-=== New
-
-=== Internal
-////
+* Add the underlying host architecture and operating system name and version to the About panel in the FusionAuth admin UI. See [breadcrumb]#System -> About#.
+** https://github.com/FusionAuth/fusionauth-issues/issues/1531
+* Add a tooltip to the Webhook Application configuration to help reduce some confusion until we deprecate this Application configuration.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1542[GitHub #1542]
+* Support longer Refresh Tokens on the Refresh Tokens Import API. The previous limitation was that the refresh token was less than or equal to `191` characters. The assumption was made that this token was opaque and that `191` was very adequate. Some IdPs utilize JWTs for Refresh Tokens and in this case, the length is likely to exceed the previous limitation. This enhancements allows for longer refresh tokens. In particular this will provide better support for importing Refresh Tokens from KeyCloak. See the link:/docs/v1/tech/apis/users#import-refresh-tokens[Import Refresh Tokens API] for additional details.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1541[GitHub Issue #1541]
+* Use a better thread pooling strategy for Webhooks to better support a very large volume of events where the event recipient may not respond quickly enough. This allows more events to be queued up if we cannot send them fast enough while waiting for a response from the webhook.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1500[GitHub Issue #1500]
+* Improve licensing errors on the API and FusionAuth Admin UI to better differentiate between not licensed, and a feature that requires a specific licensed feature. In particular, some of the features introduced as part of the Threat Detection feature require an Enterprise License with this feature enabled. So you may have a licensed edition of FusionAuth, and a feature may still not be available. This change should make it clearer why a particular feature cannot be enabled.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1555[GitHub #1555]
+* Add `tokenExpirationInstant` to the Login Response similar to how the Token endpoint response returns `expires_in` to indicate when the access token returned in the response will expire.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1309[GitHub Issue #1309]
+* Additional User API validation in support of Family configuration with child registration restrictions.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1561[GitHub #1561]
+* Support for ARM 64, the Apple M1, AWS Graviton, etc. Docker images are now published for Intel, and various ARM architectures, and FastPath and other installation paths have support for downloading Java for the correct architecture.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1523[GitHub #1532], https://github.com/FusionAuth/fusionauth-containers/issues/49[GitHub Issue #49]. Thanks to many of our community superstars for the help with this one! https://github.com/rscheuermann[@rscheuermann], https://github.com/jerryhopper[@jerryhopper], https://github.com/ceefour[@ceefour], https://github.com/dmitryzan[@dmitryzan]
+* Add the option to use the `userId` on the Start Two-Factor API
+*** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1571[GitHub Issue #1571]
+* Move the `changePasswordId` to the request body during a POST request. For backwards compatibility, the `changePasswordId` will also be accepted on the URL segment.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1214[GitHub #1214]
 
 [role=release-note]
 
@@ -207,6 +259,10 @@ _November 18th, 2021_
 _October 13th, 2021_
 
 include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Known Issues
+* A potential memory leak was introduced in this version. If you are sending a lot of email through FusionAuth, this error may cause your FusionAuth service to run out of memory. This has been fixed in version `1.33.0`, if you are unable to upgrade restarting the service periodically can mitigate this potential issue.
+** See https://github.com/FusionAuth/fusionauth-issues/issues/1548[GitHub #1548]
 
 === Fixed
 * When logging in with an anonymous user from an IdP that now has a linking strategy other than Anonymous an exception occurs. This can occur if you change your linking strategy from Anonymous to something else, and users that were created while configured as Anonymous log in again.
