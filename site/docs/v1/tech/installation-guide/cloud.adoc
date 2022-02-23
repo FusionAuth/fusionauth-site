@@ -25,11 +25,14 @@ Every deployment is separated, both logically and physically, from every other d
 ** <<Destroying a Deployment>>
 ** <<Migrating a Deployment>>
 * <<Modifying Deployments>>
+** <<Data Integrity>>
+** <<Custom Domains>>
 * <<Accessing User Data>>
 ** <<Restoring From Backup>>
 * <<Support>>
 * <<Custom FusionAuth Cloud Features>>
 * <<SLAs and Availability>>
+* <<Deployment IP Addresses>>
 * <<Load Testing>>
 * <<Limits>>
 
@@ -444,6 +447,62 @@ For high availability deployments with purchased support:
 
 * The FusionAuth engineering team will consult on product implementation and can offer "best practices" advice to further ensure system stability.
 * We size the instance properly for expected traffic, in consultation with the customer.
+
+== Deployment IP Addresses
+
+Depending on your security posture, defense in depth requirements, and application architecture, you may need the IP addresses or hostnames of the instances in your FusionAuth Cloud deployment.
+
+There are any number of reasons you might need this information, including:
+
+* Adding the values to the allow list for your SMTP service.
+* Punching a hole in a firewall to allow FusionAuth webhooks to be delivered.
+* Updating a network access control list to enable access to an on-premises LDAP directory with a connector.
+* Any other outbound connection from a FusionAuth deployment.
+
+[WARNING.warning]
+====
+The IP address, or IP addresses, of a FusionAuth Cloud deployment are not static. They are subject to change. Please plan accordingly by monitoring the IP address to which your service hostname or hostnames resolve.
+
+Hostnames, on the other hand, are immutable. If you can use them instead of IP addresses, that is recommended.
+====
+
+Use `nslookup` to find the address, based on your deployment hostname. Start with the default hostname ending in `fusionauth.io`, not any custom domains. 
+
+Deployment nodes follow a naming convention. If your deployment hostname is `piedpiper.fusionauth.io`, the pattern is `piedpiper-N.instance.fusionauth.io` where `N` ranges from `1` to the number of nodes in the deployment. You can find the number of nodes by viewing the deployment in your account portal or by opening a support ticket.
+
+Note that this naming format may change in future versions of FusionAuth Cloud.
+
+Once you know the hostnames, find the IP addresses by using the `nslookup` command like this:
+
+[source,shell]
+-----
+nslookup piedpiper-1.instance.fusionauth.io
+-----
+
+This will output something similar to this:
+
+[source]
+-----
+Server:		192.168.11.11
+Address:	192.168.11.11
+
+Non-authoritative answer:
+Name:	piedpiper-1.instance.fusionauth.io
+Address: 11.11.11.11
+-----
+
+Look for the `Address` value in the `answer` section. Above, it is `11.11.11.11`. Repeat this for each node.
+
+[WARNING.warning]
+====
+IP addresses and hostnames discovered via `nslookup` or other methods should not be used for HTTP requests such as API calls; they won't respond to such requests.
+
+This information should be used only to allow outbound traffic from FusionAuth deployments through firewalls and other network control layers.
+====
+
+There is an open issue to https://github.com/FusionAuth/fusionauth-issues/issues/1393[allow FusionAuth deployments to have static IP addresses]. If this is important to you, please upvote the issue.
+
+In addition to using IP addresses or hostnames as outlined above, consider custom headers, TLS transport and client certificates to ensure that outbound traffic is appropriately secured.
 
 == Load Testing
 
