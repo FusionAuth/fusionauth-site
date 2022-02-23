@@ -8,6 +8,7 @@ var indexPages = {
   '/docs/v1/tech/admin-guide/': true,
   '/docs/v1/tech/apis/': true,
   '/docs/v1/tech/apis/connectors/': true,
+  '/docs/v1/tech/apis/entity-management/': true,
   '/docs/v1/tech/apis/identity-providers/': true,
   '/docs/v1/tech/apis/messengers/': true,
   '/docs/v1/tech/client-libraries/': true,
