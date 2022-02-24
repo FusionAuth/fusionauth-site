@@ -79,7 +79,11 @@ var redirects = {
   '/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales': '/learn/expert-advice/ciam/making-sure-your-auth-system-scales',
   '/learn/expert-advice/identity-basics/value-standards-compliant-authentication': '/learn/expert-advice/oauth/value-standards-compliant-authentication',
   '/podcast': '/',
+  '/pricing/cloud/': '/pricing',
+  '/pricing/edition/': '/pricing',
+  '/pricing/editions/': '/pricing',
   '/resources/auth0-migration': '/auth0-migration',
+  '/resources/guide-to-user-data-security': '/learn/expert-advice/security/guide-to-user-data-security',
   '/upgrade/from-homegrown': '/compare',
   '/upgrade/from-open-source': '/compare',
   '/upgrade/from-saas': '/compare'
