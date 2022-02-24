@@ -5,6 +5,7 @@ description: FusionAuth, the authentication and authorization platform built for
 author: David Polstra
 image: blogs/fusionauth-enterprise-kubernetes-support/press-release-fusionauth-adds-enterprise-kubernetes-support.png
 category: blog
+tags: topic-kubernetes
 excerpt_separator: "<!--more-->"
 ---
 
