@@ -3,7 +3,7 @@ layout: advice
 title: Anatomy of a JWT
 description: Learn more about what goes into a JSON Web Token and how they are constructed. 
 author: Dan Moore
-image: advice/pros-and-cons-of-jwts-article.png
+image: advice/anatomy-jwt/expert-advice-anatomy-of-a-jwt.png
 category: Tokens
 date: 2022-02-24
 dateModified: 2022-02-24
