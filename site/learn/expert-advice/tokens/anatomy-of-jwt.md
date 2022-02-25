@@ -9,10 +9,17 @@ date: 2022-02-24
 dateModified: 2022-02-24
 ---
 
-Here's a JSON Web Token, freshly minted.
+Here's a JSON Web Token, freshly minted. Newlines have been added for clarity, but they are typically not present.
 
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9.eyJhdWQiOiI4NWEwMzg2Ny1kY2NmLTQ4ODItYWRkZS0xYTc5YWVlYzUwZGYiLCJleHAiOjE2NDQ4ODQxODUsImlhdCI6MTY0NDg4MDU4NSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJqdGkiOiIzZGQ2NDM0ZC03OWE5LTRkMTUtOThiNS03YjUxZGJiMmNkMzEiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoiYWRtaW5AZnVzaW9uYXV0aC5pbyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhcHBsaWNhdGlvbklkIjoiODVhMDM4NjctZGNjZi00ODgyLWFkZGUtMWE3OWFlZWM1MGRmIiwicm9sZXMiOlsiY2VvIl19.dee-Ke6RzR0G9avaLNRZf1GUCDfe8Zbk9L2c7yaqKME
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9.eyJhdWQiO
+iI4NWEwMzg2Ny1kY2NmLTQ4ODItYWRkZS0xYTc5YWVlYzUwZGYiLCJleHAiOjE2NDQ4ODQ
+xODUsImlhdCI6MTY0NDg4MDU4NSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwMDAwMDAwM
+C0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJqdGkiOiIzZGQ2NDM0ZC03OWE5LTR
+kMTUtOThiNS03YjUxZGJiMmNkMzEiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SR
+CIsImVtYWlsIjoiYWRtaW5AZnVzaW9uYXV0aC5pbyIsImVtYWlsX3ZlcmlmaWVkIjp0cnV
+lLCJhcHBsaWNhdGlvbklkIjoiODVhMDM4NjctZGNjZi00ODgyLWFkZGUtMWE3OWFlZWM1M
+GRmIiwicm9sZXMiOlsiY2VvIl19.dee-Ke6RzR0G9avaLNRZf1GUCDfe8Zbk9L2c7yaqKME
 ```
 
 This may look like a lot of gibberish, but as you learn more about JWTs, it begins to make more sense.
@@ -59,7 +66,7 @@ The list of algorithms and implementation support level is below.
 | PS512        | RSASSA-PSS using SHA-512 and MGF1 with SHA-512 | Optional |
 | none         | No digital signature or MAC performed | Optional |
 
-This table is drawn from from RFC 7518. As only HS256 is required to be compliant with the spec, consult the software or library used to create JWTs for details on supported algorithms.
+This table is drawn from RFC 7518. As only HS256 is required to be compliant with the spec, consult the software or library used to create JWTs for details on supported algorithms.
 
 Other metadata is also stored in this part of the token. The `typ` header indicates the type of the JWT. In this case, the value is `JWT`, but other values are valid. For instance, if the JWT conforms to RFC 9068, it may have the value `at+JWT` indicating it is an access token.
 
@@ -141,7 +148,7 @@ Another security concern is related to the verification of the `aud` claim. Sinc
 
 Why?
 
-Imagine a scenario where you have two different APIs. One is to create and manage todos and the other is a billing API, used to transfer money. Both APIs expect some users with a a role of `admin`. However, that role means vastly different things in terms of what actions can be taken. 
+Imagine a scenario where you have two different APIs. One is to create and manage todos and the other is a billing API, used to transfer money. Both APIs expect some users with a role of `admin`. However, that role means vastly different things in terms of what actions can be taken. 
 
 If both the todo and billing APIs don't verify that any given JWT was created for them, an attacker could take a JWT from the todo API with the `admin` role and present it to the billing API.
 
@@ -160,7 +167,7 @@ While you can read the [relevant portion of the specification](https://datatrack
 * the signature is base64 URL encoded
 * the encoded signature is appended to the string with a `.` as a separator
 
-When the JWT is recieved, the same operations can be performed. If the generated signature is correct, the contents of the JWT are unchanged from when it was created.
+When the JWT is received, the same operations can be performed. If the generated signature is correct, the contents of the JWT are unchanged from when it was created.
 
 ## Limits
 
@@ -171,7 +178,7 @@ In the specifications, there are no hard limits on length of JWTs. In practical 
 
 ### Storage
 
-JWTs can be sent in HTTP headers, stored in cookies, and place in form parameters. In these scenarios, the storage dictates the maximum JWT length.
+JWTs can be sent in HTTP headers, stored in cookies, and placed in form parameters. In these scenarios, the storage dictates the maximum JWT length.
 
 For example, the typical storage limit for cookies in a browser is typically 4096 bytes, including the name. The limit on HTTP headers varies widely based on software components, but 8192 bytes seems to be a common value.
 
@@ -223,6 +230,4 @@ Be mindful of additional time taken to transport longer JWT; this can be tested 
 
 ## Conclusion
 
-Signed JWTs have a header, body, and signature. 
-
-Understanding all three of these components are critical to the correct use of JWTs.
+Signed JWTs have a header, body, and signature. Each plays a vital role in ensuring that JWTs can be used to safely store and transmit critical information, whether about identities or not. Understanding all three of these components are critical to the correct use of JWTs as well.
