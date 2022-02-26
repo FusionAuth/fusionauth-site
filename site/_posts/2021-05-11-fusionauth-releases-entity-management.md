@@ -5,7 +5,7 @@ description: This feature simplifies creating and managing fine-grained permissi
 author: David Polstra
 image: blogs/entity-management-launch/fusionauth-launches-entity-managemen-applications-header-image.png
 category: blog
-tags: feature-entity-management
+tags: feature-entity-management topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 
