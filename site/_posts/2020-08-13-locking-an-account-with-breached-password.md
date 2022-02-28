@@ -19,7 +19,7 @@ FusionAuth gives you options. You can integrate using [JWTs](/docs/v1/tech/oauth
 
 In this tutorial, we'll extend FusionAuth to lock an account if a user signs in with a compromised password.
 
-> Due to the use case, this post focuses on the breached password detection event, but the integration principles apply for any of the [over fifteen events](/docs/v1/tech/events-webhooks/events) for which FusionAuth can fire a webhook.
+> Due to the use case, this post focuses on the breached password detection event, but the integration principles apply for any of the [over fifteen events](/docs/v1/tech/events-webhooks/events/) for which FusionAuth can fire a webhook.
 
 This is different from [locking an account](/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout) based on login attempts. In this case, you are relying on the [breached password detection feature](/blog/2020/07/22/breached-password-detection). 
 
