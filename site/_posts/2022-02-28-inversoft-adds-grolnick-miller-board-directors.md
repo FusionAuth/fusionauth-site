@@ -3,7 +3,7 @@ layout: blog-post
 title: Inversoft Adds Andy Grolnick and Kendall Miller to Its Board of Directors
 description: Veteran technologists bring expertise scaling innovative, security-focused businesses while creating organic growth.
 author: David Polstra
-image: blogs/advanced-threat-detection-launch/fusionauth-introduces-advanced-threat-detection-to-help-safeguard-user-identity-header-image.png
+image: blogs/inversoft-adds-grolnick-miller-board-directors/inversoft-adds-andy-grolnick-and-kendall-miller-board-of-directors.png
 category: blog
 tags: topic-press-release
 excerpt_separator: "<!--more-->"
