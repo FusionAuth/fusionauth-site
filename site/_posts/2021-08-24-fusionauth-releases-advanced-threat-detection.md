@@ -5,7 +5,7 @@ description: This feature simplifies process for developers to protect against m
 author: David Polstra
 image: blogs/advanced-threat-detection-launch/fusionauth-introduces-advanced-threat-detection-to-help-safeguard-user-identity-header-image.png
 category: blog
-tags: feature-advanced-threat-detection
+tags: feature-advanced-threat-detection topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

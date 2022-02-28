@@ -5,6 +5,7 @@ description: Veteran B2B tech leader Don Bergal joins FusionAuth and focuses on 
 author: David Polstra
 image: blogs/fusionauth-names-don-bergal-as-ceo/press-release-fusionauth-names-don-bergal-as-ceo-header-image.png
 category: blog
+tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

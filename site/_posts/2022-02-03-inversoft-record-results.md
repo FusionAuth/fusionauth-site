@@ -5,6 +5,7 @@ description: Both FusionAuth and CleanSpeak software businesses achieve signific
 author: David Polstra
 image: blogs/inversoft-record-results/inversoft-inc-reports-record-results.png
 category: blog
+tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

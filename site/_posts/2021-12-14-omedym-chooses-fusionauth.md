@@ -5,6 +5,7 @@ description: Omeydm's need for multi-tenancy, SSO and a powerful API drove the c
 author: David Polstra
 image: blogs/omedym-chooses-fusionauth-ciam/press-release-omedym-chooses-fusionauth-customer-identity-and-access-management-to-scale-customer-growth-replaces-former-cloud-provider.png
 category: blog
+tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

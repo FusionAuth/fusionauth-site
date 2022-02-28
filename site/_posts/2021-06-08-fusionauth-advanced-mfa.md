@@ -5,7 +5,7 @@ description: With FusionAuth Advanced MFA, developers can layer in different aut
 author: David Polstra
 image: blogs/advanced-mfa-launch/press-release-fusionauth-advanced-mfa-gives-developers-flexibility-control-in-deploying-authentication-factors-header-image.png
 category: blog
-tags: topic-feature-mfa
+tags: topic-feature-mfa topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 
