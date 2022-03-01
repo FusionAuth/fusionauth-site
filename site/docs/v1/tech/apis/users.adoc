@@ -19,6 +19,7 @@ This page contains all of the APIs for managing users.
 === Importing Users
 * <<Import Users>>
 * <<Import Refresh Tokens>>
+* <<Password Hashes>>
 
 === User Search
 * <<Search for Users>>
@@ -520,6 +521,41 @@ include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 :never_search_error!:
 :never_missing!:
 
+== Password Hashes
+
+Password hashes can be imported into FusionAuth. This allows users to transparently use their old passwords while at no time exposing the plaintext password. This section contains details about importing specific password hashes.
+
+You can also learn more about hashes in the link:/docs/v1/tech/reference/password-hashes[password hashing reference].
+
+=== Bcrypt
+
+When importing a bcrypt hash, you may have a value such as `$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`. This single string represents the bcrypt version, factor, salt and hash.
+
+The number before the final `$` is the factor, the 22 characters after the final `$` is the salt and the last 31 characters are the hash.
+
+For the above bcrypt hash, `10` is the factor and should be placed in the [field]#factor# field.
+`N9qo8uLOickgx2ZMRZoMye` is the salt and should be placed in the [field]#salt# field.
+`IjZAgcfl7p92ldGxad68LJZdL17lhWy` is the hash value and should be placed in the [field]#password# field.
+
+=== MD5
+
+When importing an MD5 password hash, you may or may not have a salt. If you have no salt, use the empty string, `''`, as the salt and you may still use the salted MD5 plugin.
+
+MD5 is commonly stored in hexidecimal format, such as `25d55ad283aa400af464c76d713c07ad`. FusionAuth requires imported passwords to be stored in base64. You must convert any hexidecimal values to base64 before importing, or the import will not work.
+
+Here is an example ruby script to convert hexidecimal values to base64 encoded:
+
+[source,ruby]
+.Convert a Hexidecimal Password Hash Value to Base64
+----
+hash_in_hex = "25d55ad283aa400af464c76d713c07ad"
+
+def hex_to_base64_digest(hexdigest)
+  [[hexdigest].pack("H*")].pack("m0")
+end
+
+puts hex_to_base64_digest(hash_in_hex)
+----
 
 == Search for Users
 
