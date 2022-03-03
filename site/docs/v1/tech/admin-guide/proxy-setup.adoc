@@ -23,7 +23,7 @@ While FusionAuth doesn't require a proxy, using one offers additional flexibilit
 
 == What Is a Proxy
 
-While the term is overloaded, for the purposes of this document, a proxy is any software which sits between your users and FusionAuth. Some or all requests to FusionAuth pass through the proxy.
+While the term is overloaded, for the purposes of this document, a proxy is any software which sits between your users and FusionAuth. Some or all requests to FusionAuth then pass through the proxy.
 
 ++++
 {% plantuml source: _diagrams/docs/admin-guide/one-proxy.plantuml, alt: "A typical proxy configuration." %}
@@ -41,7 +41,7 @@ FusionAuth should work with any proxy that supports HTTP. If you find a proxy th
 
 == Why Use a Proxy
 
-While you can run FusionAuth without a proxy, there a are a number of reasons why you might want to use one:
+While you can run FusionAuth without a proxy, there are a number of reasons why you might want one:
 
 * Have different domain names which point to different FusionAuth tenants
 * Block or throttle access based on request characteristics
@@ -53,16 +53,14 @@ While you can run FusionAuth without a proxy, there a are a number of reasons wh
 
 == How To Use a Proxy
 
-This section won't cover setting up your proxy or proxy specific configuration. Instead, consult your proxy package's documentation.
-
-What is important is that you are forwarding all requests to FusionAuth and that you are setting the correct headers. 
+This section won't cover setting up your proxy or proxy specific configuration. Instead, consult your proxy package's documentation. However, you must forward all requests to FusionAuth, and you must also set the correct headers. 
 
 Here's a list of the headers you must set:
 
-* `X-Forwarded-Proto`: typically this will be `https`. This ensures any redirects are sent with the appropriate scheme. This will be the scheme of the proxy.
-* `X-Forwarded-Host`: The original host requested by the client in the `Host` HTTP request header. This will be the hostname of the proxy.
-* `X-Forwarded-For`: The originating IP address of the client. This varies by client, but is used for logging IP addresses and link:/docs/v1/tech/apis/ip-acl[enforcing ACLs].
-* `X-Forwarded-Server`: The hostname of the proxy server. 
+* `X-Forwarded-Proto`: typically this will be `https`. This ensures any redirects and cookies are sent with the appropriate scheme. This will be the scheme of the proxy server.
+* `X-Forwarded-Host`: The original host requested by the client in the `Host` HTTP request header. This will be the hostname of the proxy server.
+* `X-Forwarded-For`: The originating IP address of the client. This varies and is used for logging IP addresses and link:/docs/v1/tech/apis/ip-acl[enforcing ACLs].
+* `X-Forwarded-Server`: The hostname of the proxy server.
 
 Let's say FusionAuth lives at \https://example.fusionauth.io, and the proxy lives at \https:///auth.example.com. 
 
@@ -73,7 +71,7 @@ In this case, the headers would have the following values:
 * `X-Forwarded-For`: The client IP address
 * `X-Forwarded-Server`: `auth.example.com`
 
-Proxies may use different formats to set these headers. For example, IIS requires you to use underscores and prepend the header with HTTP: `X-Forwarded-Proto` is converted to `HTTP_X_Forwarded_Proto`. Please consult your proxy's documentation for more details.
+Proxies may use different formats to set these headers. For example, IIS requires underscores and you must prepend the header with HTTP. `X-Forwarded-Proto` is `HTTP_X_Forwarded_Proto`. Please consult your proxy server's documentation for more details.
 
 === Caching
 
@@ -85,26 +83,26 @@ The community has provided a number of example configurations for different prox
 
 === Chaining Proxies
 
-If needed, you can have multiple proxies for each request. This may be useful if you have one proxy that handles domain name translation and one that handles error pages.
+If needed, you can have multiple proxies for each request. This may be useful if one proxy handles custom domain names for tenants and another handles error pages.
 
 ++++
 {% plantuml source: _diagrams/docs/admin-guide/two-proxies.plantuml, alt: "A proxy configuration with multiple proxies." %}
 ++++
 
-With this pattern, ensure that every proxy in the chain has the same value for `X-Forwarded-Host`: the original hostname.
+With this pattern, every proxy in the chain must have the same value for `X-Forwarded-Host`: the original hostname.
 
-This allows FusionAuth to set cookies and create redirects correctly.
+Doing so allows FusionAuth to set cookies and create redirects correctly.
 
 However, `X-Forwarded-Server` should change as requests pass through each proxy.
 
 === Locking FusionAuth Down
 
-You may want to allow access to FusionAuth only through the proxy to enhance your defense in depth strategy. There are a few options to do so:
+You may want to allow access to FusionAuth only through the proxy to enhance a defense in depth strategy. There are a few options to do so:
 
 * At the network level, using firewalls.
 * Using FusionAuth's IP ACL feature (only available in the Enterprise edition).
 
-In either case, disallow all traffic to FusionAuth not originating from the proxy.
+In either case, disallow traffic to FusionAuth not originating from the proxy.
 
 == Troubleshooting
 
