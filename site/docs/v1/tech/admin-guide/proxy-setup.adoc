@@ -1,16 +1,33 @@
 ---
 layout: doc
-title: Proxy Setup For FusionAuth 
-description: You can add a proxy in front of FusionAuth. This documents why and how.
+title: FusionAuth and Proxies
+description: You can add a proxy in front of FusionAuth. This page documents why and how.
 ---
 
 :sectnumlevels: 0
+:page-liquid:
+
+== Overview
+
+While FusionAuth doesn't require a proxy, using one offers additional flexibility.
+
+* <<What Is a Proxy>>
+* <<Why Use a Proxy>>
+* <<How To Use a Proxy>>
+** <<Caching>>
+** <<Common Proxy Configurations>>
+** <<Chaining Proxies>>
+** <<Locking FusionAuth Down>>
+* <<Troubleshooting>>
+* <<Limits>>
 
 == What Is a Proxy
 
-For the purposes of this document, a proxy is a piece of software which sits between your users and FusionAuth. Some or all requests to FusionAuth pass through the proxy.
+While the term is overloaded, for the purposes of this document, a proxy is any software which sits between your users and FusionAuth. Some or all requests to FusionAuth pass through the proxy.
 
-TODO need diagram here
+++++
+{% plantuml source: _diagrams/docs/admin-guide/one-proxy.plantuml, alt: "A typical proxy configuration." %}
+++++
 
 Proxies can be self-hosted or SaaS. Examples include:
 
@@ -27,10 +44,10 @@ FusionAuth should work with any proxy that supports HTTP. If you find a proxy th
 While you can run FusionAuth without a proxy, there a are a number of reasons why you might want to use one:
 
 * Have different domain names which point to different FusionAuth tenants
-* Throttle access
-* Cache pages for performance
+* Block or throttle access based on request characteristics
+* Cache CSS for performance
 * Display custom error pages for 4xx or 5xx errors
-* Handle TLS termination
+* Terminate TLS
 * Add additional request processing logic
 * Have FusionAuth requests served from a non-standard path such as `/fa/`
 
@@ -49,13 +66,18 @@ Here's a list of the headers you must set:
 
 Let's say FusionAuth lives at \https://example.fusionauth.io, and the proxy lives at \https:///auth.example.com. 
 
-In this case, the headers would have the following values.
+In this case, the headers would have the following values:
+
 * `X-Forwarded-Proto`: `https`
 * `X-Forwarded-Host`: `auth.example.com`
 * `X-Forwarded-For`: The client IP address
 * `X-Forwarded-Server`: `auth.example.com`
 
 Proxies may use different formats to set these headers. For example, IIS requires you to use underscores and prepend the header with HTTP: `X-Forwarded-Proto` is converted to `HTTP_X_Forwarded_Proto`. Please consult your proxy's documentation for more details.
+
+=== Caching
+
+FusionAuth disallows caching with the https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control[`Cache-control: no-store` header]. Never cache FusionAuth responses.
 
 === Common Proxy Configurations
 
@@ -65,9 +87,13 @@ The community has provided a number of example configurations for different prox
 
 If needed, you can have multiple proxies for each request. This may be useful if you have one proxy that handles domain name translation and one that handles error pages.
 
-TODO need diagram here
+++++
+{% plantuml source: _diagrams/docs/admin-guide/two-proxies.plantuml, alt: "A proxy configuration with multiple proxies." %}
+++++
 
-If you do this, ensure that every proxy in the chain has the same value for `X-Forwarded-Host`, that of the original hostname. This allows FusionAuth to set cookies and create redirects correctly.
+With this pattern, ensure that every proxy in the chain has the same value for `X-Forwarded-Host`: the original hostname.
+
+This allows FusionAuth to set cookies and create redirects correctly.
 
 However, `X-Forwarded-Server` should change as requests pass through each proxy.
 
@@ -79,6 +105,20 @@ You may want to allow access to FusionAuth only through the proxy to enhance you
 * Using FusionAuth's IP ACL feature (only available in the Enterprise edition).
 
 In either case, disallow all traffic to FusionAuth not originating from the proxy.
+
+== Troubleshooting
+
+If you see the below error when you are trying to log in, ensure that all your headers are set correctly.
+
+[source,text]
+.Common Proxy Error Message
+----
+Something doesn't seem right. You have been logged out of FusionAuth. If you were attempting to log in please click 'Return to Login' to retry.
+----
+
+If you are using FusionAuth Cloud, ensure that you have added the hostname of the proxy to which the initial request has been made to your list of custom domains.
+
+For additional troubleshooting, it is helpful to remove any proxies one at a time and try to log in. This can help narrow down the source of the problem.
 
 == Limits
 
