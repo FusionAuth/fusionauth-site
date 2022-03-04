@@ -96,7 +96,6 @@ Put the following values for the rest of the field:
 
 Make sure to replace `<YOUR_FUSIONAUTH_URL>` with the URL of your FusionAuth instance. Also, enable the "Automatically connect existing users" setting.
 
-TODO update with correct urls, somehow, or don't show this image.
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-drupal/configure-drupal-oidc.png" alt="Configure Drupal OIDC module." class="img-fluid" figure=true %}
 
 By default the OpenID login buttons are not visible. You can enable them in the "OpenID buttons display in user login form" section. Select "Above" or "Below" to show the OpenID buttons along with the default Drupal login form.
