@@ -13,11 +13,11 @@ We're excited to announce the release of version 1.26 of FusionAuth. This shippe
 
 <!--more-->
 
-This release contained a number of enhancements and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-26-0) for a full breakdown of the changes between 1.25 and 1.26. I wanted to highlight a few of the biggest ones.
+This release contained a number of enhancements and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes#version-1-26-0) for a full breakdown of the changes between 1.25 and 1.26. I wanted to highlight a few of the biggest ones.
 
 ## Advanced multi-factor authentication (MFA)
 
-This is a premium feature requiring a [paid license](/pricing/). It increases support for MFA in FusionAuth, including adding the following features:
+This is a premium feature requiring a [paid license](/pricing). It increases support for MFA in FusionAuth, including adding the following features:
 
 * Customizable SMS templates, including localization
 * A new MFA factor: email 
@@ -30,7 +30,7 @@ This is a premium feature requiring a [paid license](/pricing/). It increases su
 The FusionAuth team wants every user to be able to use multi-factor authentication to secure their accounts, whether developers buy a premium edition or not. Therefore, support for time based one-time password MFA solutions such as Google Authenticator and Authy continues to be included in the community edition. (Take that, hackers!)
 
 {% include _callout-important.liquid content=
-"Unfortunately, these changes are not backwards compatible with the previous Two Factor implementation, so if you have built on top of that, please [review the changes carefully](/docs/v1/tech/apis/two-factor/). There is also a [1.25 -> 1.26 MFA migration guide](/docs/v1/tech/guides/multi-factor-authentication/#migration-from-version-1-25-and-earlier)."
+"Unfortunately, these changes are not backwards compatible with the previous Two Factor implementation, so if you have built on top of that, please [review the changes carefully](/docs/v1/tech/apis/two-factor). There is also a [1.25 -> 1.26 MFA migration guide](/docs/v1/tech/guides/multi-factor-authentication#migration-from-version-1-25-and-earlier)."
 %}
 
 Here's a customized SMS template:
@@ -60,7 +60,7 @@ When the reminder API is ready to gather upcoming tasks, it "signs in" with the 
 
 {% include _image.liquid src="/assets/img/blogs/release-1-26/list-of-entities.png" alt="A list of APIs created using Entity Management." class="img-fluid" figure=false %}
 
-All of this set up and execution can be done via API, making Entity Management a great way to model machine to machine communication in a dynamic service oriented application, an internet of things system, or elsewhere. You don't have to use the grant mechanism either. If you want to model relationships in FusionAuth for any reason, store JSON arbitrary data in the `entity.data` field. Read more about [Entity Management here](/docs/v1/tech/core-concepts/entity-management/).
+All of this set up and execution can be done via API, making Entity Management a great way to model machine to machine communication in a dynamic service oriented application, an internet of things system, or elsewhere. You don't have to use the grant mechanism either. If you want to model relationships in FusionAuth for any reason, store JSON arbitrary data in the `entity.data` field. Read more about [Entity Management here](/docs/v1/tech/core-concepts/entity-management).
 
 ## An API to manage API keys
 
@@ -99,10 +99,10 @@ There were a couple of bugs fixed, including:
 
 ## Upgrade at will
 
-We're in the process of documenting all of this, but the [release notes](/docs/v1/tech/release-notes/#version-1-26-0) serve as a good guide of the changes, fixes, and new features.
+We're in the process of documenting all of this, but the [release notes](/docs/v1/tech/release-notes#version-1-26-0) serve as a good guide of the changes, fixes, and new features.
 
-If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). 
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
 If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/){:target="_blank"} and upgrade your servers. If you have any questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/){:target="_blank"}.
 
-Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing/).
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

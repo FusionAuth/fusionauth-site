@@ -13,7 +13,7 @@ We're excited to announce the release of version 1.31.0 of FusionAuth. This vers
 
 <!--more-->
 
-This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-31-0) for a full breakdown of the changes between 1.30 and 1.31. 
+This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes#version-1-31-0) for a full breakdown of the changes between 1.30 and 1.31. 
 
 There are a few items worth calling out.
 
@@ -41,10 +41,10 @@ Some of the other 20+ enhancements and fixes included in this release:
 
 ## Upgrade at will
 
-The [release notes](/docs/v1/tech/release-notes/#version-1-31-0) are a guide of the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
+The [release notes](/docs/v1/tech/release-notes#version-1-31-0) are a guide of the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
 
-If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). 
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
 If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/){:target="_blank"} and upgrade your servers. If you have any questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/){:target="_blank"}.
 
-Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing/).
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

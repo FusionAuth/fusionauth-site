@@ -16,7 +16,7 @@ Specifically, Authentication-as-a-Service (AaaS) is growing fast. Their out-of-t
 
 But outsourcing isn't as simple as it sounds. Vendor management is time-consuming and can introduce significant risks to the business if due diligence isn't observed.
  
-_This blog post is an excerpt from [Performing Due Diligence on Authentication Vendors](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors/)._
+_This blog post is an excerpt from [Performing Due Diligence on Authentication Vendors](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors)._
 
 ## The need for due diligence
 
@@ -51,4 +51,4 @@ While important, there are other aspects to consider when performing due diligen
 * Engineering implementation effort
 * Pricing 
 
-To learn about those aspects and more, read [Performing Due Diligence on Authentication Vendors](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors/).
+To learn about those aspects and more, read [Performing Due Diligence on Authentication Vendors](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors).

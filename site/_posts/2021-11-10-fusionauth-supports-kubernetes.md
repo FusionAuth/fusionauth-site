@@ -5,6 +5,7 @@ description: FusionAuth, the authentication and authorization platform built for
 author: David Polstra
 image: blogs/fusionauth-enterprise-kubernetes-support/press-release-fusionauth-adds-enterprise-kubernetes-support.png
 category: blog
+tags: topic-kubernetes topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 
@@ -16,9 +17,9 @@ FusionAuth, the authentication and authorization platform built for developers, 
  
 Kubernetes continues to be the go-to choice for container orchestration platforms, [with 78% of companies](https://enterprisersproject.com/article/2020/6/kubernetes-statistics-2020) polled by the Cloud Native Computing Foundation using it. Despite its popularity amongst enterprises, Kubernetes is notoriously complex. Adding authorization and authentication services within it is often more work than DevSecOps teams have the bandwidth or expertise for.
 
-"We have a Kubernetes set up for our platform and the integration of FusionAuth via the helm chart is just a breeze. Together with [FusionAuth Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart/), we can launch new dedicated FusionAuth instances completely automated," said Cyrill Lippuner, CTO at Aposphere. "Further, it can run completely in a private network without needing cloud access, which is a big plus on the privacy side."
+"We have a Kubernetes set up for our platform and the integration of FusionAuth via the helm chart is just a breeze. Together with [FusionAuth Kickstart](/docs/v1/tech/installation-guide/kickstart), we can launch new dedicated FusionAuth instances completely automated," said Cyrill Lippuner, CTO at Aposphere. "Further, it can run completely in a private network without needing cloud access, which is a big plus on the privacy side."
 
-FusionAuth’s Kubernetes support is turn-key, with minimal configuration and no coding required. For more on using FusionAuth in Kubernetes, visit [https://fusionauth.io/kubernetes/](https://fusionauth.io/kubernetes/).
+FusionAuth’s Kubernetes support is turn-key, with minimal configuration and no coding required. For more on using FusionAuth in Kubernetes, visit [https://fusionauth.io/kubernetes/](/kubernetes/).
 
 ### About FusionAuth
 

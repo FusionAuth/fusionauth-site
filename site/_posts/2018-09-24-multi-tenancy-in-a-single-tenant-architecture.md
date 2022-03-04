@@ -86,4 +86,4 @@ assertEquals(response.status, 404);
 
 If you use tenants in this way, you still get the best of both worlds. When you log into the FusionAuth UI, you can manage all users across all tenants. Plus, you get full visibility and reporting across your entire system.
 
-These are just some of the use-cases that the FusionAuth Tenants feature help solve. Tenants are also great for taking multiple legacy backends and unifying the identities over time, with very little risk. If you need help implementing multi-tenants in your application, [contact us directly](https://fusionauth.io/contact).  
+These are just some of the use-cases that the FusionAuth Tenants feature help solve. Tenants are also great for taking multiple legacy backends and unifying the identities over time, with very little risk. If you need help implementing multi-tenants in your application, [contact us directly](/contact).  

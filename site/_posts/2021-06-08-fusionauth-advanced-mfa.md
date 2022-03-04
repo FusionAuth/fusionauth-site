@@ -5,7 +5,7 @@ description: With FusionAuth Advanced MFA, developers can layer in different aut
 author: David Polstra
 image: blogs/advanced-mfa-launch/press-release-fusionauth-advanced-mfa-gives-developers-flexibility-control-in-deploying-authentication-factors-header-image.png
 category: blog
-tags: topic-feature-mfa
+tags: topic-feature-mfa topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 
@@ -23,7 +23,7 @@ FusionAuth Advanced MFA focuses on:
 * **Flexible End Points** – allows developers to customize their MFA. Send messages through emails, SMS providers like Twilio or time-based one-time password solutions such as Google Authenticator. Flexible end points can accommodate new messaging tech as it comes on line, too. 
 * **Support for Multiple End Users** – supports associating an MFA method with more than one account. Ex: if two or more users share an account, they may all want to be able to receive MFA codes in their email. 
 
-FusionAuth Advanced MFA is available now. Click here for more information: [https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication/](/docs/v1/tech/guides/multi-factor-authentication/).
+FusionAuth Advanced MFA is available now. Click here for more information: [https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication](/docs/v1/tech/guides/multi-factor-authentication).
 
 ### About FusionAuth
 

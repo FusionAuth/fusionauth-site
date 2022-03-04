@@ -25,7 +25,7 @@ You need to have the following software installed before you begin:
 - node 12.x (other versions of Node may work, but have not been tested)
 - npm (comes with recent versions of node)
 
-You'll also want to make sure your system meets the [memory, storage and CPU requirements](https://fusionauth.io/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
+You'll also want to make sure your system meets the [memory, storage and CPU requirements](/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
 
 ## Architecture
 This application has three main components. All of these will run locally.
@@ -48,7 +48,7 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options (rpm, deb, etc) if you don't have Docker installed.
+Check out the [Download FusionAuth page](/download) for other installation options (rpm, deb, etc) if you don't have Docker installed.
 
 After you sign in as a FusionAuth administrator, create a new application. I named mine 'Secure Angular', and will refer to this throughout the tutorial.
 
@@ -381,7 +381,7 @@ Now, let's add the ability to authenticate against the FusionAuth identity serve
 
 The first thing we want to do is provide a link to sign in. We're going to proxy through the express server in order to keep our architecture clean. Then we'll show the sign in link only to users who are not signed in. Once a user is, we'll display their email address.
 
-Note that we send the user directly to FusionAuth to sign in. We could have instead built the screen in the express server, but FusionAuth allows you to [style your login page](https://fusionauth.io/docs/v1/tech/themes/) however you'd like. In addition, if you build the login page in express, you technically would not be following the OAuth2 flow.
+Note that we send the user directly to FusionAuth to sign in. We could have instead built the screen in the express server, but FusionAuth allows you to [style your login page](/docs/v1/tech/themes/) however you'd like. In addition, if you build the login page in express, you technically would not be following the OAuth2 flow.
 
 FusionAuth also needs to know where to send the user after successful authentication, so let's add that to our config.js. Let's also add the application ID, client ID and other OAuth secrets that we saved off in a text file when we configured our FusionAuth API:
 
@@ -548,7 +548,7 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-If we have a token, we'll get user information, including their email address, via the userinfo endpoint. We'll also retrieve more information from the registration endpoint and return both to our Angular application. If all we want is the data available from the [userinfo endpoint](https://fusionauth.io/docs/v1/tech/oauth/endpoints#userinfo), we don't need to make that second API call.
+If we have a token, we'll get user information, including their email address, via the userinfo endpoint. We'll also retrieve more information from the registration endpoint and return both to our Angular application. If all we want is the data available from the [userinfo endpoint](/docs/v1/tech/oauth/endpoints#userinfo), we don't need to make that second API call.
 
 Restart your express server by going to the terminal where it is running, hitting control-C and then running
 
@@ -617,7 +617,7 @@ router.get('/', (req, res) => {
 module.exports = router;
 ```
 
-This route destroys the express session and then sends the user to FusionAuth to a crafted URL which invalidates the session via the [logout endpoint](https://fusionauth.io/docs/v1/tech/oauth/endpoints#logout). Again, restart your express server by going to the terminal where it is running, hitting control-C and then running
+This route destroys the express session and then sends the user to FusionAuth to a crafted URL which invalidates the session via the [logout endpoint](/docs/v1/tech/oauth/endpoints#logout). Again, restart your express server by going to the terminal where it is running, hitting control-C and then running
 
 ```shell
 $ npm run server

@@ -5,6 +5,7 @@ description: Omeydm's need for multi-tenancy, SSO and a powerful API drove the c
 author: David Polstra
 image: blogs/omedym-chooses-fusionauth-ciam/press-release-omedym-chooses-fusionauth-customer-identity-and-access-management-to-scale-customer-growth-replaces-former-cloud-provider.png
 category: blog
+tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 
@@ -20,7 +21,7 @@ FusionAuth’s IAM platform was built with developers in mind and is API-first, 
 
 “Omedym is the type of customer we love working with. They know and respect that authorization and authentication is a complex but essential process, but don’t want their development teams having to build it,” said Don Bergal, CEO of FusionAuth. “Stepping into a relationship like this where we bring a mature platform so their development can focus on what they do best is exactly why we created FusionAuth.”
 
-FusionAuth continually innovates, bringing unique features to market that make it easy for developers to add authentication and authorization. In recent months, the company has launched its [Entity Management](/blog/2021/05/11/fusionauth-releases-entity-management/), [Advanced Multi Factor Authentication](/blog/2021/06/08/fusionauth-advanced-mfa/), [Advanced Threat Detection](/blog/2021/08/24/fusionauth-releases-advanced-threat-detection/) and [Enterprise Kubernetes Support](/blog/2021/11/10/fusionauth-supports-kubernetes/) features.  
+FusionAuth continually innovates, bringing unique features to market that make it easy for developers to add authentication and authorization. In recent months, the company has launched its [Entity Management](/blog/2021/05/11/fusionauth-releases-entity-management), [Advanced Multi Factor Authentication](/blog/2021/06/08/fusionauth-advanced-mfa), [Advanced Threat Detection](/blog/2021/08/24/fusionauth-releases-advanced-threat-detection) and [Enterprise Kubernetes Support](/blog/2021/11/10/fusionauth-supports-kubernetes) features.  
 
 ### About Omedym
 

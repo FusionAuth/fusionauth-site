@@ -757,7 +757,7 @@ The unique Id of the application that is represented by this login record.
 The name of the application at the time this record was created.
 
 [field]#logins``[x]``.instant# [type]#[Long]#::
-The link:/docs/v1/tech/reference/data-types/#instants[instant] this login occurred.
+The link:/docs/v1/tech/reference/data-types#instants[instant] this login occurred.
 
 [field]#logins``[x]``.ipAddress# [type]#[String]#::
 The IP address if provided during the login request.
@@ -1043,13 +1043,13 @@ include::docs/src/json/users/forgot-password-request-advanced.json[]
 |The request was successful. A JSON response body will be provided when authenticated using an API key, when the API key has been omitted from the request, no response body is provided.
 
 |400
-|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
+|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors[Errors] JSON Object with the specific errors.
 
 |401
-|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication].
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication[Authentication].
 
 |403
-|The forgot password functionality has been disabled. This is caused by an administrator setting the Forgot Password Email Template to the option _Feature Disabled. No template selected._ in the Tenant Email configuration. See [breadcrumb]#Tenants -> Email -> Teplate settings# in the FusionAuth admin UI.
+|The forgot password functionality has been disabled. This is caused by an administrator setting the Forgot Password Email Template to the option _Feature Disabled. No template selected._ in the Tenant Email configuration. See [breadcrumb]#Tenants -> Email -> Template settings# in the FusionAuth admin UI.
 
 |404
 |The User could not be found.
@@ -1127,6 +1127,12 @@ The User's current password. When this parameter is provided the current passwor
 [field]#password# [type]#[String]# [required]#Required#::
 The User's new password.
 
+[field]#trustChallenge# [type]#[String]# [optional]#Optional# [since]#Available since 1.33.0#::
+This field is marked optional because it is only required when the user has enabled two-factor authentication, and a `trustChallenge` was provided on the Two-Factor Start API request. When a user has enabled two-factor authentication this field becomes required if a `trustChallenge` was provided on the Two-Factor Start API request. When required, this value must be equal to the value provided to the Two-Factor Start API.
+
+[field]#trustToken# [type]#[String]# [optional]#Optional# [since]#Available since 1.33.0#::
+This field is marked optional, because it is only required when the user has enabled two-factor authentication. When a user has enabled two-factor authentication this field becomes required when attempting to change a password using the `changePasswordId`.
+
 [source,json]
 .Example JSON Request
 ----
@@ -1164,6 +1170,12 @@ When this value is provided it should be in place of the `changePasswordId` requ
 
 [field]#password# [type]#[String]# [required]#Required#::
 The User's new password.
+
+[field]#trustChallenge# [type]#[String]# [optional]#Optional# [since]#Available since 1.33.0#::
+This field is marked optional because it is only required when the user has enabled two-factor authentication, and a `trustChallenge` was provided on the Two-Factor Start API request. When a user has enabled two-factor authentication this field becomes required if a `trustChallenge` was provided on the Two-Factor Start API request. When required, this value must be equal to the value provided to the Two-Factor Start API.
+
+[field]#trustToken# [type]#[String]# [optional]#Optional# [since]#Available since 1.33.0#::
+This field is marked optional, because it is only required when the user has enabled two-factor authentication. When a user has enabled two-factor authentication this field becomes required when attempting to change a password using the `changePasswordId`.
 
 [source,json]
 .Example JSON Request
@@ -1209,6 +1221,12 @@ The user's existing refresh token. If you have access to your current refresh to
 +
 This parameter is used to determine if the `oneTimePassword` that is returned from this API will be eligible to request a refresh token when used by the Login API. If this parameter is not provided and no cookie is found on the request, a refresh token will not be provided on the Login response when using the returned `oneTimePassword`.
 
+[field]#trustChallenge# [type]#[String]# [optional]#Optional# [since]#Available since 1.33.0#::
+This field is marked optional because it is only required when the user has enabled two-factor authentication, and a `trustChallenge` was provided on the Two-Factor Start API request. When a user has enabled two-factor authentication this field becomes required if a `trustChallenge` was provided on the Two-Factor Start API request. When required, this value must be equal to the value provided to the Two-Factor Start API.
+
+[field]#trustToken# [type]#[String]# [optional]#Optional# [since]#Available since 1.33.0#::
+This field is marked optional, because it is only required when the user has enabled two-factor authentication. When a user has enabled two-factor authentication this field becomes required when attempting to change a password using the `changePasswordId`.
+
 [source,json]
 .Example JSON Request
 ----
@@ -1217,7 +1235,7 @@ include::docs/src/json/users/change-password-request.json[]
 
 === Response
 
-[cols="1,9"]
+[cols="1,9a"]
 .Response Codes
 |===
 |Code |Description
@@ -1226,10 +1244,20 @@ include::docs/src/json/users/change-password-request.json[]
 |The request was successful. Starting in version `1.5.0` a JSON response body will be returned unless the API was called with an API key was used with a `loginId`. Prior to version `1.5.0` a JSON body was not returned.
 
 |400
-|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
+|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors[Errors] JSON Object with the specific errors.
+
+Beginning in version `1.33.0` a status code of `400` may also be used to indicate additional trust is required to complete this request. In this case the following error will be returned.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/src/json/errors/requires-trust-token-response.json[]
+----
+
+To complete this request you must obtain a `trustToken`. To obtain a `trustToken` complete a Two-Factor Login request.
 
 |401
-|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication].
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication[Authentication].
 
 |404
 |The User could not be found using the `changePasswordId` or `loginId` value from the request. If using the `changePasswordId` the id is either incorrect or expired. Another reason for this status code is that you have provided the `currentPassword` parameter and it does not match the current password.

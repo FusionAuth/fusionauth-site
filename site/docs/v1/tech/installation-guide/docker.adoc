@@ -18,6 +18,7 @@ The following example is using Docker Compose but you may find links and example
 * <<Upgrading>>
 * <<Docker Images>>
 * <<Kickstart>>
+* <<Plugins>>
 * <<Accessing the Host Machine>>
 
 == Docker Compose
@@ -75,18 +76,18 @@ include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/mast
 ----
 
 == Configuration
-Review the link:/docs/v1/tech/reference/configuration/[Configuration - Environment Variables] documentation to customize your deployment.
+Review the link:/docs/v1/tech/reference/configuration[Configuration - Environment Variables] documentation to customize your deployment.
 
 == Docker Services
 In the above example configurations you will find a database, search and FusionAuth service. Read below to better understand how each service is configured.
 
 === Database Service
 
-At a minimum, you wil need to either set the `POSTGRES_PASSWORD` environment variable in the `db` service section, or more ideally set the value in the host environment and leave it out of the `docker-compose.yml` file. Ensure the other properties fit your requirements. Refer to the link:/docs/v1/tech/installation-guide/system-requirements/[System Requirements] for database version support.
+At a minimum, you will need to either set the `POSTGRES_PASSWORD` environment variable in the `db` service section, or more ideally set the value in the host environment and leave it out of the `docker-compose.yml` file. Ensure the other properties fit your requirements. Refer to the link:/docs/v1/tech/installation-guide/system-requirements[System Requirements] for database version support.
 
 === Search Service
 
-We currently support Elasticsearch versions 6.3.x - 7.6.x.  Later versions may works as well, but may not have been tested for compatibility.  Please let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
+We currently support Elasticsearch versions 6.3.x - 7.6.x.  Later versions may work as well, but may not have been tested for compatibility.  Please let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
 
 == Production Deployment
 
@@ -126,7 +127,7 @@ Prior to version 1.19, migration behavior was different. See below for more.
 
 If silent mode is set to `true`, then database migrations will automatically be performed.
 
-If silent mode is `false` and the runtime mode is set to `development`, then the link:/docs/v1/tech/installation-guide/fusionauth-app/#maintenance-mode[maintenance mode screen] will pop up and you will be prompted to complete the migrations there. 
+If silent mode is `false` and the runtime mode is set to `development`, then the link:/docs/v1/tech/installation-guide/fusionauth-app#maintenance-mode[maintenance mode screen] will pop up and you will be prompted to complete the migrations there.
 
 In all other cases the migrations will not be applied, and you'll have to perform them yourself. If you want to manage your own database upgrades, performing the SQL migrations out of band with another tool or process is a good option.
 
@@ -152,7 +153,7 @@ In all other cases the migrations will not be applied, and you'll have to perfor
 |Migration never applied by FusionAuth, must be applied out of band
 |===
 
-See the link:/docs/v1/tech/reference/configuration/[configation reference] or the link:/docs/v1/tech/guides/silent-mode/[silent mode guide] for more information. To apply the database migrations out of band see the link:/docs/v1/tech/installation-guide/upgrade/#database[database upgrade] documentation.
+See the link:/docs/v1/tech/reference/configuration[configuration reference] or the link:/docs/v1/tech/guides/silent-mode[silent mode guide] for more information. To apply the database migrations out of band see the link:/docs/v1/tech/admin-guide/upgrade#database[database upgrade] documentation.
 
 ==== Prior to 1.19
 
@@ -188,17 +189,17 @@ Using Docker with Kickstart is a powerful combination. Using these technologies 
 
 All the normal limitations of Kickstart apply (the Kickstart will not run if the database has already been set up with an API key, for example).
 
-It's easy to get started with Kickstart, but you'll need to tweak your Docker Compose files a bit. Before you begin, you'll need a valid `kickstart.json` file. Note that this file could be called anything, `kickstart.json` is simply a convention. Check out the link:/docs/v1/tech/installation-guide/kickstart/[Kickstart documentation] for more information on writing one.
+It's easy to get started with Kickstart, but you'll need to tweak your Docker Compose files a bit. Before you begin, you'll need a valid `kickstart.json` file. Note that this file could be called anything, `kickstart.json` is simply a convention. Check out the link:/docs/v1/tech/installation-guide/kickstart[Kickstart documentation] for more information on writing one.
 
 Once you have a valid `kickstart.json` file, create a subdirectory in the location of your `docker-compose.yml` file. It can be named anything; this documentation will use a directory called `kickstart`. Next, you'll mount this directory and set the `FUSIONAUTH_APP_KICKSTART_FILE` variable in the `docker-compose.yml` file. 
 
 Here are the steps to do so:
 
-* In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`
+* In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`.
 * Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the docker container expects, not the path on the host.
 * Configure `docker-compose.yml` to pass the environment variable set by `.env` to the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
 
-The following is an example `docker-compose.yml` file configuring FusionAuth to use a `kickstart.json` at startup. 
+The following is an example `docker-compose.yml` file configuring FusionAuth to run the commands in a `kickstart.json` at startup.
 
 ```yaml
 version: '3'
@@ -262,6 +263,79 @@ io.fusionauth.api.service.system.kickstart.KickstartRunner - Summary
 This indicates that Kickstart completed and provides a summary of the configuration changes made by it.
 
 You may also want to check out https://github.com/FusionAuth/fusionauth-example-scripts/tree/master/isolated-docker-setup[the Isolated Docker Setups] if you want the ability to rapidly stand up different versions and configurations of FusionAuth.
+
+== Plugins
+
+You can mount a directory containing a plugin to your Docker container.
+
+Here are the steps to do so:
+
+* In the `volumes:` section of the `fusionauth` service, add `- ./plugins:/usr/local/fusionauth/plugins`.
+* Copy your plugin jar file, created link:/docs/v1/tech/plugins/[by following the instructions], to your local `plugins` directory.
+* Start your Docker file
+
+The following is an example `docker-compose.yml` file configuring FusionAuth to scan for plugins at startup.
+
+```yaml
+version: '3'
+
+services:
+  db:
+    image: postgres:9.6
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+# Un-comment to access the db service directly
+#    ports:
+#      - 5432:5432
+    networks:
+      - db
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  fusionauth:
+    image: fusionauth/fusionauth-app:latest
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+      SEARCH_TYPE: database
+    networks:
+     - db
+    restart: unless-stopped
+    ports:
+      - 9011:9011
+    volumes:
+      - fa_config:/usr/local/fusionauth/config
+      - ./plugins:/usr/local/fusionauth/plugins
+
+networks:
+  db:
+    driver: bridge
+
+volumes:
+  db_data:
+  fa_config:
+```
+
+After running `docker-compose up` you should see a line like this in the output:
+
+[source]
+----
+INFO  io.fusionauth.api.plugin.guice.PluginModule - Installing plugin [com.mycompany.fusionauth.plugins.guice.MyExampleFusionAuthPluginModule]
+INFO  io.fusionauth.api.plugin.guice.PluginModule - Plugin successfully installed
+----
+
+This indicates that the plugin has been installed and can be used.
 
 == Accessing the Host Machine
 

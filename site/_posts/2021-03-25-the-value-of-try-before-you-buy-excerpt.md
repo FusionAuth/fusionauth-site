@@ -15,7 +15,7 @@ It's not enough to simply have a free trial of a potential authentication soluti
 
 What are steps you can take to make sure you maximize the knowledge you gain and minimize your time and monetary investment?
 
-_This blog post is an excerpt from [The Value of Trying Your Auth Provider Before You Commit](/learn/expert-advice/identity-basics/try-before-you-buy/)._
+_This blog post is an excerpt from [The Value of Trying Your Auth Provider Before You Commit](/learn/expert-advice/identity-basics/try-before-you-buy)._
 
 ### Decide What You Need to Learn
 
@@ -41,4 +41,4 @@ If you can, it's best to build out your trial prototype or run your experiments 
 
 If you don't already have a QA environment, this can be a great chance to create one. And even if you don't want to spin up a new environment, you can have someone on the development team run the experiments in their local environment to make sure you can verify all the necessary functionalities.
 
-To learn about the value of trying an auth provider before you buy, read [The Value of Trying Your Auth Provider Before You Commit](/learn/expert-advice/identity-basics/try-before-you-buy/).
+To learn about the value of trying an auth provider before you buy, read [The Value of Trying Your Auth Provider Before You Commit](/learn/expert-advice/identity-basics/try-before-you-buy).

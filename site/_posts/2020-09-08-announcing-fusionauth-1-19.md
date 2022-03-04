@@ -40,7 +40,7 @@ If you want to send a user directly to an IdP, append the `idp_hint` parameter. 
 
 ### Import those refresh tokens
 
-If you are migrating to FusionAuth, typically you are using [the Import Users API](/docs/v1/tech/apis/users#import-users), perhaps with a [custom password encryptor](/docs/v1/tech/plugins/password-encryptors). You usually want to minimize impact on your users due to migration of a production system. 
+If you are migrating to FusionAuth, typically you are using [the Import Users API](/docs/v1/tech/apis/users#import-users), perhaps with a [custom password encryptor](/docs/v1/tech/plugins/custom-password-hashing). You usually want to minimize impact on your users due to migration of a production system. 
 
 With this release you can now import refresh tokens issued by a different user management system. FusionAuth will continue to honor those tokens. Rather than forcing a user to log in at migration, when clients present the old refresh token, new JWTs will be issued. Score one for smooth, transparent migrations.
 
@@ -65,5 +65,5 @@ This was a limitation prior to this release due to the way we managed the HTTP s
 
 In addition to these features, there were other bugs squashed and GitHub issues resolved as well. Please see the [release notes](/docs/v1/tech/release-notes) for the full breakdown of the changes between 1.18 and 1.19. 
 
-If you'd like to upgrade your FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you. Or, if you'd like to download and use FusionAuth, [check out your options](/pricing).
+If you'd like to upgrade your FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you. Or, if you'd like to download and use FusionAuth, [check out your options](/pricing).
 
