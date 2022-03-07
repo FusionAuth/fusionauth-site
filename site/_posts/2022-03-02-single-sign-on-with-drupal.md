@@ -60,7 +60,7 @@ Then click "Install".
 
 Next, it's time to configure FusionAuth. If this is your first time logging in to your FusionAuth instance, you need to register an account. Just enter your name, email, password, and click "Submit". There's also [a tutorial about setting up an instance the first time](/docs/v1/tech/tutorials/setup-wizard).
 
-TODO add kickstart
+You can also use this [sample kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/drupal-sso.json) to set up everything if you don't want to do these steps manually. Make sure to review the kickstart file and update the authorized redirect URLs, at a minimum. Learn more about [Kickstart here](/docs/v1/tech/installation-guide/kickstart).
 
 Once you are at the FusionAuth dashboard, navigate to "Applications" and then click the green plus button to add a new application.
 
@@ -68,7 +68,7 @@ Once you are at the FusionAuth dashboard, navigate to "Applications" and then cl
 
 In the application creation page, change the app's name to something recognizable, for example, "Drupal". This name is displayed in the application list in the FusionAuth dashboard.
 
-In the "OAuth" tab, enter `<YOUR_DRUPAL_SITE_BASE_URL>/openid-connect/generic` in the "Authorized redirect URL" field. Replace `<YOUR_DRUPAL_SITE_BASE_URL>` with the URL of your drupal site. Below it is `\http://35.227.12.233` but that's just my setup.
+In the "OAuth" tab, enter `<YOUR_DRUPAL_SITE_BASE_URL>/openid-connect/generic` in the "Authorized redirect URL" field. Replace `<YOUR_DRUPAL_SITE_BASE_URL>` with the URL of your drupal site. Below it is `\http://35.227.12.233` but that's specific to my setup.
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-drupal/add-application-oauth-tab.png" alt="Configuring the OAuth tab of the drupal application." class="img-fluid" figure=true %}
 
@@ -86,15 +86,21 @@ The popup window will show you a list of information about the application. Copy
 
 ### Finishing the setup in Drupal
 
-Back in Drupal, navigate to "Configuration", then to "OpenID Connect". Enable the "Generic" option under "Enabled OpenID Connect clients". Enter the Client Id and the Client Secret in the appropriate fields.
+Back in Drupal, navigate to "Configuration", then to "OpenID Connect". 
 
-Put the following values for the rest of the field:
+Enable the "Generic" option under "Enabled OpenID Connect clients".
+
+Enter the Client Id and the Client Secret you found in the FusionAuth "OAuth Configuration" above in the appropriate fields.
+
+Put the following values for the rest of the fields:
 
 1. `<YOUR_FUSIONAUTH_URL>/oauth2/authorize` in "Authorization endpoint".
 2. `<YOUR_FUSIONAUTH_URL>/oauth2/token` in "Token endpoint".
 3. `<YOUR_FUSIONAUTH_URL>/oauth2/userinfo` in "Userinfo endpoint".
 
-Make sure to replace `<YOUR_FUSIONAUTH_URL>` with the URL of your FusionAuth instance. Also, enable the "Automatically connect existing users" setting.
+Make sure to replace `<YOUR_FUSIONAUTH_URL>` with the URL of your FusionAuth instance.
+
+Also, enable the "Automatically connect existing users" setting. This allows existing Drupal users (as determined by email) to sign in with FusionAuth.
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-drupal/configure-drupal-oidc.png" alt="Configure Drupal OIDC module." class="img-fluid" figure=true %}
 
