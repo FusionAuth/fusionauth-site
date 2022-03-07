@@ -61,7 +61,7 @@ OptionParser.new do |opts|
 
   opts.on("-h", "--help", "Prints this help.") do
     puts opts
-    exit
+    exit(false)
   end
 end.parse!
 
@@ -93,6 +93,12 @@ def make_api_path(type)
     type = type.gsub("-event","")
     if type == "user-action"
       type = "user-actions"
+    end
+    if type == "user-login-id-duplicate-on-create"
+      type = "user-login-id-duplicate-create"
+    end
+    if type == "user-login-id-duplicate-on-update"
+      type = "user-login-id-duplicate-update"
     end
     return base + type
   end
@@ -150,8 +156,13 @@ def todash(camel_cased_word)
   downcase
 end
 
-def open(url)
-  Net::HTTP.get(URI.parse(url))
+def open_url(url)
+  res = Net::HTTP.get_response(URI.parse(url))
+  if res.code != "200"
+    return nil
+  end
+
+  return res.body
 end
 
 def downcase(string) 
@@ -215,7 +226,11 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       puts "retrieving " + api_url
     end
 
-    page_content = open(api_url)
+    page_content = open_url(api_url)
+    unless page_content
+      puts "Could not retrieve: " + api_url
+      exit(false)
+    end
   end
   
   fields = json["fields"]
