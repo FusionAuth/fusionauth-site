@@ -24,6 +24,7 @@ IGNORED_FIELD_REGEXPS = [
   /entity\.parentId/, # not currently documenting until this is further built out
   /theme\.templates\.emailSend/, # this is a derived, internal field
   /theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
+  /event\.info\.location\.displayString/, # this is a derived field
 ]
 # option handling
 options = {}
