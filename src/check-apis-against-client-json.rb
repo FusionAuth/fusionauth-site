@@ -165,7 +165,7 @@ end
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
   # these are leafs of the tree and aren't fields with possible subfields.
-  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double" ]
+  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double", "EventType" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
   nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email"]
@@ -207,7 +207,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   
   fields = json["fields"]
   extends = json["extends"]
-  
+
   # if we extend a class, we need to add those fields to our existing fields
   extends && extends.length > 0 && extends.each do |ex|
     unless fields && fields.length > 0
@@ -228,6 +228,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     field_name = fi[0].to_s
     
     full_field_name = make_on_page_field_name(t)+ "." + field_name
+
     if known_types.include? field_type
       # we are at a leaf. We should see if we have any fields missing
       if ! page_content.include? full_field_name 
