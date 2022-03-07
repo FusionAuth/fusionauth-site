@@ -13,7 +13,7 @@ require 'yaml'
 
 
 IGNORED_FIELD_REGEXPS = [
-  /[^.]*\.tenantId/, # toplevel tenantId always ignored, as that is handled implicitly via API key locking or header if there is more than one tenant
+  /^(?!event).*\.tenantId/, # toplevel tenantId always ignored, except when checking events, as that is handled implicitly via API key locking or header if there is more than one tenant
   /user\.salt/, # never send user.salt, only used by Import API
   /application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
   /application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
@@ -74,10 +74,13 @@ end
 def make_api_path(type)
   base = "apis/"
 
-  if (is_event(type))
+  if is_event(type)
     base = "events-webhooks/events/"
     # convert audit-log-create-event to audit-log-create
     type = type.gsub("-event","")
+    if type == "user-action"
+      type = "user-actions"
+    end
     return base + type
   end
 
@@ -165,7 +168,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
-  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog"]
+  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email"]
 
   if options[:verbose]
     puts "opening: "+fn
@@ -229,8 +232,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       # we are at a leaf. We should see if we have any fields missing
       if ! page_content.include? full_field_name 
         ignore = false
-        # okay to have tenantId missing, as that is handled implicitly via API key locking or header if there is more than one tenant
-        # other fields in this regexp ok to omit as well
+        # fields in this regexp ok to omit
         IGNORED_FIELD_REGEXPS.each do |re|
           ignore = re.match(full_field_name)
           if ignore
