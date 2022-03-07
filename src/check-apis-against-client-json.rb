@@ -13,17 +13,19 @@ require 'yaml'
 
 
 IGNORED_FIELD_REGEXPS = [
-  /[^.]*\.tenantId/, # toplevel tenantId always ignored, as that is handled implicitly via API key locking or header if there is more than one tenant
-  /user\.salt/, # never send user.salt, only used by Import API
-  /application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
-  /application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
-  /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
-  /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
-  /tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
-  /user\.uniqueUsername/, # this is a derived, internal field
-  /entity\.parentId/, # not currently documenting until this is further built out
-  /theme\.templates\.emailSend/, # this is a derived, internal field
-  /theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
+  /^(?!event).*\.tenantId/, # toplevel tenantId always ignored, except when checking events, as that is handled implicitly via API key locking or header if there is more than one tenant
+  /^user\.salt/, # never send user.salt, only used by Import API
+  /^application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
+  /^application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
+  /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
+  /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
+  /^tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
+  /^user\.uniqueUsername/, # this is a derived, internal field
+  /^entity\.parentId/, # not currently documenting until this is further built out
+  /^theme\.templates\.emailSend/, # this is a derived, internal field
+  /^theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
+  /^event\.info\.location\.displayString/, # this is a derived field
+  /^event\.ipAddress/, # this is a deprecated field
 ]
 # option handling
 options = {}
@@ -60,36 +62,70 @@ OptionParser.new do |opts|
 
   opts.on("-h", "--help", "Prints this help.") do
     puts opts
-    exit
+    exit(false)
   end
 end.parse!
+
+def is_event(type)
+  return (type.end_with?("-event") or type.end_with?("Event"))
+end
+
+# some events don't have tenant Id
+def handle_event_field_exceptions(ignore, type, full_field_name)
+  unless is_event(type)
+    return ignore # don't process anything that isn't an event
+  end
+  events_without_tenant_ids = ["auditLogCreateEvent", "eventLogCreateEvent"]
+  if full_field_name == "event.tenantId" && events_without_tenant_ids.include?(type)
+    return true # can safely ignore
+  end
+
+  return ignore
+end
 
 # what our dashed type is -> what the path is in the url
 # no hash at end of url as of feb 2022
 def make_api_path(type)
+  base = "apis/"
+
+  if is_event(type)
+    base = "events-webhooks/events/"
+    # convert audit-log-create-event to audit-log-create
+    type = type.gsub("-event","")
+    if type == "user-action"
+      type = "user-actions"
+    end
+    if type == "user-login-id-duplicate-on-create"
+      type = "user-login-id-duplicate-create"
+    end
+    if type == "user-login-id-duplicate-on-update"
+      type = "user-login-id-duplicate-update"
+    end
+    return base + type
+  end
+
   if type == "generic-connector-configuration"
-    return "connectors/generic"
+    return base + "connectors/generic"
   end
   if type == "family"
-    return "families"
+    return base + "families"
   end
   if type == "entity"
-    return "entity-management/entities"
+    return base + "entity-management/entities"
   end
   if type == "entity-type"
-    return "entity-management/entity-types"
+    return base + "entity-management/entity-types"
   end
   if type == "entity-grant"
-    return "entity-management/grants"
+    return base + "entity-management/grants"
   end
   if type == "ldap-connector-configuration"
-    return "connectors/ldap"
+    return base + "connectors/ldap"
   end
   if type == "email-template"
-    return "emails"
+    return base + "emails"
   end
-  # planning for families or other non normal pluralizations.
-  return type + "s"
+  return base + type + "s"
 end
 
 # what our type is -> what the variable is on the doc page
@@ -106,6 +142,11 @@ def make_on_page_field_name(type)
   if type == "ldapConnectorConfiguration"
     return "connector"
   end
+
+  if is_event(type)
+    return "event"
+  end
+
   return type
 end
 
@@ -116,8 +157,13 @@ def todash(camel_cased_word)
   downcase
 end
 
-def open(url)
-  Net::HTTP.get(URI.parse(url))
+def open_url(url)
+  res = Net::HTTP.get_response(URI.parse(url))
+  if res.code != "200"
+    return nil
+  end
+
+  return res.body
 end
 
 def downcase(string) 
@@ -144,10 +190,10 @@ end
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
   # these are leafs of the tree and aren't fields with possible subfields.
-  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double" ]
+  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double", "EventType", "SortedSet" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
-  nested_attributes = ["grant.entity", "entity.type"]
+  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method"]
 
   if options[:verbose]
     puts "opening: "+fn
@@ -176,17 +222,21 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   end
   unless page_content
     # we are in leaf object, we don't need to pull the page content
-    api_url = options[:siteurl] + "/docs/v1/tech/apis/"+make_api_path(todash(t))
+    api_url = options[:siteurl] + "/docs/v1/tech/"+make_api_path(todash(t))
     if options[:verbose]
       puts "retrieving " + api_url
     end
 
-    page_content = open(api_url)
+    page_content = open_url(api_url)
+    unless page_content
+      puts "Could not retrieve: " + api_url
+      exit(false)
+    end
   end
   
   fields = json["fields"]
   extends = json["extends"]
-  
+
   # if we extend a class, we need to add those fields to our existing fields
   extends && extends.length > 0 && extends.each do |ex|
     unless fields && fields.length > 0
@@ -207,20 +257,21 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     field_name = fi[0].to_s
     
     full_field_name = make_on_page_field_name(t)+ "." + field_name
+
     if known_types.include? field_type
       # we are at a leaf. We should see if we have any fields missing
       if ! page_content.include? full_field_name 
         ignore = false
-        # okay to have tenantId missing, as that is handled implicitly via API key locking or header if there is more than one tenant
-        # other fields in this regexp ok to omit as well
+        # fields in this regexp ok to omit
         IGNORED_FIELD_REGEXPS.each do |re|
           ignore = re.match(full_field_name)
           if ignore
             break
           end
         end
+        ignore = handle_event_field_exceptions(ignore, t,full_field_name)
         unless ignore
-          missing_fields.append({full_field_name: full_field_name, type: field_type})
+          missing_fields.append({original_examined_type: t, full_field_name: full_field_name, type: field_type})
         end
       end
     elsif nested_attributes.include? full_field_name
