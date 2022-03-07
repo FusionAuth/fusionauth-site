@@ -14,17 +14,17 @@ require 'yaml'
 
 IGNORED_FIELD_REGEXPS = [
   /^(?!event).*\.tenantId/, # toplevel tenantId always ignored, except when checking events, as that is handled implicitly via API key locking or header if there is more than one tenant
-  /user\.salt/, # never send user.salt, only used by Import API
-  /application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
-  /application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
-  /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
-  /application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
-  /tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
-  /user\.uniqueUsername/, # this is a derived, internal field
-  /entity\.parentId/, # not currently documenting until this is further built out
-  /theme\.templates\.emailSend/, # this is a derived, internal field
-  /theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
-  /event\.info\.location\.displayString/, # this is a derived field
+  /^user\.salt/, # never send user.salt, only used by Import API
+  /^application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
+  /^application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
+  /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
+  /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
+  /^tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
+  /^user\.uniqueUsername/, # this is a derived, internal field
+  /^entity\.parentId/, # not currently documenting until this is further built out
+  /^theme\.templates\.emailSend/, # this is a derived, internal field
+  /^theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
+  /^event\.info\.location\.displayString/, # this is a derived field
 ]
 # option handling
 options = {}
@@ -67,6 +67,19 @@ end.parse!
 
 def is_event(type)
   return (type.end_with?("-event") or type.end_with?("Event"))
+end
+
+# some events don't have tenant Id
+def handle_event_field_exceptions(ignore, type, full_field_name)
+  unless is_event(type)
+    return ignore # don't process anything that isn't an event
+  end
+  events_without_tenant_ids = ["auditLogCreateEvent", "eventLogCreateEvent"]
+  if full_field_name == "event.tenantId" && events_without_tenant_ids.include?(type)
+    return true # can safely ignore
+  end
+
+  return ignore
 end
 
 # what our dashed type is -> what the path is in the url
@@ -240,8 +253,9 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
             break
           end
         end
+        ignore = handle_event_field_exceptions(ignore, t,full_field_name)
         unless ignore
-          missing_fields.append({full_field_name: full_field_name, type: field_type})
+          missing_fields.append({original_examined_type: t, full_field_name: full_field_name, type: field_type})
         end
       end
     elsif nested_attributes.include? full_field_name
