@@ -25,6 +25,7 @@ IGNORED_FIELD_REGEXPS = [
   /^theme\.templates\.emailSend/, # this is a derived, internal field
   /^theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
   /^event\.info\.location\.displayString/, # this is a derived field
+  /^event\.ipAddress/, # this is a deprecated field
 ]
 # option handling
 options = {}
@@ -189,10 +190,10 @@ end
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
   # these are leafs of the tree and aren't fields with possible subfields.
-  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double", "EventType" ]
+  known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double", "EventType", "SortedSet" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
-  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email"]
+  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method"]
 
   if options[:verbose]
     puts "opening: "+fn
