@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: How to Set Up Single Sign-On With Drupal
+title: "How to Set Up Single Sign-On (SSO) Between FusionAuth and Drupal"
 description: This tutorial demonstrates how to integrate SSO to a Drupal site using FusionAuth with the help of an OpenID Connect app.
 author: Aniket Bhattacharyea
 image: blogs/single-sign-on-drupal/how-to-set-up-single-sign-on-sso-between-fusionauth-and-drupal.png
@@ -72,7 +72,7 @@ In the "OAuth" tab, enter `<YOUR_DRUPAL_SITE_BASE_URL>/openid-connect/generic` i
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-drupal/add-application-oauth-tab.png" alt="Configuring the OAuth tab of the drupal application." class="img-fluid" figure=true %}
 
-By default, FusionAuth doesn't allow users to register a new account. This is useful when you have an internal tool where admins manually create the accounts. But if you want the users to be able to register an account, you need to turn on self-service registration in the **Registration** tab. You can also customize which fields are required by turning them on.
+By default, FusionAuth doesn't allow users to register a new account. This is useful when you have an internal tool where admins manually create the accounts. But if you want the users to be able to register an account, you need to turn on self-service registration in the "Registration" tab. You can also customize which fields are required by turning them on.
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-drupal/add-application-registration-tab.png" alt="Configuring the Registration tab of the drupal application." class="img-fluid" figure=true %}
 
