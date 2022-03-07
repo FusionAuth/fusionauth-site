@@ -64,32 +64,44 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+def is_event(type)
+  return (type.end_with?("-event") or type.end_with?("Event"))
+end
+
 # what our dashed type is -> what the path is in the url
 # no hash at end of url as of feb 2022
 def make_api_path(type)
+  base = "apis/"
+
+  if (is_event(type))
+    base = "events-webhooks/events/"
+    # convert audit-log-create-event to audit-log-create
+    type = type.gsub("-event","")
+    return base + type
+  end
+
   if type == "generic-connector-configuration"
-    return "connectors/generic"
+    return base + "connectors/generic"
   end
   if type == "family"
-    return "families"
+    return base + "families"
   end
   if type == "entity"
-    return "entity-management/entities"
+    return base + "entity-management/entities"
   end
   if type == "entity-type"
-    return "entity-management/entity-types"
+    return base + "entity-management/entity-types"
   end
   if type == "entity-grant"
-    return "entity-management/grants"
+    return base + "entity-management/grants"
   end
   if type == "ldap-connector-configuration"
-    return "connectors/ldap"
+    return base + "connectors/ldap"
   end
   if type == "email-template"
-    return "emails"
+    return base + "emails"
   end
-  # planning for families or other non normal pluralizations.
-  return type + "s"
+  return base + type + "s"
 end
 
 # what our type is -> what the variable is on the doc page
@@ -106,6 +118,11 @@ def make_on_page_field_name(type)
   if type == "ldapConnectorConfiguration"
     return "connector"
   end
+
+  if is_event(type)
+    return "event"
+  end
+
   return type
 end
 
@@ -147,7 +164,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
-  nested_attributes = ["grant.entity", "entity.type"]
+  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog"]
 
   if options[:verbose]
     puts "opening: "+fn
@@ -176,7 +193,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   end
   unless page_content
     # we are in leaf object, we don't need to pull the page content
-    api_url = options[:siteurl] + "/docs/v1/tech/apis/"+make_api_path(todash(t))
+    api_url = options[:siteurl] + "/docs/v1/tech/"+make_api_path(todash(t))
     if options[:verbose]
       puts "retrieving " + api_url
     end
