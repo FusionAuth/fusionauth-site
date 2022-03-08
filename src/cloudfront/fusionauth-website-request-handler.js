@@ -73,6 +73,8 @@ var redirects = {
   '/features/security-data-compliance': '/security-data-compliance',
   '/features/user-experience': '/platform/customizable',
   '/features/user-management-reporting': '/features/user-management',
+  '/gaming': '/industries/gaming-entertainment',
+  '/gaming/': '/industries/gaming-entertainment',
   '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes',
   '/learn/expert-advice/identity-basics/avoid-lockin': '/learn/expert-advice/authentication/avoid-lockin',
   '/learn/expert-advice/identity-basics/common-authentication-implementation-risks': '/learn/expert-advice/authentication/common-authentication-implementation-risks',
