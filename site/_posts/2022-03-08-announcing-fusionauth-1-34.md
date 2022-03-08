@@ -25,7 +25,7 @@ There are a few things worth calling out.
 
 FusionAuth has supported PKCE for years with improvements in the 1.21 and 1.28 releases.
 
-This release rolls PKCE through the entire FusionAuth internal infrastructure. In particular, FusionAuth often implements other grants or authentication flows on top of the Authorization Code grant. With this release, any time an internal Authorization Code grant happens, PKCE is used. For instance, the FusionAuth Device Code grant implementation is built on the of the Authorization Code grant.
+This release rolls PKCE through the entire FusionAuth internal infrastructure. In particular, FusionAuth often implements other grants or authentication flows on top of the Authorization Code grant. With this release, any time an internal Authorization Code grant happens, PKCE is used. For instance, the FusionAuth Device Code grant implementation is built on the Authorization Code grant.
 
 This change will be transparent to you and doesn't require you to modify any external integrations, such as between your application and FusionAuth.
 
