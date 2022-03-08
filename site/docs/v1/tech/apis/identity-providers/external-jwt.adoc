@@ -3,6 +3,7 @@ layout: doc
 title: External JWT Identity Provider APIs
 description: APIs for creating, retrieving, updating and deleting external JWT identity providers
 ---
+:idp_since: 10100
 
 == Overview
 
@@ -15,12 +16,23 @@ This is a special type of identity provider that is only used via the link:/docs
 
 In order for this identity provider to use the JWT, it also needs the public key or HMAC secret that the JWT was signed with. FusionAuth will verify that the JWT is valid and has not expired. Once the JWT has been validated, FusionAuth will reconcile it to ensure that the User exists and is up-to-date.
 
+:idp_display_name: 
+:token_name: pass:normal[token provided in the `refresh_token` field]
+:return_text: request
+
+include::docs/v1/tech/apis/identity-providers/_token-storage-note.adoc[]
+
+:idp_display_name!:
+:token_name!:
+:return_text!:
+
 === Operations
 
 * <<Create an External JWT Identity Provider>>
 * <<Retrieve an External JWT Identity Provider>>
 * <<Update an External JWT Identity Provider>>
 * <<Delete an External JWT Identity Provider>>
+* <<Complete the External JWT Login>>
 
 == Create an External JWT Identity Provider
 
@@ -89,6 +101,10 @@ include::docs/v1/tech/apis/identity-providers/_external-jwt-response-body.adoc[]
 
 == Update an External JWT Identity Provider
 
+:capitalized_object_name: External JWT Identity Provider
+include::docs/v1/tech/apis/_generic-update-explanation-fragment.adoc[]
+:capitalized_object_name!:
+
 === Request
 
 [.api-authentication]
@@ -149,3 +165,43 @@ This API does not return a JSON response body.
 include::docs/v1/tech/apis/_standard-delete-response-codes.adoc[]
 :never_search_error!:
 
+== Complete the External JWT Login
+
+This API allows you to complete an External JWT login after retrieving the external JWT and processing it.
+
+For example, if you have a JWT representing a user, using this API you can pass that JWT returned from an external service to FusionAuth and we will complete the login workflow and reconcile the user to FusionAuth.
+
+The user does not need to exist yet in FusionAuth to utilize this API, depending on the configured link:/docs/v1/tech/identity-providers/#linking-strategies[linking strategy]. The token returned will be used to retrieve the user's email address or username and if that user does not yet exist in FusionAuth the user may be created.
+
+If [field]#createRegistration# has been enabled for this identity provider and the user does not yet have a registration for this application, a registration will be automatically created for the user. The user will be assigned any default roles configured for the application.
+
+If [field]#createRegistration# has not been enabled, a registration will not be created if one does not yet exist. This is useful if you wish to manually provision users and then subsequently allow them to login.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Complete External JWT Login
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/identity-provider/login#
+--
+
+==== Request Headers
+
+[.api]
+include::docs/v1/tech/apis/identity-providers/_x-forwarded-for-header.adoc[]
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.adoc[]
+
+:loginProvider: External JWT
+include::docs/v1/tech/apis/identity-providers/_identity-provider-login-request-body.adoc[]
+:loginProvider!:
+
+=== Response
+
+The response for this API contains the User object.
+
+:loginProvider: External JWT
+include::docs/v1/tech/apis/identity-providers/_identity-provider-login-response-body.adoc[]
+:loginProvider!:
+:idp_since!:

@@ -5,7 +5,7 @@ description: How can you safely and easily migrate your user's data from a legac
 author: Dan Moore
 image: blogs/migrating-users-legacy-datastore/how-to-migrate-your-legacy-user-data-to-a-centralized-auth-system.png
 category: blog
-tags: client-php feature-connectors
+tags: client-php feature-connectors tutorial tutorial-php tutorial tutorial-reactor-feature
 excerpt_separator: "<!--more-->"
 ---
 
@@ -63,7 +63,7 @@ A variant of this approach is to segment your users, and migrate them segment by
 
 ### FusionAuth's support for the big bang
 
-If you want to use the big bang with FusionAuth, check out the [Migrate Users tutorial](/docs/v1/tech/tutorials/migrate-users). FusionAuth also includes support for [custom password hashing logic](/docs/v1/tech/plugins/password-encryptors), allowing you to import users without requiring them to modify their password.
+If you want to use the big bang with FusionAuth, check out the [Migrate Users tutorial](/docs/v1/tech/migration-guide/). FusionAuth also includes support for [custom password hashing logic](/docs/v1/tech/plugins/custom-password-hashing), allowing you to import users without requiring them to modify their password.
 
 ## Migrate-on-authentication
 
@@ -88,7 +88,7 @@ However, there are risks with the phased approach as well.
 
 You can do a phased migration using FusionAuth Connectors. Let's walk through how to do so.
 
-If you don't have FusionAuth running, [get it going in 5 minutes](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). Then get a license key and activate it. *Please note that Connectors are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing).* Finally, [activate your license](/docs/v1/tech/reactor). 
+If you don't have FusionAuth running, [get it going in 5 minutes](/docs/v1/tech/5-minute-setup-guide). Then get a license key and activate it. *Please note that Connectors are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing).* Finally, [activate your license](/docs/v1/tech/reactor). 
 
 To use a Connector for a phased migration, you will:
 

@@ -5,6 +5,7 @@ description: Disclosure is an annual security conference. I attended and brought
 author: Dan Moore
 image: blogs/disclosure-2020/disclosure-conference-report.png
 category: blog
+tags: conference-report
 excerpt_separator: "<!--more-->"
 ---
 

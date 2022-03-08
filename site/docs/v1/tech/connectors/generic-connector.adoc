@@ -10,12 +10,15 @@ description: Connect to an arbitrary user data source over HTTP
 
 * <<Configuration>>
 * <<Using the Generic Connector>>
+** <<Request>>
+** <<Response>>
+** <<Using the Generic Connector as the System of Record>>
 * <<Security>>
 
 Generic Connectors allow you to authenticate users against or migrate them from any user datasource accessible over HTTP or TLS.
 
 
-=== Configuration
+== Configuration
 
 image::connectors/generic-connector.png[The Generic Connector creation page.,width=1200,role=shadowed bottom-cropped]
 
@@ -29,7 +32,7 @@ An optional UUID. When this value is omitted a unique Id will be generated autom
 A unique name to identify the Connector. This name is for display purposes only and it can be modified later if desired.
 
 [field]#Authentication URL# [required]#Required#::
-The fully qualified URL of the API endpoint. The connector will send an HTTP POST request to this URL to authenticate the user. The format and status code returned will be identical to the link:/docs/v1/tech/apis/login/[Login API].
+The fully qualified URL of the API endpoint. The connector will send an HTTP POST request to this URL to authenticate the user. The format and status code returned will be identical to the link:/docs/v1/tech/apis/login[Login API].
 
 [field]#Connect timeout# [required]#Required# [default]#default is `1000`#::
 The connect timeout in milliseconds used when making the POST request.
@@ -75,7 +78,7 @@ Value::
 The header value to add to the HTTP request when authentiationg.
 
 
-=== Using the Generic Connector
+== Using the Generic Connector
 
 To use a Generic Connector:
 
@@ -83,7 +86,7 @@ To use a Generic Connector:
 * Configure the Connector in [breadcrumb]#Settings -> Connectors#, including securing the endpoint.
 * Add the Connector Policy in [breadcrumb]#Tenants -> Your Tenant -> Connectors# to configure to which domains the connector applies.
 
-==== Request
+=== Request
 
 The request to your API endpoint will be delivered as JSON:
 
@@ -95,19 +98,27 @@ include::docs/src/json/login/request.json[]
 
 Your application will then look up the user and verify the correct credentials were provided. Then you can return the response.
 
-==== Response
+=== Response
 
-Your API should return a valid FusionAuth `user` object with status code 200 if the user is found and authenticated. Note that while you may return any of the attributes of the user object, only the required ones must be returned.
+Your API should return a valid FusionAuth `user` object with status code 200 if the user is found and authenticated. Note that while you may return any of the attributes of the user object, including nested objects such as application registrations with roles, only the required ones must be returned.
 
-If the user cannot be authenticated, you should return the appropriate status code and response data as documented by the link:/docs/v1/tech/apis/login/[Login API].
+If the user cannot be authenticated, you should return the appropriate status code and response data as documented by the link:/docs/v1/tech/apis/login[Login API].
 
 [source,json]
 .Example Successful Response JSON
 ----
-include::docs/src/json/users/login-response.json[]
+include::docs/src/json/users/login-migrated-response.json[]
 ----
 
-=== Security
+=== Using the Generic Connector as the System of Record
+
+:system_of_record: backing database accessed via API
+include::docs/v1/tech/connectors/_system-of-record-caveat.adoc[]
+:system_of_record!: 
+
+The correct way to maintain these attributes is to store them in the backing database, query them when the API is called, and deliver them as part of the User JSON object.
+
+== Security
 
 :request_entity: Generic Connector API endpoint
 :request_entity_lc: user-api
@@ -115,4 +126,5 @@ include::docs/src/json/users/login-response.json[]
 include::docs/v1/tech/shared/_securing_http_requests.adoc[]
 :request_entity!:
 :request_entity_lc!:
+
 

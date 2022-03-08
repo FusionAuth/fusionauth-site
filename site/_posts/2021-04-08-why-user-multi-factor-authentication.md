@@ -5,7 +5,7 @@ description: What is multi-factor authentication (MFA) and when should developer
 author: Dan Moore
 image: blogs/what-where-why-mfa/the-what-why-and-when-of-multi-factor-authentication-mfa-header-image.png
 category: blog
-tags: topic-feature-mfa
+tags: feature-mfa
 excerpt_separator: "<!--more-->"
 ---
 
@@ -42,7 +42,7 @@ A foundational part of building a secure, available system is ensuring only auth
 
 If your users provide only one authentication factor, it can be stolen by a bad actor. This actor now has the same access to the system as the user does.
 
-Secrets users know, such as passwords, are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection/) and users may protect themselves by practicing good password hygiene, requiring another factor increases the security of user accounts on your system. Microsoft researchers found that accounts are ["99.9% less likely to be compromised"](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/your-pa-word-doesn-t-matter/ba-p/731984) if MFA is used.
+Secrets users know, such as passwords, are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection) and users may protect themselves by practicing good password hygiene, requiring another factor increases the security of user accounts on your system. Microsoft researchers found that accounts are ["99.9% less likely to be compromised"](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/your-pa-word-doesn-t-matter/ba-p/731984) if MFA is used.
 
 Implementing MFA is typically a partnership with your users. Some forms of MFA are easier for system developers to implement. Others require more effort from users.
 

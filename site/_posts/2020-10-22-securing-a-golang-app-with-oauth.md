@@ -5,7 +5,7 @@ description: Golang lets you build web applications that are performant and easy
 author: Krissanawat Kaewsanmuang
 image: blogs/golang-oauth/securing-a-golang-app-with-oauth.png
 category: blog
-tags: client-go
+tags: client-go tutorial tutorial-go
 excerpt_separator: "<!--more-->"
 ---
 
@@ -22,7 +22,7 @@ You can follow along conceptually, or check out the [GitHub repo](https://github
 The requirements to follow this tutorial are as follows:
 
 * Go SDK
-* VScode or any other text editor
+* VSCode or any other text editor
 * FusionAuth
 * Homebrew (optional)
 

@@ -6,7 +6,7 @@ author: Dan Moore
 image: advice/mfa/expert-advice-multi-factor-authentication-for-developers-header-image.png
 category: Authentication
 date: 2021-02-19
-dateModified: 2021-02-19
+dateModified: 2021-04-26
 ---
 
 As more of our lives move online, multi-factor authentication (MFA) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep safe. 
@@ -37,6 +37,16 @@ Multi-factor authentication isn't just for online user accounts, though. If you 
 
 The majority of user accounts have a password as a factor. You might be working in such a system right now. As engineering teams become more aware of the problem of user account hijacking and its real world consequences, more are allowing or requiring additional factors of authentication. 
 
+### What is the difference between MFA and 2FA?
+
+These terms are often used interchangably, which unfortunately blurs important differences between them.
+
+When a system supports more than one method or factor of authentication, it supports MFA. Any factor in the categories of proof mentioned above suffices. Later in this article, we'll cover different factors in more detail.
+
+2FA, on the other hand, occurs when a user provides two factors of authentication. This often happens at the moment of login, but can take place at other times. For example, when a particularly sensitive operation like account deletion occurs, an additional factor may be required. One of the two factors is typically a password, but not always.
+
+In general, MFA outlines a system's capabilities, while 2FA describes how many factors are required when authentication is needed.
+
 ## Why use multi-factor authentication (MFA)?
 
 Building a secure, available system requires ensuring only authorized people and software agents have access to it. This is a foundational concern.
@@ -45,7 +55,7 @@ Authentication, which ensures that a system knows who the user is, and authoriza
 
 If your users have only one factor of authentication, it can be stolen, especially if it is a password. At that point, you as a developer will have limited ability to stop the thief. Your system will have to notice suspicious behavior to determine who is legitimate and who is not. This can be done, but is complex to do at scale. If you can't determine illicit access, the thief will have the same privileges as the user whose stolen credentials are being used; they will be indistinguishable from that user.
 
-Unfortunately, passwords are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection/) and users can protect themselves by practicing good password hygiene, requiring another factor increases the obstacles to a bad actor.
+Unfortunately, passwords are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection) and users can protect themselves by practicing good password hygiene, requiring another factor increases the obstacles to a bad actor.
 
 In particular, if another factor is required as part of the login process, account security can increase dramatically. Microsoft researchers found that accounts are ["99.9% less likely to be compromised"](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/your-pa-word-doesn-t-matter/ba-p/731984) if MFA is used.
 
@@ -182,7 +192,7 @@ A user's phone isn't limited to running a TOTP application, accepting a phone ca
 
 The user proves they received the notification by sharing that code with the auth system. The server can encrypt the code before sending it and the application can decrypt it on the phone to ensure the code can't be tampered with or read. Such systems can be very effective. In 2019, Google researchers found that such on-device prompts ["helped block 100% of automated bots, 99% of bulk phishing attacks, and 90% of targeted attacks."](https://security.googleblog.com/2019/05/new-research-how-effective-is-basic.html)
 
-Similar to phone call and text messages's dependence on the phone network providers, the security of the push notification in transit systems is up to the provider of the push notification. However, I hear Apple and Google are pretty good at this security thing.
+Similar to the dependence of phone call and text message security on the phone network providers, the security of the push notification in transit systems is up to the provider of the push notification. However, I hear Apple and Google are pretty good at this security thing.
 
 With any of the above MFA options using a smartphone as part of the factor, encourage your users to configure the device to require authentication, like a pin, before applications or notifications on the phone can be accessed. 
 

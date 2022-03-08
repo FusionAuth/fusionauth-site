@@ -5,7 +5,7 @@ description: Use the FusionAuth APIs to create and manage a user using the .NET 
 author: Dan Moore
 image: blogs/dot-net-command-line-client/creating-user-cli-client.png
 category: blog
-tags: client-netcore
+tags: client-netcore tutorial tutorial-netcore
 excerpt_separator: "<!--more-->"
 ---
 
@@ -31,7 +31,7 @@ You need to have the following software installed before you begin:
 - Docker (optional, but preferred for installing FusionAuth)
 - .NET Core ([download it here if needed](https://dotnet.microsoft.com/download))
 
-You'll also want to double check to make sure your system meets the [memory, storage and CPU requirements](https://fusionauth.io/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
+You'll also want to double check to make sure your system meets the [memory, storage and CPU requirements](/docs/v1/tech/installation-guide/system-requirements) for FusionAuth.
 
 ## Architecture
 
@@ -43,11 +43,11 @@ And then there is the FusionAuth identity server, which is a standalone applicat
 
 ## APIs and client libraries
 
-FusionAuth has a [full-featured and well-documented API](https://fusionauth.io/docs/v1/tech/apis/) which allows you to create and manage users, applications, and groups. Using this API allows you to extend FusionAuth for purposes never contemplated by the FusionAuth team. You can also integrate it with other data sources and pieces of software unknown to us. If your software can speak JSON and reach FusionAuth over a network connection, you can integrate.
+FusionAuth has a [full-featured and well-documented API](/docs/v1/tech/apis/) which allows you to create and manage users, applications, and groups. Using this API allows you to extend FusionAuth for purposes never contemplated by the FusionAuth team. You can also integrate it with other data sources and pieces of software unknown to us. If your software can speak JSON and reach FusionAuth over a network connection, you can integrate.
 
-However, we realize that not everyone wants to write raw JSON. (Wimps.) This is why we have created [client libraries](https://fusionauth.io/docs/v1/tech/client-libraries/) to make using the API a snap. These are available under the Apache 2.0 license and  can be embedded in your applications as you see fit.
+However, we realize that not everyone wants to write raw JSON. (Wimps.) This is why we have created [client libraries](/docs/v1/tech/client-libraries/) to make using the API a snap. These are available under the Apache 2.0 license and  can be embedded in your applications as you see fit.
 
-In this post, I'll be using the [.NET Core client library](https://fusionauth.io/docs/v1/tech/client-libraries/netcore).
+In this post, I'll be using the [.NET Core client library](/docs/v1/tech/client-libraries/netcore).
 
 ## Setting up FusionAuth
 
@@ -63,7 +63,7 @@ docker-compose up
 
 Now FusionAuth should be running at `http://localhost:9011`.
 
-Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options (rpm, deb, etc) if you don't have Docker installed.
+Check out the [Download FusionAuth page](/download) for other installation options (rpm, deb, etc) if you don't have Docker installed.
 
 Sign in as a FusionAuth administrator and create a new application. I creatively named mine 'dotnetcore', and will refer to this application throughout the tutorial. No need to tweak any defaults, but do note the "Id", which we'll use later. 
 
@@ -248,7 +248,7 @@ We can store arbitrary key value pairs in the data field. This lets us associate
 // ...
 ```
 
-A bit more about the registration. The registration field is what ties the user to the application you created. [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications) are simply something a user can log in to. Each user can be associated with zero to many applications. See [this forum post for more information](https://fusionauth.io/community/forum/topic/5/can-you-limit-a-user-s-login-authentication-access-to-applications-within-a-single-tenant). 
+A bit more about the registration. The registration field is what ties the user to the application you created. [Applications](/docs/v1/tech/core-concepts/applications) are simply something a user can log in to. Each user can be associated with zero to many applications. See [this forum post for more information](/community/forum/topic/5/can-you-limit-a-user-s-login-authentication-access-to-applications-within-a-single-tenant). 
 
 ```csharp
 // ...
@@ -266,7 +266,7 @@ A bit more about the registration. The registration field is what ties the user 
 // ...
 ```
 
-A note about the API choice. We used the "Create a User" API in this tutorial. This API works well for creating one user at a time; this is what an onboarding tool might use. However, if you want to import a large number of users into FusionAuth, you'll want to explore the [Bulk Import API](https://fusionauth.io/docs/v1/tech/apis/users#import-users). Actually, you can do one better and just read the ["Migrate Users" tutorial](https://fusionauth.io/docs/v1/tech/tutorials/migrate-users) which will walk you through how to, well, migrate users to FusionAuth.
+A note about the API choice. We used the "Create a User" API in this tutorial. This API works well for creating one user at a time; this is what an onboarding tool might use. However, if you want to import a large number of users into FusionAuth, you'll want to explore the [Bulk Import API](/docs/v1/tech/apis/users#import-users). Actually, you can do one better and just read the ["Migrate Users" tutorial](/docs/v1/tech/migration-guide/) which will walk you through how to, well, migrate users to FusionAuth.
 
 ## Running the command line client
 
@@ -301,5 +301,5 @@ If you want to build an executable to distribute to any user or server with the 
 
 While APIs are great, client libraries are even better. Even though the team at FusionAuth is good, they haven't anticipated all of your user management needs. That's why they've built out over ten client libraries available for the most popular languages.
 
-Right now poor newuser2@example.com can't do much. Next, we'll [create a web application](https://fusionauth.io/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth) that they can log in to.
+Right now poor newuser2@example.com can't do much. Next, we'll [create a web application](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth) that they can log in to.
 

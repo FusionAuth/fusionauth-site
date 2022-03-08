@@ -24,7 +24,7 @@ While these solutions have similar core capabilities, don't think that Active Di
 
 ## How Active Directory and FusionAuth Are Different
 
-[{% include _image.liquid src="/assets/img/blogs/active-directory-fusionauth-compare-sample.png" alt="Active Directory and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](https://fusionauth.io/resources/fusionauth-vs-active-directory.pdf "Download the Active Directory and FusionAuth Feature Comparison")
+[{% include _image.liquid src="/assets/img/blogs/active-directory-fusionauth-compare-sample.png" alt="Active Directory and FusionAuth Feature Comparison" class="float-left img-thumbnail mr-md-4" style="max-width: 600px;" figure=false %}](/resources/fusionauth-vs-active-directory.pdf "Download the Active Directory and FusionAuth Feature Comparison")
 
 ### Free for Unlimited Users
 
@@ -62,7 +62,7 @@ FusionAuth is a small, bootstrapped company dedicated to our customers. We have 
 
 To see more details on how Active Directory and FusionAuth stack up, [download this feature comparison](/resources/fusionauth-vs-active-directory.pdf "Active Directory and FusionAuth Feature Comparison") and please [contact us](/contact "Contact Us") if you have any questions.
 
-[Download the Active Directory and FusionAuth Feature Comparison](/resources/fusionauth-vs-active-directory.pdf "Active Directory and FusionAuth Feature Comparison"){: .btn .btn-primary}
+[Download the Active Directory and FusionAuth Feature Comparison](/resources/fusionauth-vs-active-directory.pdf "Active Directory and FusionAuth Feature Comparison"){:.button .brochure .orange .text-larger}
 
 ## Learn More About FusionAuth
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](/ "FusionAuth Home") about FusionAuth and download it today.

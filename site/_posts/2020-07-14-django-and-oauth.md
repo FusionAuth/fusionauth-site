@@ -5,7 +5,7 @@ description: In this tutorial, we'll build a basic Django web application using 
 author: Gareth Dwyer
 image: blogs/social-sign-in-django/headerimage.png
 category: blog
-tags: client-python
+tags: client-python tutorial tutorial-django tutorial-python
 excerpt_separator: "<!--more-->"
 ---
 
@@ -40,7 +40,7 @@ Also, any integrations that you set up with other providers (e.g. Google for "Si
 
 ## Installing and configuring FusionAuth with Docker Compose
 
-There are [various ways](https://fusionauth.io/docs/v1/tech/installation-guide/fusionauth-app) to install FusionAuth depending on your system, but the easiest way is to use Docker and Docker Compose. [Instructions are here](https://fusionauth.io/docs/v1/tech/installation-guide/docker). Currently, to install and run FusionAuth you would run (again, assuming you have Docker installed).
+There are [various ways](/docs/v1/tech/installation-guide/fusionauth-app) to install FusionAuth depending on your system, but the easiest way is to use Docker and Docker Compose. [Instructions are here](/docs/v1/tech/installation-guide/docker). Currently, to install and run FusionAuth you would run (again, assuming you have Docker installed).
 
 ```bash
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
@@ -79,7 +79,7 @@ Click the Save button in the top right for your changes to take effect.
 
 ### Creating an application in the Google Developers Console
 
-In order to allow our users to sign in to our app using their Google account, you'll need to set up a Google Cloud project and get an OAuth ID and secret. The full instructions for doing this are [available here](https://fusionauth.io/docs/v1/tech/identity-providers/google).
+In order to allow our users to sign in to our app using their Google account, you'll need to set up a Google Cloud project and get an OAuth ID and secret. The full instructions for doing this are [available here](/docs/v1/tech/identity-providers/google).
 
 Use `http://localhost:9011` for the authorized JavaScript origin and Authorized redirect URI. This will allow our FusionAuth app to talk to Google's servers and have them authenticate users on our behalf, as shown below.
 
@@ -87,7 +87,7 @@ Use `http://localhost:9011` for the authorized JavaScript origin and Authorized 
 
 Note that with a sandbox application, which is created by default, you can only sign up a maximum of 100 users. For production use, you need to make sure that you have pages describing your privacy policy and get approval from Google, which you'll be prompted to do during the setup process.
 
-Once you've set up everything in the Google Console, you'll need to complete your setup by adding Google as an identity provider to FusionAuth and copying in the Client Id and Client Secret that you received from Google. These are different values than the FusionAuth application's Client Id and Client Secret. You can find the detailed steps for [setting up Google as a third-party login via FusionAuth here](https://fusionauth.io/docs/v1/tech/identity-providers/google).
+Once you've set up everything in the Google Console, you'll need to complete your setup by adding Google as an identity provider to FusionAuth and copying in the Client Id and Client Secret that you received from Google. These are different values than the FusionAuth application's Client Id and Client Secret. You can find the detailed steps for [setting up Google as a third-party login via FusionAuth here](/docs/v1/tech/identity-providers/google).
 
 In the next step, make sure that you have enabled the Google integration and turn on "Create registration" for your Secret Birthday's app. Also don't forget to hit the save button.
 
@@ -409,7 +409,7 @@ Now after the user logs in, they'll be taken over to the FusionAuth page where t
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/fusionauth-login.png" alt="The FusionAuth login and sign up page." class="img-fluid" figure=false %}
 
-If it's important to you that your login page shares a look and feel with the rest of your application, FusionAuth allows you to fully customise this page using [FusionAuth themes](https://fusionauth.io/docs/v1/tech/themes/), but doing so is left as an exercise for the reader.
+If it's important to you that your login page shares a look and feel with the rest of your application, FusionAuth allows you to fully customise this page using [FusionAuth themes](/docs/v1/tech/themes/), but doing so is left as an exercise for the reader.
 
 After the user is directed back to the `/dashboard` route from FusionAuth (after logging in), they'll bring a `code` with them. This is part of the Authorization Code grant process. The Django application needs to exchange that for an access token. This access token contains claims and could be used to access other protected resources. However, we won't do so at this time.
 

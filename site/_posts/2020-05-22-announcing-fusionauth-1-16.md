@@ -26,7 +26,7 @@ You can now test your SMTP settings in the "Tenants" / "Email" section of the ad
 
 And of course there are over 15 bugs squashed and GitHub issues resolved as well. 
 
-Please see the [release notes](https://fusionauth.io/docs/v1/tech/release-notes) for the full breakdown of the changes between 1.15 and 1.16.
+Please see the [release notes](/docs/v1/tech/release-notes) for the full breakdown of the changes between 1.15 and 1.16.
 
-If you'd like to upgrade your version, please see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you. Or, if you'd like to check out FusionAuth, [download it today for free](/download).
+If you'd like to upgrade your version, please see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). If you have a licensed edition, open a [support request from your account dashboard](https://account.fusionauth.io){:target="_blank"} and we'll take care of you. Or, if you'd like to check out FusionAuth, [download it today for free](/download).
 

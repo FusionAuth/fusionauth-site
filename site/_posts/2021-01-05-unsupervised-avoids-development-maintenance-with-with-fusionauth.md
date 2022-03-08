@@ -23,7 +23,7 @@ After choosing FusionAuth, the development team had one authentication system to
 
 Justin estimates that if they had to rebuild what FusionAuth provides them, they'd have to hire an additional senior engineer to build, maintain, and debug their auth layer. 
 
-Unsupervised also automates the setup of developer environments via [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart). Doing so enables consistent system configuration for every engineering team member. 
+Unsupervised also automates the setup of developer environments via [Kickstart](/docs/v1/tech/installation-guide/kickstart). Doing so enables consistent system configuration for every engineering team member. 
 
 We'll let Justin have the final word:
 
@@ -31,4 +31,4 @@ We'll let Justin have the final word:
 
 Want to learn more about Unsupervised's decision process and savings? 
 
-[Read the case study](/resources/unsupervised-case-study.pdf){:.button .brochure .orange .text-larger}{:target="_blank"}
+[READ THE CASE STUDY](/resources/unsupervised-case-study.pdf){:.button .brochure .orange .text-larger}{:target="_blank"}

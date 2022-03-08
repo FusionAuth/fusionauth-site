@@ -5,43 +5,52 @@ description: We'll build a web application using ASP.NET Core and control page a
 author: Dan Moore
 image: blogs/authorization-code-grant-asp-net/securing-asp-net-app-oauth.png
 category: blog
-tags: client-netcore
+tags: client-netcore tutorial tutorial-netcore
+updated_date: 2021-10-07
 excerpt_separator: "<!--more-->"
 ---
 
-Previously, we used .NET Core to [build a command line tool](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client) to add users to a FusionAuth user identity management system. In this tutorial, we'll build out a web application with a protected page. We'll use Razor Pages and have both login and logout happen against FusionAuth, using the Authorization Code grant.
+Previously, we used .NET Core to [build a command line tool](/blog/2020/04/28/dot-net-command-line-client) to add users to a FusionAuth user identity management system. In this tutorial, we'll build out a web application with a protected page. We'll use Razor Pages and have both login and logout happen against FusionAuth, using the Authorization Code grant.
 
 <!--more-->
 
+{% include _callout-tip.liquid content="This code and tutorial has been updated in October 2021."%}
+
 ## Configuring FusionAuth
 
-You should already have FusionAuth up and running. If you don't, head over to the previous post "[Creating a user in FusionAuth with a .NET Core CLI Client](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client)" for instructions on downloading and installing FusionAuth. You'll also need to create the application. After that, if you want to skip building the CLI client, you can just create a user in the admin user interface.
+You should already have FusionAuth up and running. If you don't, head over to the previous post "[Creating a user in FusionAuth with a .NET Core CLI Client](/blog/2020/04/28/dot-net-command-line-client)" for instructions on downloading and installing FusionAuth. You'll also need to create the application. After that, if you want to skip building the CLI client, you can just create a user in the admin user interface.
 
 We are going to make a few changes to the FusionAuth configuration to allow integration with the ASP.Net Core web application.
 
-First, we're going to create a new signing key. There's a list of [supported algorithms](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/Supported-Algorithms) that work with the open source identity project we're using, but currently [symmetric algorithms are not supported](https://github.com/IdentityModel/IdentityModel.AspNetCore/issues/102)--I love the honesty of the library maintainer: "Don't use symmetric keys is the easy answer." Using the default HMAC key resulted in a `SecurityTokenSignatureKeyNotFoundException` and there was no easy way to change the `SignatureProvider`. Luckily, FusionAuth supports [different key types](https://fusionauth.io/docs/v1/tech/apis/keys#generate-a-key), so let's generate an asymmetric key to use to sign our JSON Web Tokens (JWTs). 
+First, we're going to create a new signing key. There's a list of [supported algorithms](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/Supported-Algorithms) that work with the open source identity project we're using, but currently [symmetric algorithms are not supported](https://github.com/IdentityModel/IdentityModel.AspNetCore/issues/102)--I love the honesty of the library maintainer: "Don't use symmetric keys is the easy answer." Using the default HMAC key resulted in a `SecurityTokenSignatureKeyNotFoundException` and there was no easy way to change the `SignatureProvider`. Luckily, FusionAuth supports [different key types](/docs/v1/tech/apis/keys#generate-a-key), so let's generate an asymmetric key to use to sign our JSON Web Tokens (JWTs). 
 
 To generate the key, go to "Settings" then to "Key Master". In the upper right hand corner, click on the dropdown next to "Import Public Key" and choose "Generate RSA". Use a descriptive name like "For dotnetcore" and leave the rest of defaults and click "Submit". 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-keypair.png" alt="A new RSA keypair in FusionAuth." class="img-fluid" figure=false %}
 
-Next, we'll be modifying the previously created "dotnetcore"' application settings. Edit that application, then go to the OAuth tab. Make the following changes:
+Next, we'll be modifying the previously created "dotnetcore"' application settings. Edit that application, then go to the "OAuth" tab. Make the following changes:
 
-* Add an Authorized Redirect URL of `http://localhost:5000/signin-oidc`. 
-* Add a Logout URL of `http://localhost:5000`. 
+* Add an "Authorized Redirect URL" of `http://localhost:5000/signin-oidc`. 
+* Add a "Logout URL" of `http://localhost:5000`. 
 
-The web application we are going to build is going to be on port 5000, and `signin-oidc` is an endpoint provided by the authentication library. We're setting things up so that the Authorization Code grant will work. Write down the `Client ID` and `Client Secret`, as we'll need that information later. When you are done configuring this section, the OAuth tab of your application should look like this:
+The web application we are going to build is going to be on port 5000, and `signin-oidc` is an endpoint provided by the authentication library. We're setting things up so that the Authorization Code grant will work. Write down the `Client Id` and `Client Secret`, as we'll need that information later. When you are done configuring this section, the OAuth tab of your application should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-oauth-setup-screen.png" alt="The OAuth settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
-Next, go to the JWT tab. We need to enable JSON Web Token signing and tell FusionAuth to use the previously generated RSA keypair. Update the "Access token signing key" and "Id token signing key" to point to that keypair. When you are done, the JWT tab should look like this:
+Next, go to the "JWT" tab. We need to enable JSON Web Token signing and tell FusionAuth to use the previously generated RSA keypair. Update the "Access token signing key" and "Id token signing key" to point to that keypair. When you are done, the JWT tab should look like this:
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/aspnet-application-jwt-screen.png" alt="The JWT settings for the 'dotnetcore' application." class="img-fluid" figure=false %}
 
 Click the blue "Save" icon to save all the settings you just configured. We're done with FusionAuth. (Unless you need to add a user, in which case, go to the "Users" section and add one. Make sure to add them to the "dotnetcore" application by creating the appropriate user registration.)
 
+### Configuring FusionAuth with Kickstart
+
+Instead of manually configuring FusionAuth as above, you can also use Kickstart. This lets you get going quickly if you have a fresh installation of FusionAuth.
+
+You can learn more about how to use [Kickstart](/docs/v1/tech/installation-guide/kickstart). If you want to give it a try, here's an [example Kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/asp-net-razor-pages.json) which sets up FusionAuth for this tutorial.
+
 ## Set up a basic ASP.NET Razor Pages application
 
-Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore) available if you want to download it and take a look.
+Now let's start building our ASP.NET Core web application. We'll use [Razor Pages](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-3.1&tabs=visual-studio) and ASP.NET Core 3.1. This application will display common information to all users. There will also be a secured area only available to an authenticated user. Good thing we have already added one! As usual, we have the [full source code](https://github.com/FusionAuth/fusionauth-example-asp-netcore/) available if you want to download it and take a look.
 
 First, let's create a new web application using the `dotnet` CLI and go to that directory:
 
@@ -68,7 +77,7 @@ I can hit `control-C` to exit out of this application. I also like to open up a 
 dotnet publish -r win-x64 && bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
 ```
 
-If I visit `http://localhost:5000` I'm redirected to an https address and get a warning from my browser. While that might make sense in production, unless we terminated TLS before traffic gets to this application, we don't need this behavior in development. To avoid this, simply remove `app.UseHttpsRedirection();` from `Startup.cs`, which is the main configuration file for our web application. 
+If I visit `http://localhost:5000` I'm redirected to an https address and get a warning from my browser. While that might make sense in production, unless we terminate TLS before traffic gets to this application, we don't need this behavior in development. To avoid this, simply remove `app.UseHttpsRedirection();` from `Startup.cs`, which is the main configuration file for our web application. 
 
 We'll also want to add a page to be secured, which we'll aptly call "Secure". Add `Secure.cshtml` and `Secure.cshtml.cs` to the `SampleApp/Pages` directory. Give them the following content:
 
@@ -137,7 +146,7 @@ dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect
 dotnet add package IdentityModel.AspNetCore -v 1.0.0-rc.4.1
 ```
 
-You'll note that unlike the [command line tool](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client), we aren't using FusionAuth client packages. We'll be protecting this page using standard OAuth and so there's no need for any FusionAuth specific API calls. While I'll be highlighting FusionAuth, you could run this code against any OAuth2 compliant server. 
+You'll note that unlike the [command line tool](/blog/2020/04/28/dot-net-command-line-client), we aren't using FusionAuth client packages. We'll be protecting this page using standard OAuth and so there's no need for any FusionAuth specific API calls. While I'll be highlighting FusionAuth, you could run this code against any OAuth2 compliant server. 
 
 We specify version `1.0.0-rc.4.1` for the [IdentityModel](https://github.com/IdentityModel/IdentityModel.AspNetCore/) package because it hasn't been released just yet. This package makes integrating with standards-based OAuth servers a snap, so we'll overlook it being not quite released.
 
@@ -298,7 +307,7 @@ Here we configure the cookie, including setting the cookie name:
 // ...
 ```
 
-Finally, we set up our previously referenced authentication provider, `"oidc"`. You could have multiple providers. We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to fully configure this provider. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant. PKCE is turned on by default. We pull configuration information like our client id from either `appsettings.json` or the environment.  These are the values you saved off when you were configuring FusionAuth. (We'll add them to `appsettings.json` a bit later.) We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to configure our provider. Since we want to use the Authorization Code grant, we set `ResponseType = "code"`. PKCE is turned on by default, so we're ready for [OAuth 2.1](https://fusionauth.io/blog/2020/04/15/whats-new-in-oauth-2-1).
+Finally, we set up our previously referenced authentication provider, `"oidc"`. You could have multiple providers. We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to fully configure this provider. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant. PKCE is turned on by default. We pull configuration information like our client id from either `appsettings.json` or the environment.  These are the values you saved off when you were configuring FusionAuth. (We'll add them to `appsettings.json` a bit later.) We create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-3.1) object to configure our provider. Since we want to use the Authorization Code grant, we set `ResponseType = "code"`. PKCE is turned on by default, so we're ready for [OAuth 2.1](/blog/2020/04/15/whats-new-in-oauth-2-1).
 
 ```csharp
 // ...
@@ -308,6 +317,8 @@ Finally, we set up our previously referenced authentication provider, `"oidc"`. 
 
     options.ClientId = Configuration["SampleApp:ClientId"];
     options.ClientSecret = Configuration["SampleApp:ClientSecret"];
+    options.Scope.Add("openid");
+    options.ClaimActions.Remove("aud");
 
     options.ResponseType = "code";
     options.RequireHttpsMetadata = false;
@@ -325,7 +336,7 @@ app.UseAuthentication();
 
 Wait, I thought we were preventing users from accessing certain pages? Isn't that authorization, not authentication? When we first set up the application, we didn't have any authentication scheme configured. And, in this case, we're actually prohibiting access to any anonymous user, so any authenticated user is authorized.
 
-For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of `Configure` method. This makes it easier to see [errors in the OAuth flow](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII). But for production code, please remove it.
+For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of the `Configure` method. This makes it easier to see [errors in the OAuth flow](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII). But for production code, please remove it.
 
 ```csharp
 // ...
@@ -358,7 +369,7 @@ Wait, where's the client secret? This file is in git, but we should not put secr
 dotnet publish -r win-x64 && SampleApp__ClientSecret=H4... bin/Debug/netcoreapp3.1/win-x64/publish/SampleApp.exe
 ```
 
-Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the "Secure" page. You'll be prompted to log in using FusionAuth's default login page. You can [theme the login screen of FusionAuth](https://fusionauth.io/docs/v1/tech/themes/) if you want to make the login page look like your company's brand.
+Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the "Secure" page. You'll be prompted to log in using FusionAuth's default login page. You can [theme the login screen of FusionAuth](/docs/v1/tech/themes/) if you want to make the login page look like your company's brand.
 
 {% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/login-asp-dot-net-example.png" alt="The login screen in FusionAuth." class="img-fluid" figure=false %}
 
@@ -445,10 +456,70 @@ Great! Now you can both sign in and sign out of your application.
 
 (If you are interested, you can see the application's current code by looking at the [`add-logout` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-logout).
 
+## Checking claims
+
+You should check the claims of the token to be sure that you know that you should be consuming the token. If the token was intended for another audience, say a different application with different roles, you don't want to inadvertently provide escalated or incorrect access.
+
+First, add a `services.AddAuthorization` clause, which will check the claims of the provided token. Add it after the `JwtSecurityTokenHandler.DefaultMapInboundClaims` line. 
+
+In FusionAuth, the `aud` claim is the same as the `ClientId` or application Id. We'll check that these are the same.
+
+```csharp
+//...
+JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+
+// Configure your policies
+services.AddAuthorization(options =>
+  options.AddPolicy("Registered", policy => policy.RequireClaim("aud", Configuration["SampleApp:ClientId"])));
+
+services.AddRazorPages();
+
+//...
+```
+
+Then, because the `aud` claim is by default not available, you need to add `options.ClaimActions.Remove("aud");` to the `AddOpenIdConnect` options section.
+
+```csharp
+.AddOpenIdConnect("oidc", options =>
+{
+  options.Authority = Configuration["SampleApp:Authority"];
+  options.ClientId = Configuration["SampleApp:ClientId"];
+  options.ClientSecret = Configuration["SampleApp:ClientSecret"];
+  options.Scope.Add("openid");
+
+  options.ClaimActions.Remove("aud");
+
+  options.ResponseType = "code";
+  options.RequireHttpsMetadata = false;
+//...
+```
+
+Finally, you can add one or more token validation parameters. These will let the framework automatically verify the audience. This is slightly duplicative of the `AddAuthorization` clause above, but this check applies everywhere, whereas the `AddAuthorization` clause can be more flexible. For instance, you could examine claims other than `aud`, such as roles, when protecting a page.
+
+```csharp
+//...
+options.RequireHttpsMetadata = false;
+options.TokenValidationParameters = new TokenValidationParameters
+{
+  ValidateAudience = true,
+  ValidAudience = Configuration["SampleApp:ClientId"]
+};
+```
+## Troubleshooting
+
+If you run into an issue with cookies on Chrome or other browsers, you might need to run the ASP.NET application under SSL.
+
+Luckily, ASP.NET ships with certificates and you can access this application at `https://localhost:5001`. If you do this, make sure to add an "Authorized Redirect URL" of `https://localhost:5001/signin-oidc`. To do so, log into the administrative user interface, navigate to "Applications", then edit "dotnetcore", then to the "OAuth" tab. You can have more than one URL, so feel free to add it.
+
+This tutorial doesn't use any new .NET functionality, so should work on any version of ASP.NET. The code has been tested with 3.1 and 5.0:
+
+* [3.1 repo](https://github.com/FusionAuth/fusionauth-example-asp-netcore)
+* [5.0 repo](https://github.com/FusionAuth/fusionauth-example-asp-netcore5)
+
 ## Next steps
 
 If you want to explore more, you can add more pages to the application, limit a page to a certain user, or customize the FusionAuth login page theme.
 
-You could also welcome users with their first name by retrieving user information via an API call, using the [FusionAuth .NET Core client library](https://fusionauth.io/docs/v1/tech/client-libraries/netcore).
+You could also welcome users with their first name by retrieving user information via an API call, using the [FusionAuth .NET Core client library](/docs/v1/tech/client-libraries/netcore).
 
 For the next post in this .NET Core series, we'll be associating a user with a role and creating a custom claim in the JWT, so stay tuned!

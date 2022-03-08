@@ -4,6 +4,7 @@ title: Easy Integration of Spring and FusionAuth
 author: Tyler Scott
 description: Making a Spring application with FusionAuth is easy, just follow these simple steps.
 image: blogs/spring-and-fusionauth-example.jpg
+tags: tutorial-java tutorial
 category: blog
 excerpt_separator: "<!--more-->"
 ---
@@ -56,10 +57,10 @@ Don't want to read? [Jump to the example](https://github.com/FusionAuth/fusionau
     __Quick overview of our OpenID Connect workflow__
 
     1. A user clicks on a login link `<a href="/login">Login</a>`
-    2. Spring handles the `/login` request by initiating an OAuth2 redirect to the `authorize` endpoint (https://fusionauth.io/docs/v1/tech/oauth/endpoints#authorize) on the FusionAuth instance.
+    2. Spring handles the `/login` request by initiating an OAuth2 redirect to the `authorize` endpoint (/docs/v1/tech/oauth/endpoints#authorize) on the FusionAuth instance.
     3. The user logs into the FusionAuth instance and gets redirected back to your application with an authentication code. In our example they will get redirected back to `/login` and login will detect the code to proceed to the next step.
-    4. Next, Spring exchanges the auth code for an access token by calling the FusionAuth `token` endpoint (https://fusionauth.io/docs/v1/tech/oauth/endpoints#token). FusionAuth returns an id token, which is a JWT. While we could use the JWT directly or hand it to Spring Security to validate the signature and use the data inside the JWT, our example is instead going to use a different OpenID Connect integration.
-    5. Finally, our filter takes over and we call the `userinfo` endpoint (https://fusionauth.io/docs/v1/tech/oauth/endpoints#userinfo) to exchange the access token (JWT) for a User object. The User object that the `userinfo` endpoint returns is a valid OpenID Connect User object. We load this information into an instance of the `io.fusionauth.security.FusionAuthUserDetails` object from our library, which is the class that powers the `@PreAuthorize` annotation methods. This is accessible via `SpringContextHolder.getContext().getAuthentication().getPrincipal()`. Note that a lot of this is happening automatically for you and you don't need to specifically write code to manage the OAuth workflow.
+    4. Next, Spring exchanges the auth code for an access token by calling the FusionAuth `token` endpoint (/docs/v1/tech/oauth/endpoints#token). FusionAuth returns an id token, which is a JWT. While we could use the JWT directly or hand it to Spring Security to validate the signature and use the data inside the JWT, our example is instead going to use a different OpenID Connect integration.
+    5. Finally, our filter takes over and we call the `userinfo` endpoint (/docs/v1/tech/oauth/endpoints#userinfo) to exchange the access token (JWT) for a User object. The User object that the `userinfo` endpoint returns is a valid OpenID Connect User object. We load this information into an instance of the `io.fusionauth.security.FusionAuthUserDetails` object from our library, which is the class that powers the `@PreAuthorize` annotation methods. This is accessible via `SpringContextHolder.getContext().getAuthentication().getPrincipal()`. Note that a lot of this is happening automatically for you and you don't need to specifically write code to manage the OAuth workflow.
 
     You can read more on the FusionAuth OAuth workflow here: https://fusionauth.io/docs/v1/tech/oauth/
 
@@ -399,7 +400,7 @@ http.addFilterAfter(new OAuth2ClientContextFilter(), AbstractPreAuthenticatedPro
 
 ## Conclusion
 
-That's all it takes! When you get set up, send us a link to your site. We'd love to see how you integrated FusionAuth with your Spring application. If you have any questions or comments, let us know in the comments below or [contact us](https://fusionauth.io/contact).
+That's all it takes! When you get set up, send us a link to your site. We'd love to see how you integrated FusionAuth with your Spring application. If you have any questions or comments, let us know in the comments below or [contact us](/contact).
 
 ## Addendum
 

@@ -67,7 +67,11 @@ FusionAuth is a bootstrapped company dedicated to our customers. We have success
 
 To see more details on how Auth0 and FusionAuth stack up, [download this feature comparison](/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison") and please [contact us](/contact "Contact Us") if you have any questions.
 
-[Download the Auth0 and FusionAuth Feature Comparison](/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison"){: .btn .btn-primary}
+[Download the Auth0 and FusionAuth Feature Comparison](/resources/fusionauth-vs-auth0.pdf "Auth0 and FusionAuth Feature Comparison"){:.button .brochure .orange .text-larger}
+
+You can also view technical documentation about how you can migrate from Auth0 to FusionAuth.
+
+[View the Auth0 Technical Migration Guide](/docs/v1/tech/migration-guide/auth0){:.button .brochure .orange .text-larger}
 
 ## Learn More About FusionAuth
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, data search, user management and more, 100% free for unlimited users. [Find out more](/ "FusionAuth Home") about FusionAuth and download it today.

@@ -15,29 +15,35 @@ Source Code:
 
 * https://github.com/FusionAuth/go-client
 
-Installation
+// TODO change this across all the client libraries
+
+=== Installation
 
 ```bash
-go get github.com/FusionAuth/go-client/pkg/fusionauth
+go mod init example.com/test/fusionauth
+go mod tidy
 ```
 
-Example Usage
+=== Example Usage
+
+Put this file in `fusionauth.go`
 
 ```go
-package example
+package main
 
 import (
-    "encoding/json"
     "net/http"
     "net/url"
     "time"
+    "fmt"
 
     "github.com/FusionAuth/go-client/pkg/fusionauth"
 )
 
 const host = "http://localhost:9011"
 
-var apiKey = "YOUR_FUSIONAUTH_API_KEY"
+var apiKey = "YOUR_API_KEY"
+
 var httpClient = &http.Client{
 	Timeout: time.Second * 10,
 }
@@ -45,37 +51,36 @@ var httpClient = &http.Client{
 var baseURL, _ = url.Parse(host)
 
 // Construct a new FusionAuth Client
-var auth = fusionauth.NewClient(httpClient, baseURL, apiKey)
+var client = fusionauth.NewClient(httpClient, baseURL, apiKey)
 
-// Login logs in the user using the FusionAuth Go client library
-func Login() http.HandlerFunc {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Read response body
-        var credentials fusionauth.LoginRequest
-        defer r.Body.Close()
-        json.NewDecoder(r.Body).Decode(&credentials)
-        // Use FusionAuth Go client to log in the user
-        authResponse, errors, err := auth.Login(credentials)
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusBadRequest)
-            return
-        }
-        // Write the response from the FusionAuth client as JSON
-        var responseJSON []byte
-        if errors != nil {
-            responseJSON, err = json.Marshal(errors)
-        } else {
-            responseJSON, err = json.Marshal(authResponse)
-        }
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-            return
-        }
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        w.Write(responseJSON)
-    })
+func main() {
+    response, errors, err := client.RetrieveUserByEmail("user@example.com")
+    if err != nil {
+        // err is a transport layer error (connection failed, etc)
+        fmt.Println(err)   
+        return
+    }
+    if errors != nil {
+        // err is a FusionAuth response error (user couldn't be found, etc)
+        fmt.Println(response.StatusCode)
+        return
+    }
+    fmt.Println(response.User.Email)   
+    fmt.Println(response.User.FirstName)   
+    fmt.Println(response.User.LastName)   
 }
+```
+
+To build an executable:
+
+```bash
+go build
+```
+
+To run:
+
+```bash
+./fusionauth
 ```
 
 == PATCH requests
@@ -86,11 +91,11 @@ include::docs/v1/tech/client-libraries/_static-patch-note.adoc[]
 
 ++++
 {% capture relatedTag %}client-go{% endcapture %}
-{% include _doc_related_posts.liquid %}
+{% include _doc-related-posts.liquid %}
 ++++
 
 === Example apps
 ++++
 {%capture language %}go{% endcapture %}
-{% include _example_apps_one_section.liquid %}
+{% include _example-apps-one-section.liquid %}
 ++++

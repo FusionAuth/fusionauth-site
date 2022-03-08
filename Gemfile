@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-ruby "2.7.0"
+ruby "2.7.5"
 
 # Hello! This is where you manage which Jekyll version is used to run.
 # When you want to use a different version, change it below, save the
@@ -21,7 +21,6 @@ group :jekyll_plugins do
   gem "jekyll-paginate-v2", "3.0.0"
   gem "jekyll-environment-variables"
   gem "jekyll-algolia", "~> 1.0"
-  gem "jekyll-redirect-from"
 end
 
 # For the docs
@@ -30,3 +29,5 @@ gem "haml", "5.1.2"
 gem "pygments.rb", "1.2.1"
 gem "sassc", "2.3.0"
 gem "tilt", "2.0.10"
+
+gem "s3_website", "~> 3.4"

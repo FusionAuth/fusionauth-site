@@ -5,7 +5,7 @@ description: We'll configure FusionAuth and extend the ASP.NET Core web applicat
 author: Dan Moore
 image: blogs/adding-more-claims-asp-net/fusionauth-asp-net-core-with-custom-claims.png
 category: blog
-tags: client-netcore
+tags: client-netcore tutorial tutorial-netcore
 excerpt_separator: "<!--more-->"
 ---
 
@@ -43,7 +43,7 @@ Since the role and other claims are encoded in the JWT, which is stored in a coo
 
 ## Adding custom claims
 
-You can add claims based on user data, the time of day or anything else. In FusionAuth, you add this data to a JWT with a [lambda](https://fusionauth.io/docs/v1/tech/lambdas/jwt-populate). This is a JavaScript function that receives the JWT object before it is signed and can modify it. Remember way back when we [created the user](https://fusionauth.io/blog/2020/04/28/dot-net-command-line-client) and specified their favorite color as a command line option? Well, we're going to send that information down to the ASP.NET Core web application so that it can display that very valuable data.
+You can add claims based on user data, the time of day or anything else. In FusionAuth, you add this data to a JWT with a [lambda](/docs/v1/tech/lambdas/jwt-populate). This is a JavaScript function that receives the JWT object before it is signed and can modify it. Remember way back when we [created the user](/blog/2020/04/28/dot-net-command-line-client) and specified their favorite color as a command line option? Well, we're going to send that information down to the ASP.NET Core web application so that it can display that very valuable data.
 
 A lambda is flexible and can pull from user or registration data. You can modify the token by removing attributes also, though there are some that are immutable. Here's the lambda:
 

@@ -5,7 +5,7 @@ description: Advanced registration forms let you easily build out multi-step reg
 author: Dan Moore
 image: blogs/advanced-registration-forms/how-to-use-fusionauths-advanced-registration-forms.png
 category: blog
-tags: feature-advanced-registration-forms
+tags: feature-advanced-registration-forms tutorial tutorial-reactor-feature
 excerpt_separator: "<!--more-->"
 ---
 
@@ -35,7 +35,7 @@ This is part of a three part series. Here are all the posts:
 
 ## FusionAuth setup
 
-If you don't have FusionAuth running, [get it going in 5 minutes](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). 
+If you don't have FusionAuth running, [get it going in 5 minutes](/docs/v1/tech/5-minute-setup-guide). 
 
 Then get a license key and activate it. *Please note that advanced registration forms are a paid edition feature. You can [learn more about paid editions and sign up for a free trial here](/pricing).* 
 

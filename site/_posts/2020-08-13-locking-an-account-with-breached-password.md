@@ -5,7 +5,7 @@ description: Webhooks let you take actions based on events in FusionAuth. For in
 author: Dan Moore
 image: blogs/breached-password-webhook/breached-password-detection-how-to-lock-user-accounts-with-a-webhook.png
 category: blog
-tags: feature-breached-password-detection client-php feature-webhooks
+tags: feature-breached-password-detection client-php feature-webhooks tutorial tutorial-feature tutorial-webhooks
 excerpt_separator: "<!--more-->"
 ---
 
@@ -19,9 +19,9 @@ FusionAuth gives you options. You can integrate using [JWTs](/docs/v1/tech/oauth
 
 In this tutorial, we'll extend FusionAuth to lock an account if a user signs in with a compromised password.
 
-> Due to the use case, this post focuses on the breached password detection event, but the integration principles apply for any of the [over fifteen events](/docs/v1/tech/events-webhooks/events) for which FusionAuth can fire a webhook.
+> Due to the use case, this post focuses on the breached password detection event, but the integration principles apply for any of the [over fifteen events](/docs/v1/tech/events-webhooks/events/) for which FusionAuth can fire a webhook.
 
-This is different from [locking an account](/docs/v1/tech/tutorials/setting-up-user-account-lockout) based on login attempts. In this case, you are relying on the [breached password detection feature](/blog/2020/07/22/breached-password-detection). 
+This is different from [locking an account](/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout) based on login attempts. In this case, you are relying on the [breached password detection feature](/blog/2020/07/22/breached-password-detection). 
 
 *Note: breached password detection is a [paid edition feature](/pricing).*
 

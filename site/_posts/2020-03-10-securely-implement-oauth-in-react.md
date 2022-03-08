@@ -5,7 +5,7 @@ description: This post describes how to securely implement OAuth in a React appl
 author: Matt Boisseau
 excerpt_separator: "<!--more-->"
 image: blogs/oauth-react-fusionauth.png
-tags: client-javascript
+tags: client-javascript tutorial tutorial-react tutorial-javascript
 category: blog
 ---
 
@@ -70,7 +70,7 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker-compose up
 ```
 
-(Check out the [Download FusionAuth page](https://fusionauth.io/download) for other installation options.)
+(Check out the [Download FusionAuth page](/download) for other installation options.)
 
 Once FusionAuth is running (by default at [localhost:9011](http://localhost:9011)), create a new Application. The only configurations you need to change are `Authorized redirect URLs` and `Logout URL` on the `OAuth` tab. These are basically links used by FusionAuth during the only two times we redirect off our app entirely: login and logout. After a user logs in, FusionAuth will redirect them back to our app on one of the `Authorized Redirect URLs`. After a user logs out, FusionAuth will redirect them to the `Logout URL`.
 
@@ -1115,10 +1115,10 @@ Type in whatever you want and watch the value change. You can log in and out as 
 
 Our React app can log in, log out, and modify user data. You might be wondering what's next. Here are a few next steps you can take:
 
-- You'll probably want to let users [register from the app itself](https://fusionauth.io/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined), instead of manually adding them via the admin panel.  
-- Maybe you want to [change how the FusionAuth login form looks](https://fusionauth.io/docs/v1/tech/apis/themes).  
-- For extra security, you can [enable and send two-factor codes](https://fusionauth.io/docs/v1/tech/apis/two-factor).  
-- You can even let users log in via a third-party, like [Facebook](https://fusionauth.io/docs/v1/tech/apis/identity-providers/facebook) or [Google](https://fusionauth.io/docs/v1/tech/apis/identity-providers/google).
+- You'll probably want to let users [register from the app itself](/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined), instead of manually adding them via the admin panel.  
+- Maybe you want to [change how the FusionAuth login form looks](/docs/v1/tech/apis/themes).  
+- For extra security, you can [enable and send two-factor codes](/docs/v1/tech/apis/two-factor).  
+- You can even let users log in via a third-party, like [Facebook](/docs/v1/tech/apis/identity-providers/facebook) or [Google](/docs/v1/tech/apis/identity-providers/google).
 
 In all of these cases, remember what you learned from this example:
 
@@ -1126,6 +1126,6 @@ In all of these cases, remember what you learned from this example:
 1. Make requests to the relevant FusionAuth endpoints (including any parameters listed in the docs) and send data to React with `res.send`
 1. Use `fetch` to call your Express routes from React, and save the response using `setState`
 
-Check out the [FusionAuth APIs](https://fusionauth.io/docs/v1/tech/apis/) for even more options.
+Check out the [FusionAuth APIs](/docs/v1/tech/apis/) for even more options.
 
 Happy coding!

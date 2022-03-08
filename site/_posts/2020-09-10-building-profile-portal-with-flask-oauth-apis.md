@@ -5,13 +5,16 @@ description: Advanced registration forms let you easily build out multi-step reg
 author: Dan Moore
 image: blogs/flask-oauth-portal/building-a-user-profile-portal-with-flask-oauth-and-apis.png
 category: blog
-tags: feature-advanced-registration-forms client-python
+updated_date: 2021-05-21
+tags: feature-advanced-registration-forms client-python tutorial-python tutorial tutorial-reactor-feature
 excerpt_separator: "<!--more-->"
 ---
 
 Once a user registers, you can view their data in the administrative user interface. But how can you allow the user to view or change their data themselves?
 
 <!--more-->
+
+_Note that user profile editing functionality is now available in paid editions of FusionAuth. [Learn more](/docs/v1/tech/account-management/)._
 
 Previously, we built a [self service registration form](/blog/2020/08/27/advanced-registration-form) for a real estate application. It was a two step form which captured specific information about their home buying needs. We also themed the [registration form](/blog/2020/09/01/theme-registration-form). This tutorial builds on the previous two and will walk through building a python flask application to let a user sign in and modify the profile data they provided at registration. 
 

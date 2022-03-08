@@ -5,8 +5,8 @@ description: We'll build a Laravel application that delegates user management, r
 author: Karl Hughes
 image: blogs/fusionauth-laravel/user-registration-sign-in-laravel-fusionauth.png
 category: blog
-updated_date: 2020-04-05
-tags: client-php, tutorial, tutorial-laravel, tutorial-php
+updated_date: 2021-04-05
+tags: client-php tutorial tutorial-laravel tutorial-php
 excerpt_separator: "<!--more-->"
 ---
 
@@ -14,7 +14,7 @@ Laravel is one of the most popular PHP application frameworks in the marketplace
 
 <!--more-->
 
-In this tutorial, we'll set up a new Laravel application that uses FusionAuth to register and login users. All the code used here is [available on Github](https://github.com/FusionAuth/fusionauth-example-laravel). This application will show just a tiny sample of what you can do with FusionAuth, so be sure to check out the [PHP Client Library](https://fusionauth.io/docs/v1/tech/client-libraries/php) and [documentation](https://fusionauth.io/docs/v1/tech/) for much more.
+In this tutorial, we'll set up a new Laravel application that uses FusionAuth to register and login users. All the code used here is [available on Github](https://github.com/FusionAuth/fusionauth-example-laravel). This application will show just a tiny sample of what you can do with FusionAuth, so be sure to check out the [PHP Client Library](/docs/v1/tech/client-libraries/php) and [documentation](/docs/v1/tech/) for much more.
 
 ## What we'll cover
 1. Installing and setting up a local FusionAuth instance
@@ -27,7 +27,7 @@ In this tutorial, we'll set up a new Laravel application that uses FusionAuth to
 8. Conclusion and next steps
 
 ## What you'll need
-- [FusionAuth](https://fusionauth.io/download)
+- [FusionAuth](/download)
 - [PHP](https://www.php.net/) (7+ preferred)
 - [Composer](https://getcomposer.org/) package manager
 - PHP development environment
@@ -38,9 +38,9 @@ Please note this example application was tested using:
 - Laravel 7.30.4
 
 ## Installing and setting up FusionAuth
-Before we write any PHP code, FusionAuth must be downloaded and running on your local machine or server. FusionAuth is available [for all major operating systems](https://fusionauth.io/download) or it can be [run in Docker](https://fusionauth.io/docs/v1/tech/installation-guide/docker).
+Before we write any PHP code, FusionAuth must be downloaded and running on your local machine or server. FusionAuth is available [for all major operating systems](/download) or it can be [run in Docker](/docs/v1/tech/installation-guide/docker).
 
-Once you have FusionAuth running, you should log into the admin panel and create a new API Key and Application. This process [is outlined here](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide), but you can skip the OAuth settings for this tutorial.
+Once you have FusionAuth running, you should log into the admin panel and create a new API Key and Application. This process [is outlined here](/docs/v1/tech/5-minute-setup-guide), but you can skip the OAuth settings for this tutorial.
 
 ## Setting up a new Laravel Application
 Assuming you have PHP and Composer installed on your machine, you can create a new Laravel application with the following command:
@@ -56,7 +56,7 @@ There are several other options for [installing](https://laravel.com/docs/7.x#in
 %}
 
 ## Installing and configuring the FusionAuth PHP package
-After you create the new Laravel application, you can use Composer to install the [FusionAuth PHP Client](https://fusionauth.io/docs/v1/tech/client-libraries/php). This will allow you to connect to the FusionAuth instance:
+After you create the new Laravel application, you can use Composer to install the [FusionAuth PHP Client](/docs/v1/tech/client-libraries/php). This will allow you to connect to the FusionAuth instance:
 
 ```shell
 composer require fusionauth/fusionauth-client
@@ -206,7 +206,7 @@ Route::post('/register', 'RegisterUser');
 ```
 
 {% include _callout-note.liquid content=
-"FusionAuth supports different features when a user registers, including verification emails, required fields and custom roles. Be sure to [check out the documentation](https://fusionauth.io/docs/v1/tech/apis/registrations) to make sure you include all the appropriate options."
+"FusionAuth supports different features when a user registers, including verification emails, required fields and custom roles. Be sure to [check out the documentation](/docs/v1/tech/apis/registrations) to make sure you include all the appropriate options."
 %}
 
 At this point, you should be able to access the `/register` route in your Laravel application and successfully register a new user in FusionAuth.
@@ -314,7 +314,7 @@ The first route will display a new view file that includes an email and password
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-laravel/login-page.png" alt="The profile page for a Laravel application using FusionAuth." class="img-fluid" figure=false %}
 
-{% include _callout-tip.liquid content="When users are logged in, FusionAuth also returns a JWT token. If you're building a single page application or want to perform client-side requests, [check out the documentation](https://fusionauth.io/docs/v1/tech/apis/jwt) for details."
+{% include _callout-tip.liquid content="When users are logged in, FusionAuth also returns a JWT token. If you're building a single page application or want to perform client-side requests, [check out the documentation](/docs/v1/tech/apis/jwt) for details."
 %}
 
 Now when you log in using the new form, you'll be redirected to `/profile`, but that page doesn't exist yet (hence, the 404 error).

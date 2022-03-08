@@ -5,7 +5,7 @@ description: How to use JWTs to secure your golang microservices
 author: Krissanawat Kaewsanmuang
 image: blogs/securing-golang-microservice-jwt/securing-a-go-microservice-with-jwt-header-image.png
 category: blog
-tags: client-go
+tags: client-go tutorial tutorial-go
 excerpt_separator: "<!--more-->"
 ---
 
@@ -508,8 +508,8 @@ Using a token in this manner to secure microservices is widely used as it is a s
 
 All the code is available on [Github](https://github.com/FusionAuth/fusionauth-example-go-jwt-microservices). If you want to play around with JWTs and the golang microservices you built here, you could:
 
-* [Set up FusionAuth in 5 minutes](/docs/v1/tech/5-minute-setup-guide/) and have it generate the JWTs when a user logs in.
-* Learn how to [secure golang applications with OAuth](/blog/2020/10/22/securing-a-golang-app-with-oauth/).
+* [Set up FusionAuth in 5 minutes](/docs/v1/tech/5-minute-setup-guide) and have it generate the JWTs when a user logs in.
+* Learn how to [secure golang applications with OAuth](/blog/2020/10/22/securing-a-golang-app-with-oauth).
 * Modify the middleware and curl scripts to use the more standard `Authorization` header and `Bearer` token prefix.
 * Use an asymmetric signing algorithm such as RSA to avoid sharing a secret between the two programs.
 * Build more than one golang microservice and have service access controlled by the value of the `roles` claim in the JWT.
