@@ -84,6 +84,7 @@ For blog posts:
 -- `topic-<topic>` for general topics. 
 -- `topic-community-story` for any community stories you do.
 -- `feature-<topic>` for specific features. These will show up on the feature page.
+- You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
 
 For documentation posts:
 - Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
