@@ -1,7 +1,7 @@
 ---
 layout: advice
 title: SAML vs OAuth
-description: SAML and OAuth are two systems that make secure delegation of access more convenient and secure. Although they’re superficially similar, under the hood there are more differences than you might expect.
+description: SAML and OAuth are two systems that make secure user access more convenient and secure. Although they’re superficially similar, under the hood there are more differences than you might expect.
 image: advice/oauth-2-1/expert-advice-differences-between-oauth-2-and-oauth-2.1.png
 author: James Konik
 category: OAuth
