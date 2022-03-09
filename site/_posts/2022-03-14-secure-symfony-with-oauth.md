@@ -3,7 +3,7 @@ layout: blog-post
 title: Securing a Symfony application with OAuth
 description: How you can set up Symfony to use an OAuth server
 author: Dan Moore
-image: blogs/oggeh-fusionauth-gluu/oggeh-cloud-computing-switched-to-fusionauth-from-gluu.png
+image: blogs/symfony-oidc/securing-a-symfony-application-with-oauth-header-image.png
 category: blog
 tags: tutorial, client-php
 excerpt_separator: "<!--more-->"
