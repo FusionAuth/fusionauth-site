@@ -67,13 +67,13 @@ Let’s talk about what function each system performs.
 
 SAML is primarily for authentication, which means proving the user is who they say they are.
 
-There are [several common places](https://techterms.com/definition/authentication) where we see this in action. While entering a username and password is the most obvious example, unlocking your phone with a passcode or using a biometric scanner are also forms of authentication. With SAML authentication, the identity provider returns a SAML response confirming the user’s identity.
+There are [several common places](https://fusionauth.io/docs/v1/tech/core-concepts/authentication-authorization) where we see this in action. While entering a username and password is the most obvious example, unlocking your phone with a passcode or using a biometric scanner are also forms of authentication. With SAML authentication, the identity provider returns a SAML response confirming the user’s identity.
 
 OAuth, by contrast, is an authorization system. Here, the system determines what permissions the user gets.
 
 Though authentication and authorization are different, they’re often used together, with one system for each type of functionality. Apps often need to both authenticate users and then determine what they can do, though in some cases, such as logging into a streaming service or other subscription-based platform, authentication might simply grant them access to resources.
 
-OAuth is frequently used together with [OpenID Connect](https://openid.net/connect/), or OIDC. This allows you to authenticate users and get their profile information, such as [contact data or personal details](https://docs.wso2.com/display/AM220/Obtaining+User+Profile+Information+with+OpenID+Connect), while using OAuth for authorization.
+OAuth is frequently used together with [OpenID Connect](https://openid.net/connect/), or OIDC. This allows you to authenticate users and get their profile information, such as [contact data or personal details](https://fusionauth.io/docs/v1/tech/oauth/tokens#id-token), while using OAuth for authorization.
 
 You can experiment with OAuth on the [OAuth Tools](https://oauth.tools/) website, as in the screenshot below:
 
