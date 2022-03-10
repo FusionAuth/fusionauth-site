@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.35
-description: This release includes bug fixes, internal updates, and support for API calls in FusionAuth lambdas.
+description: This release includes bug fixes, internal updates, and support for HTTP requests in FusionAuth lambdas.
 author: Dan Moore
 image: blogs/release-1-35/product-update-fusionauth-1-35.png
 category: blog
@@ -9,7 +9,7 @@ tags: tbd topic-troubleshooting feature-advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.35 of FusionAuth. This version shipped Mar 9, 2022. 1.35 includes bug fixes, internal updates, and support for API calls in FusionAuth lambdas.
+We're excited to announce the release of version 1.35 of FusionAuth. This version shipped Mar 9, 2022. 1.35 includes bug fixes, internal updates, and support for HTTP requests in FusionAuth lambdas.
 
 <!--more-->
 
@@ -17,7 +17,7 @@ This release contained features, enhancements, and bug fixes. Please see the [re
 
 There are a few improvements that I wanted to call out specifically.
 
-## API calls within lambdas
+## HTTP requests in lambdas
 
 This is an [oft-requested feature](https://github.com/FusionAuth/fusionauth-issues/issues/267) which allows for complex integrations by allowing a lambda to retrieve data from external URLs.
 
@@ -32,19 +32,19 @@ In all of these scenarios, integration with additional data sources or logic may
 
 * Adding custom claims based on business logic specific to the user and application, encapsulated by an API.
 * Calling IdP endpoints to retrieve additional data, such as the Microsoft Graph API endpoints.
-* Augmenting a token with information from FusionAuth, such as the name of any groups of which a user is a member.
+* Calling a FusionAuth API. One example would be retrieving group names and adding them to a token.
 
 This is all possible with this release, because you can now make arbitrary HTTP requests within your lambda. This allows you to integrate any API or enterprise systems into various login flows.
 
-Here's example code, which fetches a random Marvel movie quote from an unauthenticated API:
+Here's example code, which retrieves a random Marvel movie quote from an unauthenticated API:
 
 ```javascript
 var response = fetch("https://randommarvelquoteapi.herokuapp.com/", {
-                                  method: "GET",
-                                  headers: {
-                                    "Content-Type": "application/json"
-                                  }
-                                });
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json"
+  }
+});
 ```
 
 The request includes headers, so you may access any private APIs that are secured by an API key. You can make multiple requests to the same or different servers from within one lambda. You can also use other HTTP methods such as `POST`, allowing you to modify external databases during a lambda execution.
@@ -76,11 +76,13 @@ This feature is available for users on Essentials or Enterprise edition. Learn m
 
 GraalJS is a FusionAuth [tech preview feature](/docs/v1/tech/core-concepts/roadmap#tech-preview-features) at the moment. This means that, while the FusionAuth team will always strive for backward compatibility, there may be some changes required as we receive feedback from users and customers. In addition, GraalJS doesn't currently have the [performance optimizations of Nashorn](https://github.com/FusionAuth/fusionauth-issues/issues/571#issuecomment-1061614065), so when using it, benchmark your system to ensure it meets your needs.
 
-The benefits of GraalJS include the ability to use `fetch` as mentioned above and long-term support for a more modern version of JavaScript. While there is no internal timeline to remove Nashorn, it is recommended that you migrate your lambdas to GraalJS once it is out of tech preview.
+The benefits of GraalJS include the ability to make HTTP requests as mentioned above and long-term support for a more modern version of JavaScript. While there is no internal timeline to remove Nashorn, it is recommended that you migrate your lambdas to GraalJS once it is out of tech preview.
 
-You can choose which engine to use on a per lambda basis:
+You can choose which engine to use on a per lambda basis, via the administrative user interface as below, or via the API:
 
 {% include _image.liquid src="/assets/img/blogs/release-1-35/lambda-engine-choice.png" alt="Choosing an engine type for your lambda." class="img-fluid" figure=true %}
+
+You can also switch between the two engines if needed. However, functionality such as HTTP requests will be limited to code running under GraalJS.
 
 ## The rest of it
 
