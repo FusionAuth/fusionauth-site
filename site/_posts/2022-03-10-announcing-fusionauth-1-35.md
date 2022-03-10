@@ -31,7 +31,7 @@ As a reminder, FusionAuth lambdas are snippets of JavaScript executed at various
 In all of these scenarios, integration with additional data sources or logic may be required or useful. This includes:
 
 * Adding custom claims based on business logic specific to the user and application, encapsulated by an API.
-* Calling IdP endpoints to retrieve data during a user reconcile, such as the Microsoft Graph API endpoints.
+* Calling IdP endpoints to retrieve additional data, such as the Microsoft Graph API endpoints.
 * Augmenting a token with information from FusionAuth, such as the name of any groups of which a user is a member.
 
 This is all possible with this release, because you can now make arbitrary HTTP requests within your lambda. This allows you to integrate any API or enterprise systems into various login flows.
@@ -49,7 +49,7 @@ var response = fetch("https://randommarvelquoteapi.herokuapp.com/", {
 
 The request includes headers, so you may access any private APIs that are secured by an API key. You can make multiple requests to the same or different servers from within one lambda. You can also use other HTTP methods such as `POST`, allowing you to modify external databases during a lambda execution.
 
-The `response` object includes the body, status and headers. You can check to see if the API call succeeded and perform logic based on teh response status. 
+The `response` object includes the body, status and headers. You can check to see if the API call succeeded and perform logic based on the response status. 
 
 Below we add the retrieved quote to the JWT claims, because who doesn't love a good movie quote?
 
@@ -72,7 +72,7 @@ This feature is available for users on Essentials or Enterprise edition. Learn m
 
 ## Internal upgrades
 
-1.35 and future versions of FusionAuth will ship with the GraalJS JavaScript execution engine. The only JavaScript execution engine for previous version is Nashorn, which has been [heading toward deprecation and removal from the JDK for a while](https://openjdk.java.net/jeps/335).
+1.35 and future versions of FusionAuth will ship with the GraalJS JavaScript execution engine. The sole JavaScript execution engine for previous versions was Nashorn, which has been [heading toward deprecation and removal from the JDK for a while](https://openjdk.java.net/jeps/335).
 
 GraalJS is a FusionAuth [tech preview feature](/docs/v1/tech/core-concepts/roadmap#tech-preview-features) at the moment. This means that, while the FusionAuth team will always strive for backward compatibility, there may be some changes required as we receive feedback from users and customers. In addition, GraalJS doesn't currently have the [performance optimizations of Nashorn](https://github.com/FusionAuth/fusionauth-issues/issues/571#issuecomment-1061614065), so when using it, benchmark your system to ensure it meets your needs.
 
