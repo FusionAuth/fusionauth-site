@@ -62,6 +62,25 @@ if (response.status === 200) {
 }
 ```
 
+Here's the payload of the resulting token:
+
+```json
+{
+  "aud": "85a03867-dccf-4882-adde-1a79aeec50df",
+  "exp": 1646935824,
+  "iat": 1646932224,
+  "iss": "acme.com",
+  "sub": "00000000-0000-0000-0000-000000000004",
+  "jti": "2f60f4e0-f686-4cfe-a5af-bdfb77068ad5",
+  "authenticationType": "PASSWORD",
+  "email": "dinesh@fusionauth.io",
+  "email_verified": true,
+  "applicationId": "85a03867-dccf-4882-adde-1a79aeec50df",
+  "roles": [],
+  "quote": "Oh will you shut up about that? God, 20 years you've been throwing that in my face. Like it's some great thing, not eating me. Normal people don't even think about eating someone else, much less, that person having to be grateful for it."
+}
+```
+
 You can manage these lambdas via the administrative user interface, as below, or [the Lambda API](/docs/v1/tech/apis/lambdas).
 
 {% include _image.liquid src="/assets/img/blogs/release-1-35/api-requests-lambda.png" alt="Lambda which makes API requests." class="img-fluid" figure=true %}
