@@ -5,7 +5,7 @@ description: This release includes bug fixes, internal updates, and support for 
 author: Dan Moore
 image: blogs/release-1-35/product-update-fusionauth-1-35.png
 category: blog
-tags: tbd topic-troubleshooting feature-advanced-threat-detection
+tags: topic-troubleshooting feature-advanced-threat-detection topic-lambda
 excerpt_separator: "<!--more-->"
 ---
 
