@@ -13,7 +13,7 @@ A FusionAuth lambda is a JavaScript function that can be used to augment or modi
 FusionAuth leverages lambdas to handle different events that occur inside it as well as customize tokens and messages that FusionAuth sends such as JWTs or SAML responses. A lambda may optionally be invoked when these events occur. Developers can write lambdas in the FusionAuth UI or can upload lambdas via the API.
 
 * <<Lambda Types>>
-* <<Example Lambda>>
+* <<Example Lambdas>>
 * <<JavaScript>>
 ** <<Console>>
 ** <<Engine>>
@@ -33,9 +33,14 @@ The following lambdas are currently supported:
 // Don't add a new lambda here. Add it to the site/_data/lambdas.yaml file and the list will be generated.
 {% include docs/_lambda_toc.liquid %}
 
-== Example Lambda
+== Example Lambdas
 
-Here is an example of a FusionAuth lambda that adds some additional fields to a JWT:
+Each lambda documentation page will have an example lambda implementation specific to that functionality.
+The signature of each lambda function differs for different types of lambdas.
+
+=== Adding Claims
+
+Here is an example of a FusionAuth lambda that adds additional claims to a JWT:
 
 [source,javascript]
 ----
@@ -45,11 +50,92 @@ function populate(jwt, user, registration) {
 }
 ----
 
-Each lambda documentation page will have an example lambda implementation.
+=== Making an HTTP Request
+
+include::docs/v1/tech/shared/_advanced-edition-blurb.adoc[]
+
+Here is an example of a FusionAuth lambda that adds additional claims to a JWT based on an HTTP request:
+
+[source,javascript]
+----
+function populate(jwt, user, registration) {
+  var response = fetch("https://api.example.com/api/status?"+user.id, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+  
+  if (response.status === 200) {
+    var jsonResponse = JSON.parse(response.body);
+    jwt.status = jsonResponse.status;
+  } else {
+    jwt.status = "basic";
+  }
+----
+
+==== Headers
+
+You can provider request header values in a number of different ways:
+
+[source,javascript,title="An anonymous object"]
+----
+headers: {
+  "Content-Type": "application/json"
+}
+----
+
+[source,javascript,title="A hash or map"]
+----
+headers: new Headers({
+   "Content-Type": "application/json"
+})
+----
+
+[source,javascript,title="An array"]
+----
+headers: new Headers([
+    ["Content-Type", "application/json"]
+])
+----
+
+==== The Response Object
+
+A response object will be returned. It will have the following fields:
+
+* `headers`: headers returned by the request.
+* `status`: an HTTP status code. This will be an integer.
+* `body`: the body of the response.
 
 == JavaScript
 
-FusionAuth is using the Nashorn JavaScript engine to compile and execute lambdas functions. The Nashorn engine supports ECMA script version 5.1.
+=== Engine
+
+As of FusionAuth 1.35, you have the choice of JavaScript engine:
+
+* Nashorn
+* GraalJS
+
+Versions previous to 1.35 only have access to the Nashorn engine.
+
+==== Nashorn
+
+Nashorn is built on top of the Java virtual machine and while Nashorn permits access to the Java API, for security reasons FusionAuth restricts access to all Java objects during a lambda invocation. Here is the documentation provided by Oracle for the Nashorn engine:
+
+https://docs.oracle.com/javase/8/docs/technotes/guides/scripting/nashorn/
+
+The Nashorn engine supports ECMA script version 5.1.
+
+==== GraalJS
+
+GraalJS is built on top of the Java virtual machine. For security reasons, FusionAuth restricts access to various GraalJS features during a lambda invocation.
+
+Here is documentation for the GraalJS engine:
+
+https://github.com/oracle/graaljs
+
+The GraalJS Engine https://www.graalvm.org/22.0/reference-manual/js/JavaScriptCompatibility/[supports EcmaScript 2021].
+However, there is an https://github.com/FusionAuth/fusionauth-issues/issues/1630[open bug which interferes with this support] in version 1.35.
 
 === Console
 
@@ -79,25 +165,6 @@ function populate(jwt, user, registration) {
 }
 ----
 
-=== Engine
-
-As of FusionAuth 1.35, you have the choice of JavaScript engine:
-
-* Nashorn
-* GraalJS
-
-==== Nashorn
-
-Nashorn is built on top of the Java virtual machine and while Nashorn permits access to the Java API, for security reasons FusionAuth restricts access to all Java objects during a lambda invocation. Here is the documentation provided by Oracle for the Nashorn engine:
-
-https://docs.oracle.com/javase/8/docs/technotes/guides/scripting/nashorn/
-
-==== GraalJS
-
-GraalJS is built on top of the Java virtual machine. For security reasons, FusionAuth restricts access to various GraalJS features during a lambda invocation. Here is documentation for the GraalJS engine:
-
-https://github.com/oracle/graaljs
-
 == Limitations
 
 If the Identity Provider linking strategy is set to `Link Anonymously`, no lambdas will be used by FusionAuth. More information about the link:/docs/v1/tech/identity-providers/#linking-strategies[Identity Provider linking strategies is available here].
@@ -124,6 +191,21 @@ function populate(jwt, user, registration) {
   console.info('jwt:' + object2String(jwt));
 ----
 
+There are no limits on execution time.
+
+=== HTTP Request Limitations
+
+When making HTTP requests, if you make an API call in an lambda to an endpoint that triggers the same lambda, it will call itself recursively. This does not end well.
+
+HTTP requests will time out after two seconds.
+
+The `fetch` method in a lambda does not implement the https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API[entire `fetch` API] as implemented in a browser.
+The first argument to `fetch` must always be a string URL.
+Only the following options are supported:
+
+* `method`, which defaults to `GET`
+* `headers`, which defaults to null
+* `body`, which must be a string
 
 == Future Engines
 
@@ -131,5 +213,5 @@ The Nashorn engine is being phased out of Java in favor of more robust and advan
 
 [NOTE.note]
 ====
-As of 1.35, FusionAuth supports the GraalJS engine. You can choose between either engine. Eventually Nashorn support will be deprecated and removed, but there is no timeline for that now.
+As of 1.35, FusionAuth supports the GraalJS engine. You can choose between either engine. Eventually Nashorn support will be deprecated and removed, but there is no timeline for that now. Please review the https://github.com/FusionAuth/fusionauth-issues/issues/1631[tracking issue for more details].
 ====
