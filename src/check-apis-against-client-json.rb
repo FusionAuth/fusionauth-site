@@ -195,6 +195,9 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
   nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method"]
 
+  # these are enums represented as strings in the API, but enums in java. We should still see them on the page
+  enums = ["lambda.type", "lambda.engineType"]
+
   if options[:verbose]
     puts "opening: "+fn
   end
@@ -274,7 +277,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
           missing_fields.append({original_examined_type: t, full_field_name: full_field_name, type: field_type})
         end
       end
-    elsif nested_attributes.include? full_field_name
+    elsif enums.include? full_field_name or nested_attributes.include? full_field_name
       if options[:verbose]
         puts "not traversing #{full_field_name}, but checking if it is in the content"
       end
