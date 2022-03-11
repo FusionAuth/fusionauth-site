@@ -57,6 +57,8 @@ var redirects = {
   '/docs/v1/tech/guides/migration': '/docs/v1/tech/migration-guide/general',
   '/docs/v1/tech/plugins/password-encryptors': '/docs/v1/tech/plugins/custom-password-hashing',
   '/docs/v1/tech/reference/password-encryptors': '/docs/v1/tech/reference/password-hashes',
+  '/docs/v1/tech/reactor': '/docs/v1/tech/core-concepts/licensing-features',
+  '/docs/v1/tech/reactor/': '/docs/v1/tech/core-concepts/licensing-features',
   '/docs/v1/tech/troubleshooting': '/docs/v1/tech/admin-guide/troubleshooting',
   '/docs/v1/tech/tutorials/gate-accounts-until-verified': '/docs/v1/tech/tutorials/gating/gate-accounts-until-user-email-verified',
   '/docs/v1/tech/tutorials/migrate-users': '/docs/v1/tech/migration-guide/tutorial',
