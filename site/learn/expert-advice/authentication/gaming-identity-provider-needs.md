@@ -3,7 +3,7 @@ layout: advice
 title: Identity Provider Needs for Gaming or Esports
 description: What are the specific features you need to look for in an identity provider if you’re in the gaming or esports industry?
 author: Deborah Ruck
-image: advice/mfa/expert-advice-multi-factor-authentication-for-developers-header-image.png
+image: advice/gaming-esports-identity-provider/gaming-auth-expert-advice.png
 category: Authentication
 date: 2022-03-15
 dateModified: 2022-03-15
