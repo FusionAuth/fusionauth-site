@@ -3,7 +3,7 @@ layout: blog-post
 title: We'll see you at GDC
 description: FusionAuth is going to the 2022 Game Developers Conference. Stop by and see us!
 author: Dan Moore
-image: blogs/fusionauth-aws-reinvent-2021/see-you-at-aws-reinvent-header-image.png
+image: blogs/game-developers-conference/gdc.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
@@ -35,7 +35,7 @@ If you want to meet up with the FusionAuth team at GDC, we're around and ready t
 Find us in a couple of places:
 
 * We have a booth in the Expo hall, which will be open Wednesday to Friday. We're between the Arcade Play and the Connect Lounge areas. If you are using the [online GDC map](https://www.expocad.com/host/fx/ubm/22gdc/exfx.html), our booth number is "P1857". Brave the madness and come say hi for a demo, to chat about the intricacies of the Authorization Code grant, or to sign up to win a Lego set, an Oculus Quest, or a PS5.
-* The FusionAuth founder and CTO, Brian Pontarelli is talking about [how to handle logins and registrations at scale](https://schedule.gdconf.com/session/growing-to-millions-of-users-how-to-handle-logins-and-registrations-at-scale-presented-by-fusionauth/886274). He'll cover how to prepare with load testing tips, different scaling techniques, and a dive into the typical causes of request latency. 
+* The FusionAuth founder and CTO, Brian Pontarelli is talking on Wednesday about [how to handle logins and registrations at scale](https://schedule.gdconf.com/session/growing-to-millions-of-users-how-to-handle-logins-and-registrations-at-scale-presented-by-fusionauth/886274). He'll cover how to prepare with load testing tips, different scaling techniques, and a dive into the typical causes of request latency. 
 * We'll be out and about as well. Send us a note via our [contact form](/contact) or tweet/DM [Brian](https://twitter.com/bpontarelli).
 
 Happy GDCing!
