@@ -58,9 +58,9 @@ function populate(jwt, user, registration) {
 
 include::docs/v1/tech/shared/_advanced-edition-blurb.adoc[]
 
-Here is an example of a FusionAuth lambda that adds additional claims to a JWT based on an HTTP request:
+Here is a FusionAuth lambda that adds additional claims to a JWT based on an HTTP request:
 
-[source,javascript]
+[source,javascript,title="A lambda which adds claims based on an external API."]
 ----
 function populate(jwt, user, registration) {
   var response = fetch("https://api.example.com/api/status?"+user.id, {
@@ -71,10 +71,35 @@ function populate(jwt, user, registration) {
   });
   
   if (response.status === 200) {
+    // assuming successful response looks like:
+    // {"status":"statusValue"}
     var jsonResponse = JSON.parse(response.body);
     jwt.status = jsonResponse.status;
   } else {
     jwt.status = "basic";
+  }
+}
+----
+
+You can also call FusionAuth APIs if you have a valid API key:
+
+[source,javascript,title="A lambda which adds claims based on a FusionAuth API."]
+----
+function populate(jwt, user, registration) {
+  var response = fetch("http://localhost:9011/api/group", {
+    method: "GET",
+    headers: {
+      "Authorization": "bf69486b-4733-4470-a592-f1bfce7af580"
+    }
+  });
+  
+  if (response.status === 200) {
+    // assuming successful response as defined here:
+    // https://fusionauth.io/docs/v1/tech/apis/groups#retrieve-a-group
+    var jsonResponse = JSON.parse(response.body);
+    jwt.groups = jsonResponse.groups;
+  } else {
+    jwt.groups = [];
   }
 }
 ----
