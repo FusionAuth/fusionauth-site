@@ -24,8 +24,6 @@ For the "others" group the basic structure of the `_oauth-idp-operations.adoc` i
   - _identity-provider-login-request-body.adoc
   - _identity-provider-login-response-body.adoc
     
-To remain backwards compatible the `_identity-provider-login-request-body.adoc` file looks at attributes coming from both groups.  The second group of "other" IdPs passes the IdP type in as {loginProvider} if this attribute is not defined then we assume it's included from one of the "oauth" IdPs and will pickup on the `idp_type` or other `ipd_` attributes to adjust the page for those IdPs.
-
 ### Available Since
 
 This is the only attribute `idp_since` that is set for every IdP.  Since it is used various places it is set before any includes and unset at the bottom of the `adoc` file.
