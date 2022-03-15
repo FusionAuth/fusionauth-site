@@ -1,5 +1,14 @@
 ==== Request Body
 
+// default to empty string
+:data_code_since: 
+ifeval::["{idp_display_name}" == "Google"]
+:data_code_since: pass:normal[[since]#Available since 1.28.0#]
+endif::[]
+ifeval::["{idp_display_name}" == "Facebook"]
+:data_code_since: pass:normal[[since]#Available since 1.28.0#]
+endif::[]
+
 [.api]
 [field]#applicationId# [type]#[UUID]# [required]#Required#::
 The Id of the Application the user is to be logged into. This application must have {idp_display_name} login enabled for this request to succeed.
@@ -17,38 +26,15 @@ The Apple `id_token` returned during Sign in with Apple.
 [field]#data.redirect_uri# [type]#[String]# [required]#Required#::
 The authorized redirect URI from your Sign in with Apple configuration. This value will be the publicly available URL of FusionAuth with the `/oauth2/callback` suffix.
 endif::[]
-ifeval::["{idp_display_name}" == "Epic Games"]
-
+ifeval::["{idp_token_or_code}" == "token or code"]
+include::_common-data-code-or-token.adoc[]
+endif::[]
+ifeval::["{idp_token_or_code}" == "token"]
+[field]#data.oauth# [type]#[String]# [required]#Required#::
+The Steam oauth token returned from their login API. This token will be sent to the Steam Token Details API as the `access_token` parameter.
 endif::[]
 ifeval::["{idp_display_name}" == "Facebook"]
-
-[field]#data.code# [type]#[String]# [optional]#Optional# [since]#Available since 1.28.0#::
-When using the authorization code grant, Facebook will have returned an authorization code. To complete the login request, provide the `code` and the `redirect_uri` parameters to allow FusionAuth to complete this grant by exchanging the authorization code for an `access_token`.
-+
-When using `code` you must also supply `redirect_uri`. If `code` is not provided, then `token` will be required.
-
-[field]#data.redirect_uri# [type]#[String]# [optional]#Optional# [since]#Available since 1.28.0#::
-The redirect URI that was provided to the Facebook Authorization endpoint. This value will be sent to the Token Info API as the `redirect_uri` parameter.
-
-[field]#data.token# [type]#[String]# [optional]#Optional#::
-When using a popup or other login mode where Facebook has already returned you an `accessToken` through a JavaScript callback or other mechanism, you will send this value in the `token` parameter. FusionAuth will use this value to request user details and then complete the login.
-+
-When using `token` you do not have to supply `redirect_uri`. If `token` is not provided, then `code` will be required.
-
-endif::[]
-ifeval::["{idp_type}" == "Google"]
-[field]#data.code# [type]#[String]# [optional]#Optional# [since]#Available since 1.28.0#::
-When using the authorization code grant, Google will have returned an authorization code. To complete the login request, provide the `code` and the `redirect_uri` parameters to allow FusionAuth to complete this grant by exchanging the authorization code for an `access_token`.
-+
-When using `code` you must also supply `redirect_uri`. If `code` is not provided, then `token` will be required.
-
-[field]#data.redirect_uri# [type]#[String]# [optional]#Optional# [since]#Available since 1.28.0#::
-The redirect URI that was provided to the Google Authorization endpoint. This value will be sent to the Token Info API as the `redirect_uri` parameter.
-
-[field]#data.token# [type]#[String]# [optional]#Optional#::
-When using a popup or other login mode where Google has already returned you an `id_token` through a JavaScript callback or other mechanism, you will send this value in the `token` parameter. FusionAuth will use this value to request user details and then complete the login.
-+
-When using `token` you do not have to supply `redirect_uri`. If `token` is not provided, then `code` will be required.
+include::_common-data-code-or-token.adoc[]
 endif::[]
 ifeval::["{idp_display_name}" == "HYPR"]
 [field]#data.code# [type]#[String]# [required]#Required#::
@@ -94,17 +80,6 @@ The authorization code, this is the `code` parameter that was returned on the Au
 
 [field]#data.redirect_uri# [type]#[String]# [required]#Required#::
 The redirect URI that was provided to the OpenID Connect Authorization endpoint. This value will be sent to the Token endpoint as the `redirect_uri` parameter.
-endif::[]
-ifeval::["{idp_token_or_code}" == "code"]
-[field]#data.code# [type]#[String]# [required]#Required#::
-The authorization code, this is the `code` parameter that was returned on the Authorization redirect URI. This code will be sent to the Token endpoint as the `code` parameter. If `code` is not provided, then the `token` will be required.
-
-[field]#data.redirect_uri# [type]#[String]# [required]#Required#::
-The redirect URI that was provided to the {idp_display_name} Authorization endpoint. This value will be sent to the Token endpoint as the `redirect_uri` parameter.
-endif::[]
-ifeval::["{idp_token_or_code}" == "token"]
-[field]#data.oauth# [type]#[String]# [required]#Required#::
-The Steam oauth token returned from their login API. This token will be sent to the Steam Token Details API as the `access_token` parameter.
 endif::[]
 
 ifeval::["{idp_display_name}" == "External JWT"]
@@ -177,6 +152,7 @@ A refresh token from the identity provider.
 
 endif::[]
 
+// this handles setting up the JSON display
 ifeval::["{idp_display_name}" == "Apple"]
 :idp_request: apple
 endif::[]
@@ -215,3 +191,4 @@ endif::[]
 include::_identity-provider-login-request-example.adoc[]
 :show_code_and_token_examples!:
 :idp_request!:
+:data_code_since!:
