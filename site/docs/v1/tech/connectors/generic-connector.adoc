@@ -14,9 +14,9 @@ description: Connect to an arbitrary user data source over HTTP
 ** <<Response>>
 ** <<Using the Generic Connector as the System of Record>>
 * <<Security>>
+* <<Performance Considerations>>
 
 Generic Connectors allow you to authenticate users against or migrate them from any user datasource accessible over HTTP or TLS.
-
 
 == Configuration
 
@@ -35,10 +35,10 @@ A unique name to identify the Connector. This name is for display purposes only 
 The fully qualified URL of the API endpoint. The connector will send an HTTP POST request to this URL to authenticate the user. The format and status code returned will be identical to the link:/docs/v1/tech/apis/login[Login API].
 
 [field]#Connect timeout# [required]#Required# [default]#default is `1000`#::
-The connect timeout in milliseconds used when making the POST request.
+The connect timeout in milliseconds, used when making the POST request.
 
 [field]#Read timeout# [required]#Required# [default]#default is `2000`#::
-The read timeout in milliseconds used when making the POST request.
+The read timeout in milliseconds, used when making the POST request.
 
 [field]#Debug enabled# [optional]#Optional# [default]#default is `false`#::
 Enable debug to create an event log to assist you in debugging integration errors.
@@ -75,7 +75,7 @@ image::connectors/generic-connector-header.png[The Generic Connector headers sec
 Name::
 The name of the header to add to the HTTP request when authenticating.
 Value::
-The header value to add to the HTTP request when authentiationg.
+The header value to add to the HTTP request when authenticating.
 
 
 == Using the Generic Connector
@@ -103,6 +103,7 @@ Your application will then look up the user and verify the correct credentials w
 Your API should return a valid FusionAuth `user` object with status code 200 if the user is found and authenticated. Note that while you may return any of the attributes of the user object, including nested objects such as application registrations with roles, only the required ones must be returned.
 
 If the user cannot be authenticated, you should return the appropriate status code and response data as documented by the link:/docs/v1/tech/apis/login[Login API].
+For instance, a 404 if the user authentication fails or the user is not found.
 
 [source,json]
 .Example Successful Response JSON
@@ -127,4 +128,36 @@ include::docs/v1/tech/shared/_securing_http_requests.adoc[]
 :request_entity!:
 :request_entity_lc!:
 
+== Performance Considerations
+
+Enabled Connectors are in the critical path the login experience and therefore should have low latency.
+BHere are some things to do to increase performance of your Generic Connector.
+
+=== Network Connection
+
+There are three phases of the Connector network connection, from FusionAuth connector to the API endpoint:
+
+* Initial connection to the API endpoint
+* First byte read from the connection
+* Response complete and returned from the API endpoint
+
+The first two have configurable timeouts, the [field]#Connect timeout# and the [field]#Read timeout# fields.
+For [field]#Connect timeout#, if the timeout expires before the connection can be established, the login fails.
+For [field]#Read timeout#, if the timeout expires before there is data available to be read, the login fails.
+The default values for these timeouts are typically adequate, but you may want to tune them if there is resource contention on your server.
+
+However, neither timeout prevents the HTTP request from taking as long as it needs to in order to respond once the API endpoint has begun to write bytes to the output stream. 
+If a Connector is not correctly terminating the HTTP response or taking an excessive time to process the login request, then this can cause issues under load.
+
+You can avoid issues by having your API endpoint write login data and completely close the connection as quickly as possible.
+You can load test your Connector using FusionAuth's load testing framework or any other HTTP based load testing framework.
+Additionally, ensure the API endpoint is sized correctly and not starved of resources.
+If the user cannot be authenticated, you should return the appropriate status code and data as quickly as possible, as documented by the link:/docs/v1/tech/apis/login[Login API].
+Using the correct status code for each response ensures that FusionAuth handles the response appropriately.
+
+=== Disable Logging
+
+Turning on the Connector's [field]#Debug Enabled# field during development is useful for troubleshooting.
+However, once you deploy a Connector to production, enable debugging only when troubleshooting.
+Debugging writes to the [breadcrumb]#System -> Event Log# and this causes additional load on the database.
 
