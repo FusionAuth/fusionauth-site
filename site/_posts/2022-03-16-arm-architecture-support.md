@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Inversoft Adds Andy Grolnick and Kendall Miller to Its Board of Directors
+title: FusionAuth Supports ARM Architecture; Makes Authorization Simple for Developers Building on ARM Architecture
 description: Veteran technologists bring expertise scaling innovative, security-focused businesses while creating organic growth.
 author: David Polstra
 image: blogs/arm-architecture-support/fusionauth-supports-arm-architecture.png
@@ -9,19 +9,20 @@ tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 
-Inversoft, Inc., the parent company of software products [FusionAuth](https://fusionauth.io) and [CleanSpeak](https://cleanspeak.com), today announced the addition of Andy Grolnick and Kendall Miller to its board of directors. Mr. Grolnick and Mr. Miller will join other board members to help steer Inversoft toward creating organic growth for both FusionAuth and CleanSpeak.
+[FusionAuth](/), the authentication and authorization platform built for developers, today announced its support for ARM-based architecture. Since its inception, FusionAuth has committed to running anywhere, and supporting the ARM architecture further allows developers to run FusionAuth where and how they want. By working with ARM processors, the company is able to support additional use cases such as IoT and high-performance cloud platforms that are built on ARM-based architectures.
+
 
 <!--more-->
 
-Mr. Grolnick is the former CEO and chairman of LogRhythm. Under his leadership, the company grew to become one of the leading cybersecurity software companies in the market and a nine-time Gartner Magic Quadrant leader. He brings more than 30 years of experience building, scaling and leading technology businesses. He currently serves as the CEO of Graylog, a leading open source log management software company.
 
-Mr. Miller is currently the president of Fairwinds, the leading provider of Kubernetes governance and security software. He has significant operational experience and has previously worked with disruptive technologies, including a mobile-based social media company well before the advent of Twitter. His experience with both security and microservices technologies are an asset in guiding Inversoft through its next phase of growth.
+“The engineers we built FusionAuth for are the same ones that are building the next generation of technology,” said Daniel DeGroff, co-CTO at FusionAuth. “Because we are developers ourselves, we’ve seen the shift toward ARM-based infrastructure and have prepared appropriately. We will always prioritize resources to ensure developers have what they need to make auth simple, secure and deployable anywhere.”  
 
-"Andy and Kendall are tremendous additions to Inversoft’s board of directors. Both have security-focused expertise and have proven experience in scaling businesses through rapid growth," said Brian Pontarelli, founder and Chairman of Inversoft’s Board of Directors. "Inversoft recognized substantial growth over the past 12 months and we are eager for our new board members to help steer our company to further success."
+Developers of all kinds -from hobbyists to professionals building technology in enterprise cloud or desktop environments - are moving to ARM to take advantage of the architecture's cost savings and performance gains. FusionAuth is committed to continually identifying ways to make developers’ lives easier and let them build on the technology of their choice.
 
-### About Inversoft
+### About FusionAuth
 
-Inversoft, Inc is the parent company of the FusionAuth and CleanSpeak software products. FusionAuth is the authentication and authorization platform built for developers, by developers. It solves the problem of building essential user security without adding risk or distracting from the primary application. CleanSpeak is the content filtering and moderation platform protecting online communities from offensive and inappropriate content. Self-hosted or cloud based, these products serve customers worldwide. Inversoft is based in Denver, CO. For more information see [fusionauth.io](https://fusionauth.io) and [cleanspeak.com](https://cleanspeak.com). 
+FusionAuth is the authentication and authorization platform built for developers, by developers. It solves the problem of building essential user security without adding risk or distracting from the primary application. For developers and technical leaders creating products for external users, FusionAuth puts them in the driver’s seat, with control, flexibility and developer ergonomics. FusionAuth tames the risk and complexity that comes with typical identity systems. With self-hosted or cloud software, extensive documentation, free options, fast deployment and a no-hassle process, it eliminates the business hurdles that make it hard for developers to meet their authentication and authorization requirements. Learn more at [fusionauth.io](/). 
+
 
 ### Media Contact
 
