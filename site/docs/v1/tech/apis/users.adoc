@@ -18,6 +18,7 @@ This page contains all of the APIs for managing users.
 
 === Importing Users
 * <<Import Users>>
+* <<Password Hashes>>
 * <<Import Refresh Tokens>>
 
 === User Search
@@ -483,6 +484,37 @@ Only a status code is available on the Import API, no JSON body will be returned
 include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 :webhook_event!:
 
+== Password Hashes
+
+Password hashes can be imported into FusionAuth. This allows users to transparently use their old passwords while at no time exposing the plaintext password. This section contains details about importing specific password hashes.
+
+You can also learn more about hashes in the link:/docs/v1/tech/reference/password-hashes[password hashing reference], and you can link:/docs/v1/tech/plugins/custom-password-hashing[implement your own custom hash] as well.
+
+=== Bcrypt
+
+When importing a bcrypt hash, you may have a value such as `$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`. This single string represents the bcrypt version, factor, salt and hash.
+
+The number before the final `$` is the factor, the 22 characters after the final `$` is the salt and the last 31 characters are the hash.
+
+For the above bcrypt hash, `10` is the factor and should be placed in the [field]#factor# field.
+`N9qo8uLOickgx2ZMRZoMye` is the salt and should be placed in the [field]#salt# field.
+`IjZAgcfl7p92ldGxad68LJZdL17lhWy` is the hash value and should be placed in the [field]#password# field.
+
+=== MD5
+
+When importing an MD5 password hash, you may not have a salt. If this is the case, use the empty string, `''`, as the salt. You may still use the salted MD5 plugin provided by FusionAuth.
+
+MD5 is commonly stored in hexadecimal format, such as `25d55ad283aa400af464c76d713c07ad`. FusionAuth requires imported passwords to be stored in base64. Convert any hexadecimal values to base64 before importing, or the import will not work.
+
+Here is an example ruby script to convert hexadecimal values to base64 encoded:
+
+[source,ruby]
+.Convert a Hexadecimal Password Hash Value to Base64
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scripts/master/import-helpers/convert-md5-hexadecimal-to-base64.rb[]
+----
+
+
 == Import Refresh Tokens
 
 [NOTE.since]
@@ -519,7 +551,6 @@ The response does not contain a body, the HTTP status code will indicate the res
 include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
 :never_search_error!:
 :never_missing!:
-
 
 == Search for Users
 
