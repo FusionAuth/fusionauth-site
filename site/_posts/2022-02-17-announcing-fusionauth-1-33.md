@@ -5,7 +5,7 @@ description: This release includes updates in Docker architecture support, impro
 author: Dan Moore
 image: blogs/release-1-33/product-update-fusionauth-1-33.png
 category: blog
-tags: tbd topic-troubleshooting feature-advanced-threat-detection
+tags: topic-troubleshooting feature-advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 
