@@ -287,7 +287,7 @@ The theme pages are kinda complex because they a data file which is iterated ove
 ## Expert Advice
 
 The places to put files for the Expert Advice sections differ from the regular blog.
-Blog:	`/fusionauth-site/site/learn/expert-advice/security` 
+Content:	`site/learn/expert-advice/security` # or other top level category 
 Images: `site/assets/img/advice/<subdir>`
 Stamps: `site/assets/img/stamps`
 UML: `site/_diagrams/learn/expert-advice/<subdir>`
