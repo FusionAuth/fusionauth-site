@@ -103,6 +103,7 @@ For lists:
 - multi-factor authentication
 - multi-tenancy/multi-tenant
 - two-factor
+- ECMAScript
 
 ## Git
 
