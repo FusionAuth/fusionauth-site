@@ -30,6 +30,8 @@ end.parse!
 
 file = File.new(options[:file])
 
+seen_filenames = {}
+
 file.readlines.each do |line|
   html_dir = options[:directory].to_s.gsub(/.*assets/,'/assets')
   if line.match(/imgur/)
@@ -37,6 +39,11 @@ file.readlines.each do |line|
     ob = line.split(/]/)
     desc = ob[0].gsub('!','').gsub('[','').tr('^A-Za-z0-9 ','')
     filename = desc.downcase.gsub(' ','-').tr('^a-z0-9-','') + ".png"
+    if seen_filenames[filename]
+      filename = filename.gsub(".png","-"+rand(100).to_s+".png")
+    else
+      seen_filenames[filename] = true
+    end
     #puts filename
 
     url = ob[1].gsub('(','').gsub(')','').strip
