@@ -46,6 +46,7 @@ var indexPages = {
   '/learn/expert-advice/tokens/': true
 };
 var redirects = {
+  '/blog': '/blog/',
   '/docs': '/docs/',
   '/docs/v1/tech/apis/consent': '/docs/v1/tech/apis/consents',
   '/docs/v1/tech/common-errors': '/docs/v1/tech/admin-guide/troubleshooting',
