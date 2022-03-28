@@ -5,8 +5,8 @@ description: SAML and OAuth are two systems that make secure user access more co
 image: advice/saml-vs-oauth/saml-vs-oauth.png
 author: James Konik
 category: OAuth
-date: 2022-03-09
-dateModified: 2022-03-09
+date: 2022-03-28
+dateModified: 2022-03-28
 ---
 
 Login is the first major step in your relationship with your users. Making it go smoothly reflects well on your applications. It also needs to be secure, but the requirements for identifying users safely are complex.
