@@ -3,7 +3,7 @@ layout: blog-post
 title: "Using Single Sign-on with Discord and FusionAuth"
 description: By configuring an integration between Discord and FusionAuth, you can use FusionAuth in your applications to allow users to log in with their Discord credentials.
 author: Cameron Pavey
-image: blogs/single-sign-on-drupal/how-to-set-up-single-sign-on-sso-between-fusionauth-and-drupal.png
+image: blogs/single-sign-on-discord/using-single-sign-on-with-discord-and-fusionauth.png
 category: blog
 tags: tutorial tutorial-integration 
 excerpt_separator: "<!--more-->"
