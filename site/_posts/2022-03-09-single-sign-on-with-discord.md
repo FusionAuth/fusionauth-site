@@ -49,6 +49,8 @@ Once you’ve created your administrator account, you need to create a new appli
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/application-details.png" alt="Application details." class="img-fluid" figure=true %}
 
+TODO stopped here
+
 You can leave the “Id” field blank, and it will generate a new universally unique identifier (UUID) for you. Give the application an appropriate name, and then move to the OAuth tab. For this tutorial, change the Client Authentication field to “Not required when using PKCE,” and the PKCE field to “Not required when using client authentication.”
 
 Add an Authorized Redirect URL with a value of `http://localhost:9000/oauth-callback`, and set the logout URL as `http://localhost:8080`. These two URLs will resolve to the sample application, which you will configure shortly. Save your changes, and note the Id of the newly created application. Select the view icon to go back into your FusionAuth Application, and make a note of the Client Id and Secret. Be sure to label them so you don’t get them mixed up with the Discord Client Id and Secret.
