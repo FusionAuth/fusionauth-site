@@ -24,7 +24,7 @@ But for users, MFA is tedious. You have to set it up. You have to keep track of 
  
 ## The solution
 
-The FusionAuth R&D team, with decades of experience in security and software development, saw a clear market opportunity to augment [traditional MFA methods](/learn/expert-advice/authentication/multi-factor-authentication) such as time based one-time password (TOTP), facial recognition, and sending a code via SMS with a new, innovative MFA method.
+The FusionAuth R&D team, with decades of experience in security and software development, saw a clear market opportunity to augment [traditional MFA methods](/learn/expert-advice/authentication/multi-factor-authentication) such as time based one-time password (TOTP), facial recognition, or sending a code via SMS with a new, innovative MFA method.
 
 "The feature is remarkably simple," said CTO Daniel DeGroff. "Rather than send you a code that requires you to keep track of a device or rely on iOS or Android to implement FIDO2 correctly, BioTech&trade; utilizes any bodily fluid to authenticate a user."
 
@@ -38,13 +38,15 @@ Admins can use the API to configure this setting as well, of course.
 
 During the login process, users are prompted to provide a sample of any bodily fluid. They simply drip it in front of the camera and the soon-to-be patented BioTech&trade; algorithm analyzes it and authenticates the user.
 
-Founder Brian Pontarelli continued: "After completing the initial prototype we looked at each other in disbelief. It doesn't get any more satisfying! Everyone's cursed at their computer, now they can spit at it too."
+Founder Brian Pontarelli continued: "After completing the initial prototype we looked at each other in disbelief. It doesn't get any more satisfying! Everyone has cursed at their computer, now they can spit at it too."
 
 As part of the R&D process, extensive user experience testing validated the research. In one trial, FusionAuth tested the speed and accuracy of two different MFA methods. One was the typical TOTP using Google Authenticator (boring) and the other used BioTech&trade; MFA.
 
 The user was quick to choose the BioTech&trade; option, stating "I mean, all it took was a few tears of joy! Now I won't have to have my phone or YubiKey around to log into my bank account. It's great!"
 
 With a thoughtful look on her face, she added "What other bodily fluids are supported?"
+
+_(FusionAuth is not responsible for any damage done to your keyboard or mobile phone as the result of using BioTech&trade;.)_
 
 ## Addressing some security "experts"
 
