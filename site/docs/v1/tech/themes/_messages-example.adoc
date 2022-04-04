@@ -27,7 +27,7 @@ The behavior differs between `theme.message` and `theme.optionalMessage` only wh
 
 When there is no suitable key found and `theme.message` is used, an exception is thrown and the template fails to completely render. When there is no suitable key found and `theme.optionalMessage` is used, the key value is returned: `optional-message` in the example above.
 
-Here's an example of a template that will render for a user with a German locale but fail for a user with an English locale:
+Here's an example of a template that will render for a user with a German locale but fail for a user with an English locale, because `message` fails when there is no key found:
 
 [source,html]
 .Template Which Will Fail For Users With an English Locale
@@ -35,5 +35,25 @@ Here's an example of a template that will render for a user with a German locale
 <p>${theme.message('optional-greeting')}</p>
 ----
 
-There's an https://github.com/FusionAuth/fusionauth-issues/issues/1661[open issue about the behavior of `optionalMessage`].
+Here's a Freemarker function which returns an empty string when there is no value found for an optional message:
 
+[source,freemarker]
+.Freemarker Function to Return the Empty String When No Value is Found
+----
+[#function getOptionalMessage key=""]
+  [#if "${theme.optionalMessage(key)}" == "${key}"]
+    [#return "" /]
+  [/#if]
+  [#return theme.optionalMessage(key) /]
+[/#function]
+----
+
+If you add this to your `_helpers.ftl` file, you can call it like this:
+
+[source,freemarker]
+.Calling getOptionalMessage
+----
+[@helpers.getOptionalMessage key="optional-greeting" /]
+----
+
+There's an https://github.com/FusionAuth/fusionauth-issues/issues/1661[open issue on changing the behavior of `optionalMessage`].
