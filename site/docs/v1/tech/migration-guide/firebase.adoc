@@ -3,34 +3,31 @@
 === Overview
 
 This document will help you migrate off of Firebase Authentication. If
-you are looking to compare FusionAuth and Firebase Authentication, this
-document may help.
+you are looking to compare FusionAuth and Firebase Authentication, link:/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison[this
+document may help].
 
-This guide assumes you have installed FusionAuth. If you have not,
-please view our installation guides and install FusionAuth before you
-begin. For more general migration information, please view the
-FusionAuth migration guide.
+This guide assumes you have installed FusionAuth. If you have not, please link:/docs/v1/tech/installation-guide/[view our installation guides] and install FusionAuth before you begin. For more general migration information, please view the link:/docs/v1/tech/migration-guide/general[FusionAuth migration guide].
 
-* Planning Considerations
-** Obtaining User Data
-** Mapping User Attributes
-** Social Logins
-** Other Entities
-** Universal Login
-* Exporting Users
-** Add the Extension
-** Run the Extension
-** Download the File
-* Exporting Password Hashes
-* Importing Users
-** Set Up FusionAuth
-** Get the Script
-** Install Needed Gems
-** Use the Script
-** Verify the Import
-** The Final Destination of Imported Users
-* What to Do Next
-* Additional Support
+* <<Planning Considerations>>
+** <<Obtaining User Data>>
+** <<Mapping User Attributes>>
+** <<Social Logins>>
+** <<Other Entities>>
+** <<Universal Login>>
+* <<Exporting Users>>
+** <<Add the Extension>>
+** <<Run the Extension>>
+** <<Download the File>>
+* <<Exporting Password Hashes>>
+* <<Importing Users>>
+** <<Set Up FusionAuth>>
+** <<Get the Script>>
+** <<Install Needed Gems>>
+** <<Use the Script>>
+** <<Verify the Import>>
+** <<The Final Destination of Imported Users>>
+* <<What to Do Next>>
+* <<Additional Support>>
 
 There are a number of different ways applications can be integrated with
 Firebase, and it would be difficult to cover them all. This guide
@@ -59,107 +56,21 @@ further documented below.
 
 `![Exporting Firebase Users](export-users.mov)`
 
-==== Mapping User Attributes
+=== Mapping User Attributes
 
-The attributes of the User object in FusionAuth are well documented.
+include::docs/v1/tech/migration-guide/_mapping-user-attributes.adoc[]
 
-If there is an attribute in your Firebase user which cannot be directly
-mapped to a FusionAuth attribute, you can place it in the `user.data`
-field. This field can store arbitrary JSON values and will be indexed
-and searchable.
+=== Social Logins
 
-==== Social Logins
+include::docs/v1/tech/migration-guide/_social-login-note.adoc[]
 
-Firebase also provides integrations with other social login providers
-such as Twitter, Google or Facebook. Review the supported FusionAuth
-Identity Providers to ensure your social providers are supported.
+include::docs/v1/tech/migration-guide/_social-login-migration.adoc[]
 
-If not supported explicitly, a provider may work with an OIDC or SAML
-connection. Otherwise, please open a feature request.
+=== Other Entities
 
-When migrating social logins, you may need to modify the switches of the
-Firebase import script. See Use the Script for more.
-
-Migrating users with social logins such as Apple or Facebook requires
-that you have an existing user Id for that provider. What this unique
-user Id looks like depends on the particular social identity provider.
-The unique Id may be an email address, an integer, UUID, or a random
-string.
-
-Configure the appropriate FusionAuth Identity Provider with the same
-values (`client_id`, etc) as the original user management system you are
-migrating away from.
-
-Import users with the Import API, assigning each user with a social
-login a random password such as a UUID.
-
-Your next step depends on whether the social login provider’s unique
-identifier is available as part of your migration data. If you have the
-social login provider’s unique identifier, for each user, use the Link
-API to create a link with the appropriate User Id, Identity Provider Id
-and Identity Provider User Id.
-
-* The User Id is the Id of the recently created FusionAuth User.
-
-* The Identity Provider Id is found on the corresponding Identity Provider
-API documentation. Look for `identityProvider.id`.
-
-* The Identity Provider User Id is the existing social provider user
-identifier exported or otherwise extracted from the original system.
-
-You do not need to migrate the social network token, which may or may
-not be accessible. During the first login of a newly migrated user,
-FusionAuth finds the unique user in the social login provider based on
-the migrated Identity Provider User Id, and completes the login. During
-this process, FusionAuth stores a token on the Link, if the social
-provider returns one. Depending on the configuration of the social
-provider, users may see a prompt asking if they want to allow FusionAuth
-to have access to user data such as email address.
-
-IdP Linking Strategies are available since version 1.28.0. Before that
-version, users were linked on email.
-
-If you do not have the social login provider’s identifier, you need to
-decide if you want to transparently link the two accounts, which is
-easier for the end user, or if you want to ask the user to manually link
-the accounts, which is more accurate, but may be confusing.
-
-To transparently link the accounts, choose a linking strategy of `Link On
-Email` or `Link On Username`, which will create the user if they don’t
-exist. However, if the user has an email address at their social
-provider which differs from the email address that was used to sign up
-for your application and which you imported to FusionAuth, then two
-accounts will be created.
-
-For example, if the user has a Google account `richard@gmail.com`, but
-signed up for your application with `richard@fusionauth.io`, then if you
-use the `Link On Email` strategy, two different accounts will be created,
-since FusionAuth is trying to match on email address and they don’t. The
-same holds true for usernames with the `Link on Username` strategy.
-
-To prompt the user to link the accounts, choose a linking strategy of
-`Pending`, which will prompt the end user to sign into FusionAuth after
-they sign into the social provider, authoritatively linking the two
-accounts.
-
-Here’s more information about IdP Linking Strategies.
-
-==== Other Entities
-
-There are often other important entities, such as connections or roles,
-that need to be migrated. There are usually fewer of these, so an
-automated migration may not make sense, but plan to move this
-configuration somehow.
-
-Be aware that functionality may not be the same between Firebase and
-FusionAuth. This is different from user data; as long as you can somehow
-migrate a login identifier (a username or email) and a password hash, a
-user will be authenticated and successfully migrated. You can download
-FusionAuth before you begin a migration and build a proof of concept to
-learn more about the differences.
-
-A partial list of what may need to be migrated for your application to
-work properly includes the following:
+:other_migrated_entities: connections or roles
+include::docs/v1/tech/migration-guide/_other-entities-intro.adoc[]
+:other_migrated_entities!:
 
 * In Firebase[Check], Connections are a source of data for users.
 FusionAuth calls these Identity Providers.
@@ -178,21 +89,16 @@ has Roles and they are defined on an Application by Application basis.
 * Refresh tokens allow JWTs to be refreshed without a user logging in.
 These can be migrated using the Import Refresh Tokens API.
 
-In FusionAuth, users are explicitly mapped to applications with a
-Registration.
+[NOTE]
+====
+In FusionAuth, users are explicitly mapped to applications with a link:/docs/v1/tech/core-concepts/registrations[Registration].
 
-Auth0, in contrast, gives users access to all Auth0 applications in a
-tenant by default.
+Auth0, in contrast, gives users access to all Auth0 applications in a tenant by default.
+====
 
-===== Identifiers
+==== Identifiers 
 
-When creating an object with the FusionAuth API, you can specify the Id.
-It must be a UUID.
-
-This works for users, applications, and tenants, among others.
-
-If you have external dependencies on an Id stored in Firebase, port the
-same Id over to FusionAuth.
+include::docs/v1/tech/migration-guide/_identifiers.adoc[]
 
 ==== Universal Login
 
@@ -209,14 +115,11 @@ data from Firebase.
 
 === Exporting Users
 
-To export users with the user interface, log in and navigate to your
-dashboard. You’ll perform the following steps:
+To export users with the user interface, log in and navigate to your dashboard. You’ll perform the following steps:
 
-[arabic]
-. Install the Firebase CLI
-. Retrieve the Project ID of the Firebase application you want to export
-the users from
-. Download the exported file in your chosen format
+1. Install the Firebase CLI
+2. Retrieve the Project ID of the Firebase application you want to export the users from
+3. Download the exported file in your chosen format
 
 ==== Install the Firebase CLI
 
@@ -298,92 +201,29 @@ Sample Firebase user data export download (replace)
 
 Next up, import the user data. Here are the steps we need to take.
 
-[arabic]
-. Set Up FusionAuth
-. Add an scrypt hashing plugin
-. Get the Script
-. Install Needed Gems
-. Use the Script
-. Verify the Import
-. The Final Destination of Imported Users
+1. Set Up FusionAuth
+2. Add an scrypt hashing plugin
+3. Get the Script
+4. Install Needed Gems
+5. Use the Script
+6. Verify the Import
+7. The Final Destination of Imported Users
 
-==== Set Up FusionAuth
+=== Set Up FusionAuth
 
-You need to set up FusionAuth so migrated user data can be stored. As
-mentioned above, this guide assumes you have FusionAuth installed.
+include::docs/v1/tech/migration-guide/_set-up-fusionauth.adoc[]
 
-If you don’t,
-https://fusionauth.io/docs/v1/tech/installation-guide/[view our
-installation guides] and install it before proceeding further.
+==== Create a Test Tenant
 
-===== Create a Test Tenant
+include::docs/v1/tech/migration-guide/_create-test-tenant.adoc[]
 
-It is best to create a separate tenant for migration testing. Tenants
-logically isolate configuration settings and users. If a migration goes
-awry or you need to redo it after tweaking settings, you can delete the
-test tenant and start with a clean system. To add a tenant, navigate to
-*Tenants* and choose the green plus sign.
+==== Create a Test Application
 
-image::migration-guide/{migration_source_dir}/list-of-tenants-add-highlighted.png[Create a new Tenant]
+include::docs/v1/tech/migration-guide/_create-test-application.adoc[]
 
-Give it a descriptive name like `Firebase import test`. You shouldn’t
-need to modify any of the other configuration options to test importing
-users.
+==== Add an API Key
 
-Save the tenant.
-
-image::migration-guide/{migration_source_dir}/add-tenant.png[The tenant creation screen]
-
-Record the Id of the tenant, which will be a UUID. It will look
-something like `a7a842b2-7318-4259-8965-41b0ce39e3b2`. You’ll use this
-later.
-
-image::migration-guide/{migration_source_dir}/tenant-list.png[The tenant list]
-
-===== Create a Test Application
-
-Applications are anything a user can log in to. In FusionAuth there’s no
-differentiation between web applications, SaaS applications, APIs and
-native apps. To add an application, navigate to *Applications* and
-choose the green plus sign. Give the application a descriptive name like
-`Firebase application`.
-
-Select your new tenant, created above, in the dropdown for the `Tenant`
-field.
-
-Navigate to the *OAuth* tab and add an entry to
-`Authorized redirect URLs`. Use a dummy value such as
-`https://fusionauth.io`. Later, you’ll need to update this to be a valid
-redirect URL that can take the authorization code and exchange it for a
-token. Learn more about this in the
-https://fusionauth.io/docs/v1/tech/oauth/[FusionAuth OAuth
-documentation].
-
-You shouldn’t need to modify any of the other configuration options to
-test importing users. Save the application.
-
-image::migration-guide/{migration_source_dir}/add-application.png[The application creation screen.]
-
-Next, view the application by clicking the green magnifying glass and
-note the `OAuth IdP login URL`. You’ll be using it to test that users
-can log in.
-
-image::migration-guide/{migration_source_dir}/app-login-url.png[Finding the login URL.]
-
-===== Add an API Key
-
-The next step is to create an API key. This will be used by the import
-script. To do so, navigate to *Settings > API Keys* in the
-administrative user interface.
-
-image::migration-guide/{migration_source_dir}/add-api-key.png[Adding an API key]
-
-This key needs to have the permission to run a bulk import of users. In
-the spirit of the principle of least privilege, give it the permission
-to `POST` to the `/api/user/import endpoint`. Record the API key string,
-as you’ll use it below.
-
-image::migration-guide/{migration_source_dir}/set-api-key-permissions.png[Setting API key permissions]
+include::docs/v1/tech/migration-guide/_create-api-key.adoc[]
 
 ==== Add a scrypt hashing plugin
 
@@ -434,27 +274,9 @@ Test Tenant you created earlier. Click the *edit* icon. Under the
 _Choosing the password scheme_
 image:set-hash-scheme.png[set-hash-scheme]
 
-==== Get the Script
+=== Get the Script
 
-FusionAuth provides an import script under a permissive open source
-license. It requires ruby (tested with ruby 2.7). To get the script,
-clone the git repository:
-
-_Getting the import scripts_
-
-[source,bash]
-----
-git clone https://github.com/FusionAuth/fusionauth-import-scripts
-----
-
-Navigate to the `Firebase` directory:
-
-_Navigate to the correct directory_
-
-[source,sh]
-----
-cd fusionauth-import-scripts/firebase
-----
+include::docs/v1/tech/migration-guide/_get-script.adoc[]
 
 ==== Install Needed Gems
 
@@ -523,9 +345,10 @@ So it may make sense to import all the users in one pass (omitting the
 `-l` switch). Then, after the users are imported, create the links using
 the `-o` switch in a second pass.
 
-_Note: The social account linking functionality will only work with
-FusionAuth versions above or equal to 1.28. The fusionauth_client
-library must be >= 1.28 as well._
+[NOTE.note]
+====
+The social account linking functionality will only work with FusionAuth versions above or equal to 1.28. The `fusionauth_client` library must be >= 1.28 as well.
+====
 
 You may or may not want to use the `-m` switch, which takes the Firebase
 Id for users without a social login and uses the same value for the
@@ -571,77 +394,21 @@ are documented in the
 https://fusionauth.io/docs/v1/tech/apis/users#import-users[Import User
 API docs]. This will require modifying the `import.rb` code.
 
-==== Verify the Import
+=== Verify the Import
 
-Next, log in to the FusionAuth administrative user interface. Review the
-user entries to ensure the data was correctly imported.
-
-You can manage the user by clicking on the black
-button to the right of the `Created` date in the list to review the
-details of the imported user’s profile.
-
-If you have a test user whose password you know, open an incognito
-window and log in to ensure the hash migration was successful. You
-recorded the URL to log in to the example application in Create a Test
-Application.
-
-After the test login, the user will be redirected to a URL like
-`https://fusionauth.io/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`.
-This happens because you haven’t set up a web application to handle the
-authorization code redirect.
-
-That is an important next step but is beyond the scope of this document.
-Consult the 5 minute setup guide for an example of how to do this.
+include::docs/v1/tech/migration-guide/_verify-import.adoc[]
 
 === The Final Destination of Imported Users
 
-After you are done testing, you can choose to import users into the
-default tenant or a new tenant. Whichever you choose, make sure to
-update the `-t` switch to the correct value before running the import for
-the final time.
+include::docs/v1/tech/migration-guide/_final-destination.adoc[]
 
-If you aren’t keeping users in the test tenant, delete it.
+== What to Do Next
 
-If you need to start over because the import failed or you need to tweak
-a setting, delete the tenant you created. This will remove all the users
-and other configuration for this tenant, giving you a fresh start. To do
-so, navigate to Tenants and choose the red trash can icon.
+include::docs/v1/tech/migration-guide/_what-next.adoc[]
 
-image::migration-guide/{migration_source_dir}/link[Deleting a tenant]
+== Additional Support
 
-Confirm your desire to delete the tenant. Depending on how many users
-you have imported, this may take some time.
+include::docs/v1/tech/migration-guide/_additional-support.adoc[]
 
-=== What to Do Next
-
-You now have your users migrated, or a plan to do so. Congratulations!
-What is next?
-
-You need to migrate additional configuration, as mentioned in Other
-Entities. Since the type of configuration varies, it is hard to provide
-a full list of how to import these items, but the general pattern will
-be:
-
-* Identify corresponding FusionAuth functionality.
-* Configure it in your FusionAuth instance, either manually or by
-scripting it using the client libraries or API.
-* Update your application configuration to use the new FusionAuth
-functionality.
-
-Make sure you assign your users to the appropriate FusionAuth
-applications. You can do this either:
-
-* As part of your import process by adding registrations at import time.
-* After users have been migrated with the Registrations API.
-
-You’ll also need to modify and test each of your applications, whether
-custom, open source, or commercial, to ensure:
-
-* Users can successfully log in.
-* The authorization code redirect is handled correctly.
-* Users receive appropriate permissions and roles based on the JWT.
-* The look and feel of the hosted login pages matches each application’s
-look and feel.
-
-If your application uses a standard OAuth, SAML or OIDC library to
-communicate with Firebase, the transition should be relatively painless.
+:migration_source_name!:
+:migration_source_dir!:
