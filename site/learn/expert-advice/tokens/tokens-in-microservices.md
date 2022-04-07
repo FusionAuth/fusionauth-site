@@ -207,21 +207,30 @@ This is helpful for situations where you are bolting on token based authenticati
 
 In this case, make sure you don't just pass the extracted headers, but that you also pass an API key or other secret. That will allow the microservice to be sure that the request is coming from a valid source, the API gateway.
 
-You might append the following values to the forwarded request.
+You might append the following values to the forwarded request using something like the [ReverseProxy](https://pkg.go.dev/net/http/httputil#ReverseProxy) or other proxy middleware.
 
-```
-X-API-key: ... // known value to assure the microservice of the request authenticity
-X-user-id: ... // extracted from the token
-X-roles: ... // extracted from the token
+```golang
+http.Handle("/", &httputil.ReverseProxy{
+    Director: func(r *http.Request) {
+        r.URL.Scheme = "https"
+        r.URL.Host = "microservice.url"
+        r.Host = r.URL.Host
+        r.Header.Set("X-API-key", "...") // known value to assure the microservice of the request authenticity
+        r.Header.Set("X-user-id", "...") // extracted from the token
+        r.Header.Set("X-roles", "...") // extracted from the token
+    },
+})
 ```
 
 The costs of this approach are that you have to build the token processor and extract out needed data. The benefits are that you can avoid modifying the microservice or using an ambassador container to proxy requests to it. 
 
+## What about TLS
+
+Underlying each of these approaches is an understanding that traffic over internal network (pod-to-pod) should use TLS unless there's a good reason not to. By using a service mesh, you can avoid a ightmare of certificate renewals and transparently use TLS.
+
+Using TLS between the different services lets you protect traffic in flight. With mutual TLS (client certificates) you can know that one service is allowed to call another, but you don't have the granularity that a token provides. As exhibited above, you can limit services or resources within a service to holders of tokens with certain claims, allowing for more fine grained security and control.
+
+## Conclusion
+
 These four approaches to handling token based authentication allow you to protect your system components with tokens which often in a format dictated by an external provider. The ability to pass through tokens, completely ignore them, re-issue them into a different algorithm, or extract the payload and transmute it to a different format, give you flexibility in meeting your security and performance needs.
 
-
-TLS? how does that fit
-
-Where to process them
-
-How coarse/fine grained should you make them
