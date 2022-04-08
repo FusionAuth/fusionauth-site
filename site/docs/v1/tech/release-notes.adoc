@@ -59,8 +59,6 @@ Looking for release notes older than 1.23.0? Look in the link:/docs/v1/tech/arch
 == Version 1.36.0
 _April 7th, 2022_
 
-In progress&hellip;
-
 include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === Security
@@ -68,27 +66,51 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1632[GitHub Issue #1632]
 
 === Changed
-* The JWT authorization method is no longer supported when using the `GET` HTTP method on the JWT Refresh API.
-** The reason for this potentially breaking change is due to concern of potential abuse. If you were previously using a JWT to authorize the request to the `GET` HTTP method, you will need to modify your integration to utilize an API key. See the link:/docs/v1/tech/apis/jwt#retrieve-refresh-tokens[Retrieve Refresh Tokens
- API] for additional details.
+* The JWT authorization method is no longer supported when using the `GET` method on the link:/docs/v1/tech/apis/jwt#retrieve-refresh-tokens[Retrieve Refresh Tokens] API.
+** The reason for this potentially breaking change is due to concern of potential abuse. If you were previously using a JWT to authorize the request to the `GET` HTTP method, you will need to modify your integration to utilize an API key. See the link:/docs/v1/tech/apis/jwt#retrieve-refresh-tokens[Retrieve Refresh Tokens] API for additional details.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1646[GitHub Issue #1646]
+* Reserved JWT claims
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1669[GitHub Issue #1669]
 
 === Fixed
-* Entities don't support the use of `:` in the permission name
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1480[GitHub #1480], thanks to https://github.com/matthewhartstonge[@matthewhartstonge] for the help!
-* An application role may not be immediately available to assign to a user after initial creation.
-** This issue was due to some additional caching introduced in version `1.32.1`.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1575[GitHub #1575]
-* Handle a read-only directory inside of the configured plugin directory.
+* Entities don't support the use of `:` in the permission name, this limitation has been removed.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1480[GitHub Issue #1480], thanks to https://github.com/matthewhartstonge[@matthewhartstonge] for the help!
+* An application role may not be immediately available to assign to a user after initial creation. This issue was due to some additional caching introduced in version `1.32.1`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1575[GitHub Issue #1575]
+* Ignore read-only directories inside of the configured plugin directory instead of throwing an exception.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1655[GitHub Issue #1655]
+* Enhance email validation to keep obviously incorrect emails from being used during self-service user registration.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1625[GitHub Issue #1625], thanks to https://github.com/pablomadrigal[@pablomadrigal] for letting us know!
+* When using the GraalJS Lambda engine, you cannot use ECMA 6 features such as `const` or `let`.
+** This only affects version `1.35.0` when using the new GraalJS engine, and does not represent a regression because prior to version `1.35.0` the only Lambda engine available was Nashorn which only supported ECMA 5.1.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1630[GitHub Issue #1630]
+* When using a Connector, a timing issue exists that could cause a login to fail. See the linked issue for an example exception that you may observe if you encounter this issue.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1633[GitHub Issue #1633]
+* When the `openid` scope is used with the `offline_scope` and then the resulting refresh token is used in a Refresh grant, the returned `id_token` may be signed with the key configured for the `access_token`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1643[GitHub Issue #1643]
+* The requested `AssertionConsumerServiceURL` in a SAML v2 `AuthNRequest` is ignored and the first URL configured is used istead.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1278[GitHub Issue #1278], thanks to https://github.com/pakomp[@pakomp] for letting us know!
+* FusionAuth may fail to start on Windows when using the `startup.bat` script. See linked issue for a workaround.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1624[GitHub Issue #1624], thanks to https://github.com/James-M-Oswald[@James-M-Oswald] for the assist!
+* The Tenant View dialog may show the incorrect Event transaction setting for a Tenant created via the API.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1642[GitHub Issue #1642]
+* The Tenant edit and add panel displays Webhook events that are not configured at the Tenant level.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1593[GitHub Issue #1593]
+* The Password Grant response is missing the Two Factor Method Ids when a Two-Factor challenge is required. This issue was introduced in version `1.26.0` when Two-Factor Method Ids were added to the Login API response.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1585[GitHub Issue #1585]
+
+=== Enhancements
 * Allow for plugins that require dependent jars in their classpath.
 ** To take advantage of this capability, create a sub-directory in the configured plugin directory. Place your plugin jar, and any dependant jars in the same directory or nested sub-directories. Each immediate sub-directory of the configured plugin directory will become built as a discrete classloader. Each of these class loaders will still share the parent classloader, so it is still advised to keep dependencies to a bare minimum such that you don't conflict with existing dependencies of FusionAuth.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1663[GitHub Issue #1663]
-* Enhance email validation to keep obviously incorrect emails from being used during self-service user registration.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1625[GitHub Issue #1625], thanks to https://github.com/pablomadrigal[@pablomadrigal] for letting us know!
-
-=== Enhancements
-* TBD
+* Add a separate Execute thread pool in the Apache Tomact configuration to separate incoming requests from localhost callback requests to reduce thread contension.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1659[GitHub Issue #1659]
+* Alphabetize the Applications in Select form controls in the FusionAuth admin UI
+** https://github.com/FusionAuth/fusionauth-issues/issues/1668[GitHub Issue #1668]
+* Minimize the duration of the DB Transaction during authentication. This should improve login performance, especially when using an LDAP or Generic Connector.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1666[GitHub Issue #1666] (yikes)
+* Allow a login using a 3rd party IdP such as Google to succeed even if an Elasticsearch exception occurs when attempting to re-index the user.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1673[GitHub Issue #1673]
 
 === New
 * Initial technology preview for SCIM Server
@@ -97,6 +119,12 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * Nintendo Online Identity Provider
 ** Available with all licensed editions of FusionAuth.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1206[GitHub Issue #1206]
+* New Identity Provider Link & Unlink Events
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1589[GitHub Issue #1589]
+* Default the Event Transaction Type in the Tenant configuration to `None`
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1644[GitHub Issue #1644]
+* New JWT claims
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1669[GitHub Issue #1669]
 
 === Internal
 * Update Apache Tomcat from `8.5.72` to `8.5.77`.
@@ -221,7 +249,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1531[GitHub Issue #1531]
 * Add a tooltip to the Webhook Application configuration to help reduce some confusion until we deprecate this Application configuration.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1542[GitHub Issue #1542]
-* Support longer Refresh Tokens on the Refresh Tokens Import API. The previous limitation was that the refresh token was less than or equal to `191` characters. The assumption was made that this token was opaque and that `191` was very adequate. Some IdPs utilize JWTs for Refresh Tokens and in this case, the length is likely to exceed the previous limitation. This enhancements allows for longer refresh tokens. In particular this will provide better support for importing Refresh Tokens from KeyCloak. See the link:/docs/v1/tech/apis/users#import-refresh-tokens[Import Refresh Tokens API] for additional details.
+* Support longer Refresh Tokens on the Refresh Tokens Import API. The previous limitation was that the refresh token was less than or equal to `191` characters. The assumption was made that this token was opaque and that `191` was very adequate. Some IdPs utilize JWTs for Refresh Tokens and in this case, the length is likely to exceed the previous limitation. This enhancements allows for longer refresh tokens. In particular this will provide better support for importing Refresh Tokens from KeyCloak. See the link:/docs/v1/tech/apis/users#import-refresh-tokens[Import Refresh Tokens ] API for additional details.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1541[GitHub Issue #1541]
 * Use a better thread pooling strategy for Webhooks to better support a very large volume of events where the event recipient may not respond quickly enough. This allows more events to be queued up if we cannot send them fast enough while waiting for a response from the webhook.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1500[GitHub Issue #1500]
@@ -512,7 +540,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === Changed
 * New themed page added for Unauthorized access.
-** See the link:/docs/v1/tech/apis/themes[Theme API] and the link:/docs/v1/tech/themes/[Theme] documentation for additional details.
+** See the link:/docs/v1/tech/apis/themes[Theme ] API and the link:/docs/v1/tech/themes/[Theme] documentation for additional details.
 * A macro available to themes named `[@helpers.input]` was modified to be able to build a checkbox. This change could affect you if you try to copy and paste the checkbox usage without modifying the macro definition in your Helper file. Review the link:/docs/v1/tech/themes/#upgrading[Upgrading] section on the link:/docs/v1/tech/themes/[Themes] page for information on how to resolve potential breaking changes.
 
 === New
@@ -578,7 +606,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === Enhancements
 * Search on `oldValue`, `newValue` and `reason` in the Audit Log.
-** See the link:/docs/v1/tech/apis/audit-logs#search-the-audit-log[Audit Log Search API] for additional details on searching on `oldValue`, `newValue` and `reason` in the audit log.
+** See the link:/docs/v1/tech/apis/audit-logs#search-the-audit-log[Audit Log Search ] API for additional details on searching on `oldValue`, `newValue` and `reason` in the audit log.
 * When using IdP linking in conjunction with the Oauth2 Device grant, the recently completed links will be available on the Device complete themed page by using the `completedLinks` variable.
 ** See the link:/docs/v1/tech/themes/template-variables#oauth-device-complete[Device Complete] themed page documentation for additional details.
 * More themed pages will have access to the currently logged in user using the `currentUser` variable.
@@ -641,13 +669,13 @@ _July 10th, 2021_
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1279[GitHub Issue #1279]
 
 === Enhancements
-* Enhance the Link API to retrieve a user by a 3rd party unique Id to identify a FusionAuth user is linked to the user. See the link:/docs/v1/tech/apis/identity-providers/links[Link API] for additional details.
+* Enhance the Link API to retrieve a user by a 3rd party unique Id to identify a FusionAuth user is linked to the user. See the link:/docs/v1/tech/apis/identity-providers/links[Link ] API for additional details.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1277[GitHub Issue #1277]
 * During a device link request which contains a device linking token, show an intermediate page asking the user if they would like to sign in with an existing user or create a new user.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1287[GitHub Issue #1287]
-* Allow the IdP Login API to optionally be passed a request parameter to indicate a link should not be established and a `404` should be returned instead. This is useful if you wish to identify if a link exists first before starting an auxiliary workflow such as a device grant with a linking token. See the link:/docs/v1/tech/apis/identity-providers/[Login API] for additional details.
+* Allow the IdP Login API to optionally be passed a request parameter to indicate a link should not be established and a `404` should be returned instead. This is useful if you wish to identify if a link exists first before starting an auxiliary workflow such as a device grant with a linking token. See the link:/docs/v1/tech/apis/identity-providers/[Login ] API for additional details.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1288[GitHub Issue #1288]
-* Add additional configuration to the unique username configuration to support always appending a suffix even when the username is not in use. See the link:/docs/v1/tech/apis/tenants[Tenant API] for additional details.
+* Add additional configuration to the unique username configuration to support always appending a suffix even when the username is not in use. See the link:/docs/v1/tech/apis/tenants[Tenant ] API for additional details.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1290[GitHub Issue #1290]
 * Add an additional debug event log when for the SAML IdP to debug the `AuthN` request sent to the SAML IdP
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1293[GitHub Issue #1293]
@@ -706,21 +734,21 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 === Changed
 * You may no longer build a synthetic email address using a lambda for an OpenID Connect identity provider. This has been removed because you may now link a user by username or create a link w/out a username or an email to an existing FusionAuth user. If you are using this feature, you may need to plan for a migration to this new behavior. If you have a support contract with FusionAuth, please reach out and ask for additional information.
 * When using FusionAuth as a SAML IdP, FusionAuth will now accept `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent` in addition to `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`. This should allow FusionAuth to work with SAML v2 service providers that only support the persistent NameID format.
-* Tokens returned by IdPs are no longer stored on the User Registration object in the `tokens` field. Each token is now stored with the IdP link for the User and the IdP. See the link:/docs/v1/tech/apis/identity-providers/links[Link API] for additional details.
+* Tokens returned by IdPs are no longer stored on the User Registration object in the `tokens` field. Each token is now stored with the IdP link for the User and the IdP. See the link:/docs/v1/tech/apis/identity-providers/links[Link ] API for additional details.
 
 === New
 * Reindex API
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1232[GitHub Issue #1232]
-** See the link:/docs/v1/tech/apis/system#rebuild-the-elasticsearch-index[Reindex API] for usage.
+** See the link:/docs/v1/tech/apis/system#rebuild-the-elasticsearch-index[Reindex ] API for usage.
 * Account Link API
 ** This API will allow you to link and un-link users in 3rd party identity providers with a FusionAuth user.
-** See the link:/docs/v1/tech/apis/identity-providers/links[Link API] for usage.
+** See the link:/docs/v1/tech/apis/identity-providers/links[Link ] API for usage.
 * IdP Linking options
 ** Each Identity Provider may now be configured with a linking strategy. The strategies will include linking by email, username, anonymous or a link to an existing user.
 ** Linking by username is now supported. There is a higher risk of account takeover using this strategy, you should use caution when using this feature.
 ** Tokens from identity providers should now be retrieved from the link, rather than the registration. More information can be found under `identityProviderLink.token` response value link:/docs/v1/tech/apis/identity-providers/links#retrieve-a-link[here]
 * Email Send API allows an email address in the To field instead of only allowing FusionAuth userIds
-** See the link:https://fusionauth.io/docs/v1/tech/apis/emails#send-an-email[Email Send API] for additional details.
+** See the link:https://fusionauth.io/docs/v1/tech/apis/emails#send-an-email[Email Send ] API for additional details.
 * SAML Identity Provider can now be configured to use any NameID format. Previously only the Email NameID format was utilized.
 ** This should allow the SAML identity provider configuration to be more flexible and work with additional SAML identity providers.
 
@@ -728,9 +756,9 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * When FusionAuth is acting as a SAML Identity Provider, you may now send a NameID format of Email or Persistent.
 ** This should allow FusionAuth to work with additional SAML service providers such as Slack.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/522[GitHub Issue #522]
-* The link:https://fusionauth.io/docs/v1/tech/apis/emails#send-an-email[Email Send API] now allows you to send to a user that does not yet exist in FusionAuth by allowing you to specify an email address for the `To:` field.
+* The link:https://fusionauth.io/docs/v1/tech/apis/emails#send-an-email[Email Send ] API now allows you to send to a user that does not yet exist in FusionAuth by allowing you to specify an email address for the `To:` field.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/743[GitHub Issue #743]
-** See the  link:/docs/v1/tech/apis/login[Email Send API] for additional details.
+** See the  link:/docs/v1/tech/apis/login[Email Send ] API for additional details.
 * The Facebook and Google Identity Providers will now default to using a redirect instead of a popup for login. All existing configurations will be migrated to use the popup dialog to remain consistent with the previous behavior. With this update you may now also use the `idp_hint` parameter to login with Facebook and Google.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/909[GitHub Issue #909]
 * Additional PKCE and Client Authentication configuration
@@ -809,10 +837,10 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === Changed
 * Login API now returns `213` for Registration Not Verified.
-** See the link:/docs/v1/tech/apis/login[Login API] response for additional details.
+** See the link:/docs/v1/tech/apis/login[Login ] API response for additional details.
 * The Login API and the User API may optionally return a `emailVerificationId` or `registrationVerificationId` to assist the developer in completing a verification workflow when the verification strategy has been configured to use a short code instead of a long "clickable" link.
-** See the link:/docs/v1/tech/apis/login[Login API] response for additional details.
-* The Verify Email API now takes the `verificationId` in the request body instead of a URL segment. See the link:/docs/v1/tech/apis/users#verify-a-users-email[Verify Email API] for additional details.
+** See the link:/docs/v1/tech/apis/login[Login ] API response for additional details.
+* The Verify Email API now takes the `verificationId` in the request body instead of a URL segment. See the link:/docs/v1/tech/apis/users#verify-a-users-email[Verify Email ] API for additional details.
 ** This change is backwards compatible, but the deprecated use of the API may be removed in the future.
 ** The client libraries methods have also been preserved, but a new method has been added to accept a request body.
 * The Verify Registration API now takes the `verificationId` in the request body instead of a URL segment.
@@ -846,7 +874,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * Product Version API.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1193[GitHub Issue #1193]
 ** Thanks to https://github.com/jegger[@jegger] for the request!
-** See link:/docs/v1/tech/apis/system#retrieve-system-version[Version API] for additional details or find `retrieveVersion` in your FusionAuth client library.
+** See link:/docs/v1/tech/apis/system#retrieve-system-version[Version ] API for additional details or find `retrieveVersion` in your FusionAuth client library.
 
 === Enhancements
 * Try to support Microsoft Outlook Safe Links
@@ -903,13 +931,13 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 === Changed
 
 * The Two-Factor API has changed which allows you to enable and disable Two-Factor methods as well as send codes.
-** See the link:/docs/v1/tech/apis/two-factor[Two-Factor API] for more details.
+** See the link:/docs/v1/tech/apis/two-factor[Two-Factor ] API for more details.
 * The Two-Factor Login API now returns `409` for too many attempts. This allows the Two-Factor Login API to provide the same locking capability as the Login API when too many failed attempts occur.
-** See the link:/docs/v1/tech/apis/login#complete-two-factor-authentication[Two-Factor Login API] for more details.
+** See the link:/docs/v1/tech/apis/login#complete-two-factor-authentication[Two-Factor Login ] API for more details.
 * The Import API has changed for enabling Two-Factor.
-**  See the link:/docs/v1/tech/apis/users#import-users[User Import API] for changes.
-* The User API has changed for enabling and disabling Two-Factor. See the link:/docs/v1/tech/apis/users[User API] for changes.
-** See the link:/docs/v1/tech/apis/users[User API] for changes.
+**  See the link:/docs/v1/tech/apis/users#import-users[User Import ] API for changes.
+* The User API has changed for enabling and disabling Two-Factor. See the link:/docs/v1/tech/apis/users[User ] API for changes.
+** See the link:/docs/v1/tech/apis/users[User ] API for changes.
 * Email and SMS Two-Factor methods will now require a paid edition of FusionAuth. link:/pricing[Learn more about paid editions].
 ** If you are only using Authenticator/TOTP for Two-Factor, this functionality will continue to work properly in the community edition.
 * If you are upgrading from a version less than 1.7.0, you must do a two stage upgrade. Upgrade to a version greater than or equal to 1.7.0 but less than 1.26.0, then upgrade from that version to 1.26.0. There were internal migration changes which necessitate this two stage process.
@@ -964,7 +992,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** New themed template `SAMLv2 logout template`. This template will be rendered when you utilize the SAML v2 Logout feature, it is nearly identical to the existing OAuth2 logout themed page. If you are using themes, please review your theme to ensure your user experience is not interrupted.
 
 === Fixed
-* If you are using Elasticsearch version 6 you may encounter an error when using the Search API. This is due to a change in how we optionally request the document hit count in the search request to Elasticsearch. The change is not compatible with Elasticsearch version 6. As a work around, you can set `accurateTotal=true` in the API request. See the link:/docs/v1/tech/apis/users#search-for-users[User Search API] for additional details on using this parameter.
+* If you are using Elasticsearch version 6 you may encounter an error when using the Search API. This is due to a change in how we optionally request the document hit count in the search request to Elasticsearch. The change is not compatible with Elasticsearch version 6. As a work around, you can set `accurateTotal=true` in the API request. See the link:/docs/v1/tech/apis/users#search-for-users[User Search ] API for additional details on using this parameter.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1135[GitHub Issue #1135]
 * Using the HTTP `PATCH` method on the FusionAuth application may produce erroneous validation errors.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1110[GitHub Issue #1110]
@@ -1042,7 +1070,7 @@ _February 11th, 2021_
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1080[GitHub Issue #1080]
 * You may now import an RSA certificate with a key bit length less than `2048` into Key Master. The minimum supported RSA key length for signing a JWT is `2048`, so this was previously the minimum requirement to import anything into Key Master. However, we have several configurations now that require a certificate that is only used to verify a signature from a third party. In these cases, we are not using the certificate to sign anything, and https://github.com/trevorr[@trevorr] rightly pointed out that we should allow smaller keys to be imported to support these use cases. Thank you for the (now obvious) insight! We really appreciate our community members that provide us value for value.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1085[GitHub Issue #1085] & https://github.com/FusionAuth/fusionauth-issues/issues/1091[GitHub Issue #1091]
-* Added an additional Search API parameter to allow you to obtain the actual hit count from Elasticsearch. For performance reasons, the default behavior of an Elasticsearch query is to limit the hit count to 10,000. This means that if your query matched more than 10,000 records, the API response will only indicate that at least 10,000 records matched. This is very adequate for pagination purposes, or general queries. There are times where you are building a very specific query and the intent is to identify an accurate number of matching records. You may now provide an additional parameter to the search request named `accurateTotal` which will then return an accurate hit count on the API response. See the link:/docs/v1/tech/apis/users#search-for-users[User Search API] for additional details.
+* Added an additional Search API parameter to allow you to obtain the actual hit count from Elasticsearch. For performance reasons, the default behavior of an Elasticsearch query is to limit the hit count to 10,000. This means that if your query matched more than 10,000 records, the API response will only indicate that at least 10,000 records matched. This is very adequate for pagination purposes, or general queries. There are times where you are building a very specific query and the intent is to identify an accurate number of matching records. You may now provide an additional parameter to the search request named `accurateTotal` which will then return an accurate hit count on the API response. See the link:/docs/v1/tech/apis/users#search-for-users[User Search ] API for additional details.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1086[GitHub Issue #1086]
 * Allow the user to click on the Enabled column in the Webhook event configuration in the Webhook and Tenant configurations to enable or disable all events at once. This is just a usability enhancement to save you from clicking over and over. You're welcome.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1093[GitHub Issue #1093]
