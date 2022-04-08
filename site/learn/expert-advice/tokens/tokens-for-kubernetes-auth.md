@@ -1,13 +1,13 @@
 ---
 layout: advice
 title: Tokens at the Context Boundary
-description: How to use and revoke JSON Web Tokens for effective and efficient authorization management. Examples, diagrams & more.
+description: How to handle tokens at the boundary of your microservices
 author: Dan Moore
 image: advice/building-secure-signed-jwt-article.png
 category: Tokens
 related:
-date: 2020-06-04
-dateModified: 2020-06-25
+date: 2022-04-04
+dateModified: 2022-04-25
 ---
 
 When you are using JWTs as part of your authorization solution in a microservices or Kubernetes based environment, you need to determine where to process them and how fine grained to make them.
@@ -53,7 +53,7 @@ However, this approach relies on lower layers of the authorization system being 
 Here the token is provided to the microservices and they each validate the signature and the claims independently of the API gateway. You'll typically handle this with, in increasing order of effort and customizability: 
 
 * a service mesh such as [Linkerd](https://linkerd.io/) or [Istio](https://istio.io/)
-* an ambassador container running NGINX plus an [token processing NGINX library](https://github.com/zmartzone/lua-resty-openidc) or a similar proxy
+* an ambassador container running NGINX plus an [token processing NGINX library](https://github.com/zmartzone/lua-resty-openidc) or a similar proxy like [airbag](https://github.com/Soluto/airbag)
 * the code embedded in a library in your microservice which can then validate the signature and claims 
 
 For example, if using Istio, you'd apply this command to create a request authentication policy, which confirms information about who created the JWT and validates the signature of the JWT.
@@ -105,6 +105,9 @@ spec:
       notValues: ["https://example.fusionauth.io"]
     - key: request.auth.claims[roles]
       notValues: ["admin"]
+```
+TODO test, I think we need these to be two separate policies, both with the metadata
+```yaml
   action: ALLOW
   rules:
   - when:
