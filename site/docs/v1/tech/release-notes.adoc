@@ -69,16 +69,25 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * The JWT authorization method is no longer supported when using the `GET` method on the link:/docs/v1/tech/apis/jwt#retrieve-refresh-tokens[Retrieve Refresh Tokens] API.
 ** The reason for this potentially breaking change is due to concern of potential abuse. If you were previously using a JWT to authorize the request to the `GET` HTTP method, you will need to modify your integration to utilize an API key. See the link:/docs/v1/tech/apis/jwt#retrieve-refresh-tokens[Retrieve Refresh Tokens] API for additional details.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1646[GitHub Issue #1646]
-* Reserved JWT claims
+* Updated reserved JWT claims by grant type. The `amr` claims is marked as reserved, and will be available in a future release.
+** Reserved for authorization code and implicit grant, `amr`, `exp`, `iat`, `sub` and `tid`. Only `amr` and `tid` are new for this release.
+** Reserved for Vending API `amr`, `exp` and `iat`. Only the `amr` claim is new for this release.
+** Reserved for Client Credentials grant, `amr`, `aud`, `exp`, `iat`, `permissions`, `sub` and `tid`.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1669[GitHub Issue #1669]
 
 === Fixed
+* The requested `AssertionConsumerServiceURL` in a SAML v2 `AuthNRequest` is ignored and the first URL configured is used istead.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1278[GitHub Issue #1278], thanks to https://github.com/pakomp[@pakomp] for letting us know!
 * Entities don't support the use of `:` in the permission name, this limitation has been removed.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1480[GitHub Issue #1480], thanks to https://github.com/matthewhartstonge[@matthewhartstonge] for the help!
 * An application role may not be immediately available to assign to a user after initial creation. This issue was due to some additional caching introduced in version `1.32.1`.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1575[GitHub Issue #1575]
-* Ignore read-only directories inside of the configured plugin directory instead of throwing an exception.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1655[GitHub Issue #1655]
+* The Password Grant response is missing the Two Factor Method Ids when a Two-Factor challenge is required. This issue was introduced in version `1.26.0` when Two-Factor Method Ids were added to the Login API response.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1585[GitHub Issue #1585]
+* The Tenant edit and add panel displays Webhook events that are not configured at the Tenant level.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1593[GitHub Issue #1593]
+* FusionAuth may fail to start on Windows when using the `startup.bat` script. See linked issue for a workaround.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1624[GitHub Issue #1624], thanks to https://github.com/James-M-Oswald[@James-M-Oswald] for the assist!
 * Enhance email validation to keep obviously incorrect emails from being used during self-service user registration.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1625[GitHub Issue #1625], thanks to https://github.com/pablomadrigal[@pablomadrigal] for letting us know!
 * When using the GraalJS Lambda engine, you cannot use ECMA 6 features such as `const` or `let`.
@@ -86,44 +95,38 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1630[GitHub Issue #1630]
 * When using a Connector, a timing issue exists that could cause a login to fail. See the linked issue for an example exception that you may observe if you encounter this issue.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1633[GitHub Issue #1633]
-* When the `openid` scope is used with the `offline_scope` and then the resulting refresh token is used in a Refresh grant, the returned `id_token` may be signed with the key configured for the `access_token`.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1643[GitHub Issue #1643]
-* The requested `AssertionConsumerServiceURL` in a SAML v2 `AuthNRequest` is ignored and the first URL configured is used istead.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1278[GitHub Issue #1278], thanks to https://github.com/pakomp[@pakomp] for letting us know!
-* FusionAuth may fail to start on Windows when using the `startup.bat` script. See linked issue for a workaround.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1624[GitHub Issue #1624], thanks to https://github.com/James-M-Oswald[@James-M-Oswald] for the assist!
 * The Tenant View dialog may show the incorrect Event transaction setting for a Tenant created via the API.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1642[GitHub Issue #1642]
-* The Tenant edit and add panel displays Webhook events that are not configured at the Tenant level.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1593[GitHub Issue #1593]
-* The Password Grant response is missing the Two Factor Method Ids when a Two-Factor challenge is required. This issue was introduced in version `1.26.0` when Two-Factor Method Ids were added to the Login API response.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1585[GitHub Issue #1585]
+* When the `openid` scope is used along with the `offline_access` scope and then the resulting refresh token is used in a Refresh grant, the returned `id_token` may be signed with the key configured for the `access_token`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1643[GitHub Issue #1643]
+* Ignore read-only directories inside of the configured plugin directory instead of throwing an exception.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1655[GitHub Issue #1655]
 
 === Enhancements
-* Allow for plugins that require dependent jars in their classpath.
-** To take advantage of this capability, create a sub-directory in the configured plugin directory. Place your plugin jar, and any dependant jars in the same directory or nested sub-directories. Each immediate sub-directory of the configured plugin directory will become built as a discrete classloader. Each of these class loaders will still share the parent classloader, so it is still advised to keep dependencies to a bare minimum such that you don't conflict with existing dependencies of FusionAuth.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1663[GitHub Issue #1663]
-* Add a separate Execute thread pool in the Apache Tomact configuration to separate incoming requests from localhost callback requests to reduce thread contension.
+* Add a separate execute thread pool in the Apache Tomcat configuration to separate incoming requests from localhost callback requests to reduce thread contension.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1659[GitHub Issue #1659]
-* Alphabetize the Applications in Select form controls in the FusionAuth admin UI
+* Allow for plugins that require dependent jars in their classpath.
+** To take advantage of this capability, create a sub-directory in the configured plugin directory. Place your plugin jar, and any dependant jars in the same directory or nested sub-directories. Each immediate sub-directory of the configured plugin directory will be considered a discrete classloader. Each of these class loaders will still share the parent classloader, so it is still advised to keep dependencies to a bare minimum such that you don't conflict with existing dependencies of FusionAuth.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1663[GitHub Issue #1663]
+* Minimize the duration of the database Transaction during authentication. This should improve login performance, especially when using an LDAP or Generic Connector.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1666[GitHub Issue #1666] (666 😱 yikes)
+* Alphabetize the Applications in Select form controls in the FusionAuth admin UI, this should make it easier for those are not robots to navigate when you have many applications.
 ** https://github.com/FusionAuth/fusionauth-issues/issues/1668[GitHub Issue #1668]
-* Minimize the duration of the DB Transaction during authentication. This should improve login performance, especially when using an LDAP or Generic Connector.
-** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1666[GitHub Issue #1666] (yikes)
 * Allow a login using a 3rd party IdP such as Google to succeed even if an Elasticsearch exception occurs when attempting to re-index the user.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1673[GitHub Issue #1673]
 
 === New
-* Initial technology preview for SCIM Server
-** Available in the Enterprise edition.
+* Initial technology preview for SCIM Server, this feature is available in the Enterprise edition.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/106[GitHub Issue #106]
-* Nintendo Online Identity Provider
-** Available with all licensed editions of FusionAuth.
+* Nintendo Online Identity Provider, this feature is available with all licensed editions of FusionAuth.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1206[GitHub Issue #1206]
 * New Identity Provider Link & Unlink Events
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1589[GitHub Issue #1589]
 * Default the Event Transaction Type in the Tenant configuration to `None`
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1644[GitHub Issue #1644]
 * New JWT claims
+** The `tid` claim is now being set in all JWTs. This is the FusionAuth Tenant Id, and is marked as reserved.
+** The JWT header will also now contain a `gty` claim which will represent the grant types in order of use for this token.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1669[GitHub Issue #1669]
 
 === Internal
