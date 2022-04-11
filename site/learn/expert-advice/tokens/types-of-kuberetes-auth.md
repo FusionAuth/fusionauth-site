@@ -16,11 +16,7 @@ IMAGE
 
 Each of these layers has different needs and requirements and implementation choices.
 
-The first is the infrastructure layer.
-
-The second is the service-to-service layer.
-
-And the third is the request/response layer.
+The first is the infrastructure layer. The second is the service-to-service layer. And the third is the request/response layer.
 
 Let's look at each in turn.
 
@@ -177,18 +173,16 @@ Tokens are typically provided by the requesting client and are the result of som
 
 Again, depending on your implementation, you may be able to configure a service mesh to examine claims in the token, such as the `roles` claim. You can also use an ambassador container to examine these claims, or do so inside your microservices. These options are discussed in more detail in [TODO link to tokens for k8s post](TODO).
 
-However, there may be cases where you want to modify a token that comes in from a request and specify that a request is coming from both a given service and a user request. For example, in the todos application, you might have a 
+However, there may be cases where you want to modify a token that comes in from a request and specify that a request is coming from both a given service and a user request. For example, in the todos application, a user might be able to share a todo. Alice might share a todo with Bob. In this case, when Bob requests his shared todos, the shares microservice will need to call the todos service but make sure it is clear that it is doing so on behalf of Bob, not itself. 
 
-share where Alice gives bob permis to view her todos. When bob visits the shares screen, the shares MS needs to call todos on behalf of bob so it can get the correct Alice todos
+This can either be done via a [standardized OAuth grant](https://datatracker.ietf.org/doc/html/rfc8693/), if your identity provider supports it, or by otherwise passing the identity of the requester through via a token. 
 
-IMAGE
+## Conclusion
 
+This article covered three different layers of Kubernetes authentication:
 
+* the infrastructure layer
+* the service-to-service layer
+* the request/response layer
 
-
-
-on behalf of
-
-## Telemetry TODO?
-
-telemetry
+Each of these is important in ensuring that your application is appropriately secured.
