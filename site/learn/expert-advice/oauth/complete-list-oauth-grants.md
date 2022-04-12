@@ -1,4 +1,4 @@
-﻿---
+---
 layout: advice
 title: The Complete List of OAuth 2 Grants
 description: Sure, you know the Authorization Code grant and the Client Credentials grant, but what other OAuth grants are there?
@@ -45,38 +45,29 @@ The authorization code grant is used to sign into applications by using third-pa
     - `state`, with the state parameter sent in the original request. The Client should compare this value with the one stored in the user’s session to make sure the authorization code obtained is in response to requests made by this client and not another client application.
 
 
-5. The Client sends a *POST* request to the token endpoint on the Authorization Server with the following parameters:
+5. The Client sends a *POST* request to the token endpoint on the Authorization Server.
+The client also must include client credentials if it’s a confidential client or it was issued client credentials. The authorization server will authenticate the client if client credentials are included and verify that the refresh token was issued to the authenticated client. The client authentication process is described in detail in [section 3.2.1 of RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1).
+The *POST* request must include the following parameters:
     - `grant_type`, with the value of `authorization_code`.
     - `redirect_uri`, with the same redirect URI the user was redirected back to.
     - `code`, with the authorization code from the query string.
-
-
-The client also must include client credentials if it’s a confidential client or it was issued client credentials. The authorization server will authenticate the client if client credentials are included and verify that the refresh token was issued to the authenticated client. The client authentication process is described in detail in [section 3.2.1 of RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1).
-
 
 6. The Authorization Server responds with a JSON object containing these properties:
     - `token_type`, with the value `Bearer`.
     - `expires_in`, with an integer representing the TTL of the access token.
     - `access_token`, the access token itself.
 
-
 `scope` and `refresh_token` may be returned as well.
-
 
 There is also an extension called [PKCE](https://datatracker.ietf.org/doc/html/rfc7636) which prevents certain attacks if the client secret cannot be secured, such as in a single page application.
 
-
 ## Implicit
-
 
 The implicit grant type is used by user-agent-specific clients like web browsers or email readers. Generally, it’s used by single-page web applications that can’t store client secret credentials because their application code and storage are publicly accessible. 
 
-
-This grant is no longer recommended for getting access tokens because it is less secure than the authorization flow, since it lacks client authentication. The implicit grant is only used in legacy applications. Therefore, no flow will be outlined.
-
+This grant is no longer recommended for getting access tokens because it is less secure than the authorization flow, since it lacks client authentication. The implicit grant is only used in legacy applications. Therefore, no flow will be outlined. [Learn more.](/blog/2021/04/29/whats-wrong-with-implicit-grant)
 
 ## Resource Owner Password Credentials
-
 
 This grant is based on the functionality of the username and password credentials of a resource owner (user) to authorize and access protected data from a resource server. This kind of grant works well for trusted first-party clients on both web and platform applications. It is also useful as a stepping stone when porting applications using custom auth solutions over to OAuth-based solutions.
 
@@ -114,7 +105,7 @@ The client credentials grant type uses the ID and secret credentials of a client
 1. The Client sends a *POST* request with the following body parameters to the authorization endpoint on the Authorization Server:
     - `grant_type`, with the value `client_credentials`.
     - `scope`, with a space-delimited list of requested scope permissions.
-    - Client credentials as described in the Authorization Code Grant section.
+    - Client credentials as described in the above Authorization Code Grant section.
 
 
 2. The Authorization Server will respond with a JSON object containing the following properties:
@@ -277,8 +268,7 @@ The user-managed access (UMA) grant type is an authorization standard protocol b
 The UMA grant type gives the resource owner control over who can access their protected resources from a centralized authorization server without taking into consideration where the resources live. For example, a student can share their private data like health issues and exam scores with their school, teachers, and parents.
 
 
-### Flow for [a][b]UMA 
-
+### Flow for UMA 
 
 1. The Resource Server puts resources and their available scopes under Authorization Server protection. Once the resource is registered, the Resource Owner can set policy conditions at the Authorization Server.
 
@@ -293,46 +283,31 @@ The UMA grant type gives the resource owner control over who can access their pr
 
 
 5. The Resource Server returns Authorization Server URI and permission ticket. The response must contain a `WWW-Authenticate` header with the value `UMA` and the following parameters -
+  * `as_uri`: The `issuer` URI from the authorization server's discovery document
+  * `ticket`: The permission ticket
 
 
-* `as_uri`: The `issuer` URI from the authorization server's discovery document
-* `ticket`: The permission ticket
+6. The Client requests an access token from the Authorization Server’s token endpoint by making a POST request with the following parameters (the client can also redirect the requesting party to the Authorization Server as explained [here](https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#claim-redirect)):
+  * `grant_type`: Must be set to ` urn:ietf:params:oauth:grant-type:uma-ticket`
+  * `ticket`: The permission ticket received in the previous step
+  * `claim_token` (optional): A string containing the claim information the format specified by the `claim_token_format` parameter.
+  * `claim_token_format` (optional): Specifies the format of the `claim_token`. 
+  * `pct` (optional): If the authorization server issued a PCT (persistent claims token) along with the RPT, this parameter may be included to optimize the process of requesting a new RPT
+  * `rpt` (optional): An existing RPT, if one is available. This gives the authorization server the option to upgrade the RPT instead of assigning a new one.
+  * `scope` (optional): A space-separated list of scopes.
 
-
-6. The Client requests an access token from the Authorization Server’s token endpoint by making a POST request with the following parameters:
-
-
-* `grant_type`: Must be set to ` urn:ietf:params:oauth:grant-type:uma-ticket`
-* `ticket`: The permission ticket received in the previous step
-* `claim_token` (optional): A string containing the claim information the format specified by the `claim_token_format` parameter.
-* `claim_token_format` (optional): Specifies the format of the `claim_token`. 
-* `pct` (optional): If the authorization server issued a PCT (persistent claims token) along with the RPT, this parameter may be included to optimize the process of requesting a new RPT
-* `rpt` (optional): An existing RPT, if one is available. This gives the authorization server the option to upgrade the RPT instead of assigning a new one.
-* `scope` (optional): A space-separated list of scopes.
-
-
-Note that the client can also redirect the requesting party to the Authorization Server as explained [here](https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#claim-redirect)
-
-
-7. The Authorization Server issues an RPT after verifying the claims. The response contains the following parameters -
-    - `token_type`, with the value `Bearer`.
-    - `expires_in`, with an integer representing the TTL of the access token.
-    - `access_token`, the access token itself.
-    - `pct` (optional), a persistent token claim
-    - `upgraded` (optional), a boolean value to indicate whether an existing RPT was upgraded.
-
-
-`scope` and `refresh_token` may be returned as well.
-
+7. The Authorization Server issues an RPT after verifying the claims. The response contains the following parameters (`scope` and `refresh_token` may be returned as well):
+  * `token_type`, with the value `Bearer`.
+  * `expires_in`, with an integer representing the TTL of the access token.
+  * `access_token`, the access token itself.
+  * `pct` (optional), a persistent token claim
+  * `upgraded` (optional), a boolean value to indicate whether an existing RPT was upgraded.
 
 8. The Client requests for the protected resource with RPT as a bearer token.
 
-
 9. The Resource Server introspects RPT at the Authorization Server and the Authorization Server returns token introspection status. There isn’t a standard recommended way of performing the introspection. One example can be found [here](https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-federated-authz-2.0.html#token-introspection).
 
-
 11. The Resource Server gives access to the protected resource.
-
 
 ## SAML 2.0 Bearer Grant
 
