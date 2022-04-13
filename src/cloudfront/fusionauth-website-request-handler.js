@@ -6,6 +6,7 @@ var indexPages = {
   '/docs/v1/tech/': true,
   '/docs/v1/tech/account-management/': true,
   '/docs/v1/tech/admin-guide/': true,
+  '/docs/v1/tech/advanced-threat-detection/': true,
   '/docs/v1/tech/apis/': true,
   '/docs/v1/tech/apis/connectors/': true,
   '/docs/v1/tech/apis/entity-management/': true,
