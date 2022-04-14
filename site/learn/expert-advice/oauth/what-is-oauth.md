@@ -27,7 +27,7 @@ With the help of OAuth2, a token, which has a limited lifetime, provides that de
 
 ## How OAuth2 Works
 
-Usually, OAuth2 is involved when a user (also called the resource owner) is providing a third-party application (called a client application) access to data in a different service (called the resource server) without sharing their credentials. Let’s make it more concrete with an example.
+Usually, OAuth2 is involved when a user (also called the Resource Owner) is providing a third-party application (called a client application) access to data in a different service (called the Resource Server) without sharing their credentials. Let’s make it more concrete with an example.
 
 If you wanted to print images from your Pinterest account without downloading the images and uploading them again to a printing website, and without sharing your Pinterest username and password with the printing website, you could authorize the printing website to have read-only access to your Pinterest photos.
 
@@ -35,24 +35,30 @@ You can do this using OAuth2. Here's a diagram of the grant, which is explained 
 
 {% plantuml source: _diagrams/learn/expert-advice/oauth/what-is-oauth-authorization-code-grant.plantuml, alt: "Example of the Authorization Code grant" %}
 
+A few bits of jargon:
+* The Pinterest Login Service is the Authorization Server (what authenticates the user).
+* The Pinterest Photo Service is the Resource Server (what holds the protected data).
+* The Printing Website is the Client (what wants access to the protected data).
+* The Browser represents the Resource Owner (who can grant access to the protected data).
+
 Here are the steps:
 
-1. The Printing Website (the client and a third party app, unconnected to Pinterest) redirects the user to the Pinterest Photo Service (which is the resource server, as it has access to the images the user is trying to print). 
-2. The user logs in (since Pinterest needs to know who they are) to the Pinterest Login Service (also called an authorization server).
-3. As part of the login process, the authorization server asks the user to give access to a third-party application. 
-4. If the user agrees and grants permissions the printing website asks for, the authorization server sends an authorization code to the Printing Website.
-5. The Printing Website uses this authorization code, and credentials previously issued by Pinterest, which are tied to the application, to get an access token from the authorization server. The authorization server is presented with both the authorization code, which represents the choices the user made, and the application credentials. It verifies both of these and generates an access token.
+1. The Printing Website (the Client and a third party app, unconnected to Pinterest) redirects the user to the Pinterest Photo Service (which is the Resource Server, as it has access to the images the user is trying to print). 
+2. The user logs in (since Pinterest needs to know who they are) to the Pinterest Login Service (also called an Authorization Server).
+3. As part of the login process, the Authorization Server asks the user to give access to a third-party application. 
+4. If the user agrees and grants permissions the printing website asks for, the Authorization Server sends an authorization code to the Printing Website.
+5. The Printing Website uses this authorization code, and credentials previously issued by Pinterest, which are tied to the application, to get an access token from the Authorization Server. The Authorization Server is presented with both the authorization code, which represents the choices the user made, and the application credentials. It verifies both of these and generates an access token.
 6. The Printing Website receives the access token and stores it safely.
-7. The Printing Website sends the access token to the Pinterest resource server with a request for the images.
+7. The Printing Website sends the access token to the Pinterest Resource Server with a request for the images.
 8. The images are returned.
 
-In these steps, the user never shares their credentials with the third-party app. Instead the app gains access based on interactions with the authorization server, but that authorization server is what confirms the user's identity. 
+In these steps, the user never shares their credentials with the third-party app. Instead the app gains access based on interactions with the Authorization Server, but that Authorization Server is what confirms the user's identity. 
 
 OAuth2 isn't the first authentication/authorization mechanism to act on behalf of the user. Many authentication systems, including [Kerberos](https://web.mit.edu/kerberos/), operate in the same way. However OAuth2 is unique because its delegated authorization framework is the first to be widely accepted and to function across the web.
 
 ### Additional OAuth2 Concepts
 
-The authorization process consists of several parties, including the resource owner, the resource server, the authorization server, and the client. As mentioned before, the third-party application obtains tokens from the authorization server and uses these tokens to access the resources held by the resource server. Like any other technical topic, there are common concepts and jargon worth knowing. These include: 
+The authorization process consists of several parties, including the Resource Owner, the Resource Server, the Authorization Server, and the Client. As mentioned before, the third-party application obtains tokens from the Authorization Server and uses these tokens to access the resources held by the Resource Server. Like any other technical topic, there are common concepts and jargon worth knowing. These include: 
 
 * Scopes
 * Grants
@@ -65,24 +71,26 @@ Let’s take a look at these concepts.
 
 A scope is a method of restricting access. Remember in the example above, when the user only wanted to allow access to Gmail contacts and not the ability to send emails? Scopes can help with this.
 
-Instead of giving applications full access to a user's account, it enables apps to request a limited, well, scope of what they can do on the user's behalf. For example, some apps use OAuth2 to identify users and therefore only require a user Id and basic profile information. Other applications may require access to more sensitive data, like the user's birthdate or the ability to post data on the user's behalf. Scopes can represent these different levels of access. They are presented at the initial request of the client, and then parsed and displayed to the user at the authorization server.
+Instead of giving applications full access to a user's account, it enables apps to request a limited, well, scope of what they can do on the user's behalf. For example, some apps use OAuth2 to identify users and therefore only require a user Id and basic profile information. Other applications may require access to more sensitive data, like the user's birthdate or the ability to post data on the user's behalf. Scopes can represent these different levels of access. They are presented at the initial request of the Client, and then parsed and displayed to the user at the Authorization Server.
 
 Users are more likely to allow an app to gain access to personal data if they understand what exactly the app can and can’t do. Scopes allow them to make informed decisions about what they consent to share with any third-party application.
 
 #### Grants
 
-Grants are authentication flows for obtaining access tokens from the authorization server. The grant encapsulates a process, data flow and rules used to generate a token. The core OAuth2 grants (as outlined in [RFC 6749](https://tools.ietf.org/html/rfc6749)) are:
+Grants are authentication flows for obtaining access tokens from the Authorization Server. The grant encapsulates a process, data flow and rules used to generate a token. The core OAuth2 grants (as outlined in [RFC 6749](https://tools.ietf.org/html/rfc6749)) are:
 
-* **Authorization Code Grant:** The fundamental attribute of this grant is the one time authorization code generated from the authorization server after authenticating the resource owner. This is exchanged for the token using server side code. 
+* **Authorization Code Grant:** The fundamental attribute of this grant is the one time authorization code generated from the Authorization Server after authenticating the Resource Owner. This is exchanged for the token using server side code. 
 * **Implicit Grant:** A simplified flow used by browser based applications implemented with JavaScript. This is a legacy grant. [Don’t use this grant](/blog/2021/04/29/whats-wrong-with-implicit-grant/).
-* **Resource Owner Credentials:** This grant is helpful when the username and password are required for authorization. Also called the Password grant. It should only be used if there is a high level of trust between the resource owner and the third-party application or for migrating from legacy systems to OAuth2 based systems.
+* **Resource Owner Credentials:** This grant is helpful when the username and password are required for authorization. Also called the Password grant. It should only be used if there is a high level of trust between the Resource Owner and the third-party application or for migrating from legacy systems to OAuth2 based systems.
 * **Client Credentials:** This is the right grant when the application is trying to act on behalf of itself without the user’s presence. An example is the Printing Website calling into an Invoice Generation service to create invoices for the prints. This is not done for any user, but instead for the Printing Website itself.
+
+You can [learn more about various grants](/learn/expert-advice/oauth/complete-list-oauth-grants/). 
 
 #### Access Tokens
 
 Programs use access tokens to make requests on a user's behalf. As mentioned above, the access token denotes a particular application's permission to access certain elements of a user's data.
 
-Access tokens are, per the specification, opaque to the client. While some authorization servers generate access tokens that have internal structure, such as JSON Web Tokens, others do not.
+Access tokens are, per the specification, opaque to the Client. While some Authorization Servers generate access tokens that have internal structure, such as JSON Web Tokens, others do not.
 
 Access tokens must be kept private, both in transit and at rest. Passing the token through non-encrypted channels makes it easier for replay attacks which is why it’s recommended for OAuth2 flows to always use TLS.
 
@@ -90,7 +98,7 @@ Access tokens must be kept private, both in transit and at rest. Passing the tok
 
 OAuth2 typically requires static, out of band initial configuration. For example, before an application can call the GMail API to retrieve contact information on behalf of a user, it must first receive approval from Google. This process is called "Client Registration" and can be done manually or, in certain circumstances, programmatically.
 
-During client registration, the third party application provides information like the client type, a redirect URL where the authorization code can be sent, and other related information including a website and description. The authorization server then generates a client Id and a client secret.
+During Client registration, the third party application provides information like the client type, a redirect URL where the authorization code can be sent, and other related information including a website and description. The Authorization Server then generates a client Id and a client secret.
 
 Some clients can safely keep secret values such as the client secret, and are known confidential clients. Others, such as JavaScript Single Page Applications (SPAs) cannot, because their source code can be examined for secrets. These are known as public clients.
 

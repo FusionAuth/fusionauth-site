@@ -26,7 +26,7 @@ end
 # For the docs
 gem "asciidoctor", "2.0.10"
 gem "haml", "5.1.2"
-gem "pygments.rb", "1.2.1"
+gem "pygments.rb", "2.3.0"
 gem "sassc", "2.3.0"
 gem "tilt", "2.0.10"
 
