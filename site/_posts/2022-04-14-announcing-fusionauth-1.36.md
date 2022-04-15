@@ -29,7 +29,11 @@ This functionality is only available for our Enterprise users; learn more by vis
 
 ## Nintendo Online Identity Provider
 
-Nintendo Online (forthcoming) has been added as an identity provider, allowing users to log in using their Nintendo Online accounts. This feature is available to our Enterprise and Essentials license holders as part of the “Advanced and gaming Idp” suite. Learn more about these editions by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
+Nintendo Online (forthcoming) has been added as an identity provider, allowing users to log in using their Nintendo Online accounts.
+
+{% include _image.liquid src="/assets/img/blogs/release-1-36/nintendo-login.png" alt="Nintendo added as Idp." class="img-fluid" figure=true %}
+
+This feature is available to our Enterprise and Essentials license holders as part of the “Advanced and gaming Idp” suite. Learn more about these editions by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
  
 ## Webhook for user Link and Unlink
 
