@@ -27,7 +27,7 @@ SCIM data formats vary wildly so new lambdas are available. The lambdas will tak
 
 This functionality is only available for our Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 
-{% include _image.liquid src="/assets/img/blogs/release-1-36/scim-tenant-settings.png" alt="SCIM tenant settings" class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/release-1-36/scim-tenant-settings.png" alt="The SCIM tenant settings." class="img-fluid" figure=true %}
 
 ## Nintendo Online Identity Provider
 
