@@ -27,11 +27,11 @@ SCIM data formats vary wildly so a new lambda is available. This lambda will tak
 
 This functionality is only available for our Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 
-{% include _image.liquid src="/assets/img/blogs/release-1-35/api-requests-lambda.png" alt="Lambda which makes API requests." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/release-1-36/scim-tenant-settings.png" alt="SCIM tenant settings" class="img-fluid" figure=true %}
 
 ## Nintendo Online Identity Provider
 
-Nintendo Online (forthcoming) has been added as an identity provider, allowing users to log in using their Nintendo Online accounts.
+Nintendo Online has been added as an identity provider, allowing users to log in using their Nintendo Online accounts.
 
 {% include _image.liquid src="/assets/img/blogs/release-1-36/nintendo-login.png" alt="Nintendo added as Idp." class="img-fluid" figure=true %}
 
@@ -39,7 +39,12 @@ This feature is available to our Enterprise and Essentials license holders as pa
  
 ## Webhook for user Link and Unlink
 
-A new webhook event is available for developers to trigger an action when a user links or unlinks to an identity provider. This will allow developers to write a subsystem that immediately notices any new Idp accounts their users associate with their FusionAuth account (e.g. Xbox, nintendo, play station) and when these accounts are deleted. Another system listens for those events and handles them: for instance it records the data for analytics, or adjusts functionality which is only available if you have an account at a certain IdP, like a special in-game item is only available to Xbox users or Nintendo users. Documentation for this web hook will be available [here](/docs/v1/tech/apis/webhooks#overview) soon.
+A new webhook event is available for developers to trigger an action when a user links or unlinks to an identity provider.
+
+* This will allow developers to write a subsystem that immediately notices any new Idp accounts their users associate with their FusionAuth account (e.g. Xbox, nintendo, play station) and when these accounts are deleted.
+* Another system listens for those events and handles them: for instance it records the data for analytics, or adjusts functionality which is only available if you have an account at a certain IdP, like a special in-game item is only available to Xbox users or Nintendo users.
+
+Documentation for this web hook will be available [here](/docs/v1/tech/apis/webhooks#overview) soon.
  
 ## The rest of it
 
