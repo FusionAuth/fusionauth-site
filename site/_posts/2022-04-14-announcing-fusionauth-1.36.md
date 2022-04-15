@@ -9,7 +9,7 @@ tags: topic-troubleshooting scim scim2
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of versions 1.36 of FusionAuth. This version shipped April 14, 2022. The 1.36 releases include bug fixes, internal updates, and SCIM support.
+We're excited to announce the release of version 1.36 of FusionAuth. It shipped in mid April, 2022. The 1.36 releases include bug fixes, a new Identity Provider, and SCIM support.
 
 <!--more-->
 
