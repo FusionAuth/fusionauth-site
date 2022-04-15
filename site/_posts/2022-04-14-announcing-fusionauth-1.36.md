@@ -23,7 +23,7 @@ There are a few improvements that I wanted to call out specifically.
 
 This feature is particularly helpful in cases where you want to use a third-party SCIM-compliant backend to provision users and keep user data in sync. SCIM helps you manage users across systems like GitHub, Salesforce, and Trello, among others.
 
-SCIM data formats vary wildly so a new lambda is available. This lambda will take care of mapping from the SCIM provided user data into the FusionAuth user data schema, allowing for integration flexibility.
+SCIM data formats vary wildly so new lambdas are available. The lambdas will take care of mapping from the SCIM provided user data into the FusionAuth user data schema and vice versa. This allows for a large degree of integration flexibility.
 
 This functionality is only available for our Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 
