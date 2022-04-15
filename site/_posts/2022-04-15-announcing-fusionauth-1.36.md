@@ -45,11 +45,11 @@ This will allow developers to write a subsystem that immediately notices any new
 
 A typical user scenario might go as follow:
 
-* A user, Alice, signs in to GameA using 'login with XBox' and FusionAuth. A link event is sent.
-* Alice plays GameA for months.
+* A user, Alice, signs in to ExampleGame using 'login with XBox' and FusionAuth. A link event is sent.
+* Alice plays ExampleGame for months.
 * Alice sells her XBox and buys a PS5.
-* Alice  signs into GameA with 'login with PSN'. A link event is sent.
-* Alice notices that there is an XBox account associated with her FusionAuth account. She delinks it from within the GameA UX. An unlink event is sent.
+* Alice signs into ExampleGame with 'login with PSN'. A link event is sent.
+* Alice notices that there is an XBox account associated with her FusionAuth account. She delinks it from within the ExampleGame UX. An unlink event is sent.
 
 Documentation for this web hook is available [here](/docs/v1/tech/events-webhooks/events/).
  
