@@ -19,7 +19,7 @@ There are a few improvements that I wanted to call out specifically.
 
 ## SCIM 2 support
 
-[SCIM 2](http://www.simplecloud.info) (System for Cross-domain Identity Management), a standardized API for identity management sponsored by the IETF, allows user records to be read, written, and shared via HTTP using a simple JSON schema. In a [long-awaited feature](https://github.com/FusionAuth/fusionauth-issues/issues/106), FusionAuth now supports SCIM formats and operations as well as our own API. Learn more about SCIM support in our [SCIM API documentation](https://fusionauth.io/docs/v1/tech/apis/scim).
+[SCIM 2](http://www.simplecloud.info) (System for Cross-domain Identity Management), a standardized API for identity management sponsored by the IETF, allows user records to be read, written, and shared via HTTP using a simple JSON schema. In a [long-awaited feature](https://github.com/FusionAuth/fusionauth-issues/issues/106), FusionAuth now supports SCIM formats and operations as well as our own API.
 
 This feature is particularly helpful in cases where you want to use a third-party SCIM-compliant backend to provision users and keep user data in sync. SCIM helps you manage users across systems like GitHub, Salesforce, and Trello, among others.
 
@@ -41,18 +41,26 @@ This feature is available to our Enterprise and Essentials license holders as pa
 
 A new webhook event is available for developers to trigger an action when a user links or unlinks an identity provider such as Google or Facebook.
 
-* This will allow developers to write a subsystem that immediately notices any new IdP accounts their users associate with their FusionAuth account (e.g. Xbox, Nintendo, PlayStation) and when these accounts are deleted.
-* Another system listens for those events and handles them: for instance it records the data for analytics, or adjusts functionality which is only available if you have an account at a certain IdP, like a special in-game item is only available to Xbox users or Nintendo users.
+This will allow developers to write a subsystem that immediately notices any new IdP accounts their users associate with their FusionAuth account (e.g. Google, Facebook, LinkedIn) and when these accounts are unlinked from FusionAuth. Another system listens for those events and handles them: for instance it can record the data for analytics, or adjust functionality which is only available if you have an account at a certain IdP, like a special in-game item is only available to Xbox users.
 
-Documentation for this web hook will be available [here](/docs/v1/tech/apis/webhooks#overview) soon.
+A typical user scenario might go as follow:
+
+* A user, Alice, signs in to GameA using 'login with XBox' and FusionAuth. A link event is sent.
+* Alice plays GameA for months.
+* Alice sells her XBox and buys a PS5.
+* Alice  signs into GameA with 'login with PSN'. A link event is sent.
+* Alice notices that there is an XBox account associated with her FusionAuth account. She delinks it from within the GameA UX. An unlink event is sent.
+
+Documentation for this web hook is available [here](/docs/v1/tech/events-webhooks/events/).
  
 ## The rest of it
 
 There were 17 issues, enhancements, and bug fixes included in this release. A selection of these include:
 
 * Custom password plugins that rely on dependencies in jarfiles are now more easily loaded. Required jars can now be  placed in the same directory as custom plugin, and will be loaded in a separate class loader.
-* OAuth2 Password Grant correctly returns MFA method
-* Support for higher volumes of logins when using a connector by making more conservative use of system resources
+* OAuth2 Password Grant correctly returns MFA method.
+* Support for higher volumes of logins when using a connector by making more conservative use of system resources.
+
 Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-36-1).
 
 ## Upgrade at will
