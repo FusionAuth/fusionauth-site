@@ -8,8 +8,6 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-To the FusionAuth Community:  
-
 The FusionAuth team is proud to announce that we have completed the rigorous audit process and have now earned SOC2 Type II certification for our entire organization, including the FusionAuth product.
 
 <!--more-->
@@ -23,5 +21,4 @@ This certification is the result of demonstrating strict security and process co
 For contracted FusionAuth customers we will confidentially provide a full and detailed audit report upon request.  Please reach out to your FusionAuth support contact or to your account representative for more information. 
 
 The FusionAuth community can rest assured in the fact that SOC2 Type II certification indicates FusionAuth's high level of security commitment, awareness and preparation.
-
 
