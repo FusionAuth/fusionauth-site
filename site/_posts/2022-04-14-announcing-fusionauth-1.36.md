@@ -27,6 +27,8 @@ SCIM data formats vary wildly so a new lambda is available. This lambda will tak
 
 This functionality is only available for our Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 
+{% include _image.liquid src="/assets/img/blogs/release-1-35/api-requests-lambda.png" alt="Lambda which makes API requests." class="img-fluid" figure=true %}
+
 ## Nintendo Online Identity Provider
 
 Nintendo Online (forthcoming) has been added as an identity provider, allowing users to log in using their Nintendo Online accounts.
