@@ -41,7 +41,7 @@ This feature is available to our Enterprise and Essentials license holders as pa
 
 A new webhook event is available for developers to trigger an action when a user links or unlinks to an identity provider.
 
-* This will allow developers to write a subsystem that immediately notices any new Idp accounts their users associate with their FusionAuth account (e.g. Xbox, Nintendo, PlayStation) and when these accounts are deleted.
+* This will allow developers to write a subsystem that immediately notices any new IdP accounts their users associate with their FusionAuth account (e.g. Xbox, Nintendo, PlayStation) and when these accounts are deleted.
 * Another system listens for those events and handles them: for instance it records the data for analytics, or adjusts functionality which is only available if you have an account at a certain IdP, like a special in-game item is only available to Xbox users or Nintendo users.
 
 Documentation for this web hook will be available [here](/docs/v1/tech/apis/webhooks#overview) soon.
