@@ -37,7 +37,7 @@ Nintendo Online has been added as an identity provider, allowing users to log in
 
 This feature is available to our Enterprise and Essentials license holders as part of the “Advanced and gaming Idp” suite. Learn more about these editions by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
  
-## Webhook for user Link and Unlink
+## Webhook for user identity provider linking events
 
 A new webhook event is available for developers to trigger an action when a user links or unlinks to an identity provider.
 
