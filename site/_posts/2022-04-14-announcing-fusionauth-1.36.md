@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.36
-description: This release includes bug fixes, enhancements, and SCIM2 support.
+description: This release includes bug fixes, a new Identity Provider, and SCIM2 support.
 author: Joyce Park 
 image: blogs/release-1-36/product-update-fusionauth-1-36.png
 category: blog
