@@ -19,7 +19,8 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and never include a slash at the end (i.e. `link:/docs/v1/tech/apis/users` not `link:users`)
-- All code snippets within any documents should have indenting formatted to 2 spaces
+- All code snippets within any documents should have indenting formatted to 2 spaces.
+- Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - If something is new in a version, mark it with something like this:
 
   [NOTE.since]
