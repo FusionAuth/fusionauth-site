@@ -147,7 +147,7 @@ There are many ways to solve this issue, but at the root, each recognizes the se
 
 However, what happens when user is involved? Let's look at that next.
 
-## Request/response auth
+## Auth for Requests
 
 When a request for a todo comes in, it is associated, as mentioned above, with a particular user such as Alice or Bob. This is an additional layer of authentication and authorization data that client certificates or the other methods mentioned previously can't help with. In this case you want to reach for tokens.
 
