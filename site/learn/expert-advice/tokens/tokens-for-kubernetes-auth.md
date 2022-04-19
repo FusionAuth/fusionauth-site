@@ -79,45 +79,75 @@ spec:
     prefix: "Bearer "
 ```
 
-This approach also passes the payload to the microservice so that it can examine claims, such as the `sub` claim, and retrieve data or otherwise process the request based on that information.
+This approach also passes the payload to the microservice so that it can examine claims, such as the `sub` claim, and retrieve data or otherwise process the request based on that information. Istio fails when the `jwksUri` is not accessible or empty. Also, ensure the the headers from `jwtHeader` are passed through to all services that need to access them.
 
-TODO test header prefix
-TODO test exp claim (is it valid if the exp claim is missing? is it valid if the exp claim is in the past)
+Apply these commands to create a request authorization policy, which examines additional claims in the JWT and allows or denies access based on them. 
 
-Apply these commands to create a request authorization policy, which examines additional claims in the JWT and allows or denies access based on them. Note that `DENY` actions are applied before `ALLOW` actions, and the default is to `ALLOW` everything. 
-
-This policy allows all requests to the `todos` workspace for anyone with the `admin` role.
+This policy allows all requests to the `todos` workspace for anyone with the `admin` role and denies everyone else from the same issuer.
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: "jwt-auth"
-  namespace: development
+  name: "jwt-authz-deny"
+  namespace: default
 spec:
   selector:
     matchLabels:
-      app: todos
+      app: reviews
   action: DENY
   rules:
   - when:
     - key: request.auth.claims[iss]
-      notValues: ["https://example.fusionauth.io"]
+      values: ["https://sandbox.fusionauth.io"]
     - key: request.auth.claims[roles]
       notValues: ["admin"]
 ```
-TODO test, I think we need these to be two separate policies, both with the metadata
+
 ```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: "jwt-authz"
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: reviews
   action: ALLOW
   rules:
   - when:
     - key: request.auth.claims[iss]
-      values: ["https://example.fusionauth.io"]
+      values: ["https://sandbox.fusionauth.io"]
     - key: request.auth.claims[roles]
       values: ["admin"]
+```yaml
+
+When setting these rules up in Istio, some debugging commands can be helpful:
+
+First, view the logs of the istiod service:
+
+```shell
+kubectl -n istio-system logs --since=1h istiod-<id> -f
 ```
 
-You can learn more about these commands in the [Istio documentation](https://istio.io/latest/docs/reference/config/security/).
+This shows you errors similar to: 
+
+```
+Internal:Error adding/updating listener(s) virtualInbound: Provider 'origins-0' in jwt_authn config has invalid local jwks: Jwks doesn't have any valid public key
+```
+
+Such errors indicate your JWKS endpoint which contains the public keys used to verify the signature of the token are invalid or inaccessible.
+
+Second, look at the listener configs for your pods:
+
+```
+istioctl proxy-config listener -n default todos-v3-<id> -o json
+```
+
+This shows all of the listeners running against a given service. The output will include filters with names like `envoy.filters.http.jwt_authn` and `envoy.filters.http.rbac`. It provides a long JSON output useful for debugging rules.
+
+You can learn more about these commands in the [Istio documentation](https://istio.io/latest/docs/reference/config/security/) and the [troubleshooting documentation](https://istio.io/latest/docs/ops/common-problems/security-issues/#end-user-authentication-fails)
 
 IMAGE
 
@@ -175,7 +205,7 @@ func main() {
 		fmt.Printf("Something Went Wrong: %s", err.Error())
 	}
 
-	// more typicaly, pull from secrets
+	// typically, you'll pull this from a secrets manager
 	var mySigningKey = []byte("hello gophers!!!")
 
 	hmacToken := jwt.New(jwt.SigningMethodHS256)
@@ -227,7 +257,7 @@ http.Handle("/", &httputil.ReverseProxy{
 
 The costs of this approach are that you have to build the token processor and extract out needed data. The benefits are that you can avoid modifying the microservice or using an ambassador container to proxy requests to it. 
 
-## What about TLS
+## What about TLS?
 
 Underlying each of these approaches is an understanding that traffic over internal network (pod-to-pod) should use TLS unless there's a good reason not to. By using a service mesh, you can avoid a ightmare of certificate renewals and transparently use TLS.
 
