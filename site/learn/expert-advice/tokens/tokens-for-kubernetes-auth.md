@@ -1,13 +1,12 @@
 ---
 layout: advice
-title: Tokens at the Context Boundary
+title: Tokens at the Microservices Context Boundary
 description: How to handle tokens at the boundary of your microservices
 author: Dan Moore
 image: advice/building-secure-signed-jwt-article.png
 category: Tokens
-related:
-date: 2022-04-04
-dateModified: 2022-04-25
+date: 2022-04-19
+dateModified: 2022-04-19
 ---
 
 When you are using JWTs as part of your authorization solution in a microservices or Kubernetes based environment, you need to determine where to process them and how fine grained to make them.
