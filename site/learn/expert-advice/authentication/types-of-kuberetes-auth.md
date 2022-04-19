@@ -4,10 +4,9 @@ title: Types of Kuberenetes auth
 description: What are the three levels of kubernetes authentication
 author: Dan Moore
 image: advice/building-secure-signed-jwt-article.png
-category: Tokens
-related:
-date: 2020-06-04
-dateModified: 2020-06-25
+category: Authentication
+date: 2022-04-19
+dateModified: 2022-04-19
 ---
 
 When considering auth inside your Kubernetes cluster, it's good to think of three different layers.
