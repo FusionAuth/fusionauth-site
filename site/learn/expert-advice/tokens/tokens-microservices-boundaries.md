@@ -13,7 +13,7 @@ When you are using JWTs as part of your authorization solution in a microservice
 
 Consider this simple microservices based system. 
 
-IMAGE
+{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/system-diagram.png" alt="Simple microservices system architecture diagram." class="img-fluid" figure=false %}
 
 We have three different services, all protected by an API gateway. This API gateway could be running NGINX, Apache, or some other open source system. It could be a commercial packages such as HAProxy or Kong. It could also be a cloud vendor managed API gateway, such as an AWS Application Load Balancer or a Google Cloud Load Balancer. 
 
@@ -33,7 +33,7 @@ But what happens after this? There are four scenarios:
 * The token is re-issued. The token may be parsed apart and re-issued. The data may be the same or sanitized. The signing algorithm, the lifetime and other attributes of the token can be modified. When the token arrives at the microservice, it can be validated and user data can be extracted.
 * The token data is completely extracted. Claims are pulled off the token and put into a headers or the body of the request. The API gateway provides an API key which is validated by the microservices.
 
-All of these scenarios have different tradeoffs. Let's look at each one in more detail.
+All of these scenarios have different tradeoffs. Let's look at each one in more detail, with an example request made by a client to retrieve a user's todos.
 
 ## Trust With No Validation
 
@@ -41,7 +41,7 @@ In this case, the API gateway's stamp of approval is enough for each microservic
 
 The token is provided to the microservice which can decode the payload and examine the claims without worrying about the signature.
 
-IMAGE
+{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/no-microservice-validation.png" alt="No microservice validation." class="img-fluid" figure=false %}
 
 The benefits of this approach are simplicity of microservices implementation. They don't have to worry about JWT validation at all. They may have to decode the payload, but that can be done with the [golang base64](https://pkg.go.dev/encoding/base64) package or other similar packages. In addition, no external network access is required (to retrieve the public keys for signature validation). Because there is no signature validation, processing will be faster.
 
@@ -49,7 +49,11 @@ However, this approach relies on lower layers of the authorization system being 
 
 ## Passthrough
 
-Here the token is provided to the microservices and they each validate the signature and the claims independently of the API gateway. You'll typically handle this with, in increasing order of effort and customizability: 
+Here the token is provided to the microservices and they each validate the signature and the claims independently of the API gateway.
+
+{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/passthrough.png" alt="Each service validates the full token." class="img-fluid" figure=false %}
+
+You'll typically handle this with, in increasing order of effort and customizability: 
 
 * a service mesh such as [Linkerd](https://linkerd.io/) or [Istio](https://istio.io/)
 * an ambassador container running NGINX plus an [token processing NGINX library](https://github.com/zmartzone/lua-resty-openidc) or a similar proxy like [airbag](https://github.com/Soluto/airbag)
@@ -82,26 +86,7 @@ This approach also passes the payload to the microservice so that it can examine
 
 Apply these commands to create a request authorization policy, which examines additional claims in the JWT and allows or denies access based on them. 
 
-This policy allows all requests to the `todos` workspace for anyone with the `admin` role and denies everyone else from the same issuer.
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: "jwt-authz-deny"
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: reviews
-  action: DENY
-  rules:
-  - when:
-    - key: request.auth.claims[iss]
-      values: ["https://sandbox.fusionauth.io"]
-    - key: request.auth.claims[roles]
-      notValues: ["admin"]
-```
+This authorization policy allows all requests to the `todos` workspace for anyone with the `admin` role:
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -112,15 +97,37 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: reviews
+      app: todos
   action: ALLOW
   rules:
   - when:
     - key: request.auth.claims[iss]
-      values: ["https://sandbox.fusionauth.io"]
+      values: ["https://example.fusionauth.io"]
     - key: request.auth.claims[roles]
       values: ["admin"]
+```
+
+This policy denies access to all other requests with a token the same issuer.
+
+
 ```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: "jwt-authz-deny"
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: todos
+  action: DENY
+  rules:
+  - when:
+    - key: request.auth.claims[iss]
+      values: ["https://example.fusionauth.io"]
+    - key: request.auth.claims[roles]
+      notValues: ["admin"]
+```
 
 When setting these rules up in Istio, some debugging commands can be helpful:
 
@@ -148,9 +155,7 @@ This shows all of the listeners running against a given service. The output will
 
 You can learn more about these commands in the [Istio documentation](https://istio.io/latest/docs/reference/config/security/) and the [troubleshooting documentation](https://istio.io/latest/docs/ops/common-problems/security-issues/#end-user-authentication-fails)
 
-IMAGE
-
-This approach pushes more authentication and business logic to your microservices, though by using a service mesh or ambassador you may be able to keep the microservice relatively ignorant of the implementation. The service still has to have access to the JWKS endpoint for signature validation, which requires external network access.
+This approach pushes more authentication and business logic to your microservices, though by using a service mesh or ambassador you may be able to keep the microservice relatively ignorant of the implementation. The service still has to have access to the JWKS endpoint for signature validation, which requires external network access or a proxy.
 
 The API gateway remains relatively simple. It still performs validation, but doesn't have to do anything to the token beyond forwarding it. You also gain the benefits of token checking at both layers, so if something is in your network and presents an invalid token, the request will fail.
 
@@ -158,13 +163,13 @@ The API gateway remains relatively simple. It still performs validation, but doe
 
 In this case, the token is processed at the API gateway. With Kubernetes, you can add an adapter your ingress, process the request and modify the token. 
 
-IMAGE
+{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/reissue.png" alt="The gateway re-issues the token." class="img-fluid" figure=false %}
 
 Common ways to modify the token include:
 
-* Remove unneeded information
-* Shorten the lifetime
-* Use a different signing key
+* Removing unneeded information
+* Shortening the lifetime
+* Using a different signing key
 
 You might want to remove unneeded information that is generated by an external token provider. Such tokens might include extra information which doesn't make sense to the services behind the API gateway. You might modify the `aud` claim to make it more specific as well.
 
@@ -234,6 +239,8 @@ While this requires more custom code, the benefits of re-issuing the token mean 
 ## Full Extraction
 
 Finally, the API gateway can extract the contents of the token entirely and turn it into a header or body parameter rather than re-issuing the token.
+
+{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/extraction.png" alt="The gateway extracts needed data from the token as passes it as a header or form parameter." class="img-fluid" figure=false %}
 
 This is helpful for situations where you are bolting on token based authentication, but the service expects values to be in normal HTTP headers or the body and it isn't worth it to upgrade it to process tokens. This could happen either right after the API gateway forwards the request or right before the container receives it.
 
