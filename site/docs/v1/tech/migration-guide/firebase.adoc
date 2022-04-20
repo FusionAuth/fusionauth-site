@@ -1,6 +1,17 @@
-== Migration from Firebase
+---
+layout: doc
+title: Migration from Firebase
+description: How to migrate your users to FusionAuth from Firebase.
+---
+:page-liquid:
 
-=== Overview
+:migration_source_name: Firebase
+:migration_source_dir: firebase
+:script_supports_social_logins: false
+:add-tenant-image-role: bottom-cropped
+
+
+== Overview
 
 This document will help you migrate off of Firebase Authentication. If
 you are looking to compare FusionAuth and Firebase Authentication, link:/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison[this
@@ -32,13 +43,13 @@ Firebase, and it would be difficult to cover them all. This guide
 mentions the typical parts of a bulk migration and focuses on migrating
 user data from a Firebase managed user database into FusionAuth.
 
-=== Planning Considerations
+== Planning Considerations
 
-==== Obtaining User Data
+=== Obtaining User Data
 
 You can use the Firebase CLI or API to export user data. This guide uses
 the CLI, but if you have a large number of users, the management API is
-recommended. Firebase also has a link:link[high level export guide worth
+recommended. Firebase also has a https://firebase.google.com/docs/firestore/manage-data/export-import[high level export guide worth
 reviewing].
 
 If you haven't already installed and setup the Firebase CLI, you can
@@ -49,22 +60,18 @@ to do so.
 If you are using the user interface, usernames, email addresses, hashes
 and other data can be obtained by downloading a CSV or JSON file.
 
-Here’s a brief video walking through the export process, which is
-further documented below.
 
-`![Exporting Firebase Users](export-users.mov)`
-
-=== Mapping User Attributes
+== Mapping User Attributes
 
 include::docs/v1/tech/migration-guide/_mapping-user-attributes.adoc[]
 
-=== Social Logins
+== Social Logins
 
 include::docs/v1/tech/migration-guide/_social-login-note.adoc[]
 
 include::docs/v1/tech/migration-guide/_social-login-migration.adoc[]
 
-=== Other Entities
+== Other Entities
 
 :other_migrated_entities: connections or roles
 include::docs/v1/tech/migration-guide/_other-entities-intro.adoc[]
@@ -89,11 +96,11 @@ These can be migrated using the Import Refresh Tokens API.
 In FusionAuth, users are explicitly mapped to applications with a link:/docs/v1/tech/core-concepts/registrations[Registration].
 ====
 
-==== Identifiers 
+=== Identifiers 
 
 include::docs/v1/tech/migration-guide/_identifiers.adoc[]
 
-==== Universal Login
+=== Universal Login
 
 Firebase has pre-built UI's for web, iOS, android etc. You can also choose to build your own login page, and call the Firebase APIs. 
 
@@ -104,7 +111,7 @@ more about these choices.
 Once you’ve planned your migration, the next step is to export your user
 data from Firebase.
 
-=== Exporting Users
+== Exporting Users
 
 To export users with the user interface, log in and navigate to your dashboard. You’ll perform the following steps:
 
@@ -112,7 +119,7 @@ To export users with the user interface, log in and navigate to your dashboard. 
 2. Retrieve the Project ID of the Firebase application you want to export the users from
 3. Download the exported file in your chosen format
 
-==== Install the Firebase CLI
+=== Install the Firebase CLI
 
 Navigate to the
 https://firebase.google.com/docs/cli#install-cli-mac-linux[Firebase CLI
@@ -122,7 +129,7 @@ After installing the CLI, be sure to
 https://firebase.google.com/docs/cli#sign-in-test-cli[login and test]
 that the installation is succesful.
 
-==== Retrieve the Project ID
+=== Retrieve the Project ID
 
 Before exporting the users, you'll need the Project ID of the Firebase
 project you want to export from. To get this ID, run the following
@@ -144,7 +151,7 @@ This will list all your Firebase projects, like this:
 Make a note of the Project ID of the Firebase project you want to export
 from.
 
-==== Download the File
+=== Download the File
 
 To download the user file, run the following
 https://firebase.google.com/docs/cli/auth[Firebase `auth:export` CLI
@@ -159,8 +166,6 @@ Replace `your_project_id` with the Project ID you noted above.
 
 After the export finishes, you’ll end up with a JSON file called
 `users.json`. It should look something like this:
-
-Sample Firebase user data export download (replace)
 
 [source,js]
 ----
@@ -188,7 +193,7 @@ Sample Firebase user data export download (replace)
 ]}
 ----
 
-=== Importing Users
+== Importing Users
 
 Next up, import the user data. Here are the steps we need to take.
 
@@ -200,23 +205,23 @@ Next up, import the user data. Here are the steps we need to take.
 6. Verify the Import
 7. The Final Destination of Imported Users
 
-=== Set Up FusionAuth
+== Set Up FusionAuth
 
 include::docs/v1/tech/migration-guide/_set-up-fusionauth.adoc[]
 
-==== Create a Test Tenant
+=== Create a Test Tenant
 
 include::docs/v1/tech/migration-guide/_create-test-tenant.adoc[]
 
-==== Create a Test Application
+=== Create a Test Application
 
 include::docs/v1/tech/migration-guide/_create-test-application.adoc[]
 
-==== Add an API Key
+=== Add an API Key
 
 include::docs/v1/tech/migration-guide/_create-api-key.adoc[]
 
-==== Add a scrypt hashing plugin
+=== Add a scrypt hashing plugin
 
 Most Firebase projects use a https://github.com/firebase/scrypt[modified
 version of the scrypt algorithm] for password hashes. FusionAuth does
@@ -236,22 +241,19 @@ dots near the the *Add User* button. Then select *Password hash
 parameters*. This will open a modal with the parameters we need. Make a
 note of them.
 
-_Copying the Firebase hash parameters_
-image:firebase-hash-parameters.png[Copying the Firebase hash parameters]
+image::migration-guide/{migration_source_dir}/firebase-hash-parameters.png[Copying the Firebase hash parameters,width=1200]
 
 Now open the
 `src/main/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptor.java`
 file. Copy the Firebase parameters from above into the variables under
 the `Firebase Scrypt Parameters` comment.
 
-_Adding the Firebase scrypt parameters to the FusionAuth plugin_
-image:plugin-firebase-parameters.png[Adding the Firebase scrypt
-parameters to the FusionAuth plugin]
+
+image::migration-guide/{migration_source_dir}/plugin-firebase-parameters.png[Adding the Firebase scrypt parameters to the FusionAuth plugin,width=1000]
 
 After you have copied over the parameters, build and install the plugin
 project as detailed
-https://fusionauth.io/docs/v1/tech/plugins/writing-a-plugin[in the
-plugins guide]. You may need to change the test case parameters in the
+https://fusionauth.io/docs/v1/tech/plugins/writing-a-plugin[in the plugins guide]. You may need to change the test case parameters in the
 file
 `src/test/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptorTest.java`
 to match a known password, salt and hash from your Firebase
@@ -262,20 +264,20 @@ Test Tenant you created earlier. Click the *edit* icon. Under the
 *Password* tab, find the section *Cryptographic hash settings*. Choose
 *example-salted-firebase-scrypt* as the *Scheme*.
 
-_Choosing the password scheme_
-image:set-hash-scheme.png[set-hash-scheme]
 
-=== Get the Script
+image::migration-guide/{migration_source_dir}/set-hash-scheme.png[Set hash scheme,width=1200]
+
+== Get the Script
 
 include::docs/v1/tech/migration-guide/_get-script.adoc[]
 
-==== Install Needed Gems
+=== Install Needed Gems
 
 The following gems must be available to the import script:
 
 * `date`
 * `json`
-* `optargs`
+* `optparse`
 * `securerandom`
 * `fusionauth_client`
 
@@ -285,7 +287,7 @@ Most likely all of these will be on your system already, except the
 If you have `bundler` installed, run `bundle install` in the `firebase`
 directory. Otherwise install the needed gems in some other way.
 
-==== Use the Script
+=== Use the Script
 
 You can see the output of the script by running it with the `-h` option:
 
@@ -349,7 +351,6 @@ Id as they did in Firebase. Otherwise, you can omit this switch.
 
 When you run the script, you’ll see output like:
 
-_Import script output_
 
 [source,sh]
 ----
