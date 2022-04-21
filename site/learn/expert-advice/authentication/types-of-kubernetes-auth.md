@@ -1,6 +1,6 @@
 ---
 layout: advice
-title: Types of Kuberenetes Auth
+title: Types of Kubernetes Auth
 description: What are the three levels of Kubernetes authentication?
 author: Dan Moore
 image: advice/building-secure-signed-jwt-article.png
@@ -38,7 +38,7 @@ A wide variety of options are supported, including
 
 There's also an impersonation option, which allows users to "take on" the identity of other users, to test access or otherwise troubleshoot.
 
-Once users are authenticated, information about them, such as username, group, and resources requested, is available to [Kubernetes authorizers](https://kubernetes.io/docs/reference/access-authn-authz/authorization/). These are again well documented, but support the following methods of determining access to partcular resources:
+Once users are authenticated, information about them, such as username, group, and resources requested, is available to [Kubernetes authorizers](https://kubernetes.io/docs/reference/access-authn-authz/authorization/). These are again well documented, but support the following methods of determining access to particular resources:
 
 * ABAC: where policies are combined and evaluated
 * RBAC: where roles associated with the user control access
@@ -46,9 +46,11 @@ Once users are authenticated, information about them, such as username, group, a
 
 If relying on external sources to determine user resource access, such as an OIDC server or webhooks, you'll want to make sure you have another means of authentication independent of that external source. This allows you to modify the configuration of your cluster when those external resources are unavailable. 
 
+Here's a [tutorial on setting up Kubernetes RBAC with FusionAuth](/blog/2022/02/24/rbac-with-kubernetes-fusionauth).
+
 ## Application Auth
 
-When you have containers running on Kubernetes, there are another two types of authentication entirely different from infrastructure outlined above.
+When you have containers running on Kubernetes, there are another two types of auth entirely different from the infrastructure auth outlined above.
 
 {% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-diagram.png" alt="Diagram of todo application in kubernetes." class="img-fluid" figure=false %}
 
@@ -63,20 +65,20 @@ There are two common types of authentication within the application:
 
 ## Service to Service Communication
 
-You want to lock down communication between the constituent parts of your application. You have a few options, but a choice is mutual TLS. Mutual TLS uses in client x.509 certificates and the TLS protocol to authenticate and authorize different parts of your system. 
+You want to lock down communication between the constituent parts of your application. You have a few options, but a choice is mutual TLS. Mutual TLS uses client x.509 certificates and the TLS protocol to authenticate and authorize different parts of your system. 
  
 Consider the application below.
 
 {% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-diagram.png" alt="Diagram of todo application in kubernetes." class="img-fluid" figure=false %}
 
-Suppose the reminders service needs information from the todos service. There's a new feature being built. The reminders service will send an email to every user who has a todo with a due date falling in the next 24 hours. Therefore the reminders service needs to query the todos service.
+Suppose the reminder service needs information from the todo service. There's a new feature being built. The reminder service will send an email to every user who has a todo with a due date falling in the next 24 hours. Therefore the reminder service needs to query the todo service.
 
 When building this feature, you'll want to ensure:
 
-* that the reminders service can access the data it needs
-* that the todos service isn't open to any unauthorized access
+* that the reminder service can access the data it needs
+* that the todo service isn't open to any unauthorized access
 
-Because the reminders service is making the request, mutual TLS is a good solution. Each service can have a certificate and they can mutually verify them. This can be done manually, but a far simpler solution is to use a service mesh such as Istio or Linkerd, because they'll take care of the certificate provisioning, the ambassador pods in between your services and the renewals.
+Because the reminder service is making the request, mutual TLS is a good solution. Each service can have a certificate and they can mutually verify them. This can be done manually, but a far simpler solution is to use a service mesh such as Istio or Linkerd, because they'll take care of the certificate provisioning, the ambassador pods in between your services and the renewals.
 
 If you are using Istio, enable strict mutual TLS authentication using this configuration:
 
@@ -100,7 +102,7 @@ You can read more about [mutual TLS authentication in Istio](https://istio.io/la
 
 Since every service in Istio is transparently associated with a client certificate, once mutual TLS is enabled, you can enforce authorization rules. 
 
-Contining with the example above, the reminder service can call the todos service, but not the reverse. Here's an example configuration. The first enables the reminders service to call the todos service, but only with the `GET` HTTP method:
+Continuing with the example above, the reminder service can call the todo service, but not the reverse. Here's an example configuration. The first enables the reminder service to call the todo service, but only with the `GET` HTTP method:
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -116,13 +118,13 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/reminders"]
+        principals: ["cluster.local/ns/default/sa/reminder"]
     to:
     - operation:
         methods: ["GET"]
 ```
 
-And the following policy denies the todos service access to the reminders service.
+And the following policy denies the todo service access to the reminder service.
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -133,7 +135,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: reminders
+      app: reminder
   action: DENY
   rules:
   - from:
@@ -147,7 +149,7 @@ However, you don't have to use a service mesh for service to service communicati
 
 There are many ways to solve this issue, but at the root, each recognizes the service as the requesting entity.
 
-However, what happens when user is involved? Let's look at that next.
+However, what happens when a user is involved? Let's look at that next.
 
 ## Auth for Requests
 
@@ -183,9 +185,9 @@ These options are discussed in more detail in [this article about tokens](/learn
 
 However, there may be cases where you want to modify a token that comes in from a request to show that the request is coming from both a given service and a user request.
 
-For example, in the todos application, one feature would be todo sharing: Alice might share a todo with Bob. In this case, when Bob requests his shared todos, the shares microservice will need to call the todos service. But the request must include information specifying it is doing so on behalf of Bob, not itself. 
+For example, in the todos application, one feature would be todo sharing: Alice might share a todo with Bob. In this case, when Bob requests his shared todos, the share microservice will need to call the todo service. But the request must include information specifying it is doing so on behalf of Bob, not itself. 
 
-This can either be done via a [standardized OAuth grant](https://datatracker.ietf.org/doc/html/rfc8693/), if your identity provider supports it. You could re-mint the token or have a secondary layer of authentication by passing the token as well as an identifier of the shares service.
+This can either be done via a [standardized OAuth grant](https://datatracker.ietf.org/doc/html/rfc8693/), if your identity provider supports it. You could re-mint the token or have a secondary layer of authentication by passing the token as well as an identifier of the share service.
 
 ## Conclusion
 
