@@ -1,9 +1,4 @@
----
-layout: blog-post
-title: FusionAuth Secures SOC 2 Type 2 Certification
-description: Company’s focus on security allowed it to skip immediately to Type 2 Certification
-author: David Polstra
-image: blogs/fusionauth-secures-soc2/soc2-type2.png
+---- layout: blog-post title: FusionAuth Secures SOC 2 Type 2 Certification description: Company’s focus on security allowed it to skip immediately to Type 2 Certification author: David Polstra image: blogs/fusionauth-secures-soc2/soc2-type2-wp.png
 category: blog
 tags: topic-press-release
 excerpt_separator: "<!--more-->"
