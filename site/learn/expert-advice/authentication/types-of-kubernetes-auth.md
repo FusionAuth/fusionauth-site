@@ -67,11 +67,9 @@ There are two common types of authentication within the application:
 
 You want to lock down communication between the constituent parts of your application. You have a few options, but a choice is mutual TLS. Mutual TLS uses client x.509 certificates and the TLS protocol to authenticate and authorize different parts of your system. 
  
-Consider the application below.
+Suppose the reminder service from the application above needs information from the todo service. There's a new feature being built. The reminder service will send an email to every user who has a todo with a due date falling in the next 24 hours. Therefore the reminder service needs to query the todo service.
 
-{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-diagram.png" alt="Diagram of todo application in kubernetes." class="img-fluid" figure=false %}
-
-Suppose the reminder service needs information from the todo service. There's a new feature being built. The reminder service will send an email to every user who has a todo with a due date falling in the next 24 hours. Therefore the reminder service needs to query the todo service.
+{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-service-to-service.png" alt="Diagram of service to service communication application in kubernetes." class="img-fluid" figure=false %}
 
 When building this feature, you'll want to ensure:
 
@@ -153,7 +151,7 @@ However, what happens when a user is involved? Let's look at that next.
 
 ## Auth for Requests
 
-{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-diagram.png" alt="Diagram of todo application in kubernetes." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-user-request.png" alt="Diagram of user request." class="img-fluid" figure=false %}
 
 When a request for a todo comes in, it is associated, as mentioned above, with a particular user such as Alice or Bob. This is an additional layer of authentication and authorization which client certificates or the other methods mentioned previously can't help with. In this case you want to reach for tokens. 
 
@@ -183,7 +181,9 @@ These options are discussed in more detail in [this article about tokens](/learn
 
 ### On Behalf Of Requests
 
-However, there may be cases where you want to modify a token that comes in from a request to show that the request is coming from both a given service and a user request.
+However, there is an interesting subset of user requests. There can be cases where you want to make a request of a service on behalf of a user. To do so, modify the token from the request with additional information about the service making a request.
+
+{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-on-behalf-of.png" alt="Diagram of on behalf of request." class="img-fluid" figure=false %}
 
 For example, in the todos application, one feature would be todo sharing: Alice might share a todo with Bob. In this case, when Bob requests his shared todos, the share microservice will need to call the todo service. But the request must include information specifying it is doing so on behalf of Bob, not itself. 
 
