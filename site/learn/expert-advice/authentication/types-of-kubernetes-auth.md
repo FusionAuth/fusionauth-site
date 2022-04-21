@@ -9,31 +9,25 @@ date: 2022-04-19
 dateModified: 2022-04-19
 ---
 
-When considering auth inside your Kubernetes cluster, it's good to think of three different layers.
+When considering auth inside your Kubernetes cluster, it's good to think of three different types. Each has different needs and requirements and implementation choices.
 
-IMAGE
-
-Each of these layers has different needs and requirements and implementation choices.
-
-The first is the infrastructure layer. The second is the service-to-service layer. And the third is the request/response layer.
-
-Let's look at each in turn.
+The first is infrastructure. The second is service-to-service. And the third is authentication and authorization on a given request. Let's look at each in turn.
 
 ## Infrastructure
 
-This is the control plane layer. This determines who can do what to your Kubernetes cluster. This cincludes such tasks as:
+This is the control plane layer. This determines who can do what to your Kubernetes cluster. This includes such tasks as:
 
 * updating a deployment
 * deleting a node
 * adding a secret
 
-This is the kind of authentication discussed in [the Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/). As outlined there:
+This is the authentication and authorization discussed in [the Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/).
+
+As outlined there:
 
 > API requests are tied to either a normal user or a service account, or are treated as anonymous requests. This means every process inside or outside the cluster, from a human user typing kubectl on a workstation, to kubelets on nodes, to members of the control plane, must authenticate when making requests to the API server, or be treated as an anonymous user.
 
-So any API request that needs to read from, add to, or modify Kubernetes configuration must be authenticated (unless the request is available to anonymous users).
-
-The Kubernetes documentation outlines all supported options for both service accounts and user accounts, so this article won't cover them in detail.
+So any API request that needs to read from, add to, or modify Kubernetes configuration must be authenticated (unless the request is available to anonymous users). The Kubernetes documentation outlines all supported options for both service accounts and user accounts, so this article won't cover them in detail.
 
 A wide variety of options are supported, including
 
@@ -42,41 +36,49 @@ A wide variety of options are supported, including
 * Client certificates
 * Webhooks which receive a token and can validate access
 
-There's also an impersonation option, which allows users to "take on" the identity of other users to test access.
+There's also an impersonation option, which allows users to "take on" the identity of other users, to test access or otherwise troubleshoot.
 
-Once these users are authenticated information about them, such as username, group, and resources requested is made available to [Kubernetes authorizers](https://kubernetes.io/docs/reference/access-authn-authz/authorization/). These are again well documented, but support the following methods of determining access:
+Once users are authenticated, information about them, such as username, group, and resources requested, is available to [Kubernetes authorizers](https://kubernetes.io/docs/reference/access-authn-authz/authorization/). These are again well documented, but support the following methods of determining access to partcular resources:
 
-* ABAC: policies are combined and evaluated
-* RBAC: roles associated with the user control
-* Webhooks, which fire to a known destination; the response is what decides access
+* ABAC: where policies are combined and evaluated
+* RBAC: where roles associated with the user control access
+* Webhooks, which fire to a known destination; the response is what determines access
 
-If relying on external sources to determine your access, such as an OIDC server or webhooks, ensure you have an escape hatch which doesn't depend on that external source to modify the configuration of your cluster. 
+If relying on external sources to determine user resource access, such as an OIDC server or webhooks, you'll want to make sure you have another means of authentication independent of that external source. This allows you to modify the configuration of your cluster when those external resources are unavailable. 
 
 ## Application Auth
 
-When you have containers running in pods on Kubernetes, there are levels of authentication entirely above the infrastructure level outlined in the previous section. 
+When you have containers running on Kubernetes, there are another two types of authentication entirely different from infrastructure outlined above.
 
-IMAGE
+{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-diagram.png" alt="Diagram of todo application in kubernetes." class="img-fluid" figure=false %}
 
-For instance, if you are running the todo application diagrammed above, you must ensure that Alice has access to Alice's todos and Bob has access to Bob's todos. But this authentication and authorization decision making happens at the level of the todos application and has nothing to do with the nodes and Kubernetes API access.
+For instance, if you are running a todo application like the one diagrammed above, you need to make sure a user Alice has access to Alice's todos and a user Bob has access to Bob's todos, but neither Alice nor Bob should have access to the other's data.
 
-There are two common types of authentication at the application level:
+This authentication and authorization happens within the todos application and it has nothing to do with the access decisions around nodes and Kubernetes API.
 
-* mutual TLS
-* token based authentication
+There are two common types of authentication within the application:
 
-## Mutual TLS
+* service to service communication
+* user initiated requests
 
-Mutual TLS is based on the idea of client certificates. Suppose the reminders service needs to request information from the todos service to send a notice for every user with a todo due date in the next 24 hours. You'll want to ensure two things:
+## Service to Service Communication
+
+You want to lock down communication between the constituent parts of your application. You have a few options, but a choice is mutual TLS. Mutual TLS uses in client x.509 certificates and the TLS protocol to authenticate and authorize different parts of your system. 
+ 
+Consider the application below.
+
+{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-diagram.png" alt="Diagram of todo application in kubernetes." class="img-fluid" figure=false %}
+
+Suppose the reminders service needs information from the todos service. There's a new feature being built. The reminders service will send an email to every user who has a todo with a due date falling in the next 24 hours. Therefore the reminders service needs to query the todos service.
+
+When building this feature, you'll want to ensure:
 
 * that the reminders service can access the data it needs
 * that the todos service isn't open to any unauthorized access
 
-Because it is the reminders service that is making the request, mutual TLS is a good solution. Each service can have a certificate and they can mutually verify them.
+Because the reminders service is making the request, mutual TLS is a good solution. Each service can have a certificate and they can mutually verify them. This can be done manually, but a far simpler solution is to use a service mesh such as Istio or Linkerd, because they'll take care of the certificate provisioning, the ambassador pods in between your services and the renewals.
 
-This can be done manually, but a far simpler solution is to use a service mesh such as Istio or Linkerd.
-
-If you are using Istio, you can enable strict mutual TLS authentication using this configuration:
+If you are using Istio, enable strict mutual TLS authentication using this configuration:
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -98,7 +100,7 @@ You can read more about [mutual TLS authentication in Istio](https://istio.io/la
 
 Since every service in Istio is transparently associated with a client certificate, once mutual TLS is enabled, you can enforce authorization rules. 
 
-In the application above, one such rule is that that the reminder service can call the todos service, but not the reverse. Here's an example:
+Contining with the example above, the reminder service can call the todos service, but not the reverse. Here's an example configuration. The first enables the reminders service to call the todos service, but only with the `GET` HTTP method:
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -119,7 +121,8 @@ spec:
     - operation:
         methods: ["GET"]
 ```
-TODO test
+
+And the following policy denies the todos service access to the reminders service.
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -138,9 +141,9 @@ spec:
         principals: ["cluster.local/ns/default/sa/todos"]
 ```
 
-This setup will enforce service level separation.
+This setup provides service level authentication and enforces access control.
 
-Again, you don't have to use a service mesh for this kind of authentication. You could provide every service with a unique static identifier which was rotated regularly (an API key) and implement the exact same type of service to service authentication. You could also use the OAuth client credentials grant and treat each service or endpoint as a separate resource.
+However, you don't have to use a service mesh for service to service communication. You could provide every service with a unique static identifier which was rotated regularly (an API key) and implement the exact same type of service to service authentication. You could also use the OAuth client credentials grant and treat each service or endpoint as a separate resource.
 
 There are many ways to solve this issue, but at the root, each recognizes the service as the requesting entity.
 
@@ -148,9 +151,11 @@ However, what happens when user is involved? Let's look at that next.
 
 ## Auth for Requests
 
-When a request for a todo comes in, it is associated, as mentioned above, with a particular user such as Alice or Bob. This is an additional layer of authentication and authorization data that client certificates or the other methods mentioned previously can't help with. In this case you want to reach for tokens.
+{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-diagram.png" alt="Diagram of todo application in kubernetes." class="img-fluid" figure=false %}
 
-Tokens are typically provided by the requesting client and are the result of something like an OAuth grant. They are very often JSON Web Tokens and contain a payload which looks like this:
+When a request for a todo comes in, it is associated, as mentioned above, with a particular user such as Alice or Bob. This is an additional layer of authentication and authorization which client certificates or the other methods mentioned previously can't help with. In this case you want to reach for tokens. 
+
+Tokens are typically provided by the requesting client and are the result of something like an OAuth grant. They are very often JSON Web Tokens and contain a payload which looks similar to this:
 
 ```json
 { 
@@ -170,18 +175,24 @@ Tokens are typically provided by the requesting client and are the result of som
 }
 ```
 
-Again, depending on your implementation, you may be able to configure a service mesh to examine claims in the token, such as the `roles` claim. You can also use an ambassador container to examine these claims, or do so inside your microservices. These options are discussed in more detail in [TODO link to tokens for k8s post](TODO).
+Again, depending on your implementation, you may be able to configure a service mesh to examine claims in the token, such as the `roles` or `sub` claims. The former controls what roles a user has, while the latter is the identifier for a user. You can also use an ambassador container to examine these claims, or do so inside your microservices.
 
-However, there may be cases where you want to modify a token that comes in from a request and specify that a request is coming from both a given service and a user request. For example, in the todos application, a user might be able to share a todo. Alice might share a todo with Bob. In this case, when Bob requests his shared todos, the shares microservice will need to call the todos service but make sure it is clear that it is doing so on behalf of Bob, not itself. 
+These options are discussed in more detail in [this article about tokens](/learn/expert-advice/tokens/tokens-microservices-boundaries). What's important is that the auth information is included in the token, and can be shared between the various services to ensure they only offer up data or functionality that is appropriate for this user.
 
-This can either be done via a [standardized OAuth grant](https://datatracker.ietf.org/doc/html/rfc8693/), if your identity provider supports it, or by otherwise passing the identity of the requester through via a token. 
+### On Behalf Of Requests
+
+However, there may be cases where you want to modify a token that comes in from a request to show that the request is coming from both a given service and a user request.
+
+For example, in the todos application, one feature would be todo sharing: Alice might share a todo with Bob. In this case, when Bob requests his shared todos, the shares microservice will need to call the todos service. But the request must include information specifying it is doing so on behalf of Bob, not itself. 
+
+This can either be done via a [standardized OAuth grant](https://datatracker.ietf.org/doc/html/rfc8693/), if your identity provider supports it. You could re-mint the token or have a secondary layer of authentication by passing the token as well as an identifier of the shares service.
 
 ## Conclusion
 
-This article covered three different layers of Kubernetes authentication:
+This article covered three different types of Kubernetes auth, each protecting a different resource or method of communication:
 
-* the infrastructure layer
-* the service-to-service layer
-* the request/response layer
+* infrastructure 
+* service-to-service
+* request/response
 
 Each of these is important in ensuring that your application is appropriately secured.
