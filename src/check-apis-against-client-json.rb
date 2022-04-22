@@ -104,9 +104,14 @@ def make_api_path(type)
     return base + type
   end
 
+  if type == "identity-provider-link"
+    return base + "identity-providers/links"
+  end
+
   if type == "generic-connector-configuration"
     return base + "connectors/generic"
   end
+
   if type == "family"
     return base + "families"
   end
@@ -193,7 +198,10 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double", "EventType", "SortedSet" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
-  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method"]
+  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method", "event.identityProviderLink"]
+
+  # these are enums represented as strings in the API, but enums in java. We should still see them on the page
+  enums = ["lambda.type", "lambda.engineType"]
 
   if options[:verbose]
     puts "opening: "+fn
@@ -230,6 +238,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     page_content = open_url(api_url)
     unless page_content
       puts "Could not retrieve: " + api_url
+
       exit(false)
     end
   end
@@ -274,7 +283,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
           missing_fields.append({original_examined_type: t, full_field_name: full_field_name, type: field_type})
         end
       end
-    elsif nested_attributes.include? full_field_name
+    elsif enums.include? full_field_name or nested_attributes.include? full_field_name
       if options[:verbose]
         puts "not traversing #{full_field_name}, but checking if it is in the content"
       end

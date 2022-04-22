@@ -6,6 +6,7 @@ var indexPages = {
   '/docs/v1/tech/': true,
   '/docs/v1/tech/account-management/': true,
   '/docs/v1/tech/admin-guide/': true,
+  '/docs/v1/tech/advanced-threat-detection/': true,
   '/docs/v1/tech/apis/': true,
   '/docs/v1/tech/apis/connectors/': true,
   '/docs/v1/tech/apis/entity-management/': true,
@@ -46,6 +47,7 @@ var indexPages = {
   '/learn/expert-advice/tokens/': true
 };
 var redirects = {
+  '/blog': '/blog/',
   '/docs': '/docs/',
   '/docs/v1/tech/apis/consent': '/docs/v1/tech/apis/consents',
   '/docs/v1/tech/common-errors': '/docs/v1/tech/admin-guide/troubleshooting',
@@ -57,6 +59,8 @@ var redirects = {
   '/docs/v1/tech/guides/migration': '/docs/v1/tech/migration-guide/general',
   '/docs/v1/tech/plugins/password-encryptors': '/docs/v1/tech/plugins/custom-password-hashing',
   '/docs/v1/tech/reference/password-encryptors': '/docs/v1/tech/reference/password-hashes',
+  '/docs/v1/tech/reactor': '/docs/v1/tech/core-concepts/licensing-features',
+  '/docs/v1/tech/reactor/': '/docs/v1/tech/core-concepts/licensing-features',
   '/docs/v1/tech/troubleshooting': '/docs/v1/tech/admin-guide/troubleshooting',
   '/docs/v1/tech/tutorials/gate-accounts-until-verified': '/docs/v1/tech/tutorials/gating/gate-accounts-until-user-email-verified',
   '/docs/v1/tech/tutorials/migrate-users': '/docs/v1/tech/migration-guide/tutorial',
@@ -82,7 +86,9 @@ var redirects = {
   '/learn/expert-advice/identity-basics/value-standards-compliant-authentication': '/learn/expert-advice/oauth/value-standards-compliant-authentication',
   '/podcast': '/',
   '/pricing/cloud/': '/pricing',
+  '/pricing/edition': '/pricing',
   '/pricing/edition/': '/pricing',
+  '/pricing/editions': '/pricing',
   '/pricing/editions/': '/pricing',
   '/resources/auth0-migration': '/auth0-migration',
   '/resources/guide-to-user-data-security': '/learn/expert-advice/security/guide-to-user-data-security',
