@@ -114,7 +114,7 @@ Once you have entered these details and saved them, do as the repo’s ReadMe pr
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/example-application.png" alt="Example Application." class="img-fluid" figure=true %}
 
-Click the "sign in" button, which will take you to your FusionAuth instance’s login screen, complete with a shiny new "Sign in with Discord"” button. Click this button, and you will be prompted to authorize through Discord.
+Click the "sign in" button, which will take you to your FusionAuth instance’s login screen, complete with a shiny new "Sign in with Discord" button. Click this button, and you will be prompted to authorize through Discord.
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/discord-authorization-prompt.png" alt="Discord authorization prompt." class="img-fluid" figure=true %}
 
