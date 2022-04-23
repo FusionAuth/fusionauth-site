@@ -43,45 +43,65 @@ docker-compose up
 
 Next, it's time to configure FusionAuth. If this is your first time logging in to your FusionAuth instance, you need to register an account. Just enter your name, email, password, and click "Submit". There's also [a tutorial about setting up an instance the first time](/docs/v1/tech/tutorials/setup-wizard).
 
-You can also use this [sample kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/drupal-sso.json) to set up everything if you don't want to do these steps manually. Make sure to review the kickstart file and update the authorized redirect URLs, at a minimum. Learn more about [Kickstart here](/docs/v1/tech/installation-guide/kickstart).
+You can also use this [sample kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/example-apps/discord-sso.json) to set up everything if you don't want to do these steps manually. Make sure to review the kickstart file and update the authorized redirect URLs, at a minimum. Learn more about [Kickstart here](/docs/v1/tech/installation-guide/kickstart).
 
 Once you’ve created your administrator account, you need to create a new application. Navigate to "Applications" in the sidebar, and click the Plus button at the top of the screen.
 
-{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/application-details.png" alt="Application details." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/application-creation.png" alt="Application creation screen." class="img-fluid" figure=true %}
 
-TODO stopped here
+You can leave the “Id” field blank, and it will generate a new universally unique identifier (UUID) for you. Give the application an appropriate name, and then move to the OAuth tab. For this tutorial, change the Client Authentication field to "Not required when using PKCE," and the PKCE field to "Not required when using client authentication."
 
-You can leave the “Id” field blank, and it will generate a new universally unique identifier (UUID) for you. Give the application an appropriate name, and then move to the OAuth tab. For this tutorial, change the Client Authentication field to “Not required when using PKCE,” and the PKCE field to “Not required when using client authentication.”
+Add an Authorized Redirect URL with a value of `http://localhost:9000/oauth-callback`, and set the logout URL as `http://localhost:8080`. These two URLs will resolve to the sample application, which you will configure shortly. 
 
-Add an Authorized Redirect URL with a value of `http://localhost:9000/oauth-callback`, and set the logout URL as `http://localhost:8080`. These two URLs will resolve to the sample application, which you will configure shortly. Save your changes, and note the Id of the newly created application. Select the view icon to go back into your FusionAuth Application, and make a note of the Client Id and Secret. Be sure to label them so you don’t get them mixed up with the Discord Client Id and Secret.
+Save your changes, then click the View icon (the magnifying glass) from the list of applications. This will pull up the details screen. Make a note of the Client Id and Secret. Be sure to label them so you don’t get them mixed up with the Discord Client Id and Secret.
 
-Navigate to "Settings > Identity Providers". This is where you’ll configure the actual Discord Identity Provider. Click the dropdown menu at the top and select "Add OpenID Connect".
+{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/application-view.png" alt="Application details view screen." class="img-fluid" figure=true %}
 
-{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/add-openid-connect.png" alt="Add OpenID Connect." class="img-fluid" figure=true %}
+Navigate to "Settings" and then to "Identity Providers". This is where you’ll configure the actual Discord Identity Provider. Click the dropdown menu at the top and select "Add OpenID Connect".
+
+{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/add-openid-connect.png" alt="Add the OpenID Connect Identity Provider." class="img-fluid" figure=true %}
 
 This will take you to another page where you can enter the settings for the Discord application you created previously.
 
-{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/id-provider-details.png" alt="Identity Provider details." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/id-provider-details.png" alt="Discord Identity Provider details." class="img-fluid" figure=true %}
 
-Give the Identity Provider a meaningful name (like “Discord”), enter the Client Id and Secret from your Discord application, and set the “Client authentication” to “Request body (client_secret_post).” 
+Give the Identity Provider a meaningful name (like "Discord"), enter the Client Id and Secret from your Discord application, and set the "Client authentication" to `Request body (client_secret_post).” 
 
 Next, configure endpoints, which tell FusionAuth how to communicate with Discord during the authentication process. It’s important to set all three endpoints here correctly, otherwise the integration will not work properly. These endpoints have been known to change in the past; however, at the time of writing (February 2022), the values are:
 
-- Authorization endpoint: https://discord.com/api/oauth2/authorize
-- Token endpoint: https://discord.com/api/oauth2/token
-- Userinfo endpoint: https://discord.com/api/users/@me (Note: make sure you use `@me` and not your Discord username here)
+- "Authorization endpoint": `https://discord.com/api/oauth2/authorize`
+- "Token endpoint": `https://discord.com/api/oauth2/token`
+- "Userinfo endpoint": `https://discord.com/api/users/@me` (Note: make sure you use `@me` and not your Discord username here)
 
-If you have trouble with these settings, be sure to refer to the [official Discord documentation](https://discord.com/developers/docs/topics/oauth2). Again, these URLS have changed in the past, and may change again in the future.
+{% include _callout-tip.liquid content="If you have trouble with these settings, be sure to refer to the [official Discord documentation](https://discord.com/developers/docs/topics/oauth2). Again, these URLS have changed in the past, and may change again in the future." %}
 
-You also need to change the value of “Scope” to “identify email,” and update “Button text” to “Log In with Discord” as well. The button text is a cosmetic, not functional, change. Next, make sure this Identity Provider is enabled for the FusionAuth application you created previously. You should be able to see your application listed at the bottom of the screen, alongside the default “FusionAuth” application, and you can enable it here. Finally, go to the “Options” tab, and update the “Unique Id claim” from “sub” to “id.” You can now save your Identity Provider.
+You also need to change the value of "Scope" to `identify email` and update "Button text" to "Log In with Discord". The button text is a cosmetic, not functional, change.
 
-The last thing you need to do in the FusionAuth admin panel is to create an API key for the sample application. To do this, navigate to Settings > API Keys, and click the "Plus" button at the top. Leave the Id blank, and make a note of the Key value, then click the save button.
+{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/id-provider-details-enabling-application.png" alt="Enabling the Discord Identity Provider for the demo app." class="img-fluid" figure=true %}
+
+Next, make sure this Identity Provider is enabled for the FusionAuth application you created previously. You should be able to see your application listed at the bottom of the screen, alongside the default FusionAuth application. Enable the Discord Identity Provider for this application.
+
+{% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/id-provider-details-update-unique-id-claim.png" alt="Configuring the Unique Id claim." class="img-fluid" figure=true %}
+
+Finally, go to the "Options" tab, and update the "Unique Id claim" from `sub` to `id`.
+
+Whew. You can now save your Identity Provider.
+
+The last thing you need to do in the FusionAuth admin panel is to create an API key for the sample application.
+
+To do this, navigate to "Settings" then "API Keys", and click the "Plus" button at the top.
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/add-api-key.png" alt="Add API Key." class="img-fluid" figure=true %}
 
-Your FusionAuth instance is now configured to work with Discord. To see it in action, you can configure a simple application that will allow you to log in using this new Identity Provider.
+Leave the Id blank, and make a note of the Key value, then click the save button. Note that this creates a key with unlimited privileges. While that is fine for a demo application, limit the permissions for a production application.
 
-Rather than building one from scratch, you can make use of an existing public repo by the FusionAuth team, [FusionAuth Example: React](https://github.com/FusionAuth/fusionauth-example-react).
+Your FusionAuth instance is now configured to work with Discord.
+
+## Setting up the application
+
+While you spent a lot of time configuring FusionAuth and Discord, there has to be an application for the user to actually log in to! This could be a todo application, a recipe app or a video game application, whatever you're building that you want to add Discord login to.
+
+For this demo, to see the Discord login in action, configure a simple application that will allow you to log in using this new Identity Provider. Rather than building one from scratch, you can make use of an existing public repo by the FusionAuth team, [FusionAuth Example: React](https://github.com/FusionAuth/fusionauth-example-react).
 
 Clone this repo to your machine, and navigate to the `config.js` file located in the root directory of the project. Enter your details from when you set up your FusionAuth instance in the following fields:
 
@@ -98,9 +118,20 @@ Click the "sign in" button, which will take you to your FusionAuth instance’s 
 
 {% include _image.liquid src="/assets/img/blogs/single-sign-on-discord/discord-authorization-prompt.png" alt="Discord authorization prompt." class="img-fluid" figure=true %}
 
-After clicking "Authorize", you’ll be taken back to the FusionAuth Example Application, where you’ll be presented with a response object containing your user data from Discord. If you see this, you have successfully authenticated with FusionAuth via Discord.
+After clicking "Authorize", you’ll be taken back to the FusionAuth Example Application, where you’ll be presented with a response object containing your user data from Discord.
 
-## Wrapping Up
+If you see this, you have successfully authenticated with FusionAuth via Discord. Ta-da!
 
-If you’ve followed along, you should now have a FusionAuth instance configured to authenticate with Discord. As you would have seen during the configuration process, there are plenty more identity providers, and even more configuration options to choose from. Embrace the ways of SSO, and never worry about adding authentication to a project again.
+## Wrapping up
 
+If you’ve followed along, you should now have a FusionAuth instance configured to authenticate with Discord. As you would have seen during the configuration process, there are plenty more identity providers, and even more configuration options to choose from.
+
+Embrace the ways of SSO, and never worry about adding authentication to a project again.
+
+## Take it further
+
+Some areas that you may want explore:
+
+- Adding logins to other providers, such as Google or Facebook.
+- Exploring roles and self-registration. Have the React app get information about the roles and offer different functionality for different roles.
+- Install a [different example application](/docs/v1/tech/example-apps/) and set up Discord login for that application. Then you can SSO between both of them. For more, read the [SSO guide](/docs/v1/tech/guides/single-sign-on).
