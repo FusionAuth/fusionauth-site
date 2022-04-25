@@ -12,6 +12,7 @@ var indexPages = {
   '/docs/v1/tech/apis/entity-management/': true,
   '/docs/v1/tech/apis/identity-providers/': true,
   '/docs/v1/tech/apis/messengers/': true,
+  '/docs/v1/tech/apis/scim/': true,
   '/docs/v1/tech/client-libraries/': true,
   '/docs/v1/tech/connectors/': true,
   '/docs/v1/tech/core-concepts/': true,
