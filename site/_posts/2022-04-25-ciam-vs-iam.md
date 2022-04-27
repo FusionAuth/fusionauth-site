@@ -26,7 +26,7 @@ IAM is primarily for managing employee identities. There are a number of large v
 * the users can be forced to conform to password policies and other security requirements (what are they going to do, quit?)
 * eventually people leave and can be offboarded
 
-IAM is also working in a heterogeonous environment. There will be multiple silos of user data as well as protocols used to convey identity information. LDAP is still alive and well in many companies. I talked to a company once who had rolled up a bunch of hospitals and maintained a number of different directories for years while the integration occurred. 
+IAM is also working in a heterogeonous environment. There will be multiple silos of user data as well as protocols used to convey identity information. LDAP is still alive and well in many companies. I talked to a company once who had rolled up a bunch of hospitals and maintained a number of different directories for years while the integration occurred. There also may be complicated federation between silos of user data, including using standards like SAML.
 
 There are also other entities that may need identity managed by an IAM solution, such as contractors or partners. The common theme is that:
 
@@ -44,15 +44,18 @@ First, customers are, well, customers. They are paying you money by buying a goo
 * localization in their language
 * consumer grade user experience
 * performance like Google, which is what users expect
+* if you offer identity federation, it will often be to a social provider like Facebook or Google
 
-Another difference is that there may be a much larger number of users. Each company in the Fortune 500 has an average of 57,400 employees [as of 2019](https://fortune.com/fortune500/2019/), but the number of customers can be many multiples of the number of employees. As an extreme case, Google had 135,000 employees in 2021, but [in 2022 were estimated](https://www.semrush.com/blog/google-search-statistics/) to have 246 million unique users in the US alone. (Sorry for the switching of years, Fortune didn't make the stats easy to find.) XXX?
+Another difference is that there may be a much larger number of users. Each company in the Fortune 500 has an average of 57,400 employees [as of 2019](https://fortune.com/fortune500/2019/), but the number of customers can be many multiples of the number of employees. As an extreme case, Google had 135,000 employees in 2021, but [in 2022 were estimated](https://www.semrush.com/blog/google-search-statistics/) to have 246 million unique users in the US alone. (Sorry for the switching of years, Fortune didn't make the stats easy to find.) XXX? And these customers may not interact with your organization every day. Your employees will.
 
 This has a couple of ramifications for any implementation:
 
 * You will need to plan for much bigger scale and will need higher per-user efficiency.
 * On the other hand, plan for some, possibly a majority of, users to be inactive in any given month.
 * Many IAM solutions charge dollars/user. For CIAM, you'll want to pay orders of magnitudes less per user.
-* You'll want to enable self-service for common account actions, such as registration and credentials management (enabling MFA, resetting a password).
+* You'll want to enable self-service for common account actions, such as registration and credentials management (enabling MFA, resetting a password). Otherwise the customer service load will explode.
+
+Additionally, other departments, including revenue generating ones like marketing and sales, will want access to your CIAM system. This means that any system you use should have the ability to push data into other systems, preferably in real time, that can be used to augment different customer views.
 
 Thankfully, the complexity of permissions tends to be lower with CIAM solutions. While there may still be several types of users, you likely won't have complex cross cutting hierarchies like you will with IAM (team/department/organization/division). Users may have different attributes, but it's unlikely you'll have a thicket of permissions and a huge number of applications to control access to, in contrast with IAM.
 
