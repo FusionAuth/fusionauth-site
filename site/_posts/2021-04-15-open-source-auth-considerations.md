@@ -14,7 +14,7 @@ Open-source authentication providers are popular because anyone can review much 
 
 But while open-source providers do have some benefits over proprietary authentication providers, there are some downsides as well.
 
-_This blog post is an excerpt from [Open Source vs Commercial Auth Providers](/learn/expert-advice/identity-basics/open-source-vs-commercial/)._
+_This blog post is an excerpt from [Open Source vs Commercial Auth Providers](/learn/expert-advice/identity-basics/open-source-vs-commercial)._
 
 ### Support
 
@@ -64,4 +64,4 @@ The caveat to that price tag is that you generally also have to run this softwar
 
 While this price tag is attractive, it's important not to forget that open-source providers come with added maintenance and security responsibility when compared to proprietary solutions, as we've already discussed.
 
-To learn about pros and cons of open-source and commercial auth providers, read [Open Source vs Commercial Auth Providers](/learn/expert-advice/identity-basics/open-source-vs-commercial/).
+To learn about pros and cons of open-source and commercial auth providers, read [Open Source vs Commercial Auth Providers](/learn/expert-advice/identity-basics/open-source-vs-commercial).

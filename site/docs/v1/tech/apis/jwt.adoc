@@ -10,12 +10,12 @@ JSON Web Tokens (JWTs) are portable identity tokens. A JWT is issued after compl
 
 * <<Issue a JWT>>
 * <<Reconcile a JWT>>
-* <<Refresh a JWT>>
-* <<Validate a JWT>>
-* <<Vend a JWT>>
 * <<Retrieve Public Keys>>
+* <<Refresh a JWT>>
 * <<Retrieve Refresh Tokens>>
 * <<Revoke Refresh Tokens>>
+* <<Validate a JWT>>
+* <<Vend a JWT>>
 
 Here's a presentation discussing how to use JWTs in a microservices architecture:
 
@@ -66,7 +66,7 @@ include::docs/src/requests/jwt/issue-get-request.http[]
 
 === Response
 
-:authorization_message: You did not supply a valid Authorization header, the header was omitted or your access token is expired. The response will be empty. See link:/docs/v1/tech/apis/authentication/[Authentication].
+:authorization_message: You did not supply a valid Authorization header, the header was omitted or your access token is expired. The response will be empty. See link:/docs/v1/tech/apis/authentication[Authentication].
 :not_registered:
 :never_missing:
 :no_errors:
@@ -93,6 +93,7 @@ include::docs/src/json/jwt/issue-get-response.json[]
 ----
 
 == Reconcile a JWT
+
 The Reconcile API is used to take a JWT issued by a third party identity provider as described by an link:/docs/v1/tech/apis/identity-providers/[Identity Provider]
 configuration and reconcile the User represented by the JWT to FusionAuth.
 
@@ -130,7 +131,7 @@ The response for this API contains the User object.
 |The reconcile was successful. The response will contain the User object that was authenticated.
 
 |400
-|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors/[Errors] JSON Object with the specific errors.
+|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors[Errors] JSON Object with the specific errors.
 
 |401
 |The request cannot be completed. The `identityProviderId` is invalid, the JWT signature cannot be validated, the JWT does not contain a claim
@@ -355,16 +356,6 @@ The Id of the user to retrieve issued Refresh Tokens.
 
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
-[.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Retrieve Refresh Tokens issued to a User
-[.endpoint]
-.URI
---
-[method]#GET# [uri]#/api/jwt/refresh#
---
-
-include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
-
 === Response
 
 :no_errors:
@@ -388,36 +379,39 @@ A unique device identifier to represent the device for which this Refresh Token 
 [deprecated]#Removed in version 1.5.0# This parameter will no longer be returned in the response body.
 
 [field]#refreshTokens``[x]``.insertInstant# [type]#[Long]#::
-The link:/docs/v1/tech/reference/data-types/#instants[instant] this Refresh Token was issued.
+The link:/docs/v1/tech/reference/data-types#instants[instant] this Refresh Token was issued.
+
+[field]#refreshTokens``[x]``.id# [type]#[Long]#::
+The Id of the Refresh Token.
 
 [field]#refreshTokens``[x]``.metaData.device.description# [type]#[String]#::
-A description of the device. For example, `iPhone 6S 32GB Work Phone`.
+A description of the device. For example, `Hooli Phone 8GB Work Phone`.
 
 [field]#refreshTokens``[x]``.metaData.device.lastAccessedAddress# [type]#[String]#::
 The IP address of the device when this Refresh Token was last used.
 
+[field]#refreshTokens``[x]``.metaData.device.lastAccessedInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] this Refresh Token was last used.
+
 [field]#refreshTokens``[x]``.metaData.device.name# [type]#[String]#::
-The name of the device, for example `Mary's iPhone`.
+The name of the device, for example `Richard's Hooli Phone`.
 
 [field]#refreshTokens``[x]``.metaData.device.type# [type]#[String]#::
 The type of device represented by the `device` parameter. The following are possible types:
 +
-* `BROWSER`
-* `DESKTOP`
-* `LAPTOP`
-* `MOBILE`
-* `OTHER`
-* `SERVER`
-* `TABLET`
-* `TV`
-* `UNKNOWN`
+include::docs/v1/tech/apis/_device-type-list.adoc[]
+
+[field]#refreshTokens``[x]``.metaData.scopes# [type]#[Array<String>]#::
+The scopes associated with this Refresh Token. These are set at authentication when when the Refresh Token is first created.
+
+[field]#refreshTokens``[x]``.startInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] of the start of this Refresh Token. This value will be used to calculate token expiration.
 
 [field]#refreshTokens``[x]``.token# [type]#[String]#::
 The string representation of the encoded Refresh Token. This value should be kept in some sort of secure storage and treated as sensitive information.
 
 [field]#refreshTokens``[x]``.userId# [type]#[UUID]#::
 The User Id of the user for which this Refresh Token was issued.
-
 
 [source,json]
 .Example Response JSON
@@ -464,14 +458,39 @@ The Id of the user to revoke issued Refresh Tokens.
 include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Revoke a single Refresh Token by Id
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Revoke all Refresh Tokens issued to a User for an Application
+[.endpoint]
+.URI
+--
+[method]#DELETE# [uri]#/api/jwt/refresh``?applicationId=\{applicationId\}&userId=\{userId\}``#
+--
+
+[NOTE.since]
+====
+Available Since Version 1.19.0
+====
+
+
+==== Request Parameters
+
+[.api]
+[field]#applicationId# [type]#[UUID]# [required]#Required#::
+The Id of the application.
+
+[field]#userId# [type]#[UUID]# [required]#Required#::
+The Id of the user.
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Revoke a single Refresh Token by Id
 [.endpoint]
 .URI
 --
 [method]#DELETE# [uri]#/api/jwt/refresh/``\{tokenId\}``#
 --
 
-This API may be authenticated using a JWT. If using JWT authentication, the JWT owner and token owner must match. See link:/docs/v1/tech/apis/authentication/[Authentication] for examples of authenticating using a JWT. 
+This API may be authenticated using a JWT or an API key. If using JWT authentication, the JWT owner and token owner must match. See link:/docs/v1/tech/apis/authentication[Authentication] for examples of authenticating using a JWT. 
 
 ==== Request Parameters
 
@@ -482,14 +501,14 @@ The Id of the refresh token to be revoked.
 When deleting a single token, using this parameter is recommended. Using this parameter does not expose the refresh token.
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Revoke a single Refresh Token by value
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Revoke a single Refresh Token by value
 [.endpoint]
 .URI
 --
 [method]#DELETE# [uri]#/api/jwt/refresh``?token=\{token\}``#
 --
 
-This API may be authenticated using a JWT. If using JWT authentication, the JWT owner and token owner must match. See link:/docs/v1/tech/apis/authentication/[Authentication] for examples of authenticating using a JWT. 
+This API may be authenticated using a JWT or an API key. If using JWT authentication, the JWT owner and token owner must match. See link:/docs/v1/tech/apis/authentication[Authentication] for examples of authenticating using a JWT. 
 
 ==== Request Parameters
 
@@ -537,7 +556,7 @@ The encoded JWT to validate sent in on the Authorization request header.
 +
 The header is expected be in the following form: `Authorization: Bearer <encoded_access_token>`.
 +
-See link:/docs/v1/tech/apis/authentication/[Authentication] for additional examples.
+See link:/docs/v1/tech/apis/authentication[Authentication] for additional examples.
 
 ==== Request Cookies
 
@@ -575,6 +594,10 @@ include::docs/src/json/jwt/validate-response.json[]
 == Vend a JWT
 
 This API is used to create a free-form access token (JWT) with claims defined by the caller. The only "reserved" claims that cannot be specified are `exp` and `iat`. The `iat` claim is the issued at time of the JWT and the `exp` is the expiration time of the JWT as computed by adding to the `iat` value either the user passed [field]#timeToLiveInSeconds# or the tenant JWT [field]#timeToLiveInSeconds#. If a reserved claim is passed into the [field]#claims# object, it will be ignored.
+
+Here's a video showing how to use this feature.
+
+video::Kd6l5NPd_L0[youtube,width=560,height=315]
 
 === Request
 

@@ -10,10 +10,10 @@ description: Search options within FusionAuth
 
 FusionAuth ships with two options for search: a simple search via the database search engine and the Elasticsearch database engine.
 
-== Using the Search Engine
-
+* <<Configuration>>
 * <<Using the Database Search Engine>>
 * <<Using the Elasticsearch Search Engine>>
+* <<Pagination>>
 
 == Configuration
 
@@ -28,14 +28,14 @@ By selecting the appropriate link:/docs/v1/tech/installation-guide/[installation
 
 === Configuration Reference
 
-The relevant properties which control the configuration of the search engine include `search.type` which specifies the search engine type. For the database search engine, there is no other configuration needed. All other settings referencing `search` apply to the Elasticsearch search engine only. Please see the link:/docs/v1/tech/reference/configuration/[Configuration Reference] for more details.
+The relevant properties which control the configuration of the search engine include `search.type` which specifies the search engine type. For the database search engine, there is no other configuration needed. All other settings referencing `search` apply to the Elasticsearch search engine only. Please see the link:/docs/v1/tech/reference/configuration[Configuration Reference] for more details.
 
 ==== Switch Engine Types
 
-You may link:/docs/v1/tech/tutorials/switch-search-engines/[switch between the different search engines].
+You may link:/docs/v1/tech/tutorials/switch-search-engines[switch between the different search engines].
 
 ==== Docker
-If you are running FusionAuth in a Docker environment, see the link:/docs/v1/tech/installation-guide/docker/[Using FusionAuth on Docker] documentation for an example configuring Elasticsearch as the user search engine.
+If you are running FusionAuth in a Docker environment, see the link:/docs/v1/tech/installation-guide/docker[Using FusionAuth on Docker] documentation for an example configuring Elasticsearch as the user search engine.
 
 
 ==== View Current Configuration
@@ -84,3 +84,33 @@ Optionally, you can also reindex via API.
 
 - link:/docs/v1/tech/apis/system#rebuild-the-elasticsearch-index[Rebuild Index API]
 - link:/docs/v1/tech/apis/system#retrieve-the-status-of-an-index-rebuild[Index Status API]
+
+== Pagination
+
+Whichever search engine you are using, you will likely need to paginate the results when running a query that matches many users or entities. Use the `numberOfResults` and `startRow` parameters to do so.
+
+[source,javascript,title="Pagination pseudocode to retrieve search results"]
+----
+
+// this is pseudo code and won't work out of the box
+// adapt for whichever client and programming language you are using
+
+startRow = 0
+numberOfResults = 25
+fullresults = [] // new array
+results = client.search(query, startRow, numberOfResults)
+count = results.length
+fullresults.append(results)
+
+while (count > 0) {
+  startRow = startRow + count 
+  results = client.search(query, startRow, numberOfResults)
+  fullresults.append(results)
+  count = results.length
+}
+
+// process fullresults here
+----
+
+You may also set `numberOfResults` to a higher number (500 or 5000, for example) to retrieve more results.
+However, processing results 25 or 50 at a time has less impact on the FusionAuth system.

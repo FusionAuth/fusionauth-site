@@ -175,7 +175,7 @@ You might be wondering if the **Third-party login and registration** mode can wo
 1. TWGTL's OAuth server redirects the user back to the TWGTL application.
 1. The user is logged into TWGTL.
 
-> What does "reconcile out" mean? OAuth has its jargon, oh yes. To reconcile a user with a remote system means optionally creating a local account and then attaching data and identity from a remote data source like Facebooik to that account. The remote account is the authority and the local account is modified as needed to reflect remote data.
+> What does "reconcile out" mean? OAuth has its jargon, oh yes. To reconcile a user with a remote system means optionally creating a local account and then attaching data and identity from a remote data source like Facebook to that account. The remote account is the authority and the local account is modified as needed to reflect remote data.
 
 The nice part about this workflow is that TWGTL doesn't have to worry about integrating with Facebook (or any other provider) or reconciling the user's account. That's handled by the OAuth server. It's also possible to delegate to additional OAuth servers, easily adding "Login with Google" or "Login with Apple". You can also nest deeper than the 2 levels illustrated here.
 
@@ -272,7 +272,7 @@ A good example of this mode is setting up a streaming app on an Apple TV, smart 
 7. The user is taken to a "Finished" screen.
 8. A few seconds later, the device is connected to the user's account.
 
-This mode often takes a bit of time to complete because the app on the Apple TV is polling the OAuth server. We won't go over this mode because our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization/) covers it in great detail.
+This mode often takes a bit of time to complete because the app on the Apple TV is polling the OAuth server. We won't go over this mode because our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization) covers it in great detail.
 
 ## OAuth Grants
 
@@ -356,7 +356,7 @@ This code immediately redirects the browser to the OAuth server. However, if you
 * `state` - technically this parameter is optional, but it is useful for preventing various security issues. This parameter is echoed back to your application by the OAuth server. It can be anything you might need to be persisted across the OAuth workflow. If you have no other need for this parameter, I suggest setting it to a large random string. If you need to have data persisted across the workflow, I suggest setting URL encoding the data and appending a random string as well.
 * `response_type` - this should always be set to `code` for this grant. This tells the OAuth server you are using the Authorization Code grant.
 * `scope` - this is also an optional parameter, but in some of the above modes, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll refresh tokens later).
-* `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code grant. This is known as a "public client". There aren't many cases of applications that don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them. PKCE is also recommended by the [OAuth 2.1 draft](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1/).
+* `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code grant. This is known as a "public client". There aren't many cases of applications that don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them. PKCE is also recommended by the [OAuth 2.1 draft](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1).
 * `code_challenge_method` - this is an optional parameter, but if you implement PKCE, you must specify how your PKCE `code_challenge` parameter was created. It can either be `plain` or `S256`. We never recommend using anything except `S256` which uses SHA-256 secure hashing for PKCE.
 * `nonce` - this is an optional parameter and is used for OpenID Connect. We don't go into much detail of OpenID Connect in this guide, but we will cover a few aspects including Id tokens and the `nonce` parameter. The `nonce` parameter will be included in the Id token that the OAuth server generates. We can verify that when we retrieve the Id token. This is discussed later.
 
@@ -1499,7 +1499,7 @@ With the Client Credentials grant, there is no user to log in. Instead, the `cli
 
 ### Device grant
 
-This grant is our final grant to cover. This grant type allows us to use the **Device login and registration** mode. As mentioned above, we cover this mode and the Device grant in detail in our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization/).
+This grant is our final grant to cover. This grant type allows us to use the **Device login and registration** mode. As mentioned above, we cover this mode and the Device grant in detail in our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization).
 
 ## Conclusion
 

@@ -23,7 +23,7 @@ Dr. Laurent Michel is a FusionAuth community member and product owner at Softozo
 
 I am the company's official leader. I energize the roles of developer, architect, and product owner. I am the only one team member with the product owner role. The roles of developer and architect are taken by other members of the team. Every architectural decision is discussed in the team so that we get as much insight as possible into the possible problems that we might face during the development. This way we also spread the knowledge of everyone across the whole team.  
 
-Nowadays, I essentially develop in C++, C# (.Net / WPF), javascript (VueJs), and python (mainly to write acceptance tests).  
+Nowadays, I essentially develop in C++, C# (.Net / WPF), javascript (VueJS), and python (mainly to write acceptance tests).  
 
 > The ease of installation and the set of features were the most decisive motivations to use [FusionAuth].
 

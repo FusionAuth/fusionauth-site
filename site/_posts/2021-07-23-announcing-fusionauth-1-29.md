@@ -13,7 +13,7 @@ We're excited to announce the release of version 1.29 of FusionAuth. This shippe
 
 <!--more-->
 
-This release contained a number of enhancements and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes/#version-1-29-0) for a full breakdown of the changes between 1.28 and 1.29. 
+This release contained a number of enhancements and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes#version-1-29-0) for a full breakdown of the changes between 1.28 and 1.29. 
 
 There were a few items worth calling out.
 
@@ -29,18 +29,18 @@ In particular, turning on debugging when using a [SAML Identity Provider](/docs/
 * The relay state
 * The entire unencoded XML value
 
-Enabling this will help all FusionAuth users using SAML to more easily debug any issues. It's always a good idea to turn this off in production or once the debugging is done, however. It will fire for every user who authenticates using the SAML provider, and may have a performance impact; it will definitely spam the [Event Log](/docs/v1/tech/troubleshooting/#event-log).
+Enabling this will help all FusionAuth users using SAML to more easily debug any issues. It's always a good idea to turn this off in production or once the debugging is done, however. It will fire for every user who authenticates using the SAML provider, and may have a performance impact; it will definitely spam the [Event Log](/docs/v1/tech/admin-guide/troubleshooting#event-log).
 
 ## Identity linking enhancements
 
 The last release included identity linking, where you could link one or more external accounts, managed by other identity providers, to one FusionAuth user account. This release extends identity linking functionality to:
 
-* Allow you to retrieve a FusionAuth user by an Identity Provider Id and the unique Id maintained at that Identity Provider. This API allows you to find a user who registered in FusionAuth using the Facebook Identity Provider to modify or delete them. Provide the [Facebook Identity Provider Id](/docs/v1/tech/apis/identity-providers/facebook/) and the user's Facebook user Id, and you can find the FusionAuth user to modify to your heart's content.
+* Allow you to retrieve a FusionAuth user by an Identity Provider Id and the unique Id maintained at that Identity Provider. This API allows you to find a user who registered in FusionAuth using the Facebook Identity Provider to modify or delete them. Provide the [Facebook Identity Provider Id](/docs/v1/tech/apis/identity-providers/facebook) and the user's Facebook user Id, and you can find the FusionAuth user to modify to your heart's content.
 * Allow the IdP Login API to be passed a request parameter indicating a link should not be established. This is useful if you wish to determine if an identity link exists first before starting a workflow such as a device grant with a linking token.
 
 ## Freemarker debugging improvements
 
-[Apache Freemarker](https://freemarker.apache.org/) is the technology used to customize [FusionAuth themes](/docs/v1/tech/themes/). Themes control every aspect of the user interface for the [hosted login pages](/docs/v1/tech/core-concepts/integration-points/#hosted-login-pages). These hosted login pages take care of common login workflows. FusionAuth provides a default theme, but for most implementations, you'll want to brand these pages to look like your application.
+[Apache Freemarker](https://freemarker.apache.org/) is the technology used to customize [FusionAuth themes](/docs/v1/tech/themes/). Themes control every aspect of the user interface for the [hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages). These hosted login pages take care of common login workflows. FusionAuth provides a default theme, but for most implementations, you'll want to brand these pages to look like your application.
 
 Previous to this release, errors in the templates would cause ugly exceptions to be displayed to the end user. With this release, a more useful message is logged to the aforementioned Event Log, including debugging info such as the expression, the line number, the template name and the theme Id. When the runtime mode is `production`, the full error is never logged to the end user.
 
@@ -58,10 +58,10 @@ Some of the other enhancements and fixes included in this release:
 
 ## Upgrade at will
 
-The [release notes](/docs/v1/tech/release-notes/#version-1-29-0) are a guide of the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
+The [release notes](/docs/v1/tech/release-notes#version-1-29-0) are a guide of the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
 
-If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/installation-guide/upgrade/). 
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
 If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/){:target="_blank"} and upgrade your servers. If you have any questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/){:target="_blank"}.
 
-Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing/).
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

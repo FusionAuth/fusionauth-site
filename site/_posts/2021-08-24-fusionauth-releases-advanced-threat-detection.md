@@ -5,7 +5,7 @@ description: This feature simplifies process for developers to protect against m
 author: David Polstra
 image: blogs/advanced-threat-detection-launch/fusionauth-introduces-advanced-threat-detection-to-help-safeguard-user-identity-header-image.png
 category: blog
-tags: feature-advanced-threat-detection
+tags: feature-advanced-threat-detection topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 
@@ -22,12 +22,14 @@ FusionAuth's Advanced Threat Detection includes:
 * **IP Access Control Lists:** flexible rules to examine IP addresses and block malicious requests while allowing valid access;   
 * **Rate Limiting:** limits common requests (failed login, forgotten password, send email verification and more) to prevent user login spamming, credential stuffing, and bot access;
 * **Registration Locking by Domain:** prevents emails from certain domains from being used to register accounts, which can prevent account spoofing; 
+* **Expanded Webhook Events** enables tracking important events around passwords, MFA, and login.
 * **Captcha:** requires users to prove they are human to log in or register with support for Google ReCaptcha V2 and V3, hCaptcha and hCaptcha Enterprise;
 * **Impossible Travel Calculations:** prevents insecure access from geographically distant login requests by calculating whether travel between login locations is physically possible. 
 
+
 These security enhancing features are all turn-key, with minimal configuration and no coding required.
 
-FusionAuth also recently launched its [Advanced Multi-Factor Authentication](/docs/v1/tech/apis/two-factor/) (MFA) offering, which gives developers more flexibility and choice in deploying authentication within their organizations, including factors such as multiple TOTP apps, phone numbers or email addresses, and step up authentication.
+FusionAuth also recently launched its [Advanced Multi-Factor Authentication](/docs/v1/tech/apis/two-factor) (MFA) offering, which gives developers more flexibility and choice in deploying authentication within their organizations, including factors such as multiple TOTP apps, phone numbers or email addresses, and step up authentication.
 
 ### About FusionAuth
 

@@ -1,0 +1,68 @@
+name: deploy_website
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "deploy_website"
+  deploy_website:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Global environment
+    env:
+      ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      JEKYLL_ENV: production
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Setup the system with the repository code, Java, and Ruby
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          # s3_website ruby/java uploader does not support 11. :-(
+          java-version: '8'
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          ruby-version: '2.7.5'
+
+      # Set the env vars. These default to dev and if the branch is `master` then this changes to use the production keys
+      - name: Set dev env vars based on branch
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_ACCESS_KEY_ID }}" >> ${GITHUB_ENV}
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_SECRET_ACCESS_KEY }}" >> ${GITHUB_ENV}
+        shell: bash
+      - name: Set prod env vars based on branch
+        if: startsWith(github.ref, 'refs/heads/master')
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ${GITHUB_ENV} 
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ${GITHUB_ENV}
+        shell: bash
+
+      # Run the deployment
+      - name: Deploy website
+        run: |
+          bundle exec jekyll build || true
+          bundle exec jekyll build --trace
+          bundle exec s3_website push
+          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront describe-function --name fusionauth-website-request-handler --query 'ETag' --output text)
+          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront update-function --name fusionauth-website-request-handler --function-code fileb://src/cloudfront/fusionauth-website-request-handler.js --function-config Comment="Request handler for the FusionAuth website",Runtime="cloudfront-js-1.0" --if-match ${CLOUDFRONT_FUNCTION_ETAG} --query 'ETag' --output text)
+          aws cloudfront publish-function --name fusionauth-website-request-handler --if-match ${CLOUDFRONT_FUNCTION_ETAG}
+        shell: bash
+
+      # Update the Algolia search index if this is `master`
+      - name: Deploy website
+        if: startsWith(github.ref, 'refs/heads/master')
+        run: |
+          bundle exec jekyll algolia
+        shell: bash

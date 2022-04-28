@@ -133,6 +133,6 @@ These are just some of the use cases that tenants can help solve, but there are 
 ## Conclusion
 There are benefits and drawbacks to both single-tenant and multi-tenant systems. Ultimately, a company must decide what is most important to their business and what can be sacrificed. Is cost a primary driver? Does your industry vertical have unique regulatory constraints? Is security critical for the type of data you are storing? Take the time to explicitly define your specific requirements, and then select the solution that best fits your needs.
 
-If you have additional questions on multi-tenant and single-tenant solutions, please [contact us](https://fusionauth.io/contact "Contact Us").
+If you have additional questions on multi-tenant and single-tenant solutions, please [contact us](/contact "Contact Us").
 
 {% include _advice-get-started.liquid intro="If you are looking for a single-tenant identity solution that supports multiple logical tenants, FusionAuth has you covered." %}

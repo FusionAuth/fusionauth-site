@@ -22,7 +22,7 @@ So, let's get started!
 ## Requirements
 
 Some tools you need to have before starting this tutorial:
-* VScode or any other Text Editor
+* VSCode or any other Text Editor
 * Git
 * Xcode, for iOS
 * iPhone simulator or real iOS device
@@ -33,7 +33,7 @@ Some tools you need to have before starting this tutorial:
 
 ## Setting up FusionAuth as your auth provider
 
-In order to set up FusionAuth, follow the [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide/). It is simple and quick. By default, the FusionAuth instance will run at the address `http://localhost:9011`. 
+In order to set up FusionAuth, follow the [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide). It is simple and quick. By default, the FusionAuth instance will run at the address `http://localhost:9011`. 
 
 We'll also run through some of the most important setup steps below:
 
@@ -102,7 +102,7 @@ cd $HOME/dev
 flutter create fusionauth_demo
 ```
 
-After the installation process completes, we will see that the `fusionauth_demo` directory contains all the flutter starter app configuration. We can open the project directory with VScode by running the following command:
+After the installation process completes, we will see that the `fusionauth_demo` directory contains all the flutter starter app configuration. We can open the project directory with VSCode by running the following command:
 
 ```shell
 code fusionauth_demo

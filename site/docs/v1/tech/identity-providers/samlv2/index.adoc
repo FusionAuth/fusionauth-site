@@ -29,7 +29,7 @@ In this example FusionAuth is the SAML service provider and we are configuring a
 
 We also provide specific examples for configuring SAML with some providers whose implementation requires unique configuration. If you'd like us to provide additional examples, please open a request on https://github.com/FusionAuth/fusionauth-site/issues[GitHub].
 
-* link:/docs/v1/tech/identity-providers/samlv2/adfs/[Configure SAML v2 for Active Directory Federation Services (ADFS)]
+* link:/docs/v1/tech/identity-providers/samlv2/adfs[Configure SAML v2 for Active Directory Federation Services (ADFS)]
 
 {empty} +
 
@@ -42,7 +42,7 @@ image::identity-providers/login-samlv2.png[SAML v2 Login,width=1200,role=bottom-
 
 To create an Identity Provider navigate to [breadcrumb]#Settings -> Identity Providers# and click `Add provider` and select `SAML v2` from the dialog.
 
-This will take you to the `Add SAML v2` panel. Here you will need to fill out the required fields. If you do not know the IdP endpoint of your SAML v2 provider, you will need to contact the identity provider owner to get the URL.
+This will take you to the `Add SAML v2` screen. Here you will need to fill out the required fields. If you do not know the IdP endpoint of your SAML v2 provider, you will need to contact the identity provider owner to get the URL.
 
 :identity_provider: SAMLv2
 :login_message: pass:quotes[That's it, now the `Login with PiedPiper` button will show up on the login page.]
@@ -50,12 +50,15 @@ include::docs/v1/tech/identity-providers/_idp_application_configuration.adoc[]
 :identity_provider!:
 :login_message!:
 
-image::identity-providers/identity-provider-samlv2-add.png[Add SAML v2,width=1200,role=bottom-cropped]
+image::identity-providers/identity-provider-samlv2-add-top.png[Add SAML v2 Identity Provider,width=1200,role=bottom-cropped]
 
 
 === Form Fields
 
 [.api]
+[field]#Enabled# [optional]#Optional#::
+Whether this SAMLv2 Identity Provider is enabled.
+
 [field]#Id# [optional]#Optional#::
 An optional UUID. When this value is omitted a unique Id will be generated automatically.
 
@@ -65,6 +68,41 @@ A unique name to identify the identity provider. This name is for display purpos
 [field]#IdP endpoint# [required]#Required#::
 The URL of the SAML identity providers login page.
 
+[field]#NameID format# [optional]#Required# [since]#Available since 1.28.0#::
+The NameID format to send to the SAML v2 identity provider in the AuthN request.
+
+[field]#Verification key# [required]#Required#::
+The public key or certificate that you must import into FusionAuth's KeyMaster. This is the public key provided to you by the identity provider.
+
+[field]#Button text# [required]#Required#::
+The text to be displayed in the button on the login form. This value defaults to `Login with SAML` but it may be modified to your preference.
+
+[field]#Button image# [optional]#Optional#::
+The image to be displayed in the button on the login form. When this value is omitted a default SAML icon will be displayed on the login button.
+
+[field]#Linking strategy# [optional]#Optional# [default]#defaults to `Link on email. Create the user if they do not exist`# [since]#Available since 1.28.0#::
+The linking strategy for the SAMLv2 provider. link:/docs/v1/tech/identity-providers/#linking-strategies[See Linking Strategies for more].
+
+[field]#Reconcile lambda# [optional]#Optional#::
+A lambda maps custom claims returned from the SAML Response to the FusionAuth User or Registration.
++
+To create or configure a lambda, navigate to [breadcrumb]#Settings -> Lambdas#. link:/docs/v1/tech/lambdas/[See the lambda documentation for more].
+
+[field]#Debug enabled# [optional]#Optional# [default]#defaults to `false`#::
+Some identity providers are not compliant with the SAML and XML signing specifications. This makes it challenging to get them working with FusionAuth. 
++
+If you are running into integration issues, toggle this setting on and FusionAuth will output debugging information into the Event Log during a SAML login. You can find the event log in [breadcrumb]#System -> Event Log#.
+
+=== Options
+
+image::identity-providers/identity-provider-samlv2-add-options.png[Add SAML v2 Options section,width=1200,role=top-cropped]
+
+==== Form Fields
+
+[api]
+[field]#Unique Id claim# [optional]#Optional#::
+The name of the claim that is returned in the SAML response that contains the unique Id of the user.
+
 [field]#Use NameId for email# [optional]#Optional#::
 If this is enabled, FusionAuth will assume that the `NameID` in the SAML response contains the email address of the user.
 
@@ -72,9 +110,6 @@ If this is enabled, FusionAuth will assume that the `NameID` in the SAML respons
 The name of the email claim returned in the SAML response.
 +
 When [field]#Use NameId for email# is enabled this field will not be displayed and will not be required.
-
-[field]#Verification key# [required]#Required#::
-The public key or certificate that you must import into FusionAuth's KeyMaster. This is the public key provided to you by the identity provider.
 
 [field]#Use POST method# [optional]#Optional#::
 When enabled the authentication request will use the HTTP POST binding with the identity provider instead of the default Redirect binding which uses the HTTP GET method.
@@ -88,35 +123,19 @@ The key used to sign the SAML request. Required when [field]#Sign request# is en
 [field]#Canonicalization method# [optional]#Optional#::
 The XML signature canonicalization method used when digesting and signing the SAML request. Required when [field]#Use POST method# and [field]#Sign request# are enabled.
 
-=== Options
+=== Managed domains
 
-image::identity-providers/identity-provider-samlv2-add.png[Add SAML v2 Options section,width=1200,role=bottom-cropped]
+image::identity-providers/identity-provider-samlv2-add-managed-domains.png[Add SAML v2 Managed Domains section,width=1200,role=top-cropped]
 
 ==== Form Fields
 
 [api]
-[field]#Button text# [required]#Required#::
-The text to be displayed in the button on the login form. This value defaults to `Login with SAML` but it may be modified to your preference.
-
-[field]#Button image# [optional]#Optional#::
-The image to be displayed in the button on the login form. When this value is omitted a default SAML icon will be displayed on the login button.
-
-[field]#Reconcile lambda# [optional]#Optional#::
-A lambda maps custom claims returned from the SAML response into the FusionAuth `User` and `Registration`. To learn more about creating a lambda, view the link:/docs/v1/tech/lambdas/samlv2-response-reconcile/[SAML v2 Reconcile lambda documentation].
-+
-To configure a lambda, navigate to [breadcrumb]#Settings -> Lambdas#.
-
 [field]#Managed domains# [optional]#Optional#::
 You may optionally scope this identity provider to one or more managed domains. For example, if you were to use a SAML v2 identity provider for your employees, you may add your company domain `piedpiper.com` to this field.
 +
 Adding one or more managed domains for this configuration will cause this provider not to be displayed as a button on your login page. Instead of a button the login form will first ask the user for their email address. If the user's email address matches one of the configured domains the user will then be redirected to this login provider to complete authentication. If the user's email address does not match one of the configured domains, the user will be prompted for a password and they will be authenticated using FusionAuth.
 +
 These configured domains will be used by the link:/docs/v1/tech/apis/identity-providers/#lookup-an-identity-provider[Lookup API].
-
-[field]#Debug# [optional]#Optional#::
-Some identity providers are not compliant with the SAML and XML signing specifications. This makes it challenging to get them working with FusionAuth. 
-+
-If you are running into integration issues, toggle this setting on and FusionAuth will output debugging information into the Event Log during a SAML login. You can find the event log in [breadcrumb]#System -> Event Log#.
 
 == Integration Details
 
@@ -138,7 +157,7 @@ include::docs/v1/tech/identity-providers/_samlv2-integration-details-fields.adoc
 
 To complete the login request, the SAML v2 Identity Provider will make an HTTP `POST` request to the callback URL in FusionAuth. In order for this request to be allowed through the CORS filter you will need to navigate to [breadcrumb]#Settings -> System -> CORS# and add the SAML IdP origin as an [field]#Allowed Origin# the CORS configuration.
 
-Once you complete your SAML v2 Identity Provider configuration, if your CORS configuration is not yet configured to allow the login request to complete you wil be shown the following warning prompting you to complete the CORS configuration. See link:/docs/v1/tech/reference/cors/[CORS Filter reference] for additional details on modifying the CORS configuration.
+Once you complete your SAML v2 Identity Provider configuration, if your CORS configuration is not yet configured to allow the login request to complete you will be shown the following warning prompting you to complete the CORS configuration. See link:/docs/v1/tech/reference/cors[CORS Filter reference] for additional details on modifying the CORS configuration.
 
 image::identity-providers/identity-provider-samlv2-cors-warning.png[SAMLv2 CORS Warning,width=1200,role=bottom-cropped]
 

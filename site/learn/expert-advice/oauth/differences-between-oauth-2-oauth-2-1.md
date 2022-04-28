@@ -74,7 +74,7 @@ Whew, that's a lot. Let's examine each of these in turn. But before we do, let's
 
 > The authorization code grant is extended with the functionality from PKCE ([RFC7636](https://tools.ietf.org/html/rfc7636)) such that the default method of using the authorization code grant according to this specification requires the addition of the PKCE parameters
 
-Wow, that's a lot. Let’s break that down. The Authorization Code grant is one of the most commonly used OAuth grants and is the most secure. If you're into flow charts, here's [a post explaining the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-sessions) using a chart and walking through the grant step by step.
+Wow, that's a lot. Let’s break that down. The Authorization Code grant is one of the most commonly used OAuth grants and is the most secure. If you're into flow charts, here's [a post explaining the Authorization Code grant](/learn/expert-advice/authentication/webapp/oauth-authorization-code-grant-sessions) using a chart and walking through the grant step by step.
 
 The [Proof Key for Code Exchange (PKCE) RFC](https://tools.ietf.org/html/rfc7636) was published in 2015 and extends the Authorization Code grant to protect from an attack if part of the authorization flow happens over a non TLS connection. For example, this occurs if there's communication between components of a native application. 
 
@@ -106,7 +106,7 @@ The Implicit grant is inherently insecure when used in a single-page application
 
 Access tokens are not necessarily one-time use, and can live from minutes to days depending on how the OAuth server is configured. If they are stolen, the resources they protect are no longer secure. You may think "well, I don’t have any malicious JavaScript on my site." Are you sure? Have you audited all your code, and its dependencies, and their dependencies, and their dependencies? Do you audit your code automatically? Extensive dependency trees can lead to unforeseen security issues: someone took over an [open source node library](https://snyk.io/blog/malicious-code-found-in-npm-package-event-stream/) and added malicious code that was downloaded millions of times. 
 
-Here's an [article about the least insecure way to use the Implicit grant for an SPA](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-implicit-grant-jwts-cookies). In this situation, the access token is provided to the SPA as an HttpOnly cookie. In the end it basically recreates the Authorization Code grant, illustrating how the Implicit grant simply can't be made secure.
+Here's an [article about the least insecure way to use the Implicit grant for an SPA](/learn/expert-advice/authentication/spa/oauth-implicit-grant-jwts-cookies). In this situation, the access token is provided to the SPA as an HttpOnly cookie. In the end it basically recreates the Authorization Code grant, illustrating how the Implicit grant simply can't be made secure.
 
 The OAuth 2.1 draft specification omits the Implicit grant. This means that any software implementing OAuth 2.1 won't have to implement this grant. If you use this grant in your application, you’ll have to replace it with a different one if you want to be compliant with OAuth 2.1. 
 
@@ -114,7 +114,7 @@ The OAuth 2.1 draft specification omits the Implicit grant. This means that any 
 
 > The Resource Owner Password Credentials grant is omitted from this specification as per Section 2.4 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-This grant was added to the OAuth 2.0 specification with an eye toward making migration to OAuth compliant servers easier. In this grant, the application server receives the username and password (or other credentials) and passes it on to the OAuth server. Here's [an article breaking down each step of the Resource Owner Password Credentials grant](https://fusionauth.io/learn/expert-advice/authentication/webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies). 
+This grant was added to the OAuth 2.0 specification with an eye toward making migration to OAuth compliant servers easier. In this grant, the application server receives the username and password (or other credentials) and passes it on to the OAuth server. Here's [an article breaking down each step of the Resource Owner Password Credentials grant](/learn/expert-advice/authentication/webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies). 
 
 This grant is often used for native mobile applications. While this grant made it easier to migrate to OAuth with minimal application changes, it doesn't follow the typical delegation pattern. After all, the application server has full access to the credentials of the user, exactly what OAuth is designed to avoid. No longer can you leave the work of securing users' credentials and data to the OAuth server. With this grant, you must ensure that your application backend is just as secure.
 
@@ -138,7 +138,7 @@ A query string and, more generally, any string in a URL, is never private. JavaS
 
 Refresh tokens are longer lived than access tokens and have a higher level of privilege, since they can be used to create entirely new access tokens. Therefore you should take more care when securing a refresh token. Never share your refresh tokens between different devices.
 
-If they are acquired by an attacker, they can create access tokens at will. Obviously at that point, the resource which the access tokens protect will no longer be secured. As an example of how to secure refresh tokens, here’s a [post using the Authorization Code grant](https://fusionauth.io/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens using HttpOnly cookies with a constrained cookie domain, and you can learn more about [FusionAuth's access and refresh tokens here](/docs/v1/tech/oauth/tokens/).
+If they are acquired by an attacker, they can create access tokens at will. Obviously at that point, the resource which the access tokens protect will no longer be secured. As an example of how to secure refresh tokens, here’s a [post using the Authorization Code grant](/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens using HttpOnly cookies with a constrained cookie domain, and you can learn more about [FusionAuth's access and refresh tokens here](/docs/v1/tech/oauth/tokens).
 
 The OAuth 2.1 draft provides two options for refresh tokens: they can be one-time use or tied to the sender with a cryptographic binding. 
 
