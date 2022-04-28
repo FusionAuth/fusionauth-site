@@ -19,6 +19,7 @@ This guide will illustrate multi-factor authentication features in FusionAuth, i
 * <<Migration from Version 1.25 and Earlier>>
 * <<Integrating Other MFA Methods>>
 * <<Migrating MFA Methods From a Different System>>
+* <<Forcing MFA>>
 * <<Troubleshooting>>
 
 == Types of MFA Supported
@@ -536,7 +537,41 @@ If you have other MFA methods that you'd like to use with FusionAuth, you have a
 
 include::docs/v1/tech/guides/_mfa-migration.adoc[]
 
+== Forcing MFA
+
+There are times when you might want to force a user to MFA before they ever get access to your applciation, or force every user of a certain type to MFA.
+
+These are two different situations.
+
+=== Forcing a User to Before Accessing an Application
+
+You may want to force a user to perform MFA before they can access a certain sensitive application, and to deny them access if they have not enabled MFA.
+To do so with FusionAuth, the easiest way is to put a value in the JWT using a link:/docs/v1/tech/lambdas/jwt-populate[JWT Populate Lambda].
+
+[source,javascript]
+.Example lambda which adds MFA enabled claim
+----
+function populate(jwt, user, registration) {
+  jwt.hasMFAEnabled = user.twoFactor && user.twoFactor.methods && user.twoFactor.methods.length > 0;
+}
+----
+
+Then, when your application receives the JWT, it can check this claim.
+If the claim is missing or `false`, the application can force the user to add an MFA method or otherwise display an error.
+Such a check can happen in the application or in a proxy.
+
+Having FusionAuth https://github.com/FusionAuth/fusionauth-issues/issues/763[manage this check is an open feature request].
+Please review the issue and comment on or upvote it if you'd like to see this handled by FusionAuth.
+
+=== Forcing a User to Always MFA
+
+Any user with an MFA method enabled will be forced to MFA if they have not before on a given device.
+You can modify how long a device will be trusted by modifying the `twoFactorTrustIdTimeToLiveInSeconds` setting on the tenant.
+Set this value to `1` if you'd like a user to MFA every time they log in.
+
 == Troubleshooting
+
+// TODO break out to an include for including into troubleshooting guide
 
 If using the email MFA method and your emails don't get sent, ensure you have configured your SMTP settings correctly. See the link:/docs/v1/tech/admin-guide/troubleshooting#troubleshooting-email[Email Troubleshooting] section for more.
 
