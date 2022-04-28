@@ -17,6 +17,8 @@ There are a number of ways to gain this insight.
 * <<Application Events>>
 * <<Metrics>>
 ** <<Prometheus Endpoint>>
+* <<OpenTelemetry>>
+** <<Set Up the Exporter>>
 * <<Load Testing>>
 ** <<Tips>>
 
@@ -63,7 +65,8 @@ Here's an overview table of monitoring options.
 
 == Log Files
 
-The system log files will be placed in the `logs` directory under the FusionAuth installation unless you are running FusionAuth in a container. In the latter case, the log output will be sent to STDOUT. 
+The system log files will be placed in the `logs` directory under the FusionAuth installation unless you are running FusionAuth in a container. In the latter case, the log output will be sent to STDOUT by default.
+You may also set up a https://docs.docker.com/config/containers/logging/configure/[Docker logging driver] to direct log files elsewhere.
 
 System logs running in non-containerized instances can also be exported via the link:/docs/v1/tech/apis/system#export-system-logs[Export System Logs API].
 
@@ -132,6 +135,48 @@ You can also enable JMX metrics as outlined in the link:/docs/v1/tech/admin-guid
 === Prometheus Endpoint
 
 The default system metrics are also available in a Prometheus compatible form. link:/docs/v1/tech/tutorials/prometheus[This tutorial explains how to set up Prometheus to scrape the FusionAuth metrics].
+
+== OpenTelemetry
+
+FusionAuth is a Java application. You can use the https://github.com/open-telemetry/opentelemetry-java-instrumentation[OpenTelemetry] project to instrument it. Doing so can assist troubleshooting performance issues and make it easier to run.
+
+FusionAuth has no custom tracing spans embedded, but it can be set up as an OpenTelemetry exporter. Doing so provides useful data about types of requests, database queries, and more.
+
+image::admin-guide/monitor/opentelemetry-display.png[Exploring telemetry using Honeycomb.,width=1200]
+
+=== Set Up the Exporter
+
+Download the https://github.com/open-telemetry/opentelemetry-java-instrumentation[Java OpenTelemetry agent]. Make it available to the FusionAuth instance. If you are using a zip/deb/rpm, put it in a directory. If using docker, mount the host directory to the container.
+Set an environment variable `OT_PATH` to point to the directory.
+
+Next, you need to configure FusionAuth to use the agent by passing the correct Java command line switches. There are a couple of ways to do this.
+
+You can use Java system properties, environment variables, or edit the `fusionauth.properties` config file. See the link:/docs/v1/tech/reference/configuration[configuration reference] for more info. For this example, environment variables will be used.
+
+Set this environment variable and make sure it is available when you start FusionAuth (in a startup script, `.bashrc`, etc):
+
+[source,shell,title=Enabling OpenTelemetry export]
+----
+export FUSIONAUTH_APP_ADDITIONAL_JAVA_ARGS="-javaagent:$OT_PATH/opentelemetry-javaagent.jar"
+----
+
+Next, configure OpenTelemetry to point to your collector. 
+Here's an example of the environment variables to set to use https://www.honeycomb.io/[HoneyComb] as your collector. The specific variables needed will vary based on your chosen solution; please consult the collector's documentation. 
+
+[source,shell,title=Configuring OpenTelemetry collector]
+----
+# from https://docs.honeycomb.io/getting-data-in/opentelemetry/java-distro/#using-opentelemetry-without-the-honeycomb-distribution
+export OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
+export OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=$HONEYCOMB_API_KEY
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_SERVICE_NAME=fusionauth-test
+export OTEL_TRACES_SAMPLER=traceidratio
+export OTEL_TRACES_SAMPLER_ARG=0.5
+export OTEL_RESOURCE_ATTRIBUTES=SampleRate=2
+export OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_CLIENT_REQUEST=X-FusionAuth-TenantId
+----
+
+Start FusionAuth up and enjoy your new insights.
 
 == Load Testing
 
