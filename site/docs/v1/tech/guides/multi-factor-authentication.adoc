@@ -539,14 +539,27 @@ include::docs/v1/tech/guides/_mfa-migration.adoc[]
 
 == Forcing MFA
 
-There are times when you might want to force a user to MFA before they ever get access to your applciation, or force every user of a certain type to MFA.
+There are times when you might want to force a user to provide an additional factor of authentication before they ever get access to your application.
+For example, you might require MFA when a user logs into an accounting application, but not when they log in to a customer support application.
 
-These are two different situations.
+Or you might want to force every user with a certain role to provide an additional factor every time they log in.
+For example, super admins might need to provide a second factor every time they log in.
 
-=== Forcing a User to Before Accessing an Application
+In FusionAuth, if a user has one or more additional factors configured for their account, they will be forced to provide that second factor on login.
+Once someone has provided a second factor, they will not have to provide it again until a certain amount of time has passed.
+This duration is configurable at the tenant level, and is set by the `twoFactorTrustIdTimeToLiveInSeconds` setting.
 
-You may want to force a user to perform MFA before they can access a certain sensitive application, and to deny them access if they have not enabled MFA.
-To do so with FusionAuth, the easiest way is to put a value in the JWT using a link:/docs/v1/tech/lambdas/jwt-populate[JWT Populate Lambda].
+=== Forcing a User to Provide an Additional Factor Before Accessing an Application
+
+You may want to force a user to perform MFA before they can access a sensitive application, such as the accounting application mentioned above.
+
+One way to do that is to add link:/docs/v1/tech/guides/multi-factor-authentication#step-up-auth[step up authentication] to your application.
+Each time the user accesses the application, perform a step up, which will force them to provide an additional factor.
+
+An alternate option is to deny access if the user has configured any MFA method, since a user with an MFA method enabled will have used it on log in.
+If using this option, configure the `twoFactorTrustIdTimeToLiveInSeconds` setting to a small value.
+
+To check whether MFA is enabled, put a value in the JWT using a link:/docs/v1/tech/lambdas/jwt-populate[JWT Populate Lambda].
 
 [source,javascript]
 .Example lambda which adds MFA enabled claim
@@ -556,18 +569,25 @@ function populate(jwt, user, registration) {
 }
 ----
 
-Then, when your application receives the JWT, it can check this claim.
-If the claim is missing or `false`, the application can force the user to add an MFA method or otherwise display an error.
+When your application receives the JWT, check this claim.
+If the claim is missing or `false`, the application knows that the user has not completed an additional factor, and can deny access.
 Such a check can happen in the application or in a proxy.
 
 Having FusionAuth https://github.com/FusionAuth/fusionauth-issues/issues/763[manage this check is an open feature request].
 Please review the issue and comment on or upvote it if you'd like to see this handled by FusionAuth.
 
-=== Forcing a User to Always MFA
+=== Forcing a User to Provide an Additional Factor Every Time
 
-Any user with an MFA method enabled will be forced to MFA if they have not before on a given device.
-You can modify how long a device will be trusted by modifying the `twoFactorTrustIdTimeToLiveInSeconds` setting on the tenant.
-Set this value to `1` if you'd like a user to MFA every time they log in.
+As mentioned above, you may want certain types of users to provide an additional factor every time they log in.
+
+You can use the same step up authentication method as mentioned above. Using the "super admin" example, if the application sees a user who has that role, it can force a step up.
+
+To avoid modifying your application, you can also examine the user during authentication and modify parameters sent to FusionAuth.
+
+If you are using the hosted login pages, you can set [field]#trustComputer# to `false` every time a user visits the link:/docs/v1/tech/themes/template-variables#oauth-two-factor[`/oauth2/two-factor` page] and has a role of "superadmin".
+You may also remove the theme code which sets that variable, in which case it will default to a value of `false`.
+
+If you are using the Login API, don't send the [field]#twoFactorTrustId# value returned link:/docs/v1/tech/apis/login#complete-multi-factor-authentication[after completing a multi-factor authentication].
 
 == Troubleshooting
 
