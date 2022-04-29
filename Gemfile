@@ -21,6 +21,7 @@ group :jekyll_plugins do
   gem "jekyll-paginate-v2", "3.0.0"
   gem "jekyll-environment-variables"
   gem "jekyll-algolia", "~> 1.0"
+  gem "jekyll-minifier", "0.1.10"
 end
 
 # For the docs
