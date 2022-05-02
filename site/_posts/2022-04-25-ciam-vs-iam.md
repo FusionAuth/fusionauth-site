@@ -9,58 +9,101 @@ tags: features-ciam
 excerpt_separator: "<!--more-->"
 ---
 
-Though there are similarities between Customer Identity and Access Management (CIAM) and IAM (Identity and Access Management), at their heart they are serving different needs, and so have some striking differences. Both CIAM and IAM are about people. Who can access your systems, how do they prove who they are, and how you can manage access over time. Let's take a look at these two identity management solutions and see how they differ.
+Both Customer Identity and Access Management (CIAM) and IAM (Identity and Access Management) are about people who are users of your system: who can access what, how do they prove who they are, and how you manage access over time. Though there are similarities between CIAM and IAM, at their heart they serve different needs. 
+
+Let's take a look at these two identity management archetypes and see how they differ.
 
 <!--more-->
 
 
 ## IAM
 
-While IAM stands for Identity and Access Management, it is actually missing a letter. It really should be EIAM, for Employee Identity and Access Mnagement. It's also called "Workforce", probably because that sounds better than EIAM (how do you even pronouce that?)
+While IAM stands for Identity and Access Management, it is actually missing a letter. It really should be termed EIAM, for Employee Identity and Access Management. It's also commonly called "workforce", probably because that sounds better than EIAM (how do you even pronounce EIAM?).
 
-IAM is primarily for managing employee identities. There are a number of large vendors who help larger companies manage this problem. The lifecycle is well understood:
+IAM is primarily for managing employee identities. There are a number of vendors who help companies manage this problem. 
 
-* people are onboarded when they are hired
-* employees have a certain set of privilegdes needed to do their jobs
-* workers may shift roles in a known fashion (also known as a 'promotion' or 'transfer')
-* the users can be forced to conform to password policies and other security requirements (what are they going to do, quit?)
-* eventually people leave and can be offboarded
+The employee lifecycle is well understood:
 
-IAM is also working in a heterogeonous environment. There will be multiple silos of user data as well as protocols used to convey identity information. LDAP is still alive and well in many companies. I talked to a company once who had rolled up a bunch of hospitals and maintained a number of different directories for years while the integration occurred. There also may be complicated federation between silos of user data, including using standards like SAML.
+* people are on-boarded when they are hired
+* employees have a certain set of privileges needed to do their jobs
+* workers may shift roles in a controlled fashion (also known as a 'promotion' or 'transfer')
+* users can be forced to conform to password policies and other security requirements (what are they going to do, quit?)
+* eventually people leave and will then be offboarded
 
-There are also other entities that may need identity managed by an IAM solution, such as contractors or partners. The common theme is that:
+IAM solutions are deployed in a heterogeneous environment. Multiple silos of user data are normal, as well as different protocols for identity data. For example, LDAP is still alive and well in many companies. I talked to a company who had rolled up a bunch of hospitals and maintained multiple different employee directories for years. There also may be complicated federation between the user data silos.
 
-* they are well known and go through defined processes to get their identity
-* there's a durable business relationship, whether in the form of wages or contractual agreements
+There are other entities which may need their identity managed by an IAM solution, such as contractors or partners. 
 
-Customers, however, have different expectations.
+The common attributes of IAM users are:
+
+* they are known and verified, typically through legal paperwork such as an offer letter and employment contract
+* they proceed through a set of defined processes to get their credentials
+* there's a durable business relationship, often involving money
+
+Customers, however, are different.
 
 ## CIAM
 
-Customer Identity and Access Management still deals with people and the priviledges and access they have, but there are a number of differences.
+Customer Identity and Access Management handles human beings and their privileges and access, but there are a number of differences from IAM.
 
-First, customers are, well, customers. They are paying you money by buying a good or service from you. They typically have other choices for businesses to transact with. This means there's a different set of expectations. Customers in general can't be expected to have the same commitment to a company or organization that employees or partners will. This means that you need to meet customer's expectations with a CIAM system, just as you do with a product. That includes:
+First, customers are, well, customers.
+
+They are buying a good or service from you, and paying you for it. They typically have other choices of businesses with which to transact. 
+
+They may also be potential customers, evaluating your solution. Compare that with IAM; you aren't going to give a potential employee access to your systems, but a potential customer may have limited access.
+
+You want to delight them.
+
+### Expectations
+
+Because of the alternatives they have, customers have a different set of expectations. Customers won't have the same commitment to a company or organization that employees or partners will. You need to meet customer's expectations with any system or product they interact with, including how they log in and access systems via CIAM.
+
+Some ways to exceed customer expectations include:
 
 * localization in their language
 * consumer grade user experience
-* performance like Google, which is what users expect
-* if you offer identity federation, it will often be to a social provider like Facebook or Google
+* speed similar to Google search
+* communication methods they prefer like SMS or email
+* social identity federation with Facebook or Google (the best social provider depends on geography and user persona)
 
-Another difference is that there may be a much larger number of users. Each company in the Fortune 500 has an average of 57,400 employees [as of 2019](https://fortune.com/fortune500/2019/), but the number of customers can be many multiples of the number of employees. As an extreme case, Google had 135,000 employees in 2021, but [in 2022 were estimated](https://www.semrush.com/blog/google-search-statistics/) to have 246 million unique users in the US alone. (Sorry for the switching of years, Fortune didn't make the stats easy to find.) XXX? And these customers may not interact with your organization every day. Your employees will.
+It's not only users that have expectations of a CIAM system. Marketing and sales departments, among others, will want access to the data your CIAM system holds. It must have the ability to push the appropriate user data into other applications, preferably in real time. This data can then be used to improve the customer experience as well as to achieve company goals such as increased sales.
 
-This has a couple of ramifications for any implementation:
+### More users, less interaction
 
-* You will need to plan for much bigger scale and will need higher per-user efficiency.
+Another difference between CIAM and IAM is that there will be more users in a CIAM system.
+
+Companies can have thousands of employees, but a customer population many times larger. Google had 135,000 employees in 2021, but [billions of users](https://www.semrush.com/blog/google-search-statistics/). Basecamp had less than 100 employees, but had [millions of users](https://expandedramblings.com/index.php/basecamp-statistics-and-facts/).
+
+Many IAM solutions charge dollars/user/month. For CIAM, you'll want to pay orders of magnitudes less per user.
+
+Additionally, customers will not necessarily interact with your organization or application every day, whereas employees will, at least on their non-vacation days.
+
+The increased number of users and less frequent usage means:
+
+* You will need to plan for scale and higher per-user efficiency.
 * On the other hand, plan for some, possibly a majority of, users to be inactive in any given month.
-* Many IAM solutions charge dollars/user. For CIAM, you'll want to pay orders of magnitudes less per user.
-* You'll want to enable self-service for common account actions, such as registration and credentials management (enabling MFA, resetting a password). Otherwise the customer service load will explode.
+* Ensure self-service is available for common account actions, such as registration, enabling security measures and password resets. Otherwise your customer service load will explode.
 
-Additionally, other departments, including revenue generating ones like marketing and sales, will want access to your CIAM system. This means that any system you use should have the ability to push data into other systems, preferably in real time, that can be used to augment different customer views.
+### Permission complexity
 
-Thankfully, the complexity of permissions tends to be lower with CIAM solutions. While there may still be several types of users, you likely won't have complex cross cutting hierarchies like you will with IAM (team/department/organization/division). Users may have different attributes, but it's unlikely you'll have a thicket of permissions and a huge number of applications to control access to, in contrast with IAM.
+Thankfully, the complexity of permissions tends to be lower with CIAM solutions.
 
-In short, with CIAM you can handle more users but the access control will be simpler to model and understand. Additionally, customers won't put up with user interfaces, security requirements or system performance that organizations can impose on employees or partners.
+While there may still be multiple types of users with permissions within your application or applications, what you won't have is complex cross cutting permission hierarchies like IAM users will.
+
+For workforce solutions, other entities matter, like the team, the department, the organization, and the division. These all play a role in determining access to resources within the company. This is, of course, on top of the attributes of the user.
+
+With CIAM, you won't have this hierarchical thicket of permissions. You also won't typically have a large number of different applications to which you must control access.
+
+In short, with CIAM you can handle more users but the access control will be simpler to model and understand. Customers won't put up with user interfaces, security requirements or system performance that organizations can inflict on employees or partners.
+
+### What about a CRM?
+
+CIAM differs from a Customer Relationship Management (CRM) tool such as Salesforce or Hubspot. The purpose of CRM is to record the interactions with a customer and the audience is internal. The purpose of CIAM is to allow the user to manage their identity as well as to control access to different applications.
 
 ## Conclusion
 
-CIAM and IAM solutions share some common attributes, but there are significant differences as well. IAM solutions are great at supporting and enabling a company's workforce to access permissions they need to do their job. CIAM solutions are simpler and built for scale and customer experience.
+CIAM and IAM solutions share some common attributes. They both help you control people's access to your system. But there are significant differences as well.
+
+IAM solutions are great at supporting and enabling a company's workforce to access applications they need to do their job in a secure manner.
+
+CIAM solutions, on the other hand, are simpler and built for scale and customer experience.
