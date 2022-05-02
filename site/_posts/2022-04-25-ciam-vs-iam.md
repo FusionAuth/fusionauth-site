@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: CIAM vs IAM
+title: Customer Identity and Access Management (CIAM) vs Identity and Access Management (IAM)
 description: What are the main differences between CIAM and IAM?
 author: Dan Moore
 image: blogs/single-sign-on-discord/using-single-sign-on-with-discord-and-fusionauth.png
