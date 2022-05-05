@@ -17,7 +17,7 @@ This release contained features, enhancements, and bug fixes. Please see the [re
 
 There are a few improvements that I wanted to call out specifically.
 
-## HTTP requests in lambdas
+## Lambda HTTP Connect
 
 This is an [oft-requested feature](https://github.com/FusionAuth/fusionauth-issues/issues/267) which allows for complex integrations by allowing a lambda to retrieve data from external URLs.
 
@@ -34,7 +34,7 @@ In all of these scenarios, integration with additional data sources or logic may
 * Calling IdP endpoints to retrieve additional data, such as the Microsoft Graph API endpoints.
 * Calling a FusionAuth API. One example would be retrieving group names and adding them to a token.
 
-This is all possible with this release, because you can now make arbitrary HTTP requests within your lambda. This allows you to integrate any API or enterprise systems into various login flows.
+This is all possible with this release, because with Lambda HTTP Connect, you can now make arbitrary HTTP requests within your lambda. This allows you to integrate any API or enterprise systems into various login flows.
 
 Here's example code, which retrieves a random Marvel movie quote from an unauthenticated API:
 
@@ -85,7 +85,7 @@ You can manage these lambdas via the administrative user interface, as below, or
 
 {% include _image.liquid src="/assets/img/blogs/release-1-35/api-requests-lambda.png" alt="Lambda which makes API requests." class="img-fluid" figure=true %}
 
-However, you must use the new GraalJS execution engine for this functionality. Learn more about [HTTP requests in lambdas](/docs/v1/tech/lambdas/) in the docs.
+However, you must use the new GraalJS execution engine for this functionality. Learn more about [Lambda HTTP Connect](/docs/v1/tech/lambdas/) in the docs.
 
 This feature is available for users on Essentials or Enterprise edition. Learn more about these editions by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 

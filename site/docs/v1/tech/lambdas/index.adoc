@@ -16,12 +16,13 @@ FusionAuth leverages lambdas to handle different events that occur inside it as 
 * <<Lambda Types>>
 * <<Example Lambdas>>
 ** <<Adding Claims>>
-** <<Making an HTTP Request>>
+** <<Using Lambda HTTP Connect>>
 * <<JavaScript>>
 ** <<Engine>>
 ** <<Console>>
+** <<Exceptions>>
 * <<Limitations>>
-** <<HTTP Request Limitations>>
+** <<Lambda HTTP Connect Limitations>>
 * <<Future Engines>>
 
 Here's a brief video covering some aspects of lambdas:
@@ -54,7 +55,9 @@ function populate(jwt, user, registration) {
 }
 ----
 
-=== Making an HTTP Request
+=== Using Lambda HTTP Connect
+
+This feature allows you to make HTTP requests from within a lambda.
 
 include::docs/v1/tech/shared/_advanced-edition-blurb.adoc[]
 
@@ -104,7 +107,7 @@ function populate(jwt, user, registration) {
 }
 ----
 
-Here's a video showing more details about HTTP requests:
+Here's a video showing more details about Lambda HTTP Connect:
 
 video::_TnDUPQm3aQ[youtube,width=560,height=315]
 
@@ -205,6 +208,24 @@ function populate(jwt, user, registration) {
 }
 ----
 
+=== Exceptions
+
+When an exception is thrown, further processing ceases.
+Whatever operation the lambda was part of (login, Identity Provider user reconciliation, etc) will not complete.
+
+[source,javascript]
+----
+function populate(jwt, user, registration) {
+  if (user.data.isNoLongerWelcome == true) {
+    throw "Stop!";
+  }
+}
+----
+
+If using the hosted login pages, FusionAuth will display a customizable error message.
+
+To learn about an exceptio, enable debugging on the lambda via the [field]#Debug enabled# toggle in the administrative user interface or the API.
+
 == Limitations
 
 If the Identity Provider linking strategy is set to `Link Anonymously`, no lambdas will be used by FusionAuth. More information about the link:/docs/v1/tech/identity-providers/#linking-strategies[Identity Provider linking strategies is available here].
@@ -213,15 +234,13 @@ The FusionAuth lambdas do not have full access to JavaScript modules and librari
 
 `console.log` and other `console` methods only take one argument; this differs from the `console` method available in web browsers.
 
-=== HTTP Request Limitations
+=== Lambda HTTP Connect Limitations
 
 include::docs/v1/tech/shared/_advanced-edition-blurb.adoc[]
 
-When making HTTP requests, do not call a FusionAuth API which invokes the calling lambda, because it will fail. For example, in a JWT Populate lambda, do not invoke the Login API.
+When using Lambda HTTP Connect to make HTTP requests, do not call a FusionAuth API which invokes the calling lambda, because it will fail. For example, in a JWT Populate lambda, do not invoke the Login API.
 
-Making HTTP requests from a lambda requires the lambda use the GraalJS engine.
-
-HTTP requests will time out after two seconds.
+Requests from a lambda require the lambda to use the GraalJS engine. HTTP requests will time out after two seconds.
 
 The `fetch` method in a lambda does not implement the https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API[entire `fetch` API] as implemented in a browser.
 The first argument to `fetch` must always be a string URL.

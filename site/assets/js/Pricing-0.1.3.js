@@ -31,7 +31,7 @@ FusionAuth.Account.PriceCalculator = function() {
 
   // Fetch the pricing model
   this.priceModel = null;
-  new Prime.Ajax.Request(FusionAuth.accountURL + '/ajax/edition/price-model', 'GET')
+  new Prime.Ajax.Request(FusionAuth.accountURL + '/ajax/purchase/price-model', 'GET')
       .withSuccessHandler(this._handlePriceModelResponse)
       .withErrorHandler(this._handlePriceModelResponse)
       .go();
@@ -46,7 +46,7 @@ FusionAuth.Account.PriceCalculator = function() {
 
 FusionAuth.Account.PriceCalculator.constructor = FusionAuth.Account.PriceCalculator;
 FusionAuth.Account.hostingTypes = ['self-hosted', 'basic-cloud', 'business-cloud', 'ha-cloud'];
-FusionAuth.Account.editions = ['Community', 'Starter', 'Essentials', 'Enterprise'];
+FusionAuth.Account.plans = ['Community', 'Starter', 'Essentials', 'Enterprise'];
 
 FusionAuth.Account.PriceCalculator.prototype = {
   _calculateHostingPrice: function(type) {
@@ -63,25 +63,25 @@ FusionAuth.Account.PriceCalculator.prototype = {
     return price;
   },
 
-  _calculateEditionPrice: function(plan) {
+  _calculatePlanPrice: function(plan) {
     if (plan === 'Community') {
       return 0;
     }
 
     var mau = parseInt(this.monthlyActiveUserSlider.getValue());
-    var edition = this.priceModel.edition.tierPricing[plan];
+    var planPricing = this.priceModel.plan.tierPricing[plan];
     var increments = mau / 10000;
     var price;
     if (increments < 10) {
-      price = edition.base.pricePerUnit + (edition.tier2.pricePerUnit * (increments - 1));
+      price = planPricing.base.pricePerUnit + (planPricing.tier2.pricePerUnit * (increments - 1));
     } else if (increments < 100) {
-      price = edition.base.pricePerUnit + (edition.tier2.pricePerUnit * 9) + (edition.tier3.pricePerUnit * (increments - 10));
+      price = planPricing.base.pricePerUnit + (planPricing.tier2.pricePerUnit * 9) + (planPricing.tier3.pricePerUnit * (increments - 10));
     } else {
-      price = edition.base.pricePerUnit + (edition.tier2.pricePerUnit * 9) + (edition.tier3.pricePerUnit * 90) + (edition.tier4.pricePerUnit * (increments - 100));
+      price = planPricing.base.pricePerUnit + (planPricing.tier2.pricePerUnit * 9) + (planPricing.tier3.pricePerUnit * 90) + (planPricing.tier4.pricePerUnit * (increments - 100));
     }
 
     if (!this.monthly) {
-      price = Math.floor(price - (price * edition.annualDiscountPercentage));
+      price = Math.floor(price - (price * planPricing.annualDiscountPercentage));
     }
     return price;
   },
@@ -138,37 +138,22 @@ FusionAuth.Account.PriceCalculator.prototype = {
   },
 
   _updatePrices: function() {
-    var mau = parseInt(this.monthlyActiveUserSlider.getValue());
     for (var hIndex in FusionAuth.Account.hostingTypes) {
-      for (var eIndex in FusionAuth.Account.editions) {
+      for (var eIndex in FusionAuth.Account.plans) {
         var hostingType = FusionAuth.Account.hostingTypes[hIndex];
-        var edition = FusionAuth.Account.editions[eIndex];
+        var plan = FusionAuth.Account.plans[eIndex];
         var hostingPrice = this._calculateHostingPrice(hostingType);
-        var editionPrice = this._calculateEditionPrice(edition);
-        var price = hostingPrice + editionPrice;
+        var planPrice = this._calculatePlanPrice(plan);
+        var price = hostingPrice + planPrice;
         price = Math.floor(price);
         var text = price === 0 ? 'FREE' : new Intl.NumberFormat('en').format(price);
-        var name = hostingType + "-" + edition.toLowerCase();
+        var name = hostingType + "-" + plan.toLowerCase();
         var amount = Prime.Document.queryById(name);
         if (amount === null) {
           continue;
         }
 
-        if (edition === 'Starter') {
-          if (mau > 10000) {
-            amount.setHTML('--');
-            Prime.Document.query('.pricing-table-item.starter').each(function(e) {
-              e.setOpacity(0.50).setStyle('pointer-events', 'none');
-            });
-          } else {
-            amount.setHTML(text);
-            Prime.Document.query('.pricing-table-item.starter').each(function(e) {
-              e.setOpacity(1.0).setStyle('pointer-events', 'all');
-            });
-          }
-        } else {
-          amount.setHTML(text);
-        }
+        amount.setHTML(text);
       }
     }
 
