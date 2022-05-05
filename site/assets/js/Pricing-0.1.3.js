@@ -129,12 +129,6 @@ FusionAuth.Account.PriceCalculator.prototype = {
             .setHTML(e.getAttribute('html-orig'));
       });
     }
-
-    if (mau > 10000) {
-      Prime.Document.query('.starter-button').each(function(e) {
-        e.setHTML('Not available');
-      });
-    }
   },
 
   _updatePrices: function() {
