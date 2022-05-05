@@ -3,7 +3,7 @@ layout: advice
 title: The Developer Benefits of Single Sign-On
 description: What is Single Sign-On and how can it help developers build successful applications? 
 author: Kasper Siig
-image: advice/mfa/expert-advice-multi-factor-authentication-for-developers-header-image.png
+image: advice/developer-benefits-sso/developer-benefits-sso.png
 category: Authentication
 date: 2022-04-19
 dateModified: 2022-04-26
