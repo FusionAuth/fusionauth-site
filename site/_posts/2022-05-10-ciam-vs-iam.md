@@ -52,7 +52,7 @@ They are buying a good or service from you, and paying you for it. They typicall
 
 They may also be potential customers, evaluating your solution. Compare that with IAM; you aren't going to give a potential employee access to your systems, but a potential customer may have limited access.
 
-You want to delight them.
+With customers your primary motivation is to delight them.
 
 ### Expectations
 
@@ -72,16 +72,16 @@ It's not only users that have expectations of a CIAM system. Marketing and sales
 
 Another difference between CIAM and IAM is that there will be more users in a CIAM system.
 
-Companies can have thousands of employees, but a customer population many times larger. Google had 135,000 employees in 2021, but [billions of users](https://www.semrush.com/blog/google-search-statistics/). Basecamp had less than 100 employees, but had [millions of users](https://expandedramblings.com/index.php/basecamp-statistics-and-facts/).
+Companies can have thousands of employees, but a customer population many times larger. Google had 135,000 employees in 2021, but [billions of users](https://www.semrush.com/blog/google-search-statistics/). Basecamp had fewer than 100 employees, but had [millions of users](https://expandedramblings.com/index.php/basecamp-statistics-and-facts/).
 
 Many IAM solutions charge dollars/user/month. For CIAM, you'll want to pay orders of magnitudes less per user.
 
-Additionally, customers will not necessarily interact with your organization or application every day, whereas employees will, at least on their non-vacation days.
+Additionally, customers will not necessarily interact with your organization or application every day, whereas employees will, at least on their non-vacation days. But, due to marketing campaigns, seasonal trends or even the day of the month, there may be spikes in usage that you'll want to prepare for.
 
-The increased number of users and less frequent usage means:
+The increased number of users and irregular visitation frequency means:
 
 * You will need to plan for scale and higher per-user efficiency.
-* On the other hand, plan for some, possibly a majority of, users to be inactive in any given month.
+* On the other hand, plan for some users, possibly a majority of them, to be inactive in any given month.
 * Ensure self-service is available for common account actions, such as registration, enabling security measures and password resets. Otherwise your customer service load will explode.
 
 ### Permission complexity
