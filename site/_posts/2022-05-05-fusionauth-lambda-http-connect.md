@@ -3,7 +3,7 @@ layout: blog-post
 title: FusionAuth Expands Support for Authentication Workflows Spanning Multiple Systems
 description: Lambda HTTP Connect enables software developers to build complex authentication workflows spanning multiple systems and cloud services.
 author: David Polstra
-image: blogs/fusionauth-soc2-announcement/soc2-type2.png
+image: blogs/http-lambda-connect-press-release/http-lambda-connect.png
 category: blog topic-press-release
 excerpt_separator: "<!--more-->"
 ---
