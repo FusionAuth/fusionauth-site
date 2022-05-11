@@ -13,22 +13,42 @@ A deployment is a FusionAuth instance, a database, a search application, and all
 
 You can create as many deployments as you want and tear them down when you do not need them. You pay only for the time each deployment is running.
 
-Every deployment is separated, both logically and physically, from every other deployment. There is no network path between deployments except over the internet. There is no shared database or other storage infrastructure.
+Every deployment is separated, both logically and physically, from every other deployment.
+There is no network path between deployments except over the internet.
+There is no shared database or other storage infrastructure.
 
 * <<Why Use FusionAuth Cloud>>
 * <<What Does FusionAuth Cloud Cost>>
-* <<How To Use FusionAuth Cloud>>
+** <<The Pricing Calculator>>
+* <<The Account Portal>>
 ** <<Portal Areas>>
-** <<Setting Up Your Account and Billing>>
-** <<Creating a Deployment>>
-** <<Managing Your Deployments>>
-** <<Upgrading a Deployment>>
-** <<Destroying a Deployment>>
-** <<Migrating a Deployment>>
-** <<Other Portal Areas>>
+* <<Setting Up Your Account>>
+* <<Creating a Deployment>>
+** <<Billing Issues>>
+** <<Configuring Your Deployment>>
+** <<Deployment Provisioning>>
+** <<Accessing the FusionAuth UI>>
+* <<Managing Your Deployments>>
+* <<Upgrading a Deployment>>
+** <<Upgrade Duration>>
+** <<Upgrade Considerations>>
+** <<Upgrade Process>>
+** <<Rolling Back From a Problematic Upgrade>>
+* <<Destroying a Deployment>>
+* <<Migrating Data From a Deployment>>
+** <<Migrating To FusionAuth Cloud>>
+** <<Migrating Away From FusionAuth Cloud>>
 * <<Modifying Deployments>>
 ** <<Data Integrity>>
-** <<Custom Domains>>
+* <<Custom Domains>>
+* <<Other Portal Areas>>
+** <<Home>>
+** <<Plan>>
+** <<Billing>>
+** <<Users>>
+** <<Company>>
+** <<Support>>
+** <<Account>>
 * <<Accessing User Data>>
 ** <<Restoring From Backup>>
 * <<Support>>
@@ -36,6 +56,8 @@ Every deployment is separated, both logically and physically, from every other d
 * <<SLAs and Availability>>
 * <<Deployment IP Addresses>>
 * <<Load Testing>>
+** <<General Tips>>
+** <<Load Testing With FusionAuth Cloud>>
 * <<Limits>>
 
 == Why Use FusionAuth Cloud
@@ -93,16 +115,11 @@ Your account portal contains the following areas:
 * [breadcrumb]#Account# - manage your user account, including adding MFA or changing your password.
 * [breadcrumb]#Logout# - logs you out of the account application.
 
-image::installation-guides/cloud/home-tab.png[The dashboard of the FusionAuth Cloud account application.,width=1200]
+image::installation-guides/cloud/home-tab.png[The dashboard of the FusionAuth Cloud account application.,width=1200,role=bottom-cropped]
 
-[NOTE.info]
-====
-Adding a user to your company will allow them to manage FusionAuth deployments and take other account portal actions.
+include::docs/v1/tech/installation-guide/_cloud-user-note.adoc[]
 
-Doing so will *not* provision the user an account on the FusionAuth instance in the deployment.
-
-You must do that separately.
-====
+You can read more about the other portal areas in the <<Other Portal Areas>> section.
 
 == Setting Up Your Account
 
@@ -111,11 +128,11 @@ Register by going to https://account.fusionauth.io/[the account portal].
 
 If you already have an account, you can log in and skip this section.
 
-image::installation-guides/cloud/login-screen.png[Log in to your account,width=1200,roles=bottom-cropped,top-cropped]
+image::installation-guides/cloud/login-screen.png[Log in to your account,width=1200,role=bottom-cropped,top-cropped]
 
 If you do not have an account, follow the "Create an account" link. On the registration form, first you'll be prompted for a name and company.
 
-image::installation-guides/cloud/registration-first-screen.png[Registering for an account.,width=1200]
+image::installation-guides/cloud/registration-first-screen.png[Registering for an account.,width=1200,role=bottom-cropped,top-cropped]
 
 On the next screen, you'll be prompted for email, password and other required information.
 
@@ -126,7 +143,7 @@ You can choose a plan, price out a deployment, or add your billing information.
 You'll need to provide that before you can create a deployment.
 However, you can fully price out a deployment before entering billing information.
 
-image::installation-guides/cloud/home-tab.png[The home tab.,width=1200]
+image::installation-guides/cloud/home-tab.png[The home tab.,width=1200,role=bottom-cropped]
 
 You can navigate away from the [breadcrumb]#Home# tab and explore other areas of the account portal.
 For example, you can add other users, update your information, or change your company name.
@@ -134,11 +151,10 @@ For example, you can add other users, update your information, or change your co
 If you'd prefer to be invoiced rather than provide credit card details, link:/contact[contact us].
 
 If you are paying with a credit card, you will receive a payment receipt to the email address you signed up with.
-If you need to have the receipt, you can update that in the [breadcrumb]#Billing# tab.
+If you need to have the receipt, you can update details in link:#billing[the [breadcrumb]#Billing# tab].
 
-The following section focuses on the [breadcrumb]#Deployments# tab.
+The following section focuses on deployments and the actions available in the [breadcrumb]#Deployments# tab.
 Learn more about the link:#other-portal-areas[other portal areas here].
-
 
 After you have created an account, the next step is to create a deployment.
 
@@ -151,7 +167,7 @@ There are a few steps to getting access to a deployment.
 Navigate to the [breadcrumb]#Deployments# tab.
 If you have no deployments, you will see a screen like this:
 
-image::installation-guides/cloud/deployments-tab-no-deployments.png[On the Deployments tab with no deployments.,width=1200,roles=bottom-cropped]
+image::installation-guides/cloud/deployments-tab-no-deployments.png[On the Deployments tab with no deployments.,width=1200,role=bottom-cropped]
 
 Click the "Launch Today" button to start your first FusionAuth Cloud deployment.
 
@@ -160,7 +176,7 @@ Click the "Launch Today" button to start your first FusionAuth Cloud deployment.
 If you are on invoice billing, you cannot launch a FusionAuth cloud deployment.
 You'll see a screen like this:
 
-image::installation-guides/cloud/deployments-tab-invoiced.png[On the Deployments tab with invoicing set up after trying to launch.,width=1200,roles=bottom-cropped]
+image::installation-guides/cloud/deployments-tab-invoiced.png[On the Deployments tab with invoicing set up after trying to launch.,width=1200,role=bottom-cropped]
 
 In this situation, please https://account.fusionauth.io/account/support[file a support ticket] to modify your billing status or request a new deployment.
 
@@ -174,14 +190,14 @@ This hostname will be suffixed with the `fusionauth.io` domain name.
 If your plan supports it, you will be able to configure a different hostname, such as `auth.piedpiper.com`.
 If you need to reuse an existing hostname or migrate data from an existing deployment, open a https://account.fusionauth.io/account/support/[support ticket].
 
-Choose the version you want to run; the default is the latest release.
+Choose the version you want to run; the default is the latest release at the time of deployment creation.
 
-image::installation-guides/cloud/provisioning-add-details.png[Add details for provisioning.,width=1200]
+image::installation-guides/cloud/provisioning-add-details.png[Add details for provisioning.,width=1200,role=bottom-cropped]
 
-Pick the type of this deployment: Basic, Business or High-Availability (HA).
+Next, pick the type of this deployment: Basic, Business or High-Availability (HA).
 Each has different features and data durability guarantees.
 
-image::installation-guides/cloud/provisioning-select-type.png[Selecting your desired type on the provisioning screen.,width=1200]
+image::installation-guides/cloud/provisioning-select-type.png[Selecting your desired type on the provisioning screen.,width=1200,role=bottom-cropped]
 
 Next, choose your region and size.
 Supported regions include:
@@ -211,6 +227,7 @@ If you have needs for more requests per second, please see <<Custom FusionAuth C
 image::installation-guides/cloud/provisioning-select-region-size.png[Choosing your region and size.,width=1200,role=bottom-cropped]
 
 You'll see a price at the bottom of the screen.
+
 This price will update as you change attributes of your deployment.
 
 image::installation-guides/cloud/provisioning-price-summary.png[Your price summary.,width=1200,role=top-cropped]
@@ -222,16 +239,17 @@ The screenshots above are for a Basic FusionAuth Cloud deployment.
 Different deployments will show different options. 
 ====
 
-When you have your deployment configured as you would like, click "Add to Cart".
+When you have your deployment configured as you would like, click [field]#Add to Cart#.
 You will then be presented with a summary page, which will show your current information as well as any changes to be made.
 You may add more than one deployment if you wish.
 
-Finally, scroll to the bottom and click [field]#Purchase# to begin the deployment creation process.
-This will also charge your credit card.
-
 image::installation-guides/cloud/provisioning-purchase.png[Provisioning purchase section.,width=1200]
 
-If you do not have a payment method on file, add one in the [breadcrumb]#Billing# tab. Learn more about the link:#billing[[breadcrumb]#Billing# tab].
+Scroll to the bottom and click [field]#Purchase# to begin the deployment creation process.
+This will also charge your credit card.
+
+If you do not have a payment method on file, add one in the [breadcrumb]#Billing# tab.
+Learn more about the link:#billing[[breadcrumb]#Billing# tab].
 
 === Deployment Provisioning
 
@@ -245,7 +263,7 @@ image::installation-guides/cloud/deployments-active.png[Deployment tab when the 
 
 === Accessing the FusionAuth UI
 
-Log in to the deployment's administrative user interface by clicking on the deployment's URL, such as `\https://piedpiper-dev.fusionauth.io`.
+Log in to the deployment's administrative user interface by clicking on the deployment's URL, such as `\https://piedpiper-dev-ha-may.fusionauth.io`.
 
 At that point the link:/docs/v1/tech/tutorials/setup-wizard[Setup Wizard] will begin.
 You can configure FusionAuth by creating API keys, adding additional users, setting up applications for your users to log in to, or any other task.
@@ -270,7 +288,7 @@ FusionAuth will work with any email provider which has a SMTP interface.
 
 At any time you can log in to the account portal, navigate to [breadcrumb]#Deployments# and manage your deployments.
 
-To add another deployment, click "Add deployment".
+To add another deployment, click [field]#Add deployment#.
 You'll go through the same provisioning workflow as above, and end up with another FusionAuth Cloud deployment.
 
 image::installation-guides/cloud/deployments-launch-deployment.png[Launch deployment button,width=1200,role=bottom-cropped]
@@ -344,14 +362,14 @@ To upgrade a deployment from version `1.x-1` to version `1.x`:
 * https://account.fusionauth.io/[Log into your account].
 * Record the time you began the upgrade.
 * Navigate to the [breadcrumb]#Deployments# tab. Manage the deployment, then choose the "Upgrade" option. Select `1.x` from the [field]#Version# dropdown.
-* Confirm you want to start the upgrade:
+* Confirm you want to start the upgrade.
 
 image::installation-guides/cloud/deployments-upgrade-confirm.png[Upgrading a deployment,width=1200,role=bottom-cropped]
 
 * After confirmation, the deployment will be in an "Upgrading" state until finished. Monitor the upgrade by viewing the [breadcrumb]#Deployments# tab. To programmatically monitor the upgrade, call the link:/docs/v1/tech/apis/system#retrieve-system-status[System Status API].
 * The upgrade to version `1.x` is complete when the user interface deployment has a status of "Active", or when the System Status API returns success.
 
-[NOTE.warning]
+[WARNING.warning]
 ====
 You cannot downgrade a FusionAuth Cloud deployment version.
 
@@ -373,7 +391,9 @@ If you have a FusionAuth deployment and want to delete it, do so by https://acco
 
 [WARNING.warning]
 ====
-Before destroying a deployment, ensure you back up your user data and configuration. You can retrieve your configuration using the APIs. See <<Accessing User Data>> for more about retrieving user data and passwords.
+Before destroying a deployment, ensure you back up your user data and configuration. You can retrieve your configuration using the APIs.
+
+See <<Accessing User Data>> for more about retrieving user data and passwords.
 
 For Business and High Availability plans, FusionAuth will retain a backup for a maximum of 30 days.
 
@@ -399,9 +419,23 @@ At this point you will no longer be charged for this deployment.
 
 == Migrating Data From a Deployment
 
-You can migrate your user data to a FusionAuth Cloud deployment or from FusionAuth Cloud to a self-hosted FusionAuth instance. 
+FusionAuth can be run in a variety of environments, but you may want to migrate between them because:
 
-If you are interested in migrating from an auth system other than FusionAuth, you're looking for our link:/docs/v1/tech/migration-guide/[Migration Guide].
+* You want to let the FusionAuth team operate your auth server.
+* You started out in FusionAuth Cloud but now want to run the software on internal systems for performance, compliance or control.
+* You started out running FusionAuth locally for cost reasons, but now have launched and want to have someone else run it for you.
+
+You can migrate the user data FusionAuth holds for you in a number of ways:
+
+* From a self-hosted FusionAuth instance to a FusionAuth Cloud deployment.
+* From a FusionAuth Cloud deployment to a self-hosted FusionAuth instance.
+* From a different auth provider into FusionAuth.
+* Away from FusionAuth to a different auth provider.
+
+If you are interested in migrating to FusionAuth from an auth system other than FusionAuth, check out the link:/docs/v1/tech/migration-guide/[Migration Guide].
+
+If you want to retrieve your user data from FusionAuth Cloud in order to migrate to a different auth provider, see <<Accessing User Data>>.
+To get user data from a self-hosted FusionAuth instance, query the database.
 
 === Migrating To FusionAuth Cloud
 
@@ -494,24 +528,25 @@ First, log into your account portal.
 Navigate to [breadcrumb]#Deployments#.
 Then, choose the [field]#Action# dropdown and select `Custom URL(s)`.
 
-image::installation-guides/cloud/custom-url-action.png[Navigating to the custom URLs domain entry screen.,width=1200]
+image::installation-guides/cloud/custom-url-action.png[Navigating to the custom URLs domain entry screen.,width=1200,role=bottom-cropped]
 
 If you have existing custom URLs, you'll see them here.
-
 To add one, click [field]#Update custom URL(s)#.
 
 image::installation-guides/cloud/custom-url-update.png[The custom URLs list screen.,width=1200]
 
-Add the domain names to the text field.
-For example, `auth.piedpiper.com`.
+Add the domain names to [field]#Custom domains# field; for example, `auth.piedpiper.com`.
+Confirm you want the change by entering the text `CONFIRM` in the [field]#Confirm# text field.
 Then click [field]#Submit#.
 
-image::installation-guides/cloud/custom-url-add-domains.png[Adding custom URLs.,width=1200]
+image::installation-guides/cloud/custom-url-add-domains.png[Adding custom URLs.,width=1200,role=bottom-cropped]
 
 You'll be sent to a verification screen.
-After a few minutes, you'll be shown a set of records which you'll have to add to your DNS.
+This screen will update as the proper DNS records and other infrastructure are created.
 
-image::installation-guides/cloud/custom-url-verification-instructions.png[Pending verification instructions screen.,width=1200]
+image::installation-guides/cloud/custom-url-verification-instructions.png[Pending verification instructions screen.,width=1200,role=bottom-cropped]
+
+After a few minutes, you'll be shown a set of records which you'll have to add to your DNS.
 
 Custom domains are currently only offered for Business and HA Cloud deployments.
 If you are using Basic Cloud, upgrade to a supported type to enable a custom domain name.
@@ -524,7 +559,7 @@ The account portal is where you can manage your deployments and licenses, as wel
 
 The [breadcrumb]#Home# tab is a dashboard where you can view information about your FusionAuth account.
 
-image::installation-guides/cloud/home-tab.png[Home tab.,width=1200]
+image::installation-guides/cloud/home-tab.png[The home tab.,width=1200,role=bottom-cropped]
 
 === Plan
 
@@ -535,47 +570,65 @@ Some plans include support.
 
 image::installation-guides/cloud/plan-tab.png[The plan tab.,width=1200]
 
+If you no longer want to pay for a plan, change it to the Community plan here by clicking on the [field]#Change Plan# button.
+
 Learn more about link:/docs/v1/tech/admin-guide/licensing[plans] and link:/docs/v1/tech/core-concepts/editions-features[licensing].
+
 
 === Billing
 
-To update your billing, navigate to the [breadcrumb]#Billing# tab.
+The [breadcrumb]#Billing# tab is where you can update your billing information and view invoices.
+This tab is only useful if you are using a credit card to pay for your FusionAuth plan or deployments.
 
-You can view and modify aspects of your billing.
-
+On this tab, view and modify aspects of your billing.
 There's an overview of your billing status.
 
-image::installation-guides/cloud/billing-overview.png[The overview section of the billing tab.,width=1200]
+image::installation-guides/cloud/billing-overview.png[The overview section of the billing tab.,width=1200,role=bottom-cropped.]
 
 You can update your payment methods with a different credit card.
+FusionAuth stores no credit card data internally; it all is stored in an external third paty provider.
 
-image::installation-guides/cloud/billing-update-card.png[The payment method update section of the billing tab.,width=1200]
+image::installation-guides/cloud/billing-update-card.png[The payment method update section of the billing tab.,width=1200,role=bottom-cropped]
 
-You can update current payment settings, including the name and tax identifier on the invoice, the email address that invoices are sent to.
+You can update current payment settings, including:
 
-image::installation-guides/cloud/billing-update-detail.png[The payment method details section of the billing tab.,width=1200]
+* the name on the invoice
+* the tax identifier on the invoice
+* the email address to which invoices are sent
+
+image::installation-guides/cloud/billing-update-detail.png[The payment method details section of the billing tab.,width=1200,role=bottom-cropped]
 
 You can view past invoices.
+This can be useful when accounting is curious about a past bill.
+No more filing a support ticket to see the invoice from six months ago!
 
-image::installation-guides/cloud/billing-view-invoices.png[The invoices section of the billing tab.,width=1200]
+image::installation-guides/cloud/billing-view-invoices.png[The invoices section of the billing tab.,width=1200,role=bottom-cropped]
 
 === Users
 
 You can add, modify and remove users from your FusionAuth account.
+Users added this way can log in to account.fusionauth.io and access information about your FusionAuth deployments, plan, licenses and more.
 
-View the list of users in your account.
+include::docs/v1/tech/installation-guide/_cloud-user-note.adoc[]
 
-image::installation-guides/cloud/users-list.png[List the users with access to your account.,width=1200]
+You can see users who have access to your account.
+Users must have an email address.
 
-Add users to your account. You can have unlimited users in your FusionAuth account portal.
+image::installation-guides/cloud/users-list.png[List the users with access to your account.,width=1200,role=bottom-cropped]
 
-image::installation-guides/cloud/users-list-add.png[The add button to add users to your account.,width=1200]
+Add users to your account.
+You can have unlimited users in your FusionAuth account portal.
+If you have more than one FusionAuth account, users can belong to multiple accounts.
 
-Modify a user in your account. You can change their name, email address and roles.
+image::installation-guides/cloud/users-list-add.png[The add button to add users to your account.,width=1200,role=bottom-cropped]
 
-image::installation-guides/cloud/users-edit.png[Edit a user.,width=1200]
+As well as adding a new user, you can also modify an existing user.
+You can change their name, email address and roles.
 
-Users can have zero or more roles, which control access to functionality within the portal.
+image::installation-guides/cloud/users-edit.png[Edit a user.,width=1200,role=bottom-cropped]
+
+Users can have zero or more roles.
+Each role controls access to functionality within the portal.
 
 * Billing manager: view invoices, manage payment methods
 * Deployment manager: view and manage deployments
@@ -583,7 +636,7 @@ Users can have zero or more roles, which control access to functionality within 
 * Admin: access to all functionality of the roles above
 * Security officer: will be notified of any security updates
 
-Support tickets can be opened by any user with an account.
+include::docs/v1/tech/installation-guide/_support-tickets-opener.adoc[]
 
 === Company
 
@@ -591,31 +644,33 @@ To update your company details, navigate to the [breadcrumb]#Company# tab.
 
 You can change your company name.
 
-image::installation-guides/cloud/company-edit.png[Edit your company.,width=1200]
+image::installation-guides/cloud/company-edit.png[Edit your company.,width=1200,role=bottom-cropped]
 
 You can remove all your company details by navigating to the [breadcrumb]#Company -> Danger zone# section.
 Follow the instructions there, including removing all your deployments, and you'll be able to remove all data about you and your company.
 
-image::installation-guides/cloud/company-danger-zone.png[The company danger zone.,width=1200]
+image::installation-guides/cloud/company-danger-zone.png[The company danger zone.,width=1200,role=bottom-cropped]
 
 === Support
 
 To review your support options, navigate to the [breadcrumb]#Support# tab or click on the Support widget at the bottom of the page.
 
-Learn more about link:/docs/v1/tech/admin-guide/technical-support[technical support options].
+include::docs/v1/tech/installation-guide/_support-tickets-opener.adoc[]
 
+Learn more about link:/docs/v1/tech/admin-guide/technical-support[technical support options].
 
 === Account
 
-To update your account, navigate to the [breadcrumb]#Account# tab.
+To update your user account details, navigate to the [breadcrumb]#Account# tab.
 
 You can edit your user details, including your name, password, and email address.
 
-image::installation-guides/cloud/account-edit-user.png[Edit your account details.,width=1200]
+image::installation-guides/cloud/account-edit-user.png[Edit your account details.,width=1200,role=bottom-cropped]
 
 You can also set up MFA for your account.
+Currently only TOTP MFA is allowed for the account portal
 
-image::installation-guides/cloud/account-two-factor.png[Set up MFA for your account.,width=1200]
+image::installation-guides/cloud/account-two-factor.png[Set up MFA for your account.,width=1200,role=bottom-cropped]
 
 == Accessing User Data
 
