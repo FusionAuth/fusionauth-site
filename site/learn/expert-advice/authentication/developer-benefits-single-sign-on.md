@@ -63,7 +63,7 @@ SSO solutions are frequently misunderstood as something that would compromise sy
 
 Actually, when SSO is appropriately implemented, it significantly reduces the likelihood of a password-related hack. Users are more likely to generate robust, complicated, and difficult-to-guess passwords when they only need to remember one password for all their apps. They’re also less likely to repeat or write down passwords, which lowers the danger of identity theft.
 
-Developers benefit because they get best of breed security practices that they don’t need to code. For instance, combining SSO with [multifactor authentication (MFA)](/learn/expert-advice/authentication/multi-factor-authentication/) is an excellent way to add an extra degree of protection. With MFA, a user must submit at least two pieces of proof to authenticate their identities, such as a password and an OTP sent to their phone.
+Developers benefit because they get best of breed security practices that they don’t need to code. For instance, combining SSO with [multi-factor authentication (MFA)](/learn/expert-advice/authentication/multi-factor-authentication/) is an excellent way to add an extra degree of protection. With MFA, a user must submit at least two pieces of proof to authenticate their identities, such as a password and an OTP sent to their phone.
 
 Another practical security feature is risk-based authentication (RBA), which relies on technologies to monitor user behavior and context for any odd activity that might suggest an unauthorized user or hack. For example, if you see a pattern of failed logins or incorrect IP addresses, you can require MFA or block the user.
 
