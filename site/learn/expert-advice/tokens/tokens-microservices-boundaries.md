@@ -145,7 +145,7 @@ Internal:Error adding/updating listener(s) virtualInbound: Provider 'origins-0' 
 
 Such errors indicate your JWKS endpoint which contains the public keys used to verify the signature of the token are invalid or inaccessible.
 
-Second, look at the listener configs for your pods:
+Second, look at the listener configurations for your pods:
 
 ```
 istioctl proxy-config listener -n default todos-v3-<id> -o json
