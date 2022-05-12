@@ -46,7 +46,7 @@ If you want to meet up with the FusionAuth team at Gluecon, we're around and rea
 
 Find us in a couple of places:
 
-* We have a booth. Our booth number is "T14", but we should be easy to find since this isn't a re:Invent size conferences. Come say hi for a demo, to chat about the intricacies of the Authorization Code grant, or to sign up to win a Lego set or an Oculus Quest.
+* We have a booth. Our booth number is "T14", but we should be easy to find since this isn't a re:Invent size conference. Come say hi for a demo, to chat about the intricacies of the Authorization Code grant, or to sign up to win a Lego set or an Oculus Quest.
 * The FusionAuth founder and co-CTO, Brian Pontarelli, is talking on Thursday about the complexity of user login.
 * I'll be giving a talk on Wednesday on "Why Terraform Stinks", where I'll talk about our adventures with (and without) Terraform as we built FusionAuth Cloud.
 * We'll be out and about as well. Send us a note via our [contact form](/contact) or tweet/DM [Brian](https://twitter.com/bpontarelli) or [me](https://twitter.com/mooreds).
