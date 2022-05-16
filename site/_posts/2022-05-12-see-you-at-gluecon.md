@@ -3,7 +3,7 @@ layout: blog-post
 title: We'll see you at Gluecon
 description: FusionAuth is going to Gluecon 2022. Stop by and see us!
 author: Dan Moore
-image: blogs/game-developers-conference/gdc.png
+image: blogs/gluecon-2022/gluecon.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
@@ -32,7 +32,7 @@ Whew, that's a pretty broad purview. Here's [the agenda](https://docs.google.com
 
 FusionAuth is auth built by devs, for devs, so we love to connect to developers at conferences like Gluecon. We have great conversations about how developers are solving auth and CIAM problems at their company as well as learning about other development practices and experiences.
 
-Gluecon is one of our favorites. There's no filler, just great technical content.
+Gluecon is one of our favorites. There's no filler, just great technical content. It's where I first learned about APIs, AWS Lambda, Swagger/OpenAPI, and the battery impact of network connectivity in a mobile app.
 
 We're looking forward to the sessions. Exciting options include "The Hitchhiker’s Guide to MFA", "More Than Just a Bucket of Bits: Cloud Object Storage turns Sweet Sixteen" and "Measuring Developer Productivity: What and What NOT to Do". I'm especially looking forward to [Rachel Stephens'](https://twitter.com/rstephensme) keynote: "The Pit and the Pendulum". This isn't the sum total that is interesting to us; there are a lot of great talks!
 
