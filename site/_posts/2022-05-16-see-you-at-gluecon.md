@@ -26,7 +26,7 @@ This conference focuses on developers, but the talks cover a lot of ground. Topi
 * developer evangelism 
 * the newest tools and platforms driving technology
 
-Whew, that's a pretty broad purview. Here's [the agenda](https://docs.google.com/spreadsheets/d/1OvMFgLY6VmcSvNn1_CTDRcjatI8fee65jHUAThg9SYg/edit#gid=0) if you'd like to see specific details.
+Whew, that's a pretty broad purview. Here's [the agenda](https://docs.google.com/spreadsheets/d/1OvMFgLY6VmcSvNn1_CTDRcjatI8fee65jHUAThg9SYg/edit#gid=0) if you'd like to see specific details. You can also view the [conference site](https://www.gluecon.com/).
 
 ## Why the team is attending
 
