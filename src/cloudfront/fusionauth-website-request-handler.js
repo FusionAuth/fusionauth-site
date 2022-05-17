@@ -73,7 +73,6 @@ var redirects = {
   '/features/breached-password-detection': '/features/authentication',
   '/features/built-for-developers': '/platform/built-for-developers',
   '/features/connectors': '/features/authentication',
-  '/features/password-control': '/features/passwordless',
   '/features/scalability': '/platform/scalable',
   '/features/security-data-compliance': '/security-data-compliance',
   '/features/user-experience': '/platform/customizable',
