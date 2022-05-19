@@ -118,9 +118,10 @@ Install the chart using the `helm` command. Set the [field]#postgresqlPassword# 
 
 [source,shell,title=Install the postgresql chart]
 ----
-helm install pg-minikube bitnami/postgresql \
-  --set postgresqlPassword=<your-postgresql-password>
+helm install pg-minikube --set auth.postgresPassword=<your-postgres-password> bitnami/postgresql
 ----
+
+Setting the password is optional and will be generated automatically if you do not set one.
 
 When completed successfully, the output will contain some useful information about your deployment:
 
@@ -146,9 +147,28 @@ To connect to your database from outside the cluster execute the following comma
     PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 -U postgres -d postgres -p 5432
 ----
 
-When you deploy FusionAuth, you will need to use the DNS name `pg-minikube-postgresql.default.svc.cluster.local` as seen above and the password that you set in the install command.
+When you deploy FusionAuth, you will need to use the DNS name `pg-minikube-postgresql.default.svc.cluster.local` as seen above and the password created from installing the helm chart.
 
-You can test your deployment by attempting to connect to the database following the instructions in the output. You can also verify the `pg-minikube-postgresql` pod by again retrieving pods with `kubectl`. The following command requests pods in the `default` namespace with output (`-o`) containing additional information such as [field]#IP Address#:
+[source,helmtext,title=Export the Postgres password]
+----
+export POSTGRES_PASSWORD=$(kubectl get secret --namespace default pg-minikube-postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode)
+----
+
+Following the above command, if you did not set a password when installing my-release you can use the command below to display it.
+
+[source,helmtext, title=Display your password]
+----
+echo $POSTGRES_PASSWORD
+----
+
+You can also test your deployment by attempting to connect to the database following the instructions in the output.
+
+[source,helmtext,title=Connect to the database]
+----
+kubectl run pg-minikube-postgresql-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:11.13.0-debian-10-r40 --env="PGPASSWORD=$POSTGRES_PASSWORD" --command -- psql --host pg-minikube-postgresql -U postgres -d postgres -p 5432
+----
+
+You can also verify the `pg-minikube-postgresql` pod by again retrieving pods with `kubectl`. The following command requests pods in the `default` namespace with output (`-o`) containing additional information such as [field]#IP Address#:
 
 [source,shell,title=Get pods in the default namespace]
 ----
@@ -290,7 +310,7 @@ When you installed <<Deploy Postgresql, Postgresql>> and <<Deploy Elasticsearch,
 * `pg-minikube-postgresql.default.svc.cluster.local`
 * `elasticsearch-master.default.svc.cluster.local`
 
-You will use these values when deploying FusionAuth.
+You will use these values for the database and elasticsearch host values when deploying FusionAuth.
 
 For more information on DNS see Kubernetes documentation for https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/[DNS for Services and Pods].
 
