@@ -3,6 +3,7 @@ layout: blog-post
 title: Keycloak and FusionAuth Comparison
 description: Compare FusionAuth and Keycloak for your identity and access management solution.
 author: Brian Pontarelli
+updated_date: 2022-05-19
 image: blogs/keycloak-fusionauth-comparison.jpg
 category: blog
 excerpt_separator: "<!--more-->"
@@ -41,6 +42,10 @@ Another difference between Keycloak and FusionAuth is our how we approach custom
 To see more details on how Keycloak and FusionAuth stack up, [download this feature comparison](/resources/fusionauth-vs-keycloak.pdf "Keycloak and FusionAuth Feature Comparison") and please [contact us](/contact "Contact Us") if you have any questions.
 
 [Download the Keycloak and FusionAuth Feature Comparison](/resources/fusionauth-vs-keycloak.pdf "Keycloak and FusionAuth Feature Comparison"){:.button .brochure .orange .text-larger}
+
+You can also view technical documentation about how you can migrate from Keycloak to FusionAuth.
+
+[View the Keycloak Technical Migration Guide](/docs/v1/tech/migration-guide/keycloak){:.button .brochure .orange .text-larger}
 
 ## Learn More About FusionAuth
 FusionAuth is designed to be the most flexible and secure Customer Identity and Access Management solution available at the best price. We provide registration, login, SSO, MFA, social login, data search, user management and more, 100% free for unlimited users. [Find out more](/ "FusionAuth Home") about FusionAuth and download it today.
