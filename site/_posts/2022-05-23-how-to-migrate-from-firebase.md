@@ -55,7 +55,7 @@ The basic steps of a bulk migration are:
 * Retrieve user data from Firebase. You can do this with the Firebase CLI: `firebase auth:export users.json --format=JSON --project your_project_id`.
 * Massage the exported user data into a format acceptable to your new provider, using whatever data transformation tools you are comfortable with.
 * Upload the user data to the new provider. 
-* Create configuration in the new auth system corresponding to the applications previously set up in Fireabase. You should also customize the user interface, messages, MFA methods and any other specific settings that are relevant.
+* Create configuration in the new auth system corresponding to the applications previously set up in Firebase. You should also customize the user interface, messages, MFA methods and any other specific settings that are relevant.
 * Update your custom, COTS or OSS applications to point to the new auth system.
 * Disable the sign-in methods in your Firebase application to ensure that all of your users are authenticating against the new system.
 
@@ -83,7 +83,7 @@ Since Firebase uses scrypt to rehash user passwords at login, if a user has been
 ## A slow migration from Firebase
 
 
-With a slow, or phased, migration, users log in to the new system, provide their username and password, which is then forwarded to Firebase. (This must be a secure connection and should be augmented with IP restrictions, custom headers or client certificates; you don't want anyone to be able to pass credentials and probe your userbase.) If the credentials are correct, the user is logged in. The new system can rehash and store the password along with other user data.
+With a slow, or phased, migration, users log in to the new system, provide their username and password, which is then forwarded to Firebase. (This must be a secure connection and should be augmented with IP restrictions, custom headers or client certificates; you don't want anyone to be able to pass credentials and probe your list of users.) If the credentials are correct, the user is logged in. The new system can rehash and store the password along with other user data.
 
 Here's a diagram of an initial user login during a slow migration:
 
@@ -98,7 +98,7 @@ The basic steps of a slow migration are:
 * Set up the new auth system. Make sure you map all user functionality and data from Firebase to the new system.
 * Determine what constitutes "done" for this migration, since it is unlikely that every single user will log in and be migrated, no matter how long you run these two systems in parallel. You can see [more details on how to calculate that](/docs/v1/tech/migration-guide/general#migration-timeline).
 * Set up a way for the new system to present user credentials to Firebase during an authentication event. The exact method will depend on new system features. This can be done with a Firebase API call; see [this Firebase documentation](https://firebase.google.com/docs/reference/rest/auth#section-sign-in-email-password) for more.
-* Create configuration in the new auth system corresponding to the applications previously set up in Fireabase. You should also customize the user interface, messages, MFA methods and any other specific settings that are relevant.
+* Create configuration in the new auth system corresponding to the applications previously set up in Firebase. You should also customize the user interface, messages, MFA methods and any other specific settings that are relevant.
 * Update your custom, COTS or OSS applications to point to the new auth system.
 * Wait, running reports periodically to determine if you've migrated enough users to shut down the slow migration.
 * Decide what to do with unmigrated users. Options include abandoning them, a bulk migration, or contacting them to encourage a sign-in.
@@ -108,8 +108,8 @@ Slow migrations have less impact on your users, but more impact on your systems 
 
 ## Conclusion
 
-This blog post offers an overview of a Firebase migration. No matter what the new target system is, you'll need to decide between the bulk or slow migration, as well take specific steps to move your data and settings. You'll also want to consider how to migrate any the other functionality you use in Firebase.
+This blog post offers an overview of a Firebase migration. No matter what the new target system is, you'll need to decide between the bulk or slow migration, as well take specific steps to move your data and settings. You'll also want to consider how to migrate any other functionality you use in Firebase.
 
-If you are looking for step by step instructions on how to move to FusionAuth from Firebase, please check out our [Firebase migration guide](/docs/v1/tech/migration-guide/cognito).
+If you are looking for step by step instructions on how to move to FusionAuth from Firebase, please check out our [Firebase migration guide](/docs/v1/tech/migration-guide/firebase).
 
 
