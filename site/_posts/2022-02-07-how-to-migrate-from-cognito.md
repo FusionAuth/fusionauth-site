@@ -78,11 +78,11 @@ You could notify the users in bulk via email or update your login screens with a
 
 Here's the login flow before the bulk migration:
 
-{% plantuml source: _diagrams/docs/guides/bulk-migration-before.plantuml, alt: "Bulk migration login request flow before the migration." %}
+{% plantuml source: _diagrams/docs/guides/bulk-migration-before-cognito.plantuml, alt: "Bulk migration login request flow before the migration." %}
 
 Here's the login flow after the bulk migration, when Amazon Cognito no longer is involved in the login process:
 
-{% plantuml source: _diagrams/docs/guides/bulk-migration-after.plantuml, alt: "Bulk migration login request flow after the migration." %}
+{% plantuml source: _diagrams/docs/guides/bulk-migration-after-cognito.plantuml, alt: "Bulk migration login request flow after the migration." %}
 
 The benefits of a bulk migration include:
 
