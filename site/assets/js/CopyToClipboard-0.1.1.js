@@ -30,7 +30,7 @@ class FusionAuthCopyToClipboard {
              .writeText(source.innerText)
              .then(() => {
                const tooltip = document.createElement('div');
-               tooltip.classList.add('bg-gray-500', 'mb-3', 'p-2', 'rounded', 'shadow-md', 'text-white', "z-10");
+               tooltip.classList.add('text-white', "z-10");
                tooltip.innerHTML = 'Copied <div data-popper-arrow></div>';
                copyButton.parentNode.appendChild(tooltip);
                Popper.createPopper(copyButton, tooltip,
@@ -39,7 +39,7 @@ class FusionAuthCopyToClipboard {
                        {
                          name: 'offset',
                          options: {
-                           offset: [0, 10],
+                           offset: [-40, -15],
                          },
                        },
                      ],
