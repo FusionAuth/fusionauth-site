@@ -32,7 +32,7 @@ While [Firebase](https://firebase.google.com/) is a low cost auth service and a 
 * Billing may be confusing and take some time to get used to.
 
 These limitations may be acceptable initially, but eventually you may need a feature not provided by Firebase, such as a unique login provider or the OAuth device grant.
-Or perhaps you want more control over the location of your data, or a more typical testing and deploymet setup.
+Or perhaps you want more control over the location of your data, or a more typical testing and deployment setup.
 
 For whatever reason, you may decide you need to move your customer and user data from Firebase. Let's take a look at how you might do so.
 
