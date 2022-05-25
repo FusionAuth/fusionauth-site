@@ -16,6 +16,7 @@ The User itself is easy enough to understand, it represents your end user, your 
 * <<User Sessions>>
 * <<What Makes a User Active>>
 * <<User Search>>
+* <<Segmenting Users>>
 
 Here's a brief video covering some aspects of users:
 
@@ -140,3 +141,97 @@ The following screenshot shows an Elasticsearch JSON query being constructed to 
 image::core-concepts/user-search-json-query.png[User Search with JSON Query.,width=1200]
 
 To learn more about the Elasticsearch search engine in general, view the link:/docs/v1/tech/core-concepts/search[search core concepts section].
+
+
+== Segmenting Users
+
+Often times you want to segment users into separate groupings.
+You have four options to do so in FusionAuth.
+They each have different tradeoffs.
+The options are:
+
+* Tenants
+* Applications and Registrations
+* Groups
+* Entities and Grants
+
+//TODO table
+
+=== Tenants
+
+Each FusionAuth tenant is a logical grouping of users, configuration and applications.
+Users are entirely contained within tenants.
+A user with the same identifier (email, username, etc) in two different tenants is a different user.
+They can have a different password, different identity provider links and different attributes.
+You can search across tenants using the User Search API.
+
+An example use case is a private label todo SaaS application, where you want a user to sign up for two or more different instances of your SaaS and not know that there is a shared identity store behind them.
+richard@piedpiper.com can sign up for the Pied Piper Todo application and the Hooli Todo Application with the same email address, but different passwords, MFA methods and more.
+
+One issue is that if you have users, such as customer support representatives, which need access across tenants, keeping their accounts in sync is difficult.
+One option is to have an administrative identity server, whether that is a second instance of FusionAuth, Google GSuite, or Azure AD, and have these users authenticate with it.
+
+Learn more about link:/docs/v1/tech/core-concepts/tenants[Tenants].
+
+=== Applications and Registrations
+
+Applications in FusionAuth represent something you can log in to.
+They are tenant scoped.
+You associate a user with an application via a registration.
+You may also optionally associate one or more roles with a user's registration.
+
+An example use case is a single company, where you have a forum, a todo application and an accounting application.
+If you have three users, Richard, Monica and Jared, you can grant Richard access to all three applications, Monica access to the forum and todo applications, and Jared access to the accounting application.
+You can prohibit a user from logging into an application by checking the token claims or enabling the [field]#Require registration# setting.
+
+Applications also may have associated Identity Providers, such as Google or OIDC providers.
+When so configured, a user may log into an application with the Identity Provider.
+
+Every user object contains an array of application registrations.
+You can search for all users with a given registration.
+
+Learn more about link:/docs/v1/tech/core-concepts/appliciations[Applications].
+
+=== Groups
+
+Groups are a way to group users in FusionAuth.
+They are tenant scoped.
+They may have application roles associated with them; users with a registration for an application as well as a group membership will recieve those roles.
+
+Group membership is boolean in nature.
+A user is either in a group or out of a group.
+
+An example use case is a forum moderators group.
+The forum application can get the group memberships of any user and provide a 'flag' button on the forum software.
+
+Every user object contains an array of group memberships.
+You can search for all users with a given group memberships.
+
+Learn more about link:/docs/v1/tech/core-concepts/groups[Groups].
+
+=== Entities and Grants
+
+Entities and grants allow you to model fine grained permissions in a flexible manner.
+Entities are things, while grants are expressions of permissions granted to a user or thing against another thing.
+Entities have permissions that are configurable at creation time.
+Entities, grants and permissions are analogus to applications, registrations and roles, but you can't log in an entity.
+Entities are a good fit when you have users that may need access to different assets which can't be easily modeled as applications.
+
+An example use case which could be modelled using entities is GitHub organizations.
+A user can belong to zero or more GitHub organizations and have different access levels in each one.
+But a user logs in to GitHub, not to a GitHub organization.
+Additionally, permissions will vary.
+A user may be an admin in one GitHub organization and have read-only access in another one.
+
+It is very common to have an interstitial page when using entities.
+The user logs in to an application, and is then presented with a list of entities to which they've been granted permissions.
+The users selects an entity and then acts within that entity.
+
+You can search for all users granted access to a given entity.
+You can search for all entities for which a user has a grant.
+
+One issue is that to search for grants on a user, you must use FusionAuth's proprietary APIs.
+Additionally, since entities cannot be 'logged into', they don't have any relationship with external Identity Providers.
+
+Learn more about link:/docs/v1/tech/core-concepts/entity-management[Entities and Grants].
+
