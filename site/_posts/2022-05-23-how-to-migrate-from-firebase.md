@@ -3,7 +3,7 @@ layout: blog-post
 title: How to migrate user your user data from Google Firebase
 description: How can you migrate user data such as password hashes and social logins away from Google Firebase?
 author: Dan Moore
-image: blogs/migrate-from-cognito/how-to-migrate-from-amazon-cognito-header-image.png
+image: blogs/migrate-from-firebase/migrating-user-data-off-google-firebase.png
 category: blog
 tags: topic-upgrade-firebase
 excerpt_separator: "<!--more-->"
