@@ -53,11 +53,15 @@ Using MFA, you can request one of three types of additional information from use
 * Something the user has, such as a verified digital badge, PC, smartphone, or digital game console
 * Something the user is, such as a biometric ID
 
-Learn more about [Multi-Factor Authentication](/learn/expert-advice/authentication/multi-factor-authentication)
+What kind of additional factor makes sense for your users depends on their demographic and device. You should also make varying kinds of factors available, as the casual game player might want something easy to use like SMS whereas the professional esport player, with a more valuable account, will want a more secure factor such as a biometric ID tied to their phone.
+
+Learn more about [Multi-Factor Authentication](/learn/expert-advice/authentication/multi-factor-authentication).
 
 ### Geographic Alerts
 
-Not only can you monitor users’ login details, but you can also monitor where they’re logging in from. Adaptive authentication, an AI-based authentication method, monitors account login activity in real time and alerts you if someone tries to log in from an unregistered device or an unusual location. For example, if a user logs in from one country and then logs in again from a different country an hour later, that should trigger an "impossible travel" alert.
+Not only can you monitor users’ login details, but you can also monitor where they’re logging in from. IP addresses can be mapped to physical locations. While this mapping is never perfect and can be thwarted by VPNs, it is usually good enough to provide an additional layer of assurance.
+
+Adaptive authentication, an AI-based authentication method, monitors account login activity in real time and alerts you or the account holder if someone tries to log in from an unregistered device or an unusual location. For example, if a user logs in from one country and then logs in again from a different country an hour later, that should trigger an "impossible travel" alert.
 
 If a user’s location is new or changes frequently, your adaptive authentication tool will assess the threat level. If the login attempt is deemed to be suspicious, the user will be asked to confirm the attempt by providing additional authentication information before being granted access. This can include forcing a new authentication, providing an additional factor of authentication, completing a CAPTCHA and more.
 
