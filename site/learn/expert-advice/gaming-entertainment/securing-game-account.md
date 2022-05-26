@@ -1,12 +1,12 @@
 ---
 layout: advice
 title: Securing Gaming User Accounts with Fraud Detection and Suspicious Activity Notification
-description: When it comes to gaming, saving progress is an essential job. Gaming user accounts do that and much more. However, just like any other virtual account, gaming accounts need to be secured from fraudulent activity as well. In this guide, you will talk about the significance of securing gaming accounts and show some ways in which it can be done.
+description: When it comes to gaming, saving progress is an essential job. Gaming user accounts do that and much more. However, just like any other virtual account, gaming accounts need to be secured from fraudulent activity as well. In this guide, learn about the significance of securing gaming accounts and the ways in which it can be done.
 author: Rabo James Bature
 image: advice/zero-trust/expert-advice-auth-providers-and-zero-trust-architecture-header-image.png
-category: Security
-date: 2022-01-05
-dateModified: 2022-01-05
+category: Gaming and Entertainment
+date: 2022-06-01
+dateModified: 2022-06-01
 ---
 
 As the industry continues to grow, gaming is becoming a [way for users to make money](https://www.teknosassociates.com/how-do-professional-gamers-make-money/) in addition to being a form of entertainment. Gamers need to be able to track and save their progress to qualify for prize money, esports league salaries, or sponsorships, as well as add to their streaming content or videos on demand. Their unique user accounts are vital to their success.
@@ -59,7 +59,7 @@ Learn more about [Multi-Factor Authentication](/learn/expert-advice/authenticati
 
 Not only can you monitor users’ login details, but you can also monitor where they’re logging in from. Adaptive authentication, an AI-based authentication method, monitors account login activity in real time and alerts you if someone tries to log in from an unregistered device or an unusual location. For example, if a user logs in from one country and then logs in again from a different country an hour later, that should trigger an "impossible travel" alert.
 
-If a user’s location is new or changes frequently, your adaptive authentication tool will assess the threat level. If the login attempt is deemed to be suspicious, the user will be asked to confirm the attempt by providing additional authentication information before being granted access.
+If a user’s location is new or changes frequently, your adaptive authentication tool will assess the threat level. If the login attempt is deemed to be suspicious, the user will be asked to confirm the attempt by providing additional authentication information before being granted access. This can include forcing a new authentication, providing an additional factor of authentication, completing a CAPTCHA and more.
 
 ### Event Logs
 
@@ -69,7 +69,7 @@ Event logs monitor suspicious account activity, such as a login from a new devic
   
 ### Automatic Logout
 
-A gaming account can be configured to automatically log out after sitting idle for a set number of minutes or hours. This helps prevent attackers from accessing an account that is still logged in on a user’s device.
+A gaming account can be configured to automatically log out after sitting idle for a set number of minutes or hours. Session timeouts like this prevent attackers from accessing an account that is still logged in on a user’s device.
 
 ## Conclusion 
 
