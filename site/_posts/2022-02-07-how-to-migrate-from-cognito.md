@@ -78,11 +78,11 @@ You could notify the users in bulk via email or update your login screens with a
 
 Here's the login flow before the bulk migration:
 
-{% plantuml source: _diagrams/docs/guides/bulk-migration-before.plantuml, alt: "Bulk migration login request flow before the migration." %}
+{% plantuml source: _diagrams/docs/guides/bulk-migration-before-cognito.plantuml, alt: "Bulk migration login request flow before the migration." %}
 
 Here's the login flow after the bulk migration, when Amazon Cognito no longer is involved in the login process:
 
-{% plantuml source: _diagrams/docs/guides/bulk-migration-after.plantuml, alt: "Bulk migration login request flow after the migration." %}
+{% plantuml source: _diagrams/docs/guides/bulk-migration-after-cognito.plantuml, alt: "Bulk migration login request flow after the migration." %}
 
 The benefits of a bulk migration include:
 
@@ -101,13 +101,13 @@ With a slow, or phased, migration, users are not required to reset their passwor
 
 Here's a diagram of an initial user login during a slow migration:
 
-{% plantuml source: _diagrams/docs/guides/slow-migration.plantuml, alt: "Slow migration initial login request flow." %}
+{% plantuml source: _diagrams/docs/guides/slow-migration-cognito.plantuml, alt: "Slow migration initial login request flow." %}
 
 After the initial login, Cognito is no longer the system of record for that user. Any changes to this user, whether made by themselves, automated processes or customer service team members, will need to be made in the new system.
 
 In subsequent logins, the original Cognito system is never consulted.
 
-{% plantuml source: _diagrams/docs/guides/slow-migration-subsequent.plantuml, alt: "Slow migration subsequent login request flow." %}
+{% plantuml source: _diagrams/docs/guides/slow-migration-subsequent-cognito.plantuml, alt: "Slow migration subsequent login request flow." %}
 
 The basic steps of a slow migration are:
 
