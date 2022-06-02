@@ -3,7 +3,7 @@ layout: blog-post
 title: Why secure gamer's user accounts?
 description: What are risks to gamer accounts and why should you secure them?
 author: Rabo James Bature
-image: blogs/mitigate-risks-auth-vendor-acquired/how-to-mitigate-risk-when-your-auth-vendor-gets-acquired-header-image.png
+image: blogs/securing-gaming-accounts/secure-gamers-user-accounts-header.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---

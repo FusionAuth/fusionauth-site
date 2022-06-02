@@ -3,7 +3,7 @@ layout: advice
 title: Securing Gaming User Accounts with Fraud Detection and Suspicious Activity Notification
 description: When it comes to gaming, saving progress is an essential job. Gaming user accounts do that and much more. However, just like any other virtual account, gaming accounts need to be secured from fraudulent activity as well. In this guide, learn about the significance of securing gaming accounts and the ways in which it can be done.
 author: Rabo James Bature
-image: advice/zero-trust/expert-advice-auth-providers-and-zero-trust-architecture-header-image.png
+image: advice/securing-gaming-accounts/securing-gaming-accounts.png
 category: Gaming and Entertainment
 date: 2022-06-01
 dateModified: 2022-06-01
