@@ -42,6 +42,7 @@ var indexPages = {
   '/learn/expert-advice/authentication/': true,
   '/learn/expert-advice/ciam/': true,
   '/learn/expert-advice/dev-tools/': true,
+  '/learn/expert-advice/gaming-entertainment/': true,
   '/learn/expert-advice/identity-basics/': true,
   '/learn/expert-advice/oauth/': true,
   '/learn/expert-advice/security/': true,
