@@ -84,6 +84,7 @@ var redirects = {
   '/learn/expert-advice/identity-basics/common-authentication-implementation-risks': '/learn/expert-advice/authentication/common-authentication-implementation-risks',
   '/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales': '/learn/expert-advice/ciam/making-sure-your-auth-system-scales',
   '/learn/expert-advice/identity-basics/value-standards-compliant-authentication': '/learn/expert-advice/oauth/value-standards-compliant-authentication',
+  '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/learn/expert-advice/gaming-entertainment/gaming-identity-provider-needs',
   '/podcast': '/',
   '/pricing/cloud/': '/pricing',
   '/pricing/edition': '/pricing',
