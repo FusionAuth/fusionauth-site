@@ -48,6 +48,9 @@ module Jekyll
             item.title = "Release "+r.to_s
             if date && date.length > 2
               item.updated = date.to_s
+            else
+              # too new to have release notes, let's mark it as today.
+              item.updated = Time.now.to_s
             end
           end
 
