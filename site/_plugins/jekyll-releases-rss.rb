@@ -3,6 +3,7 @@ require 'uri'
 require 'json'
 require 'rss'
 require 'nokogiri'
+require 'date'
 
 module Jekyll
   class ReleasesFeedGenerator < Generator
@@ -22,6 +23,7 @@ module Jekyll
 
       releases = JSON.parse(content)
       releaseslist = releases['versions'].reverse()
+      latest_date = nil
       rss = RSS::Maker.make("atom") do |maker|
         maker.channel.author = "FusionAuth"
         maker.channel.about = "https://fusionauth.io"
@@ -56,15 +58,21 @@ module Jekyll
 
           if maker.channel.updated.nil?
             # first time, we want to grab the latest release timestamp
-            maker.channel.updated =  date.to_s
+            maker.channel.updated = date.to_s
+            latest_date = Time.parse(date.to_s)
           end
         end
       end
 
       file_name = "releases.xml"
       output_dir = "#{site.source}/docs/v1/tech/"
-      File.open(output_dir+file_name, "w") { |f| f.write rss}
-      site.static_files << Jekyll::StaticFile.new(site, '', output_dir, file_name)
+      # Check if the file needs to be re-generated
+      output = File.join(output_dir, file_name)
+      if !File.exist?(output) || File.mtime(output) < latest_date
+        File.open(output_dir+file_name, "w") { |f| f.write rss}
+        site.static_files << Jekyll::StaticFile.new(site, '', output_dir, file_name)
+      end
+
     end
   end
 end
