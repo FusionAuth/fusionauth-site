@@ -11,14 +11,32 @@ This guide will illustrate multi-factor authentication features in FusionAuth, i
 * <<Types of MFA Supported>>
 * <<Tenant Set Up>>
 * <<Enabling MFA on a User>>
+** <<Directly Enabling MFA for a User>>
+** <<Building Your Own Interface>>
+** <<Verifying MFA Is Enabled>>
+** <<Adding a Second Method>>
+** <<Recovery Codes>>
 * <<The End User Login Experience with MFA>>
+** <<Hosted Login Pages>>
+** <<Building Your Own Screens>>
 * <<Step Up Auth>>
+** <<Start the Process>>
+** <<Optionally Send the Code>>
+** <<Complete the Step Up>>
 * <<Disabling MFA on a User>>
+** <<Using the Administrative User Interface>>
+** <<Directly Disabling MFA for a User>>
+** <<Building Your Own Interface>>
 * <<Resending Codes>>
 * <<Recovery Codes>>
 * <<Migration from Version 1.25 and Earlier>>
 * <<Integrating Other MFA Methods>>
+* <<Migrating MFA Methods From a Different System>>
+* <<Forcing MFA>>
 * <<Troubleshooting>>
+
+
+
 
 == Types of MFA Supported
 
@@ -48,17 +66,57 @@ Please see the link:/docs/v1/tech/core-concepts/tenants#multi-factor[Tenant conf
 
 Once you've configured tenant settings, enable one or more MFA methods on a user. Doing this will require the user to present the additional factor of proof whenever they log in. 
 
-Since this involves sharing secrets and verifying possession of email accounts or mobile phones, you cannot enable MFA using the FusionAuth administrative user interface. Instead, use the API to do this.
+Since this involves sharing secrets and verifying possession of email accounts or mobile phones, you cannot enable MFA using the FusionAuth administrative user interface. 
 
-However, if you have a paid edition, users may also use the self service account management feature to enable MFA for their accounts. link:/docs/v1/tech/account-management/[Learn more about that option here].
+You have three options:
 
-To enable MFA for a single user, these are the steps to take with the API:
+* If you have a paid edition, users may use the self service account management feature to enable MFA for their accounts. link:/docs/v1/tech/account-management/[Learn more about that option here].
+* You may enable MFA directly using the User API.
+* You can build your own MFA user interface, allowing end users to enable MFA.
+
+=== Directly Enabling MFA for a User
+
+To directly enable MFA for a user, update their user object with one or more MFA methods.
+
+[source,shell]
+.Adding MFA methods to a user directly
+----
+API_KEY=...
+
+curl -XPATCH -H 'Content-type: application/json' -H "Authorization: $API_KEY" \
+'https://localhost.fusionauth.io/api/user/00000000-0000-0000-0000-000000000004' \
+-d '{
+  "user": {
+    "twoFactor": {
+      "methods": [{
+        "method": "email",
+        "email": "dinesh@aol.com"
+      }, {
+        "method": "email",
+        "email": "dinesh@gmail.com"
+      }]
+    }
+  }
+}'
+----
+
+You are `PATCH`ing the `twoFactor` array; doing so multiple times adds to the array each time (rather than setting it to exactly what you provided in the API call). https://github.com/FusionAuth/fusionauth-issues/issues/441[Read this tracking issue for more info.]
+
+If adding a TOTP factor, make sure you capture the secret and convey it to the user so they may enter it into their authenticator application.
+
+There is no confirmation step when using this approach, so if an email address or phone number is incorrect, the user will never see the code sent.
+
+You can read more about updating a user in the link:/docs/v1/tech/apis/users[User API docs].
+
+=== Building Your Own Interface
+
+If building your own user interface, these are the steps to take with the API:
 
 * If using TOTP, optionally generate a shared secret to present to the user
 * If using a message based MFA method, send a code to the user
 * Build a page to accept that code and enable MFA
 
-=== Optionally Generate a Shared Secret
+==== Optionally Generate a Shared Secret
 
 This is needed if you are using TOTP. For any other MFA method, skip this section. 
 
@@ -84,7 +142,7 @@ You must present the shared secret to the user for TOTP MFA. This can be present
 
 Unless you are using the self service account management, you'll have to build this interface for your application.
 
-=== Optionally Send a Code to the User For Message Based MFA
+==== Optionally Send a Code to the User For Message Based MFA
 
 For email and SMS methods, send a code to the user using the Send API. If you are using TOTP, skip this section.
 
@@ -107,7 +165,7 @@ This API call will send a unique code to the user using the method specified.
 
 The lifetime and length of this code can be configured by navigating to [breadcrumb]#Tenants -> Your Tenant -> Advanced# and modifying the [field]#Two-Factor One Time Code# settings.
 
-=== Collect the Code
+==== Collect the Code
 
 Once the code has been sent or the secret shared, accept the code from the user. Unless you are using the self service account management, you'll have to build this page in your application. 
 
@@ -185,6 +243,18 @@ If you are using hosted login pages (learn more about link:/docs/v1/tech/core-co
 
 * The "OAuth two-factor methods" template displays the page where a user may choose between various MFA methods.
 * The "OAuth two-factor" template displays the page where a user enters an MFA code during login.
+
+You'll also need to modify the link:/docs/v1/tech/email-templates/[email or message templates] if using email or SMS methods. 
+
+Here's an example of the default template when a user has one MFA method enabled.
+By default, the code for the factor is sent, if applicable, and the user is prompted for the code.
+
+image::guides/multi-factor-authentication/code-sent-after-user-mfa-enabled.png[The user experience with one MFA method enabled.,width=1200,role=bottom-cropped]
+
+Here's an example of the default template when a user has more than one MFA method enabled.
+The user is then prompted to pick which method they'd like.
+
+image::guides/multi-factor-authentication/authentication-challenge-multiple-factors.png[MFA prompt screen at login, with multiple factors enabled.,width=1200,role=bottom-cropped]
 
 Learn more about themes and templates, including the variables available for each page, in the link:/docs/v1/tech/themes/[themes documentation].
 
@@ -374,33 +444,63 @@ If you have a valid user object, full speed ahead with the sensitive action your
 
 == Disabling MFA on a User
 
-Users may need to disable an MFA method. They may switch email addresses, change their phone number, or simply want to turn off MFA. There are a number of ways to do this.
+Users may need to disable an MFA method. They may switch email addresses, change their phone number, or simply want to turn off MFA.
 
-The FusionAuth administrative user interface allows you to remove MFA from a user. 
+You have four options:
+
+* If you have a paid edition, users may use the self service account management feature to disable MFA for their accounts. link:/docs/v1/tech/account-management/[Learn more about that option here].
+* You may remove MFA using the administrative user interface.
+* You may disable MFA directly using the User API.
+* You can build your own MFA user interface, allowing end users to disable MFA.
+
+=== Using the Administrative User Interface
 
 Navigate to [breadcrumb]#Users -> The User# and manage the user. Then go to the [breadcrumb]#Multi-Factor# tab. Remove any of the MFA methods by clicking the red trash can icon and confirming the deletion:
 
 image::guides/multi-factor-authentication/delete-factor-admin-view.png[Delete an MFA method from the admin screen.,width=1200]
 
-A user may also remove an MFA method by using the self service account management (if you have a paid edition) by clicking the `-` link. 
-
-// TBD after this link is live. link:/docs/v1/tech/account-management/[Learn more about that here.]
+A user may also remove an MFA method by using the self service account management (if you have a paid edition) by clicking the `-` link. link:/docs/v1/tech/account-management/[Learn more about that here.]
 
 image::guides/multi-factor-authentication/user-self-serve-manage-factors.png[Self service management of MFA methods.,width=1200,role=bottom-cropped]
 
-Finally, you can remove an MFA method using the API. To do so you need to:
+=== Directly Disabling MFA for a User
+
+To do this, you'll need to update the `twoFactor` array.
+In the below example, all methods are removed.
+You could also remove just the ones with a method of `email` or one particular MFA method.
+
+[source,shell]
+.Deleting MFA methods from a user directly
+----
+API_KEY=...
+
+user=`curl -XGET -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/user/00000000-0000-0000-0000-000000000004'`
+
+# this empties out the twoFactor array. You can use any programming language to do this, this example uses jq
+user_two_factor_removed=`echo $user| jq 'del(.[].twoFactor[])' -`
+
+curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://sandbox.fusionauth.io/api/user/00000000-0000-0000-0000-000000000004' -d "$user_two_factor_removed"
+----
+
+The reason you need to retrieve the user and modify the data, then use `PUT` to update it, is because of how `PATCH` handles arrays.
+https://github.com/FusionAuth/fusionauth-issues/issues/441[Read this tracking issue for more info.]
+
+=== Building Your Own Interface
+
+Building your interface allows you maximal control.
+To disable MFA, you need to do the following:
 
 * Optionally send the code
 * Collect the code
 * Call the disable MFA API
 
-Let's cover that next.
-
-=== Disabling MFA via the API
-
-First you need to collect a code from the user. This can be a code from one of the user's existing MFA methods or a recovery code. To build this screen, you may need to present them with a list of available MFA methods. This is present on the user object.
+Typically, you need to send a code to the user first.
+If they are using TOTP, this is optional.
 
 ==== Optionally Send a Code
+
+This can be a code from one of the user's existing MFA methods or a recovery code.
+To build this screen, you may need to present them with a list of available MFA methods. This is present on the user object.
 
 If the user choose a message based MFA method, send them a code:
 
@@ -423,7 +523,11 @@ This will send a code using the method specified. If a user is using a TOTP meth
 
 ==== Collect the Code
 
-You'll need to build a page to collect the code. This will be part of your application.
+You'll need to build a page to collect the code.
+This will be part of your application.
+
+For message based MFA methods, this will be a code you sent.
+For TOTP MFA, this will be a code provided by an authenticator application.
 
 ==== Disable MFA
 
@@ -451,7 +555,7 @@ When you use a recovery code to disable MFA, it removes all the MFA methods for 
 
 You can resend codes using message based MFA methods by calling the send API. 
 
-You may need to do this because a user requests it. For example, if a user initially requests to get a code be sent to an email address, then realizes they really want to MFA with their mobile phone, your application may call the send endpoint twice.
+You may need to do this because a user requests it. For example, if a user initially requests to get a code to be sent to an email address, then realizes they really want to MFA with their mobile phone, your application may call the send endpoint twice.
 
 Calling the send endpoint sends a new code but also invalidates all other codes associated with this MFA request. 
 
@@ -519,7 +623,70 @@ If you have other MFA methods that you'd like to use with FusionAuth, you have a
 * Use the link:/docs/v1/tech/apis/login[Login API] and build custom login flows, inserting your custom MFA functionality where needed.
 * Set up an OpenID Connect server with the required MFA functionality. Then set up an link:/docs/v1/tech/identity-providers/openid-connect/[Identity Provider] that delegates to that OIDC server. Modify your theme so that this Identity Provider is the only login option.
 
+== Migrating MFA Methods From a Different System
+
+include::docs/v1/tech/guides/_mfa-migration.adoc[]
+
+== Forcing MFA
+
+There are times when you might want to force a user to provide an additional factor of authentication before they ever get access to your application.
+For example, you might require MFA when a user logs into an accounting application, but not when they log in to a customer support application.
+
+Or you might want to force every user with a certain role to provide an additional factor every time they log in.
+For example, super admins might need to provide a second factor every time they log in.
+
+In FusionAuth, if a user has one or more additional factors configured for their account, they will be forced to provide that second factor on login.
+Once someone has provided a second factor, they will not have to provide it again until a certain amount of time has passed.
+This duration is configurable at the tenant level, and is set by the `twoFactorTrustIdTimeToLiveInSeconds` setting.
+
+=== Forcing a User to Provide an Additional Factor Before Accessing an Application
+
+You may want to force a user to perform MFA before they can access a sensitive application, such as the accounting application mentioned above.
+
+One way to do that is to add link:/docs/v1/tech/guides/multi-factor-authentication#step-up-auth[step up authentication] to your application.
+Each time the user accesses the application, perform a step up, which will force them to provide an additional factor.
+
+An alternate option is to deny access in the application by augmenting the JWT based on whether the user has any MFA methods:
+
+* If the user has not configured an MFA method, you know they haven't provided an additional factor.
+* If the user has configured an MFA method, you know they have provided the additional factor when they logged in and the device was untrusted.
+
+If using this method to enforce MFA, configure the `twoFactorTrustIdTimeToLiveInSeconds` setting to a small value, as when that duration elapses, the device will become untrusted and MFA will be required at login.
+
+To check whether MFA is enabled, put a value in the JWT with a link:/docs/v1/tech/lambdas/jwt-populate[JWT Populate Lambda].
+
+[source,javascript]
+.Example lambda which adds MFA enabled claim
+----
+function populate(jwt, user, registration) {
+  jwt.hasMFAEnabled = user.twoFactor && user.twoFactor.methods && user.twoFactor.methods.length > 0;
+}
+----
+
+When your application receives the JWT, check the value of this claim.
+
+If the claim is missing or `false`, the application knows that the user has not completed an additional factor, and can deny access.
+Such a check can happen in the application or in a proxy.
+
+Having FusionAuth https://github.com/FusionAuth/fusionauth-issues/issues/763[manage this check is an open feature request].
+Please review the issue and comment on or upvote it if you'd like to see this handled by FusionAuth.
+
+=== Forcing a User to Provide an Additional Factor Every Time
+
+As mentioned above, you may want certain types of users to provide an additional factor every time they log in.
+
+You can use the same step up authentication method as mentioned above. Using the "super admin" example, if the application sees a user who has that role, it can force a step up.
+
+To avoid modifying your application, you can also examine the user during authentication and modify parameters sent to FusionAuth.
+
+If you are using the hosted login pages, you can set [field]#trustComputer# to `false` every time a user visits the link:/docs/v1/tech/themes/template-variables#oauth-two-factor[`/oauth2/two-factor` page] and has a role of "superadmin".
+You may also remove the theme code which sets that variable, in which case it will default to a value of `false`.
+
+If you are using the Login API, don't send the [field]#twoFactorTrustId# value returned link:/docs/v1/tech/apis/login#complete-multi-factor-authentication[after completing a multi-factor authentication].
+
 == Troubleshooting
+
+// TODO break out to an include for including into troubleshooting guide
 
 If using the email MFA method and your emails don't get sent, ensure you have configured your SMTP settings correctly. See the link:/docs/v1/tech/admin-guide/troubleshooting#troubleshooting-email[Email Troubleshooting] section for more.
 

@@ -19,7 +19,8 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and never include a slash at the end (i.e. `link:/docs/v1/tech/apis/users` not `link:users`)
-- All code snippets within any documents should have indenting formatted to 2 spaces
+- All code snippets within any documents should have indenting formatted to 2 spaces.
+- Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - If something is new in a version, mark it with something like this:
 
   [NOTE.since]
@@ -63,6 +64,7 @@ For API docs:
 - If a feature is only available when using a paid edition, use the `shared/_premium-edition-blurb-api.adoc` fragment for API fields, and `shared/_premium-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields.
 - If a feature is only available when using a enterprise edition, use the `shared/_enterprise-edition-blurb-api.adoc` fragment for API fields, and `shared/_enterprise-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
 - If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
+- If a field was deprecated in a version 30 versions ago (deprecated in 1.15, you are now at 1.45), you can remove it from the docs.
 
 For blog posts:
 - Indent all code with two spaces per level.
@@ -84,6 +86,7 @@ For blog posts:
 -- `topic-<topic>` for general topics.
 -- `topic-community-story` for any community stories you do.
 -- `feature-<topic>` for specific features. These will show up on the feature page.
+- You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
 
 For documentation posts:
 - Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
@@ -103,6 +106,7 @@ For lists:
 - multi-factor authentication
 - multi-tenancy/multi-tenant
 - two-factor
+- ECMAScript
 
 ## Git
 

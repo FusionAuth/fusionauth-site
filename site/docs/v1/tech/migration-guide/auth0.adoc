@@ -9,6 +9,7 @@ description: How to migrate your users to FusionAuth from Auth0.
 :migration_source_dir: auth0
 :script_supports_social_logins: true
 :add-tenant-image-role: bottom-cropped
+:extra_permissions_text: 
 
 == Overview
 
@@ -34,6 +35,7 @@ This guide assumes you have installed FusionAuth. If you have not, please link:/
 ** <<Use the Script>>
 ** <<Verify the Import>>
 ** <<The Final Destination of Imported Users>>
+* <<MFA Enrollments>>
 * <<What to Do Next>>
 * <<Additional Support>>
 
@@ -201,7 +203,7 @@ include::docs/v1/tech/migration-guide/_create-test-application.adoc[]
 
 ==== Add an API Key
 
-include::docs/v1/tech/migration-guide/_create-api-key.adoc[]
+include::docs/v1/tech/migration-guide/_create-api-key-social.adoc[]
 
 === Get the Script
 
@@ -306,6 +308,35 @@ include::docs/v1/tech/migration-guide/_verify-import.adoc[]
 === The Final Destination of Imported Users
 
 include::docs/v1/tech/migration-guide/_final-destination.adoc[]
+
+== MFA Enrollments
+
+Your users may have MFA enabled.
+If so, you will want to port that over.
+
+The first thing to do is to look at the MFA methods available to your users.
+Here's https://auth0.com/docs/secure/multi-factor-authentication/multi-factor-authentication-factors[the list of Auth0 supported factors].
+You may not have enabled all of these.
+Here's https://auth0.com/docs/secure/multi-factor-authentication/enable-mfa[Auth0 documentation] to see which you've enabled in the dashboard.
+
+The [field]#method# field of the Two-Factor API link:/docs/v1/tech/apis/two-factor#request-body[lists the MFA methods supported by FusionAuth].
+FusionAuth also supports recovery codes.
+
+You can determine which type of MFA is used by each user by retrieving https://auth0.com/docs/api/management/v2#!/Users/get_users_by_id[their data using the management API].
+
+If a user uses email or SMS verification, you can port the data over to FusionAuth using link:/docs/v1/tech/guides/multi-factor-authentication#directly-enabling-mfa-for-a-user[the user update API] or by adding the [field]#twoFactor# fields to your import JSON.
+The former will link:/docs/v1/tech/core-concepts/users#what-makes-a-user-active[trigger an MAU increment], while the latter will not.
+
+While you can't generate a fixed set of recovery codes, once MFA has been enabled for a user, you can link:/docs/v1/tech/apis/two-factor#retrieve-recovery-codes[retrieve the recovery codes].
+
+If your user uses TOTP, where they provide a one time code provided by an application like Google Authenticator, you'll need to request the initial secret for your users from Auth0 by opening a support ticket with them.
+
+If your users use a different method unsupported by FusionAuth, then you should map the Auth0 method to a FusionAuth method.
+
+* WebAuthn: https://github.com/FusionAuth/fusionauth-issues/issues/77[Follow this issue to see the status of FusionAuth WebAuthn support].
+* Push Notifications: It is possible a link:/docs/v1/tech/messengers/generic-messenger[Generic Messenger] would work, but this would require some investigation and custom coding.
+* Voice: A link:/docs/v1/tech/messengers/generic-messenger[Generic Messenger] integrated with a solution like https://www.twilio.com/docs/voice[Twilio Voice] should work.
+* Cisco Duo: A link:/docs/v1/tech/messengers/generic-messenger[Generic Messenger] integrated with a solution like https://www.twilio.com/docs/voice[Twilio Voice] could work.
 
 == What to Do Next
 
