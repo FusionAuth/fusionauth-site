@@ -54,8 +54,8 @@ FusionAuth.DirectDownloads.prototype = {
       var div =
           (i === this.versions.length - 1 ? '<div id="' + idVersion + '">' : '<div id="' + idVersion + '" class="mt-5">') +
           '<h4 class="border-bottom">{version}\
-<span style="font-size: 0.5em;" class="font-weight-light"><a href=' + releaseNotesLink + '>Release Notes</a></span>\
-<span style="font-size: 0.5em;" class="font-weight-light">| <a href="/docs/v1/tech/installation-guide/packages/">Installation Guide</a></span>\
+ <span style="font-size: 0.5em;" class="font-weight-light"><a href=' + releaseNotesLink + '>Release Notes</a></span>\
+ <span style="font-size: 0.5em;" class="font-weight-light">| <a href="/docs/v1/tech/installation-guide/packages/">Installation Guide</a></span>\
 </h4>\
 <a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app-{version}.zip">fusionauth-app-{version}.zip</a>\
 &nbsp;<span style="font-size: 0.8em;">[<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-app-{version}.zip.sha256">sha256</a>]</span>\
