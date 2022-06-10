@@ -21,7 +21,7 @@ Dmitry Zanozin is a FusionAuth community member and Founder and CEO at ZanoCloud
 
 **Dmitry:** We’re a technology consulting company that brings cloud infrastructure and big data processing back down to earth for people running businesses.
 
-It’s our mission to make it more accessible to everyone. Our team of experts has a wealth of experience, and we provide the best solution for our clients, no matter what their specific needs may be. So, they can focus on running their businesses, not managing their technology.
+It’s our mission to make it more accessible to everyone. Our team of experts have a wealth of experience, and we provide the best solution for our clients, no matter what their specific needs may be. So, they can focus on running their businesses, not managing their technology.
 
 **Dan:** Tell me about your work as a founder at ZanoCloud.
 
