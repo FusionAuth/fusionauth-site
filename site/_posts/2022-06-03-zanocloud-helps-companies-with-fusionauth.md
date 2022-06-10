@@ -79,7 +79,7 @@ Time-wise, it saved several weeks of work and provided a better user experience 
 
 > We choose FusionAuth because of its installation and configuration simplicity.
 
-**Dan:** How do you run FusionAuth (kubernetes, standalone tomcat server, behind a proxy, etc)?
+**Dan:** How do you run FusionAuth (kubernetes, standalone web app, behind a proxy, etc)?
 
 **Dmitry:** We use only container-based deployments with Kubernetes or standalone Docker.
 
