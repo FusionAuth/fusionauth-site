@@ -45,14 +45,16 @@ module Jekyll
             date = fragment.css('p > em').inner_text
           end
 
+          # no valid date? Skip it
+          unless (date && date.length > 2)
+            next
+          end
+
           maker.items.new_item do |item|
             item.link = "https://fusionauth.io/docs/v1/tech/release-notes#version-"+anchor_text
             item.title = "Release "+r.to_s
             if date && date.length > 2
               item.updated = date.to_s
-            else
-              # too new to have release notes, let's mark it as today.
-              item.updated = Time.now.to_s
             end
           end
 
