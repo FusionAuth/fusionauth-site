@@ -58,8 +58,13 @@ module Jekyll
 
           if maker.channel.updated.nil?
             # first time, we want to grab the latest release timestamp
-            maker.channel.updated = date.to_s
-            latest_date = Time.parse(date.to_s)
+            if date && date.length > 2
+              maker.channel.updated = date.to_s
+              latest_date = Time.parse(date.to_s)
+            else
+              maker.channel.updated = Time.now.to_s
+              latest_date = Time.now
+            end
           end
         end
       end
