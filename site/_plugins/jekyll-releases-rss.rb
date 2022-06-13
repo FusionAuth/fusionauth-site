@@ -45,26 +45,23 @@ module Jekyll
             date = fragment.css('p > em').inner_text
           end
 
+          # no valid date? Skip it
+          unless (date && date.length > 2)
+            next
+          end
+
           maker.items.new_item do |item|
             item.link = "https://fusionauth.io/docs/v1/tech/release-notes#version-"+anchor_text
             item.title = "Release "+r.to_s
             if date && date.length > 2
               item.updated = date.to_s
-            else
-              # too new to have release notes, let's mark it as today.
-              item.updated = Time.now.to_s
             end
           end
 
           if maker.channel.updated.nil?
             # first time, we want to grab the latest release timestamp
-            if date && date.length > 2
-              maker.channel.updated = date.to_s
-              latest_date = Time.parse(date.to_s)
-            else
-              maker.channel.updated = Time.now.to_s
-              latest_date = Time.now
-            end
+            maker.channel.updated = date.to_s
+            latest_date = Time.parse(date.to_s)
           end
         end
       end
