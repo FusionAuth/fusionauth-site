@@ -41,9 +41,9 @@ In addition, gaming platforms often require users to provide credit card details
 
 In order to protect users as well as your company, you need to know current security practices in fraud detection and suspicious activity notification. The following are tools and best practices to use for more secure gaming accounts.
 
-### Multifactor Authentication
+### Multi-factor Authentication
 
-With multifactor authentication (MFA), the account user is required to provide two or more verification factors in order to gain access to the account. This method of authentication is used for many different types of online accounts.
+With multi-factor authentication (MFA), the account user is required to provide two or more verification factors in order to gain access to the account. This method of authentication is used for many different types of online accounts.
 
 In addition to a username and password, MFA requires an additional means of authentication such as a biometric solution (like a fingerprint or retina scan) or a temporary one-time password (OTP). This protects users’ login information from [brute force attacks](https://www.kaspersky.com/resource-center/definitions/brute-force-attack).
 
@@ -69,7 +69,7 @@ If a user’s location is new or changes frequently, your adaptive authenticatio
 
 In modern gaming platforms, gamers can access and play games using different endpoint devices, which makes it practically impossible to manage your network securely using network monitoring alone. To improve your network security, you can use [event logs](https://www.techopedia.com/definition/25410/event-log-networking), or files that contain critical information about operating system, application, or device usage.
 
-Event logs monitor suspicious account activity, such as a login from a new device, multiple login attempts, a password reset request, or a multifactor update. Users are notified of suspicious activity and asked to confirm that they performed the actions.
+Event logs monitor suspicious account activity, such as a login from a new device, multiple login attempts, a password reset request, or a multi-factor update. Users are notified of suspicious activity and asked to confirm that they performed the actions.
   
 ### Automatic Logout
 
