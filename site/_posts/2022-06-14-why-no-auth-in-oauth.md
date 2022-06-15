@@ -34,7 +34,7 @@ This is a high level, truncated version, and there's a lot more, but let's keep 
 
 The Authorization Code grant is the main OAuth grant involving users, so that is the one to examine.
 
-If you look closely at the specifications, it's clear that authentication is critical to this grant. From [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749), the OAuth 2.0 standard, the authorization server is:
+If you look closely at the specifications, it's clear that authentication is critical to this grant. From [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749), the OAuth2 standard, the authorization server is:
 
 > The server issuing access tokens to the client after successfully authenticating the resource owner and obtaining authorization.
 
@@ -49,7 +49,7 @@ So it's clear that:
 
 And yet, the *means* of authentication is never defined in the specification.
 
-How about the [OAuth 2.1 specification](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05), currently under development? It's very similar to the OAuth 2.0 document in general, but in this case the 2.1 specification has expanded section 1.3.1:
+How about the [OAuth 2.1 specification](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05), currently under development? It's very similar to the OAuth2 document in general, but in this case the 2.1 specification has expanded section 1.3.1:
 
 > Before directing the resource owner back to the client with the authorization code, the authorization server authenticates the resource owner, and may request the resource owner's consent or otherwise inform them of the client's request.  Because the resource owner only authenticates with the authorization server, the resource owner's credentials are never shared with the client, and the client does not need to have knowledge of any additional authentication steps such as multi-factor authentication or delegated accounts.
 
@@ -87,9 +87,9 @@ This means that the authorization server can authenticate the user to whatever l
 * AAL2
 * AAL3
 
-"AAL1 provides some assurance that the claimant controls an authenticator bound to the subscriber’s account. AAL1 requires either single-factor or multi-factor authentication using a wide range of available authentication technologies. Successful authentication requires that the claimant prove possession and control of the authenticator through a secure authentication protocol."
+If we look at that document, you can see that the first level, AAL1, "provides some assurance that the claimant controls an authenticator bound to the subscriber’s account. AAL1 requires either single-factor or multi-factor authentication using a wide range of available authentication technologies. Successful authentication requires that the claimant prove possession and control of the authenticator through a secure authentication protocol."
 
-AAL2 is a step up and "provides high confidence that the claimant controls authenticator(s) bound to the subscriber’s account. Proof of possession and control of two distinct authentication factors is required through secure authentication protocol(s). Approved cryptographic techniques are required at AAL2 and above."
+The next level, AAL2, is a step up and "provides high confidence that the claimant controls authenticator(s) bound to the subscriber’s account. Proof of possession and control of two distinct authentication factors is required through secure authentication protocol(s). Approved cryptographic techniques are required at AAL2 and above."
 
 AAL3 is the highest level and "provides very high confidence that the claimant controls authenticator(s) bound to the subscriber’s account. Authentication at AAL3 is based on proof of possession of a key through a cryptographic protocol. AAL3 authentication SHALL use a hardware-based authenticator and an authenticator that provides verifier impersonation resistance; the same device MAY fulfill both these requirements. In order to authenticate at AAL3, claimants SHALL prove possession and control of two distinct authentication factors through secure authentication protocol(s). Approved cryptographic techniques are required."
 
@@ -97,31 +97,36 @@ There are more specifics in that document. Lots and lots of specifics.
 
 There are other similar frameworks, such as the [Trusted Digital Identity Framework](https://www.dta.gov.au/our-projects/digital-identity/trusted-digital-identity-framework) and the [UK digital identity & attributes trust framework](https://www.gov.uk/government/publications/uk-digital-identity-attributes-trust-framework-updated-version) with varying levels of detail.
 
-## Other benefits
+## Future proofing
 
-By leaving the details of authentication methods to the authorization server, the specifications will continue to be relevant even if new methods of authentication are invented. For example, neither WebAuthn or FaceID existed when OAuth 2 was published. 
+By leaving the details of authentication methods to the authorization server, the OAuth and OIDC specifications remain relevant even if new methods of authentication are invented. For example, neither WebAuthn or FaceID existed when RFC 6749 was published. 
 
-But because the means of authentication is out of scope, they can both be used in the course of generating an access token, *if the authorization server requires it*.
+But because the precise method of authentication is out of scope, both WebAuthn and FaceID can both be used in the process of obtaining an access token, *if the authorization server requires it*. The determination of the appropriate level of assurance for the login process is entirely up to the authorization server.
 
-In addition to future proofing, an authorization server can introduce new functionality strengthening authentication at the authorization server *without affecting any dependent applications*.
+## Context specific authentication
 
-Examples include:
+In addition to future proofing, an authorization server can introduce functionality strengthening authentication at the authorization server *without affecting any dependent applications*.
+
+Examples of such functionality include:
 
 * requiring one or more additional factors of authentication
 * requiring specific factors for certain users
 * implementing server side checks for suspicious behavior, such as requesting 100 password reset emails from the same IP address
 * adding a CAPTCHA to prevent bot activity or credential stuffing
 
-All of these are entirely the province of the authorization server and can be layered in without affecting any protected resources or applications which depend on the token.
+All of these are entirely the province of the authorization server. They can be added without affecting any protected resources or applications which depend on the token, when it is finally issued.
 
-As RFC 6749 says
-> [The access token] enables ... [removes] the resource server's need to understand a wide range of authentication methods.
+As RFC 6749 says, using this indirection removes "the resource server's need to understand a wide range of authentication methods."
 
-The authorization server can also, as mentioned in the OAuth 2.1 draft, authenticate the user by delegating to an external identity store (or more than one). This allows for flexibility in terms of "who owns the user".
+The authorization server can also, as mentioned in the OAuth 2.1 draft, authenticate the user by delegating to an external identity store (or more than one). This allows for flexibility in terms of who "owns the user", or which system is the system of record for a given user.
 
 ## It's not just authentication
 
-Funnily enough, authentication isn't the only major topic skirted by OAuth and OIDC. Another major question that is simply not answered by these specifications: "How is the user provisioned in the authorization server?" While there are [specifications like SCIM](http://www.simplecloud.info/) that cover this, for OAuth and OIDC they are out of scope.
+Funnily enough, authentication isn't the only major topic skirted by OAuth and OIDC.
+
+Another question critical to identity that is simply not answered by these specifications is "How is the user provisioned in the authorization server?"
+
+While there are [specifications like SCIM](http://www.simplecloud.info/) that cover this, for OAuth and OIDC they are out of scope.
 
 ## Conclusion
 
