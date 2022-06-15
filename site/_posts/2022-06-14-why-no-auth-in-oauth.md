@@ -12,7 +12,7 @@ OAuth, a standard for securely delegating authorization information, and OIDC, a
 
 However, there is next to no guidance about how to actually authenticate the user. Should I use a username and password? A magic link? Delegate to a third party? Require a TOTP code? 
 
-This question came up in a discussion on the FusionAuth team and I thought it was worth digging into a bit more.
+This question came up in a discussion amongst the FusionAuth team and I thought it was worth digging into a bit more.
 
 Why exactly is 'authentication' undefined in OAuth/OIDC?
 
