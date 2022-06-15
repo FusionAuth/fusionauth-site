@@ -79,9 +79,11 @@ Why is this?
 
 Separation of concerns is a common pattern in software systems. Developers break up systems into different components, with each component being responsible for a different piece of the system. Some parts are responsible for creating the user interface, others for data access.
 
-In this case, the specifications are clearly not defining authentication, but are focused on the means and artifacts of that authentication.
+In this case, the OAuth and OIDC specifications do not define authentication. Instead, they focus on the precursors and artifacts of an authentication event.
 
-This means that the authorization server can authenticate the user to whatever level of certainty it needs. And there are specifications for that, such as [NIST 800-63-3](https://pages.nist.gov/800-63-3/sp800-63-3.html) which defines the three levels of "Authenticator Assurance", creatively named:
+This means that the authorization server can authenticate the user to whatever level of certainty it needs, based on what it knows.
+
+There are specifications for that, such as [NIST 800-63-3](https://pages.nist.gov/800-63-3/sp800-63-3.html) which defines the three levels of "Authenticator Assurance". These are creatively named:
 
 * AAL1
 * AAL2
@@ -96,6 +98,8 @@ AAL3 is the highest level and "provides very high confidence that the claimant c
 There are more specifics in that document. Lots and lots of specifics.
 
 There are other similar frameworks, such as the [Trusted Digital Identity Framework](https://www.dta.gov.au/our-projects/digital-identity/trusted-digital-identity-framework) and the [UK digital identity & attributes trust framework](https://www.gov.uk/government/publications/uk-digital-identity-attributes-trust-framework-updated-version) with varying levels of detail.
+
+Ignoring authentication is a great example of separating concerns. It allows OAuth2 and OIDC to focus on the nitty gritty of getting the resource owner to the authorization server as well as generating access and identity tokens.
 
 ## Future proofing
 
