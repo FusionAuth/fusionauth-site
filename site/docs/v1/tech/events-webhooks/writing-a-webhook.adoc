@@ -3,6 +3,8 @@ layout: doc
 title: Writing a Webhook
 description: Learn how to write a Webhook to handle and process events sent by FusionAuth
 ---
+:page-liquid:
+
 
 == Writing a Webhook
 
@@ -38,20 +40,38 @@ Please review this issue for additional information about https://github.com/Fus
 
 === Retries
 
-If the webhook transaction succeeds, FusionAuth will try to send the payload to any failed webhooks again. For example, if there are five webhooks set up to listen to a `user.update` request, and the transaction level is set to "Any single webhook must succeed" and one webhook succeeds, the four failures will be retried. FusionAuth will retry sending the payload up to three times. This retry logic means that webhook endpoints may receive a payload multiple times and should be prepared to handle such a situation.
+If the webhook transaction succeeds, FusionAuth will try to send the payload to any failed webhooks again. For example, if there are three webhooks set up to listen to a `user.update` request, and the transaction level is set to "Any single webhook must succeed" and one webhook succeeds, the two failures will be retried. FusionAuth will retry sending the payload up to three additional times. This retry logic means that webhook endpoints may receive a payload multiple times and should be prepared to handle such a situation.
 //TODO update when https://github.com/FusionAuth/fusionauth-issues/issues/1543 lands
 
 If not enough of the webhooks succeed to satisfy the transaction type initially, the operation will not succeed; for example, the user will not be updated. The originating call will recieve an error HTTP status code.
 
-If a webhook endpoint times out, this is considered a failure, the same as if a non `2xx` status code is returned.
+If a webhook endpoint times out, this is considered a failure, the same as if a non `2xx` status code is returned. If the endpoint does not respond after the retries, the failure will be logged in the system log.
 
-If the endpoint does not respond after the third time, the failure will be logged.
 
-// TODO system diagrams
+==== Retry Examples
+
+Below are flow diagrams of example requests. The order of the requests is not guaranteed, but is merely illustrative. In each of these, an API call such as a user update is made, and FusionAuth has been configured to fire off to three different webhooks at that time. The webhook transaction level and the webhook success statuses vary.
+
+Here's a situation with three webhooks and a webhook transaction level of "No webhooks are required to succeed". In this scenario, FusionAuth "fires and forgets":
+++++
+{% plantuml source: _diagrams/docs/events-webhooks/transaction-none.plantuml, alt: "A flow with three webhooks and a 'no webhooks are required to succeed' transaction level." %}
+++++
+
+Next, consider the scenario with three webhooks and a webhook transaction configuration of "Any single webhook must succeed" where "Webhook 1" succeeds. In this case, the other two webhooks are retried up to three additional times. "Webhook 2" succeeds eventually, but "Webhook 3" fails:
+
+++++
+{% plantuml source: _diagrams/docs/events-webhooks/transaction-any-succeed-two-failures.plantuml, alt: "A flow with three webhooks, a 'any single webhook must succeed' transaction level, and one success." %}
+++++
+
+Here's a configuration with three webhooks and a webhook transaction configuration of "Any single webhook must succeed" where all webhooks fail or time out. In this case, there are no retries, since the webhook transaction level was not met.
+
+++++
+{% plantuml source: _diagrams/docs/events-webhooks/transaction-any-succeed-three-failures.plantuml, alt: "A flow with three webhooks, a 'any single webhook must succeed' transaction level, and three failures." %}
+++++
 
 === Calling FusionAuth APIs In Webhooks
 
-Some events fire on creation of an entity in FusionAuth, such as `user.create`. You may want to modify the created entity, but if your webhook tries to modify the newly created object in a webhook handling the create event, the operation will fail. This is due to the fact that the operation occurs in a transaction and has not yet completed when the webhook runs. 
+Some events fire on creation of an entity in FusionAuth, such as `user.create`. You may want to modify the created entity, but if your webhook tries to modify the newly created object in a webhook handling the create event, the operation will fail. This is due to the fact that the operation occurs in a database transaction and has not yet completed when the webhook runs. 
 
 In fact, the created user will not be visible to any other API request until the transaction is committed. The operation fails because the webhook is trying to modify an object that has not yet been completely created and has not yet been committed to persistent storage. Depending upon your transaction configuration for a particular event, FusionAuth may wait until all webhooks have responded before committing the transaction.
 
