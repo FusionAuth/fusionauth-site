@@ -107,6 +107,7 @@ For lists:
 - multi-tenancy/multi-tenant
 - two-factor
 - ECMAScript
+- esport
 
 ## Git
 

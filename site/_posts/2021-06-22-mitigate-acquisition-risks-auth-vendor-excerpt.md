@@ -1,5 +1,5 @@
 ﻿---
-layout: advice
+layout: blog-post
 title: How to mitigate risk when your auth vendor gets acquired
 description: What risk mitigation steps can you take when your auth vendor is acquired?
 author: Eze Sunday Eze
