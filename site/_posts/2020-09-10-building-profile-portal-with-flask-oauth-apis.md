@@ -5,7 +5,7 @@ description: Advanced registration forms let you easily build out multi-step reg
 author: Dan Moore
 image: blogs/flask-oauth-portal/building-a-user-profile-portal-with-flask-oauth-and-apis.png
 category: blog
-updated_date: 2021-05-21
+updated_date: 2022-06-20
 tags: feature-advanced-registration-forms client-python tutorial-python tutorial tutorial-reactor-feature
 excerpt_separator: "<!--more-->"
 ---
@@ -116,7 +116,6 @@ import os
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-app.config.from_object('settings.Config')
 
 @app.route('/', methods=["GET"])
 def homepage():
@@ -214,7 +213,7 @@ This is a sample OAuth/Flask application.
 
 In this template, if the `user` variable exists, the user's email address is shown. Otherwise it displays login or registration links. 
 
-Finally, update `oauth.py` to provide the routes you added to the template. Below is the entire updated file, but we'll examine each method one at a time after the code block:
+Finally, update `oauth.py` to provide the routes you added to the template as well as load the config. Below is the entire updated file, but we'll examine each method one at a time after the code block:
 
 ```python
 from requests_oauthlib import OAuth2Session
@@ -287,6 +286,17 @@ if __name__ == "__main__":
   app.secret_key = os.urandom(24)
   app.run(debug=True)
 ```
+
+First, load the config file.
+
+```python
+# ...
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
+app.config.from_object('settings.Config') # this is new
+# ...
+```
+
 
 First, the home page route:
 
@@ -378,7 +388,7 @@ This code checks to see that the `state` parameter is the same value as was sent
 
 Finally, we set some session variables and then redirect to the home page route. That page re-renders the template, providing the user object.
 
-Since the FusionAuth OAuth server is running on `localhost` without TLS, you need to let the OAuth library know that you are okay with that. Otherwise you'll see this error:
+Since the FusionAuth OAuth server is running on `localhost` without TLS, you need to let the OAuth library know that you are okay with that. Otherwise you'll see this error in the log file when you try to log in:
 
 ```
 oauthlib.oauth2.rfc6749.errors.InsecureTransportError: (insecure_transport) OAuth 2 MUST utilize https.
