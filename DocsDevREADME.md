@@ -302,6 +302,12 @@ There are currently nine sections:
 
 Please don't add a top level section.
 
+If you need a third level indentation, add the "tertiary" class to the list element.
+
+```
+<li class="tertiary {% if page.url == "/docs/v1/tech/identity-providers/external-jwt/" %}active{% endif %}"><a href="/docs/v1/tech/identity-providers/external-jwt/">Overview</a></li>
+```
+
 ## Data Driven Pages
 
 Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file.
