@@ -3,7 +3,7 @@ layout: blog-post
 title: What is SCIM?
 description: What is SCIM and why would you use it?
 author: Dan Moore
-image: blogs/auth-oauth/why-no-authentication-in-oauth.png
+image: blogs/what-is-scim/what-is-scim.png
 category: blog
 tags: feature-scim
 excerpt_separator: "<!--more-->"
