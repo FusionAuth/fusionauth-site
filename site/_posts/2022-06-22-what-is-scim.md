@@ -19,7 +19,7 @@ But this post isn't about FusionAuth's support; rather it is about what SCIM is 
 
 ## What does SCIM let you do?
 
-At a high level, supporting SCIM allows you to provision and de-provision (add and remove) users and groups from your identity systems. When a new user is added to one system, that user's details can fan out to other systems with have their own datastores.
+At a high level, supporting SCIM allows you to provision and deprovision (add and remove) users and groups from your identity systems. When a new user is added to one system, that user's details can fan out to other systems with their own datastores.
 
 An example would be when a new developer is added to an HR system, they can be added to other systems required to do their job, such as a cloud computing provider, a source control system and a ping-pong tournament management system.
 
@@ -37,7 +37,7 @@ With SCIM, you are replicating data all over the place. This is an approach that
 
 But when you have applications which want to manage their own user storage or which don't support standards like OIDC (OpenID Connect) and SAML (Security Assertion Markup Language), then you may need to replicate user data. Rather than set up the application to rely on a single user data store, you can send the needed identity information to the application. If those applications support SCIM, then you can add, update and remove users as needed.
 
-You can also use SCIM to move portions of your identity from a source of truth to another system, possibly outside of your organization. For example, if you sign up for a SaaS application and you have your data stored in an identity server, the identity server can use SCIM to push some of your information, such as your email address, over to the SaaS application, while witholding other information, such as your birth date.
+You can also use SCIM to move portions of your identity from a source of truth to another system, possibly outside of your organization. For example, if you sign up for a SaaS application and you have your data stored in an identity server, the identity server can use SCIM to push some of your information, such as your email address, over to the SaaS application, while withholding other information, such as your birth date.
 
 When getting started with an identity system, you often need to provision users, and SCIM can help you do so. For CIAM (Customer Identity and Access Management) systems, self-registration can work in certain scenarios, but there may be applications for which user self-provisioning is not acceptable.
 
@@ -67,7 +67,7 @@ There are three core resources: `Users`, `Groups` and `EnterpriseUsers`. SCIM ca
 
 `Users` can also have emails, phone numbers, addresses and more. They can even have a list of x.509 certificates. Each user also has a password, which is write only.
 
-The required fields are few: the `userName` field is required. In additional an `id` field must be created and assigned by the server.
+The required fields are few: the `userName` field is required. In addition, an `id` field must be created and assigned by the server.
 
 I'll let you review the [relevant section of the RFC](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1) for the full list of attributes for this resource. 
 
@@ -138,7 +138,7 @@ Other things to consider:
 
 ## Additional resources
 
-Here are some additional reasources:
+Here are some additional resources:
 
 * [An overview of the specification and links to all relevant RFCs](http://www.simplecloud.info/)
 * [The RFC defining the overall concepts and requirements](https://datatracker.ietf.org/doc/html/rfc7642)
