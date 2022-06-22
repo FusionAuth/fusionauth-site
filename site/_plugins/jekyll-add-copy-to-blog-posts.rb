@@ -5,6 +5,6 @@ Jekyll::Hooks.register :posts, :post_render do |post|
    # look for pre tags with highlight class, 
    # add <i class="cursor-pointer fal fa-fw fa-copy" data-widget="copy-button" style="float:right"></i>
    # as the first child
-   post.output.gsub!('<pre class="highlight">','<pre class="highlight"><i class="cursor-pointer fal fa-fw fa-copy" data-widget="copy-button" style="float:right"></i>')
+   post.output.gsub!('<pre class="highlight">','<pre class="highlight"><i class="cursor-pointer fal fa-fw fa-copy" data-widget="copy-button" style="float:right"></i><div>   </div>')
    
 end
