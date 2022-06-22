@@ -144,4 +144,4 @@ Here are some additional reasources:
 * [The RFC defining the overall concepts and requirements](https://datatracker.ietf.org/doc/html/rfc7642)
 * [The RFC defining the protocol](https://datatracker.ietf.org/doc/html/rfc7644)
 * [The RFC defining the core schema definitions](https://datatracker.ietf.org/doc/html/rfc7643)
-* [FusionAuth SCIM documentation](https://fusionauth.io/docs/v1/tech/core-concepts/scim)
+* [FusionAuth SCIM documentation](/docs/v1/tech/core-concepts/scim)
