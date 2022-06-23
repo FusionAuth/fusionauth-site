@@ -27,6 +27,8 @@ Stephen Saucier is a FusionAuth community member and Head of UX Development at C
 
 Since our launch, we've had a great reception from our customers, and we feel like we have only to get the word out now!
 
+> We use FusionAuth in both mobile (React Native) and web (SolidJS, Java) clients.
+
 **Dan:** Tell me about your work as Head of UX Development at ClearSpend.
 
 **Stephen:** Since we're a startup, I wear many hats, including running our front-end development for mobile & web and all quality assurance.
@@ -47,6 +49,8 @@ The managers who allocate the spend cards do all of that, along with the employe
 
 We keep the ClearSpend team out of our clients' workspace.
 
+> Several of us had used FusionAuth at a previous company as well and were pleased with it.
+
 **Dan:** How did you model companies? Did you do that in FusionAuth with, say, groups, or did you keep those entities in your database?
 
 **Stephen:** We keep those in our database. That allows for performant database sharding and also makes it easy for bookkeepers who work with multiple companies to switch between them when doing their books.
@@ -61,6 +65,8 @@ Several of us had used FusionAuth at a previous company as well and were pleased
 
 **Stephen:** We started with FusionAuth from the get-go.
 
+> We needed an identity provider that was easy to use, well-documented, cost-effective, and that would scale well with our business.
+
 **Dan:** Why did you choose FusionAuth over the alternatives?
 
 **Stephen:** A few reasons:
@@ -73,6 +79,8 @@ Several of us had used FusionAuth at a previous company as well and were pleased
 **Dan:** How much time and money would you say FusionAuth has saved you?
 
 **Stephen:** I haven't done a cost-comparison between it and competitors, but I'd imagine it's in the thousands of dollars per year, with our usage.
+
+> [FusionAuth] APIs are straightforward and do everything we need.
 
 **Dan:** How do you run FusionAuth (kubernetes, standalone server, behind a proxy, etc)?
 
