@@ -282,6 +282,32 @@ or, if you want to see everything:
 bundle exec jekyll algolia --dry-run --verbose
 ```
 
+## Docs navigation
+
+We use a combination of URL and frontmatter metadata to determine what documentation section to hold open when you are visiting a doc page.
+
+In general, set the `navcategory` frontmatter attribute to the correct value when adding a new documentation page. The only exception is the API docs, which all live under `/apis/` so we can use that path and don't have to set the `navcategory` value.
+
+There are currently nine sections:
+
+* getting started: aimed at first time users
+* installation guide: installing
+* migration guide: migrating
+* admin guide: for operating FusionAuth, includes roadmap and release notes
+* login methods: the methods someone might use to log a user in
+* developer guide: developer facing doc for integrating with FusionAuth
+* customization: how to customize FusionAuth 
+* premium features: any paid features should go here
+* APIs: all api docs
+
+Please don't add a top level section.
+
+If you need a third level indentation, add the "tertiary" class to the list element.
+
+```
+<li class="tertiary {% if page.url == "/docs/v1/tech/identity-providers/external-jwt/" %}active{% endif %}"><a href="/docs/v1/tech/identity-providers/external-jwt/">Overview</a></li>
+```
+
 ## Data Driven Pages
 
 Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file.
