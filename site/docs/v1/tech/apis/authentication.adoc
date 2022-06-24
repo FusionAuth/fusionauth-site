@@ -62,12 +62,7 @@ When an API endpoint is marked with a shield such as &nbsp;icon:shield-alt[title
 
 When using this authentication method in FusionAuth for an API, the username must be the string `apikey` in lowercase. The password may be any API key with the appropriate permission for the endpoint being called.
 
-Basic authentication using API key is only utilized by a select few FusionAuth APIs. These are typically integrated with other software packages which expect to authenticate using basic auth.
-
-== Client Credentials
-When an API is marked with a cogs icon such as &nbsp;icon:cogs[title="Supports Client Credentials",type=fas]&nbsp;, it means you are required to provide a JSON Web Token (JWT) with the `client_credentials` grant type, with clients being represented by FusionAuth Entities.
-
-* An example link:/docs/v1/tech/oauth/#example-client-credentials-grant[client credentials grant using Entities].
+Basic authentication using an API key is only utilized by a select few FusionAuth APIs. These are typically integrated with other software packages which expect such an authentication method.
 
 === Authorization Header Examples
 
@@ -83,6 +78,44 @@ The following is a curl example using the HTTP Basic Authorization header with a
 curl -X GET  \
 -H 'Authorization: Basic YXBpa2V5OjY5Y1dxVW8wNGhpNFdMdUdBT2IzMmRXZXQwalpkVzBtSkNjOU9yLUxEamNIUXFMSzJnR29mS3plZg==' \
 'https://local.fusionauth.io/api/prometheus/metrics'
+----
+
+== Client Credentials
+
+When an API is marked with a cogs icon such as &nbsp;icon:cogs[title="Supports Client Credentials",type=fas]&nbsp;, the authorization becomes a two step process. You must:
+
+* Use the `client_credentials` grant to obtain a JSON Web Token (JWT). The requester should be granted the appropriate permissions on the target entity.
+* Make a request of the API with the JWT in the `Authorization` header.
+
+If the JWT is expired or incorrect, the request will fail.
+
+The requesting and target entities, as well as permissions, are all managed using link:/docs/v1/tech/core-concepts/entity-management[Entities].
+
+== Client Credentials Examples 
+
+Here is an example link:/docs/v1/tech/oauth/#example-client-credentials-grant[client credentials grant using Entities].
+
+Here's another example. First, you get the token:
+
+[source,shell,title="Curl example to retrieve JWT"]
+----
+curl -u "eb6fce6a-4ed8-4010-8091-1709fc823329:_7bz1Ct1Sode-zIyevcQFSyzW9w3TkfKSWuS-Ls8vQQ" \
+  https://local.fusionauth.io/oauth2/token \
+  -d 'grant_type=client_credentials&scope=target-entity:a647e989-1c7e-4386-9ec6-fa4fe6908906:scim:user:read'
+----
+
+Here's an example JWT that might be returned:
+
+[source,properties,title="SCIM request example Authorization header"]
+----
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoiMDUzYWE1Y2QxIiwidXNlIjoic2NpbV9zZXJ2ZXIifQ.eyJhdWQiOiJhNjQ3ZTk4OS0xYzdlLTQzODYtOWVjNi1mYTRmZTY5MDg5MDYiLCJleHAiOjE2NTU3NjExNzAsImlhdCI6MTY1NTc1NzU3MCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiJlYjZmY2U2YS00ZWQ4LTQwMTAtODA5MS0xNzA5ZmM4MjMzMjkiLCJqdGkiOiJjMTMxYThiZi0yN2E5LTQ2MGUtOTFiYi0xOTI5NmE2MDFlMTEiLCJzY29wZSI6InRhcmdldC1lbnRpdHk6YTY0N2U5ODktMWM3ZS00Mzg2LTllYzYtZmE0ZmU2OTA4OTA2OnNjaW06dXNlcjpyZWFkIiwidGlkIjoiNTc5NzA5ZjQtMWYyMi1jMTMxLWRlMjYtZTc3MGUwNGJhMTJkIiwicGVybWlzc2lvbnMiOnsiYTY0N2U5ODktMWM3ZS00Mzg2LTllYzYtZmE0ZmU2OTA4OTA2IjpbInNjaW06dXNlcjpyZWFkIl19fQ.XNLUF-8IT5Mh411uD0jOb_3aaT5YJrbM6q4PZrOxfbQ
+----
+
+After retrieving the JWT, place it in the `Authorization` header with a prefix of `Bearer `. Then you call the API endpoint:
+
+[source,shell,title="Curl example to call API"]
+----
+curl -XGET -H "Authorization: Bearer eyJhbG..." 'https://local.fusionauth.io/api/scim/resource/v2/Users'
 ----
 
 == JWT Authentication
