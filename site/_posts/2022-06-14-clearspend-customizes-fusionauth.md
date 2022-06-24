@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: ZanoCloud helps companies make the most of the cloud with FusionAuth
-description: ZanoCloud helps companies with a variety of problems and reaches for FusionAuth for their auth needs.
+title: ClearSpend chose FusionAuth because of self-hosting and clear APIs
+description: ClearSpend, a spend-control and expense-management solution, uses FusionAuth for all their user management needs.
 author: Dan Moore
 image: blogs/zanocloud.png
 category: blog
