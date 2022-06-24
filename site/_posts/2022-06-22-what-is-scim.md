@@ -39,6 +39,8 @@ But when you have applications which want to manage their own user storage or wh
 
 You can also use SCIM to move portions of your identity from a source of truth to another system, possibly outside of your organization. For example, if you sign up for a SaaS application and you have your data stored in an identity server, the identity server can use SCIM to push some of your information, such as your email address, over to the SaaS application, while withholding other information, such as your birth date.
 
+Another common use case is where you are not necessarily provisioning the same resources in multiple systems, but rather just provisioning them on to a single SCIM server. If you have multiple SCIM clients that want to provision them and query the resource data, this can make sense, especially if the clients are third party products that already know how to "speak" SCIM.
+
 When getting started with an identity system, you often need to provision users, and SCIM can help you do so. For CIAM (Customer Identity and Access Management) systems, self-registration can work in certain scenarios, but there may be applications for which user self-provisioning is not acceptable.
 
 There are additional [use cases outlined in the RFC](https://datatracker.ietf.org/doc/html/rfc7642#section-3).
@@ -90,6 +92,8 @@ The first is the `id`, which is a required attribute and is a globally unique id
 The `externalId`, on the other hand, is provided by the client. It is optional and allows for identifiers from the provisioning process to be stored in the server.
 
 For example, the HR system discussed above might have an identifier for the developer. It could be stored in the cloud computing provider's SCIM datastore. That way, you could query directly in the cloud computing system for a given record based on the HR id.
+
+In addition, `$ref` attribute is commonly used. This string is an HTTP addressable resource which points to additional information about this item, and is often used to convey relationships between resources in SCIM. For example, a user object may contain group membership information. That group information may contain a `$ref` attribute pointing to the SCIM identifier of that group.
 
 ## Supported operations
 
