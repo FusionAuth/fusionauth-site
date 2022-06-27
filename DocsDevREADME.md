@@ -323,6 +323,15 @@ You can also go from asciidoc to liquid syntax. Examples of that are the 'relate
 
 The theme pages are kinda complex because they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
 
+
+### Adding an example app
+
+* Create a repo. It should have the prefix `fusionauth-example-` and you should add both the owners (as admins) and developer team (as maintainers).
+* Add a readme and a license (apache2). It's great for the readme to point at the blog post, but you can also update the readme after your post is live.
+* Add an entry in https://github.com/FusionAuth/fusionauth-site/blob/master/site/_data/exampleapps.yaml (you can do it on your blog post branch). Note that you can only put an app in one tech group, and that if it is a JavaScript app, use JavaScript, not typescript, as the group name.
+
+This will add an example app to the example apps section.
+
 ## Expert Advice
 
 The places to put files for the Expert Advice sections differ from the regular blog.
