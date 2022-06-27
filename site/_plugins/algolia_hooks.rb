@@ -13,6 +13,12 @@ module Jekyll
         return true if filepath =~ %r{^landing}
         false
       end
+
+      def self.before_indexing_each(record, _node, _context)
+        if record["content"] && record["content"].inner_html.length > 9000
+          return nil
+        end
+      end
     end
   end
 end
