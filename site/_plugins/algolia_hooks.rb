@@ -1,13 +1,6 @@
 module Jekyll
   module Algolia
     module Hooks
-     # from https://community.algolia.com/jekyll-algolia/hooks.html
-     # don't send entire html
-     # not sure if we need it
-     def self.before_indexing_each(record, node, context)
-        record[:html] = nil
-        record
-      end
 
       def self.should_be_excluded?(filepath)
         return true if filepath =~ %r{^landing}
@@ -20,10 +13,11 @@ module Jekyll
           puts "skipping: " + record[:url] + " as it has a length of " +record[:content].length.to_s
           return nil
         end
-        if record[:html] && record[:html].length > 9000
-          puts "skipping: " + record[:url] + " as it has a length of " +record[:html].length.to_s
-          return nil
-        end
+        
+        # from https://community.algolia.com/jekyll-algolia/hooks.html
+        # don't send entire html
+        # we don't need it, takes up more space
+        record[:html] = nil
         return record
       end
     end
