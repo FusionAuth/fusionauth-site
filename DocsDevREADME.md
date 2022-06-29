@@ -1,6 +1,6 @@
 ## Documentation Style Guidelines
 
-Here are some guidelines to follow when writing documentation (everything under `/site/docs`.
+Here are some guidelines to follow when writing documentation (everything under `/site/docs`) as well as the blog (`_posts`).
 
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` when describing a unique identifier
