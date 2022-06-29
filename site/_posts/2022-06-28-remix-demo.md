@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: FusionAuth Remix demo
-description: Example of how Remix works with FusionAuth or any OAuth2 server
+description: Example of how Remix works with FusionAuth
 author: Joyce Park
 image: blogs/connecting-fusionauth-remix/connecting-fusionauth-remix-runapp.png
 category: blog
@@ -15,7 +15,7 @@ However, new users should be aware that the authentication functionality current
 
 <!--more-->
 
-In this post we will explain what problems this might cause for developers, and how to upgrade to a better solution with less work. We are FusionAuth and we build auth servers so our example will naturally use the FusionAuth server, but in principle the same solution should work with any auth service supports OAuth2 and OIDC.
+In this post we will explain what problems this might cause for developers, and how to upgrade to a better solution with less work. We are FusionAuth and we build auth servers so our example will naturally use the FusionAuth server, but in principle the same solution should work with any auth service that supports OAuth2 and OIDC.
 
 ## Why not use Remix's authentication?
 
@@ -23,11 +23,12 @@ The Remix team ships an auth solution with the Indie and Blues stacks, and a ver
 
 This solution is appealingly straightforward and might be sufficient for low-risk uses like the demo -- most people aren't going to care too much about protecting their joke collection, in this case authentication mostly is intended to identify who added which joke to the app -- but modern auth solutions give you far higher levels of security and functionality if deployed properly. For instance, an authentication server such as FusionAuth can very easily allow you to:
 
-* Offer external authentication by trusted sources such as Google, Facebook, or Apple
+* Offer external authentication by [trusted sources](/docs/v1/tech/identity-providers/) such as Google, Facebook, or Apple
 * Set up your org as an source of authentication, authorization and user data for other apps
-* Access external APIs that require specific kinds of authentication
-* Protect your own APIs from unauthorized access
+* Access external APIs that require stronger forms of authentication than simple username/password
+* [Protect your own APIs](/docs/v1/tech/guides/api-authorization) from unauthorized access
 * Limit the scope of authentication to a specific domain or client
+* [Theme your FusionAuth forms](/docs/v1/tech/themes/) to match your Remix app 
 * Let you sleep easily at night knowing that your solution has been professionally security audited for years
 
 But to do so, you need to adopt modern standards and practices -- and the sooner the better. In fact adopting a standards-based third-party server will result in less code than a hand-rolled solution.
@@ -40,13 +41,13 @@ There's one somewhat unusual feature of this example, which is that we chose fil
 
 File-based session storage has one drawback that is only relevant at scale: once you need more than one Remix server, you will have to pin each user to a particular server for the duration of that session. However most developers are unlikely to encounter that kind of problem -- or by the time you do, you'll have the resources to solve it.
 
-You will also need a working FusionAuth instance. The easiest way to get this for testing purposes is to have a short conversation with a member of our [Sales team](https://fusionauth.io/contact) who will be able to provision a cloud instance for you. The second fastest way is to use the Docker install. The third fastest way is to use the Fast Path install detailed in our [Five Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide). In all cases you should install the development data included in our [Kickstart project](https://github.com/FusionAuth/fusionauth-example-kickstart/tree/master/fusionauth).
+You will also need a working FusionAuth instance. The easiest way to get this for testing purposes is to have a short conversation with a member of our [Sales team](/contact) who will be able to provision a cloud instance for you. The second fastest way is to use the Docker install. The third fastest way is to use the Fast Path install detailed in our [Five Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide). In all cases except the cloud instance you should install the development data included in our [Kickstart project](https://github.com/FusionAuth/fusionauth-example-kickstart/tree/master/fusionauth).
 
 Once you have a FusionAuth instance, you should be able to go to the admin page and configure your FusionAuth instance like this:
 
-<img src="/assets/img/blogs/connecting-fusionauth-remix/fusionauth-config.png" />
+{% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/fusionauth-config.png" alt="FusionAuth config for Remix" class="img-fluid" figure=true %}
 
-Then you must copy some values to `env.example` and change the name of the file to `.env` to set the correct environment variables. At this point you should be ready to fire up the Remix server and try out the example.
+Then you must copy some values to `env.example` and change the name of the file to `.env` to set the correct environment variables. At this point you should be ready to fire up the Remix server and try out the example at a default address of `localhost:3000`.
 
 ## Using FusionAuth with Remix
 
