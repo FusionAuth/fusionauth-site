@@ -23,7 +23,7 @@ The Remix team ships an auth solution with the Indie and Blues stacks, and a ver
 
 This solution is appealingly straightforward and might be sufficient for low-risk uses like the demo -- most people aren't going to care too much about protecting their joke collection, in this case authentication mostly is intended to identify who added which joke to the app -- but modern auth solutions give you far higher levels of security and functionality if deployed properly. For instance, an authentication server such as FusionAuth can very easily allow you to:
 
-* Offer external authentication by trusted sources such as Google, Facebook, or Apple (known as Identity Providers)
+* Offer external authentication by trusted sources such as Google, Facebook, or Apple
 * Set up your org as an Identity Provider for other apps
 * Access external APIs that require specific kinds of authentication
 * Protect your own APIs from unauthorized access
