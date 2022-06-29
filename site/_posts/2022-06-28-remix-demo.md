@@ -15,7 +15,7 @@ However, new users should be aware that the authentication functionality current
 
 <!--more-->
 
-In this post we will explain what problems this might cause for developers, and how to upgrade to a better solution with less work. We are FusionAuth and we build auth servers so our example will naturally use the FusionAuth server, but in principle the same solution should work with any auth service that is OAuth2 compliant.
+In this post we will explain what problems this might cause for developers, and how to upgrade to a better solution with less work. We are FusionAuth and we build auth servers so our example will naturally use the FusionAuth server, but in principle the same solution should work with any auth service supports OAuth2 and OIDC.
 
 ## Why not use Remix's authentication?
 
