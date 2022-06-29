@@ -10,7 +10,7 @@ module Jekyll
       def self.before_indexing_each(record, _node, _context)
         # skip really long records
         if record[:content] && record[:content].length > 9000
-          puts "skipping: " + record[:url] + " as it has a length of " +record[:content].length.to_s
+          puts "skipping some content on " + record[:url] + " as it has a length of " +record[:content].length.to_s
           return nil
         end
         
