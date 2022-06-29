@@ -46,7 +46,7 @@ Once you have a FusionAuth instance, you should be able to go to the admin page 
 
 <img src="/assets/img/blogs/connecting-fusionauth-remix/fusionauth-config.png" />
 
-Then you must copy some values to `env.example` and change the name of the file to .env to set environment variables. At this point you should be ready to fire up the Remix server and try out the example.
+Then you must copy some values to `env.example` and change the name of the file to `.env` to set the correct environment variables. At this point you should be ready to fire up the Remix server and try out the example.
 
 ## Using FusionAuth with Remix
 
