@@ -1,6 +1,6 @@
 ## Documentation Style Guidelines
 
-Here are some guidelines to follow when writing documentation (everything under `/site/docs`.
+Here are some guidelines to follow when writing documentation (everything under `/site/docs`) as well as the blog (`_posts`).
 
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` when describing a unique identifier
@@ -323,6 +323,15 @@ Examples of that are the customers page and the quotes widget.
 You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps. Note that you can't use liquid syntax in any include files. See https://github.com/asciidoctor/jekyll-asciidoc/issues/166 for more details about this issue.
 
 The theme pages are kinda complex because they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
+
+
+### Adding an example app
+
+* Create a repo. It should have the prefix `fusionauth-example-` and you should add both the owners (as admins) and developer team (as maintainers).
+* Add a readme and a license (apache2). It's great for the readme to point at the blog post, but you can also update the readme after your post is live.
+* Add an entry in https://github.com/FusionAuth/fusionauth-site/blob/master/site/_data/exampleapps.yaml (you can do it on your blog post branch). Note that you can only put an app in one tech group, and that if it is a JavaScript app, use JavaScript, not typescript, as the group name.
+
+This will add the example app to the example apps section in the docs.
 
 ## Expert Advice
 

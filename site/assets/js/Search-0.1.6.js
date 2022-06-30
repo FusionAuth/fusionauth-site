@@ -10,7 +10,24 @@ FusionAuth.Search = function() {
 
   var searchFunction = this._searchHelperFunction;
   this.searchBar = Prime.Document.queryById('search-bar');
-  this.searchClient = algoliasearch('MN6ZCVNV21', 'e65ffc9f8bb352def753e7614de78416');
+  this.algoliaClient = algoliasearch('MN6ZCVNV21', 'e65ffc9f8bb352def753e7614de78416');
+  this.searchClient = { algoliaClient: this.algoliaClient,
+                        search(requests) {
+                          // pulled from https://www.algolia.com/doc/guides/building-search-ui/going-further/conditional-requests/js/ because we don't need to record empty requests
+                          if (requests.every(({ params }) => !params.query)) {
+                            return Promise.resolve({
+                              results: requests.map(() => ({
+                                hits: [],
+                                nbHits: 0,
+                                nbPages: 0,
+                                page: 0,
+                                processingTimeMS: 0,
+                              })),
+                            });
+                          }
+                          return this.algoliaClient.search(requests);
+                        }
+  };
   this.search = instantsearch(
       {
         indexName: 'website',
