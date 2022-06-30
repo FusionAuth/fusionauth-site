@@ -19,13 +19,12 @@ In this post we will explain what problems this might cause for developers, and 
 
 ## Why not use Remix's authentication?
 
-The Remix team ships an auth solution with the Indie and Blues stacks, and a very similar one with the Grunge stack. You can see components like join, login/logout, and protected pages in the Notes sample app (`app/routes/notes`) and in the Jokes sample app that you can build by following the [documentation](https://remix.run/docs/en/v1/tutorials/jokes). Basically these sample apps check the database to see if a user with a particular username and password exists, and if so they set an encrypted session cookie with the userId. Subsequent pageloads that require auth will check for the existence of the userId in the database and redirect elsewhere if it doesn't exist.
+The Remix team ships an auth solution with the Indie and Blues stacks, and a very similar one with the Grunge stack. You can see components like join, login/logout, and protected pages in the Notes sample app (`/app/routes/notes`) and in the Jokes sample app that you can build by following the [documentation](https://remix.run/docs/en/v1/tutorials/jokes). Basically these sample apps check the database to see if a user with a particular username and password exists, and if so they set an encrypted session cookie with the userId. Subsequent pageloads that require auth will check for the existence of the userId in the database and redirect elsewhere if it doesn't exist.
 
 This solution is appealingly straightforward and might be sufficient for low-risk uses like the demo -- most people aren't going to care too much about protecting their joke collection, in this case authentication mostly is intended to identify who added which joke to the app -- but modern auth solutions give you far higher levels of security and functionality if deployed properly. For instance, an authentication server such as FusionAuth can very easily allow you to:
 
 * Offer external authentication by [trusted sources](/docs/v1/tech/identity-providers/) such as Google, Facebook, or Apple
-* Set up your org as an source of authentication, authorization and user data for other apps
-* Access external APIs that require stronger forms of authentication than simple username/password
+* Set up your org as an source of authentication and authorization for multiple apps
 * [Protect your own APIs](/docs/v1/tech/guides/api-authorization) from unauthorized access
 * Limit the scope of authentication to a specific domain or client
 * [Theme your FusionAuth forms](/docs/v1/tech/themes/) to match your Remix app 
@@ -47,10 +46,87 @@ Once you have a FusionAuth instance, you should be able to go to the admin page 
 
 {% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/fusionauth-config.png" alt="FusionAuth config for Remix" class="img-fluid" figure=true %}
 
-Then you must copy some values to `env.example` and change the name of the file to `.env` to set the correct environment variables. At this point you should be ready to fire up the Remix server and try out the example at a default address of `localhost:3000`.
+Then you must copy some values to `env.example` and change the name of the file to `.env` to set the correct environment variables using data from the FusionAuth app. At this point you should be ready to fire up the Remix server and try out the example at a default address of `localhost:3000`.
 
 ## Using FusionAuth with Remix
 
-Once you've done all this, auth will be trivially easy -- because all the hard lifting is being done by FusionAuth. Navigate to `http://localhost:3000` and click the login link. That will redirect you to the FusionAuth login -- which you can [customize easily](/docs/v1/tech/themes/) with your own CSS! -- and if you loaded the Kickstart data as directed you should now be able to log in as `dinesh@fusionauth.io` with password `password`. You will be redirected to `auth/callback` and from there dumped into `dashboard`. Try the same clickpath again and see what happens! If you want to make sure this was not a fluke, try the `/logout` route.
+Once you've done all this configuration, auth will be trivially easy -- because all the hard lifting is being done by FusionAuth. Let's look at some code!
 
-Literally every time you need to add authenticatiion to a view, you merely call `authenticator.authenticate` with a `successRedirect` and a `failureRedirect` as shown in `app/routes/auth.callback.tsx`. Yes it really is that simple to get the best authentication in the business!
+Navigate to `http://localhost:3000` and click the login link. That will take you to the `/login` route, which looks like this:
+
+```bash
+import type { LoaderFunction } from "@remix-run/node"
+import { authenticator } from "~/auth.server";
+
+export let loader: LoaderFunction = async ({ request }) => {
+  // If the user is already authenticated redirect to /dashboard directly
+  return await authenticator.authenticate("FusionAuth", request, {
+    successRedirect: "/dashboard",
+    failureRedirect: "/error",
+  },
+  );
+};
+```
+
+This is all the app code you need to protect any route. As you can see, you will merely be trying the `authenticator.authenticate` method, and redirecting to either the `/dashboard` or the `/error` route on success or failure.
+
+What is this authenticator thing all about? If you open the `/app/auth.server` file, you should see something like this (slightly simplified here):
+
+```bash
+import { Authenticator } from "remix-auth";
+import { sessionStorage } from "~/session.server";
+import { OAuth2Strategy } from "remix-auth-oauth2";
+
+// Create an instance of the authenticator, pass a generic with what
+// strategies will return and will store in the session
+export let authenticator = new Authenticator<User>(sessionStorage);
+
+authenticator.use(
+    new OAuth2Strategy(
+        {
+            authorizationURL: `${process.env.AUTH_URL}/authorize`,
+            tokenURL: `${process.env.AUTH_URL}/token`,
+            clientID: process.env.CLIENT_ID || "",
+            clientSecret: process.env.CLIENT_SECRET || "",
+            callbackURL: process.env.AUTH_CALLBACK_URL || "",
+
+        },
+        async ({ accessToken, refreshToken, extraParams, profile, context }) => {
+            // This function is MANDATORY for the system to work, and would be the
+            // main cause of being redirected to the /error route
+            console.log("Verified by FusionAuth!")
+        }
+    ),
+    // this is optional, but if you setup more than one OAuth2 instance you will
+    // need to set a custom name to each one
+    "FusionAuth"
+);
+```
+
+This code leans very heavily on @sergiodxa's OAuth work for Remix, the npm packages `remix-auth` and `remix-auth-oauth2`. It will handle all the tedious boilerplate necessary to negotiate between Remix apps and an OAuth2 authentication service like FusionAuth. As you can see, we just send some secret data -- and remember, this is all sent from the server side of Remix, not from client-side JavaScript! -- which helps tell FusionAuth what app you are trying to log in from, and where you want to go afterwards.
+
+If you are not logged in, our Remix `/login` route will redirect you to the FusionAuth login -- which you can [customize easily](/docs/v1/tech/themes/) with your own CSS! -- which looks like this out of the box:
+
+{% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/dinesh-login.png" alt="FusionAuth login screen" class="img-fluid" figure=true %}
+
+and if you loaded the Kickstart data as directed you should now be able to log in as `dinesh@fusionauth.io` with password `password`. Any specifically login-related errors, like forgetting your password or not being registered, will be handled here.
+
+If you log in successfully, you will be redirected to `/auth/callback` which checks your login again in code that should be familiar since it's almost identical to the `/login` route:
+
+```bash
+import type { LoaderFunction, ActionFunction } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+import { sessionStorage } from "~/session.server";
+import { authenticator } from "~/auth.server";
+
+export const loader: LoaderFunction = async ({request}) => {
+  await authenticator.authenticate("FusionAuth", request, {
+    successRedirect: "/dashboard",
+    failureRedirect: "/login",
+  });
+}
+```
+
+and from there dumped into `/dashboard` which is just a message saying you're logged in. If you then try the same clickpath again, you will get passed through to `/dashboard` without logging in!
+
+Yes it really is that simple to get the best authentication in the business! You can also configure FusionAuth to give you extra functionality that would be a pain to handroll, such as only allowing a certain number of login attempts before sending the user to a timeout. Remix is an exciting solution for app development because it magically handles dividing up the codebase into server-side and client-side functions, and we feel that this approach is very congruent with FusionAuth's authentication philosophy.
