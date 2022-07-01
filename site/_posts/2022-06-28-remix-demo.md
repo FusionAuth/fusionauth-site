@@ -19,7 +19,7 @@ In this post we will explain what problems this might cause for developers, and 
 
 ## Why not use Remix's authentication?
 
-The Remix team ships an auth solution with the Indie and Blues stacks, and a very similar one with the Grunge stack. You can see components like join, login/logout, and protected pages in the Notes sample app (`/app/routes/notes`) and in the Jokes sample app that you can build by following the [documentation](https://remix.run/docs/en/v1/tutorials/jokes). Basically these sample apps check the database to see if a user with a particular username and password exists, and if so they set an encrypted session cookie with the userId. Subsequent pageloads that require auth will check for the existence of the userId in the database and redirect elsewhere if it doesn't exist.
+The Remix team ships an auth solution with the Indie and Blues stacks, and a very similar one with the Grunge stack. You can see components like join, login/logout, and protected pages in the Notes sample app (`/app/routes/notes`) and in the Jokes sample app that you can build by following the [documentation](https://remix.run/docs/en/v1/tutorials/jokes). Basically these sample apps check the database to see if a user with a particular username and password exists, and if so they set an encrypted session cookie with the userId. Subsequent page loads that require auth will check for the existence of the userId in the database and redirect elsewhere if it doesn't exist.
 
 This solution is appealingly straightforward and might be sufficient for low-risk uses like the demo -- most people aren't going to care too much about protecting their joke collection, in this case authentication mostly is intended to identify who added which joke to the app -- but modern auth solutions give you far higher levels of security and functionality if deployed properly. For instance, an authentication server such as FusionAuth can very easily allow you to:
 
@@ -42,7 +42,7 @@ File-based session storage has one drawback that is only relevant at scale: once
 
 You will also need a working FusionAuth instance. The easiest way to get this for testing purposes is to have a short conversation with a member of our [Sales team](/contact) who will be able to provision a cloud instance for you. The second fastest way is to use the [Docker install](/docs/v1/tech/installation-guide/docker). The third fastest way is to use the Fast Path install detailed in our [Five Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide). 
 
-You need to create a user and an application in FusionAuth, since that is going to be your user data store. The application is configuration that represents the Remix application. You can learn more about [users](/docs/v1/tech/core-concepts/users) and [applications](/docs/v1/tech/core-concepts/applications).
+You need to create a user and an application in FusionAuth, since that is going to be your user data store. The application represents the Remix application in FusionAuth. You can learn more about [users](/docs/v1/tech/core-concepts/users) and [applications](/docs/v1/tech/core-concepts/applications).
 
 Another option is to use the [Kickstart project](https://github.com/FusionAuth/fusionauth-example-kickstart/tree/master/fusionauth) and [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart). This will only work with the latter two installation options, but that's the data I will use for the rest of this tutorial.
 
@@ -147,6 +147,6 @@ export const loader: LoaderFunction = async ({request}) => {
 }
 ```
 
-and from there dumped into `/dashboard` which is just a message saying you're logged in. If you then try the same clickpath again, you will get passed through to `/dashboard` without logging in!
+and from there dumped into `/dashboard` which is just a message saying you're logged in. If you then try the same click path again, you will get passed through to `/dashboard` without logging in!
 
-Yes it really is that simple to get the best authentication in the business! You can also configure FusionAuth to give you extra functionality that would be a pain to handroll, such as only allowing a certain number of login attempts before sending the user to a timeout. Remix is an exciting solution for app development because it magically handles dividing up the codebase into server-side and client-side functions, and we feel that this approach is very congruent with FusionAuth's authentication philosophy.
+Yes it really is that simple to get the best authentication in the business! You can also configure FusionAuth to give you extra functionality that would be a pain to hand roll, such as only allowing a certain number of login attempts before sending the user to a timeout. Remix is an exciting solution for app development because it magically handles dividing up the codebase into server-side and client-side functions, and we feel that this approach is very congruent with FusionAuth's authentication philosophy.
