@@ -40,13 +40,33 @@ There's one somewhat unusual feature of this example, which is that we chose fil
 
 File-based session storage has one drawback that is only relevant at scale: once you need more than one Remix server, you will have to pin each user to a particular server for the duration of that session. However most developers are unlikely to encounter that kind of problem -- or by the time you do, you'll have the resources to solve it.
 
-You will also need a working FusionAuth instance. The easiest way to get this for testing purposes is to have a short conversation with a member of our [Sales team](/contact) who will be able to provision a cloud instance for you. The second fastest way is to use the [Docker install](/docs/v1/tech/installation-guide/docker). The third fastest way is to use the Fast Path install detailed in our [Five Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide). In all cases except the cloud instance you should install the development data included in our [Kickstart project](https://github.com/FusionAuth/fusionauth-example-kickstart/tree/master/fusionauth).
+You will also need a working FusionAuth instance. The easiest way to get this for testing purposes is to have a short conversation with a member of our [Sales team](/contact) who will be able to provision a cloud instance for you. The second fastest way is to use the [Docker install](/docs/v1/tech/installation-guide/docker). The third fastest way is to use the Fast Path install detailed in our [Five Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide). 
+
+You need to create a user and an application in FusionAuth, since that is going to be your user data store. The application is configuration that represents the Remix application. You can learn more about [users](/docs/v1/tech/core-concepts/users) and [applications](/docs/v1/tech/core-concepts/applications).
+
+Another option is to use the [Kickstart project](https://github.com/FusionAuth/fusionauth-example-kickstart/tree/master/fusionauth) and [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart). This will only work with the latter two installation options, but that's the data I will use for the rest of this tutorial.
 
 Once you have a FusionAuth instance, you should be able to go to the admin page and configure your FusionAuth instance like this:
 
 {% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/fusionauth-config.png" alt="FusionAuth config for Remix" class="img-fluid" figure=true %}
 
-Then you must copy some values to `env.example` and change the name of the file to `.env` to set the correct environment variables using data from the FusionAuth app. At this point you should be ready to fire up the Remix server and try out the example at a default address of `localhost:3000`.
+Important configuration options:
+
+* Set `Authorized Redirect URLs` to `http://localhost:3000/auth/callback`
+* Set `Logout URL` to `http://localhost:3000/logout`
+
+Then you must copy some values to `env.example`. Here's an example of the `env.example` file, with values filled out. Your values will be different:
+
+```
+CLIENT_ID="85a03867-dccf-4882-adde-1a79aeec50df"
+CLIENT_SECRET="b4xOdsBUWHQkkU3BOqAxSilfttI4TJv9eI_LOj8zVgE"
+AUTH_URL="https://local.fusionauth.io"
+AUTH_CALLBACK_URL="http://localhost:3000/auth/callback"
+```
+
+Change the name of the file to `.env` after setting the correct environment variables using data from the FusionAuth application configuration.
+
+At this point you should be ready to fire up the Remix server and try out the example at a default address of `localhost:3000`.
 
 ## Using FusionAuth with Remix
 
