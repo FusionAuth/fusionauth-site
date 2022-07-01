@@ -60,7 +60,7 @@ Then you must copy some values to `env.example`. Here's an example of the `env.e
 ```
 CLIENT_ID="85a03867-dccf-4882-adde-1a79aeec50df"
 CLIENT_SECRET="b4xOdsBUWHQkkU3BOqAxSilfttI4TJv9eI_LOj8zVgE"
-AUTH_URL="https://local.fusionauth.io"
+AUTH_URL="http://localhost:9000"
 AUTH_CALLBACK_URL="http://localhost:3000/auth/callback"
 ```
 
