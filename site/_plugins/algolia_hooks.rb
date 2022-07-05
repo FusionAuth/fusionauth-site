@@ -13,8 +13,8 @@ module Jekyll
           # Simplify h1, h2, h3, h4, h5 and h6 indexing in case of embedded elements.
           # - Specifically, the h1 in release notes includes an inner <a> that does not need to be indexed.
           if %w[h1 h2 h3 h4 h5 h6].include? _node.name
-            record[:html] = _node.text
-            record[:text] = _node.text.strip
+            record[:html] = _node.text.strip
+            record[:text] = _node.text
           end
 
           # Collapse JSON for better searching.
