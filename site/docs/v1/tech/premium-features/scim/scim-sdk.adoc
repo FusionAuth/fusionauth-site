@@ -9,39 +9,46 @@ navcategory: premium
 
 == Overview
 
-This document explains how to build a SCIM client using the open source https://github.com/Captain-P-Goldfish/SCIM-SDK[SCIM-SDK Java Library] and use it with FusionAuth.
+This guide shows how to integrate a SCIM client, built using the open source https://github.com/Captain-P-Goldfish/SCIM-SDK[SCIM-SDK Java Library], with FusionAuth.
+
+* <<Prerequisites>>
+* <<FusionAuth Configuration>>
+** <<Entity Types>>
+** <<Entities>>
+** <<Request and Response Lambdas>>
+** <<Tenant Configuration>>
+* <<The SCIM Client Application>>
+** <<Configure the Application>>
+** <<Run the Application>>
+** <<Examine the Application>>
+* <<More Information>>
 
 == Prerequisites
 
-You'll need to have FusionAuth installed, at least version TODO. link:/docs/v1/tech/installation-guide/[Learn more about various ways of installing it].
+In order to work through this guide, you'll need a few things already set up.
 
-Ensure you have a license. You can link:/docs/v1/tech/admin-guide/licensing[learn more about licensing here]. SCIM requires an enterprise license. Learn more about link:/docs/v1/tech/core-concepts/editions-features[license options here] and link:/pricing[pricing here].
-
-You'll need maven 3 and a modern version of Java installed. This document has been tested with Java 17.
-
-You'll also need git installed.
+* A FusionAuth instance, running version 1.36.8 or greater. link:/docs/v1/tech/installation-guide/[Learn more about various ways of installing FusionAuth].
+* A license. You can link:/docs/v1/tech/admin-guide/licensing[learn more about licensing here]. SCIM requires an enterprise license. Learn more about link:/docs/v1/tech/core-concepts/editions-features[options] and link:/pricing[pricing].
+* git, to download the SCIM client.
+* Maven3 and a modern version of Java, to run the SCIM client. The below instructions were tested with Java 17.
 
 == FusionAuth Configuration
 
-In order for FusionAuth to accept requests from SCIM clients, you need to configure a few things.
+In order for FusionAuth to accept requests from SCIM clients, it must be properly configured as a SCIM server. To do so, follow the steps below.
 
-=== Set Up Entity Types and Entities
+=== Entity Types
 
-Then, you need to review the required entity types.
+Review or create the required entity types. These entity types will be present if you installed FusionAuth via the Setup Wizard. However, they will not be present if you have used link:/docs/v1/tech/installation-guide/kickstart[Kickstart].
 
-These entity types will be present if you installed FusionAuth normally. However, they will not be present if you have used link:/docs/v1/tech/installation-guide/kickstart[Kickstart].
+If these entity types are present, skip to <<Entities>> unless you want to learn more about the entity types and permissions.
 
-If these entity types are present, you can skip to <<Set Up the Entities>>.
+==== Add the Server Entity Type
 
-=== Add the Server Entity Type
-
-First, add the SCIM server. Navigate to [breadcrumb]#Entity Management -> Entity Types#. 
-
-Select the [breadcrumb]#Add SCIM Server# option.
+First, add the SCIM server. Navigate to [breadcrumb]#Entity Management -> Entity Types#. Select the [breadcrumb]#Add SCIM Server# option.
 
 image::premium-features/scim/add-scim-server-entity-type.png[Add the SCIM server entity type.,width=1200,role=bottom-cropped]
 
-This entity will have the following default permissions:
+This entity will, by default, have the following permissions:
 
 * `scim:enterprise:user:create`
 * `scim:enterprise:user:delete`
@@ -56,122 +63,122 @@ This entity will have the following default permissions:
 * `scim:user:read`
 * `scim:user:update`
 
-You can remove permissions if you never want your SCIM server to be able to undertake an operation. For example, remove `scim:user:delete` if you will never delete users from this SCIM server. Set the name to any appropriate value.
+Remove permissions if you never want your SCIM server to support an operation. For example, remove `scim:user:delete` to disable user deletion by any clients accessing this SCIM server. Set the name of the entity type to an appropriate value, such as `SCIM Server`.
 
 image::premium-features/scim/adding-scim-server-entity-type-details.png[The details page when adding add the SCIM server entity type.,width=1200]
 
-=== Add the Client Entity Type
+==== Add the Client Entity Type
 
-Then, create a SCIM client entity type. Unlike the server, this entity type doesn't require any permissions. Instead, this is the type for SCIM client applications. These applications will provide user and group data to the SCIM server for provisioning.
+Next, create a SCIM client entity type. Unlike the server, this entity type doesn't have any permissions. Instead, this is the type representing SCIM client applications. Such applications provide user and group data to the SCIM server to be provisioned.
 
 image::premium-features/scim/add-scim-client-entity-type.png[Adding the SCIM client entity type.,width=1200,role=bottom-cropped]
 
-You can name the client entity type as you wish.
+Give this entity type an appropriate name such as `SCIM Client`.
 
 image::premium-features/scim/adding-scim-client-entity-type-details.png[The details of the SCIM client entity type.,width=1200,role=bottom-cropped]
 
 After you have set up or verified the existence of these two types of entities, the next step is to set up the individual entities, representing the actual SCIM server or client applications.
 
-=== Set Up the Entities
+=== Entities
 
-Next, set up at least two entities. You need to set up an instance of the SCIM server and the SCIM client, and then grant permissions on the SCIM server to the SCIM client.
+You need to set up at least two entities: an instance of the SCIM server and the SCIM client. Then, you must grant permissions on the SCIM server to the SCIM client.
 
-You can have as many SCIM clients and servers as you would like, but in general you want at most one SCIM server per tenant. For each SCIM interaction, only one server can be specified.
+You may have as many SCIM clients and servers as you would like, but typically you will have at most one SCIM server per tenant. For each SCIM interaction, only one server can be specified.
 
-To add the entities, navigate to [breadcrumb]#Entity Management -> Entities#. Create a new entity.
+To add the entities, navigate to [breadcrumb]#Entity Management -> Entities# and create a new entity using the `+` button.
 
 image::premium-features/scim/add-scim-server-entity.png[Adding a SCIM server entity.,width=1200,role=bottom-cropped]
 
-Ensure it has the type of the SCIM server entity type detailed above. You can also give it a name.
+Make sure the new SCIM server entity has the [field]#Entity type# of the SCIM server entity type outlined above. Give it a name as well.
 
 image::premium-features/scim/adding-scim-server-entity-details.png[The details of the SCIM server entity.,width=1200,role=bottom-cropped]
 
-After you save the entity, you'll be presented with the list of entities. Next, add another entity, for the SCIM client.
+After you save the entity, you'll be presented with a list of existing entities. The next step is to add another entity for the SCIM client application.
 
 image::premium-features/scim/add-scim-client-entity.png[Adding a SCIM client entity.,width=1200,role=bottom-cropped]
 
-Make sure it has the type of the SCIM client entity type detailed above. Give it a descriptive name as well.
+Similarly to the SCIM server entity you just created, make sure this entity has the [field]#Entity type# of the SCIM client entity type outlined above. Since you may have more than one SCIM client, a descriptive name for this entity is especially important.
 
 image::premium-features/scim/adding-scim-client-entity-details.png[The details of the SCIM client entity.,width=1200,role=bottom-cropped]
 
-Next, you need to manage the client entity in order to add permissions to access the server entity.
+Next, manage the client entity to grant the correct permissions to the server entity. Do so by clicking the black button on the entity listing page next to the client entity.
 
-image::premium-features/scim/list-view-highlight-manage-button.png[The manage button on the SCIM client.,width=1200,role=bottom-cropped]
+image::premium-features/scim/list-view-highlight-manage-button.png[The manage button for the SCIM client.,width=1200,role=bottom-cropped]
 
 Click the "Add" button to begin the grant adding process.
 
 image::premium-features/scim/client-grant-add-page.png[The "Add" Button lets you add grants.,width=1200,role=bottom-cropped]
 
-Search for the SCIM server by entering the name of the entity in the search box and select the correct entity.
+Search for the SCIM server by entering the name of the entity you created above in the search box. Select the correct entity.
 
-image::premium-features/scim/client-grant-search-page.png[Searching for the correct entity.,width=1200,role=bottom-cropped]
+image::premium-features/scim/client-grant-search-page.png[Searching for the correct SCIM server entity.,width=1200,role=bottom-cropped]
 
-Next, add the permissions. You may grant one or more SCIM permissions to the client.
+Next, add permissions. You may grant one or more SCIM permissions to the client application. These permissions will be included in the authentication process to obtain the appropriate level of access. 
 
-These will be provided during the SCIM process to authenticate the appropriate level of access. Select the SCIM server entity in the [field]#Name# field and any permissions you'd like this client to have. Below, the ability to read and create users is granted, but the client may neither delete nor update users.
+The SCIM server entity will be in the [field]#Name# field. Select permissions you'd like this client to have. Below, the ability to read and create users is granted. This client may neither delete nor update users.
 
 image::premium-features/scim/granting-scim-client-permissions-on-scim-server.png[Granting permissions on the server to the client.,width=1200,role=bottom-cropped]
 
-Finally, note the client Id of the SCIM server and the client Id and secret of the SCIM client. You can see the Ids by looking in the list view.
+Finally, you need to record the client Id of the SCIM server and the client Id and secret of the SCIM client. These will be used by the SCIM client Java application, which uses the SCIM-SDK project and is examined below, to provision users.
+
+You can see the Ids by looking in the list view.
 
 image::premium-features/scim/getting-ids-for-scim-client-and-server.png[Finding the Ids for the entities.,width=1200,role=bottom-cropped]
 
-To find the client secret, review details of the SCIM client entity. Navigate to the details screen by clicking on the "View" button (the magnifying glass) from the list screen.
+To find the client secret for the SCIM client entity, view the details screen. You can navigate to the details screen by clicking on the "View" button (the magnifying glass) from the entity list page.
 
 image::premium-features/scim/scim-client-id-secret.png[Determining the client secret for the SCIM client.,width=1200]
 
-You'll need these values to configure the application acting as a SCIM client. You'll learn more about this application below.
+=== Request and Response Lambdas
 
-=== Set Up the Request and Response Lambdas
+Next, we need to review the lambdas. Navigate to [breadcrumb]#Customizations -> Lambdas#. You should see four lambdas prefixed with "SCIM".
 
-Next, we need to review the lambdas. Navigate to [breadcrumb]#Customizations -> Lambdas#. You should see four lambdas labeled with "SCIM".
-
-There are two sets of default lambdas, one for users and one for groups. Each set of lambdas has one lambda for incoming requests and the other for outgoing responses. You can use the same lambda for both User and EnterpriseUser resources, or you can use different ones.
+There are two sets of default lambdas, one for users and one for groups. Each set of lambdas has one lambda for incoming requests and one for outgoing responses. You can use the same lambda for both User and EnterpriseUser resources, or you can use different ones.
 
 Lambdas can transform requests and responses, register users for applications, make HTTP requests to external APIs, and contain other business logic. link:/docs/v1/tech/lambdas/[Learn more about the different lambdas], including their arguments.
 
-image::premium-features/scim/scim-lambdas-list.png[The default SCIM lambdas.,width=1200,role=bottom-cropped]
+image::premium-features/scim/scim-lambdas-list.png[A list including the default SCIM lambdas.,width=1200,role=bottom-cropped]
 
-You may edit and modify lambdas as needed, but for the purposes of this document, the default lambdas are fine.
+You may edit and modify lambdas as needed, but for the purposes of this document, the default lambdas work fine.
 
 image::premium-features/scim/scim-user-request-default-lambda.png[The default SCIM user request lambda.,width=1200,role=bottom-cropped]
 
-After you have verified the lambdas will work for your needs, you should enable and configure SCIM at the tenant level.
+After you have verified the lambdas will work for your needs, enable and configure SCIM in the tenant settings.
 
-=== Set Up the Tenant
+=== Tenant Configuration
 
-Finally, you have configured the needed scaffolding to enable SCIM for a given tenant. 
+Prior to this, you have configured everything required to enable SCIM for a FusionAuth tenant. 
 
-To do so, navigate to [breadcrumb]#Tenants -> Default Tenant#. Edit the tenant and then navigate to the [breadcrumb]#SCIM# tab. Once you've checked the [field]#Enabled# field, you'll see the SCIM settings.
+To do so, navigate to [breadcrumb]#Tenants -> Default Tenant#. Edit the tenant and then navigate to the [breadcrumb]#SCIM# tab. Once you've checked the [field]#Enabled# field, you'll see all the SCIM settings.
 
 Configure the following details:
 
 * The [field]#Client entity type# should be the client entity type you previously created: `SCIM Client`.
 * The [field]#Server entity type# should be the client entity type you previously created: `SCIM Server`.
-* The [field]#User request lambda# should be the default lambda.
-* The [field]#User response lambda# should be the default lambda.
-* The [field]#Enterprise User request lambda# should be the default lambda.
-* The [field]#Enterprise User response lambda# should be the default lambda.
-* The [field]#Group request lambda# should be the default lambda.
-* The [field]#Group response lambda# should be the default lambda.
+* The [field]#User request lambda# should be the default lambda of the correct type.
+* The [field]#User response lambda# should be the default lambda of the correct type.
+* The [field]#Enterprise User request lambda# should be the default lambda of the correct type.
+* The [field]#Enterprise User response lambda# should be the default lambda of the correct type.
+* The [field]#Group request lambda# should be the default lambda of the correct type.
+* The [field]#Group response lambda# should be the default lambda of the correct type.
 
-You can leave the [field]#Schemas# field blank, and a default schema will be provided.
+You can leave the [field]#Schemas# field blank; a default schema will be provided.
 
 image::premium-features/scim/tenant-scim-settings-after-configuration.png[A configured tenant's SCIM settings.,width=1200]
 
-Each of these settings is documented further. link:/docs/v1/tech/core-concepts/tenants#scim[Review detailed documentation about the various Tenant settings]. 
+Each of these settings is documented in detail elsewhere. link:/docs/v1/tech/core-concepts/tenants#scim[Review detailed documentation about the Tenant SCIM settings]. 
 
 == The SCIM Client Application
 
-Next,you will  create a small command line Java application as a SCIM client. This application will use the open source https://github.com/Captain-P-Goldfish/SCIM-SDK[SCIM-SDK Java library] to interact with the FusionAuth SCIM server. 
+Next, create a command line SCIM client Java application. This application will use the open source https://github.com/Captain-P-Goldfish/SCIM-SDK[SCIM-SDK Java library] to interact with the FusionAuth SCIM server. 
 
-Recall that clients are the source of user information, so this client will be able to create, list and retrieve a user in FusionAuth. While this is a subset of typical usage, it suffices to demonstrate the integration.
+Clients are the source of user information, so this client will be able to create, list and retrieve a user in FusionAuth.
 
-The https://github.com/FusionAuth/fusionauth-example-scim-integration[entire source code is available] and you should start by cloning it. Below you'll configure and run it.
+The https://github.com/FusionAuth/fusionauth-example-scim-integration[entire source code is available]. Below you'll download, configure and run it.
 
 Before you configure the application, clone the repository and compile it:
 
-[source,shell,title=Setting up the example application]
+[source,shell,title=Compiling the example SCIM client application]
 ----
 git clone https://github.com/FusionAuth/fusionauth-example-scim-integration && \
 cd fusionauth-example-scim-integration && \
@@ -180,7 +187,9 @@ mvn compile
 
 === Configure the Application
 
-You'll need to modify the application by editing `src/main/java/io/fusionauth/example/scim/ScimExample.java` using the text editor or IDE of your choice. Search for the text: `change these`. You'll see something similar to:
+You'll need to modify the application by editing the `src/main/java/io/fusionauth/example/scim/ScimExample.java` file using the text editor or IDE of your choice. 
+
+Search for the text: `change these`. You'll see something similar to the below code.
 
 [source,java,title="Configuration to change for the example"]
 ----
@@ -189,38 +198,38 @@ include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scim-in
 //...
 ----
 
-Update the `FUSIONAUTH_HOST` constant with the URL pointing to your FusionAuth installation, such as `\http://localhost:9011`.
+You need to update the various constants:
 
-Update the `SCIM_SERVER_ENTITY_ID` constant with the Id of the entity with the type `SCIM Server` created above. This represents the FusionAuth server. If you didn't record this, navigate to [breadcrumb]#Entity Management -> Entities# and copy the Id from the list of entities. Also update the `CLIENT_ID` constant with the Id of the entity with the type `SCIM Client` created above. This will represent this java program. If you didn't record this, navigate to [breadcrumb]#Entity Management -> Entities# and copy the Id from the list of entities.
+* Update `FUSIONAUTH_HOST` with the URL pointing to your FusionAuth installation, such as `\http://localhost:9011`.
+* Update `SCIM_SERVER_ENTITY_ID` with the Id of the entity with the type `SCIM Server` created above. This represents the FusionAuth server. If you didn't record this, navigate to [breadcrumb]#Entity Management -> Entities# and copy the Id from the list of entities.
+* Update `CLIENT_ID` with the Id of the entity with the type `SCIM Client` created above. This represents this Java program. If you didn't record this, navigate to [breadcrumb]#Entity Management -> Entities# and copy the Id from the list of entities.
 
 image::premium-features/scim/getting-ids-for-scim-client-and-server.png[Finding the Ids for the entities.,width=1200,role=bottom-cropped]
 
-Optionally update the `EXISTING_USER_ID` constant with the Id of any user in your system. You can find one by navigating to [breadcrumb]#Users# and viewing the details of a user. If you don't do this, you won't be able to retrieve a user.
+You may also optionally update `EXISTING_USER_ID` with the Id of any user in your FusionAuth system. Find one by navigating to [breadcrumb]#Users# and viewing the details of a user. If you don't update this constant, you won't be able to retrieve a user.
 
-Optionally update the `CREATED_USER_LOGIN_ID` constant with a unique username for your system. This will be the username of the created user. If you don't modify this value, the default username will be used.
+Optionally update `CREATED_USER_LOGIN_ID` with a unique username. This will be the username of the created user. If you don't modify this value, the default username will be used.
 
 The other constants may be left unchanged, unless you want to experiment with changing permissions or setting a different password for created users.
 
 === Run the Application
 
-The application can be run in one of three modes:
+The application can be run in three modes:
 
 * `get` which retrieves a single user
-* `list` which lists users 
+* `list` which lists up to five users 
 * `create`, which adds a new user
 
 Let's create a new user and then check to see that the user was added.
 
-To run the program, you need to recompile it after making the changes mentioned above:
+To run the program, to recompile it to ensure the changes above are picked up.
 
 [source,shell,title=Recompiling the sample application]
 ----
 mvn compile
 ----
 
-Then, you can run it. You need to provide two arguments to the application. The first is the client secret for the SCIM client entity. This value, along with the configured client Id, will be used to authenticate the SCIM client before the SCIM APIs are called. If you didn't record this, navigate to [breadcrumb]#Entity Management -> Entities#, view the details of the SCIM Client entity, and copy the secret.
-
-TODO picture
+Then, run it. You need to provide two arguments to the application. The first is the client secret for the SCIM client entity. This value, along with the client Id, will be used to authenticate the SCIM client before the SCIM APIs are called. If you didn't record this, navigate to [breadcrumb]#Entity Management -> Entities#, view the details of the SCIM Client entity, and copy the secret.
 
 Then, run the command below, with the value of `YOUR_CLIENT_SECRET` updated to the real value, such as `i2kN2KFBPKKj3FsxfilPXDDreBUskn2Sl-27QbQRYQM`.
 
@@ -230,7 +239,7 @@ mvn exec:java -Dexec.mainClass="io.fusionauth.example.scim.ScimExample" \
 -Dexec.args="YOUR_CLIENT_SECRET create"
 ----
 
-You'll see the output of the sample application, which should look something like this:
+You'll see the output of the sample application, which should look something like this.
 
 [source,shell,title=Output of sample application]
 ----
@@ -241,30 +250,24 @@ You'll see the output of the sample application, which should look something lik
 [INFO] --------------------------------[ jar ]---------------------------------
 [INFO] 
 [INFO] --- exec-maven-plugin:3.0.0:java (default-cli) @ scim-integration ---
-SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
-SLF4J: Defaulting to no-operation (NOP) logger implementation
-SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
-error message status: 200
-error message: {"active":true,"emails":[{"primary":true,"type":"work"}],"id":"d7d98d7f-392d-4e61-a0ee-64fce8c1bf3a","meta":{"created":"2022-06-29T00:31:26.749Z","lastModified":"2022-06-29T00:31:26.749Z","location":"https://local.fusionauth.io/api/scim/resource/v2/Users/d7d98d7f-392d-4e61-a0ee-64fce8c1bf3a","resourceType":"User"},"name":{},"phoneNumbers":[{"primary":true,"type":"mobile"}],"schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],"userName":"test@example.com"}
+{"schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],"active":true,"id":"fccf49ab-f34e-4736-9dfc-50a68b4a86f3","meta":{"created":"2022-07-05T13:42:02.963Z","lastModified":"2022-07-05T13:42:02.963Z","location":"https://local.fusionauth.io/api/scim/resource/v2/Users/fccf49ab-f34e-4736-9dfc-50a68b4a86f3","resourceType":"User"},"userName":"test@example.com"}
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  1.209 s
-[INFO] Finished at: 2022-06-28T18:31:26-06:00
+[INFO] Total time:  1.259 s
+[INFO] Finished at: 2022-07-05T09:42:03-04:00
 [INFO] ------------------------------------------------------------------------
 ----
 
-TODO why is this an error message? some kind of mapping issue. May need to tweak the response lambda
-
 If you navigate to [breadcrumb]#Users# in the administrative user interface, you will see the new user has been added.
 
-TODO image
+image::premium-features/scim/new-user-added.png[New user added via SCIM.,width=1200]
 
 === Examine the Application
 
-Let's look at two sections of the example application. The first is the SCIM client authentication and the second is the method that creates the user.
+Let's look at two parts of the example application: the SCIM client authentication and the method that creates the user.
 
-To authenticate a SCIM client in FusionAuth, the client credentials grant is performed, including requesting any needed SCIM permissions. The resulting access token is then used as a bearer token in the SCIM API request, by including it in the `Authorization` header. This is all encapsulated in the `getCredentials` method:
+To authenticate a SCIM client in FusionAuth, the link:/docs/v1/tech/oauth/#example-client-credentials-grant[client credentials grant] is performed, including requesting any needed SCIM permissions. The resulting access token is then used as a bearer token in the SCIM API request, by including it in the `Authorization` header. The token generation happens in the `getCredentials` method.
 
 [source,java,title="The getCredentials method"]
 ----
@@ -273,7 +276,7 @@ include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scim-in
 //...
 ----
 
-The `create` operation first builds a user object and then calls the SDK provided `scimRequestBuilder.create` method, which posts to the FusionAuth server.
+The `create` operation first builds a user object and then calls the SCIM-SDK provided `scimRequestBuilder.create` method, which posts to a SCIM server; in this case, the FusionAuth server receives the request.
 
 [source,java,title="The createUser method"]
 ----
@@ -282,12 +285,13 @@ include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scim-in
 //...
 ----
 
-The list and get operations of this client application similarly build the request and then use the SDK to make a SCIM compliant request. You can view, download and run the client application by cloning the https://github.com/FusionAuth/fusionauth-example-scim-integration[GitHub repository].
+The list and get operations of this client application similarly build the request and use the SCIM-SDK library to make a SCIM compliant request. As noted above, you can view, download and run the client application by cloning the https://github.com/FusionAuth/fusionauth-example-scim-integration[GitHub repository].
 
-You've created a SCIM server and SCIM client that can provision users with SCIM into your FusionAuth instance.
+Congrats! You've configured FusionAuth as a SCIM server and created a SCIM client that can provision users with SCIM.
 
 == More Information
 
+* See link:/blog/2022/06/27/what-is-scim[What is SCIM] for a gentle introduction to SCIM.
 * See the link:/docs/v1/tech/core-concepts/scim[SCIM Overview] for details about SCIM.
 * See the link:/docs/v1/tech/apis/scim[SCIM API Overview] for details about the supported endpoints.
 * See the link:/docs/v1/tech/core-concepts/tenants#scim[Tenants SCIM Overview] for details about SCIM Tenant settings.
