@@ -10,7 +10,7 @@ navcategory: installation
 
 FusionAuth Docker containers can be used with Docker Compose, Kubernetes, Helm or OpenShift. 
 
-The following example is using Docker Compose but you may find links and examples for kubernetes, Helm and OpenShift in the https://github.com/FusionAuth/fusionauth-containers[FusionAuth Containers] GitHub repo.
+The following example is using Docker Compose. Here are link:/docs/v1/tech/installation-guide/kubernetes/[kubernetes and Helm installation instructions. Find links for OpenShift and other community supported Docker environments in the https://github.com/FusionAuth/fusionauth-contrib[FusionAuth Contrib] GitHub repo.
 
 * <<Docker Compose>>
 * <<Configuration>>
@@ -26,50 +26,53 @@ The following example is using Docker Compose but you may find links and example
 
 All of the FusionAuth Docker images may be found on https://hub.docker.com/u/fusionauth/[Docker Hub].
 
+The FusionAuth docker compose yaml files may be found on https://github.com/FusionAuth/fusionauth-containers[FusionAuth containers repository].
+
 If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. `docker-compose.yml` will install FusionAuth without the enhanced search capability that Elasticsearch provides.  If you would rather use FusionAuth with Elasticsearch for improved searching, make sure you include the `docker-compose.override.yml`.
 
-=== FusionAuth
+=== Installing FusionAuth
 
 include::docs/v1/tech/installation-guide/_docker-compose-files.adoc[]
 
-=== FusionAuth with Elasticsearch
+=== Installing FusionAuth with Elasticsearch
 
 :with_elasticsearch:
 include::docs/v1/tech/installation-guide/_docker-compose-files.adoc[]
 :with_elasticsearch!:
 
-=== Docker Compose Files
+=== The Docker Compose Files
 
-You can examine the files used with this installation method.
-
-==== FusionAuth
-
-The following is the `docker-compose.yml` file for FusionAuth without the Elasticsearch engine.
+The following is the default `docker-compose.yml` file, which installs FusionAuth without the Elasticsearch engine.
 
 [source,yaml,title=docker-compose.yml]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml[]
 ----
 
-==== FusionAuth with Elasticsearch
-
-The following is the `docker-compose-override.yml`. When included in your working directory next to the above `docker-compose.yml`, your FusionAuth installation will use Elasticsearch. 
+The following is the default `docker-compose-override.yml` file. When included in your working directory next to the above `docker-compose.yml`, your FusionAuth installation will use Elasticsearch. 
 
 [source,yaml,title=docker-compose-overrride.yml]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml[]
 ----
 
-== Docker Configuration
-Review the link:/docs/v1/tech/reference/configuration[Configuration - Environment Variables] documentation to customize your deployment.
-
 == Docker Services
 
-In the above example configurations you will find a database, search and FusionAuth service. Let's look at each of these.
+In the above example configurations there are three services:
+
+* database 
+* search 
+* FusionAuth
+
+Let's look at each of these.
 
 === Database Service
 
-The database service provides a database. You will need to either set the `POSTGRES_PASSWORD` environment variable in the `db` service section, or more ideally, set the value in the host environment and leave it out of the `docker-compose.yml` file.
+The database service provides a postgreSQL database for use by FusionAuth.
+
+You will need to either set the `POSTGRES_PASSWORD` environment variable in the `db` service section, or more ideally, set the value in the host environment and leave it out of the `docker-compose.yml` file.
+
+By default this database is not accessible outside of the docker compose containers, but you may expose the port if you want to examine the database.
 
 Review the other properties to ensure they meet your requirements. 
 
@@ -78,6 +81,36 @@ Review the other properties to ensure they meet your requirements.
 include::docs/v1/tech/installation-guide/_elastic-search-version.adoc[]
 
 include::docs/v1/tech/installation-guide/_elasticsearch-ram.adoc[]
+
+=== The FusionAuth Service
+
+This is the service that runs the FusionAuth application.
+
+Review the link:/docs/v1/tech/reference/configuration#options[Configuration] documentation to customize your deployment. The best way t configure FusionAuth when using Docker is to use environment variables.
+
+In addition, the port `9011` is mapped between the container and your host machine. This may be modified if you want to run more than one FusionAuth instance or for any other reason.
+
+=== Other Services
+
+You may add other services to the docker compose files if needed.
+
+For example, in development environments it can be helpful to run mailcatcher for SMTP.
+
+[source,yaml,title=`docker-compose.override.yml with mailcatcher]
+----
+version: '3'
+
+services:
+  mailcatcher:
+    image: yappabe/mailcatcher
+    ports:
+      - "1025:1025"
+      - "1080:1080"
+    networks:
+      - mailcatcher
+
+#other services
+----
 
 == Production Deployment
 
@@ -159,13 +192,7 @@ The docker compose file references the `latest` tag, but that tag is not dynamic
 
 == Docker Images
 
-If you want to build your own image starting with our base image, the following Docker image is available.
-
-=== FusionAuth App
-
-```
-docker pull fusionauth/fusionauth-app
-```
+If you want to build your own image starting with our base image, start with the `fusionauth/fusionauth-app` image.
 
 //TODO explain how to create a child image
 
