@@ -1,6 +1,6 @@
 ## Documentation Style Guidelines
 
-Here are some guidelines to follow when writing documentation (everything under `/site/docs`.
+Here are some guidelines to follow when writing documentation (everything under `/site/docs`) as well as the blog (`_posts`).
 
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` when describing a unique identifier
@@ -46,15 +46,20 @@ Here are some guidelines to follow when writing documentation (everything under 
     ```
 
 
-- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
-- If you are including a file in the docs/asciidoctor, do not prepend the include file path with `/`. Instead, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
-- If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers. See the 5 minute guide for an example.
 - If a doc gets long consider adding a table of contents in the top section or breaking it into multiple documents. To generate a table of contents from section headers, run this script:
 ```
 egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
 ```
 
-For API docs:
+### Including files
+
+- If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
+- If you are including a file in the docs which uses asciidoctor, do not prepend the include file path with `/`. 
+  - If it is a top level doc, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
+  - If it is an included doc (that is, one that starts with `_`), use the relative path: `include::../../../../src/json/scim/enterpriseuser-create-request.json[]` or `include::_scim-customizable-schema-shared.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
+- If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers: `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]`
+
+### For API docs
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
@@ -282,6 +287,32 @@ or, if you want to see everything:
 bundle exec jekyll algolia --dry-run --verbose
 ```
 
+## Docs navigation
+
+We use a combination of URL and frontmatter metadata to determine what documentation section to hold open when you are visiting a doc page.
+
+In general, set the `navcategory` frontmatter attribute to the correct value when adding a new documentation page. The only exception is the API docs, which all live under `/apis/` so we can use that path and don't have to set the `navcategory` value.
+
+There are currently nine sections:
+
+* getting started: aimed at first time users
+* installation guide: installing
+* migration guide: migrating
+* admin guide: for operating FusionAuth, includes roadmap and release notes
+* login methods: the methods someone might use to log a user in
+* developer guide: developer facing doc for integrating with FusionAuth
+* customization: how to customize FusionAuth 
+* premium features: any paid features should go here
+* APIs: all api docs
+
+Please don't add a top level section.
+
+If you need a third level indentation, add the "tertiary" class to the list element.
+
+```
+<li class="tertiary {% if page.url == "/docs/v1/tech/identity-providers/external-jwt/" %}active{% endif %}"><a href="/docs/v1/tech/identity-providers/external-jwt/">Overview</a></li>
+```
+
 ## Data Driven Pages
 
 Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file.
@@ -291,6 +322,15 @@ Examples of that are the customers page and the quotes widget.
 You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps. Note that you can't use liquid syntax in any include files. See https://github.com/asciidoctor/jekyll-asciidoc/issues/166 for more details about this issue.
 
 The theme pages are kinda complex because they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
+
+
+### Adding an example app
+
+* Create a repo. It should have the prefix `fusionauth-example-` and you should add both the owners (as admins) and developer team (as maintainers).
+* Add a readme and a license (apache2). It's great for the readme to point at the blog post, but you can also update the readme after your post is live.
+* Add an entry in https://github.com/FusionAuth/fusionauth-site/blob/master/site/_data/exampleapps.yaml (you can do it on your blog post branch). Note that you can only put an app in one tech group, and that if it is a JavaScript app, use JavaScript, not typescript, as the group name.
+
+This will add the example app to the example apps section in the docs.
 
 ## Expert Advice
 

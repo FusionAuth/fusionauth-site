@@ -2,6 +2,7 @@
 layout: doc
 title: Release Notes <a class="fa-sm" title="Release notes RSS feed" href="/docs/v1/tech/releases.xml"><i class="fas fa-xs fa-rss"></i></a>
 description: Release notes for each version of FusionAuth
+navcategory: admin
 ---
 
 ////
@@ -56,13 +57,58 @@ Looking for release notes older than 1.23.0? Look in the link:/docs/v1/tech/arch
 
 [role=release-note]
 
+== Version 1.36.8
+_July 4th, 2022_
+
+=== Fixed
+
+* Fix the placeholder text in the entity grants search field.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1774[GitHub Issue #1774]
+* Correct the SCIM HTTP response code when a new resource is created to be `201`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1775[GitHub Issue #1775]
+* Correct the SCIM HTTP response code when a duplicate resource is attempted to be created to be `409`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1776[GitHub Issue #1776]
+
+[role=release-note]
+
+== Version 1.36.7
+_June 23rd, 2022_
+
+=== Security
+* Ensure the provided `client_id` matches the Application represented by the Refresh Token when performing a Refresh grant. This is marked as a security fix because the intended design is to ensure the Refresh Token does indeed match the requested `client_id`. However, the risk is minimal due to the caller still being required to have a valid set of client credentials, and must still present a valid refresh token.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1766[GitHub Issue #1766] Thanks to https://github.com/gnarlium[@gnarlium] for reporting the issue!
+
+=== Fixed
+* The initial "start" phase of a user action triggered by a failed login configuration is not sent.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1654[GitHub Issue #1654]
+* When a SAML v2 SP is using an HTTP redirect binding during the Logout request FusionAuth make fail to complete the logout request.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1723[GitHub Issue #1723]
+* A timing issue exists where under load of creating logins and then deleting applications programatically, a login record for a now deleted application may get stuck in the queue causing exceptions when attempting to write the record to the database.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1765[GitHub Issue #1765]
+* Correct the `Content-Type` HTTP response header returned from the SCIM endpoints.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1769[GitHub Issue #1769]
+
+[role=release-note]
+
+== Version 1.36.6
+_June 16th, 2022_
+
+=== Fixed
+
+* When using Rate Limiting for Failed logins, the user may be able to login successfully after being rate limited - but prior to the end of the configured time period.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1758[GitHub Issue #1758]
+* When using a JWT Populate lambda and modifying the default value of the `aud` claim to be an array instead of a string value, this token can no longer be used by the Introspect endpoint. This fix allows you to modify the `aud` claim to be an array, and it may be used with the Introspect endpoint as long as the requested `client_id` is contained in the `aud` claim. The OAuth2 Logout endpoint was also updated to allow this same `aud` modification to be using an `id_token` as the `id_token_hint`. When using this style of token as an `id_token_hint`, the first value in the `aud` claim that is equal to a FusionAuth application Id will be utilized.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1759[GitHub Issue #1759]
+
+[role=release-note]
+
 == Version 1.36.5
 _June 13th, 2022_
 
 === Security
 * Upgrade Java to get the patch for https://nvd.nist.gov/vuln/detail/CVE-2022-21449[CVE-2022-21449]. Note that in version `1.36.4` FusionAuth manually patched this vulnerability. To ensure you are not vulnerable to this vulnerability, upgrade to FusionAuth version `1.36.4` or later, or discontinue use of the Elliptic Curve algorithm.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1672[GitHub Issue #1672]
-* Fix validation of the Oauth2 Logout endpoint when using the `post_logout_redirect` parameter.
+* Fix validation of the Oauth2 Logout endpoint when using the `post_logout_redirect` parameter. As link:/docs/v1/tech/oauth/endpoints#logout[documented here], you must ensure that any value for this parameter is in the Authorized URLs list for the application. This may be a breaking change if you do not.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1750[GitHub Issue #1750]
 
 === Fixed
@@ -126,11 +172,11 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === Known Issues
 * If you create an empty directory in the FusionAuth plugin directory, or create a directory that does not contain any FusionAuth plugin jars, and have other plugin jars in the root of the plugin directory, the legitimate plugin jar may not be loaded. If you encounter this problem, either remove the empty directories, or make the empty directories read only.
-** This has been resolved in version 1.36.1.
+** This has been resolved in version `1.36.1`.
 * If you are using the Client Credentials Grant and omit the permissions from the `target-entity:` scope, the expected permissions will not be returned as part of the access token claims.
-** This has been resolved in version 1.36.1.
+** This has been resolved in version `1.36.1`.
 * If you are using the `openid` scope which produces an `id_token`, and you utilize a 3rd party library that consumes the `id_token` to validate the signature, expiration or similar claims, the token may be incorrectly identified as expired. This is because after a refresh token is used to generate a new `id_token` the `auth_time` claim may have lost precision from the original value in the initial `id_token`.
-** This has been resolved in version 1.36.3.
+** This has been resolved in version `1.36.3`.
 
 === Security
 * Ensure that the Change Password identifier is revoked if an API is used to change a user's password after the user has initiated a change password request.
@@ -309,7 +355,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** https://github.com/FusionAuth/fusionauth-issues/issues/1490[GitHub Issue #1490]
 * When configuring more than one preferred language in the FusionAuth Admin UI on the User or User Registration, the order may not be preserved. For example, if you configured `French, English` where `French` is the preferred languages, with a second option of `English`, when saving the form, the serialized value will become `English, French` and will not likely be saved in the order you expect.
 ** https://github.com/FusionAuth/fusionauth-issues/issues/1131[GitHub Issue #1131]
-* Fix a potential memory leak in the Email services. If you are sending a lot of email through FusionAuth, this error may cause your FusionAuth service to run out of memory. Restarting the service periodically can mitigate this potential if you are unable to upgrade. This issue was most likely introduced in version `1.30.2`.
+* Fix a potential memory leak in the Email services. If you are sending a lot of email through FusionAuth, this error may cause your FusionAuth service to run out of memory. Restarting the service periodically can mitigate this potential if you are unable to upgrade. This issue was most likely introduced in version `1.30.1`.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1548[GitHub Issue #1548]
 * When completing a Family workflow where a parent joins a child to a family, the `parentEmail` field may not be properly updated in the search index.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1550[GitHub Issue #1550]
@@ -396,7 +442,7 @@ _November 18th, 2021_
 
 === Known Issues
 * If you are modifying the user email or username in an Identity Provider Reconcile Lambda, the lambda may be invoked more than once after the initial link has been established. This may cause User registration data to be modified, or lost. If you have not yet upgraded to this version, it is advised that you wait until you can update to version `1.32.1`.
-** Resolved in 1.32.1 by https://github.com/FusionAuth/fusionauth-issues/issues/1517[GitHub Issue #1517]
+** Resolved in `1.32.1` by https://github.com/FusionAuth/fusionauth-issues/issues/1517[GitHub Issue #1517]
 
 === Changed
 * You may now modify, or fabricate an email or username in the Identity Provider Reconcile Lambda regardless of the Identity Provider type.
@@ -467,10 +513,6 @@ _November 18th, 2021_
 _October 13th, 2021_
 
 include::docs/v1/tech/__database-migration-warning.adoc[]
-
-=== Known Issues
-* A potential memory leak was introduced in this version. If you are sending a lot of email through FusionAuth, this error may cause your FusionAuth service to run out of memory. This has been fixed in version `1.33.0`, if you are unable to upgrade restarting the service periodically can mitigate this potential issue.
-** See https://github.com/FusionAuth/fusionauth-issues/issues/1548[GitHub Issue #1548]
 
 === Fixed
 * When logging in with an anonymous user from an IdP that now has a linking strategy other than Anonymous an exception occurs. This can occur if you change your linking strategy from Anonymous to something else, and users that were created while configured as Anonymous log in again.
@@ -550,7 +592,9 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === Known Issues
 * Registration counts may fail to be rolled up into reports when using PostgreSQL. Updating to `1.30.2` should resolve the issue.
-** Resolved in 1.32.0 by https://github.com/FusionAuth/fusionauth-issues/issues/1498[GitHub Issue #1498]
+** Resolved in `1.32.0` by https://github.com/FusionAuth/fusionauth-issues/issues/1498[GitHub Issue #1498]
+* A potential memory leak was introduced in this version. Updating to `1.33.0` should resolve the issue, if you are unable to upgrade, restarting the service periodically can mitigate this potential issue.
+** Resolved in `1.33.0` by https://github.com/FusionAuth/fusionauth-issues/issues/1548[GitHub Issue #1548]
 
 === Fixed
 * The Text MIME type of an email may not render unicode correctly when the host system does not have `UTF-8` set as the default character set.
@@ -1002,7 +1046,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 
 === Known Issues
 * If you use a non default theme for the FusionAuth default tenant, you may see an error when trying to log in to the admin UI. You can workaround this by appending `?&bypassTheme=true` to your login URL.
-** Resolved in 1.26.1, see https://github.com/FusionAuth/fusionauth-issues/issues/1175[GitHub Issue #1175] for additional details.
+** Resolved in `1.26.1`, see https://github.com/FusionAuth/fusionauth-issues/issues/1175[GitHub Issue #1175] for additional details.
 
 === Changed
 
@@ -1112,7 +1156,7 @@ _February 11th, 2021_
 
 === Known Issues
 * If you are using Elasticsearch version 6 you may encounter an error when using the Search API. This is due to a change in how we optionally request the document hit count in the search request to Elasticsearch. The change is not compatible with Elasticsearch version 6. As a work around, you can set `accurateTotal=true` in the API request.
-** Resolved in 1.25.0, see https://github.com/FusionAuth/fusionauth-issues/issues/1135[GitHub Issue #1135] for additional details.
+** Resolved in `1.25.0`, see https://github.com/FusionAuth/fusionauth-issues/issues/1135[GitHub Issue #1135] for additional details.
 
 === Security
 * More consistent usage of the `Cache-Control` HTTP response header. The default for all pages will be `Cache-Control: no-cache`, and some pages that may contain potentially sensitive information such as the API key add, edit or index pages will use a `Cache-Control: no-store`. No known vulnerability exists with the previous behavior, this is just a proactive change to limit the possible mis-use of cached pages in the FusionAuth admin UI.
