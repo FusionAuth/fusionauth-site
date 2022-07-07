@@ -3,7 +3,7 @@ layout: blog-post
 title: ClearSpend chose FusionAuth because of self-hosting and clear APIs
 description: ClearSpend, a spend-control and expense-management solution, uses FusionAuth for all their user management needs.
 author: Dan Moore
-image: blogs/zanocloud.png
+image: blogs/clearspend-fusionauth/clearsend.png
 category: blog
 tags: topic-community-story 
 excerpt_separator: "<!--more-->"
@@ -92,8 +92,11 @@ Several of us had used FusionAuth at a previous company as well and were pleased
 
 **Dan:** Any general feedback/areas to improve?
 
-**Stephen:** 1. Documentation includes a good many outdated entries, and several guides have not been rewritten to work with new versions.
-2. Custom UIs for user management don't always seem to be a first-class citizen, and customizing the built-in UI is quite limited in comparison. _Ed. note: This [issue](https://github.com/FusionAuth/fusionauth-issues/issues/91) and [this one](https://github.com/FusionAuth/fusionauth-issues/issues/1524) may be of interest._
+**Stephen:** Sure, two things come to mind.
+
+The documentation includes a good many outdated entries, and several guides have not been rewritten to work with new versions.
+
+And custom interfaces for user management don't always seem to be a first-class citizen. Customizing the built-in UI is quite limited. _Ed. note: This [issue](https://github.com/FusionAuth/fusionauth-issues/issues/91) and [this one](https://github.com/FusionAuth/fusionauth-issues/issues/1524) may be of interest._
 
 **Dan:** Thanks for your feedback!
 
