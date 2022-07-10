@@ -381,7 +381,7 @@ class ApplicationController < ActionController::Base
 
   def current_user
     if session[:user_jwt]
-      token = session[:user_jwt]["value"].first
+      token = session[:user_jwt][:value].first
 
       if token && token["email_verified"]
         @email = token["email"]
