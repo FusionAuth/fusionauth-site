@@ -64,6 +64,7 @@ var redirects = {
   '/docs/v1/tech/reactor': '/docs/v1/tech/admin-guide/licensing',
   '/docs/v1/tech/reactor/': '/docs/v1/tech/admin-guide/licensing',
   '/docs/v1/tech/troubleshooting': '/docs/v1/tech/admin-guide/troubleshooting',
+  '/docs/v1/tech/tutorials/register-user-login-api': '/docs/v1/tech/5-minute-setup-guide',
   '/docs/v1/tech/tutorials/gate-accounts-until-verified': '/docs/v1/tech/tutorials/gating/gate-accounts-until-user-email-verified',
   '/docs/v1/tech/tutorials/migrate-users': '/docs/v1/tech/migration-guide/tutorial',
   '/docs/v1/tech/tutorials/setting-up-user-account-lockout': '/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout',
