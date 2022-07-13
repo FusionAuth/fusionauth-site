@@ -30,7 +30,7 @@ For instance, an auth server such as FusionAuth can very easily allow you to:
 * [Protect your own APIs](/docs/v1/tech/guides/api-authorization) from unauthorized access
 * Limit the scope of authentication to a specific domain or client
 * [Theme your login and other authentication workflow pages](/docs/v1/tech/themes/) to match your Remix app 
-* Let you sleep easily at night knowing that your solution has been professionally security audited for years
+* Let you sleep easily at night knowing that your solution has been built and audited by security professionals for years in the past and will continue to be maintained far into the future
 
 But to do so, you need to adopt modern standards and practices -- and the sooner the better. In fact adopting a standards-based third-party server will result in less code than a hand-rolled solution.
 
