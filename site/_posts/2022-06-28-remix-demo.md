@@ -5,7 +5,7 @@ description: Example of how Remix works with FusionAuth
 author: Joyce Park
 image: blogs/connecting-fusionauth-remix/connecting-fusionauth-remix-runapp.png
 category: blog
-tags: remix, remix-run
+tags: remix remix-run
 excerpt_separator: "<!--more-->"
 ---
 
@@ -15,19 +15,21 @@ However, new users should be aware that the authentication functionality current
 
 <!--more-->
 
-In this post we will explain what problems this might cause for developers, and how to upgrade to a better solution with less work. We are FusionAuth and we build auth servers so our example will naturally use the FusionAuth server, but in principle the same solution should work with any auth service that supports OAuth2 and OIDC.
+In this post we will explain what problems this might cause for developers, and how to upgrade to a better solution with less work. FusionAuth provides a free-to-use OIDC server, so our example will naturally use FusionAuth. In principle the same solution will work with any identity provider that supports OAuth2 and OIDC.
 
 ## Why not use Remix's authentication?
 
 The Remix team ships an auth solution with the Indie and Blues stacks, and a very similar one with the Grunge stack. You can see components like join, login/logout, and protected pages in the Notes sample app (`/app/routes/notes`) and in the Jokes sample app that you can build by following the [documentation](https://remix.run/docs/en/v1/tutorials/jokes). Basically these sample apps check the database to see if a user with a particular username and password exists, and if so they set an encrypted session cookie with the userId. Subsequent page loads that require auth will check for the existence of the userId in the database and redirect elsewhere if it doesn't exist.
 
-This solution is appealingly straightforward and might be sufficient for low-risk uses like the demo -- most people aren't going to care too much about protecting their joke collection, in this case authentication mostly is intended to identify who added which joke to the app -- but modern auth solutions give you far higher levels of security and functionality if deployed properly. For instance, an authentication server such as FusionAuth can very easily allow you to:
+This solution is appealingly straightforward and might be sufficient for low-risk uses like the demo application. Most people aren't going to care too much about protecting their joke collection and with the Jokes app authentication primarily identifies who added which joke to the app. But modern auth solutions give you far higher levels of security and functionality if deployed properly.
 
-* Offer external authentication by [trusted sources](/docs/v1/tech/identity-providers/) such as Google, Facebook, or Apple
+For instance, an auth server such as FusionAuth can very easily allow you to:
+
+* Offer federated login by [trusted sources](/docs/v1/tech/identity-providers/) such as Google, Facebook, or Apple
 * Set up your org as an source of authentication and authorization for multiple apps
 * [Protect your own APIs](/docs/v1/tech/guides/api-authorization) from unauthorized access
 * Limit the scope of authentication to a specific domain or client
-* [Theme your FusionAuth forms](/docs/v1/tech/themes/) to match your Remix app 
+* [Theme your login and other authentication workflow pages](/docs/v1/tech/themes/) to match your Remix app 
 * Let you sleep easily at night knowing that your solution has been professionally security audited for years
 
 But to do so, you need to adopt modern standards and practices -- and the sooner the better. In fact adopting a standards-based third-party server will result in less code than a hand-rolled solution.
