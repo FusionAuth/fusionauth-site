@@ -10,102 +10,114 @@ navcategory: installation
 
 FusionAuth Docker containers can be used with Docker Compose, Kubernetes, Helm or OpenShift. 
 
-The following example is using Docker Compose but you may find links and examples for kubernetes, Helm and OpenShift in the https://github.com/FusionAuth/fusionauth-containers[FusionAuth Containers] GitHub repo.
+The following example is using Docker Compose. Here are link:/docs/v1/tech/installation-guide/kubernetes/[kubernetes installation instructions, which use Helm]. Find links for OpenShift and other community supported environments in the https://github.com/FusionAuth/fusionauth-contrib[FusionAuth Contrib] GitHub repo.
 
 * <<Docker Compose>>
-* <<Configuration>>
+** <<Installing FusionAuth>>
+** <<Installing FusionAuth with Elasticsearch>>
+** <<The Docker Compose Files>>
 * <<Docker Services>>
-* <<Production Deployment>>
+** <<Database Service>>
+** <<Search Service>>
+** <<The FusionAuth Service>>
+** <<Other Services>>
 * <<Upgrading>>
-* <<Docker Images>>
+** <<Migrations>>
+** <<Docker Tags>>
+* <<Custom Docker Images>>
 * <<Kickstart>>
 * <<Plugins>>
 * <<Accessing the Host Machine>>
+* <<Elasticsearch Production Deployment Configuration>>
 
 == Docker Compose
 
 All of the FusionAuth Docker images may be found on https://hub.docker.com/u/fusionauth/[Docker Hub].
 
-If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example.  The reference `docker-compose.yml` will install FusionAuth without the enhanced search capability that Elasticsearch provides.  If you would like to install FusionAuth including Elasticsearch for improved search capability, include the reference `docker-compose.override.yml` in the install steps below.
+The FusionAuth Docker Compose yaml files may be found on https://github.com/FusionAuth/fusionauth-containers[FusionAuth containers repository].
 
-The following are examples and may not be the most recent version. Refer to the following link in https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub] to find the latest version of our reference configuration.
+If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. `docker-compose.yml` will install FusionAuth without the enhanced search capability that Elasticsearch provides.  If you would rather use FusionAuth with Elasticsearch for improved searching, make sure you include the `docker-compose.override.yml`.
 
-=== FusionAuth
-In this example, we will download the `docker-compose.yml` and the `.env` files and then start up the configured containers.
+=== Installing FusionAuth
 
-[source]
-----
-curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
-----
+include::docs/v1/tech/installation-guide/_docker-compose-files.adoc[]
 
-=== FusionAuth with Elasticsearch
-In this example, we will download the `docker-compose.yml`, `docker-compose.override.yml` and the `.env` files and then start up the configured containers.
+=== Installing FusionAuth with Elasticsearch
 
-[source]
-----
-curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
-curl -o docker-compose.override.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
-curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
-----
+:with_elasticsearch:
+include::docs/v1/tech/installation-guide/_docker-compose-files.adoc[]
+:with_elasticsearch!:
 
-The stock `.env` file will contain the following values, you will want to modify the `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` values are correct. You may also override any of these values using environment variables.
+=== The Docker Compose Files
 
-[source,shell,title=The .env file]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env[]
-----
-
-=== Docker Compose Examples
-
-==== FusionAuth
-The following is an example `docker-compose.yml` file configuring FusionAuth without the Elasticsearch engine. For the most recent version of this example find this file on https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub].
+The following is the default `docker-compose.yml` file, which installs FusionAuth without the Elasticsearch engine.
 
 [source,yaml,title=docker-compose.yml]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml[]
 ----
 
-==== FusionAuth with Elasticsearch
-The following is an example `docker-compose-override.yml` which may be included in your working directory next to the above `docker-compose.yml` to install and configure Elasticsearch. For the most recent version of this example find this file on https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth[GitHub].
+The following is the default `docker-compose-override.yml` file. When included in your working directory next to the above `docker-compose.yml`, your FusionAuth installation will use Elasticsearch. 
 
 [source,yaml,title=docker-compose-overrride.yml]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml[]
 ----
 
-== Configuration
-Review the link:/docs/v1/tech/reference/configuration[Configuration - Environment Variables] documentation to customize your deployment.
-
 == Docker Services
-In the above example configurations you will find a database, search and FusionAuth service. Read below to better understand how each service is configured.
+
+In the above example configurations there are three services:
+
+* database 
+* search 
+* FusionAuth
+
+Let's look at each of these.
 
 === Database Service
 
-At a minimum, you will need to either set the `POSTGRES_PASSWORD` environment variable in the `db` service section, or more ideally set the value in the host environment and leave it out of the `docker-compose.yml` file. Ensure the other properties fit your requirements. Refer to the link:/docs/v1/tech/installation-guide/system-requirements[System Requirements] for database version support.
+The database service provides a PostgreSQL database for use by FusionAuth.
+
+You will need to either set the `POSTGRES_PASSWORD` environment variable in the `db` service section, or, more ideally, set the value in the host environment and leave it out of the `docker-compose.yml` file.
+
+By default this database is not accessible outside of the Docker Compose containers, but you may expose the port if you want to examine the database.
+
+Review the other properties to ensure they meet your requirements. 
 
 === Search Service
 
-We currently support Elasticsearch versions 6.3.x - 7.6.x.  Later versions may work as well, but may not have been tested for compatibility.  Please let us know if you have a requirement for a different version of Elasticsearch. The remainder of the properties can be changed to whatever you need.
+include::docs/v1/tech/installation-guide/_elastic-search-version.adoc[]
 
-== Production Deployment
+include::docs/v1/tech/installation-guide/_elasticsearch-ram.adoc[]
 
-Elasticsearch has a few runtime requirements that may not be met by default on your host platform. Please review the Elasticsearch Docker production mode guide for more information.
+=== The FusionAuth Service
 
-* https://www.elastic.co/guide/en/elasticsearch/reference/7.6/docker.html#docker-cli-run-prod-mode
+This is the service that runs the FusionAuth application.
 
-For example if startup is failing and you see the following in the logs, you will need to increase `vm.max_map_count` on your host VM.
+Review the link:/docs/v1/tech/reference/configuration#options[Configuration] documentation to customize your deployment. The best way to configure FusionAuth when using Docker is to use environment variables as documented in that link.
 
-[source]
+In addition, the port `9011` is mapped between the container and your host machine. This may be modified if you want to run more than one FusionAuth instance or for any other reason.
+
+=== Other Services
+
+You may add other services to the Docker Compose files if needed.
+
+For example, in development environments it can be helpful to run https://mailcatcher.me/[MailCatcher] for SMTP.
+
+[source,yaml,title=`docker-compose.override.yml with mailcatcher]
 ----
-2018-11-22T12:32:06.779828954Z Nov 22, 2018 12:32:06.779 PM ERROR c.inversoft.maintenance.search.ElasticsearchSilentConfigurationWorkflowTask
-  - Silent configuration was unable to complete search configuration. Entering maintenance mode. State [SERVER_DOWN]
+version: '3'
 
-2018-11-22T13:00:05.346558595Z ERROR: [2] bootstrap checks failed
-2018-11-22T13:00:05.346600195Z [1]: memory locking requested for elasticsearch process but memory is not locked
-2018-11-22T13:00:05.346606495Z [2]: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+services:
+  mailcatcher:
+    image: yappabe/mailcatcher
+    ports:
+      - "1025:1025"
+      - "1080:1080"
+    networks:
+      - mailcatcher
+
+#other services
 ----
 
 == Upgrading
@@ -162,23 +174,26 @@ If the installation is in `production` mode, apply the migrations out of band.
 
 When running in development runtime mode, silent mode was enabled based upon the presence of environment variables, such as the database user, and could not explicitly be enabled or disabled. 
 
-=== Docker tags
+=== Docker Tags
 
-The docker compose file references the `latest` tag, but that tag is not dynamic, it is only the latest at a point in time. To get the most recently released image, you have a couple of options.
+The Docker Compose file references the `latest` tag, but that tag is not dynamic. It is only the latest at a point in time. To get the most recently released image, you have a couple of options.
 
-* You can edit the docker compose file with an explicit tag version. This is a good idea for a production deployment.
-* You can remove the old image first, as otherwise the latest image won't be used: `docker rmi <old image id>`. This command may prompt you to remove containers using that image. Since all state is stored in the database, you can safely remove the containers.
-* You can pull the latest image with this command: `docker pull fusionauth/fusionauth-app:latest`.
+* Edit the Docker Compose file and specify a specific version. This is a good idea for a production deployment.
+* Remove the old image first: `docker rmi <old image id>`. This command may prompt you to remove containers using that image. Since all state is stored in the database, you can safely remove the containers. Then, when you restart Docker Compose, the latest image will be retrieved.
+* Pull the latest image with this command: `docker pull fusionauth/fusionauth-app:latest`.
 
-== Docker Images
+== Custom Docker Images
 
-If you want to build your own image starting with our base image, the following Docker image is available.
+If you want to build your own image starting with our base image, start with the `fusionauth/fusionauth-app` image. Just as the FusionAuth Docker image is based on the `ubuntu:focal` image, you can build a Docker file which is based on the `fusionauth:fusionauth-app` image. This can be useful if you want to automatically install a password hashing plugin, configuration file, or other customization.
 
-=== FusionAuth App
+Here's the FusionAuth application Docker image file as a reference.  
 
-```
-docker pull fusionauth/fusionauth-app
-```
+[source,yaml,title=The FusionAuth Docker file]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/fusionauth-app/Dockerfile[]
+----
+
+Here is https://docs.docker.com/engine/reference/builder/#from[additional Docker documentation].
 
 == Kickstart
 
@@ -197,12 +212,13 @@ Once you have a valid `kickstart.json` file, create a subdirectory in the locati
 Here are the steps to do so:
 
 * In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`.
-* Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the docker container expects, not the path on the host.
+* Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the Docker container expects, not the path on the host.
 * Configure `docker-compose.yml` to pass the environment variable set by `.env` to the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to run the commands in a `kickstart.json` at startup.
 
-```yaml
+[source,yaml,title="Example Docker compose file for running Kickstart"]
+----
 version: '3'
 
 services:
@@ -252,11 +268,11 @@ networks:
 volumes:
   db_data:
   fa_config:
-```
+----
 
 After running `docker-compose up` you should see a line like this in the output:
 
-[source]
+[source,title="FusionAuth log messages indicating Kickstart gas succeeded"]
 ----
 io.fusionauth.api.service.system.kickstart.KickstartRunner - Summary
 ----
@@ -277,7 +293,8 @@ Here are the steps to do so:
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to scan for plugins at startup.
 
-```yaml
+[source,yaml,title="Example Docker compose file for installing a plugin"]
+----
 version: '3'
 
 services:
@@ -326,21 +343,21 @@ networks:
 volumes:
   db_data:
   fa_config:
-```
+----
 
 After running `docker-compose up` you should see a line like this in the output:
 
-[source]
+[source,title="FusionAuth log messages indicating a plugin has been successfully installed"]
 ----
 INFO  io.fusionauth.api.plugin.guice.PluginModule - Installing plugin [com.mycompany.fusionauth.plugins.guice.MyExampleFusionAuthPluginModule]
 INFO  io.fusionauth.api.plugin.guice.PluginModule - Plugin successfully installed
 ----
 
-This indicates that the plugin has been installed and can be used.
+Such output indicates that the plugin has been installed and can be used.
 
 == Accessing the Host Machine
 
-The default FusionAuth docker configuration sets up the network using the `bridge` configuration. This means that all the hosts defined by `docker-compose` can access each other. However, it means that any applications running on your host machine cannot be accessed by FusionAuth using `localhost`.
+The default FusionAuth Docker configuration sets up the network using the `bridge` configuration. This means that all the hosts defined by `docker-compose` can access each other. However, it means that any applications running on your host machine cannot be accessed by FusionAuth using `localhost`.
 
 This is typically only an issue when FusionAuth is accessing resources outside of the Docker network to, for example, send email or request a webhook. If a Rails application is running locally on a Mac and you want FusionAuth, running in Docker, to send a webhook payload to it, `localhost` won't work.
 
@@ -351,3 +368,20 @@ In this situation, do one of the following:
 * Install FusionAuth on the host machine, using FastPath or another method
 
 Modifying FusionAuth to use other Docker networking schemes such as `host` may work, but isn't fully tested or supported.
+
+== Elasticsearch Production Deployment Configuration
+
+Elasticsearch has a few runtime requirements that may not be met by default on your host platform. Please review the https://www.elastic.co/guide/en/elasticsearch/reference/7.6/docker.html#docker-cli-run-prod-mode[Elasticsearch Docker production mode guide for more information].
+
+For example if startup is failing and you see the following in the logs, you will need to increase `vm.max_map_count` on your host VM.
+
+[source,title="The log message when max_map_count is too low"]
+----
+2018-11-22T12:32:06.779828954Z Nov 22, 2018 12:32:06.779 PM ERROR c.inversoft.maintenance.search.ElasticsearchSilentConfigurationWorkflowTask
+  - Silent configuration was unable to complete search configuration. Entering maintenance mode. State [SERVER_DOWN]
+
+2018-11-22T13:00:05.346558595Z ERROR: [2] bootstrap checks failed
+2018-11-22T13:00:05.346600195Z [1]: memory locking requested for elasticsearch process but memory is not locked
+2018-11-22T13:00:05.346606495Z [2]: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+----
+
