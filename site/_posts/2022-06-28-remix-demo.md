@@ -154,7 +154,7 @@ authenticator.use(
       // here we are simply verifying the user successfully authenticated, 
       // but you could also look the user up using the userInfo endpoint 
       // or FusionAuth APIs in order to get more profile data, such as roles.
-      console.log("Successful authentiation by FusionAuth!")
+      console.log("Successful authentication by FusionAuth!")
     }
   ),
   // this is optional, but if you set up more than one OAuth2 instance you will
@@ -189,7 +189,7 @@ From there you'll be sent to `/dashboard` which is just a message saying you're 
 
 ## Next steps
 
-As mentioned above, in addition to outsourcing login, there are other features you get when an external auth server such as FusionAuth. You can configure it for extra functionality that would be a pain to build yourself. Some examples: 
+As mentioned above, in addition to outsourcing login, there are other features you get when using an external auth server such as FusionAuth. You can configure it for extra functionality that would be a pain to build yourself. Some examples: 
 
 * only allowing a certain number of login attempts before locking a user account
 * adding additional login providers such as Google or Facebook
