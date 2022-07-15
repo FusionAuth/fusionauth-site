@@ -581,9 +581,9 @@ You considered this situation while planning your migration, but now, implement 
 
 You can mix and match these approaches. For example, you could migrate all paying customers, even those who haven't signed in during the migration period. At the same time you could archive the data of free accounts; those potential customers may have been trialing your application and may even have forgotten they have an account.
 
-==== Forgot Password Functionality
+==== The Forgot Password Use Case
 
-What happens when a user forgets their password during a slow migration? There are two scenarios:
+What happens when a user forgets their password and attempts to reset it, but you are in the middle of a slow migration? There are two scenarios:
 
 * The user has been migrated and has an account in FusionAuth
 * The user has not been migrated and still only has an account in the legacy system
@@ -610,9 +610,28 @@ They may be able to trigger a password reset email from the appropriate user dat
 
 image::migration-guide/general/reset-user-password.png[Resetting the password of a user.,width=1200,role=bottom-cropped]
 
-The message displayed in the user interface when someone enters the "forgot password" flow can modified by changing the `forgot-password-email-sent` property in the `messages.properties` file in link:/docs/v1/tech/themes/localization#messages[your theme].
+The message displayed in the user interface when someone enters the "forgot password" flow can be modified by changing the `forgot-password-email-sent` property in the `messages.properties` file in link:/docs/v1/tech/themes/localization#messages[your theme].
 
 There's an https://github.com/FusionAuth/fusionauth-issues/issues/1786[open issue discussing how to improve this experience]. Please upvote or add any comments there.
+
+==== The Registration Use Case
+
+What happens when a user attempts to register for an application and you are in the middle of a slow migration? There are two scenarios:
+
+* The user has been migrated and has an account in FusionAuth
+* The user has not been migrated and still only has an account in the legacy system
+
+In the first case, the normal FusionAuth behavior occurs: an error message will be displayed, prompting the user to log in.
+
+In the second case, FusionAuth doesn't know about the user. You could let the new user register, which will create an entirely new account. If they have existing data, you could try to migrate it with a custom process.
+
+A more straightforward approach would be to fail the registration. You can do this with webhooks. In this case you'd use the link:/docs/v1/tech/events-webhooks/events/user-create[`user.create`] webhook, which fires every time a user is created.
+
+If you set a transaction level of 'at least one webhook must succeed' and the webhook doesn't return a 200, then user creation will fail.
+
+You can write code to receive the webhook and then check your database. If the user exists, they have not migrated yet. Return a non 2xx status code, and then update the error message to state that they must log in. If the user does not exist in your legacy database, you can return a 200 status code and the user creation and registration will complete.
+
+The message displayed in the user interface when a webhook fails can modified by changing the `[WebhookTransactionException]` property in the `messages.properties` file in link:/docs/v1/tech/themes/localization#messages[your theme].
 
 ==== Slow Migration Alternatives
 
