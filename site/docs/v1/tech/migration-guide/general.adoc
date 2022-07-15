@@ -581,6 +581,27 @@ You considered this situation while planning your migration, but now, implement 
 
 You can mix and match these approaches. For example, you could migrate all paying customers, even those who haven't signed in during the migration period. At the same time you could archive the data of free accounts; those potential customers may have been trialing your application and may even have forgotten they have an account.
 
+==== What About Forgot Password Functionality
+
+What happens when a user forgets their password during a slow migration. There are two scenarios:
+
+* The user has been migrated
+* The user has not been migrated
+
+In either case, FusionAuth will display a message saying something like "We've sent you an email containing a link that will allow you to reset your password. Once you receive the email follow the instructions to change your password." But an email will only be sent in the first case, where the user exists in FusionAuth. In the second case, the user will never receive an email.
+
+Why, then, is this message displayed for both migrated and unmigrated users? 
+
+The answer is that FusionAuth can't distinguish between unmigrated users and users that don't exist in your system. In order to secure your user data and prevent enumeration attacks, FusionAuth doesn't reveal whether there is a valid account for a given username or email. If FusionAuth were to display a message such as "There is no account in the system" for an unmigrated user, then attackers would be able to determine whether an accont existed, by trying different values and noting the different error messages.
+
+This unfortunately means that the "Forgot Password" experience for migrating users is suboptimal. The current recommendation is to update the error message to say something like:
+
+"We've sent you an email containing a link that will allow you to reset your password. Once you receive the email follow the instructions to change your password. If you don't receive an email, please check your spam folder or contact customer service." You'd need to provide a link to a form, phone number or other means of contacting customer service. Customer service representivies can then check to see whether the user is migrated or not and trigger a password reset email from the appropriate system.
+
+The forgot password email sent message can be modified by changing the `forgot-password-email-sent` property in the `messages.properties` file in your theme.
+
+There's an https://github.com/FusionAuth/fusionauth-issues/issues/1786[open issue discussing how to improve this experience]. Please add any comments there.
+
 ==== Slow Migration Alternatives
 
 In some cases, you may be able to implement a slow migration without using a Connector.
