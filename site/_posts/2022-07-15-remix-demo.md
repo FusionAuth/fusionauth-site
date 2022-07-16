@@ -60,7 +60,7 @@ You'll want to do this from a different directory than the cloned remix applicat
 
 ## Configuring FusionAuth
 
-Next, create a user and an application in FusionAuth, since that is going to be your user data store. Navigate to \http://localhost:9011 and go through the [setup wizard](/docs/v1/tech/tutorials/setup-wizard) to create your first user.
+Next, create a user and an application in FusionAuth, since that is going to be your user data store. Navigate to `http://localhost:9011` and go through the [setup wizard](/docs/v1/tech/tutorials/setup-wizard) to create your first user.
 
 Next, create an application in FusionAuth. The application represents the Remix application in FusionAuth. You can learn more about [users](/docs/v1/tech/core-concepts/users) and [applications](/docs/v1/tech/core-concepts/applications). 
 
