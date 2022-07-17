@@ -9,7 +9,7 @@ navcategory: login-methods
 
 == Configure SAML v2 for AzureAD
 
-This documentation will guide you in configuring SAML v2 Idp for Azure AD. In this case, FusionAuth will act as Service Provider (SP) to AzureAD (Idp). Functionally, the result of this documentation will allow you to display a "Login with AzureAD" button on your FusionAuth login page and connect via SAML to AzureAD.
+This documentation will guide you in configuring SAML v2 Idp for AzureAD. In this case, FusionAuth will act as Service Provider (SP) to AzureAD (Idp). Functionally, the result will allow you to display a "Login with AzureAD" button on your FusionAuth login page and connect via SAML to AzureAD users/applications.
 
 image:identity-providers/azure-ad-saml/new-login-button[New Login With Azure-Button,width=1200,role=shadowed]
 
@@ -17,7 +17,7 @@ image:identity-providers/azure-ad-saml/new-login-button[New Login With Azure-But
 
 [NOTE]
 ====
-For this guide, we are going to use Azure Single Sign-on functionality. There may be other ways to connect SAML v2 and AzureAD, but these would fall outside of the scope of this article.
+For this guide, we use Azure Single Sign-on functionality. There may be alternate methods to connect SAML v2 and AzureAD, but these would fall outside of the scope of this documentation.
 ====
 
 If you are following this guide, likely you have already configured an AzureAD Enterprise application. If you have not, please follow the brief steps outlined below:
@@ -37,21 +37,21 @@ From your application home screen, click on Single sign-on. For this integration
 
 image:identity-providers/azure-ad-saml/configure-single-sign-on-saml[Configure Single-sign on saml,width=1200,role=shadowed]
 
-Azure will present five steps to complete. However, we have a bit of a procedural dilemma or catch-22. Before we can move forward, we need to make an Entity ID (our FusionAuth Idp, in this case) so that AzureAD can generate a X509 certificate. However, before we make an Entity ID/IdP in FusionAuth, we need an X509 certificate. The below steps will solve this problem and complete our integration. In sum, we will be:
+AzureAD will present five steps to complete. However, we have a bit of a procedural dilemma. Before we can move forward, we need to make an Entity ID (our FusionAuth Idp, in this case) so AzureAD can generate a X509 certificate. However, before we make an Entity ID/IdP in FusionAuth, we need an X509 certificate. The below steps will solve this problem and complete our integration. In sum, we will be:
 
-1. Creating a dummy X509 certificate and importing this into Key Master.
-2. Making a SAML Idp in FusionAuth (Entity Id) with a dummy certificate.
-3. Updating our AzureAD application with values from our newly created Idp, thereby getting a valid X509 certificate.
+1. Creating a "dummy" X509 certificate and importing this into Key Master.
+2. Making a SAML Idp in FusionAuth (Entity Id) with a dummy certificate selected.
+3. Updating our AzureAD Enterprise application with values from our newly created Idp, thereby getting a valid X509 certificate.
 4. Revisiting our SAML Idp in FusionAuth and updating with the correct X509 certificate from the above step.
 5. Completing our integration.
 
-If you already have a valid X509 certificate, you can complete step two above with a valid certificate (and skip a few of the remaining steps).
+If you already have a valid X509 certificate, you can complete step two above using this valid certificate and skip a few of the steps below.
 
 With that discussed, let us begin!
 
 == Import a "dummy" X509 certificate
 
-The first step is to import a dummy certificate into Key Master. You can generate any dummy X509 cert as it will be changed later. Once generated, under Key Master (`Settings > Key Master`) click `Import Certificate`.
+The first step is to import a "dummy" certificate into Key Master. You can generate any X509 certificate as it will be changed later. Once generated, under Key Master (`Settings > Key Master`) click `Import Certificate`.
 
 image:identity-providers/azure-ad-saml/import-certificate[Import Certificate,width=1200,role=shadowed]
 
@@ -133,17 +133,17 @@ image:identity-providers/azure-ad-saml/integration-details[Integration Details,w
 
 == Download and Import X509 Certificate into FusionAuth
 
-Previously, we created and used a dummy X509 certificate. At this point, we can change this. From the overview of your SAML application in AzureAD, under step three, you should find a Certificate (Base64) to download. Download the Base64 encoded certificate.
+Previously, we created and used a "dummy" X509 certificate. At this point, we can change this. From the overview of your SAML application in AzureAD, under step three, you should find a Certificate (Base64) to download.
 
 image:identity-providers/azure-ad-saml/generated-certificate[Generated Certificate,width=1200,role=shadowed]
 
 Next, import this certificate into Key Master (`Settings > Key Master > Import Certificate`). Leave the Key identifier property blank, as this will be autogenerated from the thumbprint in the existing certificate.
 
-Update the certificate used on your Idp configuration (`Settings > Identity Providers > your SAML IDP > Verification Key`) with this new X509 certificate. You can also remove the dummy certificate from Key Master once complete.
+Update the certificate used on your Idp configuration (`Settings > Identity Providers > your SAML IDP > Verification Key`) with this new X509 certificate. You can also remove the "dummy" certificate from Key Master once complete.
 
 [WARNING]
 ====
-Leave the Key identifier property blank, as this will be autogenerated from the thumbprint of the existing certificate. Otherwise, FusionAuth will not be able to validate the signature of the AuthN request from AzureAD when using this integration.
+Leave the Key identifier property blank, as this will be autogenerated from the thumbprint of the existing certificate. Otherwise, FusionAuth will not be able to validate the signature of the AuthN response from AzureAD when using this integration.
 ====
 
 == Assign Users
@@ -153,7 +153,7 @@ Leave the Key identifier property blank, as this will be autogenerated from the 
 If you are using an existing AzureAD application with assigned users, you may skip this step.
 ====
 
-Before we can complete our integration, assign AzureAD users to your application. Generally, the admin user for AzureAD can be used when testing. Add a user by navigating to `Users and groups` and clicking on the `Add user/group` button. Follow onscreen instructions to select and add a user.
+Before we can complete our integration, assign AzureAD users to your application. Add a user by navigating to `Users and groups` and clicking on the `Add user/group` button. Follow onscreen instructions to select and add a user.
 
 image:identity-providers/azure-ad-saml/add-user-azure[Add a User to Azure,width=1200,role=shadowed]
 
@@ -161,7 +161,7 @@ image:identity-providers/azure-ad-saml/add-user-azure[Add a User to Azure,width=
 
 image:identity-providers/azure-ad-saml/new-login-button[New Login With Azure-Button,width=1200,role=shadowed]
 
-At this point, what remains is to attempt a login. To test quickly, navigate to `Applications > Your Application > View (magnify icon) > OAuth2 & OpenID Connect Integration details > Login URLs`.
+At this point, what remains is to attempt a login. To test quickly, navigate to `Applications > Your Application > View (magnify icon) > OAuth2 & OpenID Connect Integration details > Login URLs`. Copy is this URL.
 
 Open a new tab, paste in the login URL, and you should see your new SAML AzureAD IdP login option. If your integration fails, remember to review the Event Logs (`System > Event Log`)
 
