@@ -128,7 +128,7 @@ Every major cloud service provider has had some form of service outage, includin
 
 It can be frustrating to be left at the mercy of your third-party providers. For instance, the identity provider service [Auth0](https://auth0.com/) powers a massive number of websites. [It went down](https://status.auth0.com/incidents/zvjzyc7912g5?u=3qykby4vypfp) for a few hours in 2021 and caused major outages across the internet.
 
-[Heroku](https://www.heroku.com/), which allows you to deploy and scale websites, is dealing with an [unauthorized access incident](https://status.heroku.com/incidents/2413) that has been ongoing since early April. It still hasn’t been resolved at the time of this article.
+[Heroku](https://www.heroku.com/), which allows you to deploy and scale websites, is dealing with an [unauthorized access incident](https://status.heroku.com/incidents/2413) that has been ongoing since early April. It was resolved at the end of May.
 
 If you own your service, though, you have more control and can address outages more quickly and effectively. 
 
