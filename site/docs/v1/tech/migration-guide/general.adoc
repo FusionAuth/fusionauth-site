@@ -161,7 +161,7 @@ Think about the edge cases. What fields are required and optional in the old aut
 
 Is there a clean one-to-one mapping between the original system's auth fields and FusionAuth? The answer is usually "no". Therefore plan to spend some time examining the current system's data and seeing how it maps to FusionAuth's user schema, link:/docs/v1/tech/apis/users[as documented]. We'll look at an example of a mapping process in the next section. 
 
-What should you do if you have data which doesn't map cleanly to any of the fields available in FusionAuth? FusionAuth provides a `data` field on a number of entities, including the user entity and application registrations. This `data` field can be used to store arbitrary key value data, and is a good place to save off any fields from the old system which don't map well to the FusionAuth user or application registration data models. In fact, it's often useful to store all the original user data in this field, so that you have it should you need it post-migration. Having access to the original, unmigrated data can be helpful in the future. If there was mistranslated data or fields, you'll be able to examine what was present in the old system without accessing it.
+What should you do if you have data which doesn't map cleanly to any of the fields available in FusionAuth? FusionAuth provides a `data` field on a number of entities, including the user entity and application registrations. This `data` field can be used to store arbitrary key value data, and is a good place to save any fields from the old system which don't map well to the FusionAuth user or application registration data models. In fact, it's often useful to store all the original user data in this field, so that you have it should you need it post-migration. Having access to the original, unmigrated data can be helpful in the future. If there was mistranslated data or fields, you'll be able to examine what was present in the old system without accessing it.
 
 Consider how to handle unexpected data during the migration process. You can save off the record for further examination, toss it as malformed, or ignore only fields containing unexpected data. Which choice you make depends on your business needs and the value of each account.
 
@@ -412,7 +412,7 @@ With FusionAuth, slow migrations happen using link:/docs/v1/tech/connectors/[Con
 
 ==== Determine Your Finish Line
 
-Unlike a big bang migration, with a slow migration you need to set a migration completion goal. Slow migrations move accounts one user at a time, so it is unlikely you'll migrate one hundred percent of your users through this approach. Some people log in to your application rarely while others may have abandoned their accounts. No matter how long a migration period you allow, some of your users will not log in during that timeframe, and therefore won't be migrated.
+Unlike a big bang migration, with a slow migration you need to set a migration completion goal. Slow migrations move accounts one user at a time, so it is unlikely you'll migrate one hundred percent of your users through this approach. Some people log in to your application rarely while others may have abandoned their accounts. No matter how long a migration period you allow, some of your users will not log in during that time frame, and therefore won't be migrated.
 
 So, with this approach, you need to decide what "done" means. Some factors to consider:
 
@@ -421,7 +421,7 @@ So, with this approach, you need to decide what "done" means. Some factors to co
 * Are there external events such as times of the year or holidays when greater or lesser numbers of users engage with your application? 
 * What are the ramifications of a user being unable to log in? Are there business, compliance, legal, or security concerns? 
 * Is loss of timely access to your application an annoyance or a disaster?
-* You will have some users who are not migrated when the slow migration period is over. How will you handle those accounts?
+* You will have some users who have not migrated when the slow migration period is over. How will you handle those accounts?
 * How painful is it to operate both FusionAuth and your current authentication system?
 * How valuable is a customer who has not logged in to your application in six months? A year? Three years? 
 
@@ -580,6 +580,60 @@ You considered this situation while planning your migration, but now, implement 
 * Extend the time running both systems; that is, set a new goal and continue the slow migration.
 
 You can mix and match these approaches. For example, you could migrate all paying customers, even those who haven't signed in during the migration period. At the same time you could archive the data of free accounts; those potential customers may have been trialing your application and may even have forgotten they have an account.
+
+==== The Forgot Password Use Case
+
+What happens when a user forgets their password and attempts to reset it, but you are in the middle of a slow migration? There are two scenarios:
+
+* The user has been migrated and has an account in FusionAuth
+* The user has not been migrated and still only has an account in the legacy system
+
+In either case, when a user submits a forgot password request, FusionAuth will display a message similar to `We've sent you an email containing a link that will allow you to reset your password. Once you receive the email, follow the instructions to change your password.` 
+
+An email will only be sent in the first case, where the user exists in FusionAuth. In the second case, the user will never receive an email.
+
+Why, then, is this message displayed for both sets of users? 
+
+The answer is that FusionAuth *can't distinguish* between users who have not been migrated and users that don't exist. In order to secure your user data and prevent enumeration attacks, FusionAuth doesn't reveal whether there is a valid account for a given username or email.
+
+If FusionAuth were to display a message such as `There is no account in the system` for a user who had not been migrated, attackers could determine whether an account existed, by trying different values and noting the different error messages.
+
+This unfortunately means that the "Forgot Password" experience isn't as smooth during a migration as it is afterwards.
+
+The current recommendation is to update the error message to something like:
+
+`We've sent you an email containing a link that will allow you to reset your password. Once you receive the email follow the instructions to change your password. If you don't receive an email, please check your spam folder or contact customer service.`
+
+Make sure you provide a link to a form, phone number or other means of contacting customer service. Customer service representatives can then check to see whether the user is migrated or not. 
+
+A customer service representative can trigger a password reset email from the appropriate user data store. You can do that from within the FusionAuth administrative user interface.
+
+image::migration-guide/general/reset-user-password.png[Resetting the password of a user.,width=1200,role=bottom-cropped]
+
+Alternatively, if the user has not been migrated, the customer service representative can look up the user and then reset theier password in the legacy system.
+
+The message displayed in the user interface when someone enters the "forgot password" flow can be modified by changing the `forgot-password-email-sent` property in the `messages.properties` file in link:/docs/v1/tech/themes/localization#messages[your theme].
+
+There's an https://github.com/FusionAuth/fusionauth-issues/issues/895[open issue discussing how to improve this experience]. Please upvote or add any comments there.
+
+==== The Registration Use Case
+
+What happens when a user attempts to register for an application and you are in the middle of a slow migration? There are two scenarios:
+
+* The user has been migrated and has an account in FusionAuth
+* The user has not been migrated and still only has an account in the legacy system
+
+In the first case, the normal FusionAuth behavior occurs: an error message will be displayed, prompting the user to log in.
+
+In the second case, FusionAuth doesn't know about the user. You could let the new user register, which will create an entirely new account. If they have existing data, you could try to migrate it with a custom process.
+
+A more straightforward approach would be to fail the registration. You can do this with webhooks. In this case you'd use the link:/docs/v1/tech/events-webhooks/events/user-create[`user.create`] webhook, which fires every time a user is created.
+
+If you set a transaction level of 'at least one webhook must succeed' and the webhook doesn't return a 200, then user creation will fail.
+
+You can write code to receive the webhook and then check your database. If the user exists, they have not migrated yet. Return a non 2xx status code, and then update the error message to state that they must log in. If the user does not exist in your legacy database, you can return a 200 status code and the user creation and registration will complete.
+
+The message displayed in the user interface when a webhook fails can modified by changing the `[WebhookTransactionException]` property in the `messages.properties` file in link:/docs/v1/tech/themes/localization#messages[your theme].
 
 ==== Slow Migration Alternatives
 

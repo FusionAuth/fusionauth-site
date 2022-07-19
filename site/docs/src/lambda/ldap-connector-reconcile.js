@@ -1,7 +1,7 @@
 // This is an example LDAP Connector reconcile, modify this to your liking.
 function reconcile(user, userAttributes) {
 
-  // Un-comment this line to see the userAttributes object printed to the event log
+  // Uncomment this line to see the userAttributes object printed to the event log
   // console.info(JSON.stringify(userAttributes, null, 2));
 
   // This assumes the 'uid' attribute is a string form of a UUID in the format
