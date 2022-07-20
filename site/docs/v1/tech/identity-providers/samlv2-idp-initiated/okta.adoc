@@ -9,10 +9,9 @@ include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
 
 == Configure SAML v2 IdP Initiated SSO With Okta
 
-This page will guide you in configuring a SAMLv2 IdP Initiated Identity Provider with Okta as the initiating IdP. You will be able to visit an Okta provided link, authenticate and then be logged in to FusionAuth.
+This page will guide you in configuring a SAMLv2 IdP Initiated Identity Provider with Okta as the initiating IdP. You will be able to visit an Okta provided link, authenticate and then be logged into FusionAuth.
 
 This document assumes you have an admin account with Okta and a valid FusionAuth paid edition license.
-
 
 * <<Configure SAML v2 IdP Initiated SSO With Okta>>
 * <<Create and Partially Configure the Okta SSO Application>>
@@ -26,25 +25,38 @@ This document assumes you have an admin account with Okta and a valid FusionAuth
 
 == Create and Partially Configure the Okta SSO Application
 
-Navigate to the Okta admin screen, and add an application. Search for `SAML Service Provider` and add this type of application.
+[NOTE]
+====
+You will want to set up this application as an admin. Okta allows users with various permissions. Later, create a user that can log into our newly created application, `Pied Piper`.
+====
+
+Navigate to the Okta admin screen. Using the left "hamburger" menu, click on `Applications Header > Applications`. From here, click `Create App Integration`. Select the SAML option and hit next.
 
 image::identity-providers/idp-initiated/okta-add-saml-service-provider-initial-screen.png[Setting up a SAMLv2 application in Okta,width=1200]
 
-Add an [field]#Application label# describing the application. Configure any other "General Settings" as needed.
+Add an [field]#App name# describing the application. Configure any other "General Settings" as needed (including adding your award winning logo).
 
 image::identity-providers/idp-initiated/okta-general-settings.png[General settings tab when creating a SAMLv2 application in Okta,width=1200,role=bottom-cropped]
 
-Click "Next". You will arrive at the "Sign-On Options" section.
+Click "Next". You will arrive at the "Configure SAML" section.
 
-image::identity-providers/idp-initiated/okta-sign-in-options.png[Sign-on settings tab when creating a SAMLv2 application in Okta,width=1200]
+image::identity-providers/idp-initiated/configure-saml.png[Settings tab when creating a SAMLv2 application in Okta,width=1200]
 
-Click "View Setup Instructions". This will open needed instructions in a separate browser tab:
+Please complete the [field]#Single sign on URL# and [field]#Audience URI (SP Entity ID)# with placeholder data. We will return to these fields in a moment (with real data from FusionAuth). Click next to proceed.
 
-image::identity-providers/idp-initiated/okta-saml-sp-configuration-instructions.png[Configuration instructions for the SAML SP when creating a SAMLv2 application in Okta,width=1200,role=bottom-cropped]
+The final screen is related to marketing/support. This screen may or may not be present. Click the Finish button.
 
-Record the [field]#Identity Provider Issuer# and [field]#Identity Provider HTTP Post URL# values. The former is a string such as `exkq14ymac31Bx7895d6`. There may be a typo in the instructions with the string `is` prefixed to the [field]#Identity Provider Issuer#.
+image::identity-providers/idp-initiated/feedback-marketing-step.png[Feedback Marketing Step,width=1200]
+
+Now, under the Sign On tab, scroll down until you see a button called "View SAML setup instructions".  This will open a new window/tab. You will need the values displayed to complete the rest of this tutorial.
+
+image::identity-providers/idp-initiated/view-saml-setup-instructions[Feedback Marketing Step,width=1200]
+
+Record the [field]#Identity Provider Single Sign-On URL# and [field]#Identity Provider Issuer# values. The latter is a string such as `http://www.okta.com/exkq14ymac31Bx7895d6`.
 
 Download the "Identity Provider Certificate" too, then close the instructions tab.
+
+image::identity-providers/idp-initiated/detail-saml-setup-instructions[Feedback Marketing Step,width=1200]
 
 == Add the Okta Public Certificate to FusionAuth
 
@@ -82,7 +94,12 @@ image::identity-providers/idp-initiated/fusionauth-view-identity-provider.png[Vi
 
 Navigate to [breadcrumb]#Settings -> System -> CORS#.
 
-Determine the hostname and scheme of the Okta Identity Provider HTTP POST URL. If the URL is `https://example.okta.com/app/generic-saml/11111151wmJ3HKZYD5d6/saml2`, then the hostname and scheme are `https://example.okta.com`.
+Determine the hostname and scheme of the Okta Identity Provider Single Sign-On URL. If the URL is `https://trial-6089629.okta.com/app/trial-6089629_test_1/exk1mn2r8kVgtAv6q697/sso/saml` then the hostname and scheme are `https://example.okta.com`. Additionally you might have to add another entry with a trailing backslash `https://example.okta.com/`.
+
+[NOTE]
+====
+If you run into CORS configuration challenges, the best solution is to review the `System > Event Log`. This will tell you exactly what hostname and schemes require a whitelist.
+====
 
 Add this value to the CORS [field]#Allowed origins# field. Ensure that the `POST` method is checked in the [field]#Allowed methods# field. Save the configuration
 
@@ -103,7 +120,7 @@ image::identity-providers/idp-initiated/fusionauth-set-up-application.png[Config
 
 == Complete SSO Configuration in Okta
 
-Return to the [breadcrumb]#Sign-on Options# tab in the Okta Admin screen.
+Return to the Configure SAML Tab.  This can be found by navigating as follows from the App homepage: [breadcrumb]#General > SAML Settings > Edit Button > General Settings > Next Button > Configure SAML# tab in the Okta Admin screen.
 
 * Set the value of the [field]#Assertion Consumer Service URL# to the value of the [field]#Callback URL (ACS)# from the FusionAuth Identity Provider recorded above.
 * Set the value of the [field]#Service Provider Entity Id# to the value of the [field]#Issuer# recorded above.
@@ -111,17 +128,19 @@ Return to the [breadcrumb]#Sign-on Options# tab in the Okta Admin screen.
 
 image::identity-providers/idp-initiated/okta-sign-on-advanced-settings.png[Configure Okta with the FusionAuth SP information,width=1200]
 
-Save the Okta application by clicking "Done".
+Save the Okta application by clicking "Next" until complete.
 
-Scroll to the [breadcrumb]#App Embed Link# section and note the [field]#Embed Link# value. This is the link a user needs to visit to begin the IdP initiated SSO, so you could place it in your application's navigation, launchpad or elsewhere.
+Naviate to the [breadcrumb]#General# tab and scroll to the [breadcrumb]#App Embed Link# section and note the [field]#Embed Link# value. This is the link a user needs to visit to begin the IdP initiated SSO, so you could place it in your application's navigation, launchpad or elsewhere.
 
 Finally, click on the [breadcrumb]#Assignments# tab and assign the user to the application.
+
+image::identity-providers/idp-initiated/okta-assign-application-to-user-step-one.png[Pick a user to assign to application,width=1200]
 
 image::identity-providers/idp-initiated/okta-assign-application-to-user.png[Assigning a user to the SAML SP application,width=1200]
 
 == Test It Out
 
-Open an incognito browser window and visit the [field]#Embed Link# value. Log in with your Okta IdP credentials.
+Open an incognito browser window and visit the [field]#Embed Link# value. This value can be found on the bottom of the General tab of your Okta Application. Log in with your Okta IdP credentials.
 
 image::identity-providers/idp-initiated/okta-login-page.png[Logging in with Okta,width=1200]
 
