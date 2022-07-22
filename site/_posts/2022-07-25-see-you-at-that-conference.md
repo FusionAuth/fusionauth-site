@@ -33,7 +33,9 @@ Whew, that's a pretty broad purview, and I didn't cover it all. Here's [the sche
 
 FusionAuth is auth built by devs, for devs, so we love to connect to developers at conferences like THAT Conference. We have great conversations about how developers are solving auth and CIAM problems at their company as well as learning about other development practices and experiences.
 
-THAT Conference WI is powered by the developer community, aimed at inclusivity, and takes place in a beautiful location. What is not to like?
+THAT Conference is powered by the developer community, aimed at inclusivity, and takes place in a beautiful location in the midwest.
+
+What is not to like? Well, the name can be a bit confusing. There's that. (See what I did there.)
 
 We're looking forward to the sessions. Exciting options include "Modern Authentication and Authorization with OIDC, OAuth2, and Resource-based Permissions", "Stranger Danger: Your JavaScript attack surface just got bigger!" and "HTTP: Past, Present, and Future". I'm especially looking forward to FusionAuth team member Matt Hathcock's presentation: "Protecting your API with OAuth". Note that this list isn't everything interesting; there are a lot of great talks!
 
@@ -46,7 +48,7 @@ If you want to meet up with the FusionAuth team at THAT Conference, we're around
 Find us in a couple of places:
 
 * We have a booth in the sponsor hallway. We should be easy to find since this isn't a re:Invent size conference. Come say hi for a demo, to chat about the intricacies of the Authorization Code grant, or to sign up to win a Lego set or an Oculus Quest.
-* As mentioned abovem FusionAuth team member Matt Hathcock, is talking on Thursday about how to protect your API with OAuth.
+* As mentioned above, FusionAuth team member Matt Hathcock is talking on Thursday about how to protect your API using tokens and the OAuth2 standard.
 * We'll be out and about as well. Send us a note via our [contact form](/contact) or tweet/DM [our corporate account](https://twitter.com/fusionauth).
 
 Happy THAT Conference! Hope to see you there.
