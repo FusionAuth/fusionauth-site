@@ -3,7 +3,7 @@ layout: blog-post
 title: We'll see you at THAT Conference
 description: FusionAuth is going to THAT Conference in Wisconsin. Stop by and see us!
 author: Dan Moore
-image: blogs/gluecon-2022/gluecon.png
+image: blogs/that-wi-2022/that-conference.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---
