@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: We'll see you at KCDC
+title: FusionAuth is going to KCDC
 description: FusionAuth is going to KCDC Conference in Kansas. Stop by and see us!
 author: Dan Moore
 image: blogs/that-wi-2022/that-conference.png
@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-It's conference season! KCDC (The Kansas City Developer Conference) is a developer focused conference which happens in downtown Kansas City Aug 8-10. This year, FusionAuth is sponsoring it.
+It's conference season! Last week [we were at THAT](/blog/2022/07/25/see-you-at-that-conference), next week we'll be at KCDC (The Kansas City Developer Conference). This is a developer focused conference which happens in downtown Kansas City Aug 8-10. This year, FusionAuth is sponsoring KCDC.
 
 <!--more-->
 
@@ -22,7 +22,7 @@ This conference focuses on developers, architects, managers and more. As far as 
 * .NET
 * Java
 * JavaScript
-* and more
+* and more. Much more.
 
 Whew, that's broad, and I didn't even list them all. Here's [the schedule](https://www.kcdc.info/sessions) if you'd like to see specific details about sessions. You can also view the [conference site](https://www.kcdc.info/) to learn more about the conferences in general.
 
