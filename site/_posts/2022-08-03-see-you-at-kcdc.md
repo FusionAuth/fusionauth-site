@@ -44,7 +44,7 @@ If you want to meet up with the FusionAuth team at KCDC, we're around and ready 
 
 Find us in a couple of places:
 
-* We have a booth in the sponsor area. We should be easy to find since this isn't a re:Invent size conference. Come say hi for a demo, to chat about the intricacies of the Authorization Code grant (yay PKCE!), or to sign up to win a Lego set or an Oculus Quest.
+* We have are at booth 527 in the sponsors area. We should be easy to find since this isn't a re:Invent size conference. Come say hi for a demo of FusionAuth, to chat about the intricacies of the Authorization Code grant (yay PKCE!), or to sign up to win an Oculus Quest.
 * I'll be giving a talk on WebAuthn first thing Tuesday morning. Come heckle me!
 * We'll be out and about as well. Send us a note via our [contact form](/contact) or tweet/DM [me](https://twitter.com/mooreds) or [our corporate account](https://twitter.com/fusionauth) if you'd like to say hey.
 
