@@ -34,18 +34,14 @@ If you'd like to have your own private instance of FusionAuth in the cloud, mana
 
 == Overview
 
-Here are the steps that you need to take to set up FusionAuth to provide login, logout and registration for your application:
+Here are the steps that you need to take to set up FusionAuth to provide login and logout for your application:
 
 . xref:1-log-into-the-sandbox[Log into the sandbox]
 . xref:2-create-an-application-and-configure-the-oauth-settings[Create an Application and configure the OAuth settings]
 . xref:3-grant-permissions[Grant permissions]
-. xref:4-write-a-route-controller-action-etc-in-your-backend-application-that-completes-the-login[Write a route (controller, action, etc) in your backend application that completes the login]
+. xref:4-configure-the-backend-to-complete-the-login[Configure the Backend to Complete the Login]
 . xref:5-store-the-user-object-in-the-session[Store the user object in the session]
 . xref:6-test-the-application[Test the application]
-
-Steps similar to these will be used for integrating with any OAuth identity provider. These also work for an OpenID Connect (OIDC) identity provider. Since FusionAuth supports both OAuth and OIDC, you'll use the latter since it is the modern standard. Let's get into the details of each step. 
-
-
 
 == 1. Log Into the Sandbox Server
 
@@ -61,29 +57,9 @@ include::docs/v1/tech/getting-started/_5-minute-application-setup.adoc[]
 
 == 3. Grant Permissions 
 
-Next, grant the user you created in the Setup Wizard permissions to log into your new Application. This can be done from the User management section of the FusionAuth admin UI. Click the [breadcrumb]#Users# link in the navigation. Click on the user:
+include::docs/v1/tech/getting-started/_5-minute-register-user.adoc[]
 
-TODO fix image for sandbox
-image::5-minute-setup-guide/user-search.png[User Search,width=1200,role=bottom-cropped]
-
-Once you are in this user's account, you'll click the "Add Registration" button. This will take us to a page that will allow us to add a registration for this user to the new Application. Registrations associate users with applications.
-
-Here's the screen to add the registration:
-
-image::5-minute-setup-guide/registration-add-form.png[Registration Add Form,width=1200,role=bottom-cropped]
-
-For this tutorial, you don't need to provide any additional information for the registration; click the save button at the top.
-
-Now the user is set up so that they can log into the application.
-
-[NOTE.note]
-====
-FusionAuth supports users self-registering. In that case, the registration will be added when the user signs up. What you just used is normally not required in order for users to log in. However, this process can be used for applications that are closed systems such as internal applications for your company. In these cases, users will be manually granted permissions to each application by an administrator.
-
-Learn how to set up link:/docs/v1/tech/guides/basic-registration-forms[self-service registration].
-====
-
-== 7. Write a route (controller, action, etc) in your backend application that completes the login
+== 4. Configure the Backend to Complete the Login
 
 Before you test the login, let's write the route/controller in your application's backend that will complete the OAuth workflow. After a user logs into FusionAuth's OAuth front-end successfully, their browser will be redirected to the URL you provided in the configuration step above. This redirect will contain a query parameter called `code` that contains the OAuth authorization code from FusionAuth. Our route/controller will use this `code` parameter to call back to FusionAuth to exchange the code for an access token.
 
@@ -144,6 +120,8 @@ include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/ma
 //...
 ----
 
+
+
 == 9. Test the application
 
 Now that everything is written, let's test the workflow. We can fire up the Node.js BFF using this command:
@@ -157,6 +135,7 @@ If you open your application in the browser and click the `Login` link, this wil
 
 As mentioned above, the Node.js code above is available on the FusionAuth GitHub located here: https://github.com/FusionAuth/fusionauth-node-example .
 
+TODO need to talk to Brian about recommendation: cookies?
 === Cookies for a Single Page Application
 
 If you prefer to use cookies rather than server-side sessions, you can modify the code for your `oauth-redirect` route from this:
@@ -182,6 +161,27 @@ to this:
 
 This approach works well if you are building a single-page application (SPA) or any other type of application where cookies are preferred to server-side sessions.
 
+== Review The Login and Logout Code
+
+TODO login
+Here's how your Pug template, which lives in `views/index.pug`, looks:
+
+[source,pug,title=Pug Template]
+----
+extends layout
+
+block content
+  h1= title
+  if user
+    p Hello #{user.firstName}
+  else
+    a(href='http://localhost:9011/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&state='+stateValue+'&code_challenge='+challenge+'&code_challenge_method=S256') Login
+
+  p Welcome to #{title}
+----
+
+TODO logout
+
 == Feedback 
 
 FusionAuth is beginning to work on a ten minute guide and a 42 minute guide. What topics would you want to learn next? Please choose two at most.
@@ -196,13 +196,13 @@ From here, you can begin creating a registration page in your application or usi
 
 * link:/docs/v1/tech/core-concepts/[Core Concepts]
 * link:/docs/v1/tech/lambdas/jwt-populate[Customizing users' JWTs]
-* link:/docs/v1/tech/email-templates[Customizing emails]
+* link:/docs/v1/tech/email-templates[Sending and customizing emails]
 * link:/docs/v1/tech/identity-providers/[Logging in with OIDC, SAML and social login providers]
 * link:/docs/v1/tech/themes/[Making the FusionAuth pages look like your application with themes]
 * link:/docs/v1/tech/guides/multi-factor-authentication[MFA/Two-Factor]
 * link:/docs/v1/tech/oauth/[OAuth documentation]
 * link:/docs/v1/tech/apis/registrations[Registration API]
-* link:/docs/v1/tech/guides/advanced-registration-forms[Self service registration]
+* link:/docs/v1/tech/guides/basic-registration-forms[Self-service registration]
 * link:/docs/v1/tech/guides/single-sign-on[Single Sign-on/SSO]
 * link:/docs/v1/tech/tutorials/[Tutorials in other programming languages]
 * link:/docs/v1/tech/apis/users[User API]
