@@ -51,6 +51,8 @@ var indexPages = {
 };
 var redirects = {
   '/blog': '/blog/',
+  '/cognito': '/docs/v1/tech/migration-guide/cognito',
+  '/cognito/': '/docs/v1/tech/migration-guide/cognito',
   '/docs': '/docs/',
   '/docs/v1/tech/apis/consent': '/docs/v1/tech/apis/consents',
   '/docs/v1/tech/common-errors': '/docs/v1/tech/admin-guide/troubleshooting',
