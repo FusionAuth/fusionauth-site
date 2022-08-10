@@ -19,7 +19,7 @@ There are a few such changes worth highlighting, but wow, there's a lot of stuff
 
 ## Configure MFA requirements for an application 
 
-Previous to this release, you enabled MFA on a tenant by tenant basis. When a user had MFA enabled, they complete the MFA process for every application they logged in to.
+Previous to this release, you enabled MFA on a tenant by tenant basis. When a user had MFA enabled, they completed the MFA process for every application they logged in to.
 
 In conversations with customers, we discovered they were using FusionAuth as a CIAM system for more than one type of application, and that our MFA implementation was lacking.
 
@@ -31,7 +31,7 @@ If you enable MFA for all users, the first application's onboarding and growth s
 
 The solution is to allow MFA to be enabled or disabled on a per application basis.
 
-To do so with this version of FusionAuth, log in to the FusionAuth administrative user interface, navigate to the "Applications" tab and edit your application. Proceed to the "Multi-Factor" tab and chose your preferred option from the "On login policy" dropdown.
+To do so with this version of FusionAuth, log in to the FusionAuth administrative user interface, navigate to the "Applications" tab and edit your application. Proceed to the "Multi-Factor" tab and choose from the "On login policy" dropdown.
 
 {% include _image.liquid src="/assets/img/blogs/release-1-37/multi-factor-app-config.png" alt="The application specific MFA settings." class="img-fluid" figure=true %} 
 
@@ -69,7 +69,7 @@ This will show all webhooks. Any with a value of `false` for the `global` field 
 
 ## Verify an email address without sending an email
 
-Email address verification is critical for CIAM systems to ensure accounts are created by legitimate users. Additionally, self service workflows such as password resets require a valid email address. FusionAuth supports email verification. Prior to this release, there are a number of ways to verify a user's email address, but they all sent emails to the user's inbox.
+Email address verification is critical for CIAM systems to ensure accounts are created by legitimate users. Additionally, self service workflows such as password resets require a valid email address. FusionAuth supports email verification. Prior to this release, there were a number of ways to verify a user's email address, but they all sent emails to the user's inbox.
 
 However, you may want to verify an email address without actually sending an email. Example use cases include when you've already verified the email address through another system, because you provisioned the email address yourself out of band, or because there's a registration workflow outside of FusionAuth which has confirmed deliverability.
 
