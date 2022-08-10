@@ -9,7 +9,7 @@ tags: topic-security topic-webhook
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.37 of FusionAuth. It shipped in early August, 2022. The 1.37 releases include bug fixes, the ability to configure multi-factor authentication (MFA) requirements on an application by application basis, and webhooks enhancements.
+We're excited to announce the release of version 1.37 of FusionAuth. It shipped in August, 2022. The 1.37 releases include bug fixes, the ability to configure multi-factor authentication (MFA) requirements on an application by application basis, and webhooks enhancements.
 
 <!--more-->
 
@@ -31,19 +31,28 @@ If you enable MFA for all users, the first application's growth suffers. If you 
 
 The solution: to allow MFA to be enabled on an application by application basis.
 
-To do so, log in to the FusionAuth administrative user interface, navigate to the "Applications" tab and edit your application. Then go to ... XXX TODO once released
+To do so, log in to the FusionAuth administrative user interface, navigate to the "Applications" tab and edit your application. Then go to the "Multi-Factor" tab and chose your preferred option from the "On login policy" dropdown.
 
-{% include _image.liquid src="/assets/img/blogs/release-1-37/scim-tenant-settings.png" alt="The SCIM tenant settings." class="img-fluid" figure=true %} TODO once released
+{% include _image.liquid src="/assets/img/blogs/release-1-37/multi-factor-app-config.png" alt="The application specific MFA settings." class="img-fluid" figure=true %} 
+
+You have four choices:
+
+* Disable the application specific MFA configuration. In this case, the application will have the same behavior as in previous versions of FusionAuth.
+* Enable the application specific MFA configuration and set the "Trust policy" to "Any". Doing this will mean that if the user has completed an MFA challenge for any FusionAuth managed application, they will not be challenged again for this application until the duration configured for "Two-Factor trust" has expired.
+* Enable the application specific MFA configuration and set the "Trust policy" to "This application". Doing this will mean that if the user has completed an MFA challenge for this application, they will not be challenged until the duration configured for "Two-Factor trust" has expired.
+* Enable the application specific MFA configuration and set the "Trust policy" to "None". Doing this will mean that the user must complete an MFA challenge for every login.
+
+This functionality requires a valid FusionAuth license.
 
 ## Webhooks, applications and tenants
 
-Previous to this release, a few webhooks could be associated with an application. This was not recommended and caused a lot of confusion for our users. In this release, all webhooks will be associated with a tenant, and you won't be able to configure application specific webhooks. 
+Previous to this release, a few webhooks could be associated with an application. This was not recommended and caused a lot of confusion for our users. In this release, all webhooks will be associated with a tenant, and you won't be able to configure application specific webhooks. You will be able to associate a webhook with zero or more tenants, however.
 
-TODO image
+{% include _image.liquid src="/assets/img/blogs/release-1-37/webhook-tenant-limit.png" alt="Configuring webhooks to fire only for certain tenants.." class="img-fluid" figure=true %} 
 
-If you currently have a webhook associated with an application, TODO what do you do? 
+If you currently have a webhook associated with an application, it wil be transparently migrated. Each webhook will be associated with the tenant containing the application. The code receiving the webhook should be modified to handle events from other applications in the same tenant.
 
-If you are only interested in events for a certain application, you can filter in the webhook receiving code. For example, if you are only interested in the "User Registration Create" event for an internal admin application, you can set up your tenant to fire this event for the tenant and then filter and discard all such events sent by any other application.
+If you are only interested in events for a certain application, filter in the webhook receiving code. For example, if you are only interested in the "User Registration Create" event for an internal admin application, fire this event for the tenant and then filter and discard events sent by any other application.
 
 You can review your existing webhook configuration by using the administrative user interface or by running this script.
 
@@ -58,24 +67,19 @@ This will show any webhooks configured for a specific application. If `global` i
 
 ## Can verify an email without sending an email
 
-Email address verification is critical to ensure that accounts are created by legitimate users and that self service actions such as password resets are delivered correctly. FusionAuth supports this and there are a number of actions that will verify a user's email address.
+Email address verification is critical for CIAM systems to ensure accounts are created by legitimate users and that self service actions such as password resets can be delivered. FusionAuth supports this functionality. There are a number of interactions that will verify a user's email address, but they all involve sending emails to the email address associated with an account.
 
-But there are times when you want to verify an email address directly, without sending an email. This may be because you've already verified the email address through another system, because you provisioned the email address yourself, or for other reasons.
+However, there are times when you want to verify an email address without sending an email. This may be because you've already verified the email address through another system, because you provisioned the email address yourself, or because the email address is trusted.
 
-On the flip side, you may want to mark an address as unverified, even though it was previously verified. You might do this because an email has bounced, a user's role has changed and you need to reverify their access, or for any other reason.
+You can now use an API call to directly mark a user's email as verified.
 
-You can now use an API call to directly mark an email as verified or unverfied. TODO check 
-
-TODO
 ```shell
 INSTANCE_HOSTNAME=... # your instance's hostname
-API_KEY=... # an API key with at least `POST` permission on the /api/webhook endpoint
+API_KEY=... # an API key with at least `POST` permission on the /api/user/verify-email endpoint
 
-curl -H 'Content-type: application/json' -H "Authorization: $API_KEY" https://$INSTANCE_HOSTNAME/api/ -d \
-{
-}
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" https://$INSTANCE_HOSTNAME/api/user/verify-email -d \
+'{ "userId": "429797ba-37d7-4bbe-8748-58fb812448ff" }'
 ```
-
 
 ## Moving to Netty
 
