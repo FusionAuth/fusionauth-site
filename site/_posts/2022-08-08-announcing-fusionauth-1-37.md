@@ -3,7 +3,7 @@ layout: blog-post
 title: Announcing FusionAuth 1.37
 description: This release includes bug fixes, multi-factor authentication (MFA) policies for applications, an API to mark a user's email address as verified, and the ability to limit webhooks to a certain tenant.
 author: Dan Moore
-image: blogs/release-1-37/product-update-fusionauth-1-37.png
+image: blogs/release-1-37/fusionauth-1-37.png
 category: blog
 tags: topic-security topic-webhook
 excerpt_separator: "<!--more-->"
