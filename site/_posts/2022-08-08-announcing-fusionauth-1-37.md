@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.37
-description: This release includes bug fixes, the ability to configure multi-factor authentication (MFA) requirements on an application by application basis, and webhooks enhancements.
+description: This release includes bug fixes, multi-factor authentication (MFA) policies for applications, an API to mark a user's email address as verified, and the ability to limit webhooks to a certain tenant.
 author: Dan Moore
 image: blogs/release-1-37/product-update-fusionauth-1-37.png
 category: blog
@@ -9,52 +9,54 @@ tags: topic-security topic-webhook
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of version 1.37 of FusionAuth. It shipped in August, 2022. The 1.37 releases include bug fixes, the ability to configure multi-factor authentication (MFA) requirements on an application by application basis, and webhooks enhancements.
+We're excited to announce the release of version 1.37 of FusionAuth. It shipped in August, 2022. The 1.37 release includes bug fixes, multi-factor authentication (MFA) policies for applications, an API to mark a user's email address as verified, and the ability to limit webhooks to certain tenants.
 
 <!--more-->
 
-These releases contained features, enhancements, and bug fixes. Please see the [release notes](/docs/v1/tech/release-notes#version-1-37-0) for a full breakdown of the changes between 1.36 and 1.37. 
+This release contains many new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-37-0) for a full breakdown of the changes between 1.36 and 1.37. 
 
-There are a few changes that are worth highlighting. But wow, there's a lot of stuff in this release. Please, check out the [release notes](/docs/v1/tech/release-notes#version-1-37-0).
+There are a few such changes worth highlighting, but wow, there's a lot of stuff in this release. Please, please, check out the [release notes](/docs/v1/tech/release-notes#version-1-37-0).
 
-## Configure MFA requirements for an application
+## Configure MFA requirements for an application 
 
-Previous to this release, you could enable MFA on a tenant by tenant basis. Then, if a user had MFA enabled, they were required to complete the MFA process for every application they logged into.
+Previous to this release, you enabled MFA on a tenant by tenant basis. When a user had MFA enabled, they complete the MFA process for every application they logged in to.
 
-Our customers raised an interesting business case. They were using FusionAuth for more than one kind of application. 
+In conversations with customers, we discovered they were using FusionAuth as a CIAM system for more than one type of application, and that our MFA implementation was lacking.
 
-Some were consumer facing applications with low risk and a desire to ensure onboarding was as easy as possible, such as a gaming application.
+Some applications were low risk and consumer facing. For these, our customers wanted to ensure new account creation and onboarding was as easy as possible. One example of this is a freemium gaming application.
 
-Others were higher risk, either internal applications where compliance dictated MFA and other security measures or customer facing higher risk applications where money transfers or other high value interactions were involved.
+Other applications were higher risk, with a corresponding greater need for identity assurance. For example, an internal application where compliance requirements dictated MFA or a customer application allowing valuable transactions such as a financial transfer.
 
-If you enable MFA for all users, the first application's growth suffers. If you disable it, then the second type of application is in violation of rules or is exposed to issues.
+If you enable MFA for all users, the first application's onboarding and growth suffers. If MFA is disabled, the second kind of application is riskier and in some cases in violation of governance policies.
 
-The solution: to allow MFA to be enabled on an application by application basis.
+The solution is to allow MFA to be enabled or disabled on a per application basis.
 
-To do so, log in to the FusionAuth administrative user interface, navigate to the "Applications" tab and edit your application. Then go to the "Multi-Factor" tab and chose your preferred option from the "On login policy" dropdown.
+To do so with this version of FusionAuth, log in to the FusionAuth administrative user interface, navigate to the "Applications" tab and edit your application. Proceed to the "Multi-Factor" tab and chose your preferred option from the "On login policy" dropdown.
 
 {% include _image.liquid src="/assets/img/blogs/release-1-37/multi-factor-app-config.png" alt="The application specific MFA settings." class="img-fluid" figure=true %} 
 
-You have four choices:
+You have four choices. You can:
 
-* Disable the application specific MFA configuration. In this case, the application will have the same behavior as in previous versions of FusionAuth.
-* Enable the application specific MFA configuration and set the "Trust policy" to "Any". Doing this will mean that if the user has completed an MFA challenge for any FusionAuth managed application, they will not be challenged again for this application until the duration configured for "Two-Factor trust" has expired.
-* Enable the application specific MFA configuration and set the "Trust policy" to "This application". Doing this will mean that if the user has completed an MFA challenge for this application, they will not be challenged until the duration configured for "Two-Factor trust" has expired.
-* Enable the application specific MFA configuration and set the "Trust policy" to "None". Doing this will mean that the user must complete an MFA challenge for every login.
+* Disable application specific MFA configuration. In this case, the application will have the same behavior as it did in previous versions of FusionAuth as described above.
+* Enable the application specific MFA configuration and set the "Trust policy" to "Any". Then, if the user has completed an MFA challenge for any FusionAuth managed application, they will not be challenged again for this application until the timespan configured for "Two-Factor trust" has expired.
+* Enable the application specific MFA configuration and set the "Trust policy" to "This application". In this case, if the user has completed an MFA challenge for this application, they will not be challenged until the duration configured for "Two-Factor trust" has expired. However, if they have completed the MFA challenge for another application, they'll be prompted to complete MFA when they try to log in to this one.
+* Enable the application specific MFA configuration and set the "Trust policy" to "None". The user must complete an MFA challenge for every login to this application.
 
-This functionality requires a valid FusionAuth license.
+This functionality requires a valid FusionAuth license. Please see [the pricing page](/pricing) for more information.
 
 ## Webhooks, applications and tenants
 
-Previous to this release, a few webhooks could be associated with an application. This was not recommended and caused a lot of confusion for our users. In this release, all webhooks will be associated with a tenant, and you won't be able to configure application specific webhooks. You will be able to associate a webhook with zero or more tenants, however.
+Previous to this release, a small but non-zero number of webhooks could be associated with an application. This was not recommended and caused confusion for our users. In this release, all webhooks are associated with a tenant; you won't be able to configure application specific webhooks any more.
+
+However, you will be able to associate a webhook with zero or more tenants. This can be useful when segmenting environments using tenants. You typically  don't want your production webhooks to receive events from the staging tenant and vice versa.
 
 {% include _image.liquid src="/assets/img/blogs/release-1-37/webhook-tenant-limit.png" alt="Configuring webhooks to fire only for certain tenants.." class="img-fluid" figure=true %} 
 
-If you currently have a webhook associated with an application, it wil be transparently migrated. Each webhook will be associated with the tenant containing the application. The code receiving the webhook should be modified to handle events from other applications in the same tenant.
+If you currently have a webhook associated with an application, it will be transparently migrated. Each application specific webhook will be associated with the tenant containing that application.
 
-If you are only interested in events for a certain application, filter in the webhook receiving code. For example, if you are only interested in the "User Registration Create" event for an internal admin application, fire this event for the tenant and then filter and discard events sent by any other application.
+The code receiving the webhook should be modified to handle events from other applications in the same tenant. If you are only interested in events for a certain application, filter in the code receiving the webhook. For example, if you are interested in the ["User Registration Create"](/docs/v1/tech/events-webhooks/events/user-registration-create) event for an internal admin application, filter and discard events sent by other applications.
 
-You can review your existing webhook configuration by using the administrative user interface or by running this script.
+You can review your existing webhook configuration by using the administrative user interface or by running this script:
 
 ```shell
 INSTANCE_HOSTNAME=... # your instance's hostname
@@ -63,15 +65,15 @@ API_KEY=... # an API key with at least `GET` permission on the /api/webhook endp
 curl -H "Authorization: $API_KEY" https://$INSTANCE_HOSTNAME/api/webhook|jq '.webhooks|.[]|.id,.global,.applicationIds '
 ```
 
-This will show any webhooks configured for a specific application. If `global` is false, the application Ids for which this webhoook is configured will be printed as well.
+This will show all webhooks. Any with a value of `false` for the `global` field is application specific. For these, application Ids will be printed as well.
 
-## Can verify an email without sending an email
+## Verify an email address without sending an email
 
-Email address verification is critical for CIAM systems to ensure accounts are created by legitimate users and that self service actions such as password resets can be delivered. FusionAuth supports this functionality. There are a number of interactions that will verify a user's email address, but they all involve sending emails to the email address associated with an account.
+Email address verification is critical for CIAM systems to ensure accounts are created by legitimate users. Additionally, self service workflows such as password resets require a valid email address. FusionAuth supports email verification. Prior to this release, there are a number of ways to verify a user's email address, but they all sent emails to the user's inbox.
 
-However, there are times when you want to verify an email address without sending an email. This may be because you've already verified the email address through another system, because you provisioned the email address yourself, or because the email address is trusted.
+However, you may want to verify an email address without actually sending an email. Example use cases include when you've already verified the email address through another system, because you provisioned the email address yourself out of band, or because there's a registration workflow outside of FusionAuth which has confirmed deliverability.
 
-You can now use an API call to directly mark a user's email as verified.
+You can now use an API call to mark a user's email as verified:
 
 ```shell
 INSTANCE_HOSTNAME=... # your instance's hostname
@@ -81,22 +83,22 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" htt
 '{ "userId": "429797ba-37d7-4bbe-8748-58fb812448ff" }'
 ```
 
-## Moving to Netty
+## Goodbye Tomcat, hello Netty
 
-Another change in this release that opens up some exciting new possibilities is the move from Tomcat to Netty for the infrastructure underlying FusionAuth.
+Another change in this release opens up some exciting new possibilities. With 1.37, the infrastructure underlying FusionAuth is changed: out with Tomcat and in with Netty.
 
-Tomcat has been very good to us over the years, and the previous releases relied on it. But Tomcat has some architectural assumptions and moving to a more customizable foundational layer like Netty allows better cookie handling and more options around configuration reloading.
+Tomcat has been very good to FusionAuth over the years. But Tomcat has some architectural assumptions. Moving to a more customizable foundation layer like Netty allows better cookie handling and flexibility around configuration reloading.
 
-While this is a lower level change that is functionally equivavlent and shouldn't have any impacts on you and your users, it will open up a lot of possibilities for FusionAuth in future versions.
+While this is a functionally equivalent lower level change and shouldn't have any impacts on you and your users, we look forward to the future features this will enable.
 
 ## The rest of it
 
 There were 21 issues, enhancements, and bug fixes included in this release. A selection of these not mentioned above includes:
 
 * SMTP debugging is now available in the Event Log rather than the System Log.
-* Client library fixes.
-* You can now use `let`/`optional` chaining when using the GraalJS lambda engine.
-* Email template size restrictions were increased from 64K to 16MB, allowing for uses such as inline images in emails.
+* You can now use `let`/`optional` chaining in your JavaScript when using the GraalJS lambda engine.
+* Some client library bugs were fixed.
+* Email template size restrictions were increased from 64K to 16MB, allowing for inline images in emails.
 * FusionAuth now supports `id_token_hint` on logout.
 
 Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-37-0).
