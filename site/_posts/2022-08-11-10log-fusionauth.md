@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: ClearSpend chose FusionAuth because of self-hosting and clear APIs
-description: ClearSpend, a spend-control and expense-management solution, uses FusionAuth for all their user management needs.
+title: 10log integrates FusionAuth into their architectural acoustics applications
+description: 10log integrates FusionAuth running on a Digital Ocean droplet into their architectural acoustics web and desktop applications
 author: Dan Moore
 image: blogs/clearspend-fusionauth/clearsend.png
 category: blog
@@ -27,10 +27,11 @@ Kőműves Ákos a FusionAuth community member and team member at 10log. He chatt
 
 We also do lots of custom components, charts, and more. Here's one of [our public calculators](https://www.10log.com/public/rt). Here's [another one](https://www.10log.com/public/raytracer). You can see this [last one in action](https://www.youtube.com/watch?v=cBA91hA2NEw).
 
-
 **Dan:** Tell me about your work on this project.
 
 **Kőműves:** I work as a contractor with the owner of 10log.io and 10log.com and have for more than 7 years now.
+
+> With FusionAuth, we do not need to build out a user management/login system. 
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
@@ -42,7 +43,7 @@ We also do lots of custom components, charts, and more. Here's one of [our publi
 
 **Dan:** What problems did we solve for you?
 
-**Kőműves:** With FusoinAuth, we do not need to build out a user management/login system. 
+**Kőműves:** With FusionAuth, we do not need to build out a user management/login system. 
 
 **Dan:** How were you solving them before FusionAuth?
 
@@ -56,6 +57,8 @@ We also do lots of custom components, charts, and more. Here's one of [our publi
 
 **Kőműves:** It was pretty straightforward to set it up - the only issue we had is that it wasn't working with 1GB of memory. That's the size of the cheapest droplet on DigitalOcean where our apps are hosted.
 I don't recall now but I believe I expected it to work with 1GB of memory after reading the requirements. After upgrading our droplet to a different tier (2GB) it worked without any problem. 
+
+> [10log chose FusionAuth because] of the ability to be self-hosted and own our data.
 
 **Dan:** How often do you upgrade FusionAuth?
 
