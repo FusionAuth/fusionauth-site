@@ -103,7 +103,7 @@ There were 21 issues, enhancements, and bug fixes included in this release. A se
 * You can now use `let`/`optional` chaining in your JavaScript when using the GraalJS lambda engine.
 * Some client library bugs were fixed.
 * Email template size restrictions were increased from 64K to 16MB, allowing for inline images in emails.
-* Windows installations now using WSL2 and a .deb file.
+* Windows installations now use WSL2 and a .deb file.
 * FusionAuth now supports an expired `id_token` in the `id_token_hint` for the logout endpoint.
 
 Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-37-0).
