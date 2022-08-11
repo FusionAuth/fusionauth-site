@@ -19,7 +19,7 @@ Kőműves Ákos a FusionAuth community member and team member at 10log. He chatt
 
 **Dan:** Can you tell me a bit about 10log? What is the company's mission?
 
-**Kőműves:** 10log is building a suite of web-based technical and project management tools for the architectural acoustics & noise control industry. These tools are designed to speed up the learning curve for new acousticians and increase efficiency and design quality for senior acousticians. 10log also sponsors research to improve the knowlegebase of acoustics and the quality of these tools.
+**Kőműves:** 10log is building a suite of web-based technical and project management tools for the architectural acoustics & noise control industry. These tools are designed to speed up the learning curve for new acousticians and increase efficiency and design quality for senior acousticians. 10log also sponsors research to improve the knowledge base of acoustics and the quality of these tools.
 
 **Dan:** That sounds really cool. What would you say is the biggest challenge of this project? Is it UX? The math that models the acoustics? Something else?
 
