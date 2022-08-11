@@ -65,7 +65,7 @@ API_KEY=... # an API key with at least `GET` permission on the /api/webhook endp
 curl -H "Authorization: $API_KEY" https://$INSTANCE_HOSTNAME/api/webhook|jq '.webhooks|.[]|.id,.global,.applicationIds '
 ```
 
-This will show all webhooks. Any with a value of `false` for the `global` field is application specific. For these, application Ids will be printed as well.
+This will show all webhooks. Any with a value of `false` for the `global` field is an application specific webhook. For these webhooks, the application Ids will be displayed as well. These are the webhooks you'll need to modify.
 
 ## Verify an email address without sending an email
 
@@ -83,6 +83,8 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" htt
 '{ "userId": "429797ba-37d7-4bbe-8748-58fb812448ff" }'
 ```
 
+You can also specify, when creating a user using the admin UI, whether or not to verify their email at the time of creation.
+
 ## Goodbye Tomcat, hello Netty
 
 Another change in this release opens up some exciting new possibilities. With 1.37, the infrastructure underlying FusionAuth is changed: out with Tomcat and in with Netty.
@@ -90,6 +92,8 @@ Another change in this release opens up some exciting new possibilities. With 1.
 Tomcat has been very good to FusionAuth over the years. But Tomcat has some architectural assumptions. Moving to a more customizable foundation layer like Netty allows better cookie handling and flexibility around configuration reloading.
 
 While this is a functionally equivalent lower level change and shouldn't have any impacts on you and your users, we look forward to the future features this will enable.
+
+There are, however, some configuration changes that have been made obsolete or changed. See the release notes for more details.
 
 ## The rest of it
 
@@ -99,7 +103,8 @@ There were 21 issues, enhancements, and bug fixes included in this release. A se
 * You can now use `let`/`optional` chaining in your JavaScript when using the GraalJS lambda engine.
 * Some client library bugs were fixed.
 * Email template size restrictions were increased from 64K to 16MB, allowing for inline images in emails.
-* FusionAuth now supports `id_token_hint` on logout.
+* Windows installations now use WSL2 and a .deb file.
+* FusionAuth now supports an expired `id_token` in the `id_token_hint` for the logout endpoint.
 
 Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-37-0).
 
