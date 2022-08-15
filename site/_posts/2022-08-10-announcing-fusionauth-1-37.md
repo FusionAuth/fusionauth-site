@@ -42,7 +42,7 @@ You have four choices. You can:
 * Enable the application specific MFA configuration and set the "Trust policy" to "This application". In this case, if the user has completed an MFA challenge for this application, they will not be challenged until the duration configured for "Two-Factor trust" has expired. However, if they have completed the MFA challenge for another application, they'll be prompted to complete MFA when they try to log in to this one.
 * Enable the application specific MFA configuration and set the "Trust policy" to "None". The user must complete an MFA challenge for every login to this application.
 
-This functionality requires a valid FusionAuth license. Please see [the pricing page](/pricing) for more information.
+Note that this doesn't enforce MFA if a user doesn't have one or more MFA methods enabled. There's [a recommended workaround for that documented in the MFA guide](/docs/v1/tech/guides/multi-factor-authentication#forcing-mfa). This functionality requires a valid FusionAuth license. Please see [the pricing page](/pricing) for more information.
 
 ## Webhooks, applications and tenants
 
