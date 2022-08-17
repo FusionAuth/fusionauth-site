@@ -9,7 +9,7 @@ tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 
-Kőműves Ákos a FusionAuth community member and team member at 10log. He chatted with us over email about how he and the 10log team are using FusionAuth to meet their auth needs. 
+Kőműves Ákos is a FusionAuth community member and team member at 10log. He chatted with us over email about how he and the 10log team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
@@ -88,4 +88,4 @@ I don't recall now but I believe I expected it to work with 1GB of memory after 
 
 -------
 
-We love sharing community stories. You can check out [10logs's website](https://10log.io/) if you'd like to learn more. 
+We love sharing community stories. You can check out [Kőműves Ákos' site](http://akoskm.com/) or [10logs's website](https://10log.io/) if you'd like to learn more. 
