@@ -9,7 +9,7 @@ tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 
-Ákos Ákos is a FusionAuth community member and team member at 10log. He chatted with us over email about how he and the 10log team are using FusionAuth to meet their auth needs. 
+Ákos Kőműves is a FusionAuth community member and team member at 10log. He chatted with us over email about how he and the 10log team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
