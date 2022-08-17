@@ -3,7 +3,7 @@ layout: blog-post
 title: 10log integrates FusionAuth into their architectural acoustics applications
 description: 10log integrates FusionAuth running on a Digital Ocean droplet into their architectural acoustics web and desktop applications
 author: Dan Moore
-image: blogs/clearspend-fusionauth/clearsend.png
+image: blogs/10log-integrates-fusionauth/10log-integrates-fusionauth.png
 category: blog
 tags: topic-community-story 
 excerpt_separator: "<!--more-->"
