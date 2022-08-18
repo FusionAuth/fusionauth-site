@@ -6,7 +6,11 @@ description: APIs for enabling and disabling Multi-Factor Authentication
 
 == Overview
 
-include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+[.paid-edition]
+====
+image::reactor-logo-gray.svg[FusionAuth Reactor logo]
+Email and SMS two-factor methods are only available in paid editions of FusionAuth. Please visit link:/pricing[our pricing page] to learn more about paid editions.
+====
 
 This API allows you to manage Multi-Factor authentication (MFA) for users.
 
@@ -15,15 +19,13 @@ This API allows you to manage Multi-Factor authentication (MFA) for users.
 This API underwent breaking changes in version 1.26. You can view the link:two-factor-1-25[1.25 Two Factor documentation] if needed.
 ====
 
-
-**However, the Authenticator/TOTP implementation is not a premium feature.**
-
 * <<Authentication>>
 * <<TOTP Implementation>>
 * <<Enable Multi-Factor>>
 * <<Disable Multi-Factor>>
 * <<Generate a Secret>>
 * <<Start Multi-Factor>>
+* <<Retrieve Multi-Factor Status>>
 * <<Send a Multi-Factor Code During Login or Step Up>>
 * <<Send a Multi-Factor Code When Enabling MFA>>
 * <<Send a Multi-Factor Code When Disabling MFA>>
@@ -313,6 +315,76 @@ This API does not return a JSON response body.
 include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
 :success_code!:
 :success_message!:
+
+== Retrieve Multi-Factor Status
+
+Retrieves a user's multi-factor status. This is helpful to understand if a user has two-factor enabled, and if the user will be required to perform a two-factor challenge during the next login request.
+
+This API may also be used to identify if an existing two-factor trust value obtained during a two-factor login is expired, or valid for a specific application when an Application has been configured to restrict two-factor trust.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Retrieve Multi-Factor Status
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/two-factor/status/`\{twoFactorTrustId\}`#
+--
+
+include::docs/v1/tech/apis/_x-fusionauth-tenant-id-header-scoped-operation.adoc[]
+
+==== Request Parameters
+
+[.api]
+[field]#applicationId# [type]#[String]# [optional]#Optional#::
+A unique application Id. When Application Multi-Factor configuration is enabled, providing this parameter will ensure the returned status applies to the expected result when attempting to login into this application.
+
+[field]#twoFactorTrustId# [type]#[String]# [optional]#Optional#::
+The existing two-factor trust obtained by completing a two-factor login. This is the value that allows you to bypass two-factor during the next login attempt.
+
+[field]#userId# [type]#[String]# [required]#Required#::
+The unique Id of the user for which to retrieve two-factor status.
+
+=== Response
+
+[cols="1,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The user does not have two-factor enabled, or the provided trust is still valid for the next login.
+
+|242
+|The user has two-factor authentication enabled, and will be required to complete a two-factor challenge during the next login attempt.
+
+|400
+|The request was invalid and/or malformed. The response will contain an link:/docs/v1/tech/apis/errors[Errors] JSON Object with the specific errors.
+
+|401
+|You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See link:/docs/v1/tech/apis/authentication[Authentication].
+
+|500
+|There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
+|===
+
+
+==== Response Body
+
+[.api]
+[field]#trusts# [type]#[Array]#::
+An array of one or more trust configurations.
+
+[field]#twoFactorTrustId# [type]#[String]#::
+The value provided in the [field]#twoFactorTrustId# on the request.
+
+[source,json]
+.Example Response JSON
+----
+include::docs/src/json/two-factor/status/response.json[]
+----
+
 
 == Send a Multi-Factor Code When Enabling MFA
 
