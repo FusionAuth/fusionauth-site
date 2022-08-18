@@ -30,6 +30,7 @@ This guide will illustrate multi-factor authentication features in FusionAuth, i
 ** <<Building Your Own Interface>>
 * <<Resending Codes>>
 * <<Recovery Codes>>
+* <<Trust Tokens and Trust Challenges>>
 * <<Migration from Version 1.25 and Earlier>>
 * <<Integrating Other MFA Methods>>
 * <<Migrating MFA Methods From a Different System>>
@@ -563,6 +564,32 @@ Calling the send endpoint sends a new code but also invalidates all other codes 
 == Recovery Codes
 
 include::docs/v1/tech/guides/_recovery-codes-blurb.adoc[]
+
+== Trust Tokens and Trust Challenges
+
+Changing a password when 2FA is enabled requires a trust token. To obtain this token of trust, you can complete a two factor workflow. This is to ensure that anyone who has MFA enabled and tries to change their password also has the additional factor of authentication, which provides a higher level of assurance.
+
+When using the hosted login pages, you don't need to worry about this. If you are building your own MFA integration, however, read on.
+
+For example, to change a password, you need to do the following:
+
+* Request `/api/two-factor/start`. You get the `twoFactorId` and a `code`.
+* Request `/api/two-factor/login`. Send in the `twoFactorId` and the `code` returned from the previous call. You'll get a `trustToken`.
+
+Now you have the `trustToken` required to perform a trusted action, such as changing your password while MFA is enabled. But this trust token could be stolen and used by someone else.
+
+In order to offer a higher level of security, you can provide a `trustChallenge` when you start the MFA process. Using one binds the challenge and the token. You can't use the `trustToken` without the corresponding `trustChallenge`.
+
+If you do not provide a `trustChallenge` when you begin the MFA workflow, you do not need to provide anything other than the `trustToken` to access a trusted endpoint such as the Change Password API. 
+
+If, on the other hand, you want to use a `trustChallenge`, do the following to get the `trustToken`:
+
+* Request `/api/two-factor/start`. Send a `trustChallenge`. You can provide any value, but it is best practice to make it long and random. You get the `twoFactorId` and a `code`.
+* Request `/api/two-factor/login`. Send in the `twoFactorId` and the `code` returned from the previous call. You'll get a `trustToken`.
+
+Now you have the `trustToken` required to perform a trusted action, such as changing your password while MFA is enabled.
+
+When using the `trustToken` on the Change Password API, because you provided a `trustChallenge` on the `/api/two-factor/start` step, the same value must be provided as well as the `trustToken` to successfully use the `trustToken` and complete the privileged operation.
 
 == Migration from Version 1.25 and Earlier
 
