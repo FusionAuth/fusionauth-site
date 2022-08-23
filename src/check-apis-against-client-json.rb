@@ -15,6 +15,7 @@ require 'yaml'
 IGNORED_FIELD_REGEXPS = [
   /^(?!event).*\.tenantId/, # toplevel tenantId always ignored, except when checking events, as that is handled implicitly via API key locking or header if there is more than one tenant
   /^user\.salt/, # never send user.salt, only used by Import API
+  /^user\.twoFactor\.recoveryCodes/, # only used by Import API
   /^application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
   /^application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
@@ -198,7 +199,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   known_types = ["ZoneId", "LocalDate", "char", "HTTPHeaders", "LocalizedStrings", "int", "URI", "Object", "String", "Map", "long", "ZonedDateTime", "List", "boolean", "UUID", "Set", "LocalizedIntegers", "double", "EventType", "SortedSet" ]
 
   # these are attributes that point to more complex objects at the leaf node, but aren't documented in the page. Instead, we point to the complex object doc page
-  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method", "event.identityProviderLink", "event.group"]
+  nested_attributes = ["grant.entity", "entity.type", "event.auditLog", "event.eventLog", "event.user", "event.email", "event.existing", "event.registration", "event.original", "event.method", "event.identityProviderLink", "event.group", "event.refreshToken"]
 
   # these are enums represented as strings in the API, but enums in java. We should still see them on the page
   enums = ["lambda.type", "lambda.engineType"]
