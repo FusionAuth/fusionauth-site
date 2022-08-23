@@ -15,6 +15,7 @@ require 'yaml'
 IGNORED_FIELD_REGEXPS = [
   /^(?!event).*\.tenantId/, # toplevel tenantId always ignored, except when checking events, as that is handled implicitly via API key locking or header if there is more than one tenant
   /^user\.salt/, # never send user.salt, only used by Import API
+  /^user\.recoveryCodes/, # only used by Import API
   /^application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
   /^application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
