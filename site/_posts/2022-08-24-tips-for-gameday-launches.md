@@ -53,4 +53,4 @@ Try to reduce the number of form fields you ask the user to fill out on initial 
 
 This tip is just as important for better user experience as it is for preserving server resources. The longer the registration form, the higher the chances of a user giving up before completing it. You can always ask for more details once the user has played the game and is more willing to share extra information. If an error occurs in the later steps of the registration flow, you’ll already have the user’s email and can reach out to invite them back to the game and finish the registration.
 
-To learn about more about other best practices, including CAPTCHAs and monitoring, read [Best Practices for Handling Spiky Registration Traffic for Game Launches](/learn/expert-advice/gaming-entertainment/best-practices-spiky-registration).
+To learn more about other best practices, including CAPTCHAs and monitoring, read [Best Practices for Handling Spiky Registration Traffic for Game Launches](/learn/expert-advice/gaming-entertainment/best-practices-spiky-registration).

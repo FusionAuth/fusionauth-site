@@ -67,7 +67,7 @@ No matter how much effort you put in, unexpected things happen on launch days. A
 
 These services have developer-friendly integration documentation, generally offer a free tier, and require minimal effort to integrate with your code as a middleware in your backend or frontend stack.
 
-Note that if you’re using a multistep registration form, you should make sure the alerts fire appropriately if an error occurs in the intermediary steps of the registration flow.
+Note that if you’re using a multi-step registration form, you should make sure the alerts fire appropriately if an error occurs in the intermediary steps of the registration flow.
 
 ## Use a CAPTCHA Service
 
