@@ -33,7 +33,7 @@ An optional UUID. When this value is omitted a unique Id will be generated autom
 A unique name to identify the Connector. This name is for display purposes only and it can be modified later if desired.
 
 [field]#Authentication URL# [required]#Required#::
-The fully qualified URL of the API endpoint. The connector will send an HTTP POST request to this URL to authenticate the user. The format and status code returned will be identical to the link:/docs/v1/tech/apis/login[Login API].
+The fully qualified URL of the API endpoint. The connector will send an HTTP POST request to this URL to authenticate the user. The format returned will be identical to the link:/docs/v1/tech/apis/login[Login API]. See the link:/docs/v1/tech/connectors/generic-connector#response[response section] for status codes accepted by FusionAuth from your connector.
 
 [field]#Connect timeout# [required]#Required# [default]#default is `1000`#::
 The connect timeout in milliseconds, used when making the POST request.
@@ -101,7 +101,7 @@ Your application will then look up the user and verify the correct credentials w
 
 === Response
 
-Your API should return a valid FusionAuth `user` object with status code 200 if the user is found and authenticated. Note that while you may return any of the attributes of the user object, including nested objects such as application registrations with roles, only the required ones must be returned.
+Your API should return a valid FusionAuth `user` object with status code `200` if the user is found and authenticated. Note that while you may return any of the attributes of the user object, including nested objects such as application registrations with roles, only the required ones must be returned. The only other status code FusionAuth will accept from your connector is a `404`.
 
 [WARNING]
 ====
@@ -110,8 +110,22 @@ A valid user object must be returned with a FusionAuth compatible UUID in the [f
 When you are not migrating a user,the [field]#user.id# must be the same across subsequent logins.
 ====
 
-If the user cannot be authenticated, you should return the appropriate status code and response data as documented by the link:/docs/v1/tech/apis/login[Login API].
-For instance, a 404 if the user authentication fails or the user is not found.
+If the user cannot be authenticated, then you should return a `404`.
+
+// The only thing returned is a `200` or a `404` status code.
+
+:never_search_error:
+:missing_message: To prevent enumeration attacks, a 404 is returned for any non 200 status code returned from your connector.
+:omit_internal_error:
+:omit_missing_header:
+:omit_error_malformed:
+include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+:never_search_error!:
+:missing_message!:
+:internal_error!:
+:missing_header!:
+:error_malformed!:
+
 
 
 [source,json]
@@ -161,7 +175,7 @@ If a Connector is not correctly terminating the HTTP response or taking an exces
 You can avoid issues by having your API endpoint write login data and completely close the connection as quickly as possible.
 You can load test your Connector using [FusionAuth's load testing framework](/docs/v1/tech/admin-guide/monitor#load-testing) or any other HTTP based load testing framework.
 Additionally, ensure the API endpoint is sized correctly and not starved of resources.
-If the user cannot be authenticated, you should return the appropriate status code and data as quickly as possible, as documented by the link:/docs/v1/tech/apis/login[Login API].
+You should return the appropriate status code and data as quickly as possible.
 Using the correct status code for each response ensures that FusionAuth handles the response appropriately.
 
 === Disable Logging
