@@ -12,11 +12,11 @@ Congrats! Your new massively multiplayer online (MMO) game is ready and you’re
 
 <!--more-->
 
-But you don’t have to panic. There are steps you can take to make sure your servers can handle any spikes in registration traffic. Most of the tips and best practices listed in this article will focus on user registration for online games, but they can also apply across different aspects of your online platform. They can help you save your launch day from disaster.
+But you don’t have to panic. There are steps you can take to make sure your servers can handle any spikes in registration traffic. Most of the tips and best practices listed in this article will focus on user registration for online games, but they can also apply across different aspects of your online platform.
 
-_This blog post is an excerpt from [Best Practices for Handling Spiky Registration Traffic for Game Launches](TODO/learn/expert-advice/identity-basics/what-to-do-when-auth-system-vendor-acquired)._
+_This blog post is an excerpt from [Best Practices for Handling Spiky Registration Traffic for Game Launches](/learn/expert-advice/gaming-entertainment/best-practices-spiky-registration)._
 
-Here are three tips to help.
+Here are three tips to help save your launch day from disaster.
 
 ## Run Load Testing and Stress Testing
 
@@ -37,13 +37,15 @@ class LoginUser(HttpUser):
 
 The above code will continuously send post requests to the `/login` endpoint. (You’ll want it to stop eventually!) You can explore the [Locust documentation](https://docs.locust.io/en/stable/) for more examples.
 
+Don't just focus on the average time to respond. Also take a look at the 95th percentile, often called p95. This tells you what users with a really slow experience are seeing.
+
 ## Cache Resources Liberally
 
 Almost every server framework contains some caching functionality. Make sure you’re using it, and try to cache as many resources as you can. This will make sure your server resources are being used most efficiently and are not being wasted by serving the same content to users.
 
 Multiple open source tools are useful here as well. For example, [Memcached](https://memcached.org/) is an in-memory cache used by Netflix and Facebook, as well as other companies, that offers bindings for multiple languages. [Redis](https://redis.io/) is an in-memory database that is also used as a cache by developers.
 
-You can also explore [Cloudflare](https://www.cloudflare.com/) and [Fastly](https://www.fastly.com/) as external cache proxies. They can save you a lot of money on top of resources by caching static content on the edge. This will also improve the user experience (UX) because users will be served content from the nearest edge server.
+You can also explore [Cloudflare](https://www.cloudflare.com/) and [Fastly](https://www.fastly.com/) as external cache proxies. The public clouds have their own options as well. They can save you a lot of money on top of resources by caching static content on the edge. This will also improve the user experience (UX) because users will be served content from the nearest edge server, which is quicker.
 
 ## Reduce Form Questions
 
@@ -51,4 +53,4 @@ Try to reduce the number of form fields you ask the user to fill out on initial 
 
 This tip is just as important for better user experience as it is for preserving server resources. The longer the registration form, the higher the chances of a user giving up before completing it. You can always ask for more details once the user has played the game and is more willing to share extra information. If an error occurs in the later steps of the registration flow, you’ll already have the user’s email and can reach out to invite them back to the game and finish the registration.
 
-To learn about more about other best practices, including CAPTCHAs and monitoring, read [Best Practices for Handling Spiky Registration Traffic for Game Launches](/learn/expert-advice/identity-basics/what-to-do-when-auth-system-vendor-acquired).
+To learn about more about other best practices, including CAPTCHAs and monitoring, read [Best Practices for Handling Spiky Registration Traffic for Game Launches](/learn/expert-advice/gaming-entertainment/best-practices-spiky-registration).
