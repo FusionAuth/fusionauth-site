@@ -11,12 +11,9 @@ dateModified: 2022-08-24
 
 Congrats! Your new massively multiplayer online (MMO) game is ready and you’re all set to launch. However, you’re not sure whether your servers can handle the load or whether the registration will fail under extreme load on launch day. If things really go wrong, you might lose users and revenue, which could possibly even lead to the failure of your game.
 
-But you don’t have to panic. There are steps you can take to make sure your servers can handle any spikes in registration traffic. Most of the tips and best practices listed in this chapter will focus on user registration for online games, but they can also apply across different aspects of your online platform. They can help you save your launch day from disaster.
+But you don’t have to panic. There are steps you can take to make sure your servers can handle any spikes in registration traffic. Most of the tips and best practices listed in this article will focus on user registration for online games, but they can also apply across different aspects of your online platform. They can help you save your launch day from disaster.
 
 ## Why Do You Need to Manage Launch Day Spikes?
-
-
-{% include _image.liquid src="/assets/img/advice/spiky-game-day-launches/progressive-registration-steps.png" alt="Common Categories of Progressive Registration" class="img-fluid" figure=false %}
 
 Launch days can be chaotic for games, and even more so for online games. You need to be mindful of the following issues:
 
@@ -60,7 +57,7 @@ It’s always better to be equipped for unexpected scenarios. If your server cod
 
 If you’re on AWS, you can use [EC2 Auto Scaling](https://aws.amazon.com/ec2/autoscaling/), which relies on machine learning to horizontally scale your EC2 instances. You can configure it based on multiple criteria to make sure the threshold value is optimized for your budget. The picture below (taken from [AWS](https://docs.aws.amazon.com/autoscaling/plans/userguide/gs-configure-scaling-plan.html)) shows the different available threshold options:
 
-![TODO Choose EC2 Auto Scaling groups](https://imgur.com/RalWnNI.png)
+{% include _image.liquid src="/assets/img/advice/spiky-game-day-launches/ec2-options.png" alt="Options for EC2 auto scaling" class="img-fluid" figure=false %}
 
 Similar options are available for [Google Cloud Compute Engine](https://cloud.google.com/compute/docs/autoscaler) and [Microsoft Azure](https://azure.microsoft.com/en-us/features/autoscale/).
 
@@ -81,6 +78,8 @@ You must verify a CAPTCHA as the first step on your backend and execute any inte
 If you’re not a big fan of CAPTCHAs, you can also try adding a hidden field to make sure bots aren’t filling out the form. If that field has a non-default value, then you can safely discard the form submission. I used this technique with the comments system on my blog and effectively cut down automated bot comments by 98 percent. This measure fails when confronted with any decent bot since it’s easy to bypass, but it’s better than nothing, and avoids hassling your users with a CAPTCHA.
 
 ## Reduce Form Questions
+
+{% include _image.liquid src="/assets/img/advice/spiky-game-day-launches/progressive-registration-steps.png" alt="Common Categories of Progressive Registration" class="img-fluid" figure=false %}
 
 Try to reduce the number of form fields you ask the user to fill out on initial sign-up. Ask only questions that are crucial for user gameplay. Even then, try to split the form into multiple steps and get the user’s email first.
 
@@ -104,5 +103,5 @@ There are [numerous guides](https://www.serverless.com/blog/strategies-implement
 
 Launch day is the most important day for your game or web app. If it’s handled correctly, you get a big boost for your business, but if overwhelming registration demand sours the experience for would-be users, your business could be damaged instead.
 
-The best practices listed in this chapter can help improve the user registration experience and handle spikes in registration traffic on launch day. Even though several of these tips—such as caching, autoscaling, and monitoring—don’t take much time to implement, they can offer large dividends. If you’re prepared to handle traffic when your game launches, you’ll be able to reap the benefits for long afterward.
+The best practices listed in this article can help improve the user registration experience and handle spikes in registration traffic on launch day. Even though several of these tips—such as caching, autoscaling, and monitoring—don’t take much time to implement, they can offer large dividends. If you’re prepared to handle traffic when your game launches, you’ll be able to reap the benefits for long afterward.
 
