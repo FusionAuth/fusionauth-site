@@ -1,0 +1,37 @@
+// poll the token endpoint, displaying success or error messages, and adjusting polling interval as appropriate
+function pollForToken() {
+  pollId = setInterval(function() {
+    $.ajax({
+      type: 'POST',
+      url: tokenEndpoint,
+      contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+      data: {'device_code': deviceCode, 'grant_type': grantType, 'client_id': clientId},
+      datatype: 'json',
+      success: function(data) {
+          clearInterval(pollId);
+          // use the access_token
+          accessToken = data.access_token;
+          $("#sign-in").hide();
+          $("#success-msg").show();
+        $("#success-game").show();
+      },
+      error: function(data) {
+        let err = $.parseJSON(data.responseText);
+        if (err.error == 'slow_down') {
+          clearInterval(pollId);
+          // spec says to add 5 seconds to all subsequent calls if this happens
+          intervalSeconds += 5;
+          pollForToken();
+        } else if (err.error == 'authorization_pending') {
+          // keep polling
+        } else {
+          // an invalid request occurred, nothing to do but to stop and let user try again
+          clearInterval(pollId);
+          $("#sign-in").hide();
+          $("#connect-device").show();
+          $("#error-msg").show();
+        }
+      }
+    });
+  }, intervalSeconds * 1000);
+}
