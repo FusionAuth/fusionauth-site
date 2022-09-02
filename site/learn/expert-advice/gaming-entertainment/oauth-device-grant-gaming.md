@@ -176,7 +176,7 @@ When you want to validate the code, you’re redirected to the FusionAuth URL to
 
 After you enter your credentials and submit, you should see a success message:
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/device-grant-success.png" alt="The login screen." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/advice/device-grant-gaming/device-grant-success.png" alt="The success screen." class="img-fluid" figure=false %}
 
 ### Providing the Access Token
 
