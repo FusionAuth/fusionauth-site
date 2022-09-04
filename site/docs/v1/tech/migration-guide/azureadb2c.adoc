@@ -19,7 +19,7 @@ This document will help you migrate your users off of Microsoft Azure AD B2C, an
 ** <<Slow Migration or Bulk Migration>>
 ** <<Mapping User Attributes>>
 ** <<One Tenant or Many>>
-** <<Identity Pools>>
+** <<Identity Providers>>
 ** <<Other Entities>>
 * <<Importing Users>>
 ** <<Set Up FusionAuth>>
@@ -34,7 +34,7 @@ This document will help you migrate your users off of Microsoft Azure AD B2C, an
 * <<Bulk Migration>>
 ** <<Set Up FusionAuth For a Bulk Migration>>
 ** <<Export User Data From Azure AD B2C>>
-** <<Import the Users>>
+** <<Get the Script>>
 ** <<Reset Passwords>>
 ** <<What To Do Next>>
 ** <<Additional Support>>
@@ -98,7 +98,7 @@ include::docs/v1/tech/migration-guide/_other-entities-intro.adoc[]
 * https://docs.microsoft.com/en-us/azure/active-directory-b2c/user-flow-overview[User Flows and Custom Policies] are ways for you to customize authentication or authorization workflows with Azure AD B2C. FusionAuth has a similar concept called link:/docs/v1/tech/lambdas/[Lambdas]. FusionAuth also has link:/docs/v1/tech/events-webhooks/[webhooks] fired at certain points in the user lifecycle; in certain configurations, they can also stop a particular authentication flow.
 * Azure AD B2C does not have a standardised roles and permissions concept. These are usually handled with custom attributes or secondary data stores. FusionAuth has link:/docs/v1/tech/core-concepts/roles[roles] that are configured on an application by application basis and made available in a token after a successful authentication.
 * Azure AD B2C has the concept of https://docs.microsoft.com/en-us/azure/active-directory-b2c/customize-ui?pivots=b2c-user-flow[User Flow Page Layouts] where users can log in or register. FusionAuth has link:/docs/v1/tech/core-concepts/integration-points#hosted-login-pages[hosted login pages] which offer a superset of the functionality of Azure AD B2C User Flow. They are link:/docs/v1/tech/themes/[customized via themes].
-* In Azure AD B2C, users log into https://docs.microsoft.com/en-us/azure/active-directory-b2c/application-types[Applications]. In FusionAuth, link:/docs/v1/tech/core-concepts/applications[Applications] are a similar construct, but users are associated with them through link:/docs/v1/tech/core-concepts/registrations[Registrations]. You can migrate both your Client Id and Client Secret from Azure AD B2C to FusionAuth.
+* In Azure AD B2C, users log into https://docs.microsoft.com/en-us/azure/active-directory-b2c/app-registrations-training-guide[App Registrations]. In FusionAuth, link:/docs/v1/tech/core-concepts/applications[Applications] are a similar construct, but users are associated with them through link:/docs/v1/tech/core-concepts/registrations[Registrations]. You can migrate both your Client Id and Client Secret from Azure AD B2C to FusionAuth.
 * Azure AD B2C sends emails on your behalf, such as forgot password notifications. FusionAuth can do so too; link:/docs/v1/tech/email-templates[the templates are customizable].
 * Azure AD B2C offers the Client Credentials grant. FusionAuth offers a constrained version of this using link:/docs/v1/tech/core-concepts/entity-management[Entity Management]; this is available in all paid editions.
 * Refresh tokens allow JWTs to be refreshed without a user logging in. These can be migrated from Azure AD B2C using the link:/docs/v1/tech/apis/users#import-refresh-tokens[Import Refresh Tokens API].
@@ -122,7 +122,6 @@ In addition to the different names for common functionality outlined above in <<
 
 * Azure AD B2C has https://azure.microsoft.com/en-us/pricing/details/active-directory/external-identities/#pricing[a pricing model] that applies to monthly active users (MAUs). FusionAuth has no user limit. Instead, you are limited by the resources provided to a FusionAuth instance, such as memory, CPU and database capacity.
 * FusionAuth does not support custom scopes. There is an https://github.com/FusionAuth/fusionauth-issues/issues/275[open feature request].
-<todo: fill in others>
 
 Once you've planned the migration of other entities, the next step is to set up FusionAuth to connect to Azure AD B2C to import users during login.
 
@@ -149,47 +148,41 @@ include::docs/v1/tech/migration-guide/_create-test-tenant.adoc[]
 
 include::docs/v1/tech/migration-guide/_create-test-application.adoc[]
 
-=== Set Up AWS
+=== Set Up Azure AD B2C
 
-There are two main components you need to set up to enable this migration. The first is an Application. The second is an https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview[Azure Function] to accept login requests from FusionAuth over TLS and perform an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC login] request on Azure AD B2C.
+There are two main components you need to set up to enable this migration. The first is an Application, with an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC flow]. The second is an https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview[Azure Function] to accept login requests from FusionAuth over TLS and perform an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC login] request on Azure AD B2C.
 
 [WARNING.warning]
 ====
 FusionAuth Connectors will send user credentials to Azure AD B2C for authentication. Secure both the data in transit and the Azure Function endpoint.
 
-In this guide, all communication is over TLS and the Azure Function requires a unique query string code. You should also review the documents on https://docs.microsoft.com/en-us/azure/azure-functions/security-concepts?tabs=v4[Securing Azure Functions] to implement any additional security features.
+In this guide, all communication is over TLS and the Azure Function requires a unique query string code. You should also review the documents on https://docs.microsoft.com/en-us/azure/azure-functions/security-concepts?tabs=v4[Securing Azure Functions] to implement any additional security features you may require.
 
+Also note that the Azure AD B2C ROPC endpoint is monitored by rate limiting and identity protection systems. If a dynamic threshold of failed authentications is exceeded, the identity protection system may identify a repeated IP address (i.e the Azure Function) as an attacker. You may need to deploy Functions to multiple regions, or perhaps self-host the function on a known IP address to mitigate potential issues. 
+====
 
-==== Configuring the Application in Azure AD B2C
+==== Configuring the App Registration in Azure AD B2C
 
-FusionAuth will send login requests to Azure AD B2C but needs a client Id to do so. You can re-use an existing application, but it is better practice to create a new one to receive these requests. This guide will walk through configuration using the Azure Console, but you can also configure this using CloudFormation, Terraform or any other IAC tool.
+FusionAuth will send login requests to Azure AD B2C but needs a client Id and secret to do so. It is best practice to create a new App Registration specifically for a ROPC flow to receive these requests. This guide will walk through configuration using the Azure Portal.
 
 [NOTE]
 ====
-These instructions use the new Cognito user interface released in the fall of 2021. 
+These instructions use the newer https://docs.microsoft.com/en-us/azure/active-directory-b2c/app-registrations-training-guide[App Registrations] (as opposed to the legacy Applications) experience.
 ====
 
-Visit the Cognito User Pool configuration containing the users you want to migrate. Navigate to the [breadcrumb]#Create app client# screen. Configure the new app client:
-
-* Select `Other` for the [field]#App type#. Give it a name, such as `FusionAuth migration`.
-* Ensure the [field]#Client secret# field is set to not generate a secret. 
-* For the [breadcrumb]#Authentication flows# field, select `ALLOW_USER_PASSWORD_AUTH` to enable username/password based authentication. This is the form of authentication FusionAuth will use to migrate over your users. 
-* You must enter a value in the [field]#Allowed callback URLs# field, but this won't be used. Use a value like `https://example.com`.
-* Make sure the client can read whatever attributes should be migrated; include the username or email address at a minimum.
-
-Everything else can be left with default values. 
+Visit the Azure AD B2C App Registrations tab. Then https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow#register-an-application[follow these instructions] to set up a new ROPC App Registration. 
 
 At the end, you'll end up with an app client configuration looking similar to this:
 
-image::migration-guide/{migration_source_dir}/cognito-app-client-configuration.png[Configuring an app client for migration.,width=1200]
+image::migration-guide/{migration_source_dir}/ropc-app-registration-configuration.png[Configuring an ROPC App Registration for migration.,width=1200]
 
 Save the new configuration. On the list of app clients, you'll see your new one.
 
-Record the client Id. This will be a value like `5pmi4ct0o4n6ulqj7vlnkm6nhh`. Also, note the AWS region your User Pool is in, such as `us-east-2`.
+Record the Application (client) ID. This will be a GUID like `022c5902-d8ee-43b0-ac1f-c2719b799657`.
 
-image::migration-guide/{migration_source_dir}/cognito-app-client-list.png[Finding the app client id.,width=1200]
+image::migration-guide/{migration_source_dir}/ropc-app-client-id.png[Finding the app client id.,width=1200]
 
-Next, you'll need to set up an Lambda with an API Gateway to receive the login requests from FusionAuth. The lambda will pass the credentials on to Cognito and, when the authentication succeeds, return a FusionAuth friendly JSON object.
+Next, you'll need to set up an Azure Function to receive the login requests from FusionAuth. The Function will pass the credentials on to Azure AD B2C and, when the authentication succeeds, return a FusionAuth friendly JSON object.
 
 ==== Configuring the Azure Functioin
 
@@ -200,10 +193,10 @@ When setting this up, modify the example Function code provided in this guide. H
 [source,javascript]
 .Azure AD B2C Connector Function code
 ----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-cdk-azure-b2c-migration/main/resources/index.js[]
+include::https://raw.githubusercontent.com/TheMiniDriver/fusion-ropc-azure-function/main/RopcProxyFunction/index.js[]
 ----
 
-You will probably  need to modify the `transformToFusionUserObject` function to match the properties of the users that you want to import. This converts the JSON returned from Azure AD B2C into the JSON format FusionAuth requires. You can see samples of both below. 
+You will need to modify the `transformToFusionUserObject` function to match the properties of the users that you want to import. This converts the JSON returned from Azure AD B2C into the JSON format FusionAuth requires. You can see samples of both below. To modify this procedure, clone or fork the repo for the full Function project https://github.com/TheMiniDriver/fusion-ropc-azure-function[here] Then make the changes in your local copy of the project.
 
 The exact implementation depends on your Directories custom attributes and business logic. You could, for example, give users certain FusionAuth roles, register them for more than one application or add them to a previously created FusionAuth group.
 
@@ -343,7 +336,7 @@ Once you have the custom function logic updated, it is time to deploy the Azure 
 
 ==== Deploying the Azure Function
 
-Azure Functions can be coded within the Azure portal directly, or coded on your local machine and deployed as a package using https://docs.microsoft.com/en-us/azure/azure-functions/functions-develop-vs-code?tabs=csharp[Visual Studio Code, with Azure Extensions]. As the function has dependent modules, you will need to follow these instructions. Clone the https://github.com[function project], and follow the instructions in the link to deploy to your Azure Function. 
+Azure Functions can be coded within the Azure portal directly, or coded on your local machine and deployed as a package using https://docs.microsoft.com/en-us/azure/azure-functions/functions-develop-vs-code?tabs=csharp[Visual Studio Code, with Azure Extensions]. As the function has dependent modules, you will need to follow these instructions. Clone the https://github.com/TheMiniDriver/fusion-ropc-azure-function[function project], and follow the instructions in the link to deploy to your Azure Function. 
 
 After deploying the Function, set the following Function environment variables, also known as https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings?tabs=portal[Application Settings], to those that you've recorded when setting up the ROPC app: 
 
@@ -462,7 +455,7 @@ Save it.
 
 Next, ensure this Connector Policy is in the correct order by using the arrows in the administrative user interface to put it at the top. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they'll be migrated to the FusionAuth user database.
 
-image::migration-guide/{migration_source_dir}/connector-policy-list-after-adding.png[Cognito Connector policy added and in list.,width=1200,role=bottom-cropped]
+image::migration-guide/{migration_source_dir}/connector-policy-list-after-adding.png[Azure AD B2C Connector policy added and in list.,width=1200,role=bottom-cropped]
 
 === Log In With a Test User
 
@@ -476,7 +469,7 @@ Copy this URL and open it in a new incognito browser window. (If you don't use a
 
 image::migration-guide/{migration_source_dir}/user-login.png[The login page.,width=1200,role=bottom-cropped]
 
-Enter credentials for a Cognito user account; it can be the same one you used to test the API with curl and log in. The user will be transparently migrated over to FusionAuth.
+Enter credentials for a Azure AD B2C user account; it can be the same one you used to test the API with curl and log in. The user will be transparently migrated over to FusionAuth.
 
 If the user was not migrated or the login was unsuccessful, you can troubleshoot. In the administrative user interface, enable the [field]#Debug enabled# field in the Connector configuration by navigating to [breadcrumb]#Settings -> Connectors# and editing the Generic Connector you added.
 
@@ -577,7 +570,7 @@ To export the data via the graph API, you need to authenticate with the API, and
 
 To authenticate with Azure AD B2C, you first need to register an application with Azure AD B2C, which will give you an app ID and secret. Follow link:https://docs.microsoft.com/en-us/azure/active-directory-b2c/microsoft-graph-get-started?tabs=app-reg-ga[this guide] to create an application.
 
-We've created a .NET console tool to authenticate with the Graph API and export the  users. link:TODO. Download the tool, and configure the appsettings.json file with your Azure AD B2C tenant and app ID and secret.
+We've created a node console tool to authenticate with the Graph API and export the users. You can clone or fork it from git@github.com:TheMiniDriver/fusion-azure-ad-bulk-export.git[git@github.com:TheMiniDriver/fusion-azure-ad-bulk-export.git], and configure the `.env` file with your Azure AD B2C tenant and app ID and secret.
 
 Now you can run the tool, which will connect and export all the tenant users to a JSON file called users.json. It should look similar to this: 
 
@@ -814,7 +807,7 @@ This script will send an email to every imported user. Ensure your SMTP server, 
 
 Review the `Change Password` template to ensure the messaging is correct. Here is link:/docs/v1/tech/email-templates/templates-replacement-variables#forgot-password[more information on modifying the template].
 
-Retrieve the `loginId` from the Cognito JSON export files and place it in a single file. The `loginId` will either be the username or the email address. Update the script below to use the API key created in <<Set Up FusionAuth For a Bulk Migration>> step.
+Retrieve the `loginId` from the Azure AD B2C JSON export files and place it in a single file. The `loginId` will either be the username or the email address. Update the script below to use the API key created in <<Set Up FusionAuth For a Bulk Migration>> step.
 
 The script below will call the link:/docs/v1/tech/apis/users#start-forgot-password-workflow[forgot password API] for every user. It sleeps periodically to avoid overloading the SMTP server.
 
@@ -849,7 +842,7 @@ At the end of this process, you have imported the user data and enabled users to
 
 include::docs/v1/tech/migration-guide/_what-next.adoc[]
 
-include::docs/v1/tech/migration-guide/_what-next-cognito.adoc[]
+include::docs/v1/tech/migration-guide/_what-next-azure-ad-b2c.adoc[]
 
 === Additional Support
 
