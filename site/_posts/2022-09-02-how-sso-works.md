@@ -42,19 +42,23 @@ For the other applications in this example, the credential is a valid FusionAuth
 
 ## Single sign-on request flow diagrams
 
-Here's the flow of a single sign-on login request. The home page of each application is unavailable to anonymous users.
+Here's the flow of a single sign-on login request. This uses cookies and OIDC to authenticate the users.
+
+The home page of each application is unavailable to anonymous users, and so when a browser requests it, they are directed to the identity provider, FusionAuth, to authenticate.
 
 {% plantuml source: _diagrams/blogs/sso/sso-login.plantuml, alt: "Single sign-on request flow during login." %}
 
-This shows the basics of the single sign-on flow. You have different sessions managed by different applications. But the PPVC and Hooli Jobs applications delegate authentication to the single sign-on provider, and base their sessions off of the providers.
+This shows single sign-on basics. You have different sessions managed by different applications, which can have different lifetimes and storage mechanisms. But the key point is that the PPVC and Hooli Jobs applications delegate authentication to the single sign-on provider, and build their sessions on the foundation of the identity provider's session, which is tied to authentication.
 
 ## SAML2
 
-In those flows above, the user is bounced around with redirects. There's custom code to check for the token in the PPVC and Hooli Jobs applications. There's also a deep dependence on cookies in the browser. What if you want an alternative?
+In those flows above, the user is bounced around. There's custom code to check for the token in the PPVC and Hooli Jobs applications. There's also a dependence on cookies in the browser.
+
+What if you want an alternative?
 
 Boy, do I have a standard for you!
 
-SAML, the Security Assertion Markup Language, allows you to pass around XML documents that are signed by an identity provider like FusionAuth.
+SAML, the Security Assertion Markup Language, allows you to pass around signed and/or encrypted XML documents created by an identity provider like FusionAuth.
 
 Let's say you have two different applications: Zendesk and Gusto. Here you want to use SAML to integrate these applications with your identity provider.
 
