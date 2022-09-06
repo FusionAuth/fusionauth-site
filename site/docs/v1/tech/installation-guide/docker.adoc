@@ -37,7 +37,7 @@ All of the FusionAuth Docker images may be found on https://hub.docker.com/u/fus
 
 The FusionAuth Docker Compose yaml files may be found on https://github.com/FusionAuth/fusionauth-containers[FusionAuth containers repository].
 
-If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. `docker-compose.yml` will install FusionAuth without the enhanced search capability that Elasticsearch provides.  If you would rather use FusionAuth with Elasticsearch for improved searching, make sure you include the `docker-compose.override.yml`.
+If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. `docker-compose.yml` will install FusionAuth without the enhanced search capability that Elasticsearch provides. 
 
 === Installing FusionAuth
 
@@ -51,18 +51,11 @@ include::docs/v1/tech/installation-guide/_docker-compose-files.adoc[]
 
 === The Docker Compose Files
 
-The following is the default `docker-compose.yml` file, which installs FusionAuth without the Elasticsearch engine.
+The following is the default `docker-compose.yml` file, which installs FusionAuth.
 
 [source,yaml,title=docker-compose.yml]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml[]
-----
-
-The following is the default `docker-compose-override.yml` file. When included in your working directory next to the above `docker-compose.yml`, your FusionAuth installation will use Elasticsearch. 
-
-[source,yaml,title=docker-compose-overrride.yml]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml[]
 ----
 
 == Docker Services
@@ -105,9 +98,9 @@ In addition, the port `9011` is mapped between the container and your host machi
 
 You may add other services to the Docker Compose files if needed.
 
-For example, in development environments it can be helpful to run https://mailcatcher.me/[MailCatcher] for SMTP.
+For example, in development environments it can be helpful to run https://mailcatcher.me/[MailCatcher] which provides a local SMTP server. This allows FusionAuth to send emails for account verification or a password reset.
 
-[source,yaml,title=`docker-compose.override.yml with mailcatcher]
+[source,yaml,title=`docker-compose.yml with mailcatcher]
 ----
 version: '3'
 
@@ -128,7 +121,7 @@ services:
 To upgrade FusionAuth when running with `docker-compose`:
 
 . Stop the instance: `docker-compose down`.
-. Modify the `docker-compose.yml` file (or the `docker-compose.override.yml` file, if applicable) to point to the version of FusionAuth you want. You can see https://hub.docker.com/r/fusionauth/fusionauth-app[available tags].
+. Modify the `docker-compose.yml` file to point to the version of FusionAuth you want. You can see https://hub.docker.com/r/fusionauth/fusionauth-app[available tags].
 . Start it up: `docker-compose up`.
 . Login to the administrative UI. 
 
@@ -217,6 +210,7 @@ Here are the steps to do so:
 * In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`.
 * Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the Docker container expects, not the path on the host.
 * Configure `docker-compose.yml` to pass the environment variable set by `.env` to the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
+* `docker-compose up`
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to run the commands in a `kickstart.json` at startup.
 
@@ -231,51 +225,85 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-# Un-comment to access the db service directly
-#    ports:
-#      - 5432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
-      - db
+      - db_net
     restart: unless-stopped
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    container_name: search
+    environment:
+      cluster.name: fusionauth
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
+    healthcheck:
+      test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - search_net
+    restart: unless-stopped
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - search_data:/usr/share/elasticsearch/data
+
   fusionauth:
     image: fusionauth/fusionauth-app:latest
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      search:
+        condition: service_healthy
     environment:
       DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
       DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
       DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
       DATABASE_USERNAME: ${DATABASE_USERNAME}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_MEMORY}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
       FUSIONAUTH_APP_RUNTIME_MODE: development
       FUSIONAUTH_APP_URL: http://fusionauth:9011
-      SEARCH_TYPE: database
+      SEARCH_SERVERS: http://search:9200
+      SEARCH_TYPE: elasticsearch
       FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+
     networks:
-     - db
+      - db_net
+      - search_net
     restart: unless-stopped
     ports:
       - 9011:9011
     volumes:
-      - fa_config:/usr/local/fusionauth/config
+      - fusionauth_config:/usr/local/fusionauth/config
       - ./kickstart:/usr/local/fusionauth/kickstart
 
 networks:
-  db:
+  db_net:
+    driver: bridge
+  search_net:
     driver: bridge
 
 volumes:
   db_data:
-  fa_config:
+  fusionauth_config:
+  search_data:
 ----
 
 After running `docker-compose up` you should see a line like this in the output:
 
-[source,title="FusionAuth log messages indicating Kickstart gas succeeded"]
+[source,title="FusionAuth log messages indicating Kickstart has succeeded"]
 ----
 io.fusionauth.api.service.system.kickstart.KickstartRunner - Summary
 ----
@@ -284,6 +312,18 @@ This indicates that Kickstart completed and provides a summary of the configurat
 
 You may also want to check out https://github.com/FusionAuth/fusionauth-example-scripts/tree/master/isolated-docker-setup[the Isolated Docker Setups] if you want the ability to rapidly stand up different versions and configurations of FusionAuth.
 
+If you want to test changes your Kickstart file, you'll need to delete your volumes each time. Kickstart won't run except on a brand new install. If there is any data in the database, it won't proceed.
+
+[WARNING.warning]
+====
+This will delete all data in your docker instance.
+====
+
+[source,title="Deleting the volumes"]
+----
+docker-compose down -v
+----
+
 == Plugins
 
 You can mount a directory containing a plugin to your Docker container.
@@ -291,13 +331,14 @@ You can mount a directory containing a plugin to your Docker container.
 Here are the steps to do so:
 
 * In the `volumes:` section of the `fusionauth` service, add `- ./plugins:/usr/local/fusionauth/plugins`.
-* Copy your plugin jar file, created link:/docs/v1/tech/plugins/[by following the instructions], to your local `plugins` directory.
-* Start your Docker file
+* Copy your plugin jar file, created link:/docs/v1/tech/plugins/[by following the instructions], to your `plugins` directory on the host.
+* `docker-compose up`
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to scan for plugins at startup.
 
 [source,yaml,title="Example Docker compose file for installing a plugin"]
 ----
+
 version: '3'
 
 services:
@@ -307,45 +348,79 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-# Un-comment to access the db service directly
-#    ports:
-#      - 5432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
-      - db
+      - db_net
     restart: unless-stopped
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    container_name: search
+    environment:
+      cluster.name: fusionauth
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
+    healthcheck:
+      test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - search_net
+    restart: unless-stopped
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - search_data:/usr/share/elasticsearch/data
+
   fusionauth:
     image: fusionauth/fusionauth-app:latest
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      search:
+        condition: service_healthy
     environment:
       DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
       DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
       DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
       DATABASE_USERNAME: ${DATABASE_USERNAME}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_MEMORY}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
       FUSIONAUTH_APP_RUNTIME_MODE: development
       FUSIONAUTH_APP_URL: http://fusionauth:9011
-      SEARCH_TYPE: database
+      SEARCH_SERVERS: http://search:9200
+      SEARCH_TYPE: elasticsearch
+
     networks:
-     - db
+      - db_net
+      - search_net
     restart: unless-stopped
     ports:
       - 9011:9011
     volumes:
-      - fa_config:/usr/local/fusionauth/config
+      - fusionauth_config:/usr/local/fusionauth/config
       - ./plugins:/usr/local/fusionauth/plugins
 
 networks:
-  db:
+  db_net:
+    driver: bridge
+  search_net:
     driver: bridge
 
 volumes:
   db_data:
-  fa_config:
+  fusionauth_config:
+  search_data:
 ----
 
 After running `docker-compose up` you should see a line like this in the output:
