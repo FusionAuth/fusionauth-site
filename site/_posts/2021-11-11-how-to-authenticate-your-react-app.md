@@ -39,9 +39,6 @@ This is the grant we are going to use to authenticate our users.  In this partic
 
 Using an Authorization Code grant has many advantages, including being more secure than alternatives such as the Implicit grant.  Whereas an Implicit grant authenticates against FusionAuth but exposes the resulting Access Token in the URL, the Authorization Code grant adds an extra layer of security by exchanging an Authorization Code for an Access Token before the user can gain access to their resources.  To see a deep dive into this grant that is language-agnostic, take a look at our [example Authorization Code grant](/docs/v1/tech/oauth/#example-authorization-code-grant).
 
-{% include marketing/modern-guide.liquid %}
-
-
 ## What is FusionAuth?
 
 {% include _what-is-fusionauth.liquid %}
