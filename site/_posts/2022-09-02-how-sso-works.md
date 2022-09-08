@@ -9,58 +9,54 @@ tags: topic-single-sign-on
 excerpt_separator: "<!--more-->"
 ---
 
-Single sign-on (SSO) is a key part of any customer identity and access management (CIAM) strategy. Why? Because your organziation will almost always have more than one application for your customers. Even if you are starting out with only one custom application, SaaS tools such as support forums, a ticketing system, or a chat system will require authentication. 
+Single sign-on (SSO) is a key part of any customer identity and access management (CIAM) strategy. Why? Because your organziation will almost always have more than one application for your customers. Even if you being with only one custom application, SaaS tools such as support forums, a ticketing system, or a chat system require authentication, and you won't want your users to have to log in to more systems than necessary. 
 
 <!--more-->
 
-Integrating your applications with single sign-on means that your users will be able to access all their applications with a single set of credentials such as a username and password.
+Integrating your applications with single sign-on means that your users can access all their applications with a single set of credentials such as a username and password.
 
-Let's say you have two applications that you want to enable single sign-on for.
+Let's say you have two applications for which you want to enable single sign-on.
 
 * The Pied Piper Video Chat application (PPVC)
 * The Hooli Jobs application (they're always hiring)
 
-The goal is to let users log in to PPVC. Then, if when they visit Hooli to apply for a job, they are automatically signed in to that application. 
+You want to let users log in to the PPVC, and then, if they visit Hooli to apply for a job, have them be automatically signed in to the Hooli Jobs application. This is single sign-on in a nutshell.
 
-This pattern scales to any number of applications, and can include commercial off the shelf apps. If you have a suite of applications, you can provide a seamless single sign-on experience for all your users. 
+This pattern scales to any number of applications, and can include commercial off the shelf apps that support OIDC (OpenID Connect) or SAML (Security Assertion Markup Language). If you have a suite of applications, you can provide a seamless single sign-on experience for all your users. 
 
 But how does it actually work? This blog post will dig into that, but first, let's take a step back and talk about sessions.
 
 ## Sessions
 
-Sessions are how servers know they've seen the client before. They are usually implemented with cookies, but the actual technologies used don't matter when looking at a high level picture.
-
-In the SSO scenario, the following sessions exist:
+Sessions are how servers know they've seen a client before. They are usually implemented with cookies if the application is browser based. In the SSO scenario, the following sessions exist:
 
 * FusionAuth's session, also known as the single sign-on session
 * The PPVC application's session
 * The Hooli Jobs application's session
 
-If a session doesn't exist for a given application, or expected values aren't present in it, then the session must be created or updated after the user has presented valid credentials. For FusionAuth, the credentials are often a username and password. They could also be a passwordless flow or a login federated by a social provider like Google or business directory like Azure AD.
+If a session doesn't exist for a given application, or it isn't valid, then it must be created or updated after the user has presented valid credentials and authenticated. For FusionAuth, the credentials are often a username and password. They could also be a passwordless flow or a login federated by a social provider like Google or a business directory like Azure AD.
 
-For the other applications in this example, the credential is a valid FusionAuth token. 
+For the other applications in this example, the credential, which proves authentication, is a valid FusionAuth token. 
 
 ## Single sign-on request flow diagrams
 
-Here's the flow of a single sign-on login request. This uses cookies and OIDC to authenticate the users.
-
-The home page of each application is unavailable to anonymous users, and so when a browser requests it, they are directed to the identity provider, FusionAuth, to authenticate.
+Here's the flow of an OIDC single sign-on login request. The home page of each application is unavailable to anonymous users. When a browser requests it, they are directed to the identity provider, FusionAuth, to authenticate.
 
 {% plantuml source: _diagrams/blogs/sso/sso-login.plantuml, alt: "Single sign-on request flow during login." %}
 
-This shows single sign-on basics. You have different sessions managed by different applications, which can have different lifetimes and storage mechanisms. But the key point is that the PPVC and Hooli Jobs applications delegate authentication to the single sign-on provider, and build their sessions on the foundation of the identity provider's session, which is tied to authentication.
+You have different sessions managed by different applications, which can have varying lifetimes and storage mechanisms.
 
-## SAML2
+(If you are a stickler, you'll notice there is no token request from the apps to FusionAuth after the user authenticates. That is implied and required.)
 
-In those flows above, the user is bounced around. There's custom code to check for the token in the PPVC and Hooli Jobs applications. There's also a dependence on cookies in the browser.
+The PPVC and Hooli Jobs applications delegate authentication to the single sign-on provider, and build their sessions on the foundation of the identity provider's session. That session is, in turn, tied to a user authentication event.
 
-What if you want an alternative?
+## SAML
 
-Boy, do I have a standard for you!
+SAML is an alternative to OIDC which also allows single sign-on. It is older, more complex, but well supported across a variety of applications, especially business focused ones.
 
-SAML, the Security Assertion Markup Language, allows you to pass around signed and/or encrypted XML documents created by an identity provider like FusionAuth.
+SAML, in contrat to the simple redirect flow of OIDC, passes around signed and/or encrypted XML documents. 
 
-Let's say you have two different applications: Zendesk and Gusto. Here you want to use SAML to integrate these applications with your identity provider.
+Let's look at a difference scenario. Say you have two other applications: Zendesk and Gusto. Here you want to use SAML to integrate these applications with your identity provider.
 
 Here's a diagram for a SAML flow. Technically this is an service provider (SP) initiated flow where the user is trying to access an application, such as Zendesk, before they are logged in.
 
@@ -133,3 +129,5 @@ Above, note that FusionAuth automatically logs the user out of the Hooli applica
 ## Conclusion
 
 SSO is a critical 
+
+support for both
