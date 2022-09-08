@@ -9,7 +9,7 @@ tags: topic-single-sign-on
 excerpt_separator: "<!--more-->"
 ---
 
-Single sign-on (SSO) is a key part of any customer identity and access management (CIAM) strategy. Why? Because your organziation will almost always have more than one application for your customers. Even if you being with only one custom application, SaaS tools such as support forums, a ticketing system, or a chat system require authentication, and you won't want your users to have to log in to more systems than necessary. 
+Single sign-on (SSO) is a key part of any customer identity and access management (CIAM) strategy. Why? Because your organization will almost always have more than one application for your customers. Even if you begin with only one custom application, SaaS tools such as support forums, a ticketing system, or a chat system require authentication, and you won't want your users to have to log in to more systems than necessary. 
 
 <!--more-->
 
@@ -58,7 +58,7 @@ SAML, in contrast to the token flow of OIDC, passes around signed and/or encrypt
 
 Let's look at a different scenario. Say you have two other applications: Zendesk and Gusto. You want to use SAML to integrate these applications with your identity provider.
 
-Here's a diagram for a SAML flow. Technically this is an service provider (SP) initiated flow where the user is trying to access an application, such as Zendesk, before they are logged in.
+Here's a diagram for a SAML flow. Technically this is a service provider (SP) initiated flow where the user is trying to access an application, such as Zendesk, before they are logged in.
 
 {% plantuml source: _diagrams/blogs/sso/saml-sso-login.plantuml, alt: "SAML single sign-on request flow during login." %}
 
@@ -66,7 +66,7 @@ Why would you pick SAML over the OIDC flow mentioned above? Widespread support.
 
 SAML has been around since 2005 and many many different commercial off the shelf and open source applications support it.
 
-When evaluating your identity provider solution, think about what kinds of applications you want to support. Any business focused applications will typically support SAML, whereas support for OIDC is a far easier to implement in your custom applications. 
+When evaluating your identity provider solution, think about what kinds of applications you want to support. Any business focused applications will typically support SAML, whereas support for OIDC is far easier to implement in your custom applications. 
 
 For maximum flexibility, pick an identity provider which supports both. (FusionAuth does.)
 
