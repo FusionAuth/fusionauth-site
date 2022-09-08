@@ -78,8 +78,5 @@ There are other single sign-on protocols useful for other kinds of applications.
 
 ## Conclusion
 
-SSO is a critical 
+Single sign-on is a key part of your application's authentication story. It doesn't have to be difficult, as leveraging standards like OIDC and SAML can help integrate both custom and commercial off the shelf applications with an identity provider like FusionAuth. 
 
-what is sso
-how is it implemented
-kerberos, website, saml
