@@ -137,7 +137,7 @@ Content-Length: 67
 client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&scope=offline_access
 ```
 
-The request is sent to the device authorization endpoint, along with the clientid and scope in the payload. The authorization server returns a response that includes data such as a verification URI, device code, and user code.
+The request is sent to the device authorization endpoint, along with the client Id and scope in the payload. The authorization server returns a response that includes data such as a verification URI, device code, and user code.
 
 Below is a sample of the JSON response:
 
@@ -170,7 +170,7 @@ Click on the URL to open it in your browser or a different one. All the pages sh
 
 {% include _image.liquid src="/assets/img/advice/device-grant-gaming/device-grant-code-entry.png" alt="Entering the device grant code." class="img-fluid" figure=false %}
 
-When you want to validate the code, you’re redirected to the FusionAuth URL to enter the code. Once the code is added, you click on "Submit" and a `GET` request is made to validate the user device on the URL [http://localhost:9011/oauth2/device](http://localhost:9011/oauth2/device) with the parameters of `clientid` and the `user_code`. If all goes well, you’ll be asked to authenticate on FusionAuth by entering your credentials.
+When you want to validate the code, you’re redirected to the FusionAuth URL to enter the code. Once the code is added, you click on "Submit" and a `GET` request is made to validate the user device on the URL [http://localhost:9011/oauth2/device/validate](http://localhost:9011/oauth2/device/validate) with the parameters of `client_id` and the `user_code`. If all goes well, you’ll be asked to authenticate on FusionAuth by entering your credentials.
 
 {% include _image.liquid src="/assets/img/advice/device-grant-gaming/login-screen.png" alt="The login screen." class="img-fluid" figure=false %}
 
