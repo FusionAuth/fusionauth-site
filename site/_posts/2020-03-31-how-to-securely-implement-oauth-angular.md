@@ -36,6 +36,8 @@ The second part of the application is a lightweight express middleware server. T
 
 Finally, there's the FusionAuth OAuth2 and identity server, which is a standalone application accessible at `http://localhost:9011`. This will be accessed by you, during configuration, and by the express server when data is retrieved or stored. 
 
+{% include marketing/_login-authentication-flows.liquid %}
+
 ## Setting up FusionAuth
 
 FusionAuth will be our OAuth2 and identity server for this tutorial. All user data will be persisted there. OAuth2 is the current standard for identity. Using a central identity server like FusionAuth means we can manage users across any number of custom or off the shelf applications in one place.
@@ -904,3 +906,4 @@ To take it further, consider these enhancements:
 - Set up express to store the sessions across server restarts so you don't have to login every time a new release is deployed. (Hint, [use a different store](https://www.npmjs.com/package/express-session#compatible-session-stores)).
 - Move the sensitive values from `config.js` to environment variables.
 
+{% include marketing/_fusionauth-penguin.liquid %}
