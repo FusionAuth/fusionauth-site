@@ -38,7 +38,7 @@ If a session doesn't exist for a given application, or it isn't valid, then it m
 
 For the other applications in this example, the credential, which proves authentication, is a valid FusionAuth token. 
 
-## Single sign-on request flow diagrams
+## Single sign-on request flow
 
 Here's the flow of an OIDC single sign-on login request. The home page of each application is unavailable to anonymous users. When a browser requests it, they are directed to the identity provider, FusionAuth, to authenticate.
 
@@ -50,7 +50,17 @@ You have different sessions managed by different applications, which can have va
 
 The PPVC and Hooli Jobs applications delegate authentication to the single sign-on provider, and build their sessions on the foundation of the identity provider's session. That session is, in turn, tied to a user authentication event.
 
-## SAML
+That's it. All that is required for single sign-on to work is:
+
+* browsers that respect redirects
+* a single source of truth for user authentication data (often called an identity provider)
+* a defined protocol for an application to bounce an unauthenticated user to the source of truth
+* a defined protocol for the authentication source of truth to bounce requests back to the application which needed the user to be authenticated
+* sessions for every application (typically managed with cookies)
+
+Let's look at another possible implementation.
+
+## SAML SSO
 
 SAML is an alternative to OIDC which also allows single sign-on. It is older, more complex, but well supported across a variety of applications, especially business focused ones.
 
