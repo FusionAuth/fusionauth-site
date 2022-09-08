@@ -54,21 +54,27 @@ The PPVC and Hooli Jobs applications delegate authentication to the single sign-
 
 SAML is an alternative to OIDC which also allows single sign-on. It is older, more complex, but well supported across a variety of applications, especially business focused ones.
 
-SAML, in contrat to the simple redirect flow of OIDC, passes around signed and/or encrypted XML documents. 
+SAML, in contrast to the token flow of OIDC, passes around signed and/or encrypted XML documents. 
 
-Let's look at a difference scenario. Say you have two other applications: Zendesk and Gusto. Here you want to use SAML to integrate these applications with your identity provider.
+Let's look at a different scenario. Say you have two other applications: Zendesk and Gusto. You want to use SAML to integrate these applications with your identity provider.
 
 Here's a diagram for a SAML flow. Technically this is an service provider (SP) initiated flow where the user is trying to access an application, such as Zendesk, before they are logged in.
 
 {% plantuml source: _diagrams/blogs/sso/saml-sso-login.plantuml, alt: "SAML single sign-on request flow during login." %}
 
-Why would you pick SAML over the cookie based flow mentioned above? The answer is widespread support. SAML has been around since 2005 and many many different kinds of commercial off the shelf and open source applications support it.
+Why would you pick SAML over the OIDC flow mentioned above? Widespread support.
 
-When evaluating your identity provider solution, think about what kinds of applications you want to support. Any business focused applications will likely support SAML, whereas support for OIDC is a lot easier to implement in your custom applications. For maximum flexibility, pick an identity provider which supports both. (FusionAuth does.)
+SAML has been around since 2005 and many many different commercial off the shelf and open source applications support it.
+
+When evaluating your identity provider solution, think about what kinds of applications you want to support. Any business focused applications will typically support SAML, whereas support for OIDC is a far easier to implement in your custom applications. 
+
+For maximum flexibility, pick an identity provider which supports both. (FusionAuth does.)
 
 ## Beyond the browser
 
-Both SAML and OIDC are browser based. They expect functionality such as HTTP redirects, cookies and the ability to interact using URLs. There are other single sign-on protocols that are useful for other kinds of applications. Kerberos is a common one for client server applications.
+Both SAML and OIDC are browser based. They expect functionality such as HTTP redirects, cookies and the ability to interact using URLs.
+
+There are other single sign-on protocols useful for other kinds of applications. Kerberos is a common one for client server applications.
 
 ## Conclusion
 
@@ -77,57 +83,3 @@ SSO is a critical
 what is sso
 how is it implemented
 kerberos, website, saml
-
-include the diagram
-[NOTE]
-====
-This guide illustrates a single sign-on scenario where FusionAuth is the system of record for your users.
-
-If, instead, another datastore is your system of record, check out the link:/docs/v1/tech/identity-providers/[Identity Providers] documentation, which allows users to authenticate with third party login. This includes both social sign-on providers like Google as well as providers implementing standards such as OIDC.
-====
-
-* <<Concepts>>
-* <<Request Flow Diagrams>>
-* <<Prerequisites>>
-* <<Set Up The Domains>>
-* <<Configure The Applications In FusionAuth>>
-* <<Set Up The User>>
-* <<Set Up The Code>>
-* <<Test The Results>>
-* <<Other Scenarios>>
-* <<Additional Configuration >>
-* <<Limitations>>
-* <<Additional Resources>>
-
-== Concepts
-
-It's worth spending a bit of time to discuss sessions. Sessions are how servers know they've seen the client, usually a browser, before. They are usually implemented with cookies, but the actual technologies used don't matter. In the SSO scenario, the following sessions exist:
-
-* FusionAuth's session, also known as the single sign-on session
-* The Pied Piper application's session
-* The Hooli application's session
-
-If a session doesn't exist for a given application, or expected values aren't present in it, then the session must be created or updated after the user has presented valid credentials. For FusionAuth, the credentials are a username and password, but for the other applications, the credential is a valid FusionAuth token. 
-
-== Request Flow Diagrams
-
-Here's the flow of a single sign-on login request.
-
-++++
-{% plantuml source: _diagrams/docs/guides/sso-login.plantuml, alt: "Single sign-on request flow during login." %}
-++++
-
-Here's the flow of the corresponding logout request.
-
-++++
-{% plantuml source: _diagrams/docs/guides/sso-logout.plantuml, alt: "Single sign-on request flow during logout." %}
-++++
-
-Above, note that FusionAuth automatically logs the user out of the Hooli application after the user chooses to log out of the Pied Piper application. The user does not have to log out of multiple applications. The logout URLs will be called for each application in this tenant, allowing you to transparently sign the user out of three, five or ten web applications. However, you can disable this setting too.
-
-
-## Conclusion
-
-SSO is a critical 
-
-support for both
