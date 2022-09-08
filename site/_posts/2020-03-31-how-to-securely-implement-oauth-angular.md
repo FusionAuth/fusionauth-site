@@ -640,6 +640,8 @@ Visit `http://localhost:4200` and sign in (note that you were logged out because
 
 If all you are looking for is Angular and OAuth2 authentication, this tutorial is complete. However, we're also going to add and update user data. FusionAuth can store a number of user attributes that are not part of the OAuth specification, but useful for real world systems.
  
+{% include marketing/_modern-guide.liquid %}
+
 ## Storing and Reading User Data
 
 FusionAuth has the ability to store data about users. One field called, aptly enough, `data`, can be used for any kind of textual data. We're going to write to and read from that field.
