@@ -72,9 +72,13 @@ Here's a diagram for a SAML flow. Technically this is a service provider (SP) in
 
 {% plantuml source: _diagrams/blogs/sso/saml-sso-login.plantuml, alt: "SAML single sign-on request flow during login." %}
 
+SAML is more complicated because of the breadth of the specification and because of the flexibility of XML. If you are looking to implement it, using a battle tested library is a good idea. FusionAuth provides an [opensource library for Java](https://github.com/FusionAuth/fusionauth-samlv2/) that is regularly tested and updated.
+
+## Why SAML
+
 Why would you pick SAML over the OIDC flow mentioned above? Widespread support.
 
-SAML has been around since 2005 and many many different commercial off the shelf and open source applications support it.
+SAML has been around since 2005 (at least, SAMLv2, the latest version) and many many different commercial off the shelf and open source applications support it.
 
 When evaluating your identity provider solution, think about what kinds of applications you want to support. Any business focused applications will typically support SAML, whereas support for OIDC is far easier to implement in your custom applications. 
 
