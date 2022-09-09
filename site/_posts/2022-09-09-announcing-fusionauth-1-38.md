@@ -69,7 +69,7 @@ If you are managing groups in FusionAuth and one or more other places, use these
 
 When a group is added in FusionAuth, create a group in the other system. If you want to sync the other way, from the other system to FusionAuth, use the [Group APIs](/docs/v1/tech/apis/groups) to do so.
 
-You can also use these wehbooks to audit group membership. There's an [example application](https://github.com/FusionAuth/fusionauth-example-lambda-webhook) to listen for FusionAuth webhooks and store the resulting JSON to Amazon S3. 
+You can also use these webhooks to audit group membership. There's an [example application](https://github.com/FusionAuth/fusionauth-example-lambda-webhook) to listen for FusionAuth webhooks and store the resulting JSON to Amazon S3. 
 
 In this scenario, you could capture every time a user is added or removed from a group, the date and time it happened, and IP address or location information related to that change.
 
