@@ -48,7 +48,7 @@ If a session doesn't exist for a given application, or it isn't valid, then the 
 
 For FusionAuth, the credentials are often a username and password. However, they could also be a passwordless flow, a login federated by a social provider like Google, or a credential verification by a business solution like Azure AD.
 
-For the other applications in this example, the credential, which proves authentication has occured, is a valid FusionAuth token, which is a JSON web token (JWT). 
+For the other applications in this example, the credential, which proves authentication has occurred, is a valid FusionAuth token, which is a JSON web token (JWT). 
 
 ## Single sign-on request flow
 
@@ -90,7 +90,7 @@ Here's a diagram for a SAML flow. This is a service provider (SP) initiated flow
 
 SAML is more complicated because of the breadth of the specification and because of the flexibility of XML. If you are looking to implement it, using a battle tested library is a good idea.
 
-FusionAuth provides an [opensource library for Java](https://github.com/FusionAuth/fusionauth-samlv2/) that is regularly tested and updated.
+FusionAuth provides an [open source library for Java](https://github.com/FusionAuth/fusionauth-samlv2/) that is regularly tested and updated.
 
 ## Why SAML
 
