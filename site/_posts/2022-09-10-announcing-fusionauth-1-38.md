@@ -26,7 +26,7 @@ FusionAuth is always an architectural component which integrates with other part
 This means that FusionAuth needs to play nicely with other pieces of software. It does this in a number of different ways, including:
 
 * Implementing well known standards like [SAML](/docs/v1/tech/samlv2/), [OAuth2, and OIDC](/docs/v1/tech/oauth/).
-* Providng APIs for all the things. FusionAuth offers a great default login experience for 80% of use cases, but for the other 20%, you can use our APIs. The results: your UX, our backend implementation.
+* Providing APIs for all the things. FusionAuth offers a great default login experience for 80% of use cases, but for the other 20%, you can use our APIs. The results: your UX, our backend implementation.
 * A deployment model that [works pretty much everywhere](/docs/v1/tech/installation-guide/), including Docker, Windows, Linux and macOS.
 * [Client libraries](/docs/v1/tech/client-libraries/) which allow you to manage and automate FusionAuth configuration tasks.
 
