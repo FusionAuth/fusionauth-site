@@ -53,6 +53,10 @@ There are twelve new webhooks:
 * Group Member Update - when a group membership is updated
 * Group Member Update Complete - when a group membership update transaction has completed
 
+Here's an example of a Group Member Add webhook when viewed in the administrative user interface.
+
+{% include _image.liquid src="/assets/img/blogs/release-1-38/webhook-example.png" alt="An example group webhook." class="img-fluid" figure=true %}
+
 You can view more in the [Events and Webhooks](/docs/v1/tech/events-webhooks/events/) documentation.
 
 ## How you might use these webhooks
@@ -61,7 +65,9 @@ There are a number of possible scenarios where these can be helpful.
 
 If you are managing groups in FusionAuth and another place, you can use these webhooks to help sync up the two systems. When a group is added in FusionAuth, you can create a group in the other system. If you want to sync the other way, from the other system to FusionAuth, use the [Group APIs](/docs/v1/tech/apis/groups) to do so.
 
-You can also audit group membership. There's an [example application](https://github.com/FusionAuth/fusionauth-example-lambda-webhook) to listen for FusionAuth webhooks and store the resulting JSON to Amazon S3. In this scenario, you could capture every time a user is added or removed from a group, the date and time it happened, and IP address or location information related to that change. Since groups are often used to give users permissions (who among us hasn't at one time been a member of the proverbial `admin` group?), tracking such changes can help improve your security awareness.
+You can also audit group membership. There's an [example application](https://github.com/FusionAuth/fusionauth-example-lambda-webhook) to listen for FusionAuth webhooks and store the resulting JSON to Amazon S3. 
+
+In this scenario, you could capture every time a user is added or removed from a group, the date and time it happened, and IP address or location information related to that change. Since groups are often used to give users permissions (who among us hasn't at one time been a member of the proverbial `admin` group?), tracking such changes can help improve your security awareness.
 
 ## The rest of it
 
