@@ -116,6 +116,7 @@ For lists:
 - esport
 - Docker
 - Docker Compose
+- WebAuthn
 
 ## Git
 
