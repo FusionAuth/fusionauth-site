@@ -1,17 +1,17 @@
 ---
 layout: blog-post
-title: What is WebAuthn and why do you care?
+title: What is WebAuthn and why should you care?
 description: WebAuthn is a new standard which secures user accounts and improves user experience. What could be better?
 author: Dan Moore
 image: blogs/sso-explanation/how-sso-works.png 
 category: blog
-tags: topic-single-sign-on
+tags: topic-webauthn
 excerpt_separator: "<!--more-->"
 ---
 
 WebAuthn is a new way for people to authenticate themselves to web applications. It's a widely supported standard years in the making. All major browsers work with it, which makes it easy for developers to incorporate WebAuthn into websites.
 
-WebAuthn allows users to leverage the power of biometric, device and other authentication methods via a simple, consistent, browser-native user experience.
+WebAuthn allows users to leverage the power of biometric methods via a simple browser-native user experience.
 
 <!--more-->
 
@@ -23,13 +23,13 @@ Read on and decide for yourself.
 
 WebAuthn is a way for users to authenticate to applications running in the browser. Just like a username and password, WebAuthn provides credentials, but it identifies people with a different method. WebAuthn requires a special piece of hardware or software called an "authenticator".
 
-WebAuthn removes the need for an application or user store to save off private, valuable data such as a hashed password. Instead, the application stores a public key. The corresponding private key is held securely, and in a distributed fashion, by each user's authenticator.
+WebAuthn removes the need for an application or user store to save off private, valuable data such as a hashed password. Instead, the application stores a public key. The corresponding private key is held securely by each user's authenticator.
 
 The type of asymmetric keys that an authenticator supports, how the public key is distributed to the webapp, and how the keypair is used to authenticate a user are all specified by WebAuthn and related standards.
 
 ## Why consider WebAuthn?
 
-Let's walk through a scenario to illustrate the value of WebAuthn. Say you run a website that sells clownwear (it's the next iteration of athleisure, except instead of wicking fabric, there are clown noses and big wigs). You've titled this business "Cosmo's Clown Store". You want customers and potential customers to log in to favorite items and place orders.
+Let's walk through a scenario to illustrate the value of WebAuthn. Say you run a website that sells clownwear (it's the next iteration of athleisure, except instead of wicking fabric, there are clown noses and big wigs). You've titled this business "Cosmo's Clown Store". You want customers and potential customers to log in, in order to undertake typical shopping tasks, such as favoriting items and placing orders.
 
 This website is aimed at normal folks since there is not a whole lot of crossover between the geek and clownwear market, so you want to make login easy.
 
@@ -45,11 +45,11 @@ Let's briefly look at common solutions for securing customer accounts:
 * Password managers
 * Multi-factor authentication (MFA)
 
-Passwords are a well known technology. They've been around since the 1960s and have the virtue of being well understood by most users. Users remember a username and password pair, and provide those to the application during the authentication process to prove who they are. However, passwords have a built-in tension. For each and every user, they must choose a password that is memorable, but difficult to guess. That's a difficult balance.
+Passwords are a well-known technology. They've been around since the 1960s and have the virtue of being well understood by most users. Users remember a username and password pair, and provide those to the application during the authentication process to prove who they are. However, passwords have a built-in tension. For each and every user, they must choose a password that is memorable, but difficult to guess. That's a difficult balance.
 
 There's also the fact that many passwords have been compromised and are in the hands of people who would misuse them. [Have I Been Pwned](https://haveibeenpwned.com/) has over eleven billion accounts (that is, username and password combinations). This wouldn't be such a problem if users didn't reuse passwords across different applications and sites. But since they do, usernames and passwords don't meet Cosmo's Clown Store's needs. 
 
-Next, consider password managers. These are built into modern browsers. There are also third party offerings like 1Password and LastPass. If you use the former, passwords aren't easily portable between different systems. There are also user experience issues with non-standard login forms. If you use the latter, the central servers which store password hashes are a hugely valuable target. Finally, as a webapp, you can't force users to use a password manager; at best you can strong suggest it. Given the clownwear loving audience you are targeting, this means Cosmos Clown Store will pass on this option as well.
+Next, consider password managers. These are built into modern browsers. There are also third party offerings like 1Password and LastPass. If you use the former, passwords aren't easily portable between different systems. There are also user experience issues with non-standard login forms. If you use the latter, the central servers which store password hashes are a hugely valuable target. Finally, as a webapp, you can't force users to use a password manager; at best you can strongly suggest it. Given the clownwear loving audience you are targeting, this means Cosmo's Clown Store will pass on this option as well.
 
 Finally, additional factors of authentication, or [MFA](/learn/expert-advice/authentication/multi-factor-authentication) are a common way to increase account security. Your user accounts are more secure when requiring a time based code from a device or other additional factor of authentication. But will your users be okay with the experience? The friction involved in providing the additional factor can cause issues. And remember, you don't want to get in the way of customers logging in; otherwise you won't be able to sell them the red clown noses they so desperately desire.
 
