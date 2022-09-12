@@ -9,7 +9,7 @@ tags: topic-l10n topic-scim
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the version 1.39.0 release of FusionAuth. It shipped on Sep 12, 2022. This release includes better support for JSON patch, SCIM, and locales.
+We're excited to announce the release of FusionAuth version 1.39.0. It shipped on Sep 11, 2022. This release includes better support for JSON patch, SCIM, and locales.
 
 <!--more-->
 
@@ -129,7 +129,7 @@ In other words, SCIM creates the user account, and then OIDC/SAML allows the use
 With this release you can now provision and deprovision users from these identity stores into FusionAuth. We've seen a few scenarios where this is useful:
 
 * When your customers are themselves businesses with a centralized user store. Your customers want to control access to their instance of your application, and can do so by using SCIM to set up accounts for their users. When an employee leaves the customer, their account is automatically removed from FusionAuth.
-* To you ensure your employees have correct access to your custom application. When a new employee is added into your Azure AD directory, SCIM can provision them into the custom application, easing the onboarding experience. Equally important, when the employee departs, their access to the app also departs.
+* To ensure your employees have correct access to your custom application. When a new employee is added into your Azure AD directory, SCIM can provision them into the custom application, easing the onboarding experience. Equally important, when the employee departs, their access to the app also departs.
 
 With this release, you can use the power of FusionAuth for your CIAM needs, but ensure that FusionAuth is in sync with Okta or Azure AD directories that have up to date employee data.
 
