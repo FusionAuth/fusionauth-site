@@ -11,7 +11,19 @@ dateModified: 2022-09-13
 
 Both Customer Identity and Access Management (CIAM) and IAM (Identity and Access Management) solutions control how people access your application or system. This includes who can access what, how do they prove who they are, and how you manage this access over time. CIAM and IAM have some similarities, but at their heart they serve different needs and audiences. 
 
-Let's take a closer look at these two identity management patterns.
+Let's take a look at a fictional company and when a CIAM or IAM system would be a good fit.
+
+Pied Piper is building out an empire with their middle-out compression. They have hundreds of customers and dozens of employees.
+
+When they onboard a new employee, they want to ensure the employee has access to Google Drive, an internal Slack, Zendesk, GitHub, and a few other custom built applications. If an engineer is hired, they need to be added to a certain GitHub team, whereas if a marketer is hired, they need to be given an account on Hubspot and Zapier. Strong auditing and accountability are requirements. Users must use MFA for compliance reasons (SOC2!) and are expected to authenticate to these applications daily.
+
+This use case is a perfect fit for **IAM**.
+
+When Pied Piper gets a new customer, the customer will self register, pay for access to the compression system API, and begin using it. They also need access to Zendesk for filing support tickets. Users need to be able to reset their password, update their plan, and access the API, all in a self-service manner. Some customers will use the API, complete their integration and not login again for months. A few customers want to use MFA, but most of them don't care about it. Some customers don't want the hassle of a new login, so want to log in with GitHub or Google.
+
+In contrast to the first one, this use case is a perfect fit for a **CIAM solution**.
+
+Now, let's take a closer look at these two identity management patterns.
 
 ## IAM
 
@@ -114,4 +126,4 @@ CIAM and IAM solutions share attributes. They both help developers and businesse
 
 IAM solutions solve the problem of supporting and enabling a company's workforce to access applications they need to do their job.
 
-CIAM solutions, on the other hand, are built for scale and customer experience.
+CIAM systems, on the other hand, are built for scale and customer experience. 
