@@ -37,7 +37,7 @@ The common attributes of IAM users are:
 * there are defined processes to get credentials
 * there's a durable business relationship
 
-Customers, however, are different. For starters, you don't pay them, they pay you. Let's look at some of the other ways CIAM system needs differ.
+Customers, however, are different. For starters, you don't pay them, they pay you. Let's look at some of the other ways CIAM system requirements differ from those of IAM solutions.
 
 ## CIAM
 
@@ -47,13 +47,13 @@ First, customers are, well, customers.
 
 They are buying a good or service from you, and paying you for it. They often have options when it comes to choosing to transact with you.
 
-Users of a CIAM system may not even be full customers. Unlike an IAM solution, when someone has access or doesn't, CIAM users may be potential customers, evaluating your solution. Contrast that with IAM: you aren't going to give a potential employee access to your systems no matter how much you trst them.
+Users of a CIAM system may not even be full customers. Unlike an IAM solution, when someone has access or doesn't, CIAM users may be potential customers, evaluating your solution. Contrast that with IAM: you aren't going to give a potential employee access to your systems no matter how much you trust them.
 
 Finally, because of their options and the revenue they provide, you want to delight customers.
 
 ## CIAM Expectations
 
-Because of the alternatives they have and their experience as consumers, customers have a different set of expectations. Customers lack the commitment to a company or organization that employees or partners have. You will be rewarded for meeting or exceed customer expectations for all interactions with your product, including the login process.
+Because of the alternatives they have and their experience as consumers, customers have a different set of expectations. Customers lack the commitment to a company or organization that employees or partners have. You will be rewarded for meeting or exceeding customer expectations for all product interactions, including the login process.
 
 Some ways to exceed customer expectations that are relevant to CIAM solutions include:
 
@@ -70,7 +70,7 @@ It must have the ability to disseminate appropriate user data into other applica
 
 ## More users, less interaction
 
-Another difference between CIAM and IAM is that there will be many more users in a CIAM system. Typically the differenc is an order of magnitude or more.
+Another difference between CIAM and IAM is that there will be many more users in a CIAM system. Typically the difference is an order of magnitude or more.
 
 Companies have thousands of employees, but serve a customer population many times larger. Google had 135,000 employees in 2021, but [billions of users](https://www.semrush.com/blog/google-search-statistics/). Basecamp had fewer than 100 employees, but had [millions of users](https://expandedramblings.com/index.php/basecamp-statistics-and-facts/).
 
@@ -86,15 +86,15 @@ The increased number of users and irregular activity means:
 
 ## Permission complexity
 
-The complexity of modelled permissions tends to be lower with CIAM. While there may still be different roles for users that will affect your application, what you won't have is complex cross cutting permission hierarchies like IAM systems.
+The complexity of modeled permissions tends to be lower with CIAM. While there may still be different roles for users that will affect your application, what you won't have is complex cross cutting permission hierarchies like IAM systems.
 
-For workforce solutions, other entities play a role in permissions, such as the team, the department, the organization, or the division. These all determining access to resources within the company. This is, of course, on top of the attributes of the user.
+For workforce solutions, other entities play a role in permissions, such as the team, the department, the organization, or the division. The relationship between the user, the resource and these entities all influence access to specific applications or functionality. This complexity is, of course, on top of the attributes of the user.
 
 With CIAM, most systems won't have this hierarchical thicket of permissions. You also might have fewer applications to which you must control access.
 
 ## Summing up CIAM
 
-All of the above requirements combine point to a CIAM system that isn't necessarily simpler than the typical workforce IAM solution, but one that has different constraints.
+All of the above requirements illustrate that a CIAM system isn't necessarily simpler than the typical workforce IAM solution, but does have different constraints.
 
 With CIAM you must support more users with unique access patterns. On the other hand, the access control requirements will be simpler to model and understand. 
 
@@ -102,7 +102,7 @@ Customers won't put up with user interfaces, security requirements or system per
 
 ## What about CRM?
 
-A CIAM system is different than a Customer Relationship Management (CRM) tool, such as Salesforce or Hubspot.
+A CIAM system is different from a Customer Relationship Management (CRM) tool, such as Salesforce or Hubspot.
 
 The purpose of CRM is to record the interactions with a customer and the audience is internal. While you might have different channels and other data structures in a CRM, it's not a multi-purpose login experience for your customers.
 
