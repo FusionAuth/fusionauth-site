@@ -15,6 +15,7 @@ On this page you will find links to each of the API groups and a general overvie
 * link:/docs/v1/tech/apis/authentication[API Authentication]
 * link:/docs/v1/tech/apis/errors[API Errors]
 * link:#status-codes[API Status Codes]
+* <<The PATCH HTTP Method>>
 * <<Troubleshooting>>
 
 Here's a brief video showing how to use an API:
@@ -116,6 +117,111 @@ Each API may document specific status codes and provide a specific reason for re
 |512
 |A lambda invocation failed during this API request. An event log will have been created with details of the exception. See [breadcrumb]#System -> Event Log#.
 |===
+
+== The PATCH HTTP Method
+
+There are three options for using `PATCH` operations. You choose between them by specifying a particular `Content-Type` on the request.
+
+.PATCH options
+[cols="1,1,1,1,1,1"]
+|===
+| Name | Content-Type | Array Behavior | Available Since | RFC Link | Client Library Support
+
+|FusionAuth default
+|`application/json`
+|Appends new values to an array. Deletion not possible.
+|1.12.0
+|N/A
+|Yes
+
+|JSON Patch
+|`application/json-patch+json`
+|Uses operations to specify JSON modifications.
+|1.39.0
+|https://www.rfc-editor.org/rfc/rfc6902[RFC 6902]
+|No
+
+|JSON Merge Patch
+|`application/merge-patch+json`
+|If array is provided, overwrite existing array.
+|1.39.0
+|https://www.rfc-editor.org/rfc/rfc7396[RFC 7396]
+|No
+
+|===
+
+=== PATCH Example
+
+Here's an example of how the different options work when used to modify the roles of a link:/docs/v1/tech/apis/groups[Group] which has roles of "ceo" and "dev" to remove the "dev" role.
+
+If you are only modifying specific object fields, all three `PATCH` methods are equivalent. 
+
+==== FusionAuth Default
+
+With the default method, the correct way to remove the "dev" role is to request the group JSON, find the "ceo" role from the `roleIds` array, and use `PUT` to update the group object. 
+
+[source,shell,title=Updating an object's array with the default PATCH behavior]
+----
+API_KEY=...
+GROUP_ID=...
+APPLICATION_ID=...
+group_json=`curl -H 'Authorization: '$API_KEY \
+     -X GET \
+     https://local.fusionauth.io/api/group/$GROUP_ID`
+
+# construct new object without "dev" role
+ceoRoleId=`echo $group_json | jq '.group.roles."'$APPLICATION_ID'"[] | select(.name == "ceo")|.id'`
+name=`echo $group_json | jq '.group.name'`
+data=`echo $group_json | jq '.group.data'`
+new_group_json='{"group": {"name" : '$name', "data":'$data'}, "roleIds": ['$ceoRoleId']}'
+
+echo $new_group_json
+# PUT the modified object
+curl -H 'Authorization: '$API_KEY \
+     -X PUT \
+     -H 'Content-type: application/json' \
+     https://local.fusionauth.io/api/group/$GROUP_ID \
+     -d "$new_group_json"
+----
+
+==== JSON Patch
+
+With JSON Patch, you have a flexible set of operations that can update, remove or move fields in a JSON object. Please review https://www.rfc-editor.org/rfc/rfc6902[RFC 6902] for the full list of operations.
+
+[source,shell,title=Updating an object's array with JSON Patch]
+----
+API_KEY=...
+GROUP_ID=...
+ROLE_ID=...
+
+curl -H 'Authorization: '$API_KEY \
+     -X PATCH \
+     -H 'Content-Type: application/json-patch+json' \
+     https://local.fusionauth.io/api/group/$GROUP_ID \
+     -d '[{ "op": "add", "path": "/roleIds", "value": [ "'$ROLE_ID'" ] }]'
+----
+
+This call sets the value of `roleIds` with the array contained in the `value` field. 
+
+This approach is precise and can make multiple changes to a given object with one call, but has a downside of requiring you to learn a new set of operations. Additionally, the data is sent in format (an array of operations) which is only vaguely related to the structure of the object being changed.
+
+==== JSON Merge Patch
+
+Merge Patch is a more straightforward way to update complex JSON objects. 
+
+[source,shell,title=Updating an object's array with JSON Merge Patch]
+----
+API_KEY=...
+GROUP_ID=...
+ROLE_ID=...
+
+curl -H 'Authorization: '$API_KEY \
+     -X PATCH \
+     -H 'Content-Type: application/merge-patch+json' \
+     https://local.fusionauth.io/api/group/$GROUP_ID \
+     -d '{"roleIds": ["'$ROLE_ID'"]  }'
+----
+
 
 == Troubleshooting
 
