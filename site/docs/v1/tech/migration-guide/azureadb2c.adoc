@@ -150,11 +150,17 @@ include::docs/v1/tech/migration-guide/_create-test-application.adoc[]
 
 === Set Up Azure AD B2C
 
-There are two main components you need to set up to enable this migration. The first is an Application, with an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC flow]. The second is an https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview[Azure Function] to accept login requests from FusionAuth over TLS and perform an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC login] request on Azure AD B2C.
+There are three main components you need to set up to enable this migration.
+
+The first is an App Registration, with an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC flow]. 
+
+Secondly, you will need to set up a https://docs.microsoft.com/en-us/azure/active-directory-b2c/microsoft-graph-get-started?tabs=app-reg-ga[Microsoft Graph application] to retrieve the user's details, in order to import them to FusionAuth.
+
+The third is an https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview[Azure Function] to accept login requests from FusionAuth over TLS and perform an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC login] request on Azure AD B2C, and return the relevant user data via the Azure AD B2C Graph API app.
 
 [WARNING.warning]
 ====
-FusionAuth Connectors will send user credentials to Azure AD B2C for authentication. Secure both the data in transit and the Azure Function endpoint.
+FusionAuth Connectors will send user credentials to Azure AD B2C for authentication, via an Azure Function. Secure both the data in transit and the Azure Function endpoint.
 
 In this guide, all communication is over TLS and the Azure Function requires a unique query string code. You should also review the documents on https://docs.microsoft.com/en-us/azure/azure-functions/security-concepts?tabs=v4[Securing Azure Functions] to implement any additional security features you may require.
 
@@ -163,14 +169,14 @@ Also note that the Azure AD B2C ROPC endpoint is monitored by rate limiting and 
 
 ==== Configuring the App Registration in Azure AD B2C
 
-FusionAuth will send login requests to Azure AD B2C but needs a client Id and secret to do so. It is best practice to create a new App Registration specifically for a ROPC flow to receive these requests. This guide will walk through configuration using the Azure Portal.
+FusionAuth will send login requests to Azure AD B2C to validate the users credentials, via the Azure Function. It will also retrieve the users Azure AD B2C profile from the Microsoft Graph API. It is best practice to create a 2 new App Registrations for each of the ROPC flow and the Microsoft Graph connection. This guide will walk through the configurations using the Azure Portal.
 
 [NOTE]
 ====
 These instructions use the newer https://docs.microsoft.com/en-us/azure/active-directory-b2c/app-registrations-training-guide[App Registrations] (as opposed to the legacy Applications) experience.
 ====
 
-Visit the https://aka.ms/b2cappregistrations[Azure AD B2C App Registrations] tab. Then https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow#register-an-application[follow these instructions] to set up a new ROPC App Registration.
+Visit the https://aka.ms/b2cappregistrations[Azure AD B2C App Registrations] tab. Then https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow#register-an-application[follow these instructions] to set up a new ROPC App Registration and Flow.
 
 At the end, you'll end up with an app client configuration looking similar to this:
 
@@ -178,11 +184,13 @@ image::migration-guide/{migration_source_dir}/ropc-app-registration-configuratio
 
 Save the new configuration. On the list of app clients, you'll see your new one.
 
-Record the Application (client) ID. This will be a GUID like `022c5902-d8ee-43b0-ac1f-c2719b799657`.
+Record the Application (client) ID. This will be a GUID like `022c5902-d8ee-43b0-ac1f-c2719b799657`. Also record the ROPC flow name - this will be needed as part of the Function environment settings. 
 
 image::migration-guide/{migration_source_dir}/ropc-app-client-id.png[Finding the app client id.,width=1200,role=bottom-cropped]
 
-Next, you'll need to set up an Azure Function to receive the login requests from FusionAuth. The Function will pass the credentials on to Azure AD B2C and, when the authentication succeeds, return a FusionAuth friendly JSON object.
+Now you can set up the App Registration for the Microsoft Graph API access. Follow https://docs.microsoft.com/en-us/azure/active-directory-b2c/microsoft-graph-get-started?tabs=app-reg-ga[this guide], including the "Create Client Secret" section. Record both the Client Secret, and the Application (client) ID as above.
+
+Next, you'll need to set up an Azure Function to receive the login requests from FusionAuth and return the user's profile. The Function will pass the credentials on to Azure AD B2C and, when the authentication succeeds, retrieve the user's profile from Microsoft Graph, then return a FusionAuth friendly JSON object.
 
 ==== Configuring the Azure Function
 
@@ -343,11 +351,11 @@ After deploying the Function, set the following Function environment variables, 
 [source,bash]
 .Azure Connector Function environment variables to set
 ----
-TENANT_NAME:    // The name of your AD B2C Tenaant"fusiontut",
+TENANT_NAME:    // The name of your AD B2C Tenant,
 TENANT_ID:      // The full AD B2C Tenant Id, will end with .onmicrosoft.com
-APP_NAME:       // The name of the B2C App Registration setup for ROPC flow
-CLIENT_ID:      // The App Registration clientId, a.k.a Application id
-CLIENT_SECRET:  // The App Registration client secret
+APP_NAME:       // The name of the ROPC flow setup above
+CLIENT_ID:      // The Microsoft Graph API App Registration clientId, a.k.a Application id
+CLIENT_SECRET:  // The Microsoft Graph API App Registration client secret
 ----
 
 ==== Testing The Deployed API
