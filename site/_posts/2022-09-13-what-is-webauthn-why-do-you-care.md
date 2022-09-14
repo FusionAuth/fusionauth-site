@@ -91,7 +91,7 @@ That's it.
 
 There are two major categories of authenticators: platform and cross-platform. Platform authenticators are tied to one device, like a computer or tablet. They are often implemented in software, and can be built into the operating system as well.
 
-Cross-platform authenticators are independent pieces of hardware which can be plugged into different devices. Examples of cross-platform authenticators include Yubikeys or Trezors.
+Cross-platform authenticators are independent pieces of hardware which can be plugged into different devices. Examples of cross-platform authenticators include YubiKeys or Trezors.
 
 There are options when it comes to authenticators, but what makes WebAuthn really exciting is that all of the major operating systems have implemented platform authenticators.
 
