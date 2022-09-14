@@ -74,21 +74,11 @@ Here's the JSON for that group, if you were to retrieve it via API:
 }
 ```
 
-What would you do if the group roles needed to change? Suppose you needed to remove the "dev" role from the "Paid employees" group (sorry, developers; you'll get loads of options though)?
+What would you do if the group roles needed to change? Suppose you needed to remove the "dev" role from the "Paid employees" group? (Sorry, developers; you'll get loads of options instead.)
 
 How do you model that with JSON? Should you send a new array? Send the roles to be deleted? Something else? 
 
-According to the [Group API](/docs/v1/tech/apis/groups#update-a-group), you need to send JSON that looks like this:
-
-```json
-{
-  "roleIds": [
-    "a9a4e5f8-f834-48e3-aa28-309b0b8e6a0a"
-  ]
-}
-```
-
-But FusionAuth was limited in how it handled arrays and other complex data structures before this release. In this case, it would have added any roles provided in a `PATCH` call to the existing roles. But if you are trying to delete roles from a group, you couldn't use `PATCH`. Instead, the recommended option was to request the group JSON, remove the "dev" role from the `roleIds` array, and use `PUT` to update the entire group. 
+FusionAuth was limited in how it handled arrays and other complex data structures before this release. In this case, it would have added any roles provided in a `PATCH` call to the existing roles. But if you are trying to delete roles from a group, you couldn't use `PATCH`. Instead, the recommended option was to request the group JSON, remove the "dev" role from the `roleIds` array, and use `PUT` to update the entire group. 
 
 But now there are additional choices. The first is to use [JSON Patch (RFC 6902)](https://www.rfc-editor.org/rfc/rfc6902). Use this option by setting the `Content-Type` in your request to `application/json-patch+json`. With this choice, you have fine grained control over the JSON object. You can move, replace or add fields.
 
