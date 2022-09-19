@@ -21,7 +21,7 @@ While this was a smaller release, are a couple of changes worth calling out.
 
 ## Native Windows installs
 
-In version 1.37, we removed our native Windows installation support. We figured that people installing on Windows would be able to use the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) and use our Debian or RPM packages.
+In version 1.37, we removed our native Windows installation support. We figured that people installing on Windows would be able to use the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) and use our [Debian or RPM packages](/direct-download).
 
 We were wrong. Sorry about that!
 
@@ -39,13 +39,13 @@ As of this release, receiving this message from a SCIM client will deactivate th
 
 ## MySQL database driver download changes
 
-If you are using MySQL or plan to use MySQL as the database for your FusionAuth installation, you will need to manually download the JDBC connector and place it in the correct location. Doing so will allow FusionAuth to connect to a MySQL database.
+If you are using MySQL or plan to use MySQL as the database for your FusionAuth installation, you will need to manually download the JDBC connector and place it in the correct location of your FusionAuth installation. This is required for FusionAuth to connect to any MySQL database.
 
 If you are using PostgreSQL, this change does not affect you.
 
 See [the installation guide](/docs/v1/tech/installation-guide/database#install-mysql-connector) for additional information and instructions.
 
-We apologize in advance for any inconvenience this causes you. Unfortunately, the Oracle GPL licensing makes it difficult for FusionAuth to easily deliver the JDBC driver, requiring this activity on your part.
+We apologize in advance for any inconvenience this causes you. Unfortunately, the Oracle GPL licensing makes it difficult for FusionAuth to easily deliver the JDBC driver, requiring this action on your part.
 
 ## Upgrade at will
 
