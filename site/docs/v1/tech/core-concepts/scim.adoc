@@ -170,6 +170,38 @@ In order to use FusionAuth as your SCIM provisioning server for SCIM clients, yo
 
 See the link:/docs/v1/tech/apis/scim/[SCIM API Overview] for details about the supported endpoints.
 
+== Client SCIM Authentication
+
+FusionAuth requires a completed Client Credentials grant and the resulting token for SCIM server authentication, as mentioned above. The token generated from the grant is used in the `Authorization` header as a `Bearer` token.
+
+However, some SCIM clients can't dynamically complete a client credentials grant. Instead, they need a static authorization header value.
+
+To correctly integrate such clients, do the following:
+
+* Change the JWT duration of the SCIM Client Entity Type to a larger value, such as a year, which is `31536000`.
+* Gather the SCIM Client Client Id, the SCIM Client Client Secret, and the SCIM Server Client Id. These values are available from the respective Entity details screen.
+* Determin the SCIM permissions you want to grant the SCIM Client.
+* Perform the Client Credentials grant manually using a tool like curl (see below for an example).
+
+When the token expires, the SCIM integration will fail. Document how to regenerate the token and update the SCIM client configuration internally.
+
+[source,shell,title="Performing the Client Credentials grant for a SCIM Client."]
+----
+# This curl script grants all SCIM permissions to the client.
+# Edit the scope below if you need restricted permissions.
+
+SCIM_CLIENT_CLIENT_ID=...
+SCIM_CLIENT_CLIENT_SECRET=...
+SCIM_SERVER_CLIENT_ID=...
+FUSIONAUTH_HOSTNAME=https://local.fusionauth.io # update this
+
+curl -u $SCIM_CLIENT_CLIENT_ID:$SCIM_CLIENT_CLIENT_SECRET $FUSIONAUTH_HOSTNAME/oauth2/token -d 'grant_type=client_credentials&scope=target-entity%3A'$SCIM_SERVER_CLIENT_ID'%3Ascim%3Aenterprise%3Auser%3Acreate,scim%3Aenterprise%3Auser%3Aupdate,scim%3Auser%3Aupdate,scim%3Agroup%3Aread,scim%3Agroup%3Acreate,scim%3Aenterprise%3Auser%3Adelete,scim%3Agroup%3Adelete,scim%3Agroup%3Aupdate,scim%3Auser%3Adelete,scim%3Aenterprise%3Auser%3Aread,scim%3Auser%3Acreate,scim%3Auser%3Aread'
+----
+
+This script will return a token value, starting with `ey`, as well as some other JSON. Place the token value in the authorization header configuration area of your SCIM client.
+
+Learn more about link:/docs/v1/tech/oauth/#example-client-credentials-grant[the Client Credentials grant].
+
 == Limits
 
 include::docs/v1/tech/shared/_scim-limits.adoc[]
