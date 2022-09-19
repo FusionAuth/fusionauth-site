@@ -39,6 +39,8 @@ This is the grant we are going to use to authenticate our users.  In this partic
 
 Using an Authorization Code grant has many advantages, including being more secure than alternatives such as the Implicit grant.  Whereas an Implicit grant authenticates against FusionAuth but exposes the resulting Access Token in the URL, the Authorization Code grant adds an extra layer of security by exchanging an Authorization Code for an Access Token before the user can gain access to their resources.  To see a deep dive into this grant that is language-agnostic, take a look at our [example Authorization Code grant](/docs/v1/tech/oauth/#example-authorization-code-grant).
 
+{% include marketing/_modern-guide.liquid %}
+
 ## What is FusionAuth?
 
 {% include _what-is-fusionauth.liquid %}
@@ -569,6 +571,8 @@ app.use(cors({
 ```
 
 Awesome! So if you go to `localhost:3000`, you should see the user displayed! Now let's make it dynamic with an actual login/logout!
+
+{% include marketing/_login-authentication-flows.liquid %}
 
 ## Logging in
 
@@ -1115,3 +1119,5 @@ Some areas that you may want explore further::
 
 
 Now you know how to integrate a React application with an OAuth server like FusionAuth. By delegating authentication to such a server, your react application can focus on building features, not auth.
+
+{% include marketing/_fusionauth-penguin.liquid %}
