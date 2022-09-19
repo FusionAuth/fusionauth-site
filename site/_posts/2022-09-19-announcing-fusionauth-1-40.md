@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.40
-description: This release includes native windows installation, SCIM support for deactivation of users, and a change to how you can install the MySQL driver.
+description: This release includes native windows installation, Okta SCIM support for deactivation of users, and a change to how you can install the MySQL driver.
 author: Dan Moore
 image: blogs/release-1-40/fusionauth-1-40.png
 category: blog
@@ -9,7 +9,7 @@ tags: topic-scim
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of FusionAuth version 1.40.0. It shipped on Sep 16, 2022. This release includes native windows installation, SCIM support for deactivation of users, and a change to how you can install the MySQL driver, as well as other bug fixes.
+We're excited to announce the release of FusionAuth version 1.40.0. It shipped on Sep 16, 2022. This release includes native windows installation, Okta SCIM support for deactivation of users, and a change to how you can install the MySQL driver, as well as other bug fixes.
 
 <!--more-->
 
