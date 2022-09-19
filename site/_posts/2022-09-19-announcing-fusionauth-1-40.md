@@ -9,7 +9,7 @@ tags: topic-scim
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of FusionAuth version 1.40.0. It shipped on Sep 16, 2022. This release includes native windows installation, SCIM support for deactivation of users, and a change to how you can install the MySQL driver.
+We're excited to announce the release of FusionAuth version 1.40.0. It shipped on Sep 16, 2022. This release includes native windows installation, SCIM support for deactivation of users, and a change to how you can install the MySQL driver, as well as other bug fixes.
 
 <!--more-->
 
@@ -17,7 +17,7 @@ There are a number of new features, enhancements, and bug fixes. As always, plea
 
 There were 6 issues, enhancements, and bug fixes included in this release. Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-40-0).
 
-Below are a couple of changes worth calling out.
+While this was a smaller release, are a couple of changes worth calling out.
 
 ## Native Windows installs
 
@@ -41,11 +41,11 @@ As of this release, receiving this message from a SCIM client will deactivate th
 
 If you are using MySQL or plan to use MySQL as the database for your FusionAuth installation, you will need to manually download the JDBC connector and place it in the correct location. Doing so will allow FusionAuth to connect to a MySQL database.
 
-If you are using PostgreSQL, this change will not affect you.
+If you are using PostgreSQL, this change does not affect you.
 
 See [the installation guide](/docs/v1/tech/installation-guide/database#install-mysql-connector) for additional information and instructions.
 
-We apologize in advance for any inconvenience this causes you. Unfortunately, the Oracle GPL licensing model makes it difficult for FusionAuth to easily deliver this capability.
+We apologize in advance for any inconvenience this causes you. Unfortunately, the Oracle GPL licensing makes it difficult for FusionAuth to easily deliver the JDBC driver, requiring this activity on your part.
 
 ## Upgrade at will
 
