@@ -152,7 +152,7 @@ include::docs/v1/tech/migration-guide/_create-test-application.adoc[]
 
 There are three main components you need to set up to enable this migration.
 
-The first is an App Registration, with an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC flow]. 
+The first is an App Registration, with an https://docs.microsoft.com/en-us/azure/active-directory-b2c/add-ropc-policy?tabs=app-reg-ga&pivots=b2c-user-flow[ROPC flow].
 
 Secondly, you will need to set up a https://docs.microsoft.com/en-us/azure/active-directory-b2c/microsoft-graph-get-started?tabs=app-reg-ga[Microsoft Graph application] to retrieve the user's details, in order to import them to FusionAuth.
 
@@ -169,7 +169,7 @@ Also note that the Azure AD B2C ROPC endpoint is monitored by rate limiting and 
 
 ==== Configuring the App Registration in Azure AD B2C
 
-FusionAuth will send login requests to Azure AD B2C to validate the users credentials, via the Azure Function. It will also retrieve the users Azure AD B2C profile from the Microsoft Graph API. It is best practice to create a 2 new App Registrations for each of the ROPC flow and the Microsoft Graph connection. This guide will walk through the configurations using the Azure Portal.
+FusionAuth will send login requests to Azure AD B2C to validate the users credentials, via the Azure Function. It will also retrieve the users Azure AD B2C profile from the Microsoft Graph API. It is best practice to create new App Registrations for each of the ROPC flow and Microsoft Graph connection. This guide will walk through the configurations using the Azure Portal.
 
 [NOTE]
 ====
@@ -184,7 +184,7 @@ image::migration-guide/{migration_source_dir}/ropc-app-registration-configuratio
 
 Save the new configuration. On the list of app clients, you'll see your new one.
 
-Record the Application (client) ID. This will be a GUID like `022c5902-d8ee-43b0-ac1f-c2719b799657`. Also record the ROPC flow name - this will be needed as part of the Function environment settings. 
+Record the Application (client) ID. This will be a GUID like `022c5902-d8ee-43b0-ac1f-c2719b799657`. Also record the ROPC flow name - this will be needed as part of the Function environment settings.
 
 image::migration-guide/{migration_source_dir}/ropc-app-client-id.png[Finding the app client id.,width=1200,role=bottom-cropped]
 
@@ -206,7 +206,7 @@ include::https://raw.githubusercontent.com/ritza-co/fusion-ropc-azure-function/m
 
 You will need to modify the `transformToFusionUserObject` function to match the properties of the users that you want to import. This converts the JSON returned from Azure AD B2C into the JSON format FusionAuth requires. You can see samples of both below. To modify this procedure, clone or fork the repo for the full Function project https://github.com/ritza-co/fusion-ropc-azure-function[here], then make the changes in your local copy of the project.
 
-The exact implementation depends on your Directories custom attributes and business logic. You could, for example, give users certain FusionAuth roles, register them for more than one application or add them to a previously created FusionAuth group.
+The exact implementation depends on your Active Directory's custom attributes and business logic. You could, for example, give users certain FusionAuth roles, register them for more than one application or add them to a previously created FusionAuth group.
 
 [source,json]
 .Sample User Data Response from Azure AD B2C
@@ -332,12 +332,40 @@ The exact implementation depends on your Directories custom attributes and busin
 }
 ----
 
-The `processUserJSON` will transform the above into a FusionAuth compatible format, as displayed below:
+The `transformToFusionUserObject` will transform the above into a FusionAuth compatible format, as displayed below:
 
 [source,json]
 .Sample Successful Login JSON
 ----
-include::docs/src/json/users/login-migrated-response.json[]
+{
+  "user": {
+    "id": "702eebc9-ef84-489f-b7d3-6f67388ffdd3",
+    "active": true,
+    "firstName": "Erlich",
+    "fullName": "Erlich Bachman",
+    "lastName": "Bachman",
+    "username": "702eebc9-ef84-489f-b7d3-6f67388ffdd3@fusiontut.onmicrosoft.com",
+    "email": "erlich.bachman@piedpiper.com",
+    "verified": true,
+    "insertInstant": 1661188751,
+    "data": {
+      "azure": {
+        "identities": [
+          {
+            "signInType": "emailAddress",
+            "issuer": "fusiontut.onmicrosoft.com",
+            "issuerAssignedId": "erlich.bachman@piedpiper.com"
+          },
+          {
+            "signInType": "userPrincipalName",
+            "issuer": "fusiontut.onmicrosoft.com",
+            "issuerAssignedId": "702eebc9-ef84-489f-b7d3-6f67388ffdd3@fusiontut.onmicrosoft.com"
+          }
+        ]
+      }
+    }
+  }
+}
 ----
 
 Once you have the custom function logic updated, it is time to deploy the Azure Function.
@@ -367,8 +395,8 @@ Test the login process with the lambda. You can use curl and an account whose us
 [source,shell]
 .Testing the API and Azure Function with Curl
 ----
-curl -XPOST \
-https://fusionAuth.azurewebsites.net/api/RopcProxy?code=s0ndU863xdbXsFO4dLZAJQXLzyTU789iaUJ43uLAtIkXm_AzFuFWP1zg==  -H 'Content-type: application/json' -d '{
+curl -X POST \
+'https://fusionAuth.azurewebsites.net/api/RopcProxy?code=s0ndU863xdbXsFO4dLZAJQXLzyTU789iaUJ43uLAtIkXm_AzFuFWP1zg=='  -H 'Content-type: application/json' -d '{
   "loginId": "test@example.com",
   "password": "password"
 }'
@@ -410,7 +438,7 @@ If the user is authenticated, you should receive a response similar, though diff
 }
 ----
 
-If the authorization header or account credentials are incorrect, a 404 HTTP status code is returned, along with a message in the body. You can view the status code by running `curl` with the `-vv` switch.
+If the authorization header or account credentials are incorrect, a 404 HTTP status code is returned, along with a message in the body. You can view the status code by running `curl` with the `-v` switch.
 
 === Set Up the Connector
 
@@ -548,7 +576,7 @@ To bulk migrate users, the following steps are needed:
 * Set up FusionAuth
 * Extract all user data from Azure AD B2C
 * Reformat the data into FusionAuth compatible JSON
-* Import the users using the [Import User API](/docs/v1/tech/apis/users#import-users)
+* Import the users using the link:/docs/v1/tech/apis/users#import-users[Import User API]
 * Reset all user passwords
 
 Let's look at each of these steps in more detail.
@@ -578,7 +606,15 @@ To authenticate with Azure AD B2C, you first need to register an application wit
 
 We've created a node console tool to authenticate with the Graph API and export the users. You can clone or fork it from https://github.com/ritza-co/fusion-azure-add-bulk-export[here], and configure the `.env` file with your Azure AD B2C tenant and app ID and secret.
 
-Now you can run the tool, which will connect and export all the tenant users to a JSON file called users.json. It should look similar to this:
+[source,bash]
+.Bulk Export tool environment variables to set
+----
+CLIENT_ID          // The client id,
+TENANT_ID           // The the tenant id eg. guide.onmicrosoft.com
+CLIENT_SECRET       // The client secret
+----
+
+Now you can run the tool, which will connect and export all the tenant users to a JSON file called `users.json`. It should look similar to this:
 
 [source,json,title=list-users results]
 ----
@@ -587,7 +623,7 @@ Now you can run the tool, which will connect and export all the tenant users to 
   "value":
   [
       {
-          "id": "642caa6a-86a6-4f3c-a0c0-8fc5d817fc4a",
+          "id": "862caa6a-86a6-4f3c-a0c0-8fc5d817fc56",
           "deletedDateTime": null,
           "accountEnabled": true,
           "ageGroup": null,
@@ -600,13 +636,13 @@ Now you can run the tool, which will connect and export all the tenant users to 
           "consentProvidedForMinor": null,
           "country": "South Africa",
           "department": null,
-          "displayName": "unknown",
+          "displayName": "Erlich Bachman",
           "employeeId": null,
           "employeeHireDate": null,
           "employeeLeaveDateTime": null,
           "employeeType": null,
           "faxNumber": null,
-          "givenName": "Bradley",
+          "givenName": "Erlich",
           "imAddresses":
           [],
           "infoCatalogs":
@@ -616,7 +652,7 @@ Now you can run the tool, which will connect and export all the tenant users to 
           "jobTitle": null,
           "legalAgeGroupClassification": null,
           "mail": null,
-          "mailNickname": "642caa6a-86a6-4f3c-a0c0-8fc5d817fc4a",
+          "mailNickname": "862caa6a-86a6-4f3c-a0c0-8fc5d817fc56",
           "mobilePhone": null,
           "onPremisesDistinguishedName": null,
           "officeLocation": null,
@@ -641,9 +677,9 @@ Now you can run the tool, which will connect and export all the tenant users to 
           "signInSessionsValidFromDateTime": "2022-08-05T21:40:46Z",
           "state": null,
           "streetAddress": null,
-          "surname": "Bob",
+          "surname": "Bachman",
           "usageLocation": null,
-          "userPrincipalName": "642caa6a-86a6-4f3c-a0c0-8fc5d817fc4a@fusiontut.onmicrosoft.com",
+          "userPrincipalName": "862caa6a-86a6-4f3c-a0c0-8fc5d817fc56@fusiontut.onmicrosoft.com",
           "externalUserConvertedOn": null,
           "externalUserState": null,
           "externalUserStateChangeDateTime": null,
@@ -666,12 +702,12 @@ Now you can run the tool, which will connect and export all the tenant users to 
               {
                   "signInType": "emailAddress",
                   "issuer": "fusiontut.onmicrosoft.com",
-                  "issuerAssignedId": "bradley+theminidriver@indri.co.za"
+                  "issuerAssignedId": "erlich_bachman@fusiontut.onmicrosoft.com"
               },
               {
                   "signInType": "userPrincipalName",
                   "issuer": "fusiontut.onmicrosoft.com",
-                  "issuerAssignedId": "642caa6a-86a6-4f3c-a0c0-8fc5d817fc4a@fusiontut.onmicrosoft.com"
+                  "issuerAssignedId": "862caa6a-86a6-4f3c-a0c0-8fc5d817fc56@fusiontut.onmicrosoft.com"
               }
           ],
           "onPremisesExtensionAttributes":
@@ -723,7 +759,7 @@ If you have `bundler` installed, run `bundle install` in the `azureadb2c` direct
 
 === Use the Script
 
-You can see the output of the script by running it with the `-h` option:
+You can see the usage guide of the script by running it with the `-h` option:
 
 [source,sh,title=Running the import script with the help command line switch]
 ----
