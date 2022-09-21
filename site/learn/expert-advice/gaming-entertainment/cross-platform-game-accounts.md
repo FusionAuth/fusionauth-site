@@ -13,7 +13,7 @@ More and more games are launching across two or more platforms. One of the prime
 
 Having a cross-platform gaming account enables users to play games on different platforms while syncing their progress as they switch platforms or consoles.
 
-In this guide, you’ll be introduced to cross-platform gaming accounts and why they're so useful. You’ll also learn how to implement one into your platform using [FusionAuth](https://fusionauth.io/).
+In this guide, you’ll be introduced to cross-platform gaming accounts and why they're so useful. You’ll also learn how to implement one into your platform using [FusionAuth](/).
 
 ## What Is a Cross-Platform Gaming Account?
 
@@ -55,7 +55,7 @@ In order to properly secure cross-platform gaming accounts, your auth provider s
 
 Each game platform is built differently, so in choosing an auth server, you need to verify that the server supports logging into major game networks like PSN, Xbox, Nintendo, Twitch, or Epic. Pre-built integrations will remove the need for your developers to spend time building that undifferentiated code. 
 
-Ensure that your auth server allows [identity linking](https://fusionauth.io/docs/v1/tech/identity-providers/#linking-strategies), which enables a gamer to log in on a PC and later log in on a PlayStation and link those two accounts together, even if the user signed up on the PC with a different email address than they did with the PlayStation network. It also allows gamers to switch platforms without worrying about compatibility issues, loss of progression, logging delays, or eventual failure.
+Ensure that your auth server allows [identity linking](/docs/v1/tech/identity-providers/#linking-strategies), which enables a gamer to log in on a PC and later log in on a PlayStation and link those two accounts together, even if the user signed up on the PC with a different email address than they did with the PlayStation network. It also allows gamers to switch platforms without worrying about compatibility issues, loss of progression, logging delays, or eventual failure.
 
 ### Support for Device Grants
 
@@ -85,7 +85,7 @@ Now that you understand how cross-platform gaming accounts are implemented, you�
 
 ### Requirements
 
-This tutorial assumes you have either a MySQL or PostgreSQL database already initialized with the necessary permissions to create, delete, and update tables. If you don’t, [follow these instructions](https://fusionauth.io/docs/v1/tech/installation-guide/database) to install.
+This tutorial assumes you have either a MySQL or PostgreSQL database already initialized with the necessary permissions to create, delete, and update tables. If you don’t, [follow these instructions](/docs/v1/tech/installation-guide/database) to install.
 
 You’ll also need Node.js installed. You can verify that it’s installed by running `node -v` in your terminal; you should see a version returned:
 
@@ -100,11 +100,11 @@ When enabling cross-platform gaming, you first need to create a single account a
 
 Settling down with a cross-platform gaming auth server is tricky. Your auth server needs to allow your users to login via device grants since some consoles can be restricting when it comes to text input. Your auth server also needs to provide a reliable flow, so that your users can register in your app during peak traffic times without dealing with crashes.
 
-FusionAuth does that and more. Gaming accounts are valuable since players invest money into buying in-game merchandise and services. FusionAuth implements a powerful [hashing scheme](https://fusionauth.io/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy) to ensure that user accounts are secure. With its identity-linking strategies for a variety of identity providers, you can achieve seamless integration of your users’ accounts across multiple platforms.
+FusionAuth does that and more. Gaming accounts are valuable since players invest money into buying in-game merchandise and services. FusionAuth implements a powerful [hashing scheme](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy) to ensure that user accounts are secure. With its identity-linking strategies for a variety of identity providers, you can achieve seamless integration of your users’ accounts across multiple platforms.
 
 Installing FusionAuth is painless, and it can all be run from a simple cURL request (or PowerShell command in Windows).
 
-FusionAuth provides [multiple example requests](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide#1-install-fusionauth) to install it. 
+FusionAuth provides [multiple example requests](/docs/v1/tech/5-minute-setup-guide#1-install-fusionauth) to install it. 
 
 This guide will assume you are using [Fast Path](/docs/v1/tech/installation-guide/fast-path), which requires a previously installed MySQL or PostgreSQL database.
 
@@ -148,7 +148,7 @@ You need to enter the following:
 
 Click "Submit". 
 
-> If you do encounter the error ***Exception in thread main java.lang.NoClassDefFoundError: com/inversoft/mysql/MySQLHelper***, make sure you've [installed the MySQL driver](https://fusionauth.io/docs/v1/tech/installation-guide/database#install-mysql-connector).
+> If you do encounter the error ***Exception in thread main java.lang.NoClassDefFoundError: com/inversoft/mysql/MySQLHelper***, make sure you've [installed the MySQL driver](/docs/v1/tech/installation-guide/database#install-mysql-connector).
 
 ### Complete the Setup Wizard
 
@@ -199,9 +199,9 @@ You are going to build a [Flutter](https://flutter.dev/) cross-platform game for
 
 FusionAuth offers multiple authentication options for you to consider when building your application. These include:
 
-- The [hosted login pages](https://fusionauth.io/docs/v1/tech/core-concepts/integrations#hosted-login-pages) forms where FusionAuth hosts the registration forms and pages.
-- An [API-based](https://fusionauth.io/docs/v1/tech/apis/users) approach to manage users.
-- [Third-party login](https://fusionauth.io/docs/v1/tech/identity-providers/) using identity providers such as Google.
+- The [hosted login pages](/docs/v1/tech/core-concepts/integrations#hosted-login-pages) forms where FusionAuth hosts the registration forms and pages.
+- An [API-based](/docs/v1/tech/apis/users) approach to manage users.
+- [Third-party login](/docs/v1/tech/identity-providers/) using identity providers such as Google.
 
 You can use any combination of these. In this application, you are going to utilize the API option due to its simplicity and direct approach.
 
