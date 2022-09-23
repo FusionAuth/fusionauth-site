@@ -163,68 +163,88 @@ If you are only modifying specific object fields, all three `PATCH` methods are 
 
 With the original, pre 1.39.0 `PATCH` method, the correct way to remove the "dev" role is to request the group JSON, find the "ceo" role from the `roleIds` array, and use `PUT` to update the group object. 
 
-[source,shell,title=Updating an object's array with the original PATCH behavior]
+[source,json,title=Original Group JSON]
 ----
-API_KEY=...
-GROUP_ID=...
-APPLICATION_ID=...
-group_json=`curl -H 'Authorization: '$API_KEY \
-     -X GET \
-     https://local.fusionauth.io/api/group/$GROUP_ID`
-
-# construct new object without "dev" role
-ceoRoleId=`echo $group_json | jq '.group.roles."'$APPLICATION_ID'"[] | select(.name == "ceo")|.id'`
-name=`echo $group_json | jq '.group.name'`
-data=`echo $group_json | jq '.group.data'`
-new_group_json='{"group": {"name" : '$name', "data":'$data'}, "roleIds": ['$ceoRoleId']}'
-
-echo $new_group_json
-# PUT the modified object
-curl -H 'Authorization: '$API_KEY \
-     -X PUT \
-     -H 'Content-type: application/json' \
-     https://local.fusionauth.io/api/group/$GROUP_ID \
-     -d "$new_group_json"
+include::docs/src/json/groups/patch/original.json[]
 ----
+
+[source,json,title=PUT Request JSON]
+----
+{
+  "group": {
+    "name": "Paid employees",
+    "data": {}
+  },
+  "roleIds": [
+    "0a15cfdd-e231-4de4-9411-6d1015e05d99"
+  ]
+}
+----
+
+After you make this `PUT` request, the group JSON will look like this.
+
+[source,json,title=Resulting Group JSON]
+----
+include::docs/src/json/groups/patch/response.json[]
+----
+
 
 ==== JSON Patch
 
-With JSON Patch, you have a flexible set of operations that can update, remove or move fields in a JSON object. Please review https://www.rfc-editor.org/rfc/rfc6902[RFC 6902] for the full list of operations.
+With JSON Patch, you have a flexible set of operations that can update, remove or move fields in a JSON object. Please review https://www.rfc-editor.org/rfc/rfc6902[RFC 6902] for the full list of operations. Here's the original JSON again:
 
-[source,shell,title=Updating an object's array with JSON Patch]
+[source,json,title=Original Group JSON]
 ----
-API_KEY=...
-GROUP_ID=...
-ROLE_ID=...
-
-curl -H 'Authorization: '$API_KEY \
-     -X PATCH \
-     -H 'Content-Type: application/json-patch+json' \
-     https://local.fusionauth.io/api/group/$GROUP_ID \
-     -d '[{ "op": "add", "path": "/roleIds", "value": [ "'$ROLE_ID'" ] }]'
+include::docs/src/json/groups/patch/original.json[]
 ----
 
-This call sets the value of `roleIds` with the array contained in the `value` field. 
+If you make a `PATCH` request with a `Content-Type` of `application/json-patch+json` and a body like below:
 
-This approach is precise and can make multiple changes to a given object with one call, but has a downside of requiring you to learn a new set of operations. Additionally, the data is sent in format (an array of operations) which is only vaguely related to the structure of the object being changed.
+[source,json,title=JSON Patch Request JSON]
+----
+[
+  {
+    "op": "remove",
+    "path": "/roleIds/1"
+  }
+]
+----
+
+This call removes the second value of the `roleIds` array, which corresponds to the "devs" role. After you make this `PATCH` request, the group JSON will look like this.
+
+[source,json,title=Resulting Group JSON]
+----
+include::docs/src/json/groups/patch/response.json[]
+----
+
+This approach is precise and can make multiple changes to a given object with one call. It also requires you to learn a new set of operations. Additionally, the data is sent in format (an array of operations) which is only vaguely related to the structure of the object being changed.
 
 ==== JSON Merge Patch
 
-Merge Patch is a more straightforward way to update complex JSON objects. 
+JSON Merge Patch is a more straightforward way to update complex JSON objects. Please review https://www.rfc-editor.org/rfc/rfc7386[RFC 7386] for a full description of the patch behavior. Here's the original JSON again:
 
-[source,shell,title=Updating an object's array with JSON Merge Patch]
+[source,json,title=Original Group JSON]
 ----
-API_KEY=...
-GROUP_ID=...
-ROLE_ID=...
-
-curl -H 'Authorization: '$API_KEY \
-     -X PATCH \
-     -H 'Content-Type: application/merge-patch+json' \
-     https://local.fusionauth.io/api/group/$GROUP_ID \
-     -d '{"roleIds": ["'$ROLE_ID'"]  }'
+include::docs/src/json/groups/patch/original.json[]
 ----
 
+If you make a `PATCH` request with a `Content-Type` of `application/merge-patch+json` and a body like below:
+
+[source,json,title=JSON Patch Request JSON]
+----
+{
+  "roleIds": [
+    "0a15cfdd-e231-4de4-9411-6d1015e05d99"
+  ]
+}
+----
+
+After you make this `PATCH` request, the group JSON will look like this.
+
+[source,json,title=Resulting Group JSON]
+----
+include::docs/src/json/groups/patch/response.json[]
+----
 
 == Troubleshooting
 
