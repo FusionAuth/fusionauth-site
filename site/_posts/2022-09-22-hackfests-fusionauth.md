@@ -71,18 +71,63 @@ Stepping out of the grind is a key attraction for hackfests for me. Having a ded
 
 Junior folks, on the other hand, benefit less from the time and more from the permission. They see the business with fresher eyes and often bring perspective of more recent tools and ediucation. But they may feel constrained by the tickets, tasks and other guidance that is provided. A free day means autonomy, as well as stretching in new directions with skills, such as presenting to their boss.
 
-But there are other benefits too
+But there are other benefits too. These include:
 
-collab
-new skills
-fun
-efficiencies
-education
+* The chance to collaborate across teams. Are you an engineer curious about devrel or sales? Are you a marketer who wants to work on a project with an engineer so you can see what coding is like? Here's your opportunity to work on a project with someone in those areas. 
+* A time to learn new skills. If you are a coder, practice your writing. If you work in devrel, work on a sales rollout. And everyone gets the chance to practice their public speaking skills.
+* It's just plain fun to build something new and show it off to your teammates.
+* If there's an itch you've been meaning to scratch or an annoying problem you'd like to address but never seem to have time to, a hackfest is a perfect day to make progress on it.
+* New efficiencies and capabilities often come out of hackfests, because of the exploration and new ideas.
+* By watching presentations, everyone will learn more about the concerns and the experiences of other team members.
 
 ## How do you do this?
 
-email stuff
+Here's a step by step list of tasks for running a hackfest.
 
-examples
+This assumes you are running one in a smallish organization or team, between five and thirty people.
 
-what about pressure to talk/deliver
+* Get buy in from leadership. This includes setting participation expectations for them and their team.
+* Write up an expectations and FAQ document, including information such as how this works, what the rules are, and the length of presentations.
+* Set a date and time, ideally a few months in the future. This makes it easier to get buy in, too. Fridays are good, but make sure it doesn't collide with deliverables or holidays. It's best to reserve at least a whole day. Some teams do a few days or a week, but I don't have experience with such durations.
+* Add the event to everyone's calendar. Share a link to the expectations and FAQ. Hackfests usually kick off at 9am and end around 5pm. Encourage peopel to start thinking of ideas.
+* A week before, send out an email reminder, with the expectations and FAQ link. 
+* At 8:30 on the date previously scheduled, set up if needed, and remind everyone that hackfest is happening that day.
+* At 9am, kick off with a brief announcement about the schedule and goals, and answer any questions about the day.
+* Then, collect ideas about what people want to work on. You can have them add it to a shared document or write them on a whiteboard.
+* After some ideas are shared, you should encourage people to talk about their ideas if they want. Then encourage people to sign up for ideas that are interesting to them. After a few minutes, folks should coalesce into teams. If some people want to work on their own, that's okay, but you should do what you can to form teams.
+* Everyone goes off to work. If you are virtual, it can be nice to have a dedicated channel people can stay in. I haven't had much luck with folks hanging out in a zoom.
+* Determine when presentations should start. The exact time depends on how many teams you have. Each team should have at least five minutes to present and five minutes for questions, but you can extend that if you want. If you have five teams and want to end at 5pm, you'll want to start at 4:10 pm at the latest.
+* About an hour before the presentations are set to begin, remind folks to sign up for a slot. I like to use a google spreadsheet.
+* Five minutes before the presentations begin, remind everyone. If in-person, shephard everyone into the presentation room.
+* Begin the presentations. Your job is to make sure to cut off anyone running over time, and to emcee the questions. 
+* I suggest everyone put their presentation artifacts in a shared folder if possible. People can also add any related features to their task lists to be prioritized later.
+* After the presentations are done, ask for feedback about hackfest mechanics, clean up and give yourself a pat on the back.
+
+If you are doing an in-person hackfest, you need to do some additional planning and work:
+
+* You'll need quiet space for the teams to work.
+* Determine where the company is buying lunch from and how you'll place and pick up the order.
+* It can be nice to have the presentation to be in a room with a screen and projector. Drinks (alcoholic or non-alcoholic or both) are nice to have as well.
+* You'll want to break for lunch around, well, lunchtime.
+
+If you are doing a remote hackfest across timezones, reach out to people outside of the core timezone and ask what their tolerance is for starting later or earlier in order to overlap. For example, if your core timezone is USA/Denver, but you have people in Pacific and Eastern, ask if the Eastern folks can work later and the folks in the Pacific area can start a bit earlier. You can also put folks in earlier timezons first on the presentation list to minimize the impact on their day.
+
+## Examples
+
+Here are some examples of projects that we've done here at FusionAuth:
+
+* Building an SEO focused topical minisite
+* Exploring GraalJS
+* Prototyping applying kickstarts to existing FusionAuth instances
+* Implementing a solution on Azure AD B2C, a competitor
+* Examining sales tools like Apollo IQ
+* Adding signatures to our software downloads
+* Recording a commercial to explore video editing solutions
+
+Some of these were exploratory while others are currently under active development or in production.
+
+## Summing up
+
+Hackfests are a low cost way to let people on your team explore new ideas, work together and learn skills.
+
+I hope you consider putting on a hackathon for your company or department.
