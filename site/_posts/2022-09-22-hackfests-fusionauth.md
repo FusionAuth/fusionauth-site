@@ -16,7 +16,7 @@ FusionAuth has been doing hackfests for a few years now. I wanted to document th
 
 ## What is a hackfest?
 
-Having spun up hackfests at three different companies, I have a firm idea in mind when I propose them. Briefly, it's a day for people to work on whatever they way.
+Having spun up hackfests at three different companies, I have a firm idea in mind when I propose them. Briefly, it's a day for people to work on whatever they want.
 
 There are a few basics:
 
@@ -32,12 +32,12 @@ As far as what people can choose to do with the time, there are two, and only tw
 * no scutwork. This is not a day to catch up on busywork that you've been putting off.
 * at the end of the day, you have to present what you worked on. This audience typically includes your boss.
 
-I find the second rule is a forcing function for the first. Most people don't want to "present" an clean inbox to their bosses because they spent the entire day answering emails.
+I find the second rule is a forcing function for the first. Most people don't want to "present" a clean inbox to their bosses because they spent the entire day answering emails.
 
 However, it makes sense to address some common concerns: 
 
 * How will we make time for this?
-* Can non-technical folks particpate?
+* Can non-technical folks participate?
 
 Let's take these one at a time.
 
@@ -47,11 +47,11 @@ If hackfests are important, you can make time. Be flexible.
 
 At one place I worked at, the hackfest started an hour later in the day because customer service employees plowed through all the tickets they could at the beginning of the day. They then set up their vacation response. The same strategy can be used with a sales team.
 
-A hackfest is similar to vacation. I always feel behind when I take vacation, but the change of sceneary and the perspective make it valuable for my work productivity. (To say nothing of the fact that vacation makes life more enjoyable and that I don't view everything through the lens of "will it make me productive".)
+A hackfest is similar to vacation. I always feel behind when I take vacation, but the change of scenery and the perspective make it valuable for my work productivity. (To say nothing of the fact that vacation makes life more enjoyable and that I don't view everything through the lens of "will it make me productive".)
 
 Scheduling is also important. Make sure you pick a date and time weeks in advance. Don't spring the idea of a day away from normal work on anyone. If possible, schedule it weeks away from internal and external deadlines, including the end of the quarter. Be flexible if issues pop up the day before which mean that some folks can't attend. If someone can't make it, they can't. They may be able to attend the presentation and support the concept and the employees who participated. 
 
-In short, you can make time if you think it valuable. I'll discuss more on the value you and your team can get from a hackfest below.
+In short, you can make time. I'll discuss more on the value you and your team can get from a hackfest below.
 
 ### Non-technical hacking
 
@@ -59,7 +59,7 @@ What about non-technical users? If you are trying to involve the entire company,
 
 Isn't the entire point of a hackfest the app or code improvements delivered?
 
-I've participated in sales and marketing efforts. I can say with certainty that folks in those departments can participate in a hackfest. You just need to set expectations for work product.
+I've participated in sales and marketing efforts. I can say with certainty that folks in those departments can participate in a hackfest. You just need to set expectations around the end product.
 
 Above, I didn't say "present your code" at the end of the hackfest, but rather "present what you worked on". The work product of a hackfest can take a lot of different forms:
 
@@ -108,9 +108,9 @@ Here's a step by step list of tasks for running a hackfest.
 
 This assumes you are running one in a smaller organization or team, between five and thirty people. Larger organizations may take longer, or shard larger groups of people into smaller sets.
 
-* First, get buy in from leadership. This includes setting participation expectations for them and their team. If you don't have this, it'll be tough to run a hackfest.
+* First, get buy-in from leadership. This includes setting participation expectations for them and their team. If you don't have this, it'll be tough to run a hackfest.
 * Write up an expectations and FAQ document, including information such as what you can expect at a hackfest, what the rules are, and the length of presentations. Make sure you make it clear that it's not all about code delivery.
-* Set a date and time, ideally a few months in the future. This makes it easier to get buy in. Fridays are good, but make sure the chosen date doesn't collide with deliverables or holidays. Reserve at least one whole day. Some teams do a few days or a week, but I don't have experience with hackfests longer than a day.
+* Set a date and time, ideally a few months in the future. This makes it easier to get buy-in. Fridays are good, but make sure the chosen date doesn't collide with deliverables or holidays. Reserve at least one whole day. Some teams do a few days or a week, but I don't have experience with hackfests longer than a day.
 * Add the event to everyone's shared calendar. Include a link to the expectations and FAQ. Hackfests usually kick off at 9am and end around 5pm. Encourage people to start thinking about ideas.
 * A week before the big day, send out an email reminder, with the expectations and FAQ link as well as any ideas you've come up with. 
 * At 8:30 on the date previously scheduled, set up if needed, and remind everyone that hackfest is happening that day.
@@ -118,11 +118,11 @@ This assumes you are running one in a smaller organization or team, between five
 * After that, build an idea list. People can add their ideas to a shared document or write them on a whiteboard.
 * After ideas are shared, encourage people to talk about their ideas to others. The goal is to get folks excited about working together. Suggest people sign up for teams working on interesting ideas. After a few minutes, folks will hopefully coalesce into teams. If some people want to work on their own, that's okay, but try to encourage team formation.
 * After this, everyone goes off to work. If you are a virtual team, it can be nice to have a dedicated chat channel people can hang in.
-* Determine when presentations should start. The exact time depends on how many teams you have. Each team should have at least five minutes to present and five minutes for questions. With five teams, and a desired end time of 5pm, presentations should to start at 4:10 pm.
+* Determine when presentations should start. The exact time depends on how many teams you have. Each team should have at least five minutes to present and five minutes for questions. With five teams, and a desired end time of 5pm, presentations should start at 4:10 pm.
 * About an hour before the presentations are set to begin, remind folks to sign up for a slot. I like to use a google spreadsheet.
-* Five minutes before the presentations begin, remind everyone again. If in-person, shephard everyone into the presentation room.
+* Five minutes before the presentations begin, remind everyone again. If in-person, shepherd everyone into the presentation room.
 * Begin the presentations. Your job is to make sure to cut off anyone running over time, and to emcee the questions. 
-* After presentations, ask everyone put their artifacts in a shared folder. People can also add any discovered, valuable tasks or features to the appropriate project management tool.
+* After presentations, ask everyone to put their artifacts in a shared folder. People can also add any discovered, valuable tasks or features to the appropriate project management tool.
 * After presentations are done, ask for feedback about hackfest mechanics, clean up and pat yourself on the back.
 
 ### In-person
@@ -137,13 +137,13 @@ If you are running an in-person hackfest, there's additional planning and work:
 
 ### Remote considerations
 
-If you running hackfest for remote employees across multiple timezones, make sure you consider the impact of the day on their lives.
+If you are running a hackfest for remote employees across multiple time zones, make sure you consider the impact of the day on their lives.
 
-Reach out to people outside of the core timezone and ask what their tolerance is for starting later or earlier in order to overlap and work collaboratively.
+Reach out to people outside of the core time zone and ask what their tolerance is for starting later or earlier in order to overlap and work collaboratively.
 
-For example, if your core timezone is USA/Denver, but you have employees in the Pacific and Eastern timezones, ask if the people in the east can work later and if the folks in the Pacific area can start a earlier.
+For example, if your core time zone is USA/Denver, but you have employees in the Pacific and Eastern time zones, ask if the people in the east can work later and if the folks in the Pacific area can start earlier.
 
-You can also schedule people based on their timezone. In the above example, someone in the Eastern timezone would present in the beginning, to minimize the impact on their day.
+You can also schedule people based on their time zone. In the above example, someone in the Eastern time zone would present in the beginning, to minimize the impact on their day.
 
 ### Non-employees
 
