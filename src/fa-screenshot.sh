@@ -14,12 +14,13 @@ function printFileAttribs() {
   printOut "Current size of the screenshot is : "`echo ${attributes} | cut -d' ' -f7`
 }
 
-function compressUsingTPNG() {
+function compressUsingTinyPNG() {
   echo "-- Using TinyPNG for compression"
 
   API_KEY=`printenv | grep TINYPNG_API_KEY | awk -F '=' '{print $2}'`
   if [ "${API_KEY}" == "" ]; then
-    echo "Error : TinyPNG API key not found in environment. Not compressing".
+    echo "Error : TinyPNG API key not found in environment. Not continuing. Please set TINYPNG_API_KEY".
+    exit 1
   else
     compressedFile=`curl -s --user api:${API_KEY} --data-binary @${absFile} -i https://api.tinify.com/shrink | grep -i location | awk '{print $2}' | sed 's/.$//'`
     printOut "-- Downloading from TinyPNG : ${compressedFile}"
@@ -39,9 +40,8 @@ function usage() {
   #print pretty usage and exit
   cat <<HELP_USAGE
 
-    $0  [-s] [-t] [-d destination folder] [-f filename] [-u url] [-h] 
+    $0  [-s] [-d destination folder] [-f filename] [-u url] [-h] 
 
-   -t  Use TinyPNG API instead of pngquant library. Set the TINYPNG_API_KEY env variable with a TinyPNG API key.
    -f  Filename for screenshot. If not provided, defaults to datetime. No suffix needed, a .png suffix will be appended.
    -u  URL to open before taking screenshot. Will cause a slight delay.
    -d  Move screenshots to given folder.
@@ -186,18 +186,7 @@ convert=`which convert`
 $convert -geometry 1600x ${absFile} ${absFile}
 
 printOut "-- Compressing png"
-if [ "${useTP}" == "yes" ]; then
-  compressUsingTPNG
-else
-  pngquant=`which pngquant`
-  $pngquant --quality=65-80 ${absFile}
-  #remove old file and rename compressed to new
-  basename=`basename ${absFile} .png`
-  rm ${absFile}
-  mv "${tempFolder}${basename}-fs8.png" ${absFile}
-  printFileAttribs
-fi
-
+compressUsingTinyPNG
 
 # move to destination folder
 if [ "${destination}" != "" ]; then
