@@ -4,7 +4,7 @@ title: Hackfests at FusionAuth
 description: How we hackfest at FusionAuth.
 author: Dan Moore
 excerpt_separator: "<!--more-->"
-image: blogs/oauth-react-fusionauth.png
+image: blogs/hackfest/hackfest-fusionauth.png
 category: blog
 ---
 
