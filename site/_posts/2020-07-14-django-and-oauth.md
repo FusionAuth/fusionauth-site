@@ -5,6 +5,7 @@ description: In this tutorial, we'll build a basic Django web application using 
 author: Gareth Dwyer
 image: blogs/social-sign-in-django/headerimage.png
 category: blog
+updated_date: 2022-09-27
 tags: client-python tutorial tutorial-django tutorial-python
 excerpt_separator: "<!--more-->"
 ---
@@ -89,7 +90,7 @@ Note that with a sandbox application, which is created by default, you can only 
 
 Once you've set up everything in the Google Console, you'll need to complete your setup by adding Google as an identity provider to FusionAuth and copying in the Client Id and Client Secret that you received from Google. These are different values than the FusionAuth application's Client Id and Client Secret. You can find the detailed steps for [setting up Google as a third-party login via FusionAuth here](/docs/v1/tech/identity-providers/google).
 
-In the next step, make sure that you have enabled the Google IdP and turn on "Create registration" for your Secret Birthday's app. You also need to specify the scopes that you allowed when setting up the app in the Google Cloud Console. Also don't forget to hit the save button.
+In the next step, make sure that you have enabled the Google Identity Provider and turn on "Create registration" for your Secret Birthday's app. You also need to specify the scopes that you allowed when setting up the app in the Google Cloud Console. Also don't forget to hit the save button.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/googlefusionauth.png" alt="Enabling Google registration in our application." class="img-fluid" figure=false %}
 
@@ -222,7 +223,7 @@ If you fire up `http://localhost:8000` in your web browser now, you should see o
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/homepage1.png" alt="Our public home page." class="img-fluid" figure=false %}
 
-To build the login URL (which will direct users to our FusionAuth server), we need to have some of our FusionAuth config copied across to our Django project. Specifically, we'll need an API key and our app's Client Id. Navigate to **Settings** and then **API Keys**, then add an API key. Add a name for the key and take note of the generated key value. 
+To build the login URL (which will direct users to our FusionAuth server), we need to have some of our FusionAuth config copied across to our Django project. Specifically, we'll need an API key and our app's Client Id. Navigate to "Settings" and then "API Keys", and add an API key. Add a name for the key and take note of the generated key value. 
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-django/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
