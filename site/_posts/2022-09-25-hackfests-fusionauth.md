@@ -122,7 +122,7 @@ This assumes you are running one in a smaller organization or team, between five
 * About an hour before the presentations are set to begin, remind folks to sign up for a slot. I like to use a google spreadsheet.
 * Five minutes before the presentations begin, remind everyone again. If in-person, shepherd everyone into the presentation room.
 * Begin the presentations. Your job is to make sure to cut off anyone running over time, and to emcee the questions. 
-* After presentations, ask everyone to put their artifacts in a shared folder. People can also add any discovered, valuable tasks or features to the appropriate project management tool.
+* After presentations, ask everyone to put their artifacts in a shared folder. People can also add any discovered, valuable tasks or features to the appropriate project management tool. Don't expect to push anything directly into production from a hackfest.
 * After presentations are done, ask for feedback about hackfest mechanics, clean up and pat yourself on the back.
 
 ### In-person
@@ -163,6 +163,18 @@ Here are some examples of hackfest projects that we've done here at FusionAuth:
 * A screenshot automation tool
 
 Some of these were exploratory, others are currently under active development, and some are deployed in production.
+
+## What if someone doesn't want to participate?
+
+If you've properly cleared the decks for people, limited the amount of time a hackfest is going to take, and have highlighted the fun, teamwork and autonomy, hopefully everyone will want to participate.
+
+What if someone has no desire to participate?
+
+Don't make them. Don't force anyone to participate.
+
+Doing so is counter to the idea of a hackfest. You don't know why they are not interested. They might be stressed about a work task, they might have had a bad experience in the past, they might not enjoy the idea of presenting in front of their peers.
+
+Invite them to the presentations, but make it clear that hackfests are an optional event and if it doesn't work for them this time, they'd be welcome in the future.
 
 ## Summing up
 
