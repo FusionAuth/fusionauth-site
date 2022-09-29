@@ -112,7 +112,7 @@ The `Update` operation must support the `PUT` method, but can optionally support
 
 There are also bulk operations, designed to apply any of the mutation operations (`Create`, `Update`, `Delete`) on many resources at one time.
 
-The specification has more `MAY`s than `MUST`s, so revew the documentation and/or machine readable configuration endpoints for any SCIM software you are considring using, before counting on any of these operations being implemented.
+The specification has more `MAY`s than `MUST`s, so review the documentation and/or machine readable configuration endpoints for any SCIM software you are considering using, before counting on any of these operations being implemented.
 
 ## Configuration Endpoints
 
@@ -141,7 +141,7 @@ Other considerations:
 * Will you be syncing data on a batch basis, a user-by-user basis or on a schedule?
 * Is there an expected timeframe for creation or deletion of users?
 * What are the performance characteristics of the client and the server?
-* How will you secure the connection between the client and the server? Authentication is built in to SCIM, but do you need other measures, such as a VPN, IP restrictions or client certificates?
+* How will you secure the connection between the client and the server? Authentication is built into SCIM, but do you need other measures, such as a VPN, IP restrictions or client certificates?
 * What [security measures do you need to take](https://datatracker.ietf.org/doc/html/rfc7643#section-9)?
 
 ### How Does The User Syncing Actually Work
@@ -171,7 +171,7 @@ SCIM is useful when your customers are themselves businesses with a centralized 
 
 When an employee leaves the customer's company, the employee account is automatically disabled in the SCIM server because of a message from the central user data store.
 
-You can also use SCIM to ensure employees have access to any custom applications which use a valid SCIM server as an identity store. When a new employee is added into your corporate directory (such as Azure AD, or Okta), the direcory, acting as a SCIM client, can provision them into custom applications, accelerating their onboarding experience.
+You can also use SCIM to ensure employees have access to any custom applications which use a valid SCIM server as an identity store. When a new employee is added into your corporate directory (such as Azure AD, or Okta), the directory, acting as a SCIM client, can provision them into custom applications, accelerating their onboarding experience.
 
 Equally important, when the employee departs, their access to the app also departs.
 
