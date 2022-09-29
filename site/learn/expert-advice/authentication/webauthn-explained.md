@@ -1,12 +1,12 @@
 ---
 layout: advice
 title: WebAuthn explained
-description: What is WebAuthn
+description: An in-depth look at how WebAuthn can help you add biometric authentication to your website.
 author: Dan Moore
 image: advice/vendor-lockin/expert-advice-avoiding-authentication-system-lock-in-header-image.png
 category: Authentication
-date: 2021-07-12
-dateModified: 2021-07-12
+date: 2022-09-28
+dateModified: 2022-07-28
 ---
 
 Webauthn is a new way to authenticate your users using biometric, secure authentication methods. WebAuthn requires something called an authenticator.
@@ -37,23 +37,39 @@ There are two types of authenticators:
 
 Authenticators have a public/private keypair. The purpose of an authenticator is to hold, create, and expose a public/private key pair. It can also be used to access the public key and allow data to be signed by the private key.
 
-## A brief digression on signing
+## A Brief Digression On Signing
 
-Suppose we have a user, Alice, who wants to send a message to a user, Bob. We want to make sure that Bob knows that Alice sent the message and that the message hasn't been changed. The user Charlie wants to interfere with the communication channel between Alice and Bob.
+Suppose we have a user, Alice, who wants to send a message to a user, Bob. We want to make sure that Bob knows that Alice sent the message and that the message hasn't been changed.
 
-One way to do this is for Alice to generate two keys: a public key and a private key. The public key is indicated by the blue key and the private key is indicated by the red key. These keys are related.
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/alice-sending-bob-message.png" alt="Alice sending Bob a message." class="img-fluid" figure=false %}
 
-TODO DIAGRAM
+Charlie wants to interfere with the communication channel between Alice and Bob, changing the message content.
 
-Alice sends the public key over to Bob. Alice doesn't just create the message M, she creates a signature as well which is based on mathematical operation with the private key that'll get over to Bob.
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/charlie-in-middle.png" alt="Charlie modifying the message Alice is sending." class="img-fluid" figure=false %}
+
+One way for Alice to succeed in keeping her message intact is for her to generate two keys: a public key and a private key. The public key is indicated by the blue key and the private key is indicated by the yellow key. These keys are related.
+
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/alice-generates-keys.png" alt="Alice generating a keypair." class="img-fluid" figure=false %}
+
+Alice sends the public key over to Bob. She can publish on a website, send it over email, or print it out and use a carrier pigeon. The public key is public.
+
+Next, Alice doesn't just create the message M, she creates a signature as well which is based on mathematical operation with the private key.
+
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/alice-signs-message.png" alt="Alice signs the message with her private key." class="img-fluid" figure=false %}
 
 Bob can use the public key and verify the signature matches in such a way that only the holder of the private key could have created it. 
 
-If Charlie gets in the middle and tries to modify the message, he can't change the signature correctly because only the holder of the private key can create that signature. 
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/bob-checks-message-signature.png" alt="Bob verifies message matches signature." class="img-fluid" figure=false %}
+
+If Charlie gets in the middle and tries to modify the message, he can't change the signature correctly because only the holder of the private key can create the correct signature.
+
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/charlie-tries-to-modify-message-with-signature.png" alt="Charlie can modify the message, but not the signature." class="img-fluid" figure=false %}
 
 When Bob checks the signature with the modified message, it won't check out and he'll know that the message has been tampered with.
 
-This is a brief overview of public/private key signatures. And the fact a signature ensures the validity of the message is what makes WebAuthn and the associated standards possible.
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/signature-doesnt-validate.png" alt="The signature is not valid because the message contents have changed." class="img-fluid" figure=false %}
+
+This is a brief overview of public/private key signatures. A signature ensures the validity of the message and this is a key part of what makes WebAuthn and the associated standards possible.
 
 ## Standards
 
@@ -61,9 +77,9 @@ Taking a step back, FIDO is an organization that's been around for years. It sta
 
 FIDO2 is the second version of the standard and WebAuthn is part of FIDO2. It was standardized starting in 2015 and fully baked in 2019.
 
-WebAuthn is about the browser interaction with a passwordless protocol. CTAP2 is a complementary standard which handles the browser to authenticator communication.
+WebAuthn is about the browser interaction with a passwordless protocol. CTAP2 is a complementary standard which handles the browser to authenticator communication. The yellow smiley face below is the user and the white globe is the browser.
 
-TODODIAGRAM
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/ctap2-webauthn.png" alt="Showing the difference between CTAP2 and WebAuthn." class="img-fluid" figure=false %}
 
 Assume you have a website that lets a user login with an authenticator. CTAP2 is handling the portion between the authenticator and the browser. It's worth noting that you can use CTAP2 without WebAuthn. But you would always want to get to the authenticator so you can have that passwordless authentication event, so CTAP2 would be in the picture if you were using FIDO2 with a native app.
 
@@ -71,7 +87,7 @@ Assume you have a website that lets a user login with an authenticator. CTAP2 is
 
 Assume you have a website that you want to use to sell clownwear. You know, big shoes and red noses and the like? You will call it... Cosmo's Clown Store.
 
-TODOpicture
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/clownwear.png" alt="Clownwear examples." class="img-fluid" figure=false %}
 
 In order to sell things in our store, people will need to be able to log in to perform typical tasks like checking their order status, adding things to their cart, and placing orders. Logging in will tie the user's identity to other data like their mailing address and credit card.
 
@@ -121,7 +137,7 @@ However, the authentication method is entirely decided by the authenticator; the
 
 WebAuthn is available on all modern browsers except for IE and Opera Mini. (Sorry IE and Opera Mini users!)
 
-TODO picture
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/can-i-use-webauthn.png" alt="Screen explaining browser support for WebAuthn." class="img-fluid" figure=false %}
 
 When a user wants to log in with WebAuthn, the flow goes as follows:
 
@@ -225,7 +241,7 @@ When an authentication ceremony happens, the website will have the user's public
 
 Registration is tied to each website. So if you use the same authenticator on multiple websites, each website will have its own corresponding key pair.
 
-TODO DIAGRAM
+{% include _image.liquid src="/assets/img/advice/webauthn-explained/keys-per-website.png" alt="Each website has its own keypair." class="img-fluid" figure=false %}
 
 Let's look at the code flow for the registration ceremony using the WebAuthn API. The options are a little more complicated than for authentication. 
 
