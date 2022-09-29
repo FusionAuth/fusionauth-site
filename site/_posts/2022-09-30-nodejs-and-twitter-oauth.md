@@ -3,7 +3,7 @@ layout: blog-post
 title: Adding a Twitter sign in to your Node.js + Express web application using OAuth
 description: In this tutorial, we'll build a basic Express web application using FusionAuth to handle login via Twitter.
 author: Bradley Van Aardt
-image: blogs/social-sign-in-django/headerimage.png
+image: blogs/social-sign-in-twitter-express/headerimage.png
 category: blog
 tags: client-node tutorial tutorial-express tutorial-node
 excerpt_separator: "<!--more-->"
@@ -32,7 +32,7 @@ The great news is that combining Passport with FusionAuth makes a complete syste
 
 With this setup, authentication concerns are taken care of entirely by FusionAuth
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-django/privateinfo-fusionauth.png" alt="Important private data goes in FusionAuth. Everything else in Django." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. FusionAuth coordinates with other identity providers" class="img-fluid" figure=false %}
 
 The image above shows how this works. Your application logic and all public information can be handled by Nodejs + Express. Anything sensitive, such as personally identifiable information (PII), is handled by FusionAuth.
 
@@ -53,11 +53,13 @@ docker-compose up
 
 Note that this uses a public `.env` file containing hard-coded database passwords and is not suitable for production use.
 
+For Twitter integration, we recommend setting up FusionAuth on a publicly available URL. This is because Twitter does not redirect to `localhost` addresses for [oAuth callbacks](https://stackoverflow.com/questions/800827/twitter-oauth-callbackurl-localhost-development). Some developers have luck setting a local `hosts` file entry, or using `127.0.0.1` instead of `localhost`, but the most reliable option is to host FusionAuth on a publicly accessible URL. Bear in mind the extra security considerations of this option.
+
 ### Configuring FusionAuth
 
-FusionAuth should now be running and reachable on `http://localhost:9011`. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more set up steps, as shown below.
+FusionAuth should now be running and reachable on your chosen URL, or `http://localhost:9011` if you've installed it locally. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more set up steps, as shown below.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-django/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
 
 We'll skip step **#3** in this tutorial, but sending emails (to verify email addresses and do password resets) is a vital part of FusionAuth running in production, so you'll want to do that.
 
@@ -69,7 +71,7 @@ Click "Setup" under "Missing Application" and call your new app "Twitter Express
 - `http://localhost:3000/` to the Authorized request origin URL
 - `http://localhost:3000/` to the Logout URL
   
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-django/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
 Click the Save button in the top right for your changes to take effect.
 
@@ -79,26 +81,26 @@ Once the user has logged in via the FusionAuth application, we can retrieve thei
 
 Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value. 
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-django/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
 For extra security, you can restrict the permissions for the key. For our app, we only need to enable the actions for `/api/user/`, which will let the key carry out basic actions on users. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-django/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
 ### Creating an application on Twitter
 
 In order to allow our users to sign in to our app using their Twitter account, you'll need to sign up for a [developer account on Twitter](https://developer.twitter.com). The full instructions for doing this are [available here](/docs/v1/tech/identity-providers/twitter).
 
-<todo: add note about local hosting, and how twitter doesnt like it>
-Use `http://localhost:9011/oauth2/callback` (where http://localhost:9011 is your FusionAuth installation address) for the Callback URI / Redirect URL. This will allow our FusionAuth app to talk to Twitter servers and have them authenticate users on our behalf, as shown below.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-django/google-authurls.png" alt="Adding authorized URLs to Google." class="img-fluid" figure=false %}
+Use `https://<YOUR_FUSIONAUTH_URL>/oauth2/callback` (where https://<YOUR_FUSIONAUTH_URL> is your FusionAuth installation address) for the Callback URI / Redirect URL. This will allow our FusionAuth app to talk to Twitter servers and have them authenticate users on our behalf, as shown below.
+
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-callbacks.png" alt="Adding authorized URLs to Google." class="img-fluid" figure=false %}
 
 Once you've set up everything on Twitter, you'll need to complete your setup by adding Twitter as an identity provider to FusionAuth and copying in the API Key and Secret that you received from Twitter. These are different values than the FusionAuth application's Client Id and Client Secret. You can find the detailed steps for [setting up Twitter as a third-party login via FusionAuth here](/docs/v1/tech/identity-providers/google).
 
 In the next step, make sure that you have enabled the Twitter integration and turn on "Create registration" for your Fusion + Express app. Also don't forget to hit the save button.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-django/googlefusionauth.png" alt="Enabling Google registration in our application." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-fusion.png" alt="Enabling Twittter registration in our application." class="img-fluid" figure=false %}
 
 Now we've done most of the admin. Let's build a Nodejs + Express app!
 
@@ -304,10 +306,33 @@ We are done with the demo. Type `npm start` at the console to start up the serve
 
 You should see the main page looking something like this:
 
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
+
+
+Clicking on "Login Here" should redirect you to your FusionAuth installation, with a Twitter button as a login option:
+
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/login-page.png" alt="The FusionAuth login page, with Twitter as an option" class="img-fluid" figure=false %}
+
+Clicking the "Login with Twitter" button should redirect you to Twitter to complete the authentication:
+
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-page.png" alt="The Twitter page asking permision to authenticate you to your FusionAuth instance" class="img-fluid" figure=false %}
+
+Entering your Twitter credentials should now redirect you back to the app's root page, where you should see a logged in message:
+
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
+
+Clicking on the "Members only area" link should take you to `users/me`, showing a JSON object representing your profile on FusionAuth (with the username from Twitter). 
+
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
+
+## Where to next with Express and FusionAuth?
+
+That’s the basics of our Express + Twitter + FusionAuth app done. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on github [here](https://github.com/fusionauth/fusionauth-example-express-twitter)
+
+Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, social sign in, and general security with just a small amount oof config code leaves a lot more time for your application's more useful and critical features. 
+
+For a production environment, you would also need to do a bit more work in making sure FusionAuth was really safe. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
 
 
 
-
-Add the passport setup to the `app.js` file.
-Add "express-session" and set it up
 
