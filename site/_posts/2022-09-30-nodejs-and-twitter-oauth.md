@@ -26,7 +26,7 @@ It'll also help if you know the basics of OAuth or authentication in general.
 
 ## Why FusionAuth instead of plain Passport?
 
-[Passport](link) is a one of the commonly used authentication systems in Express apps. It is very powerful, and allows you to hook into social providers, openID and oAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to contructs your own login page and other account functionality such as resetting passwords, forgotten password resets, 2FA, email verification, account protection and more. Setting up custom web app authentication is always more complicated than it seems
+[Passport](https://www.passportjs.org) is a one of the commonly used authentication systems in Express apps. It is very powerful, and allows you to hook into social providers, openID and oAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to contructs your own login page and other account functionality such as resetting passwords, forgotten password resets, 2FA, email verification, account protection and more. Setting up custom web app authentication is always more complicated than it seems
 
 The great news is that combining Passport with FusionAuth makes a complete system, which takes care of all aspects of authentication. It also means that much of your apps authentication capability can be configured through FusionAuth, rather than writing code and modifying your app. For example, you can easily add social login providers whenever you need, without changing code or redeploying your app. 
 
@@ -77,7 +77,7 @@ Click the Save button in the top right for your changes to take effect.
 
 ## Setup a FusionAuth API Key
 
-Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth Profile using the [FusionAuth Typescript module](link), provided with an API key.
+Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth Profile using the [FusionAuth Typescript module](https://www.npmjs.com/package/@fusionauth/typescript-client), provided with an API key.
 
 Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value. 
 
@@ -137,7 +137,7 @@ Our application will only have three pages, including the FusionAuth login page.
 
 ## Add and Initialise dependencies
 
-To start, we'll add the references needed foor [Passport](link), the [Passport-oauth2](link) strategy,enabling sessions using [Express Sessions](link). We'll also add a ref to the [FusionAuth typescript](link) client.
+To start, we'll add the references needed foor [Passport](https://www.passportjs.org), the [Passport-oauth2](https://www.passportjs.org/packages/passport-oauth2/) strategy,enabling sessions using [Express Sessions](https://github.com/expressjs/session). We'll also add a ref to the [FusionAuth typescript](https://www.npmjs.com/package/@fusionauth/typescript-client) client.
 
 Open the `app.js` file. Below the line `var logger = require('morgan');` add in the following:
 
@@ -172,7 +172,7 @@ const fusionClient = new FusionAuthClient(
 Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at. Replace `<YOUR_FUSION_API_KEY>` with the API key created earlier. 
 
 
-Now we can initialize the [Passport strategy](link). We'll be connecting to FusionAuth using oAuth2, so we'll use the [passport-oauth2](link) strategy. Add the following code directly below the code you've just added:
+Now we can initialize the [Passport strategy](https://www.passportjs.org/concepts/authentication/strategies/). We'll be connecting to FusionAuth using oAuth2, so we'll use the [passport-oauth2](https://www.passportjs.org/packages/passport-oauth2/) strategy. Add the following code directly below the code you've just added:
 
 ```js
 passport.use(
@@ -287,7 +287,7 @@ router.get('/me', function(req, res, next) {
 });
 
 ```
-Now, we need to secure the route to this page to users that are authenticated. To help with that, we'll use the [`connect-ensure-login`](link) middleware we installed earlier. Update the `users` route in the `app.js` file from:
+Now, we need to secure the route to this page to users that are authenticated. To help with that, we'll use the [`connect-ensure-login`](https://github.com/jaredhanson/connect-ensure-login) middleware we installed earlier. Update the `users` route in the `app.js` file from:
 
 ```js
 app.use('/users', usersRouter);
