@@ -1,15 +1,14 @@
 ---
 layout: blog-post
-title: Adding a Twitter sign in to your Node.js + Express web application using OAuth
+title: Adding Twitter sign in to your Node.js + Express web application using OAuth
 description: In this tutorial, we'll build a basic Express web application using FusionAuth to handle login via Twitter.
 author: Bradley Van Aardt
-image: blogs/social-sign-in-twitter-express/headerimage.png
 category: blog
 tags: client-node tutorial tutorial-express tutorial-node
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll build a basic Nodejs + [Express](http://expressjs.com) web application which does user registration and authentication via FusionAuth. We'll also hook FusionAuth into Twitter's authentication system, to allow users to easily login to your app via Twitter. 
+In this tutorial, we'll build a basic Nodejs + [Express](http://expressjs.com) web application which does user registration and authentication via FusionAuth. We'll also hook FusionAuth into Twitter's authentication system, to allow users to easily log in to your app via Twitter. 
 
 <!--more-->
 
@@ -26,9 +25,9 @@ It'll also help if you know the basics of OAuth or authentication in general.
 
 ## Why FusionAuth instead of plain Passport?
 
-[Passport](https://www.passportjs.org) is a one of the commonly used authentication systems in Express apps. It is very powerful, and allows you to hook into social providers, openID and oAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to contructs your own login page and other account functionality such as resetting passwords, forgotten password resets, 2FA, email verification, account protection and more. Setting up custom web app authentication is always more complicated than it seems
+[Passport](https://www.passportjs.org) is a one of the commonly used authentication systems in Express apps. It is very powerful, and allows you to hook into social providers, openID and OAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to construct your own login page and other account functionality such as resetting passwords, forgotten password resets, 2FA, email verification, account protection and more. Setting up custom web app authentication is always more complicated than it seems
 
-The great news is that combining Passport with FusionAuth makes a complete system, which takes care of all aspects of authentication. It also means that much of your apps authentication capability can be configured through FusionAuth, rather than writing code and modifying your app. For example, you can easily add social login providers whenever you need, without changing code or redeploying your app. 
+The great news is that combining Passport with FusionAuth makes a complete system, which takes care of all aspects of authentication. It also means that much of your app's authentication capability can be configured through FusionAuth, rather than writing code and modifying your app. For example, you can easily add social login providers whenever you need, without changing code or redeploying your app. 
 
 With this setup, authentication concerns are taken care of entirely by FusionAuth
 
@@ -36,7 +35,7 @@ With this setup, authentication concerns are taken care of entirely by FusionAut
 
 The image above shows how this works. Your application logic and all public information can be handled by Nodejs + Express. Anything sensitive, such as personally identifiable information (PII), is handled by FusionAuth.
 
-This allows you to focus a majority of your security efforts on the FusionAuth installation. It also means that if you create more applications, they can piggy-back on your centralised authentication instead of having to re-implement authentication for every application that you build. You can also create a multi-tenant configuration allowing you to easily have logically separate environments for different clients.
+This allows you to focus a majority of your security efforts on the FusionAuth installation. It also means that if you create more applications, they can piggyback on your centralised authentication instead of having to re-implement authentication for every application that you build. You can also create a multi-tenant configuration allowing you to easily have logically separate environments for different clients.
 
 Also, any integrations that you set up with other providers (e.g. Twitter sign in) can be done once, instead of per application.
 
@@ -53,7 +52,7 @@ docker-compose up
 
 Note that this uses a public `.env` file containing hard-coded database passwords and is not suitable for production use.
 
-For Twitter integration, we recommend setting up FusionAuth on a publicly available URL. This is because Twitter does not redirect to `localhost` addresses for [oAuth callbacks](https://stackoverflow.com/questions/800827/twitter-oauth-callbackurl-localhost-development). Some developers have luck setting a local `hosts` file entry, or using `127.0.0.1` instead of `localhost`, but the most reliable option is to host FusionAuth on a publicly accessible URL. Bear in mind the extra security considerations of this option.
+For Twitter integration, we recommend setting up FusionAuth on a publicly available URL. This is because Twitter does not redirect to `localhost` addresses for [OAuth callbacks](https://stackoverflow.com/questions/800827/twitter-oauth-callbackurl-localhost-development). Some developers have luck setting a local `hosts` file entry, or using `127.0.0.1` instead of `localhost`, but the most reliable option is to host FusionAuth on a publicly accessible URL. Bear in mind the extra security considerations of this option.
 
 ### Configuring FusionAuth
 
@@ -92,15 +91,15 @@ For extra security, you can restrict the permissions for the key. For our app, w
 In order to allow our users to sign in to our app using their Twitter account, you'll need to sign up for a [developer account on Twitter](https://developer.twitter.com). The full instructions for doing this are [available here](/docs/v1/tech/identity-providers/twitter).
 
 
-Use `https://<YOUR_FUSIONAUTH_URL>/oauth2/callback` (where https://<YOUR_FUSIONAUTH_URL> is your FusionAuth installation address) for the Callback URI / Redirect URL. This will allow our FusionAuth app to talk to Twitter servers and have them authenticate users on our behalf, as shown below.
+Use `https://<YOUR_FUSIONAUTH_URL>/oauth2/callback` (where `https://<YOUR_FUSIONAUTH_URL>` is your FusionAuth installation address) for the Callback URI / Redirect URL. This will allow our FusionAuth app to talk to Twitter servers and have them authenticate users on our behalf, as shown below.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-callbacks.png" alt="Adding authorized URLs to Google." class="img-fluid" figure=false %}
 
-Once you've set up everything on Twitter, you'll need to complete your setup by adding Twitter as an identity provider to FusionAuth and copying in the API Key and Secret that you received from Twitter. These are different values than the FusionAuth application's Client Id and Client Secret. You can find the detailed steps for [setting up Twitter as a third-party login via FusionAuth here](/docs/v1/tech/identity-providers/google).
+Once you've set up everything on Twitter, you'll need to complete your setup by adding Twitter as an identity provider to FusionAuth and copying in the API Key and Secret that you received from Twitter. These are different values than the FusionAuth application's Client Id and Client Secret. You can find the detailed steps for [setting up Twitter as a third-party login via FusionAuth here](/docs/v1/tech/identity-providers/twitter).
 
 In the next step, make sure that you have enabled the Twitter integration and turn on "Create registration" for your Fusion + Express app. Also don't forget to hit the save button.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-fusion.png" alt="Enabling Twittter registration in our application." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-fusion.png" alt="Enabling Twitter registration in our application." class="img-fluid" figure=false %}
 
 Now we've done most of the admin. Let's build a Nodejs + Express app!
 
@@ -131,13 +130,13 @@ If all went well, the server should start successfully and you can visit `http:/
 Our application will only have three pages, including the FusionAuth login page.
 
 1. A home page - a public page showing how many users our app has and inviting users to log in.
-1. The log in / sign up page (redirected to FusionAuth) with options to use a username/password or to sign in with Twitter.
-1. A logged in private "Member's Only" page. This will display the user's profile retrieved from FusionAuth
+2. The login / sign up page (redirected to FusionAuth) with options to use a username/password or to sign in with Twitter.
+3. A logged in private "Member's Only" page. This will display the user's profile retrieved from FusionAuth
 
 
 ## Add and Initialise dependencies
 
-To start, we'll add the references needed foor [Passport](https://www.passportjs.org), the [Passport-oauth2](https://www.passportjs.org/packages/passport-oauth2/) strategy,enabling sessions using [Express Sessions](https://github.com/expressjs/session). We'll also add a ref to the [FusionAuth typescript](https://www.npmjs.com/package/@fusionauth/typescript-client) client.
+To start, we'll add the references needed for [Passport](https://www.passportjs.org), the [Passport-oauth2](https://www.passportjs.org/packages/passport-oauth2/) strategy, enabling sessions using [Express Sessions](https://github.com/expressjs/session). We'll also add a ref to the [FusionAuth typescript](https://www.npmjs.com/package/@fusionauth/typescript-client) client.
 
 Open the `app.js` file. Below the line `var logger = require('morgan');` add in the following:
 
@@ -160,7 +159,7 @@ app.use(passport.session());
 
 Replace the `TOPSECRET` string with a string of your choosing. This secret is used to sign the session information in the cookie. Normally, this is kept secret, as anyone who has access to the secret could construct a session cookie that looks legitimate to the server and give them access to any account on the server. You can also add an environment variable to store this secret, rather than store it in the code repo.
 
-We'll also need to intialize the FusionAuth client with the API key created earlier. This will allow us to retrieve the user profile from FusionAuth after a successful login. Add the following code just below the previous code added:
+We'll also need to initialize the FusionAuth client with the API key created earlier. This will allow us to retrieve the user profile from FusionAuth after a successful login. Add the following code just below the previous code added:
 
 ```js
 const fusionClient = new FusionAuthClient(
@@ -172,7 +171,7 @@ const fusionClient = new FusionAuthClient(
 Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at. Replace `<YOUR_FUSION_API_KEY>` with the API key created earlier. 
 
 
-Now we can initialize the [Passport strategy](https://www.passportjs.org/concepts/authentication/strategies/). We'll be connecting to FusionAuth using oAuth2, so we'll use the [passport-oauth2](https://www.passportjs.org/packages/passport-oauth2/) strategy. Add the following code directly below the code you've just added:
+Now we can initialize the [Passport strategy](https://www.passportjs.org/concepts/authentication/strategies/). We'll be connecting to FusionAuth using OAuth2, so we'll use the [passport-oauth2](https://www.passportjs.org/packages/passport-oauth2/) strategy. Add the following code directly below the code you've just added:
 
 ```js
 passport.use(
@@ -201,7 +200,7 @@ passport.use(
 
 Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at. Replace `<YOUR_FUSIONAUTH_APP_CLIENTID>`, and `<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>` with the values you saved during the FusionAuth application setup earlier.
 
-This snippet of code sets up the oAuth parameters for the passport strategy. The strategy has a callback which is invoked when a successfull authorization and token call has been completed to FusionAuth. The FusionAuth client has a handy method to retreive a user by the JWT returned from the authorization process. We can use this to get the user, and return it the the passport strategy callback. This user will then also be passed to out session handler to save, and added to the `req` parameter in subsequent middleware handlers as `req.user`. To enable this, add the following code, below the code you just added:
+This snippet of code sets up the OAuth parameters for the passport strategy. The strategy has a callback which is invoked when a successful authorization and token call has been completed to FusionAuth. The FusionAuth client has a handy method to retrieve a user by the JWT returned from the authorization process. We can use this to get the user, and return it to the passport strategy callback. This user will then also be passed to out session handler to save, and added to the `req` parameter in subsequent middleware handlers as `req.user`. To enable this, add the following code, below the code you just added:
 
 ```js
 passport.serializeUser(function (user, done) {
@@ -229,7 +228,7 @@ app.get("/login", passport.authenticate("oauth2"));
 ```
 Note that we don't need to add a router or view for the login redirect to FusionAuth to work. Passport will check that if the user needs to be logged in, and if so will send them to FusionAuth for authentication. 
 
-After authentication, FusionAuth will redirect to the callback route we provided in the Passport oAuth setup, as well as in the authorized callback route earlier. We can add this route now. Add the following code under the `login` route:
+After authentication, FusionAuth will redirect to the callback route we provided in the Passport OAuth setup, as well as in the authorized callback route earlier. We can add this route now. Add the following code under the `login` route:
 
 ```js
 app.get(
@@ -254,10 +253,10 @@ Passport adds a function `isAuthenticated()` to the `req` object. Querying this 
 
 Now open the `index.hbs` file in the `views` folder, and update the code to the following:
 
+{% raw %}
 ```html
 <h1>{{title}}</h1>
 <p>Welcome to {{title}}</p>
-
 
 {{#if authenticated}}
   <p>You are logged in!</p>
@@ -270,6 +269,7 @@ Now open the `index.hbs` file in the `views` folder, and update the code to the 
   </p>
 {{/if}}
 ```
+{% endraw %}
 
 This will notify the user if they are logged in or not, and point them to the relevant page. 
 
@@ -298,7 +298,7 @@ to:
 app.use('/users', ensureLoggedIn('/login'), usersRouter);
 ```
 
-The `ensureLoggedIn` middleware checks if the user is authenticated before proceeding to the the router (or following middleware). It redirects to the `login` page if the user is not logged in. 
+The `ensureLoggedIn` middleware checks if the user is authenticated before proceeding to the router (or following middleware). It redirects to the `login` page if the user is not logged in. 
 
 ## Testing it all
 
@@ -315,21 +315,21 @@ Clicking on "Login Here" should redirect you to your FusionAuth installation, wi
 
 Clicking the "Login with Twitter" button should redirect you to Twitter to complete the authentication:
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-page.png" alt="The Twitter page asking permision to authenticate you to your FusionAuth instance" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-page.png" alt="The Twitter page asking permission to authenticate you to your FusionAuth instance" class="img-fluid" figure=false %}
 
 Entering your Twitter credentials should now redirect you back to the app's root page, where you should see a logged in message:
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
 
-Clicking on the "Members only area" link should take you to `users/me`, showing a JSON object representing your profile on FusionAuth (with the username from Twitter). 
+Clicking on the "members only area" link should take you to `users/me`, showing a JSON object representing your profile on FusionAuth (with the username from Twitter). 
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
 
 ## Where to next with Express and FusionAuth?
 
-That’s the basics of our Express + Twitter + FusionAuth app done. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on github [here](https://github.com/fusionauth/fusionauth-example-express-twitter)
+That’s the basics of our Express + Twitter + FusionAuth app done. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-express-twitter)
 
-Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, social sign in, and general security with just a small amount oof config code leaves a lot more time for your application's more useful and critical features. 
+Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, social sign in, and general security with just a small amount of config code leaves a lot more time for your application's more useful and critical features. 
 
 For a production environment, you would also need to do a bit more work in making sure FusionAuth was really safe. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
 
