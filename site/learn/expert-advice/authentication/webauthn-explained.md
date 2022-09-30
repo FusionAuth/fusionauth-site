@@ -6,12 +6,12 @@ author: Dan Moore
 image: advice/vendor-lockin/expert-advice-avoiding-authentication-system-lock-in-header-image.png
 category: Authentication
 date: 2022-09-28
-dateModified: 2022-07-28
+dateModified: 2022-09-28
 ---
 
 Webauthn is a new way to authenticate your users using biometric, secure authentication methods. WebAuthn requires something called an authenticator. What is an authenticator? An authenticator is a hardware or software device that is used to authenticate a user, via biometric or other methods, and that follows certain standards.
 
-That's a bit tautalogical, isn't it? Well, yes, but read on for more details. Also, clowns.
+That's a bit tautological, isn't it? Well, yes, but read on for more details. Also, clowns.
 
 ## WebAuthn Overview
 
@@ -32,14 +32,14 @@ What does an authentication ceremony look like? At a high level, the flow of int
 
 In general terms, there are two types of authenticators:
 
-1) Hardware authenticators, such as Yubikeys
-2) Software authenticators, built into the OS, such as Face ID
+1. Hardware authenticators, such as Yubikeys
+1. Software authenticators, built into the operating system, such as Apple's Face ID or Touch ID
 
-Authenticators have a public/private keypair. The purpose of an authenticator is to hold and create this keypair. It also needs to expose the public key. The entire credential, which includes the public key and associated metadata, is often called a "passkey". It must be able to sign messages with the private key.
+Authenticators store public/private keypairs securely. The purpose of an authenticator is to create and hold such keypairs. It also needs to expose the public key. The entire credential, which includes the public key and associated metadata, is often called a "passkey". Further, the authenticator must be able to sign content with the private key.
 
 ## A Brief Digression On Signing
 
-Suppose we have a user, Alice, who wants to send a message M to a user, Bob. We want to make sure that Bob knows that Alice sent the message and that the message hasn't been changed.
+Let's dive into message signing a bit more, since it is so critical to WebAuthn. Suppose you have a user, Alice, who wants to send a message M to a user, Bob. Alice wants to make sure that Bob knows that Alice sent the message and that the message hasn't been changed.
 
 {% include _image.liquid src="/assets/img/advice/webauthn-explained/alice-sending-bob-message.png" alt="Alice sending Bob a message." class="img-fluid" figure=false %}
 
@@ -65,7 +65,7 @@ If Charlie gets in the middle and tries to modify the message, he can (what!). B
 
 {% include _image.liquid src="/assets/img/advice/webauthn-explained/charlie-tries-to-modify-message-with-signature.png" alt="Charlie can modify the message, but not the signature." class="img-fluid" figure=false %}
 
-When Bob checks the signature that arrived with the modified message, it failes. Bob then knows the message has been tampered with.
+When Bob checks the signature that arrived with the modified message, it fails. Bob then knows the message has been tampered with.
 
 {% include _image.liquid src="/assets/img/advice/webauthn-explained/signature-doesnt-validate.png" alt="The signature is not valid because the message contents have changed." class="img-fluid" figure=false %}
 
@@ -125,7 +125,7 @@ An alternative is to use WebAuthn.
 
 With WebAuthn, the server only stores public keys. Public keys are designed to be public, and so aren't much of a target for any attacker. The private keys, which are the other half of the credential, are stored in a distributed manner across authenticators held by each user. 
 
-WebAuthn is built into all browsers and is phishing-resistant because it's tied to a specific piece of hardware or software. The user not only has to have access to that hardware or software, but also can't share that access with anyone else. WebAuthn is only available on HTTPS sites, and therefore has built in spoof protection against domain name mismatches. This gives the user a much more secure experience than MFA or a password manager. 
+WebAuthn is built into all browsers and is phishing-resistant because it's tied to a specific piece of hardware or software. The user not only has to have access to that hardware or software, but also can't share that access with anyone else. WebAuthn is only available on HTTPS sites, and has protection against domain name mismatches. These all combine to offer a more secure experience than MFA or a password manager. 
 
 Examples of authentication that WebAuthn can enable:
 
@@ -139,23 +139,25 @@ As mentioned above, WebAuthn is available on all modern browsers except for IE a
 
 {% include _image.liquid src="/assets/img/advice/webauthn-explained/can-i-use-webauthn.png" alt="Screen explaining browser support for WebAuthn." class="img-fluid" figure=false %}
 
-We've already seen the high level authentication flow, but let's take closer look. When a user logs in with WebAuthn, a typical flow is:
+You've already seen the high level authentication flow, but let's take a closer look. When a user logs in with WebAuthn, a typical flow is:
 
 1. The user signals they want to use WebAuthn. This could be a previously set cookie, clicking a button, or some other manner.
 2. The web server sends a request to the browser.
-3. The browser makes a request of the authenticator.
+3. The browser sends a request to the authenticator.
 4. The authenticator asks the user for their permission.
 5. The user grants permission, and the authenticator generates a signature and a result and sends them back to the web browser.
 6. The web browser sends the data back to the server.
-7. The server verifies the the data with the previously registered public key. If it checks out, the user is logged in.
+7. The server verifies the data with the previously registered public key. If it checks out, the user is logged in.
+
+Don't worry, you'll see some code in a minute.
 
 In more concrete terms, the user needs to authenticate to access their account at the clown store, so they begin the process.
 
 The browser sends a request to the website to log in. The website then passes back a challenge, a website identifier, and some other data. The challenge is used to prevent replay attacks and is a randomly generated string of characters.
 
-As mentioned above, each passkey is tied to a specific domain name and only allowed on HTTPS URLs, which are enforced by the browser. For instance, you can't do an authentication request for the site `example.com` if the page is served by `cosmosclownstore.com`. If these security checks pass, the browser passes the request to the authenticator via CTAP2. The authenticator then authenticates the user using a biometric means like facial recognition (or any other means it implements).
+As mentioned above, each passkey is tied to a specific domain name and only allowed on HTTPS URLs, which are enforced by the browser. For instance, you can't do an authentication request for the site `example.com` if the page is served by `cosmosclownstore.com`. If these security checks pass, the browser passes the request to the authenticator via CTAP2. The authenticator then authenticates the user using biometric means such as facial recognition (or any other means it implements).
 
-The user can choose not to authenticate with the authenticator, in which case it send back an error message. If the user does authenticate, the authenticator creates a signed assertion and passes it back to the browser. The browser passes the assertion back to Cosmo's Clown Store.
+The user can choose not to authenticate with the authenticator, in which case it sends back an error message. If the user does authenticate, the authenticator creates a signed assertion and passes it back to the browser. The browser passes the assertion back to Cosmo's Clown Store.
 
 Cosmos Clown Store can verify the assertion with the public key that is stored and associated with that user. If the assertion checks out, the user is logged in and can buy all the clownwear they want.
 
@@ -219,9 +221,9 @@ There are two main types of authenticators: cross-platform authenticators and pl
 
 Cross-platform authenticators are hardware devices that can be used between different devices, like a Yubikey.
 
-Platform authenticators are built into the operating system and exist in all major operating systems, both desktop and mobile. The ubiquity of platform authenticators means they are best for consumer facing applications. The operating systems have sophisticated biometric authentication means that you can access with WebAuthn using a simple interface.
+Platform authenticators are built into the operating system and exist in all major operating systems, both desktop and mobile. The ubiquity of platform authenticators means they are best for consumer facing applications. The operating systems have sophisticated biometric authentication; you can access these with WebAuthn using the standard JavaScript API outlined above.
 
-WebAuthn handles communication between the browser and the website, and the browsers leverage the CTAP2 protocol to talk to authenticators. As a WebAuthn implementor, you don't need to know CTAP2, just trust it exists.
+WebAuthn handles communication between the browser and the website, and the browsers leverage the CTAP2 protocol to talk to authenticators. As a WebAuthn system implementer, you don't need to know CTAP2, just understand it exists.
 
 As mentioned above, there are three main WebAuthn ceremonies: authentication, which you've already seen, registration and attestation.
 
@@ -319,13 +321,13 @@ Attestation is the third major ceremony and the question it answers is: How do I
 
 Each type of authenticator has a shared private key. This key is totally separate from private keys used for the authentication and registration ceremonies, which are tied to individual websites. The corresponding public key is stored in a public metadata registry. Here's the [FIDO alliance metadata service](https://fidoalliance.org/metadata/).
 
-With attestation, you ask the authenticator create a signature with the common private key, and then verify it with the public key from the registry.
+With attestation, you ask the authenticator to create a signature with the common private key, and then verify it with the public key from the registry.
 
 This way, you can verify only the holder of the private key could have created that signature. Which means you know that the authenticator is of the corresponding type.
 
 Attestation has some problems. The spec alludes to privacy concerns. You don't really know whether authenticators can provide this proof of lineage. In general, this is an enterprise use case.
 
-However, the metadata registry has more than the public keys used for attestation. Information such as the capabilities each authenticator supports and whether or not a authenticator might be deprecated because of security issues are included.
+However, the metadata registry has more than the public keys used for attestation. It includes information such as the capabilities each authenticator supports and whether or not an authenticator might be deprecated because of security issues.
 
 Here is one example of a registry entry.
 
@@ -434,7 +436,7 @@ There is a lot of structured metadata that you can use if desired.
 
 ## User Presence vs User Verification
 
-Authenticators can be also used as a second factor of authentication, when paired with a username and password or other factor. An authentication ceremony give you assurances about the user having access to the authenticator. If you are using an authenticator in this way, you want to distinguish between user presence versus user verification. 
+Authenticators can be also used as a second factor of authentication, when paired with a username and password or other factor. An authentication ceremony gives you assurances about the user having access to the authenticator. If you are using an authenticator in this way, you want to distinguish between user presence versus user verification. 
 
 User presence is when someone is there behind the authenticator who gave permission, but you don't know who. All it proves is that you have access to the authenticator. An example of this is when you press a button on a Yubikey.
 
@@ -454,9 +456,9 @@ Another WebAuthn feature is resident keys. With these, the user to website mappi
 
 This is available for cross-platform authenticators. With this feature, the server does not have to have prior knowledge of the user before they are authenticated. They can register and authenticate at the same time. This is less common in the B2C space.
 
-## Implemenation Details
+## Implementation Details
 
-What do we need to consider when implementing WebAuthn authentication? In some ways, the actual ceremonies are easy; they are specified in a fair bit of detail in the W3C standard. One FusionAuth developer said "the hardest part of the WebAuthn portion was translating from byte arrays to base64 and back".
+What do you need to consider when implementing WebAuthn authentication? In some ways, the actual ceremonies are easy; they are specified in a fair bit of detail in the W3C standard. One FusionAuth developer said "the hardest part of the WebAuthn portion was translating from byte arrays to base64 and back".
 
 But there's more, such as:
 
