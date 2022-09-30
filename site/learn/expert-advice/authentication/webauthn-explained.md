@@ -15,25 +15,26 @@ That's a bit tautological, isn't it? Well, yes, but read on for more details. Al
 
 ## WebAuthn Overview
 
-WebAuthn has flows of data and interaction, termed "ceremonies". These extend a network protocol to include things in the real world, such as physical hardware or human beings. There are three main ones:
+WebAuthn has flows of data and interaction, termed "ceremonies". These extend a network protocol to include things in the real world, such as physical hardware or human beings. There are two main ones:
 
-1. Registration, where the user associates an authenticator with their account
 1. Authentication, where the user logs in, using WebAuthn
-1. Attestation, where the authenticator is tied back to a known source, such as an operating system vendor
+1. Registration, where the user associates an authenticator with their account
 
 What does an authentication ceremony look like? At a high level, the flow of interaction is:
 
 1. The user tries to login to a website
 1. The website prompts the user to authenticate
-1. The user authenticates against their authenticator, which can use biometric means like Touch ID or any other method
+1. The user authenticates against their authenticator
 1. The authenticator signs and passes a response back to the website through the browser
 1. The website verifies the authenticator response
 1. The user is logged in
 
+Whenever the user authenticates against the relevant authenticator, that is an "authorization gesture". Even thoguh "gesture" implies movement, it could be a biometric means like Touch ID, using a PIN, or any other method that an authenticator offers.
+
 In general terms, there are two types of authenticators:
 
-1. Hardware authenticators, such as YubiKeys
-1. Software authenticators, built into the operating system, such as Apple's Face ID or Touch ID
+1. Cross-platform authenticators, such as YubiKeys, which can move between different devices
+1. Platform authenticators, built into the operating system, such as Apple's Face ID or Touch ID, which are tied to a given device
 
 Authenticators store public/private keypairs securely. The purpose of an authenticator is to create and hold such keypairs. It also needs to expose the public key. The entire credential, which includes the public key and associated metadata, is often called a "passkey". Further, the authenticator must be able to sign content with the private key.
 
@@ -79,9 +80,7 @@ WebAuthn focuses on the browser interaction with a passwordless protocol. CTAP2 
 
 {% include _image.liquid src="/assets/img/advice/webauthn-explained/ctap2-webauthn.png" alt="Showing the difference between CTAP2 and WebAuthn." class="img-fluid" figure=false %}
 
-If you have a website that lets a user log in with an authenticator, then CTAP2 is handling communication between the authenticator and the browser. 
-
-You can use CTAP2 without WebAuthn, for example, with a native app.
+If you have a website that lets a user log in with an authenticator, then CTAP2 is handling communication between the authenticator and the browser. You can use CTAP2 without WebAuthn, for example, with a desktop app.
 
 ## Selling Clownwear
 
@@ -109,35 +108,50 @@ If a password manager is centralized, it is now a high-value target. If it is no
 
 ### MFA
 
-If you add an additional factor of authentication (i.e. text the user a code, send them an email with a code, or require them to enter some code based on some algorithm using something like Google Authenticator), you can increase security. These additional factors of the authentication.
+If you add an additional factor of authentication (i.e. text the user a code, send them an email with a code, or require them to enter some code based on some algorithm using something like Google Authenticator), you can increase security. These additional factors of the authentication add additional assurance about who the user is during an authentication process.
 
-They add additional assurance about who the user is during an authentication process. However, the user experience is tough. It can be a hassle to force someone to go to a different device to get a code. Depending on the method, it can also be insecure. For example, SMS codes can be phished.
+However, the user experience is suboptimal. It can be a hassle to force someone to go to a different device to get a code.
+
+Depending on the method, it can also be insecure. For example, SMS codes can be phished. If you are using push messaging, attackers can bombard users until [MFA fatigue sets in](https://techcommunity.microsoft.com/t5/microsoft-entra-azure-ad-blog/defend-your-users-from-mfa-fatigue-attacks/ba-p/2365677).
 
 ### Single Sign-on
 
-Single sign-on is another option, which doesn't have these same security risks, or rather, it centralizes them. Which makes some sense; I pay more attention to my Google account than to the many random accounts I've created on other sites.
+Single sign-on is another option, which doesn't have these same risks. To be more precise, it centralizes them. This makes sense, as most people pay more attention to their Google/Facebook/Apple account than to the many random accounts they've created on other sites. You can depend on a big company's engineers to encourage best practices.
 
 However, single sign-on has a business risk. You are now depending on a third party to allow your users to access your website.
 
 ## WebAuthn
 
-An alternative is to use WebAuthn.
+WebAuthn is a decentralized, consumer-friendly, secure alternative for protecting your clownwear store.
 
-With WebAuthn, the server only stores public keys. Public keys are designed to be public, and so aren't much of a target for any attacker. The private keys, which are the other half of the credential, are stored in a distributed manner across authenticators held by each user. 
+With WebAuthn, the private keys which authenticate the user to the website typically remain on the authenticator. (There are some services that sync them across devices, but that is not part of the specification.) The server stores only public keys, which means that, unlike password hashes, there's not much value in obtaining them.
 
-WebAuthn is built into all browsers and is phishing-resistant because it's tied to a specific piece of hardware or software. The user not only has to have access to that hardware or software, but also can't share that access with anyone else. WebAuthn is only available on HTTPS sites, and has protection against domain name mismatches. These all combine to offer a more secure experience than MFA or a password manager. 
+WebAuthn is phishing-resistant because of built-in browser security checks. These include:
 
-Examples of authentication that WebAuthn can enable:
+* Each credential is locked to a specific domain name and won't be presented to any other domain
+* WebAuthn won't work if the requesting site is not on HTTPS
+
+Additionally, WebAuthn has additional security benefits:
+
+* Physical access to the authenticator is required
+* Unlike a code, a user can't share their passkey, because they don't know it
+* Unlike a push message, attackers can't start a WebAuthn ceremony
+
+These all combine to offer a more secure experience than MFA or a password manager. 
+
+The specifics of the authentication method are dictated by the authenticator. Here are some examples of authentication experiences that a user can have during a WebAuthn authentication ceremony:
 
 * facial recognition
 * PIN entry
 * fingerprint recognition
 
-However, the authentication method is entirely controlled by the authenticator.
+### Browser Support
 
-As mentioned above, WebAuthn is available on all modern browsers except for IE and Opera Mini. (Sorry IE and Opera Mini users!)
+WebAuthn is available on all modern browsers except for IE and Opera Mini. Sorry, IE and Opera Mini users!
 
 {% include _image.liquid src="/assets/img/advice/webauthn-explained/can-i-use-webauthn.png" alt="Screen explaining browser support for WebAuthn." class="img-fluid" figure=false %}
+
+### The Authentication Ceremony, Revisited
 
 You've already seen the high-level authentication flow, but let's take a closer look. When a user logs in with WebAuthn, a typical flow is:
 
@@ -155,7 +169,7 @@ In more concrete terms, the user needs to authenticate to access their account a
 
 The browser sends a request to the website to log in. The website then passes back a challenge, a website identifier, and some other data. The challenge is used to prevent replay attacks and is a randomly generated string of characters.
 
-As mentioned above, each passkey is tied to a specific domain name and only allowed on HTTPS URLs, which are enforced by the browser. For instance, you can't do an authentication request for the site `example.com` if the page is served by `cosmosclownstore.com`. If these security checks pass, the browser passes the request to the authenticator via CTAP2. The authenticator then authenticates the user using biometric means such as facial recognition (or any other means it implements).
+If the browser security checks mentioned above pass, the browser passes the request to the authenticator via CTAP2. The authenticator then authenticates the user using biometric means such as facial recognition (or any other means it implements).
 
 The user can choose not to authenticate with the authenticator, in which case it sends back an error message. If the user does authenticate, the authenticator creates a signed assertion and passes it back to the browser. The browser passes the assertion back to Cosmo's Clown Store.
 
@@ -180,8 +194,9 @@ You pass it an `options` object and get a response back. Here's what the options
 options = {
   publicKey: {
     rpId: "cosmosclownstore.com",
-    challenge: "....",
+    challenge: "...",
     userVerification: "preferred",
+    allowCredentials: ...
     //...
   }
 }
@@ -190,8 +205,9 @@ options = {
 The options object has a few important properties:
 
 - the `publicKey` top-level key: this indicates we're using WebAuthn
-- the `rpId`: this tells the authenticator which website this request is for, such as cosmosclownstore.com
+- the `rpId`: the website this request is for, such as cosmosclownstore.com
 - the `challenge`: a random string to prevent replay attacks
+- the `allowCredentials`: an array of credentials which are acceptable to this website
 
 There are other options as well, which allow the site to determine if the user should be fully verified and authenticated or just prove presence. That option will be discussed more below.
 
@@ -211,17 +227,19 @@ After you call `get` with an `options` object, the response is returned as a pro
 }
 ```
 
-If the response is successful, the response data will have an `authenticatorData` key, which has a `flags` member. `flags` is a bit array indicating whether the user authenticated or not, as well as what assurance you have. 
+If the response is successful, the response data will have an `authenticatorData` key, which has a `flags` member. `flags` is a bit array indicating if the user was present or verified, as well as extension data. The difference between presence and verification is covered below.
 
-You also have a `clientDataJSON` object, which has the `challenge` and other information. In order to prevent replay attacks verify that the `challenge` you receive is the same as the challenge you sent.
+You also receive a `clientDataJSON` object, which has the `challenge` and other information. In order to prevent replay attacks, verify that the `challenge` you receive is the same as the challenge you sent.
 
 ## Authenticators, Revisited
 
-There are two main types of authenticators: cross-platform authenticators and platform authenticators. 
+There are two types of authenticators: cross-platform authenticators and platform authenticators. 
 
 Cross-platform authenticators are hardware devices that can be used between different devices, like a YubiKey.
 
-Platform authenticators are built into the operating system and exist in all major operating systems, both desktop and mobile. The ubiquity of platform authenticators means they are best for consumer-facing applications. The operating systems have sophisticated biometric authentication; you can access these with WebAuthn using the standard JavaScript API outlined above.
+Platform authenticators are built into the operating system and exist in all major operating systems, both desktop and mobile. They typically have a secure hardware enclave where private keys are stored. The ubiquity of platform authenticators means they are best for consumer-facing applications. The operating systems have sophisticated biometric authentication; you can access these with WebAuthn using the standard JavaScript API outlined above.
+
+Authenticators can also be implemented entirely in software, such as [this one](https://chrome.google.com/webstore/detail/virtual-authenticators-ta/gafbpmlmeiikmhkhiapjlfjgdioafmja), but these are typically used for testing, not a real-world authentication scenario.
 
 WebAuthn handles communication between the browser and the website, and the browsers leverage the CTAP2 protocol to talk to authenticators. As a WebAuthn system implementer, you don't need to know CTAP2, just understand it exists.
 
@@ -254,8 +272,8 @@ options =  {
     rp: { id: "cosmosclownstore.com", 
           name: "Cosmo’s Clown Store" },
     user: { id: "1234", 
-            name: "krusty", 
-            displayName: "krusty The Clown" },
+            name: "krusty@example.com", 
+            displayName: "Krusty The Clown" },
     challenge: "...",
     pubKeyCredParams: [ { type: "public-key", alg: -7 }]
     //...
@@ -267,7 +285,9 @@ You again have the `publicKey` as the top level options field, indicating that y
 
 Then there is the `rp` object, which has information about the website that is requesting the registration operation. This includes the name to be displayed to the end user by the authenticator.
 
-You also have the `user` field, which is information used to tie the user to the credential. Additionally, to create the key, you need to specify the algorithm to use. Do this by passing the correct parameters in `pubKeyCredParams`. Above, the value is `-7`. This is an item in the [IANA COSE Algorithms registry](https://www.iana.org/assignments/cose/cose.xhtml).
+You also have the `user` field, which contains information tying the user to the credential.
+
+Additionally, to create the key, you need to specify the algorithm to use. Do this by passing the correct parameters in `pubKeyCredParams`. Above, the value is `-7`. This is an item in the [IANA COSE Algorithms registry](https://www.iana.org/assignments/cose/cose.xhtml).
 
 After creating the options object, call the `create` method on the credentials API and if it succeeds, the user will be registered with cosmosclownstore.com.
 
@@ -302,24 +322,23 @@ Here's an example response.
 }
 ```
 
-The `attestationObject` contains items such as:
+The `attestationObject` contains the `credentialId` and the `credentialPublicKey`.
 
-- the credential Id 
-- the public key 
+Store them both. You'll use the `credentialId` in future authentication flows to request that particular credential from an available authenticator. The corresponding public key is used to validate the signature on assertions from an authenticator.
 
-Store the `credentialId` to identify the user and the public key used when verifying the assertions generated by the other ceremonies. You must also verify the `challenge` and `type` in the `clientDataJSON` object.
+You must also verify the `challenge` and `type` in the `clientDataJSON` object are as expected.
 
 You may have noticed that at registration, the website passes down user information. This implies that you know who the user is. Typically, you can require another form of authentication first (i.e. user and password) and then the user will associate a WebAuthn credential with this account to make their future authentication easier.
 
 As the relying party (website), you may specify what type of authenticators you want to support. You can’t get too granular, but you can specify if you only want to support platform authenticators or cross-platform authenticators.
 
-Next, let's look at the attestation ceremony.
+Next, let's look at attestation.
 
-## The Attestation Ceremony
+## Attestation 
 
-Attestation is the third major ceremony and the question it answers is: How do I know this authenticator the user is using is legitimate? It does this through a chain of signatures.
+Attestation is the process of answering the question: How do I know this authenticator the user is using is legitimate?
 
-Each type of authenticator has a shared private key. This key is totally separate from private keys used for the authentication and registration ceremonies, which are tied to individual websites. The corresponding public key is stored in a public metadata registry. Here's the [FIDO alliance metadata service](https://fidoalliance.org/metadata/).
+Attestation answers this this through signatures. Each type of authenticator has a shared private key. This key is totally separate from private keys used for the authentication and registration ceremonies, which are tied to individual websites. The corresponding public key is stored in a public metadata registry or otherwise made available. Here's the [FIDO alliance metadata service](https://fidoalliance.org/metadata/).
 
 With attestation, you ask the authenticator to create a signature with the common private key, and then verify it with the public key from the registry.
 
@@ -436,25 +455,29 @@ There is a lot of structured metadata that you can use if desired.
 
 ## User Presence vs User Verification
 
-Authenticators can be also used as a second factor of authentication, when paired with a username and password or other factor. An authentication ceremony gives you assurances about the user having access to the authenticator. If you are using an authenticator in this way, you want to distinguish between user presence versus user verification. 
+Authenticators can be also used as a second factor of authentication, when paired with a username and password or other factor. An authentication ceremony gives you assurances about the user having access to the authenticator. 
 
-User presence is when someone is there behind the authenticator who gave permission, but you don't know who. All it proves is that you have access to the authenticator. An example of this is when you press a button on a YubiKey.
+If you are using an authenticator in this way, you want to distinguish between user presence versus user verification. 
+
+User presence is when someone is there behind the authenticator who gave permission, but you don't know who. All it proves is that you have access to the authenticator. An example of this is when you press a button on a YubiKey. Every authenticator must support checking user presence, as it is part of the specification.
 
 User verification, on the other hand, is when the user provides proof that they are who they say they are. The authenticator could require a PIN, known only to the user. It could be a Face ID or Touch ID challenge. In any case, verification allows you to tie a specific user to the authentication ceremony.
 
-Of the two types, user verification is more prevalent with the platform authenticators than cross platform authenticators. And user presence is more useful as a second factor. When not used for MFA, you will typically want user verification.
+Of the two types, user verification is more common with platform authenticators than with cross platform authenticators. And user presence is more useful as a second factor. When not used for MFA, you will typically want user verification.
 
-The initiating server specifies whether to use user verification. The three choices for user verification are preferred, required, and discouraged:
+The initiating server specifies whether to use user verification during a registration or authentication. The three choices for user verification are preferred, required, and discouraged:
 
 * Preferred means that user verification is preferred, but not required. 
-* Required means that user verification is required and the authentication will fail if it cannot be performed. 
+* Required means that user verification is required and the ceremony will fail if it cannot be performed. 
 * Discouraged means that user verification is not preferred and should not be used if possible. 
 
-## Resident Keys
+## Discoverable Credentials
 
-Another WebAuthn feature is resident keys. With these, the user to website mapping is stored, not on the server side, but on the authenticator.
+Another WebAuthn feature is discoverable credentials, also known as "resident keys". These can be used without first identifying the user.
 
-This is available for cross-platform authenticators. With this feature, the server does not have to have prior knowledge of the user before they are authenticated. They can register and authenticate at the same time. This is less common in the B2C space.
+They are requested by a website leaving the `allowCredentials` list empty in the authentication ceremony. If there is a discoverable credential available, it will be used to complete the authentication ceremony, and the authenticator response will indicate which credential was used. That credential must then be mapped to the user on the server.
+
+For non-discoverable credentials, the user must be identified in some way. These include a secure cookie, username/email field, or some other means before the authentication ceremony can begin. This is required to determine which credentials are owned by that user account. The server returns these registered credentials as part of the credential request options object in the `allowCredentials` field.
 
 ## Implementation Details
 
@@ -468,11 +491,13 @@ But there's more, such as:
 - Allowing users to use WebAuthn during the app sign in process
 - Considering the account recovery process
 
-There are libraries which can help with the server side management and WebAuthn prompts. These libraries can help with tasks like storing data safely and securely, streamlining workflows, and prompting users to register.
+There are libraries which can help with generating, translating, and validating the WebAuthn request options and response objects. These other tasks, which are not defined in the WebAuthn specification but are critical to building a full-fledged system, are not as well supported and will vary.
 
-You can use any server-side language you want, because the magic is in the WebAuthn and CTAP2 APIs, which are embedded in the browser.
+To build a WebAuthn compatible server, you can use any server-side language you want. The magic is in the WebAuthn APIs, which are embedded in the browser.
 
 ## Summing Up
 
-WebAuthn lets consumers have the security of biometric authentication methods, such as Touch ID and Face ID, without requiring expensive hardware. It is supported by every browser and can bring a safer, more secure, more easily usable means of authentication to all your users.
+WebAuthn lets consumers have the security of biometric authentication methods, such as Touch ID and Face ID, without requiring additional expensive hardware.
+
+WebAuthn is supported by every browser and can bring a safer, more secure, more easily usable means of authentication to all your users.
 
