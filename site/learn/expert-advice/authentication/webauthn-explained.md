@@ -29,7 +29,7 @@ What does an authentication ceremony look like? At a high level, the flow of int
 1. The website verifies the authenticator response
 1. The user is logged in
 
-Whenever the user authenticates against the relevant authenticator, that is an "authorization gesture". Even thoguh "gesture" implies movement, it could be a biometric means like Touch ID, using a PIN, or any other method that an authenticator offers.
+Whenever the user authenticates against the relevant authenticator, that is an "authorization gesture". Even though "gesture" implies movement, it could be a biometric means like Touch ID, using a PIN, or any other method that an authenticator offers.
 
 In general terms, there are two types of authenticators:
 
@@ -338,7 +338,7 @@ Next, let's look at attestation.
 
 Attestation is the process of answering the question: How do I know this authenticator the user is using is legitimate?
 
-Attestation answers this this through signatures. Each type of authenticator has a shared private key. This key is totally separate from private keys used for the authentication and registration ceremonies, which are tied to individual websites. The corresponding public key is stored in a public metadata registry or otherwise made available. Here's the [FIDO alliance metadata service](https://fidoalliance.org/metadata/).
+Attestation answers this through signatures. Each type of authenticator has a shared private key. This key is totally separate from private keys used for the authentication and registration ceremonies, which are tied to individual websites. The corresponding public key is stored in a public metadata registry or otherwise made available. Here's the [FIDO alliance metadata service](https://fidoalliance.org/metadata/).
 
 With attestation, you ask the authenticator to create a signature with the common private key, and then verify it with the public key from the registry.
 
