@@ -1,6 +1,6 @@
 ---
 layout: advice
-title: WebAuthn explained
+title: WebAuthn Explained
 description: An in-depth look at how WebAuthn can help you add biometric authentication to your website.
 author: Dan Moore
 image: advice/vendor-lockin/expert-advice-avoiding-authentication-system-lock-in-header-image.png
