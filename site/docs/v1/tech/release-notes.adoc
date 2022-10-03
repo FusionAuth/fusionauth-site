@@ -54,6 +54,92 @@ Release notes should have sections such as the following, omit ones that do not 
 
 Looking for release notes older than 1.23.0? Look in the link:/docs/v1/tech/archive/release-notes[release notes archive].
 
+[role=release-note]
+
+== Version 1.40.2
+_September 28th, 2022_
+
+=== Fixed
+* A two-factor trust may expire early causing a user to be prompted to complete two-factor during login. This issue was introduced in version `1.37.0`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1905[GitHub Issue #1905]
+
+[role=release-note]
+
+== Version 1.40.1
+_September 26th, 2022_
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Fixed
+* A SAML v2 IdP Initiated login request will fail if PKCE is configured as required.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1800[GitHub Issue #1800]
+* The path attribute in some cookies may be set to the request path instead of `/` which may affect a SAML v2 IdP initiated login request.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1891[GitHub Issue #1891]
+
+=== Enhancements
+* Support `Content-Type` in Kickstart when using `PATCH` request to support `application/json-patch+json` and `application/merge-patch+json`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1885[GitHub Issue #1885]
+* Remove un-necessary logging when the `Content-Type` request header is invalid or unset.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1895[GitHub Issue #1895]
+
+[role=release-note]
+
+== Version 1.40.0
+_September 16th, 2022_
+
+=== Changed
+* If you are using MySQL or plan to use MySQL you will need to manually download the JDBC connector to allow FusionAuth to connect to a MySQL database. If you are using PostgreSQL, this change will not affect you. See the installation guide for additional information. We apologize in advance for the inconvenience this causes you, but the Oracle GPL licensing model makes it difficult for FusionAuth to easily delivery this capability.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1862[GitHub Issue #1862]
+
+=== Fixed
+* An exception may occur when you attempt to perform a `PATCH` request on a Group using a `roleId` that does not exist.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1872[GitHub Issue #1872]
+* URL escape the `identityProviderUser` in the admin UI to correctly build the View and Delete actions links.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1882[GitHub Issue #1882], thanks to one of our MVPs https://github.com/epbensimpson[@epbensimpson] for letting us know and providing excellent recreation steps.
+
+=== Enhancements
+* Support changes to `user.active` for `PUT` or `PATCH` on the SCIM User or Enterprise User endpoints.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1871[GitHub Issue #1871]
+* Performance improvement for SAML v2 request parsing.
+** https://github.com/FusionAuth/fusionauth-issues/issues/1884[GitHub Issue #1884]
+
+=== New
+* Native Windows support has been re-instated. We apologize for the gap in native Windows support, for those who have been waiting to upgrade since version `1.37.0` you may now upgrade with a native installer. Thank you for all of you who have voiced your opinions with how we are support a native Windows installation.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1848[GitHub Issue #1848]
+
+[role=release-note]
+
+== Version 1.39.0
+_September 11th, 2022_
+
+=== Fixed
+* When appending the `locale` request parameter on the Authorize request to pre-select the user's locale, the locale may still be incorrect for validation errors. For example, appending `locale=fr` will allow the initial render of the page to be localized in French when available. However, because the user did not manually modify the locale selector on the page, if the login fails due to a validation error, the error messages will be returned in the default locale which is generally English.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1713[GitHub Issue #1713]
+* Group application roles removed during a `PATCH` request to the Group API.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1717[GitHub Issue #1717], thank you to https://github.com/paul-fink-silvacom[@paul-fink-silvacom] for raising the issue!
+* Corrections to the SAML v2 SP and IdP meta data.
+** The HTTP scheme was missing from the `entityID`. This issue was introduced in version `1.37.0`.
+** The `NameIdFormat` found in the SP meta data was always showing `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress` regardless of the value configured in the SAML v2 IdP.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1842[GitHub Issue #1842]
+* The potential exists to see an exception in the FusionAuth system logs when the internal login record service runs. It is unlikely you will experience this error unless you have very large login volumes.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1854[GitHub Issue #1854]
+* There is the potential for the Elasticsearch index to become out of sync with respect to group memberships when groups are being deleted, or group members are being deleted from a group.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1855[GitHub Issue #1855]
+* Add missing support for `en_GB` time and data format support in the FusionAuth admin UI when setting your preferred locale to `en_GB`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1858[GitHub Issue #1858], thanks to https://github.com/adambowen[@adambowen] for bringing this to our attention. It wasn't our intention to force our friends in the United Kingdom 🇬🇧 to painfully read dates and times in the American 🇺🇸 format. Please accept our apologies. 😎
+
+=== Enhancements
+* Better support for JSON Patch. Now supporting RFC 7386 `application/merge-patch+json` and RFC 6902 `application/json-patch+json`. Note that you may still make a request using the `PATCH` HTTP method using `application/json` and the current behavior should not be changed. All `patch*` methods found in the FusionAuth client libraries will still be using `application/json` for backwards compatibility. However, now that support for these new content types exists, we will be working to build support into our client libraries.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/441[GitHub Issue #441]
+* Better developer feedback when the `Content-Type` request header is missing or incorrect.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/604[GitHub Issue #604]
+* Additional SCIM support for the `PATCH` HTTP request method, and `filter` and `excludedAttributes` request attributes. The addition of these features allow the FusionAuth SCIM server to be compatible with Azure AD SCIM client and Okta SCIM client. The Group filter support has some limitations, see the the link:/docs/v1/tech/apis/scim/SCIMGroup#retrieve-a-group[SCIM Group] API doc for additional details.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1761[GitHub Issue #1761]
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1791[GitHub Issue #1791]
+* Add some missing message keys to default Theme message bundle.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1839[GitHub Issue #1839]
+* Remove an un-necessary db request when validating the user security scheme for a user in the FusionAuth admin UI.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1856[GitHub Issue #1856]
 
 [role=release-note]
 
@@ -131,7 +217,18 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * A regression error was introduced in version `1.37.0` that causes HTTP request headers to be malformed when being sent to a Webhook, Generic Messenger or a Generic Connector.
 ** Resolved in version `1.37.2` via https://github.com/FusionAuth/fusionauth-issues/issues/1818[GitHub Issue #1818]
 * Static resources such as CSS and JS may be missing a `Content-Type` header which may cause a proxy using `X-Content-Type-Options: nosniff` to fail to load the resource.
-** Resolves in version `1.38.1` via https://github.com/FusionAuth/fusionauth-issues/issues/1831[GitHub Issue #1831]
+** Resolved in version `1.38.1` via https://github.com/FusionAuth/fusionauth-issues/issues/1831[GitHub Issue #1831]
+* A two-factor trust may expire early causing a user to be prompted to complete two-factor during login.
+** Resolved in version `1.40.2` via https://github.com/FusionAuth/fusionauth-issues/issues/1905[GitHub Issue #1905]
+* A theme issue may exist on a form action and may cause breaking changes when upgrading to this version.
+** If you are upgrading, please verify your theme files accurately create a form action.  The following themes should be updated as follows:
+*** OAuth authorize -> `action="/oauth2/authorize"`
+*** Child registration not allowed -> `action="/oauth2/child-registration-not-allowed"`
+*** OAuth passwordless -> `action="/oauth2/passwordless"`
+*** OAuth register -> `action="/oauth2/register"`
+*** OAuth two factor -> `action="/oauth2/two-factor"`
+*** Change password form -> `action="/password/change"`
+*** Forgot password -> `action="/password/forgot"`
 
 === Security
 
@@ -141,6 +238,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 === Changed
 
 * Windows install has been removed. Our strategy is to support Windows using https://docs.microsoft.com/en-us/windows/wsl/about[WSL 2] with our provided debian package. Please plan to utilize this strategy, and open a GitHub issue if you encounter issues with the installation.
+** Due to customer feedback, a native Windows installation option has been restored as of version `1.40.0`.
 * Webhooks are no longer configured as "All applications" or limited to a single Application. They are now scoped to one or more tenants. If you previously had multiple webhooks configured within the same tenant, but scoped to separate Applications you will want to review your configuration and filter events in your own Webhook handler by the `applicationId`.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1812[GitHub Issue #1812]
 * Deprecate Apache Tomcat specific configuration. See the link:/docs/v1/tech/reference/configuration[Configuration] reference for additional detail.

@@ -116,6 +116,10 @@ For lists:
 - esport
 - Docker
 - Docker Compose
+- WebAuthn
+- IdP
+- Azure AD
+- X.509
 
 ## Git
 

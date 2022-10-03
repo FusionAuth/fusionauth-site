@@ -15,6 +15,7 @@ Adding a Login with Google button to FusionAuth is straightforward, and this gui
 * <<Create Google OAuth client credentials>>
 * <<Create a Google Identity Provider>>
 * <<Building Your Own Integration>>
+* <<Custom Parameters>>
 
 {empty} +
 
@@ -36,15 +37,15 @@ If you are prompted to select or create a project, do that now. In the following
 
 image::identity-providers/google-cloud-create-project.png[Create Google Cloud Project,width=1200,role=bottom-cropped]
 
-Now that you have selected or created your first project, click on `Create credentials` and select `OAuth client ID`.
+Now that you have selected or created your first project, navigate to [breadcrumb]#APIs & Services -> Credentials# and then click on [breadcrumb]#Create credentials# and select [field]#OAuth client ID#.
 
 image::identity-providers/google-cloud-create-credentials.png[Create Credentials,width=1200,role=bottom-cropped]
 
-If you see an alert indicating you first need to configure the content screen, do that now by clicking on `Configure consent screen`.
+If you see an alert indicating you first need to configure the content screen, do that now by clicking on [breadcrumb]#Configure consent screen#.
 
 image::identity-providers/google-cloud-configure-consent.png[Configure Consent,width=1200,role=bottom-cropped]
 
-You will be prompted to define a consent type, typically `External`.
+You will be prompted to define a consent type, typically [field]#External#. Click `Create`.
 
 image::identity-providers/google-cloud-configure-consent-internal-external.png[Configure Consent,width=1200,role=bottom-cropped]
 
@@ -59,15 +60,20 @@ In this example I have set the following fields.
 * Application Homepage link
 * Application Privacy Policy link
 * Application Terms of Service link
-* Developer contact information
+* Authorized domains
+* Developer contact information (not shown)
 
 image::identity-providers/google-cloud-configure-consent-screen.png[Configure Consent Screen,width=1200]
 
-Once this is complete Google will direct you to complete or update scopes. It is typical to select `userinfo.email` and `userinfo.profile` as well as `openid`, but feel free to enable any you would like. These same scopes should be referenced in the IdP configuration in FusionAuth, which is configured later in this process.
+Once this is complete, you can add or update scopes by clicking on the `Add or remove scopes` button. It is typical to select `userinfo.email` and `userinfo.profile` as well as `openid`, but feel free to enable any you would like.
+
+These same scopes should be referenced in the IdP configuration in FusionAuth, which is configured later in this process.
 
 image::identity-providers/google-cloud-configure-scopes.png[Configure Google Scopes,width=1200]
 
-Now you may return to the Credential section, click on `Create credentials` and select `OAuth client ID`.
+Then, click `Save and continue` after optionally adding any test users.
+
+Navigate to [breadcrumb]#APIs & Services -> Credentials# and then click on [breadcrumb]#Create credentials# and select [field]#OAuth client ID#.
 
 How you configure this panel depends on the type of login method interaction used. In this example I have specified `\https://login.piedpiper.com` because this is the URL of FusionAuth for Pied Piper.
 
@@ -77,7 +83,7 @@ If using a popup, select `Web application`, specify the name of the credential a
 
 In the image below, we are showcasing details needed for both the popup login method (added an origin) and the redirect url.  In the real world you will fill in either option, but not both (depending on your business needs).
 
-image::identity-providers/google-cloud-create-client-id.png[Create OAuth Client credentials,width=1200,role=bottom-cropped]
+image::identity-providers/google-cloud-create-client-id.png[Create OAuth Client credentials,width=1200]
 
 Now you have completed creating a Google OAuth client credential. If you select the newly created credential, you will be provided with the `Client ID` and `Client secret` necessary for the next step.
 
@@ -128,7 +134,7 @@ The linking strategy for the Google FusionAuth Identity Provider. link:/docs/v1/
 [field]#Reconcile lambda# [optional]#Optional# [since]#Available since 1.17.0#::
 A lambda may be utilized to map custom claims returned from Google.
 +
-To configure a lambda, navigate to [breadcrumb]#Settings -> Lambdas#.
+To configure a lambda, navigate to [breadcrumb]#Customizations -> Lambdas#.
 
 [field]#Debug enabled# [optional]#Optional# [default]#defaults to `false`#::
 Enable debug to create an event log to assist you in debugging integration errors.
@@ -140,6 +146,22 @@ Enable debug to create an event log to assist you in debugging integration error
 include::docs/v1/tech/identity-providers/_login-api-integration.adoc[]
 :identity_provider_fragment!:
 :identity_provider_path!:
+
+== Custom Parameters
+
+Google sometimes requires custom URL parameters when starting a login to access certain functionality. Examples include: 
+
+* `access_type=offline` if you want a refresh token from Google.
+* `prompt=select_account` if you want to force an account selection screen.
+
+There are more https://developers.google.com/identity/protocols/oauth2/openid-connect#advancedtopics[options covered here].
+
+When you need such custom parameters, the Google Identity Provider won't work. Instead, do the following:
+
+* Create an link:/docs/v1/tech/identity-providers/openid-connect/[OpenId Connect Identity Provider].
+* Set [field]#Discover endpoints# to be `false`.
+* Enter the endpoints manually from the https://developers.google.com/identity/protocols/oauth2/openid-connect#discovery[Discovery document].
+* Append whatever additional parameters are needed to the [field]#Authorization endpoint# value. For example, you might end up with something like `\https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=select_account` .
 
 
 // leave blank line so we can unset the identity provider path variable
