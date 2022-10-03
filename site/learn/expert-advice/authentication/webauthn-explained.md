@@ -15,7 +15,17 @@ That's a bit tautological, isn't it? Well, yes, but read on for more details. Al
 
 ## WebAuthn Overview
 
-WebAuthn has flows of data and interaction, termed "ceremonies". These extend a network protocol to include things in the real world, such as physical hardware or human beings. There are two main ones:
+Let's start off with an overview of the use cases, "ceremonies", and types of authenticators that all play a role in a WebAuthn implementation.
+
+There are three main use cases that WebAuthn works well for.
+
+1. Re-authentication, where the user has an account created in another way, but wants an easier way to login.
+1. First factor authentication, where the user has no account, but uses WebAuthn to login instead of a more typical first factor like a username/password combination.
+1. As another factor available for MFA.
+
+The main focus of this article is re-authentication, though the other use cases will be covered briefly.
+
+WebAuthn has flows of data and interaction, termed "ceremonies". These extend a network protocol to include things in the real world, such as physical hardware or human beings. There are two main ceremonies:
 
 1. Authentication, where the user logs in, using WebAuthn
 1. Registration, where the user associates an authenticator with their account
@@ -328,9 +338,9 @@ Store them both. You'll use the `credentialId` in future authentication flows to
 
 You must also verify the `challenge` and `type` in the `clientDataJSON` object are as expected.
 
-You may have noticed that at registration, the website passes down user information. This implies that you know who the user is. Typically, you can require another form of authentication first (i.e. user and password) and then the user will associate a WebAuthn credential with this account to make their future authentication easier.
+You may have noticed that at registration, the website passes down user information. This implies that you know who the user is. Typically, you can require another form of authentication first (i.e. user and password) and then the user will associate a WebAuthn credential with this account to make their future authentication easier. This is called re-authenication, and is the primary use case for WebAuthn.
 
-As the relying party (website), you may specify what type of authenticators you want to support. You can’t get too granular, but you can specify if you only want to support platform authenticators or cross-platform authenticators.
+As the relying party, aka cosmosclownstore.com, you may specify what type of authenticators you want to support. You can’t get very granular, but you can specify if you only want to support platform authenticators or cross-platform authenticators.
 
 Next, let's look at attestation.
 
@@ -455,7 +465,7 @@ There is a lot of structured metadata that you can use if desired.
 
 ## User Presence vs User Verification
 
-Authenticators can be also used as a second factor of authentication, when paired with a username and password or other factor. An authentication ceremony gives you assurances about the user having access to the authenticator. 
+Authenticators can be also used as a second factor of authentication, when paired with a username and password or other factor. An authentication ceremony indicates the user has access to the authenticator. This is the MFA use case mentioned above.
 
 If you are using an authenticator in this way, you want to distinguish between user presence versus user verification. 
 
@@ -473,7 +483,7 @@ The initiating server specifies whether to use user verification during a regist
 
 ## Discoverable Credentials
 
-Another WebAuthn feature is discoverable credentials, also known as "resident keys". These can be used without first identifying the user.
+Another WebAuthn feature is discoverable credentials, also known as "resident keys". These can be used without first identifying the user. This is the first factor use case mentioned above.
 
 They are requested by a website leaving the `allowCredentials` list empty in the authentication ceremony. If there is a discoverable credential available, it will be used to complete the authentication ceremony, and the authenticator response will indicate which credential was used. That credential must then be mapped to the user on the server.
 
