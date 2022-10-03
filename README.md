@@ -21,7 +21,7 @@ This project is built using jekyll and asciidoc, you'll need to have ruby instal
 Install these programs:
 
 - java
-- ruby (2.7.0)
+- ruby (2.7.5)
 - plantuml
 - git
 
