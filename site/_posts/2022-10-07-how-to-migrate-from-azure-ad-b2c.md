@@ -9,7 +9,7 @@ tags: topic-upgrade-azure-ad
 excerpt_separator: "<!--more-->"
 ---
 
-Azure AD B2C is a serverless CIAM offering from Microsft Azure with integration across many of Azure services. It offers authentication and authorization for users. Azure AD B2C supports a number of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant.
+Azure AD B2C is a serverless CIAM offering from Microsoft Azure with integration across many Azure services. It offers authentication and authorization for users. Azure AD B2C supports a number of OAuth grants, including the Authorization Code grant, the Implicit grant and the Client Credentials grant.
 
 <!--more-->
 
@@ -50,7 +50,7 @@ For whatever reason, you may decide to move your customer and user data from Azu
 
 Like any tool, Azure AD B2C has strengths as well as weaknesses. When your application depends on Azure AD B2C's unique features or if the upsides outweigh the downsides, keep on using it.
 
-Azure AD B2C can be budget and developer friendly if you are are all in on Azure. For example, if your usage is  under 50,000 MAUs, it is free. If the user interface and other limitations of Azure AD B2C are acceptable, migration doesn't make much sense. Since Azure AD B2C is serverless, it makes it easy to "set and forget" and allows you to focus on other aspects of your application. You know, the features your users want.
+Azure AD B2C can be budget and developer friendly if you are all in on Azure. For example, if your usage is  under 50,000 MAUs, it is free. If the user interface and other limitations of Azure AD B2C are acceptable, migration doesn't make much sense. Since Azure AD B2C is serverless, it makes it easy to "set and forget" and allows you to focus on other aspects of your application. You know, the features your users want.
 
 In addition, if you need custom user login flows and can successfully navigate the XML-based policy implementation, Azure AD B2C can be a good solution.
 
@@ -85,7 +85,7 @@ The basic steps of a bulk migration are:
 * Massage the exported user data into the format required by your new provider, using whatever data transformation tools you are comfortable with.
 * Upload the user data to the new provider. If you must provide a password when importing users, set it to a random high entropy string. No one will use this password, so don't record it anywhere.
 * Create configuration in the new auth system corresponding to the configuration in Azure AD B2C. You should also customize the user interface, messages, MFA methods and any other Azure AD B2C specific settings that are relevant.
-* Update your custom, commerical and open source applications to point to the new auth system.
+* Update your custom, commercial and open source applications to point to the new auth system.
 * Mark all uploaded users as needing a new password and notify them. The details of how to send this email are specific to the new system, but typically it will involve sending each user a unique email with a link.
 * After the migration is complete, delete the Azure AD B2C applications and configuration to ensure all users are authenticating against the new system.
 
@@ -120,7 +120,7 @@ With a slow, or phased, migration, users are not required to reset their passwor
 
 The connection between Azure AD B2C must be secure and over HTTPs. Use IP restrictions, custom headers and/or client certificates; you don't want anyone to be able to pass credentials to Azure AD B2C or or to inspect traffic between the new system and Azure AD B2C.
 
-The Azure AD B2C OAuth endpoint is monitored by rate limiting systems. If a dynamic threshold of failed authentications is exceeded, the may identify a repeated IP address (i.e. from the the new system) as an attacker, so you'll want to plan for that possibility.
+The Azure AD B2C OAuth endpoint is monitored by rate limiting systems. If a dynamic threshold of failed authentications is exceeded, the rate limiting system may identify a repeated IP address (i.e. from the new system) as an attacker, so you'll want to plan for that possibility.
 
 Here's a diagram of an initial user login during a slow migration:
 
