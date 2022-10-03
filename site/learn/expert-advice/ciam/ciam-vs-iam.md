@@ -3,7 +3,7 @@ layout: advice
 title: How does Customer Identity and Access Management (CIAM) differ from Identity and Access Management (IAM)?
 description: CIAM and IAM What are the main differences between CIAM and IAM (often called workforce)?
 author: Dan Moore
-image: advice/demise-third-party-cookies/demise-of-third-party-cookies-why-you-need-your-own-ciam-system.png
+image: advice/ciam-vs-iam/ciam-vs-iam.png
 category: CIAM
 date: 2022-09-13
 dateModified: 2022-09-13
