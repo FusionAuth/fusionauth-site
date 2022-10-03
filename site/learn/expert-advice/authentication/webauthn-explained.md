@@ -338,7 +338,7 @@ Store them both. You'll use the `credentialId` in future authentication flows to
 
 You must also verify the `challenge` and `type` in the `clientDataJSON` object are as expected.
 
-You may have noticed that at registration, the website passes down user information. This implies that you know who the user is. Typically, you can require another form of authentication first (i.e. user and password) and then the user will associate a WebAuthn credential with this account to make their future authentication easier. This is called re-authenication, and is the primary use case for WebAuthn.
+You may have noticed that at registration, the website passes down user information. This implies that you know who the user is. Typically, you can require another form of authentication first (i.e. user and password) and then the user will associate a WebAuthn credential with this account to make their future authentication easier. This is called re-authentication, and is the primary use case for WebAuthn.
 
 As the relying party, aka cosmosclownstore.com, you may specify what type of authenticators you want to support. You can’t get very granular, but you can specify if you only want to support platform authenticators or cross-platform authenticators.
 
