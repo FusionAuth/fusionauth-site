@@ -5,8 +5,8 @@ description: CIAM and IAM What are the main differences between CIAM and IAM (of
 author: Dan Moore
 image: advice/ciam-vs-iam/ciam-vs-iam.png
 category: CIAM
-date: 2022-09-13
-dateModified: 2022-09-13
+date: 2022-10-03
+dateModified: 2022-10-03
 ---
 
 Both Customer Identity and Access Management (CIAM) and IAM (Identity and Access Management) solutions control how people access your application or system. This includes who can access what, how do they prove who they are, and how you manage this access over time. CIAM and IAM have some similarities, but at their heart they serve different needs and audiences. 
