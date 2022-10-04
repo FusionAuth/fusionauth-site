@@ -86,7 +86,7 @@ However, let's take a look at where WebAuthn fits in the standards world.
 
 ## Standards
 
-Taking a step back, WebAuthn was standardized by a partnership between FIDO and the W3C. FIDO is an organization that's been around for years. It stands for Fast Identity Online and it creates standards focused on passwordless authentication. FIDO2 is the second version of the standard and WebAuthn is part of FIDO2. It was standardized starting in 2015 and fully baked in 2019.
+Taking a step back, WebAuthn was standardized by a partnership between FIDO and the W3C. FIDO is an organization that's been around for years. It stands for Fast Identity Online, and it creates standards focused on passwordless authentication. FIDO2 is the second version of the standard and WebAuthn is part of FIDO2. It was standardized starting in 2015 and fully baked in 2019.
 
 WebAuthn focuses on the browser interaction with a passwordless protocol. CTAP2 is a complementary standard which handles communication between the browser and the hardware or software authenticator. (The yellow smiley face below is the user and the white globe is the browser.)
 
@@ -120,7 +120,7 @@ If a password manager is centralized, it is now a high-value target. If it is no
 
 ### MFA
 
-If you add an additional factor of authentication (i.e. text the user a code, send them an email with a code, or require them to enter some code based on some algorithm using something like Google Authenticator), you can increase security. These additional factors of the authentication add additional assurance about who the user is during an authentication process.
+If you add an additional factor of authentication (e.g. text the user a code, send them an email with a code, or require them to enter some code based on some algorithm using something like Google Authenticator), you can increase security. These additional factors of the authentication add additional assurance about who the user is during an authentication process.
 
 However, the user experience is suboptimal. It can be a hassle to force someone to go to a different device to get a code.
 
@@ -143,7 +143,7 @@ WebAuthn is phishing-resistant because of built-in browser security checks. Thes
 * Each credential is locked to a specific domain name and won't be presented to any other domain
 * WebAuthn won't work if the requesting site is not on HTTPS
 
-Additionally, WebAuthn has additional security benefits:
+WebAuthn has additional security benefits:
 
 * Physical access to the authenticator is required
 * Unlike a code, a user can't share their passkey, because they don't know it (proprietary offerings from vendors like Apple notwithstanding)
