@@ -15,13 +15,13 @@ That's a bit tautological, isn't it? Well, yes, but read on for more details. Al
 
 ## WebAuthn Overview
 
-Let's start off with an overview of the use cases, "ceremonies", and types of authenticators that all play a role in a WebAuthn implementation.
+Let's start off with an overview of the use cases, "ceremonies", and types of authenticators (a way to authenticate a user, but you'll learn more about this term shortly) that all play a role in a WebAuthn implementation.
 
 There are three main use cases that WebAuthn works well for.
 
 1. Re-authentication, where the user has an account created in another way, but wants an easier way to login.
-1. First factor authentication, where the user has no account, but uses WebAuthn to login instead of a more typical first factor like a username/password combination.
-1. As another factor available for MFA.
+1. First factor authentication, where the user has no account or is on a new device, but uses WebAuthn to login instead of a more typical first factor like a username/password combination.
+1. As an additional factor for multi-factor authentication (MFA).
 
 The main focus of this article is re-authentication, though the other use cases will be covered briefly.
 
@@ -39,9 +39,9 @@ What does an authentication ceremony look like? At a high level, the flow of int
 1. The website verifies the authenticator response
 1. The user is logged in
 
-Whenever the user authenticates against the relevant authenticator, that is an "authorization gesture". Even though "gesture" implies movement, it could be a biometric means like Touch ID, using a PIN, or any other method that an authenticator offers.
+Whenever the user authenticates against the relevant authenticator, that is an "authorization gesture". It's a gesture because it requires physical interaction. This could be biometric like Touch ID, using a PIN, or any other method that an authenticator offers. An authenticator requires a user to be present with the device.
 
-In general terms, there are two types of authenticators:
+There are two types of authenticators:
 
 1. Cross-platform authenticators, such as YubiKeys, which can move between different devices
 1. Platform authenticators, built into the operating system, such as Apple's Face ID or Touch ID, which are tied to a given device
@@ -146,7 +146,7 @@ WebAuthn is phishing-resistant because of built-in browser security checks. Thes
 Additionally, WebAuthn has additional security benefits:
 
 * Physical access to the authenticator is required
-* Unlike a code, a user can't share their passkey, because they don't know it
+* Unlike a code, a user can't share their passkey, because they don't know it (proprietary offerings from vendors like Apple notwithstanding)
 * Unlike a push message, attackers can't start a WebAuthn ceremony
 
 These all combine to offer a more secure experience than MFA or a password manager. 
@@ -167,7 +167,8 @@ WebAuthn is available on all modern browsers except for IE and Opera Mini. Sorry
 
 You've already seen the high-level authentication flow, but let's take a closer look. When a user logs in with WebAuthn, a typical flow is:
 
-1. The user signals they want to use WebAuthn. This could be a previously set cookie, clicking a button, or some other manner.
+1. The system may optionally prompt a user to begin the interaction. This could be done with a previously set cookie or some other way to know the user has registered WebAuthn credentials.
+1. The user signals they want to use WebAuthn with interaction, such as clicking a button.
 2. The web server sends a request to the browser.
 3. The browser sends a request to the authenticator.
 4. The authenticator asks the user for their permission.
@@ -255,9 +256,7 @@ Authenticators can also be implemented entirely in software, such as [this one](
 
 WebAuthn handles communication between the browser and the website, and the browsers leverage the CTAP2 protocol to talk to authenticators. As a WebAuthn system implementer, you don't need to know CTAP2, just understand it exists.
 
-As mentioned above, there are three main WebAuthn ceremonies: authentication, which you've already seen, registration and attestation.
-
-Let's look at the latter.
+As mentioned above, there are two main WebAuthn ceremonies: authentication, which you've already seen and registration. Let's look at the latter.
 
 ## The Registration Ceremony
 
@@ -344,7 +343,7 @@ You may have noticed that at registration, the website passes down user informat
 
 As the relying party, aka cosmosclownstore.com, you may specify what type of authenticators you want to support. You can’t get very granular, but you can specify if you only want to support platform authenticators or cross-platform authenticators.
 
-Next, let's look at attestation.
+Next, let's look at attestation. This is not a separate ceremony, but a way of verifying authenticator lineage.
 
 ## Attestation 
 
