@@ -3,7 +3,7 @@ layout: blog-post
 title: Why consider cross-platform gaming accounts?
 description: What is a cross-platform gaming account and how is it useful?
 author: Rabo James Bature
-image: blogs/spiky-gameday-launches/3-tips-handling-spiky-gameday-launches.png
+image: blogs/advantages-cross-platform-gaming-accounts/cross-platform-gaming-account-advantages.png
 category: blog
 excerpt_separator: "<!--more-->"
 ---

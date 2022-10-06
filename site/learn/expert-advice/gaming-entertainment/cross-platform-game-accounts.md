@@ -3,7 +3,7 @@ layout: advice
 title: "Cross-Platform Gaming Accounts: Why and How?"
 description: You can build a game that deploys to multiple platforms using tools like Unity. But what about user accounts?
 author: Rabo James Bature
-image: advice/device-grant-gaming/device-grant-users-lives-easier.png
+image: advice/cross-platform-gaming-account/advice-header.png
 category: Gaming and Entertainment
 date: 2022-10-01
 dateModified: 2022-10-01
