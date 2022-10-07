@@ -87,7 +87,7 @@ Also, having a more customizable reporting/admin layer would’ve cut down on ou
 
 **Dan:** Can you tell me more about the custom work you are doing? Is it mostly reporting, UX, or something else?
 
-**Dylan:** Both reporting and UX. We pipe registrations into our data warehouse so its easier for analysts to query. 
+**Dylan:** Both reporting and UX. We pipe registrations into our data warehouse so it's easier for analysts to query. 
 
 We also built a custom UI for admins that allows them to easily query for users and perform administrative tasks on a user like setting a temporary password, locking a user, etc.
 
