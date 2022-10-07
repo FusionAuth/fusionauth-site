@@ -31,7 +31,9 @@ From my perspective, IM is an edtech company disguised as a math curriculum and 
 
 **Dan:** Tell me about your work as a Director of Engineering at Illustrative Mathematics.
 
-**Dylan:** I currently manage a team of engineers who work on various applications and products. At the end of the day, our main focus is empowering our content writers to write the best content through custom software solutions. Our team then takes that content and makes it ready for the masses, whether that's interfacing with a learning management system or creating print-ready PDFs that will become textbooks, that's our focus.
+**Dylan:** I currently manage a team of engineers who work on various applications and products.
+
+At the end of the day, our main focus is empowering our content writers to write the best content through custom software solutions. Our team then takes that content and makes it ready for the masses, whether that's interfacing with a learning management system or creating print-ready PDFs that will become textbooks. That's our focus.
 
 **Dan:** Do you focus primarily on the USA or other countries? Are there any local laws about student data you have to abide by?
 
@@ -39,7 +41,7 @@ From my perspective, IM is an edtech company disguised as a math curriculum and 
 
 As far as student data, we don't store any of that! 
 
-We've been pretty strategic in what data we store and consume so this isn't really an issue for us in our current model.
+We've been pretty strategic in what data we store and consume so this isn't really an issue for us with our current model.
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
@@ -57,7 +59,7 @@ Second, we pride ourselves in making our materials open to anyone.
 
 Third, we don’t want students seeing teacher content (aka answers to homework, assessments, etc).
 
-FusionAuth really fit the bill when it came to pricing for us and making this possible without spending a percentage of our bottom line.
+FusionAuth fit the bill when it came to pricing for us and making this possible without spending a percentage of our bottom line.
 
 **Dan:** That's great that you make all your materials free! How were you solving these problems before FusionAuth?
 
@@ -75,7 +77,7 @@ FusionAuth really fit the bill when it came to pricing for us and making this po
 
 **Dan:** How do you run FusionAuth (kubernetes, standalone server, behind a proxy, etc)?
 
-**Dylan:** We let FusionAuth take care of that for us, we are on a high availability plan in FusionAuth Cloud.
+**Dylan:** We let FusionAuth take care of that for us. We are on a high availability plan in FusionAuth Cloud.
 
 **Dan:** Any general feedback/areas to improve?
 
@@ -83,7 +85,7 @@ FusionAuth really fit the bill when it came to pricing for us and making this po
 
 Improving the [ruby SDK](https://fusionauth.io/docs/v1/tech/client-libraries/ruby) with more examples, especially for using Elasticsearch, would be really helpful.
 
-Also, having a more customizable reporting/admin layer would’ve cut down on our custom integration work, but as engineers, we recognize there isn’t a one size fits all!
+Also, having a more customizable reporting/admin layer would’ve cut down on our custom integration work, but as engineers, we recognize there isn’t a one size fits all solution!
 
 **Dan:** Can you tell me more about the custom work you are doing? Is it mostly reporting, UX, or something else?
 
@@ -95,5 +97,5 @@ We also built a custom UI for admins that allows them to easily query for users 
 
 -------
 
-We love sharing community stories. You can check out [Illustrative Mathematics' website](https://illustrativemathematics.org/) if you'd like to learn more. 
+We love sharing community stories. You can check out [Illustrative Mathematics' website](https://illustrativemathematics.org/) if you'd like to learn more about them. 
 
