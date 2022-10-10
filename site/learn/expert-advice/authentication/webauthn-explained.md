@@ -5,8 +5,8 @@ description: An in-depth look at how WebAuthn can help you add biometric authent
 author: Dan Moore
 image: advice/webauthn-explained/webauthn-explained.png
 category: Authentication
-date: 2022-09-28
-dateModified: 2022-09-28
+date: 2022-10-10
+dateModified: 2022-10-10
 ---
 
 WebAuthn is a new way to authenticate your users using biometric, secure authentication methods. WebAuthn requires something called an authenticator. What is an authenticator? An authenticator is a hardware or software device that is used to authenticate a user, via biometric or other methods, and that follows certain standards.
