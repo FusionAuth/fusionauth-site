@@ -3,10 +3,10 @@ layout: advice
 title: What is SCIM, the System for Cross-domain Identity Management?
 description: What is SCIM, why would you use it, and how does it work?
 author: Dan Moore
-image: advice/slow-migration/slow-migration-of-user-data.png
+image: advice/what-is-scim/what-is-scim.png
 category: Identity Basics
-date: 2022-09-30
-dateModified: 2022-09-30
+date: 2022-10-10
+dateModified: 2022-10-10
 ---
 
 SCIM, which stands for System for Cross-domain Identity Management, is a specification to add and remove users and groups using a standard protocol. 
