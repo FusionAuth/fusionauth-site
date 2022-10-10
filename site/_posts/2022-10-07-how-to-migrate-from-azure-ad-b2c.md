@@ -3,7 +3,7 @@ layout: blog-post
 title: How to migrate from Azure AD B2C
 description: How can you migrate your user data away from Azure AD B2C?
 author: Dan Moore
-image: blogs/migrate-from-cognito/how-to-migrate-from-amazon-cognito-header-image.png
+image: blogs/migrate-from-azure-ad/migrate-from-azure-ad-b2c.png
 category: blog
 tags: topic-upgrade-azure-ad
 excerpt_separator: "<!--more-->"
