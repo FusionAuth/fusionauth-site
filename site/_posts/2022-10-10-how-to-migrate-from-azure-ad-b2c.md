@@ -17,7 +17,7 @@ At FusionAuth, potential customers are interested in migrating from Azure AD B2C
 
 This blog post will explain why and how you might choose to migrate from Azure AD B2C to another solution. This is more complicated than it might seem because you do not have any way to retrieve users' password hashes from Azure AD B2C. This negatively impacts your ability to migrate them without an unpleasant "reset password" login experience.
 
-## The many faced of Azure AD
+## The many faces of Azure AD
 
 Azure AD is Microsoft Azure's name for an umbrella of related identity solutions. There are few options, which support different use cases, even though they may be built on the same technology.
 
