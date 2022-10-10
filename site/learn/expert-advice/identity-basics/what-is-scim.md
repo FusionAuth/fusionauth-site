@@ -54,7 +54,7 @@ There are two players in the SCIM game: the client and the server. The client pr
 
 In the example above, when a new developer is added to an HR system, SCIM adds them to other systems too. In this case, the HR system is the *client* and the other systems are *servers*.
 
-{% plantuml source: _diagrams/learn/expert-advice/identity-basics/what-is-scim/scim-new-developer.plantuml, alt: "Adding a new developer to all required systems." %}
+{% plantuml source: _diagrams/learn/expert-advice/identity-basics/what-is-scim/scim-new-developer.plantuml, alt: "Adding a new developer to all required systems, then offboarding them after they depart." %}
 
 When you are evaluating SCIM solutions, make sure you understand if they implement SCIM as a client, a server, or both. The nomenclature is a bit weird, but clients send data about users and groups; servers receive it.
 
