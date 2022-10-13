@@ -168,9 +168,37 @@ consents['af1c3aea-9871-8ecd-087a-e17d0b97a76a']=I'd like updates via Phone (tex
 ```
 Replace the guid in each consent with the `Id` of the consents you recorded earlier. You can make the descriptions whatever you like. Click "Submit", and then save the theme.
 
-Now navigate to the application you created earlier. Click "Edit" to open the application editor, and select your new theme from the "Theme" dropdown.
+Now navigate to the application you created earlier. Click "Edit" to open the application editor, and select your new theme from the "Theme" dropdown. Save the application to reflect this change. 
 
+## Create the profile update form
 
+Once a user has registered for your app, they might want to change their profile information, including the permissions given for each of the consents. FusionAuth provides a default "Account" page out of the box, but we'll need to create a custom one to account for the consent fields and other custom profile information. 
+
+Navigate to Customizations > Forms and click the green "+" button. Set the "Name" of the form to something like "Consents Self Service". Select "Self-Service User" from the "Type" dropdown.
+
+Instead of "Steps" like the registration form, self-service profile forms have "Sections", which are functionally the same. We'll mirror the registration layout here. 
+
+Click "Add Section" and add the fields "Email" and "Password" to this section.
+
+Then create another section, and add the fields "Physical Mail Address" and "Mobile Phone" to this second section. 
+
+Now creae the last section, and add the consent fields "Phone Marketing Consent", "Email Marketing Consent" and "Physical Mail Marketing Consent".
+
+The form configuration should look similar to this: 
+
+{% include _image.liquid src="/assets/img/blogs/consents-apps/self-service-form.png" alt="The custom self service form configuration" class="img-fluid" figure=false %}
+
+Click "Save" to finish creating the form.
+
+## Linking the new forms to the application
+
+We've created the forms, but we still need to link them to the application so that they are used in place of the defaults. We also need to enabled registrations on the application.
+
+Navigate to Applications and click on the "Edit" button next to the application created earlier. Click on the "Registration" tab. Under "Self-service registration", turn on the "Enabled" switch. Select "Advanced" for the "Type". Select your custom registration form from the "Form" dropdown. 
+
+Under the "Form setttings" section, select your custom self-service form from the "User Self-service" dropdown.
+
+Click "Save" to apply the updates to your application.
 
 ## Setting up Express
 
