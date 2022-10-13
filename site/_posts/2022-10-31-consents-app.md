@@ -12,7 +12,7 @@ In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) 
 
 <!--more-->
 
-The application itself is very simple: it will let users sign up via FusionAuth, allow them to set their permissions for marketing consent, and allow them to update their profile and consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-express-twitter).
+The application itself is very simple: it will let users sign up via FusionAuth, allow them to set their permissions for marketing consent, and allow them to update their profile and consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-express-consents), although much of the application is defined in FusionAuth as detailed in this guide.
 
 ## Prerequisites
 
@@ -163,9 +163,10 @@ Navigate to Customizations > Themes, and click the "Duplicate" button next to th
 
 ```
 consents['ef1b3adf-4963-4eee-893a-f16d9d97a95d']=I'd like updates via Snail Mail
-consents['bf1b4aff-4354-6ebf-099b-c16d0d97a89e']=I'd like updates via Email
-consents['af1c3aea-9871-8ecd-087a-e17d0b97a76a']=I'd like updates via Phone (text)
+consents['41bc0627-5df3-466a-bac1-a12925580c7f']=I'd like updates via Email
+consents['e6a4e555-f037-4e77-92fd-d805bdba7c33']=I'd like updates via Phone (text)
 ```
+
 Replace the guid in each consent with the `Id` of the consents you recorded earlier. You can make the descriptions whatever you like. Click "Submit", and then save the theme.
 
 Now navigate to the application you created earlier. Click "Edit" to open the application editor, and select your new theme from the "Theme" dropdown. Save the application to reflect this change.
@@ -338,7 +339,6 @@ app.get(
   }
 );
 ```
-
 On successful authentication or failure, we'll redirect to the homepage. Let's update that now to show the login status, and provide a link to the users profile page. Open the `index.js` file in the `routes` folder, and update the `get` route to the following:
 
 ```js
@@ -465,24 +465,28 @@ You should see the main page looking something like this:
 
 Clicking on "Login Here" should redirect you to your FusionAuth installation.
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/login-page.png" alt="The FusionAuth login page, with Twitter as an option" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/login-page.png" alt="The FusionAuth login page" class="img-fluid" figure=false %}
 
-Clicking the "Login with Twitter" button should redirect you to Twitter to complete the authentication.
+Clicking the "Create an account" link should render the custom registraton form configured earlier. Notice that it has 3 steps:
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/twitter-page.png" alt="The Twitter page asking permission to authenticate you to your FusionAuth instance" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/registration-steps.png" alt="The custom registration page, with multiple steps" class="img-fluid" figure=false %}
 
-Entering your Twitter credentials should now redirect you back to the app's root page, where you should see a logged in message.
+Enter all the information, and click "Register" at the end of the steps. You should then be redirected back to your Express app, with a new message on the home page:
 
 {% include _image.liquid src="/assets/img/blogs/consents-apps/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
 
-Clicking on the "Members Only area" link should take you to `users/me`, showing a JSON object representing your profile on FusionAuth (with the username from Twitter). 
+Clicking on the "profile page" link should take you to `users/me`, showing 2 JSON objects representing your profile on FusionAuth, along with the raw data from the consents API. Notice in each consent that there is a property `status`. This will be either `active` or `revoked`. You can use these values when checking to send information to the user through each channel. 
 
 {% include _image.liquid src="/assets/img/blogs/consents-apps/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
 
+Clicking the "profile page" link will redirect to FusionAuth, where the user can view and update their information and consent permissions via the self-service form created earlier. Once navigated to the FusionAuth hosted profile page, clicking on the "Edit" pencil icon button in the top right will allow the user to update their profile. 
+
+
+
 ## Where to next with Express and FusionAuth?
 
-That’s the basics of our Express + Twitter + FusionAuth app done. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-express-twitter).
+That’s the basics of our Express + FusionAuth app done. The app has a fully featured authentication system, along with user consents, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-express-consents).
 
-Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, social sign-in, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
+Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, consents, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
 
 For a production environment, you would also need to do a bit more work in making sure FusionAuth was really safe. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
