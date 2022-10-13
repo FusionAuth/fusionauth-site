@@ -35,7 +35,7 @@ With this setup, authentication, identity and consent concerns are taken care of
 
 The image below shows how this works.
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. FusionAuth coordinates with other identity providers" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. User consent information also stored and managed by FusionAuth" class="img-fluid" figure=false %}
 
 Your application logic and all public information can be handled by Node.js + Express. Anything sensitive, such as personally identifiable information (PII), passwords, and consent permissions is handled by FusionAuth.
 
