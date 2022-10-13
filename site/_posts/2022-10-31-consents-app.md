@@ -35,7 +35,7 @@ With this setup, authentication, identity and consent concerns are taken care of
 
 The image below shows how this works.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. FusionAuth coordinates with other identity providers" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. FusionAuth coordinates with other identity providers" class="img-fluid" figure=false %}
 
 Your application logic and all public information can be handled by Node.js + Express. Anything sensitive, such as personally identifiable information (PII), passwords, and consent permissions is handled by FusionAuth.
 
@@ -60,7 +60,7 @@ Note that this uses a public `.env` file containing hard-coded database password
 
 FusionAuth should now be running and reachable at `http://localhost:9011`, if you've installed it locally. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more setup steps, as shown below.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
 
 We'll skip step **#3** in this tutorial, but sending emails (to verify email addresses and do password resets) is a vital part of FusionAuth running in production, so you'll want to do that when you go live.
 
@@ -72,7 +72,7 @@ Click "Setup" under "Missing Application" and call your new app "Consents-App", 
 - `http://localhost:3000/` to the Authorized request origin URL.
 - `http://localhost:3000/` to the Logout URL.
   
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
 Click the Save button at the top right for your changes to take effect.
 
@@ -82,11 +82,11 @@ Once the user has logged in via the FusionAuth application, we can retrieve thei
 
 Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
 For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get actions for `/api/user/` and `/api/user/consent` which will let the key get basic user information, as well as any consents permissions. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
 ## Creating the custom Consents
 
@@ -139,7 +139,7 @@ Now that we have the custom fields, we can create a custom registration form wit
 
 Name the form something like "Consents Registration Form". Make sure "Registration" is selected as the forms "Type". Then click the "Add Step" button. A step in a form is like a page of the form. It helps to break up a form into multiple smaller pages so that users are not overwhelmed by a screen full of inputs. 
 
-In the "Step 1" section, click the "Add Field" button. Select "Email" from the "Field" dropdown, and then click "Submit". Then click "Add Field" again, and select "Password" as the "Field", and click "Submit". The users email and password are all we are going to capture in the first step. 
+In the "Step 1" section, click the "Add Field" button. Select "Email" from the "Field" dropdown, and then click "Submit". Then click "Add Field" again, and select "Password" as the "Field", and click "Submit". The users email and password are all we are going to capture in the first step.
 
 Now click the "Add Step" button again. In this step, we'll capture the users alternative contact information. Click "Add Field", and select "Mobile Phone" as the field, and click "Submit" . Repeat for "Physical Mail Address".
 
@@ -168,7 +168,7 @@ consents['af1c3aea-9871-8ecd-087a-e17d0b97a76a']=I'd like updates via Phone (tex
 ```
 Replace the guid in each consent with the `Id` of the consents you recorded earlier. You can make the descriptions whatever you like. Click "Submit", and then save the theme.
 
-Now navigate to the application you created earlier. Click "Edit" to open the application editor, and select your new theme from the "Theme" dropdown. Save the application to reflect this change. 
+Now navigate to the application you created earlier. Click "Edit" to open the application editor, and select your new theme from the "Theme" dropdown. Save the application to reflect this change.
 
 ## Create the profile update form
 
@@ -200,6 +200,8 @@ Under the "Form setttings" section, select your custom self-service form from th
 
 Click "Save" to apply the updates to your application.
 
+The FusionAuth setup is now complete. We can move on to the Express app.
+
 ## Setting up Express
 
 To get started, you should:
@@ -217,10 +219,10 @@ npm install
 npm install passport passport-oauth2 connect-ensure-login express-session @fusionauth/typescript-client
 npm start
 ```
-
+s
 If all went well, the server should start successfully and you can visit `http://localhost:3000`.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/express-server.png" alt="Express app default home page" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/express-server.png" alt="Express app default home page" class="img-fluid" figure=false %}
 
 ## Building the application
 
@@ -228,7 +230,7 @@ Our application will only have three pages, including the FusionAuth login page.
 
 1. A home page - a public page showing how many users our app has and inviting users to log in.
 2. The registrations page (redirected to FusionAuth) with options to set their marketing consents.s
-3. A logged in private "Member's Only" page. This will display the user's profile retrieved from FusionAuth, and allow them to click through to update their profile information, including consent permissions.
+3. A logged in private profile page. This will display the user's profile and consent permissions retrieved from FusionAuth, and allow them to click through to update their profile information, including consent permissions.
 
 ## Adding and initializing dependencies
 
@@ -314,7 +316,7 @@ passport.deserializeUser(function (user, done) {
 
 # Adding Express routes
 
-We've got the basic framework and authorization code set up. Now we can add some routes. We'll start with the `login` route to handle the redirect to FusionAuth, which will in turn handle the calls to Twitter. 
+We've got the basic framework and authorization code set up. Now we can add some routes. We'll start with the `login` route to handle the redirect to FusionAuth.
 
 Add this code under the `app.use("/", indexRouter);` line:
 
@@ -337,7 +339,7 @@ app.get(
 );
 ```
 
-On successful authentication or failure, we'll redirect to the homepage. Let's update that now to show the login status, and provide a link to the "Members Only" area. Open the `index.js` file in the `routes` folder, and update the `get` route to the following:
+On successful authentication or failure, we'll redirect to the homepage. Let's update that now to show the login status, and provide a link to the users profile page. Open the `index.js` file in the `routes` folder, and update the `get` route to the following:
 
 ```js
 router.get('/', function(req, res, next) {
@@ -357,7 +359,7 @@ Now open the `index.hbs` file in the `views` folder, and update the code to the 
 {{#if authenticated}}
   <p>You are logged in!</p>
   <p>
-    You can now visit the super secure <a href="/users/me">members only area</a>
+    You can now visit your <a href="/users/me">profile page</a>
   </p> 
 {{else}}
   <p>
@@ -367,22 +369,79 @@ Now open the `index.hbs` file in the `views` folder, and update the code to the 
 ```
 {% endraw %}
 
-This will notify the user if they are logged in or not, and point them to the relevant page.
+This will notify the user if they are logged in or not, and point them to the relevant action.
 
 ## Adding a members only area
 
 Now that we have the basic login and authentication mechanics set up, we can add a restricted route that is only available to users that are logged in. This route will show the user their profile, and a link to update their information.
 
-In the `users.js` file in the `routes` folder, modify the `get` route to the following:
+In the `users.js` file in the `routes` folder, replace the code with the following:
 
 ```js
-router.get('/me', function(req, res, next) {
-  const user = req.user; 
-  res.send('You have reached the super secret members only area! Authenticated as : ' + JSON.stringify(user, null, '\t'));
-});
+var express = require("express");
+var router = express.Router();
+var { FusionAuthClient } = require("@fusionauth/typescript-client");
 
+const fusionClient = new FusionAuthClient(
+  "<YOUR_FUSION_API_KEY>",
+  "https://<YOUR_FUSIONAUTH_URL>"
+);
+
+/* GET users listing. */
+router.get("/me", async function (req, res, next) {
+  const user = req.user;
+  // Get the user's consent info:
+  let userConsents = {};
+  try {
+    const response = await fusionClient.retrieveUserConsents(user.id);
+    userConsents = response.response.userConsents;
+  } catch (err) {
+    console.log(err);
+  }
+  res.render("me", {
+    profile: JSON.stringify(user, null, "\t"),
+    consents: JSON.stringify(userConsents, null, "\t"),
+  });
+});
 ```
-Now, we need to secure the route to this page to users that are authenticated. To help with that, we'll use the [`connect-ensure-login`](https://github.com/jaredhanson/connect-ensure-login) middleware we installed earlier. Update the `users` route in the `app.js` file from:
+
+Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at (normally `http://localhost:9000` for local docker installs). Replace `<YOUR_FUSION_API_KEY>` with the API key created earlier.
+
+This code sets up a FusionAuth client link, so that we can read the user's consent information from [the API](https://fusionauth.io/docs/v1/tech/apis/consents#retrieve-a-user-consent). It also creates a `/users/me` route, which is used to retrieve the users profile information. In the route, we grab the `user` object from the `req` parameter. Recall this was added by Passport earlier in the setup. Then we make a call to the FusionAuth API to retrieve the user's consent information, passing in the user's `id` as the parameter. We simply stringify the user object and consents and send it to the `me` handlebars template to render. In a production app, you'd want to display this a bit nicer, and maybe search for the specific fields and consents you want to display. You'd access a user's consents exactly the same way, through the API, when determining what kind of marketing channel they'd prefer. This would typically be called in a background worker process, or serverless function.
+
+We need to create the handlebars template for this route. Create a new file in the "views" folder, called `me.hbs`. Add the following code to the file:
+
+{% raw %}
+```html
+<h1>{{title}}</h1>
+<p>Welcome to {{title}}</p>
+
+<p>
+  You can update your
+  <a target="_blank"
+    href="<YOUR_FUSIONAUTH_ACCOUNT_LINK>"
+  >profile here</a>
+</p>
+
+
+<h2>Profile Info</h2>
+<p>
+  {{profile}}
+</p>
+
+<h2>Consent Permissions</h2>
+<p>
+  {{consents}}
+</p>
+```
+{% endraw %}
+
+
+This is a template that has placeholders for the dump of the raw user information, as well as the user consents. 
+
+There is also a link for the user to update their information on FusionAuth, using the custom self-service form created earlier. To update the value for `<YOUR_FUSIONAUTH_ACCOUNT_LINK>`, navigate to Applications in FusionAuth. Click the "View" button next to your application, and scroll down to the "Account URL" value. Copy the url, and replace `<YOUR_FUSIONAUTH_ACCOUNT_LINK>` in the code above with it.
+
+Now, we need to secure the route to this profile page to users that are authenticated. To help with that, we'll use the [`connect-ensure-login`](https://github.com/jaredhanson/connect-ensure-login) middleware we installed earlier. Update the `users` route in the `app.js` file from:
 
 ```js
 app.use('/users', usersRouter);
@@ -402,23 +461,23 @@ We are done with the coding. Type `npm start` at the console to start up the ser
 
 You should see the main page looking something like this:
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps//not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
 
-Clicking on "Login Here" should redirect you to your FusionAuth installation, with a Twitter button as a login option.
+Clicking on "Login Here" should redirect you to your FusionAuth installation.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/login-page.png" alt="The FusionAuth login page, with Twitter as an option" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/login-page.png" alt="The FusionAuth login page, with Twitter as an option" class="img-fluid" figure=false %}
 
 Clicking the "Login with Twitter" button should redirect you to Twitter to complete the authentication.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-page.png" alt="The Twitter page asking permission to authenticate you to your FusionAuth instance" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/twitter-page.png" alt="The Twitter page asking permission to authenticate you to your FusionAuth instance" class="img-fluid" figure=false %}
 
 Entering your Twitter credentials should now redirect you back to the app's root page, where you should see a logged in message.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
 
 Clicking on the "Members Only area" link should take you to `users/me`, showing a JSON object representing your profile on FusionAuth (with the username from Twitter). 
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
 
 ## Where to next with Express and FusionAuth?
 
