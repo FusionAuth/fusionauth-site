@@ -95,7 +95,7 @@ For our app, we want users to be able to opt in, or _consent_, to different mark
 - Email
 - Phone
 
-We'll need to get their permission for each of these options. FusionAuth manages all this under the   [Consents](link) concept. We can create custom consents for our app. 
+We'll need to get their permission for each of these options. FusionAuth manages all this under the   [Consents](link) concept. We can create custom consents for our app.
 
 In the left hand pane, Navigate to Settings > Consents. Click the green "+" button to create a new consent. Name the new consent "Email Marketing" and click the "Save" icon.
 
@@ -117,13 +117,13 @@ In the left hand pane, Navigate to Customizations > Form Fields. Click the green
 
 First, we'll add the marketing consent fields, starting with with the physical mail marketing consent. Choose "Self Consent" as the field type, and set the "Name" to "Physical Mail Marketing Consent". Select "Physical Mail Marketing" as the "Consent". The field setup should look like this: 
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/create-consent-field.png" alt="Create a new consent" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-apps/create-consent-field.png" alt="Create a new consent field" class="img-fluid" figure=false %}
 
 Click the "Save" button, and then repeat this process for the email and phone consents. 
 
-We'll also need to add a custom field to capture the user's physical address. We'll just create one field here. In a production app, you might want to break down the address into a few field, eg, "Address Line 1", "Address Line 2", "City" etc. 
+We'll also need to add a custom field to capture the user's physical address. We'll just create one field here. In a production app, you might want to break down the address into a few field, eg, "Address Line 1", "Address Line 2", "City" etc.
 
-Click the green "+" button to create a new field again. Name the new field "Physical Mail Address". For the "Field", select "Custom user data (user.data.*)". This will present another input box, starting with "user.data". Type "physicalmailaddress" in this box. 
+Click the green "+" button to create a new field again. Name the new field "Physical Mail Address". For the "Field", select "Custom user data (user.data.*)". This will present another input box, starting with "user.data". Type "physicalmailaddress" in this box.
 
 This adds a custom field to the user's "data" object. The "data" object can store extra profile information about the user, typically information you'd want to share across all your apps. If the field is app specific, then you can use the field type "Custom registration data" instead.
 
@@ -143,7 +143,7 @@ In the "Step 1" section, click the "Add Field" button. Select "Email" from the "
 
 Now click the "Add Step" button again. In this step, we'll capture the users alternative contact information. Click "Add Field", and select "Mobile Phone" as the field, and click "Submit" . Repeat for "Physical Mail Address".
 
-Click the "Add Step" button once more for the final registration step. In this step, we'll capture the users consent permission for each marketing channel. Click "Add Field" and select "Physical Mail Marketing Consent", and then click "Submit". Repeat this process for the email and phone marketing consents. 
+Click the "Add Step" button once more for the final registration step. In this step, we'll capture the users consent permission for each marketing channel. Click "Add Field" and select "Physical Mail Marketing Consent", and then click "Submit". Repeat this process for the email and phone marketing consents.
 
 Your final form should look similar to this: 
 
