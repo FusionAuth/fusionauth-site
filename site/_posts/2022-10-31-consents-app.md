@@ -143,10 +143,33 @@ In the "Step 1" section, click the "Add Field" button. Select "Email" from the "
 
 Now click the "Add Step" button again. In this step, we'll capture the users alternative contact information. Click "Add Field", and select "Mobile Phone" as the field, and click "Submit" . Repeat for "Physical Mail Address".
 
-Click the "Add Step" button once more for the final registration step. In this step, we'll capture the users consent permission for each marketing channel. Click "Add Field" and select "Physical Mail Marketing Consent", and then click "Submit". Repeat this process for the email and phone marketing consents.
+Click the "Add Step" button once more for the final registration step. In this step, we'll capture the users consent permission for each marketing channel. Click "Add Field" and select "Physical Mail Marketing Consent", and then click "Submit". Repeat this process for the email and phone marketing consents. 
 
+Your final form should look similar to this: 
 
- 
+{% include _image.liquid src="/assets/img/blogs/consents-apps/registration-form.png" alt="The custom registration form configuration" class="img-fluid" figure=false %}
+
+Click "Save". The custom registration form is complete.
+
+## Adding description for the consent inputs.
+
+By default, when adding a consent field type to a form, FusionAuth will just render the `id` of the consent on the form. This would not be helpful to users. We can customize the rendered text of the consent fields by adding lines to the "messages" template of the theme, linking a display name to each consent.
+
+To prepare, navigate to Settings > Consents. For each of the consents you created, record their `Id` and `Name`. We'll use this in the theme messages.
+
+The default theme in FusionAuth cannot be modified, but we can clone the theme and modifying our copy.
+
+Navigate to Customizations > Themes, and click the "Duplicate" button next to the default "FusionAuth" theme. Give this new theme a "Name", perhaps "Consents App Theme". Click on the "Messages" template, and then the "Edit" button next to the default localization. Scroll all the way to the bottom of the template, and add a line for each of the consents, like this:
+
+```
+consents['ef1b3adf-4963-4eee-893a-f16d9d97a95d']=I'd like updates via Snail Mail
+consents['bf1b4aff-4354-6ebf-099b-c16d0d97a89e']=I'd like updates via Email
+consents['af1c3aea-9871-8ecd-087a-e17d0b97a76a']=I'd like updates via Phone (text)
+```
+Replace the guid in each consent with the `Id` of the consents you recorded earlier. You can make the descriptions whatever you like. Click "Submit", and then save the theme.
+
+Now navigate to the application you created earlier. Click "Edit" to open the application editor, and select your new theme from the "Theme" dropdown.
+
 
 
 ## Setting up Express
