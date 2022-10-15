@@ -151,14 +151,15 @@ For this app, we are going to set up four routes:
 * **OAuth callback endpoint**: Receiver of the redirect from FusionAuth when the authorization code is granted.
 * **Logout endpoint**: Receiver of the redirect from FusionAuth when successfully logging out.
 
- ```ruby
- Rails.application.routes.draw do
-   root to: 'welcome#index'
-   get '/oauth2-callback', to: 'oauth#oauth_callback'
-   get '/logout', to: 'oauth#logout'
-   get '/login', to: 'oauth#login'
- end
- ```
+```ruby
+Rails.application.routes.draw do
+  root to: 'welcome#index'
+  get '/oauth2-callback', to: 'o_auth#oauth_callback'
+  get '/logout', to: 'o_auth#logout'
+  get '/endsession', to: 'o_auth#endsession'
+  get '/login', to: 'o_auth#login'
+end
+```
 
 #### The Welcome page
 Let's start off with a very basic welcome view that contains a link for a user to login to the application.
@@ -175,7 +176,9 @@ It should look something like this when rendered.
 
 #### OAuthController
 
-The "OAuthController" will handle each of the remaining routes needed to complete the authorization code grant flow. Here is what it will look like when we are finished:
+The "OAuthController" will handle each of the remaining routes needed to complete the authorization code grant flow. Because we want to map to the filesystem properly, put this code in `app/controllers/o_auth_controller.rb`. That allows us to name it `OAuthController` rather than `OauthController` with a little `a`.
+
+Here is what it will look like when we are finished:
 
 ```ruby
 class OAuthController < ApplicationController
