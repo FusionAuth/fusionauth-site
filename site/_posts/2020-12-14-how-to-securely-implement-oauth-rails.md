@@ -7,6 +7,7 @@ image: blogs/fusionauth-example-rails/how-to-securely-implement-oauth-in-ruby-on
 category: blog
 tags: client-ruby tutorial tutorial-rails tutorial-ruby
 excerpt_separator: "<!--more-->"
+updated_date: 2022-10-14
 ---
 
 In this tutorial, we will walk through setting up a basic Ruby on Rails app to securely authenticate with an OAuth2 server using the authorization code grant.
