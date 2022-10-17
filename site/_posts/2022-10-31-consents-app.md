@@ -35,7 +35,7 @@ With this setup, authentication, identity and consent concerns are taken care of
 
 The image below shows how this works.
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. User consent information also stored and managed by FusionAuth" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. User consent information also stored and managed by FusionAuth" class="img-fluid" figure=false %}
 
 Your application logic and all public information can be handled by Node.js + Express. Anything sensitive, such as personally identifiable information (PII), passwords, and consent permissions is handled by FusionAuth.
 
@@ -60,7 +60,7 @@ Note that this uses a public `.env` file containing hard-coded database password
 
 FusionAuth should now be running and reachable at `http://localhost:9011`, if you've installed it locally. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more setup steps, as shown below.
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
 
 We'll skip step **#3** in this tutorial, but sending emails (to verify email addresses and do password resets) is a vital part of FusionAuth running in production, so you'll want to do that when you go live.
 
@@ -72,7 +72,7 @@ Click "Setup" under "Missing Application" and call your new app "Consents-App", 
 - `http://localhost:3000/` to the Authorized request origin URL.
 - `http://localhost:3000/` to the Logout URL.
   
-{% include _image.liquid src="/assets/img/blogs/consents-apps/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
 Click the Save button at the top right for your changes to take effect.
 
@@ -82,11 +82,11 @@ Once the user has logged in via the FusionAuth application, we can retrieve thei
 
 Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value.
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
 For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get actions for `/api/user/` and `/api/user/consent` which will let the key get basic user information, as well as any consents permissions. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
 ## Creating the custom Consents
 
@@ -95,33 +95,33 @@ For our app, we want users to be able to opt in, or _consent_, to different mark
 - Email
 - Phone
 
-We'll need to get their permission for each of these options. FusionAuth manages all this under the   [Consents](link) concept. We can create custom consents for our app.
+We'll need to get their permission for each of these options. FusionAuth manages all this under the   [Consents](https://fusionauth.io/docs/v1/tech/apis/consents) concept. We can create custom consents for our app.
 
-In the left hand pane, Navigate to Settings > Consents. Click the green "+" button to create a new consent. Name the new consent "Email Marketing" and click the "Save" icon.
+In the left hand pane, navigate to Settings > Consents. Click the green "+" button to create a new consent. Name the new consent "Email Marketing" and click the "Save" icon.
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/create-consent.png" alt="Create a new consent" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/create-consent.png" alt="Create a new consent" class="img-fluid" figure=false %}
 
-Repeat this to create two more consents: "Phone Marketing" and "Physical Mail Marketing"
+Repeat this to create two more consents: "Phone Marketing" and "Physical Mail Marketing".
 
 ## Creating custom form fields
 
 During user registration for our app, we want users to be able to set their important profile information as well as their consent permissions. For this, we can create custom form fields which we will be able to use in a custom registration form. FusionAuth also has many built in form fields, which we will also make use of.
 
 The custom fields we'll create are:
--   Physical Address
--   Form Input for Physical Mail Marketing Consent
--   Form Input for Email Marketing Consent
--   Form Input for Phone Marketing Consent
+-   Physical Address.
+-   Form Input for Physical Mail Marketing Consent.
+-   Form Input for Email Marketing Consent.
+-   Form Input for Phone Marketing Consent.
 
 In the left hand pane, Navigate to Customizations > Form Fields. Click the green "+" button to create a new form field.
 
-First, we'll add the marketing consent fields, starting with with the physical mail marketing consent. Choose "Self Consent" as the field type, and set the "Name" to "Physical Mail Marketing Consent". Select "Physical Mail Marketing" as the "Consent". The field setup should look like this: 
+First, we'll add the marketing consent fields, starting with the physical mail marketing consent. Choose "Self Consent" as the field type, and set the "Name" to "Physical Mail Marketing Consent". Select "Physical Mail Marketing" as the "Consent". The field setup should look like this: 
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/create-consent-field.png" alt="Create a new consent field" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/create-consent-field.png" alt="Create a new consent field" class="img-fluid" figure=false %}
 
 Click the "Save" button, and then repeat this process for the email and phone consents. 
 
-We'll also need to add a custom field to capture the user's physical address. We'll just create one field here. In a production app, you might want to break down the address into a few field, eg, "Address Line 1", "Address Line 2", "City" etc.
+We'll also need to add a custom field to capture the user's physical address. We'll just create one field here. In a production app, you might want to break down the address into a few fields, eg, "Address Line 1", "Address Line 2", "City" etc.
 
 Click the green "+" button to create a new field again. Name the new field "Physical Mail Address". For the "Field", select "Custom user data (user.data.*)". This will present another input box, starting with "user.data". Type "physicalmailaddress" in this box.
 
@@ -129,7 +129,7 @@ This adds a custom field to the user's "data" object. The "data" object can stor
 
 The field setup should look like this:
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/physical-mail-field.png" alt="Create the physical mail address form field" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/physical-mail-field.png" alt="Create the physical mail address form field" class="img-fluid" figure=false %}
 
 Click "Save". We have setup all the custom fields we need.
 
@@ -147,7 +147,7 @@ Click the "Add Step" button once more for the final registration step. In this s
 
 Your final form should look similar to this: 
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/registration-form.png" alt="The custom registration form configuration" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/registration-form.png" alt="The custom registration form configuration" class="img-fluid" figure=false %}
 
 Click "Save". The custom registration form is complete.
 
@@ -157,7 +157,7 @@ By default, when adding a consent field type to a form, FusionAuth will just ren
 
 To prepare, navigate to Settings > Consents. For each of the consents you created, record their `Id` and `Name`. We'll use this in the theme messages.
 
-The default theme in FusionAuth cannot be modified, but we can clone the theme and modifying our copy.
+The default theme in FusionAuth cannot be modified, but we can clone the theme and modify our copy.
 
 Navigate to Customizations > Themes, and click the "Duplicate" button next to the default "FusionAuth" theme. Give this new theme a "Name", perhaps "Consents App Theme". Click on the "Messages" template, and then the "Edit" button next to the default localization. Scroll all the way to the bottom of the template, and add a line for each of the consents, like this:
 
@@ -183,21 +183,21 @@ Click "Add Section" and add the fields "Email" and "Password" to this section.
 
 Then create another section, and add the fields "Physical Mail Address" and "Mobile Phone" to this second section. 
 
-Now creae the last section, and add the consent fields "Phone Marketing Consent", "Email Marketing Consent" and "Physical Mail Marketing Consent".
+Now create the last section, and add the consent fields "Phone Marketing Consent", "Email Marketing Consent" and "Physical Mail Marketing Consent".
 
 The form configuration should look similar to this: 
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/self-service-form.png" alt="The custom self service form configuration" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/self-service-form.png" alt="The custom self service form configuration" class="img-fluid" figure=false %}
 
 Click "Save" to finish creating the form.
 
 ## Linking the new forms to the application
 
-We've created the forms, but we still need to link them to the application so that they are used in place of the defaults. We also need to enabled registrations on the application.
+We've created the forms, but we still need to link them to the application so that they are used in place of the defaults. We also need to enable registrations on the application.
 
 Navigate to Applications and click on the "Edit" button next to the application created earlier. Click on the "Registration" tab. Under "Self-service registration", turn on the "Enabled" switch. Select "Advanced" for the "Type". Select your custom registration form from the "Form" dropdown. 
 
-Under the "Form setttings" section, select your custom self-service form from the "User Self-service" dropdown.
+Under the "Form settings" section, select your custom self-service form from the "User Self-service" dropdown.
 
 Click "Save" to apply the updates to your application.
 
@@ -220,17 +220,17 @@ npm install
 npm install passport passport-oauth2 connect-ensure-login express-session @fusionauth/typescript-client
 npm start
 ```
-s
+
 If all went well, the server should start successfully and you can visit `http://localhost:3000`.
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/express-server.png" alt="Express app default home page" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/express-server.png" alt="Express app default home page" class="img-fluid" figure=false %}
 
 ## Building the application
 
 Our application will only have three pages, including the FusionAuth login page.
 
 1. A home page - a public page showing how many users our app has and inviting users to log in.
-2. The registrations page (redirected to FusionAuth) with options to set their marketing consents.s
+2. The registrations page (redirected to FusionAuth) with options to set their marketing consents.
 3. A logged in private profile page. This will display the user's profile and consent permissions retrieved from FusionAuth, and allow them to click through to update their profile information, including consent permissions.
 
 ## Adding and initializing dependencies
@@ -267,7 +267,7 @@ const fusionClient = new FusionAuthClient(
 );
 ```
 
-Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at (normally `http://localhost:9000` for local docker installs). Replace `<YOUR_FUSION_API_KEY>` with the API key created earlier.
+Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at (normally `http://localhost:9011` for local docker installs). Replace `<YOUR_FUSION_API_KEY>` with the API key created earlier.
 
 Now we can initialize the Passport strategy. We'll be connecting to FusionAuth using OAuth2, so we'll use the passport-oauth2 strategy. Add the following code directly below the code you've just added:
 
@@ -403,9 +403,11 @@ router.get("/me", async function (req, res, next) {
     consents: JSON.stringify(userConsents, null, "\t"),
   });
 });
+
+module.exports = router;
 ```
 
-Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at (normally `http://localhost:9000` for local docker installs). Replace `<YOUR_FUSION_API_KEY>` with the API key created earlier.
+Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at (normally `http://localhost:9011` for local docker installs). Replace `<YOUR_FUSION_API_KEY>` with the API key created earlier.
 
 This code sets up a FusionAuth client link, so that we can read the user's consent information from [the API](https://fusionauth.io/docs/v1/tech/apis/consents#retrieve-a-user-consent). It also creates a `/users/me` route, which is used to retrieve the users profile information. In the route, we grab the `user` object from the `req` parameter. Recall this was added by Passport earlier in the setup. Then we make a call to the FusionAuth API to retrieve the user's consent information, passing in the user's `id` as the parameter. We simply stringify the user object and consents and send it to the `me` handlebars template to render. In a production app, you'd want to display this a bit nicer, and maybe search for the specific fields and consents you want to display. You'd access a user's consents exactly the same way, through the API, when determining what kind of marketing channel they'd prefer. This would typically be called in a background worker process, or serverless function.
 
@@ -461,23 +463,23 @@ We are done with the coding. Type `npm start` at the console to start up the ser
 
 You should see the main page looking something like this:
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps//not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
 
 Clicking on "Login Here" should redirect you to your FusionAuth installation.
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/login-page.png" alt="The FusionAuth login page" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/login-page.png" alt="The FusionAuth login page" class="img-fluid" figure=false %}
 
 Clicking the "Create an account" link should render the custom registraton form configured earlier. Notice that it has 3 steps:
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/registration-steps.png" alt="The custom registration page, with multiple steps" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/registration-steps.png" alt="The custom registration page, with multiple steps" class="img-fluid" figure=false %}
 
 Enter all the information, and click "Register" at the end of the steps. You should then be redirected back to your Express app, with a new message on the home page:
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
 
 Clicking on the "profile page" link should take you to `users/me`, showing 2 JSON objects representing your profile on FusionAuth, along with the raw data from the consents API. Notice in each consent that there is a property `status`. This will be either `active` or `revoked`. You can use these values when checking to send information to the user through each channel. 
 
-{% include _image.liquid src="/assets/img/blogs/consents-apps/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/consents-app/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
 
 Clicking the "profile page" link will redirect to FusionAuth, where the user can view and update their information and consent permissions via the self-service form created earlier. Once navigated to the FusionAuth hosted profile page, clicking on the "Edit" pencil icon button in the top right will allow the user to update their profile. 
 
