@@ -24,7 +24,7 @@ With a focus on standards based customer identity and access management, FusionA
 Biometrics authentication with WebAuthn will be available for general release in November 2022 for all FusionAuth Essentials and Enterprise plan developers. Contact FusionAuth technical sales for a free trial. Learn more at [fusionauth.io/biometric](https://fusionauth.io/biometric).
 
 ### Office Hours
-Join FusionAuth authentication experts & engineers to see WebAuthn in action on Friday, November 4th @ 12 pm MST live on [YouTube](https://www.youtube.com/watch?v=zx0Rfg1Vgik).  
+Join FusionAuth authentication experts & engineers to see WebAuthn in action on Friday, November 4th @ 12 pm Mountain Time live on [YouTube](https://www.youtube.com/watch?v=zx0Rfg1Vgik).  
 
 ### About FusionAuth
 
