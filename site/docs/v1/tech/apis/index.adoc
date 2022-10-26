@@ -15,6 +15,7 @@ On this page you will find links to each of the API groups and a general overvie
 * link:/docs/v1/tech/apis/authentication[API Authentication]
 * link:/docs/v1/tech/apis/errors[API Errors]
 * link:#status-codes[API Status Codes]
+* <<The PATCH HTTP Method>>
 * <<Troubleshooting>>
 
 Here's a brief video showing how to use an API:
@@ -60,7 +61,7 @@ The APIs are grouped into the following categories.
 * link:/docs/v1/tech/apis/lambdas[Lambdas] - These APIs allow you to manage Lambdas (CRUD operations).
 * link:/docs/v1/tech/apis/login[Login] - These APIs allow you to authenticate Users.
 * link:/docs/v1/tech/apis/messengers/[Messengers] - These APIs allow you to manage Messengers (CRUD operations).
-* link:/docs/v1/tech/apis/two-factor[Multi-Factor] - This API provides allow you to enable and disable Multi-Factor Authentication (MFA) on a user.
+* link:/docs/v1/tech/apis/two-factor[Multi-Factor] - This API allows you to enable and disable Multi-Factor Authentication (MFA) on a user.
 * link:/docs/v1/tech/apis/passwordless[Passwordless] - These APIs allow you to authenticate Users without a password.
 * link:/docs/v1/tech/apis/registrations[Registrations] - These APIs allow you to manage the relationship between Users and Applications, also known as Registrations (CRUD operations).
 * link:/docs/v1/tech/apis/reactor[Reactor] - These APIs allow you to manage licensing features.
@@ -117,6 +118,138 @@ Each API may document specific status codes and provide a specific reason for re
 |A lambda invocation failed during this API request. An event log will have been created with details of the exception. See [breadcrumb]#System -> Event Log#.
 |===
 
+== The PATCH HTTP Method
+
+There are three options for using `PATCH` operations. You choose between them by specifying a particular `Content-Type` on the request.
+
+.PATCH options
+[cols="1,1,1,1,1,1,1"]
+|===
+| Name | Content-Type | Array Behavior | Available Since | RFC Link | Client Library Support | Notes
+
+|Original
+|`application/json`
+|Varies, sometimes a merge, other times an append. Read the documentation and test before using. Safest option is `GET` then `PUT`.
+|1.12.0
+|N/A
+|Yes
+|May be deprecated in the future.
+
+|JSON Patch
+|`application/json-patch+json`
+|Uses operations to specify JSON modifications.
+|1.39.0
+|https://www.rfc-editor.org/rfc/rfc6902[RFC 6902]
+|No
+|https://json-patch-builder-online.github.io/[Useful patch builder tool]
+
+|JSON Merge Patch
+|`application/merge-patch+json`
+|If target value is an array, overwrite the existing value with what is provided.
+|1.39.0
+|https://www.rfc-editor.org/rfc/rfc7396[RFC 7396]
+|No
+|N/A
+
+|===
+
+=== PATCH Example
+
+Here's an example of how the different options work when used to modify the roles of a link:/docs/v1/tech/apis/groups[Group] which has roles of "ceo" and "dev" to remove the "dev" role.
+
+If you are only modifying specific object fields, all three `PATCH` methods are equivalent. 
+
+==== Original
+
+With the original, pre 1.39.0 `PATCH` method, the correct way to remove the "dev" role is to request the group JSON, find the "ceo" role from the `roleIds` array, and use `PUT` to update the group object. 
+
+[source,json,title=Original Group JSON]
+----
+include::docs/src/json/groups/patch/original.json[]
+----
+
+[source,json,title=PUT Request JSON]
+----
+{
+  "group": {
+    "name": "Paid employees",
+    "data": {}
+  },
+  "roleIds": [
+    "0a15cfdd-e231-4de4-9411-6d1015e05d99"
+  ]
+}
+----
+
+After you make this `PUT` request, the group JSON will look like this.
+
+[source,json,title=Resulting Group JSON]
+----
+include::docs/src/json/groups/patch/response.json[]
+----
+
+
+==== JSON Patch
+
+With JSON Patch, you have a flexible set of operations that can update, remove or move fields in a JSON object. Please review https://www.rfc-editor.org/rfc/rfc6902[RFC 6902] for the full list of operations. Here's the original JSON again:
+
+[source,json,title=Original Group JSON]
+----
+include::docs/src/json/groups/patch/original.json[]
+----
+
+If you make a `PATCH` request with a `Content-Type` of `application/json-patch+json` and a body like below:
+
+[source,json,title=JSON Patch Request JSON]
+----
+[
+  {
+    "op": "remove",
+    "path": "/roleIds/1"
+  }
+]
+----
+
+This call removes the second value of the `roleIds` array, which corresponds to the "devs" role. You'll need to find what array element you want to delete, perhaps with a separate request. After you make this `PATCH` request, the group JSON will look like this.
+
+[source,json,title=Resulting Group JSON]
+----
+include::docs/src/json/groups/patch/response.json[]
+----
+
+This approach is precise and can make multiple changes to a given object with one call. It also requires you to learn a new set of operations. Additionally, the data is sent in format (an array of operations) which is only vaguely related to the structure of the object being changed.
+
+==== JSON Merge Patch
+
+JSON Merge Patch is a more straightforward way to update complex JSON objects. Please review https://www.rfc-editor.org/rfc/rfc7386[RFC 7386] for a full description of the patch behavior. Here's the original JSON again:
+
+[source,json,title=Original Group JSON]
+----
+include::docs/src/json/groups/patch/original.json[]
+----
+
+If you make a `PATCH` request with a `Content-Type` of `application/merge-patch+json` and a body like below:
+
+[source,json,title=JSON Patch Request JSON]
+----
+{
+  "roleIds": [
+    "0a15cfdd-e231-4de4-9411-6d1015e05d99"
+  ]
+}
+----
+
+After you make this `PATCH` request, the group JSON will look like this.
+
+[source,json,title=Resulting Group JSON]
+----
+include::docs/src/json/groups/patch/response.json[]
+----
+
 == Troubleshooting
 
 include::docs/v1/tech/shared/_troubleshooting-api-calls.adoc[]
+
+=== 401s With New API Keys
+
+include::docs/v1/tech/apis/_new-api-key-401.adoc[]

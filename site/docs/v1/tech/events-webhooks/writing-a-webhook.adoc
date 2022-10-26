@@ -17,7 +17,9 @@ Additional headers may be added to the request by adding headers to the Webhook 
 * <<Responses>>
 * <<Configuration>>
 ** <<Application Scoped Events>>
-** <<Example Configuration>>
+** <<Tenant Scoped Events>>
+** <<Example Configuration After 1.37.0>>
+** <<Example Configuration Before 1.37.0>>
 * <<Retries>>
 ** <<Retry Examples>>
 * <<Calling FusionAuth APIs In Webhooks>>
@@ -35,15 +37,37 @@ Then, configure the Tenant to listen for the event by navigating to [breadcrumb]
 
 If you have multiple Webhooks configured for a single Tenant, the transaction setting for the event will dictate if FusionAuth will commit the transaction or not.
 
-If you have multiple tenants listening for the same event, they will all receive that event and can filter on the provided [field]#tenantId# to determine if they should handle the event.
+As of version 1.37.0 if you have multiple webhooks assigned to different tenants but configured for the same event, such as `user.create`, only the events matching both tenant and type will be delivered. For example, imagine you have Pied Piper and Hooli tenants and both have different webhooks (piedpier.com/webhook and hooli.com/webhook) and each is configured to listen only to their tenant for the `user.create` webhook event. In this case, piedpiper.com/webhook would receive only Pied Piper user creation event information; likewise hooli.com/webhook will receive only webhooks for the `user.create` event from the Hooli tenant.
+
+Prior to version 1.37.0 if you have multiple tenants listening for the same event, they will all receive that event and can filter on the provided [field]#tenantId# to determine if they should handle the event.
 
 === Application Scoped Events
 
 include::docs/v1/tech/events-webhooks/_application-webhooks-warning.adoc[]
 
-=== Example Configuration
+=== Tenant Scoped Events
 
-Here's an example scenario. You have two tenants, Pied Piper and Hooli. You have configured two webhooks listening for `user.create` events. One updates a separate user database, the other records information in an analytics system. Both the Pied Piper and Hooli tenants have the `user.create` event enabled in their webhook configurations. 
+As of version 1.37.0, all events can be tenant scoped except system events:
+
+* `audit-log.create`
+* `create-log.create`
+* `kickstart.success`
+
+If you want to get events for certain applications, the preferred method is to send events for a tenant. Filter on the `applicationId` when consuming the event and discard events from any applications not of interest.
+
+=== Example Configuration After 1.37.0
+
+Here's an example scenario. You have two tenants, Pied Piper and Hooli. You have configured two webhooks listening for `user.create` events. One updates a separate user database, the other records information in an analytics system. Both the Pied Piper and Hooli tenants have the `user.create` event enabled in their webhook configurations and both webhooks are selected to receive events from both tenants.
+
+In this scenario, each webhook will receive data when a user is created in either tenant, Pied Piper or Hooli.
+
+Transaction settings can be managed at the tenant level. It is possible, for example, to require only the analytics webhook to succeed for the Pied Piper tenant and only the user database sync to succeed for the Hooli tenant.
+
+If you are separating your staging and production environments using tenants, webhooks will not cross those boundaries except for the instance scoped events.
+
+=== Example Configuration Before 1.37.0
+
+Here's an example scenario. You have two tenants, Pied Piper and Hooli. You have configured two webhooks listening for `user.create` events. One updates a separate user database, the other records information in an analytics system. Both the Pied Piper and Hooli tenants have the `user.create` event enabled in their webhook configurations.
 
 In this scenario, each webhook will receive data when a user is created in either tenant, Pied Piper or Hooli.
 

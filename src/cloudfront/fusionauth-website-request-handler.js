@@ -34,6 +34,7 @@ var indexPages = {
   '/docs/v1/tech/migration-guide/': true,
   '/docs/v1/tech/oauth/': true,
   '/docs/v1/tech/plugins/': true,
+  '/docs/v1/tech/premium-features/': true,
   '/docs/v1/tech/reference/': true,
   '/docs/v1/tech/samlv2/': true,
   '/docs/v1/tech/themes/': true,
@@ -51,7 +52,10 @@ var indexPages = {
 };
 var redirects = {
   '/blog': '/blog/',
+  '/cognito': '/docs/v1/tech/migration-guide/cognito',
+  '/cognito/': '/docs/v1/tech/migration-guide/cognito',
   '/docs': '/docs/',
+  '/docs/v1/tech/admin-guide/release-notifications': '/docs/v1/tech/admin-guide/releases',
   '/docs/v1/tech/apis/consent': '/docs/v1/tech/apis/consents',
   '/docs/v1/tech/common-errors': '/docs/v1/tech/admin-guide/troubleshooting',
   '/docs/v1/tech/installation-guide/configuration-management': '/docs/v1/tech/admin-guide/configuration-management',
