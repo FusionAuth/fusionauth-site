@@ -1,24 +1,24 @@
 ---
 layout: blog-post
-title: Adding Twitter sign in to your Node.js + Express web application using OAuth
-description: In this tutorial, we'll build a basic Express web application using FusionAuth to handle login via Twitter.
+title: Adding FusionAuth sign in to your Spring Web application using OAuth2
+description: In this tutorial, we'll build a basic Spring web application using FusionAuth to handle login and registration.
 author: Bradley Van Aardt
 category: blog
-tags: client-node tutorial tutorial-express tutorial-node
+tags: tutorial tutorial-spring tutorial-java
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) web application which does user registration and authentication via FusionAuth. We'll also hook FusionAuth into Twitter's authentication system, to allow users to easily log in to your app via Twitter. 
+In this tutorial, we'll build a basic Java + [Spring](https://spring.io) web application which does user registration and authentication via FusionAuth.
 
 <!--more-->
 
-The application itself is very simple: it will let users sign up via Twitter, and give them access to a "secret" area where their FusionAuth profile is displayed to them. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-express-twitter).
+The application itself is very simple: it will let users sign up via FusionAuth, and give them access to a "secret" area where their FusionAuth profile is displayed to them. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-java-spring).
 
 ## Prerequisites
 
 We'll explain nearly everything that we use, but we expect you to have:
--   Basic Node.js knowledge and a Node.js environment set up.
--   Preferably basic [Express](http://expressjs.com) knowledge (or knowledge of a similar web framework, or of the middleware concept).
+-   Basic Java  knowledge and a Java (v17) environment set up.
+-   Preferably basic [Spring](https://spring.io) knowledge (or knowledge of a similar web framework).
 -   Docker and Docker Compose set up as we'll set up FusionAuth using these.
     
 It'll also help if you know the basics of OAuth or authentication in general.
