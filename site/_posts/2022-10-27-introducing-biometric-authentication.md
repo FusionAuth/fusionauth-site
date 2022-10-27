@@ -10,7 +10,7 @@ excerpt_separator: "<!--more-->"
 ---
 
 
-FusionAuth, the developer-focused authentication platform, today announces the addition of biometric passwordless login using WebAuthn to its long list of authentication features. This enables application developers to offer the convenience and security of using built-in fingerprint and facial recognition from their mobile and laptop computers, without the need for any installed apps. 
+FusionAuth, the developer-focused authentication platform, today announces the addition of [biometric passwordless login using WebAuthn](/features/biometric-authentication) to its long list of authentication features. This enables application developers to offer the convenience and security of using built-in fingerprint and facial recognition from their mobile and laptop computers, without the need for any installed apps. 
 
 <!--more-->
 
