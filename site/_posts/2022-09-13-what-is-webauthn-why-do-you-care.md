@@ -7,6 +7,13 @@ image: blogs/what-is-webauthn/what-is-web-authn.png
 category: blog
 tags: topic-webauthn
 excerpt_separator: "<!--more-->"
+related_resources:
+  - 
+    url: /learn/expert-advice/authentication/webauthn-explained
+    title: WebAuthn Explained
+  - 
+    url: /blog/2022/10/27/introducing-biometric-authentication
+    title: Introducing biometric authentication
 ---
 
 WebAuthn is a new way for people to authenticate themselves to web applications. It's a widely supported standard years in the making. All major browsers work with it, which makes it easy for developers to incorporate WebAuthn into websites.
