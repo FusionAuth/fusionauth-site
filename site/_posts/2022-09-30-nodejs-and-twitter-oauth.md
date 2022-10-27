@@ -8,7 +8,7 @@ tags: client-node tutorial tutorial-express tutorial-node
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) web application which does user registration and authentication via FusionAuth. We'll also hook FusionAuth into Twitter's authentication system, to allow users to easily log in to your app via Twitter. 
+In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) web application which does user registration and authentication via FusionAuth. We'll also hook FusionAuth into Twitter's authentication system, to allow users to easily log in to your app via Twitter.
 
 <!--more-->
 
@@ -70,7 +70,7 @@ Click "Setup" under "Missing Application" and call your new app "Twitter Express
 
 - `http://localhost:3000/auth/callback` to the Authorized redirect URLs.
 - `http://localhost:3000/` to the Authorized request origin URL.
-- `http://localhost:3000/` to the Logout URL.
+- `http://localhost:3000/logout` to the Logout URL.
   
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
@@ -80,7 +80,7 @@ Click the Save button at the top right for your changes to take effect.
 
 Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile using the [FusionAuth Typescript module](https://www.npmjs.com/package/@fusionauth/typescript-client), provided with an API key.
 
-Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value. 
+Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
@@ -219,7 +219,7 @@ passport.deserializeUser(function (user, done) {
 
 # Adding Express routes
 
-We've got the basic framework and authorization code set up. Now we can add some routes. We'll start with the `login` route to handle the redirect to FusionAuth, which will in turn handle the calls to Twitter. 
+We've got the basic framework and authorization code set up. Now we can add some routes. We'll start with the `login` route to handle the redirect to FusionAuth, which will in turn handle the calls to Twitter.
 
 Add this code under the `app.use("/", indexRouter);` line:
 
@@ -264,6 +264,9 @@ Now open the `index.hbs` file in the `views` folder, and update the code to the 
   <p>
     You can now visit the super secure <a href="/users/me">members only area</a>
   </p> 
+  <p>
+    Or, you can <a href="<<YOUR_FUSIONAUTH_URL>/oauth2/logout?client_id=<YOUR_FUSIONAUTH_APP_CLIENTID>">log out here</a>
+  </p>
 {{else}}
   <p>
     <a href="/login">Login Here</a>
@@ -274,9 +277,11 @@ Now open the `index.hbs` file in the `views` folder, and update the code to the 
 
 This will notify the user if they are logged in or not, and point them to the relevant page.
 
+If they are logged in, besides a link to the member's only area, we provide a link to FusionAuth to start the log out process. Replace `<YOUR_FUSIONAUTH_URL>` and `<YOUR_FUSIONAUTH_APP_CLIENTID>` with your FusionAuth installation address, and application Client Id. Note that log out won't fully work until we add the neccessary routes on Express to destroy the local session. We'll do that in a bit. 
+
 ## Adding a members only area
 
-Now that we have the basic login and authentication mechanics set up, we can add a restricted route that is only available to users that are logged in. 
+Now that we have the basic login and authentication mechanics set up, we can add a restricted route that is only available to users that are logged in.
 
 In the `users.js` file in the `routes` folder, modify the `get` route to the following:
 
@@ -300,6 +305,19 @@ app.use('/users', ensureLoggedIn('/login'), usersRouter);
 ```
 
 The `ensureLoggedIn` middleware checks if the user is authenticated before proceeding to the router (or following middleware). It redirects to the `login` page if the user is not logged in. 
+
+## Logging out
+
+When we set up the FusionAuth application, we provided the Logout URL `http://localhost:3000/logout`. To complete the logout process, we'll need to add this logout URL on our express app. FusionAuth calls this URL once it has logged the user out of the FusionAuth application, which gives us the opportunity to destroy the local Express session. Add the following code under the `app.use('/users', ensureLoggedIn('/login'), usersRouter);` line:
+
+```js
+app.get('/logout', function (req, res, next) {
+  req.session.destroy();
+  res.redirect(302, '/');
+});
+```
+
+Now, when the user clicks the log out link we added on the home page, they will be redirected to FusionAuth which will destroy the FusionAuth session and cookie. Then FusionAuth will redirect back to out app's logout route, which will destroy our local session and redirect the user back to the home page. Therefore, the user will be logged out of both the FusionAuth application and the local app. 
 
 ## Testing
 
