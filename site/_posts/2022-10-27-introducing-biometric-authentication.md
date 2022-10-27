@@ -5,12 +5,19 @@ description: ...
 author: Don Bergal
 image: blogs/introducing-biometric-authentication/webauthn-biometrics-launch-press-release.png
 category: blog
-tags: topic-press-release
+tags: topic-press-release topic-webauthn
 excerpt_separator: "<!--more-->"
+related_resources:
+  - 
+    url: /learn/expert-advice/authentication/webauthn-explained
+    title: WebAuthn Explained
+  - 
+    url: /blog/2022/09/13/what-is-webauthn-why-do-you-care
+    title: What is WebAuthn and why should you care?
 ---
 
 
-FusionAuth, the developer-focused authentication platform, today announces the addition of biometric passwordless login using WebAuthn to its long list of authentication features. This enables application developers to offer the convenience and security of using built-in fingerprint and facial recognition from their mobile and laptop computers, without the need for any installed apps. 
+FusionAuth, the developer-focused authentication platform, today announces the addition of [biometric passwordless login using WebAuthn](/features/biometric-authentication) to its long list of authentication features. This enables application developers to offer the convenience and security of using built-in fingerprint and facial recognition from their mobile and laptop computers, without the need for any installed apps. 
 
 <!--more-->
 
