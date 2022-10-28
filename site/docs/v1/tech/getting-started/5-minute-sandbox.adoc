@@ -5,32 +5,40 @@ description: Use the shared sandbox instance for the 5-minute guide.
 navcategory: getting-started
 ---
 
+:imagesuffix: -sandbox
+:installmethod: sandbox
+
 You've chosen to use the FusionAuth hosted sandbox for the setup guide.
 
 This is the best option if you want to get up and running quickly or if you plan to use the SaaS version of FusionAuth but want to get going.
+
+The sandbox also runs a licensed version of FusionAuth, so if you want to explore any of the link:/docs/v1/tech/premium-features[premium features] without paying, you can use it to do so.
+
+[WARNING.warning]
+====
+The FusionAuth sandbox environment is useful for testing out FusionAuth functionality, but it is open to the world; anyone can view the user data stored there.
+
+The system is also reset regularly to a standard configuration, wiping all the data.
+
+**Please, do not** use the sandbox for production.
+
+**Please, do not** put private data in the sandbox.
+
+If you'd like to have your own private instance of FusionAuth in the cloud, managed by FusionAuth, link:/pricing[purchase hosting].
+====
 
 If you've arrived here directly, start with the link:/docs/v1/tech/5-minute-setup-guide/[5-Minute Setup Guide Overview].
 
 == Requirements
 
-You need to have Node installed. This code has been tested with node 14, but should work with other versions.
+TODO extract requirements?
+You need to have Node installed. This code has been tested with node 18, but should work with other versions.
 
 [source,shell script,title=Testing Node Installation]
 ----
 $ node -v
 v14.4.0
 ----
-
-[WARNING.warning]
-====
-The FusionAuth sandbox environment is useful for testing out FusionAuth functionality, but it is open to the world. The system is also regularly reset to a standard configuration.
-
-**Do not** use the sandbox for production.
-
-**Do not** put private data in the sandbox.
-
-If you'd like to have your own private instance of FusionAuth in the cloud, managed by FusionAuth, link:/pricing[purchase hosting].
-====
 
 == Overview
 
@@ -49,7 +57,11 @@ Navigate to the sandbox server, at https://sandbox.fusionauth.io[sandbox.fusiona
 
 Log in following the instructions on the login screen. 
 
-TODO image
+image::getting-started/5-minute-guide/login-sandbox.png[Sandbox Login,width=1200,role=bottom-cropped]
+
+After doing so you'll arrive at the sandbox dashboard.
+
+image::getting-started/5-minute-guide/dashboard-sandbox.png[Sandbox Dashboard,width=1200]
 
 == 2. Create an Application and Configure the OAuth settings
 
@@ -61,141 +73,86 @@ include::docs/v1/tech/getting-started/_5-minute-register-user.adoc[]
 
 == 4. Configure the Backend to Complete the Login
 
-Before you test the login, write the route/controller in your application's backend that will complete the OAuth workflow.
+include::docs/v1/tech/getting-started/_5-minute-configure-node-application.adoc[]
 
-After a user logs into FusionAuth's OAuth front-end successfully, their browser will be redirected to the URL you provided in the configuration step above. This redirect will contain a query parameter called `code` that contains the OAuth authorization code from FusionAuth. 
+== 5. Store the User Object In The Session
 
-Your application code will use this `code` parameter to call back to FusionAuth to exchange the code for an access token.
+include::docs/v1/tech/getting-started/_5-minute-store-user-object.adoc[]
 
-TODO libraries?
+== 6. Test the application
 
-In order to complete this process, you'll be using the FusionAuth typescript client library along with Express and Pug templates. This https://github.com/FusionAuth/fusionauth-node-example[code is available] on the FusionAuth GitHub.
+Now that everything is written, let's test the workflow. We can fire up the Node.js application using this command:
 
-Here's the `package.json`:
-
-[source,json,title=package.json]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]
-----
-
-TODO stopped here
-Install these libraries running `npm install` after creating the above `package.json` file.
-
-[source,json,title=package.json]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]
-----
-
-
-Here's the entire Express router. You want to create a file called `routes/index.js` and put this code in it:
-
-[source,javascript,title=Node.js Express Router]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[]
-----
-
-This is a lot, so you can just cut and paste it. But let's look at two specific sections. 
-
-First, to call the function on the FusionAuth client, you will also need the Client Id and the Client Secret from your Application configuration above. We'll take those values and put them in the code. These are required so that your application can prove it is the correct application the user is logging into. 
-
-Make sure you update the code with the correct values for your Application:
-
-[source,javascript,title=Node.js Client Id and Secret config]
-----
-//... 
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=clientIdSecret]
-//...
-----
-
-Second, you need a route that will respond to the path you configured in the FusionAuth admin user interface above (`/oauth-redirect`). This route will pull the `code` parameter from the request and exchange it for an access token. This access token can be used to prove that any client holding it is authorized.
-
-Here's an excerpt of some of the Node.js code for the route:
-
-[source,javascript,title=Node.js Route]
-----
-//...
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=exchangeOAuthCode]
-//...
-----
-
-If you don't want to use a client library, you may link:/docs/v1/tech/oauth/endpoints#complete-the-authorization-code-grant-request[post directly to the `/oauth2/token` endpoint]. This will link:/docs/v1/tech/oauth/endpoints#response-body[return the access token as well as other data].
-
-== 8. Store the user object in the session
-
-The final step is to add some code to your route in your BFF that will retrieve the User object from FusionAuth using the `access_token` you retrieved in the previous step. Once you have the User object, you will store it in a server side session so that it can be used in other parts of the application. We also check that the user has been registered to your application. 
-
-We can also store the `access_token` from FusionAuth as a cookie if your application would rather push the state to the browser (more on that below). 
-
-In either case, the last step you take is to redirect the authorized user back to the homepage. Here's the complete code for exchanging the token, retrieving the user and storing it in the session:
-
-[source,javascript,title=Node.js Complete OAuth Code Exchange]
-----
-//...
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=fullOAuthCodeExchange]
-//...
-----
-
-
-
-== 9. Test the application
-
-Now that everything is written, let's test the workflow. We can fire up the Node.js BFF using this command:
-
-[source,shell script,title=Node.js Command]
+[source,shell script,title=Start the node server]
 ----
 npm start
 ----
 
-If you open your application in the browser and click the `Login` link, this will take us to FusionAuth's OAuth login page. From here, you can log in with the account you created in step 4, the Setup Wizard.
+Open `http://localhost:3000/` in an incognito browser.
 
-As mentioned above, the Node.js code above is available on the FusionAuth GitHub located here: https://github.com/FusionAuth/fusionauth-node-example .
+[NOTE.note]
+====
+You need to use an incognito browser because otherwise FusionAuth won't prompt you to login, since you already logged into FusionAuth when you configured the application above.
 
-TODO need to talk to Brian about recommendation: cookies?
-=== Cookies for a Single Page Application
+FusionAuth offers single sign-on, and will automatically redirect you to the application if you are already logged in with the FusionAuth server.
+====
 
-If you prefer to use cookies rather than server-side sessions, you can modify the code for your `oauth-redirect` route from this:
+image::getting-started/5-minute-guide/nodejs-application-login.png[The Node Home Screen,width=1200,role=bottom-cropped]
 
-[source,javascript,title=Node.js Route Using Sessions for Token Storage]
+
+Click the `Login` link, this will take us to FusionAuth's login page.
+
+image::getting-started/5-minute-guide/login{imagesuffix}.png[The Login Screen,width=1200,role=bottom-cropped]
+
+From here, you can log in with the account you used to access the admin user interface above. If you log in with a valid account that is registered for the application, you arrive at the home page, but are greeted by name.
+
+image::getting-started/5-minute-guide/login-succeeded.png[Successful Login,width=1200,role=bottom-cropped,shadowed]
+
+In a real application, there'd be a lot more than a "Hello" message, but this is the building block. You can add other pages, display additional information based on other attributes of the user, and more. You've successfully authenticated and stored user data in the express session.
+
+If, on the other hand, you use an account that has a valid account, but is not registered for the application, you'll end up at a page telling you so.
+
+image::getting-started/5-minute-guide/login-failed-registration-required{imagesuffix}.png[Login Without Registration,width=1200,role=bottom-cropped]
+
+== 7. Logout
+
+Of course, for every login, there should be a corresponding logout. Log out by clicking on the "Logout" link. This will log you out of both FusionAuth and the application.
+
+Here's the view code which handles logout.
+
+[source,javascript,title=The Logout Link]
 ----
 //...
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=setUserInSession]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/views/index.pug[tags=logoutLink]
 //...
 ----
 
-to this:
+What this does is send the user to FusionAuth, where the FusionAuth session is destroyed, and then to the logout URL which was configured when you set up the Application in FusionAuth, `\http://localhost:3000/logout`. That code destroys the local session, logging the user out from the node application.
 
-[source,javascript,title=Node.js Route With Cookie Token Storage]
+[source,javascript,title=Destroying the Local Session]
 ----
-  })
-  .then((response) => {
-    res.cookie('access_token', response.response.access_token, {httpOnly: true});
-    res.cookie('refresh_token', response.response.refresh_token, {httpOnly: true});
-    res.redirect(302, '/');
-  }).catch((err) => {console.log("in error"); console.error(JSON.stringify(err));});
+//...
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=logoutRoute]
+//...
 ----
 
-This approach works well if you are building a single-page application (SPA) or any other type of application where cookies are preferred to server-side sessions.
+== 8. Summing Up
 
-== Review The Login and Logout Code
+You've now taken an application and layered on authentication with FusionAuth. A user who is registered for the application can log in, view private data, and log out.
 
-TODO login
-Here's how your Pug template, which lives in `views/index.pug`, looks:
+From here, you can link:/docs/v1/tech/guides/basic-registration-forms[set up self-service registration page].  You can also start working with link:/docs/v1/tech/themes/[themes] to make the login pages look like your application. or read link:/docs/v1/tech/tutorials/[tutorials in other programming languages].
 
-[source,pug,title=Pug Template]
-----
-extends layout
+Here are some links to additional documents that will help you continue your integration with FusionAuth.
 
-block content
-  h1= title
-  if user
-    p Hello #{user.firstName}
-  else
-    a(href='http://localhost:9011/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&state='+stateValue+'&code_challenge='+challenge+'&code_challenge_method=S256') Login
-
-  p Welcome to #{title}
-----
-
-TODO logout
+* link:/docs/v1/tech/core-concepts/[Core Concepts]
+* link:/docs/v1/tech/lambdas/jwt-populate[Customizing Users' JWTs]
+* link:/docs/v1/tech/email-templates[Sending and customizing emails]
+* link:/docs/v1/tech/identity-providers/[Logging in with OIDC, SAML and social login providers like Google]
+* link:/docs/v1/tech/guides/multi-factor-authentication[Setting Up MFA/Two-Factor]
+* link:/docs/v1/tech/oauth/[OAuth Documentation]
+* link:/docs/v1/tech/guides/single-sign-on[Single Sign-on/SSO]
+* link:/docs/v1/tech/apis/users[Controlling Users with the API]
+* link:/docs/v1/tech/premium-features/[Premium Features]
 
 == Feedback 
 
@@ -205,19 +162,3 @@ FusionAuth is beginning to work on a ten minute guide and a 42 minute guide. Wha
 <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfY0w3qAAkjdyeXIsZyyxZ4EJxrMQ-DmVkc9t4KfJDLZcDeNg/viewform?embedded=true" width="640" height="1076" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
 ++++
 
-== Next Steps
-
-From here, you can begin creating a registration page in your application or using FusionAuth's registration tool. You can also start working with FusionAuth Themes to make the login pages look like your brand. If you want to use FusionAuth's forgot password system, you will need to configure an SMTP server. Here are some links to additional documents that will help you continue your integration with FusionAuth.
-
-* link:/docs/v1/tech/core-concepts/[Core Concepts]
-* link:/docs/v1/tech/lambdas/jwt-populate[Customizing users' JWTs]
-* link:/docs/v1/tech/email-templates[Sending and customizing emails]
-* link:/docs/v1/tech/identity-providers/[Logging in with OIDC, SAML and social login providers]
-* link:/docs/v1/tech/themes/[Making the FusionAuth pages look like your application with themes]
-* link:/docs/v1/tech/guides/multi-factor-authentication[MFA/Two-Factor]
-* link:/docs/v1/tech/oauth/[OAuth documentation]
-* link:/docs/v1/tech/apis/registrations[Registration API]
-* link:/docs/v1/tech/guides/basic-registration-forms[Self-service registration]
-* link:/docs/v1/tech/guides/single-sign-on[Single Sign-on/SSO]
-* link:/docs/v1/tech/tutorials/[Tutorials in other programming languages]
-* link:/docs/v1/tech/apis/users[User API]
