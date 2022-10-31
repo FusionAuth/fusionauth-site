@@ -3,7 +3,7 @@ layout: blog-post
 title: Authenticators, Ceremonies, and WebAuthn, oh my!
 description: A dive into WebAuthn terminology.
 author: Ikeh Aakinyemi
-image: blogs/illustrative-mathematics/illustrative-mathematics-fusionauth.png
+image: blogs/webauthn-terminology/webauthn-terminology-header.png
 category: blog
 tags: topic-webauthn
 excerpt_separator: "<!--more-->"
@@ -48,7 +48,7 @@ However, this is only a basic view of the process. To understand the process in 
 
 Before users can authenticate, their device(s) must be registered on the server of the RP. This way, the RP creates the credentials that the user can authenticate, and the process looks like this:
 
-![WebAuth Registration Flow diagram courtesy of Ikeh Akinyemi](https://imgur.com/ZMJflox.png)
+{% include _image.liquid src="/assets/img/blogs/webauthn-terminology/registration-flow.png" alt="WebAuth Registration Flow diagram" class="img-fluid" figure=true %}
 
 1. The user visits the web application of the RP and initiates registration.
 2. The server creates a challenge key for registration, which is only used once.
@@ -63,7 +63,7 @@ Before users can authenticate, their device(s) must be registered on the server 
 
 After a user's device is registered with the RP, the user can be authenticated. There are six steps involved in the WebAuthn authentication process:
 
-![WebAuth Authentication Flow diagram courtesy of Ikeh Akinyemi](https://imgur.com/GyVlQ17.png)
+{% include _image.liquid src="/assets/img/blogs/webauthn-terminology/authentication-flow.png" alt="WebAuth Authentication Flow diagram" class="img-fluid" figure=true %}
 
 The following are the steps for this authentication process:
 
