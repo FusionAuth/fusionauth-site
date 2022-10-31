@@ -4,6 +4,7 @@ var indexPages = {
   '/community/forum/': true,
   '/docs/': true,
   '/docs/v1/tech/': true,
+  '/docs/v1/tech/5-minute-setup-guide/': true,
   '/docs/v1/tech/account-management/': true,
   '/docs/v1/tech/admin-guide/': true,
   '/docs/v1/tech/advanced-threat-detection/': true,
