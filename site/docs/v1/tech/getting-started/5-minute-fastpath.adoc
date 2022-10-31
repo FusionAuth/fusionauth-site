@@ -27,24 +27,18 @@ Here are the steps that you need to take to set up FusionAuth to provide login, 
 . xref:3-complete-maintenance-mode[Complete Maintenance Mode]
 . xref:4-complete-the-setup-wizard[Complete the Setup Wizard]
 . xref:5-create-an-application-and-configure-the-oauth-settings[Create an Application and configure the OAuth settings]
-. xref:6-grant-the-user-permissions-to-your-application[Grant the user permissions to your application]
-//TODO clone a basic application without login
-. xref:7-write-a-route-controller-action-etc-in-your-backend-application-that-completes-the-login[Write a route (controller, action, etc) in your backend application that completes the login]
+. xref:6-grant-permissions[Grant Permissions]
+. xref:7-configure-the-backend-to-complete-the-login[Configure the Backend to Complete the Login]
 . xref:8-store-the-user-object-in-the-session[Store the user object in the session]
-. xref:9-test-the-application[Test the application]
-// TODO add logout
+. xref:9-test-the-application[Test the Application]
+. xref:10-logout[Logout]
+. xref:11-summing-up[Summing Up]
 
-Steps similar to these will be used for integrating with any OAuth identity provider. These also work for an OpenID Connect (OIDC) identity provider. Since FusionAuth supports both OAuth and OIDC, you'll use the latter since it is the modern standard. Let's get into the details of each step. 
-
-You can also watch a video of this tutorial:
-
-video::trzY5otEgKM[youtube,width=560,height=315]
+Steps similar to these will be used for integrating with any identity provider. Let's get into the details of each step. 
 
 == 1. Install FusionAuth
 
-FusionAuth is simple to set up on your laptop, desktop or any server. You can also purchase a basic hosting plan on the link:/pricing[FusionAuth Cloud platform].
-
-Our installation guide covers all of the different methods you can use to install FusionAuth including Docker, Homebrew, Debian packages and our quick start script. You can follow any of the methods in the link:/docs/v1/tech/installation-guide/[installation guide]. For this document, you'll use the Fast Path installation process using one of the commands below.  You may optionally install Elasticsearch to be used as the user search engine.
+You are following the FastPath installation guide, so you'll use the FastPath method to install FusionAuth.
 
 include::docs/v1/tech/installation-guide/_fast-path-install.adoc[]
 
@@ -69,30 +63,40 @@ Install is complete. Time for tacos.
 Thank you have a nice day.
 ----
 
+[NOTE.note]
+====
+Don't forget to enjoy the tacos.
+====
+
 == 2. Start FusionAuth
 
-The next step is to start FusionAuth using the command that the Fast Path installer created. This script is called `startup.sh` and you can execute it from the installation directory like this:
+The next step is to start FusionAuth using the command that the Fast Path installer created. This script is called `startup.sh` or `startup.ps1`. You can execute it from the installation directory:
 
-[source,shell script,title=Startup script]
+[source,shell,title=MacOS and Linux Startup Script]
 ----
 fusionauth/bin/startup.sh
 ----
 
-This will start both the `fusionauth-app` component as well as the `fusionauth-search` component if you downloaded the Elasticsearch option. (Here's link:/docs/v1/tech/core-concepts/users#user-search[a document on how to choose whether to do so].) 
-
 If you are on Windows, you'll need to use the `startup.ps1`. Prior to version `1.40.0` the file will be named `startup.bat` instead.
+
+[source,shell,title=Windows Startup Script]
+----
+.\fusionauth\bin\startup.ps1
+----
+
+This script will start both the `fusionauth-app` component as well as the `fusionauth-search` component if you downloaded the Elasticsearch option. (Here's link:/docs/v1/tech/core-concepts/users#user-search[a document on how to choose whether to do so].) 
 
 == 3. Complete Maintenance Mode 
 
-After you have FusionAuth installed and running, you can open your browser to `http://localhost:9011`. This is the default address for FusionAuth when running locally. This will bring up FusionAuth, which should be sitting in Maintenance Mode and ready to be configured. 
+After you have FusionAuth installed and running, open your browser to `http://localhost:9011`. This is the default address for FusionAuth when running locally. This will bring up the FusionAuth admin UI, which should be sitting in Maintenance Mode and ready to be configured. 
 
-FusionAuth enters Maintenance Mode any time the database is not accessible or is not properly set up. In our case, FusionAuth was able to connect, but the system was not configured. Here's how the Maintenance Mode screen should look:
+FusionAuth enters Maintenance Mode any time the database is not accessible or is not properly set up. In this case, FusionAuth was able to connect, but the system was not configured. Here's how the Maintenance Mode screen should look:
 
 image::5-minute-setup-guide/maintenance-mode-database.png[Maintenance Mode Database,width=1200]
 
-Here you need to provide the super user credentials for the database along with the name of the host of the database is running on if it isn't running locally. We can also select either MySQL or PostgreSQL and change the database port if needed. For this example, you will be using PostgreSQL on the standard port with a super username of `postgres` and a password of `password`. We can also change the username and password that will be created as the primary database account that FusionAuth will access, the `fusionauth` user above.
+Here you need to provide the super user credentials for the database along with the name of the host of the database is running on if it isn't running locally. You can also select either MySQL or PostgreSQL and change the database port if needed. For this example, you will be using PostgreSQL on the standard port with a super username of `postgres` and a password of `password`. We can also change the username and password that will be created as the primary database account that FusionAuth will access. This is the `fusionauth` user above, but can be set to any username and password you desire.
 
-The reason that FusionAuth uses a separate username and password to connect to the database during normal operation is that if the FusionAuth configuration file is compromised and an attacker learns the database username and password, they will only have access to the FusionAuth database. This is helpful if you are using a single database server for multiple applications and databases. This is known as the principle of least privilege and FusionAuth uses this principle whenever possible.
+The reason that FusionAuth uses a separate username and password to connect to the database during normal operation is that if the configuration is compromised and an attacker learns the database username and password, they will only have access to the FusionAuth database. This is helpful if you are using a single database server for multiple applications and databases. This is known as the principle of least privilege and FusionAuth generally follows this principle.
 
 Once you click the **Submit** button, you will be taken to the next step of Maintenance Mode. If you have opted to install with Elasticsearch, this step is where the FusionAuth Search component is configured, otherwise you can skip ahead to step 4, the Setup Wizard.
 
@@ -104,207 +108,39 @@ Clicking the **Submit** button here will cause FusionAuth to exit Maintenance Mo
 
 image::5-minute-setup-guide/interstitial.png[Interstitial,width=1200,role=bottom-cropped]
 
-// TODO need screenshots of above
-
 == 4. Complete the Setup Wizard
 
-Once FusionAuth starts up successfully, you will be taken to the Setup Wizard. This is where you will create the administrator account for FusionAuth and accept the license. 
+include::docs/v1/tech/getting-started/_5-minute-setup-wizard.adoc[]
 
-**Record the email and password** you choose for the administrator account. You won't be able to recover this without setting up an email server, which is beyond the scope of this tutorial.
+== 5. Create an Application and Configure the OAuth settings
 
-We can also sign up for the FusionAuth newsletter, which is a great way to stay up-to-date on FusionAuth releases and new features. We never pitch you, hard-sell or sell your information, so feel free to sign up. Here's what the Setup Wizard page looks like:
+include::docs/v1/tech/getting-started/_5-minute-application-setup.adoc[]
 
-image::getting-started/5-minute-guide/setup-wizard.png[Setup Wizard,width=1200]
+== 6. Grant Permissions 
 
-Clicking **Submit** here will complete the Setup Wizard and log you into the FusionAuth admin UI.
+include::docs/v1/tech/getting-started/_5-minute-register-user.adoc[]
 
-== 5. Create an Application and configure the OAuth settings
+== 7. Configure the Backend to Complete the Login
 
-Once you arrive in the FusionAuth admin UI, the first thing you need to do is create an Application. An Application is something that a user can log into. This represents configuration for the application you are building or that you are migrating to use FusionAuth. 
+include::docs/v1/tech/getting-started/_5-minute-configure-node-application.adoc[]
 
-Click the [breadcrumb]#Application# menu option on the left side of the page.
+== 8. Store the User Object In The Session
 
-image::getting-started/5-minute-guide/dashboard-applications.png[Dashboard to Applications,width=1200]
+include::docs/v1/tech/getting-started/_5-minute-store-user-object.adoc[]
 
-This will take you to the listing page for Applications. Next, you'll click the green plus button (the add button) at the top of the page:
+== 9. Test the Application
 
-image::getting-started/5-minute-guide/application-listing.png[Application Listing,width=1200,role=bottom-cropped]
+include::docs/v1/tech/getting-started/_5-minute-test-application.adoc[]
 
-On the Application form, you'll need to provide a name for your Application, which is only used for display purposes. 
+== 10. Logout
 
-You'll also need to configure a few fields on the OAuth tab. Let's start with a simple setup that allows existing users to log into your application. 
+include::docs/v1/tech/getting-started/_5-minute-logout.adoc[]
 
-If you click on the [breadcrumb]#OAuth# tab, you'll see these options:
+== 11. Summing Up
 
-image::5-minute-setup-guide/application-form.png[Application Form,width=1200]
-
-Most of the default settings will be fine, but you need to enter the following fields.
-
-* You must add a value to the [field]#Authorized redirect URLs# list. This is the route/controller in your application's backend that will complete the OAuth workflow. This is also known as the 'Backend for Frontend' or BFF pattern, and is a lightweight proxy. Set this to `http://localhost:3000/oauth-redirect`. You'll build some Node.js example code below for this route. // TODO
-* Check that the Authorization Code grant is selected in the [field]#Enabled Grants# field.
-
-Once you have all of this configured, click the blue "Save" button at the top of the page. // TODO do we want buttons to be bold or quotes?
-
-== 6. Copy the OAuth login URL and add it to your application
-
-Once the Application has been created, you'll be back on the listing page. From here, you can click the green View button for your new Application. This will open a dialog that contains information about the Application, including the full URL for the OAuth login page. We'll copy this URL and paste it into your application's HTML as a link for the user to login. Most applications have a link that says, "Login" or "My Account" for this action.
-
-Here's the view dialog.
-
-image::getting-started/5-minute-guide/application-view.png[Application View Dialog,width=1200]
-
-We can add this URL as a link to your Node.js example application in the main template. The https://github.com/FusionAuth/fusionauth-node-example[code is available] on the FusionAuth GitHub, and it's recommended you download it to follow along. 
-
-Here's how your Pug template, which lives in `views/index.pug`, looks:
-
-[source,pug,title=Pug Template]
-----
-extends layout
-
-block content
-  h1= title
-  if user
-    p Hello #{user.firstName}
-  else
-    a(href='http://localhost:9011/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&state='+stateValue+'&code_challenge='+challenge+'&code_challenge_method=S256') Login
-
-  p Welcome to #{title}
-----
-
-If you are using raw HTML, here's an anchor tag that will start the OAuth workflow the same as the Pug template above:
-
-[source,html,title=HTML Snippet]
-----
-<a href="http://localhost:9011/oauth2/authorize?client_id=48cf2492-508d-4644-95eb-3741618821a4&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect">Login</a>
-----
-
-Just drop this anchor tag into your HTML page and it will take the user to FusionAuth to login.
-
-== 6. Grant the user permissions to your application
-
-Next, you need to grant the user you created in the Setup Wizard permissions to log into your new Application. This can be done from the User management section of the FusionAuth admin UI. By clicking the [breadcrumb]#Users# link in the navigation, you'll be taken to the main user search. 
-
-Type in part of the email address for your FusionAuth user.
-
-image::getting-started/5-minute-guide/user-search.png[The User search screen.,width=1200,role=bottom-cropped]
-
-Then click on the manage button to view the user details.
-
-image::getting-started/5-minute-guide/user-search-manage-button.png[The manage button.,width=1200,role=bottom-cropped]
-
-Once you are viewing this user's account, click the **Add Registration** button. 
-
-image::getting-started/5-minute-guide/user-details.png[The User details screen.,width=1200,role=bottom-cropped]
-
-This will take you to a page that will allow you to add a registration for this user to the new Application. Here's what this looks like:
-
-image::getting-started/5-minute-guide/registration-add-form.png[Adding a User Registration.,width=1200,role=bottom-cropped]
-
-For this example, you don't need to provide any additional information for the registration, so click the save button at the top.
-
-Now, FusionAuth is configured to allow the user to log in to the application. Keep in mind that in most cases, the process of creating a registration is done when the user signs up/registers for your application. link:/TODO[Learn more about setting up registration].
-
-However, this process (or other automated processes leveraging an API) can be used for closed systems such as internal corporate applications. In these cases, users will be manually granted permissions to each application by an administrator who creates their account.
-
-Let's move on to building an application. 
-
-== 7. Build an application
-
-Let's start out with a basic node application which just says hello.
-
-
-
-== 7. Write a route (controller, action, etc) in your backend application that completes the login
-
-Before you test the login, let's write the route/controller in your application's backend that will complete the OAuth workflow. After a user logs into FusionAuth's OAuth front-end successfully, their browser will be redirected to the URL you provided in the configuration step above. This redirect will contain a query parameter called `code` that contains the OAuth authorization code from FusionAuth. Our route/controller will use this `code` parameter to call back to FusionAuth to exchange the code for an access token.
-
-In order to complete this process, you'll be using the FusionAuth typescript client library along with Express and Pug templates. This https://github.com/FusionAuth/fusionauth-node-example[code is available] on the FusionAuth GitHub. Here's how your `package.json` file looks:
-
-[source,json,title=package.json]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]
-----
-
-You'll want to install this all by running `npm install` after creating the above `package.json` file.
-
-Here's the entire Express router. You want to create a file called `routes/index.js` and put this code in it:
-
-[source,javascript,title=Node.js Express Router]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[]
-----
-
-This is a lot, so you can just cut and paste it. But let's look at two specific sections. 
-
-First, to call the function on the FusionAuth client, you will also need the Client Id and the Client Secret from your Application configuration above. We'll take those values and put them in the code. These are required so that your application can prove it is the correct application the user is logging into. 
-
-Make sure you update the code with the correct values for your Application:
-
-[source,javascript,title=Node.js Client Id and Secret config]
-----
-//... 
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=clientIdSecret]
-//...
-----
-
-Second, you need a route that will respond to the path you configured in the FusionAuth admin user interface above (`/oauth-redirect`). This route will pull the `code` parameter from the request and exchange it for an access token. This access token can be used to prove that any client holding it is authorized.
-
-Here's an excerpt of some of the Node.js code for the route:
-
-[source,javascript,title=Node.js Route]
-----
-//...
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=exchangeOAuthCode]
-//...
-----
-
-If you don't want to use a client library, you may link:/docs/v1/tech/oauth/endpoints#complete-the-authorization-code-grant-request[post directly to the `/oauth2/token` endpoint]. This will link:/docs/v1/tech/oauth/endpoints#response-body[return the access token as well as other data].
-
-== 8. Store the user object in the session
-
-The final step is to add some code to your route in your BFF that will retrieve the User object from FusionAuth using the `access_token` you retrieved in the previous step. Once you have the User object, you will store it in a server side session so that it can be used in other parts of the application. We also check that the user has been registered to your application. 
-
-We can also store the `access_token` from FusionAuth as a cookie if your application would rather push the state to the browser (more on that below). 
-
-In either case, the last step you take is to redirect the authorized user back to the homepage. Here's the complete code for exchanging the token, retrieving the user and storing it in the session:
-
-[source,javascript,title=Node.js Complete OAuth Code Exchange]
-----
-//...
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=fullOAuthCodeExchange]
-//...
-----
-
-== 9. Test the application
-
-Now that everything is written, let's test the workflow. We can fire up the Node.js BFF using this command:
-
-[source,shell script,title=Node.js Command]
-----
-npm start
-----
-
-If you open your application in the browser and click the `Login` link, this will take you to FusionAuth's OAuth login page. From here, you can log in with the account you created in step 4, the Setup Wizard.
-
-// TODO screen shots
-
-As mentioned above, the Node.js code above is available on the FusionAuth GitHub located here: https://github.com/FusionAuth/fusionauth-node-example .
-
-== 10. Add log out
-
-Now
-
-Add log out TODO
-* Optionally, you can specify a valid [field]#Logout URL#. This is where the user will be redirected to after they are logged out of FusionAuth's OAuth front-end: your application.
-add registration TODO (link to ritza)
-
-
+include::docs/v1/tech/getting-started/_5-minute-summing-up.adoc[]
 
 == Feedback 
 
 include::docs/v1/tech/getting-started/_5-minute-feedback.adoc[]
-
-== Next Steps
-
-include::docs/v1/tech/getting-started/_5-minute-next-steps.adoc[]
 
