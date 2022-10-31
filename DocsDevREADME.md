@@ -20,6 +20,8 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and never include a slash at the end (i.e. `link:/docs/v1/tech/apis/users` not `link:users`)
 - All code snippets within any documents should have indenting formatted to 2 spaces.
+- When introducing a code snippet, don't use a : (colon). Instead, just use verbiage before it. "The code to exchange the token is similar to below."
+- Prefer 'You' to 'We'. 'Let's' is acceptable.
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - If something is new in a version, mark it with something like this:
 
@@ -30,7 +32,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 
 - If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
 
-- When writing posts, you have access to callouts.
+- When writing blog posts, you have access to callouts.
 
   ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
   ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
