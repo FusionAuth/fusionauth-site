@@ -96,6 +96,9 @@ For blog posts:
 -- `topic-community-story` for any community stories you do.
 -- `feature-<topic>` for specific features. These will show up on the feature page.
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
+- You can add a `related_resources` array of hashes to the front matter if you would like to customize the `additional resources` sidebar. See site/_posts/2022-10-27-introducing-biometric-authentication.md for format and example.
+
+
 
 For documentation posts:
 - Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
