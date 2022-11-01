@@ -48,8 +48,6 @@ However, this is only a basic view of the process. To understand the process in 
 
 Before users can authenticate, their device(s) must be registered on the server of the RP. This way, the RP creates the credentials that the user can use to authenticate, and the process looks like this:
 
-{% include _image.liquid src="/assets/img/blogs/webauthn-terminology/registration-flow.png" alt="WebAuth Registration Flow diagram" class="img-fluid" figure=true %}
-
 1. The user visits the web application of the RP and initiates registration.
 2. The server creates a challenge key for registration, which is only used once.
 3. The challenge key, along with the user's info, is sent to the user's device via the browser.
@@ -62,10 +60,6 @@ Before users can authenticate, their device(s) must be registered on the server 
 ### The Authentication Flow
 
 After a user's device is registered with the RP, the user can be authenticated. There are six steps involved in the WebAuthn authentication process:
-
-{% include _image.liquid src="/assets/img/blogs/webauthn-terminology/authentication-flow.png" alt="WebAuth Authentication Flow diagram" class="img-fluid" figure=true %}
-
-The following are the steps for this authentication process:
 
 1. The user initiates a login via the browser.
 2. The server (RP) creates and sends a unique challenge to the authenticator via the browser.
