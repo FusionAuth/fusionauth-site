@@ -11,7 +11,7 @@ excerpt_separator: "<!--more-->"
 
 Unless you use two-factor authentication (2FA) with your password logins, you're prone to cyberattacks. This is where [Web Authentication (WebAuthn)](https://webauthn.guide) can help.
 
-WebAuthn is an authentication standard that uses [asymmetric cryptographic](https://www.techtarget.com/searchsecurity/definition/asymmetric-cryptography) keys to authenticate users instead of passwords, mitigating cyberattacks. With WebAuthn, users can authenticate using their devices (with biometrics) without having to remember their passwords, store them, or worry about them getting compromised.
+WebAuthn is an authentication standard that uses [asymmetric cryptographic](https://www.techtarget.com/searchsecurity/definition/asymmetric-cryptography) keys to authenticate users instead of passwords, mitigating cyberattacks. With WebAuthn, users can authenticate using their devices (with biometrics) without having to remember their passwords, store them, or worry about them getting compromised. The WebAuthn credentials are also known as "passkeys".
 
 <!--more-->
 
