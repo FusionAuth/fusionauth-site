@@ -9,7 +9,9 @@ date: 2022-10-10
 dateModified: 2022-10-10
 ---
 
-WebAuthn is a new way to authenticate your users using biometric, secure authentication methods. WebAuthn requires something called an authenticator. What is an authenticator? An authenticator is a hardware or software device that is used to authenticate a user, via biometric or other methods, and that follows certain standards.
+WebAuthn is a new way to authenticate your users using biometric, secure authentication methods. It is also called "passkeys", but WebAuthn is the standard, so that's the term this document will use.
+
+WebAuthn requires something called an authenticator. What is an authenticator? An authenticator is a hardware or software device that is used to authenticate a user, via biometric or other methods, and that follows certain standards.
 
 That's a bit tautological, isn't it? Well, yes, but read on for more details. Also, clowns.
 

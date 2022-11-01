@@ -18,7 +18,7 @@ related_resources:
 
 WebAuthn is a new way for people to authenticate themselves to web applications. It's a widely supported standard years in the making. All major browsers work with it, which makes it easy for developers to incorporate WebAuthn into websites.
 
-WebAuthn allows users to leverage the power of biometric methods via a simple browser-native user experience.
+WebAuthn, commonly called "passkeys", allows users to leverage the power of biometric methods via a simple browser-native user experience.
 
 <!--more-->
 
