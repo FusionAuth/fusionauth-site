@@ -67,45 +67,47 @@ These tokens can be consumed by APIs or other systems to verify that the holder 
 
 FusionAuth recommends the Authorization Code grant, where there is a server side component which exchanges the one-time use authorization code for an access token. This server side component offers a lot of flexibility when it comes to storing the JWT.
 
-But what should you do with it? After all, an access token is a bearer token, which can't be revoked easily (though see link:/learn/expert-advice/tokens/revoking-jwts[here for strategies]).
+But what should you do with it? After all, an access token is a bearer token, and should be properly secured. What you do with the token depends on what you are using it for as well as your security requirements. If you are wondering about your options, link:/learn/expert-advice/authentication/login-authentication-workflows[here are a number of common login flows].
 
-This depends on what you are using the token for and your security requirements. The FusionAuth team has outlined a link:/learn/expert-advice/authentication/login-authentication-workflows[number of common flows here].
+Recommended storage mechanisms include:
 
-The primary storage mechanisms the FusionAuth team recommends are:
-
-* sending the token down as a `Secure`, `HTTPOnly` cookie
-* storing it server side, in a session
+* sending the token down to the browser as a `Secure`, `HTTPOnly` cookie. If you don't require cross-site cookie sharing, set `SameSite` to `Strict`. Otherwise, set `SameSite` to `Lax`, which will share the cookies in certain situations. Learn more about https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite[`SameSite` settings].
+* storing it server side, in a session. The session is typically managed by a framework, and ideally adheres to the same cookie storage recommendations. Learn more about https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html[server side sessions]. Please consult your framework documentation around securing sessions and data in sessions.
 
 .JWT Storage Options
 [cols="3,1,1"]
 |===
 | Feature | Cookie | Server Side Session 
 
-|Scales horizontally well
+|Allows for easy horizontal scaling
 |Yes
 |No
 
-|Sticky sessions required
+|Revocation possible
+|link:/learn/expert-advice/tokens/revoking-jwts[Yes]
+|Yes
+
+|Revocation easy
 |No
 |Yes
 
-|Transparently sent on requests
+|Sticky sessions or session datastore required
+|No
+|Yes
+
+|Token transparently sent on requests (to APIs, etc)
 |Yes
 |N/A
 
-|Token can be presented to servers on domains other than that which the server side component resides in
+|Token can be presented to APIs on domains other than that in which the cookie setting component resides
 |No
-|Yes
-
-|Accessible to anyone with physical browser access (they can look at the cookie)
-|Yes
-|No
+|Yes (via server side requests)
 
 |===
 
-The proper JWT storage choice should be based on your threat modelling.
+The proper JWT storage choice should be based on your threat modelling. You can configure your JWTs to be short lived, which minimizes the amount of time a stolen JWT can be used.
 
-If you need to lock down access, you can implement https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking[token sidejacking protection]. An alternative is https://github.com/FusionAuth/fusionauth-issues/issues/1679[DPoP, an open feature request].
+If you need to lock down JWTs further, implement https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking[token sidejacking protection] using cookies and a nonce. An alternative is https://github.com/FusionAuth/fusionauth-issues/issues/1679[DPoP], an open feature request for FusionAuth.
 
 == FusionAuth APIs
 
