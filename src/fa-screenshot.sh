@@ -40,12 +40,13 @@ function usage() {
   #print pretty usage and exit
   cat <<HELP_USAGE
 
-    $0  [-s] [-d destination folder] [-f filename] [-u url] [-h] 
+    $0 [-d destination folder] [-f filename] [-u url] [-s 50] [-h] 
 
    -f  Filename for screenshot. If not provided, defaults to datetime. No suffix needed, a .png suffix will be appended.
    -u  URL to open before taking screenshot. Will cause a slight delay.
    -d  Move screenshots to given folder.
    -x  How far to move the safari window on the x axis (number). Default is 640.
+   -s  How much to scroll down
    -v  Verbose mode.
    -h  Print this usage
 HELP_USAGE
@@ -53,21 +54,21 @@ HELP_USAGE
 }
 
 verbose="no"
-useTP="no"
 filename=`date +'%y%m%d-%H%M%S'`
 destination=""
 xAxis=640
+scroll=0
 url=""
-while getopts ":stx:f:u:d:h" options; do
+while getopts ":s:x:f:u:d:h" options; do
     case "${options}" in
         v)
             verbose="yes"
             ;;
-        t)
-            useTP="yes"
-            ;;
         x)
             xAxis=${OPTARG}
+            ;;
+        s)
+            scroll=${OPTARG}
             ;;
         u)
             url=${OPTARG}
@@ -102,16 +103,6 @@ if [ $status -eq 1 ]; then
   brew install imagemagick;
 else
   printOut "imagemagick is installed"
-fi
-
-printOut "-- Checking whether pngquant is installed"
-which -s pngquant
-status=$?
-if [ $status -eq 1 ]; then
-  echo "Installing pngquant"
-  brew install pngquant
-else
-  printOut "pngquant is installed"
 fi
 
 printOut "-- Checking whether safari is running"
@@ -160,6 +151,17 @@ if [ "x$url" != "x" ]; then
 tell application "Safari" to set the URL of the front document to "$url"
 delay 1
 EOD
+fi
+
+if [ "x$scroll" != "x" ]; then
+#echo "scrolling $scroll"
+  osascript<<EOD
+tell application "Safari" to tell document 1
+    do JavaScript "window.scroll(0,$scroll)"
+end tell
+delay 1
+EOD
+
 fi
 
 
