@@ -148,10 +148,19 @@ EOD
 
 if [ "x$url" != "x" ]; then
   osascript<<EOD
-tell application "Safari" to set the URL of the front document to "$url"
+tell application "Safari"
+    tell window 1
+        tell current tab
+            set URL to "$url"
+        end tell
+    end tell
+end tell
+
 delay 1
 EOD
 fi
+
+# tell application "Safari" to set the URL of the front document to "$url"
 
 if [ "x$scroll" != "x" ]; then
 #echo "scrolling $scroll"
