@@ -49,5 +49,5 @@ There is [more information on EAP releases in our technical documentation](https
 
 If you download and try an EAP, we’d love to hear from you.
 
-You can file bugs in our [GitHub issues repo](https://github.com/fusionauth/fusionauth-issues/issues)and offer any other feedback on the [community forum](https://fusionauth.io/community/forum/), in [slack](https://fusionauth.slack.com/), or via a [support ticket](https://account.fusionauth.io/account/support/). 
+You can file bugs in our [GitHub issues repo](https://github.com/fusionauth/fusionauth-issues/issues) and offer any other feedback on the [community forum](https://fusionauth.io/community/forum/), in [slack](https://fusionauth.slack.com/), or via a [support ticket](https://account.fusionauth.io/account/support/). 
 
