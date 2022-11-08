@@ -10,7 +10,9 @@ navcategory: developer
 == Overview
 
 https://kafka.apache.org/[Kafka] is a scalable messaging platform. This integration allows you to consume Webhook Events
-using a Kafka Topic in addition to or instead of consuming the JSON events directly from a configured Webhook.
+using a Kafka Topic in addition to or instead of consuming the JSON events directly from a configured Webhook, so events (for example, a "new user" event when a new user is created in FusionAuth) can be sent from FusionAuth to a Kafka topic.
+
+When the Kafka integration is enabled, all link:/docs/v1/tech/events-webhooks/events[webhook events] across all tenants will be sent to Kafka with all fields included.
 
 == Configuration
 
@@ -18,3 +20,134 @@ The Kafka integration may be enabled using the link:/docs/v1/tech/apis/integrati
 to [breadcrumb]#Settings -> Integrations -> Kafka#.
 
 image::integration-kafka.png[Kafka Configuration,width=1200,role=shadowed]
+
+By default, you'll see properties set for the Kafka Producer configuration, including `bootstrap.servers`, `max.block.ms`, and `request.timeout.ms`. These tell FusionAuth how to make the initial connection to your Kafka cluster and set how long it can wait to send information to Kafka. You can find a complete list of allowed configuration for this block at the https://kafka.apache.org/documentation/#configuration[Kafka configuration documentation].
+
+Specify a topic that you've already created in your Kafka cluster and press "Send test event" to make sure that the connection is working as expected. After seeing that it succeeded, don't forget to press "Save" in the top right to turn on the Kafka integration.
+
+You should see an event similar to the following in your Kafka topic if the test succeeds.
+
+```json
+{"createInstant":1667831017070,"id":"4532ba80-9443-4300-a324-3a2193e56c67","message":"You've successfully configured the Kafka Integration for FusionAuth.","type":"test"}
+```
+
+=== Example configuration for Docker-Compose
+
+If you're running Kafka alongside FusionAuth (for example, from the same `docker-compose.yaml` file), the only thing you need to change in the default configuration is to show FusionAuth where to find the Kafka Bootstrap server on the network.
+
+If you have a `services` block similar to the following in your Docker Compose file
+
+```
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - db
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    networks:
+      db:
+        aliases:
+          - kafka
+```
+
+
+Then you would input the following configuration in the FusionAuth UI to configure the Kafka integration.
+
+```
+bootstrap.servers=kafka:9092
+max.block.ms=5000
+request.timeout.ms=2000
+```
+
+=== Example Configuration for a remote managed Kafka integration
+
+If you're using a managed service for Kafka that runs on a different server than your FusionAuth installation, you'll also need to specify credentials for connecting to the remote Kafka instance. You should be able to get the exact configuration you need from your Kafka hosting provider by looking for "Producer configuration" or similar. It should look similar to the following.
+
+```
+bootstrap.servers=pkc-6ojv2.us-west4.gcp.your-kafka-provider.cloud:9092
+client.dns.lookup=use_all_dns_ips
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule   required username='ZN6LJ5UHSXZLW3LR'   password='M9T8b85OPspFAS37Do5Baq7jIS+hl7h7bY8MRrfVff5lz8xeCwea7zB5AC3nKXUD';
+sasl.mechanism=PLAIN
+security.protocol=SASL_SSL
+session.timeout.ms=45000
+```
+
+== Example events sent to Kafka
+
+After successfully connecting to a Kafka instance, you'll be notified for each event that happens in FusionAuth. Events will generally contain fields for 
+
+* `id`: A unique ID for that event that can be used for deduplication
+* `createInstant`: A timestamp indicating when the event occurred
+* `type`: The kind of event that occurred
+* `info`: A map of extra information about the event and its source such as IP address and device information
+
+As well as other fields as applicable to the event. You can find the full schema for each event in the link:/docs/v1/tech/events-webhooks/events[webhook events] documentation.
+
+After creating the integration and using FusionAuth, your Kafka topic might look similar to the following which shows events for 
+
+1. Sending the initial test event
+2. Creating a new user with email address `newuser@example.com`
+3. An error event because the SMTP integration isn't working so the password reset email couldn't be sent to the new user
+
+```json
+{"createInstant":1667833973280,"id":"e6a4f780-02da-4b5a-8b04-94d2a49ea369","message":"You've successfully configured the Kafka Integration for FusionAuth.","type":"test"}
+{"event":{"auditLog":{"id":38,"insertInstant":1667834917902,"insertUser":"test@example.com","message":"Created user with Id [3cbb85e7-ebf8-4c92-bc75-7ca8db4399db], name [null] and loginId [newuser@example.com]","reason":"FusionAuth User Interface"},"createInstant":1667834917903,"id":"4b81d279-24c7-463b-847a-0cecaaf113a0","info":{"ipAddress":"192.168.16.1","userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15"},"type":"audit-log.create"}}
+{"event":{"createInstant":1667834917916,"eventLog":{"id":34,"insertInstant":1667834917913,"message":"Async Email Send exception occurred.\n\nTemplate Id: 3e6462be-178c-499f-92c9-3643ccca8ced\nTemplate Name: [FusionAuth Default] Setup Password\nTenant Id: 6825d48e-4df4-f83e-1055-f1d42e363749\nAddressed to: newuser@example.com\n\nCause:\ncom.sun.mail.util.MailConnectException : Message: Couldn't connect to host, port: localhost, 25; timeout -1","type":"Error"},"id":"44ca31e5-967c-4b5c-8ff4-1ee51d73999a","type":"event-log.create"}}
+```
+
+== Troubleshooting FusionAuth's Kafka integration
+
+Kafka is a powerful but complicated piece of software, and you'll need Kafka expertise to run a production Kafka setup to consume all of your FusionAuth events. If you get stuck integrating Kafka, try the following.
+
+=== Troubleshooting the FusionAuth side of the integration
+
+* Check that you included a topic while adding the integration
+* Check that you saved the integration after configuring and testing it
+* Check the FusionAuth logs for errors relating to Kafka
+* If you're using Docker Compose, check that you've correctly mapped the ports for both Kafka and Zookeeper and correctly configured a Docker network so that FusionAuth can connect to Kafka
+
+=== Troubleshooting your Kafka installation
+
+It can be useful to run quick commands directly against your Kafka cluster to create topics and log events. You can download a version of Kafka from link:https://kafka.apache.org/downloads[the official Kafka website] and extract it to your local machine. This will give you some utility scripts to directly interact with your Kafka cluster.
+
+If you're using a Docker Compose setup locally similar to the example above, then add an entry to your hosts file to map `kafka` to `127.0.0.1`.
+
+```
+127.0.0.1 kafka
+```
+
+You can then create a topic, e.g. `fa-events`, that you can then use in FusionAuth by running the following.
+
+```
+bin/kafka-topics.sh --create --topic fa-events --bootstrap-server kafka:9092
+```
+
+You can set a consumer to watch for new events with the following command. If everything is correctly set up, you'll see events streamed to this consumer and logged to your shell as you carry out actions in FusionAuth.
+
+```
+bin/kafka-console-consumer.sh --topic fa-events --from-beginning --bootstrap-server kafka:9092
+```
+
+Or if you need to talk to a remote Kafka cluster, you can create a file locally called `consumer.properties`, with credentials for your remote cluster. 
+
+```
+bootstrap.servers=pkc-6ojv2.us-west4.gcp.confluent.cloud:9092
+client.dns.lookup=use_all_dns_ips
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule   required username='ZN6LJ5UHSXWLW2LR'   password='M9T8b75OPspFAS37Do5Baq7jIS+hi7h7bY8MRrfVff5lz8xeCweaRTO8GD3nKXUD';
+sasl.mechanism=PLAIN
+security.protocol=SASL_SSL
+session.timeout.ms=45000
+```
+
+And then run the scripts above passing in the file with the `--consumer.config` flag and the remote bootstrap server. For example, use the following to see events posted to your `fa-events` topic in a remote cluster.
+
+```
+bin/kafka-console-consumer.sh --bootstrap-server pkc-6ojv2.us-west4.gcp.confluent.cloud:9092 --consumer.config consumer.properties --topic fa-events
+```
