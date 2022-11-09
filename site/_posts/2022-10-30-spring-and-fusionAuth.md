@@ -80,7 +80,7 @@ Click the Save button at the top right for your changes to take effect.
 
 Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile using the [FusionAuth Typescript module](https://www.npmjs.com/package/@fusionauth/typescript-client), provided with an API key.
 
-Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value. 
+Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value.
 
 {% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
