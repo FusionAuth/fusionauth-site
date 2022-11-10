@@ -13,7 +13,7 @@ When talking about identity architectures in FusionAuth customers, there's a com
 
 This pattern is useful when you are deploying software to heterogeneous environments. If, for example, you are building an application which your customers will deploy on-premise, whether in a data center, air-gapped servers, or a private cloud, you should consider a facade. These environments are run by your customers, so you have limited insight into the environment configuration, but your application needs to run well.
 
-## Why deploy into this type of environment?
+## Why deploy into such a type of environment?
 
 First, let's discuss why you might choose to run in such a difficult environment. After all, isn't SaaS the future?
 
