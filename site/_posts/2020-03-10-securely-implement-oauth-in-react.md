@@ -7,11 +7,17 @@ excerpt_separator: "<!--more-->"
 image: blogs/oauth-react-fusionauth.png
 tags: client-javascript tutorial tutorial-react tutorial-javascript
 category: blog
+updated_date: 2022-11-11
 ---
 
 In this post, we'll walk step-by-step through implementing the OAuth Authorization Code Grant in a React app. This is the most secure way to implement OAuth and often overlooked for single-page applications that use technologies like React. We'll use FusionAuth as the IdP and also show you how to configure FusionAuth for this workflow. 
 
 <!--more-->
+
+{% include _callout-tip.liquid
+content=
+ "This blog post has been [superseded by a newer React/OAuth tutorial](/blog/2021/11/11/how-to-authenticate-your-react-app)."
+%}
 
 Our app will be able to:
 
