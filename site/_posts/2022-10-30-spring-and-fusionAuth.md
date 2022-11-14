@@ -25,7 +25,7 @@ It'll also help if you know the basics of OAuth or authentication in general.
 
 ## Why FusionAuth instead of local Spring Security?
 
-[Spring Security](link) is a one of the commonly used authentication systems in Java Web apps. It is very powerful, and allows you to hook into social providers, openID and OAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to construct your own login page and other account functionality such as resetting passwords, forgotten password resets, 2FA, email verification, account protection, username sanitization and more. Setting up custom web app authentication is always more complicated than it seems.
+[Spring Security](https://spring.io/projects/spring-security) is a one of the commonly used authentication and access control packages for Java web apps. It is very powerful, and allows you to hook into social providers, openID and OAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to construct your own login page and other account functionality such as resetting passwords, forgotten password resets, 2FA, email verification, account protection, username sanitization and more. You'd also typically need to do this for each app that you write. It gets boring after a few times. Setting up custom web app authentication is also always more complicated than it seems.
 
 The great news is that combining Spring Security with FusionAuth makes a complete system, which takes care of all aspects of authentication. It also means that much of your app's authentication capability can be configured through FusionAuth, rather than writing code and modifying your app. For example, you can easily add social login providers whenever you need to, without changing code or redeploying your app.
 
@@ -68,8 +68,7 @@ We'll skip step **#3** in this tutorial, but sending emails (to verify email add
 
 Click "Setup" under "Missing Application" and call your new app "Spring Example", or another name of your choice. It'll get a Client Id and Client Secret automatically - save these, as we'll use them in the code. Later, we'll set up a Java & Spring application which will run on `http://localhost:8080`, so configure the Authorized URLs accordingly. You should add:
 
-<TODO: Get real urls here>
-- `http://localhost:8080/auth/callback` to the Authorized redirect URLs.
+- `http://localhost:8080/login/oauth2/code/fusionauth` to the Authorized redirect URLs.
 - `http://localhost:8080/` to the Authorized request origin URL.
 - `http://localhost:8080/logout` to the Logout URL.
   
@@ -79,40 +78,41 @@ Click the Save button at the top right for your changes to take effect.
 
 ## Setting up OpenID Connect (OIDC)
 
-Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile using the [OIDC](link) functionality provided by FusionAuth.
+Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile using the [OIDC](https://fusionauth.io/docs/v1/tech/oauth/) functionality provided by FusionAuth.
 
-- Update URL in tenant for the JWT (Spring needs a fully qualified URL)
-- Enable OIDC in FusionAuth
+To enable this, we need to set a couple parameters in FusionAuth. 
 
+First, head to your Tenant configuration in FusionAuth. If you haven't made and linked a custom Tenant for your application, you can edit the default Tenant. Under the "General" tab in your Tenant settings, set the "Issuer" field to a URL representing your domain. Note that it must be a fully qualified URL for Spring to process it correctly (i.e. include the protocol). This issuer field is used in the [JWT](https://jwt.io) created by FusionAuth when logging in.
+
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-issuer-url.png" alt="Configuring the JWT issuer URL in FusionAuth." class="img-fluid" figure=false %}
 
 ## Setting up PKCE
 
-- PKCE originally intended for public clients (eg. native mobile or desktop apps), where a client secret could not be safely stored. 
-- Now recommended to implement even on confidential clients (web apps) where the Client Secret is under secure control.
-- Enable PKCE for all clients in FusionAuth application. 
+[Proof Key for Code Exchange, or PKCE](https://oauth.net/2/pkce/), was originally intended for public clients (eg. native mobile or desktop apps), where a client secret could not be safely stored.
+Now it is [recommended](https://oauth.net/2/grant-types/authorization-code/) even on confidential clients (web apps) where the Client Secret is under secure control, to protect against authorization code injection attacks.
+
+PKCE is enabled by default in FusionAuth for public clients. To enable PKCE for your confidential app, set the PKCE dropdown in your app's settings to "Required".
+
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-pkce-required.png" alt="Enforcing PKCE for all client types." class="img-fluid" figure=false %}
 
 ## Setting up Spring
 
-To get started, you should:
--   Generate and download a new Spring Boot base application using [Spring Initialzr](link)
--   Start the server to ensure everything is installed and working.
-
-
-Navigate to [Spring Initialzr](link), and create a new Spring Boot project with the following options set:
+Navigate to [Spring Initialzr](https://start.spring.io), and create a new Spring Boot project with the following options set:
 
 - You can choose either Gradle or Maven as your package manager. We've used Maven for this example.
 - Spring Boot 2.7.5
-- Name as you wish, we've used FusionAuthSpring for most fields
+- Name the app as you wish, we've used FusionAuthSpring for most fields
 - Choose the following dependencies:
-  - spring-boot-starter-web
-  - spring-boot-starter-oauth2-client
-  - spring-boot-starter-thymeleaf
+  - Spring Web
+  - OAuth2 client
+  - Thymeleaf
 - "Jar" as the packaging
 - Java 17
 
-Click "Generate". A zip file of the project should automatically be downloaded to your local machine. Copy and unzip to a folder to carry on development.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/spring-server.png" alt="Spring boot app default home page" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/spring-initializr.png" alt="Spring boot app initializr options" class="img-fluid" figure=false %}
+
+Click "Generate". A zip file of the project should automatically be downloaded to your local machine. Copy and unzip to a folder to carry on development.
 
 ## Building the application
 
@@ -124,7 +124,7 @@ Our application will only have three pages, including the FusionAuth login page.
 
 ## Setting up Spring Boot oAuth2 Properties
 
-- Spring Boot oAuthClient has a number of configuration options through the `application.properties` file, and through [beans](link).
+- Spring Boot oAuthClient has a number of configuration options through the `application.properties` file, and through [Spring Beans](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html).
 
 Update the `application.properties` file in the `resources` directory under the `main` source path to read as follows:
 
@@ -161,7 +161,7 @@ Replace the values:
 
 Most of the values can also be found by clicking on the "Show" application settings button in FusionAuth:
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/show-application.png" alt="Show application page in FusionAuth" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/show-application-settings.png" alt="Show application page in FusionAuth" class="img-fluid" figure=false %}
 
 ## Setting up Spring Boot oAuth2 Code Configuration
 
@@ -205,13 +205,13 @@ public class SecurityConfiguration {
 }
 ```
 
-This adds a [bean](link) to hook into the [Spring security filter chain](https://docs.spring.io/spring-security/site/docs/3.0.x/reference/security-filter-chain.html). 
+This adds a [Bean](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html) to hook into the [Spring security filter chain](https://docs.spring.io/spring-security/site/docs/3.0.x/reference/security-filter-chain.html).
 
-We create a new OAuth2 request resovler to add [PKCE (Proof Key for Code Exchange)](https://oauth.net/2/pkce/) support for any OAuth2 requests. PKCE was originally created for public clients, i.e. native mobile or desktop apps where a client secret could not be reliably stored safely. It has since been recommended for confidential clients, i.e. web services, as well. 
+We create a new OAuth2 request resovler to add [PKCE (Proof Key for Code Exchange)](https://oauth.net/2/pkce/) support for any OAuth2 requests. PKCE was originally created for public clients, i.e. native mobile or desktop apps where a client secret could not be reliably stored safely. It has since been recommended for confidential clients, i.e. web services, as well.
 
 Then we add a few things to the HTTP request chain:
 
-- A request authentication thest, using `authorizeRequests`. This allows public access to the home page at `/`, but requires any other request to first be authenticated (`anyRequest().authenticated()`). 
+- A request authentication test, using `authorizeRequests`. This allows public access to the home page at `/`, but requires any other request to first be authenticated (`anyRequest().authenticated()`). 
 - OAuth2 Login. This will redirect any requests to the built in Spring Security `/login` endpoint to the OAuth2 provider configured in the `application.properties` file. We also add the customized PKCE resolver to the login endpoint configuration.
 - A redirect back to the homepage `/` after a successful logout event.
 
@@ -249,6 +249,8 @@ Under the `main/java/.../..../resources/templates` folder, create a new file nam
 <body>
 	<h1>Hello !</h1>
 	<p>Welcome to <span th:text="${appName}">Our App</span></p>
+
+	<p>You can view your profile <a href="/user">here</a></p>
 </body>
 </html>
 ```
@@ -299,6 +301,7 @@ Under the `main/java/.../..../resources/templates` folder, create a new file nam
 ```
 
 Replace the values in the logout link:
+
 - `<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>` with the client secret from the FusionAuth app created earlier.
 - `<YOUR_FUSIONAUTH_URL>` with the base URL your FusionAuth instance is running on, typically `http://localhost:9011` for local docker installations.
 
@@ -326,7 +329,7 @@ Clicking the " Create an account" link should direct you to the register page to
 
 After registering with your email, a password, and name, you should now be redirected you back to the app, and your profile page. You should see a JSON object representing your profile on FusionAuth, fetched using OIDC.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/users.png" alt="The users page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/user.png" alt="The user page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
 
 ## Where to next with Spring and FusionAuth?
 
