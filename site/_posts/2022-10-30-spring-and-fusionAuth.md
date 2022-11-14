@@ -12,34 +12,34 @@ In this tutorial, we'll build a basic Java + [Spring](https://spring.io) web app
 
 <!--more-->
 
-The application itself is very simple: it will let users sign up via FusionAuth, and give them access to a "secret" area where their FusionAuth profile is displayed to them. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-java-spring).
+The application itself is very simple: it will let users sign up via FusionAuth, and give them access to a "secret" area where their FusionAuth profile is displayed to them via OpenID connect (OIDC). With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-java-spring).
 
 ## Prerequisites
 
 We'll explain nearly everything that we use, but we expect you to have:
--   Basic Java  knowledge and a Java (v17) environment set up.
+-   Basic Java knowledge and a Java (v17) environment set up.
 -   Preferably basic [Spring](https://spring.io) knowledge (or knowledge of a similar web framework).
 -   Docker and Docker Compose set up as we'll set up FusionAuth using these.
     
 It'll also help if you know the basics of OAuth or authentication in general.
 
-## Why FusionAuth instead of plain Passport?
+## Why FusionAuth instead of local Spring Security?
 
-[Passport](https://www.passportjs.org) is a one of the commonly used authentication systems in Express apps. It is very powerful, and allows you to hook into social providers, openID and OAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to construct your own login page and other account functionality such as resetting passwords, forgotten password resets, 2FA, email verification, account protection and more. Setting up custom web app authentication is always more complicated than it seems.
+[Spring Security](link) is a one of the commonly used authentication systems in Java Web apps. It is very powerful, and allows you to hook into social providers, openID and OAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to construct your own login page and other account functionality such as resetting passwords, forgotten password resets, 2FA, email verification, account protection, username sanitization and more. Setting up custom web app authentication is always more complicated than it seems.
 
-The great news is that combining Passport with FusionAuth makes a complete system, which takes care of all aspects of authentication. It also means that much of your app's authentication capability can be configured through FusionAuth, rather than writing code and modifying your app. For example, you can easily add social login providers whenever you need to, without changing code or redeploying your app. 
+The great news is that combining Spring Security with FusionAuth makes a complete system, which takes care of all aspects of authentication. It also means that much of your app's authentication capability can be configured through FusionAuth, rather than writing code and modifying your app. For example, you can easily add social login providers whenever you need to, without changing code or redeploying your app.
 
 With this setup, authentication concerns are taken care of entirely by FusionAuth.
 
 The image below shows how this works.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. FusionAuth coordinates with other identity providers" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Java & Spring. FusionAuth coordinates with other identity providers" class="img-fluid" figure=false %}
 
-Your application logic and all public information can be handled by Node.js + Express. Anything sensitive, such as personally identifiable information (PII), is handled by FusionAuth.
+Your application logic and all public information can be handled by Java & Spring Anything sensitive, such as personally identifiable information (PII), is handled by FusionAuth.
 
 This allows you to focus a majority of your security efforts on the FusionAuth installation. It also means that if you create more applications, they can piggyback on your centralised authentication instead of having to re-implement authentication for every application that you build. You can also create a multi-tenant configuration allowing you to easily have logically separate environments for different clients.
 
-Also, any integrations that you set up with other providers (e.g. Twitter sign-in) can be done once, instead of per application.
+Also, any integrations that you set up with other providers (e.g. Apple sign-in) can be done once, instead of per application.
 
 ## Installing and configuring FusionAuth with Docker Compose
 
@@ -60,275 +60,278 @@ For Twitter integration, we recommend setting up FusionAuth on a publicly availa
 
 FusionAuth should now be running and reachable on your chosen URL, or `http://localhost:9011` if you've installed it locally. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more setup steps, as shown below.
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
 
 We'll skip step **#3** in this tutorial, but sending emails (to verify email addresses and do password resets) is a vital part of FusionAuth running in production, so you'll want to do that.
 
 ### Creating an application
 
-Click "Setup" under "Missing Application" and call your new app "Twitter Express", or another name of your choice. It'll get a Client Id and Client Secret automatically - save these, as we'll use them in the code. Later, we'll set up a Node.js + Express application which will run on `http://localhost:3000`, so configure the Authorized URLs accordingly. You should add:
+Click "Setup" under "Missing Application" and call your new app "Spring Example", or another name of your choice. It'll get a Client Id and Client Secret automatically - save these, as we'll use them in the code. Later, we'll set up a Java & Spring application which will run on `http://localhost:8080`, so configure the Authorized URLs accordingly. You should add:
 
-- `http://localhost:3000/auth/callback` to the Authorized redirect URLs.
-- `http://localhost:3000/` to the Authorized request origin URL.
-- `http://localhost:3000/` to the Logout URL.
+<TODO: Get real urls here>
+- `http://localhost:8080/auth/callback` to the Authorized redirect URLs.
+- `http://localhost:8080/` to the Authorized request origin URL.
+- `http://localhost:8080/logout` to the Logout URL.
   
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
 Click the Save button at the top right for your changes to take effect.
 
-## Setting up a FusionAuth API key
+## Setting up OpenID Connect (OIDC)
 
-Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile using the [FusionAuth Typescript module](https://www.npmjs.com/package/@fusionauth/typescript-client), provided with an API key.
+Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile using the [OIDC](link) functionality provided by FusionAuth.
 
-Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value.
+- Update URL in tenant for the JWT (Spring needs a fully qualified URL)
+- Enable OIDC in FusionAuth
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
-For extra security, you can restrict the permissions for the key. For our app, we only need to enable the actions for `/api/user/`, which will let the key carry out basic actions on users. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app.
+## Setting up PKCE
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
+- PKCE originally intended for public clients (eg. native mobile or desktop apps), where a client secret could not be safely stored. 
+- Now recommended to implement even on confidential clients (web apps) where the Client Secret is under secure control.
+- Enable PKCE for all clients in FusionAuth application. 
 
-### Creating an application on Twitter
-
-In order to allow our users to sign into our app using their Twitter account, you'll need to sign up for a [developer account on Twitter](https://developer.twitter.com). The full instructions for doing this are available [here](/docs/v1/tech/identity-providers/twitter).
-
-Use `https://<YOUR_FUSIONAUTH_URL>/oauth2/callback` (where `https://<YOUR_FUSIONAUTH_URL>` is your FusionAuth installation address) for the Callback URI / Redirect URL. This will allow our FusionAuth app to talk to Twitter servers and have them authenticate users on our behalf, as shown below.
-
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-callbacks.png" alt="Adding authorized URLs to Google." class="img-fluid" figure=false %}
-
-Once you've set up everything on Twitter, you'll need to complete your setup by adding Twitter as an identity provider to FusionAuth and copying in the API key and secret that you received from Twitter. These are different values from the FusionAuth application's Client Id and Client Secret. You can find the detailed steps for setting up Twitter as a third-party login via FusionAuth [here](/docs/v1/tech/identity-providers/twitter).
-
-In the next step, make sure that you have enabled Twitter integration and turn on "Create registration" for your FusionAuth + Express app. Also don't forget to hit the save button.
-
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-fusion.png" alt="Enabling Twitter registration in our application." class="img-fluid" figure=false %}
-
-Now we've done most of the admin. Let's build a Node.js + Express app!
-
-## Setting up Express
+## Setting up Spring
 
 To get started, you should:
--   Scaffold a new Express application.
--   Install the scaffolded dependencies.
--   Install Passport and helper libraries, and the FusionAuth Typescript client.
+-   Generate and download a new Spring Boot base application using [Spring Initialzr](link)
 -   Start the server to ensure everything is installed and working.
 
-Here are the commands to do it:
 
-```bash
-npx express-generator --view=hbs fusion-twitter
-cd fusion-twitter 
-npm install
-npm install passport passport-oauth2 connect-ensure-login express-session @fusionauth/typescript-client
-npm start
-```
+Navigate to [Spring Initialzr](link), and create a new Spring Boot project with the following options set:
 
-If all went well, the server should start successfully and you can visit `http://localhost:3000`.
+- You can choose either Gradle or Maven as your package manager. We've used Maven for this example.
+- Spring Boot 2.7.5
+- Name as you wish, we've used FusionAuthSpring for most fields
+- Choose the following dependencies:
+  - spring-boot-starter-web
+  - spring-boot-starter-oauth2-client
+  - spring-boot-starter-thymeleaf
+- "Jar" as the packaging
+- Java 17
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/express-server.png" alt="Express app default home page" class="img-fluid" figure=false %}
+Click "Generate". A zip file of the project should automatically be downloaded to your local machine. Copy and unzip to a folder to carry on development.
+
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/spring-server.png" alt="Spring boot app default home page" class="img-fluid" figure=false %}
 
 ## Building the application
 
 Our application will only have three pages, including the FusionAuth login page.
 
-1. A home page - a public page showing how many users our app has and inviting users to log in.
-2. The login/sign-up page (redirected to FusionAuth) with options to use a username/password or to sign in with Twitter.
-3. A logged in private "Member's Only" page. This will display the user's profile retrieved from FusionAuth.
+1. A home page - a public page inviting users to log in.
+2. The login/sign-up page (redirected to FusionAuth) with options to use a username/password.
+3. A logged in private "Member's Only" page. This will display the user's profile retrieved from FusionAuth via OIDC.
 
+## Setting up Spring Boot oAuth2 Properties
 
-## Adding and initializing dependencies
+- Spring Boot oAuthClient has a number of configuration options through the `application.properties` file, and through [beans](link).
 
-To start, we'll add the references needed for [Passport](https://www.passportjs.org), the [passport-oauth2](https://www.passportjs.org/packages/passport-oauth2/) strategy, and enabling sessions using [Express Sessions](https://github.com/expressjs/session). We'll also add a reference to the [FusionAuth typescript](https://www.npmjs.com/package/@fusionauth/typescript-client) client.
+Update the `application.properties` file in the `resources` directory under the `main` source path to read as follows:
 
-Open the `app.js` file. Below the line `var logger = require('morgan');` add the following:
+```java
+spring.thymeleaf.cache=false
+spring.thymeleaf.enabled=true 
+spring.thymeleaf.prefix=classpath:/templates/
+spring.thymeleaf.suffix=.html
 
-```js
-var passport = require("passport");
-var OAuth2Strategy = require("passport-oauth2").Strategy;
-var passOAuth = require("passport-oauth2");
-var { FusionAuthClient } = require("@fusionauth/typescript-client");
-var session = require("express-session");
-const { ensureLoggedIn } = require('connect-ensure-login');
+spring.application.name=FusionAuth Spring Example
+
+spring.security.oauth2.client.registration.fusionauth-client.client-id=<YOUR_FUSIONAUTH_APP_CLIENT_ID>
+spring.security.oauth2.client.registration.fusionauth-client.client-secret=<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>
+spring.security.oauth2.client.registration.fusionauth-client.scope=email,openid,profile
+spring.security.oauth2.client.registration.fusionauth-client.redirect-uri=http://localhost:8080/login/oauth2/code/fusionauth
+spring.security.oauth2.client.registration.fusionauth-client.client-name=fusionauth
+spring.security.oauth2.client.registration.fusionauth-client.provider=fusionauth
+spring.security.oauth2.client.registration.fusionauth-client.client-authentication-method=basic
+spring.security.oauth2.client.registration.fusionauth-client.authorization-grant-type=authorization_code
+
+spring.security.oauth2.client.provider.fusionauth.authorization-uri=<YOUR_FUSIONAUTH_URL>/oauth2/authorize
+spring.security.oauth2.client.provider.fusionauth.token-uri=<YOUR_FUSIONAUTH_URL>/oauth2/token
+spring.security.oauth2.client.provider.fusionauth.user-info-uri=<YOUR_FUSIONAUTH_URL>/oauth2/userinfo?schema=openid
+spring.security.oauth2.client.provider.fusionauth.user-name-attribute=name
+spring.security.oauth2.client.provider.fusionauth.user-info-authentication-method=header
+spring.security.oauth2.client.provider.fusionauth.jwk-set-uri=<YOUR_FUSIONAUTH_URL>/.well-known/jwks.json
 ```
 
-Now, we can initialize and add Passport and the session handler to the Express pipeline. Add the following just below the `app.use(express.static(path.join(__dirname, 'public')));` line:
+Replace the values:
 
-```js
-app.use(session({ secret: "TOPSECRET" }));
-app.use(passport.initialize());
-app.use(passport.session());
-```
+- `<YOUR_FUSIONAUTH_APP_CLIENT_ID>` with the client ID from the FusionAuth app created earlier.
+- `<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>` with the client secret from the FusionAuth app created earlier.
+- `<YOUR_FUSIONAUTH_URL>` with the base URL your FusionAuth instance is running on, typically `http://localhost:9011` for local docker installations.
 
-Replace the `TOPSECRET` string with a string of your choosing. This secret is used to sign the session information in the cookie. Normally, this is kept secret, as anyone who has access to the secret could construct a session cookie that looks legitimate to the server and gives them access to any account on the server. You can also add an environment variable to store this secret, rather than store it in the code repo.
+Most of the values can also be found by clicking on the "Show" application settings button in FusionAuth:
 
-We'll also need to initialize the FusionAuth client with the API key created earlier. This will allow us to retrieve the user profile from FusionAuth after a successful login. Add the following code just below the previous code added:
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/show-application.png" alt="Show application page in FusionAuth" class="img-fluid" figure=false %}
 
-```js
-const fusionClient = new FusionAuthClient(
-  "<YOUR_FUSION_API_KEY>",
-  "https://<YOUR_FUSIONAUTH_URL>"
-);
-```
+## Setting up Spring Boot oAuth2 Code Configuration
 
-Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at. Replace `<YOUR_FUSION_API_KEY>` with the API key created earlier. 
+Create a `config` folder under the `main/java/.../....` source folder. In this folder, create a new file named `SecurityConfiguration.java` with the following contents:
 
-Now we can initialize the Passport strategy. We'll be connecting to FusionAuth using OAuth2, so we'll use the passport-oauth2 strategy. Add the following code directly below the code you've just added:
+```java
+package com.fusionauth.javafusion.config;
 
-```js
-passport.use(
-  new OAuth2Strategy(
-    {
-      authorizationURL: "https://<YOUR_FUSIONAUTH_URL>/oauth2/authorize",
-      tokenURL: "https://<YOUR_FUSIONAUTH_URL>/oauth2/token",
-      clientID: "<YOUR_FUSIONAUTH_APP_CLIENTID>",
-      clientSecret: "<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>",
-      callbackURL: "http://localhost:3000/auth/callback",
-    },
-    function (accessToken, refreshToken, profile, cb) {
-      // Get the user profile from Fusion:
-      fusionClient
-        .retrieveUserUsingJWT(accessToken)
-        .then((clientResponse) => {
-          return cb(null, clientResponse.response.user);
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    }
-  )
-);
-```
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
+import org.springframework.security.web.SecurityFilterChain;
 
-Replace the parameter `<YOUR_FUSIONAUTH_URL>` with the URL your FusionAuth instance is located at. Replace `<YOUR_FUSIONAUTH_APP_CLIENTID>`, and `<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>` with the values you saved during the FusionAuth application setup earlier.
+@Configuration
+public class SecurityConfiguration {
 
-This snippet of code sets up the OAuth parameters for the Passport strategy. The strategy has a callback which is invoked when a successful authorization and token call has been completed to FusionAuth. The FusionAuth client has a handy method to retrieve a user by the JWT returned from the authorization process. We can use this to get the user, and return it to the Passport strategy callback. This user will then also be passed to our session handler to save, and added to the `req` parameter in subsequent middleware handlers as `req.user`. To enable this, add the following code, below the code you just added:
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http, ClientRegistrationRepository repo)
+      throws Exception {
 
-```js
-passport.serializeUser(function (user, done) {
-  process.nextTick(function () {
-    done(null, user);
-  });
-});
+    var base_uri = OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI;
+    var resolver = new DefaultOAuth2AuthorizationRequestResolver(repo, base_uri);
 
-passport.deserializeUser(function (user, done) {
-  process.nextTick(function () {
-    done(null, user);
-  });
-});
+    resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
 
-```
+    http
+        .authorizeRequests(a -> a
+            .antMatchers("/").permitAll()
+            .anyRequest().authenticated())
+        .oauth2Login(login -> login.authorizationEndpoint().authorizationRequestResolver(resolver));
 
-# Adding Express routes
+    http.logout(logout -> logout
+        .logoutSuccessUrl("/"));
 
-We've got the basic framework and authorization code set up. Now we can add some routes. We'll start with the `login` route to handle the redirect to FusionAuth, which will in turn handle the calls to Twitter. 
-
-Add this code under the `app.use("/", indexRouter);` line:
-
-```js
-app.get("/login", passport.authenticate("oauth2"));
-```
-
-Note that we don't need to add a router or view for the login redirect to FusionAuth to work. Passport will check whether the user needs to be logged in, and if so will send them to FusionAuth for authentication. 
-
-After authentication, FusionAuth will redirect to the callback route we provided in the Passport OAuth setup, as well as in the authorized callback route earlier. We can add this route now. Add the following code under the `login` route:
-
-```js
-app.get(
-  "/auth/callback",
-  passport.authenticate("oauth2", { failureRedirect: "/" }),
-  function (req, res) {
-    // Successful authentication, redirect home.
-    res.redirect("/");
+    return http.build();
   }
-);
+}
 ```
 
-On successful authentication or failure, we'll redirect to the homepage. Let's update that now to show the login status, and provide a link to the "Members Only" area. Open the `index.js` file in the `routes` folder, and update the `get` route to the following:
+This adds a [bean](link) to hook into the [Spring security filter chain](https://docs.spring.io/spring-security/site/docs/3.0.x/reference/security-filter-chain.html). 
 
-```js
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express', "authenticated": req.isAuthenticated() });
-});
+We create a new OAuth2 request resovler to add [PKCE (Proof Key for Code Exchange)](https://oauth.net/2/pkce/) support for any OAuth2 requests. PKCE was originally created for public clients, i.e. native mobile or desktop apps where a client secret could not be reliably stored safely. It has since been recommended for confidential clients, i.e. web services, as well. 
+
+Then we add a few things to the HTTP request chain:
+
+- A request authentication thest, using `authorizeRequests`. This allows public access to the home page at `/`, but requires any other request to first be authenticated (`anyRequest().authenticated()`). 
+- OAuth2 Login. This will redirect any requests to the built in Spring Security `/login` endpoint to the OAuth2 provider configured in the `application.properties` file. We also add the customized PKCE resolver to the login endpoint configuration.
+- A redirect back to the homepage `/` after a successful logout event.
+
+## Adding the home page & controller
+
+Under the `main/java/.../....` folder, create a new file named "HomeController.java". Add the following contents to this file:
+
+```java
+package com.fusionauth.javafusion;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class HomeController {
+
+  @Value("${spring.application.name}")
+  String appName;
+
+  @RequestMapping("/")
+  public String homePage(Model model) {
+      model.addAttribute("appName", appName);
+      return "home";
+  }  
+}
 ```
 
-Passport adds a function `isAuthenticated()` to the `req` object. Querying this function tells us whether the user is logged in. We add this to the keys and values passed to the index view, so that we can show a different message based on the user's authentication status. 
+Under the `main/java/.../..../resources/templates` folder, create a new file named `home.html`. Add the following contents to the file:
 
-Now open the `index.hbs` file in the `views` folder, and update the code to the following:
-
-{% raw %}
 ```html
-<h1>{{title}}</h1>
-<p>Welcome to {{title}}</p>
-
-{{#if authenticated}}
-  <p>You are logged in!</p>
-  <p>
-    You can now visit the super secure <a href="/users/me">members only area</a>
-  </p> 
-{{else}}
-  <p>
-    <a href="/login">Login Here</a>
-  </p>
-{{/if}}
-```
-{% endraw %}
-
-This will notify the user if they are logged in or not, and point them to the relevant page.
-
-## Adding a members only area
-
-Now that we have the basic login and authentication mechanics set up, we can add a restricted route that is only available to users that are logged in. 
-
-In the `users.js` file in the `routes` folder, modify the `get` route to the following:
-
-```js
-router.get('/me', function(req, res, next) {
-  const user = req.user; 
-  res.send('You have reached the super secret members only area! Authenticated as : ' + JSON.stringify(user, null, '\t'));
-});
-
-```
-Now, we need to secure the route to this page to users that are authenticated. To help with that, we'll use the [`connect-ensure-login`](https://github.com/jaredhanson/connect-ensure-login) middleware we installed earlier. Update the `users` route in the `app.js` file from:
-
-```js
-app.use('/users', usersRouter);
+<html xmlns:th="http://www.w3.org/1999/xhtml" lang="en">
+<head><title>Home Page</title></head>
+<body>
+	<h1>Hello !</h1>
+	<p>Welcome to <span th:text="${appName}">Our App</span></p>
+</body>
+</html>
 ```
 
-to:
+## Adding the user page & controller
 
-```js
-app.use('/users', ensureLoggedIn('/login'), usersRouter);
+By setting the `user-info-uri` property in the `application.properties` file, along with adding the `openid` and `profile` scopes to the `scope` property, Spring will automatically query FusionAuth for the user's profile, and make it available to the app via the [`AuthenticationPrincipal` annotation parameter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/core/annotation/AuthenticationPrincipal.html). We can use this to build a user controller to show the logged in user their profile on FusionAuth. You can customize the profile fields stored on FusionAuth, and requested during registration. Read more about this [here](https://fusionauth.io/docs/v1/tech/guides/advanced-registration-forms).
+
+Under the `main/java/.../....` folder, create a new file named "UserController.java". Add the following contents to this file:
+
+```java
+package com.fusionauth.javafusion;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class UserController {
+
+  public UserController() {
+
+  } 
+
+  @RequestMapping("/user")
+  public String userPage(Model model, @AuthenticationPrincipal OidcUser principal) {
+    if (principal != null) {
+      model.addAttribute("profile", principal.getClaims());
+    }
+    return "user";
+  }
+}
 ```
 
-The `ensureLoggedIn` middleware checks if the user is authenticated before proceeding to the router (or following middleware). It redirects to the `login` page if the user is not logged in. 
+Under the `main/java/.../..../resources/templates` folder, create a new file named `user.html`. Add the following contents to the file:
+
+```html
+<html xmlns:th="http://www.w3.org/1999/xhtml" lang="en">
+<head><title>User Profile</title></head>
+<body>
+	<h1>Welcome to the protected User page. Below is your OpenID profile information.</h1>
+	<p>Profile: <span th:text="${profile}"></span></p>
+
+	<h2>You can logout here: <a href="<YOUR_FUSIONAUTH_URL>/oauth2/logout?client_id=<YOUR_FUSIONAUTH_APP_CLIENT_ID>">Logout</a></h2>
+</body>
+</html>
+```
+
+Replace the values in the logout link:
+- `<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>` with the client secret from the FusionAuth app created earlier.
+- `<YOUR_FUSIONAUTH_URL>` with the base URL your FusionAuth instance is running on, typically `http://localhost:9011` for local docker installations.
+
+The logout link redirects to FusionAuth, which logs the user out of the FusionAuth app, and then redirects back to the `logout` url set earlier in the FusionAuth app configuration, `http://localhost:8080/logout`. Spring boot web by default has logout logic wired at that endpoint, to complete the logout process on the application by destroying the local session.
 
 ## Testing
 
-We are done with the demo. Type `npm start` at the console to start up the server. Then navigate to `localhost:3000`, preferably in a private tab. This ensures that your main admin login to FusionAuth is not a confounding factor while logging in.  
+You can test the project by running it through an IDE of your choice (we used Visual Studio Code to develop this tutorial). You can also test from the command line by running:
 
-You should see the main page looking something like this:
+```bash
+mvn spring-boot:run
+```
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
+If all went well, the server should start successfully and you can visit `http://localhost:8080`.
 
-Clicking on "Login Here" should redirect you to your FusionAuth installation, with a Twitter button as a login option.
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/login-page.png" alt="The FusionAuth login page, with Twitter as an option" class="img-fluid" figure=false %}
+Clicking on "You can view your profile here" should redirect you to your FusionAuth installation, with an option to register:
 
-Clicking the "Login with Twitter" button should redirect you to Twitter to complete the authentication.
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/login-page.png" alt="The FusionAuth login page, with registration as an option" class="img-fluid" figure=false %}
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/twitter-page.png" alt="The Twitter page asking permission to authenticate you to your FusionAuth instance" class="img-fluid" figure=false %}
+Clicking the " Create an account" link should direct you to the register page to create an account.
 
-Entering your Twitter credentials should now redirect you back to the app's root page, where you should see a logged in message.
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/registration-page.png" alt="The FusionAuth registration page" class="img-fluid" figure=false %}
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
+After registering with your email, a password, and name, you should now be redirected you back to the app, and your profile page. You should see a JSON object representing your profile on FusionAuth, fetched using OIDC.
 
-Clicking on the "Members Only area" link should take you to `users/me`, showing a JSON object representing your profile on FusionAuth (with the username from Twitter). 
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/users.png" alt="The users page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
 
-{% include _image.liquid src="/assets/img/blogs/social-sign-in-twitter-express/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
+## Where to next with Spring and FusionAuth?
 
-## Where to next with Express and FusionAuth?
+That’s the basics of our Spring FusionAuth app done. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-java-spring).
 
-That’s the basics of our Express + Twitter + FusionAuth app done. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-express-twitter).
+Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, centralized user profiles, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
 
-Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, social sign-in, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features. 
-
-For a production environment, you would also need to do a bit more work in making sure FusionAuth was really safe. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
+For a production environment, you would also need to do a bit more work in making sure FusionAuth is really safe. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Spring application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Spring app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
