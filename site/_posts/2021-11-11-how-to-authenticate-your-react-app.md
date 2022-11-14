@@ -7,6 +7,7 @@ image: blogs/fusionauth-example-react-2021/how-to-use-oauth-to-add-authenticatio
 category: blog
 tags: tutorial-react tutorial-javascript client-react client-javascript tutorial-integration
 excerpt_separator: "<!--more-->"
+updated_date: 2022-11-11
 ---
 
 Whenever you build a website that allows a user to create their own account, secure authentication and authorization is a must-have.  The problem is that most handmade authentication and authorization solutions are not robust enough to keep up with the most current and secure workflows. What's more, since security is not always seen as a business priority, in-house authorization solutions can quickly become an internal tool that is not often touched, prone to disrepair and exploitation by bad actors.
@@ -15,7 +16,7 @@ Whenever you build a website that allows a user to create their own account, sec
 
 In this tutorial, you will learn how to integrate a React app with FusionAuth to implement an OAuth 2.0 compliant Authorization Code grant.  This abstracts all of the problems of making and maintaining an auth solution away from you and onto FusionAuth.
 
-We'll start with downloading and configuring FusionAuth, then create a login/logout React component, then finish by building login/logout functionality with our Express server and React in tandem.  If you'd rather clone down a completed project and take a look around yourself, you can find the finished code in a repository [here.](https://github.com/FusionAuth/fusionauth-example-react-2.0)
+We'll start with downloading and configuring FusionAuth, then create a login/logout React component, then finish by building login/logout functionality with our Express server and React in tandem.  If you'd rather clone down a completed project and take a look around yourself, you can find the finished code in a [GitHub repository here](https://github.com/FusionAuth/fusionauth-example-react-2.0).
 
 {% include _callout-tip.liquid content=
 "*Please Note:* This tutorial reworks an earlier tutorial on implementing OAuth in React, which can be found [here](/blog/2020/03/10/securely-implement-oauth-in-react)."
@@ -176,11 +177,61 @@ reactauthapp
   package.json
 ```
 
-To cover all of your bases, I recommend `cd`-ing into your `client` folder and running:
+You will need to `cd` into the client folder. Copy this code and paste it into the `package.json` file in the client folder:
+
+```json
+{
+ "name": "client",
+ "version": "0.1.0",
+ "private": true,
+ "dependencies": {
+   "@testing-library/jest-dom": "^5.14.1",
+   "@testing-library/react": "^11.2.7",
+   "@testing-library/user-event": "^12.8.3",
+   "react": "^17.0.2",
+   "react-dom": "^17.0.2",
+   "react-scripts": "4.0.3",
+   "web-vitals": "^1.1.2"
+ },
+ "scripts": {
+   "start": "react-scripts start",
+   "build": "react-scripts build",
+   "test": "react-scripts test",
+   "eject": "react-scripts eject"
+ },
+ "eslintConfig": {
+   "extends": [
+     "react-app",
+     "react-app/jest"
+   ]
+ },
+ "browserslist": {
+   "production": [
+     ">0.2%",
+     "not dead",
+     "not op_mini all"
+   ],
+   "development": [
+     "last 1 chrome version",
+     "last 1 firefox version",
+     "last 1 safari version"
+   ]
+ }
+}
+```
+
+Once your file looks like that, run:
+
+```bash
+npm install
+```
+
+and then:
 
 ```bash
 npm start
 ```
+
 If your React app automatically boots up in the browser at `localhost:3000`, then everything is working properly.
 
 Lastly, it is useful to create a config file in your `client/src` directory.  In your `client/src` folder, create a `config.js` like so:
@@ -406,6 +457,12 @@ Your completed `package.json` should look like this:
     "request": "^2.88.2"
   }
 }
+```
+
+You will then want to start your server:
+
+```bash
+npm start
 ```
 
 ### Write the Express server
@@ -659,48 +716,50 @@ Also update your `client/index.jsx` like so:
 Your full `src/index.jsx`  should look like this:
 
 ```js
-import React from 'react';
+ import React from 'react';
 import ReactDOM from 'react-dom';
 import Greeting from './components/Greeting.js';
 import LogInOut from './components/LogInOut.js';
-import './index.css';
-
-const config = require('./config.js');
-
-  class App extends React.Component {
-    constructor(props) {
-      super(props);
-      this.state = {
-        body: {} // this is the body from /user
-      };
-    }
-
-    componentDidMount() {
-      fetch(`http://localhost:${config.serverPort}/user`, {
-        credentials: 'include' // fetch won't send cookies unless you set credentials
-      })
-        .then(response => response.json())
-        .then(response => this.setState(
-          {
-            body: response
-          })
-        );
-    }
-
-      render() {
-        return (
-          <div id='App'>
-          <header>
-            <h1>FusionAuth Example: React</h1>
-            <Greeting body={this.state.body}/>
-            <LogInOut body={this.state.body} uri={`http://localhost:${config.serverPort}`}/>
-            </header>
-          </div>
-        );
-      }
-    }
-
-ReactDOM.render(<App/>, document.querySelector('#main'));
+const config = require('./config');
+ 
+class App extends React.Component {
+ constructor(props) {
+   super(props);
+   this.state = {
+     body: {} // this is the body from /user
+   };
+ }
+ 
+ componentDidMount() {
+   fetch(`http://localhost:${config.serverPort}/user`, {
+     credentials: 'include' // fetch won't send cookies unless you set credentials
+   })
+     .then(response => response.json())
+     .then(response => this.setState(
+       {
+         body: response
+       })
+     );
+ }
+ 
+ render() {
+   return (
+     <div id='App'>
+       <header>
+         <h1>FusionAuth Example: React</h1>
+         <Greeting body={this.state.body}/>
+         <LogInOut body={this.state.body} uri={`http://localhost:${config.serverPort}`}/>
+       </header>
+       <footer>
+         <a href='https://fusionauth.io/docs/v1/tech/tutorials/'>Learn how this app works.</a>
+         <a href='https://twitter.com/fusionauth'>Tweet your questions at us.</a>
+       </footer>
+     </div>
+   );
+ }
+}
+ 
+ReactDOM.render(<App/>, document.querySelector('#root'));
 ```
 
 During the login process, we add a route to our Express server that *redirects the browser over to FusionAuth*.  We do this on the server side because it is easier and makes the client code less tied to FusionAuth. If any configuration changes were required to the login URL, such as adding PKCE or a `state` parameter, the client would remain unchanged.
