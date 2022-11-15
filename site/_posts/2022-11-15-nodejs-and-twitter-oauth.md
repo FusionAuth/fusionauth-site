@@ -346,7 +346,7 @@ Clicking on the "Members Only area" link should take you to `users/me`, showing 
 
 ## Where to next with Express and FusionAuth?
 
-That’s the basics of our Express + Twitter + FusionAuth app done. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-express-twitter).
+That’s the basics of our Express + Twitter + FusionAuth app done. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The [complete code is hosted on GitHub here](https://github.com/FusionAuth/fusionauth-example-express-twitter).
 
 Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, social sign-in, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features. 
 
