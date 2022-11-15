@@ -74,6 +74,10 @@ Click "Setup" under "Missing Application" and call your new app "Spring Example"
   
 {% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
+To enable self-service registrations, select the "Registration" tab. Scroll down to "Self-service registration", and switch "Enabled" on. Choose "Basic" as the registration type. You can choose the login type as either "Email" or "Username" - we've used "Email" for this tutorial. You can also select any other fields you'd like to capture on registration - we've left them off. Your setup should look similar to this:
+
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-registration-settings.png" alt="Configuring the registration options in FusionAuth" class="img-fluid" figure=false %}
+
 Click the Save button at the top right for your changes to take effect.
 
 ## Setting up OpenID Connect (OIDC)
