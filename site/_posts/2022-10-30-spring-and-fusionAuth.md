@@ -54,7 +54,6 @@ docker-compose up
 
 Note that here we use a public `.env` file containing hard-coded database passwords—this is not suitable for production use.
 
-For Twitter integration, we recommend setting up FusionAuth on a publicly available URL. This is because Twitter does not redirect to `localhost` addresses for [OAuth callbacks](https://stackoverflow.com/questions/800827/twitter-oauth-callbackurl-localhost-development). Some developers have luck setting a local `hosts` file entry or using `127.0.0.1` instead of `localhost`, but the most reliable option is to host FusionAuth on a publicly accessible URL. Bear in mind the extra security considerations of this option.
 
 ### Configuring FusionAuth
 
@@ -90,7 +89,7 @@ First, head to your Tenant configuration in FusionAuth. If you haven't made and 
 
 {% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-issuer-url.png" alt="Configuring the JWT issuer URL in FusionAuth." class="img-fluid" figure=false %}
 
-Then head over to your FusionAuth application, and edit it. Choose the "JWT" tab on the settings page, and enable JWT by setting the slider. Then configure the JSON web tokens with the following values:
+Then head over to your FusionAuth application, and edit it. Choose the "JWT" tab on the settings page, and enable JWT by setting the toggle to on. Then configure the JSON web tokens with the following values:
 
 - "JWT duration": 3600
 - "Access Token signing key": Access token signing key generated for application <name> (RS256)
@@ -270,12 +269,13 @@ Under the `main/java/.../..../resources/templates` folder, create a new file nam
 
 ## Adding the user page and controller
 
-We set the `user-info-uri` property in the `application.properties` file and add the `openid` and `profile` scopes to the `scope` property so that Spring can automatically query FusionAuth for the user's profile and make it available to the app via the [`AuthenticationPrincipal` annotation parameter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/core/annotation/AuthenticationPrincipal.html). We can use this to build a user controller to show the logged-in user their profile on FusionAuth. You can customize the profile fields stored on FusionAuth and requested during registration. Read more about this [here](https://fusionauth.io/docs/v1/tech/guides/advanced-registration-forms).
+We set the `user-info-uri` property in the `application.properties` file and added the `openid` and `profile` scopes to the `scope` property so that Spring can automatically query FusionAuth for the user's profile and make it available to the app via the [`AuthenticationPrincipal` annotation parameter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/core/annotation/AuthenticationPrincipal.html). We can use this to build a user controller to show the logged-in user their profile on FusionAuth. You can customize the profile fields stored on FusionAuth and requested during registration. Read more about this [here](https://fusionauth.io/docs/v1/tech/guides/advanced-registration-forms).
 
 Under the `main/java/.../....` folder, create a new file named `UserController.java`. Add the following contents to this file:
 
 ```java
 package com.fusionauth.javafusion;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
