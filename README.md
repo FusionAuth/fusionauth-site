@@ -21,7 +21,7 @@ This project is built using jekyll and asciidoc, you'll need to have ruby instal
 Install these programs:
 
 - java
-- ruby (2.7.0)
+- ruby (2.7.5)
 - plantuml
 - git
 
@@ -136,3 +136,5 @@ Caused by: java.lang.RuntimeException: unsupported Java version: 15
 ```
 
 You are running the wrong version of java. Doublecheck your path.
+
+

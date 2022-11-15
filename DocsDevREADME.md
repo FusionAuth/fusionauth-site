@@ -20,6 +20,9 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
 - All `link`s should be fully-qualified and never include a slash at the end (i.e. `link:/docs/v1/tech/apis/users` not `link:users`)
 - All code snippets within any documents should have indenting formatted to 2 spaces.
+- When introducing a code snippet, don't use a : (colon). Instead, just use verbiage before it. "The code to exchange the token is similar to below."
+- Prefer 'You' to 'We'. 'Let's' is acceptable.
+- Code captions should be title cased, where the first letter of every word should be capitalized, except for a, an and the: This Code Is the Best
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - If something is new in a version, mark it with something like this:
 
@@ -30,7 +33,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 
 - If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
 
-- When writing posts, you have access to callouts.
+- When writing blog posts, you have access to callouts.
 
   ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
   ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
@@ -57,7 +60,7 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 - If you are including a file in the docs which uses asciidoctor, do not prepend the include file path with `/`. 
   - If it is a top level doc, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
   - If it is an included doc (that is, one that starts with `_`), use the relative path: `include::../../../../src/json/scim/enterpriseuser-create-request.json[]` or `include::_scim-customizable-schema-shared.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
-- If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers: `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]`
+- If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers: `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]` or `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=clientIdSecret]`
 
 ### For API docs
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
@@ -93,6 +96,9 @@ For blog posts:
 -- `topic-community-story` for any community stories you do.
 -- `feature-<topic>` for specific features. These will show up on the feature page.
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
+- You can add a `related_resources` array of hashes to the front matter if you would like to customize the `additional resources` sidebar. See site/_posts/2022-10-27-introducing-biometric-authentication.md for format and example.
+
+
 
 For documentation posts:
 - Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
@@ -116,6 +122,11 @@ For lists:
 - esport
 - Docker
 - Docker Compose
+- WebAuthn
+- IdP
+- Azure AD
+- X.509
+- Node.js
 
 ## Git
 

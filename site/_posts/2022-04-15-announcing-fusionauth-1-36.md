@@ -5,7 +5,7 @@ description: This release includes bug fixes, a new Identity Provider, and SCIM2
 author: Joyce Park 
 image: blogs/release-1-36/product-update-fusionauth-1-36.png
 category: blog
-tags: topic-troubleshooting scim scim2
+tags: topic-troubleshooting topic-scim 
 excerpt_separator: "<!--more-->"
 ---
 

@@ -17,6 +17,7 @@ class FusionAuthPriceCalculator {
     this.monthlyActiveUserSliderMax = parseInt(this.monthlyActiveUserSlider.getAttribute('max'));
     this.monthlyActiveUserValue = document.getElementById('monthly-active-users-value');
     this.communityButton = document.querySelector('a[data-plan=Community]');
+    this.starterButton = document.querySelector('a[data-plan=Starter]');
     this.purchaseButton = document.getElementById('purchase-button');
 
     this.hostingPrice = 0;
@@ -169,9 +170,26 @@ class FusionAuthPriceCalculator {
       this.hostingPriceDiv.innerText = '-';
     }
 
-    if (this.hosting !== 'self-hosting') {
+    if (this.hosting === 'ha-cloud') {
+      this.communityButton.href = '#';
+      this.communityButton.innerText = 'Not available';
+      this.communityButton.classList.add('grayed-out');
+      this.communityButton.classList.remove('sales');
+      this.communityButton.setAttribute('disabled', 'disabled');
+      this.starterButton.innerText = 'Not available';
+      this.starterButton.setAttribute('disabled', 'disabled');
+      this.starterButton.classList.add('grayed-out');
+      this.starterButton.classList.remove('sales');
+    } else if (this.hosting !== 'self-hosting') {
       this.communityButton.href = '#';
       this.communityButton.innerText = 'Select';
+      this.communityButton.classList.remove('grayed-out');
+      this.communityButton.classList.add('sales');
+      this.communityButton.removeAttribute('disabled');
+      this.starterButton.innerText = 'Select';
+      this.starterButton.removeAttribute('disabled');
+      this.starterButton.classList.remove('grayed-out');
+      this.starterButton.classList.add('sales');
     } else {
       this.communityButton.href = '/download';
       this.communityButton.innerText = 'Download';
