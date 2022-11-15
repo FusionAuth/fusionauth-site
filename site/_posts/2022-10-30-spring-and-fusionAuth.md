@@ -80,11 +80,21 @@ Click the Save button at the top right for your changes to take effect.
 
 Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile using the [OIDC](https://fusionauth.io/docs/v1/tech/oauth/) functionality provided by FusionAuth.
 
-To enable this, we need to set a couple parameters in FusionAuth. 
+To configure this to work properly with Spring, we need to set a couple JWT parameters in FusionAuth.
 
 First, head to your Tenant configuration in FusionAuth. If you haven't made and linked a custom Tenant for your application, you can edit the default Tenant. Under the "General" tab in your Tenant settings, set the "Issuer" field to a URL representing your domain. Note that it must be a fully qualified URL for Spring to process it correctly (i.e. include the protocol). This issuer field is used in the [JWT](https://jwt.io) created by FusionAuth when logging in.
 
 {% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-issuer-url.png" alt="Configuring the JWT issuer URL in FusionAuth." class="img-fluid" figure=false %}
+
+Then head over to your FusionAuth application, and edit it. Choose the "JWT" tab on the settings page, and enable JWT by setting the slider. Then configure the JSON web tokens with the following values:
+
+- "JWT duration": 3600
+- "Access Token signing key": Access token signing key generated for application <name> (RS256)
+- "Id Token signing key": Access token signing key generated for application <name> (RS256)
+
+Click the "Save" button in the top right to save these changes. Your setup should look similar to this:
+
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-jwt-config.png" alt="Configuring the JWT algorithm settings." class="img-fluid" figure=false %}
 
 ## Setting up PKCE
 
