@@ -32,7 +32,7 @@ Let's break this example JWT apart and dig a bit deeper.
 
 ## The Header
 
-`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9` is the header of this JWT. The header contains metadata about a token, including the key identifier, what algorithm was used to sign in and other information.
+`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9` is the header of the JWT. The header contains metadata about a token, including the key identifier, what algorithm was used to sign in and other information.
 
 If you run the above header through a base64 decoder:
 
