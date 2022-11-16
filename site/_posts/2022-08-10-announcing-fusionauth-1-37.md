@@ -50,7 +50,7 @@ Previous to this release, a small but non-zero number of webhooks could be assoc
 
 However, you will be able to associate a webhook with zero or more tenants. This can be useful when segmenting environments using tenants. You typically  don't want your production webhooks to receive events from the staging tenant and vice versa.
 
-{% include _image.liquid src="/assets/img/blogs/release-1-37/webhook-tenant-limit.png" alt="Configuring webhooks to fire only for certain tenants.." class="img-fluid" figure=true %} 
+{% include _image.liquid src="/assets/img/blogs/release-1-37/webhook-tenant-limit.png" alt="Configuring webhooks to fire only for certain tenants." class="img-fluid" figure=true %} 
 
 If you currently have a webhook associated with an application, it will be transparently migrated. Each application specific webhook will be associated with the tenant containing that application.
 
