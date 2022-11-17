@@ -36,6 +36,7 @@ This page describes the Admin UI for creating and configuring a Tenant.
 * <<OAuth>>
 * <<JWT>>
 * <<Password>>
+* <<WebAuthn>>
 * <<Webhooks>>
 * <<SCIM>>
 * <<Security>>
@@ -261,7 +262,7 @@ image::core-concepts/tenant-configuration-mfa-authenticator-settings.png[Tenant 
 
 [.api]
 [field]#On login# [optional]#Optional# [default]#Defaults to `Enabled`#::
-When set to `Enabled` a two-factor challenge will be required during login when a user has configured one or more two-factor methods. When set to `Disalbed`, even when a user has one or more two-factor methods configured, a two-factor challenge will not be required during login.
+When set to `Enabled` a two-factor challenge will be required during login when a user has configured one or more two-factor methods. When set to `Disabled`, even when a user has one or more two-factor methods configured, a two-factor challenge will not be required during login.
 +
 Supported values include:
 +
@@ -434,6 +435,112 @@ A non-zero number that provides an iteration count to the hashing scheme. A high
 [field]#Re-hash on login# [optional]#Optional#::
 When enabled the user's password hash will be modified if it does not match the configured values during next login.
 
+
+==== WebAuthn
+
+include::docs/v1/tech/shared/_advanced-edition-blurb.adoc[]
+
+image::core-concepts/tenant-configuration-webauthn.png[Tenant Configuration - WebAuthn,width=1200, role=bottom-cropped]
+
+===== Form Fields
+
+[.api]
+[field]#Enabled# [optional]#Optional#::
+When enabled, WebAuthn is available for the tenant, and additional configuration options will be available.
+
+[field]#Relying party Id# [optional]#Optional#::
+The Relying Party Id is used to scope WebAuthn passkeys to the site where they were registered. As part of WebAuthn's security requirements, this value must be either:
++
+ * The browser request origin's effective domain
+ * A registrable domain suffix of the effective domain
++
+For example, if the login page is at `auth.example.com`, then the following are valid Relying Party Ids:
++
+ * `auth.example.com` - matches the effective domain
+ * `example.com` - a registrable suffix of the effective domain
++
+But the following values are _not_ valid:
++
+ * `m.auth.example.com` - a subdomain of the effective domain
+ * `com` - this is a suffix of the effective domain but not registrable
++
+It is important that this is configured according to the URL that a user would see in their browser while on the FusionAuth login page.
++
+Leaving this value empty will cause the WebAuthn client API to use the browser's current request origin.
+
+[field]#Relying party name# [optional]#Optional#::
+The Relying Party name for WebAuthn ceremonies. This value may be displayed to the user by the browser or OS during WebAuthn registration and authentication ceremonies.
++
+If this value is left blank, the [field]#Issuer# value will be used.
+
+[field]#Debug enabled# [optional]#Optional#::
+Enable debug to create an event log to assist you in debugging integration errors.
+
+image::core-concepts/tenant-configuration-webauthn-bootstrap-settings.png[Tenant Configuration - WebAuthn Bootstrap settings,width=1200, role=top-cropped,bottom-cropped]
+
+===== Bootstrap settings
+
+The settings in this section affect the availability and behavior of the WebAuthn bootstrap workflow. The bootstrap workflow is meant to allow users to sign in from a new device for the first time using WebAuthn.
+
+[.api]
+[field]#Enabled# [optional]#Optional#::
+When enabled, the WebAuthn bootstrap workflow can be used to authenticate users via WebAuthn from new or repeat devices.
++
+The availability of the bootstrap workflow can be overridden at the application level on the link:/docs/v1/tech/core-concepts/applications#webauthn[WebAuthn Tab of the Application settings].
+
+[field]#Authenticator attachment# [optional]#Optional#::
+The authenticator attachment preference for the bootstrap workflow on this tenant. This value controls the attachment requirement for authenticators during the bootstrap workflow registration ceremony. Authenticators that do not meet the requirement are not considered during passkey registration. The possible values are:
++
+ * `Any` - any authenticator attachment is allowed
+ * `Platform only` - only authenticators integrated with the client device are allowed
+ * `Cross-platform only` - only authenticators that are usable across multiple client devices are allowed
++
+The recommended value for the bootstrap workflow is `Cross-platform only` when the option is available.
++
+:enterprise_feature: WebAuthn cross-platform authenticators
+include::docs/v1/tech/shared/_enterprise-edition-blurb-api.adoc[]
+
+[field]#User verification# [optional]#Optional#::
+The user verification requirement for the bootstrap workflow on this tenant. This value controls whether user verification is required for registration and authentication ceremonies during the bootstrap workflow. Authenticators that do not meet the requirement are not considered during passkey registration or authentication. The possible values are:
++
+ * `Required` - user verification is required to complete the WebAuthn ceremony
+ * `Preferred` - the Relying Party prefers user verification is provided but will not fail the WebAuthn ceremony without it
+ * `Discouraged` - the Relying Party does not want user verification for the WebAuthn ceremony
++
+Because the bootstrap workflow is used to authenticate a user, it is _highly_ recommended to set this value to `Required`.
+
+image::core-concepts/tenant-configuration-webauthn-reauthentication-settings.png[Tenant Configuration - WebAuthn Re-authentication settings,width=1200, role=top-cropped,bottom-cropped]
+
+===== Re-authentication settings
+
+The settings in this section affect the availability and behavior of the WebAuthn re-authentication workflow. The re-authentication workflow is meant to provide a streamlined user experience when logging in from a frequently used device.
+
+[.api]
+[field]#Enabled# [optional]#Optional#::
+When enabled, the WebAuthn re-authentication workflow can be used to streamline the login experience when authenticating from a previously used device.
++
+The availability of the re-authentication workflow can be overridden at the application level on the link:/docs/v1/tech/core-concepts/applications#webauthn[WebAuthn Tab of the Application settings].
+
+[field]#Authenticator attachment# [optional]#Optional#::
+The authenticator attachment preference for the re-authentication workflow on this tenant. This value controls the attachment requirement for authenticators during the re-authentication workflow registration ceremony. Authenticators that do not meet the requirement are not considered during passkey registration. The possible values are:
++
+ * `Any` - any authenticator attachment is allowed
+ * `Platform only` - only authenticators integrated with the client device are allowed
+ * `Cross-platform only` - only authenticators that are usable across multiple client devices are allowed
++
+The recommended value for the re-authentication workflow is `Platform only` to ensure the user has access to that authenticator when logging from the device in the future.
++
+:enterprise_feature: WebAuthn cross-platform authenticators
+include::docs/v1/tech/shared/_enterprise-edition-blurb-api.adoc[]
+
+[field]#User verification# [optional]#Optional#::
+The user verification requirement for the re-authentication workflow on this tenant. This value controls whether user verification is required for registration and authentication ceremonies during the re-authentication workflow. Authenticators that do not meet the requirement are not considered during passkey registration or authentication. The possible values are:
++
+ * `Required` - user verification is required to complete the WebAuthn ceremony
+ * `Preferred` - the Relying Party prefers user verification is provided but will not fail the WebAuthn ceremony without it
+ * `Discouraged` - the Relying Party does not want user verification for the WebAuthn ceremony
++
+Because the re-authentication workflow is used to authenticate a user, it is _highly_ recommended to set this value to `Required`.
 
 ==== Webhooks
 image::core-concepts/tenant-configuration-webhooks-settings.png[Tenant Configuration - Webhooks,width=1200,role=shadowed]
