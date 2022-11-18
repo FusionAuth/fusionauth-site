@@ -9,3 +9,88 @@ include::docs/v1/tech/shared/_advanced-edition-blurb.adoc[]
 
 == Overview
 
+WebAuthn provides the ability for users to authenticate in their browser using the same method they use to unlock their device, like a biometric scan or PIN. WebAuthn has some big security benefits over the traditional username and password. Read on to learn how to configure WebAuthn in your FusionAuth instance.
+
+* <<What is WebAuthn>>
+* <<Configuring WebAuthn>>
+** <<Tenant Configuration>>
+*** <<Relying party Id>>
+*** <<Bootstrap settings>>
+*** <<Re-authentication settings>>
+** <<Application Configuration>>
+
+== What is WebAuthn
+
+WebAuthn is a W3C https://www.w3.org/TR/webauthn-2/[specification] that defines an API to create and use public-key credentials in web applications. Check out FusionAuth's link:/blog/2022/09/13/what-is-webauthn-why-do-you-care[WebAuthn blog post] for more information on the basics of WebAuthn and its security benefits.
+
+== Configuring WebAuthn
+
+You can enable WebAuthn in your FusionAuth instance with a few configuration changes. This section explains these configuration options and provides detail to help you choose the best options for your instance.
+
+=== Tenant Configuration
+The bulk of WebAuthn configuration happens at the tenant level, including Relying Party settings and authenticator attachment and user verification requirements for WebAuthn workflows. Use the WebAuthn tab on the add/edit tenant page to configure these options.
+
+image::core-concepts/tenant-configuration-webauthn-general.png[Tenant Configuration - WebAuthn,width=1200, role=top-cropped,bottom-cropped]
+
+The settings in this first section are applied to all applications in the tenant.
+
+[.api]
+[field]#Enabled#::
+This toggle must be enabled to use WebAuthn on this tenant.
+
+[field]#Relying party Id#::
+The Relying Party Id controls the scope of WebAuthn passkeys (i.e. which sites a WebAuthn passkey can be used to authenticate). More on this link:#relying-party-id[below].
+
+[field]#Relying party name#::
+The Relying Party name is a human-readable name that may be displayed by the browser or operating system during a WebAuthn ceremony. The value should be something that your users will recognize such as the name of your company or service. If the field is left blank, FusionAuth will default the value to [field]#Issuer# from the General tab during WebAuthn ceremonies.
+
+[field]#Debug enabled#::
+Enable this toggle to create event logs with detailed information on WebAuthn failures. This can be useful for troubleshooting WebAuthn integration issues.
+
+==== Relying party Id
+The Relying Party Id controls which sites a given passkey can be used on. A passkey can only be used with the same Relying Party Id it was registered with, and there are some constraints on which values are valid for this field based on the browser's URL during the WebAuthn ceremony. Leaving this field blank, which causes the WebAuthn client API to use the browser request origin's effective domain, should work for most use cases, but overriding the value can provide additional flexibility. Next, we'll cover the constraints imposed on this value by the browser and then how and why you may want to override the value.
+
+===== Constraints
+
+As part of its security requirements, the WebAuthn specification requires that the Relying Party Id for a given ceremony is either:
++
+ * The browser request origin's https://html.spec.whatwg.org/multipage/browsers.html#concept-origin-effective-domain[effective domain]
+ * A https://html.spec.whatwg.org/multipage/browsers.html#is-a-registrable-domain-suffix-of-or-is-equal-to[registrable domain suffix] of the browser request origin's effective domain
++
+It's easier to explain with an example. If your login page is at `https://auth.example.com/oauth2/authorize`, then the effective domain is `auth.example.com`. The following are valid Relying Party Ids:
++
+ * `auth.example.com` - matches the effective domain
+ * `example.com` - a registrable suffix of the effective domain
++
+But the following values are _not_ valid:
++
+ * `m.auth.example.com` - a subdomain of the effective domain
+ * `com` - this is a suffix of the effective domain but not registrable
++
+Remember, these constraints are based on the domain the user sees in the browser's address bar during a WebAuthn ceremony, _not_ the domain of your or FusionAuth's APIs.
+
+===== Override
+
+Continuing with the example from the previous section, let's say your login page is at `auth.example.com`. If [field]#Relying party Id# is left blank, the WebAuthn client API will default to using `auth.example.com`, the browser request origin's effective domain, to scope passkeys. This means that passkeys will be registered with a Relying Party Id of `auth.example.com`, and those passkeys can only be used when the Relying Party Id is `auth.example.com` during the authentication ceremony.
+
+The primary use case for overriding the Relying Party Id is to allow users access to their passkeys across multiple subdomains. Let's expand this scenario and assume you've got login pages on a few domains:
++
+ * `auth.example.com` - the login domain for desktop/laptop users
+ * `m.auth.example.com` - the login domain for mobile browser users
+ * `login.example.com` - a legacy domain that is still in use for some portion of users
++
+If you leave the [field]#Relying party Id# blank, passkeys will be scoped to these exact domains. This means that a user who registers a passkey on their MacBook at `auth.example.com`, which is then synced to their other Apple devices via iCloud, would not be able to use that same passkey on their iPhone at `m.auth.example.com`. It also means that a user who registers a passkey on the legacy `login.example.com` would not be able to use that passkey on `auth.example.com` once they have been migrated to the new login domain.
+
+There are a couple of options to override the Relying Party Id to improve the flexibility and usefulness of WebAuthn. Here are the override options available assuming all three login domains use the same FusionAuth instance and keeping in mind the constraints from the previous section:
++
+ * `auth.example.com` - this value would allow users to share the same passkey between `auth.example.com` and `m.auth.example.com`, but it would prevent users from registering or using passkeys on the `login.example.com` legacy domain
+ * `example.com` - this value functions the same as using `auth.example.com` with the added benefit that users would be allowed to register and use passkeys on `login.example.com` _and_ continue using those same passkeys once they are migrated to the new `auth.example.com` domain
+
+==== Bootstrap settings
+
+
+==== Re-authentication settings
+
+
+
+=== Application Configuration
