@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: JWT Authentication Tokens Explained
-description: Technical authentication article explains JSON Web Tokens (JWT) and how they are constructed.
+title: Components of JWT Authentication Tokens Explained
+description: Technical authentication article explains JSON Web Tokens (JWT) and their component parts. 
 author: Dan Moore
 image: advice/anatomy-jwt/expert-advice-anatomy-of-a-jwt.png
 category: Tokens
@@ -11,7 +11,7 @@ dateModified: 2022-02-24
 
 # **JWT Authentication Tokens Explained**
 
-A JSON Web Token, or JWT, is an authentication token typically used with standard authentication protocols such as Oauth2. This article explains the parts of a JWT token, and helps explain how the JWT works. 
+A JSON Web Token, or JWT, is an authentication token typically used with standard authentication protocols such as Oauth2. This article explains the component parts of a JWT token, and helps explain how the JWT works. 
 
 Here’s a JSON Web Token, used for JWT Authentication, freshly minted. Newlines have been added for clarity, but they are typically not present.
 
