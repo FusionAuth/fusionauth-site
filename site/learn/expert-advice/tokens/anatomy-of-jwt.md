@@ -9,7 +9,10 @@ date: 2022-02-24
 dateModified: 2022-02-24
 ---
 
-Here's a JSON Web Token, freshly minted. Newlines have been added for clarity, but they are typically not present.
+# **JWT Authentication Tokens Explained**
+
+Here’s a JSON Web Token, used for JWT Authentication, freshly minted. Newlines have been added for clarity, but they are typically not present.
+
 
 ```
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9.eyJhdWQiO
@@ -22,13 +25,13 @@ lLCJhcHBsaWNhdGlvbklkIjoiODVhMDM4NjctZGNjZi00ODgyLWFkZGUtMWE3OWFlZWM1M
 GRmIiwicm9sZXMiOlsiY2VvIl19.dee-Ke6RzR0G9avaLNRZf1GUCDfe8Zbk9L2c7yaqKME
 ```
 
-This may look like a lot of gibberish, but as you learn more about JWTs, it begins to make more sense.
+This may look like a lot of gibberish, but as you learn more about JWT tokens and authentication, it begins to make more sense.
 
-There are a few types of JWTs, but I'll focus on signed JWTs as they are the most common. A signed JWT may also be called a JWS. It has three parts, separated by periods.
+There are a few types of JWTs, but I’ll focus on signed JWT tokens as they are the most common. A signed JWT token may also be called a JWS. It has three parts, separated by periods.
 
-There's a header, which in the case of the JWT above, starts with `eyJhbGc`. Then there is a body or payload, which above starts with `eyJhdWQ`. Finally, there is a signature, which starts with `dee-K` in the example JWT.
+There’s a header, which in the case of the JWT token above, starts with `eyJhbGc`. Then there is a body or payload, which above starts with `eyJhdWQ`. Finally, there is a signature, which starts with `dee-K` in the example JWT.
 
-Let's break this example JWT apart and dig a bit deeper.
+Let’s break this example JWT authentication token apart and dig a bit deeper.
 
 ## The Header
 
