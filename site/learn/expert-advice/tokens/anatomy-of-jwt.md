@@ -11,6 +11,8 @@ dateModified: 2022-02-24
 
 # **JWT Authentication Tokens Explained**
 
+A JSON Web Token, or JWT, is an authentication token typically used with standard authentication protocols such as Oauth2. This article explains the parts of a JWT token, and helps explain how the JWT works. 
+
 Here’s a JSON Web Token, used for JWT Authentication, freshly minted. Newlines have been added for clarity, but they are typically not present.
 
 
@@ -27,15 +29,15 @@ GRmIiwicm9sZXMiOlsiY2VvIl19.dee-Ke6RzR0G9avaLNRZf1GUCDfe8Zbk9L2c7yaqKME
 
 This may look like a lot of gibberish, but as you learn more about JWT tokens and authentication, it begins to make more sense.
 
-There are a few types of JWTs, but I’ll focus on signed JWT tokens as they are the most common. A signed JWT token may also be called a JWS. It has three parts, separated by periods.
+There are a few types of JSON Web Tokens, but I’ll focus on signed JWTs as they are the most common. A signed JWT token may also be called a JWS. It has three parts, separated by periods.
 
 There’s a header, which in the case of the JWT token above, starts with `eyJhbGc`. Then there is a body or payload, which above starts with `eyJhdWQ`. Finally, there is a signature, which starts with `dee-K` in the example JWT.
 
-Let’s break this example JWT authentication token apart and dig a bit deeper.
+How does a JWT work? Let’s break this example JWT authentication token apart and dig a bit deeper.
 
-## The JWT Authentication Token Header
+## The JWT Authentication Token Header Explained
 
-`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9` is the header of the JWT. The header contains metadata about a JWT token, including the key identifier, what algorithm was used to sign in and other information.
+`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9` is the header of the JWT. The authorization header contains metadata about a JWT token, including the key identifier, what algorithm was used to sign in and other information.
 
 If you run the above header through a base64 decoder:
 
@@ -77,7 +79,7 @@ The `kid` value indicates what key was used to sign the JWT. For a symmetric key
 
 Typically, you'll offload most of the processing of header values to a library. There are plenty of good open source JWT processing libraries. You should understand the values, but probably won't have to implement the actual processing.
 
-## The Body
+## The JWT Token Body
 
 The payload, or body, is where things get interesting. This section contains the data that this JWT authentication token was created to transport. If the JWT, for instance, represents a user authorized to access certain data or functionality, the payload contains user data such as roles or other authorization info.
 
@@ -233,4 +235,4 @@ Be mindful of additional time taken to transport longer JWT; this can be tested 
 
 ## Conclusion
 
-Signed JWT authentication tokens have a header, body, and signature. Each plays a vital role in ensuring that JWTs can be used to safely store and transmit critical information, whether about identities or not. Understanding all three of these components are critical to the correct use of JWTs as well.
+Signed JWT authentication tokens have a header, body, and signature. Each plays a vital auth role in ensuring that JWTs can be used to safely store and transmit critical information, whether about identities or not. Understanding all three of these components are critical to the correct use of JWT authentication tokens as well.
