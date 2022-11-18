@@ -1,7 +1,7 @@
 ---
 layout: advice
 title: Anatomy of a JWT
-description: Learn more about what goes into a JSON Web Token and how they are constructed. 
+description: Technical authentication article explains JSON Web Tokens (JWT) and how they are constructed.
 author: Dan Moore
 image: advice/anatomy-jwt/expert-advice-anatomy-of-a-jwt.png
 category: Tokens
