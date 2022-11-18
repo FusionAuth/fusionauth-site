@@ -53,20 +53,20 @@ The Relying Party Id controls which sites a given passkey can be used on. A pass
 ===== Constraints
 
 As part of its security requirements, the WebAuthn specification requires that the Relying Party Id for a given ceremony is either:
-+
+
  * The browser request origin's https://html.spec.whatwg.org/multipage/browsers.html#concept-origin-effective-domain[effective domain]
  * A https://html.spec.whatwg.org/multipage/browsers.html#is-a-registrable-domain-suffix-of-or-is-equal-to[registrable domain suffix] of the browser request origin's effective domain
-+
+
 It's easier to explain with an example. If your login page is at `https://auth.example.com/oauth2/authorize`, then the effective domain is `auth.example.com`. The following are valid Relying Party Ids:
-+
+
  * `auth.example.com` - matches the effective domain
  * `example.com` - a registrable suffix of the effective domain
-+
+
 But the following values are _not_ valid:
-+
+
  * `m.auth.example.com` - a subdomain of the effective domain
  * `com` - this is a suffix of the effective domain but not registrable
-+
+
 Remember, these constraints are based on the domain the user sees in the browser's address bar during a WebAuthn ceremony, _not_ the domain of your or FusionAuth's APIs.
 
 ===== Override
@@ -74,20 +74,51 @@ Remember, these constraints are based on the domain the user sees in the browser
 Continuing with the example from the previous section, let's say your login page is at `auth.example.com`. If [field]#Relying party Id# is left blank, the WebAuthn client API will default to using `auth.example.com`, the browser request origin's effective domain, to scope passkeys. This means that passkeys will be registered with a Relying Party Id of `auth.example.com`, and those passkeys can only be used when the Relying Party Id is `auth.example.com` during the authentication ceremony.
 
 The primary use case for overriding the Relying Party Id is to allow users access to their passkeys across multiple subdomains. Let's expand this scenario and assume you've got login pages on a few domains:
-+
+
  * `auth.example.com` - the login domain for desktop/laptop users
  * `m.auth.example.com` - the login domain for mobile browser users
  * `login.example.com` - a legacy domain that is still in use for some portion of users
-+
+
 If you leave the [field]#Relying party Id# blank, passkeys will be scoped to these exact domains. This means that a user who registers a passkey on their MacBook at `auth.example.com`, which is then synced to their other Apple devices via iCloud, would not be able to use that same passkey on their iPhone at `m.auth.example.com`. It also means that a user who registers a passkey on the legacy `login.example.com` would not be able to use that passkey on `auth.example.com` once they have been migrated to the new login domain.
 
 There are a couple of options to override the Relying Party Id to improve the flexibility and usefulness of WebAuthn. Here are the override options available assuming all three login domains use the same FusionAuth instance and keeping in mind the constraints from the previous section:
-+
+
  * `auth.example.com` - this value would allow users to share the same passkey between `auth.example.com` and `m.auth.example.com`, but it would prevent users from registering or using passkeys on the `login.example.com` legacy domain
  * `example.com` - this value functions the same as using `auth.example.com` with the added benefit that users would be allowed to register and use passkeys on `login.example.com` _and_ continue using those same passkeys once they are migrated to the new `auth.example.com` domain
 
 ==== Bootstrap settings
 
+image::core-concepts/tenant-configuration-webauthn-bootstrap-settings.png[Tenant Configuration - WebAuthn Bootstrap settings,width=1200, role=top-cropped,bottom-cropped]
+
+The bootstrap workflow can be used to authenticate using WebAuthn from a new device. It can also be used for repeated logins from the same device, but the user must choose the option rather than being prompted like the re-authentication workflow. The options in the Bootstrap settings section control the availability of the workflow and its requirements for authenticator attachment and user verification.
+
+[.api]
+[field]#Enabled#::
+Enabling this toggle will enable the bootstrap workflow for applications belonging to this tenant. The availability of the bootstrap workflow can be overridden at the application level using the link:#bootstrap-settings-2[Application Bootstrap settings].
+
+[field]#Authenticator attachment#::
+This setting controls which authenticator attachments are allowed for registration ceremonies when using the bootstrap workflow. See the section link:#authenticator-attachment[below] for recommendations on configuring this option for the bootstrap workflow.
+
+[field]#User verification#::
+This setting controls whether user verification is required for registration and bootstrap ceremonies when using the bootstrap workflow. See the section link:#user-verification[below] for recommendations on configuring this option for the bootstrap workflow.
+
+===== Authenticator attachment
+
+There are two link:https://www.w3.org/TR/webauthn-2/#authenticator-attachment-modality[authenticator attachment modalities] in WebAuthn.
+
+ * `platform` - the authenticator is integrated with the client device
+ * `cross-platform` - the authenticator is removable from the client device and can be used with other client devices
+
+Because the bootstrap workflow can be used to login from a new device using WebAuthn, it is recommended to use the `cross-platform` attachment by selecting the "Cross-platform only" option if available.
+
+:advanced_feature: WebAuthn cross-platform authenticators
+include::docs/v1/tech/shared/_advanced-edition-blurb-api.adoc[]
+
+:advanced_feature!:
+
+===== User verification
+
+It is _highly_ recommended to require user verification for the bootstrap workflow as it can be used to authenticate a user.
 
 ==== Re-authentication settings
 
