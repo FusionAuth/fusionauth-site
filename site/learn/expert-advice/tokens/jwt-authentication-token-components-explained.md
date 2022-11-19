@@ -9,7 +9,6 @@ date: 2022-02-24
 dateModified: 2022-02-24
 ---
 
-# **JWT Authentication Tokens Explained**
 
 A JSON Web Token, or JWT, is an authentication token typically used with standard authentication protocols such as Oauth2. This article explains the component parts of a JWT token, and helps explain how the JWT works. 
 
