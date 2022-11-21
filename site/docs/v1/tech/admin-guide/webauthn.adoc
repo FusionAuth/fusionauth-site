@@ -11,23 +11,34 @@ include::docs/v1/tech/shared/_advanced-edition-blurb.adoc[]
 
 WebAuthn provides the ability for users to authenticate in their browser using the same method they use to unlock their device, like a biometric scan or PIN. WebAuthn has some big security benefits over the traditional username and password. Read on to learn how to configure WebAuthn in your FusionAuth instance.
 
+[NOTE.note]
+====
+What about passkeys?
+
+"Passkey" is the user-friendly term for WebAuthn credentials. Use this guide to configure FusionAuth's WebAuthn systems to allow your users to log in with passkeys.
+====
+
 * <<What is WebAuthn>>
-* <<Configuring WebAuthn>>
-** <<Tenant Configuration>>
-*** <<Relying party Id>>
-*** <<Workflow settings>>
-** <<Application Configuration>>
+* <<Tenant Configuration>>
+** <<Relying party Id>>
+** <<Workflow settings>>
+* <<Application Configuration>>
 
 == What is WebAuthn
 
 WebAuthn is a W3C https://www.w3.org/TR/webauthn-2/[specification] that defines an API to create and use public-key credentials in web applications. Check out FusionAuth's link:/blog/2022/09/13/what-is-webauthn-why-do-you-care[WebAuthn blog post] for more information on the basics of WebAuthn and its security benefits.
 
-== Configuring WebAuthn
+You can enable WebAuthn in your FusionAuth instance with a few configuration changes. This guide explains these configuration options and provides detail to help you choose the best options for your instance.
 
-You can enable WebAuthn in your FusionAuth instance with a few configuration changes. This section explains these configuration options and provides detail to help you choose the best options for your instance.
+:advanced_feature: WebAuthn
+include::docs/v1/tech/shared/_advanced-edition-blurb-api.adoc[]
 
-=== Tenant Configuration
-The bulk of WebAuthn configuration happens at the tenant level, including Relying Party settings and authenticator attachment and user verification requirements for WebAuthn workflows. Use the WebAuthn tab on the add/edit tenant page to configure these options.
+:advanced_feature!:
+
+See the link:/docs/v1/tech/admin-guide/licensing[Licensing] guide for information about activating a license for your FusionAuth instance.
+
+== Tenant Configuration
+The bulk of WebAuthn configuration happens at the tenant level, including Relying Party settings, authenticator attachment, and user verification requirements. Use the WebAuthn tab on the add/edit tenant page to configure these options.
 
 image::core-concepts/tenant-configuration-webauthn-general.png[Tenant Configuration - WebAuthn,width=1200, role=top-cropped,bottom-cropped]
 
@@ -41,15 +52,17 @@ This toggle must be enabled to use WebAuthn on this tenant.
 The Relying Party Id controls the scope of WebAuthn passkeys (i.e. which sites a WebAuthn passkey can be used to authenticate). More on this link:#relying-party-id[below].
 
 [field]#Relying party name#::
-The Relying Party name is a human-readable name that may be displayed by the browser or operating system during a WebAuthn ceremony. The value should be something that your users will recognize such as the name of your company or service. If the field is left blank, FusionAuth will default the value to [field]#Issuer# from the General tab during WebAuthn ceremonies.
+The Relying Party name is a human-readable name that may be displayed by the browser or operating system during a WebAuthn ceremony. The value should be something that your users will recognize such as the name of your company or service. If the field is left blank, FusionAuth will default the value to [field]#Issuer# from the [breadcrumb]#General# tab during WebAuthn ceremonies.
 
 [field]#Debug enabled#::
 Enable this toggle to create event logs with detailed information on WebAuthn failures. This can be useful for troubleshooting WebAuthn integration issues.
 
-==== Relying party Id
-The Relying Party Id controls which sites a given passkey can be used on. A passkey can only be used with the same Relying Party Id it was registered with, and there are some constraints on which values are valid for this field based on the browser's URL during the WebAuthn ceremony. Leaving this field blank, which causes the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API] to use the browser request origin's effective domain, should work for most use cases, but overriding the value can provide additional flexibility. Next, we'll cover the constraints imposed on this value by the browser and then how and why you may want to override the value.
+=== Relying Party Id
+The Relying Party Id controls which sites a given passkey can be used on. A passkey can only be used with the same Relying Party Id it was registered with. There are constraints on valid values based on the website where the WebAuthn ceremonies are performed. Leaving this field blank, which causes the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API] to use the browser request origin's effective domain, should work for most use cases, but overriding the value can provide additional flexibility.
 
-===== Constraints
+Next, we'll cover the constraints imposed on this value by the browser and then how and why you may want to override the value.
+
+==== Constraints
 
 As part of its security requirements, the WebAuthn specification requires that the Relying Party Id for a given ceremony is either:
 
@@ -66,9 +79,9 @@ But the following values are _not_ valid:
  * `m.auth.example.com` - a subdomain of the effective domain
  * `com` - this is a suffix of the effective domain but not registrable
 
-Remember, these constraints are based on the domain the user sees in the browser's address bar during a WebAuthn ceremony, _not_ the domain of your or FusionAuth's APIs.
+Remember, if you are using a proxy or other means to serve up authentication pages for multiple domains, the domain the user sees in the browser is what matters, not the true hostname of the server.
 
-===== Override
+==== Override
 
 Continuing with the example from the previous section, let's say your login page is at `auth.example.com`. If [field]#Relying party Id# is left blank, the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API] will default to using `auth.example.com`, the browser request origin's effective domain, to scope passkeys. This means that passkeys will be registered with a Relying Party Id of `auth.example.com`, and those passkeys can only be used when the Relying Party Id is `auth.example.com` during the authentication ceremony.
 
@@ -85,7 +98,7 @@ There are a couple of options to override the Relying Party Id to improve the fl
  * `auth.example.com` - this value would allow users to share the same passkey between `auth.example.com` and `m.auth.example.com`, but it would prevent users from registering or using passkeys on the `login.example.com` legacy domain
  * `example.com` - this value functions the same as using `auth.example.com` with the added benefit that users would be allowed to register and use passkeys on `login.example.com` _and_ continue using those same passkeys once they are migrated to the new `auth.example.com` domain
 
-==== Workflow settings
+=== Workflow settings
 
 image::core-concepts/tenant-configuration-webauthn-workflow.png[Tenant Configuration - WebAuthn workflow settings,width=1200, role=top-cropped,bottom-cropped]
 
@@ -93,7 +106,7 @@ Each WebAuthn workflow has the same set of configuration options.
 
 [.api]
 [field]#Enabled#::
-Enabling this toggle will enable the associated workflow for applications belonging to this tenant. The availability of a workflow can be overridden at the application level using the link:#application-configuration[Application Configuration].
+Enabling this toggle will enable the associated workflow for all applications belonging to this tenant. The availability of a workflow can be overridden at the application level using the link:#application-configuration[Application Configuration].
 
 [field]#Authenticator attachment#::
 This setting controls which authenticator attachments are allowed for registration ceremonies when using the associated workflow. See the section link:#authenticator-attachment[below] for recommendations on configuring this option.
@@ -101,7 +114,7 @@ This setting controls which authenticator attachments are allowed for registrati
 [field]#User verification#::
 This setting controls whether user verification is required for registration and authentication ceremonies when using the associated workflow. See the section link:#user-verification[below] for recommendations on configuring this option.
 
-===== Authenticator attachment
+==== Authenticator attachment
 
 There are two link:https://www.w3.org/TR/webauthn-2/#authenticator-attachment-modality[authenticator attachment modalities] in WebAuthn.
 
@@ -118,7 +131,7 @@ include::docs/v1/tech/shared/_enterprise-edition-blurb-api.adoc[]
 
 :enterprise_feature!:
 
-===== User verification
+==== User verification
 
 There are three options for the link:https://www.w3.org/TR/webauthn-2/#enum-userVerificationRequirement[user verification requirement] defined by WebAuthn.
 
@@ -128,7 +141,7 @@ There are three options for the link:https://www.w3.org/TR/webauthn-2/#enum-user
 
 The workflow settings allow selecting the preference for user verification. If the workflow allows a user to authenticate, it is _highly_ recommended to require user verification. If user authentication is not required, anyone with access to the authenticator could use it to authenticate as the user that owns the passkey.
 
-=== Application Configuration
+== Application Configuration
 
 The application-level configuration options for WebAuthn serve as a way to override the availability of WebAuthn workflows that are configured at the tenant level.
 
