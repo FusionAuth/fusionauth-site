@@ -21,11 +21,14 @@ The following APIs are provided to manage WebAuthn passkeys.
 * <<Delete a Passkey>>
 * <<Import Passkeys>>
 
-=== WebAuthn Registration Ceremony
+=== WebAuthn Ceremonies
+* <<WebAuthn JavaScript API Binary Format>>
+
+==== WebAuthn Registration Ceremony
 * <<Start a WebAuthn Passkey Registration>>
 * <<Complete a WebAuthn Passkey Registration>>
 
-=== WebAuthn Authentication Ceremony
+==== WebAuthn Authentication Ceremony
 * <<Start a WebAuthn Passkey Assertion or Authentication>>
 * <<Complete a WebAuthn Passkey Authentication>>
 * <<Complete a WebAuthn Passkey Assertion>>
@@ -145,6 +148,44 @@ include::docs/v1/tech/apis/_import-webauthn-request-body.adoc[]
 Only a status code is available on the Import API, no JSON body will be returned.
 
 include::docs/v1/tech/apis/_standard-post-response-codes.adoc[]
+
+== WebAuthn JavaScript API Binary Format
+The WebAuthn JavaScript API `navigator.credentials.create()` and `navigator.credentials.get()` expect to receive fields containing binary data on the `options` object as ``ArrayBuffer``s and will return binary fields as ``ArrayBuffer``s. In order to prevent encoding issues on the FusionAuth API, these fields are passed over the network as base64url-encoded strings.
+
+Select fields on the `options` JSON object that is passed to the WebAuthn JavaScript API must be converted from base64url-encoded strings to ``ArrayBuffer``s after receiving `options` from the FusionAuth API. Likewise, certain fields on WebAuthn JavaScript API responses must be converted from ``ArrayBuffer``s to base64url-encoded strings before calling FusionAuth's APIs to complete the ceremony.
+
+=== Converting base64url-encoded String to `ArrayBuffer`
+Converting a based64url-encoded strings to ``ArrayBuffer``s is required before the `options` JSON object from <<Start a WebAuthn Passkey Registration>> or <<Start a WebAuthn Passkey Assertion or Authentication>> responses are passed to the WebAuthn JavaScript API. The FusionAuth hosted pages will perform this conversion as necessary. If you need to perform this conversion yourself, you can use the following JavaScript function.
+
+[source,javascript]
+.Function to convert a base64url-encoded string to an `ArrayBuffer`
+----
+function base64URLToBuffer(base64URL) {
+    const base64 = base64URL.replace(/-/g, '+').replace(/_/g, '/');
+    const padLen = (4 - (base64.length % 4)) % 4;
+    return Uint8Array.from(atob(base64.padEnd(base64.length + padLen, '=')), c => c.charCodeAt(0));
+}
+----
+
+Fields that require this conversion are documented in the <<Start a WebAuthn Passkey Registration>> and <<Start a WebAuthn Passkey Assertion or Authentication>> response sections.
+
+=== Converting `ArrayBuffer` to base64url-encoded String
+Converting ``ArrayBuffer``s to base64url-encoded strings is required before the responses from the WebAuthn JavaScript APIs are sent to FusionAuth's <<Complete a WebAuthn Passkey Registration>>, <<Complete a WebAuthn Passkey Authentication>>, or <<Complete a WebAuthn Passkey Assertion>> APIs. The FusionAuth hosted pages will perform this conversion as necessary. If you need to perform this conversion yourself, you can use the following JavaScript function.
+
+[source,javascript]
+.Function to convert an `ArrayBuffer` to a base64url-encoded string
+----
+function bufferToBase64URL(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let string = '';
+    bytes.forEach(b => string += String.fromCharCode(b));
+
+    const base64 = btoa(string);
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+----
+
+Fields that require this conversion are documented in the <<Complete a WebAuthn Passkey Registration>>, <<Complete a WebAuthn Passkey Authentication>>, and <<Complete a WebAuthn Passkey Assertion>> request sections.
 
 == Start a WebAuthn Passkey Registration
 
