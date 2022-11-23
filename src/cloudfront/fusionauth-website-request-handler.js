@@ -21,6 +21,7 @@ var indexPages = {
   '/docs/v1/tech/events-webhooks/': true,
   '/docs/v1/tech/events-webhooks/events/': true,
   '/docs/v1/tech/example-apps/': true,
+  '/docs/v1/tech/getting-started/': true,
   '/docs/v1/tech/guides/': true,
   '/docs/v1/tech/identity-providers/': true,
   '/docs/v1/tech/identity-providers/external-jwt/': true,
