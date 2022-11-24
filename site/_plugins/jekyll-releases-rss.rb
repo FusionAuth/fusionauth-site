@@ -50,6 +50,13 @@ module Jekyll
             unless (date && date.length > 2)
               next
             end
+
+            begin 
+              DateTime.parse(date)
+            rescue
+              puts "skipping date: "+date
+              next
+            end
   
             maker.items.new_item do |item|
               item.link = "https://fusionauth.io/docs/v1/tech/release-notes#version-"+anchor_text
