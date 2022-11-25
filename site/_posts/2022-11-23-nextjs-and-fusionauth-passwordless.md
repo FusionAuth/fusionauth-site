@@ -1,0 +1,392 @@
+---
+layout: blog-post
+title: Adding magic links to your Next.js application using FusionAuth
+description: In this guide, we’ll build a simple web application using Next.js that allows a user to sign up, and then log in using a magic link sent to their email address.
+author: Shivan Moodley
+category: blog
+tags: tutorial tutorial-nextjs tutorial-typescript
+excerpt_separator: "<!--more-->"
+---
+
+In this guide, we’ll build a simple web application using Next.js that allows a user to sign up, and then log in using a magic link sent to their email address.
+
+<!-- more-->
+
+The completed application will include a public page which allows users to either sign up or log-in via FusionAuth, as well as a private page where they will be able to view their profile information once they’ve logged in, using OpenID Connect. Additionally, users will be able to log out and go back to the public page.
+
+If you’d prefer to skip ahead and take a look at the code, you can view it [here](https://github.com/cishiv/nextjs-fusionauth-passwordless).
+
+## Prerequisites
+
+This tutorial will include all the necessary information for you to understand magic links, but it would be beneficial if you had:
+
+- Basic Typescript knowledge (or JavaScript ES6)
+- An understanding of [Next.js](https://nextjs.org/) (or some knowledge of a similar full-stack web framework)
+- Experience running applications using Docker and Docker Compose
+
+## What is a “magic link”?
+
+In general, magic links refer to a type of passwordless authentication in which FusionAuth sends a secure, one-time, time-bound encoded code to a user. This code is usually delivered via email, but it can also be sent through any other transport mechanism.
+
+Using magic links can ease a user’s sign-in experience, because the ownership and access to the code is considered proof of who they are. No other information is needed, and the user is able to click the link and be logged in, as if by magic.
+
+An additional security benefit to passwordless log in is that users are unable to use the same password across different websites or applications - implicitly protecting them, and you, against illicit access to your system in the case of data breaches.
+
+## Installing and configuring FusionAuth using Docker Compose
+
+There are a [number of ways](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) you can get up and running with FusionAuth on your system. If you have Docker installed on your system, the best choice is to use Docker and Docker Compose This method has an added benefit if you plan to use FusionAuth in a Docker compatible environment. 
+
+You can follow the guide [here](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker) to get started.
+
+If you already have Docker installed on your system, you can run the following command to install and run FusionAuth.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml > docker-compose.yml && \
+curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env > .env && \
+docker-compose up
+```
+
+This configuration uses a publicly available `.env` file to configure FusionAuth, which contains hard-coded database passwords. This is not recommended for production use.
+
+### Configuring FusionAuth
+
+After running the above commands, FusionAuth should be running and accessible on your system via [http://localhost:9011](http://localhost:9011/).
+
+The first time you visit this URL, you will be required to set up an administrator account and password.
+
+Once you’ve set up your admin account, you’ll be presented with three more steps to complete the set-up of FusionAuth, shown by the image below.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/initial-configuration.png" alt="FusionAuth prompts us with the setup steps that we need to complete" class="img-fluid" figure=false %}
+
+For this tutorial, setting up an application, as well as setting up an SMTP server are important. We'll walk through how to get them done.
+
+### Creating an application
+
+The first thing you’ll need to do is setup an application. Click “Setup” under “Missing Application”.
+
+This will take you to the “Add Application” page, where you can create your application. Call the application “Next.js Example” or pick another name that you would like to use.
+
+Take note of the Client Id and Client Secret that FusionAuth provides you with for this application, they will be used later in the code.
+
+Once you’re done, click the save icon and your application will be added.
+
+You will also need to configure OAuth for your newly created application. The fields you will need to configure are:
+
+- Authorized redirect URLs, set to `http://localhost:3000/api/auth/callback/fusionauth`
+- Authorized request origin URL, set to `http://localhost:3000`
+- Logout URL, set to `http://localhost:3000/api/auth/logout`
+
+These URLs correspond to the hostname and paths we will use for our Next.js application a bit later on in this tutorial.
+
+Additionally, make sure that you change PKCE ([Proof Key for Code Exchange](https://oauth.net/2/pkce/)) to “Required”. For public clients, PKCE is enabled by default, but for confidential clients, you will need to explicitly enable it.
+
+Lastly, before hitting “Save” on this page, you should ensure that “Authorization Code” is checked under “Enabled grants”. After you’ve completed the above steps, your application configuration should look similar to the below image.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/application-configuration-1.png" alt="Completed configuration for application URLs in FusionAuth" class="img-fluid" figure=false %}
+
+### Enabling self-service registrations
+
+You will want to enable your users to register for accounts using the FusionAuth login page. This will let enable FusionAuth to create and register users in one step.
+
+To enable self-service registrations, select the “Registration” tab from the “Edit Application” page. Scroll down to “Self-service registration” and set the toggle to “Enabled”. Choose “Basic” as the registration type, and set the login type to “Email”. You can also select “Username”, which will allow users to log in using their usernames, but for the purposes of this tutorial, we will use email.
+
+You can also optionally select any fields that you would like to capture during registration. For this tutorial we do not require any other registration fields.
+
+Once you’re done the above, your setup should look similar to this:
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/registration-configuration-1.png" alt="Completed configuration for registration options in FusionAuth" class="img-fluid" figure=false %}
+
+Click the save icon in the top right for your changes to be applied to your application.
+
+## Setting up OpenID Connect (OIDC)
+
+Once a user has logged in to our application using FusionAuth, we want to be able to retrieve details about their profile. We can achieve this using [OIDC](https://fusionauth.io/docs/v1/tech/oauth/), provided by FusionAuth.
+
+To configure OIDC to work correct, we need to set up a few JWT parameters in FusionAuth.
+
+Firstly, head to your tenant configuration via the FusionAuth sidebar, and edit the default tenant. Set the “issuer” field to your fully qualified URL (including the protocol). The issuer is used to sign tokens when users log in.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/oidc-configuration-1.png" alt="Completed configuration for an issuer URL for a tenant in FusionAuth" class="img-fluid" figure=false %}
+
+Once you’ve done that, hit save and navigate to the application configuration for our application and edit it. On the edit page, select the “JWT” tab, and enable JWT by setting the toggle to “Enabled”.
+
+Then, change the configuration under “JSON Web Token settings” to have the following values:
+
+- “JWT duration”: 3600
+- “Access Token signing key”: Select “Auto generate a new key on save”
+- “Id Token signing key”: Select “Auto generate a new key on save”
+
+Click the save icon in the top right to save your changes. Your resulting application configuration should be similar to the following:
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/oidc-configuration-2.png" alt="Completed JWT configuration for an application in FusionAuth" class="img-fluid" figure=false %}
+
+### Setting up an SMTP server for email
+
+For this tutorial, we’re going to use SendGrid as an SMTP provider. This will allow FusionAuth to send emails to your users as needed via SendGrid. 
+
+To get started with SendGrid and SMTP, follow their guide [here](https://docs.sendgrid.com/for-developers/sending-email/integrating-with-the-smtp-api). After you’ve set up an API key, be sure to set up a [Sender Identity](https://docs.sendgrid.com/for-developers/sending-email/sender-identity) for the email address you want to send emails from.
+
+Take special note of the API key that SendGrid provides you with, as that can only be accessed once and will be used in our configuration.
+
+To enable your FusionAuth instance to use SMTP, you need to make a few changes to your tenant configuration. A full walkthrough of this can be found [here](https://fusionauth.io/docs/v1/tech/email-templates/configure-email).
+
+Change the following fields under the “Email” tab in your tenant configuration:
+
+- Set the “Host” to `smtp.sendgrid.net`
+- Set the “Port” to `587`
+- Set the “Username” to `apikey` (This should be exact string “apikey’, and not your API key)
+- Select the “Change password” toggle, and set the “Password” to your SendGrid API key that you created
+- Change the “Default from address” to match the Sender Identity you configured
+
+Your final configuration should look similar to the following:
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/tenant-smtp-configuration.png" alt="Completed SMTP configuration for a tenant in FusionAuth" class="img-fluid" figure=false %}
+
+Once you’ve saved your configuration, you should be able to successfully send a test email by clicking the “Send test email” button. If you receive an email that looks like the below, you’re all set!
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/successful-test-email.png" alt="A test email that was successfully sent via FusionAuth" class="img-fluid" figure=false %}
+
+Note: If you’re using a free email address (e.g. @gmail.com) - your emails might go to SPAM.
+
+## Setting up Magic Links
+
+Before jumping in to building our web application, we need to make one final configuration change to enable passwordless login using the FusionAuth dashboard.
+
+Navigate to your application configuration, and toggle “Passwordless login” to “enabled” under the “Security” tab.
+
+Once done, your configuration should look similar to the image below:
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/tenant-passwordless-1.png" alt="Configuration for a tenant with passwordless login enabled in FusionAuth" class="img-fluid" figure=false %}
+
+## Building the Next.js application
+
+Now that you’ve set up all the required FusionAuth configuration, it’s time to get started building your application. Firstly, ensure you have the following installed on your system:
+
+- Node.js v18.10.0
+- npm v8.19.2
+
+### Kicking off the project
+
+To create a new Next.js project, you can use the `create-next-app` tool. To do this, run the following command in your terminal:
+
+```bash
+npx create-next-app --typescript
+```
+
+This will take you through a few set up steps, which results in a functional Next.js application.
+
+You should be able to run your application by running the following command in your terminal once in the directory Next.js generated for you:
+
+```bash
+% npm run dev
+
+> dev
+> next dev
+
+ready - started server on 0.0.0.0:3000, url: http://localhost:3000
+event - compiled client and server successfully in 1192 ms (154 modules)
+```
+
+Your application will now be accessible via `localhost:3000` and you should see the below screen if you navigate to `localhost:3000` using your browser.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-1.png" alt="A simple Next.js application displayed in a browser" class="img-fluid" figure=false %}
+
+### Using NextAuth.js
+
+We will be using [NextAuth.js](https://github.com/nextauthjs/next-auth) to interface with FusionAuth from our Next.js application. It is the most popular and widely used authentication solution for Next.js applications.
+
+To add NextAuth.js to your application, run the following command in the root of the project:
+
+```bash
+npm install --save next-auth
+```
+
+Once installed, you can configure a dynamic route handler for NextAuth.js which will contain you FusionAuth configuration.
+
+Create a new directory called `auth` in `pages/api`. Inside the newly created directory, create a new file called `[...nextauth].ts`, containing the following code:
+
+```tsx
+import NextAuth from "next-auth"
+import FusionAuthProvider from "next-auth/providers/fusionauth"
+export const authOptions = {
+  providers: [
+    FusionAuthProvider({
+      id: "fusionauth",
+      name: "FusionAuth",
+      issuer:  process.env.FUSIONAUTH_ISSUER,
+      clientId: process.env.FUSIONAUTH_CLIENT_ID,
+      clientSecret: process.env.FUSIONAUTH_SECRET,
+    }),
+  ],
+}
+export default NextAuth(authOptions)
+```
+
+To provide your Next.js application with the required fields for configuring FusionAuth, you need to create a file called `.env.local` in the root of your project, as follows:
+
+```
+FUSIONAUTH_ISSUER=YOUR_ISSUER_URL
+FUSIONAUTH_CLIENT_ID=YOUR_CLIENT_ID
+FUSIONAUTH_SECRET=YOUR_SECRET
+```
+
+By default, Next.js will load up all environment variables from a `.env.local` file into `process.env`.
+
+If you need to find your client Id and secret, you can do this by navigating to your application in FusionAuth, and looking under the OAuth configuration section.
+
+The final step in setting up NextAuth.js is to use the `SessionProvider` to wrap your application.
+
+Replace the code in `__app.tsx` with the following:
+
+```tsx
+import type { AppProps } from 'next/app'
+import { SessionProvider } from 'next-auth/react';
+
+function MyApp({ Component, pageProps: {
+  session,
+  ...pageProps
+} }: AppProps) {
+  return (
+    <SessionProvider session={session}>
+      <Component {...pageProps} />
+    </SessionProvider>
+  )
+}
+
+export default MyApp
+```
+
+### Creating a basic sign in and sign out flow
+
+Your users are going to need a button that can be clicked to kick off the login flow. To create this button, add a file called `login-btn.tsx` in `pages/components`, containing the following:
+
+```tsx
+import { useSession, signIn, signOut } from "next-auth/react"
+export default function LoginButton() {
+  const { data: session } = useSession();
+
+  if (session && session.user) {
+    return (
+      <>
+        <p>Signed in as {session.user.email}</p> 
+        <br />
+        <button onClick={() => signOut()}>Sign out</button>
+      </>
+    )
+  }
+  return (
+    <>
+      <p>Not signed in</p>
+      <br />
+      <button onClick={() => signIn()}>Sign in</button>
+    </>
+  )
+}
+```
+
+The above component uses the `useSession()` hook provided by NextAuth.js to dynamically render either a “Sign in” or “Sign out” button.
+
+Once you’ve created the `login-btn.tsx` component, you can add it to your `index.tsx` file.
+
+Replace the code in `index.tsx` with the following:
+
+```tsx
+import type { NextPage } from 'next'
+import Head from 'next/head'
+import LoginButton from './components/login-btn'
+
+const Home: NextPage = () => {
+  return (
+    <div>
+      <Head>
+        <title>Welcome to FusionAuth + Next.js</title>
+      </Head>
+      <h1>Welcome to FusionAuth + Next.js</h1>
+      <LoginButton />
+    </div>
+  )
+}
+
+export default Home
+```
+
+Once you’ve done this, your application should have a basic sign in and sign out flow. You can test it by navigating to `[localhost:3000](http://localhost:3000)` and clicking Sign In!
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-2.png" alt="Next.js application with a sign in button" class="img-fluid" figure=false %}
+
+After clicking “Sign in” you should see the following screen:
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-3.png" alt="A button centered in a web browser that reads Sign in with FusionAuth" class="img-fluid" figure=false %}
+
+Clicking “Sign in with FusionAuth” will take you to the FusionAuth sign in form, where you’ll be able to see all the sign in options we have available. Click “Login with a magic link”.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-4.png" alt="The FusionAuth Oauth2 login form including a passwordless log in option" class="img-fluid" figure=false %}
+
+After clicking the button, you should be taken to the “Passwordless login” page, where you can enter your email address to send a magic link to!
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-5.png" alt="The FusionAuth passwordless login form" class="img-fluid" figure=false %}
+
+Once you submit your email address, you will receive an email from FusionAuth containing your magic link, similar to the image below.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/magic-link-email.png" alt="An email from FusionAuth containing a magic link" class="img-fluid" figure=false %}
+
+Clicking the link from the email will log you in, and redirect you back to your application, like below.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-6.png" alt="Next.js application with a sign out button, after a user has signed in" class="img-fluid" figure=false %}
+
+### Adding a protected page
+
+It is a common use-case to want to have pages in an application that are only accessible once a user is signed in. We can do this easily with Next.js and FusionAuth.
+
+Create a file name `protected.tsx` in your `pages/` directory, containing the following code:
+
+```tsx
+import { useSession, getSession } from "next-auth/react"
+import LoginButton from "./components/login-btn"
+
+export default function Protected() {
+  const { data: session, status } = useSession()
+
+  if (status === "loading") {
+    return <p>Loading...</p>
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <>
+      <p>Access Denied</p>
+      <p>Sign in to view this page</p>
+      <hr/>
+      <LoginButton />
+      </>
+    )
+  }
+
+  return (
+    <>
+      <h1>Protected Page</h1>
+      <p>You can view this page because you are signed in.</p>
+      <hr/>
+      <LoginButton />
+    </>
+  )
+}
+```
+
+In a similar way to our login button, this code uses the `useSession` hook to check whether a user is logged in, and dynamically renders content based on that information.
+
+Navigating to `[localhost:3000/protected](http://localhost:3000/protected)` while not logged in, will yield the following.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-7.png" alt="Next.js application displaying a protected page to a user that is not signed in" class="img-fluid" figure=false %}
+
+Once you’ve signed in with FusionAuth, you will be able to see the contents of the page:
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-8.png" alt="Next.js application displaying a protected page to a user that is signed in" class="img-fluid" figure=false %}
+
+## Next Steps
+
+This simple application demonstrates a very small slice of the capabilities that passwordless login offers - but features a fully functional authentication system, without us having to build it ourselves. The complete code for this tutorial is available on GitHub, [here](https://github.com/cishiv/nextjs-fusionauth-passwordless).
+
+ To make this application more useful and production-ready, you could offer multiple channels via which users can receive magic links - this can be done by using the [passwordless API directly](https://fusionauth.io/docs/v1/tech/guides/passwordless#using-the-api-directly).
+
+Additionally, you could customize the look-and-feel of the FusionAuth login form to display the login options you want your users to have, using [themes](https://fusionauth.io/docs/v1/tech/themes/). FusionAuth provides you with a full set of capabilities around authentication to make it safer, and easier.
