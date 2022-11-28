@@ -8,7 +8,7 @@ category: blog
 excerpt_separator: "<!--more-->"
 ---
 
-AWS re:Invent is one of the largest technical conferences in the world. In the cloud space, it is the go-to event. This year there will be tens of thousands of attendees in Las Vegas, Nevada. The [FusionAuth team will be among them](/aws-reinvent22), and we'd love to see you.
+AWS re:Invent is one of the largest technical conferences in the world. In the cloud space, it is the go-to event. This week there will be tens of thousands of attendees in Las Vegas, Nevada. The [FusionAuth team will be among them](/aws-reinvent22), and we'd love to see you.
 
 <!--more-->
 
