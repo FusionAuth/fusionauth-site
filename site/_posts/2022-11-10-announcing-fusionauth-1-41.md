@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.41
-description: This release includes native windows installation, Okta SCIM support for deactivation of users, and a change to how you can install the MySQL driver.
+description: This release includes biometric authentication support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
 author: Dan Moore
 image: blogs/release-1-41/fusionauth-1-41.png
 category: blog
@@ -9,47 +9,45 @@ tags: topic-webauthn
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of FusionAuth version 1.41.0. It shipped on Noveber 10, 2022. This release includes native windows installation, Okta SCIM support for deactivation of users, and a change to how you can install the MySQL driver, as well as other bug fixes.
+We're excited to announce the release of FusionAuth version 1.41. It shipped in mid November, 2022. This release includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth administrative user interface.
 
 <!--more-->
 
-There are a number of new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-41-0) for a full breakdown of the changes between 1.40 and 1.41, including any schema changes.
+There are a number of new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-41-2) for a full breakdown of the changes between 1.40 and 1.41, including any schema changes.
 
-There were 6 issues, enhancements, and bug fixes included in this release. Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-41-0).
+There were 18 issues, enhancements, and bug fixes included in the 1.41 releases. Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-41-2).
 
-While this was a smaller release, are a couple of changes worth calling out.
+This release includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
 
-## Native Windows installs
+## Biometric authentication support
 
-In version 1.37, we removed our native Windows installation support. We figured that people installing on Windows would be able to use the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) and use our [Debian or RPM packages](/direct-download).
+This was a big one. WebAuthn, also known as passkeys, allow a user to login securely using biometric and other means. FusionAuth supports this for re-authentication and bootstrap authentication. As usual, FusionAuth supports this via the hosted login pages, where all the complexity is taken care of for you, and via APIs.
 
-We were wrong. Sorry about that!
+To enable WebAuthn, upgrade to 1.41 or greater, ensure you have the correct license and enable the workflows you desire on the tenant.
 
-Our community and customers let us know that they needed native windows installation and that the WSL option was not workable for everyone.
+{% include _image.liquid src="/assets/img/blogs/release-1-41/enable-webauthn.png" alt="The WebAuthn tenant settings." class="img-fluid" figure=true %}
 
-As of this release, FusionAuth can be installed on Windows just as it was pre 1.37.
+This functionality is only available for our Essentials and Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 
-## Enhanced SCIM support
+## Steam login
 
-The SCIM support in FusionAuth continues to improve. With this release, deactivation of users works with Okta systems.
 
-In particular, Okta updates users via `PUT` or `PATCH`, setting `active` to `false` when they are deactivated.
 
-As of this release, receiving this message from a SCIM client will deactivate the user in FusionAuth.
+## Provisioning for the FusionAuth admin UI
 
-## MySQL database driver download changes
+## The rest of it
 
-If you are using MySQL or plan to use MySQL as the database for your FusionAuth installation, you will need to manually download the JDBC connector and place it in the correct location of your FusionAuth installation. This is required for FusionAuth to connect to any MySQL database.
+As mentioned above, there were 18 issues, enhancements, and bug fixes included in this release. A selection not mentioned above includes:
 
-If you are using PostgreSQL, this change does not affect you.
+* Support for the `en_GB` time and date format in the administrative user interface.
+* Group application roles are no longer incorrectly removed when a `PATCH` request to [`/api/group/{groupId}`](/docs/v1/tech/apis/groups#update-a-group) is made
+* Improved error messages when an API request is made without the correct `Content-Type` header.
 
-See [the installation guide](/docs/v1/tech/installation-guide/database#install-mysql-connector) for additional information and instructions.
-
-We apologize in advance for any inconvenience this causes you. Unfortunately, the Oracle GPL licensing makes it difficult for FusionAuth to easily deliver the JDBC driver, requiring this action on your part.
+Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-39-0).
 
 ## Upgrade at will
 
-The [release notes](/docs/v1/tech/release-notes#version-1-41-0) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+The [release notes](/docs/v1/tech/release-notes#version-1-41-2) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
 
 If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
