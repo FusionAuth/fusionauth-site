@@ -120,40 +120,102 @@ There are a couple of reasons you might choose this method of integration.
 
 When using this option, you must set up an link:/docs/v1/tech/apis/authentication[API key] with the appropriate permissions. The minimum level of privilege required is the `POST` permission to the `/api/webauthn/start` and `/api/webauthn/register/start` endpoints.
 
+The WebAuthn registration and authentication ceremonies both have a similar set of steps.
+
+. Start the WebAuthn ceremony via an API call to FusionAuth
+. Transform the API response containing the options for the ceremony
+. Invoke the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API] in the browser using the transformed options
+. Transform the authenticator response to prevent issues during network transport
+. Include the transformed response in an API call to FusionAuth to complete the ceremony
+
+The registration and authentication ceremonies are covered in their own sections below.
+
+=== Registration
+
+Use the WebAuthn registration ceremony to create a new passkey for a user.
+
+==== Starting the registration
+
+You start a WebAuthn registration by calling the link:/docs/v1/tech/apis/webauthn#start-a-webauthn-passkey-registration[`/api/webauthn/register/start`] endpoint.
+
+[source,shell]
+.Start WebAuthn Registration API call
+----
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+curl  -H "Content-type: application/json" -H "Authorization: $API_KEY" https://local.fusionauth.io/api/webauthn/register/start -d $REQUEST_PAYLOAD
+----
+
+Here's an example request payload:
+
+[source,json]
+.Start WebAuthn Registration Request JSON
+----
+include::docs/src/json/webauthn/register-start-request.json[]
+----
+
+The call to link:/docs/v1/tech/apis/webauthn#start-a-webauthn-passkey-registration[`/api/webauthn/register/start`] begins the registration ceremony and returns a response with options for the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API], including a one-time challenge specific to this ceremony:
+
+[source,json]
+.Start WebAuthn Registration Response JSON
+----
+include::docs/src/json/webauthn/register-start-response.json[]
+----
+
+==== Transform the options response
+
+Certain fields on the link:/docs/v1/tech/apis/webauthn#start-a-webauthn-passkey-registration[`/api/webauthn/register/start`] response are returned as base64url-encoded strings. These have to be translated to JavaScript https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer[``ArrayBuffer``]s before being passed to the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API]. The response should be left as-is other than the transformations for these particular fields.
+
+The following response fields need to be converted to ``ArrayBuffer``s if they are present:
+
+* [field]#options.challenge#
+* [field]#options.excludeCredentials[x].id#
+* [field]#options.user.id#
+
+See the link:/docs/v1/tech/apis/webauthn#start-a-webauthn-passkey-registration[`/api/webauthn/register/start`] response body section for more details.
+
+You can use the following JavaScript function to perform the conversion:
+
+[source,javascript]
+.Function to convert a base64url-encoded string to an `ArrayBuffer`
+----
+include::docs/src/webauthn/base64url-to-buffer.js[]
+----
+
+The following is an ES6 snippet to convert the API response to the object that is passed to the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API]. In the following example `options` is the value of [field]#response.options#, and `creationOptions` is the object that is passed to the WebAuthn JavaScript API's `navigator.credentials.create()` function.
+
+[source,javascript]
+.Transform API response for WebAuthn JavaScript API
+----
+const creationOptions = {
+    // publicKey indicates this is for WebAuthn
+    publicKey: {
+        ...options,
+        challenge: base64URLToBuffer(options.challenge),
+        excludeCredentials: options.excludeCredentials?.map(c => {
+            return {
+                ...c,
+                id: base64URLToBuffer(c.id)
+            }
+        }) ?? [],
+        user: {
+            ...options.user,
+            id: base64URLToBuffer(options.user.id)
+        }
+    }
+}
+----
+
+==== Invoke the WebAuthn JavaScript API
+
+Invoke https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create[navigator.credentials.create()] on the WebAuthn JavaScript API, passing the transformed FusionAuth API response as a parameter.
+
+The function returns a https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise[Promise] that resolves with a https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential[``PublicKeyCredential``]. Reference MDN documentation or the WebAuth https://www.w3.org/TR/webauthn-2/[specification] for details.
+
+==== Transform the authenticator response
 
 
 
-
-== Basics
-
-WebAuthn passkeys allow for passwordless authentication on the sites they were registered. You can use WebAuthn to provide a streamlined authentication experience for users and improve security at the same time.
-
-In order to use a WebAuthn passkey for authentication, you'll first need to register a passkey for a user with the link:#registration-ceremony[Registration Ceremony]. After a passkey is registered, use the link:#authentication-ceremony[Authentication Ceremony] to authenticate a user via WebAuthn. Both ceremonies involve the same basic flow:
-
-1. Start the ceremony by sending an API request to FusionAuth to generate options for the WebAuthn JavaScript API
-2. Use the options to call the WebAuthn JavaScript API on the client
-3. Send an API request to FusionAuth to complete the ceremony. This request includes the response from the WebAuthn JavaScript API
-
-
-
-== Registration Ceremony
-
-The registration ceremony is used to register a new WebAuthn passkey on a user's device. Registration is a 3-step process:
-
-1. Call the FusionAuth API to link:/docs/v1/tech/apis/webauthn#start-a-webauthn-passkey-registration[Start a WebAuthn Passkey Registration]
-2. Call the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API] in the browser
-3. Call the FusionAuth API to link:/docs/v1/tech/apis/webauthn#complete-a-webauthn-passkey-registration[Complete a WebAuthn Passkey Registration]
-
-=== Start Passkey Registration
-
-You can start the passkey registration ceremony by providing some basic information about the user and the new passkey.
-
-[.endpoint]
---
-[method]#POST# [uri]#/api/webauthn/register/start#
---
-
-== Authentication Ceremony
 
 
 == Workflows
