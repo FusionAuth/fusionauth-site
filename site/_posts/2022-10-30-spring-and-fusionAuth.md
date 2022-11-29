@@ -101,7 +101,7 @@ Click the "Save" button in the top right to save these changes. Your setup shoul
 
 ## Setting up PKCE
 
-[Proof Key for Code Exchange (PKCE)](https://oauth.net/2/pkce/) was originally intended for public clients like native mobile or desktop apps that couldn't safely store a client secret. Now it is [recommended](https://oauth.net/2/grant-types/authorization-code/) even on confidential clients like web apps where the Client Secret is under secure control to protect against authorization code injection attacks.
+[Proof Key for Code Exchange (PKCE)](https://www.rfc-editor.org/rfc/rfc7636) was originally intended for public clients like native mobile or desktop apps that couldn't safely store a client secret. Now it is recommended even on confidential clients like web apps where the Client Secret is under secure control to protect against authorization code injection attacks.
 
 PKCE is enabled by default in FusionAuth for public clients. To enable PKCE for your confidential app, set the PKCE dropdown in your app's settings to "Required".
 
@@ -112,8 +112,8 @@ PKCE is enabled by default in FusionAuth for public clients. To enable PKCE for 
 Navigate to [Spring Initialzr](https://start.spring.io), and create a new Spring Boot project with the following options set:
 
 - You can choose either Gradle or Maven as your package manager—we've used Maven for this example
-- Spring Boot 2.7.5
-- Name the app as you wish—we've used FusionAuthSpring for most fields
+- Spring Boot 2.7.x
+- Name the app, group and artifact as you wish, to generate a package name. We've used `com.fusionauth.example.spring` for the full package name.
 - Choose the following dependencies:
   - Spring Web
   - OAuth 2.0 client
@@ -313,10 +313,11 @@ Under the `main/java/.../..../resources/templates` folder, create a new file nam
 </html>
 ```
 
-Replace the values in the logout link:
+Replace the values in the logout link in the snippet above:
 
-- `<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>` with the client secret from the FusionAuth app created earlier.
 - `<YOUR_FUSIONAUTH_URL>` with the base URL your FusionAuth instance is running on, typically `http://localhost:9011` for local Docker installations.
+- `<YOUR_FUSIONAUTH_APP_CLIENT_ID>` with the client Id from the FusionAuth app created earlier.
+
 
 The logout link redirects to FusionAuth, which logs the user out of the FusionAuth app and then redirects back to the `logout` URL set earlier in the FusionAuth app configuration, `http://localhost:8080/logout`. By default, Spring Boot web has logout logic wired at that endpoint to complete the logout process on the application by destroying the local session.
 
