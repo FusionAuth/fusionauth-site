@@ -173,7 +173,7 @@ Replace the values:
 
 Most of the values can also be found by clicking on the "View" application settings button in FusionAuth:
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/show-application-settings.png" alt="Show application page in FusionAuth" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/show-application-settings.png" alt="View application page in FusionAuth" class="img-fluid" figure=false %}
 
 ## Setting up Spring Boot OAuth 2.0 code configuration
 
