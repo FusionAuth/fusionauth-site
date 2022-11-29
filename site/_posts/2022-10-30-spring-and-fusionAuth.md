@@ -180,7 +180,7 @@ Most of the values can also be found by clicking on the "View" application setti
 Create a `config` folder under the `main/java/.../....` source folder. In this folder, create a new file named `SecurityConfiguration.java` with the following contents:
 
 ```java
-package com.fusionauth.javafusion.config;
+package com.fusionauth.example.spring.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -232,7 +232,7 @@ Then we add a few things to the HTTP request chain:
 Under the `main/java/.../....` folder, create a new file named `HomeController.java`. Add the following contents to this file:
 
 ```java
-package com.fusionauth.javafusion;
+package com.fusionauth.example.spring;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -274,7 +274,7 @@ We set the `user-info-uri` property in the `application.properties` file and add
 Under the `main/java/.../....` folder, create a new file named `UserController.java`. Add the following contents to this file:
 
 ```java
-package com.fusionauth.javafusion;
+package com.fusionauth.example.spring;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
