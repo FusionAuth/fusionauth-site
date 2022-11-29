@@ -171,7 +171,7 @@ Replace the values:
 - `<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>` with the client secret from the FusionAuth app created earlier.
 - `<YOUR_FUSIONAUTH_URL>` with the base URL your FusionAuth instance is running on, typically `http://localhost:9011` for local Docker installations.
 
-Most of the values can also be found by clicking on the "Show" application settings button in FusionAuth:
+Most of the values can also be found by clicking on the "View" application settings button in FusionAuth:
 
 {% include _image.liquid src="/assets/img/blogs/spring-fusionauth/show-application-settings.png" alt="Show application page in FusionAuth" class="img-fluid" figure=false %}
 
