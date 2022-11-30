@@ -22,6 +22,7 @@ What about passkeys?
 * <<Using the FusionAuth OAuth Interface>>
 * <<Using the API Directly>>
 * <<Customizing WebAuthn>>
+* <<Troubleshooting>>
 
 == Setting Up For WebAuthn
 If you are planning to use WebAuthn, you have two options. The first option is the FusionAuth OAuth interface. FusionAuth’s OAuth interface is customizable via themes to make each of the web pages look like your application. The other option is using the WebAuthn API. Both approaches are covered in the sections below.
@@ -475,3 +476,20 @@ image::guides/webauthn/challenge-settings.png[The tenant settings to customize c
 
 You may want to adjust the lifetime of these challenges to change how long a user has to complete a ceremony once it has been started. If an attempt is made to complete the ceremony after the challenge expires, it will fail. These values are also used as the timeout for the corresponding https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API] calls by returning the value in milliseconds as part of the link:/docs/v1/tech/apis/webauthn#start-a-webauthn-passkey-registration[`/api/webauthn/register/start`] and link:/docs/v1/tech/apis/webauthn#start-a-webauthn-passkey-assertion-or-authentication[`/api/webauthn/start`] API responses. The WebAuthn JavaScript APIs treat the timeout value as a hint. The browser may allow the user more time to complete the ceremony (e.g. if the timeout is deemed too short), but FusionAuth will still expire the challenge, preventing the ceremony from being completed. The [field]#WebAuthn authentication# value is used for both authentication and assertion.
 
+== Troubleshooting
+
+Due to the server- and client-side components of each of the WebAuthn ceremonies, troubleshooting issues can be difficult. These tips may help you when issues come up.
+
+=== Secure Context
+
+WebAuthn can only be used in https://w3c.github.io/webappsec-secure-contexts/#secure-contexts[secure contexts]. Briefly, this means that the browser must have a valid TLS connection for the current page. If WebAuthn is called from an `iframe`, then both the `iframe` and the embedding page must be secured.
+
+=== Relying Party Id
+
+A WebAuthn passkey is scoped to a specific relying party Id at the time it is created. Passkeys cannot be used with a different relying party Id than they were registered, and there are restrictions on allowed relying party Ids during a WebAuthn ceremony based on the browser request origin's effective domain.
+
+If the relying party Id for a tenant is changed because of a configuration change or a domain change, passkeys registered prior to the change will no longer work. See link:/docs/v1/tech/admin-guide/webauthn#relying-party-id[Relying Party Id] in the WebAuthn Admin Guide for more detail on constraints and configuration options.
+
+=== WebAuthn JavaScript Binary Format
+
+As mentioned earlier in this guide, certain request and response fields on FusionAuth's link:/docs/v1/tech/apis/webauthn[WebAuthn APIs] must be encoded as base64url strings for transport over the network, but the WebAuthn JavaScript API uses JavaScript's `ArrayBuffer` type for these values. See the translation sections in this guide for more information on which fields must be converted.
