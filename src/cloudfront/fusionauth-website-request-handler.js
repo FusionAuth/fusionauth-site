@@ -17,6 +17,7 @@ var indexPages = {
   '/docs/v1/tech/connectors/': true,
   '/docs/v1/tech/core-concepts/': true,
   '/docs/v1/tech/developer-guide/': true,
+  '/docs/v1/tech/developer-guide/api-gateways/': true,
   '/docs/v1/tech/email-templates/': true,
   '/docs/v1/tech/events-webhooks/': true,
   '/docs/v1/tech/events-webhooks/events/': true,
