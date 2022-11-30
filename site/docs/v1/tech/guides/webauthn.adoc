@@ -25,7 +25,7 @@ What about passkeys?
 * <<Client Guide>>
 
 == Setting Up For WebAuthn
-If you are planning to use WebAuthn, you have two options. The first option is the FusionAuth OAuth interface. FusionAuth’s OAuth interface is customizable via themes to make each of the web pages look like your application. The other option is using the WebAuthn API. We'll cover each in the sections below.
+If you are planning to use WebAuthn, you have two options. The first option is the FusionAuth OAuth interface. FusionAuth’s OAuth interface is customizable via themes to make each of the web pages look like your application. The other option is using the WebAuthn API. Both approaches are covered in the sections below.
 
 In either case, you should:
 
@@ -182,7 +182,7 @@ You can use the following JavaScript function to perform the conversion:
 include::docs/src/webauthn/base64url-to-buffer.js[]
 ----
 
-The following is an ES6 snippet to convert the API response to the object that is passed to the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API]. In the following example `options` is the value of [field]#response.options#, and `creationOptions` is the object that is passed to the WebAuthn JavaScript API's `navigator.credentials.create()` function.
+The following is an ES6 JavaScript snippet to convert the API response to the object that is passed to the https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API[WebAuthn JavaScript API]. In the following example `options` is the value of [field]#response.options#, and `creationOptions` is the object that is passed to the WebAuthn JavaScript API's `navigator.credentials.create()` function.
 
 [source,javascript]
 .Transform API response for WebAuthn JavaScript API
@@ -203,19 +203,77 @@ const creationOptions = {
             id: base64URLToBuffer(options.user.id)
         }
     }
-}
+};
 ----
 
 ==== Invoke the WebAuthn JavaScript API
 
-Invoke https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create[navigator.credentials.create()] on the WebAuthn JavaScript API, passing the transformed FusionAuth API response as a parameter.
+Invoke https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create[``navigator.credentials.create()``] on the WebAuthn JavaScript API, passing the transformed FusionAuth API response (`creationOptions` in the snippet above) as a parameter.
 
 The function returns a https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise[Promise] that resolves with a https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential[``PublicKeyCredential``]. Reference MDN documentation or the WebAuth https://www.w3.org/TR/webauthn-2/[specification] for details.
 
 ==== Transform the authenticator response
 
+Certain fields on the https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential[``PublicKeyCredential``] response from the https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create[``navigator.credentials.create()``] WebAuthn JavaScript API call need to be transformed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer[``ArrayBuffer``]s to base64url-encoded strings for transport over the network.
 
+The following response fields need to be converted from ``ArrayBuffer``s to base64url-encoded strings if they are present where [field]#credential# refers to the `PublicKeyCredential` returned by the `navigator.credentials.create()` call:
 
+* [field]#credential.response.attestationObject#
+* [field]#credential.response.clientDataJSON#
+
+See the link:/docs/v1/tech/apis/webauthn#complete-a-webauthn-passkey-registration[`/api/webauthn/register/complete`] request body section for more details.
+
+You can use the following JavaScript function to perform the conversion:
+
+[source,javascript]
+.Function to convert an `ArrayBuffer` to a base64url-encoded string
+----
+include::docs/src/webauthn/buffer-to-base64url.js[]
+----
+
+You should also use convenience methods on the `PublicKeyCredential` and its [field]#response# field to extract information on transports supported by the authenticator and any requested client extension results. The [field]#response# field contains an https://developer.mozilla.org/en-US/docs/Web/API/AuthenticatorAttestationResponse[``AuthenticatorAttestationResponse``] object after a successful call to `navigator.credentials.create()`. The following is an ES6 JavaScript snippet to convert the `PublicKeyCredential` to a suitable format for the FusionAuth link:/docs/v1/tech/apis/webauthn#complete-a-webauthn-passkey-registration[`/api/webauthn/register/complete`] API call. In the following example, `credential` is the `PublicKeyCredential` object returned by the WebAuthn JavaScript API's `navigator.credentials.create()` function, and `transformedCredential` is the object that will be included in the [field]#credential# field on the FusionAuth link:/docs/v1/tech/apis/webauthn#complete-a-webauthn-passkey-registration[`/api/webauthn/register/complete`] API request.
+
+[source,javascript]
+.Transform WebAuthn JavaScript API response for FusionAuth API request
+----
+const transformedCredential = {
+    id: credential.id,
+    response: {
+      attestationObject: bufferToBase64URL(credential.response.attestationObject),
+      clientDataJSON: bufferToBase64URL(credential.response.clientDataJSON)
+    },
+    type: credential.type,
+    clientExtensionResults: credential.getClientExtensionResults(),
+    transports: typeof credential.response.getTransports === 'undefined' ? [] : credential.response.getTransports()
+};
+----
+
+==== Completing the registration
+
+You complete a WebAuthn registration by calling the link:/docs/v1/tech/apis/webauthn#complete-a-webauthn-passkey-registration[`/api/webauthn/register/complete`] endpoint.
+
+[source,shell]
+.Complete WebAuthn Registration API call
+----
+REQUEST_PAYLOAD='{...}'
+curl  -H "Content-type: application/json" https://local.fusionauth.io/api/webauthn/register/complete -d $REQUEST_PAYLOAD
+----
+
+Here's an example request payload where [field]#credential# is the `transformedCredential` from the snippet above:
+
+[source,json]
+.Complete WebAuthn Registration Request JSON
+----
+include::docs/src/json/webauthn/register-complete-request.json[]
+----
+
+The call to link:/docs/v1/tech/apis/webauthn#complete-a-webauthn-passkey-registration[`/api/webauthn/register/complete`] completes the registration ceremony by validating the request against the WebAuthn https://www.w3.org/TR/webauthn-2/[specification], extracting the public key, and associating the new passkey with the user. This API returns the new WebAuthn passkey registered for the user.
+
+[source,json]
+.Complete WebAuthn Registration Response JSON
+----
+include::docs/src/json/webauthn/response.json[]
+----
 
 
 == Workflows
