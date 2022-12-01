@@ -16,11 +16,11 @@ Congitos user's must have a public email address configured to link on email (Se
 
 Once you have completed this configuration you may enable an OpenID Connect "Login with Cognito" button for one or more FusionAuth Applications. See link:https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html[Cognito - Configuring a user pool app client] for an additional reference.
 
-image::identity-providers/github-openid-connect-login.png[Login with Cognito, width=1200]
+image::identity-providers/cognito/cognito-login-fusionauth-button.png[Login with Cognito, width=1200]
 
 === Register a Cognito User Pool
 
-It is likely if you're interested in connecting to Cognito that you already have a user pool set up that you'd want to connect to. We're adding the steps to create a new user pool in this guide, in the interest of completeness, and in the case you would like to set up a 
+If you're interested in connecting to Cognito it is likely that you already have a user pool set up that you'd want to connect to. We're adding the steps to create a new user pool in this guide in the interest of completeness, or in the case you would like to set up a test user pool.
 
 You will first need to log in to link:https://aws.amazon.com[AWS].
 
@@ -30,61 +30,84 @@ Once logged in, search for "Cognito" in the main search field, and select the "C
 - Select "Manage User Pools". This might not exist if it is your first time creating a user pool. In that case, click on "Review Defaults"
 - Click "Create a user pool", and name the new pool, and then click "Review Defaults", then scroll down and click "Create Pool"
 
-Your pool is now created. The next steps are adding a test user, and setting up the OAuth settings. 
+Your pool is now created. The next step is adding a test user. 
 
 - Click on "Users and groups" under "General" in the left side bar. Click "Create User" to create a test user. 
+
+=== Creating a User Pool App Client
+
+To enable FusionAuth to access the user pool, we need to set up an App client on Cognito. In your user pool:
+
 - Click on "App clients" under "General" in the side bar. Then click "Add an app client"
 - Name the client, we've used "FusionClient", and then scroll down and click "Create app client"
 - Click "Show Details" and record the "App client id" and "App client secret"
-- Click on "App client settings" in the left side bar. 
-- 
 
 
+The App client needs to be set up for OAuth and to share user profiles via OpenId Connect.
 
+- Click on "App client settings" in the left side bar.
+- Check the box for your app name under "Enabled Identity Providers".
+- Set the "Callback URL" to `<YOUR_FUSIONAUTH_URL/oauth2/callback`
+- Scroll to "Allowed OAuth Flows", and check "Authorization code grant"
+- Scroll to "Allowed OAuth Scopes" and check "openid".
+- Click "Save Changes"
+- Select "Domain" under "App Integration" from the left side bar. 
+- Setup a domain name for your apps. You can name this whatever you'd like. 
+- Click "Save". 
 
-
-image::identity-providers/github-openid-connect-register-application.png[Register a new GitHub OAuth Application, width=1200]
-
-Here we have configured our application `Authorization callback URL`. If FusionAuth is running at `login.piedpiper.com`, this value should be `https://login.piedpiper.com/oauth2/callback`.
-
-image::identity-providers/github-openid-connect-client-id-secret.png[GitHub Client ID and Secret,width=1200]
-
-Once the application has been created, note the `Client ID` and the `Client Secret`. These will be used respectively as the [field]#Client Id# value and the [field]#Client secret# value in your FusionAuth OpenID Connect Identity Providers configuration. Please note that you may have to click on "Generate a new client secret".
 
 === Configure a New FusionAuth OpenID Connect Identity Provider
 
-To create a GitHub Identity Provider return to FusionAuth and navigate to [breadcrumb]#Settings -> Identity Providers# and click `Add provider` and select `OpenID Connect` from the dialog.
+There is no pre-configured connector for Cognito in FusionAuth. The generic "OpenID" can be used though, as Cognito supports the standard OpenId Connect protocols.
 
-This will take you to the `Add OpenID Connect` panel, and you'll fill out the required fields.
+Navigate to your FusionAuth instance. Select "Settings" from the side bar, and then "Identity Providers". 
 
-You will need to set [field]#Client authentication method# to `HTTP Basic authentication (client_secret_basic)`.
+Select "Add OpenID Connect" from the "Add" dropdown at the top right of the page. 
 
-[field]#Client Id# and [field]#Client secret# values reference the previously noted GitHub OAuth Application's `Client ID` and `Client Secret`. The [field]#Redirect URL# is read only and generated for you based upon the URL of FusionAuth, this value should match the one you configured in your GitHub application.
+image::identity-providers/cognito/cognito-choose-openid.png[Create a new OpenID integration, width=1200]
 
-GitHub has not implemented a well-known configuration endpoint, so you will need to disable the [field]#Discover endpoints# field and specify the endpoints manually. The values for these fields are:
+- Provide a "Name", like "Cognito". 
+- Set "Client Id" to the ""App client id" recorded when creating the App client on Cognito.
+- Select "Http Basic Authentication" for the "Client authentication" field.
+- Set "Client secret" to the ""App client secret recorded when creating the App client on Cognito.
 
-* `Authorization endpoint` - `\https://github.com/login/oauth/authorize`
-* `Token endpoint` - `\https://github.com/login/oauth/access_token`
-* `Userinfo endpoint` - `\https://api.github.com/user`
+To retrieve the values for the various "endpoints" field, visit: 
 
-You will need to specify `user:email` as a [field]#Scope# for your application.
+```
+https://cognito-idp.<REGION>.amazonaws.com/<USER_POOL_ID>/.well-known/openid-configuration 
+```
 
-In the following screenshot you will see that we have enabled this login provider for the `Pied Piper` application and enabled [field]#Create registration#.
+Replace `<REGION>` with the AWS region code that you created your Cognito user pool in. This can be found by selecting the region indicator at the top right of the menu bar, and recording the region code displayed alonside the region location. 
 
-GitHub does not implement OpenID Connect to spec. In order to pull in some additional data for populating the user profile (GitHub shortname, Image URL, etc.) you can enable a [field]#Reconcile lambda#. This example lambda below is based on a GitHub use case. This is optional.
+image::identity-providers/cognito/cognito-region-code.png[AWS region for Cognito User Pool, width=1200]
+cognito-region-code
 
-==== Example lambda
+Replace `<USER_POOL_ID` with the id of the Cognito user pool Id. You can find this by clicking on "General Settings" in the side bar of the Cognito user pool page. The "Pool Id" will be at the top of the page. 
 
-include::docs/v1/tech/lambdas/_openid-connect-example-lambda.adoc[]
+image::identity-providers/cognito/cognito-user-pool-id.png[User Pool Id in Cognito, width=1200]
 
-==== Options
+Visiting the URL with your values templated in should show you values similar to these:
 
-The final item to configure is under the [breadcrumb]#Options# tab. For Github, you will want to configure:
+```js
+{"authorization_endpoint":"https://fusionauth.auth.us-east-2.amazoncognito.com/oauth2/authorize","id_token_signing_alg_values_supported":["RS256"],"issuer":"https://cognito-idp.us-east-2.amazonaws.com/us-east-2_DFiufNreT","jwks_uri":"https://cognito-idp.us-east-2.amazonaws.com/us-east-2_DFiufNreT/.well-known/jwks.json","response_types_supported":["code","token"],"scopes_supported":["openid","email","phone","profile"],"subject_types_supported":["public"],"token_endpoint":"https://fusionauth.auth.us-east-2.amazoncognito.com/oauth2/token","token_endpoint_auth_methods_supported":["client_secret_basic","client_secret_post"],"userinfo_endpoint":"https://fusionauth.auth.us-east-2.amazoncognito.com/oauth2/userInfo"}
+```
 
-- [field]#Unique Id claim# of `id`
-- [field]#Email claim# of `email`
-- [field]#Username claim# of `login`
+NOTE: Ensure that the Domain name set earlier in the App client configuration appears in these endpoint URLs. If it does not, wait for a while for the URLS to update. There may be a lag from setting the domain until it is reflected in the URLs.
 
-That's it, now the `Login with GitHub` button will show up on the login page of our `Pied Piper` application.
+Copy the endpoints from this output into the corresponding fields in the FusionAuth config. 
 
-image::identity-providers/github-openid-connect-configuration.png[FusionAuth GitHub IdP Configuration,role=shadowed bottom-cropped top-cropped]
+Set "Button Text" to "Login with Cognito". You can also upload a Cognito icon as the button icon if you wish.
+
+Set the "Scope" field to "openid". Choose "Link on email. Create the user if the do not exist" for the "Linking Strategy".
+
+Choose "No Lambda" for the "Reconcile Lambda field". 
+
+Now choose the applications you would like Cognito sign in to be available to.
+
+==== Testing
+
+To test, navigate to the applications page in FusionAuth. Click on the "View" icon (magnifying glass) next to the application you enabled Cognito login on, and copy the "OAuth IdP login URL" address. Navigate to this address. You should see a "Login with Cognito" option on your app's sign-in page:
+
+image::identity-providers/cognito/cognito-login-fusionauth-button.png[Cognito log in on FusionAuth, width=1200]
+
+Click on the "Login with Cognito" button. Test logging in with the username and password added when creating the user pool on Cognito. If it is all set up correctly, you should be redirected back to your app, successfully logged in. 
