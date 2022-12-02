@@ -69,6 +69,7 @@ var redirects = {
   '/docs/v1/tech/installation-guide/upgrade': '/docs/v1/tech/admin-guide/upgrade',
   '/docs/v1/tech/guides/auth0-migration': '/docs/v1/tech/migration-guide/auth0',
   '/docs/v1/tech/guides/migration': '/docs/v1/tech/migration-guide/general',
+  '/docs/v1/tech/guides/passwordless': '/docs/v1/tech/passwordless/magic-links',
   '/docs/v1/tech/plugins/password-encryptors': '/docs/v1/tech/plugins/custom-password-hashing',
   '/docs/v1/tech/reference/password-encryptors': '/docs/v1/tech/reference/password-hashes',
   '/docs/v1/tech/reactor': '/docs/v1/tech/admin-guide/licensing',
