@@ -36,6 +36,7 @@ var indexPages = {
   '/docs/v1/tech/messengers/': true,
   '/docs/v1/tech/migration-guide/': true,
   '/docs/v1/tech/oauth/': true,
+  '/docs/v1/tech/passwordless/': true,
   '/docs/v1/tech/plugins/': true,
   '/docs/v1/tech/premium-features/': true,
   '/docs/v1/tech/reference/': true,
