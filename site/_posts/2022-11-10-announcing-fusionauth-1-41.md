@@ -9,13 +9,13 @@ tags: topic-webauthn
 excerpt_separator: "<!--more-->"
 ---
 
-We're excited to announce the release of FusionAuth version 1.41. It shipped in mid November, 2022. This release includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth administrative user interface.
+We wanted to announce the release of FusionAuth version 1.41. It shipped in mid November, 2022. This release includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth administrative user interface.
 
 <!--more-->
 
-There are a number of new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-41-2) for a full breakdown of the changes between 1.40 and 1.41, including any schema changes.
+There are a number of new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-41-3) for a full breakdown of the changes between 1.40 and 1.41, including any schema changes.
 
-There were 18 issues, enhancements, and bug fixes included in the 1.41 releases. Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-41-2).
+There were 19 issues, enhancements, and bug fixes included in the 1.41 releases. Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-41-3).
 
 This release includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
 
@@ -27,27 +27,39 @@ To enable WebAuthn, upgrade to 1.41 or greater, ensure you have the correct lice
 
 {% include _image.liquid src="/assets/img/blogs/release-1-41/enable-webauthn.png" alt="The WebAuthn tenant settings." class="img-fluid" figure=true %}
 
+There's a lot more detail in [the WebAuthn documentation](/fusionauth.io/docs/v1/tech/passwordless/webauthn-passkeys).
+
 This functionality is only available for our Essentials and Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 
 ## Steam login
 
+FusionAuth supports [Login with Steam](/docs/v1/tech/identity-providers/steam) which is a great way to let your game users log in. Previous to this release you could only link accounts with an access token. But sometimes, all you have is a user session ticket.
 
+This release allows you to use the session ticket to complete a link. You can read more about this in [the API docs](/docs/v1/tech/apis/identity-providers/steam); search for `sessionTicket`.
 
 ## Provisioning for the FusionAuth admin UI
 
+Previous to this release, all users had to be added to the FusionAuth UI application via API or admin action. In particular, if a user was logging in using an identity provider, such as a SAML or OIDC connection, they could not be automatically registered for the FusionAuth admin UI. They could, however, be registered for any other application.
+
+However, some FusionAuth users want to control all user access via federation, and want that external identity provider to be the source of truth, even for the FusionAuth admin UI.
+
+As of this release, you can now choose to enable "Create registration" for the FusionAuth admin application for any given Identity Provider. 
+
+{% include _image.liquid src="/assets/img/blogs/release-1-41/enable-registration-fusionauth.png" alt="Using an IdP to allow for registration of the FusionAuth application." class="img-fluid" figure=true %}
+
 ## The rest of it
 
-As mentioned above, there were 18 issues, enhancements, and bug fixes included in this release. A selection not mentioned above includes:
+As mentioned above, there were 19 issues, enhancements, and bug fixes included in this release. A selection not mentioned above includes:
 
 * Support for the `en_GB` time and date format in the administrative user interface.
 * Group application roles are no longer incorrectly removed when a `PATCH` request to [`/api/group/{groupId}`](/docs/v1/tech/apis/groups#update-a-group) is made
 * Improved error messages when an API request is made without the correct `Content-Type` header.
 
-Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-39-0).
+Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-41-3).
 
 ## Upgrade at will
 
-The [release notes](/docs/v1/tech/release-notes#version-1-41-2) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+The [release notes](/docs/v1/tech/release-notes#version-1-41-3) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
 
 If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
