@@ -9,7 +9,7 @@ tags: topic-webauthn
 excerpt_separator: "<!--more-->"
 ---
 
-We wanted to announce the release of FusionAuth version 1.41. It shipped in mid November, 2022. This release includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth administrative user interface.
+FusionAuth version 1.41 shipped in November, 2022. These releases includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth administrative user interface.
 
 <!--more-->
 
@@ -17,7 +17,7 @@ There are a number of new features, enhancements, and bug fixes. As always, plea
 
 There were 19 issues, enhancements, and bug fixes included in the 1.41 releases. Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-41-3).
 
-This release includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
+The changes include WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
 
 ## Biometric authentication support
 
@@ -29,13 +29,7 @@ To enable WebAuthn, upgrade to 1.41 or greater, ensure you have the correct lice
 
 There's a lot more detail in [the WebAuthn documentation](/fusionauth.io/docs/v1/tech/passwordless/webauthn-passkeys).
 
-This functionality is only available for our Essentials and Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
-
-## Steam login
-
-FusionAuth supports [Login with Steam](/docs/v1/tech/identity-providers/steam) which is a great way to let your game users log in. Previous to this release you could only link accounts with an access token. But sometimes, all you have is a user session ticket.
-
-This release allows you to use the session ticket to complete a link. You can read more about this in [the API docs](/docs/v1/tech/apis/identity-providers/steam); search for `sessionTicket`.
+This functionality is limited to Essentials and Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 
 ## Provisioning for the FusionAuth admin UI
 
@@ -47,13 +41,22 @@ As of this release, you can now choose to enable "Create registration" for the F
 
 {% include _image.liquid src="/assets/img/blogs/release-1-41/enable-registration-fusionauth.png" alt="Using an IdP to allow for registration of the FusionAuth application." class="img-fluid" figure=true %}
 
+## Steam login
+
+FusionAuth supports [Login with Steam](/docs/v1/tech/identity-providers/steam) which is a great way to let your game users log in. Previous to this release you could only link accounts with an access token. But sometimes, all you have is a user session ticket.
+
+This release allows you to use the session ticket to complete a link. You can read more about this in [the API docs](/docs/v1/tech/apis/identity-providers/steam); search for `sessionTicket`.
+
+Login with Steam is limited to Essentials and Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
+
 ## The rest of it
 
 As mentioned above, there were 19 issues, enhancements, and bug fixes included in this release. A selection not mentioned above includes:
 
-* Support for the `en_GB` time and date format in the administrative user interface.
-* Group application roles are no longer incorrectly removed when a `PATCH` request to [`/api/group/{groupId}`](/docs/v1/tech/apis/groups#update-a-group) is made
-* Improved error messages when an API request is made without the correct `Content-Type` header.
+* Users that are authenticated using an [LDAP or Generic connector](/docs/v1/tech/connectors/) will no longer have their refresh tokens automatically invalidated.
+* FireFox users will no longer see a zero byte file downloaded after logging out.
+* `userType` and `title` SCIM fields are now deserialized correctly.
+* You can use the `RelayState` parameter to pass a redirect URL when using the IdP initiated SAML provider.
 
 Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-41-3).
 
