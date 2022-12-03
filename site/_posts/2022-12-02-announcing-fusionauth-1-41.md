@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.41
-description: This release includes biometric authentication support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
+description: These releases include biometric authentication support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
 author: Dan Moore
 image: blogs/release-1-41/fusionauth-1-41.png
 category: blog
@@ -9,7 +9,7 @@ tags: topic-webauthn
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth version 1.41 shipped in November, 2022. These releases includes WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth administrative user interface.
+FusionAuth version 1.41 shipped in November, 2022. These releases include WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth administrative user interface.
 
 <!--more-->
 
