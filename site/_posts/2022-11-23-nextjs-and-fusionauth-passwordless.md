@@ -159,6 +159,11 @@ Once done, your configuration should look similar to the image below:
 
 {% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/tenant-passwordless-1.png" alt="Configuration for a tenant with passwordless login enabled in FusionAuth" class="img-fluid" figure=false %}
 
+Lastly, to ensure that your users can receive emails from FusionAuth, double check whether the "From Email" is set to the email you configured for your Sender Identity above.
+
+You can do this by navigating to "Email Templates", under the "Customizations" menu option, and editing the email template labelled as "[FusionAuth Default] Passwordless Login". Change the "From Email" field to your email address. Save your changes once you're done. You're completed configuration should look similar to the image below.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/email-template-configuration.png" alt="Complete configuration for an email template in FusionAuth" class="img-fluid" figure=false %}
 ## Building the Next.js application
 
 Now that you’ve set up all the required FusionAuth configuration, it’s time to get started building your application. Firstly, ensure you have the following installed on your system:
