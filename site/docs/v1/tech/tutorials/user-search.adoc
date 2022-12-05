@@ -1,0 +1,111 @@
+---
+layout: doc
+title: User Search
+description: Learn how to search users
+navcategory: admin
+---
+
+You can search users in FusionAuth to see how many there are, what they are doing, and more.
+
+This tutorial will walk you through how to use FusionAuth's powerful search capabilities to analyze users stored there. Much of this will apply to searching link:/docs/v1/tech/core-concepts/entity-management[Entities], which use a similar approach.
+
+Examples will be in curl, but you can also use any of the link:/docs/v1/tech/client-libraries/[supported client libraries] to build searches in your favorite development language.
+
+== What Type of Engine
+
+First, determine which search engine FusionAuth is using. It will either be the `database` search engine or the `elasticsearch` search engine.
+
+In the administrative user interface, navigate to [breadcrumb]#System -> About# and scroll to the [breadcrumb]#System# section and you will see the type of search.
+
+If you are using the database search engine, you'll want to link:/docs/v1/tech/core-concepts/users#database-search-engine[consult the database search engine documentation] for more information. The rest of this document focuses on the more powerful Elasticsearch search engine.
+
+Learn more about link:/docs/v1/tech/core-concepts/search[each type of search engine]. Learn more about link:/docs/v1/tech/tutorials/switch-search-engines[switching search engines].
+
+== Starting With Elasticsearch
+
+First, you can use either a `POST` or a `GET` when calling this API. The functionality is exactly the same. A `POST` request can be longer. A `GET` request can be easily shared. This document will use `POST` requests.
+
+Each of the methods that use Elasticsearch use the https://www.elastic.co/guide/en/elasticsearch/reference/7.12/analysis-standard-tokenizer.html[standard Elasticsearch tokenizer]. TODO is this true
+
+
+=== Three Types of Searches
+
+There are three main parameters you can use, and they are mutually exclusive.
+
+First, `ids` searches. These are useful when you know exactly which users you want to retrieve. This can occur if you are storing user Ids outside of FusionAuth, in another datastore, and want to query user data within FusionAuth. This is the only search which is always guaranteed to only hit your database, never Elasticsearch.
+
+Second, there is the `queryString` search. Here, the match is case-insensitive. Whitespace is allowed in the search, but must be URL escaped; for example, using %20 for a space character. Elasticsearch compatible regular expressions may be used, so you may search by prefix or suffix using the `*` wildcard. You may also search particular fields by prefixing the query with a field name: `email:`.
+
+If the query string has a `:` it will be assumed that it is a valid Elasticsearch query and it will be passed as-is. Otherwise, if it has no spaces and has a `@` it will be assumed to be an email address and passed with a prefix: `email:`. Otherwise, if it has no spaces it will have the wildcard `*` prefixed and suffixed.
+
+The last type of search uses the `query` parameter. In this case, you are providing an escaped JSON string which is passed to Elasticsearch. You have the full power of the Elasticsearch query language.
+
+For both `queryString` and `query` searches, you may search against specific fields. The exact fields are not documented, but if you are self-hosted, you can find available search fields by https://www.elastic.co/guide/en/elasticsearch/reference/6.3/indices-get-mapping.html[retrieving the Elasticsearch mapping]. If you are using FusionAuth Cloud, please https://account.fusionauth.io/account/support[open a support ticket] if you have a question about which fields are searchable.
+
+== Examples
+
+You can run all these examples locally by downloading https://github.com/fusionauth/fusionauth-example-user-search[this GitHub repository] and following the instructions.
+
+=== Searching By User Ids
+
+Here's an example of an `ids` query.
+
+[source,json]
+.Example Request JSON Searching By [field]#ids#
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/ids/data.json[]
+----
+
+[source,shell] 
+.Example Shell Script for Searching By [field]#ids#
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/ids/search-by-id.sh[]
+----
+
+== Searching With `queryString`
+
+Here are examples of `queryString` searches.
+
+Below, you are searching for `dinesh`, across all the fields. This matches on the email address of the user.
+
+[source,json]
+.Example Request JSON For Searching Across All Indexed Fields With [field]#queryString# 
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/queryString/all-fields-data.json[]
+----
+
+[source,shell] 
+.Example Shell Script For Searching Across All Indexed Fields With [field]#queryString# 
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/ids/search-all-fields.sh[]
+----
+
+Below, only the email field is searched for the string `dinesh`.
+
+[source,json]
+.Example Request JSON For Searching By Emails With [field]#queryString# 
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/queryString/email-data.json[]
+----
+
+[source,shell] 
+.Example Shell Script For Searching By Emails With [field]#queryString# 
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/ids/search-by-email.sh[]
+----
+
+If you change the value from `email:dinesh*` to `email:dinesh` this query will return 0 results, because there is no one with that email and no wildcarding is done. If, instead, you change the value from `email:dinesh*` to `email:dinesh@fusionauth.io` this query will return Dinesh.
+
+
+== Searching With `query`
+
+The `query` parameter is the most powerful way to search for users, because you have the full power of Elasticsearch. The `query` parameter is a full escaped Elasticsearch query.
+
+
+
+== Additional Reading
+
+The link:/docs/v1/tech/apis/users#elasticsearch-search-engine[FusionAuth Elasticsearch API documentation] has examples of JSON for various queries, as well as additional supported parameters.
+
+This https://elastic-builder.js.org/[query builder^] is helpful in bulding more complicated Elasticsearch queries.
+
