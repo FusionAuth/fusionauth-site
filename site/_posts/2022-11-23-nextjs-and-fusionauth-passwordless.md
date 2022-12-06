@@ -267,7 +267,7 @@ function MyApp({ Component, pageProps: {
 export default MyApp
 ```
 
-### Creating Basic Sign in and Sign out Flows
+### Creating a Basic Sign in and Sign out Flow
 
 Your users are going to need a button that can be clicked to kick off the login flow. To create this button, add a file called `login-btn.tsx` in `pages/components`, containing the following:
 
