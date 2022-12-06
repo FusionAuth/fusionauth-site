@@ -56,10 +56,12 @@ Here's an example of an `ids` query.
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/ids/data.json[]
 ----
 
+This JSON 
+
 [source,shell] 
-.Example Shell Script for Searching By [field]#ids#
+.Example Shell Script For Searching
 ----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/ids/search-by-id.sh[]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/search.sh[]
 ----
 
 == Searching With `queryString`
@@ -101,6 +103,60 @@ If you change the value from `email:dinesh*` to `email:dinesh` this query will r
 
 The `query` parameter is the most powerful way to search for users, because you have the full power of Elasticsearch. The `query` parameter is a full escaped Elasticsearch query.
 
+The first thing you need to do is build the Elasticsearch query. Below is a usery to match all users with a `user.data.Company` attribute of `PiedPiper`. 
+
+[NOTE.note]
+====
+The `user.data` field can hold arbitrary JSON and is useful if your users have customer data fields. There is a similar `.data` field on many FusionAuth objects.
+====
+
+The key is case sensitive. Searching on `user.data.company` will return zero results.
+
+The value is case insensitive. Searching for values of `PiedPiper`, `piedpiper` and `PIEDPIPER` will return the same number of results.
+
+[source,json]
+.Example Elasticsearch Query JSON For Searching the Company User Attribute
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/query/user-data-simple.json[]
+----
+
+Then, you need to escape any JSON characters in the string. This is the main difference between the `query` method and the `queryString` method. Because you can use the full Elasticsearch query language with the `query` method, but FusoinAuth's APIs expect JSON, you must escape the Elasticsearch JSON.
+
+You can use `jq`. If the Elasticsearch query above is in `queryfile`, you can escape it using this command.
+
+[source,shell]
+.Escaping Elasticsearch Query String using jq
+----
+cat queryfile | jq -R -s '.' 
+----
+
+That will display this escaped string:
+
+[source,json]
+.Example Escaped Elasticsearch Query JSON For Searching the Company User Attribute
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/query/user-data-simple-escaped.json[]
+----
+
+The next step is to add that string as the `query` parameter to a request.
+
+[source,json]
+.Example Request JSON For Searching By the Company User Attribute Emails With [field]#queryString# 
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/query/user-data-simple-request.json[]
+----
+
+Finally, you can run the query in the same way you do all the others, using the `search.sh` script.
+
+[source,shell] 
+.Example Shell Script For Searching
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/search.sh[]
+----
+
+You can 
+
+can we do filters?I know we can do ranges
 
 
 == Additional Reading
@@ -109,3 +165,4 @@ The link:/docs/v1/tech/apis/users#elasticsearch-search-engine[FusionAuth Elastic
 
 This https://elastic-builder.js.org/[query builder^] is helpful in bulding more complicated Elasticsearch queries.
 
+TODO make everything use search.sh
