@@ -13,20 +13,23 @@ Most templates will contain the User object as returned on the Retrieve User API
 
 Below you will find each stock template that FusionAuth ships for reference. The available replacement values will be outlined below for each template.
 
-* <<Breached Password>>
-* <<Confirm Child>>
-* <<COPPA Email Plus Notice>>
-* <<COPPA Notice>>
-* <<Email Verification>>
-* <<Forgot Password>>
-* <<Parent Registration Request>>
-* <<Passwordless Login>>
-* <<Registration Verification>>
-* <<Setup Password>>
-* <<Threat Detected>>
-* <<Two Factor Authentication>>
-* <<Two Factor Authentication Method Added>>
-* <<Two Factor Authentication Method Removed>>
+* <<Using Replacement Variables>>
+* <<Custom Replacement Variables>>
+* <<Available Email Templates>>
+** <<Breached Password>>
+** <<Confirm Child>>
+** <<COPPA Email Plus Notice>>
+** <<COPPA Notice>>
+** <<Email Verification>>
+** <<Forgot Password>>
+** <<Parent Registration Request>>
+** <<Passwordless Login>>
+** <<Registration Verification>>
+** <<Setup Password>>
+** <<Threat Detected>>
+** <<Two Factor Authentication>>
+** <<Two Factor Authentication Method Added>>
+** <<Two Factor Authentication Method Removed>>
 
 The following 
 
@@ -37,6 +40,110 @@ If you create a template with content and template variables for one type of ema
 Instead, the attempt will fail and there will be an error added to the Event Log.
 ====
 
+
+== Using Replacement Variables
+
+Below are some basic examples of using replacement values in your email templates.
+
+Consider the following User represented by this condensed JSON object.
+[source,json]
+----
+{
+  "email": "monica@piedpiper.com",
+  "firstName": "Monica",
+  "id": "1c592f8a-59c6-4a09-82f8-f4257e3ea4c8",
+  "lastName": "Hall"
+}
+----
+
+The following are example usages with a rendered output based upon the above mentioned example User. The replacement variables are rendered
+using https://freemarker.apache.org/docs/index.html[Apache FreeMarker] which is an HTML template language.
+
+A default value should be provided for variables that may be undefined at runtime such as `firstName`. See `firstName` in the example below
+is followed by a bang `!` and then the string `Unknown User`. This indicates that if `firstName` is undefined when the template is rendered the value
+of `Unknown User` should be used as a default value.
+
+*Template Source*
+[source,html]
+----
+Hi ${user.firstName!'Unknown User'}, welcome to Pied Piper.
+
+Please verify your email address ${user.email} by following the provided link.
+
+https://piedpiper.fusionauth.io/email/verify/${verificationId}
+- Admin
+----
+
+*Rendered Output*
+[source,html]
+----
+Hi Monica, welcome to Pied Piper.
+
+Please verify your email address monica@piedpiper.com by following the provided link.
+
+https://piedpiper.fusionauth.io/email/verify/YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4
+- Admin
+----
+
+== Custom Replacement Variables
+
+In addition to the variables mentioned in the previous section, when defining your own email templates to be used by the link:/docs/v1/tech/apis/emails#send-an-email[Send Email] API
+custom data may be provided on the API request to be used in the email template.
+
+On Send Email API request the contents of the `requestData` field will be made available to you when the template is rendered.
+
+For example, consider the following request to the Send API to send email template Id `1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e` to the User by Id `ce485a91-906f-4615-af75-81d37dc71e90`.
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/email/send/`1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e`#
+--
+
+[source,json]
+.Example Request JSON
+----
+{
+  "requestData": {
+    "paymentAmount": "$9.99",
+    "product": "party hat",
+    "quantity": "12"
+  },
+  "userIds": [
+    "ce485a91-906f-4615-af75-81d37dc71e90"
+  ]
+}
+----
+
+*Template Source*
+[source,html]
+----
+Hello ${user.firstName!''},
+
+Thank you for your purchase! We value your business, please come again!
+
+Product: ${requestData.product!'unknown'}
+Quantity: ${requestData.quantity!'unknown`}
+
+- Pied Piper Customer Success
+----
+
+*Rendered Output*
+[source,html]
+----
+Hello Kelly,
+
+Thank you for your purchase! We value your business, please come again!
+
+Product: party hat
+Quantity: 12
+
+- Pied Piper Customer Success
+----
+
+= Available Email Templates
+
+Below is an overview of each email template that ships with FusionAuth.
 
 == Breached Password
 
@@ -482,6 +589,87 @@ The Tenant object, see the Tenant API for field definitions of a Tenant.
 [field]#user# [type]#[User]#::
 The User object, see the User API for field definitions of a User.
 
+== Threat Detected
+
+include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
+
+.HTML
+[source,text]
+----
+[#setting url_escaping_charset="UTF-8"]
+[#if event.type == "UserLoginSuspicious"]
+A suspicious login was made on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.
+[#elseif event.type == "UserLoginNewDevice"]
+A login from a new device was detected on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.
+[#else]
+Suspicious activity has been observed on your account. In order to secure your account, it is recommended to change your password at your earliest convenience.
+[/#if]
+
+Device details
+
+* Device name: ${(event.info.deviceName)!'&mdash;'}
+* Device description: ${(event.info.deviceDescription)!'&mdash;'}
+* Device type: ${(event.info.deviceType)!'&mdash;'}
+* User agent: ${(event.info.userAgent)!'&mdash;'}
+
+Event details
+
+* IP address: ${(event.info.ipAddress)!'-'}
+* City: ${(event.info.location.city)!'-'}
+* Country: ${(event.info.location.country)!'-'}
+* Zipcode: ${(event.info.location.zipcode)!'-'}
+* Lat/long: ${(event.info.location.latitude)!'-'}/${(event.info.location.longitude)!'-'}
+
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+[#setting url_escaping_charset="UTF-8"]
+[#if event.type == "UserLoginSuspicious"]
+  <p>A suspicious login was made on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.</p>
+[#elseif event.type == "UserLoginNewDevice"]
+  <p>A login from a new device was detected on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.</p>
+[#else]
+  <p>Suspicious activity has been observed on your account. In order to secure your account, it is recommended to change your password at your earliest convenience.</p>
+[/#if]
+
+<p>Device details</p>
+<ul>
+  <li><strong>Device name:</strong> ${(event.info.deviceName)!'&mdash;'}</li>
+  <li><strong>Device description:</strong> ${(event.info.deviceDescription)!'&mdash;'}</li>
+  <li><strong>Device type:</strong> ${(event.info.deviceType)!'&mdash;'}</li>
+  <li><strong>User agent:</strong> ${(event.info.userAgent)!'&mdash;'}</li>
+</ul>
+
+<p>Event details</p>
+<ul>
+  <li><strong>IP address:</strong> ${(event.info.ipAddress)!'&mdash;'}</li>
+  <li><strong>City:</strong> ${(event.info.location.city)!'&mdash;'}</li>
+  <li><strong>Country:</strong> ${(event.info.location.country)!'&mdash;'}</li>
+  <li><strong>Zipcode:</strong> ${(event.info.location.zipcode)!'&mdash;'}</li>
+  <li><strong>Lat/long:</strong> ${(event.info.location.latitude)!'&mdash;'}/${(event.info.location.longitude)!'&mdash;'}</li>
+</ul>
+
+- FusionAuth Admin
+----
+
+=== Replacement Variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.28.0#::
+The Application object, see the link:/docs/v1/tech/apis/applications[Application API] for field definitions.
+
+[field]#event.info# [type]#[EventInfo]#::
+The EventInfo object, see the link:/docs/v1/tech/events-webhooks/events/user-login-suspicious[User Login Suspicious] event definition for example field definitions.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the link:/docs/v1/tech/apis/tenants[Tenant API] for field definitions.
+
+[field]#user# [type]#[User]#::
+The User object, see the link:/docs/v1/tech/apis/users[User API] for field definitions of a User.
+
 == Two Factor Authentication
 
 .HTML
@@ -625,184 +813,3 @@ The Tenant object, see the link:/docs/v1/tech/apis/tenants[Tenant API] for field
 
 [field]#user# [type]#[User]#::
 The User object, see the link:/docs/v1/tech/apis/users[User API] for field definitions of a User.
-
-== Threat Detected
-
-include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
-
-.HTML
-[source,text]
-----
-[#setting url_escaping_charset="UTF-8"]
-[#if event.type == "UserLoginSuspicious"]
-A suspicious login was made on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.
-[#elseif event.type == "UserLoginNewDevice"]
-A login from a new device was detected on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.
-[#else]
-Suspicious activity has been observed on your account. In order to secure your account, it is recommended to change your password at your earliest convenience.
-[/#if]
-
-Device details
-
-* Device name: ${(event.info.deviceName)!'&mdash;'}
-* Device description: ${(event.info.deviceDescription)!'&mdash;'}
-* Device type: ${(event.info.deviceType)!'&mdash;'}
-* User agent: ${(event.info.userAgent)!'&mdash;'}
-
-Event details
-
-* IP address: ${(event.info.ipAddress)!'-'}
-* City: ${(event.info.location.city)!'-'}
-* Country: ${(event.info.location.country)!'-'}
-* Zipcode: ${(event.info.location.zipcode)!'-'}
-* Lat/long: ${(event.info.location.latitude)!'-'}/${(event.info.location.longitude)!'-'}
-
-- FusionAuth Admin
-----
-
-.Text
-[source,text]
-----
-[#setting url_escaping_charset="UTF-8"]
-[#if event.type == "UserLoginSuspicious"]
-  <p>A suspicious login was made on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.</p>
-[#elseif event.type == "UserLoginNewDevice"]
-  <p>A login from a new device was detected on your account. If this was you, you can safely ignore this email. If this wasn't you, we recommend that you change your password as soon as possible.</p>
-[#else]
-  <p>Suspicious activity has been observed on your account. In order to secure your account, it is recommended to change your password at your earliest convenience.</p>
-[/#if]
-
-<p>Device details</p>
-<ul>
-  <li><strong>Device name:</strong> ${(event.info.deviceName)!'&mdash;'}</li>
-  <li><strong>Device description:</strong> ${(event.info.deviceDescription)!'&mdash;'}</li>
-  <li><strong>Device type:</strong> ${(event.info.deviceType)!'&mdash;'}</li>
-  <li><strong>User agent:</strong> ${(event.info.userAgent)!'&mdash;'}</li>
-</ul>
-
-<p>Event details</p>
-<ul>
-  <li><strong>IP address:</strong> ${(event.info.ipAddress)!'&mdash;'}</li>
-  <li><strong>City:</strong> ${(event.info.location.city)!'&mdash;'}</li>
-  <li><strong>Country:</strong> ${(event.info.location.country)!'&mdash;'}</li>
-  <li><strong>Zipcode:</strong> ${(event.info.location.zipcode)!'&mdash;'}</li>
-  <li><strong>Lat/long:</strong> ${(event.info.location.latitude)!'&mdash;'}/${(event.info.location.longitude)!'&mdash;'}</li>
-</ul>
-
-- FusionAuth Admin
-----
-
-=== Replacement Variables
-
-[.api]
-[field]#application# [type]#[Application]# [since]#Available since 1.28.0#::
-The Application object, see the link:/docs/v1/tech/apis/applications[Application API] for field definitions.
-
-[field]#event.info# [type]#[EventInfo]#::
-The EventInfo object, see the link:/docs/v1/tech/events-webhooks/events/user-login-suspicious[User Login Suspicious] event definition for example field definitions.
-
-[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
-The Tenant object, see the link:/docs/v1/tech/apis/tenants[Tenant API] for field definitions.
-
-[field]#user# [type]#[User]#::
-The User object, see the link:/docs/v1/tech/apis/users[User API] for field definitions of a User.
-
-== Using Replacement Variables
-
-Below are some basic examples of using replacement values in your email templates.
-
-Consider the following User represented by this condensed JSON object.
-[source,json]
-----
-{
-  "email": "monica@piedpiper.com",
-  "firstName": "Monica",
-  "id": "1c592f8a-59c6-4a09-82f8-f4257e3ea4c8",
-  "lastName": "Hall"
-}
-----
-
-The following are example usages with a rendered output based upon the above mentioned example User. The replacement variables are rendered
-using https://freemarker.apache.org/docs/index.html[Apache FreeMarker] which is an HTML template language.
-
-A default value should be provided for variables that may be undefined at runtime such as `firstName`. See `firstName` in the example below
-is followed by a bang `!` and then the string `Unknown User`. This indicates that if `firstName` is undefined when the template is rendered the value
-of `Unknown User` should be used as a default value.
-
-*Template Source*
-[source,html]
-----
-Hi ${user.firstName!'Unknown User'}, welcome to Pied Piper.
-
-Please verify your email address ${user.email} by following the provided link.
-
-https://piedpiper.fusionauth.io/email/verify/${verificationId}
-- Admin
-----
-
-*Rendered Output*
-[source,html]
-----
-Hi Monica, welcome to Pied Piper.
-
-Please verify your email address monica@piedpiper.com by following the provided link.
-
-https://piedpiper.fusionauth.io/email/verify/YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4
-- Admin
-----
-
-== Custom Replacement Variables
-
-In addition to the variables mentioned in the previous section, when defining your own email templates to be used by the link:/docs/v1/tech/apis/emails#send-an-email[Send Email] API
-custom data may be provided on the API request to be used in the email template.
-
-On Send Email API request the contents of the `requestData` field will be made available to you when the template is rendered.
-
-For example, consider the following request to the Send API to send email template Id `1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e` to the User by Id `ce485a91-906f-4615-af75-81d37dc71e90`.
-
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/email/send/`1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e`#
---
-
-[source,json]
-.Example Request JSON
-----
-{
-  "requestData": {
-    "paymentAmount": "$9.99",
-    "product": "party hat",
-    "quantity": "12"
-  },
-  "userIds": [
-    "ce485a91-906f-4615-af75-81d37dc71e90"
-  ]
-}
-----
-
-*Template Source*
-[source,html]
-----
-Hello ${user.firstName!''},
-
-Thank you for your purchase! We value your business, please come again!
-
-Product: ${requestData.product!'unknown'}
-Quantity: ${requestData.quantity!'unknown`}
-
-- Pied Piper Customer Success
-----
-
-*Rendered Output*
-[source,html]
-----
-Hello Kelly,
-
-Thank you for your purchase! We value your business, please come again!
-
-Product: party hat
-Quantity: 12
-
-- Pied Piper Customer Success
-----
