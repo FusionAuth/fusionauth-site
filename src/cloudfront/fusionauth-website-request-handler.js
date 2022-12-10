@@ -39,6 +39,7 @@ var indexPages = {
   '/docs/v1/tech/passwordless/': true,
   '/docs/v1/tech/plugins/': true,
   '/docs/v1/tech/premium-features/': true,
+  '/docs/v1/tech/premium-features/webauthn/': true,
   '/docs/v1/tech/reference/': true,
   '/docs/v1/tech/samlv2/': true,
   '/docs/v1/tech/themes/': true,
