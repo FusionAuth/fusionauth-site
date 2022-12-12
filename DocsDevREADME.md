@@ -127,6 +127,7 @@ For lists:
 - Azure AD
 - X.509
 - Node.js
+- re-authentication
 
 ## Git
 
