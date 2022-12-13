@@ -39,13 +39,14 @@ This document discusses the Elasticsearch search engine.
 
 You can determine which search engine FusionAuth is using. It will either be the `database` search engine or the `elasticsearch` search engine.
 
-To do so, in the administrative user interface, navigate to [breadcrumb]#System -> About# and scroll to the [breadcrumb]#System# section and you will see the type of search.
+To do so, in the administrative user interface, navigate to [breadcrumb]#System -> About# and scroll to the [breadcrumb]#System# section and you will see the configured search engine, as well as the version of Elasticsearch, if available. Below, it is `Elasticsearch 7.17.0`.
+
+image::guides/search/confirm-search-engine.png[Determine the search engine.,role=top-cropped,width=1200]
 
 If you are using the database search engine, you'll want to link:/docs/v1/tech/core-concepts/users#database-search-engine[consult the database search engine documentation] for more information. 
 
 * Learn more about link:/docs/v1/tech/core-concepts/search[each type of search engine].
 * Learn more about link:/docs/v1/tech/tutorials/switch-search-engines[switching search engines].
-
 
 == An Introduction To The Elasticsearch Search Engine
 
@@ -93,9 +94,16 @@ The `query` parameter search requires an escaped JSON string which is passed to 
 
 For both `queryString` and `query` searches, you may search against specific fields.
 
-The exact list of indexed fields is not documented, but if you are running FusionAuth self-hosted, you can find the list by https://www.elastic.co/guide/en/elasticsearch/reference/6.3/indices-get-mapping.html[retrieving the Elasticsearch mapping].
+The exact list of indexed fields is not documented, but if you are running FusionAuth self-hosted, you can find the list by https://www.elastic.co/guide/en/elasticsearch/reference/7.17/indices-get-mapping.html[retrieving the Elasticsearch mapping].
 
 If you are using FusionAuth Cloud, please https://account.fusionauth.io/account/support[open a support ticket] if you have a question about which fields are searchable.
+
+Fields of the user object are indexed, as are the following relationships, which are available using the `nested` query type.
+
+* `memberships` - group memberships for this user
+* `registrations` - application registrations for this user
+
+Learn more about https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-nested-query.html[the nested query type].
 
 == Results Of a User Search
 
@@ -173,7 +181,7 @@ Finally, below, the `email` field matches the string `dinesh` and the `verified`
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-search/main/examples/queryString/email-verified-data-request.json[]
 ----
 
-Learn more about making https://www.elastic.co/guide/en/elasticsearch/reference/7.12/query-dsl-query-string-query.html[queryString queries in the Elasticsearch documentation].
+Learn more about making https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-query-string-query.html[queryString queries in the Elasticsearch documentation].
 
 == Searching With `query`
 
@@ -234,7 +242,7 @@ Then, run the query using the `search.sh` script. Here's how you'd run it if the
 
 === Searching On Multiple Fields
 
-You can also perform advanced searches, including with multiple clauses and numeric ranges. Let's take a closer look at a more complex query.
+You can also perform advanced searches, including with multiple clauses, nested queries and numeric ranges. Let's take a closer look at a more complex query.
 
 First, here's the query.
 
@@ -249,7 +257,7 @@ With this query, you are searching for users who meet the following criteria.
 * A salary of less than 100000.
 * Pied Piper employment.
 * A verified email address.
-* Registered for a particular application in your system.
+* Registered for a particular application in your system. The `registrations` object is nested.
 * For that particular application, having a `paid` attribute of `false`.
 
 This is quite specific. In addition to matching a value in the `user.data` field like the first example, you are searching ranges, checking standard user attributes such as `verified`, finding users who have registered for a given application, and examining application specific fields.
@@ -296,6 +304,8 @@ You'll get back any users that match all the criteria.
 == Pagination
 
 include::docs/v1/tech/shared/_paginating-search-results.adoc[]
+
+Note that you'll only be able to get back 10000 results no matter how you paginate. See the <<Limitations>> section for workarounds.
 
 == Re-indexing
 
