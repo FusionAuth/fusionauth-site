@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: Components of JWT Authentication Tokens Explained
-description: Technical authentication article explains JSON Web Tokens (JWT) and their component parts. 
+title: Components of JWTs Explained
+description: Technical article explains JSON Web Tokens (JWT), their component parts, and how they are used for authentication. 
 author: Dan Moore
 image: advice/anatomy-jwt/expert-advice-anatomy-of-a-jwt.png
 category: Tokens
@@ -10,10 +10,11 @@ dateModified: 2022-02-24
 ---
 
 
-A JSON Web Token, or JWT, is an authentication token typically used with standard authentication protocols such as Oauth2. This article explains the component parts of a JWT token, and helps explain how the JWT works. 
+A JSON Web Token (commonly shortened to JWT), is a token typically used with standard protocols such as OAuth2. This article explains the component parts of a JWT, and helps explain how the JWT works.
 
-Here’s a JSON Web Token, used for JWT Authentication, freshly minted. Newlines have been added for clarity, but they are typically not present.
+Before we continue, it's important to note that JWTs are often mistakenly referred to as `JWT Tokens`. Adding the `Token` on the end would expand to `JSON Web Token Token`. Therefore, we leave off the trailing `Token` and simply use `JWT` in this article as it is the more correct name. Likewise, because JWTs are often used as part of an authentication and authorization process, some people refer to them as `Authentication Tokens` or `JWT Authentication Tokens`. Technically, a JWT is merely a token that contains Base64 encoded JSON. It can be used in many different use cases _including_ authentication and authorization. Therefore, we don't use this term in this article either, but we discuss how JWTs are used during the authentication process. 
 
+Let's dig in! Here’s a freshly minted JWT. Newlines have been added for clarity, but they are typically not present.
 
 ```
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9.eyJhdWQiO
@@ -26,17 +27,17 @@ lLCJhcHBsaWNhdGlvbklkIjoiODVhMDM4NjctZGNjZi00ODgyLWFkZGUtMWE3OWFlZWM1M
 GRmIiwicm9sZXMiOlsiY2VvIl19.dee-Ke6RzR0G9avaLNRZf1GUCDfe8Zbk9L2c7yaqKME
 ```
 
-This may look like a lot of gibberish, but as you learn more about JWT tokens and authentication, it begins to make more sense.
+This may look like a lot of gibberish, but as you learn more about JWTs and how they are used in OAuth2 or authentication processes, it begins to make more sense.
 
-There are a few types of JSON Web Tokens, but I’ll focus on signed JWTs as they are the most common. A signed JWT token may also be called a JWS. It has three parts, separated by periods.
+There are a few types of JSON Web Tokens, but I’ll focus on signed JWTs as they are the most common. A signed JWT may also be called a JWS. It has three parts, separated by periods.
 
-There’s a header, which in the case of the JWT token above, starts with `eyJhbGc`. Then there is a body or payload, which above starts with `eyJhdWQ`. Finally, there is a signature, which starts with `dee-K` in the example JWT.
+There’s a header, which in the case of the JWT above, starts with `eyJhbGc`. Then there is a body or payload, which above starts with `eyJhdWQ`. Finally, there is a signature, which starts with `dee-K` in the example JWT.
 
-How does a JWT work? Let’s break this example JWT authentication token apart and dig a bit deeper.
+How does a JWT work? Let’s break this example JWT apart and dig a bit deeper.
 
-## The JWT Authentication Token Header Explained
+## The JWT Header Explained
 
-`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9` is the header of the JWT. The authorization header contains metadata about a JWT token, including the key identifier, what algorithm was used to sign in and other information.
+`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9` is the header of the JWT. The JWT header contains metadata about a JWT, including the key identifier, what algorithm was used to sign in and other information.
 
 If you run the above header through a base64 decoder:
 
@@ -50,37 +51,37 @@ You will see this JSON:
 {"alg":"HS256","typ":"JWT","kid":"f58890d19"}%   
 ```
 
-`HS256` indicates that the JWT authentication token was signed with a symmetric algorithm, specifically HMAC using SHA-256. 
+`HS256` indicates that the JWT was signed with a symmetric algorithm, specifically HMAC using SHA-256. 
 
 The list of algorithms and implementation support level is below.
 
-| "alg" Param Value | Digital Signature or MAC Algorithm | Implementation Requirements |
-|---------|-------------|------------|
-| HS256        | HMAC using SHA-256            | Required |
-| HS384        | HMAC using SHA-384            | Optional |
-| HS512        | HMAC using SHA-512            | Optional |
-| RS256        | RSASSA-PKCS1-v1_5 using SHA-256 | Recommended |
-| RS384        | RSASSA-PKCS1-v1_5 using SHA-384 | Optional |
-| RS512        | RSASSA-PKCS1-v1_5 using SHA-512 | Optional |
-| ES256        | ECDSA using P-256 and SHA-256 | Recommended+ |
-| ES384        | ECDSA using P-384 and SHA-384 | Optional |
-| ES512        | ECDSA using P-521 and SHA-512 | Optional |
-| PS256        | RSASSA-PSS using SHA-256 and MGF1 with SHA-256 | Optional |
-| PS384        | RSASSA-PSS using SHA-384 and MGF1 with SHA-384 | Optional |
-| PS512        | RSASSA-PSS using SHA-512 and MGF1 with SHA-512 | Optional |
-| none         | No digital signature or MAC performed | Optional |
+| "alg" Param Value | Digital Signature or MAC Algorithm             | Implementation Requirements |
+|-------------------|------------------------------------------------|-----------------------------|
+| HS256             | HMAC using SHA-256                             | Required                    |
+| HS384             | HMAC using SHA-384                             | Optional                    |
+| HS512             | HMAC using SHA-512                             | Optional                    |
+| RS256             | RSASSA-PKCS1-v1_5 using SHA-256                | Recommended                 |
+| RS384             | RSASSA-PKCS1-v1_5 using SHA-384                | Optional                    |
+| RS512             | RSASSA-PKCS1-v1_5 using SHA-512                | Optional                    |
+| ES256             | ECDSA using P-256 and SHA-256                  | Recommended+                |
+| ES384             | ECDSA using P-384 and SHA-384                  | Optional                    |
+| ES512             | ECDSA using P-521 and SHA-512                  | Optional                    |
+| PS256             | RSASSA-PSS using SHA-256 and MGF1 with SHA-256 | Optional                    |
+| PS384             | RSASSA-PSS using SHA-384 and MGF1 with SHA-384 | Optional                    |
+| PS512             | RSASSA-PSS using SHA-512 and MGF1 with SHA-512 | Optional                    |
+| none              | No digital signature or MAC performed          | Optional                    |
 
 This table is drawn from RFC 7518. As only HS256 is required to be compliant with the spec, consult the software or library used to create JWTs for details on supported algorithms.
 
-Other metadata is also stored in this part of the JWT token. The `typ` header indicates the type of the JWT. In this case, the value is `JWT`, but other values are valid. For instance, if the JWT conforms to RFC 9068, it may have the value `at+JWT` indicating it is an access token.
+Other metadata is also stored in this part of the JWT. The `typ` header indicates the type of the JWT. In this case, the value is `JWT`, but other values are valid. For instance, if the JWT conforms to RFC 9068, it may have the value `at+JWT` indicating it is an access token.
 
-The `kid` value indicates what key was used to sign the JWT. For a symmetric key the `kid` could be used to look up a value in a secrets vault. For an asymmetric signing algorithm, this value lets the consumer of a JWT token look up the correct public key corresponding to the private key which signed this JWT. Processing this value correctly is critical to signature verification and the integrity of the JWT payload.
+The `kid` value indicates what key was used to sign the JWT. For a symmetric key the `kid` could be used to look up a value in a secrets vault. For an asymmetric signing algorithm, this value lets the consumer of a JWT look up the correct public key corresponding to the private key which signed this JWT. Processing this value correctly is critical to signature verification and the integrity of the JWT payload.
 
 Typically, you'll offload most of the processing of header values to a library. There are plenty of good open source JWT processing libraries. You should understand the values, but probably won't have to implement the actual processing.
 
 ## The JWT Token Body
 
-The payload, or body, is where things get interesting. This section contains the data that this JWT authentication token was created to transport. If the JWT, for instance, represents a user authorized to access certain data or functionality, the payload contains user data such as roles or other authorization info.
+The payload, or body, is where things get interesting. This section contains the data that this JWT was created to transport. If the JWT, for instance, represents a user authorized to access certain data or functionality, the payload contains user data such as roles or other authorization info.
 
 Here's the payload from the example JWT:
 
@@ -158,9 +159,9 @@ If both the todo and billing APIs don't verify that any given JWT was created fo
 
 This would be at best a bug and at worst an escalation of privilege with negative ramifications for bank accounts.
 
-## The JWT Token Signature
+## The JWT Signature
 
-The signature of a JWT token is critical, because it guarantees the integrity of the payload and the header. Verifying the signature must be the first step that any consumer of a JWT performs. If the signature doesn't match, no further processing should take place.
+The signature of a JWT is critical, because it guarantees the integrity of the payload and the header. Verifying the signature must be the first step that any consumer of a JWT performs. If the signature doesn't match, no further processing should take place.
 
 While you can read the [relevant portion of the specification](https://datatracker.ietf.org/doc/html/rfc7515#page-15) to learn how the signature is generated, the high level overview is:
 
@@ -173,9 +174,9 @@ While you can read the [relevant portion of the specification](https://datatrack
 
 When the JWT is received, the same operations can be performed. If the generated signature is correct, the contents of the JWT are unchanged from when it was created.
 
-## JWT Authentication Token Limits
+## Limits
 
-In the specifications, there are no hard limits on length of JWT tokens for authentication. In practical terms, think about:
+In the specifications, there are no hard limits on length of JSON Web Tokens. In practical terms, think about:
 
 * Where are you going to store the JWT
 * What is the performance penalty of large JWTs
@@ -234,4 +235,4 @@ Be mindful of additional time taken to transport longer JWT; this can be tested 
 
 ## Conclusion
 
-Signed JWT authentication tokens have a header, body, and signature. Each plays a vital auth role in ensuring that JWTs can be used to safely store and transmit critical information, whether about identities or not. Understanding all three of these components are critical to the correct use of JWT authentication tokens as well.
+Signed JWTs have a header, body, and signature. Each plays a vital auth role in ensuring that JWTs can be used to safely store and transmit critical information, whether about identities or not. Understanding all three of these components are critical to the correct use of JWT as well.
