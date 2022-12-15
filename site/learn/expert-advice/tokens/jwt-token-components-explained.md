@@ -1,7 +1,7 @@
 ---
 layout: advice
-title: Components of JWT Authentication Tokens Explained
-description: Technical authentication article explains JSON Web Tokens (JWT) and their component parts. 
+title: Components of JWT Tokens Explained
+description: Technical article explains JSON Web Tokens (JWT) and their component parts used in authentication. 
 author: Dan Moore
 image: advice/anatomy-jwt/expert-advice-anatomy-of-a-jwt.png
 category: Tokens
@@ -10,9 +10,9 @@ dateModified: 2022-02-24
 ---
 
 
-A JSON Web Token, or JWT, is an authentication token typically used with standard authentication protocols such as Oauth2. This article explains the component parts of a JWT token, and helps explain how the JWT works. 
+A JSON Web Token, or JWT, is a token typically used with standard authentication protocols such as Oauth2. This article explains the component parts of a JWT token, and helps explain how the JWT works in authentication processes. 
 
-Here’s a JSON Web Token, used for JWT Authentication, freshly minted. Newlines have been added for clarity, but they are typically not present.
+Here’s a JSON Web Token freshly minted. Newlines have been added for clarity, but they are typically not present.
 
 
 ```
@@ -32,9 +32,9 @@ There are a few types of JSON Web Tokens, but I’ll focus on signed JWTs as the
 
 There’s a header, which in the case of the JWT token above, starts with `eyJhbGc`. Then there is a body or payload, which above starts with `eyJhdWQ`. Finally, there is a signature, which starts with `dee-K` in the example JWT.
 
-How does a JWT work? Let’s break this example JWT authentication token apart and dig a bit deeper.
+How does a JWT work? Let’s break this example JWT token apart and dig a bit deeper.
 
-## The JWT Authentication Token Header Explained
+## The JWT Token Header Explained
 
 `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9` is the header of the JWT. The authorization header contains metadata about a JWT token, including the key identifier, what algorithm was used to sign in and other information.
 
@@ -50,7 +50,7 @@ You will see this JSON:
 {"alg":"HS256","typ":"JWT","kid":"f58890d19"}%   
 ```
 
-`HS256` indicates that the JWT authentication token was signed with a symmetric algorithm, specifically HMAC using SHA-256. 
+`HS256` indicates that the JWT token was signed with a symmetric algorithm, specifically HMAC using SHA-256. 
 
 The list of algorithms and implementation support level is below.
 
@@ -80,7 +80,7 @@ Typically, you'll offload most of the processing of header values to a library. 
 
 ## The JWT Token Body
 
-The payload, or body, is where things get interesting. This section contains the data that this JWT authentication token was created to transport. If the JWT, for instance, represents a user authorized to access certain data or functionality, the payload contains user data such as roles or other authorization info.
+The payload, or body, is where things get interesting. This section contains the data that this JWT token was created to transport. If the JWT, for instance, represents a user authorized to access certain data or functionality, the payload contains user data such as roles or other authorization info.
 
 Here's the payload from the example JWT:
 
@@ -126,7 +126,7 @@ You may add any claims you want to a JWT, including data useful to downstream co
 
 ### Claims to Verify
 
-When code is presented with a JWT, it should verify certain claims. At a minimum, these claims should be checked out:
+When code is presented with a JWT token, it should verify certain claims. At a minimum, these claims should be checked out:
 
 * `iss` identifies the issuer of the JWT. It doesn't matter exactly what this string is (UUID, domain name, URL or something else) as long as the issuer and consumer of the JWT agree on valid values, and that the consumer validates the claim matches a known good value.
 * `aud` identifies the audience of the token, that is, who should be consuming it. `aud` may be a scalar or an array value. Again, the issuer and the consumer of the JWT should agree on the specific values considered acceptable.
@@ -138,7 +138,7 @@ Avoid putting unused claims into a JWT. While there is no limit to the size of a
 
 ### Claims and Security
 
-The claims of a signed JWT are visible to anyone who possesses the token.
+The claims of a signed JWT are visible to anyone who possesses the JWT token.
 
 As you saw above, all you need to view the claims in plaintext is a base64 decoder, which is available at every command line and everywhere in the internet.
 
@@ -173,7 +173,7 @@ While you can read the [relevant portion of the specification](https://datatrack
 
 When the JWT is received, the same operations can be performed. If the generated signature is correct, the contents of the JWT are unchanged from when it was created.
 
-## JWT Authentication Token Limits
+## JWT Token Limits
 
 In the specifications, there are no hard limits on length of JWT tokens for authentication. In practical terms, think about:
 
@@ -234,4 +234,4 @@ Be mindful of additional time taken to transport longer JWT; this can be tested 
 
 ## Conclusion
 
-Signed JWT authentication tokens have a header, body, and signature. Each plays a vital auth role in ensuring that JWTs can be used to safely store and transmit critical information, whether about identities or not. Understanding all three of these components are critical to the correct use of JWT authentication tokens as well.
+Signed JWT tokens have a header, body, and signature. Each plays a vital auth role in authentication, ensuring that JWTs can be used to safely store and transmit critical information, whether about identities or not. Understanding all three of these components are critical to the correct use of JWT tokens in the authentication process. 
