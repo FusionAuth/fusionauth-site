@@ -28,7 +28,7 @@ When using OAuth 2.0, a token, which has a limited lifetime, provides that desir
 Often there is confusion between OAuth and SAML. SAML is primarily an authentication system, while OAuth is an authorization system. Authentication is about confirming the user’s identity. Authorization is about deciding what services, functionality or data they can access. A detailed comparison is [found here](/learn/expert-advice/oauth/saml-vs-oauth) . 
 
 
-## How OAuth2 Works
+## How OAuth 2.0 Works
 
 Usually, OAuth2 is involved when a user (also called the Resource Owner) is providing a third-party application (called a client application) access to data in a different service (called the Resource Server) without sharing their credentials. Let’s make it more concrete with an example.
 
