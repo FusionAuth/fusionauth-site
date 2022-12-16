@@ -30,7 +30,7 @@ Often there is confusion between OAuth and SAML. SAML is primarily an authentica
 
 ## How OAuth 2.0 Works
 
-Usually, OAuth2 is involved when a user (also called the Resource Owner) is providing a third-party application (called a client application) access to data in a different service (called the Resource Server) without sharing their credentials. Let’s make it more concrete with an example.
+Usually, OAuth 2.0 is involved when a user (also called the Resource Owner) is providing a third-party application (called a client application) access to data in a different service (called the Resource Server) without sharing their credentials. Let’s make it more concrete with an example.
 
 If you wanted to print images from your Pinterest account without downloading the images and uploading them again to a printing website, and without sharing your Pinterest username and password with the printing website, you could authorize the printing website to have read-only access to your Pinterest photos.
 
