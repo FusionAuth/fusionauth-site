@@ -49,7 +49,7 @@ Here are the steps:
 1. The Printing Website (the Client and a third party app, unconnected to Pinterest) redirects the user to the Pinterest Photo Service (which is the Resource Server, as it has access to the images the user is trying to print). This is the authorization request.
 2. The user logs in (since Pinterest needs to know who they are) to the Pinterest Login Service (also called an Authorization Server).
 3. As part of the login process, the Authorization Server asks the user to give access to a third-party application. 
-4. If the user agrees and grants permissions the printing website asks for, the Authorization Server endpoint sends an authorization code to the Printing Website.
+4. If the user agrees and grants permissions the printing website asks for, the Authorization Server endpoint sends an authorization code to the Printing Website to an endpoint. This endpoint is often called a redirect URI or a callback URL.
 5. The Printing Website uses this authorization code, and credentials previously issued by Pinterest, which are tied to the application, to get an access token from the Authorization Server. The Authorization Server is presented with both the authorization code, which represents the choices the user made, and the application credentials. It verifies both of these and generates an access token.
 6. The Printing Website receives the access token and stores it safely.
 7. The Printing Website sends the access token to the Pinterest Resource Server with a request for the images.
