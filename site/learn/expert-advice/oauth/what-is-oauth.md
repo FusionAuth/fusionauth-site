@@ -93,7 +93,7 @@ You can [learn more about various grants](/learn/expert-advice/oauth/complete-li
 
 Programs use access tokens to make requests on a user's behalf. As mentioned above, the access token denotes a particular application's permission to access certain elements of a user's data.
 
-Access tokens are, per the specification, opaque to the Client. While some Authorization Servers generate access tokens that have internal structure, such as JSON Web Tokens (JWT), others do not.
+Access tokens are, per the specification, opaque to the Client. While some Authorization Servers generate access tokens that have internal structure, such as JSON Web Tokens (JWTs), others do not.
 
 Access tokens must be kept private, both in transit and at rest. Passing the token through non-encrypted channels makes it easier for replay attacks which is why it’s recommended for OAuth2 flows to always use TLS.
 
