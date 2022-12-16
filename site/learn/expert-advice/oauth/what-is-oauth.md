@@ -13,7 +13,7 @@ Open Authorization (OAuth) is an open, standardized protocol for internet token-
 
 First, an authorization flow is used to authenticate and authorize a third-party service. After that, an access token is generated and shared with the third-party service which allows specific information to be accessed. Passwords are never shared because OAuth lets you authorize an application to communicate with another on your behalf.
 
-Instead of passing authentication data between customers and service providers, an OAuth token is provided. Therefore, developers get access to end-user data in a more secure manner. In this article, you’ll learn how OAuth works, how versions 1 and 2 differ, and why you should use OAuth2 instead of your own authorization solution. 
+Instead of passing authentication data between customers and service providers, an OAuth token is provided. Therefore, developers get access to end-user data in a more secure manner. In this article, you’ll learn how OAuth works, how versions 1 and 2 differ, and why you should use OAuth instead of your own authorization solution. 
 
 ## Why OAuth
 
