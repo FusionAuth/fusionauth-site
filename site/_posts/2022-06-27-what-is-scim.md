@@ -5,7 +5,7 @@ description: What is SCIM and why would you use it?
 author: Dan Moore
 image: blogs/what-is-scim/what-is-scim.png
 category: blog
-tags: feature-scim
+tags: topic-scim
 excerpt_separator: "<!--more-->"
 ---
 
