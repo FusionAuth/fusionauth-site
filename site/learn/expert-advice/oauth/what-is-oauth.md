@@ -57,7 +57,7 @@ Here are the steps:
 
 In these steps, the user never shares their credentials with the third-party app. Instead the app gains access based on interactions with the Authorization Server, but that Authorization Server is what confirms the user's identity. 
 
-OAuth 2.0 isn't the first authentication/authorization mechanism to act on behalf of the user. Many authentication systems, including [Kerberos](https://web.mit.edu/kerberos/), operate in the same way. However OAuth2 is unique because its delegated authorization framework is the first to be widely accepted and to function across the web.
+OAuth 2.0 isn't the first authentication/authorization mechanism to act on behalf of the user. Many authentication systems, including [Kerberos](https://web.mit.edu/kerberos/), operate in the same way. However OAuth 2.0 is unique because its delegated authorization framework is the first to be widely accepted and to function across the web.
 
 ### Additional OAuth 2.0 Concepts
 
