@@ -172,7 +172,7 @@ In this article, you looked at what OAuth2 is, key concepts, an example grant, w
 
 ## Additional Resources
 
-For practical steps to implement Oauth 2.0 with different Javascript frameworks, see these tutorials: 
+For practical steps to implement OAuth 2.0 with different Javascript frameworks, see these tutorials: 
 * [OAuth and Angular] (https://fusionauth.io/blog/2020/03/31/how-to-securely-implement-oauth-angular )
 * [OAuth and React] (https://fusionauth.io/blog/2021/11/11/how-to-authenticate-your-react-app)
 * [OAuth and VueJS] (https://fusionauth.io/blog/2020/08/06/securely-implement-oauth-vuejs)
