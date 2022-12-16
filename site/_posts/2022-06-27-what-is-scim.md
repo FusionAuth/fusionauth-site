@@ -18,7 +18,7 @@ Now, as of version 1.36, FusionAuth can consume SCIM requests and act as the pro
 But this post isn't about FusionAuth's support; rather it is about what SCIM is and why you might want to use it.
 
 ## What does SCIM mean?
-SCIM stands for System for Cross-domain Identity Management. It was created in 2011 as SCIM 1.0 by the Open Web Foundation. The current standard, SCIM 2.0 was released in 2015 as an [Internet Engineering Task Force (IETF) RFC](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1). 
+SCIM stands for System for Cross-domain Identity Management. It was created in 2011 as SCIM 1.0 by the Open Web Foundation. The current standard, SCIM 2.0 was released in 2015 as an [Internet Engineering Task Force (IETF) RFC](https://datatracker.ietf.org/doc/html/rfc7643). 
 
 ## How does SCIM provisioning work?
 
