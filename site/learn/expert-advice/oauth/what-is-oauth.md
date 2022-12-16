@@ -23,7 +23,7 @@ Before authentication and authorization with OAuth was available, websites would
 
 This article will focus on OAuth 2.0, the second version of OAuth, though below we do cover differences between the versions.
 
-With the help of OAuth 2.0, a token, which has a limited lifetime, provides that desired limited access. Connecting multiple applications is easier for users. It is also more secure since user credentials are not shared. Auth is also easier for developers to manage because they only need to integrate OAuth 2.0 in their application instead of having their own database to store users' sensitive information.
+When using OAuth 2.0, a token, which has a limited lifetime, provides that desired limited access. Connecting multiple applications is easier for users. It is also more secure since user credentials are not shared. Auth is also easier for developers to manage because they only need to integrate OAuth 2.0 in their application instead of having their own database to store users' sensitive information.
 
 Often there is confusion between OAuth and SAML. SAML is primarily an authentication system, while OAuth is an authorization system. Authentication is about confirming the user’s identity. Authorization is about deciding what services they can access. A detailed comparison is [found here](https://fusionauth.io/learn/expert-advice/oauth/saml-vs-oauth) . 
 
