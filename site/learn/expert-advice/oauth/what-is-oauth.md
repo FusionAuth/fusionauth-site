@@ -134,7 +134,7 @@ This led to significant differences between the two versions, including:
 OAuth2 has a different security profile than OAuth1 because it’s more transport dependent, flexible, and less prescriptive. The developers of OAuth2 focused on making it interoperable and versatile across sites and devices. They also included token expiration. Many of the original creators and supporters of OAuth1, regardless of their intentions, refused to accept version 2 because:
 
 * The second version is incompatible. The developers intended for OAuth2 to replace OAuth1 everywhere. 
-* OAuth2 doesn’t explicitly specify or enable encryption, signatures, client verification, or channel binding (tying a particular session or transaction to another particular client and server). Instead, it requires implementers to deliver those functionalities via external security protocols like TLS. In OAuth2 1 each message was individually signed.
+* OAuth2 doesn’t explicitly specify or enable encryption, signatures, client verification, or channel binding (tying a particular session or transaction to another particular client and server). Instead, it requires implementers to deliver those functionalities via external security protocols like TLS. In OAuth 1.0 each message was individually signed.
 * OAuth2 uses bearer tokens, which makes it easier to integrate but less secure. There are efforts to introduce proof of possession/token binding to OAuth2, such as MTLS and DPoP.
 
 ### OAuth 2.0 Best Practices
