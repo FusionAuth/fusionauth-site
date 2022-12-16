@@ -9,7 +9,7 @@ date: 2022-01-27
 dateModified: 2022-01-27
 ---
 
-Open Authorization (OAuth) is an open, standardized protocol for internet token-based authorization. OAuth allows services, like Facebook and Google or your own, to manage access to an end user's account information without disclosing the user's credentials. 
+Open Authorization (OAuth) is an open, standardized protocol for internet token-based authorization. The current version, OAuth2.0, allows services, like Facebook and Google or your own, to manage access to an end user's account information without disclosing the user's credentials. 
 
 First, an authorization flow is used to authenticate and authorize a third-party service. After that, an access token is generated and shared with the third-party service which allows specific information to be accessed. Passwords are never shared because OAuth lets you authorize an application to communicate with another on your behalf.
 
