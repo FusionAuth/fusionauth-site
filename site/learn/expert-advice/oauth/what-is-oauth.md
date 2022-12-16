@@ -25,7 +25,7 @@ This article will focus on OAuth 2.0, the second version of OAuth, though below 
 
 With the help of OAuth 2.0, a token, which has a limited lifetime, provides that desired limited access. Connecting multiple applications is easier for users. It is also more secure since user credentials are not shared. Auth is also easier for developers to manage because they only need to integrate OAuth 2.0 in their application instead of having their own database to store users' sensitive information.
 
-Often there is confusion between Oauth and SAML. SAML is primarily an authentication system, while OAuth is an authorization system. Authentication is about confirming the user’s identity. Authorization is about deciding what services they can access, as [described here](https://fusionauth.io/learn/expert-advice/oauth/saml-vs-oauth) . 
+Often there is confusion between OAuth and SAML. SAML is primarily an authentication system, while OAuth is an authorization system. Authentication is about confirming the user’s identity. Authorization is about deciding what services they can access. A detailed comparison is [found here](https://fusionauth.io/learn/expert-advice/oauth/saml-vs-oauth) . 
 
 
 ## How OAuth2 Works
@@ -34,7 +34,7 @@ Usually, OAuth2 is involved when a user (also called the Resource Owner) is prov
 
 If you wanted to print images from your Pinterest account without downloading the images and uploading them again to a printing website, and without sharing your Pinterest username and password with the printing website, you could authorize the printing website to have read-only access to your Pinterest photos.
 
-You can do this using OAuth2. Here's a diagram of the grant, which is explained further below:
+You can do this using OAuth 2.0. Here's a diagram of the grant, which is explained further below:
 
 {% plantuml source: _diagrams/learn/expert-advice/oauth/what-is-oauth-authorization-code-grant.plantuml, alt: "Example of the Authorization Code grant" %}
 
@@ -49,7 +49,7 @@ Here are the steps:
 1. The Printing Website (the Client and a third party app, unconnected to Pinterest) redirects the user to the Pinterest Photo Service (which is the Resource Server, as it has access to the images the user is trying to print). 
 2. The user logs in (since Pinterest needs to know who they are) to the Pinterest Login Service (also called an Authorization Server).
 3. As part of the login process, the Authorization Server asks the user to give access to a third-party application. 
-4. If the user agrees and grants permissions the printing website asks for, the Authorization Server sends an authorization code to the Printing Website.
+4. If the user agrees and grants permissions the printing website asks for, the Authorization Server endpoint sends an authorization code to the Printing Website.
 5. The Printing Website uses this authorization code, and credentials previously issued by Pinterest, which are tied to the application, to get an access token from the Authorization Server. The Authorization Server is presented with both the authorization code, which represents the choices the user made, and the application credentials. It verifies both of these and generates an access token.
 6. The Printing Website receives the access token and stores it safely.
 7. The Printing Website sends the access token to the Pinterest Resource Server with a request for the images.
@@ -57,9 +57,9 @@ Here are the steps:
 
 In these steps, the user never shares their credentials with the third-party app. Instead the app gains access based on interactions with the Authorization Server, but that Authorization Server is what confirms the user's identity. 
 
-OAuth2 isn't the first authentication/authorization mechanism to act on behalf of the user. Many authentication systems, including [Kerberos](https://web.mit.edu/kerberos/), operate in the same way. However OAuth2 is unique because its delegated authorization framework is the first to be widely accepted and to function across the web.
+OAuth 2.0 isn't the first authentication/authorization mechanism to act on behalf of the user. Many authentication systems, including [Kerberos](https://web.mit.edu/kerberos/), operate in the same way. However OAuth2 is unique because its delegated authorization framework is the first to be widely accepted and to function across the web.
 
-### Additional OAuth2 Concepts
+### Additional OAuth 2.0 Concepts
 
 The authorization process consists of several parties, including the Resource Owner, the Resource Server, the Authorization Server, and the Client. As mentioned before, the third-party application obtains tokens from the Authorization Server and uses these tokens to access the resources held by the Resource Server. Like any other technical topic, there are common concepts and jargon worth knowing. These include: 
 
@@ -93,13 +93,13 @@ You can [learn more about various grants](/learn/expert-advice/oauth/complete-li
 
 Programs use access tokens to make requests on a user's behalf. As mentioned above, the access token denotes a particular application's permission to access certain elements of a user's data.
 
-Access tokens are, per the specification, opaque to the Client. While some Authorization Servers generate access tokens that have internal structure, such as JSON Web Tokens, others do not.
+Access tokens are, per the specification, opaque to the Client. While some Authorization Servers generate access tokens that have internal structure, such as JSON Web Tokens (JWT), others do not.
 
 Access tokens must be kept private, both in transit and at rest. Passing the token through non-encrypted channels makes it easier for replay attacks which is why it’s recommended for OAuth2 flows to always use TLS.
 
 #### Client Ids
 
-OAuth2 typically requires static, out of band initial configuration. For example, before an application can call the GMail API to retrieve contact information on behalf of a user, it must first receive approval from Google. This process is called "Client Registration" and can be done manually or, in certain circumstances, programmatically.
+OAuth 2.0 typically requires static, out of band initial configuration. For example, before an application can call the GMail API to retrieve contact information on behalf of a user, it must first receive approval from Google. This process is called "Client Registration" and can be done manually or, in certain circumstances, programmatically.
 
 During Client registration, the third party application provides information like the client type, a redirect URL where the authorization code can be sent, and other related information including a website and description. The Authorization Server then generates a client Id and a client secret.
 
@@ -114,9 +114,9 @@ As a developer, advantages of integrating OAuth2 into your application include:
 * Providing consumers with more control over their data by using scopes to authorize access to certain capabilities on a case-by-case basis.
 * Isolating all authentication processing, allowing for additional security methods such as MFA to be implemented without affecting any application.
 
-## How OAuth2 Differs from OAuth1
+## How OAuth 2.0 Differs from OAuth 1.0
 
-OAuth2 is the second version of OAuth, and is incompatible with the first version. OAuth2 is a complete rewrite of the protocol, which made the two versions suitable for different needs. OAuth1 is rarely seen in the wild, apart from [Twitter's API](https://developer.twitter.com/en/docs/authentication/overview).
+OAuth 2.0 is the second version of OAuth, and is incompatible with the first version. OAuth 2.0 is a complete rewrite of the protocol, which made the two versions suitable for different needs. OAuth1 is rarely seen in the wild, apart from [Twitter's API](https://developer.twitter.com/en/docs/authentication/overview).
 
 OAuth1 was written based on Flickr’s authorization API and Google’s AuthSub. However, challenges arose and paved the way for another version. The developers of the second version wanted to address the following issues present in OAuth1:
 
@@ -137,7 +137,7 @@ OAuth2 has a different security profile than OAuth1 because it’s more transpor
 * OAuth2 doesn’t explicitly specify or enable encryption, signatures, client verification, or channel binding (tying a particular session or transaction to another particular client and server). Instead, it requires implementers to deliver those functionalities via external security protocols like TLS. In OAuth2 1 each message was individually signed.
 * OAuth2 uses bearer tokens, which makes it easier to integrate but less secure. There are efforts to introduce proof of possession/token binding to OAuth2, such as MTLS and DPoP.
 
-### OAuth2 Best Practices
+### OAuth 2.0 Best Practices
 
 According to the [OAuth2 Security Best Current Practice](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics), the Implicit Grant is not recommended as it is vulnerable to access token leaks. Many individuals have attempted to abuse OAuth2 across applications, so it’s important to follow basic web security rules as well.
 
@@ -149,7 +149,7 @@ For example, to maintain the integrity of any OAuth2 grant:
 * Secrets should never be exposed. For example, don’t include a client secret in a mobile application. 
 * Store all access tokens securely, since they are bearer tokens and if stolen, can be misused.
 
-## OAuth2 is Not an Authentication Protocol
+## OAuth 2.0 is Not an Authentication Protocol
 
 OAuth2 is an authorization framework, not an authentication protocol. Your authorization policy decisions are decoupled from authentication using OAuth2.
 
@@ -157,7 +157,7 @@ Even though authentication is critical to every grant, the access token itself d
 
 You can use [OpenID Connect](https://openid.net/connect/) to extend OAuth2 for authentication scenarios, where you need to know who is requesting access, rather than whether an entity has access to a protected resource. Most OAuth2 servers support OIDC, and it supports many of the same grants with additional scopes. 
 
-## Benefits of Using OAuth2 Instead of Your Own Solution
+## Benefits of Using OAuth 2.0 Instead of Your Own Solution
 
 OAuth2 provides you with technical advantages such as a central choke point to manage, limit and control access to services.
 With OAuth2, you have the benefits of a standard as well. This includes a team of experts working to push the standard forward in terms of functionality and security, a wide set of libraries that work with the standard, and a population of developers who understand the protocol. Compare that to a homegrown authorization protocol, which has none of these advantages.
@@ -170,4 +170,9 @@ OAuth2 is a delegated access authorization system designed for services and user
 
 In this article, you looked at what OAuth2 is, key concepts, an example grant, what problems OAuth2 solves, how it contrasts with OAuth1, and why you might use it rather than creating your own authentication solution.
 
+## Additional Resources
 
+For practical steps to implement Oauth 2.0 with different Javascript frameworks, see these tutorials: 
+* [OAuth and Angular] (https://fusionauth.io/blog/2020/03/31/how-to-securely-implement-oauth-angular )
+* [OAuth and React] (https://fusionauth.io/blog/2021/11/11/how-to-authenticate-your-react-app)
+* [OAuth and VueJS] (https://fusionauth.io/blog/2020/08/06/securely-implement-oauth-vuejs)
