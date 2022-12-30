@@ -113,6 +113,9 @@ def make_api_path(type)
 
   if type.end_with? "identity-provider"
     idp_type = type.gsub("-identity-provider","")
+    if idp_type == "samlv2-id-p-initiated"
+      idp_type = "samlv2-idp-initiated"
+    end
     return base + "identity-providers/" + idp_type
   end
 
