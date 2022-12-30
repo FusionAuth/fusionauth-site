@@ -331,6 +331,15 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
           end
         end
         unless file
+	  # this is a weird one, it is a inner class but on a supertype
+          if options[:verbose]
+            puts "handling special case of Identity Provider lambda config"
+          end
+	  if field_type =="LambdaConfiguration" && ancestor_type.end_with?("IdentityProvider")
+            file = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.provider.BaseIdentityProvider$LambdaConfiguration.json")[0]
+	  end
+        end
+        unless file
           if options[:verbose]
             puts "no inner class found, looking for all other classes, but avoiding other inner classes"
           end
