@@ -27,6 +27,8 @@ IGNORED_FIELD_REGEXPS = [
   /^theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
   /^event\.info\.location\.displayString/, # this is a derived field
   /^event\.ipAddress/, # this is a deprecated field
+  /^identityProvider\.issuer/, # this is a deprecated field
+  /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/master/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
 ]
 # option handling
 options = {}
@@ -109,6 +111,11 @@ def make_api_path(type)
     return base + "identity-providers/links"
   end
 
+  if type.end_with? "identity-provider"
+    idp_type = type.gsub("-identity-provider","")
+    return base + "identity-providers/" + idp_type
+  end
+
   if type == "generic-connector-configuration"
     return base + "connectors/generic"
   end
@@ -145,6 +152,11 @@ def make_on_page_field_name(type)
   if type == "entityGrant"
     return "grant"
   end
+
+  if type.end_with? "IdentityProvider"
+    return "identityProvider"
+  end
+
   if type == "ldapConnectorConfiguration"
     return "connector"
   end
