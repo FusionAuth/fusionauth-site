@@ -208,9 +208,26 @@ def downcase(string)
 end
 
 def skip_file(fn) 
+
+  # this is a super class of user. we don't have an explicit API for it, though
   if fn.end_with? "io.fusionauth.domain.SecureIdentity.json"
     return true
   end
+
+  # these are webauthn implementation details, no APIs to manage them directly
+  if fn.end_with? "io.fusionauth.domain.webauthn.PublicKeyCredentialEntity.json"
+    return true
+  end
+  
+  if fn.end_with? "io.fusionauth.domain.webauthn.PublicKeyCredentialRelyingPartyEntity.json"
+    return true
+  end
+  if fn.end_with? "io.fusionauth.domain.webauthn.PublicKeyCredentialUserEntity.json"
+    return true
+  end
+
+  # above are webauthn implementation details, no APIs to manage them directly
+
   return false
 end
 
