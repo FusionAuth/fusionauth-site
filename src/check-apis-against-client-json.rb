@@ -207,6 +207,12 @@ def downcase(string)
   dcs
 end
 
+def skip_file(fn) 
+  if fn.end_with? "io.fusionauth.domain.SecureIdentity.json"
+    return true
+  end
+  return false
+end
 
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
@@ -244,8 +250,16 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   if options[:verbose]
     puts "processing " + t
   end
+
+  if skip_file(fn)
+    if options[:verbose]
+      puts "skipping " + fn
+    end
+    return
+  end
+
   unless page_content
-    # we are in leaf object, we don't need to pull the page content
+    # if we are in leaf object, we don't need to pull the page content
     api_url = options[:siteurl] + "/docs/v1/tech/"+make_api_path(todash(t))
     if options[:verbose]
       puts "retrieving " + api_url
