@@ -5,6 +5,7 @@ description: In this tutorial, we'll build a basic Spring web application using 
 author: Bradley Van Aardt
 category: blog
 tags: tutorial tutorial-spring tutorial-java
+image: blogs/spring-fusionauth/authentication-spring-boot-oidc.png
 excerpt_separator: "<!--more-->"
 ---
 
@@ -12,7 +13,7 @@ In this tutorial, we'll build a basic Java and [Spring](https://spring.io) web a
 
 <!--more-->
 
-The application itself is very simple: It will let users sign up via FusionAuth and give them access to a "secret" area where their FusionAuth profile is displayed to them via OpenID Connect (OIDC). With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-java-spring).
+The application itself is very simple: It will let users sign up via FusionAuth and give them access to a "secret" area where their FusionAuth profile is displayed to them via OpenID Connect (OIDC). With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can, as always, [skip ahead and view/run the code](https://github.com/fusionauth/fusionauth-example-java-spring).
 
 ## Prerequisites
 
@@ -347,7 +348,7 @@ After registering with your email, a password, and name, you should be redirecte
 
 ## Where to next with Spring and FusionAuth?
 
-That’s the basics of our Spring and FusionAuth app. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-java-spring).
+That’s the basics of our Spring and FusionAuth app. The app has a fully featured authentication system, without the hassle and possible risks of implementing all of that code ourselves. A complete code example is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-java-spring).
 
 Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, centralized user profiles, and general security with just a little configuration code leaves a lot more time for your application's more useful and critical features.
 
