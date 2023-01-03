@@ -69,16 +69,17 @@ We'll skip step **#3** in this tutorial, but sending emails (to verify email add
 Click "Setup" under "Missing Application" and call your new app "Spring Example" or another name of your choice. It'll get a Client Id and Client Secret automatically—save these, as we'll use them in the code. Later, we'll set up a Java and Spring application that will run on `http://localhost:8080`, so configure the Authorized URLs accordingly. You should add:
 
 - `http://localhost:8080/login/oauth2/code/fusionauth` to the Authorized redirect URLs.
-- `http://localhost:8080/` to the Authorized request origin URL.
 - `http://localhost:8080/logout` to the Logout URL.
   
 {% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
-To enable self-service registrations, select the "Registration" tab. Scroll down to "Self-service registration", and switch "Enabled" on. Choose "Basic" as the registration type. You can choose the login type as either "Email" or "Username" - we've used "Email" for this tutorial. You can also select any other fields you'd like to capture on registration - we've left them off. Your setup should look similar to this:
+To enable self-service registrations, select the "Registration" tab. Scroll down to "Self-service registration", and switch "Enabled" on. Choose "Basic" as the registration type. You can choose the login type as either "Email" or "Username" - we've used "Email" for this tutorial. Ensure you enable "Full name". You may even want to require it, as the Spring code further on expects this field to be present on your user.
+
+You can also select any other fields you'd like to capture on registration - we've left them off. Your setup should look similar to this:
 
 {% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-registration-settings.png" alt="Configuring the registration options in FusionAuth" class="img-fluid" figure=false %}
 
-Click the Save button at the top right for your changes to take effect.
+Click the "Save" button at the top right for your changes to take effect.
 
 ## Setting up OpenID Connect (OIDC)
 
