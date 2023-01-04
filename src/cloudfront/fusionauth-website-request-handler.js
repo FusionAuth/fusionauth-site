@@ -180,7 +180,7 @@ function handler(event) {
 }
 
 function removeSlash(uri) {
-  return indexPages[uri] !== true && !uri.startsWith('/blog/page');
+  return indexPages[uri] !== true && !uri.startsWith('/blog/page') && !uri.startsWith('/blog/archive');;
 }
 
 function calculateRedirect(uri) {

@@ -154,6 +154,9 @@ include::docs/v1/tech/shared/_securing_http_requests.adoc[]
 == Performance Considerations
 
 Enabled Connectors are in the critical path of the login experience and therefore should have low latency.
+
+Set a low timeout; under one second is ideal. Increasing the timeout can result in resource starvation in FusionAuth, as more and more resources are spent on slow requests.
+
 Here are some things to do to improve performance of your Generic Connector.
 
 === Network Connection
@@ -173,10 +176,14 @@ However, neither timeout prevents the HTTP request from taking as long as it nee
 If a Connector is not correctly terminating the HTTP response or taking an excessive time to process the login request, then this can cause issues under load.
 
 You can avoid issues by having your API endpoint write login data and completely close the connection as quickly as possible.
-You can load test your Connector using [FusionAuth's load testing framework](/docs/v1/tech/admin-guide/monitor#load-testing) or any other HTTP based load testing framework.
+You can load test your Connector using link:/docs/v1/tech/admin-guide/monitor#load-testing[FusionAuth's load testing framework] or any other HTTP based load testing framework.
 Additionally, ensure the API endpoint is sized correctly and not starved of resources.
 You should return the appropriate status code and data as quickly as possible.
 Using the correct status code for each response ensures that FusionAuth handles the response appropriately.
+
+=== Add Database Indices
+
+If you are querying a database to determine whether a user can authenticate, use database tooling such as `explain plan` and make sure that appropriate indices have been added.
 
 === Disable Logging
 
@@ -184,3 +191,14 @@ Turning on the Connector's [field]#Debug Enabled# field during development is us
 However, once you deploy a Connector to production, enable debugging only when troubleshooting.
 Debugging writes to the [breadcrumb]#System -> Event Log# and this causes additional load on the database.
 
+=== Perform Optional Actions Out Of Band
+
+Your connector may need to do certain other tasks after a successful login occurs. This could include calling APIs or sending messages. If these actions don't affect the result of the authentication, have these take place after a response has been sent to FusionAuth.
+
+One way to accomplish this is to use a queue to store relevant data, which can then be read later by a different process.
+
+=== Load Test
+
+You can load test your connector using a staging environment and the link:/docs/v1/tech/apis/login[Login API]. Configure the tenant to use your connector, create users in your system, and use a load testing tool to make repeated login requests of FusionAuth through your connector.
+
+link:/docs/v1/tech/admin-guide/monitor#load-testing[Here's more about load testing FusionAuth].
