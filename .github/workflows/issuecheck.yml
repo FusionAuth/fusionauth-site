@@ -21,11 +21,19 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-      - uses: ruby/setup-ruby@v1
+      - uses: octokit/request-action@v2.x
+        id: get_issue_status
         with:
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-      - name: Check APIs for completeness against client libs
+          route: GET /repos/{owner}/{repo}/issues/{issue_number}
+          owner: fusionauth
+          repo: fusionauth-issues
+          issue_number: issue_number
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: "echo issue status: ${{ steps.get_issue_status.outputs.data.state }}"
+#https://github.com/octokit/request-action
+      - name: Check for issues in docs.
         run: |
-          git clone https://github.com/fusionauth/fusionauth-client-builder
-          src/check-apis-against-client-json.rb -f $PWD/src/.checkapis.yaml -c $PWD/fusionauth-client-builder -v
+          egrep -Ri 'github.com/fusionauth/fusionauth-issues/issues/[0-9]+' docs |grep -v release-notes |sed 's!.*issues/!!'| sed 's/\[.*//'|sed 's![^0-9]!!g'|sort -u > list.issues
+          
         shell: bash
