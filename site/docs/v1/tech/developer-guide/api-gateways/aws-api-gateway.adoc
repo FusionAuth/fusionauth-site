@@ -9,9 +9,9 @@ navcategory: developer
 
 Amazon API Gateway is an AWS service for creating, publishing, maintaining, monitoring, and securing REST, HTTP, and WebSocket APIs at any scale. You can create APIs to AWS services or other web services
 
-You can configure Amazon API Gateway to handle connections to the resource, and then configure it to delegate authentication to FusionAuth. This is done with what is called the OIDC module.
+You can configure Amazon API Gateway to handle authentication and authorization to the resource through JSON Web Tokens (JWTs) issued on behalf of a user by an identity provider.
 
-In this document, you'll learn how to set up Amazon API Gateway and FusionAuth to protect a static site running on your computer.
+In this document, you'll learn how to set up Amazon API Gateway and FusionAuth as the identity provider to protect a lambda function running on your AWS cloud instance.
 
 == Prerequisites
 
@@ -22,7 +22,7 @@ In this document, you'll learn how to set up Amazon API Gateway and FusionAuth t
 
 Navigate to your FusionAuth instance.
 
-First, you need to make sure the JWT issuer setting is correct. Navigate to [breadcrumb]#Tenants -> Your Tenant# and change the issuer to the URL of your FusionAuth instance. For example, `\https://local.fusionauth.io`.
+First, you need to make sure the JWT issuer setting is correct. Navigate to [breadcrumb]#Tenants -> Your Tenant# and change the issuer to the URL of your FusionAuth instance. For example, `\https://local.fusionauth.io`. Record this value, as we'll set it in the AWS Gateway API Authorizor later. 
 
 Next, you need to configure an application which will issue tokens to access the Amazon API Gateway project.
 
@@ -36,11 +36,85 @@ image::api-gateways/ngrok-cloud-edge/application-configuration.png[The FusionAut
 
 Click the `Save` button.
 
-Edit the new application. You should see values in the [field]#Client Id# field. Copy them and put them in a text file. You'll use them in the <<Set Up Amazon API Gateway>> step.
+Edit the new application. You should see a value in the [field]#Client Id# field. Copy it and put it in a text file. You'll use it in the <<Set Up Amazon API Gateway>> step.
 
 image::api-gateways/ngrok-cloud-edge/application-client-id-client-secret.png[Extracting the Client Id and secret,width=1200]
 
-Now, open up a new tab. Next, you are going to set up ngrok Cloud Edge.
+
+== Set Up AWS Gateway
+
+Navigate to your [AWS Console](https://aws.amazon.com), or create an [AWS account](https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-creating.html) if you haven't got one already.
+
+Search for "API Gateway" in the top bar, and click it. 
+
+image::api-gateways/aws-api-gateway/search-api-gateway.png[The AWS search for API Gateway,width=1200,role=bottom-cropped]
+
+Select "Build HTTP API" from the API type list. 
+
+image::api-gateways/aws-api-gateway/build-http-api.png[Choose HTTP API build,width=1200,role=bottom-cropped]
+
+Name the API. This is for your description only, so it can be anything. Then click Next.
+
+image::api-gateways/aws-api-gateway/name-api.png[Name the HTTP API build,width=1200,role=bottom-cropped]
+
+On the "Routes" page, click Next without setting anything. We'll add the route via the Lambda function we'll create in a bit.
+
+On the "Stages" page, click Next, leaving the defaults.
+
+Finally, click "Create" on the "Review" page. 
+
+A summary page for the API should appear. Copy the "Invoke URL" from the "$default" stage under the stages section. This will be the base URL for the API. We'll add a Lambda function next, which will give us a route to call. 
+
+=== Create a Lambda function to secure
+
+In the main top search bar, search for and select "Lambda". 
+
+Click "Create function" to create a new Lambda. Name the function "privateFunction", and leave all the other options as the defaults. Click "Create Function" at the bottom of the page. 
+
+image::api-gateways/aws-api-gateway/name-lambda.png[Name the Lambda,width=1200,role=bottom-cropped]
+
+Under the "Code" tab for the Lambda, click on the "index.mjs" file, and replace the contents with the following:
+
+```javascript
+    export const handler = async(event) => {
+
+    const claims = event.requestContext.authorizer.jwt.claims;
+    const response = {
+        statusCode: 200,
+        body: JSON.stringify(claims),
+    };
+    return response;
+};
+```
+Then click the "Deploy" button to update the Lambda. 
+
+Click the expander next to "Function overview" near the top of the page. Then click on "Add Trigger".
+
+Under "Trigger Configuration", choose "API Gateway" as the source. Select "Use an existing API", and then select the API Gateway, set up earlier, in the search box, and Select the "$default" stage. 
+
+Under "Security", choose "Create a JWT authorizor". 
+
+Set "Identity source" to `$request.header.Authorization`.
+
+Under "Issuer", set the URL to be the same as you set in FusionAuth for the JWT issuer in the Tenant configuration. Make sure that it is exactly the same, including trailing slashes etc.
+
+Under "Audiences", paste in the "Client ID" from the FusionAuth application created earlier.
+
+Then click the primary "Add" button at the bottom right of the screen. 
+
+After completing this, a new route will be added onto your Gateway API, with the same name as the Lambda, "privateFunction" here. Concat this name with the "Invoke URL" recorded earlier when setting up the API Gateway to get the full url. It should look similar in form to this: `https://w3miabt10d.execute-api.us-east-2.amazonaws.com/privateFunction`. 
+
+If you call this route, through a browser or Postman or Curl, you should recieve a 401, and an "Unauthorized" message. We'll create a token next with FusionAuth to show how the route can be successfully called. 
+
+== Creating a token from FusionAuth
+
+To access the the secured Lambda function, we'll need to get a valid token from FusionAuth. Normally, your front end app would redirect a user to FusionAuth to login, obtain a code, and then exchange that code for a token, using a framework of your choice. For the purposes of this guide, we'll call the FusionAuth API on behalf of a user to create a token directly. 
+
+To enable this, there are a few settings that need to be changed on FusionAuth. In the side panel in FusionAuth, select "Settings > API Keys". Click the green "+" button at the top left to create a new key. 
+
+Give the key a meaningful description, like "API Gateway Key". Select the Tenant that you created the FusionAuth application under (normally "Default").  
+
+Then, under "Endpoints", select "Get"
 
 == Set Up ngrok Cloud Edge
 
