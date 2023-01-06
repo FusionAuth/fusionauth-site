@@ -4,8 +4,8 @@ title: Readymag chose FusionAuth because of the well-structured API, Typescript 
 description: Readymag, a browser-based design tool that helps create websites, portfolios and online publications uses FusionAuth because of its clear structure, reasonable update policies and support.
 author: Dan Moore
 image: blogs/readymag-apis-typescript-support/readymag-chose-fusionauth-because-of-the-well-structured-api-typescript-sdk-and-helpful-support-header-image.png
-category: community-story
-tags: topic-community-story topic-upgrade-homegrown upgrade homegrown community-story apis
+category: blog
+tags: topic-community-story topic-upgrade-homegrown
 excerpt_separator: "<!--more-->"
 ---
 

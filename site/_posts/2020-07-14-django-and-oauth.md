@@ -4,9 +4,9 @@ title: Adding social sign in to your Django web application using OAuth
 description: In this tutorial, we'll build a basic Django web application using FusionAuth for an easier and safer way of handling user registration and authentication.
 author: Gareth Dwyer
 image: blogs/social-sign-in-django/headerimage.png
-category: tutorial
+category: blog
 updated_date: 2022-09-27
-tags: client-python tutorial tutorial-django tutorial-python python django
+tags: client-python tutorial tutorial-django tutorial-python
 excerpt_separator: "<!--more-->"
 ---
 

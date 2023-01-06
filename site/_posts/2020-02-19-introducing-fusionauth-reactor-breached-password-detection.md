@@ -4,8 +4,7 @@ title: Introducing FusionAuth Reactor™ with Breached Password Detection
 description: FusionAuth Version 1.15.0 introduces FusionAuth Reactor™ with Breached Password Detection. Ensure your users aren't using insecure passwords at login.
 author: Bryan Giese
 excerpt_separator: "<!--more-->"
-categories: features
-tags: breached-password-detection release-announcement
+categories: blog
 image: blogs/version-1-15-0-reactor-editions-2.png
 ---
 

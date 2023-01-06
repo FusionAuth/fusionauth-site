@@ -4,8 +4,8 @@ title: NextAuth, SSO with the Login API, and duplicate key errors
 description: Top highlights from the FusionAuth forum in May.
 author: Dan Moore
 image: blogs/may-2021-forum-highlights/nextauth-sso-with-the-login-api-and-duplicate-key-errors-header-image.png
-category: announcement
-tags: topic-forum-posts forum-posts sso single-sign-on
+category: blog
+tags: topic-forum-posts
 excerpt_separator: "<!--more-->"
 ---
 

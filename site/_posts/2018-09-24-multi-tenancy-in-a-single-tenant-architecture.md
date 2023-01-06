@@ -4,8 +4,8 @@ title: Multi-tenancy in a Single-tenant Architecture
 description: FusionAuth is a single-tenant solution that allows you to control multiple tenants within your instance.
 author: Daniel DeGroff
 image: blogs/multi-tenancy.png
-category: article
-tags: api-tenants tenants architecture
+category: blog
+tags: api-tenants
 excerpt_separator: "<!--more-->"
 ---
 

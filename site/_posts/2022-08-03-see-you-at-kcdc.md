@@ -4,8 +4,7 @@ title: FusionAuth is going to KCDC
 description: FusionAuth is going to KCDC Conference in Kansas. Stop by and see us!
 author: Dan Moore
 image: blogs/kcdc-2022/kcdc-2022.png
-category: announcement
-tags: conference kcdc
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

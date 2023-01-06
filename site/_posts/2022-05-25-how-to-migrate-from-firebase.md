@@ -4,8 +4,8 @@ title: How to migrate your user data from Google Firebase
 description: How can you migrate user data such as password hashes and social logins away from Google Firebase?
 author: Dan Moore
 image: blogs/migrate-from-firebase/migrating-user-data-off-google-firebase.png
-category: tutorial
-tags: topic-upgrade-firebase upgrade firebase migration
+category: blog
+tags: topic-upgrade-firebase
 excerpt_separator: "<!--more-->"
 ---
 

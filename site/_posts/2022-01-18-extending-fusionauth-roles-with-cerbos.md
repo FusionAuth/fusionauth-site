@@ -4,8 +4,8 @@ title: Extending FusionAuth roles with Cerbos
 description: Sometimes RBAC isn't enough and you need more fine-grained permissions. FusionAuth seamlessly integrates with Cerbos to provide that option.
 author: Dan Moore
 image: blogs/cerbos-authorization/extending-fusionauth-roles-with-cerbos-header-image.png
-category: tutorial
-tags: tutorial tutorial-integration authorization roles integration
+category: blog
+tags: tutorial tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
 

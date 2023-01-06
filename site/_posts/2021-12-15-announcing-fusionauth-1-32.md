@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.32
 description: This release includes custom email headers, identity provider link limits, and more.
 author: Dan Moore
 image: blogs/release-1-32/product-update-fusionauth-1-32.png
-category: announcement
-tags: topic-troubleshooting feature-advanced-threat-detection advanced-threat-detection identity-links email release-announcement
+category: blog
+tags: topic-troubleshooting feature-advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 

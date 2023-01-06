@@ -4,8 +4,8 @@ title: Authenticators, Ceremonies, and WebAuthn, oh my!
 description: A dive into WebAuthn terminology.
 author: Ikeh Aakinyemi
 image: blogs/webauthn-terminology/webauthn-terminology-header.png
-category: article
-tags: topic-webauthn webauthn 
+category: blog
+tags: topic-webauthn
 excerpt_separator: "<!--more-->"
 ---
 

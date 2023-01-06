@@ -4,8 +4,8 @@ title: Securing A Golang App with OAuth
 description: Golang lets you build web applications that are performant and easy to deploy. This tutorial will show you how to use OAuth to authenticate users in a golang application.
 author: Krissanawat Kaewsanmuang
 image: blogs/golang-oauth/securing-a-golang-app-with-oauth.png
-category: tutorial
-tags: client-go tutorial tutorial-go golang
+category: blog
+tags: client-go tutorial tutorial-go
 excerpt_separator: "<!--more-->"
 ---
 

@@ -4,8 +4,7 @@ title: Stop Storing My Plaintext Password
 description: DO NOT store passwords in plaintext! Learn how to protect your organizations passwords from potential hacking threats
 author: Brian Pontarelli
 image: blogs/plain-text-offender-cu.png
-category: article
-tags: passwords plain-text hashing
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

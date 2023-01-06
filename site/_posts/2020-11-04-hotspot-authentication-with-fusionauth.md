@@ -4,8 +4,8 @@ title: Controlling a hotspot with FusionAuth authentication
 description: Implement authentication and authorization using FusionAuth to allow web surfing at devices behind a firewall
 image: blogs/controlling-hotspot/controlling-a-hotspot-with-fusionauth-authentication.png
 author: Mauro Viola
-category: tutorial
-tags: client-python tutorial tutorial-python tutorial-integration python integration wifi-hotspot
+category: blog
+tags: client-python tutorial tutorial-python tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
 

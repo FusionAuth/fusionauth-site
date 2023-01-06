@@ -4,8 +4,7 @@ title: How to get the most out of a free auth provider trial
 description: When you are trialing auth software, how can you make most effective use of this time?
 author: Keanan Koppenhaver
 image: blogs/try-before-you-buy/how-to-get-the-most-out-of-a-free-auth-provider-trial-header-image.png
-category: article
-tags: free-trial poc proof-of-concept kicking-tires evaluation
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 When you're evaluating authentication providers, one of the main building blocks of any software product, you want to make sure you won't regret your choice a few months or years later. 

@@ -4,8 +4,8 @@ title: Jerry talks GDPR compliance, ARM images and paper manuals
 description: Community member Jerry Hopper discusses how he discovered FusionAuth and how it's helped him and his teams save development time and avoid authentication headaches.
 author: Dan Moore
 image: blogs/jerry-hopper-story/jerry-talks-gdpr-compliance-arm-images-and-paper-manuals.png
-category: community-story
-tags: topic-community-story community-story arm php
+category: blog
+tags: topic-customer-story
 excerpt_separator: "<!--more-->"
 ---
 

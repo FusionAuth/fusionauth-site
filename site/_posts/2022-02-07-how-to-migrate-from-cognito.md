@@ -4,8 +4,8 @@ title: How to migrate from Amazon Cognito
 description: How can you migrate away from Amazon Cognito?
 author: Dan Moore
 image: blogs/migrate-from-cognito/how-to-migrate-from-amazon-cognito-header-image.png
-category: tutorial
-tags: topic-upgrade-cognito upgrade cognito
+category: blog
+tags: topic-upgrade-cognito
 excerpt_separator: "<!--more-->"
 ---
 

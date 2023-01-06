@@ -4,8 +4,7 @@ title: FusionAuth 1.6 Adds SAML Support and More
 description: FusionAuth 1.6 adds SAML support, Lambdas and much more in this new release. Download and upgrade now!
 author: Daniel DeGroff
 image: blogs/fusionauth-1-6-saml-lambda.png
-category: announcement
-tags: saml release-announcement lambda email templates
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

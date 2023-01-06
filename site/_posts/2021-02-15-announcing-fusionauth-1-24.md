@@ -4,8 +4,7 @@ title: Announcing FusionAuth 1.24
 description: The FusionAuth 1.24 Release offers UX improvements and numerous bug fixes.
 author: Dan Moore
 image: blogs/release-1-24/product-update-fusionauth-1-24.png
-category: announcement
-tags: release-announcement
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

@@ -5,8 +5,7 @@ description: Compare FusionAuth and Keycloak for your identity and access manage
 author: Brian Pontarelli
 updated_date: 2022-05-19
 image: blogs/keycloak-fusionauth-comparison.jpg
-category: comparison
-tags: keycloak ciam
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

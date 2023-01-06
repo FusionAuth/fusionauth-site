@@ -4,8 +4,7 @@ title: We'll see you at CodeMash
 description: FusionAuth is going to CodeMash. Stop by and see us!
 author: Dan Moore
 image: blogs/fusionauth-codemash-2021/well-see-you-at-codemash-header-image.png
-category: announcement
-tags: conference codemash
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

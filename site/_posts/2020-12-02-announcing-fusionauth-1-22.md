@@ -4,8 +4,7 @@ title: Announcing FusionAuth 1.22
 description: The FusionAuth 1.22 Release offers Elasticsearch improvements and asynchronous tenant deletion
 author: Dan Moore
 image: blogs/release-1-22/product-update-fusionauth-1-22.png
-category: announcement
-tags: release-announcement elasticsearch tenants
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

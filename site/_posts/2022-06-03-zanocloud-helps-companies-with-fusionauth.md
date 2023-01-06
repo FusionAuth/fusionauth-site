@@ -4,8 +4,8 @@ title: ZanoCloud helps companies make the most of the cloud with FusionAuth
 description: ZanoCloud helps companies with a variety of problems and reaches for FusionAuth for their auth needs.
 author: Dan Moore
 image: blogs/zanocloud.png
-category: community-story
-tags: topic-community-story community-story cloud
+category: blog
+tags: topic-community-story 
 excerpt_separator: "<!--more-->"
 ---
 

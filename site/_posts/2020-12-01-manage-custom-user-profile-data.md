@@ -4,8 +4,8 @@ title: Manage custom user profile data in the FusionAuth admin
 description: Once you have custom user data in the FusionAuth system, how can you update it?
 image: blogs/custom-admin-registration-form/manage-custom-user-profile-data-in-th-fusionauth-admin.png
 author: Dan Moore
-category: tutorial
-tags: feature-advanced-registration-forms tutorial tutorial-feature tutorial-reactor-feature advanced-registration-forms forms
+category: blog
+tags: feature-advanced-registration-forms tutorial tutorial-feature tutorial-reactor-feature
 excerpt_separator: "<!--more-->"
 ---
 

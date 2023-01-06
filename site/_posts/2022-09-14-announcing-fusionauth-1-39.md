@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.39
 description: This release includes better support for JSON patch, SCIM, and locales, as well as bug fixes.
 author: Dan Moore
 image: blogs/release-1-39/fusionauth-1-39.png
-category: announcement
-tags: topic-l10n topic-scim localization scim release-announcement
+category: blog
+tags: topic-l10n topic-scim
 excerpt_separator: "<!--more-->"
 ---
 

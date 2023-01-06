@@ -4,8 +4,7 @@ title: User Data Security is a Breach
 description: User data security includes hardware, software, and human challenges. Use this guide with code examples to secure your system from hacks and exploits.
 author: Bryan Giese
 image: blogs/user-data-security-is-a-breach.png
-category: article
-tags: user-data-security user-data ciam
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

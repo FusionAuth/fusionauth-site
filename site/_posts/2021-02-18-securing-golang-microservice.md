@@ -4,8 +4,8 @@ title: Securing a Go Microservice with JWT
 description: How to use JWTs to secure your golang microservices
 author: Krissanawat Kaewsanmuang
 image: blogs/securing-golang-microservice-jwt/securing-a-go-microservice-with-jwt-header-image.png
-category: tutorial
-tags: client-go tutorial tutorial-go golang microservices
+category: blog
+tags: client-go tutorial tutorial-go
 excerpt_separator: "<!--more-->"
 ---
 

@@ -4,8 +4,8 @@ title: C# API calls, SMTP configuration and authentication
 description: Top highlights from the FusionAuth forum in March.
 author: Dan Moore
 image: blogs/mar-2021-forum-highlights/forum-highlights-c-sharp-api-calls-smtp-configuration-and-authentication-header-image.png
-category: announcement
-tags: topic-forum-posts client-netcore forum-posts netcore dotnet
+category: blog
+tags: topic-forum-posts client-netcore
 excerpt_separator: "<!--more-->"
 ---
 

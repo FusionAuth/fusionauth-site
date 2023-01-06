@@ -4,8 +4,8 @@ title: FusionAuth Advanced MFA Gives Developers Flexibility, Control in Deployin
 description: With FusionAuth Advanced MFA, developers can layer in different authentication factors such as TOTP, multiple phone numbers or email addresses, step up authentication, applications and even new factors as they are introduced to the market.
 author: David Polstra
 image: blogs/advanced-mfa-launch/press-release-fusionauth-advanced-mfa-gives-developers-flexibility-control-in-deploying-authentication-factors-header-image.png
-category: announcement
-tags: topic-feature-mfa topic-press-release press-release mfa multi-factor-authentication
+category: blog
+tags: topic-feature-mfa topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

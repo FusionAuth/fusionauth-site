@@ -4,8 +4,7 @@ title: We'll see you at GDC
 description: FusionAuth is going to the 2022 Game Developers Conference. Stop by and see us!
 author: Dan Moore
 image: blogs/game-developers-conference/gdc.png
-category: announcement
-tags: conference game-developer-conference
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

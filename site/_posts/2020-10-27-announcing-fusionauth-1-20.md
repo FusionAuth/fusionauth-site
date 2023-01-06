@@ -4,8 +4,7 @@ title: Announcing FusionAuth 1.20
 description: The FusionAuth 1.20 Release offers more forms, SAML improvements, docker changes and more.
 author: Dan Moore
 image: blogs/release-1-20/product-update-fusionauth-1.20.png
-category: announcement
-tags: release-announcement saml docker forms
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

@@ -4,8 +4,8 @@ title: Cybanetix deployed on-prem FusionAuth as part of a PCI-DSS compliant solu
 description: FusionAuth offered Cybanetix the ability to unify the authentication and authorisation mechanisms across all customers' solutions and avoid locally managed credentials.
 author: Dan Moore
 image: blogs/cybanetix-fusionauth/cybanetix-deployed-on-prem-fusionauth-for-a-pci-dss-compliant-solution.png
-category: community-story
-tags: topic-community-story topic-upgrade-homegrown upgrade homegrown community-story
+category: blog
+tags: topic-community-story topic-upgrade-homegrown
 excerpt_separator: "<!--more-->"
 ---
 

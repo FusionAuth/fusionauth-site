@@ -3,8 +3,8 @@ layout: blog-post
 title: Adding sign in to your Spring web application using OIDC
 description: In this tutorial, we'll build a basic Spring web application using FusionAuth to handle login and registration.
 author: Bradley Van Aardt
-category: tutorial
-tags: tutorial tutorial-spring tutorial-java java spring oidc
+category: blog
+tags: tutorial tutorial-spring tutorial-java
 image: blogs/spring-fusionauth/authentication-spring-boot-oidc.png
 excerpt_separator: "<!--more-->"
 ---

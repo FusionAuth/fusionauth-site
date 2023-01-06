@@ -4,8 +4,7 @@ title: FusionAuth 1.4 Adds Self-Service Registration, TypeScript Client Library 
 description: FusionAuth 1.4 is now available adding Self-Service Registration, Typescript Client Library and more.
 author: Daniel DeGroff
 image: blogs/fusionauth-self-service-registration-typescript.jpg
-category: announcement
-tags: release-announcement typescript registration
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

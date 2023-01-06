@@ -4,8 +4,8 @@ title: FusionAuth Supports ARM Architecture; Makes Authorization Simple for Deve
 description: By working with ARM processors, FusionAuth supports additional use cases such as IoT and high-performance cloud platforms built on ARM-based architectures.
 author: David Polstra
 image: blogs/arm-architecture-support/fusionauth-supports-arm-architecture.png
-category: announcement
-tags: topic-press-release press-release arm-support arm
+category: blog
+tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

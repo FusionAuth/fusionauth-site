@@ -5,8 +5,7 @@ description: What are the ways you can migrate user data, and why should you pic
 author: Dan Moore
 image: blogs/approaches-user-migration/approaches-to-user-account-migration-header-image.png
 tags: topic-upgrade-auth0 topic-migrate
-category: article
-tags: migration upgrade user-account-migration
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

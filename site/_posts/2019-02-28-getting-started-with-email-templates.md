@@ -4,8 +4,7 @@ title: Getting Started with Email Templates in FusionAuth
 description: Emails should represent your brand, and FusionAuth's email templates help you do that with ease.
 author: Brian Pontarelli
 image: blogs/email-templates.png
-category: features
-tags: email templates
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

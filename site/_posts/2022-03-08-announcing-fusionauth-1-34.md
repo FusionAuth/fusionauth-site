@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.34
 description: This release includes security updates, a new password hash plugin and more.
 author: Dan Moore
 image: blogs/release-1-34/product-update-fusionauth-1-34.png
-category: announcement
-tags: topic-troubleshooting feature-advanced-threat-detection release-announcement advanced-threat-detection
+category: blog
+tags: tbd topic-troubleshooting feature-advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 

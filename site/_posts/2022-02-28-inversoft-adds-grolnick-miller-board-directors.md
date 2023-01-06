@@ -4,8 +4,8 @@ title: Inversoft Adds Andy Grolnick and Kendall Miller to Its Board of Directors
 description: Veteran technologists bring expertise scaling innovative, security-focused businesses while creating organic growth.
 author: David Polstra
 image: blogs/inversoft-adds-grolnick-miller-board-directors/inversoft-adds-andy-grolnick-and-kendall-miller-board-of-directors.png
-category: announcement
-tags: topic-press-release press-release
+category: blog
+tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

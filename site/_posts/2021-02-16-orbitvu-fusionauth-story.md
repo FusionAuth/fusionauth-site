@@ -4,8 +4,8 @@ title: Orbitvu chose FusionAuth for architectural flexibility, great support, an
 description: Orbitvu, a product photography company, gets more flexibility and value with FusionAuth.
 author: Dan Moore
 image: blogs/orbitvu-fusionauth-story/orbitvu-chose-fusionauth-for-architectural-flexibility-great-support-and-customizability-header-image.png
-category: community-story
-tags: topic-community-story community-story consents sso
+category: blog
+tags: topic-community-story
 excerpt_separator: "<!--more-->"
 ---
 

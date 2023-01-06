@@ -1,11 +1,10 @@
 ---
 layout: blog-post
 title: FusionAuth Reviews from Around the World
-description: FusionAuth has been downloaded 40k times by companies all over the world.
+description: One-way hashing for passwords is the standard mechanism used to protect your user's passwords. Let's take a look at how it works and some new ideas to improve it.
 author: Bryan Giese
 image: blogs/fit-small-business-map2.jpg
-category: announcement
-tags: reviews community-feedback
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

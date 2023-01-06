@@ -4,8 +4,7 @@ title: "Outsourcing auth: how to get buy-in from your team"
 description: Who are the players you'll need to work with to make an outsourced auth implementation successful?
 image: blogs/team-buy-in-outsource-auth/outsourcing-auth-how-to-get-buy-in-from-your-team-header-image.png
 author: Joe Stech
-category: article
-tags: authentication authorization outsource team
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

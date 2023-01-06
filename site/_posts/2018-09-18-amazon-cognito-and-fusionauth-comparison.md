@@ -5,8 +5,7 @@ description: Compare FusionAuth and Amazon Cognito for your identity and access 
 author: Bryan Giese
 updated_date: 2022-05-19
 image: blogs/amazon-cognito-and-fusionauth-comparison.jpg
-category: comparison
-tags: cognito ciam
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

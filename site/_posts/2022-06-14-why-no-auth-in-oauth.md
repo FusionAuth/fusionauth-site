@@ -4,8 +4,7 @@ title: Why is there no authentication in OAuth?
 description: OAuth and OIDC are all about authentication, right? Why is there no process of authentication defined in the specifications?
 author: Dan Moore
 image: blogs/auth-oauth/why-no-authentication-in-oauth.png
-category: article
-tags: standards oauth oidc authentication
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

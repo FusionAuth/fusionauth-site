@@ -4,8 +4,8 @@ title: Breached password detection best practices
 description: How can you protect your systems and users from known, breached passwords?
 author: Brian Pontarelli
 image: blogs/breached-password-detection-best-practices/breached-password-detection-best-practices.png
-category: article
-tags: feature-breached-password-detection breached-password-detection best-practices
+category: blog
+tags: feature-breached-password-detection
 excerpt_separator: "<!--more-->"
 ---
 

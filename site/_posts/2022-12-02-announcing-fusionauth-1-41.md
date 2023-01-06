@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.41
 description: These releases include biometric authentication support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
 author: Dan Moore
 image: blogs/release-1-41/fusionauth-1-41.png
-category: announcement
-tags: topic-webauthn webauthn release-announcement
+category: blog
+tags: topic-webauthn
 excerpt_separator: "<!--more-->"
 ---
 

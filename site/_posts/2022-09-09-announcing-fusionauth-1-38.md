@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.38
 description: This release includes bug fixes and group membership webhooks
 author: Dan Moore
 image: blogs/release-1-38/fusionauth-1-38.png
-category: announcement
-tags: topic-webhook webhooks release-announcement
+category: blog
+tags: topic-webhook
 excerpt_separator: "<!--more-->"
 ---
 
