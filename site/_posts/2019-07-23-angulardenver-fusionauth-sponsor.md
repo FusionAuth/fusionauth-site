@@ -4,8 +4,7 @@ title: AngularDenver is Next Week!
 description: AngularDenver is Colorado's best Angular conference. Join us for all 4 days of technical goodness.
 author: Bryan Giese
 image: blogs/angulardenver-fusionauth-sponsor.jpg
-category: announcement
-tags: conference angular-denver
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

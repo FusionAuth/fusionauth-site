@@ -4,8 +4,8 @@ title: Additional JWT headers, verification emails, and disappearing registratio
 description: Top highlights from the FusionAuth forum in April.
 author: Dan Moore
 image: blogs/apr-2021-forum-highlights/forum-highlights-additional-jwt-headers-verification-emails-and-disappearing-registrations-header-image.png
-category: announcement
-tags: topic-forum-posts forum-posts jwt registrations
+category: blog
+tags: topic-forum-posts
 excerpt_separator: "<!--more-->"
 ---
 

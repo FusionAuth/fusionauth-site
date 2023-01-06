@@ -4,8 +4,8 @@ title: How to Set Up Single Sign-On Between FusionAuth and WordPress
 description: In this tutorial, you'll be learning how to implement OAuth SSO for WordPress users.
 author: Aniket Bhattacharyea
 image: blogs/wordpress-sso-fusionauth/how-to-set-up-single-sign-on-sso-between-fusionauth-and-wordpress-header-image.png
-category: tutorial
-tags: tutorial tutorial-php client-php tutorial-integration wordpress single-sign-on oauth
+category: blog
+tags: tutorial tutorial-php client-php tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
 

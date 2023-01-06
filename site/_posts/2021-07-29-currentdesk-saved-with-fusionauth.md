@@ -4,8 +4,8 @@ title: CurrentDesk saved thousands of dollars by choosing FusionAuth
 description: CurrentDesk, a financial technology provider, choose FusionAuth for affordability, flexibility and developer friendliness.
 author: Dan Moore
 image: blogs/currentdesk-fusionauth/currentdesk-saved-thousands-of-dollars-by-choosing-fusionauth-header-image.png
-category: community-story
-tags: topic-community-story community-story oauth
+category: blog
+tags: topic-community-story 
 excerpt_separator: "<!--more-->"
 ---
 

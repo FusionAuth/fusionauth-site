@@ -4,8 +4,7 @@ title: Is the OAuth Device grant right for your game authentication needs?
 description: How can the OAuth Device Authorization grant help your users easily autenticate into your game?
 author: Success Ologunsua
 image: blogs/device-grant-gaming/oauth-device-grant-game-users.png
-category: article
-tags: gaming device-grant oauth
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

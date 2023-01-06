@@ -4,8 +4,8 @@ title: FusionAuth awarded High Performer in 3 Categories in G2’s Winter 2023 R
 description: FusionAuth has been recognized in G2’s Winter 2023 report. This was our debut year in the quarterly industry report published by G2. 
 author: Emily Jansen
 image: blogs/fusionauth-g2-winter-2023/g2-winter-high-performer-header.png
-category: announcement
-tags: topic-press-release press-release reviews
+category: blog
+tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

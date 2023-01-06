@@ -4,8 +4,7 @@ title:  Download File Counts from Google Cloud Storage
 description: Getting download file counts from Google Cloud Storage using access logs and a Ruby script
 author: Brian Pontarelli
 image: blogs/download-count.png
-category: tutorial
-tags: google-cloud-storage script
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

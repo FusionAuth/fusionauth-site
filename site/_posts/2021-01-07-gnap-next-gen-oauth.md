@@ -4,8 +4,7 @@ title: GNAP, the next generation of OAuth
 description: What is GNAP, how does it fit in with OAuth, and why should you care?
 image: blogs/gnap-oauth2-next-gen/gnap-the-next-generation-of-oauth-header-image.png
 author: Dan Moore
-category: article
-tags: standards oauth gnap
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

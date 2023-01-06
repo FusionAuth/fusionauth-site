@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.28
 description: The FusionAuth 1.28 release includes identity linking, additional identity providers, a lambda for the Client Credentials grant and more
 author: Dan Moore
 image: blogs/release-1-28/product-update-fusionauth-1-28.png
-category: announcement
-tags: feature-identity-providers feature-client-credentials-grant client-credentials-grant lambda gaming identity-linking release-announcement
+category: blog
+tags: feature-identity-providers feature-client-credentials-grant
 excerpt_separator: "<!--more-->"
 ---
 

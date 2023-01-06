@@ -4,8 +4,7 @@ title: Why secure gamer's user accounts?
 description: What are risks to gamer accounts and why should you secure them?
 author: Rabo James Bature
 image: blogs/securing-gaming-accounts/secure-gamers-user-accounts-header.png
-category: article
-tags: gaming security
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

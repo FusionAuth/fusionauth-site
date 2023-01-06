@@ -4,8 +4,8 @@ title: Seegno manages thousands of tenants with FusionAuth and Kubernetes
 description: Seegno upgraded from their homegrown auth system and uses FusionAuth in Kubernetes as their headless, self-hosted solution.
 author: Dan Moore
 image: blogs/seegno-fusionauth/seegno-manages-thousands-of-tenants-with-fusionauth-and-kubernetes-header-image.png
-category: community-story
-tags: topic-community-story topic-upgrade-homegrown client-javascript topic-kubernetes homegrown community-story javascript kubernetes
+category: blog
+tags: topic-community-story topic-upgrade-homegrown client-javascript topic-kubernetes
 excerpt_separator: "<!--more-->"
 ---
 

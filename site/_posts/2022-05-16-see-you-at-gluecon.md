@@ -4,8 +4,7 @@ title: We'll see you at Gluecon
 description: FusionAuth is going to Gluecon 2022. Stop by and see us!
 author: Dan Moore
 image: blogs/gluecon-2022/gluecon.png
-category: announcement
-tags: conference gluecon
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

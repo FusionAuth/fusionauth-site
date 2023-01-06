@@ -4,8 +4,7 @@ title: Why use a standardized auth protocol?
 description: What are the main reasons you should think about using a standarized authentication and authorization protocol such as OAuth?
 author: James Hickey
 image: blogs/why-use-standardized-auth-protocol/why-use-a-standardized-auth-protocol-header-image.png
-category: article
-tags: standards oauth authentication authorization
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

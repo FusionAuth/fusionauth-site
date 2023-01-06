@@ -4,8 +4,7 @@ title: Building the FusionAuth Homebrew Formula
 description: FusionAuth easily installs through Homebrew. Here's how we built the Homebrew formula.
 author: Tyler Scott
 image: blogs/homebrew-install.png
-category: tutorial
-tags: homebrew
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

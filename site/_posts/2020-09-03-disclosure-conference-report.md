@@ -4,8 +4,8 @@ title: ! 'Disclosure conference report: a good time was had by all'
 description: Disclosure is an annual security conference. I attended and brought back this report.
 author: Dan Moore
 image: blogs/disclosure-2020/disclosure-conference-report.png
-category: announcement
-tags: conference disclosure
+category: blog
+tags: conference-report
 excerpt_separator: "<!--more-->"
 ---
 

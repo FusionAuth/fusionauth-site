@@ -4,8 +4,7 @@ title: Announcing FusionAuth 1.25
 description: The FusionAuth 1.25 Release includes more debugging and SAMLv2 logout.
 author: Dan Moore
 image: blogs/release-1-25/product-update-fusionauth-1-25.png
-category: announcement
-tags: release-announcment saml debugging
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

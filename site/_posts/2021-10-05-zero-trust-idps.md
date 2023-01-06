@@ -4,8 +4,7 @@ title: Zero Trust and How IdPs Factor Into It
 description: Learn about the Zero Trust framework and how Identity Providers factor into it to protect your network and help keep your resources secure.
 author: Cameron Pavey
 image: blogs/zero-trust-idps/zero-trust-and-how-idps-factor-into-it-header-image.png
-category: article
-tags: zero-trust identity-provider
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

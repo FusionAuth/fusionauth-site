@@ -4,8 +4,7 @@ title: FusionAuth achieves SOC2 Type II certification
 description: The FusionAuth team is proud to announce that we have completed the rigorous audit process and have now earned SOC2 Type II certification for our entire organization, including the FusionAuth product. 
 author: Don Bergal
 image: blogs/fusionauth-soc2-announcement/soc2-type2.png
-tags: press-release soc2
-category: announcement
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

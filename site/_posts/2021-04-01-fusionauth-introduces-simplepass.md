@@ -4,8 +4,7 @@ title: FusionAuth releases SimplePass&trade;
 description: Why enter a password when the system can do it for you?
 author: Dan Moore
 image: blogs/simplepass/fusionauth-releases-simplepass-header-image.png
-category: article
-tag: april-fools passwords
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

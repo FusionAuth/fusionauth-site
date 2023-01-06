@@ -4,8 +4,7 @@ title: ASP.NET Core Identity Considered Harmful
 description: Why ASP.NET Core Identity just doesn't cut it.
 author: Ted Neward
 image: blogs/core-identity-considered-harmful/aspnetcore-identity-considered-harmful.png
-category: tutorial
-tags: netcore dotnet
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

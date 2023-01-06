@@ -4,8 +4,8 @@ title: IoT company picks FusionAuth to avoid getting distracted by auth
 description: FusionAuth allows an IoT company to ignore auth and focus on building their applications.
 author: Dan Moore
 image: blogs/ampio-customer-story/iot-company-picks-fusionauth-to-avoid-getting-distracted-by-auth-header-image.png
-category: community-story
-tags: topic-community-story topic-upgrade-homegrown community-story homegrown upgrade
+category: blog
+tags: topic-community-story topic-upgrade-homegrown
 excerpt_separator: "<!--more-->"
 ---
 

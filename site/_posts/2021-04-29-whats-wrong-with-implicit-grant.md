@@ -4,8 +4,8 @@ title: What's Wrong With the OAuth2 Implicit Grant?
 description: OAuth2 specifies an Implicit grant. What's wrong with using it?
 author: Brian Pontarelli
 image: blogs/avoid-implicit-grant/whats-wrong-with-the-oauth2-implicit-grant-header-image.png
-category: article
-tags: client-javascript javascript standards oauth implicit-grant
+category: blog
+tags: client-javascript
 excerpt_separator: "<!--more-->"
 ---
 The Implicit grant is part of the OAuth 2 RFC, but is [one of the features omitted in the OAuth 2.1 specification](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1). With this grant, you don't have to write server side code. Instead of having to exchange an authorization code for an access token, you are provided an access token on redirect.

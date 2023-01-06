@@ -4,8 +4,7 @@ title: OneLogin and FusionAuth - Different Enough To Make A Difference
 description: Compare FusionAuth and OneLogin for your identity and access management solution.
 author: Bryan Giese
 image: blogs/onelogin-and-fusionauth-comparison.jpg
-category: comparison
-tags: onelogin ciam
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

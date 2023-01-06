@@ -4,8 +4,8 @@ title: FusionAuth Remix demo
 description: Example of how Remix works with FusionAuth
 author: Joyce Park
 image: blogs/connecting-fusionauth-remix/connecting-fusionauth-remix-runapp.png
-category: tutorial
-tags: remix remix-run tutorial javascript
+category: blog
+tags: remix remix-run
 excerpt_separator: "<!--more-->"
 ---
 

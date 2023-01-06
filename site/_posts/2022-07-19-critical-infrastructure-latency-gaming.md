@@ -4,8 +4,7 @@ title: Critical infrastructure and latency in gaming
 description: What is critical infrastructure and how does it affect gaming latency?
 author: Kealan Parr
 image: blogs/latency-critical-infrastructure/critical-infrastructure-latency-in-gaming.png
-category: article
-tags: gaming latency
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

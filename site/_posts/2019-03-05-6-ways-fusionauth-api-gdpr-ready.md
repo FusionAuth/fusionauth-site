@@ -4,8 +4,7 @@ title: 6 Ways The FusionAuth API Is GDPR Ready
 description: FusionAuth is ready for the GDPR in 6 important ways.
 author: Bryan Giese
 image: blogs/6-ways-fusionauth-api-gdpr-ready.jpg
-category: article
-tags: gdpr
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

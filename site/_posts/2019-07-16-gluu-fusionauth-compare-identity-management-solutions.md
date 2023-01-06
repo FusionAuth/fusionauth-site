@@ -4,8 +4,7 @@ title: Gluu and FusionAuth - Compare Identity Management Solutions
 description: Compare the features and capability of Gluu and FusionAuth Identity Management Solutions
 author: Bryan Giese
 image: blogs/gluu-fusionauth-comparison-main.png
-category: comparison
-tags: gluu upgrade
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

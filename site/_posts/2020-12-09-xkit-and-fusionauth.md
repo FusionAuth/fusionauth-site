@@ -4,8 +4,8 @@ title: Adding native integrations to your app with FusionAuth and Xkit
 description: How to use FusionAuth and Xkit together to simplify auth and integration development.
 image: blogs/xkit-fusionauth-integration/adding-native-integrations-to-your-app-with-fusionauth-and-xkit-header-image.png
 author: Trey Griffith and Dan Moore
-category: tutorial
-tags: client-javascript tutorial tutorial-integration integration javascript
+category: blog
+tags: client-javascript tutorial tutorial-integration
 excerpt_separator: "<!--more-->"
 ---
 

@@ -4,8 +4,7 @@ title: "Spring Framework CVE: How it affects FusionAuth (TLDR: It doesn't)"
 description: FusionAuth does not use Spring and is not affected by CVE-2022-22965
 author: Dan Moore
 image: blogs/spring4shell/spring-update-fusionauth.png
-tags: cve log4shell
-category: announcement
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

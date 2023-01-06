@@ -4,8 +4,7 @@ title: "We'll see you at AWS re:Invent 2022"
 description: FusionAuth is going to AWS re:Invent. Stop by and see us!
 author: Dan Moore
 image: blogs/fusionauth-aws-reinvent-2022/see-you-at-aws-reinvent-header-image.png
-category: announcement
-tags: conference aws-re-invent
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

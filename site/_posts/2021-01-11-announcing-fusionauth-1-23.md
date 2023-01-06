@@ -4,8 +4,7 @@ title: Announcing FusionAuth 1.23
 description: The FusionAuth 1.23 Release offers customer support roles as well as the LinkedIn identity provider
 author: Dan Moore
 image: blogs/release-1-23/product-update-fusionauth-1-23.png
-category: announcement
-tags: release-announcement roles linkedin
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

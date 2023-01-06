@@ -4,8 +4,8 @@ title: Authenticating with AWS Managed Microsoft Active Directory and LDAP
 description: You can use FusionAuth LDAP connectors to authenticate users against Microsoft Active Directory.
 author: Dan Moore
 image: blogs/active-directory-connector/authenticating-with-aws-managed-microsoft-active-directory-and-ldap.png
-category: tutorial
-tags: feature-connectors feature-ldap client-netcore tutorial tutorial-reactor-feature ldap netcore connectors
+category: blog
+tags: feature-connectors feature-ldap client-netcore tutorial tutorial-reactor-feature 
 excerpt_separator: "<!--more-->"
 ---
 

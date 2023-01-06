@@ -4,8 +4,8 @@ title: Omedym Chooses FusionAuth Customer Identity and Access Management to Scal
 description: Omeydm's need for multi-tenancy, SSO and a powerful API drove the company to choose FusionAuth over other vendors.
 author: David Polstra
 image: blogs/omedym-chooses-fusionauth-ciam/press-release-omedym-chooses-fusionauth-customer-identity-and-access-management-to-scale-customer-growth-replaces-former-cloud-provider.png
-category: announcement
-tags: topic-press-release press-release
+category: blog
+tags: topic-press-release
 excerpt_separator: "<!--more-->"
 ---
 

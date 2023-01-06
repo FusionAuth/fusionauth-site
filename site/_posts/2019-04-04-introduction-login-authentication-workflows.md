@@ -4,8 +4,7 @@ title: Introduction to Login and Authentication Workflows
 description: Introduction to application types, login and authentication workflows. Start here to learn how to architect and design an effective authentication system.
 author: Bryan Giese
 image: blogs/types-logins-authentication-workflows.png
-category: features
-tags: login workflows
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

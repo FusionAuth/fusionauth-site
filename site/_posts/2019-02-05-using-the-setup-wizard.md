@@ -4,8 +4,7 @@ title: Using the FusionAuth Setup Wizard
 description: The FusionAuth Setup Wizard makes setting up FusionAuth a simple step-by-step process.
 author: Brian Pontarelli
 image: blogs/setup-wizard-create-admin.png
-category: tutorial
-tags: setup-wizard setup
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

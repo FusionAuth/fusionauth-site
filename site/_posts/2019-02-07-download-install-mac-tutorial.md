@@ -4,8 +4,7 @@ title: Download and Install FusionAuth - macOS
 description: Download and install FusionAuth on macOS with these easy steps.
 author: Brian Pontarelli
 image: blogs/macos-install.jpg
-category: tutorial
-tags: macos installation
+category: blog
 excerpt_separator: "<!--more-->"
 ---
 

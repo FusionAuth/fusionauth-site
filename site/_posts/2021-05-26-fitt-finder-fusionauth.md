@@ -4,8 +4,8 @@ title: FITT Finder chose FusionAuth and left auth security to the experts
 description: FITT Finder, a health and fitness activity discovery startup, uses FusionAuth because they want to prepare for millions of users.
 author: Dan Moore
 image: blogs/fitt-finder-fusionauth/fitt-finder-chose-fusionauth-and-left-auth-security-to-the-experts.png
-category: community-story
-tags: topic-community-story topic-upgrade-homegrown community-story upgrade homegrown jwt
+category: blog
+tags: topic-community-story topic-upgrade-homegrown
 excerpt_separator: "<!--more-->"
 ---
 
