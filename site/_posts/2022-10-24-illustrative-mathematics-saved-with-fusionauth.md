@@ -4,8 +4,8 @@ title: Illustrative Mathematics saved 50% by moving to FusionAuth from Auth0
 description: Illustrative Mathematics, a non-profit helping educate children about mathm, switched to FusionAuth and saved.
 author: Dan Moore
 image: blogs/illustrative-mathematics/illustrative-mathematics-fusionauth.png
-category: blog
-tags: topic-community-story topic-upgrade-auth0
+category: community-story
+tags: topic-community-story topic-upgrade-auth0 auth0 upgrade community-story
 excerpt_separator: "<!--more-->"
 ---
 

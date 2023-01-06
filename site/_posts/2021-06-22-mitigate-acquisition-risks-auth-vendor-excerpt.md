@@ -4,7 +4,8 @@ title: How to mitigate risk when your auth vendor gets acquired
 description: What risk mitigation steps can you take when your auth vendor is acquired?
 author: Eze Sunday Eze
 image: blogs/mitigate-risks-auth-vendor-acquired/how-to-mitigate-risk-when-your-auth-vendor-gets-acquired-header-image.png
-category: blog
+category: article
+tags: risk mitigation acquisition
 excerpt_separator: "<!--more-->"
 ---
 

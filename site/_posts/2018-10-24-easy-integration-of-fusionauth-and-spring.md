@@ -4,8 +4,8 @@ title: Easy Integration of Spring and FusionAuth
 author: Tyler Scott
 description: Making a Spring application with FusionAuth is easy, just follow these simple steps.
 image: blogs/spring-and-fusionauth-example.jpg
-tags: tutorial-java tutorial
-category: blog
+tags: tutorial-java tutorial java spring
+category: tutorial
 excerpt_separator: "<!--more-->"
 ---
 

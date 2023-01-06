@@ -5,7 +5,8 @@ description: How we hackfest at FusionAuth.
 author: Dan Moore
 excerpt_separator: "<!--more-->"
 image: blogs/hackfest/hackfest-fusionauth.png
-category: blog
+category: article
+tags: hackfest
 ---
 
 Hackfests, also called hackathons or fedex days (because you "ship in a day"), build team cohesion and allow for exploration of new technologies and processes.

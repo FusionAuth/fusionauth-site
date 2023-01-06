@@ -4,8 +4,8 @@ title: How to Set Up Single Sign-On Between FusionAuth and Joomla
 description: In this tutorial, you’ll be learning how to implement OAuth SSO for Joomla users.
 author: Patrick Jackson
 image: blogs/joomla-sso-fusionauth/how-to-set-up-single-sign-on-sso-between-fusionauth-and-joomla-header-image.png
-category: blog
-tags: tutorial tutorial-php client-php tutorial-integration
+category: tutorial
+tags: tutorial tutorial-php client-php tutorial-integration joomla integration php
 excerpt_separator: "<!--more-->"
 ---
 

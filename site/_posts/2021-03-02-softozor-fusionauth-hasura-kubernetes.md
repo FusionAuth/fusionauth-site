@@ -4,8 +4,8 @@ title: Softozor integrated FusionAuth with Hasura and Kubernetes and saved devel
 description: While working on a consulting project building an ecommerce platform, Softozor chose FusionAuth to manage their authentication and authorization.
 author: Dan Moore
 image: blogs/softozor-fusionauth-story/softozor-integrated-fusionauth-with-hasura-and-kubernetes-and-saved-development-effort.png
-category: blog
-tags: topic-community-story topic-upgrade-keycloak topic-kubernetes
+category: community-story
+tags: topic-community-story topic-upgrade-keycloak topic-kubernetes keycloak community-story upgrade kubernetes hasura netcore jwt python
 excerpt_separator: "<!--more-->"
 ---
 

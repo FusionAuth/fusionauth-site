@@ -4,8 +4,8 @@ title: Unio self hosts FusionAuth and saves $100k
 description: Unio uses FusionAuth to handle their user accounts, authentication, authorization, and password management.
 author: Dan Moore
 image: blogs/unio-saves-100k-with-fusionauth/unio-self-hosts-fusionauth-and-saves-100k-header-image.png
-category: blog
-tags: topic-community-story client-java
+category: community-story
+tags: topic-community-story client-java java community-story self-hosting
 excerpt_separator: "<!--more-->"
 ---
 

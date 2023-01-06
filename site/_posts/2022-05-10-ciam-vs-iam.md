@@ -4,8 +4,8 @@ title: Customer Identity and Access Management (CIAM) vs Identity and Access Man
 description: What are the main differences between CIAM and IAM?
 author: Dan Moore
 image: blogs/ciam-vs-iam/ciam-vs-iam.png
-category: blog
-tags: features-ciam
+category: article
+tags: features-ciam ciam iam explainer
 excerpt_separator: "<!--more-->"
 ---
 

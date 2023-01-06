@@ -4,7 +4,8 @@ title: Like your avatar? You can keep it.
 description: FusionAuth can take advantage of your existing Gravatar account. No problem.
 author: Daniel DeGroff
 image: blogs/keep-avatar.jpg
-category: blog
+category: features
+tags: avatar gravatar
 excerpt_separator: "<!--more-->"
 ---
 

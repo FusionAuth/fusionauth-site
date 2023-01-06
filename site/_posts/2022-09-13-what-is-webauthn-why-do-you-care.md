@@ -4,8 +4,8 @@ title: What is WebAuthn and why should you care?
 description: WebAuthn is a new standard which secures user accounts and improves user experience. What could be better?
 author: Dan Moore
 image: blogs/what-is-webauthn/what-is-web-authn.png
-category: blog
-tags: topic-webauthn
+category: article
+tags: topic-webauthn webauthn security user-experience
 excerpt_separator: "<!--more-->"
 related_resources:
   - 

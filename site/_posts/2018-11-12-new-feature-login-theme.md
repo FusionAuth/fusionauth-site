@@ -4,8 +4,8 @@ title: New Feature - Login Theme
 description: Login themes allow you to completely customize the look and feel of your login pages
 author: Brian Pontarelli
 image: blogs/login-theme.png
-category: blog
-tags: feature-themes
+category: features
+tags: feature-themes themes
 excerpt_separator: "<!--more-->"
 ---
 

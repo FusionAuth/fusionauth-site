@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.33
 description: This release includes updates in Docker architecture support, improved localization and more.
 author: Dan Moore
 image: blogs/release-1-33/product-update-fusionauth-1-33.png
-category: blog
-tags: topic-troubleshooting feature-advanced-threat-detection
+category: announcement
+tags: topic-troubleshooting feature-advanced-threat-detection advanced-threat-detection release-announcement
 excerpt_separator: "<!--more-->"
 ---
 

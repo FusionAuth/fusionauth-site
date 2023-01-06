@@ -4,7 +4,8 @@ title: DataStax's Switch to FusionAuth - A Case Study
 description: DataStax needed a powerful identity solution FAST. FusionAuth was there to help.
 author: Bryan Giese
 image: blogs/data-stax-case-study.jpg
-category: blog
+category: article
+tags: datastax migration
 excerpt_separator: "<!--more-->"
 ---
 

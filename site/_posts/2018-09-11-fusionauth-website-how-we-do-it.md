@@ -4,7 +4,8 @@ title: The FusionAuth website - How we do it
 description: How we built the FusionAuth website using BootstrapStudio, Jekyll, JustComments and other tools
 author: Brian Pontarelli
 image: blogs/fusionauth-website.png
-category: blog
+category: announcement
+tags: blog
 excerpt_separator: "<!--more-->"
 ---
 

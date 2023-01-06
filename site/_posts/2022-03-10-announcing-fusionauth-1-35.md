@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.35
 description: This release includes bug fixes, internal updates, and support for HTTP requests in FusionAuth lambdas.
 author: Dan Moore
 image: blogs/release-1-35/product-update-fusionauth-1-35.png
-category: blog
-tags: topic-troubleshooting feature-advanced-threat-detection topic-lambda
+category: announcement
+tags: topic-troubleshooting feature-advanced-threat-detection topic-lambda lambda advanced-threat-detection
 excerpt_separator: "<!--more-->"
 ---
 

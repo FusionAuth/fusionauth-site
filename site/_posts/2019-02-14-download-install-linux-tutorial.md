@@ -4,7 +4,8 @@ title: Download and Install FusionAuth Tutorial - Linux
 description: Download and install FusionAuth on Linux with these easy steps.
 author: Brian Pontarelli
 image: blogs/macos-install.jpg
-category: blog
+category: tutorial
+tags: linux installation
 excerpt_separator: "<!--more-->"
 ---
 
