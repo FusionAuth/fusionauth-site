@@ -45,7 +45,7 @@ With this release, as an admin, you now have the ability to allow users who have
 
 If a user attempts to log in, triggers an action due to the number of failed attempts, and then resets their password, prior to this release the action would still be in force and they'd be denied access. Now, on a tenant by tenant basis, you can cancel the action when a successful password reset occurs.
 
-{% include _image.liquid src="/assets/img/blogs/release-1-42/account-lock-tenant-settings.png" alt="The tenant settings allowing users to cancel an action by resetting their password." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/release-1-42/account-lock-tenant-settings.png" alt="The tenant settings to allow users to cancel an lockout action by resetting their password." class="img-fluid" figure=true %}
 
 This helps lessen the load on your admins because they don't have to manually remove the user action; it is now in the user's control.
 
