@@ -4,7 +4,8 @@ title: Announcing FusionAuth 1.16
 description: The FusionAuth 1.16 Release allows you search provider flexibility, a smaller Docker image and more.
 author: Pete Geoly
 image: blogs/news/blog-fusionauth-1-16.png
-category: blog
+category: announcement
+tags: release-announcement docker user-search
 excerpt_separator: "<!--more-->"
 ---
 

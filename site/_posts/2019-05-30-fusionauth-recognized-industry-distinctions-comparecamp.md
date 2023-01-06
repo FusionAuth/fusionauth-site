@@ -4,7 +4,8 @@ title: FusionAuth Identity & Access Management Solution Is Recognized with Indus
 description: FusionAuth received the 2019 Great User Experience and Rising Star Awards
 author: Bryan Giese
 image: blogs/comparecamp-awards.png
-category: blog
+category: announcement
+tags: reviews award
 excerpt_separator: "<!--more-->"
 ---
 

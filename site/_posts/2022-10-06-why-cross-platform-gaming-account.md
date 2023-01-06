@@ -4,7 +4,8 @@ title: Why consider cross-platform gaming accounts?
 description: What is a cross-platform gaming account and how is it useful?
 author: Rabo James Bature
 image: blogs/advantages-cross-platform-gaming-accounts/cross-platform-gaming-account-advantages.png
-category: blog
+category: article
+tags: gaming cross-platform
 excerpt_separator: "<!--more-->"
 ---
 

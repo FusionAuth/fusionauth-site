@@ -4,7 +4,8 @@ title: We'll see you at THAT Conference
 description: FusionAuth is going to THAT Conference in Wisconsin. Stop by and see us!
 author: Dan Moore
 image: blogs/that-wi-2022/that-conference.png
-category: blog
+category: announcement
+tags: conference that-conference
 excerpt_separator: "<!--more-->"
 ---
 

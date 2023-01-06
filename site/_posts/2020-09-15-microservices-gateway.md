@@ -4,8 +4,8 @@ title: Centralized authentication with a microservices gateway
 description: Implement authentication and authorization using FusionAuth for a gateway API application that routes to two different microservices.
 author: Tim Kleier
 image: blogs/node-microservices-gateway/building-a-microservices-gateway-application.png
-category: blog
-tags: client-javascript tutorial tutorial-javascript
+category: tutorial
+tags: client-javascript tutorial tutorial-javascript javascript microservices gateway
 excerpt_separator: "<!--more-->"
 ---
 

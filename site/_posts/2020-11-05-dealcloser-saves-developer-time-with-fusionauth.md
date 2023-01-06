@@ -4,8 +4,8 @@ title: dealcloser chooses FusionAuth, saves two months of development time
 description: dealcloser, a legaltech startup, uses FusionAuth to solve their enterprise needs.
 image: blogs/dealcloser-case-study/dealcloser-chooses-fusionauth-saves-two-months-of-development-time.png
 author: David Polstra
-category: blog
-tags: topic-customer-story topic-upgrade-saas topic-upgrade-auth0
+category: announcement
+tags: topic-customer-story topic-upgrade-saas topic-upgrade-auth0 auth0 upgrade customer-story
 excerpt_separator: "<!--more-->"
 ---
 

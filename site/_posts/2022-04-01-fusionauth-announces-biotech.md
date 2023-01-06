@@ -4,7 +4,8 @@ title: FusionAuth announces BioTech&trade;
 description: A game-changing new factor of authentication.
 author: Dan Moore
 image: blogs/fusionauth-biotech/biotech-header.png
-category: blog
+category: article
+tags: april-fools
 excerpt_separator: "<!--more-->"
 ---
 

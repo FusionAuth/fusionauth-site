@@ -4,8 +4,8 @@ title: Video conferencing company DolphinVC chose FusionAuth for cloud independe
 description: DolphinVC chose FusionAuth because it saved them time and they could run it wherever they wanted. They didn't want to be restricted to a single cloud provider.
 author: Dan Moore
 image: blogs/dolphinvc-fusionauth/video-conferencing-company-dolphinvc-chose-fusionauth-for-cloud-independence-header-image.png
-category: blog
-tags: topic-community-story
+category: community-story
+tags: topic-community-story community-story self-hosting kubernetes
 excerpt_separator: "<!--more-->"
 ---
 
