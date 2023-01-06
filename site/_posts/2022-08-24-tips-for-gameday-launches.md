@@ -4,7 +4,8 @@ title: Three tips for handling spiky gameday launches
 description: Game launches often result in large traffic spikes. How can you plan for these.
 author: Muhammad Yasoob Ullah Khalid
 image: blogs/spiky-gameday-launches/3-tips-handling-spiky-gameday-launches.png
-category: blog
+category: article
+tags: gaming launches
 excerpt_separator: "<!--more-->"
 ---
 

@@ -4,8 +4,8 @@ title: JWT authorization in a microservices gateway
 description: How would
 author: Tim Kleier and Matt Anderson
 image: blogs/microservices-jwt-auth/jwt-authorization-in-a-microservices-gateway.png
-category: blog
-tags: client-javascript tutorial tutorial-javascript
+category: tutorial
+tags: client-javascript tutorial tutorial-javascript microservices javascript nodejs
 excerpt_separator: "<!--more-->"
 ---
 

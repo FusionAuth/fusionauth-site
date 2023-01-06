@@ -4,7 +4,8 @@ title: When to self-host critical application components
 description: Should you self-host critical parts of your application or use a SaaS provider?
 author: Matthew Fuller
 image: blogs/when-to-self-host/when-to-self-host-critical-application-components-header-image.png
-category: blog
+category: article
+tags: self-hosting hosting-choices saas auth0
 excerpt_separator: "<!--more-->"
 ---
 

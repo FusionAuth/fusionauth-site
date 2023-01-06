@@ -4,8 +4,8 @@ title: "How to Set Up Single Sign-On (SSO) Between FusionAuth and Drupal"
 description: This tutorial demonstrates how to integrate SSO to a Drupal site using FusionAuth with the help of an OpenID Connect app.
 author: Aniket Bhattacharyea
 image: blogs/single-sign-on-drupal/how-to-set-up-single-sign-on-sso-between-fusionauth-and-drupal.png
-category: blog
-tags: tutorial tutorial-integration client-php
+category: tutorial
+tags: tutorial tutorial-integration client-php php integration
 excerpt_separator: "<!--more-->"
 ---
 
