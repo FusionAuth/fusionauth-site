@@ -4,8 +4,8 @@ title: FusionAuth Launches Entity Management; Simplifies Creating & Managing Fin
 description: This feature simplifies creating and managing fine-grained permissions across all applications, is simple to use and integrate, and lets developers focus on core work.
 author: David Polstra
 image: blogs/entity-management-launch/fusionauth-launches-entity-managemen-applications-header-image.png
-category: blog
-tags: feature-entity-management topic-press-release
+category: announcement
+tags: feature-entity-management topic-press-release press-release entity-management
 excerpt_separator: "<!--more-->"
 ---
 

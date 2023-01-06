@@ -4,7 +4,8 @@ title: FusionAuth 1.5 Adds Passwordless Login
 description: FusionAuth 1.5 adds passwordless login and more. Download and upgrade now!
 author: Daniel DeGroff
 image: blogs/fusionauth-1-5-passwordless.png
-category: blog
+category: features
+tags: passwordless magic-link login
 excerpt_separator: "<!--more-->"
 ---
 
