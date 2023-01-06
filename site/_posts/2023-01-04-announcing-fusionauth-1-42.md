@@ -5,64 +5,63 @@ description: This release includes rehashing of passwords on password change, fo
 author: Dan Moore
 image: blogs/release-1-42/fusionauth-1-42.png
 category: announcement
-tags: release-announcement passwords
+tags: release-announcement passwords mfa multi-factor-authentication tenants
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth version 1.42 shipped on December 7, 2022. This release includes rehashing of passwords on password change, force MFA, and allow users to unlock their account by changing their password, and more.
+FusionAuth version 1.42 shipped on December 7, 2022. This release includes the ability to force MFA, rehashing of passwords on password change, and to allow users to unlock their account by changing their password, and more.
 
 <!--more-->
 
 There are a number of new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-42-0) for a full breakdown of the changes between 1.41 and 1.42, including any schema changes.
 
-All in all there are 13 issues, enhancements, and bug fixes included in the 1.42 releases. Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-42-3).
+All in all there are 13 issues, enhancements, and bug fixes included in the 1.42 releases. Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-42-0).
 
-The changes include WebAuthn support, improvements to Steam login, and IdP provisioning for the FusionAuth admin UI.
+## Forcing MFA
 
-## Biometric authentication support
+This was a big one. Previously, MFA was only enforced when a user had a valid method. With this change, you can now prohibit someone from logging in to an application if they don't have an MFA method enabled. You can set this at either the tenant or the application level (the application level requires an Enterprise plan). The policy also allows configuring MFA to take place if the user has an additional factor set up, or to not require any MFA at all.
 
-This was a big one. WebAuthn, also known as passkeys, allow a user to login securely using biometric and other means. FusionAuth supports this for re-authentication and bootstrap authentication. As usual, FusionAuth supports this via the hosted login pages, where all the complexity is taken care of for you, and via APIs.
+{% include _image.liquid src="/assets/img/blogs/release-1-42/enable-forced-mfa.png" alt="The MFA tenant settings with a policy of 'required'." class="img-fluid" figure=true %}
 
-To enable WebAuthn, upgrade to 1.42 or greater, ensure you have the correct license and enable the workflows you desire on the tenant.
+When the MFA policy is set to `required`, a user with an MFA method configured, whether the TOTP method accessible to instances running on the community plan, or any advanced MFA methods such email or SMS, will be prompted for that additional factor, based on the trust lifetime defined.
 
-{% include _image.liquid src="/assets/img/blogs/release-1-42/enable-webauthn.png" alt="The WebAuthn tenant settings." class="img-fluid" figure=true %}
+If a user does not have an MFA method configured, they will be sent to a themeable page where they will be prompted to add an additional factor. Until they do so, the login will not complete; they'll be repeatedly forced into the workflow to add a second factor.
 
-There's a lot more detail in [the WebAuthn documentation](/fusionauth.io/docs/v1/tech/passwordless/webauthn-passkeys).
+When applied at the tenant level, this functionality applies to all applications in a tenant, so if you enable it on the default tenant, it will also apply to the FusionAuth administrative user interface.
 
-This functionality is limited to Essentials and Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
+## Rehashing password on password change
 
-## Provisioning for the FusionAuth admin UI
+FusionAuth has password hashing plugins, which allow for easy migration of existing users. If you have their hashes and know the algorithm and factor used to hash them, you can transparently import your users. 
 
-Previous to this release, all users had to be added to the FusionAuth UI application via API or admin action. In particular, if a user was logging in using an identity provider, such as a SAML or OIDC connection, they could not be automatically registered for the FusionAuth admin UI. They could, however, be registered for any other application.
+When this is done with an insecure algorithm, perhaps one that is older or home-grown, FusionAuth has the ability to rehash the password on login using a more secure hashing algorithm.
 
-However, some FusionAuth users want to control all user access via federation, and want that external identity provider to be the source of truth, even for the FusionAuth admin UI.
+Previous to this release, the rehashing happened only on login, but with this release, it will happen on a password change as well.
 
-As of this release, you can now choose to enable "Create registration" for the FusionAuth admin application for any given Identity Provider. 
+This is one of the subtleties of authentication that using an authentication server takes off the plate of your engineering team.
 
-{% include _image.liquid src="/assets/img/blogs/release-1-42/enable-registration-fusionauth.png" alt="Using an IdP to allow for registration of the FusionAuth application." class="img-fluid" figure=true %}
+## Unlocking accounts by changing the password
 
-## Steam login
+With this release, as an admin, you now have the ability to allow users who have been actioned and [thus prevented from logging in](/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout) to cancel the action whenever their password is reset.
 
-FusionAuth supports [Login with Steam](/docs/v1/tech/identity-providers/steam) which is a great way to let your game users log in. Previous to this release you could only link accounts with an access token. But sometimes, all you have is a user session ticket.
+If a user attempts to log in, triggers an action due to the number of failed attempts, and then resets their password, prior to this release the action would still be in force and they'd be denied access. Now, on a tenant by tenant basis, you can cancel the action when a successful password reset occurs.
 
-This release allows you to use the session ticket to complete a link. You can read more about this in [the API docs](/docs/v1/tech/apis/identity-providers/steam); search for `sessionTicket`.
+{% include _image.liquid src="/assets/img/blogs/release-1-42/account-lock-tenant-settings.png" alt="The tenant settings allowing users to cancel an action by resetting their password." class="img-fluid" figure=true %}
 
-Login with Steam is limited to Essentials and Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
+This helps lessen the load on your admins because they don't have to manually remove the user action; it is now in the user's control.
 
 ## The rest of it
 
-As mentioned above, there were 19 issues, enhancements, and bug fixes included in this release. A selection not mentioned above includes:
+As mentioned above, there were 13 issues, enhancements, and bug fixes included in this release. A selection not mentioned above includes:
 
-* Users that are authenticated using an [LDAP or Generic connector](/docs/v1/tech/connectors/) will no longer have their refresh tokens automatically invalidated.
-* FireFox users will no longer see a zero byte file downloaded after logging out.
-* `userType` and `title` SCIM fields are now deserialized correctly.
-* You can use the `RelayState` parameter to pass a redirect URL when using the IdP initiated SAML provider.
+* Refresh tokens can be revoked when MFA is enabled.
+* Minor WebAuthn related fixes.
+* Fixes an issue when searching on both `entityId` and `userId`.
 
-Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-42-3).
+Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-42-0).
 
 ## Upgrade at will
 
-The [release notes](/docs/v1/tech/release-notes#version-1-42-3) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+The [release notes](/docs/v1/tech/release-notes#version-1-42-0) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
 
 If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/v1/tech/admin-guide/upgrade). 
 
