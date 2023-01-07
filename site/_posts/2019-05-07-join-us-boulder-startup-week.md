@@ -4,7 +4,8 @@ title: Join us for Boulder Startup Week
 description: Boulder Startup Week is one of the best events for developers, founders, startups and VC entrepreneurs. Join us!
 author: Bryan Giese
 image: blogs/boulder-startup-week.jpg
-category: blog
+category: announcement
+tags: conference boulder-startup-week
 excerpt_separator: "<!--more-->"
 ---
 

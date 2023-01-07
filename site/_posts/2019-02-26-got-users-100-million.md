@@ -4,7 +4,8 @@ title: Got Users? How About 100 Million of Them?
 description: FusionAuth can handle hundreds of millions of users easily, because you might need to.
 author: Daniel DeGroff
 image: blogs/got-users.jpg
-category: blog
+category: article
+tags: performance load-testing
 excerpt_separator: "<!--more-->"
 ---
 

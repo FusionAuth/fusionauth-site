@@ -4,7 +4,8 @@ title: Open Office Hours To Ask Anything About Identity, Authorization, and Auth
 description: Every month, ask the FusionAuth experts anything about identity, authorization, and authentication.
 author: Bryan Giese
 image: blogs/open-office-webinar-01.png
-category: blog
+category: announcement
+tags: office-hours ciam
 excerpt_separator: "<!--more-->"
 ---
 

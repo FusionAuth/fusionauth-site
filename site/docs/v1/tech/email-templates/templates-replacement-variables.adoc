@@ -13,18 +13,23 @@ Most templates will contain the User object as returned on the Retrieve User API
 
 Below you will find each stock template that FusionAuth ships for reference. The available replacement values will be outlined below for each template.
 
-* <<Breached Password>>
-* <<Confirm Child>>
-* <<COPPA Email Plus Notice>>
-* <<COPPA Notice>>
-* <<Email Verification>>
-* <<Forgot Password>>
-* <<Parent Registration Request>>
-* <<Passwordless Login>>
-* <<Registration Verification>>
-* <<Setup Password>>
-* <<Threat Detected>>
-* <<Two Factor Authentication>>
+* <<Using Replacement Variables>>
+* <<Custom Replacement Variables>>
+* <<Available Email Templates>>
+** <<Breached Password>>
+** <<Confirm Child>>
+** <<COPPA Email Plus Notice>>
+** <<COPPA Notice>>
+** <<Email Verification>>
+** <<Forgot Password>>
+** <<Parent Registration Request>>
+** <<Passwordless Login>>
+** <<Registration Verification>>
+** <<Setup Password>>
+** <<Threat Detected>>
+** <<Two Factor Authentication>>
+** <<Two Factor Authentication Method Added>>
+** <<Two Factor Authentication Method Removed>>
 
 The following 
 
@@ -35,6 +40,110 @@ If you create a template with content and template variables for one type of ema
 Instead, the attempt will fail and there will be an error added to the Event Log.
 ====
 
+
+== Using Replacement Variables
+
+Below are some basic examples of using replacement values in your email templates.
+
+Consider the following User represented by this condensed JSON object.
+[source,json]
+----
+{
+  "email": "monica@piedpiper.com",
+  "firstName": "Monica",
+  "id": "1c592f8a-59c6-4a09-82f8-f4257e3ea4c8",
+  "lastName": "Hall"
+}
+----
+
+The following are example usages with a rendered output based upon the above mentioned example User. The replacement variables are rendered
+using https://freemarker.apache.org/docs/index.html[Apache FreeMarker] which is an HTML template language.
+
+A default value should be provided for variables that may be undefined at runtime such as `firstName`. See `firstName` in the example below
+is followed by a bang `!` and then the string `Unknown User`. This indicates that if `firstName` is undefined when the template is rendered the value
+of `Unknown User` should be used as a default value.
+
+*Template Source*
+[source,html]
+----
+Hi ${user.firstName!'Unknown User'}, welcome to Pied Piper.
+
+Please verify your email address ${user.email} by following the provided link.
+
+https://piedpiper.fusionauth.io/email/verify/${verificationId}
+- Admin
+----
+
+*Rendered Output*
+[source,html]
+----
+Hi Monica, welcome to Pied Piper.
+
+Please verify your email address monica@piedpiper.com by following the provided link.
+
+https://piedpiper.fusionauth.io/email/verify/YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4
+- Admin
+----
+
+== Custom Replacement Variables
+
+In addition to the variables mentioned in the previous section, when defining your own email templates to be used by the link:/docs/v1/tech/apis/emails#send-an-email[Send Email] API
+custom data may be provided on the API request to be used in the email template.
+
+On Send Email API request the contents of the `requestData` field will be made available to you when the template is rendered.
+
+For example, consider the following request to the Send API to send email template Id `1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e` to the User by Id `ce485a91-906f-4615-af75-81d37dc71e90`.
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/email/send/`1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e`#
+--
+
+[source,json]
+.Example Request JSON
+----
+{
+  "requestData": {
+    "paymentAmount": "$9.99",
+    "product": "party hat",
+    "quantity": "12"
+  },
+  "userIds": [
+    "ce485a91-906f-4615-af75-81d37dc71e90"
+  ]
+}
+----
+
+*Template Source*
+[source,html]
+----
+Hello ${user.firstName!''},
+
+Thank you for your purchase! We value your business, please come again!
+
+Product: ${requestData.product!'unknown'}
+Quantity: ${requestData.quantity!'unknown`}
+
+- Pied Piper Customer Success
+----
+
+*Rendered Output*
+[source,html]
+----
+Hello Kelly,
+
+Thank you for your purchase! We value your business, please come again!
+
+Product: party hat
+Quantity: 12
+
+- Pied Piper Customer Success
+----
+
+= Available Email Templates
+
+Below is an overview of each email template that ships with FusionAuth.
 
 == Breached Password
 
@@ -480,46 +589,6 @@ The Tenant object, see the Tenant API for field definitions of a Tenant.
 [field]#user# [type]#[User]#::
 The User object, see the User API for field definitions of a User.
 
-== Two Factor Authentication
-
-.HTML
-[source,text]
-----
-<p>
-  To complete your login request, enter this one-time code code on the login form when prompted.
-</p>
-<p>
-  <strong>${code}</strong>
-</p>
-
-- FusionAuth Admin
-----
-
-.Text
-[source,text]
-----
-To complete your login request, enter this one-time code code on the login form when prompted.
-
-${code}
-
-- FusionAuth Admin
-----
-
-=== Replacement Variables
-
-[.api]
-[field]#application# [type]#[Application]# [since]#Available since 1.28.0#::
-The Application object, see the link:/docs/v1/tech/apis/applications[Application API] for field definitions.
-
-[field]#code# [type]#[String]#::
-A code that the user must provide to complete multi-factor authentication.
-
-[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
-The Tenant object, see the link:/docs/v1/tech/apis/tenants[Tenant API] for field definitions.
-
-[field]#user# [type]#[User]#::
-The User object, see the link:/docs/v1/tech/apis/users[User API] for field definitions of a User.
-
 == Threat Detected
 
 include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
@@ -601,102 +670,146 @@ The Tenant object, see the link:/docs/v1/tech/apis/tenants[Tenant API] for field
 [field]#user# [type]#[User]#::
 The User object, see the link:/docs/v1/tech/apis/users[User API] for field definitions of a User.
 
-== Using Replacement Variables
+== Two Factor Authentication
 
-Below are some basic examples of using replacement values in your email templates.
-
-Consider the following User represented by this condensed JSON object.
-[source,json]
+.HTML
+[source,text]
 ----
-{
-  "email": "monica@piedpiper.com",
-  "firstName": "Monica",
-  "id": "1c592f8a-59c6-4a09-82f8-f4257e3ea4c8",
-  "lastName": "Hall"
-}
-----
+<p>
+  To complete your login request, enter this one-time code code on the login form when prompted.
+</p>
+<p>
+  <strong>${code}</strong>
+</p>
 
-The following are example usages with a rendered output based upon the above mentioned example User. The replacement variables are rendered
-using https://freemarker.apache.org/docs/index.html[Apache FreeMarker] which is an HTML template language.
-
-A default value should be provided for variables that may be undefined at runtime such as `firstName`. See `firstName` in the example below
-is followed by a bang `!` and then the string `Unknown User`. This indicates that if `firstName` is undefined when the template is rendered the value
-of `Unknown User` should be used as a default value.
-
-*Template Source*
-[source,html]
-----
-Hi ${user.firstName!'Unknown User'}, welcome to Pied Piper.
-
-Please verify your email address ${user.email} by following the provided link.
-
-https://piedpiper.fusionauth.io/email/verify/${verificationId}
-- Admin
+- FusionAuth Admin
 ----
 
-*Rendered Output*
-[source,html]
+.Text
+[source,text]
 ----
-Hi Monica, welcome to Pied Piper.
+To complete your login request, enter this one-time code code on the login form when prompted.
 
-Please verify your email address monica@piedpiper.com by following the provided link.
+${code}
 
-https://piedpiper.fusionauth.io/email/verify/YkQY5Gsyo4RlfmDciBGRmvfj3RmatUqrbjoIZ19fmw4
-- Admin
-----
-
-== Custom Replacement Variables
-
-In addition to the variables mentioned in the previous section, when defining your own email templates to be used by the link:/docs/v1/tech/apis/emails#send-an-email[Send Email] API
-custom data may be provided on the API request to be used in the email template.
-
-On Send Email API request the contents of the `requestData` field will be made available to you when the template is rendered.
-
-For example, consider the following request to the Send API to send email template Id `1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e` to the User by Id `ce485a91-906f-4615-af75-81d37dc71e90`.
-
-[.endpoint]
-.URI
---
-[method]#POST# [uri]#/api/email/send/`1bc118ae-d5fa-4cdf-a90e-e8ef55c3e11e`#
---
-
-[source,json]
-.Example Request JSON
-----
-{
-  "requestData": {
-    "paymentAmount": "$9.99",
-    "product": "party hat",
-    "quantity": "12"
-  },
-  "userIds": [
-    "ce485a91-906f-4615-af75-81d37dc71e90"
-  ]
-}
+- FusionAuth Admin
 ----
 
-*Template Source*
-[source,html]
+=== Replacement Variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.28.0#::
+The Application object, see the link:/docs/v1/tech/apis/applications[Application API] for field definitions.
+
+[field]#code# [type]#[String]#::
+A code that the user must provide to complete multi-factor authentication.
+
+[field]#tenant# [type]#[Tenant]# [since]#Available since 1.18.2#::
+The Tenant object, see the link:/docs/v1/tech/apis/tenants[Tenant API] for field definitions.
+
+[field]#user# [type]#[User]#::
+The User object, see the link:/docs/v1/tech/apis/users[User API] for field definitions of a User.
+
+== Two Factor Authentication Method Added
+
+include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
+
+.HTML
+[source,text]
 ----
-Hello ${user.firstName!''},
+<p>
+The following two factor method was added to ${user.email}:
 
-Thank you for your purchase! We value your business, please come again!
+    <br>
+    <strong>Method: ${method.method}</strong>
+    <br>
+    <strong>Identifier: ${method.id}</strong>
 
-Product: ${requestData.product!'unknown'}
-Quantity: ${requestData.quantity!'unknown`}
+</p>
 
-- Pied Piper Customer Success
+- FusionAuth Admin
 ----
 
-*Rendered Output*
-[source,html]
+.Text
+[source,text]
 ----
-Hello Kelly,
+The following two factor method was added to ${user.email}:
 
-Thank you for your purchase! We value your business, please come again!
+- Method: ${method.method}
+- Identifier: ${method.id}
 
-Product: party hat
-Quantity: 12
-
-- Pied Piper Customer Success
+- FusionAuth Admin
 ----
+
+=== Replacement Variables
+
+[.api]
+[field]#application# [type]#[Application]# [since]#Available since 1.28.0#::
+The Application object, see the link:/docs/v1/tech/apis/applications[Application API] for field definitions.
++
+*Note*:
+This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined. You can check for this variable safely in freemarker by wrapping the variable as such: `${(application)!""}`.
+
+[field]#event# [type]#[Event]#::
+The Event object for a two factor add event.  See the link:/docs/v1/tech/events-webhooks/events/user-two-factor-method-add[Webhooks & Events section] for field definitions.
+
+[field]#method# [type]#[Object]#::
+The two-factor method that was added. See the link:/docs/v1/tech/apis/two-factor[Multi Factor/Two Factor APIs] for property definitions and example JSON.
+
+[field]#tenant# [type]#[Tenant]#::
+The Tenant object, see the link:/docs/v1/tech/apis/tenants[Tenant API] for field definitions.
+
+[field]#user# [type]#[User]#::
+The User object, see the link:/docs/v1/tech/apis/users[User API] for field definitions of a User.
+
+== Two Factor Authentication Method Removed
+
+include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
+
+.HTML
+[source,text]
+----
+<p>
+The following two factor was removed from ${user.email}:
+
+    <br>
+    <strong>Method: ${method.method}</strong>
+    <br>
+    <strong>Identifier: ${method.id}</strong>
+
+</p>
+
+- FusionAuth Admin
+----
+
+.Text
+[source,text]
+----
+The following two factor method was removed from ${user.email}:
+
+- Method: ${method.method}
+- Identifier: ${method.id}
+
+- FusionAuth Admin
+----
+
+=== Replacement Variables
+
+[.api]
+[field]#application# [type]#[Application]#::
+The Application object, see the link:/docs/v1/tech/apis/applications[Application API] for field definitions.
++
+*Note*:
+This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined. You can check for this variable safely in freemarker by wrapping the variable as such: `${(application)!""}`.
+
+[field]#event# [type]#[Event]#::
+The Event object for a two factor remove event.  See the link:/docs/v1/tech/events-webhooks/events/user-two-factor-method-remove[Webhooks & Events section] for field definitions.
+
+[field]#method# [type]#[Object]#::
+The two-factor method that was removed. See the link:/docs/v1/tech/apis/two-factor[Multi Factor/Two Factor APIs] for property definitions and example JSON.
+
+[field]#tenant# [type]#[Tenant]#::
+The Tenant object, see the link:/docs/v1/tech/apis/tenants[Tenant API] for field definitions.
+
+[field]#user# [type]#[User]#::
+The User object, see the link:/docs/v1/tech/apis/users[User API] for field definitions of a User.

@@ -4,8 +4,8 @@ title: The Auth Bottleneck Pattern
 description: How and why to use a centralized user management system rather than having individual applications use their own auth components.
 author: Dan Moore
 image: blogs/bottleneck-pattern/the-auth-bottleneck-pattern.png
-category: blog
-tags: topic-auth-patterns
+category: article
+tags: topic-auth-patterns patterns bottleneck
 excerpt_separator: "<!--more-->"
 ---
 
