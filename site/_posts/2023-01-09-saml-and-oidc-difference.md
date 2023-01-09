@@ -257,11 +257,11 @@ However, they share some similar concepts shown in the table below:
 
 | **OIDC**                                                                          | **SAML**                                                              |
 |-------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| Uses **ID tokens** which contain authentication details about the user | Uses **Assertions** which contain authentication details about the user |
+| **ID tokens** contain authentication details about the user | **Assertions** contain authentication details about the user |
 | Redirects to **Redirect URI** after authentication                       | Redirects back to a **Relay State** after authentication                         |
-| Uses **exp** and **nbf** to indicate token validity duration    | Uses **NotBefore** and **NotOnOrAfter**               |
-| Uses **Relying Party (RP)**                                   | Uses **Service Providers (SP)** |
-| Uses **OpenID Provider (OP)**                                   | Uses **Identity Provider (IDP)** |
+| **nbf** and **exp** for token validity duration    | Uses **NotBefore** and **NotOnOrAfter**               for token validity duration    |
+| The **OpenID Provider (OP)**  authenticates the user                                 | The **Identity Provider (IDP)** authenticates the user |
+| The **Relying Party (RP)** wants the user data                                 | The **Service Provider (SP)** wants the user data |
 
 ## Conclusion
 
