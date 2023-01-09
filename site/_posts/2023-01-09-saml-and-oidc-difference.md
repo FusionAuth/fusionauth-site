@@ -78,6 +78,7 @@ Here's an example of what an access token response looks like:
    "token_type": "Bearer",
    "userId": "2408d99d-425b-4850-a8ea-068e2740038e"
 }
+```
  
 ## What Is SAML?
 
