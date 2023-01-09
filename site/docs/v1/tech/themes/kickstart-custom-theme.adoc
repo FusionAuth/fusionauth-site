@@ -101,6 +101,7 @@ Create a file called `kickstart.json` in the `kickstart` folder and copy the fol
     "themeID" : "#{UUID()}",
     "applicationID" : "404e516b-06b8-49da-9c68-c1cd1928c81d",
     "clientSecret" : "RBLhJrfRsa0-YxVPrn_aZfzIGccWyncdvHvDNTy-Hrs",
+    "defaultTenantId": "da025934-3ba7-4a13-83f0-aab68c9919b8",
     "userID" : "#{UUID()}"
   },
   "apiKeys": [
@@ -113,14 +114,15 @@ Create a file called `kickstart.json` in the `kickstart` folder and copy the fol
     "&{json/updateTheme.json}",
     "&{json/createApplication.json}",
     "&{json/createUser.json}",
-    "&{json/registerUser.json}"
+    "&{json/registerUser.json}",
+    "&{json/setDefaultTheme.json}"
   ]
 }
 ```
 
 There are three sections in this code: `"variables"`, `"apiKeys"`, and `"requests"`.
 
-The `"variables"` section defines identifiers for the key components of our FusionAuth instance. In this section, `"apiKey"`, `"themeId"`, and `"userId"` are randomly generated UUIDs. We'll use the arbitrary values in `"applicationId"` and `"clientSecret"` later on.
+The `"variables"` section defines identifiers for the key components of our FusionAuth instance. In this section, `"apiKey"`, `"themeId"`, and `"userId"` are randomly generated UUIDs. We'll use the arbitrary values in `"applicationId"`, `"clientSecret"` and `"defaultTenantId"` later on.
 
 The `"apiKeys"` section defines the key through which our requests will be executed. At least one `"apiKey"` is required for every `kickstart.json` file.
 
@@ -160,6 +162,22 @@ Create a file called `updateTheme.json` and add the following to it:
 ```
 
 This request applies our `darkTheme.css` stylesheet to the theme we created.
+
+Create a file called `setDefaultTheme.json` and copy the following into it:
+
+```json
+{
+  "method": "PATCH",
+  "url": "/api/tenant/#{defaultTenantId}",
+  "body": {
+    "tenant": {
+      "themeId": "#{themeID}"
+    }
+  }
+}
+```
+
+This request sets the dark theme as the theme for the default tenant.
 
 Create a file called `createApplication.json` and copy the following into it:
 
@@ -263,9 +281,11 @@ Once you have completed the steps above, you should have a folder that is struct
       +-- registerUser.json
       |
       +-- createApplication.json
+      |
+      +-- setDefaultTheme.json
 ```
 
-To launch the FusionAuth instance, navigate to the `Kickstart_Theme` folder and run the Docker Compose file.
+To launch the FusionAuth instance, navigate to the `Kickstart_Theme` folder and run the docker compose command.
 
 ```bash
 docker-compose up
@@ -284,15 +304,6 @@ Enter these credentials into the login screen to be taken to the admin dashboard
 
 You can look at [breadcrumb]#Applications#, [breadcrumb]#Users#, and [breadcrumb]#Customizations -> Themes# to verify that all of the settings have been configured correctly.
 
-Before we can see our custom theme in action, we need to apply it to the application.
-
-== Applying the Theme
-
-To apply our custom theme, we need to bind it to the default tenant. Since the default tenant is created automatically with a random UUID every time, programmatically modifying it is outside the scope of this tutorial.
-
-To manually set the theme of the default tenant, navigate to "Tenants" and hit the "edit" button. In the "Theme" panel, select "Dark Theme" and click "Save".
-
-image::themes/kickstart-theme/select-dark-theme.png[Set the theme,width=1200]
 
 == Running the Application
 
@@ -346,7 +357,14 @@ Copy the entire contents of that box into your `defaultMessages.txt` file, find 
 Kickstart will not run if it sees any users, API keys, or applications in the FusionAuth database. This is to prevent data loss. If you can login to the FusionAuth administrative user interface, Kickstart will not run.
 ====
 
-Once you have modified `updateTheme.json`, you will need to clear the volumes created when you launched the FusionAuth instance to allow the Kickstart to rerun. When you relaunch the instance using the `docker-compose up` command and apply the dark theme, the result will be as below with the updated message:
+Once you have modified `updateTheme.json`, you will need to clear the volumes created when you launched the FusionAuth instance to allow the Kickstart to rerun. You can do this by executing the following command (This will totally destroy all data stored in the instance):
+
+```bash
+docker-compose down -v
+```
+
+
+When you relaunch the instance using the `docker-compose up` command, the result will be as below with the updated message:
 
 
 
