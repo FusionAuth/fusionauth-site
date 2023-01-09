@@ -5,7 +5,7 @@ description: OIDC and SAML are authentication protocols that enable identity pro
 author: Paul Ibeabuchi
 category: article
 tags: saml oidc explainer
-image: blogs/spring-fusionauth/authentication-spring-boot-oidc.png
+image: blogs/saml-oidc-difference/saml-oidc-difference.png
 excerpt_separator: "<!--more-->"
 ---
 
