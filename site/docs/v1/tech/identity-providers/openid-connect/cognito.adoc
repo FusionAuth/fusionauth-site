@@ -9,24 +9,21 @@ navcategory: login-methods
 
 == Configure OpenID Connect with Cognito
 
-[NOTE]
-====
-Cognito users must have a public email address configured to link on email (See link:/docs/v1/tech/identity-providers#linking-strategies[Linking Strategies for more on this]). An approach that will work for all users is to link on username or create an anonymous link. Using these strategies ensures that the configured Cognito OIDC connection works for every user, no matter their Cognito privacy settings.
-====
+include::docs/v1/tech/identity-providers/openid-connect/_link-on-email-note.adoc[]
 
-Once you have completed this configuration, you may enable an OpenID Connect "Login with Cognito" button for one or more FusionAuth Applications. See link:https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html[Cognito - Configuring a user pool app client] for an additional reference.
+Once you have completed this configuration, you may enable an OpenID Connect "Login with Cognito" button for one or more FusionAuth Applications.
 
 image::identity-providers/cognito/cognito-login-fusionauth-button.png[Login with Cognito, width=1200, role=bottom-cropped]
 
 === Register a Cognito User Pool
 
-If you're interested in connecting to Cognito, it is likely that you already have a user pool set up that you'd want to connect to. We're adding the steps to create a new user pool in this guide in the interest of completeness, or in case you would like to set up a test user pool.
+If you're interested in connecting to Cognito, it is likely that you already have a user pool set up that you'd want to connect to. We're adding the steps to create a new user pool in this guide in the interest of completeness, or in case you would like to set up a test user pool. You can refer to the link:https://docs.aws.amazon.com/cognito/latest/developerguide/getting-started-with-cognito-user-pools.html[getting started with cognito user pools] documentation for additional reference..
 
 You will first need to log in to link:https://aws.amazon.com[AWS].
 
 Once logged in, search for "Cognito" in the main search field, and select the "Cognito" service.
 
-- Choose the region you'd like the user pool to reside in from the top right dropdown.
+- Choose the region you'd like the user pool to reside in from the top right region indicator dropdown.
 - Click "Create a user pool".
 - Select the pool sign-in options for Step 1. In this example, we are using email.
 - Review the configurations for Step 2 up to Step 4 to make sure they conform to your needs.
@@ -36,7 +33,9 @@ Once logged in, search for "Cognito" in the main search field, and select the "C
 
 === Creating a User Pool App Client
 
-To enable FusionAuth to access the user pool, we need to set up an app client on Cognito. In your user pool:
+To enable FusionAuth to access the user pool, we need to set up an app client on Cognito. See link:https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-client-apps.html[Cognito - Configuring a user pool app client] for additional reference.
+
+In your user pool:
 
 - Under "Initial app client" on Step 5, set the app type to confidential.
 - Give the client a name. We’ve used "FusionClient".
@@ -68,11 +67,10 @@ image::identity-providers/cognito/cognito-choose-openid.png[Create a new OpenID 
 - Set "Client Id" to the "App Client Id" recorded when creating the app client on Cognito.
 - Select "HTTP Basic Authentication" for the "Client Authentication" field.
 - Set "Client secret" to the app client secret recorded when creating the app client on Cognito.
-
-To retrieve the values for the various "endpoints" fields, visit:
+- Enable "Discover endpoints" and use the following as the "Issuer" URL:
 
 ```
-https://cognito-idp.<REGION>.amazonaws.com/<USER_POOL_ID>/.well-known/openid-configuration
+https://cognito-idp.<REGION>.amazonaws.com/<USER_POOL_ID>/
 ```
 
 Replace `<REGION>` with the AWS region code that you created your Cognito user pool in. This can be found by selecting the region indicator at the top right of the menu bar and recording the region code displayed alongside the region location.
@@ -82,49 +80,20 @@ Replace `<USER_POOL_ID` with the Cognito user pool Id. You can find this by clic
 
 image::identity-providers/cognito/cognito-user-pool-id.png[User Pool Id in Cognito, width=1200, role=bottom-cropped]
 
-If you browse to the `openid-configuration` URL should show you a JSON document similar to this:
-
-```json
-{
-  "authorization_endpoint": "https://fusionauth.auth.us-east-2.amazoncognito.com/oauth2/authorize",
-  "id_token_signing_alg_values_supported": [
-    "RS256"
-  ],
-  "issuer": "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_DFiufNrjlT",
-  "jwks_uri": "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_DFiufNrjlT/.well-known/jwks.json",
-  "response_types_supported": [
-    "code",
-    "token"
-  ],
-  "scopes_supported": [
-    "openid",
-    "email",
-    "phone",
-    "profile"
-  ],
-  "subject_types_supported": [
-    "public"
-  ],
-  "token_endpoint": "https://fusionauth.auth.us-east-2.amazoncognito.com/oauth2/token",
-  "token_endpoint_auth_methods_supported": [
-    "client_secret_basic",
-    "client_secret_post"
-  ],
-  "userinfo_endpoint": "https://fusionauth.auth.us-east-2.amazoncognito.com/oauth2/userInfo"
-}
-```
-
-NOTE: Ensure that the Domain name set earlier in the app client configuration appears in these endpoint URLs. If it does not, wait for a while for the URLs to update. There may be a lag between setting the domain and the domain reflecting in the URLs.
-
-Copy the endpoints from this output into the corresponding fields in the FusionAuth config.
-
 Set "Button Text" to "Login with Cognito". You can also upload a Cognito icon as the button icon if you wish.
+
+include::docs/v1/tech/identity-providers/openid-connect/_link-on-email-note.adoc[]
 
 Set the "Scope" field to "openid". Choose "Link on email. Create the user if they do not exist" for the "Linking Strategy".
 
 Choose "No Lambda" for the "Reconcile Lambda field". If you wanted to examine or modify the response of the Cognito authentication event and modify the user based on that, you'd link:/docs/v1/tech/lambdas/[create a lambda] and assign it here.
 
 Now choose the applications for which you would like the Cognito sign-in to be available.
+
+Once you are done you should have a configuration similar to this:
+
+image::identity-providers/cognito/openid-connect-settings.png[penID integration settings, width=1200]
+
 
 ==== Testing
 
