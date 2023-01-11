@@ -4,8 +4,8 @@ title: How to integrate with FusionAuth using PHP
 description: A quick overview of integrating with FusionAuth using PHP. This post covers creating and registering a user, changing their password, generating a login report and then deleting the user. 
 author: Alfrick Opidi
 image: blogs/integrate-with-php.png
-category: blog
-tags: client-php tutorial tutorial-php
+category: tutorial
+tags: client-php tutorial tutorial-php php
 excerpt_separator: "<!--more-->"
 ---
 

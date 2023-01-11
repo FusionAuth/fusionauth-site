@@ -4,9 +4,9 @@ title: How to Securely Implement OAuth in Vue.js
 description: This post describes how to securely implement OAuth in a Vue application using the Authorization Code Grant (with FusionAuth as the IdP).
 author: Ashutosh Singh
 image: blogs/oauth-vuejs/how-to-securely-implement-oauth-in-vue-js.png
-category: blog
+category: tutorial
 updated_date: 2021-03-16
-tags: client-javascript tutorial tutorial-vue tutorial-javascript
+tags: client-javascript tutorial tutorial-vue tutorial-javascript vuejs vue javascript
 
 excerpt_separator: "<!--more-->"
 ---

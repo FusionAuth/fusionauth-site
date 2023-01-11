@@ -28,6 +28,21 @@ Install these programs:
 `gem install bundle`
 `bundle install`
 
+#### Build Errors
+On M1 Macs, you may receive an error similar to:
+```text
+Gem::Ext::BuildError: ERROR: Failed to build gem native extension.
+
+    current directory: /Users/<username>/.rbenv/versions/2.7.5/lib/ruby/gems/2.7.0/gems/eventmachine-1.2.7/ext
+/Users/<username>/.rbenv/versions/2.7.5/bin/ruby -I /Users/mark/.rbenv/versions/2.7.5/lib/ruby/site_ruby/2.7.0 extconf.rb
+```
+
+To fix this, rebuild the eventmachine gem using:
+```shell
+gem install eventmachine -v '1.2.7' -- --with-ldflags="-Wl,-undefined,dynamic_lookup"
+bundle install
+```
+
 ### Setup Savant
 
 We use the Savant build tool. In order to build and run this project, you'll need to first setup Savant.

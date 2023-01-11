@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.27
 description: The FusionAuth 1.27 Release includes application themes, email gating, safe links fixes and more
 author: Dan Moore
 image: blogs/release-1-27/product-update-fusionauth-1-27.png
-category: blog
-tags: feature-application-themes
+category: announcement
+tags: feature-application-themes themes application-themes release-announcement email-gating
 excerpt_separator: "<!--more-->"
 ---
 

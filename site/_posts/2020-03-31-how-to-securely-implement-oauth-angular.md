@@ -4,8 +4,8 @@ title: How to securely implement OAuth in Angular
 description: A detailed overview of securely integrating an Angular application with an OAuth provider using the OAuth Authorization Code Grant  
 author: Dan Moore
 image: blogs/fusionauth-example-angular/oauth-angular-fusionauth.png
-category: blog
-tags: client-javascript tutorial tutorial-angular
+category: tutorial
+tags: client-javascript tutorial tutorial-angular angular javascript
 excerpt_separator: "<!--more-->"
 ---
 

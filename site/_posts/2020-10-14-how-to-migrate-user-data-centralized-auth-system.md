@@ -4,8 +4,8 @@ title: How to migrate your legacy user data to a centralized auth system
 description: How can you safely and easily migrate your user's data from a legacy user datastore to a centralized auth system?  
 author: Dan Moore
 image: blogs/migrating-users-legacy-datastore/how-to-migrate-your-legacy-user-data-to-a-centralized-auth-system.png
-category: blog
-tags: client-php feature-connectors tutorial tutorial-php tutorial tutorial-reactor-feature
+category: tutorial
+tags: client-php feature-connectors tutorial tutorial-php tutorial tutorial-reactor-feature php connectors migration upgrade
 excerpt_separator: "<!--more-->"
 ---
 

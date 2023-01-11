@@ -4,7 +4,8 @@ title: Auth specific scaling challenges
 description: What are the elements of an authentication system which make it difficult to scale?
 author: James Hickey
 image: blogs/scaling-auth-system/auth-specific-scaling-challenges-header-image.png
-category: blog
+category: article
+tags: scaling password hashing
 excerpt_separator: "<!--more-->"
 ---
 

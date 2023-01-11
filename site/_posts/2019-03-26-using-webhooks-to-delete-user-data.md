@@ -4,8 +4,8 @@ title: Using Webhooks In FusionAuth To Delete User Data
 description: Use FusionAuth's webhooks to ensure that you can delete all a user's data when they request it. GDPR compliance has never been easier.
 author: John Philips
 image: blogs/using-webhooks-in-fusionauth.jpg
-category: blog
-tags: feature-webhooks client-javascript tutorial tutorial-webhooks tutorial-node tutorial-feature
+category: tutorial
+tags: feature-webhooks client-javascript tutorial tutorial-webhooks tutorial-node tutorial-feature webhooks nodejs javascript
 excerpt_separator: "<!--more-->"
 ---
 

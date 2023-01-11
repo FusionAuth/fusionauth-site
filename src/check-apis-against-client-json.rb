@@ -27,6 +27,8 @@ IGNORED_FIELD_REGEXPS = [
   /^theme\.templates\.registrationSend/, # deprecated, replaced with templates.registrationSent
   /^event\.info\.location\.displayString/, # this is a derived field
   /^event\.ipAddress/, # this is a deprecated field
+  /^identityProvider\.issuer/, # this is a deprecated field
+  /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/master/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
 ]
 # option handling
 options = {}
@@ -109,6 +111,14 @@ def make_api_path(type)
     return base + "identity-providers/links"
   end
 
+  if type.end_with? "identity-provider"
+    idp_type = type.gsub("-identity-provider","")
+    if idp_type == "samlv2-id-p-initiated"
+      idp_type = "samlv2-idp-initiated"
+    end
+    return base + "identity-providers/" + idp_type
+  end
+
   if type == "generic-connector-configuration"
     return base + "connectors/generic"
   end
@@ -145,6 +155,11 @@ def make_on_page_field_name(type)
   if type == "entityGrant"
     return "grant"
   end
+
+  if type.end_with? "IdentityProvider"
+    return "identityProvider"
+  end
+
   if type == "ldapConnectorConfiguration"
     return "connector"
   end
@@ -192,6 +207,29 @@ def downcase(string)
   dcs
 end
 
+def skip_file(fn) 
+
+  # this is a super class of user. we don't have an explicit API for it, though
+  if fn.end_with? "io.fusionauth.domain.SecureIdentity.json"
+    return true
+  end
+
+  # these are webauthn implementation details, no APIs to manage them directly
+  if fn.end_with? "io.fusionauth.domain.webauthn.PublicKeyCredentialEntity.json"
+    return true
+  end
+  
+  if fn.end_with? "io.fusionauth.domain.webauthn.PublicKeyCredentialRelyingPartyEntity.json"
+    return true
+  end
+  if fn.end_with? "io.fusionauth.domain.webauthn.PublicKeyCredentialUserEntity.json"
+    return true
+  end
+
+  # above are webauthn implementation details, no APIs to manage them directly
+
+  return false
+end
 
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
@@ -229,8 +267,16 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   if options[:verbose]
     puts "processing " + t
   end
+
+  if skip_file(fn)
+    if options[:verbose]
+      puts "skipping " + fn
+    end
+    return
+  end
+
   unless page_content
-    # we are in leaf object, we don't need to pull the page content
+    # if we are in leaf object, we don't need to pull the page content
     api_url = options[:siteurl] + "/docs/v1/tech/"+make_api_path(todash(t))
     if options[:verbose]
       puts "retrieving " + api_url
@@ -317,6 +363,15 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
             file = mf
             break
           end
+        end
+        unless file
+	  # this is a weird one, it is a inner class but on a supertype
+          if options[:verbose]
+            puts "handling special case of Identity Provider lambda config"
+          end
+	  if field_type =="LambdaConfiguration" && ancestor_type.end_with?("IdentityProvider")
+            file = Dir.glob(options[:clientlibdir]+"/src/main/domain/io.fusionauth.domain.provider.BaseIdentityProvider$LambdaConfiguration.json")[0]
+	  end
         end
         unless file
           if options[:verbose]
