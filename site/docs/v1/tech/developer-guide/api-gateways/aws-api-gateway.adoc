@@ -32,13 +32,13 @@ Make sure that the [field]#Enabled grants# checkboxes have the `Authorization Co
 
 Your application should look like this.
 
-image::api-gateways/ngrok-cloud-edge/application-configuration.png[The FusionAuth example configuration,width=1200]
+image::api-gateways/aws-api-gateway/application-configuration.png[The FusionAuth example configuration,width=1200]
 
 Click the `Save` button.
 
 Edit the new application. You should see a value in the [field]#Client Id# field. Copy it and put it in a text file. You'll use it in the <<Set Up Amazon API Gateway>> step.
 
-image::api-gateways/ngrok-cloud-edge/application-client-id-client-secret.png[Extracting the Client Id and secret,width=1200]
+image::api-gateways/aws-api-gateway/application-client-id-client-secret.png[Extracting the Client Id and secret,width=1200]
 
 
 == Set Up AWS Gateway
@@ -122,106 +122,72 @@ Save the API key. You should now see a list of all API keys. Click on the lock i
 
 image::api-gateways/aws-api-gateway/api-key.png[Enabling the login API,width=1200,role=bottom-cropped]
 
-Now create a test user to login with on FusionAuth. Navigate to "Users" in the side bar, and click the green "+" button at the top right of the screen to create a new user. Choose the appropriate tenant (usually "default"), and fill in the information. You can choose to not send an email to set up the password, but rather set it directly when creating the user, by toggling the "Send email to set up password" switch.
+Now create a test user to login with on FusionAuth. Navigate to "Users" in the side bar, and click the green "+" button at the top right of the screen to create a new user. Choose the appropriate tenant (usually "default"), and fill in the information. You can choose to not send an email to set up the password, but rather set it directly when creating the user, by toggling the "Send email to set up password" switch. Record this user email and password, as we'll use it to obtain a token. 
 
 After saving the user, click to the "Registrations" tab. Click "Add registrations", and select the FusionAuth application you set up earlier. 
 
-image::api-gateways/aws-api-gateway/registrations-tab.png[The ngrok Cloud Edges configuration screen,width=1200,role=bottom-cropped]
+image::api-gateways/aws-api-gateway/registrations-tab.png[The application registrations tab,width=1200,role=bottom-cropped]
 
 Using cURL or Postman, make a POST request to your FusionAuth instance's `/api/login` endpoint. This will return a JWT in the response. 
 
 The cURL call should look like this: 
 
+```bash
+curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/login' \
+--header 'Authorization: <API_KEY>' \
+--header 'Content-Type: application/json' \
+--data-raw '  {
+    "loginId": "<USER_EMAIL>",
+    "password": "<USER_PASSWORD>",
+    "applicationId": "<APPLICATION_ID>",
+    "noJWT" : false
+  }'
 ```
+
+where:
+- `<YOUR_FUSIONAUTH_URL>` is the URL of your FusionAuth installation.
+- `<API_KEY>` is the API created above, enabled for login.
+- `<USER_EMAIL>` is the email address of the user added above.
+- `<USER_PASSWORD>` is the password of the user added above.
+
+The return response from FusionAuth should look similar to the following:
+
+```
+{
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImhDUjA4X3daR2s0OUFlYUFmRDY5ZmJKWmRGTSJ9.eyJhdWQiOiI2M2I3M2Y3Ni03NDAwLTQ4N2QtYjEyMi01NzA1Yjg0OGRhODAiLCJleHAiOjE2NzMzNjYyMDQsImlhdCI6MTY3MzM2MjYwNCwiaXNzIjoiaHR0cHM6Ly9mdXNpb25hdXRoLnJpdHphLmNvIiwic3ViIjoiMzk2MzAwMGYtNjg2ZC00MTY5LWI2MjgtOWM5YzQ1MzRiNzgwIiwianRpIjoiZDk3ZGIyZWYtZjExNS00ZDIxLWFlOTQtMDIyN2RmMGU4YzI5IiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJlbWFpbCI6ImJvYkBhd3MuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6ImJvYmF3cyIsImFwcGxpY2F0aW9uSWQiOiI2M2I3M2Y3Ni03NDAwLTQ4N2QtYjEyMi01NzA1Yjg0OGRhODAiLCJyb2xlcyI6W10sImF1dGhfdGltZSI6MTY3MzM2MjYwNCwidGlkIjoiZjAwNGMxZmUtNDg0Yi05MDJjLWQ3Y2EtYmRiYzQ2NGRhMGI3In0.m7gzXhNLToPNVE1p5Vo2pLgP6WBcPNfS_zZJnJ81mdEgi6-orViz-tU8j0L8wva0-8KlMdy54cq_XjnDnYJ0aX90O4ZE_QVU5NuDDfzXH14wQtKQoIIydsB6ZvQoBt8JNFUHJb9ANLCGnfn6FVQKqPIzye18Gx_7wYSVokw3eLNFyzrq9dwOD5Q8V9gvZmXV2pTokQAtA7qFaadb2dIeFlSEB7wamKiZLXILjeWAeMbbvAAMQZWFh46UJjwr06QTd8PxQmRwDWWznJy1Vs8EAgZA4vkRSWnn3IbiaCtOaL1ANuEex6il7q32ahxj0Ncm9wn0DbDsQE9NB0CCNTSIhA",
+    "tokenExpirationInstant": 1673366204805,
+    "user": {
+        .....
+    }
+}
 ```
 
+Copy the `token` value out. This the the JWT, which we can use to access the API Gateway function. 
 
-== Set Up ngrok Cloud Edge
+Now call the api gateway with the following cURL command:
 
-Log into an account with ngrok Cloud Edge enabled. Navigate to https://dashboard.ngrok.com/cloud-edge/edges[the ngrok dashboard] and then to [breadcrumb]#Cloud Edge -> Edges#.
+```
+curl --location --request GET '<https://<GATEWAY_URL>/privateFunction>' \
+--header 'Authorization: Bearer <JWT_TOKEN>'
+```
+where
+- <GATEWAY_URL> is the 
+- <JWT_TOKEN> is the JWT from the `api/login` call.
 
-image::api-gateways/ngrok-cloud-edge/ngrok-edges.png[The ngrok Cloud Edges configuration screen,width=1200,role=bottom-cropped]
 
-Click `Create Edge` and select an `HTTPS Edge`. Click `Create HTTPS Edge`.
+You should see the function return with a reflection of the claims it received:
 
-Copy the endpoint, which might look like `\https://pe07g5cn.ngrok.io` and paste it into the text file. You'll use that in the <<Test It Out>> step.
-
-Click on `Start a Tunnel`. This will give you an `ngrok` command to run.
-
-image::api-gateways/ngrok-cloud-edge/ngrok-start-tunnel.png[The screen with the start tunnel command,width=1200,role=bottom-cropped]
-
-It'll look something like this.
-
-[source,shell,title="Command to start the ngrok tunnel"]
-----
-ngrok tunnel --region us --label edge=edghts_2HhKN3ozOCbPO6eDYlXnUgUyiEn http://localhost:80
-----
-
-Copy and paste it, and then modify that to point to your web server. If you are following this document, you need to point it to port 8000.
-
-[source,shell,title="Command to start the ngrok tunnel to the python protected app"]
-----
-ngrok tunnel --region us --label edge=edghts_2HhKN3ozOCbPO6eDYlXnUgUyiEn http://localhost:8000
-----
-
-Then paste the command into the same text file.
-
-Next, navigate to the [breadcrumb]#OIDC# tab.
-
-image::api-gateways/ngrok-cloud-edge/ngrok-configure-oidc-start.png[The ngrok Cloud Edges OIDC configuration screen,width=1200]
-
-Click on `Begin setup`.
-
-Configure it by taking the following steps.
-
-* Add the URL of the FusionAuth server into the [field]#Issuer URL (Open ID Provider)# field.
-* Put the Client Id you copied in the <<Set Up FusionAuth>> step into the [field]#Client ID# field.
-* Put the Client secret you copied in the <<Set Up FusionAuth>> step into the [field]#Client Secret# field.
-
-Here's how the configuration will look after you are done. 
-
-image::api-gateways/ngrok-cloud-edge/ngrok-configure-oidc-end.png[The filled-out ngrok Cloud Edges OIDC configuration screen,width=1200]
-
-Next, copy the value in the [field]#Redirect URI# read-only field. This should be something like `\https://idp.ngrok.com/oauth2/callback`.
-
-Save the configuration.
-
-== Finishing Up With FusionAuth
-
-Switch back to the FusionAuth admin screen. Edit the FusionAuth application config, if you previously navigated away.
-
-Add the value from the ngrok Cloud Edge [field]#Redirect URI# read-only field to the FusionAuth [field]#Authorized redirect URLs# field.
-
-image::api-gateways/ngrok-cloud-edge/application-redirect-urls.png[Adding the redirect URL to the FusionAuth application configuration,width=1200]
-
-Save the updated configuration.
-
-== Test It Out
-
-Now it is time to test the integration. Open up another terminal and start up the ngrok tunnel.
-
-[source,shell,title="Start the ngrok tunnel to the protected app"]
-----
-ngrok tunnel --region us --label edge=edghts_2HhKN3ozOCbPO6eDYlXnUgUyiEn http://localhost:8000
-----
-
-Open an incognito browser window to ensure that you aren't logged into FusionAuth.
-
-Visit the endpoint you copied above: `\https://pe07g5cn.ngrok.io`.
-
-You will be prompted to log into FusionAuth.
-
-image::api-gateways/ngrok-cloud-edge/fusionauth-login-screen.png[The login screen,width=1200,role=bottom-cropped]
-
-If you login, you'll see the protected application. You won't be able to access it without doing so.
+```json
+    {"applicationId":"63b73f76-7400-487d-b122-5705b848da80","aud":"63b73f76-7400-487d-b122-5705b848da80","auth_time":"1672137288","authenticationType":"PASSWORD","email":"ehrlich@piedpiper.com","email_verified":"true","exp":"1672140888","iat":"1672137288","iss":"https://fusionauth.ritza.co","jti":"2f80b975-1870-4970-b876-90c2e7d9444b","preferred_username":"ehrlich","roles":"[]","sub":"3963000f-686d-4169-b628-9c9c4534b780","tid":"f004c1fe-484b-902c-d7ca-bdbc464da0b7"}
+```
 
 == Next Steps
 
-There's a lot more you can do with ngrok Cloud Edge. 
+There's a lot more you can do with Amazon API Gateway 
 
-You can configure the ngrok Cloud Edge OIDC module to force users to reauthenticate, expire after a certain amount of inactivity and more.
+You can configure scopes for a route, and check against them before allowing a user through. 
 
-You can also combine the OIDC module with other security limitations, such as IP restrictions. You can also configure ngrok to proxy different paths to different applications and add or remove headers.
+You can also combine the OIDC module with other security limitations, such as IP restrictions.
 
-Finally, you can tweak your FusionAuth settings to ensure that the user is registered for the ngrok Cloud Edge application or fire off webhooks when the user logs in.
+Finally, you can tweak your FusionAuth settings to ensure that the user is registered for the Amazon Gateway API application or fire off webhooks when the user logs in.
 
