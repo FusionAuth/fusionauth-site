@@ -174,7 +174,7 @@ While you can read the [relevant portion of the specification](https://datatrack
 
 When the JWT is received, the same operations can be performed. If the generated signature is correct, the contents of the JWT are unchanged from when it was created.
 
-## Limits
+## JSON Web Token Limits
 
 In the specifications, there are no hard limits on length of JSON Web Tokens. In practical terms, think about:
 
