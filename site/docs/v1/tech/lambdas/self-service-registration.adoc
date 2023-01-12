@@ -47,19 +47,42 @@ With this information you may programatically perform any validation you wish as
 
 == Example lambda
 
-In the example below on the second step of the self-service registration form we will return a field error with a code for a custom theme message if the user's middle name is not "Danger".
+Here we will show how to setup a simple lambda that will allow a user to tell us who their current auth provider is and who their future auth provider will be. If they supply a current auth provider we are going to conditionally validate who their future auth provider is, and it must be "FusionAuth"!
+
+First we need to set up an advanced registration form with two steps. We will perform validation on the second step.
+
+image::customization/lambdas/self-service-registration/self-service-reg-form-setup.png[Self-Service registration example form setup,width=800,role=bottom-cropped top-cropped]
+
+We will also add appropriate messaging to our theme.
+
+image::customization/lambdas/self-service-registration/self-service-reg-messages.png[Self-Service registration example form setup,width=600,role=bottom-cropped top-cropped]
+
+Then we will supply the following lambda code for the validation
 
 [source,javascript]
 ----
+// Validate the self-service registration form here
 function validate(result, user, registration, context) {
-    // On step 2 of the form, if the middleName is not equal to "Danger" fail validation.
-    if (context.step === 2) {
-      if (user.middleName !== 'Danger') {
-        result.errors.fieldErrors['user.middleName'] = [{
-          code: '[notDangerous]user.middleName'
-        }];
-      }
+    // On form step "2"
+    if (context.step === 2 &&
+        // if the user has filled out the "currentAuth" field
+        user.data.currentAuth !== null &&
+        // and their "futureAuth" provider field is not "FusionAuth"
+        user.data.futureAuth !== 'FusionAuth') {
+      // set a field error for the "futureAuth" field
+      result.errors.fieldErrors['user.data.futureAuth'] = [{
+        // with the "invalid" error code that we have defined in the theme
+        code: '[invalid]user.data.futureAuth'
+      }];
     }
-  }
+}
 ----
+
+When a user goes to register they will see this form step
+
+image::customization/lambdas/self-service-registration/self-service-reg-form-blank.png[Self-Service registration example form setup,width=600,role=bottom-cropped top-cropped]
+
+When the user submits the wrong future auth provider we will trigger the validation and supply the error message
+
+image::customization/lambdas/self-service-registration/self-service-reg-form-invalid.png[Self-Service registration example form setup,width=600,role=bottom-cropped top-cropped]
 
