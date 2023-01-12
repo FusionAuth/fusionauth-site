@@ -43,39 +43,40 @@ image::api-gateways/aws-api-gateway/application-client-id-client-secret.png[Extr
 
 == Set Up AWS Gateway
 
-Navigate to your [AWS Console](https://aws.amazon.com), or create an [AWS account](https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-creating.html) if you haven't got one already.
+Navigate to your link:https://aws.amazon.com[AWS Console], or create an link:https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-creating.html[AWS account] if you haven't got one already.
 
-Search for "API Gateway" in the top bar, and click it. 
+Search for `API Gateway` in the top bar, and click it. 
 
 image::api-gateways/aws-api-gateway/search-api-gateway.png[The AWS search for API Gateway,width=1200,role=bottom-cropped]
 
-Select "Build HTTP API" from the API type list. 
+Select `Build HTTP API` from the API type list. 
 
 image::api-gateways/aws-api-gateway/build-http-api.png[Choose HTTP API build,width=1200,role=bottom-cropped]
 
-Name the API. This is for your description only, so it can be anything. Then click Next.
+Name the API. This is for your description only, so it can be anything. Then click `Next`.
 
 image::api-gateways/aws-api-gateway/name-api.png[Name the HTTP API build,width=1200,role=bottom-cropped]
 
-On the "Routes" page, click Next without setting anything. We'll add the route via the Lambda function we'll create in a bit.
+On the [breadcrumb]#Routes# page, click `Next` without setting anything. We'll add the route via the Lambda function we'll create in a bit.
 
-On the "Stages" page, click Next, leaving the defaults.
+On the [breadcrumb]#Stages# page, click `Next`, leaving the defaults.
 
-Finally, click "Create" on the "Review" page. 
+Finally, click `Create` on the [breadcrumb]#Review# page. 
 
-A summary page for the API should appear. Copy the "Invoke URL" from the "$default" stage under the stages section. This will be the base URL for the API. We'll add a Lambda function next, which will give us a route to call. 
+A summary page for the API should appear. Copy the [field]#Invoke URL# from the [breadcrumb]#$default# stage under the stages section. This will be the base URL for the API. We'll add a Lambda function next, which will give us a route to call. 
 
 === Create a Lambda function to secure
 
-In the main top search bar, search for and select "Lambda". 
+In the main top AWS search bar, search for and select `Lambda`. 
 
-Click "Create function" to create a new Lambda. Name the function "privateFunction", and leave all the other options as the defaults. Click "Create Function" at the bottom of the page. 
+Click `Create function` to create a new Lambda. Name the function "privateFunction", and leave all the other options as the defaults. Click `Create Function` at the bottom of the page. 
 
 image::api-gateways/aws-api-gateway/name-lambda.png[Name the Lambda,width=1200,role=bottom-cropped]
 
-Under the "Code" tab for the Lambda, click on the "index.mjs" file, and replace the contents with the following:
+Under the "Code" tab for the Lambda, click on the "index.mjs" file, and replace the contents with the following code to return the claims found in the JWT:
 
-```javascript
+[source,javascript,title="Lambda function to reflect user claims"]
+----
     export const handler = async(event) => {
 
     const claims = event.requestContext.authorizer.jwt.claims;
@@ -85,54 +86,56 @@ Under the "Code" tab for the Lambda, click on the "index.mjs" file, and replace 
     };
     return response;
 };
-```
-Then click the "Deploy" button to update the Lambda. 
+----
 
-Click the expander next to "Function overview" near the top of the page. Then click on "Add Trigger".
+Then click the `Deploy` button to update the Lambda. 
 
-Under "Trigger Configuration", choose "API Gateway" as the source. Select "Use an existing API", and then select the API Gateway, set up earlier, in the search box, and Select the "$default" stage. 
+Click the expander next to [breadcrumb]#Function overview# near the top of the page. Then click on `Add Trigger`.
 
-Under "Security", choose "Create a JWT authorizor". 
+Under [field]#Trigger Configuration#, choose `API Gateway` as the source. Select `Use an existing API`, and then select the API Gateway, set up earlier, in the search box, and select the `$default` stage. 
 
-Set "Identity source" to `$request.header.Authorization`.
+Under [breadcrumb]#Security#, choose `Create a JWT authorizor`. 
 
-Under "Issuer", set the URL to be the same as you set in FusionAuth for the JWT issuer in the Tenant configuration. Make sure that it is exactly the same, including trailing slashes etc.
+Set [field]#Identity source" to `$request.header.Authorization`.
 
-Under "Audiences", paste in the "Client ID" from the FusionAuth application created earlier.
+For [field]#Issuer#, set the URL to be the same as you set in FusionAuth for the JWT issuer in the Tenant configuration. Make sure that it is exactly the same, including trailing slashes, without any whitespace etc.
 
-Then click the primary "Add" button at the bottom right of the screen. 
+Under [field]#Audiences#, paste in the `Client ID` from the FusionAuth application created earlier.
 
-After completing this, a new route will be added onto your Gateway API, with the same name as the Lambda, "privateFunction" here. Concat this name with the "Invoke URL" recorded earlier when setting up the API Gateway to get the full url. It should look similar in form to this: `https://w3miabt10d.execute-api.us-east-2.amazonaws.com/privateFunction`. 
+Then click the primary `Add` button at the bottom right of the screen. 
 
-If you call this route, through a browser or Postman or cURL, you should recieve a 401, and an "Unauthorized" message. We'll create a token next with FusionAuth to show how the route can be successfully called. 
+After completing this, a new route will be added onto your Gateway API, with the same name as the Lambda, `privateFunction` here. Concat this name with the "Invoke URL" recorded earlier when setting up the API Gateway to get the full url. It should look similar in form to this: `\https://w3miabt10d.execute-api.us-east-2.amazonaws.com/privateFunction`. 
 
-== Creating a token from FusionAuth
+If you call this route, through a browser or Postman or cURL, you should recieve a 401, and an `Unauthorized` message. We'll create a token next with FusionAuth to show how the route can be successfully called. 
+
+== Testing with a token from FusionAuth
 
 To access the the secured Lambda function, we'll need to get a valid token from FusionAuth. Normally, your front end app would redirect a user to FusionAuth to login, obtain a code, and then exchange that code for a token, using a framework of your choice. For the purposes of this guide, we'll call the FusionAuth API on behalf of a user to create a token directly. 
 
-To enable this, there are a few settings that need to be changed on FusionAuth. In the side panel in FusionAuth, select "Settings > API Keys". Click the green "+" button at the top left to create a new key. 
+To enable this, there are a few settings that need to be changed on FusionAuth. In the side panel in FusionAuth, select [breadcrumb]#Settings > API Keys#. Click the green `+` button at the top left to create a new key. 
 
-Give the key a meaningful description, like "API Gateway Key". Select the Tenant that you created the FusionAuth application under (normally "Default"). 
+Give the key a meaningful description, like `API Gateway Key`. Select the Tenant that you created the FusionAuth application under (normally `Default`). 
 
-Then, under "Endpoints", allow "POST" on the `api/login` route.
+Then, under [breadcrumb]#Endpoints#, allow `POST` on the `\api/login` route.
 
 image::api-gateways/aws-api-gateway/login-api.png[Enabling the login API,width=1200,role=bottom-cropped]
 
-Save the API key. You should now see a list of all API keys. Click on the lock icon next to the "key" field for the key you just created, and copy out the API key for later use. 
+Save the API key. You should now see a list of all API keys. Click on the lock icon next to the [field]#key# field for the key you just created, and copy out the API key for later use. 
 
 image::api-gateways/aws-api-gateway/api-key.png[Enabling the login API,width=1200,role=bottom-cropped]
 
-Now create a test user to login with on FusionAuth. Navigate to "Users" in the side bar, and click the green "+" button at the top right of the screen to create a new user. Choose the appropriate tenant (usually "default"), and fill in the information. You can choose to not send an email to set up the password, but rather set it directly when creating the user, by toggling the "Send email to set up password" switch. Record this user email and password, as we'll use it to obtain a token. 
+Now create a test user to login with on FusionAuth. Navigate to [breadcrumb]#"Users"# in the side bar, and click the green `+` button at the top right of the screen to create a new user. Choose the appropriate tenant (usually `default`), and fill in the information. You can choose to not send an email to set up the password, but rather set it directly when creating the user, by toggling the [field]#Send email to set up password# switch. Record this user email and password, as we'll use it to obtain a token. 
 
-After saving the user, click to the "Registrations" tab. Click "Add registrations", and select the FusionAuth application you set up earlier. 
+After saving the user, click to the [breadcrumb]#Registrations# tab. Click `Add registrations`, and select the FusionAuth application you set up earlier. 
 
 image::api-gateways/aws-api-gateway/registrations-tab.png[The application registrations tab,width=1200,role=bottom-cropped]
 
-Using cURL or Postman, make a POST request to your FusionAuth instance's `/api/login` endpoint. This will return a JWT in the response. 
+Using cURL or Postman, make a POST request to your FusionAuth instance's `\/api/login` endpoint. This will return a JWT in the response. 
 
 The cURL call should look like this: 
 
-```bash
+[source,shell,title="cURL command to obtain a JWT token"]
+----
 curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/login' \
 --header 'Authorization: <API_KEY>' \
 --header 'Content-Type: application/json' \
@@ -142,7 +145,7 @@ curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/login' \
     "applicationId": "<APPLICATION_ID>",
     "noJWT" : false
   }'
-```
+----
 
 where:
 - `<YOUR_FUSIONAUTH_URL>` is the URL of your FusionAuth installation.
@@ -152,7 +155,8 @@ where:
 
 The return response from FusionAuth should look similar to the following:
 
-```
+[source,json,title="Return token from the API call"]
+----
 {
     "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImhDUjA4X3daR2s0OUFlYUFmRDY5ZmJKWmRGTSJ9.eyJhdWQiOiI2M2I3M2Y3Ni03NDAwLTQ4N2QtYjEyMi01NzA1Yjg0OGRhODAiLCJleHAiOjE2NzMzNjYyMDQsImlhdCI6MTY3MzM2MjYwNCwiaXNzIjoiaHR0cHM6Ly9mdXNpb25hdXRoLnJpdHphLmNvIiwic3ViIjoiMzk2MzAwMGYtNjg2ZC00MTY5LWI2MjgtOWM5YzQ1MzRiNzgwIiwianRpIjoiZDk3ZGIyZWYtZjExNS00ZDIxLWFlOTQtMDIyN2RmMGU4YzI5IiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJlbWFpbCI6ImJvYkBhd3MuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6ImJvYmF3cyIsImFwcGxpY2F0aW9uSWQiOiI2M2I3M2Y3Ni03NDAwLTQ4N2QtYjEyMi01NzA1Yjg0OGRhODAiLCJyb2xlcyI6W10sImF1dGhfdGltZSI6MTY3MzM2MjYwNCwidGlkIjoiZjAwNGMxZmUtNDg0Yi05MDJjLWQ3Y2EtYmRiYzQ2NGRhMGI3In0.m7gzXhNLToPNVE1p5Vo2pLgP6WBcPNfS_zZJnJ81mdEgi6-orViz-tU8j0L8wva0-8KlMdy54cq_XjnDnYJ0aX90O4ZE_QVU5NuDDfzXH14wQtKQoIIydsB6ZvQoBt8JNFUHJb9ANLCGnfn6FVQKqPIzye18Gx_7wYSVokw3eLNFyzrq9dwOD5Q8V9gvZmXV2pTokQAtA7qFaadb2dIeFlSEB7wamKiZLXILjeWAeMbbvAAMQZWFh46UJjwr06QTd8PxQmRwDWWznJy1Vs8EAgZA4vkRSWnn3IbiaCtOaL1ANuEex6il7q32ahxj0Ncm9wn0DbDsQE9NB0CCNTSIhA",
     "tokenExpirationInstant": 1673366204805,
@@ -160,32 +164,34 @@ The return response from FusionAuth should look similar to the following:
         .....
     }
 }
-```
+----
 
 Copy the `token` value out. This the the JWT, which we can use to access the API Gateway function. 
 
 Now call the api gateway with the following cURL command:
 
-```
+[source,shell,title="Calling the API Gateway endpoint with the JWT"]
+----
 curl --location --request GET '<https://<GATEWAY_URL>/privateFunction>' \
 --header 'Authorization: Bearer <JWT_TOKEN>'
-```
+----
+
 where
 - <GATEWAY_URL> is the 
 - <JWT_TOKEN> is the JWT from the `api/login` call.
 
-
 You should see the function return with a reflection of the claims it received:
 
-```json
+[source,json,title="Return token from the API call"]
+----
     {"applicationId":"63b73f76-7400-487d-b122-5705b848da80","aud":"63b73f76-7400-487d-b122-5705b848da80","auth_time":"1672137288","authenticationType":"PASSWORD","email":"ehrlich@piedpiper.com","email_verified":"true","exp":"1672140888","iat":"1672137288","iss":"https://fusionauth.ritza.co","jti":"2f80b975-1870-4970-b876-90c2e7d9444b","preferred_username":"ehrlich","roles":"[]","sub":"3963000f-686d-4169-b628-9c9c4534b780","tid":"f004c1fe-484b-902c-d7ca-bdbc464da0b7"}
-```
+----
 
 == Next Steps
 
-There's a lot more you can do with Amazon API Gateway 
+You can build an entire HTTP API using Amazon API Gateway, Lambda and FusionAuth, without having to manage any servers.  
 
-You can configure scopes for a route, and check against them before allowing a user through. 
+You can also configure required scopes for a route, and check against them before allowing a user through. 
 
 You can also combine the OIDC module with other security limitations, such as IP restrictions.
 
