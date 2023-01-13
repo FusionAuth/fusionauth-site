@@ -19,19 +19,26 @@ What should you do with all of these tokens? How can they be used by your applic
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/oauth-up-to-token.plantuml, alt: "The Authorization Code grant up to the point where tokens are requested from the token endpoint." %}
 
-The FusionAuth team has helped hundreds of customers integrate our auth server into their applications. There are [many different ways you can choose to perform an integration](/learn/expert-advice/authentication/login-authentication-workflows), but the team has learned that certain options are best.
+The FusionAuth team has helped hundreds of customers integrate our auth server into their applications. There are [many different ways you can choose to perform an integration](/learn/expert-advice/authentication/login-authentication-workflows), but the team recommends certain options that offer the best tradeoffs between functionality and security.
 
 ## Why Use The OAuth Authorization Code Grant
 
-But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. If you want to use FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login).
+But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. For example, with FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login) and pass the username and password directly from your application to FusionAuth, getting a token in return. Why bother with the OAuth dance of redirects.
 
 When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people have spent lots of time refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it.
 
-The FusionAuth team firmly believes that using standards based OAuth and OIDC grants to integrate a third party auth server into your application architecture allows you to leverage these benefits and maintain flexibility to migrate if need be.
+The FusionAuth team firmly believes that using standards based OAuth and OIDC grants to integrate a third party auth server into your application architecture allows you to leverage these benefits and maintain flexibility to migrate.
 
-So, if you are convinced that the Authorization Code grant makes sense, you need to store the tokens that result from the Authorization Code grant. 
+You also get the following benefits:
 
-There are two main options. Which is the right way depends on your needs.
+* Customer personally identifiable information is kept in one safe and secure location.
+* You have one view of your customer across all your apps.
+* Advanced authentication functionality such as MFA, enterprise single sign-on and login rate limiting can be implemented in one place for all applications.
+* You can upgrade such authentication functionality without modifying downstream applications.
+* You can offer single sign-on across all your custom, commercial and open source applications.
+* Common login related workflows such as changing profile data or passwords can be centralized and managed by the auth server.
+
+Once you've decided to use the Authorization Code grant, you need to store the tokens that result from it. There are two main options. 
 
 ## Store Tokens On The Client
 
@@ -110,16 +117,7 @@ If client-side storage doesn't meet your needs, another option is to store the a
 
  In this scenario, storing the token doesn't offer many benefits. It's possible you'd present the token to other APIs, but in general, if you have received a valid token from the OAuth token endpoint, the user has authenticated. If that's enough, or you can pull information about the user from other sources using secure, server-side methods, you can use this approach.
 
-Even though you don't use the token, you still get benefits from using an auth server:
-
-* Customer personally identifiable information is kept in one safe and secure location.
-* You have one view of your customer across all your apps.
-* Advanced authentication functionality such as MFA, enterprise single sign-on and login rate limiting can be implemented in one place for all applications.
-* You can upgrade such authentication functionality without modifying downstream applications.
-* You can offer single sign-on across custom, commercial and open source applications.
-* Common login related workflows such as changing profile data or passwords can be centralized and therefore implemented one time.
-
-Please note you get these benefits if you use client-side storage as well.
+Even though you don't use the token, you still get the benefits mentioned above that spring from the OAuth Authorization Code grant.
 
 ## The Id Token
 
