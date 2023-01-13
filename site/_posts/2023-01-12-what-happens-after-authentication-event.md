@@ -17,7 +17,7 @@ These tokens include an access token, an optional refresh token, and an optional
 
 What should you do with all of these tokens? How can they be used by your application to ensure that only the correct users get access to data and functionality?
 
-DIAGRAM of Authorization Code Grant
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/oauth-up-to-token.plantuml, alt: "The Authorization Code grant up to the point where tokens are requested from the token endpoint." %}
 
 The FusionAuth team has helped hundreds of customers integrate our auth server into their applications. There are [many different ways you can choose to perform an integration](/learn/expert-advice/authentication/login-authentication-workflows), but the team has learned that certain options are best.
 
@@ -43,7 +43,7 @@ If you choose this option, the browser, whether a simple HTML page with some Jav
 
 As long as the APIs live on a common domain (or parent domain), the cookie will be sent. For example, the auth server can live at at `auth.example.com` and if you set the cookie domain to `.example.com`, apis living at `api.example.com`, `todo.example.com`, and `contacts.example.com` will all receive the token.
 
-DIAGRAM
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies." %}
 
 ### Token Validation
 
@@ -56,8 +56,6 @@ Each API validates the token. They should check:
 * issuer (the `iss` claim)
 * any other specific claims
 
-DIAGRAM
-
 All of these should be validated before handing back any data or allowing any functionality. In fact, they should be validated before any additional processing is done, because if any of these checks fail, the requester is unknown.
 
 The signature and standard claims checks can and should be done with a library. Checking other claims is business logic and should be handled by the API developer.
@@ -66,13 +64,15 @@ This validation approach assumes the token has internal structure and is signed;
 
 If you don't have a token that meets these criteria, introspect the token by presenting it to the auth server.
 
-INTROSPECTION DIAGRAM
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-introspection.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies and using introspection to validate them." %}
 
 After a successful introspection, the returned JSON will assure the API server that the user is who they say they are.
 
 ### Using The Refresh Token
 
 When using this approach, at some point the access token will expire, and the client should handle the expected access denied error. When you request a scope of `offline_access` for the initial auth server request, you will receive a refresh token.
+
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-refresh-token.plantuml, alt: "Using a refresh token." %}
 
 After the access token expires, the client can present the refresh token to the auth server. That server can validate that the user's account is still active, there is still an extant session, or perform any other required checks.
 
@@ -88,7 +88,7 @@ Using cookies means you are safe from XSS attacks, a common mechanism for attack
 
 If the APIs are on different domains, either use a proxy which can ingest the token, validate it and pass on requests to other domains, or use the session based approach, detailed below.
 
-PROXY DIAGRAM
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
 
 ### Alternatives To Client Stored Tokens
 
@@ -104,7 +104,7 @@ Client binding measures remove the danger of XSS because the token can't be used
 
 If client side storage doesn't work, another option is to store the access token and refresh token in the server side session. The application can use normal web sessions. In this scenario, storing the token doesn't buy you much. 
 
-DIAGRAM
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
 
 It's possible you'd present the token to other APIs, but in general, if you have received a valid token from the OAuth token endpoint, the user has authenticated. If that's enough, or you can pull information about the user from other sources using secure, server-side methods, you can use this approach.
 
