@@ -5,7 +5,7 @@ description: What should you do with tokens returned after an OAuth grant? How c
 author: Dan Moore
 image: TBD
 category: article
-tags: oauth authentication jwt cookie explainer
+tags: oauth authentication jwt cookie explainer mobile
 excerpt_separator: "<!--more-->"
 ---
 
