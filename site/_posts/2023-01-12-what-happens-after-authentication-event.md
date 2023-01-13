@@ -41,7 +41,7 @@ Send these as `HTTPOnly`, secure cookies with a `SameSite` value of `Lax` or `St
 
 If you choose this option, the browser, whether a simple HTML page with some JavaScreipt or a complicated SPA, makes requests against APIs, and the token is along for the ride.
 
-As long as the APIs live on a common domain (or parent domain), the cookie will be sent. For example, the auth server can live at at `auth.example.com` and if you set the cookie domain to `.example.com`, apis living at `api.example.com`, `todo.example.com`, and `contacts.example.com` will all receive the token.
+As long as the APIs live on a common domain (or parent domain), the cookie will be sent. For example, the auth server can live at at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com` and `todo.example.com`, or any other host under `.example.com`, will receive the token.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies." %}
 
@@ -86,7 +86,7 @@ As mentioned above, this approach is a perfect fit for a JavaScript, single page
 
 Using cookies means you are safe from XSS attacks, a common mechanism for attackers to gain access to tokens and to make requests masquarading as another user. `HTTPOnly`, secure cookies are not available to any JavaScript running on the page, so can't be accessed by malicious scripts.
 
-If the APIs are on different domains, either use a proxy which can ingest the token, validate it and pass on requests to other domains, or use the session based approach, detailed below.
+If the APIs are on different domains, either use a proxy which can ingest the token, validate it and pass on requests to other domains, or use the session based approach, discussed later. Below is a diagram of using the proxy approach, where an API from `todos.com` is called through a proxy living at `proxy.example.com`.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
 
@@ -102,11 +102,11 @@ Client binding measures remove the danger of XSS because the token can't be used
 
 ## Using Sessions
 
-If client side storage doesn't work, another option is to store the access token and refresh token in the server side session. The application can use normal web sessions. In this scenario, storing the token doesn't buy you much. 
+If client side storage doesn't meet your needs, another option is to store the access token and refresh token in the server side session. The application can then use normal web sessions.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
 
-It's possible you'd present the token to other APIs, but in general, if you have received a valid token from the OAuth token endpoint, the user has authenticated. If that's enough, or you can pull information about the user from other sources using secure, server-side methods, you can use this approach.
+ In this scenario, storing the token doesn't offer many benefits. It's possible you'd present the token to other APIs, but in general, if you have received a valid token from the OAuth token endpoint, the user has authenticated. If that's enough, or you can pull information about the user from other sources using secure, server-side methods, you can use this approach.
 
 Even though you don't use the token, you still get benefits from using an auth server:
 
