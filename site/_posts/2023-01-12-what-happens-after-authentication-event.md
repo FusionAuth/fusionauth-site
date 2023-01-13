@@ -9,7 +9,7 @@ tags: oauth authentication jwt cookie explainer
 excerpt_separator: "<!--more-->"
 ---
 
-At the end of the OAuth Authorization Code grant, after a user has logged in, one or more tokens are presented. This happens when you make a request to the tokeen endpoint. 
+At the end of the OAuth Authorization Code grant, after a user has logged in, one or more tokens are presented. This happens when you make a request to the token endpoint. 
 
 These tokens include an access token, an optional refresh token, and an optional id token. The access token is used to get access to different APIs and protected resources. The refresh token lets you mint new access tokens, and the id token is used by the client to display information about the user.
 
@@ -25,7 +25,7 @@ The FusionAuth team has helped hundreds of customers integrate our auth server i
 
 But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. If you want to use FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login).
 
-When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people have spent lots of times refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it.
+When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people have spent lots of time refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it.
 
 The FusionAuth team firmly believes that using standards based OAuth and OIDC grants to integrate a third party auth server into your application architecture allows you to leverage these benefits and maintain flexibility to migrate if need be.
 
@@ -37,13 +37,15 @@ There are two main options. Which is the right way depends on your needs.
 
 The first option is to send the access token and refresh token down to the client. 
 
-Send these as `HTTPOnly`, secure cookies with a `SameSite` value of `Lax` or `Strict`.
+When using a browser, send these as `HTTPOnly`, secure cookies with a `SameSite` value of `Lax` or `Strict`.
 
-If you choose this option, the browser, whether a simple HTML page with some JavaScreipt or a complicated SPA, makes requests against APIs, and the token is along for the ride.
+If you choose this option, the browser, whether a simple HTML page with some JavaScript or a complicated single page application (SPA), makes requests against APIs, and the token is along for the ride.
 
 As long as the APIs live on a common domain (or parent domain), the cookie will be sent. For example, the auth server can live at at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com` and `todo.example.com`, or any other host under `.example.com`, will receive the token.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies." %}
+
+When using a native app, store these tokens in a secure location, such as the [iOS Keychain](https://developer.apple.com/documentation/security/keychain_services) or [Android internal data](https://developer.android.com/topic/security/best-practices#safe-data).
 
 ### Token Validation
 
@@ -84,17 +86,17 @@ If you choose this path, you gain horizontal scalability. As long as your APIs a
 
 As mentioned above, this approach is a perfect fit for a JavaScript, single page application pulling data from multiple APIs hosted by the same organization.
 
-Using cookies means you are safe from XSS attacks, a common mechanism for attackers to gain access to tokens and to make requests masquarading as another user. `HTTPOnly`, secure cookies are not available to any JavaScript running on the page, so can't be accessed by malicious scripts.
+Using cookies means you are safe from XSS attacks, a common mechanism for attackers to gain access to tokens and to make requests masquerading as another user. `HTTPOnly`, secure cookies are not available to any JavaScript running on the page, so can't be accessed by malicious scripts.
 
 If the APIs are on different domains, either use a proxy which can ingest the token, validate it and pass on requests to other domains, or use the session based approach, discussed later. Below is a diagram of using the proxy approach, where an API from `todos.com` is called through a proxy living at `proxy.example.com`.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
 
-### Alternatives To Client Stored Tokens
+### Alternatives To Client Stored Tokens In the Browser
 
-Why a cookie and not another storage mechanism like such as memory or localstorage? Why not bind the cookie to the browser? All options have tradeoffs, and using cookies works for most of our customers.
+Why use a browser cookie and not another storage mechanism such as memory or localstorage? Why not bind the cookie to the browser? All options have tradeoffs, and using cookies works for most of our customers.
 
-Localstorage is a difficult option because, unless you have a fingerprint your token, as [recommmended by OWASP](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking), you'll be prone to those XSS attacks, since all JavaScript running on the page has access to the token. If you do fingerprint your token, you'll be limited to sending it to APIs running on the domain the cookie is sent to, anyway.
+Localstorage is a difficult option because, unless you have fingerprint your token, as [recommended by OWASP](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking), you'll be prone to those XSS attacks, since all JavaScript running on the page has access to the token. If you fingerprint your token, you'll be limited to sending it to APIs running on the domain the cookie is sent to, anyway.
 
 If you use an in-memory storage solution, when the browser is refreshed, the token goes poof. The user has to log in again, which is not a great experience.
 
@@ -125,7 +127,7 @@ What about the id token? This is provided when you specify a scope of `profile`,
 
 This token can be safely sent to the browser and stored in localstorage or a cookie accessible to JavaScript.
 
-The id token should never contain any secrets nor be used to access protected data, but can be useful for displaying infomration about a user such as their name.
+The id token should never contain any secrets nor be used to access protected data, but can be useful for displaying information about a user such as their name.
 
 ## Summing Up
 
