@@ -98,11 +98,11 @@ Localstorage is a difficult option because, unless you have a fingerprint your t
 
 If you use an in-memory storage solution, when the browser is refreshed, the token goes poof. The user has to log in again, which is not a great experience.
 
-Client binding measures remove the danger of XSS because the token can't be used without a private key that only the proper client possesses. However, these approaches require additional setup on the client side and are relatively new; for example, as of this writing, DPoP is not yet an IETF standard. 
+Client binding measures remove the danger of XSS because the token can't be used without a private key that only the proper client possesses. However, these approaches require additional setup on the client-side and are relatively new; for example, as of this writing, DPoP is not yet an IETF standard. 
 
 ## Using Sessions
 
-If client side storage doesn't meet your needs, another option is to store the access token and refresh token in the server side session. The application can then use normal web sessions.
+If client-side storage doesn't meet your needs, another option is to store the access token and refresh token in the server side session. The application can then use normal web sessions.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
 
@@ -117,7 +117,7 @@ Even though you don't use the token, you still get benefits from using an auth s
 * You can offer single sign-on across custom, commercial and open source applications.
 * Common login related workflows such as changing profile data or passwords can be centralized and therefore implemented one time.
 
-Please note you get these benefits if you use client side storage as well.
+Please note you get these benefits if you use client-side storage as well.
 
 ## The Id Token
 
@@ -129,6 +129,8 @@ The id token should never contain any secrets nor be used to access protected da
 
 ## Summing Up
 
-Client side storage of the tokens or server-side session storage handle the vast majority of systems integrating with the OAuth and OIDC standards for authenticating and authorizing users.
+Client-side storage of the tokens or server-side session storage handle the vast majority of systems integrating with the OAuth and OIDC standards for authenticating and authorizing users.
 
-The FusionAuth team recommends using one of these two options after you retrieve the token at the end of the Authorization Code grant.
+Client-side storage is a great choice when you have disparate APIs and want to support highly distributed clients such as mobile devices or browsers. Server-side session storage is simpler and easier to integrate into monolithic applications.
+
+The FusionAuth team recommends using one of these two options after you obtain the token at the end of the Authorization Code grant.
