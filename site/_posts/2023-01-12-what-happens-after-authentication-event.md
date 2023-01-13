@@ -1,10 +1,10 @@
 ---
 layout: blog-post
-title: What happens after an OAuth authentication event
-description: We all have them. Line of business applications that have their own user datastore. How can you update them to use a centralized user datastore?
+title: What happens to the tokens after an OAuth Authorization Code grant?
+description: What should you do with tokens returned after an OAuth grant? How can they be used by your application to ensure that only the correct users get access to data and functionality?
 author: Dan Moore
-image: blogs/upgrade-php-application/securing-your-legacy-php-business-application-with-oauth.png
-category: tutorial
+image: TBD
+category: article
 tags: oauth authentication jwt cookie explainer
 excerpt_separator: "<!--more-->"
 ---
