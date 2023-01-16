@@ -7,7 +7,7 @@ navcategory: developer
 
 == Overview
 
-Amazon API Gateway is an AWS service for creating, publishing, maintaining, monitoring, and securing REST, HTTP, and WebSocket APIs at any scale. You can create APIs to AWS services or other web services
+Amazon API Gateway is an AWS service for creating, publishing, maintaining, monitoring, and securing REST, HTTP, and WebSocket APIs at any scale. You can create APIs to AWS services or other web services.
 
 You can configure Amazon API Gateway to handle authentication and authorization to a resource through JSON Web Tokens (JWTs) issued on behalf of a user by an identity provider.
 
@@ -33,6 +33,10 @@ Make sure that the [field]#Enabled grants# checkboxes have the `Authorization Co
 Your application should look like this.
 
 image::api-gateways/aws-api-gateway/application-configuration.png[The FusionAuth example configuration,width=1200]
+
+On the [breadcrumb]#JWT# tab toggle the [field]#Enabled# field and set the [field]#Access Token signing key# and [field]#Id Token signing key# to `Auto generate a new key on save...`
+
+image::api-gateways/aws-api-gateway/jwt-config.png[The JWT configuration,width=1200,role=bottom-cropped]
 
 Click the `Save` button.
 
@@ -69,16 +73,16 @@ A summary page for the API should appear. Copy the [field]#Invoke URL# from the 
 
 In the main top AWS search bar, search for and select `Lambda`.
 
-Click `Create function` to create a new Lambda. Name the function "privateFunction", and leave all the other options as the defaults. Click `Create Function` at the bottom of the page.
+Click `Create function` to create a new Lambda function. Name the function `privateFunction`, and leave all the other options as the defaults. Click `Create Function` at the bottom of the page.
 
 image::api-gateways/aws-api-gateway/name-lambda.png[Name the Lambda,width=1200]
 
-Under the "Code" tab for the Lambda, click on the "index.mjs" file, and replace the contents with the following code to return the claims found in the JWT:
+Under the [breadcrumb]#Code# tab for the Lambda, click on the "index.mjs" file, and replace the contents with the following code to return the claims found in the JWT:
 
 [source,javascript,title="Lambda function to reflect user claims"]
 ----
 export const handler = async(event) => {
-    const claims = event.requestContext.authorizer.jwt.claims;
+    const claims = event.requestContext.authorizer.claims;
     const response = {
         statusCode: 200,
         body: JSON.stringify(claims),
@@ -178,14 +182,29 @@ curl --location --request GET 'https://<GATEWAY_URL>/privateFunction' \
 
 where:
 
-* `<GATEWAY_URL>` is the
-* `<JWT_TOKEN>` is the JWT from the `api/login` call.
+* `<GATEWAY_URL>` is the invoke URL saved earlier.
+* `<JWT_TOKEN>` is the JWT from the `/api/login` call.
 
 You should see the function return with a reflection of the claims it received:
 
 [source,json,title="Return token from the API call"]
 ----
-    {"applicationId":"63b73f76-7400-487d-b122-5705b848da80","aud":"63b73f76-7400-487d-b122-5705b848da80","auth_time":"1672137288","authenticationType":"PASSWORD","email":"ehrlich@piedpiper.com","email_verified":"true","exp":"1672140888","iat":"1672137288","iss":"https://fusionauth.ritza.co","jti":"2f80b975-1870-4970-b876-90c2e7d9444b","preferred_username":"ehrlich","roles":"[]","sub":"3963000f-686d-4169-b628-9c9c4534b780","tid":"f004c1fe-484b-902c-d7ca-bdbc464da0b7"}
+{
+    "applicationId":"63b73f76-7400-487d-b122-5705b848da80",
+    "aud":"63b73f76-7400-487d-b122-5705b848da80",
+    "auth_time":"1672137288",
+    "authenticationType":"PASSWORD",
+    "email":"ehrlich@piedpiper.com",
+    "email_verified":"true",
+    "exp":"1672140888",
+    "iat":"1672137288",
+    "iss":"https://local.fusionauth.io",
+    "jti":"2f80b975-1870-4970-b876-90c2e7d9444b",
+    "preferred_username":"erlich",
+    "roles":"[]",
+    "sub":"3963000f-686d-4169-b628-9c9c4534b780",
+    "tid":"f004c1fe-484b-902c-d7ca-bdbc464da0b7"
+ }
 ----
 
 == Next Steps
