@@ -25,20 +25,23 @@ The FusionAuth team has helped hundreds of customers integrate our auth server i
 
 But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. For example, with FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login) and pass the username and password directly from your application to FusionAuth, getting a token in return. Why bother with the OAuth dance of redirects.
 
-When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people have spent lots of time refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it.
+When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people in the Internet Engineering Task Force (IETF) working group have spent lots of time refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it.
 
-The FusionAuth team firmly believes that using standards based OAuth and OIDC grants to integrate a third party auth server into your application architecture allows you to leverage these benefits and maintain flexibility to migrate.
+The FusionAuth team firmly believes that using standards based OAuth grants to integrate a third party auth server into your application architecture allows you to leverage these benefits and maintain flexibility to migrate. OpenID Connect (OIDC) is also a useful standard which layers identity information onto OAuth grants.
 
-You also get the following benefits:
+When using the Authorization Code grant, in addition to the wisdom of the IETF members, you get the following benefits:
 
-* Customer personally identifiable information is kept in one safe and secure location.
+* Customer personally identifiable information (PII) is stored in one safe and secure location.
 * You have one view of your customer across all your apps.
 * Advanced authentication functionality such as MFA, enterprise single sign-on and login rate limiting can be implemented in one place for all applications.
 * You can upgrade such authentication functionality without modifying downstream applications.
 * You can offer single sign-on across all your custom, commercial and open source applications.
 * Common login related workflows such as changing profile data or passwords can be centralized and managed by the auth server.
 
-Once you've decided to use the Authorization Code grant, you need to store the tokens that result from it. There are two main options. 
+If you've decided to use the Authorization Code grant, you need to store the resulting tokens. There are two main options:
+
+* storing them on the client
+* storing them in a server-side session
 
 ## Store Tokens On The Client
 
@@ -56,16 +59,21 @@ When using a native app, store these tokens in a secure location, such as the [i
 
 ### Token Validation
 
-Each API validates the token. They should check:
+Validating the access tokens is critical to building your application correctly. In the diagram below, each API validates the token presented by the client.
+
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/validating-tokens.plantuml, alt: "Zooming in on token valiation." %}
+
+
+The APIs should validate:
 
 * the signature
-* expiration time (the `exp` claim)
-* not valid before time (the `nbf` claim)
-* audience (the `aud` claim)
-* issuer (the `iss` claim)
+* the expiration time (the `exp` claim)
+* the not valid before time (the `nbf` claim)
+* the audience (the `aud` claim)
+* the issuer (the `iss` claim)
 * any other specific claims
 
-All of these should be validated before handing back any data or allowing any functionality. In fact, they should be validated before any additional processing is done, because if any of these checks fail, the requester is unknown.
+All of these should be validated as soon as the request is received. They should be validated before any additional processing is done, because if any of these checks fail, the requester is an unknown quantity.
 
 The signature and standard claims checks can and should be done with a language specific open source library, such as [fusionauth-jwt (Java)](https://github.com/fusionauth/fusionauth-jwt), [node-jsonwebtoken (JavaScript)](https://github.com/auth0/node-jsonwebtoken), or [golang-jwt (golang)](https://github.com/golang-jwt/jwt). Checking other claims is business logic and should be handled by the API developer.
 
@@ -75,7 +83,7 @@ If you don't have a token that has that internal structure, another option is to
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-introspection.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies and using introspection to validate them." %}
 
-After a successful introspection, the returned JSON will assure the API server that the user is who they say they are.
+After a successful introspection, the returned JSON will assure the API server that the user is who they say they are. Using introspection adds more dependencies on FusionAuth, but removes the need for APIs to validate the token. 
 
 ### Using The Refresh Token
 
@@ -91,11 +99,13 @@ If the account is still good and the user is still logged in, the auth server ca
 
 If you choose this path, you gain horizontal scalability. As long as your APIs are on the same base domain, they are presented with any request your application makes. 
 
-As mentioned above, this approach is a perfect fit for a JavaScript, single page application pulling data from multiple APIs hosted by the same organization.
+As mentioned above, this approach is a perfect fit for a single page JavaScript application using data from multiple APIs on the same domain.
 
-Using cookies means you are safe from XSS attacks, a common mechanism for attackers to gain access to tokens and to make requests masquerading as another user. `HTTPOnly`, secure cookies are not available to any JavaScript running on the page, so can't be accessed by malicious scripts.
+Using secure `HTTPOnly` cookies means you are safe from XSS attacks, a common mechanism for attackers to gain access to tokens and to make requests masquerading as another user. Secure `HTTPOnly` cookies are not available to JavaScript running on the page, and therefore can't be accessed by malicious scripts.
 
-If the APIs are on different domains, either use a proxy which can ingest the token, validate it and pass on requests to other domains, or use the session based approach, discussed later. Below is a diagram of using the proxy approach, where an API from `todos.com` is called through a proxy living at `proxy.example.com`.
+If the APIs are on different domains, you can use a proxy which can ingest the token, validate it and pass on requests to other domains, or choose the session based approach, discussed later.
+
+Below is a diagram of using the proxy approach, where an API from `todos.com` is called through a proxy living at `proxy.example.com`.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
 
