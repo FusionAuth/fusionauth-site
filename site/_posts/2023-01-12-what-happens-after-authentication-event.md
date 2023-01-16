@@ -115,9 +115,11 @@ If client-side storage doesn't meet your needs, another option is to store the a
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
 
- In this scenario, storing the token doesn't offer many benefits. It's possible you'd present the token to other APIs, but in general, if you have received a valid token from the OAuth token endpoint, the user has authenticated. If that's enough, or you can pull information about the user from other sources using secure, server-side methods, you can use this approach.
+If you have received a valid token from the OAuth token endpoint, the user has authenticated. Use this approach if that's enough, or you need to retrieve data from other sources using secure, server-side methods. Below is an example of how you can proxy API requests through 
 
-Even though you don't use the token, you still get the benefits mentioned above that spring from the OAuth Authorization Code grant.
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage-api-calls.plantuml, alt: "Proxying API calls using tokens stored in a server-side session." %}
+
+Even if you don't use the token, you still get the benefits mentioned above that spring from the OAuth Authorization Code grant.
 
 ## The Id Token
 
