@@ -1,11 +1,11 @@
 ---
 layout: blog-post
-title: What happens after an OAuth authentication event
-description: We all have them. Line of business applications that have their own user datastore. How can you update them to use a centralized user datastore?
+title: What happens to the tokens after an OAuth Authorization Code grant?
+description: What should you do with tokens returned after an OAuth grant? How can they be used by your application to ensure that only the correct users get access to data and functionality?
 author: Dan Moore
-image: blogs/upgrade-php-application/securing-your-legacy-php-business-application-with-oauth.png
-category: tutorial
-tags: oauth authentication jwt cookie explainer
+image: TBD
+category: article
+tags: oauth authentication jwt cookie explainer mobile
 excerpt_separator: "<!--more-->"
 ---
 
@@ -19,31 +19,40 @@ What should you do with all of these tokens? How can they be used by your applic
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/oauth-up-to-token.plantuml, alt: "The Authorization Code grant up to the point where tokens are requested from the token endpoint." %}
 
-The FusionAuth team has helped hundreds of customers integrate our auth server into their applications. There are [many different ways you can choose to perform an integration](/learn/expert-advice/authentication/login-authentication-workflows), but the team has learned that certain options are best.
+The FusionAuth team has helped hundreds of customers integrate our auth server into their applications. There are [many different ways you can choose to perform an integration](/learn/expert-advice/authentication/login-authentication-workflows), but the team recommends certain options that offer the best tradeoffs between functionality and security.
 
 ## Why Use The OAuth Authorization Code Grant
 
-But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. If you want to use FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login).
+But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. For example, with FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login) and pass the username and password directly from your application to FusionAuth, getting a token in return. Why bother with the OAuth dance of redirects.
 
-When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people have spent lots of times refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it.
+When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people have spent lots of time refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it.
 
-The FusionAuth team firmly believes that using standards based OAuth and OIDC grants to integrate a third party auth server into your application architecture allows you to leverage these benefits and maintain flexibility to migrate if need be.
+The FusionAuth team firmly believes that using standards based OAuth and OIDC grants to integrate a third party auth server into your application architecture allows you to leverage these benefits and maintain flexibility to migrate.
 
-So, if you are convinced that the Authorization Code grant makes sense, you need to store the tokens that result from the Authorization Code grant. 
+You also get the following benefits:
 
-There are two main options. Which is the right way depends on your needs.
+* Customer personally identifiable information is kept in one safe and secure location.
+* You have one view of your customer across all your apps.
+* Advanced authentication functionality such as MFA, enterprise single sign-on and login rate limiting can be implemented in one place for all applications.
+* You can upgrade such authentication functionality without modifying downstream applications.
+* You can offer single sign-on across all your custom, commercial and open source applications.
+* Common login related workflows such as changing profile data or passwords can be centralized and managed by the auth server.
+
+Once you've decided to use the Authorization Code grant, you need to store the tokens that result from it. There are two main options. 
 
 ## Store Tokens On The Client
 
 The first option is to send the access token and refresh token down to the client. 
 
-Send these as `HTTPOnly`, secure cookies with a `SameSite` value of `Lax` or `Strict`.
+When using a browser, send these as `HTTPOnly`, secure cookies with a `SameSite` value of `Lax` or `Strict`.
 
-If you choose this option, the browser, whether a simple HTML page with some JavaScreipt or a complicated SPA, makes requests against APIs, and the token is along for the ride.
+If you choose this option, the browser, whether a simple HTML page with some JavaScript or a complicated single page application (SPA), makes requests against APIs, and the token is along for the ride.
 
-As long as the APIs live on a common domain (or parent domain), the cookie will be sent. For example, the auth server can live at at `auth.example.com` and if you set the cookie domain to `.example.com`, apis living at `api.example.com`, `todo.example.com`, and `contacts.example.com` will all receive the token.
+As long as the APIs live on a common domain (or parent domain), the cookie will be sent. For example, the auth server can live at at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com` and `todo.example.com`, or any other host under `.example.com`, will receive the token.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies." %}
+
+When using a native app, store these tokens in a secure location, such as the [iOS Keychain](https://developer.apple.com/documentation/security/keychain_services) or [Android internal data](https://developer.android.com/topic/security/best-practices#safe-data).
 
 ### Token Validation
 
@@ -84,15 +93,15 @@ If you choose this path, you gain horizontal scalability. As long as your APIs a
 
 As mentioned above, this approach is a perfect fit for a JavaScript, single page application pulling data from multiple APIs hosted by the same organization.
 
-Using cookies means you are safe from XSS attacks, a common mechanism for attackers to gain access to tokens and to make requests masquarading as another user. `HTTPOnly`, secure cookies are not available to any JavaScript running on the page, so can't be accessed by malicious scripts.
+Using cookies means you are safe from XSS attacks, a common mechanism for attackers to gain access to tokens and to make requests masquerading as another user. `HTTPOnly`, secure cookies are not available to any JavaScript running on the page, so can't be accessed by malicious scripts.
 
-If the APIs are on different domains, either use a proxy which can ingest the token, validate it and pass on requests to other domains, or use the session based approach, detailed below.
+If the APIs are on different domains, either use a proxy which can ingest the token, validate it and pass on requests to other domains, or use the session based approach, discussed later. Below is a diagram of using the proxy approach, where an API from `todos.com` is called through a proxy living at `proxy.example.com`.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
 
-### Alternatives To Client Stored Tokens
+### Alternatives To Client Stored Tokens In the Browser
 
-Why a cookie and not another storage mechanism like such as memory or localstorage? Why not bind the cookie to the browser? All options have tradeoffs, and using cookies works for most of our customers.
+Why use a browser cookie and not another storage mechanism such as memory or localstorage? Why not bind the cookie to the browser? All options have tradeoffs, and using cookies works for most of our customers.
 
 Localstorage is a difficult option because, unless you also set a fingerprint cookie, as [recommmended by OWASP](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking), you are exposed to XSS attacks. Remember, all JavaScript running on the page has access to localstorage. If you do add a fingerprint to your token and send a cookie down with the same value, you'll be limited to sending requests to APIs running on the domain the cookie is locked to.
 
@@ -102,22 +111,13 @@ Client binding measures, such as [Distributed Proof of Possession (DPoP)](https:
 
 ## Using Sessions
 
-If client side storage doesn't work, another option is to store the access token and refresh token in the server side session. The application can use normal web sessions. In this scenario, storing the token doesn't buy you much. 
+If client-side storage doesn't meet your needs, another option is to store the access token and refresh token in the server side session. The application can then use normal web sessions.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
 
-It's possible you'd present the token to other APIs, but in general, if you have received a valid token from the OAuth token endpoint, the user has authenticated. If that's enough, or you can pull information about the user from other sources using secure, server-side methods, you can use this approach.
+ In this scenario, storing the token doesn't offer many benefits. It's possible you'd present the token to other APIs, but in general, if you have received a valid token from the OAuth token endpoint, the user has authenticated. If that's enough, or you can pull information about the user from other sources using secure, server-side methods, you can use this approach.
 
-Even though you don't use the token, you still get benefits from using an auth server:
-
-* Customer personally identifiable information is kept in one safe and secure location.
-* You have one view of your customer across all your apps.
-* Advanced authentication functionality such as MFA, enterprise single sign-on and login rate limiting can be implemented in one place for all applications.
-* You can upgrade such authentication functionality without modifying downstream applications.
-* You can offer single sign-on across custom, commercial and open source applications.
-* Common login related workflows such as changing profile data or passwords can be centralized and therefore implemented one time.
-
-Please note you get these benefits if you use client side storage as well.
+Even though you don't use the token, you still get the benefits mentioned above that spring from the OAuth Authorization Code grant.
 
 ## The Id Token
 
@@ -125,10 +125,12 @@ What about the id token? This is provided when you specify a scope of `profile`,
 
 This token can be safely sent to the browser and stored in localstorage or a cookie accessible to JavaScript.
 
-The id token should never contain any secrets nor be used to access protected data, but can be useful for displaying infomration about a user such as their name.
+The id token should never contain any secrets nor be used to access protected data, but can be useful for displaying information about a user such as their name.
 
 ## Summing Up
 
-Client side storage of the tokens or server-side session storage handle the vast majority of systems integrating with the OAuth and OIDC standards for authenticating and authorizing users.
+Client-side storage of the tokens or server-side session storage handle the vast majority of systems integrating with the OAuth and OIDC standards for authenticating and authorizing users.
 
-The FusionAuth team recommends using one of these two options after you retrieve the token at the end of the Authorization Code grant.
+Client-side storage is a great choice when you have disparate APIs and want to support highly distributed clients such as mobile devices or browsers. Server-side session storage is simpler and easier to integrate into monolithic applications.
+
+The FusionAuth team recommends using one of these two options after you obtain the token at the end of the Authorization Code grant.
