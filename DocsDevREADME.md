@@ -129,6 +129,7 @@ For lists:
 - X.509
 - Node.js
 - re-authentication
+- self-service
 
 ## Git
 
