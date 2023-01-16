@@ -5,7 +5,7 @@ description: The FusionAuth 1.25 Release includes more debugging and SAMLv2 logo
 author: Dan Moore
 image: blogs/release-1-25/product-update-fusionauth-1-25.png
 category: announcement
-tags: release-announcment saml debugging
+tags: release-announcement saml debugging
 excerpt_separator: "<!--more-->"
 ---
 
