@@ -14,6 +14,11 @@ Whenever you build a website that allows a user to create their own account, sec
 
 <!--more-->
 
+{% include _callout-tip.liquid
+content=
+ "This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk)."
+%}
+
 In this tutorial, you will learn how to integrate a React app with FusionAuth to implement an OAuth 2.0 compliant Authorization Code grant.  This abstracts all of the problems of making and maintaining an auth solution away from you and onto FusionAuth.
 
 We'll start with downloading and configuring FusionAuth, then create a login/logout React component, then finish by building login/logout functionality with our Express server and React in tandem.  If you'd rather clone down a completed project and take a look around yourself, you can find the finished code in a [GitHub repository here](https://github.com/FusionAuth/fusionauth-example-react-2.0).
