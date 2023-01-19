@@ -257,7 +257,7 @@ public class HomeController {
 }
 ```
 
-Under the `main/java/.../..../resources/templates` folder, create a new file named `home.html`. Add the following contents to the file:
+Under the `src/main/resources/templates` folder, create a new file named `home.html`. Add the following contents to the file:
 
 ```html
 <html xmlns:th="http://www.w3.org/1999/xhtml" lang="en">
@@ -303,7 +303,7 @@ public class UserController {
 }
 ```
 
-Under the `main/java/.../..../resources/templates` folder, create a new file named `user.html`. Add the following contents to the file:
+Under the `src/main/resources/templates` folder, create a new file named `user.html`. Add the following contents to the file:
 
 ```html
 <html xmlns:th="http://www.w3.org/1999/xhtml" lang="en">
