@@ -1,7 +1,7 @@
 ---
 layout: doc
 title: Kong Gateway  
-description: Kong Gateway JWT & OIDC integration
+description: Kong Gateway JWT integration
 navcategory: developer
 ---
 
@@ -11,7 +11,7 @@ Kong Gateway is an API management tool that allows you to connect client API cal
 
 You can configure Kong Gateway to handle authorization to the resource through JSON Web Tokens (JWTs) issued on behalf of a user by an identity provider.
 
-In this document, you'll learn how to set up Kong Gateway and FusionAuth as the identity provider to protect a simple HTTP service running on your Kong instance.
+In this document, you'll learn how to set up Kong Gateway and FusionAuth as the identity provider to protect a simple HTTP service.
 
 == Prerequisites
 
@@ -29,7 +29,7 @@ curl -I http://localhost:8000/mock/requests
 
 If you have correctly set up Kong Gateway, this command will return `+HTTP/1.1 200 OK+`, indicating a successful connection to the service. 
 
-Now, you can restrict access to the service by requiring a JWT. To do this, add a JWT plugin with the following command.
+Now, you can restrict access to the service by requiring a JWT. To do this, add a link:https://docs.konghq.com/hub/kong-inc/jwt/[JWT plugin] to the Kong service with the following command. We assume the service name is "example_service", as in the Kong Get Started guide. 
 
 [source,shell,title,restrict access with JWT]
 ----
@@ -37,7 +37,7 @@ curl -X POST http://localhost:8001/services/example_service/plugins \
     --data "name=jwt" 
 ----
 
-At this point, the service is, for all intents and purposes, inaccessible. You can execute
+At this point, the service is inaccessible without a token. You can execute:
 
 [source,shell,title,cURL to test Kong setup, part two]
 ----
@@ -74,11 +74,11 @@ Now, navigate to [breadcrumb]#Settings -> Key Master#. You will see the Access k
 
 image::../../../../../assets/img/docs/api-gateways/kong-gateway/kong-gateway-public-key.png[FusionAuth Public Key for Access Token,width=1200]
 
-You will use FusionAuth's API to generate a JWT for your application. To do this, you need an API Key with POST access to the `+/api/login+` endpoint. Go to [breadcrumb]#Settings -> API Keys# to add such a key. Make sure the appropriate [field]#tenant# is selected.
+You will use FusionAuth's API to generate a test JWT for your application. To do this, you need an API Key with POST access to the `+/api/login+` endpoint. Go to [breadcrumb]#Settings -> API Keys# to add such a key. Make sure the appropriate [field]#tenant# is selected.
 
 image::../../../../../assets/img/docs/api-gateways/kong-gateway/kong-gateway-api-key-setup.png[FusionAuth API Key setup, width=1200]
 
-Finally, make sure there is at least one user registered to your application. You can create a new user by navigating to [breadcrumb]#User -> Add user#. Untoggle the [field]#Send email to set up password# switch to manually enter a password. Here, the password chosen is `+password+`.
+Finally, make sure there is at least one user registered to your application so that you can test with a JWT issued for that user. You can create a new user by navigating to [breadcrumb]#User -> Add user#. Untoggle the [field]#Send email to set up password# switch to manually enter a password. Here, the password chosen is `+password+`.
 
 image::../../../../../assets/img/docs/api-gateways/kong-gateway/kong-gateway-create-user.png[FusionAuth User Creation, width=1200]
 
@@ -88,9 +88,9 @@ image::../../../../../assets/img/docs/api-gateways/kong-gateway/kong-gateway-use
 
 == Add a consumer in Kong
 
-Now that FusionAuth has all the requisite information to create a JWT, you can configure your Kong Gateway to provide access based on it. 
+Now that FusionAuth has all the requisite information to create a JWT, you can configure your Kong Gateway and JWT plugin to provide access based on valid tokens created by FusionAuth.
 
-Execute the following command in your terminal.
+Execute the following command in your terminal to add a Consumer to Kong.
 
 [source,shell,title,Create a consumer]
 ----
@@ -98,7 +98,7 @@ curl -i -X POST http://localhost:8001/consumers \
   --data "username=fusionauth" 
 ----
 
-This creates a consumer with the username `+fusionauth+`. This consumer will handle the authentication information that you supply to it, namely the the public key and issuer name from FusionAuth. You can enable this with the following command.
+This creates a Kong Consumer with the username `+fusionauth+`. This Consumer will be linked to the authentication information that you supply to it, namely the the public key and issuer name from FusionAuth. This Consumer uses the information provided to verify any JWT used to access the service. You can enable this with the following command.
 
 [source,shell,title,Supply key to consumer]
 ----
@@ -120,9 +120,9 @@ curl -i -X POST http://localhost:8001/consumers/fusionauth/jwt \
   -F "key=https://local.fusionauth.io"
 ----
 
-== Creating and using the JWT
+== Creating and using the service with a JWT
 
-You can now generate the JWT to access your Kong Gateway service using FusionAuth's login API. Execute the following command in your terminal.
+You can now generate a test JWT to access your Kong Gateway service using FusionAuth's login API. Execute the following command in your terminal.
 
 [source,shell,title,Get JWT from FusionAuth]
 ----
@@ -137,15 +137,15 @@ curl --location --request POST '<YOUR_FUSIONAUTH_URL>/api/login' \
   }'
 ----
 
-Here, again, `+YOUR_FUSIONAUTH_URL+` is the issuer name. `+API_KEY+` is the key you set up on the [breadcrumb]#Settings -> API Keys# page, 
+Here, `+YOUR_FUSIONAUTH_URL+` is the issuer name. `+API_KEY+` is the key you set up on the [breadcrumb]#Settings -> API Keys# page
 
 image::../../../../../assets/img/docs/api-gateways/kong-gateway/kong-gateway-api-key.png[FusionAuth API Key setup, width=1200]
 
-`+APPLICATION_ID+` is the id of your FusionAuth application, 
+`+APPLICATION_ID+` is the id of your FusionAuth application. 
 
 image::../../../../../assets/img/docs/api-gateways/kong-gateway/kong-gateway-application-id.png[FusionAuth Application Id, width=1200]
 
-and `+USER_EMAIL+` and `+USER_PASSWORD+` are the username and password of the user that you registered to that application.
+`+USER_EMAIL+` and `+USER_PASSWORD+` are the username and password of the test user that you registered to that application.
 
 Using the example names from this guide, the command will appear as follows:
 
@@ -189,4 +189,9 @@ This command should return `+HTTP/1.1 200 OK+`, indicating successful authorizat
 
 === Next Steps
 
-<todo>
+We've shown how to enable JWT authorization on a Kong Service.  In a production appplication, this using Kong and the JWT plugin is useful to secure backend services of an application. This way, each service does not need to handle authorization or authentication. Instead, authentication and authorization is handled by FusionAuth and Kong.  
+
+We've used the FusionAuth API to create a test token on behalf of a user. For a production system, the token will generally be generated after a user signs into you application through a front end. Check out some of our framework integration tutorials to implement that: 
+
+* link:https://fusionauth.io/blog/2023/01/03/spring-and-fusionauth[Java Spring Guide]
+* link:https://fusionauth.io/blog/2022/11/15/nodejs-and-twitter-oauth[Node.js Express Guide]
