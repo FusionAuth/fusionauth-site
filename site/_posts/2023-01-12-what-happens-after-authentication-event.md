@@ -21,7 +21,7 @@ What should you do with all of these tokens? How can they be used by your applic
 
 The FusionAuth team has helped hundreds of customers integrate our auth server into their applications. There are [many different ways you can choose to perform an integration](/learn/expert-advice/authentication/login-authentication-workflows), but the team recommends certain options that offer the best tradeoffs between functionality and security.
 
-## Why Use The OAuth Authorization Code Grant
+## Why use the OAuth Authorization Code grant
 
 But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. For example, with FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login) and pass the username and password directly from your application to FusionAuth, getting a token in return. Why bother with the OAuth dance of redirects.
 
@@ -44,7 +44,7 @@ If you've decided to use the Authorization Code grant, you need to store the res
 * storing them on the client
 * storing them in a server-side session
 
-## Store Tokens On The Client
+## Store tokens on the client
 
 The first option is to send the access token and refresh token down to the client. While both are stored on the client, only the access token must be presented to any APIs or protected resources. The refresh token should be presented to FusionAuth, but that workflow will be covered in more detail below. If the refresh token cookie is sent to a resource server, it can be safely ignored.
 
@@ -58,7 +58,7 @@ As long as the APIs live on a common domain, or a parent domain, the access toke
 
 When using a native app, store these tokens in a secure location, such as the [iOS Keychain](https://developer.apple.com/documentation/security/keychain_services) or [Android internal data](https://developer.android.com/topic/security/best-practices#safe-data). Retrieve them and append them to the proper header before making API requests.
 
-### Token Validation
+### Token validation
 
 In the diagram above, there's a `Validate Tokens` step. Validating the access token each time they are presented is critical to securing building your application.
 
@@ -99,7 +99,7 @@ A successful introspection will return JSON. The claims in the JSON still need t
 
 Using introspection adds a dependency on FusionAuth, but removes the need for APIs to validate the token signature. Again, the claims must still be checked.
 
-### Using The Refresh Token
+### Using the Refresh Token grant
 
 At some point the access token will expire. The client must handle any access denied error.
 
@@ -111,7 +111,7 @@ After the access token expires, the client presents the refresh token to the aut
 
 When the checks pass, the auth server can issue a new access token. This can be transmitted to the client. This then transparently extends the user's session.
 
-### Benefits Of Client Stored Tokens
+### Benefits of client stored tokens
 
 If you choose to use client stored tokens, you gain a lot of horizontal scalability. As long as the APIs are on a domain to which cookies can be sent, they are sent along with any request your application makes. 
 
@@ -125,7 +125,7 @@ Below is a diagram of using the proxy approach, where an API from `todos.com` is
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
 
-### Alternatives To Client Stored Tokens For the Browser
+### Alternatives to client stored tokens for the browser
 
 Why use browser cookies and not another storage mechanism such as memory or localstorage? Why not bind the cookie to the browser? All options have tradeoffs, and using cookies works for many customers.
 
@@ -139,7 +139,7 @@ Client binding measures, such as [Distributed Proof of Possession (DPoP)](https:
 
 But if client storage won't meet your needs, you can use tried and true web sessions.
 
-## Using Sessions
+## Using sessions
 
 Another option is to store the access token and refresh token in the server-side session. The application uses web sessions to identify with the server, and the token is available for other requests originating server-side. This is also known as the backend for frontend (BFF) proxy.
 
@@ -163,7 +163,7 @@ Even if you don't present the token to other APIs, you still get the above benef
 * You can offer single sign-on across all your custom, commercial and open source applications.
 * Common login related workflows such as changing profile data or passwords can be centralized and managed by the auth server.
 
-## The Id Token
+## The id token
 
 What about the id token? That was mentioned initially as an optional token, but then not discussed further.
 
@@ -173,7 +173,7 @@ The id token can be safely sent to the browser and stored in localstorage or a c
 
 Id tokens are guaranteed to be JWTs, so you can also validate them client side to ensure their integrity.
 
-## Summing Up
+## Summing up
 
 The two options of client-side token storage or server-side sessions handle the majority of systems integrating with the OAuth and OIDC standards to safely authenticate and authorize users.
 
