@@ -25,9 +25,9 @@ The FusionAuth team has helped hundreds of customers integrate our auth server i
 
 But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. For example, with FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login) and pass the username and password directly from your application to FusionAuth, getting a token in return. Why bother with the OAuth dance of redirects.
 
-When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people in the Internet Engineering Task Force (IETF) working group have spent lots of time refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it.
+When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people in the Internet Engineering Task Force (IETF) working group have spent lots of time refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it. You also benefit from documents such as [OAuth 2.0 for browser based apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps), currently being developed, and [OAuth 2.0 for native apps](https://www.rfc-editor.org/rfc/rfc8252).
 
-The FusionAuth team firmly believes that using standards based OAuth grants to integrate a third party auth server into your application architecture allows you to leverage these benefits and maintain flexibility to migrate. OpenID Connect (OIDC) is also a useful standard which layers identity information onto OAuth grants.
+The FusionAuth team firmly believes that using standard OAuth grants to integrate a third party auth server into your application architecture allows you to leverage these benefits. It also leaves open migration possibilities, should your auth server fail to meet your needs. OpenID Connect (OIDC) is another standard which layers identity information onto OAuth grants.
 
 When using the Authorization Code grant, in addition to the wisdom of the IETF members, you get the following benefits:
 
@@ -68,7 +68,7 @@ One validation approach works if the token is signed and has internal structure,
 
 With a signed token, the API server can validate the access token without communicating with any other system, by checking the signature and the claims.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/validating-tokens.plantuml, alt: "Zooming in on token valiation." %}
+{% plantuml source: _diagrams/blogs/after-authorization-code-grant/validating-tokens.plantuml, alt: "Zooming in on token validation." %}
 
 The APIs must validate:
 
@@ -107,7 +107,7 @@ When you request a scope of `offline_access` in the initial authorization sequen
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-refresh-token.plantuml, alt: "Using a refresh token." %}
 
-After the access token expires, the client presents the refresh token to the auth server, such as FusionAuth. That server validates the user's account is still active, that there is still an active session, and any other logic that ay be required.
+After the access token expires, the client presents the refresh token to the auth server, such as FusionAuth. That server validates the user's account is still active, that there is still an active session, and any other logic that may be required.
 
 When the checks pass, the auth server can issue a new access token. This can be transmitted to the client. This then transparently extends the user's session.
 
@@ -129,9 +129,11 @@ Below is a diagram of using the proxy approach, where an API from `todos.com` is
 
 Why use browser cookies and not another storage mechanism such as memory or localstorage? Why not bind the cookie to the browser? All options have tradeoffs, and using cookies works for many customers.
 
-Localstorage is a difficult option because, unless you also set a fingerprint cookie, as [recommmended by OWASP](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking), you are exposed to XSS attacks. Remember, any JavaScript running on the page has access to localstorage. If you do follow the OWASP recommendations by adding a fingerprint to your token and sending a cookie down with a related value, you'll be limited to sending requests to APIs on the domain to which the cookie is scoped.
+Localstorage is a difficult option because, unless you also set a fingerprint cookie, as [recommended by OWASP](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking), you are exposed to XSS attacks. Remember, any JavaScript running on the page has access to localstorage. If you do follow the OWASP recommendations by adding a fingerprint to your token and sending a cookie down with a related value, you'll be limited to sending requests to APIs on the domain to which the cookie is scoped.
 
 If you use an in-memory storage solution, when the browser is refreshed, the token is gone. The user has to log in again, which is not a great experience.
+
+You can also use a service worker to isolate access to the tokens. This is a secure option, but all requests from the application must then pass through the service worker.
 
 Client binding measures, such as [Distributed Proof of Possession (DPoP)](https://www.ietf.org/archive/id/draft-ietf-oauth-dpop-12.html), remove XSS danger. The token can't be used without a private key that only the proper client possesses. However, these approaches require additional setup on the client side and are relatively new. For example, as of this writing, DPoP is not yet an IETF standard.
 
@@ -139,7 +141,7 @@ But if client storage won't meet your needs, you can use tried and true web sess
 
 ## Using Sessions
 
-Another option is to store the access token and refresh token in the server-side session. The application uses web sessions to identify with the server, and the token is available for other requests originating server-side.
+Another option is to store the access token and refresh token in the server-side session. The application uses web sessions to identify with the server, and the token is available for other requests originating server-side. This is also known as the backend for frontend (BFF) proxy.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
 
@@ -165,7 +167,7 @@ Even if you don't present the token to other APIs, you still get the above benef
 
 What about the id token? That was mentioned initially as an optional token, but then not discussed further.
 
-When you request a scope of `profile` in the initial authorization sequence, after successful authentication you will receive a id token as well as an access token. There are other OIDC scopes as well, beyond `profile`.
+When you request a scope of `profile` in the initial authorization sequence, after successful authentication you will receive an id token as well as an access token. There are other OIDC scopes as well, beyond `profile`.
 
 The id token can be safely sent to the browser and stored in localstorage or a cookie accessible to JavaScript. The id token should never be used to access protected data, but instead is for displaying information about a user such as their name.
 
@@ -173,7 +175,7 @@ Id tokens are guaranteed to be JWTs, so you can also validate them client side t
 
 ## Summing Up
 
-The two options of client-side token storage or server-side sessions handle the majority of systems integrating with the OAuth and OIDC standards to safely authenticate and authore users.
+The two options of client-side token storage or server-side sessions handle the majority of systems integrating with the OAuth and OIDC standards to safely authenticate and authorize users.
 
 Client-side storage is a great choice when you have disparate APIs and want to support highly distributed clients such as mobile devices or browsers in a scalable fashion. Server-side session storage is simpler and easier to integrate into monolithic applications.
 
