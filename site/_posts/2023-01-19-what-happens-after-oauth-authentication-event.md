@@ -149,7 +149,7 @@ If you have a valid token from the OAuth token endpoint via the app, the user is
 
 In other situations, you need to retrieve data from other APIs with no domain limits, over secure, server-side channels.
 
-Below is an example of how you can proxy API requests through server-side components.
+Below is an example of how you can proxy API requests through server-side components. The APIs receiving the tokens must still validate them, with the same options as discussed above.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage-api-calls.plantuml, alt: "Proxying API calls using tokens stored in a server-side session." %}
 
