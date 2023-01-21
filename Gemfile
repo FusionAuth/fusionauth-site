@@ -23,6 +23,7 @@ group :jekyll_plugins do
   gem "jekyll-algolia", "~> 1.0"
   gem "jekyll-minifier", "0.1.10"
   gem "jekyll-archives", "2.2.1"
+  gem "jekyll-datapage-generator"
 end
 
 # For the docs
