@@ -137,6 +137,11 @@ For blog posts:
 - server-side
 - client-side
 
+## Words to avoid
+
+- etc
+
+
 ## Git
 
 * Open a PR with changes. Tag someone to review it.
