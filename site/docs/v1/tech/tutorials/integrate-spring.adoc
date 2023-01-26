@@ -6,32 +6,33 @@ navcategory: getting-started
 ---
 
 :page-liquid:
+
+// TBD how much these are useful
 :prequisites: Java and Maven
 :technology: Java Spring
+:language: Java
 
 == Integrate Your {technology} Application With FusionAuth
 
 In this article, you are going to learn how to integrate a {technology} application with FusionAuth.
 
-Here's a typical application login flow before FusionAuth.
+Here's a typical application login flow before integrating FusionAuth into your {technology} application..
 
 ++++
 {% plantuml source: _diagrams/docs/login-before.plantuml, alt: "Login before FusionAuth." %}
 ++++
 
-And here's the same application login flow when FusionAuth is introduced FusionAuth.
+And here's the same application login flow when FusionAuth is introduced.
 ++++
 {% plantuml source: _diagrams/docs/login-after.plantuml, alt: "Login with FusionAuth." %}
 ++++
 
 
-== Pre-requisites
+== Prerequisites
 
-You’ll need to have {prequisites} installed.
+For this tutorial, you’ll need to have {prequisites} installed. You'll also need Docker, since that is how you’ll install FusionAuth.
 
-You’ll also need Docker, since that is how you’ll install FusionAuth.
-
-== Download and install FusionAuth
+== Download and Install FusionAuth
 
 First, make a project directory:
 
@@ -47,33 +48,30 @@ Then, install FusionAuth:
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker-compose up -d
 ----
 
-TODO do we want to ship with mailcatcher so that email is taken care of?
+== Create a User and an API Key
 
-== Create a user and an API key
+Next, http://localhost:9011[log into your FusionAuth instance].
+You’ll need to set up a user and a password, as well as accept the terms and conditions.
 
-Next, http://localhost:9011[log into your FusionAuth instance]. You’ll
-need to set up a user and a password, as well as accept the terms and
-conditions.
+Then, you’re at the FusionAuth admin UI.
+This lets you configure FusionAuth manually.
+But for this tutorial, you're going to create an API key and then you’ll configure FusionAuth using our {language} client library.
 
-Then, you’re at the FusionAuth admin UI. This lets you configure
-FusionAuth via clickops. But you’re only going to create an API key and
-then you’ll configure FusionAuth using our Java client library.
+Navigate to [breadcrumb]#Settings -> API Keys#. Click the [uielement]#+# button to add a new API Key.
+Copy the value of the [field]#Key# field and then save the key.
+It might be a value like `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`.
 
-Navigate to ``Settings'' and then ``API Keys''. Click the + button to
-add a new API Key. Copy the value of the ``Key'' field and then save the
-key. It might be a value like
-`CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`. This creates
-an API key that can be used for any FusionAuth API call. Save that off,
-you’ll be using it later.
+Doing so creates an API key that can be used for any FusionAuth API call.
+Save that key value off as you’ll be using it later.
 
 == Configure FusionAuth
 
-Next, you need to set up FusionAuth. This can be done in different ways,
-but we’re going to use the java client library. The below instructions
-are not for any IDE, but instead use command line maven.
+Next, you need to set up FusionAuth.
+This can be done in different ways, but we’re going to use the {language} client library.
+The below instructions use maven from the command line, but you can use the client library with an IDE of your preference as well.
 
 First, make a directory:
 
@@ -419,7 +417,7 @@ protected information in this page.
 </html>
 ----
 
-Then, you need to add the Java files that comprise your Spring
+Then, you need to add the {language} files that comprise your Spring
 application. There are four:
 
 * An application startup class
@@ -551,10 +549,48 @@ public class ProfileController {
 }
 ----
 
-Once you’ve set these up, you can start up the Spring application using
-this command: `mvn spring-boot:run`.
+At the end, your directory tree should look like: 
 
-You can now open up an incognito window and visit
-http://localhost:8080[the Spring app]. Log in using the user you added
-in FusionAuth, and you’ll see a JSON output of your profile on the
-profile page.
+[source]
+----
+├── docker-compose.yml
+├── setup-fusionauth
+│   ├── pom.xml
+│   └── src
+│       └── main
+│           └── java
+│               └── io
+│                   └── fusionauth
+│                       └── example
+│                           └── Setup.java
+└── setup-spring
+    ├── pom.xml
+    └── src
+        └── main
+            ├── java
+            │   └── io
+            │       └── fusionauth
+            │           └── example
+            │               └── spring
+            │                   ├── FusionAuthSpringApplication.java
+            │                   ├── HomeController.java
+            │                   ├── ProfileController.java
+            │                   └── config
+            │                       └── SecurityConfiguration.java
+            └── resources
+                ├── application.properties
+                └── templates
+                    ├── home.html
+                    └── profile.html
+----
+
+Once you’ve created this directory structure, you can start up the Spring application using this command: 
+
+[source,shell,title="Start the application"]
+----
+mvn spring-boot:run
+----
+
+You can now open up an incognito window and visit http://localhost:8080[the Spring app].
+Log in using the user you added in FusionAuth, and you’ll see a JSON output of your profile on the profile page.
+
