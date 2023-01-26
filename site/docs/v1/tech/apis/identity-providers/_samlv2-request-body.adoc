@@ -45,7 +45,7 @@ This is an optional list of domains that this SAML v2 provider should be used fo
 endif::[]
 
 [field]#identityProvider.emailClaim# [type]#[String]# [optional]#Optional#::
-The name of the email claim (Attribute in the `Assertion` element) in the SAML response that FusionAuth uses to uniquely identity the user. If this is not set, the `useNameIdForEmail` flag must be true.
+The name of the email claim (attribute in the `Assertion` element) in the SAML response that FusionAuth uses to uniquely identity the user. If this is not set, the `useNameIdForEmail` flag must be true.
 
 [field]#identityProvider.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`#::
 Determines if this provider is enabled. If it is false then it will be disabled globally.
@@ -70,29 +70,27 @@ The specified Lambda Id must be of type `SAMLv2Reconcile`.
 
 include::_identity-provider-linking-strategy-request-parameter.adoc[]
 
-[field]#identityProvider.loginHintConfiguration.enabled# [type]#[boolean]# [optional]#Optional#::
-When enabled, at the onset of the AuthN request (using redirect bindings), FusionAuth will attempt to pass a custom specified login hint to the SAML IdP.
+[field]#identityProvider.loginHintConfiguration.enabled# [type]#[boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.43.0#::
+When enabled and HTTP-Redirect binding are used, a login hint will be passed (when available) as a query parameter to the IdP using the configured parameter name set by the [field]#identityProvider.loginHintConfiguration.parameterName#.
 
 [field]#identityProvider.loginHintConfiguration.parameterName# [type]#[String]#::
-When using a login hint, at the onset of the AuthN request (using redirect bindings), the name of the login hint parameter to be provided to the SAML IdP.
+The name of the query parameter to use when sending a login hint to the IdP. This is only used when a login hint is available and [field]#identityProvider.loginHintConfiguration.enabled# is set to `true`.
 
 [field]#identityProvider.name# [type]#[String]# [required]#Required#::
 The name of this SAML v2 identity provider. This is only used for display purposes. Must be unique across all identity providers.
 
 ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.nameIdFormat# [type]#[String]# [required]#Required# [default]#Defaults to `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`#::
-The `nameid-format` of this SAML v2 identity provider.
-+
-Possible values are:
+The *NAME-ID*entifier property is used to facilitate communication about a user between a Service Provider (SP) and Identity Provider (IdP). The SP can specify the preferred format in the AuthN request regarding a user. The identity Provider will attempt to honor this format in the AuthN response.
 +
 - `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent` -
-FusionAuth will expect the `NameId` returned will not change and is unique. When not specified, this is the default value.
+FusionAuth will expect the user id returned will not change and is unique.
 +
 - `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress` -
 FusionAuth will expect an email address returned for the `NameId`. When setting this option, ensure email addresses within the external identity provider are globally unique and unchanging. If the external system does not have unique email addresses, identify a unique Id from the external IdP using the the `identityProvider.uniqueIdClaim` field.
 +
-- `urn:oasis:names:tc:SAML:1.1:nameid-format:custom` -
-Allows customization of the `nameIdFormat` to be any value necessary. For instance, using this option, it is possible to set a nameIdFormat to `foo` per business requirements.
+- `urn:oasis:names:tc:SAML:1.1:nameid-format:other` -
+Allows customization of the `nameIdFormat` to be any `NameId` format value.
 endif::[]
 
 ifndef::samlv2_idp_initiated[]
@@ -124,13 +122,13 @@ This field must be set to `SAMLv2IdPInitiated`.
 endif::[]
 
 [field]#identityProvider.uniqueIdClaim# [type]#[String]# [optional]#Optional#::
-FusionAuth will use this claim as a unique and unchanging value from the external IdP when linking a user.
+The name of the unique `userId` claim (attribute in the `Assertion` element) in the SAML response that FusionAuth uses to uniquely link the user. If this is not set, the `emailClaim` will be used.
 
 [field]#identityProvider.useNameIdForEmail# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`#::
 Whether or not FusionAuth will use the `NameID` element value as the email address of the user for reconciliation processing. If this is false, then the `emailClaim` property must be set.
 
 [field]#identityProvider.usernameClaim# [type]#[String]# [optional]#Optional#::
-The name of the claim in the SAML response that includes the username.
+The name of the claim in the SAML response (attribute in the `Assertion` element) in the SAML response that FusionAuth uses to identity the username. If this is not set, the `NameId` value will be used to link a user. This value is required if linking on username.
 
 ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.xmlSignatureC14nMethod# [type]#[String]# [optional]#Optional# [default]#Defaults to `exclusive`# [since]#Available since 1.20.0#::

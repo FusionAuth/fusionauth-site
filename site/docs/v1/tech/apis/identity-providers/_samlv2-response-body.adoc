@@ -83,23 +83,27 @@ The id of a SAML reconcile lambda that is applied when the identity provider sen
 
 include::_identity-provider-linking-strategy-response-parameter.adoc[]
 
+[field]#identityProvider.loginHintConfiguration.enabled# [type]#[boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.43.0#::
+When enabled and HTTP-Redirect binding are used, a login hint will be passed (when available) as a query parameter to the IdP using the configured parameter name set by the [field]#identityProvider.loginHintConfiguration.parameterName#.
+
+[field]#identityProvider.loginHintConfiguration.parameterName# [type]#[String]#::
+The name of the query parameter to use when sending a login hint to the IdP. This is only used when a login hint is available and [field]#identityProvider.loginHintConfiguration.enabled# is set to `true`.
+
 [field]#identityProvider.name# [type]#[String]#::
 The name of this SAML v2 identity provider. This is only used for display purposes.
 
 ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.nameIdFormat# [type]#[String]#::
-The `nameid-format` of this SAML v2 identity provider.
-+
-Possible values are:
+The *NAME-ID*entifier property is used to facilitate communication about a user between a Service Provider (SP) and Identity Provider (IdP). The SP can specify the preferred format in the AuthN request regarding a user. The identity Provider will attempt to honor this format in the AuthN response.
 +
 - `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent` -
-FusionAuth will expect the `NameId` returned will not change and is unique. When not specified, this is the default value.
+FusionAuth will expect the user id returned will not change and is unique.
 +
 - `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress` -
-FusionAuth will expect an email address returned for the `NameId`.
+FusionAuth will expect an email address returned for the `NameId`. When setting this option, ensure email addresses within the external identity provider are globally unique and unchanging. If the external system does not have unique email addresses, identify a unique Id from the external IdP using the the `identityProvider.uniqueIdClaim` field.
 +
-- `urn:oasis:names:tc:SAML:1.1:nameid-format:custom` -
-Allows customization of the `nameIdFormat` to be any value necessary. For instance, using this option, it is possible to set a nameIdFormat to `foo` per business requirements.
+- `urn:oasis:names:tc:SAML:1.1:nameid-format:other` -
+Allows customization of the `nameIdFormat` to be any `NameId` format value.
 endif::[]
 
 ifndef::samlv2_idp_initiated[]
@@ -123,19 +127,20 @@ ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.type# [type]#[String]#::
 This field will be `SAMLv2`.
 endif::[]
+
 ifdef::samlv2_idp_initiated[]
 [field]#identityProvider.type# [type]#[String]#::
 This field will be `SAMLv2IdPInitiated`.
 endif::[]
 
 [field]#identityProvider.uniqueIdClaim# [type]#[String]#::
-FusionAuth will use this claim as a unique and unchanging value from the external IdP when linking a user.
+The name of the unique `userId` claim (attribute in the `Assertion` element) in the SAML response that FusionAuth uses to uniquely link the user. If this is not set, the `emailClaim` will be used.
 
 [field]#identityProvider.useNameIdForEmail# [type]#[Boolean]#::
 Whether or not FusionAuth will use the `NameID` element value as the email address of the user for reconciliation processing.
 
 [field]#identityProvider.usernameClaim# [type]#[String]#::
-The name of the claim in the SAML response that includes the username claim.
+The name of the claim in the SAML response (attribute in the `Assertion` element) in the SAML response that FusionAuth uses to identity the username. If this is not set, the `NameId` value will be used to link a user.
 
 ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.xmlSignatureC14nMethod# [type]#[String]# [since]#Available since 1.20.0#::
@@ -156,6 +161,6 @@ ifdef::samlv2_idp_initiated[]
 [source,json]
 .Example SAML v2 IdP Initiated Response JSON
 ----
-include::../../../../src/json/identity-providers/samlv2-idp-initiated-request.json[]
+include::../../../../src/json/identity-providers/samlv2-idp-initiated-response.json[]
 ----
 endif::[]
