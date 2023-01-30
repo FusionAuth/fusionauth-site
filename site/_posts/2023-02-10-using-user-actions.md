@@ -5,7 +5,7 @@ description: In this tutorial, we'll create User Actions to coordinate events ar
 author: Ritza
 category: tutorial
 tags: tutorial user-actions
-image: blogs/spring-fusionauth/user-actions-blog-image.png
+image: blogs/user-actions/user-actions-blog-image.png
 excerpt_separator: "<!--more-->"
 ---
 
@@ -55,14 +55,13 @@ Click "Setup" under "Missing Application" and call your new app "Silicon Valley 
 
 Click the "Save" button at the top right for your changes to take effect.
 
-
 ### Steps
 
-
-1. Setup an [email provider on your tenant](https://fusionauth.io/docs/v1/tech/email-templates/configure-email)
 1. Create a test user. Record User Id. Record User Id of admin user.
 1. Create email templates in FusionAuth:(link)
  	- Save and copy ID from the email list page
+    - cancel 
+    - modify
  		- signup ID: 5eaf58e7-2e5a-4eea-94b8-74a707724f7b
  		- expired ID: 18490dc2-b3d4-462f-9a8e-882b4fb4e76f
 1. Create API Access Key. Allow post and Gets to User Actions 
@@ -70,18 +69,20 @@ Click the "Save" button at the top right for your changes to take effect.
 		- `/api/user/action`
 	Key: dLPw9kJmBLd4zIegTu4S1N5XoK_G0ZkbzCNjYPU8ZsRKNnYWDiGQ1x1U
 
-1. Create a user [user action definition](https://fusionauth.io/docs/v1/tech/apis/user-actions) with the email ids and POST using `/api/user-action`
+1. Create a [user action definition](https://fusionauth.io/docs/v1/tech/apis/user-actions) with the email ids and POST using `/api/user-action`
 	```json
-	{
-  		"userAction": {
-  			"name": "Bought Temporary Access",
-  			"startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
-  			"endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
-  			"temporal": true,
-  			"userEmailingEnabled": false,
-  			"sendEndEvent": false
-  		}
-  	}
+    {
+        "userAction": {
+            "name": "Bought Temporary Access",
+            "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
+            "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
+            "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+            "cancelEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+            "temporal": true,
+            "userEmailingEnabled": true,
+            "sendEndEvent": false
+        }
+    }
 	```
 
 	```sh
@@ -89,17 +90,17 @@ Click the "Save" button at the top right for your changes to take effect.
 		--header 'Authorization: dLPw9kJmBLd4zIegTu4S1N5XoK_G0ZkbzCNjYPU8ZsRKNnYWDiGQ1x1U' \
 		--header 'Content-Type: application/json' \
 		--data-raw '{
-			    "userAction": {
-			        "name": "Bought Temporary Access",
-			        "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
-			        "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
-			        "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
-			        "cancelEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
-			        "temporal": true,
-			        "userEmailingEnabled": true,
-			        "sendEndEvent": false
-			    }
-			}'
+      "userAction": {
+        "name": "Bought Temporary Access",
+        "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
+        "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
+        "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+        "cancelEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+        "temporal": true,
+        "userEmailingEnabled": true,
+        "sendEndEvent": false
+    }
+}'
 	```
 
 	Should return:
@@ -142,7 +143,6 @@ Click the "Save" button at the top right for your changes to take effect.
 		    "emailUser": true,
 		    "expiry": 1674903995472,
 		    "notifyUser": true,
-		    "reasonId": "00000000-0000-0000-0000-000000000020",
 		    "userActionId": "fbff792c-2340-4d72-b4fd-534f94d0a94b"
 		  }
 		}
