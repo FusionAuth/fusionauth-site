@@ -117,7 +117,7 @@ Navigate to [Spring Initialzr](https://start.spring.io), and create a new Spring
 
 - You can choose either Gradle or Maven as your package manager—we've used Maven for this example
 - Spring Boot 2.7.x
-- Name the app, group and artifact as you wish, to generate a package name. We've used `com.fusionauth.example.spring` for the full package name.
+- Name the app, group and artifact as you wish, to generate a package name. We've used `io.fusionauth.example` for the full package name.
 - Choose the following dependencies:
   - Spring Web
   - OAuth 2.0 client
@@ -145,35 +145,14 @@ Spring Boot OAuth 2.0 Client has various configuration options through the `appl
 Update the `application.properties` file in the `resources` directory under the `main` source path to read as follows:
 
 ```java
-spring.thymeleaf.cache=false
-spring.thymeleaf.enabled=true 
-spring.thymeleaf.prefix=classpath:/templates/
-spring.thymeleaf.suffix=.html
-
-spring.application.name=FusionAuth Spring Example
-
-spring.security.oauth2.client.registration.fusionauth-client.client-id=<YOUR_FUSIONAUTH_APP_CLIENT_ID>
-spring.security.oauth2.client.registration.fusionauth-client.client-secret=<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>
-spring.security.oauth2.client.registration.fusionauth-client.scope=email,openid,profile
-spring.security.oauth2.client.registration.fusionauth-client.redirect-uri=http://localhost:8080/login/oauth2/code/fusionauth
-spring.security.oauth2.client.registration.fusionauth-client.client-name=fusionauth
-spring.security.oauth2.client.registration.fusionauth-client.provider=fusionauth
-spring.security.oauth2.client.registration.fusionauth-client.client-authentication-method=basic
-spring.security.oauth2.client.registration.fusionauth-client.authorization-grant-type=authorization_code
-
-spring.security.oauth2.client.provider.fusionauth.authorization-uri=<YOUR_FUSIONAUTH_URL>/oauth2/authorize
-spring.security.oauth2.client.provider.fusionauth.token-uri=<YOUR_FUSIONAUTH_URL>/oauth2/token
-spring.security.oauth2.client.provider.fusionauth.user-info-uri=<YOUR_FUSIONAUTH_URL>/oauth2/userinfo?schema=openid
-spring.security.oauth2.client.provider.fusionauth.user-name-attribute=name
-spring.security.oauth2.client.provider.fusionauth.user-info-authentication-method=header
-spring.security.oauth2.client.provider.fusionauth.jwk-set-uri=<YOUR_FUSIONAUTH_URL>/.well-known/jwks.json
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/application.properties %}
 ```
 
 Replace the values:
 
-- `<YOUR_FUSIONAUTH_APP_CLIENT_ID>` with the client ID from the FusionAuth app created earlier.
-- `<YOUR_FUSIONAUTH_APP_CLIENT_SECRET>` with the client secret from the FusionAuth app created earlier.
-- `<YOUR_FUSIONAUTH_URL>` with the base URL your FusionAuth instance is running on, typically `http://localhost:9011` for local Docker installations.
+- `9fdb985-9173-4e01-9d73-ac2d60d1dc8e` with the client ID from the FusionAuth app created earlier.
+- `super-secret-secret-that-should-be-regenerated-for-production` with the client secret from the FusionAuth app created earlier.
+- `http://locahost:9011` with the base URL your FusionAuth instance is running on, if not using a local installation.
 
 Most of the values can also be found by clicking on the "View" application settings button in FusionAuth:
 
@@ -181,44 +160,10 @@ Most of the values can also be found by clicking on the "View" application setti
 
 ## Setting up Spring Boot OAuth 2.0 code configuration
 
-Create a `config` folder under the `main/java/.../....` source folder. In this folder, create a new file named `SecurityConfiguration.java` with the following contents:
+Create a `config` directory under the `src/main/java/io/fusionauth/example/spring` source directory. Create a new file named `SecurityConfiguration.java` with the following contents:
 
 ```java
-package com.fusionauth.example.spring.config;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
-import org.springframework.security.web.SecurityFilterChain;
-
-@Configuration
-public class SecurityConfiguration {
-
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http, ClientRegistrationRepository repo)
-      throws Exception {
-
-    var base_uri = OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI;
-    var resolver = new DefaultOAuth2AuthorizationRequestResolver(repo, base_uri);
-
-    resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
-
-    http
-        .authorizeRequests(a -> a
-            .antMatchers("/").permitAll()
-            .anyRequest().authenticated())
-        .oauth2Login(login -> login.authorizationEndpoint().authorizationRequestResolver(resolver));
-
-    http.logout(logout -> logout
-        .logoutSuccessUrl("/"));
-
-    return http.build();
-  }
-}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java %}
 ```
 
 This adds a [Bean](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html) to hook into the [Spring security filter chain](https://docs.spring.io/spring-security/site/docs/3.0.x/reference/security-filter-chain.html).
@@ -233,94 +178,38 @@ Then we add a few things to the HTTP request chain:
 
 ## Adding the home page and controller
 
-Under the `main/java/.../....` folder, create a new file named `HomeController.java`. Add the following contents to this file:
+In the `src/main/java/io/fusionauth/example/spring` source directory, create a new file named `HomeController.java`. Add the following contents to this file:
 
 ```java
-package com.fusionauth.example.spring;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-@Controller
-public class HomeController {
-
-  @Value("${spring.application.name}")
-  String appName;
-
-  @RequestMapping("/")
-  public String homePage(Model model) {
-      model.addAttribute("appName", appName);
-      return "home";
-  }  
-}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/HomeController.java %}
 ```
 
-Under the `src/main/resources/templates` folder, create a new file named `home.html`. Add the following contents to the file:
+Under the `src/main/resources/templates` directory, create a new file named `home.html`. Add the following contents to the file:
 
 ```html
-<html xmlns:th="http://www.w3.org/1999/xhtml" lang="en">
-<head><title>Home Page</title></head>
-<body>
-	<h1>Hello !</h1>
-	<p>Welcome to <span th:text="${appName}">Our App</span></p>
-
-	<p>You can view your profile <a href="/user">here</a></p>
-</body>
-</html>
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/home.html %}
 ```
 
 ## Adding the user page and controller
 
 We set the `user-info-uri` property in the `application.properties` file and add the `openid` and `profile` scopes to the `scope` property so that Spring can automatically query FusionAuth for the user's profile and make it available to the app via the [`AuthenticationPrincipal` annotation parameter](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/core/annotation/AuthenticationPrincipal.html). We can use this to build a user controller to show the logged-in user their profile on FusionAuth. You can customize the profile fields stored on FusionAuth and requested during registration. Read more about this [here](https://fusionauth.io/docs/v1/tech/guides/advanced-registration-forms).
 
-Under the `main/java/.../....` folder, create a new file named `UserController.java`. Add the following contents to this file:
+In the `src/main/java/io/fusionauth/example/spring` source directory, create a new file named `UserController.java`. Add the following contents to this file:
 
 ```java
-package com.fusionauth.example.spring;
-
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-@Controller
-public class UserController {
-
-  public UserController() {
-
-  } 
-
-  @RequestMapping("/user")
-  public String userPage(Model model, @AuthenticationPrincipal OidcUser principal) {
-    if (principal != null) {
-      model.addAttribute("profile", principal.getClaims());
-    }
-    return "user";
-  }
-}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/UserController.java %}
 ```
 
-Under the `src/main/resources/templates` folder, create a new file named `user.html`. Add the following contents to the file:
+Under the `src/main/resources/templates` directory, create a new file named `user.html`. Add the following contents to the file:
 
 ```html
-<html xmlns:th="http://www.w3.org/1999/xhtml" lang="en">
-<head><title>User Profile</title></head>
-<body>
-	<h1>Welcome to the protected User page. Below is your OpenID profile information.</h1>
-	<p>Profile: <span th:text="${profile}"></span></p>
-
-	<h2>You can logout here: <a href="<YOUR_FUSIONAUTH_URL>/oauth2/logout?client_id=<YOUR_FUSIONAUTH_APP_CLIENT_ID>">Logout</a></h2>
-</body>
-</html>
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/user.html %}
 ```
 
 Replace the values in the logout link in the snippet above:
 
-- `<YOUR_FUSIONAUTH_URL>` with the base URL your FusionAuth instance is running on, typically `http://localhost:9011` for local Docker installations.
-- `<YOUR_FUSIONAUTH_APP_CLIENT_ID>` with the client Id from the FusionAuth app created earlier.
+- `http://localhost:9011` with the base URL your FusionAuth instance is running on, if not using a local installation.
+- `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e` with the client Id from the FusionAuth app created earlier.
 
 
 The logout link redirects to FusionAuth, which logs the user out of the FusionAuth app and then redirects back to the `logout` URL set earlier in the FusionAuth app configuration, `http://localhost:8080/logout`. By default, Spring Boot web has logout logic wired at that endpoint to complete the logout process on the application by destroying the local session.
