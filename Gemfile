@@ -23,6 +23,7 @@ group :jekyll_plugins do
   gem "jekyll-algolia", "~> 1.0"
   gem "jekyll-minifier", "0.1.10"
   gem "jekyll-archives", "2.2.1"
+  gem "jekyll-remote-include", :github => "netrics/jekyll-remote-include", :ref => "a230e824783d5c6783235d5a05bff17d6bb11324"
 end
 
 # For the docs
