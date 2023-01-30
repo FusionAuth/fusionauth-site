@@ -117,7 +117,7 @@ Navigate to [Spring Initialzr](https://start.spring.io), and create a new Spring
 
 - You can choose either Gradle or Maven as your package manager—we've used Maven for this example
 - Spring Boot 2.7.x
-- Name the app, group and artifact as you wish, to generate a package name. We've used `io.fusionauth.example` for the full package name.
+- Name the app, group and artifact as you wish, to generate a package name. We've used `io.fusionauth.example.spring` for the full package name.
 - Choose the following dependencies:
   - Spring Web
   - OAuth 2.0 client
