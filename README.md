@@ -2,19 +2,16 @@
 
 https://fusionauth.io
 
-
 The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
 
 Thanks!
  - FusionAuth team
 
-
-
 ## Building
 
 If you want to submit a PR or test a change to fix a link, etc it may be helpful for you to build and run locally.
 
-This project is built using jekyll and asciidoc, you'll need to have ruby installed.
+This project is built using jekyll and asciidoc. You'll need to have ruby installed.
 
 ### Install
 
