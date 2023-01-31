@@ -1,0 +1,73 @@
+Now, let's enable {{page.feature}}. Let's create another FusionAuth script, since to set up {{page.feature}}, all you need to do is tweak some FusionAuth configuration. First, go back to the `fusionauth-setup` directory:
+
+```
+cd ../setup-fusionauth
+```
+
+You'll use the same client library and API key, but run different commands.
+
+Put the below code in `src/main/java/io/fusionauth/example/AddTwitterOAuth.java`.
+
+```java
+package io.fusionauth.example;
+
+import java.util.HashMap;
+
+import java.util.UUID;
+
+import com.inversoft.error.Errors;
+import com.inversoft.rest.ClientResponse;
+
+import io.fusionauth.client.FusionAuthClient;
+import io.fusionauth.domain.api.IdentityProviderRequest;
+import io.fusionauth.domain.api.IdentityProviderResponse;
+import io.fusionauth.domain.provider.TwitterApplicationConfiguration;
+import io.fusionauth.domain.provider.TwitterIdentityProvider;
+
+public class AddTwitterOAuth {
+
+    public static void main(String[] args) {
+        final String apiKey = System.getProperty("fusionauth.api.key");
+        final FusionAuthClient client = new FusionAuthClient(apiKey, "http://localhost:9011");
+        
+        // create a twitter provider
+        UUID clientId = UUID.fromString(Setup.APPLICATION_ID);
+        TwitterIdentityProvider twitterIdentityProvider = new TwitterIdentityProvider();
+        twitterIdentityProvider.enabled = true;
+        twitterIdentityProvider.buttonText = "Login With Twitter";
+        twitterIdentityProvider.consumerKey = "change-this-in-production-to-be-a-real-twitter-key";
+        twitterIdentityProvider.consumerSecret = "change-this-in-production-to-be-a-real-twitter-secret";
+        
+        // enable it for our application
+        twitterIdentityProvider.applicationConfiguration = new HashMap<UUID, TwitterApplicationConfiguration>();
+        TwitterApplicationConfiguration twitterApplicationConfiguration = new TwitterApplicationConfiguration();
+        twitterApplicationConfiguration.enabled = true;
+        twitterIdentityProvider.applicationConfiguration.put(clientId, twitterApplicationConfiguration);
+
+        IdentityProviderRequest twitterIdentityProviderRequest = new IdentityProviderRequest(twitterIdentityProvider);
+		
+        ClientResponse<IdentityProviderResponse, Errors> identityProviderResponse = client.createIdentityProvider(null, twitterIdentityProviderRequest);
+        if (!identityProviderResponse.wasSuccessful()) {
+        	throw new RuntimeException("couldn't add twitter OAuth");
+        }
+    }
+}
+```
+
+You can run this by using a similar mvn command:
+
+```shell
+mvn compile && mvn exec:java -Dexec.mainClass="io.fusionauth.example.AddTwitterOAuth" -Dfusionauth.api.key=<your API key>
+```
+
+Now, test to see that you have {{page.feature}} enabled for your application. Close any other incognito windows you have open and then open a new one. (This ensures you've logged out of the application.)
+
+Visit [the spring java application](http://localhost:8080) and log in again. Now, on the login page, you should see a {{page.feature}} button.
+
+TBD image?
+
+If you want to click it and have it work, make sure you set up your Twitter OAuth Provider with real values [by following these instructions](/docs/v1/tech/identity-providers/twitter).
+
+
+
+

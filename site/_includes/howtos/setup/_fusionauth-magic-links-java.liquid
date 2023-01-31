@@ -1,0 +1,67 @@
+Now, let's enable {{page.feature}}. Let's create another FusionAuth script, since to set up {{page.feature}}, all you need to do is tweak some FusionAuth configuration. First, go back to the `fusionauth-setup` directory:
+
+```
+cd ../setup-fusionauth
+```
+
+You'll use the same client library and API key, but run different commands.
+
+Put the below code in `src/main/java/io/fusionauth/example/AddMagicLink.java`.
+
+```java
+package io.fusionauth.example;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import com.inversoft.error.Errors;
+import com.inversoft.rest.ClientResponse;
+
+import io.fusionauth.client.FusionAuthClient;
+import io.fusionauth.domain.api.ApplicationResponse;
+
+public class AddMagicLink {
+
+    public static void main(String[] args) {
+        final String apiKey = System.getProperty("fusionauth.api.key");
+        final FusionAuthClient client = new FusionAuthClient(apiKey, "http://localhost:9011");
+
+        // enable magic links
+        UUID clientId = UUID.fromString(Setup.APPLICATION_ID);
+        
+        Map<String, Object> applicationMap = new HashMap<String, Object>();
+        Map<String, Object> passwordlessConfigurationMap = new HashMap<String, Object>();
+        Map<String, Object> enableMagicLinkUpdateMap = new HashMap<String, Object>();
+        
+        passwordlessConfigurationMap.put("enabled",true);
+        applicationMap.put("passwordlessConfiguration", passwordlessConfigurationMap);
+        enableMagicLinkUpdateMap.put("application", applicationMap);
+
+        ClientResponse<ApplicationResponse, Errors> applicationResponse = client.patchApplication(clientId, enableMagicLinkUpdateMap);
+        if (!applicationResponse.wasSuccessful()) {
+        	throw new RuntimeException("couldn't update application");
+        }
+    }
+}
+```
+
+You can run this by using a similar mvn command:
+
+```shell
+mvn compile && mvn exec:java -Dexec.mainClass="io.fusionauth.example.AddMagicLinks" -Dfusionauth.api.key=<your API key>
+```
+
+Now, test to see that you have {{page.feature}} enabled for your application. Close any other incognito windows you have open and then open a new one. (This ensures you've logged out of the application.)
+
+Visit [the spring java application](http://localhost:8080) and log in again. Now, on the login page, you should see a {{page.feature_singular}} button.
+
+TBD image?
+
+If you want to click it and have it work, make sure you [set up your FusionAuth email configuration](/docs/v1/tech/email-templates/configure-email) using a service like Sendgrid or Mailgun.
+
+
+
+
+
+
