@@ -43,7 +43,11 @@ Note that here we use a public `.env` file containing hard-coded database passwo
 
 ### Configuring FusionAuth
 
-FusionAuth should now be running and reachable on your chosen URL or `http://localhost:9011` if you've installed it locally. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more set-up steps, as shown below.
+FusionAuth should now be running and reachable on your chosen URL or `http://localhost:9011` if you've installed it locally. The first time you visit, you'll be prompted to set up an admin user and password. 
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-initial-setup.png" alt="FusionAuth initial setup user and password" class="img-fluid" figure=false %}
+
+Once you've done this, you'll be prompted to complete three more set-up steps, as shown below.
 
 {% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
 
@@ -51,43 +55,43 @@ Sending emails to communicate to the user about their purchase is a vital part o
 
 ### Creating an application
 
-Click "Setup" under "Missing Application" and call your new app "Silicon Valley Chronicle" or another name of your choice. 
+Click "Setup" under "Missing Application" and call your new app "Silicon Valley Chronicle" or another name of your choice. Select a tenant if you've set more than one up already.
+	
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-add-application.png" alt="FusionAuth Add Application" class="img-fluid" figure=false %}
 
 Click the "Save" button at the top right for your changes to take effect.
 
-### Steps
-
-1. Create a test user. Record User Id. Record User Id of admin user.
-1. Create email templates in FusionAuth:(link)
- 	- Save and copy ID from the email list page
-    - cancel 
-    - modify
- 		- signup ID: 5eaf58e7-2e5a-4eea-94b8-74a707724f7b
- 		- expired ID: 18490dc2-b3d4-462f-9a8e-882b4fb4e76f
-1. Create API Access Key. Allow post and Gets to User Actions 
-		- `/api/user-action`
-		- `/api/user/action`
-	Key: dLPw9kJmBLd4zIegTu4S1N5XoK_G0ZkbzCNjYPU8ZsRKNnYWDiGQ1x1U
-
-1. Create a [user action definition](https://fusionauth.io/docs/v1/tech/apis/user-actions) with the email ids and POST using `/api/user-action`
-	```json
-    {
-        "userAction": {
-            "name": "Bought Temporary Access",
-            "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
-            "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
-            "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
-            "cancelEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
-            "temporal": true,
-            "userEmailingEnabled": true,
-            "sendEndEvent": false
-        }
-    }
-	```
-
+### Creating a user
+	
+Two users are required for a User Action to take effect: an `actioner` and an `actionee`. The `actioner` will be the admin user that you created when you set up FusionAuth for the first time. The `actionee` will be the user who buys temporary access to our news site.
+	
+To create a user, navigate to `Users` and click the `Add` button. Then supply an email address. You can untoggle the `Send email to set up password` switch to supply a password straight away. 
+	
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-create-user.png" alt="Create User" class="img-fluid" figure=false %}
+	
+### Creating an API Key
+	
+We will create and execute our User Action through API calls, so we need to set up an API Key. Navigate to `Settings -> API Keys` and click the `Add` button. Make sure `POST` is enabled for both the `/api/user-action` and `/api/user/action` endpoints. We will use the former to create our User Action and the latter to execute it. 
+	
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-create-api-key.png" alt="Create API Key" class="img-fluid" figure=false %}
+	
+Record the value of your API Key.
+	
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-api-key-created.png" alt="API Key Created" class="img-fluid" figure=false %}
+	
+### Creating email templates
+	
+Our User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their IDs. More information on email templates in FusionAuth can be found [<todo>](here).
+	
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email-templates.png" alt="Email Templates" class="img-fluid" figure=false %}
+	
+### Creating the User Action
+	
+We can now create a [user action definition](https://fusionauth.io/docs/v1/tech/apis/user-actions) with the email ids and POST using `/api/user-action`. The `temporal` attribute allows us to set an `expiry` time when we execute the action.
+	
 	```sh
-	curl --location --request POST 'https://fusionauth.ritza.co/api/user-action' \
-		--header 'Authorization: dLPw9kJmBLd4zIegTu4S1N5XoK_G0ZkbzCNjYPU8ZsRKNnYWDiGQ1x1U' \
+	curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/user-action' \
+		--header 'Authorization: <YOUR API KEY>' \
 		--header 'Content-Type: application/json' \
 		--data-raw '{
       "userAction": {
@@ -95,12 +99,12 @@ Click the "Save" button at the top right for your changes to take effect.
         "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
         "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
         "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
-        "cancelEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+        "cancelEmailTemplateId": "981a1ecf-4a1d-44b8-8211-3215cb80319f",
         "temporal": true,
         "userEmailingEnabled": true,
         "sendEndEvent": false
-    }
-}'
+	    }
+	}'
 	```
 
 	Should return:
@@ -109,7 +113,7 @@ Click the "Save" button at the top right for your changes to take effect.
 		{
 		    "userAction": {
 		        "active": true,
-		        "cancelEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+		        "cancelEmailTemplateId": "981a1ecf-4a1d-44b8-8211-3215cb80319f",
 		        "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
 		        "id": "6f4115c0-3db9-4734-aeda-b9c3f7dc4269",
 		        "includeEmailInEventJSON": false,
@@ -129,12 +133,19 @@ Click the "Save" button at the top right for your changes to take effect.
 		}
 	```
 
-	Record `id: fbff792c-2340-4d72-b4fd-534f94d0a94b`
+Record the `id` value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`. You can verify that the User Action was created by going to `Settings -> User Actions`.
+	
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-user-action-created.png" alt="User Action Created" class="img-fluid" figure=false %}
 
-
-1. Now you can [apply the action](https://fusionauth.io/docs/v1/tech/apis/actioning-users) to a specific user:
-	```json
-		{
+### Executing the User Action
+	
+Now you can [apply the action](https://fusionauth.io/docs/v1/tech/apis/actioning-users) to a specific user with the `api/user/action` endpoint. The `expiry` time follows the UNIX epoch format in milliseconds. Make sure the `actioneeUserId`, `actionerUserId`, and `userActionId` values match the ones you recorded in the previous steps.
+	
+	```sh
+	curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/user/action' \
+		--header 'Authorization: <YOUR API KEY>' \
+		--header 'Content-Type: application/json' \
+		--data-raw '{
 		  "broadcast": true,
 		  "action": {
 		    "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
@@ -145,7 +156,7 @@ Click the "Save" button at the top right for your changes to take effect.
 		    "notifyUser": true,
 		    "userActionId": "fbff792c-2340-4d72-b4fd-534f94d0a94b"
 		  }
-		}
+		}'
 	```
 	should reply with 200 OK
 	```js
@@ -167,3 +178,4 @@ Click the "Save" button at the top right for your changes to take effect.
 		}
 	```
 
+Upon executing this action, the `actionee` will receive an email thanking them for their subscription.
