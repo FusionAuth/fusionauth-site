@@ -1,0 +1,283 @@
+---
+layout: doc
+title: Integrate Your Python Django Application With FusionAuth
+description: Integrate your Python Django application with FusionAuth
+navcategory: getting-started
+---
+
+:page-liquid:
+
+// TBD how much these are useful
+:prequisites: python3 and pip3
+:technology: Python Django
+:language: python
+
+== Integrate Your {technology} Application With FusionAuth
+
+In this article, you are going to learn how to integrate a {technology} application with FusionAuth.
+
+Here's a typical application login flow before integrating FusionAuth into your {technology} application..
+
+++++
+{% plantuml source: _diagrams/docs/login-before.plantuml, alt: "Login before FusionAuth." %}
+++++
+
+And here's the same application login flow when FusionAuth is introduced.
+++++
+{% plantuml source: _diagrams/docs/login-after.plantuml, alt: "Login with FusionAuth." %}
+++++
+
+
+== Prerequisites
+
+For this tutorial, you’ll need to have {prequisites} installed. You'll also need Docker, since that is how you’ll install FusionAuth.
+
+== Download and Install FusionAuth
+
+First, make a project directory:
+
+[source,shell]
+----
+mkdir integrate-fusionauth && cd integrate-fusionauth
+----
+
+Then, install FusionAuth:
+
+[source,bash]
+----
+curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
+https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
+curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
+docker-compose up -d
+----
+
+== Create a User and an API Key
+
+Next, http://localhost:9011[log into your FusionAuth instance].
+You’ll need to set up a user and a password, as well as accept the terms and conditions.
+
+Then, you’re at the FusionAuth admin UI.
+This lets you configure FusionAuth manually.
+But for this tutorial, you're going to create an API key and then you’ll configure FusionAuth using our {language} client library.
+
+Navigate to [breadcrumb]#Settings -> API Keys#. Click the [uielement]#+# button to add a new API Key.
+Copy the value of the [field]#Key# field and then save the key.
+It might be a value like `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`.
+
+Doing so creates an API key that can be used for any FusionAuth API call.
+Save that key value off as you’ll be using it later.
+
+== Configure FusionAuth
+
+Next, you need to set up FusionAuth.
+This can be done in different ways, but we’re going to use the {language} client library.
+The below instructions use maven from the command line, but you can use the client library with an IDE of your preference as well.
+
+First, make a directory:
+
+[source,shell]
+----
+mkdir setup-fusionauth && cd setup-fusionauth
+----
+
+If you want, you can http://localhost:9011[login to your instance] and
+examine the new application configuration the script created for you after you are done.
+
+Now, cut and paste the following file into `pom.xml`.
+
+[source,xml,title="Your FusionAuth configuration pom.xml"]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/java/pom.xml[]
+----
+
+Then make the directory for your setup class:
+
+[source,shell]
+----
+mkdir -p src/main/java/io/fusionauth/example
+----
+
+Then copy and paste the following code into the
+`src/main/java/io/fusionauth/example/Setup.java` file.
+
+[source,java]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/java/src/main/java/io/fusionauth/example/Setup.java[]
+----
+
+Then, you can run the setup class. This will create FusionAuth
+configuration for your :technology: application.
+
+Now, cut and paste the following file into `requirements.txt`.
+
+[source,xml,title="Your FusionAuth configuration requirements.txt"]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/python/requirements.txt[]
+----
+
+Then copy and paste the following code into the `setup.py` file.
+
+[source,python]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/python/setup.py[]
+----
+
+Then, you can run the setup script. You'll use `venv` to keep your workspace clean. This will create FusionAuth
+configuration for your :technology: application.
+
+[source,shell]
+----
+python -m venv venv && \
+source venv/bin/activate && \
+pip install -r requirements.txt && \
+python setup.py
+----
+
+== Create Your :technology: Application
+
+TBD pull over djanog from https://fusionauth.io/blog/2023/01/24/single-sign-on-django-fusionauth
+
+Now you are going to create a :technology: application. While this section uses a
+simple :technology: application, you can use the same configuration to
+integrate your :technology: application with FusionAuth.
+
+First, make a directory:
+
+[source,shell]
+----
+mkdir ../setup-spring && cd ../setup-spring
+----
+
+Then, install the following files in these locations.
+
+Put a `pom.xml` file at the top level. Here are the contents of this
+file:
+
+[source,xml,title="Your Spring pom.xml file"]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/pom.xml[]
+----
+
+Then, you need to create two directories:
+
+[source,shell]
+----
+mkdir -p src/main/resources/templates && \
+mkdir -p src/main/java/io/fusionauth/example/spring/config
+----
+
+Paste the below into `src/main/resources/application.properties`. This is mostly the OAuth configuration you need.
+
+[source,properties]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/application.properties[]
+----
+
+Then put this HTML in the `src/main/resources/templates/home.html` file.
+This is going to be the page unauthenticated users see.
+
+[source,html]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/home.html[]
+----
+
+Add this HTML in the `src/main/resources/templates/user.html` file.
+This is going to be the page authenticated users can access. This will
+only show a JSON representation of the user, but you could put other
+protected information in this page.
+
+[source,html]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/user.html[]
+----
+
+Then, you need to add the {language} files that comprise your Spring
+application. There are four:
+
+* An application startup class
+* A configuration class
+* Two controllers for the pages you added above
+
+Let’s add the startup file first. In
+`src/main/java/io/fusionauth/example/spring/FusionAuthSpringApplication.java`,
+put this code:
+
+[source,java]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/FusionAuthSpringApplication.java[]
+----
+
+Next, the configuration class. In
+`src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java`,
+put this code:
+
+[source,java]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java[]
+----
+
+Finally, create the home and user controllers which back the HTML templates above.
+
+Here’s the home controller, which should live in
+`src/main/java/io/fusionauth/example/spring/HomeController.java`,
+which should contain this code:
+
+[source,java]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/HomeController.java[]
+----
+
+Here’s the profile controller, which should live in
+`src/main/java/io/fusionauth/example/spring/UserController.java`. It
+should have this code:
+
+[source,java]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/UserController.java[]
+----
+
+At the end, your directory tree should look like: 
+
+[source]
+----
+├── docker-compose.yml
+├── setup-fusionauth
+│   ├── pom.xml
+│   └── src
+│       └── main
+│           └── java
+│               └── io
+│                   └── fusionauth
+│                       └── example
+│                           └── Setup.java
+└── setup-spring
+    ├── pom.xml
+    └── src
+        └── main
+            ├── java
+            │   └── io
+            │       └── fusionauth
+            │           └── example
+            │               └── spring
+            │                   ├── FusionAuthSpringApplication.java
+            │                   ├── HomeController.java
+            │                   ├── UserController.java
+            │                   └── config
+            │                       └── SecurityConfiguration.java
+            └── resources
+                ├── application.properties
+                └── templates
+                    ├── home.html
+                    └── user.html
+----
+
+Once you’ve created this directory structure, you can start up the Spring application using this command: 
+
+[source,shell,title="Start the application"]
+----
+mvn spring-boot:run
+----
+
+You can now open up an incognito window and visit http://localhost:8080[the Spring app].
+Log in using the user you added in FusionAuth, and you’ll see a JSON output of your profile on the profile page.
+
