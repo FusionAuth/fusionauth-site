@@ -1,10 +1,10 @@
 ---
 layout: blog-post
-title: Adding single sign-on to your Laravel web application
+title: Adding single sign-on to a Laravel app using Socialite and OIDC
 description: In this tutorial, we'll build a basic Laravel web application using FusionAuth to handle single sign-on.
 author: Vinicius Campitelli
 category: tutorial
-tags: tutorial tutorial-laravel tutorial-php php laravel
+tags: tutorial tutorial-laravel tutorial-php php laravel oidc
 image: blogs/laravel-single-sign-on/laravel-app-sso.png
 excerpt_separator: "<!--more-->"
 ---
@@ -13,7 +13,7 @@ Single sign-on (SSO) is a session and user authentication technique that permits
 credentials to authenticate with multiple apps. SSO works by establishing trust between a service provider, usually your
 application, and an identity provider, like FusionAuth.
 
-> @FIXME
+> @INTERNAL copy the rest from Django article
 
 <!--more-->
 
@@ -22,6 +22,32 @@ application, and an identity provider, like FusionAuth.
 > @TODO create application, configure the oauth callback and grab both client ID and secret 
 
 # Installing Laravel
+
+> Note: If you already have a running Laravel application, please skip this step.
+
+There are several ways of installing Laravel, but we recommend using it inside a Docker container via Laravel Sail. To
+do so, you can execute the command below to automatically download and install every package needed:
+
+```shell
+$ curl -s https://laravel.build/my-app | bash
+```
+
+> @INTERNAL I don't like doing this without a proper checksum or something. Maybe we could host our own install script and
+> provide the checksum ourselves?
+
+> Hint: you can change the name of your application from `my-app` from the URL above to anything you like, as long
+> as it only contains alphanumeric characters, dashes and underscores
+
+After everything is finished, you can enter the application directory and start it via Sail:
+
+```shell
+$ cd my-app
+$ ./vendor/bin/sail up -d
+```
+
+The command `./vendor/bin/sail` has a lot of built-in tools to handle your containerized application from your host
+machine, and it will forward every unknown option to `docker compose`. So, running the command above would actually
+just run `docker compose up -d` with the necessary context and environment to run it successfully.
 
 # About Laravel Socialite
 
@@ -33,7 +59,7 @@ Officialy, it is shipped with support for Facebook, Twitter, LinkedIn, Google, G
 are several community projects that add other providers, and they are grouped in a project
 called [Socialite Providers](https://socialiteproviders.com/).
 
-> @FIXME should we avoid talking about these providers?
+> @INTERNAL should we avoid talking about these providers?
 
 Thanks to the open-source community, there is
 [a package to use FusionAuth as a provider](https://github.com/SocialiteProviders/FusionAuth), which we'll now use to
@@ -84,7 +110,7 @@ FUSIONAUTH_BASE_URL=http://localhost:9011
 FUSIONAUTH_REDIRECT_URI=http://your.app.domain/auth/callback
 ```
 
-> @FIXME is Tenant ID really needed? I tried locally and it doesn't seem to be, but I just want to make sure as their
+> @INTERNAL is Tenant ID really needed? I tried locally and it doesn't seem to be, but I just want to make sure as their
 > docs (for the FusionAuth Socialite provider) says that it is required
 
 Now, we need to alter the service provider responsible for listening to events
@@ -148,7 +174,7 @@ Route::get('/auth/callback', function () {
 });
 ```
 
-> @FIXME check for errors in the redirect
+> @INTERNAL check for errors in the redirect
 
 
 # Creating the migration
@@ -212,7 +238,7 @@ return new class extends Migration
 };
 ```
 
-> @FIXME check ID and token lengths
+> @INTERNAL check ID and token lengths
 
 We also need to add `doctrine/dbal` as a dependency, which is a package responsible for changing table and column
 definitions:
@@ -231,7 +257,7 @@ $ php artisan migrate
   2023_02_03_123000_add_fusionauth_fields_user_table ........................................................ 51ms DONE
 ```
 
-> @FIXME can we paint `INFO` blue here?
+> @INTERNAL can we paint `INFO` blue here?
 
 > @TODO modify Users model 
 
