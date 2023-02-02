@@ -12,6 +12,7 @@ This page contains the APIs that are used to manage Applications as well as the 
 * <<Retrieve an Application>>
 * <<Update an Application>>
 * <<Delete an Application>>
+* <<Search for Applications>>
 * <<Reactivate an Application>>
 * <<Create an Application Role>>
 * <<Update an Application Role>>
@@ -161,6 +162,122 @@ The response for this API contains the new information for the Application that 
 include::docs/v1/tech/apis/_standard-put-response-codes.adoc[]
 
 include::docs/v1/tech/apis/_application-response-body.adoc[]
+
+== Search for Applications
+
+[NOTE.since]
+====
+This API has been available since 1.44.0
+====
+
+This API is used to search for Applications and may be called using the `GET` or `POST` HTTP methods. Examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Search for Applications using the given search and sort criteria
+[.endpoint]
+.URI
+--
+[method]#GET# [uri]#/api/application/search``?name=\{name\}&active=\{active\}&tenantId=\{tenantId\}&orderBy={field}&startRow={startRow}``#
+--
+
+==== Request Parameters
+
+[field]#name# [type]#[String]# [optional]#Optional#::
+The string to search for in the Application name. This can contain wildcards using the asterisk or percent characters (* or %).
+
+[field]#active# [type]#[Boolean]# [optional]#Optional#::
+Filters on the Application's `active` status.
+
+[field]#tenantId# [type]#[UUID]# [optional]#Optional#::
+Restricts the results to Applications belonging to the given Tenant.
+
+[field]#numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+The number of results to return from the search.
+
+[field]#orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `insertInstant DESC`#::
+The database column to order the search results on plus the order direction.
++
+The columns you can use for this are:
++
+* `id` - the UUID of the Application
+* `insertInstant` - the link:/docs/v1/tech/reference/data-types#instants[instant] when the Application was created
+* `name` - the Application name
+* `tenant` - the id of the Tenant in which the Application belongs
++
+For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+
+[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#::
+The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Search for Applications using the given search and sort criteria
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/application/search#
+--
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+==== Request Body
+
+[.api]
+[field]#search.name# [type]#[String]# [optional]#Optional#::
+The string to search for in the Application name. This can contain wildcards using the asterisk or percent characters (* or %).
+
+[field]#search.active# [type]#[Boolean]# [optional]#Optional#::
+Filters on the Application's `active` status.
+
+[field]#search.tenantId# [type]#[UUID]# [optional]#Optional#::
+Filters Applications to those belonging to the specified Tenant.
+
+[field]#search.numberOfResults# [type]#[Integer]# [optional]#Optional# [default]#defaults to `25`#::
+The number of results to return from the search.
+
+[field]#search.orderBy# [type]#[String]# [optional]#Optional# [default]#defaults to `insertInstant DESC`#::
+The database column to order the search results on plus the order direction.
++
+The columns you can use for this are:
++
+* `id` - the UUID of the Application
+* `insertInstant` - the link:/docs/v1/tech/reference/data-types#instants[instant] when the Application was created
+* `name` - the Application name
+* `tenant` - the id of the Tenant in which the Application belongs
++
+For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+
+[field]#startRow# [type]#[Integer]# [optional]#Optional# [default]#defaults to `0`#::
+The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+
+[source,json]
+.Example JSON Request
+----
+include::docs/src/json/applications/search-post-request.json[]
+----
+
+=== Response
+
+The response for this API contains the Applications matching the search criteria in paginated format.
+
+include::docs/v1/tech/apis/_standard-get-response-codes.adoc[]
+
+==== Response Body
+
+[.api]
+[field]#applications# [type]#[Array]#::
+The list of Applications returned by the search.
+
+[field]#total# [type]#[Integer]#::
+The total number of Applications matching the search criteria. Use this value along with the [field]#numberOfResults# and [field]#startRow# in the Search request to perform pagination.
+
+[source,json]
+.Example JSON Response
+----
+include::docs/src/json/applications/search-response.json[]
+----
+
 
 == Delete an Application
 
