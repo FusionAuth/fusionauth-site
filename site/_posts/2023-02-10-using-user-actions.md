@@ -81,7 +81,7 @@ Record the value of your API Key.
 	
 ### Creating email templates
 	
-Our User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their IDs. More information on email templates in FusionAuth can be found [<todo>](here).
+Our User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their IDs. More information on email templates in FusionAuth can be found [https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview](here).
 	
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email-templates.png" alt="Email Templates" class="img-fluid" figure=false %}
 	
@@ -136,7 +136,29 @@ We can now create a [user action definition](https://fusionauth.io/docs/v1/tech/
 Record the `id` value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`. You can verify that the User Action was created by going to `Settings -> User Actions`.
 	
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-user-action-created.png" alt="User Action Created" class="img-fluid" figure=false %}
+	
+### Setting up Webhooks
 
+In order to propagate a message to our sister news sites, we can set up a webhook. To do this, we can navigate to `Settings -> Webhooks` and click the `Add` button. To simulate the endpoint of our sister news site that will consume the user action information, we will use [https://webhook.site](webhook.site). Upon visiting this page, it will generate a unique URL of the form `https://webhook.site/<YOUR_WEBHOOK_SITE_ID>`. Copy this URL into the `URL` field.
+	
+{% include _image.liquid src="/assets/img/blogs/user-actions-add-webhook.png" alt="Add Webhook" class="img-fluid" figure=false %}
+	
+Scroll down and make sure that the `user.action` event is enabled.
+	
+{% include _image.liquid src="/assets/img/blogs/user-actions-webhook-switch.png" alt="Webhook event switch" class="img-fluid" figure=false %}
+	
+Then, select the `Tenants` tab and select your tenant. Alternatively, you can select `All tenants`.
+	
+{% include _image.liquid src="/assets/img/blogs/user-actions-webhook-tenant.png" alt="Enable tenant on webhook page" class="img-fluid" figure=false %}
+	
+Navigate to `Tenants -> Your tenant` and select the `Webhooks` tab. Make sure that the webhook is enabled. If you selected `All tenants` on the webhook page, its checkbox will be disabled.
+	
+{% include _image.liquid src="/assets/img/blogs/user-actions-tenants-webhooks.png" alt="Webhook enabled on tenants page" class="img-fluid" figure=false %}
+	
+Scroll down and make sure the `user.action` event is enabled here as well.
+	
+{% include _image.liquid src="/assets/img/blogs/user-actions-tenants-switch.png" alt="Tenant event switch" class="img-fluid" figure=false %}
+	
 ### Executing the User Action
 	
 Now you can [apply the action](https://fusionauth.io/docs/v1/tech/apis/actioning-users) to a specific user with the `api/user/action` endpoint. The `expiry` time follows the UNIX epoch format in milliseconds. Make sure the `actioneeUserId`, `actionerUserId`, and `userActionId` values match the ones you recorded in the previous steps.
@@ -153,7 +175,6 @@ Now you can [apply the action](https://fusionauth.io/docs/v1/tech/apis/actioning
 		    "comment": "Signed up for 24 hour premium access",
 		    "emailUser": true,
 		    "expiry": 1674903995472,
-		    "notifyUser": true,
 		    "userActionId": "fbff792c-2340-4d72-b4fd-534f94d0a94b"
 		  }
 		}'
@@ -179,3 +200,17 @@ Now you can [apply the action](https://fusionauth.io/docs/v1/tech/apis/actioning
 	```
 
 Upon executing this action, the `actionee` will receive an email thanking them for their subscription.
+	
+{% include _image.liquid src="/assets/img/blogs/user-actions-email.png" alt="Email confirmation" class="img-fluid" figure=false %}
+	
+You can also verify that the request was propagated to the sister news site by checking `https://webhook.site/!#/<YOUR_WEBHOOK_SITE_ID>`. You will see the body of your request in the `Raw Content` field
+	
+{% include _image.liquid src="/assets/img/blogs/user-actions-webhook-site.png" alt="Webhook confirmation" class="img-fluid" figure=false %}
+	
+### Conclusion
+	
+In this tutorial, we used User Actions to set up an email system to respond to a user who bought temporary access to our news site. We also propagated that request to sister news sites so that they can upsell the user as well.
+	
+### Further Reading
+	
+For more information on FusionAuth User Actions, see [https://fusionauth.io/docs/v1/tech/apis/user-actions#overview](this page).
