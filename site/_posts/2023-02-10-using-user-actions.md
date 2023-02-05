@@ -9,7 +9,7 @@ image: blogs/user-actions/user-actions-blog-image.png
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll create FusionAuth User Actions to automate emails and notifications when a user buys temporary access to a news site.
+In this tutorial, we'll create FusionAuth User Actions to flag a user, and send emails and webhook notifications, when they buy temporary access to a news site.
 
 <!--more-->
 
