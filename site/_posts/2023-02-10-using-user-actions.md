@@ -246,7 +246,7 @@ FusionAuth will return an object with an array of all actions currently active o
 
 ### Conclusion
  
-In this tutorial, we used User Actions to flag a user who bought temporary access to our news site. We also propagated that request to sister news sites so that they can upsell the user as well.
+In this tutorial, we used User Actions to flag and email users who buy temporary access to our news site. We also propagate that request to sister news sites so that they can upsell the user as well.
  
 ### Further Reading
  
