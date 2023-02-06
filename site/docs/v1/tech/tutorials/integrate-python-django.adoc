@@ -129,7 +129,7 @@ First, make a directory:
 mkdir ../setup-django && cd ../setup-django
 ----
 
-Now, update `requirements.txt` to include {technology}.
+Now, create a new `requirements.txt` file to include {technology}.
 Add the `Django` and `mozilla-django-oidc` plugins so that your requirements file looks like this:
 
 [source,text,title="Your requirements.txt file"]
@@ -139,7 +139,7 @@ Django==3.2.15
 mozilla-django-oidc==2.0.0
 ----
 
-Then, re-run `pip install`:
+Then, re-run `pip install` to install these new packages
 
 [source,shell]
 ----
@@ -217,27 +217,14 @@ Create a `urls.py` file for your application, at `app/urls.py`, and put the foll
 
 [source,python]
 ----
-from django.urls import path
-
-from . import views
-
-urlpatterns = [
-    path('', views.index, name='index'),
-]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/add-first-page/mysite/app/urls.py[]
 ----
 
 Then you have to tie the view to the template you created above by modifying `app/views.py` to look like:
 
 [source,python]
 ----
-from django.shortcuts import render
-
-# Create your views here.
-from django.http import HttpResponse
-
-
-def index(request):
-    return render(request, template_name='app/authentication.html')
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/add-first-page/mysite/app/views.py[]
 ----
 
 Then, modify `mysite/settings.py`. First, import the `os` module, changing the imports at the top of `mysite/settings.py` to look like:
@@ -259,11 +246,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app', # this is what you are adding
+    'app',
 ]
 ----
 
-Look for the `TEMPLATES` variable and replace the `DIRS` field with this:
+The last change with `mysite/settings.py` is to update the templates variable. Look for the `TEMPLATES` variable and replace the `DIRS` field with this:
 
 [source,python]
 ----
@@ -275,114 +262,53 @@ Finally you have to edit the `mysite/urls.py` file:
 * Add `path('app/', include('app.urls')),` to the `urlpatterns` variable in that file.
 * Change the import line: `from django.urls import path` to `from django.urls import include, path`.
 
-Here's a partial view of what `mysite/urls.py` should look like:
+Here's what `mysite/urls.py` should look like:
 
 [source,python]
 ----
-# ...
-
-from django.urls import include, path
-
-# ...
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('app/', include('app.urls')),
-]
-# ...
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/add-first-page/mysite/mysite/urls.py[]
 ----
 
 At this point, you can visit http://localhost:8000/app[http://localhost:8000/app] and you should be greeted with the contents of the `authentication.html` file you created above.
 
+
+=== Add Authentication
+
 Now you are going to link up FusionAuth and add authentication to this project.
 
-First, modify `mysite/settings.py` and add `mozilla_django_oidc` to the list of applications. You installed this app in your environment when you modified `requirements.txt`.
+First, modify `mysite/settings.py` and add `mozilla_django_oidc` to the list of applications. You installed this app in your environment when you updated `requirements.txt`.
 
 [source,python]
 ----
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'app',
-    'mozilla_django_oidc', # this is what you are adding
-]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/main/mysite/mysite/settings.py[tags=installedApps]
 ----
 
 You need to add some additional configuration for this app. Just below the `INSTALLED_APPS` array, add this:
 
 [source,python]
 ----
-
-INSTALLED_APPS = [
-# ...
-]
-
-AUTHENTICATION_BACKENDS = (
-    'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
-)
-
-# The below config is taken from fusionauth admin UI when you set up the Django application in it
-OIDC_RP_CLIENT_ID = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-OIDC_RP_CLIENT_SECRET = 'change-this-in-production-to-be-a-real-secret'
-
-OIDC_OP_AUTHORIZATION_ENDPOINT = "http://localhost:9011/oauth2/authorize"
-OIDC_OP_TOKEN_ENDPOINT = "http://localhost:9011/oauth2/token"
-OIDC_OP_USER_ENDPOINT = "http://localhost:9011/oauth2/userinfo"
-
-OIDC_RP_SCOPES = "openid profile email"
-
-OIDC_RP_SIGN_ALGO = "RS256"
-OIDC_OP_JWKS_ENDPOINT = "http://localhost:9011/.well-known/jwks.json"
-
-LOGIN_REDIRECT_URL = "http://localhost:8000/app/"
-LOGOUT_REDIRECT_URL = "http://localhost:8000/app/"
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/main/mysite/mysite/settings.py[tags=oidcConfig]
 ----
 
 Save the `mysite/settings.py` file.
 
-Next, update the paths to include those provided by the mozilla_django_oidc code. Here's what the `urlpatterns` array of in `mysite/urls.py` should look like:
+Next, update the paths to include those provided by the mozilla_django_oidc code. Here's what `mysite/urls.py` should look like:
 
 [source,python]
 ----
-# ...
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('app/', include('app.urls')),
-    path('oidc/', include('mozilla_django_oidc.urls')),
-]
-# ...
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/main/mysite/mysite/urls.py[]
 ----
 
 Then you want to update the `app/templates/app/authentication.html` file to have this content:
 
 [source,html]
 ----
-{% raw %}<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Django OAuth App</title>
-</head>
-<body>
-<div>
-    {% if user.is_authenticated %}
-    <p>You are signed-in! Welcome {{user.email}}</p>
-    <form action="{% url 'oidc_logout' %}" method="post">
-        {% csrf_token %}
-        <input type="submit" value="Logout">
-    </form>
-    {% else %}
-    <a href="{% url 'oidc_authentication_init' %}">Login</a>
-    {% endif %}
-</div>
-</body>
-</html>{% endraw %}
+{% raw %}
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/main/mysite/app/templates/app/authentication.html[]
+{% endraw %}
 ----
 
-You need to run some migrations to make sure you have all the database tables set up:
+Run all your migrations to make sure you have any needed database tables set up.
 
 [source,shell]
 ----
