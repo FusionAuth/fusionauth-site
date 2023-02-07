@@ -19,7 +19,7 @@ SSO helps reduce password fatigue by requiring users to only remember one passwo
 
 In this tutorial, you'll learn how to design and implement SSO using [Laravel](https://laravel.com), a popular PHP-based web framework and FusionAuth as the OIDC provider. Any other OIDC compatible authentication server should work as well. 
 
-## Implementing SSO in a Laravel Web App
+## Implementing SSO in a Laravel web app
 
 As previously stated, in this tutorial, you'll be shown how to implement SSO in a Laravel web app. The Laravel demo application is integrated with FusionAuth, an authentication and authorization platform, and [Laravel Socialite](https://laravel.com/docs/9.x/socialite), its official solution to authenticate users with OAuth providers.
 
@@ -29,7 +29,7 @@ Before you begin, you'll need the following:
 * [Docker Engine](https://docs.docker.com/engine/) and [Docker Compose](https://docs.docker.com/compose/).
 * Experience with a Laravel framework and application development.
 
-### Installing FusionAuth
+## Installing FusionAuth
 
 Go through [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) to install FusionAuth in your machine. You have a few ways of doing so, but we recommend the [Docker](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker) approach.
 

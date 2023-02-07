@@ -23,7 +23,7 @@ On the "Edit Application" page, click on the "OAuth" tab at the top. You'll need
 {% include _image.liquid src=oauthDetailsImage alt="The OAuth details tab."
 class="img-fluid" figure=true %}
 
-* Record the generated "Client ID" and the "Client Secret" in a text file or to the clipboard. You'll use these below.
+* Record the generated "Client Id" and the "Client Secret" in a text file or to the clipboard. You'll use these below.
 * Add the value `{{ include.callbackUrl || default: "http://localhost:8000/oidc/callback/" }}` to the "Authorized redirect URLs" field. This will be used by
   FusionAuth to redirect the user to your application page once the user is successfully authenticated.
 * Scroll down and check the "Require registration" checkbox. This ensures that users who haven't been registered for
