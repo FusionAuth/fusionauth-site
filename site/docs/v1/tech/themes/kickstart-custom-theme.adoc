@@ -20,31 +20,29 @@ You'll need to have Node.js and Docker installed to follow this guide and the 5-
 
 Once you've completed the steps in the 5-minute guide, we can take a look at the state of the FusionAuth instance you created.
 
-Navigate to "Applications" and edit the application you created. Go to the "OAuth" tab to examine the settings that you configured.
+Navigate to [breadcrumb]#Applications# and edit the application you created. Go to the [breadcrumb]#OAuth# tab to examine the settings that you configured.
 
 image::themes/kickstart-theme/app-settings.png[Application settings.,width=1200]
 
-In the 5-minute guide, the "Authorized redirect URLs", "Logout URL", "Enabled grants", and "Require registration" fields were manually entered. We will use Kickstart to automate all of these settings. We will also apply predefined "Client Id" and "Client secret" values to make launching the application easier.
+In the 5-minute guide, the [field]#Authorized redirect URLs#, [field]#Logout URL#, [field]#Enabled grants#, and [field]#Require registration# fields were manually entered. We will use Kickstart to automate all of these settings. We will also apply predefined [field]#Client Id# and [field]#Client secret# values to make launching the application easier.
 
 Now, navigate to [breadcrumb]#Users -> Manage# for the user that you set up in the 5-minute guide.
 
 image::themes/kickstart-theme/manageuser.png[Manage user.,width=1200]
 
-
 In the 5-minute guide, you created both the user and the FusionAuth registration by manually filling out the registration form. You then added a registration for the user to the application you created. We are going to automate these steps.
 
 Finally, navigate to [breadcrumb]#Customizations -> Themes# and preview the FusionAuth theme. The application you created in the 5-minute guide uses the OAuth authorize and OAuth logout pages.
 
-The OAuth authorize page looks like this:
+The OAuth authorize template looks like this:
 
 image::themes/kickstart-theme/preview-oauth.png[Preview theme,width=1200]
 
-The OAuth logout page looks like this:
+The OAuth logout template looks like this:
 
 image::themes/kickstart-theme/preview-oauth-logout.png[OAuth logout FusionAuth,width=1200]
 
-
-We are going to create a dark theme for these pages that will look like this:
+We are going to create a dark theme so these templates that will look like this:
 
 image::themes/kickstart-theme/preview-authorize-dark.png[OAuth authorize Dark,width=1200]
 
@@ -126,7 +124,9 @@ The `"variables"` section defines identifiers for the key components of our Fusi
 
 The `"apiKeys"` section defines the key through which our requests will be executed. At least one `"apiKey"` is required for every `kickstart.json` file.
 
-The `"requests"` section defines the API requests that perform our automations. Here, each request is encased in a JSON file, which we need to define separately. Let's do this now.
+The `"requests"` section defines the API requests that perform our automations. Here, each request is encased in a JSON file, which we need to define separately. You can also have them inline, but when you are working with a lot of changes, it is easier to have each change in a separate file.
+
+Let's define these files now.
 
 === The API Request JSON Files
 
@@ -251,7 +251,45 @@ With these files, our `kickstart` folder is complete and ready to use. The entir
 
 == Modifying the Files from the 5-Minute Guide
 
-include::docs/v1/tech/themes/_five-minute-guide-modifications.adoc[]
+Next we'll import and modify the files from the 5-minute guide that let us launch and run our FusionAuth instance.
+
+First, download the Docker files.
+
+```bash
+curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
+```
+
+To enable Kickstart to run from this `docker-compose.yml` file, we must make some modifications. They are described in detail at https://fusionauth.io/docs/v1/tech/installation-guide/docker#kickstart[this link] and copied here for your convenience:
+
+- In the `volumes:` section of the FusionAuth service, add `- ./kickstart:/usr/local/fusionauth/kickstart`.
+
+- Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the Docker container expects, not the path on the host.
+
+- Configure `docker-compose.yml` to pass the environment variable set by `.env` to the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the FusionAuth service.
+
+Now download the 5-minute guide files.
+
+```bash
+git clone https://github.com/FusionAuth/fusionauth-example-5-minute-guide \
+&& cd fusionauth-example-5-minute-guide
+```
+
+This folder contains a file called `.env.sample`:
+
+```env
+CLIENT_ID=CHANGEME
+CLIENT_SECRET=CHANGEME
+BASE_URL=http://localhost:9011
+```
+
+Change the `CLIENT_ID` and `CLIENT_SECRET` so that they match the `applicationId` and `clientSecret` variables from your `kickstart.json` file. Then save the file as `.env`
+
+```env
+CLIENT_ID=404e516b-06b8-49da-9c68-c1cd1928c81d
+CLIENT_SECRET=RBLhJrfRsa0-YxVPrn_aZfzIGccWyncdvHvDNTy-Hrs
+BASE_URL=http://localhost:9011
+```
 
 == Running Kickstart
 
@@ -307,7 +345,7 @@ You can look at [breadcrumb]#Applications#, [breadcrumb]#Users#, and [breadcrumb
 
 == Running the Application
 
-Now that everything is set up and our theme has been applied, we can run the application. Navigate to the `fusionauth-example-5-minute-guide` and use `npm` to start the application.
+Now that everything is set up and our theme has been applied, we can run the application. Navigate to the `fusionauth-example-5-minute-guide` directory and use `npm` to start the application.
 
 ```bash
 npm install
