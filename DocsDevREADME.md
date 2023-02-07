@@ -157,6 +157,7 @@ For blog posts:
 - re-authentication
 - server-side
 - client-side
+- curl
 
 ## Words to avoid
 
