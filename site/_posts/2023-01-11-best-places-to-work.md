@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: FusionAuth is 2023 a Best Place to Work
+title: FusionAuth is a 2023 Best Place to Work
 description: FusionAuth has been named a Best Place to Work and Best Startup to Work from BuiltinDenver
 author: Emily Jansen
 image: blogs/best-place-to-work-2023/built_in_best_places_to_work_fusionauth.png
