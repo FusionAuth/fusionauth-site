@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.30
 description: The FusionAuth 1.30 releases a robust suite of Advanced Threat Detection features, a JWT vending machine, myriad webhook events, and more.
 author: Akira Brand
 image: blogs/release-1-30/product-update-fusionauth-1-30.png
-category: blog
-tags: topic-troubleshooting feature-advanced-threat-detection
+category: announcement
+tags: topic-troubleshooting feature-advanced-threat-detection advanced-threat-detection release-announcement jwt webhooks
 excerpt_separator: "<!--more-->"
 ---
 

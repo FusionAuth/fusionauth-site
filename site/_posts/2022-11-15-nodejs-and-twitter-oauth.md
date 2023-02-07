@@ -3,9 +3,9 @@ layout: blog-post
 title: Adding Twitter sign in to your Node.js + Express web application using OAuth
 description: In this tutorial, we'll build a basic Express web application using FusionAuth to handle login via Twitter.
 author: Bradley Van Aardt
-category: blog
+category: tutorial
 image: blogs/social-sign-in-twitter-express/twitter-node-js-oauth-header.png
-tags: client-node tutorial tutorial-express tutorial-node
+tags: client-node tutorial tutorial-express tutorial-node nodejs node javascript express twitter
 excerpt_separator: "<!--more-->"
 ---
 

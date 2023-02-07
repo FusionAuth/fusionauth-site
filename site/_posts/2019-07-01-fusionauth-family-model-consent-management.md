@@ -4,7 +4,8 @@ title: FusionAuth 1.7 Release Provides Advanced Consent Management and Family Re
 description: FusionAuth 1.7 provides advanced consent management and family relationship modeling allowing you to quickly comply with complex COPPA and data control regulations.
 author: Bryan Giese
 image: blogs/fusionauth-1-7-consent-family-model.png
-category: blog
+category: announcement
+tags: family consent release-announcement
 excerpt_separator: "<!--more-->"
 ---
 

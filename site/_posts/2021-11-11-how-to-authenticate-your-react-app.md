@@ -4,8 +4,8 @@ title: How to use OAuth to Add Authentication to Your React App
 description: In this tutorial, you’ll learn how to implement secure login/logout process with React and FusionAuth
 author: Akira Brand
 image: blogs/fusionauth-example-react-2021/how-to-use-oauth-to-add-authentication-to-your-react-app-header-image.png
-category: blog
-tags: tutorial-react tutorial-javascript client-react client-javascript tutorial-integration
+category: tutorial
+tags: tutorial-react tutorial-javascript client-react client-javascript tutorial-integration react integration javascript
 excerpt_separator: "<!--more-->"
 updated_date: 2022-11-11
 ---
@@ -13,6 +13,11 @@ updated_date: 2022-11-11
 Whenever you build a website that allows a user to create their own account, secure authentication and authorization is a must-have.  The problem is that most handmade authentication and authorization solutions are not robust enough to keep up with the most current and secure workflows. What's more, since security is not always seen as a business priority, in-house authorization solutions can quickly become an internal tool that is not often touched, prone to disrepair and exploitation by bad actors.
 
 <!--more-->
+
+{% include _callout-tip.liquid
+content=
+ "This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk), currently in beta."
+%}
 
 In this tutorial, you will learn how to integrate a React app with FusionAuth to implement an OAuth 2.0 compliant Authorization Code grant.  This abstracts all of the problems of making and maintaining an auth solution away from you and onto FusionAuth.
 

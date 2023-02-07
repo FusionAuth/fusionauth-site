@@ -4,8 +4,8 @@ title: Migrating off of Auth0? Here's what you need to know
 description: You aren't sure about the Okta acquisition. What are things you need to consider when migrating off of Auth0?
 author: Dan Moore
 image: blogs/migrating-off-auth0/migrating-off-of-auth0-heres-what-you-need-to-know-header-image.png
-category: blog
-tags: topic-upgrade-auth0
+category: article
+tags: topic-upgrade-auth0 migration auth0 upgrade
 excerpt_separator: "<!--more-->"
 ---
 

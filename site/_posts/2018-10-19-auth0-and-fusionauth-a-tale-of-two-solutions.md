@@ -5,7 +5,8 @@ description: Compare FusionAuth and Auth0 for your identity and access managemen
 author: Bryan Giese
 updated_date: 2021-03-11
 image: blogs/fusionauth-vs-auth0/header.png
-category: blog
+tags: auth0 ciam
+category: comparison
 excerpt_separator: "<!--more-->"
 ---
 

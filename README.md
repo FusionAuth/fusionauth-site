@@ -2,19 +2,16 @@
 
 https://fusionauth.io
 
-
 The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
 
 Thanks!
  - FusionAuth team
 
-
-
 ## Building
 
 If you want to submit a PR or test a change to fix a link, etc it may be helpful for you to build and run locally.
 
-This project is built using jekyll and asciidoc, you'll need to have ruby installed.
+This project is built using jekyll and asciidoc. You'll need to have ruby installed.
 
 ### Install
 
@@ -27,6 +24,21 @@ Install these programs:
 
 `gem install bundle`
 `bundle install`
+
+#### Build Errors
+On M1 Macs, you may receive an error similar to:
+```text
+Gem::Ext::BuildError: ERROR: Failed to build gem native extension.
+
+    current directory: /Users/<username>/.rbenv/versions/2.7.5/lib/ruby/gems/2.7.0/gems/eventmachine-1.2.7/ext
+/Users/<username>/.rbenv/versions/2.7.5/bin/ruby -I /Users/mark/.rbenv/versions/2.7.5/lib/ruby/site_ruby/2.7.0 extconf.rb
+```
+
+To fix this, rebuild the eventmachine gem using:
+```shell
+gem install eventmachine -v '1.2.7' -- --with-ldflags="-Wl,-undefined,dynamic_lookup"
+bundle install
+```
 
 ### Setup Savant
 

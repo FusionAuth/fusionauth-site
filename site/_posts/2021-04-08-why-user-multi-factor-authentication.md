@@ -4,8 +4,8 @@ title: The what, why and when of multi-factor authentication (MFA)
 description: What is multi-factor authentication (MFA) and when should developers require it?
 author: Dan Moore
 image: blogs/what-where-why-mfa/the-what-why-and-when-of-multi-factor-authentication-mfa-header-image.png
-category: blog
-tags: feature-mfa
+category: article
+tags: feature-mfa multi-factor-authentication mfa
 excerpt_separator: "<!--more-->"
 ---
 

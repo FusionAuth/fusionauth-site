@@ -4,8 +4,8 @@ title: Maila Networks centralized authentication with FusionAuth on OpenStack
 description: Maila Networks uses FusionAuth and OpenStack to save months of development time.
 author: Dan Moore
 image: blogs/maila-networks-openstack-fusionauth/maila-networks-centralized-authentication-with-fusionauth-on-openstack-header-image.png
-category: blog
-tags: topic-community-story topic-openstack
+category: community-story
+tags: topic-community-story topic-openstack openstack community-story
 excerpt_separator: "<!--more-->"
 ---
 
