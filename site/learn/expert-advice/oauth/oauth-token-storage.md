@@ -60,7 +60,7 @@ If you choose this option, the browser, whether a simple HTML page with some Jav
 
 This works great as long as APIs and the server setting the token cookies live on a domain with shared cookies. For example, the code which gets the tokens can live at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com`, `todo.example.com`, or any other host under `.example.com`, will receive the token.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies." %}
+{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-token-storage/client-side-storage.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies." %}
 
 When using a native app, store these tokens in a secure location, such as the [iOS Keychain](https://developer.apple.com/documentation/security/keychain_services) or [Android internal data](https://developer.android.com/topic/security/best-practices#safe-data). This protects these credentials from any other applications running on your device. Retrieve them and append them to the proper header before making API requests.
 
@@ -72,7 +72,7 @@ One validation approach that is an option if the token is signed and has interna
 
 With a signed token, an API server validates the access token without communicating with any other system, by checking the signature and the claims.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/validating-tokens.plantuml, alt: "Zooming in on token validation." %}
+{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-token-storage/validating-tokens.plantuml, alt: "Zooming in on token validation." %}
 
 The APIs must validate the following:
 
@@ -93,7 +93,7 @@ Checking other claims is business logic and can be handled by the API developer.
 
 If the access token doesn't meet the criteria above, you can introspect the token by presenting it to the authorization server. With this process, the validity of the token is confirmed by the token issuing software.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-introspection.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies and using introspection to validate them." %}
+{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-token-storage/client-side-storage-introspection.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies and using introspection to validate them." %}
 
 A successful introspection request returns JSON. Claims in this response still need to be checked:
 
@@ -111,7 +111,7 @@ At some point every access token expires, and the client will, when presenting i
 
 When you initially request the `offline_access` scope, you will receive a refresh token as well as an access token after a user authenticates.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-refresh-token.plantuml, alt: "Using a refresh token." %}
+{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-token-storage/client-side-storage-refresh-token.plantuml, alt: "Using a refresh token." %}
 
 When the access token expires, the client can present the refresh token to the authorization server. That server validates the user's account is still active, that there is still an active session, and any other required logic. The authorization server can then issue a new access token. This can be sent to the client and transparently extends the user's access to the APIs.
 
@@ -128,7 +128,7 @@ If your APIs are on multiple domains, or on domains different than what can set 
 
 Below is a diagram of the proxy approach, where an API from `todos.com` is called via a proxy at `proxy.example.com`. Cookies set from the `.example.com` domain will never be sent to the `todos.com` domain due to browser rules.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
+{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-token-storage/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
 
 ### Alternatives To Browser Client-side Tokens
 
@@ -148,13 +148,13 @@ If client storage options don't meet your needs, another option is web sessions.
 
 You can store the access token and refresh token in the server-side session. The application can use web sessions to communicate with the server. The token is then available for any requests originating from server-side code. This is also known as the backend for frontend (BFF) proxy.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
+{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-token-storage/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
 
 If you need to retrieve data from other APIs with no domain limits, over secure, server-side channels, this is a good option. If you don't really care about what the token gets you access to, you can examine the claims and validity, then discard it, assured the user has authenticated at the authorization server.
 
 Below is an example of proxying API requests through server-side components. The APIs receiving the tokens still need to validate them.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage-api-calls.plantuml, alt: "Proxying API calls using tokens stored in a server-side session." %}
+{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-token-storage/session-storage-api-calls.plantuml, alt: "Proxying API calls using tokens stored in a server-side session." %}
 
 Even if you don't use token to gain access to APIs from server-side code, you still get benefits from using the OAuth Authorization Code grant:
 
