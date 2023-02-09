@@ -44,15 +44,15 @@ Go through the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minut
 
 Now you need to configure FusionAuth.
 
-First, you'll configure the application, then register the user for the application.
+First, you'll create a new RSA key to sign your JSON Web Tokens, then configure the application and register the user for the application.
 
 This setup allows users in FusionAuth to sign in to the Next.js application automatically once they are authenticated by FusionAuth.
 
-### Create a new JWT secret
+### Create a new RSA key
 
-Create an RSA key pair to sign your JSON Web Tokens by going to **Settings** &rarr; **Key Master**. Then, look at the _"Generate"_ button in the top right corner of the page. If it is **Generate RSA**, click it. If it is another option, click the _"⌄"_ button right next to it to display more options and then click **Generate RSA**.
+Create an RSA key pair to sign your JSON Web Tokens by going to _"Settings"_ &rarr; _"Key Master"_. Then, look at the _"Generate"_ button in the top right corner of the page. If it is _"Generate RSA"_, click it. If it is another option, click the _"⌄"_ button right next to it to display more options and then click _"Generate RSA"_.
 
-In the dialog, fill in a name for your key, the issuer as your FusionAuth application domain and make sure that the _" Algorithm"_ is _" RSA using SHA-256"_. Click * *Submit ** to save the key.
+In the dialog, fill in a name for your key, the issuer as your FusionAuth application domain and make sure that the _"Algorithm"_ is _"RSA using SHA-256"_. Click _"Submit"_ to save the key.
 
 {% include _image.liquid src="/assets/img/blogs/nextjs-single-sign-on/rsa-jwt.gif" alt="Generating a new RSA key." class="img-fluid" figure=true %}
 
@@ -62,7 +62,7 @@ In the dialog, fill in a name for your key, the issuer as your FusionAuth applic
 {% include posts/sso/setup.md
 callbackUrl='http://localhost:3000/api/auth/callback/fusionauth'
 oauthDetailsImage='/assets/img/blogs/nextjs-single-sign-on/fusionauth-callback.png'
-beforeSavingInstructions='Go back to the beginning of the page and select the _"JWT"_ tab. There, click the _"Enabled"_ switch and change both _"Access token signing key"_ and _" Id token signing key"_ to your newly generated RSA signing key.'
+beforeSavingInstructions='Go back to the beginning of the page and select the _"JWT"_ tab. There, click the _"Enabled"_ switch and change both _"Access token signing key"_ and _"Id token signing key"_ to your newly generated RSA signing key.'
 %}
 {% endcomment %}
 
@@ -233,4 +233,4 @@ $ yarn dev
 $ pnpm dev
 ```
 
-Browse to [localhost:3000](http://localhost:3000) and click the _" Log in"_ button, where you'll be taken to a page with only a _" Sign in with FusionAuth"_ button. When clicking it, you should be redirected to your FusionAuth login screen. After entering the correct username and password (created when you set up FusionAuth), you arrive back at your Next.js application home screen, with your email address displayed and a _" Log out"_ button.
+Browse to [localhost:3000](http://localhost:3000) and click the _"Log in"_ button, where you'll be taken to a page with only a _"Sign in with FusionAuth"_ button. When clicking it, you should be redirected to your FusionAuth login screen. After entering the correct username and password (created when you set up FusionAuth), you arrive back at your Next.js application home screen, with your email address displayed and a _"Log out"_ button.
