@@ -9,7 +9,7 @@ tags: conference lfi-2023
 excerpt_separator: "<!--more-->"
 ---
 
-Learning From Incidents is a community focused on, well, learning from incidents. They are having a conference in Denver next week, on February 15 and 16. There will hundreds of SREs, software engineers and others looking to learn best practices around incident management. The FusionAuth team will be among them, and we'd love to see you.
+Learning From Incidents is a community focused on, well, learning from incidents. They are having a conference in Denver next week, on February 15 and 16. There will be hundreds of SREs, software engineers and others looking to learn best practices around incident management. The FusionAuth team will be among them, and we'd love to see you.
 
 <!--more-->
 
@@ -17,7 +17,7 @@ Learning From Incidents is a community focused on, well, learning from incidents
 
 We're going to the Learning From Incidents conference for many reasons.
 
-One is that FusionAuth runs a SaaS offering of our auth server called [FusionAuth Cloud](https://fusionauth.io/pricing?step=hosting). The FusionAuth team operates the FusionAuth software in various architectures, from a basic offering suitable for development and proof of concepts to highly available, multi-region deployments suitable for millions of monthly active users. Attending conferences like this ensure that the team stays up to date on the best pratices around operating such critical infrastructure.
+One is that FusionAuth runs a SaaS offering of our auth server called [FusionAuth Cloud](https://fusionauth.io/pricing?step=hosting). The FusionAuth team operates the FusionAuth software in various architectures, from a basic offering suitable for development and proof of concepts to highly available, multi-region deployments suitable for millions of monthly active users. Attending conferences like this one ensures that the team stays up to date on the best practices around operating such critical infrastructure.
 
 Conferences like LFI are also an opportunity to meet engineers and developers where they are at, both during talks and in the everpresent hallway track. We look forward to exchanging knowledge and ideas with folks building, operating, and supporting modern applications.
 
