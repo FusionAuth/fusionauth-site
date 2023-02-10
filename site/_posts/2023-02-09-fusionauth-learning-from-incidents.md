@@ -36,6 +36,6 @@ However, there are other great sessions packed into this two day conference as w
 If you want to catch up with the FusionAuth team at the Learning From Incidents Conference next week, we're around and ready to chat. Find us in a couple of places:
 
 * We have a booth in the sponsors area. Come say hello for a demo of our auth software, to chat about the intricacies of the Authorization Code grant, or to pick up a (very soft) t-shirt.
-* We'll be out and about as well. If you want to say hey, send us a note via our [contact form](/contact), message us on the [LFI 2023 Slack](lficonference2023.slack.com) or [tweet/DM me on Twitter](https://twitter.com/mooreds).
+* We'll be out and about as well. If you want to say hey, send us a note via our [contact form](/contact), message us on the [LFI 2023 Slack](https://lficonference2023.slack.com) or [tweet/DM me on Twitter](https://twitter.com/mooreds).
 
 Finally, may your backups and restores always be successful.
