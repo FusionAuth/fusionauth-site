@@ -15,8 +15,30 @@ In this document, you'll learn how to set up Amazon API Gateway and FusionAuth a
 
 == Prerequisites
 
-* A FusionAuth instance running on a publicly accessible URL. You can spin up a link:/pricing[basic FusionAuth Cloud instance] or link:/docs/v1/tech/installation-guide/[install it on any server]. If you are not able to host FusionAuth on a public server / URL, you can proxy your local instance  of FusionAuth through a tool like link:https://ngrok.com[ngrok].
+* A FusionAuth instance running on a publicly accessible URL. You can spin up a link:/pricing[basic FusionAuth Cloud instance] or link:/docs/v1/tech/installation-guide/[install it on any server]. If you are not able to host FusionAuth on a public server/URL, you can tunnel your local instance of FusionAuth through a tool like link:https://ngrok.com[ngrok].
 * An link:https://aws.amazon.com[AWS account].
+
+=== Exposing FusionAuth Publicly
+
+If your FusionAuth instance is already publicly available, you can skip this section. 
+
+If you are hosting FusionAuth locally, and want to expose it publicly using ngrok, you can run the following command: 
+
+[source,shell,title="Exposing a local FusionAuth instance through ngrok"]
+----
+ngrok http 9011
+----
+
+This assumes your local FusionAuth instance is running on port 9011, which is the default for local FusionAuth installations.
+
+Look for the `Forwarding` line in the output. It should look something like this:
+
+[source,shell,title="Output forwarding address from ngrok"]
+----                                                                            Forwarding    https://7817-102-218-66-2.eu.ngrok.io -> http://localhost:9011 
+----
+
+The forwarding address will be publicly accessible, and you can use this to replace `<YOUR_FUSIONAUTH_URL>` in this tutorial. 
+
 
 == Set Up FusionAuth
 
@@ -133,7 +155,11 @@ Save the API key. You should now see a list of all API keys. Click on the lock i
 
 image::api-gateways/aws-api-gateway/api-key.png[Enabling the login API,width=1200,role=bottom-cropped]
 
-Now create a test user to login with on FusionAuth. Navigate to [breadcrumb]#Users# in the sidebar and click the green [uielement]#+# button at the top right of the screen to create a new user. Choose the appropriate tenant (usually `default`), and fill in the information. You can choose not to send an email to set up the password but rather set it directly when creating the user by toggling the [field]#Send email to set up password# switch. Record this user email and password, as we'll use it to obtain a token.
+To test, you'll need to link a FusionAuth user to your application. You can either use the existing admin user you use to log in to FusionAuth, or create a new isolated user. 
+
+To link your existing user, navigate to the user list through the [breadcrumb]#Users# menu item in the sidebar. Find your user, and click the [uielement]#Manage# action button on the user. Click the [breadcrumb]#Registrations# tab. Click [uielement]#Add registrations# and select the FusionAuth application you set up earlier.
+
+Alternatively, to create a new user, navigate to [breadcrumb]#Users# in the sidebar and click the green [uielement]#+# button at the top right of the screen to create a new user. Choose the appropriate tenant (usually `default`), and fill in the information. You can choose not to send an email to set up the password but rather set it directly when creating the user by toggling the [field]#Send email to set up password# switch. Record this user email and password, as we'll use it to obtain a token.
 
 After saving the user, click the [breadcrumb]#Registrations# tab. Click [uielement]#Add registrations# and select the FusionAuth application you set up earlier.
 
@@ -215,11 +241,11 @@ You should see the function return with a reflection of the claims it received:
 
 == Troubleshooting
 
-* If you are running a local instance of FusionAuth, Amazon Gateway will not be able to reach the keysets needed to validate the JWT. You will either need to host FusionAuth on a publicly accessible URL, or proxy your local instance through a tool like link:https://ngrok.com[ngrok].
+* If you are running a local instance of FusionAuth, Amazon API Gateway will not be able to reach the keysets needed to validate the JWT. You will either need to host FusionAuth on a publicly accessible URL, or proxy your local instance through a tool like link:https://ngrok.com[ngrok].
 
 * Ensure that your FusionAuth application's [field]#Access Token signing key# and [field]#Id Token signing key# on the application's [breadcrumb]#JWT# tab are asymmetric (RS256).
 
-* The JWT issued by the link:/docs/v1/tech/apis/login[FusionAuth Login API] has an expiry. If you wait too long before using it to call the Amazon Gateway API, the token will expire and the call will fail. 
+* The JWT issued by the link:/docs/v1/tech/apis/login[FusionAuth Login API] has an expiry. If you wait too long before using it to call the Amazon API Gateway, the token will expire and the call will fail. 
 
 == Next Steps
 
