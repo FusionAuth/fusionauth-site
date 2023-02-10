@@ -27,7 +27,7 @@ To enable WebAuthn, upgrade to 1.41 or greater, ensure you have the correct lice
 
 {% include _image.liquid src="/assets/img/blogs/release-1-41/enable-webauthn.png" alt="The WebAuthn tenant settings." class="img-fluid" figure=true %}
 
-There's a lot more detail in [the WebAuthn documentation](/fusionauth.io/docs/v1/tech/passwordless/webauthn-passkeys).
+There's a lot more detail in [the WebAuthn documentation](/docs/v1/tech/passwordless/webauthn-passkeys).
 
 This functionality is limited to Essentials and Enterprise users; learn more by visiting [the pricing page](/pricing) or [contacting our sales team](/contact).
 
