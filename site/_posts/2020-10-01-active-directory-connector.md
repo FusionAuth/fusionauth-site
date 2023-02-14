@@ -233,7 +233,7 @@ After you've set up the Connector, you need to tell FusionAuth how to use it. In
 
 Click "Add policy" and select the Connector. You may optionally enter the email domain or domains for which this Connector should be used; add multiple domains on separate lines. You can also leave the value of `*` which will cause this Connector to be checked for users with any email address, which is what this post will do.
 
-If you check the "Migrate User" option, this configures FusionAuth to check Active Directory for user attributes, including the password, only at the first authentication of each user. You can read more [about migration here](/docs/v1/tech/connectors). For this post, Active Directory will remain the system of record, so leave it unchecked and save the policy entry.
+If you check the "Migrate User" option, this configures FusionAuth to check Active Directory for user attributes, including the password, only at the first authentication of each user. You can read more [about migration here](/docs/v1/tech/connectors/). For this post, Active Directory will remain the system of record, so leave it unchecked and save the policy entry.
 
 {% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-tenant-connector-policy.png" alt="Setting up the policy for the Active Directory Connector." class="img-fluid" figure=false %}
 

@@ -274,7 +274,7 @@ The Authentication URL API endpoint is up and ready to go. The next step is to c
 
 There are two parts to letting users authenticate against that shiny new API you just wrote.
 
-The first is setting up the Connector and the second is updating the tenant configuration to use it. Below, you'll do this with the FusionAuth administrative user interface, but you could use the [Connector APIs](/docs/v1/tech/apis/connectors) and the [Tenant APIs](/docs/v1/tech/apis/tenants), if desired.
+The first is setting up the Connector and the second is updating the tenant configuration to use it. Below, you'll do this with the FusionAuth administrative user interface, but you could use the [Connector APIs](/docs/v1/tech/apis/connectors/) and the [Tenant APIs](/docs/v1/tech/apis/tenants), if desired.
 
 First, create the Connector by navigating to "Settings" and then "Connectors", and create a new one. Give it a name, like "My ATM Connector", and update the "Authentication URL" with the URL of the endpoint which you created above. For this post, update the headers tab with the authorization header value configured in `config.php`: `supersecretauthheader`. When configured, it looks like this:
 
