@@ -42,7 +42,7 @@ But nothing is perfect. OAuth2 also has some flaws. These include:
 
 A final issue with OAuth2 is complexity. Here are some of the RFCs that you may need to read when getting started with OAuth2:
 
-{% include _image.liquid src="/assets/img//blogs/gnap-oauth2-next-gen/oauth2-spec-pyramid.svg" alt="The pyramid of OAuth2 specifications" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/gnap-oauth2-next-gen/oauth2-spec-pyramid.svg" alt="The pyramid of OAuth2 specifications" class="img-fluid" figure=false %}
 
 GNAP isn't alone in trying to fix some of these issues. [OAuth 2.1](/learn/expert-advice/oauth/differences-between-oauth-2-oauth-2-1) is addressing some of them as well. From my research, including reading the draft spec and reviewing discussion on the mailing list, GNAP aims to address these problems in a more cohesive manner. 
 

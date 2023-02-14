@@ -23,7 +23,7 @@ The FusionAuth team has helped hundreds of customers integrate our auth server i
 
 ## Why use the OAuth Authorization Code grant
 
-But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. For example, with FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login) and pass the username and password directly from your application to FusionAuth, getting a token in return. Why bother with the OAuth dance of redirects.
+But first, why use the Authorization Code grant at all? There are, after all, simpler ways to offload authentication. For example, with FusionAuth, you can use the [Login API](/docs/v1/tech/apis/login) and pass the username and password directly from your application to FusionAuth, getting a token in return. Why bother with the OAuth dance of redirects?
 
 When you use the Authorization Code grant, you stand on the shoulders of giants. Many many people in the Internet Engineering Task Force (IETF) working group have spent lots of time refining this grant, poking and fixing holes in its security, documenting it, and building libraries on top of it. You also benefit from documents such as [OAuth 2.0 for browser based apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps), currently being developed, and [OAuth 2.0 for native apps](https://www.rfc-editor.org/rfc/rfc8252).
 
@@ -52,7 +52,7 @@ When using a browser, store these as `HTTPOnly`, secure cookies with a `SameSite
 
 If you choose this option, the browser, whether a simple HTML page with some JavaScript or a complicated single page application (SPA), makes requests against APIs, and the access token is along for the ride.
 
-As long as the APIs live on a common domain, or a parent domain, the access token cookie will be sent with requests. For example, the auth server can live at at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com`, `todo.example.com`, or any other host under `.example.com`, will receive the token.
+As long as the APIs live on a common domain, or a parent domain, the access token cookie will be sent with requests. For example, the server which gets the tokens can live at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com`, `todo.example.com`, or any other host under `.example.com`, will receive the token.
 
 {% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies." %}
 
@@ -60,11 +60,11 @@ When using a native app, store these tokens in a secure location, such as the [i
 
 ### Token validation
 
-In the diagram above, there's a `Validate Tokens` step. Validating the access token each time they are presented is critical to securing building your application.
+In the diagram above, there's a `Validate Tokens` step. Validating the access token each time they are presented is critical to securely building your application.
 
 In the diagram below, each API validates the token presented by the client, even if the token has been seen before, as is the case with `api.example.com`.
 
-One validation approach works if the token is signed and has internal structure, which is true of many but not all access tokens and is illustrated below. A JSON Web Token (JWT) meets these criteria, but there are formats that work as well. JWTs are used by FusionAuth and other auth servers as the access token format. This is not guaranteed by the [OAuth specification](https://www.rfc-editor.org/rfc/rfc6749#section-1.4).
+One validation approach that works if the token is signed and has internal structure, which is true of many but not all access tokens and is illustrated below. A JSON Web Token (JWT) meets these criteria, but there are formats that work as well. JWTs are used by FusionAuth and other auth servers as the access token format. This is not guaranteed by the [OAuth specification](https://www.rfc-editor.org/rfc/rfc6749#section-1.4).
 
 With a signed token, the API server can validate the access token without communicating with any other system, by checking the signature and the claims.
 

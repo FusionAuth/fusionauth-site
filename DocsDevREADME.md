@@ -60,6 +60,27 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 - If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
 - If a field was deprecated in a version 30 versions ago (deprecated in 1.15, you are now at 1.45), you can remove it from the docs.
 
+#### Request section layout
+This is general layout guidance for APIs that have `GET` and `POST` options:
+```
+== Request section header
+GET URLs (could have 1-3 of these, show the most common)
+=== GET request parameters (path segment)
+=== GET request parameters (query string)
+=== GET request headers
+
+POST URLs (only will be one, typically)
+=== POST request headers
+=== POST request parameters (path segment)
+=== POST request body
+Example POST request(s)
+
+=== Response section header
+Response codes
+==== Response body
+Example response(s)
+```
+
 ## Blog posts
 
 For blog posts:
@@ -136,6 +157,7 @@ For blog posts:
 - re-authentication
 - server-side
 - client-side
+- curl
 
 ## Words to avoid
 
