@@ -158,6 +158,7 @@ For blog posts:
 - server-side
 - client-side
 - curl
+- self-service
 
 ## Words to avoid
 
