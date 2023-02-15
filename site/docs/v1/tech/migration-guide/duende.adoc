@@ -14,8 +14,7 @@ description: How to migrate your users to FusionAuth from Duende.
 
 == Overview
 
-This document will help you migrate off of Duende Indentity Server. If
-you are looking to compare FusionAuth and Duende Authentication, link:/blog/2018/10/02/firebase-and-fusionauth-ciam-comparison[this document may help].
+This document will help you migrate off of Duende Indentity Server.
 
 This guide assumes you have installed FusionAuth. If you have not, please link:/docs/v1/tech/installation-guide/[view our installation guides] and install FusionAuth before you begin. For more general migration information, please view the link:/docs/v1/tech/migration-guide/general[FusionAuth migration guide].
 
@@ -26,10 +25,9 @@ This guide assumes you have installed FusionAuth. If you have not, please link:/
 ** <<Other Entities>>
 ** <<Login UI>>
 * <<Exporting Users>>
-** <<Download the File>>
+** <<Create a User File>>
 * <<Importing Users>>
 ** <<Set Up FusionAuth>>
-** <<Add the scrypt Hashing Plugin>>
 ** <<Get the Script>>
 ** <<Install Needed Gems>>
 ** <<Use the Script>>
@@ -119,47 +117,16 @@ data from Firebase.
 
 == Exporting Users
 
-To export users with the Firebase CLI, you’ll perform the following steps:
+
+Duende IdentityServer does not prescribe where you store your user data. You can store it in a database, in a file, or in a custom data store. How you store your users will determine how you export them. 
 
 1. Install the Firebase CLI
 2. Retrieve the Project Id of the Firebase application you want to export the users from
 3. Download the exported file in your chosen format
 
-=== Install the Firebase CLI
 
-Navigate to the
-https://firebase.google.com/docs/cli#install-cli-mac-linux[Firebase CLI
-documentation], and install the Firebase CLI to your system.
-
-After installing the CLI, be sure to
-https://firebase.google.com/docs/cli#sign-in-test-cli[login and test]
-that the installation is successful.
-
-=== Retrieve the Project Id
-
-Before exporting the users, you'll need the Project ID of the Firebase
-project you want to export from. To get this ID, run the following
-Firebase CLI command:
-
-[source,bash]
-----
-firebase projects:list
-----
-
-This will list all your Firebase projects, like this:
-
-[title="List of Firebase projects"]
-----
-│ Project Display Name │ Project ID   │ Project Number │ Resource Location ID │
-├──────────────────────┼──────────────┼────────────────┼──────────────────────┤
-│ fusion               │ fusion-bea44 │ 1021914842301  │ [Not specified]   
-----
-
-Make a note of the Project Id of the Firebase project you want to export
-from.
-
-=== Download the File
-
+=== Create a User File
+ 
 To download the user file, run the following
 https://firebase.google.com/docs/cli/auth[Firebase `auth:export` CLI
 command]:
@@ -205,12 +172,11 @@ After the export finishes, you’ll end up with a JSON file called
 Next up, import the user data. Here are the steps we need to take.
 
 1. Set Up FusionAuth
-2. Add the scrypt Hashing Plugin
-3. Get the Script
-4. Install Needed Gems
-5. Use the Script
-6. Verify the Import
-7. The Final Destination of Imported Users
+2. Get the Script
+3. Install Needed Gems
+4. Use the Script
+5. Verify the Import
+6. The Final Destination of Imported Users
 
 === Set Up FusionAuth
 
@@ -227,57 +193,6 @@ include::docs/v1/tech/migration-guide/_create-test-application.adoc[]
 ==== Add an API Key
 
 include::docs/v1/tech/migration-guide/_create-api-key-social.adoc[]
-
-=== Add the scrypt Hashing Plugin
-
-Most Firebase projects use a https://github.com/firebase/scrypt[modified
-version of the scrypt algorithm] for password hashes. FusionAuth does
-not support scrypt directly, but does
-link:/docs/v1/tech/plugins/custom-password-hashing[support
-plugins for custom hashing].
-
-To extend FusionAuth to support scrypt, follow the instructions for
-https://fusionauth.io/docs/v1/tech/plugins/writing-a-plugin[cloning,
-building and installing the plugins example repository]. Before building
-the project, navigate to the
-`src/main/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptor.java`
-file to add in a few scrypt parameters, which we'll get from Firebase.
-
-In Firebase, navigate to the Authentication panel, and click on the three
-dots near the *Add User* button. Then select *Password hash
-parameters*. This will open a modal with the parameters we need. Make a
-note of them.
-
-image::migration-guide/{migration_source_dir}/firebase-hash-parameters.png[Copying the Firebase hash parameters,width=1200]
-
-Now open the
-`src/main/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptor.java`
-file. Copy the Firebase parameters from above into the variables under
-the `Firebase Scrypt Parameters` comment.
-
-
-[source,shell,title="Adding the scrypt parameters to the plugin"]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-contrib/master/Password%20Hashing%20Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptor.java[tags=scryptParameters]
-----
-
-After you have copied over the parameters, build and install the plugin
-project as detailed
-link:/docs/v1/tech/plugins/writing-a-plugin[in the plugins guide]. You may need to change the test case parameters in the
-file
-`src/test/java/com/mycompany/fusionauth/plugins/ExampleFirebaseScryptPasswordEncryptorTest.java`
-to match a known password, salt and hash from your Firebase
-installation.
-
-After installing the plugin, and restarting FusionAuth, navigate to the
-Test Tenant you created earlier. Click the *edit* icon. Under the
-*Password* tab, find the section *Cryptographic hash settings*. Choose
-*example-salted-firebase-scrypt* as the *Scheme*.
-
-
-image::migration-guide/{migration_source_dir}/set-hash-scheme.png[Set hash scheme,width=1200]
-
-If that plugin doesn't show up, please review the link:/docs/v1/tech/plugins/writing-a-plugin#troubleshooting[plugin troubleshooting steps].
 
 === Get the Script
 
