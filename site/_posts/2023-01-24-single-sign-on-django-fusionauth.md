@@ -89,7 +89,7 @@ Executing the `docker ps` command will list three containers running named `fusi
 
 Once the FusionAuth service is started, open a browser and access [http://localhost:9011/](http://localhost:9011/), where you'll be taken to a "Maintenance Mode" screen:
 
-{% include _image.liquid src="/assets/img/blogs/includes/fusionauth/maintenance-mode-database.png" alt="FusionAuth maintenance mode screen." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/django-single-sign-on/maintenance-mode-database.png" alt="FusionAuth maintenance mode screen." class="img-fluid" figure=true %}
 
 {% include _callout-tip.liquid
     content="`localhost` above and in other sections of this article can be replaced with your machine's hostname or IP address if you're running this project on a remote machine."
@@ -114,7 +114,7 @@ Password: (the default value is fine)
 
 Once the setup is complete, you'll be automatically redirected to the "FusionAuth Setup Wizard", as seen here:
 
-{% include _image.liquid src="/assets/img/blogs/includes/fusionauth/setup-wizard.png" alt="FusionAuth setup wizard." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/django-single-sign-on/setup-wizard.png" alt="FusionAuth setup wizard." class="img-fluid" figure=true %}
 
 Fill in the admin user account details and accept the license agreement; then click "Submit".
 
@@ -149,17 +149,17 @@ This setup allows users in FusionAuth to sign in to the Django application autom
 
 To set up the application, navigate to the [FusionAuth admin UI](http://localhost:9011/admin) and select "Applications" on the left-hand navigation bar:
 
-{% include _image.liquid src="/assets/img/blogs/includes/fusionauth/set-up-the-application.png" alt="Set up the application." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/django-single-sign-on/set-up-the-application.png" alt="Set up the application." class="img-fluid" figure=true %}
 
-Then click on the "+" button on the top right of the "Applications" page and fill in the "Name" field with a name of your choosing (here, it's "your_application"):
+Then click on the "+" button on the top right of the "Applications" page and fill in the "Name" field with a name of your choosing (here, it's "django_sso_app"):
 
-{% include _image.liquid src="/assets/img/blogs/includes/fusionauth/name-the-application.png" alt="Name the Django application." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/django-single-sign-on/name-the-django-application.png" alt="Name the Django application." class="img-fluid" figure=true %}
 
 You can leave all the other fields empty because FusionAuth will choose a default value for those fields. Go ahead and save the application in order for the Client Id details to be generated.
 
 Access the "Application" page again and click on the "Edit Applications" icon (a little edit/notepad icon):
 
-{% include _image.liquid src="/assets/img/blogs/includes/fusionauth/edit-application.png" alt="The list of applications. The edit icon is the blue pencil/notepad." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/django-single-sign-on/edit-application.png" alt="The list of applications. The edit icon is the blue pencil/notepad." class="img-fluid" figure=true %}
 
 On the "Edit Application" page, click on the "OAuth" tab at the top. You'll need to get some information from this page.
 
@@ -179,11 +179,11 @@ After filling in the details, click the "Save" icon.
 
 Next, register the user for the application. Navigate to the "Users" tab and find your user. Click on the black "Manage User" button under the "Action" heading in the list. You'll end up at the details page:
 
-{% include _image.liquid src="/assets/img/blogs/includes/fusionauth/register-user.png" alt="The user details screen, where you can register them." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/django-single-sign-on/register-user.png" alt="The user details screen, where you can register them." class="img-fluid" figure=true %}
 
-Click "Add registration" to register the user for `your_application`.
+Click "Add registration" to register the user for the `django_sso_app`.
 
-{% include _image.liquid src="/assets/img/blogs/includes/fusionauth/add-registration.png" alt="Adding the user registration." class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/django-single-sign-on/add-registration.png" alt="Adding the user registration." class="img-fluid" figure=true %}
 
 If users of this application have unique configuration details, such as a username, timezone, or languages, which are different then the user's defaults, you could configure them here.
 
