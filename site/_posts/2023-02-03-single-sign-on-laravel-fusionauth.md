@@ -30,9 +30,9 @@ Before you begin, you'll need the following:
 * Experience with a Laravel framework and application development.
 * The [Git client tool](https://git-scm.com/downloads).
 
-## Clone the GitHub repository
+## Clone the GitHub repository _(optional)_
 
-To begin, clone the demo project source code for this project from this [GitHub repository](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on) using the following command:
+If you don't want to keep copying and pasting code from this article, you can clone this [GitHub repository](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on) using the command below. You'd still have to copy files to their correct location though, as described in both this article and that repository.
 
 ```bash
 git clone https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on
@@ -40,7 +40,13 @@ git clone https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-o
 
 ## Installing FusionAuth
 
-Get through the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) to install FusionAuth in your machine. You have a few ways of doing so, but we recommend the [Docker](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker) approach.
+If you already have a FusionAuth Cloud instance, you can use that, but for the sake of simplicity, this tutorial will assume you are using a locally hosted instance. There are detailed setup guides in the [documentation](https://fusionauth.io/docs/v1/tech/installation-guide/docker/), but the short version is that once you have Docker and Docker Compose set up and installed correctly, you can run the following command in a new directory to download and execute the necessary files.
+
+```shell
+$ curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
+$ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
+$ docker compose up
+```
 
 ### Starting FusionAuth
 
@@ -56,7 +62,7 @@ This setup allows users in FusionAuth to sign in to the Laravel application auto
 
 ### Set up the application
 
-{% include posts/sso/setup.md callbackUrl='http://localhost/auth/callback' oauthDetailsImage='/assets/img/blogs/laravel-single-sign-on/oauth-details.png' %}
+{% include posts/sso/setup.md callbackUrl="http://localhost/auth/callback" oauthDetailsImage="/assets/img/blogs/laravel-single-sign-on/oauth-details.png" %}
 
 ### Register the user
 
