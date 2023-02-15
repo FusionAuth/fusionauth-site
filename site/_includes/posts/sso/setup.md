@@ -20,7 +20,7 @@ On the "Edit Application" page, click on the "OAuth" tab at the top. You'll need
 
 * Record the generated "Client Id" and the "Client Secret" in a text file or to the clipboard. You'll use these below.
 * Add the value `{{ include.callbackUrl | | default: "http://localhost:8000/oidc/callback/" }}` to the "Authorized redirect URLs" field. This will be used by FusionAuth to redirect the user to your application page once the user is successfully authenticated.
-* Scroll down and check the "Require registration" checkbox. This ensures that users who haven't been registered for this application in FusionAuth aren't able to access it.
+* Scroll down and check the "Require registration" checkbox. This ensures that users who haven't been registered for this application in FusionAuth aren't able to access it when using the hosted login pages.
 
 After filling in the details, click the "Save" icon.
 

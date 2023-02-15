@@ -159,7 +159,7 @@ protected $listen = [
 ];
 ```
 
-{% include _callout-note.liquid content="If you already have something in the `$listen` array (like `Registered::class => [...]`), please keep it and just add a new entry to the array" %}
+{% include _callout-note.liquid content="If you already have something in the `$listen` array (like `Registered::class => [...]`), please keep it and add a new entry to the array" %}
 
 ### Creating new fields in the User model
 
