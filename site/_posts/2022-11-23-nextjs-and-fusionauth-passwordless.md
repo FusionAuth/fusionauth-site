@@ -2,7 +2,7 @@
 layout: blog-post
 title: Adding magic links to your Next.js application using FusionAuth
 description: In this guide, we’ll build a simple web application using Next.js that allows a user to sign up and then login using a magic link sent to their email address.
-author: Ritza
+author: Shivan Moodley
 category: blog
 tags: tutorial tutorial-nextjs tutorial-typescript
 excerpt_separator: "<!--more-->"
