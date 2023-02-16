@@ -2,7 +2,7 @@
 layout: blog-post
 title: Adding magic links to your Next.js application using FusionAuth
 description: In this guide, we’ll build a simple web application using Next.js that allows a user to sign up and then login using a magic link sent to their email address.
-author: Shivan Moodley
+author: Ritza
 category: blog
 tags: tutorial tutorial-nextjs tutorial-typescript
 excerpt_separator: "<!--more-->"
@@ -42,7 +42,6 @@ If you already have Docker installed on your system, you can run the following c
 
 ```bash
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
-https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
 docker-compose up
 ```
@@ -73,9 +72,9 @@ Once you’re done, click the save icon and your application will be added.
 
 Now you need to configure OAuth for your newly created application. The fields you will need to configure are:
 
-- Authorized redirect URLs, set to `http://localhost:3000/api/auth/callback/fusionauth`
-- Authorized request origin URL, set to `http://localhost:3000`
-- Logout URL, set to `http://localhost:3000/api/auth/logout`
+- Authorized redirect URLs, set to `http://localhost:3000/api/auth/callback/fusionauth`.
+- Authorized request origin URL, set to `http://localhost:3000`.
+- Logout URL, set to `http://localhost:3000/api/auth/logout`.
 
 These URLs correspond to the hostname and paths we will use for our Next.js application.
 
@@ -115,9 +114,9 @@ Now hit save and navigate to the application configuration for our application a
 
 Change the configuration under "JSON Web Token settings" to have the following values:
 
-- "JWT duration": 3600
-- "Access Token signing key": Select "Auto generate a new key on save"
-- "Id Token signing key": Select "Auto generate a new key on save"
+- "JWT duration": 3600.
+- "Access Token signing key": Select "Auto generate a new key on save".
+- "Id Token signing key": Select "Auto generate a new key on save".
 
 Click the save icon in the top right to save your changes. Your resulting application configuration should be similar to the following:
 
@@ -289,7 +288,7 @@ export default function LoginButton() {
     <>
       <p>Not signed in</p>
       <br />
-      <button onClick={() => signIn()}>Sign in</button>
+      <button onClick={() => signIn("fusionauth")}>Sign in</button>
     </>
   )
 }
@@ -323,13 +322,9 @@ export default Home
 
 Once you’ve done this, your application should have a basic sign in and sign out flow. You can test it by navigating to `http://localhost:3000` and clicking "Sign In".
 
-{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-2.png" alt="Next.js application with a sign in button" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-2.png" alt="Next.js application with a signin button" class="img-fluid" figure=false %}
 
-After clicking "Sign In", you should see the following screen:
-
-{% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-3.png" alt="A button centered in a web browser that reads Sign in with FusionAuth" class="img-fluid" figure=false %}
-
-Clicking "Sign in with FusionAuth" will take you to the FusionAuth sign-in form, where you’ll be able to see all the sign-in options we have available. Click "Login with a magic link".
+Clicking "Sign in" will take you to the FusionAuth sign-in form, where you’ll be able to see all the available sign-in options. Click "Login with a magic link".
 
 {% include _image.liquid src="/assets/img/blogs/nextjs-fusionauth-passwordless/nextjs-screen-4.png" alt="The FusionAuth Oauth2 login form including a passwordless log in option" class="img-fluid" figure=false %}
 
