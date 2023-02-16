@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.43
-description: This release includes rehashing of passwords on password change, force MFA, and allow users to unlock their account by changing their password, and more.
+description: This release includes the unification of SAML SP initiated and IdP initiated login configurations, enhanced support for PostgreSQL 15, options to relax SAML security measures to ease migration, and adds support for wildcards in redirect URL.
 author: Dan Moore
 image: blogs/release-1-43/fusionauth-1-43.png
 category: announcement
@@ -9,7 +9,7 @@ tags: release-announcement saml redirect-uri postgresql
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth version 1.43 shipped on February 15, 2023. This release includes the unification of SAML SP initiated and IdP initiated login configurations, enhanced support for PostgreSQL 15, options to relax SAML security measures to ease migration, and adds support for wildcards in redirect URLS. And more!
+FusionAuth version 1.43 shipped on February 15, 2023. This release includes the unification of SAML SP initiated and IdP initiated login configurations, enhanced support for PostgreSQL 15, options to relax SAML security measures to ease migration, and adds support for wildcards in redirect URLs. And more!
 
 <!--more-->
 
