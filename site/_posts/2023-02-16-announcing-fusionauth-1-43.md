@@ -49,8 +49,9 @@ The validation of the `Destination` attribute can be modified for any SAML Ident
 
 {% include _image.liquid src="/assets/img/blogs/release-1-43/saml-destination-validation.png" alt="With great power comes great responsibility." class="img-fluid" figure=true %}
 
-When you are changing these settings, be aware of the security risks and minimize the number of destinations that FusionAuth accepts. While this may be necessary for a migration, afterwards work with the upstream IdPs to modify their configuration to point directly to FusionAuth. This is the safest and most secure setting.
-
+{% include _callout-important.liquid
+    content="When you are changing these settings, be aware of the security risks and minimize the number of destinations that FusionAuth accepts. While this may be necessary for a migration, afterwards work with the upstream IdPs to modify their configuration to point directly to FusionAuth. This is the safest and most secure setting."
+%}
 
 ## Support for wildcards in redirect URLs
 
@@ -62,8 +63,9 @@ However, the community has shared situations where a wildcard is helpful, such a
 
 Again, with great power comes great responsibility.
 
-If you are allowing wildcards, ensure that the scope of the wildcard is as narrow as possible and that you entirely control all content and code running at the wildcarded URLs. Otherwise you could run into a situation where someone hijacks authorization codes and steals access tokens.
-
+{% include _callout-important.liquid
+    content="If you are allowing wildcards, ensure that the scope of the wildcard is as narrow as possible and that you entirely control all content and code running at the wildcarded URLs. Otherwise you could run into a situation where someone hijacks authorization codes and steals access tokens."
+%}
 
 ## The rest of it
 
