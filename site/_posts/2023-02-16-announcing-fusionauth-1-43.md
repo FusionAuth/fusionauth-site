@@ -5,7 +5,7 @@ description: This release includes rehashing of passwords on password change, fo
 author: Dan Moore
 image: blogs/release-1-43/fusionauth-1-43.png
 category: announcement
-tags: release-announcement passwords mfa multi-factor-authentication tenants
+tags: release-announcement saml redirect-uri postgresql
 excerpt_separator: "<!--more-->"
 ---
 
@@ -71,6 +71,7 @@ Again, with great power comes great responsibility.
 
 As mentioned above, there were 36 issues, enhancements, and bug fixes included in this release. A selection of the included changes not covered above includes:
 
+* There's a self-service registration validation lambda, allowing you to create more complex validation in for an advanced registration signup form.
 * You can provide a `sourceApplicationId` when creating a new application to make application setup easier.
 * Consents can be managed via the account management profile pages.
 * The Apple Identity Provider has been enhanced to support both web and mobile logins from one configuration.
