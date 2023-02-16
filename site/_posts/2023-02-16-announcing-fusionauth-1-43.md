@@ -39,7 +39,7 @@ These changes are backward compatible for [every version of PostgreSQL](/docs/v1
 
 When FusionAuth is acting as the Service Provider in a SAML flow, it checks the AuthN response to ensure that it was the intended recipient by verifying the `Destination` attribute is the FusionAuth ACS URL. This is a secure default, because it prohibits an attack where someone else creates an AuthN response using a server setup they control to create an identity that has elevated privileges, then presents that response to FusionAuth.
 
-However, if you have have hundreds or thousands of configurations in external client systems depending on that configuration, it can be tough to migrate from another Service Provider to FusionAuth. Doing so requires asking all those clients to update their configuration to point from the previous ACS URL. 
+However, if you have hundreds or thousands of configurations in external client systems depending on that configuration, it can be tough to migrate from another Service Provider to FusionAuth. Doing so requires asking all those clients to update their configuration to point from the previous ACS URL. 
 
 With this release, you have more flexibility to allow for different destination values. You can allow any `Destination`, or specify certain ones in a list.
 
@@ -71,7 +71,7 @@ Again, with great power comes great responsibility.
 
 As mentioned above, there were 36 issues, enhancements, and bug fixes included in this release. A selection of the included changes not covered above includes:
 
-* There's a self-service registration validation lambda, allowing you to create more complex validation in for an advanced registration signup form.
+* There's a self-service registration validation lambda, allowing you to create more complex validation for an advanced registration signup form.
 * You can provide a `sourceApplicationId` when creating a new application to make application setup easier.
 * Consents can be managed via the account management profile pages.
 * The Apple Identity Provider has been enhanced to support both web and mobile logins from one configuration.
