@@ -8,11 +8,11 @@ tags: client-node tutorial tutorial-express tutorial-node
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) web application which does advanced user registration and authentication via FusionAuth. We'll create a custom registration form, along with custom consent options for marketing preferences, and setup self service options for users to update their profile and consent permissions.  
+In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) web application which grants conditional access to users in a family structure. Specifically, a "child" user will request access to the site and then their "parent" user can grant or revoke their access at will.  
 
 <!--more-->
 
-The application itself is very simple: it will let users sign up via FusionAuth, allow them to set their permissions for marketing consent, and allow them to update their profile and consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-express-consents), although much of the application is defined in FusionAuth as detailed in this guide.
+The application itself is very simple: it will let users sign up via FusionAuth, allow them to set permissions for their children, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](<todo>), although much of the application is defined in FusionAuth as detailed in this guide.
 
 ## Prerequisites
 
