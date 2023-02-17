@@ -1,16 +1,15 @@
-# This is workflow for spell checking using PySpelling lib (https://pypi.org/project/pyspelling/)
-name: spellcheck_website
+# Checks asciidoc sanit
+name: asciidoc_check
 on: 
-  # run 2 weekdays at ~noon MT 
+  # run once a day
   schedule:
-    - cron: '31 17 * * 2,4'
+    - cron: '31 19 * * *'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  check_asciidoc:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -23,6 +22,13 @@ jobs:
         run: |
           bundle exec jekyll build || true 
         shell: bash
-      # Spellcheck
-      - uses: igsekor/pyspelling-any@v0.0.2
-        name: Spellcheck
+      # invert the results of the find command. If we find anything, we want to fail. Otherwise succeed.
+      # more here: https://stackoverflow.com/questions/367069/how-can-i-negate-the-return-value-of-a-process
+      - name: Check for broken internal asciidoctor links
+        run: |
+          ! find _site/docs -type f|xargs grep -l 'BROKEN LINK'
+        shell: bash
+      - name: Check for broken external asciidoctor links
+        run: |
+          ! find _site/docs -type f|xargs grep -l '[^:]/docs/v1/'
+        shell: bash
