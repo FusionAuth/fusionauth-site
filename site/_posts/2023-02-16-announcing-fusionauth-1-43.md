@@ -5,7 +5,7 @@ description: This release includes the unification of SAML SP initiated and IdP 
 author: Dan Moore
 image: blogs/release-1-43/fusionauth-1-43.png
 category: announcement
-tags: release-announcement saml redirect-uri postgresql
+tags: release-announcement saml redirect-uri postgresql oauth security
 excerpt_separator: "<!--more-->"
 ---
 
