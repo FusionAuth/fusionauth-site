@@ -1,0 +1,268 @@
+---
+layout: doc
+title: "OAuth Integrations: Supabase"
+description: A practical approach of using FusionAuth SSO capabilities in a Supabase application
+navcategory: login-methods
+---
+
+== Overview
+
+link:https://supabase.com/[Supabase] is an open source hosting service for Postgres databases. In this article, you will build a simple event management web application using FusionAuth, Supabase, and Next.js, a web application framework built on top of React.
+
+When a user tries to log in to your application, they will be redirected to the FusionAuth login page. After logging in, they will be back to your application, which will call the Supabase API to retrieve events for them. This request will have a JWT issued to that user, which Supabase will use to only return rows they have access to, using Postgres' link:https://www.postgresql.org/docs/current/ddl-rowsecurity.html[Row Level Security (RLS)] feature.
+
+== Configuring Supabase
+
+Log in to your link:https://app.supabase.com/[Supabase account], and click [uielement]#New project#. Enter a [field]#Name# for your project, a secure [field]#Database Password# and click [uielement]#Create new project# to save it. It may take a couple of minutes for your project to be provisioned.
+
+image::oauth/integrations/supabase/new-project.png[New Supabase project settings,width=956,role=box-shadow rounded]
+
+=== Creating table
+
+Click the [uielement]#Table editor# icon in the sidebar menu and select [uielement]#Create a new table#.
+
+1. Name it `events`
+2. Make sure [field]#Enable Row Level Security (RLS)# is checked _(you'll see more about this in the next step)_
+3. Click [uielement]#Add column# three times to create the following columns:
++
+[cols="1,1"]
+|===
+|Field | Type
+
+|`title`
+|[field]#text#
+
+|`date`
+|[field]#timestamptz#
+
+|`user_id`
+|[field]#text#
+|===
+  * For every new column, click the [uielement]#cog icon# to edit its properties and uncheck [field]#Is Nullable#
+4. Click [uielement]#Save#
+
+image::oauth/integrations/supabase/create-table.png[Creating table,width=671,role=box-shadow rounded]
+
+=== Inserting sample data
+
+To make things simpler, we won't go through how to insert data into your Supabase table via your web application, but you can take a look link:https://supabase.com/docs/reference/javascript/insert[at their docs]. To populate your table, you'll have to manually insert data into it. Before doing this, you need to grab the User Ids from your FusionAuth application, so log in to your instance, browse to [uielement]#Users# and click [uielement]#Manage# _(the blueish card icon)_ to see the details for a user.
+
+image::oauth/integrations/supabase/users-manage.png[Users page,width=671,role=box-shadow rounded]
+
+Copy the [field]#User Id# from that page.
+
+image::oauth/integrations/supabase/user-id.png[User details page,width=671,role=box-shadow rounded]
+
+Go back to your Supabase dashboard, click [uielement]#Table editor# in the main navigation and select the [uielement]#events# table in the second sidebar that appeared. Click the [uielement]#Insert# green button and select [uielement]#Insert row# to create a new record.
+
+Leave the [field]#id# empty, fill in something in [field]#title#, select any [field]#date#, paste the User Id you copied in [field]#user_id# and click [uielement]#Save#. You should repeat these steps and insert at least one more record for another user.
+
+image::oauth/integrations/supabase/insert-row.png[Inserting row in Supabase,width=671,role=box-shadow rounded]
+
+=== Creating a policy for Row Level Security
+
+link:https://www.postgresql.org/docs/current/ddl-rowsecurity.html[Row Level Security (RLS)] is a feature from PostgreSQL that restricts which rows can be returned or modified by queries accordingly to the logged in user. This is possible by creating a _Policy_, that is an expression that evaluates to a Boolean value and can be specified to apply to `ALL` commands, or to `SELECT`, `INSERT`, `UPDATE`, or `DELETE`.
+
+For our application, you'll need to extract the User Id from the session JWT. Create an SQL function by clicking [uielement]#SQL editor# in the sidebar, pasting the contents below and hitting [uielement]#RUN#.
+
+[source,sql]
+----
+CREATE OR REPLACE FUNCTION get_user_id_from_jwt() RETURNS text AS $$
+SELECT NULLIF(current_setting('request.jwt.claims', true)::json->>'sub', '')::text;
+$$ LANGUAGE SQL stable;
+----
+
+This will create a `get_user_id_from_jwt()` function that extracts the `sub` claim from the current session JWT, which is where your application will store the User Id in. Now, you need to create a policy by navigating to [breadcrumb]#Authentication -> Policies#, clicking [uielement]#New policy# for your `events` table, and selecting [field]#For full customization# to create a policy from scratch.
+
+Give it a meaningful name, like _"Users can only manage their own events"_, select `ALL` as [field]#Allowed operation# and set both [field]#USING expression# and [field]#WITH CHECK expression# as `get_user_id_from_jwt() = user_id` to call our function created above to extract the User Id and match it against the table's [field]#user_id# column. Click [uielement]#Review# and finally [uielement]#Save policy# to finish editing it.
+
+image::oauth/integrations/supabase/rls-policy.png[Creating RLS policy,width=1184,role=box-shadow rounded]
+
+=== Grabbing API settings
+
+The final step before going back to your application is retrieving some credentials and settings that will be used to connect to the Supabase API. You can do this by clicking [uielement]#Project Settings# in the sidebar and select theing [field]#API# menu in the navigation menu that appeared on the left. You'll have to copy three values from this page that will be later used when <<configuring-environment-variables,configuring environment variables>>. The fields are:
+
+. [field]#URL# from the [uielement]#Project URL# section.
+. [field]#anon public# key from [uielement]#Project API keys#.
+. [field]#JWT Secret# from [uielement]#JWT Settings# (you need to click the [uielement]#Reveal# button to display this information).
+
+image::oauth/integrations/supabase/api-settings.png[Supabase API settings,width=1200,role=box-shadow rounded]
+
+== Creating Next.js application and setting up FusionAuth
+
+Now that you finally have Supabase set up, you can create a new Next.js application by following the steps from our link:/blog/2023/02/10/nextjs-single-sign-on[Adding single sign-on to a Next.js app using OIDC] blog post.
+
+After you finish, add `@supabase/supabase-js` as a dependency to the project:
+
+[source,shell]
+----
+$ npm install @supabase/supabase-js
+----
+
+== Issuing JWTs with Supabase's key
+
+Supabase needs [glossary]#JSON Web Tokens# that are signed with their own HMAC-SHA256 secret key. So, you'll have to issue a new token when calling their API to identify the underlying user. To do this, change `src/api/auth/[...nextauth].js` to add some link:https://next-auth.js.org/configuration/callbacks[callbacks], which are ways of personalizing your NextAuth.js session. We have provided some comments directly in the code below to better explain what is going on.
+
+[source,javascript]
+----
+export const authOptions = {
+  /* ... */
+  callbacks: {
+    async jwt({ token, account, profile }) {
+      if (!token.accessToken) {
+        /**
+         * Creating a new JWT for Supabase and using their claims as base
+         * @link https://supabase.com/docs/learn/auth-deep-dive/auth-deep-dive-jwts
+         * @link https://supabase.com/docs/learn/auth-deep-dive/auth-policies
+         * @type {string}
+         */
+        token.accessToken = await new SignJWT({})
+          .setProtectedHeader({alg: 'HS256'})
+          .setIssuedAt()
+          // You can change this to your app name
+          .setIssuer('My Next.js + FusionAuth application')
+          // The sub claim is usually what we use to match the JWT to rows in your database
+          .setSubject(token.sub)
+          // The authenticated role is special in Supabase, it tells the API that this is an authenticated user
+          // and will know to compare the JWT against any policies you've added to the requested resource (table or row).
+          .setAudience('authenticated')
+          .setExpirationTime('1h')
+          .sign(
+            Buffer.from(process.env.SUPABASE_SIGNING_SECRET, 'utf8')
+          );
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Grabbing the Access Token we generated in the callback above
+      session.accessToken = token.accessToken;
+
+      return session;
+    },
+  },
+}
+----
+
+With these changes, the session object now has an `accessToken` property containg the JWT that Supabase needs.
+
+== Building Supabase client
+
+Create a `src/utils/supabase.js` file to return a Supabase client by informing your account URL, the anon public key and the JWT you generated in the previous step. These information will actually be stored in environment variables, which will be configured soon.
+
+[source,javascript]
+----
+import {createClient} from '@supabase/supabase-js';
+
+const createSupabaseClient = (accessToken = null) => {
+  const options = {};
+  if (accessToken) {
+    options.global = {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    };
+  }
+
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    options,
+  );
+};
+
+export {createSupabaseClient};
+----
+
+== Fetching data
+
+You should fetch rows from your Supabase tables and pass them to the frontend page using Next's `getServerSideProps()` hook. Change `src/pages/index.js` and add the code below to check if the current session is valid and whether it has the issued JWT from before. If so, it'll call the Supabase API to retrieve data from the `events` table we created in the beginning of this article.
+
+[source,javascript]
+----
+import {createSupabaseClient} from '@/utils/supabase';
+import {authOptions} from '@/pages/api/auth/[...nextauth]';
+
+export async function getServerSideProps ({ req, res }) {
+  // Checking current session
+  const session = await getServerSession(req, res, authOptions);
+  if ((!session) || (!session.accessToken)) {
+    return {
+      props: {},
+    };
+  }
+
+  // Retrieving data from Supabase API
+  const supabase = createSupabaseClient(session.accessToken);
+  const response = await supabase.from('events').select('*');
+
+  // Passing records to the Home component in an "events" property
+  return {
+    props: {
+      events: response.data
+    },
+  };
+}
+----
+
+In that same file, the `Home` component will have to check whether there are `events` being passed as a property and build a table with the records. To keep the code clean, we'll create another function, called `renderTable()`, to actually render it.
+
+[source,javascript]
+----
+const renderTable = (events) => {
+  if (!Array.isArray(events)) {
+    return null;
+  }
+  return (
+    <div style={{marginTop: "20px"}}>
+      <h2>Rows</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Title</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {events.map((event) => (
+            <tr key={event.id}>
+              <td>{event.id}</td>
+              <td>{event.title}</td>
+              <td>{event.date}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default function Home ({ events }) {
+  const { data: session } = useSession();
+  return (
+    /* ... */
+    <main>
+      <LoginButton />
+      {session && renderTable(events)}
+    </main>
+    /* ... */
+  )
+}
+----
+
+== Configuring environment variables
+
+As part of the process of setting up your Next.js application from our link:/blog/2023/02/10/nextjs-single-sign-on[Adding single sign-on to a Next.js app using OIDC] blog post, you should have already created a `.env.local` file. Now, it's time to paste the information you copied from Supabase API settings earlier into it, by adding the variables below and replacing everything that is quoted with the actual value.
+
+[source,ini]
+----
+NEXT_PUBLIC_SUPABASE_URL="<Project URL>"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="<anon public key from Project API keys>"
+SUPABASE_SIGNING_SECRET="<JWT Secret from JWT Settings>"
+----
+
+== Testing
+
+It's finally time to wrap everything up and test the application! Start the web server by running `yarn dev` and browse to http://localhost:3000[localhost:3000]. Click [uielement]#Log in# to be redirected to the FusionAuth login page. Fill in the credentials from one of the users you have insert data to Supabase and you should be back to your application with a list of the events beloging to them. To check if everything is working accordingly, click [uielement]#Log out# and repeat the same process, but using another user and you should see a different set of events being listed.
+
+By implementing insert, update and delete operations, you should have a working application that can use all of FusionAuth power to manage your users without having to worry about handling authentication and authorization anymore.
