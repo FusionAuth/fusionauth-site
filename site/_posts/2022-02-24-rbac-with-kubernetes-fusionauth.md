@@ -4,8 +4,8 @@ title: Implementing RBAC in Kubernetes with FusionAuth
 description: If you want to restrict access to the various resources (pods, services, etc.) in your Kubernetes cluster, you can employ role based access control, along with an OIDC server such as FusionAuth. 
 author: Aniket Bhattacharyea
 image: blogs/rbac-kubernetes/implementing-rbac-in-kubernetes-with-fusionauth.png
-category: blog
-tags: tutorial tutorial-integration tutorial-kubernetes topic-kubernetes
+category: tutorial
+tags: tutorial tutorial-integration tutorial-kubernetes topic-kubernetes integration kubernetes
 excerpt_separator: "<!--more-->"
 ---
 

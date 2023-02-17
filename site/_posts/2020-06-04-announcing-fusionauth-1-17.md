@@ -1,10 +1,11 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.17
-description: The FusionAuth 1.17 Release offers Sign in with Apple, more flexibilty with identity provider user reconciliation and more.
+description: The FusionAuth 1.17 Release offers Sign in with Apple, more flexibility with identity provider user reconciliation and more.
 author: Dan Moore
 image: blogs/news/fusionauth-release-1-17.png
-category: blog
+category: announcement
+tags: release-announcement apple lambda
 excerpt_separator: "<!--more-->"
 ---
 

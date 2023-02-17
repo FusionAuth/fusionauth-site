@@ -4,14 +4,20 @@ title: Easy Integration of Spring and FusionAuth
 author: Tyler Scott
 description: Making a Spring application with FusionAuth is easy, just follow these simple steps.
 image: blogs/spring-and-fusionauth-example.jpg
-tags: tutorial-java tutorial
-category: blog
+tags: tutorial-java tutorial java spring
+category: tutorial
 excerpt_separator: "<!--more-->"
 ---
 
 Making a Spring application with FusionAuth is easy. Follow the steps below and in about an hour you'll have FusionAuth providing user login and authorization for your application. Or you can be up and running in just a few minutes by using our example app.
 
 <!--more-->
+
+{% include _callout-important.liquid
+content=
+ "This post is old and no longer works. If you'd like to use Spring and FusionAuth, see this [post on using Spring Boot and FusionAuth together](/blog/2023/01/03/spring-and-fusionauth)."
+%}
+
 
 Don't want to read? [Jump to the example](https://github.com/FusionAuth/fusionauth-example-spring-security).
 
@@ -399,6 +405,11 @@ http.addFilterAfter(new OAuth2ClientContextFilter(), AbstractPreAuthenticatedPro
 ```
 
 ## Conclusion
+
+{% include _callout-important.liquid
+content=
+ "This post is old and no longer works. If you'd like to use Spring and FusionAuth, see this [post on using Spring Boot and FusionAuth together](/blog/2023/01/03/spring-and-fusionauth)."
+%}
 
 That's all it takes! When you get set up, send us a link to your site. We'd love to see how you integrated FusionAuth with your Spring application. If you have any questions or comments, let us know in the comments below or [contact us](/contact).
 

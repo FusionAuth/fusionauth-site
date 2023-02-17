@@ -4,8 +4,8 @@ title: FusionAuth Names Don Bergal as CEO to Further Advance Sales of Company's 
 description: Veteran B2B tech leader Don Bergal joins FusionAuth and focuses on driving organic growth
 author: David Polstra
 image: blogs/fusionauth-names-don-bergal-as-ceo/press-release-fusionauth-names-don-bergal-as-ceo-header-image.png
-category: blog
-tags: topic-press-release
+category: announcement
+tags: topic-press-release press-release
 excerpt_separator: "<!--more-->"
 ---
 

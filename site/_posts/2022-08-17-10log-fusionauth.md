@@ -4,12 +4,12 @@ title: 10log integrates FusionAuth into their architectural acoustics applicatio
 description: 10log integrates FusionAuth running on a Digital Ocean droplet into their architectural acoustics web and desktop applications
 author: Dan Moore
 image: blogs/10log-integrates-fusionauth/10log-integrates-fusionauth.png
-category: blog
-tags: topic-community-story 
+category: community-story
+tags: topic-community-story community-story javascript
 excerpt_separator: "<!--more-->"
 ---
 
-Ákos Kőműves is a FusionAuth community member and team member at 10log. He chatted with us over email about how he and the 10log team are using FusionAuth to meet their auth needs. 
+Ákos Komuves is a FusionAuth community member and team member at 10log. He chatted with us over email about how he and the 10log team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 

@@ -46,6 +46,8 @@ We do cover a lot, so here's a handy table of contents to let you jump directly 
   * [Device grant](#device-grant)
 * [Conclusion](#conclusion)
 
+{% include marketing/_modern-guide.liquid %}
+
 ## OAuth overview
 
 OAuth 2.0 is a set of specifications that allow developers to easily delegate the authentication and authorization of their users to someone else. While the specifications don't specifically cover authentication, in practice this is a core piece of OAuth, so we will cover it in depth (because that's how we roll).
@@ -273,6 +275,8 @@ A good example of this mode is setting up a streaming app on an Apple TV, smart 
 8. A few seconds later, the device is connected to the user's account.
 
 This mode often takes a bit of time to complete because the app on the Apple TV is polling the OAuth server. We won't go over this mode because our [OAuth Device Authorization article](/learn/expert-advice/oauth/oauth-device-authorization) covers it in great detail.
+
+{% include marketing/_login-authentication-flows.liquid %}
 
 ## OAuth Grants
 
@@ -1508,3 +1512,5 @@ I hope this guide has been a useful overview of the real-world uses of OAuth 2.0
 If you notice any issues, bugs, or typos in the Modern Guide to OAuth, please submit a Github issue or pull request on [this repository](https://github.com/FusionAuth/fusionauth-site).
 
 Thanks for reading and happy coding!
+
+{% include marketing/_fusionauth-penguin.liquid %}

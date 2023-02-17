@@ -8,17 +8,19 @@
 
 
 function printFileAttribs() {
-  attributes=`/usr/local/bin/identify ${absFile}`
+  identify=`which identify`
+  attributes=`$identify ${absFile}`
   printOut "Current dimensions of the screenshot are : "`echo ${attributes} | cut -d' ' -f3`
   printOut "Current size of the screenshot is : "`echo ${attributes} | cut -d' ' -f7`
 }
 
-function compressUsingTPNG() {
+function compressUsingTinyPNG() {
   echo "-- Using TinyPNG for compression"
 
   API_KEY=`printenv | grep TINYPNG_API_KEY | awk -F '=' '{print $2}'`
   if [ "${API_KEY}" == "" ]; then
-    echo "Error : TinyPNG API key not found in environment. Not compressing".
+    echo "Error : TinyPNG API key not found in environment. Not continuing. Please set TINYPNG_API_KEY".
+    exit 1
   else
     compressedFile=`curl -s --user api:${API_KEY} --data-binary @${absFile} -i https://api.tinify.com/shrink | grep -i location | awk '{print $2}' | sed 's/.$//'`
     printOut "-- Downloading from TinyPNG : ${compressedFile}"
@@ -27,7 +29,7 @@ function compressUsingTPNG() {
 }
 
 function printOut() {
-  if [ ${silent} == "no" ]; then
+  if [ ${verbose} == "yes" ]; then
     echo
     echo ${1}
   fi
@@ -38,20 +40,19 @@ function usage() {
   #print pretty usage and exit
   cat <<HELP_USAGE
 
-    $0  [-s] [-t] [-d destination folder] [-f filename] [-u url] [-h] 
+    $0  [-s] [-d destination folder] [-f filename] [-u url] [-h] 
 
-   -s  Silent mode.
-   -t  Use TinyPNG API instead of pngquant library. Set the TINYPNG_API_KEY env variable with a TinyPNG API key.
    -f  Filename for screenshot. If not provided, defaults to datetime. No suffix needed, a .png suffix will be appended.
    -u  URL to open before taking screenshot. Will cause a slight delay.
    -d  Move screenshots to given folder.
    -x  How far to move the safari window on the x axis (number). Default is 640.
+   -v  Verbose mode.
    -h  Print this usage
 HELP_USAGE
   exit 0;
 }
 
-silent="no"
+verbose="no"
 useTP="no"
 filename=`date +'%y%m%d-%H%M%S'`
 destination=""
@@ -59,8 +60,8 @@ xAxis=640
 url=""
 while getopts ":stx:f:u:d:h" options; do
     case "${options}" in
-        s)
-            silent="yes"
+        v)
+            verbose="yes"
             ;;
         t)
             useTP="yes"
@@ -93,7 +94,10 @@ shift $((OPTIND-1))
 
 
 printOut "-- checking if imagemagick is installed..."
-if [ ! -f "/usr/local/bin/convert" ]; then
+
+which -s convert
+status=$?
+if [ $status -eq 1 ]; then
   echo "Installing imagemagick..."
   brew install imagemagick;
 else
@@ -101,13 +105,14 @@ else
 fi
 
 printOut "-- Checking whether pngquant is installed"
-if [ ! -f "/usr/local/bin/pngquant" ]; then
+which -s pngquant
+status=$?
+if [ $status -eq 1 ]; then
   echo "Installing pngquant"
   brew install pngquant
 else
   printOut "pngquant is installed"
 fi
-
 
 printOut "-- Checking whether safari is running"
 safaricount=`ps cax | grep -i "safari.app" | grep -iv grep | wc -l`;
@@ -177,22 +182,13 @@ printOut "-- Checking image properties"
 printFileAttribs
 
 printOut "-- Resizing screenshot"
-/usr/local/bin/convert -geometry 1600x ${absFile} ${absFile}
+convert=`which convert`
+$convert -geometry 1600x ${absFile} ${absFile}
 
 printOut "-- Compressing png"
-if [ "${useTP}" == "yes" ]; then
-  compressUsingTPNG
-else
-  /usr/local/bin/pngquant --quality=65-80 ${absFile}
-  #remove old file and rename compressed to new
-  basename=`basename ${absFile} .png`
-  rm ${absFile}
-  mv "${tempFolder}${basename}-fs8.png" ${absFile}
-  printFileAttribs
-fi
+compressUsingTinyPNG
 
-
-# move to desination folder
+# move to destination folder
 if [ "${destination}" != "" ]; then
     mv ${absFile} ${destination}/${filename}
 fi

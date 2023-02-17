@@ -5,7 +5,8 @@ description: Compare FusionAuth and Firebase for your identity and access manage
 author: Bryan Giese
 updated_date: 2022-05-19
 image: blogs/firebase-and-fusionauth-comparison.jpg
-category: blog
+category: comparison
+tags: firebase ciam
 excerpt_separator: "<!--more-->"
 ---
 
