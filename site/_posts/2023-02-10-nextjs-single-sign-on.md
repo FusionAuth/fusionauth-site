@@ -216,6 +216,7 @@ FUSIONAUTH_CLIENT_ID="<APP CLIENT ID FROM FUSIONAUTH>"
 FUSIONAUTH_CLIENT_SECRET="<APP CLIENT SECRET FROM FUSIONAUTH>"
 FUSIONAUTH_TENANT_ID="<TENANT ID>" # Leave blank if you only have the default tenant
 FUSIONAUTH_URL="<ENTIRE FUSIONAUTH URL>" # example: http://localhost:9011
+NEXTAUTH_SECRET="<A SECRET>" # you can run `openssl rand -base64 32`
 ```
 
 ## Testing
