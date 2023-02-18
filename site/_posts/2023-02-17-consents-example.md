@@ -1,10 +1,12 @@
 ---
 layout: blog-post
 title: Using and Managing Consents in an Express App
-description: Build an app with marketing consent options and allow your users to update their preferences
+description: Build an app with marketing consent options and allow your users to update their preferences.
 author: Bradley Van Aardt
 category: blog
-tags: client-node tutorial tutorial-express tutorial-node
+image: blogs/consents-app/managing-consent-header.png
+tags: client-node tutorial tutorial-express tutorial-node feature-advanced-registration-forms
+category: tutorial
 excerpt_separator: "<!--more-->"
 ---
 
@@ -13,6 +15,10 @@ In this tutorial, we'll build a basic Node.js and [Express](http://expressjs.com
 <!--more-->
 
 The application itself is very simple: it will let users sign up via FusionAuth, allow them to set their permissions for marketing consent, and allow them to update their profile and consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-express-consents), although much of the application is defined in FusionAuth as detailed in this guide.
+
+{% include _callout-note.liquid
+           content="The profile and custom registration forms described below are part of our paid plans. Please see the [pricing page](/pricing) for more information about paid plans. Consents, however, are community plan features."
+%}
 
 ## Prerequisites
 
@@ -167,7 +173,7 @@ consents['41bc0627-5df3-466a-bac1-a12925580c7f']=I'd like updates via Email
 consents['e6a4e555-f037-4e77-92fd-d805bdba7c33']=I'd like updates via Phone (text)
 ```
 
-Replace the GUID in each consent with the `Id` you recorded earlier. You can make the descriptions whatever you like. Click "Submit", and then save the theme.
+Replace the UUID in each consent with the `Id` you recorded earlier. You can make the descriptions whatever you like. Click "Submit", and then save the theme.
 
 Now navigate to the application you created earlier. Click "Edit" to open the application editor, and select your new theme from the "Theme" dropdown. Save the application to reflect this change.
 
