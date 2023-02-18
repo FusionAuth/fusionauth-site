@@ -66,13 +66,15 @@ We'll skip step **#3** in this tutorial, but sending emails (to verify email add
 
 ### Creating an application
 
-Click "Setup" under "Missing Application" and call your new app "Consents-App", or another name of your choice. It'll get a Client Id and Client Secret automatically - save these, as we'll use them in the code. Later, we'll set up a Node.js + Express application which will run on `http://localhost:3000`, so configure the Authorized URLs accordingly. You should add:
+Click "Setup" under "Missing Application" and call your new app "Family-Api-App", or another name of your choice. It'll get a Client Id and Client Secret automatically - save these, as we'll use them in the code. Later, we'll set up a Node.js + Express application which will run on `http://localhost:3000`, so configure the Authorized URLs accordingly. You should add:
 
-- `http://localhost:3000/auth/callback` to the Authorized redirect URLs.
-- `http://localhost:3000/` to the Authorized request origin URL.
-- `http://localhost:3000/` to the Logout URL.
+- `http://localhost:3000/oauth-redirect` to the Authorized redirect URLs.
+- `http://localhost:3000/` to the Authorized request origin URLs.
+- `http://localhost:3000/logout` to the Logout URL.
+
+Make sure that `PKCE` is set to `Required.` Your application should look like this.
   
-{% include _image.liquid src="/assets/img/blogs/consents-app/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-create-application.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
 
 Click the Save button at the top right for your changes to take effect.
 
