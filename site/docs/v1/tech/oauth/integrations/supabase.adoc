@@ -88,27 +88,38 @@ The final step before going back to your application is retrieving some credenti
 
 image::oauth/integrations/supabase/api-settings.png[Supabase API settings,width=1200,role=box-shadow rounded]
 
-== Creating Next.js application and setting up FusionAuth
+== Setting up FusionAuth and creating Next.js application
 
 Now that you finally have Supabase set up, you can create a new Next.js application by following the steps from our link:/blog/2023/02/10/nextjs-single-sign-on[Adding single sign-on to a Next.js app using OIDC] blog post.
 
-After you finish, add `@supabase/supabase-js` as a dependency to the project:
+If you want to have a working application instead of manually doing all the next steps, you can clone this link:https://github.com/FusionAuth/fusionauth-example-supabase[GitHub repository] and skip to <<configuring-environment-variables,configuring environment variables>>.
+
+[source,shell]
+----
+$ git clone git@github.com:FusionAuth/fusionauth-example-supabase.git
+----
+
+=== Requiring Supabase SDK client
+
+You can add `@supabase/supabase-js` as a dependency to the project by running the command below.
 
 [source,shell]
 ----
 $ npm install @supabase/supabase-js
 ----
 
-== Issuing JWTs with Supabase's key
+=== Issuing JWTs with Supabase's key
 
-Supabase needs [glossary]#JSON Web Tokens# that are signed with their own HMAC-SHA256 secret key. So, you'll have to issue a new token when calling their API to identify the underlying user. To do this, change `src/api/auth/[...nextauth].js` to add some link:https://next-auth.js.org/configuration/callbacks[callbacks], which are ways of personalizing your NextAuth.js session. We have provided some comments directly in the code below to better explain what is going on.
+Supabase needs [glossary]#JSON Web Tokens# that are signed with their own HMAC-SHA256 secret key. So, you'll have to issue a new token when calling their API to identify the underlying user. To do this, change `src/pages/api/auth/[...nextauth].js` to add some link:https://next-auth.js.org/configuration/callbacks[callbacks], which are ways of personalizing your NextAuth.js session. We have provided some comments directly in the code below to better explain what is going on.
 
 [source,javascript]
 ----
+import {SignJWT} from 'jose';
+
 export const authOptions = {
   /* ... */
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token }) {
       if (!token.accessToken) {
         /**
          * Creating a new JWT for Supabase and using their claims as base
@@ -120,7 +131,7 @@ export const authOptions = {
           .setProtectedHeader({alg: 'HS256'})
           .setIssuedAt()
           // You can change this to your app name
-          .setIssuer('My Next.js + FusionAuth application')
+          .setIssuer('My Supabase application')
           // The sub claim is usually what we use to match the JWT to rows in your database
           .setSubject(token.sub)
           // The authenticated role is special in Supabase, it tells the API that this is an authenticated user
@@ -145,7 +156,7 @@ export const authOptions = {
 
 With these changes, the session object now has an `accessToken` property containg the JWT that Supabase needs.
 
-== Building Supabase client
+=== Building Supabase client
 
 Create a `src/utils/supabase.js` file to return a Supabase client by informing your account URL, the anon public key and the JWT you generated in the previous step. These information will actually be stored in environment variables, which will be configured soon.
 
@@ -173,14 +184,16 @@ const createSupabaseClient = (accessToken = null) => {
 export {createSupabaseClient};
 ----
 
-== Fetching data
+=== Fetching data
 
 You should fetch rows from your Supabase tables and pass them to the frontend page using Next's `getServerSideProps()` hook. Change `src/pages/index.js` and add the code below to check if the current session is valid and whether it has the issued JWT from before. If so, it'll call the Supabase API to retrieve data from the `events` table we created in the beginning of this article.
 
 [source,javascript]
 ----
-import {createSupabaseClient} from '@/utils/supabase';
 import {authOptions} from '@/pages/api/auth/[...nextauth]';
+import {createSupabaseClient} from '@/utils/supabase';
+import {getServerSession} from 'next-auth/next';
+import {useSession} from 'next-auth/react';
 
 export async function getServerSideProps ({ req, res }) {
   // Checking current session
@@ -250,19 +263,19 @@ export default function Home ({ events }) {
 }
 ----
 
-== Configuring environment variables
+=== Configuring environment variables
 
 As part of the process of setting up your Next.js application from our link:/blog/2023/02/10/nextjs-single-sign-on[Adding single sign-on to a Next.js app using OIDC] blog post, you should have already created a `.env.local` file. Now, it's time to paste the information you copied from Supabase API settings earlier into it, by adding the variables below and replacing everything that is quoted with the actual value.
 
 [source,ini]
 ----
-NEXT_PUBLIC_SUPABASE_URL="<Project URL>"
+NEXT_PUBLIC_SUPABASE_URL="<URL from Project URL>"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="<anon public key from Project API keys>"
 SUPABASE_SIGNING_SECRET="<JWT Secret from JWT Settings>"
 ----
 
 == Testing
 
-It's finally time to wrap everything up and test the application! Start the web server by running `yarn dev` and browse to http://localhost:3000[localhost:3000]. Click [uielement]#Log in# to be redirected to the FusionAuth login page. Fill in the credentials from one of the users you have insert data to Supabase and you should be back to your application with a list of the events beloging to them. To check if everything is working accordingly, click [uielement]#Log out# and repeat the same process, but using another user and you should see a different set of events being listed.
+It's finally time to wrap everything up and test the application! Start the web server by running `npm run dev` and browse to http://localhost:3000[localhost:3000]. Click [uielement]#Log in# to be redirected to the FusionAuth login page. Fill in the credentials from one of the users you have insert data to Supabase and you should be back to your application with a list of the events beloging to them. To check if everything is working accordingly, click [uielement]#Log out# and repeat the same process, but using another user and you should see a different set of events being listed.
 
 By implementing insert, update and delete operations, you should have a working application that can use all of FusionAuth power to manage your users without having to worry about handling authentication and authorization anymore.
