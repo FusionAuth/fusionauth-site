@@ -108,15 +108,11 @@ npm start
 
 If all went well, the server should start successfully and you can visit `http://localhost:3000`.
 
-{% include _image.liquid src="/assets/img/blogs/consents-app/express-server.png" alt="Express app default home page" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-express-server.png" alt="Express app default home page" class="img-fluid" figure=false %}
 
 ## Building the application
 
-Our application will only have three pages, including the FusionAuth login page.
-
-1. A home page - a public page showing how many users our app has and inviting users to log in.
-2. The registrations page (redirected to FusionAuth) with options to set their marketing consents.
-3. A logged in private profile page. This will display the user's profile and consent permissions retrieved from FusionAuth, and allow them to click through to update their profile information, including consent permissions.
+Our application will only one page apart from the FusionAuth login page: a home page from which a "parent" user can grant or revoke permission for "child" users to view the page.
 
 ## Adding and initializing dependencies
 
