@@ -88,14 +88,13 @@ Navigate to Settings and then API Keys, then add a key. Add a name for the key a
 
 For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get actions for `/api/user/` and `/api/user/consent` which will let the key get basic user information, as well as any consents permissions. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
-{% include _image.liquid src="/assets/img/blogs/consents-app/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-api-key.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
 ## Setting up Express
 
 To get started, you should:
 -   Scaffold a new Express application.
 -   Install the scaffolded dependencies.
--   Install Passport and helper libraries, and the FusionAuth Typescript client.
 -   Start the server to ensure everything is installed and working.
 
 Here are the commands to do it:
@@ -104,7 +103,6 @@ Here are the commands to do it:
 npx express-generator --view=pug fusionauth-example-family
 cd fusionauth-example-family
 npm install
-npm install passport passport-oauth2 connect-ensure-login express-session @fusionauth/typescript-client pkce-challenge express-session
 npm start
 ```
 
