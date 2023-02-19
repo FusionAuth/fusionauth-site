@@ -114,6 +114,36 @@ If all went well, the server should start successfully and you can visit `http:/
 
 Our application will only one page apart from the FusionAuth login page: a home page from which a "parent" user can grant or revoke permission for "child" users to view the page.
 
+Add the following to `views/index.pug`. 
+
+```js
+  - var clientId = '<YOUR_CLIENT_ID>'
+  if user
+    p Hello #{user.firstName}
+    p 
+      a(href='/confirm-child-list') View children to confirm
+    p Confirmed children
+    if family
+      ul 
+        each val in family
+           form(action='/change-consent-status', method='POST')
+              p #{val.email}
+                |
+                Consent #{val.consentstatus}
+                input(type='hidden', name='userConsentId', value=val.userConsentId) 
+                |  
+                if val.status == "Active"
+                  input(type='submit', value='Revoke Consent')
+                  input(type='hidden', name='desiredStatus', value='Revoked') 
+                else
+                  input(type='hidden', name='desiredStatus', value='Active') 
+                  input(type='submit', value='Grant Consent')
+  else
+    a(href='<YOUR_FUSIONAUTH_URL>/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&code_challenge='+challenge+'&code_challenge_method=S256') Login
+```
+
+Replace `<YOUR_CLIENT_ID>` with the Id of your FusionAuth application and `<YOUR_FUSIONAUTH_URL>` with the fully-qualified URL of your FusionAuth instance, including the protocol. For example, `<YOUR_CLIENT_ID>` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and `<YOUR_FUSIONAUTH_URL>` might look like `https://local.fusionauth.io`.
+
 # Adding Express routes
 
 We've got the basic framework and authorization code set up. Now we can add some routes. We'll start with the `login` route to handle the redirect to FusionAuth.
