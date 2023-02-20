@@ -320,14 +320,14 @@ To better see what is going on after logging in, you can change the view for the
 ```php
 // Before:
 @auth
-    <a href="{{ url('/home') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Home</a>
+    <a href="{% raw %}{{ url('/home') }}{% endraw %}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Home</a>
 @else
   // ...
 
 // After:
 @auth
-    <a href="{{ url('/home') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Home</a>
-    <span class="ml-4 text-gray-600 dark:text-gray-400">Welcome, <span class="font-semibold">{{ Auth::user()->name }}</span></span>
+    <a href="{% raw %}{{ url('/home') }}{% endraw %}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Home</a>
+    <span class="ml-4 text-gray-600 dark:text-gray-400">Welcome, <span class="font-semibold">{% raw %}{{ Auth::user()->name }}{% endraw %}</span></span>
 @else
   // ...
 ```
