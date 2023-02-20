@@ -46,6 +46,7 @@ var indexPages = {
   '/docs/v1/tech/tutorials/': true,
   '/docs/v1/tech/tutorials/gating/': true,
   '/docs/v1/tech/tutorials/two-factor/': true,
+  '/how-to/': true,
   '/learn/expert-advice/': true,
   '/learn/expert-advice/authentication/': true,
   '/learn/expert-advice/ciam/': true,
