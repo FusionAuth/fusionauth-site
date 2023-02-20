@@ -98,15 +98,49 @@ Let's create the parent user first. Navigate to `Users` and click the `Add` butt
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-parent-user.png" alt="Creating the parent user." class="img-fluid" figure=false %}
 
-Repeat this process for the child user. By default, the child user's `Birthdate` can be anything or left blank.
+Repeat this process for the child user. By default, the child user's `Birthdate` can be anything or left blank. Record the `User Id` of both users, as you will need them when adding the users to a family.
 
-Then, register both users to the application. Click the `Manage` button for each user and click the `Add registration` button. 
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-user-id.png" alt="The unique Id of the created user" class="img-fluid" figure=false %}
 
-{% include _image.liquid src="/assets/img/blogs/family-api/family-api-add-registration.png" alt="The button to add a registration to a user" class="img-fluid" figure=false %}
-
-Select the application from the dropdown. You do not need to supply a username or any other information in order to register a user.
+Then, register both users to the application. Click the `Manage` button for each user and click the `Add registration` button. Select the application from the dropdown. You do not need to supply a username or any other information in order to register a user.
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-registration-select-application.png" alt="Selecting the application to register a user to." class="img-fluid" figure=false %}
+
+## Adding users to a family
+
+Now that you've created your two users and registered them to your application, you can assign both users to their appropriate family roles via the [Family API](https://fusionauth.io/docs/v1/tech/apis/families). Execute the following command in your terminal.
+
+```sh
+curl -X POST <YOUR_FUSIONAUTH_URL>/api/user/family \
+-H "Authorization: <YOUR_API_KEY>" \
+-H "Content-Type: application/json" \
+-d '{
+  "familyMember" : {
+    "userId": "<PARENT_USER_ID>",
+    "owner": true,
+    "role": "Adult"
+  }	
+}'
+```
+
+Here, `<YOUR_FUSIONAUTH_URL>` is your fully-qualified domain name, including the protocol, for example `https://local.fusionauth.io`, `<YOUR_API_KEY>` is the key that you created in the `Setting up a FusionAuth API key` section, and `<PARENT_USER_ID>` is the `User Id` of the parent user that you just recorded. Record the `Id` value in the response JSON that is returned upon executing the request. You will need it to add the child user to this family.
+
+The request to add the child user to the family is similar, but has a few key differences. First, since the family already exists, you will use a `PUT` request rather than a `POST` request. Second, you need to supply the unique Id for the family in the request's URL. Finally, the `owner` and `role` values will be different.
+
+Execute the following command in your terminal.
+
+```sh
+curl -X PUT <YOUR_FUSIONAUTH_URL>/api/user/family/<YOUR_FAMILY_ID> \
+-H "Authorization: <YOUR_API_KEY>" \
+-H "Content-Type: application/json" \
+-d '{
+  "familyMember" : {
+    "userId": "<CHILD_USER_ID>",
+    "owner": false,
+    "role": "Child"
+  }	
+}'
+```
 
 ## Setting up Express
 
