@@ -208,6 +208,18 @@ Add the following to `views/index.pug`.
 
 Replace `<YOUR_CLIENT_ID>` with the Id of your FusionAuth application and `<YOUR_FUSIONAUTH_URL>` with the fully-qualified URL of your FusionAuth instance, including the protocol. For example, `<YOUR_CLIENT_ID>` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and `<YOUR_FUSIONAUTH_URL>` might look like `https://local.fusionauth.io`.
 
+You can use the `express-session` middleware package to facilitate the storage and usage of session information in your app. In the `app.js` file, add the following line at the top:
+
+```js
+var expressSession = require('express-session');
+```
+
+To use the package, add the following line under `app.use(cookieParser());`:
+
+```js
+app.use(expressSession({resave: false, saveUninitialized: false, secret: 'fusionauth-node-example'}));
+```
+
 At this point, your application has a `Login` link that will redirect you to the FusionAuth login page, but it does not yet have the necessary information to complete the login. To do this, you need to add a route.
 
 # Adding Express routes
