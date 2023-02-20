@@ -90,7 +90,7 @@ For extra security, you can restrict the permissions for the key. For our app, w
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-api-key.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
-## Creating users
+## Creating and registering users
 
 The application will have two users: a "child" user who will request access to the site and a "parent" user who can grant or revoke the child user's permission at any time. 
 
@@ -98,7 +98,15 @@ Let's create the parent user first. Navigate to `Users` and click the `Add` butt
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-parent-user.png" alt="Creating the parent user." class="img-fluid" figure=false %}
 
-Now, repeat this process for the child user. By default, the child user's `Birthdate` can be anything or left blank.
+Repeat this process for the child user. By default, the child user's `Birthdate` can be anything or left blank.
+
+Then, register both users to the application. Click the `Manage` button for each user and click the `Add registration` button. 
+
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-add-registration.png" alt="The button to add a registration to a user" class="img-fluid" figure=false %}
+
+Select the application from the dropdown. You do not need to supply a username or any other information in order to register a user.
+
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-registration-select-application.png" alt="Selecting the application to register a user to." class="img-fluid" figure=false %}
 
 ## Setting up Express
 
