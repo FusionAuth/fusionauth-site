@@ -90,7 +90,7 @@ Navigate to "Settings", then "API Keys", and add a key. Add a name for the key a
 
 {% include _image.liquid src="/assets/img/blogs/consents-app/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
-For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get actions for `/api/user/` and `/api/user/consent` that will let the key get basic user information, as well as any consents permissions. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
+For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get actions for `/api/user/` and `/api/user/consent` that will let the key get basic user information, as well as any consents. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
 {% include _image.liquid src="/assets/img/blogs/consents-app/gettingapikey-limited-scope.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
@@ -262,7 +262,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 ```
 
-Replace the `TOPSECRET` string with a string of your choice. This secret is used to sign the session information in the cookie. Normally, this is kept secret, as anyone who has access to the secret could construct a session cookie that looks legitimate to the server and gives them access to any account on the server. You can also add an environment variable to store this secret, rather than storing it in the code repo.
+Replace the `TOPSECRET` value with a long, high entropy, random string of your choice. This secret is used to sign the session information in the cookie. Normally, this is kept secret, as anyone who has access to the secret could construct a session cookie that looks legitimate to the server and gives them access to any account on the server. You can also add an environment variable to store this secret, rather than storing it in the code repo.
 
 We'll also need to initialize the FusionAuth client with the API key created earlier. This will allow us to retrieve the user profile and consents from FusionAuth after a successful login. Add the following code just below the previous code added:
 
@@ -493,8 +493,10 @@ Clicking the "profile page" link will redirect to FusionAuth, where the user can
 
 ## Where to next with Express and FusionAuth?
 
-That’s the basics of our Express and FusionAuth app done. The app has a fully featured authentication system, along with user consents, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-express-consents).
+That’s the basics of our Express and FusionAuth app. The app has a fully featured authentication system, along with user consents, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-express-consents).
 
-Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, consents, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
+For a production environment, you would need to do a bit more work to lock down FusionAuth. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment.
 
-For a production environment, you would need to do a bit more work in making sure FusionAuth was really safe. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
+You would also need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, consents, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
+
+Happy coding!
