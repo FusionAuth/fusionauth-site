@@ -206,61 +206,122 @@ Add the following to `views/index.pug`.
 
 Replace `<YOUR_CLIENT_ID>` with the Id of your FusionAuth application and `<YOUR_FUSIONAUTH_URL>` with the fully-qualified URL of your FusionAuth instance, including the protocol. For example, `<YOUR_CLIENT_ID>` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and `<YOUR_FUSIONAUTH_URL>` might look like `https://local.fusionauth.io`.
 
+At this point, your application has a `Login` link that will redirect you to the FusionAuth login page, but it does not yet have the necessary information to complete the login. To do this, you need to add a route.
+
 # Adding Express routes
 
-We've got the basic framework and authorization code set up. Now we can add some routes. We'll start with the `login` route to handle the redirect to FusionAuth.
+You've got the basic framework and authorization code set up. Now you can add some routes. You can start with the `login` route to handle the redirect to FusionAuth.
 
-Add this code under the `app.use("/", indexRouter);` line:
+First, you can define your dependencies. In the `routes/index.js` file, add the following code under the `var router = express.Router();` line:
 
 ```js
-app.get("/login", passport.authenticate("oauth2"));
+const pkceChallenge = require('pkce-challenge');
+const {FusionAuthClient} = require('@fusionauth/typescript-client');
+const clientId = '<YOUR_CLIENT_ID>';
+const clientSecret = '<YOUR_CLIENT_SECRET>';
+const client = new FusionAuthClient('<YOUR_API_KEY>', '<YOUR_FUSIONAUTH_URL>');
+const consentId = '<YOUR_CONSENT_ID>';
 ```
 
-Note that we don't need to add a router or view for the login redirect to FusionAuth to work. Passport will check whether the user needs to be logged in, and if so will send them to FusionAuth for authentication.
+The `pkceChallenge` package enables your application to utilize a Proof Key for Code Exchange (PKCE), which ensures that every step of the authorization flow is handled by FusionAuth and not a malicious actor. Here, you are also importing the FusionAuth TypeScript client as well as several parameters that allow your application to communicate with your FusionAuth configuration. `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` can be found in FusionAuth under `Applications -> Your Application`. In a production environment, you should use environment variables here to prevent your client secret from leaking. `<YOUR_API_KEY>` can be found under `Settings -> API Keys` and `<YOUR_CONSENT_ID>` can be found under `Settings -> Consents`. 
 
-After authentication, FusionAuth will redirect to the callback route we provided in the Passport OAuth setup, as well as in the authorized callback route earlier. We can add this route now. Add the following code under the `login` route:
+Now, in the `GET home page` section, replace the `res.render('index', { title: 'Express' });` line with the following:
 
 ```js
-app.get(
-  "/auth/callback",
-  passport.authenticate("oauth2", { failureRedirect: "/" }),
-  function (req, res) {
-    // Successful authentication, redirect home.
-    res.redirect("/");
-  }
-);
+    let family = [];
+    //generate the pkce challenge/verifier dict
+    pkce_pair = pkceChallenge();
+    req.session.verifier = pkce_pair['code_verifier']
+    req.session.challenge = pkce_pair['code_challenge']
+    if (req.session.user && req.session.user.id) {
+
+        // build our family object for display
+        client.retrieveFamilies(req.session.user.id)
+            .then((response) => {
+                if (response.response.families && response.response.families.length >= 1) {
+                    // adults can only belong to one family
+                    let children = response.response.families[0].members.filter(elem => elem.role != 'Adult');
+                    let getUsers = children.map(elem => {
+                        return client.retrieveUser(elem.userId);
+                    });
+                    Promise.all(getUsers).then((users) => {
+                        users.forEach(user => {
+                            family.push({"id": user.response.user.id, "email": user.response.user.email});
+                        });
+                    }).then(() => {
+                        let getUserConsentStatuses = children.map(elem => {
+                            return client.retrieveUserConsents(elem.userId);
+                        });
+                        return Promise.all(getUserConsentStatuses);
+                    }).then((consentsResponseArray) => {
+                        // for each child, we'll want to get the status of the consent matching our consentId and put that in the family object, for that child.
+                        const userIdToStatus = {};
+                        const userIdToUserConsentId = {};
+                        consentsResponseArray.forEach((oneRes) => {
+                            const matchingConsent = oneRes.response.userConsents.filter((userConsent) => userConsent.consent.id == consentId)[0];
+                            if (matchingConsent) {
+                                const userId = matchingConsent.userId;
+                                userIdToUserConsentId[userId] = matchingConsent.id;
+                                userIdToStatus[userId] = matchingConsent.status;
+                            }
+                        });
+                        family = family.map((onePerson) => {
+                            onePerson["status"] = userIdToStatus[onePerson.id];
+                            onePerson["userConsentId"] = userIdToUserConsentId[onePerson.id];
+                            return onePerson;
+                        });
+                        //}).then(() => {
+                        res.render('index', {
+                            family: family,
+                            user: req.session.user,
+                            title: 'Family Example',
+                            challenge: pkce_pair['code_challenge']
+                        });
+                    });
+                } else {
+                    res.render('index', {family: family, user: req.session.user, title: 'Family Example', challenge: pkce_pair['code_challenge']});
+                }
+            }).catch((err) => {
+            console.log("in error");
+            console.error(JSON.stringify(err));
+        });
+    } else {
+        res.render('index', {family: family, user: req.session.user, title: 'Family Example', challenge: pkce_pair['code_challenge']});
+    }
 ```
-On successful authentication or failure, we'll redirect to the homepage. Let's update that now to show the login status, and provide a link to the users profile page. Open the `index.js` file in the `routes` folder, and update the `get` route to the following:
+
+Quite a lot seems to be happening here, but for now just understand that you are setting up all of the information required by FusionAuth for a successful login. Now, you can make sure that information is correctly applied upon hitting the `Login` button by adding the following code at the end of the file, right before the `module.exports = router;` line:
 
 ```js
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express', "authenticated": req.isAuthenticated() });
+/* OAuth return from FusionAuth */
+router.get('/oauth-redirect', function (req, res, next) {
+    // This code stores the user in a server-side session
+    client.exchangeOAuthCodeForAccessTokenUsingPKCE(req.query.code,
+        clientId,
+        clientSecret,
+        'http://localhost:3000/oauth-redirect',
+        req.session.verifier)
+        .then((response) => {
+            req.session.state = req.query.state;
+            return client.retrieveUserUsingJWT(response.response.access_token);
+        })
+        .then((response) => {
+            req.session.user = response.response.user;
+        })
+        .then((response) => {
+            if (req.session.state == "confirm-child-list") {
+                res.redirect(302, '/confirm-child-list');
+                return
+            }
+            res.redirect(302, '/');
+
+        }).catch((err) => {
+        console.log("in error");
+        console.error(JSON.stringify(err));
+    });
+
 });
 ```
-
-Passport adds a function `isAuthenticated()` to the `req` object. Querying this function tells us whether the user is logged in. We add this to the keys and values passed to the index view, so that we can show a different message based on the user's authentication status.
-
-Now open the `index.hbs` file in the `views` folder, and update the code to the following:
-
-{% raw %}
-```html
-<h1>{{title}}</h1>
-<p>Welcome to {{title}}</p>
-
-{{#if authenticated}}
-  <p>You are logged in!</p>
-  <p>
-    You can now visit your <a href="/users/me">profile page</a>
-  </p> 
-{{else}}
-  <p>
-    <a href="/login">Login Here</a>
-  </p>
-{{/if}}
-```
-{% endraw %}
-
-This will notify the user if they are logged in or not, and point them to the relevant action.
 
 ## Adding a members only area
 
