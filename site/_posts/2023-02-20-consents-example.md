@@ -5,7 +5,7 @@ description: Build an app with marketing consent options and allow your users to
 author: Bradley Van Aardt
 category: blog
 image: blogs/consents-app/managing-consent-header.png
-tags: client-node tutorial tutorial-express tutorial-node feature-advanced-registration-forms
+tags: client-node tutorial tutorial-express tutorial-node feature-advanced-registration-forms feature-consents api-consents
 category: tutorial
 excerpt_separator: "<!--more-->"
 ---
