@@ -142,7 +142,17 @@ curl -X PUT <YOUR_FUSIONAUTH_URL>/api/user/family/<YOUR_FAMILY_ID> \
 }'
 ```
 
+## Creating a consent
+
+You are almost ready to build your custom application and leverage your FusionAuth configuration to enable permission-based access to your site. Now, you just have to add a [consent](https://fusionauth.io/docs/v1/tech/apis/consents#overview), which will enable the parent user to grant or revoke access to the child user. 
+
+Navigate to `Settings -> Consents` and click the `Add` button. Supply a name for the consent. By default, the minimum age of self-consent is 13, meaning any user aged 13 or older can access the site without needing permission from a parent user. You can modify this value if you wish. For the purposes of this guide, just make sure this number is higher than the age of your child user. If you did not supply a `Birthdate` for your child user, you can leave this value as-is, since a blank `Birthdate` will cause a user's age to be stored as -1.
+
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-add-consent.png" alt="Creating the consent" class="img-fluid" figure=false %}
+
 ## Setting up Express
+
+Your FusionAuth configuration is now ready to go, and you can start building your application using Express. 
 
 To get started, you should:
 -   Scaffold a new Express application.
@@ -164,7 +174,7 @@ If all went well, the server should start successfully and you can visit `http:/
 
 ## Building the application
 
-Our application will only one page apart from the FusionAuth login page: a home page from which a "parent" user can grant or revoke permission for "child" users to view the page.
+Our application will only one page apart from the FusionAuth login page: a home page from which a parent user can grant or revoke permission for the child user to view the page.
 
 Add the following to `views/index.pug`. 
 
