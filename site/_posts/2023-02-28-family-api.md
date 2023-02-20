@@ -157,6 +157,7 @@ Your FusionAuth configuration is now ready to go, and you can start building you
 To get started, you should:
 -   Scaffold a new Express application.
 -   Install the scaffolded dependencies.
+-   Install the helper libraries, and the FusionAuth Typescript client.
 -   Start the server to ensure everything is installed and working.
 
 Here are the commands to do it:
@@ -165,6 +166,7 @@ Here are the commands to do it:
 npx express-generator --view=pug fusionauth-example-family
 cd fusionauth-example-family
 npm install
+npm install @fusionauth/typescript-client pkce-challenge express-session
 npm start
 ```
 
@@ -215,7 +217,7 @@ You've got the basic framework and authorization code set up. Now you can add so
 First, you can define your dependencies. In the `routes/index.js` file, add the following code under the `var router = express.Router();` line:
 
 ```js
-const pkceChallenge = require('pkce-challenge');
+const pkceChallenge = require('pkce-challenge').default;
 const {FusionAuthClient} = require('@fusionauth/typescript-client');
 const clientId = '<YOUR_CLIENT_ID>';
 const clientSecret = '<YOUR_CLIENT_SECRET>';
