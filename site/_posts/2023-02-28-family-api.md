@@ -176,9 +176,9 @@ If all went well, the server should start successfully and you can visit `http:/
 
 ## Building the application
 
-Our application will only one page apart from the FusionAuth login page: a home page from which a parent user can grant or revoke permission for the child user to view the page.
+Our application will have only two pages apart from the FusionAuth login page: a landing page that will redirect the user to the FusionAuth login page, and a home page from which a parent user can grant or revoke permission for the child user to view the page.
 
-Add the following to `views/index.pug`. 
+For the landing page, add the following to `views/index.pug`. 
 
 ```js
   - var clientId = '<YOUR_CLIENT_ID>'
@@ -208,7 +208,7 @@ Add the following to `views/index.pug`.
 
 Replace `<YOUR_CLIENT_ID>` with the Id of your FusionAuth application and `<YOUR_FUSIONAUTH_URL>` with the fully-qualified URL of your FusionAuth instance, including the protocol. For example, `<YOUR_CLIENT_ID>` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and `<YOUR_FUSIONAUTH_URL>` might look like `https://local.fusionauth.io`.
 
-Also, create a new file in the `views` folder called `confirmchildren.pug` and add the following to it.
+For the home page, create a new file in the `views` folder called `confirmchildren.pug` and add the following to it.
 
 ```js
 extends layout
@@ -360,6 +360,118 @@ router.get('/oauth-redirect', function (req, res, next) {
         console.error(JSON.stringify(err));
     });
 
+});
+```
+
+With that, the landing page and FusionAuth login page should be fully functional. Now, you can add the functionality that allows the home page to work. Add the following code underneath what you just added.
+
+```js
+/* Confirm child list flow */
+router.get('/confirm-child-list', function (req, res, next) {
+    if (!req.session.user) {
+        // force signin
+        res.redirect(302, '/');
+    }
+    client.retrievePendingChildren(req.session.user.email)
+        .then((response) => {
+            res.render('confirmchildren', {children: response.response.users, title: 'Confirm Your Children', challenge: req.session.challenge});
+        }).catch((err) => {
+        console.log("in error");
+        console.error(JSON.stringify(err));
+    });
+});
+```
+
+This will allow the list of children associated with the parent user to surface on the home page. To enable a parent user to confirm the child user as a member of their family, add the following code underneath what you just added.
+
+```js
+/* Confirm child action */
+router.post('/confirm-child', function (req, res, next) {
+    if (!req.session.user) {
+        // force signin
+        res.redirect(302, '/');
+    }
+    childEmail = req.body.child;
+
+    if (!childEmail) {
+        console.log("No child email provided!");
+        res.redirect(302, '/');
+    }
+
+    let childUserId = undefined;
+    client.retrieveUserByEmail(childEmail)
+        .then((response) => {
+            childUserId = response.response.user.id;
+            return client.retrieveFamilies(req.session.user.id)
+        })
+        .then((response) => {
+            if (response && response.response && response.response.families && response.response.families.length >= 1) {
+                // user is already in family
+                return response;
+            }
+            // if no families, create one for them
+            const familyRequest = {"familyMember": {"userId": req.session.user.id, "owner": true, "role": "Adult"}};
+            return client.createFamily(null, familyRequest);
+        })
+        .then((response) => {
+            //only expect one
+            const familyId = response.response.families[0].id;
+            const familyRequest = {"familyMember": {"userId": childUserId, "role": "Child"}}
+            return client.addUserToFamily(familyId, familyRequest);
+        })
+        .then((response) => {
+            // capture consent
+            const consentRequest = {
+                "userConsent": {
+                    "userId": childUserId,
+                    "consentId": consentId,
+                    "giverUserId": req.session.user.id
+                }
+            }
+            return client.createUserConsent(null, consentRequest);
+        })
+        .then((response) => {
+            // now pull existing children to be confirmed
+            client.retrievePendingChildren(req.session.user.email)
+        })
+        .then((response) => {
+            res.redirect(302, '/confirm-child-list');
+        }).catch((err) => {
+        console.log("in error");
+        console.error(JSON.stringify(err));
+    });
+});
+```
+
+The last piece of the puzzle is to handle the granting and revocation of consent by the parent user for the child user to access the site. Add the following code underneath what you just added.
+
+```js
+/* Change consent */
+router.post('/change-consent-status', function (req, res, next) {
+    if (!req.session.user) {
+        // force signin
+        res.redirect(302, '/');
+    }
+
+    const userConsentId = req.body.userConsentId;
+    let desiredStatus = req.body.desiredStatus;
+    if (desiredStatus != 'Active') {
+        desiredStatus = 'Revoked';
+    }
+
+    if (!userConsentId) {
+        console.log("No userConsentId provided!");
+        res.redirect(302, '/');
+    }
+
+    const patchBody = {userConsent: {status: desiredStatus}};
+    client.patchUserConsent(userConsentId, patchBody)
+        .then((response) => {
+            res.redirect(302, '/');
+        }).catch((err) => {
+        console.log("in error");
+        console.error(JSON.stringify(err));
+    });
 });
 ```
 
