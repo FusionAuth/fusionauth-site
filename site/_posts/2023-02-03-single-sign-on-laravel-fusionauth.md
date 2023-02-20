@@ -32,7 +32,7 @@ Before you begin, you'll need the following:
 
 ## Clone the GitHub repository _(optional)_
 
-If you don't want to keep copying and pasting code from this article, you can clone this [GitHub repository](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on) using the command below. You'd still have to copy files to their correct location though, as described in both this article and that repository.
+If you don't want to keep copying and pasting code from this article, you can clone this [GitHub repository](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on) using the command below. You'd still have to [configure the environment variables](#configuring-environment-variables) though.
 
 ```bash
 git clone https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on
@@ -72,7 +72,7 @@ This setup allows users in FusionAuth to sign in to the Laravel application auto
 
 Instead of manually setting up FusionAuth using the admin UI as you did above, you can use Kickstart. This tool allows you to get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart).
 
-Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on/blob/main/kickstart/kickstart.json) which sets up FusionAuth for this tutorial.
+Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on/blob/main/fusionauth/kickstart/kickstart.json) which sets up FusionAuth for this tutorial.
 
 ## Installing and configuring Laravel
 
@@ -119,6 +119,18 @@ $ ./vendor/bin/sail composer require socialiteproviders/fusionauth
 content="When running the command above, [composer](https://getcomposer.org) will automatically install the necessary `laravel/socialite` package"
 %}
 
+Alter the service provider responsible for listening to events at `app/Providers/EventServiceProvider.php` to tell Laravel that it should call `FusionAuthExtendSocialite` class when there is an event for Socialite. To do this, change its `$listen` property to add the following entry to the array:
+
+```php
+protected $listen = [
+    \SocialiteProviders\Manager\SocialiteWasCalled::class => [
+        \SocialiteProviders\FusionAuth\FusionAuthExtendSocialite::class . '@handle',
+    ],
+];
+```
+
+{% include _callout-note.liquid content="If you already have something in the `$listen` array (like `Registered::class => [...]`), please keep it and add a new entry to the array" %}
+
 Now, configure your application with the necessary settings to interact with the FusionAuth service, by adding a new entry to the array located at `config/services.php`:
 
 ```php
@@ -130,6 +142,8 @@ Now, configure your application with the necessary settings to interact with the
     'tenant_id' => env('FUSIONAUTH_TENANT_ID'),
 ],
 ```
+
+### Configuring environment variables
 
 Instead of putting directly the values there, you should use environment variables, which is a good practice from both maintenance and security standpoints, as described in the [12 Factor App](https://12factor.net/config) methodology and in several others. Being so, alter your `.env` file to include those entries:
 
@@ -148,18 +162,6 @@ FUSIONAUTH_BASE_URL=http://localhost:9011
 # We'll create the route for `/auth/callback` later##
 FUSIONAUTH_REDIRECT_URI=http://localhost/auth/callback
 ```
-
-Now, alter the service provider responsible for listening to events at `app/Providers/EventServiceProvider.php` to tell Laravel that it should call `FusionAuthExtendSocialite` class when there is an event for Socialite. To do this, change its `$listen` property to add the following entry to the array:
-
-```php
-protected $listen = [
-    \SocialiteProviders\Manager\SocialiteWasCalled::class => [
-        \SocialiteProviders\FusionAuth\FusionAuthExtendSocialite::class . '@handle',
-    ],
-];
-```
-
-{% include _callout-note.liquid content="If you already have something in the `$listen` array (like `Registered::class => [...]`), please keep it and add a new entry to the array" %}
 
 ### Creating new fields in the User model
 
@@ -318,14 +320,14 @@ To better see what is going on after logging in, you can change the view for the
 ```php
 // Before:
 @auth
-  <a href="{% raw %}{{ url('/home') }}{% endraw %}" class="text-sm text-gray-700 dark:text-gray-500 underline">Home</a>
+    <a href="{{ url('/home') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Home</a>
 @else
   // ...
 
 // After:
 @auth
-  <a href="{% raw %}{{ url('/home') }}{% endraw %}" class="text-sm text-gray-700 dark:text-gray-500 underline">Home</a>
-  <span class="ml-2 text-sm text-gray-700 dark:text-gray-500">{% raw %}{{ Auth::user()->name }}{% endraw %}</span>
+    <a href="{{ url('/home') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Home</a>
+    <span class="ml-4 text-gray-600 dark:text-gray-400">Welcome, <span class="font-semibold">{{ Auth::user()->name }}</span></span>
 @else
   // ...
 ```
