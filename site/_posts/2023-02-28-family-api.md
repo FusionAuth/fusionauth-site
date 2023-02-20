@@ -86,9 +86,19 @@ Navigate to Settings and then API Keys, then add a key. Add a name for the key a
 
 {% include _image.liquid src="/assets/img/blogs/consents-app/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
 
-For extra security, you can restrict the permissions for the key. For our app, we only need to enable the post and put actions for `/api/user/family` which will let the key create a family and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
+For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get, post and put actions for `/api/user/family` which will let the key create a family and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-api-key.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
+
+## Creating users
+
+The application will have two users: a "child" user who will request access to the site and a "parent" user who can grant or revoke the child user's permission at any time. 
+
+Let's create the parent user first. Navigate to `Users` and click the `Add` button. Select a tenant and supply an email address. Untoggle the `Send email to set up password` switch to directly supply a password. By default, a user must be at least 21 years old in order to be designated as a family owner, so supply an appropriate `Birthdate` as well. This requirement can be modified in the [tenant configuration](https://fusionauth.io/docs/v1/tech/core-concepts/tenants#family).
+
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-parent-user.png" alt="Creating the parent user." class="img-fluid" figure=false %}
+
+Now, repeat this process for the child user. By default, the child user's `Birthdate` can be anything or left blank.
 
 ## Setting up Express
 
