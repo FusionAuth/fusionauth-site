@@ -46,6 +46,7 @@ var indexPages = {
   '/docs/v1/tech/tutorials/': true,
   '/docs/v1/tech/tutorials/gating/': true,
   '/docs/v1/tech/tutorials/two-factor/': true,
+  '/how-to/': true,
   '/learn/expert-advice/': true,
   '/learn/expert-advice/authentication/': true,
   '/learn/expert-advice/ciam/': true,
@@ -94,7 +95,7 @@ var redirects = {
   '/features/user-management-reporting': '/features/user-management',
   '/gaming': '/industries/gaming-entertainment',
   '/gaming/': '/industries/gaming-entertainment',
-  '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes',
+  '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes/',
   '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/learn/expert-advice/gaming-entertainment/gaming-identity-provider-needs',
   '/learn/expert-advice/dev-tools/jwt-debugger': '/learn/expert-advice/dev-tools/jwt-decoder',
   '/learn/expert-advice/identity-basics/avoid-lockin': '/learn/expert-advice/authentication/avoid-lockin',
@@ -116,7 +117,7 @@ var redirects = {
   '/upgrade/from-saas': '/compare'
 };
 var s3Paths = ['/direct-download', '/license'];
-var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/'];
+var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/'];
 
 function handler(event) {
   var request = event.request;
