@@ -665,59 +665,62 @@ But if you are trying to migrate an expected mass of new users and want to use F
 
 == Special Considerations
 
-Beyond migrating users, there may be other important data to import.
+Beyond migrating users, there may be other important data to import from a previous user identity datastore.
 
 === Migrating Refresh Tokens
 
-If you are moving from a token based API system to FusionAuth, you may follow the common practice of using short-lived access tokens to protect resources, but long-lived refresh tokens to avoid needlessly reauthenticating users.
+If you have a token based authentication system, you may follow the common practice of using short-lived access tokens to protect resources, but long-lived refresh tokens to avoid needlessly reauthenticating users. If updating this system to use FusionAuth as a token source, you can avoid invalidating all the existing refresh tokens.
 
-In this case, you can import users' refresh tokens from the existing system into FusionAuth. Importing refresh tokens ensures that your users enjoy an uninterrupted application experience, since the next time their access token expires, they'll present a valid refresh token to FusionAuth, which will in turn issue a new signed token.
+You can import users' refresh tokens from the existing system into FusionAuth. Importing refresh tokens ensures that your users can enjoy an uninterrupted application experience. The next time their access token expires, each client can present a valid refresh token to FusionAuth, which will in turn issue a new signed access token.
 
-This concern is only applicable for big-bang migrations, since a slow migration can re-issue the refresh token for each user as they log in.
+This option is only applicable for big-bang migrations, since a slow migration can re-issue a refresh token for each user at login time.
 
-Consult the link:/docs/v1/tech/apis/users#import-refresh-tokens[documentation for this API] for more information on how to do so.
+Consult the link:/docs/v1/tech/apis/users#import-refresh-tokens[documentation for the Refresh Token Import API] for more information on how to import these tokens.
 
 === Migrating SAML Configuration
 
-If you are have a number of SAML identity providers (IdPs) to which your existing user accout system delegates, you'll need to update those external IdP configurations. This is commone when you have multiple organizations in your application and each orgnization has one or more SAML identity providers which control the users which have access to your organization.
+If you are have SAML identity providers (IdPs) to which your existing user account system delegates, you must update all external IdP configurations that depend on an existing authentication system. This is common when you have multiple organizations represented in your application and each orgnization has one or more SAML identity providers which are the system of record for the organization's users in your application.
 
-There are two paths forward for updating external SAML configuration. In this scenario, there is an existing SAMLv2 Service Provider (SP), and you are transitioning to using FusionAuth as your new SP.
+When migrating, there is an existing SAML Service Provider (SP). This could be a custom application or another vendor. After migration, you will use FusionAuth as your new SP.
 
-==== Migrate By Updating Upstream Configuration
+There are two options to update this type of SAML configuration external to FusionAuth. 
 
-The first, recommended option, is to reach out to every upstream SAML IdP and update your configuration. To make this simpler, you can preload all the certificates in FusionAuth using the link:/docs/v1/tech/core-concepts/key-master[Key Master UI] or APIs. You can also configure link:/docs/v1/tech/identity-providers/samlv2/[FusionAuth SAMLv2 Identity Providers] with the same values as your existing SAML SP.
+==== Updating Upstream Configuration
 
-However, in this scenario, each upstream IdP needs to update their Assertion Consumer Service (ACS) URL to the valid FusionAuth value. If this is different than the previous value, which is likely, this updating process may take a while and require coordination across organizations.
+The first, recommended, option, is to contact every upstream SAML IdP and have the administrators update their configuration to point to FusionAuth instead of the existing SAML SP. You can preload the required certificates in FusionAuth using the link:/docs/v1/tech/core-concepts/key-master[Key Master UI] or APIs. You can also configure link:/docs/v1/tech/identity-providers/samlv2/[FusionAuth SAMLv2 Identity Providers] with the same values (audience, etc) as the existing SAML SP.
 
-This may impact a FusionAuth migration, because you may need to wait to configure your applications to use FusionAuth until the upstream IdP sends the SAML response to the correct ACS.
+However, in this option, each upstream IdP needs to update their Assertion Consumer Service (ACS) URL to a valid FusionAuth value. Since the ACS URL typically is different and the adminstrators of the IdP may not make such changes a priority, this updating process may take a while.
 
-==== Migrate By Relaxing FusionAuth Security Settings
+This will impact a FusionAuth migration, because you may have to wait to configure your applications to use FusionAuth until the upstream IdP sends the SAML response to the correct ACS URL.
 
-There's an alternative, which involves relaxing certain security settings in FusionAuth to allow for a longer migration period.
+==== Relaxing FusionAuth Security Settings
+
+You can ease a SAML migration by relaxing certain security settings in FusionAuth. This will allow FusionAuth to ingest SAML assertions designated for the existing SAML SP, which means you can migrate to FusionAuth more quickly.
 
 [NOTE.since]
 ====
 This option relies on FusionAuth functionality available since version 1.43.0.
 ====
 
-In this scenario, you preload all the certificates and let the upstream IdP administrators know that they'll need to update their ACS URLs eventually. You'll also configure a link:/docs/v1/tech/identity-providers/samlv2/[FusionAuth SAMLv2 Identity Provider] with the same values as your existing SAML SP.
+In this scenario, you also preload the required certificates and notify upstream IdP administrators they'll need to update their ACS URLs eventually. You'll also configure a link:/docs/v1/tech/identity-providers/samlv2/[FusionAuth SAMLv2 Identity Provider] with the same values as your existing SAML SP.
 
-But, in addition:
+But, in addition you need to:
 
+* Configure your applications to point to the FusionAuth hosted login pages. You may want to use an `idp_hint` to skip the hosted login pages and send users directly to the IdP.
+* Modify the FusionAuth destination assertion policy. You can do this via the API or the administrative user interface. In the administrative user interface, navigate to [breadcrumb]#Identity Providers -> Your SAMLv2 Identity Provider#. Then navigate to the [breadcrumb]#Options# tab, and find the [field]#Destination assertion policy# field.
 * Set up an HTTP redirect from your existing ACS URL to the FusionAuth ACS URL. You can do this using a proxy such as nginx.
-* Update the destination assertion policy. You can do this via the API or the administrative user interface. In the administrative user interface, navigate to [breadcrumb]#Identity Providers -> Your SAMLv2 Identity Provider#. Then navigate to the [breadcrumb]#Options# tab, and find the [field]#Destination assertion policy# field.
+* You may disable or shut down the existing SAML SP at this time, since all traffic should be moving through FusionAuth.
 
-Set [field]#Destination assertion policy# field to [uielement]#Allow alternates#. This choice verifies the `Destination` attribute is either the expected FusionAuth ACS URL, or one of the configured alternate values. Add as many alternate values as you need. Each value is typically an ACS URL of the SAML SP that FusionAuth is replacing.
+Set the [field]#Destination assertion policy# field to [uielement]#Allow alternates#. This choice verifies the SAML `Destination` attribute is either the expected FusionAuth ACS URL, or one multiple known alternate values. Add as many alternates as you need. Each is typically an ACS URL of the SAML SP that FusionAuth is replacing.
 
 [WARNING.warning]
 ====
-When you are changing the [field]#Destination assertion policy# settings, be aware of the security risks and minimize the number of destinations that FusionAuth accepts.
+When you are changing the [field]#Destination assertion policy# setting, be aware of the security risks and minimize the number of destinations that FusionAuth accepts.
 
-While this may be necessary for a migration, afterwards work with the upstream IdPs to modify their configuration to point directly to FusionAuth. This is the safest and most secure setting.
+While modifying this setting may be necessary for a migration, you should, as soon as possible, work with the upstream IdPs to modify their configuration to point directly to the FusionAuth ACS URL. This is the safest and most secure configuration.
 ====
 
-At a later time, work with each SAML IdP to update their configuration to point to the FusionAuth ACS. After all are migrated, set [field]#Destination assertion policy# field to [uielement]#Enabled#, which is the most secure setting.
-
+At a later time, request each SAML IdP update their configuration to point to the FusionAuth ACS URL. After all upstream providers have been migrated to the latest configuration, set the [field]#Destination assertion policy# field to [uielement]#Enabled#, the most secure setting. 
 
 == Additional Resources
 
