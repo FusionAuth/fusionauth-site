@@ -9,18 +9,18 @@ image:
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll create FusionAuth User Actions to flag a user, and send emails and webhook notifications, when they buy temporary access to a news site.
+In this tutorial, we'll create FusionAuth User Actions to flag a user and send emails and webhook notifications when they buy temporary access to a news site.
 
 <!--more-->
 
-User Actions in FusionAuth can be quite powerful. They are often used to temporarily disable access to a user upon some infringement or account review. However, they can be used in positive scenarios as well. We'll model a common type of scenario in this tutorial: A user buys temporary access to a news site. You can apply a FusionAuth User Action which broadcasts that to all the sister news sites, which can now try to upsell the user to buy a subscription, as well as send an email to the user thanking them. When the user's access expires, User Actions can send an automatic email thanking them.
+User Actions in FusionAuth can be quite powerful. They are often used to temporarily disable access to a user upon some infringement or account review. However, they can be used in positive scenarios as well. We'll model a common type of scenario in this tutorial: A user buys temporary access to a news site. You can apply a FusionAuth User Action to broadcast the purchase to sister news sites so that they can upsell the user a subscription and send automatic emails to the user when they subscribe, modify or cancel their subscription, and when the subscription expires.
 
 ## Prerequisites
 
 We'll explain nearly everything that we use, but we expect you to have:
 
 - Docker and Docker Compose set up as we'll set up FusionAuth using these.
-- [cURL](https://curl.se), or [Postman](https://www.postman.com), or a similar tool installed to send test HTTP requests to the FusionAuth API.
+- [cURL](https://curl.se), [Postman](https://www.postman.com), or a similar tool installed to send test HTTP requests to the FusionAuth API.
 
 ## Installing and configuring FusionAuth with Docker Compose
 
@@ -44,7 +44,7 @@ Once you've done this, you'll be prompted to complete three more set-up steps, a
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/fusionauth-setup.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
 
-Sending emails to communicate to the user about their purchase is a vital part of this tutorial, so you'll want to set that up. Read more about setting up [email on FusionAuth here](https://fusionauth.io/docs/v1/tech/email-templates/configure-email). If you are running locally, you can use a mock SMTP email server like [MailCatcher](https://mailcatcher.me)
+Sending emails to communicate to the user about their purchase is a vital part of this tutorial, so you'll want to set that up. Read more about [setting up email on FusionAuth here](https://fusionauth.io/docs/v1/tech/email-templates/configure-email). If you are running locally, you can use a mock SMTP email server like [MailCatcher](https://mailcatcher.me).
 
 ### Creating an application
 
@@ -60,11 +60,11 @@ Two users are required for a User Action to take effect: an `actioner` and an `a
  
 To create a user, navigate to "Users" and click the "Add" button. Then supply an email address. You can untoggle the "Send email to set up password" switch to supply a password straight away.
 
-Record the Id's of both users.
+Record the Ids of both users.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-create-user.png" alt="Create User" class="img-fluid" figure=false %}
  
-### Creating an API Key
+### Creating an API key
  
 We will create and execute our User Action through API calls, so we need to set up an API Key. Navigate to "Settings" then "API Keys" and click the "Add" button. Make sure `POST` is enabled for both the `/api/user-action` and `/api/user/action` endpoints. We will use the former to create our User Action and the latter to execute it.
  
@@ -76,13 +76,13 @@ Record the value of your API Key.
  
 ### Creating email templates
  
-Our User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their Id under "Customizations" then "Email Templates". More information on email templates in FusionAuth can be found [here](https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview).
+Our User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their Ids under "Customizations", "Email Templates". More information on email templates in FusionAuth can be found [here](https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview).
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email-templates.png" alt="Email Templates" class="img-fluid" figure=false %}
  
 ### Creating the User Action
  
-We can now create a [user action definition](https://fusionauth.io/docs/v1/tech/apis/user-actions) with the email template Ids and `POST` to the `/api/user-action` route. Setting the `temporal` attribute to `true` allows us to set an `expiry` time when we execute the action on a user. This means that the action will automatically be removed from the user after the time set in `expiry`. We can also set `sendEndEvent` to `true` so that we can be notified via webhook when the access period has expired.
+We can now create a [User Action definition](https://fusionauth.io/docs/v1/tech/apis/user-actions) with the email template Ids and `POST` to the `/api/user-action` route. Setting the `temporal` attribute to `true` allows us to set an `expiry` time when we execute the action on a user. This means that the action will automatically be removed from the user after the time set in `expiry`. We can also set `sendEndEvent` to `true` so that we can be notified via webhook when the access period has expired.
  
 ```sh
 curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/user-action' \
@@ -102,7 +102,8 @@ curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/user-action' \
  }'
 ```
 
-Replace `<YOUR_FUSIONAUTH_URL>` with the URL of your FusionAuth instance, `<YOUR API KEY>` with the API key noted earlier as well as the `startEmailTemplateId`, `endEmailTemplateId`, `modifyEmailTemplateId` and `cancelEmailTemplateId` with appropriate values, in the command above.
+In this command, replace `<YOUR_FUSIONAUTH_URL>` with the URL of your FusionAuth instance, `<YOUR API KEY>` with the API key noted earlier, and the `startEmailTemplateId`, `endEmailTemplateId`, `modifyEmailTemplateId`, and `cancelEmailTemplateId` with appropriate values.
+
 FusionAuth should return something similar to the following:
 
 ```json
@@ -129,13 +130,13 @@ FusionAuth should return something similar to the following:
 }
 ```
 
-Record the `id` value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`. You can verify that the User Action was created by going to "Settings" then "User Actions" in the FusionAuth admin portal.
+Record the `id` value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`. You can verify that the User Action was created by going to "Settings", then "User Actions" in the FusionAuth admin portal.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-user-action-created.png" alt="User Action Created" class="img-fluid" figure=false %}
  
-### Setting up Webhooks
+### Setting up webhooks
 
-In order to propagate a message when a user action is taken to our sister news sites, we can set up a webhook. To do this, we can navigate to "Settings" then "Webhooks" and click the "Add" button. To simulate the endpoint of our sister news site that will consume the user action information, we will use [https://webhook.site](https://webhook.site). Upon visiting this page, it will generate a unique URL of the form `https://webhook.site/<YOUR_WEBHOOK_SITE_ID>`. Copy this URL into the "URL" field.
+To propagate a message when a user action is taken to our sister news sites, we can set up a webhook. To do this, navigate to "Settings" then "Webhooks" and click the "Add" button. To simulate the endpoint of our sister news site that will consume the user action information, we will use [https://webhook.site](https://webhook.site). If you visit this page, it will generate a unique URL of the form `https://webhook.site/<YOUR_WEBHOOK_SITE_ID>`. Copy this URL into the "URL" field.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-add-webhook.png" alt="Add Webhook" class="img-fluid" figure=false %}
  
@@ -147,17 +148,17 @@ Then, select the "Tenants" tab and select your tenant. Alternatively, you can se
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-webhook-tenant.png" alt="Enable tenant on webhook page" class="img-fluid" figure=false %}
  
-Navigate to "Tenants" then "Your tenant" and select the "Webhooks" tab. Make sure that the webhook is enabled. If you selected "All tenants" on the webhook page, its checkbox will be disabled.
+Navigate to "Tenants", then "Your tenant", and select the "Webhooks" tab. Make sure that the webhook is enabled. If you selected "All tenants" on the webhook page, its checkbox will be disabled.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-tenants-webhooks.png" alt="Webhook enabled on tenants page" class="img-fluid" figure=false %}
  
-Scroll down and make sure the `user.action` event is enabled here as well.
+Scroll down and make sure the `user.action` event is enabled here too.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-tenants-switch.png" alt="Tenant event switch" class="img-fluid" figure=false %}
  
 ### Executing the User Action
  
-Now you can [apply the action](https://fusionauth.io/docs/v1/tech/apis/actioning-users) to a specific user with the `api/user/action` endpoint. The `expiry` time follows the UNIX epoch format in milliseconds. Make sure the `actioneeUserId`, `actionerUserId`, and `userActionId` values match the ones you recorded in the previous steps as well as to update the `expiry` to a future timestamp.
+Now you can [apply the action](https://fusionauth.io/docs/v1/tech/apis/actioning-users) to a specific user with the `api/user/action` endpoint. The `expiry` time follows the UNIX epoch format in milliseconds. Make sure the `actioneeUserId`, `actionerUserId`, and `userActionId` values match the ones you recorded in the previous steps. Update the `expiry` to a future timestamp.
  
 ```sh
 curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/user/action' \
@@ -176,7 +177,7 @@ curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/user/action' \
  }'
 ```
 
-FusionAuth should reply with 200 OK:
+FusionAuth should reply with `200 OK`:
 
 ```json
 {
@@ -197,7 +198,7 @@ FusionAuth should reply with 200 OK:
 }
 ```
 
-Upon executing this action, the `actionee` will receive an email thanking them for their subscription.
+When this action is executed, the `actionee` will receive an email thanking them for their subscription.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email.png" alt="Email confirmation" class="img-fluid" figure=false %}
  
@@ -207,18 +208,18 @@ You can also verify that the request was propagated to the sister news site by c
 
 When the action expires, the webhook will be fired again.
  
-### Querying Action status on a User
+### Querying action status on a user
 
-Depending on how you control access to your articles, you might want to check the user to see if they have temporary access actioned. You can do this by [querying the actions API](https://fusionauth.io/docs/v1/tech/apis/actioning-users#retrieve-a-previously-taken-action) and filtering by user and Action:
+Depending on how you control access to your articles, you might want to check the user to see if they have temporary access actioned. You can do this by [querying the actions API](https://fusionauth.io/docs/v1/tech/apis/actioning-users#retrieve-a-previously-taken-action) and filtering by user and action:
 
 ```sh
 curl --location --request GET 'https://<YOUR_FUSIONAUTH_URL>/api/user/action?userId=<USER_ID>&active=true' \
 --header 'Authorization: <YOUR API KEY>'
 ```
 
-Replace `<YOUR_FUSIONAUTH_URL>` , `<YOUR API KEY>` and `<USER_ID>` with the appropriate values. 
+Replace `<YOUR_FUSIONAUTH_URL>` , `<YOUR API KEY>`, and `<USER_ID>` with the appropriate values. 
 
-FusionAuth will return an object with an array of all actions currently active on the user. You can filter to find if there are any with the `userActionId` of the user action set up above, to test if the user has temporary access:
+FusionAuth will return an object with an array of all actions currently active on the user. You can filter the results to find the `userActionId` of the user action we set up above to test if the user has temporary access:
 
 ```sh
 {
@@ -246,8 +247,8 @@ FusionAuth will return an object with an array of all actions currently active o
 
 ### Conclusion
  
-In this tutorial, we used User Actions to flag and email users who buy temporary access to our news site. We also propagate that request to sister news sites so that they can upsell the user as well.
+In this tutorial, we used User Actions to flag and email users who buy temporary access to our news site. We also propagate that request to sister news sites so that they can upsell to the user.
  
-### Further Reading
+### Further reading
  
 For more information on FusionAuth User Actions, see [this overview](https://fusionauth.io/docs/v1/tech/apis/user-actions#overview) and [this reference on actioning users](https://fusionauth.io/docs/v1/tech/apis/actioning-users).
