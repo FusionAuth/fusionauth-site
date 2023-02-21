@@ -84,9 +84,7 @@ Once the user has logged in via the FusionAuth application, we can retrieve thei
 
 Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value.
 
-{% include _image.liquid src="/assets/img/blogs/consents-app/gettingapikey.png" alt="Getting the API key from FusionAuth." class="img-fluid" figure=false %}
-
-For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get, post and put actions for `/api/user/family` which will let the key create a family and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
+For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get action for `api/user`, the get and post actions for `api/user/consent`, and the get, post, and put actions for `/api/user/family`. This will let the key get basic user information, modify permissions to view the app, create a family and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-api-key.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
