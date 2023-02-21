@@ -67,15 +67,22 @@ After saving the application, find the application in the list of applications a
 
 image::api-gateways/kong-gateway/kong-gateway-application-id.png[FusionAuth Application Id, width=1200,role=bottom-cropped]
 
-Now, navigate to [breadcrumb]#Settings -> Key Master#. You will see the access key that you've just created in this list. By default, it has the name `Access token signing key generated for application <NAME_OF_APPLICATION>`. View the key and copy the entire contents of the [field]#PEM encoded# field under the [breadcrumb]#Public Key# section into a file in your current working directory. Name the file something like `public.pem`
+Now, navigate to [breadcrumb]#Settings -> Key Master#. You will see the access key that you've just created in this list. By default, it has the name `Access token signing key generated for application <NAME_OF_APPLICATION>`. View the key and copy the entire contents of the [field]#PEM encoded# field under the [breadcrumb]#Public Key# section into a file in your current working directory. Name the file something like `public.pem`.
 
 image::api-gateways/kong-gateway/kong-gateway-public-key.png[FusionAuth Public Key for Access Token,width=1200]
+
+[NOTE.note]
+====
+Why not use JWKS, which FusionAuth supports, to retrieve the public key?
+
+Unfortunately, https://github.com/Kong/kong/issues/8381#issuecomment-1035441828[JWKS is not supported by the JWT Kong plugin].
+====
 
 You will use FusionAuth's API to generate a test JWT for your application. However, in a real-world application, the user or service would get the JWT through an OAuth grant. In the case of a user, the appropriate grant is the Authorization Code grant, and for a service, the Client Credentials grant. To make this example simpler, you'll use the Login API to get the JWT. To do this, you need an API key with POST access to the `/api/login` endpoint. Go to [breadcrumb]#Settings -> API Keys# to add the key. Make sure the appropriate tenant is selected in the [field]#Tenant# field.
 
 image::api-gateways/kong-gateway/kong-gateway-api-key-setup.png[FusionAuth API Key setup, width=1200]
 
-After saving the API key, you can view the key in the list of API keys. Make a note of the value of the [field]#Key# field. You will need to click the red padlock icon next to the key to reveal the value.
+After saving the API key, you can view the key in the list of API keys. Make a note of the value of the [field]#Key# field, as it will be used later. You will need to click the red padlock icon next to the key to reveal the value.
 
 image::api-gateways/kong-gateway/kong-gateway-api-key.png[FusionAuth API Key setup, width=1200,role=bottom-cropped]
 
@@ -109,7 +116,7 @@ curl -i -X POST http://localhost:8001/consumers/<CONSUMER_USERNAME>/jwt \
   -F "key=<YOUR_FUSIONAUTH_URL>"
 ----
 
-Here, `YOUR_FUSIONAUTH_URL` should exactly match the [field]#Issuer# field from [breadcrumb]#Tenants -> Your Tenant#, `CONSUMER_USERNAME` should match the [field]#username# that you supplied to the consumer in the prior step, and `PUBLIC_KEY_FILENAME` should match the name of the file that you saved the public key to, from the [breadcrumb]#Key Master# page.
+Here, `<YOUR_FUSIONAUTH_URL>` should exactly match the [field]#Issuer# field from [breadcrumb]#Tenants -> Your Tenant#, `<CONSUMER_USERNAME>` should match the [field]#username# that you supplied to the consumer in the prior step, and `<PUBLIC_KEY_FILENAME>` should match the name of the file that you saved the public key to, from the [breadcrumb]#Key Master# page.
 
 Using the example values from this guide, the command would be:
 
@@ -138,11 +145,11 @@ curl --location --request POST '<YOUR_FUSIONAUTH_URL>/api/login' \
   }'
 ----
 
-Here, `YOUR_FUSIONAUTH_URL` is the [field]#Issuer# name, and `API_KEY` is the key you noted when setting it up on the [breadcrumb]#Settings -> API Keys# page.
+Here, `<YOUR_FUSIONAUTH_URL>` is the [field]#Issuer# name, and `<API_KEY>` is the key you noted when setting it up on the [breadcrumb]#Settings -> API Keys# page.
 
-For `APPLICATION_ID`, use the Id of your FusionAuth application, noted when setting up the application.
+For `<APPLICATION_ID>`, use the Id of your FusionAuth application, noted when setting up the application.
 
-The values for `USER_EMAIL` and `USER_PASSWORD` are the username and password of the test user that you registered to that application.
+The values for `<USER_EMAIL>` and `<USER_PASSWORD>` are the username and password of the test user that you registered to that application.
 
 Using the example values from this guide, the command would be:
 
@@ -180,7 +187,7 @@ curl -I http://localhost:8000/mock/requests \
 -H 'Authorization: Bearer <TOKEN>'
 ----
 
-Where `TOKEN` is the value of the JWT that you copied from the `/api/login` call.
+Where `<TOKEN>` is the value of the JWT that you copied from the `/api/login` call.
 
 This command should return `HTTP/1.1 200 OK`, indicating successful authorization to the Kong Gateway service.
 
