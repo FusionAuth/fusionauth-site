@@ -235,10 +235,21 @@ Now, in the `GET home page` section, replace the `res.render('index', { title: '
     pkce_pair = pkceChallenge();
     req.session.verifier = pkce_pair['code_verifier']
     req.session.challenge = pkce_pair['code_challenge']
+```
+This sets up the PKCE information so that when you return from the FusionAuth login screen, you know that your email and password were not handled by an impostor. Next, add the following underneath what you just added.
+
+```js
     if (req.session.user && req.session.user.id) {
 
         // build our family object for display
         client.retrieveFamilies(req.session.user.id)
+```
+
+This grabs the information of the user who just logged in and uses it to request the information of all of that user's family members.
+
+Next, add the following underneath what you just added.
+
+```js
             .then((response) => {
                 if (response.response.families && response.response.families.length >= 1) {
                     // adults can only belong to one family
@@ -252,6 +263,13 @@ Now, in the `GET home page` section, replace the `res.render('index', { title: '
                         users.forEach(user => {
                             family.push({"id": user.response.user.id, "email": user.response.user.email});
                         });
+```
+ 
+This gets the list of all children in the current user's family and pushes their information into an array. The current user is also added to that list regardless of their role in the family so that their consent status can be used to dynamically display the restricted section of the landing page after login. 
+ 
+Next, add the following underneath what you just added.
+
+```js
                     }).then(() => {
                         let getUserConsentStatuses = children.map(elem => {
                             return client.retrieveUserConsents(elem.userId);
@@ -274,6 +292,14 @@ Now, in the `GET home page` section, replace the `res.render('index', { title: '
                             onePerson["userConsentId"] = userIdToUserConsentId[onePerson.id];
                             return onePerson;
                         });
+```
+
+This gets the consent status of each user that you just retrieved. This is the crucial piece of information that decides whether or not the restricted section will be shown.
+
+
+Next, add the following underneath what you just added.
+```js
+
                         //}).then(() => {
                         res.render('index', {
                             family: family,
@@ -294,7 +320,9 @@ Now, in the `GET home page` section, replace the `res.render('index', { title: '
     }
 ```
 
-Quite a lot seems to be happening here, but for now just understand that you are setting up all of the information required by FusionAuth for a successful login. Now, you can make sure that information is correctly applied upon hitting the `Login` button by adding the following code at the end of the file, right before the `module.exports = router;` line:
+This packages all of the information you just retrieved and uses it to render the landing page. If anything goes wrong, the error text will be displayed in the terminal window from which you ran `npm start`. 
+
+To enable the FusionAuth login page to securely authenticate and authorize your session, add the following underneath what you just added.
 
 ```js
 /* OAuth return from FusionAuth */
