@@ -154,7 +154,7 @@ If all went well, the server should start successfully and you can visit `http:/
 
 ## Building the application
 
-Our application will have only two pages apart from the FusionAuth login page: a landing page that will redirect the user to the FusionAuth login page, and a home page from which a parent user can grant or revoke permission for the child user to view the page.
+Our application will have only one page apart from the FusionAuth login page: a landing page that will redirect the user to the FusionAuth login page. This page will dynamicaly display a list of children if the current user is a parent user, and a restricted section if the current user is either an adult or a child who has been granted permission to view it by a parent user.
 
 For the landing page, add the following to `views/index.pug`. 
 
