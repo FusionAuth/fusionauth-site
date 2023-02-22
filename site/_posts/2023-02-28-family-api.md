@@ -165,7 +165,7 @@ block content
   h1= title
   p Welcome to #{title}
 
-  - var clientId = '7d31ada6-27b4-461e-bf8a-f642aacf5775'
+  - var clientId = '<YOUR_CLIENT_ID>'
   if user
     p Hello #{user.firstName}
     if family
@@ -191,7 +191,7 @@ block content
       h2 Restricted Section
       p This is a restricted section. Only authorized users can view it.
   else
-    a(href='https://fusionauth.ritza.co/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&code_challenge='+challenge+'&code_challenge_method=S256') Login
+    a(href='<YOUR_FUSIONAUTH_URL>/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&code_challenge='+challenge+'&code_challenge_method=S256') Login
 ```
 
 Replace `<YOUR_CLIENT_ID>` with the Id of your FusionAuth application and `<YOUR_FUSIONAUTH_URL>` with the fully-qualified URL of your FusionAuth instance, including the protocol. For example, `<YOUR_CLIENT_ID>` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and `<YOUR_FUSIONAUTH_URL>` might look like `https://local.fusionauth.io`.
