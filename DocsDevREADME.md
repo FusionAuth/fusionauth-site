@@ -243,6 +243,7 @@ end tell
 ## Screenshot Standards
 
 - Use light mode when capturing screenshots
+- In macOS **System Settings > Appearance** make sure _Allow wallpaper tinting in windows_ is turned _off_
 - Make sure you set your `fusionauth-app.runtime-mode` to `production` unless documenting a feature only available in `development` mode.
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
