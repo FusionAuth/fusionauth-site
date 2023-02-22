@@ -327,86 +327,6 @@ router.get('/oauth-redirect', function (req, res, next) {
 });
 ```
 
-With that, the landing page and FusionAuth login page should be fully functional. Now, you can add the functionality that allows the home page to work. Add the following code underneath what you just added.
-
-```js
-/* Confirm child list flow */
-router.get('/confirm-child-list', function (req, res, next) {
-    if (!req.session.user) {
-        // force signin
-        res.redirect(302, '/');
-    }
-    client.retrievePendingChildren(req.session.user.email)
-        .then((response) => {
-            res.render('confirmchildren', {children: response.response.users, title: 'Confirm Your Children', challenge: req.session.challenge});
-        }).catch((err) => {
-        console.log("in error");
-        console.error(JSON.stringify(err));
-    });
-});
-```
-
-This will allow the list of children associated with the parent user to surface on the home page. To enable a parent user to confirm the child user as a member of their family, add the following code underneath what you just added.
-
-```js
-/* Confirm child action */
-router.post('/confirm-child', function (req, res, next) {
-    if (!req.session.user) {
-        // force signin
-        res.redirect(302, '/');
-    }
-    childEmail = req.body.child;
-
-    if (!childEmail) {
-        console.log("No child email provided!");
-        res.redirect(302, '/');
-    }
-
-    let childUserId = undefined;
-    client.retrieveUserByEmail(childEmail)
-        .then((response) => {
-            childUserId = response.response.user.id;
-            return client.retrieveFamilies(req.session.user.id)
-        })
-        .then((response) => {
-            if (response && response.response && response.response.families && response.response.families.length >= 1) {
-                // user is already in family
-                return response;
-            }
-            // if no families, create one for them
-            const familyRequest = {"familyMember": {"userId": req.session.user.id, "owner": true, "role": "Adult"}};
-            return client.createFamily(null, familyRequest);
-        })
-        .then((response) => {
-            //only expect one
-            const familyId = response.response.families[0].id;
-            const familyRequest = {"familyMember": {"userId": childUserId, "role": "Child"}}
-            return client.addUserToFamily(familyId, familyRequest);
-        })
-        .then((response) => {
-            // capture consent
-            const consentRequest = {
-                "userConsent": {
-                    "userId": childUserId,
-                    "consentId": consentId,
-                    "giverUserId": req.session.user.id
-                }
-            }
-            return client.createUserConsent(null, consentRequest);
-        })
-        .then((response) => {
-            // now pull existing children to be confirmed
-            client.retrievePendingChildren(req.session.user.email)
-        })
-        .then((response) => {
-            res.redirect(302, '/confirm-child-list');
-        }).catch((err) => {
-        console.log("in error");
-        console.error(JSON.stringify(err));
-    });
-});
-```
-
 The last piece of the puzzle is to handle the granting and revocation of consent by the parent user for the child user to access the site. Add the following code underneath what you just added.
 
 ```js
@@ -441,35 +361,31 @@ router.post('/change-consent-status', function (req, res, next) {
 
 ## Testing
 
-We are done with the coding. Type `npm start` at the console to start up the server. Then navigate to `localhost:3000`, preferably in a private tab. This ensures that your main admin login to FusionAuth is not a confounding factor while logging in.  
+We are done with the coding. Type `npm start` at the console to start up the server. Then navigate to `localhost:3000` in a private window. This ensures that your main admin login to FusionAuth is not a confounding factor while logging in.  
 
-You should see the main page looking something like this:
+You should see the landing page looking something like this:
 
-{% include _image.liquid src="/assets/img/blogs/consents-app/not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-testing-landing-page.png" alt="The main page when logged out" class="img-fluid" figure=false %}
 
-Clicking on "Login Here" should redirect you to your FusionAuth installation.
+Clicking on "Login" should redirect you to your FusionAuth installation.
 
 {% include _image.liquid src="/assets/img/blogs/consents-app/login-page.png" alt="The FusionAuth login page" class="img-fluid" figure=false %}
 
-Clicking the "Create an account" link should render the custom registraton form configured earlier. Notice that it has 3 steps:
+First, login as the child user. You should see a very simple home page with no restricted information.
 
-{% include _image.liquid src="/assets/img/blogs/consents-app/registration-steps.png" alt="The custom registration page, with multiple steps" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-testing-child-revoked.png" alt="The child user logs in but cannot see any restricted information" class="img-fluid" figure=false %}
 
-Enter all the information, and click "Register" at the end of the steps. You should then be redirected back to your Express app, with a new message on the home page:
+Close the private window and open a new one. Repeat the steps above, this time signing in as the parent user. You should see an option to grant the child user consent to view the restricted section.
 
-{% include _image.liquid src="/assets/img/blogs/consents-app/logged-in.png" alt="The root page message for logged in users" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-testing-grant-consent.png" alt="The parent user logs in and can grant or revoke consent for the child user" class="img-fluid" figure=false %}
 
-Clicking on the "profile page" link should take you to `users/me`, showing 2 JSON objects representing your profile on FusionAuth, along with the raw data from the consents API. Notice in each consent that there is a property `status`. This will be either `active` or `revoked`. You can use these values when checking to send information to the user through each channel. 
+Close the private window and open a new one. Login as the child user again. This time, the restricted section should appear.
 
-{% include _image.liquid src="/assets/img/blogs/consents-app/users-me.png" alt="The users/me page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
-
-Clicking the "profile page" link will redirect to FusionAuth, where the user can view and update their information and consent permissions via the self-service form created earlier. Once navigated to the FusionAuth hosted profile page, clicking on the "Edit" pencil icon button in the top right will allow the user to update their profile. 
-
-
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-testing-child-granted.png" alt="The child user logs in and can see the restricted section" class="img-fluid" figure=false %}
 
 ## Where to next with Express and FusionAuth?
 
-That’s the basics of our Express + FusionAuth app done. The app has a fully featured authentication system, along with user consents, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/fusionauth/fusionauth-example-express-consents).
+That’s the basics of our Express + FusionAuth app done. The app has a fully featured authentication system, along with user consents, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](<todo>).
 
 Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, consents, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
 
