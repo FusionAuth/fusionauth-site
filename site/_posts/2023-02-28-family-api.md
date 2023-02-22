@@ -23,26 +23,6 @@ We'll explain nearly everything that we use, but we expect you to have:
     
 It'll also help if you know the basics of OAuth or authentication in general.
 
-## Why FusionAuth instead of plain Passport?
-
-[Passport](https://www.passportjs.org) is a one of the commonly used authentication systems in Express apps. It is very powerful, and allows you to hook into social providers, openID and OAuth providers, or use a local authentication strategy. This sounds like everything you'll ever need, but there are still a few missing pieces. For example, you still need to construct your own login page and other account functionality such as changing passwords, forgotten password resets, 2FA, email verification, account protection and more. Setting up custom web app authentication is always more complicated than it seems.
-
-You'd also need to implement functionality to allow users to update their profile information. Part of users profile and account data is inevitably consent permissions. Most apps will need to gather user's consent for activities such as sending marketing updates, or sharing the user's data with affiliates and other third-parties. This would normally require coding, storing and maintaining with custom solutions. However, since it is an integral part of user identity, FusionAuth has consent management built-in.
-
-The great news is that combining Passport with FusionAuth makes a complete system, which takes care of all aspects of authentication and identity. It also means that much of your app's authentication capability can be configured through FusionAuth, rather than writing code and modifying your app. For example, you can easily add registration form fields whenever you need to, without changing code or redeploying your app.
-
-With this setup, authentication, identity and consent concerns are taken care of entirely by FusionAuth.
-
-The image below shows how this works.
-
-{% include _image.liquid src="/assets/img/blogs/consents-app/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Node-Express. User consent information also stored and managed by FusionAuth" class="img-fluid" figure=false %}
-
-Your application logic and all public information can be handled by Node.js + Express. Anything sensitive, such as personally identifiable information (PII), passwords, and consent permissions is handled by FusionAuth.
-
-This allows you to focus a majority of your security efforts on the FusionAuth installation. It also means that if you create more applications, they can piggyback on your centralised authentication instead of having to re-implement authentication for every application that you build. You can also create a multi-tenant configuration allowing you to easily have logically separate environments for different clients.
-
-Also, any integrations that you set up with other providers (e.g. Twitter, Google, Apple sign-in) can be done once, instead of per application.
-
 ## Installing and configuring FusionAuth with Docker Compose
 
 There are [various ways](/docs/v1/tech/installation-guide/fusionauth-app) to install FusionAuth depending on your system, but the easiest way is to use Docker and Docker Compose. Instructions are [here](/docs/v1/tech/installation-guide/docker). Currently, to install and run FusionAuth you would run (again, assuming you have Docker installed) the following commands:
