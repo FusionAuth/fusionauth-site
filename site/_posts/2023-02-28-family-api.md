@@ -159,13 +159,20 @@ Our application will have only two pages apart from the FusionAuth login page: a
 For the landing page, add the following to `views/index.pug`. 
 
 ```js
-  - var clientId = '<YOUR_CLIENT_ID>'
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+
+  - var clientId = '7d31ada6-27b4-461e-bf8a-f642aacf5775'
   if user
     p Hello #{user.firstName}
-    p 
-      a(href='/confirm-child-list') View children to confirm
-    p Confirmed children
     if family
+      - var self = family.filter(elem => elem.id == user.id)[0]
+      - family = family.filter(elem => elem.id != user.id)
+      if family.length > 0
+        p Confirmed children
       ul 
         each val in family
            form(action='/change-consent-status', method='POST')
@@ -180,8 +187,11 @@ For the landing page, add the following to `views/index.pug`.
                 else
                   input(type='hidden', name='desiredStatus', value='Active') 
                   input(type='submit', value='Grant Consent')
+    if self.status == "Active"
+      h2 Restricted Section
+      p This is a restricted section. Only authorized users can view it.
   else
-    a(href='<YOUR_FUSIONAUTH_URL>/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&code_challenge='+challenge+'&code_challenge_method=S256') Login
+    a(href='https://fusionauth.ritza.co/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&code_challenge='+challenge+'&code_challenge_method=S256') Login
 ```
 
 Replace `<YOUR_CLIENT_ID>` with the Id of your FusionAuth application and `<YOUR_FUSIONAUTH_URL>` with the fully-qualified URL of your FusionAuth instance, including the protocol. For example, `<YOUR_CLIENT_ID>` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and `<YOUR_FUSIONAUTH_URL>` might look like `https://local.fusionauth.io`.
@@ -233,6 +243,8 @@ Now, in the `GET home page` section, replace the `res.render('index', { title: '
                 if (response.response.families && response.response.families.length >= 1) {
                     // adults can only belong to one family
                     let children = response.response.families[0].members.filter(elem => elem.role != 'Adult');
+                    //include current user in children list
+                    children = children.concat(response.response.families[0].members.filter(elem => elem.userId == req.session.user.id))
                     let getUsers = children.map(elem => {
                         return client.retrieveUser(elem.userId);
                     });
