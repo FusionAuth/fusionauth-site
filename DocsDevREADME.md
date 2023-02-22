@@ -392,3 +392,23 @@ Content:	`site/learn/expert-advice/security` # or other top level category 
 Images: `site/assets/img/advice/<subdir>`
 Stamps: `site/assets/img/stamps`
 Diagrams: `site/_diagrams/learn/expert-advice/<subdir>`
+
+## Documentation self-review checklist
+
+Prior to requesting review on a PR, please complete the following checklist.
+
+### API documentation
+
+1. If you added or changed an API parameter, ensure you added a version flag.
+2. When APIs have default values, this is only documented on the request. Do not add it to the response.
+3. When adding or modifying request or response JSON examples, try to maintain themes and consistently.
+   - If the create request has a property of `"name": "My application"`, the response should contain this same value.
+   - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
+4. When referencing a field in the description of another field use this syntax: `[field]#name#`.
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
+  
+
+#### Non API documentation
+1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
+   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
+   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
