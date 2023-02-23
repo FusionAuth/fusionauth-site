@@ -60,6 +60,27 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 - If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
 - If a field was deprecated in a version 30 versions ago (deprecated in 1.15, you are now at 1.45), you can remove it from the docs.
 
+#### Request section layout
+This is general layout guidance for APIs that have `GET` and `POST` options:
+```
+== Request section header
+GET URLs (could have 1-3 of these, show the most common)
+=== GET request parameters (path segment)
+=== GET request parameters (query string)
+=== GET request headers
+
+POST URLs (only will be one, typically)
+=== POST request headers
+=== POST request parameters (path segment)
+=== POST request body
+Example POST request(s)
+
+=== Response section header
+Response codes
+==== Response body
+Example response(s)
+```
+
 ## Blog posts
 
 For blog posts:
@@ -136,6 +157,8 @@ For blog posts:
 - re-authentication
 - server-side
 - client-side
+- curl
+- self-service
 
 ## Words to avoid
 
@@ -220,6 +243,7 @@ end tell
 ## Screenshot Standards
 
 - Use light mode when capturing screenshots
+- In macOS **System Settings > Appearance** make sure _Allow wallpaper tinting in windows_ is turned _off_
 - Make sure you set your `fusionauth-app.runtime-mode` to `production` unless documenting a feature only available in `development` mode.
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
@@ -368,3 +392,23 @@ Content:	`site/learn/expert-advice/security` # or other top level category 
 Images: `site/assets/img/advice/<subdir>`
 Stamps: `site/assets/img/stamps`
 Diagrams: `site/_diagrams/learn/expert-advice/<subdir>`
+
+## Documentation self-review checklist
+
+Prior to requesting review on a PR, please complete the following checklist.
+
+### API documentation
+
+1. If you added or changed an API parameter, ensure you added a version flag.
+2. When APIs have default values, this is only documented on the request. Do not add it to the response.
+3. When adding or modifying request or response JSON examples, try to maintain themes and consistently.
+   - If the create request has a property of `"name": "My application"`, the response should contain this same value.
+   - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
+4. When referencing a field in the description of another field use this syntax: `[field]#name#`.
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
+6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
+
+#### Non API documentation
+1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
+   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
+   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 

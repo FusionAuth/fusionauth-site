@@ -199,7 +199,7 @@ You are going to build a [Flutter](https://flutter.dev/) cross-platform game for
 
 FusionAuth offers multiple authentication options for you to consider when building your application. These include:
 
-- The [hosted login pages](/docs/v1/tech/core-concepts/integrations#hosted-login-pages) forms where FusionAuth hosts the registration forms and pages.
+- The [hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages) where FusionAuth hosts the registration forms and pages.
 - An [API-based](/docs/v1/tech/apis/users) approach to manage users.
 - [Third-party login](/docs/v1/tech/identity-providers/) using identity providers such as Google.
 
