@@ -12,9 +12,9 @@ In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) 
 
 <!--more-->
 
-The application itself is very simple: it will let users sign up via FusionAuth, allow them to set permissions for their children, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](<todo>), although much of the application is defined in FusionAuth as detailed in this guide.
+The application itself is very simple: it will let users sign up via FusionAuth, allow them to set permissions for their children, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/Blueper/family-api-full), although much of the application is defined in FusionAuth as detailed in this guide.
 
-You can also use [these kickstart files](<todo>) to automatically handle the configuration of FusionAuth. You can find more information regarding kickstart files [here](https://fusionauth.io/docs/v1/tech/installation-guide/docker#kickstart)
+You can also use [these kickstart files](https://github.com/Blueper/FamilyAPI-kickstart) to automatically handle the configuration of FusionAuth. You can find more information regarding kickstart files [here](https://fusionauth.io/docs/v1/tech/installation-guide/docker#kickstart)
 
 ## Prerequisites
 
@@ -415,7 +415,7 @@ Close the private window and open a new one. Login as the child user again. This
 
 ## Where to next with Express and FusionAuth?
 
-That’s the basics of our Express + FusionAuth app done. The app has a fully featured authentication system, along with user consents, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](<todo>).
+That’s the basics of our Express + FusionAuth app done. The app has a fully featured authentication system, along with user consents, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/Blueper/family-api-full).
 
 Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, consents, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
 
