@@ -14,7 +14,7 @@ In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) 
 
 The application itself is very simple: it will let users sign up via FusionAuth, allow them to set permissions for their children, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](<todo>), although much of the application is defined in FusionAuth as detailed in this guide.
 
-You can also use [these kickstart files](<todo>) to automatically handle the configuration of FusionAuth. 
+You can also use [these kickstart files](<todo>) to automatically handle the configuration of FusionAuth. You can find more information regarding kickstart files [here](<todo>)
 
 ## Prerequisites
 
