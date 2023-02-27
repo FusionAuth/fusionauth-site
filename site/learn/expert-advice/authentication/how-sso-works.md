@@ -1,7 +1,7 @@
 ---
 layout: advice
 title: How Single Sign-on Works And Why You Should Care
-description: What steps do you need to take to ensure your authentication system can scale?
+description: Integrating single sign-on (SSO) into your applications means your users can access all your applications with one set of credentials, such as a username and password, a magic link, or a WebAuthn passkey.
 author: Dan Moore
 image: advice/vendor-lockin/expert-advice-avoiding-authentication-system-lock-in-header-image.png
 category: Authentication
@@ -13,7 +13,7 @@ Single sign-on (SSO) is a key part of any customer identity and access managemen
 
 Why? Because your organization typically has more than one customer facing application. Even if you start with a custom application, SaaS tools such as support forums, ticketing systems, or chat require your customers to log in. SSO can minimize how many times a customer has to log in.
 
-Integrating single sign-on into your applications means your users can access all their applications with one set of credentials, such as a username and password, a magic link, or a WebAuthn credential.
+Integrating single sign-on into your applications means your users can access all their applications with one set of credentials, such as a username and password, a magic link, or a WebAuthn passkey.
 
 ## An SSO scenario
 
@@ -40,7 +40,7 @@ In the SSO scenario above, the following sessions exist:
 
 * The PPVC application's session
 * The Hooli Jobs application's session
-* FusionAuth's session, also known as the single sign-on session
+* The identity provider's session
 
 If a session doesn't exist for a given application, or it isn't valid, then the session must be created or updated. This happens after the user has presented valid credentials and been authenticated.
 
@@ -52,7 +52,7 @@ Here's an OIDC single sign-on flow. The home page of each application is unavail
 
 {% plantuml source: _diagrams/learn/expert-advice/authentication/single-sign-on/sso-login.plantuml, alt: "Single sign-on request flow during login." %}
 
-(If you are a stickler, you'll notice there is no request for a token from the apps to FusionAuth after the user authenticates. That is implied and required.)
+(If you are a stickler, you'll notice there is no request for a token from the apps to the identity provider after the user authenticates. That is implied and required.)
 
 With SSO there are different sessions managed by different applications, which can have varying lifetimes and storage mechanisms.
 
@@ -66,8 +66,9 @@ That's it. All that is required for single sign-on to work is:
 * a defined protocol for the identity provider to bounce requests back to the application 
 * a sessions for each application (typically managed with cookies)
 
-However, there are some edge cases to consider:
+However, there are many use cases to consider, including:
 
+* Account takeover
 * Logout
 * Account locking and revocation
 * Loss of network access
@@ -100,7 +101,7 @@ When evaluating your identity provider solution, think about what kinds of appli
 
 Any business focused applications will typically support SAML, whereas support for OIDC is far easier to implement in your custom applications. Newer COTS applications may support OIDC.
 
-For maximum flexibility, pick an identity provider which supports both standards. (FusionAuth does.)
+For maximum flexibility, pick an identity provider which supports both standards.
 
 ## Beyond the browser
 
