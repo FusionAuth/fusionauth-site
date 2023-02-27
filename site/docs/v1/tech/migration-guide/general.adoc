@@ -20,6 +20,9 @@ This guide will help you migrate existing users into FusionAuth. It covers the t
 ** <<Big Bang Implementation>>
 ** <<Segment By Segment Implementation>>
 ** <<Slow Migration Implementation>>
+* <<Special Considerations>>
+** <<Migrating Refresh Tokens>>
+** <<Migrating SAML Configuration>>
 * <<Additional Resources>>
 
 == Types of Migrations
@@ -153,6 +156,7 @@ The first step to any successful data migration is planning, and user data migra
 * If your application can work with the auth system in a read-only configuration
 * How to connect to each datasource
 * What the user and account data looks like 
+* Special considerations such as SAML migration
 * Which migration approach fits your needs: big bang, segment by segment or slow migration
 
 A full explanation of data migration planning is beyond the scope of this guide. But here are items to consider when moving user data.
@@ -231,7 +235,7 @@ As this example shows, getting ready for a migration consists of many choices an
 
 Before you can migrate any user information into FusionAuth, ensure it is set up correctly. While you tested FusionAuth out previously, now it is time to set up a production ready instance. 
 
-Determine where your FusionAuth instances should be hosted. You can self host in any data center or cloud provider, or use the managed services offering from FusionAuth, link:/pricing[FusionAuth Cloud]. Decide on whether you need a link:/pricing[support plan], with guaranteed response times. Evaluate if you need any of the link:/pricing[paid edition features].
+Determine where your FusionAuth instances should be hosted. You can self host in any data center or cloud provider, or use the managed services offering from FusionAuth, link:/pricing[FusionAuth Cloud]. Decide on whether you need a link:/pricing[support plan], with guaranteed response times. Evaluate if you need any of the link:/pricing[paid plan features].
 
 Consider your change management strategy. How will you capture your FusionAuth settings so that you can make configuration changes in the future in a measured, understandable way? You can use the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest[community supported Terraform provider] or script changes in your preferred language's link:/docs/v1/tech/client-libraries/[client library].
 
@@ -348,8 +352,6 @@ In FusionAuth, duplicate emails are not allowed within the same tenant. If you m
 ----
 
 The extra validation comes at a performance cost, however, so you may want to run your import with `validateDbConstraints` equal to `true` to find the duplicate email addresses and remove or remediate them. After that, you can run an import with `validateDbConstraints` equal to `false` and reap the performance benefits.
-
-Determine if you need to import refresh tokens. If you are using an existing system which presents such tokens to the identity provider when an existing JWT expires, importing refresh tokens ensures that your users enjoy an uninterrupted application experience. Consult the link:/docs/v1/tech/apis/users#import-refresh-tokens[documentation for this API] for more information.
 
 ==== Rehashing User Passwords
 
@@ -633,7 +635,7 @@ If you set a transaction level of 'at least one webhook must succeed' and the we
 
 You can write code to receive the webhook and then check your database. If the user exists, they have not migrated yet. Return a non 2xx status code, and then update the error message to state that they must log in. If the user does not exist in your legacy database, you can return a 200 status code and the user creation and registration will complete.
 
-The message displayed in the user interface when a webhook fails can modified by changing the `[WebhookTransactionException]` property in the `messages.properties` file in link:/docs/v1/tech/themes/localization#messages[your theme].
+The message displayed in the user interface when a webhook fails can be modified by changing the `[WebhookTransactionException]` property in the `messages.properties` file in link:/docs/v1/tech/themes/localization#messages[your theme].
 
 ==== Slow Migration Alternatives
 
@@ -661,6 +663,67 @@ This approach has some downsides:
 
 But if you are trying to migrate an expected mass of new users and want to use FusionAuth for the new users, but are comfortable running the legacy system for older users, this approach may work.
 
+== Special Considerations
+
+Beyond migrating users, there may be other important data to import from a previous user identity datastore.
+
+=== Migrating Refresh Tokens
+
+If you have a token based authentication system, you may follow the common practice of using short-lived access tokens to protect resources, but long-lived refresh tokens to avoid needlessly reauthenticating users. If updating this system to use FusionAuth as a token source, you can avoid invalidating all the existing refresh tokens.
+
+You can import users' refresh tokens from the existing system into FusionAuth. Importing refresh tokens ensures that your users can enjoy an uninterrupted application experience. The next time their access token expires, each client can present a valid refresh token to FusionAuth, which will in turn issue a new signed access token.
+
+This option is only applicable for big-bang migrations, since a slow migration can re-issue a refresh token for each user at login time.
+
+Consult the link:/docs/v1/tech/apis/users#import-refresh-tokens[documentation for the Refresh Token Import API] for more information on how to import these tokens.
+
+=== Migrating SAML Configuration
+
+If you have SAML identity providers (IdPs) to which your existing user account system delegates, you must update all external IdP configurations that depend on an existing authentication system. This is common when you have multiple organizations represented in your application and each organization has one or more SAML identity providers which are the system of record for the organization's users in your application.
+
+When migrating, there is an existing SAML Service Provider (SP). This could be a custom application or another vendor. After migration, you will use FusionAuth as your new SP.
+
+There are two options to update this type of SAML configuration external to FusionAuth. 
+
+==== Updating Upstream Configuration
+
+The first option is to contact every upstream SAML IdP and have the administrators update their configuration to point to FusionAuth instead of the existing SAML SP. You can preload the required certificates in FusionAuth using the link:/docs/v1/tech/core-concepts/key-master[Key Master UI] or APIs. You can also configure link:/docs/v1/tech/identity-providers/samlv2/[FusionAuth SAMLv2 Identity Providers] with the same values (audience, etc) as the existing SAML SP.
+
+This is the recommended option. If you choose this option, make sure to incorporate communication and testing time into your migration plan.
+
+==== Relaxing FusionAuth Security Settings
+
+In the previous option, each upstream IdP needs to update their Assertion Consumer Service (ACS) URL to a valid FusionAuth value. Since the ACS URL typically is different and the administrators of the IdP may not make such changes a priority, this updating process may take a while.
+
+This will impact a FusionAuth migration, because you may have to wait to configure your applications to use FusionAuth until the upstream IdP sends the SAML response to the correct ACS URL.
+
+An alternative is relax certain security settings in FusionAuth. This will allow FusionAuth to ingest SAML assertions designated for the existing SAML SP, which means you can migrate to FusionAuth more quickly.
+
+[NOTE.since]
+====
+This option relies on FusionAuth functionality available since version 1.43.0.
+====
+
+In this scenario, you also preload the required certificates and notify upstream IdP administrators they'll need to update their ACS URLs eventually. You'll also configure a link:/docs/v1/tech/identity-providers/samlv2/[FusionAuth SAMLv2 Identity Provider] with the same values as your existing SAML SP.
+
+But, in addition you need to:
+
+* Configure your applications to point to the FusionAuth hosted login pages. You may want to use an `idp_hint` to skip the hosted login pages and send users directly to the IdP.
+* Modify the FusionAuth destination assertion policy. You can do this via the API or the administrative user interface. In the administrative user interface, navigate to [breadcrumb]#Identity Providers -> Your SAMLv2 Identity Provider#. Then navigate to the [breadcrumb]#Options# tab, and find the [field]#Destination assertion policy# field.
+* Set up an HTTP redirect from your existing ACS URL to the FusionAuth ACS URL. You can do this using a proxy such as nginx.
+* You may disable or shut down the existing SAML SP at this time, since all traffic should be moving through FusionAuth.
+
+Set the [field]#Destination assertion policy# field to [uielement]#Allow alternates#. This choice verifies the SAML `Destination` attribute is either the expected FusionAuth ACS URL, or one multiple known alternate values. Add as many alternates as you need. Each is typically an ACS URL of the SAML SP that FusionAuth is replacing.
+
+[WARNING.warning]
+====
+When you are changing the [field]#Destination assertion policy# setting, be aware of the security risks and minimize the number of destinations that FusionAuth accepts.
+
+While modifying this setting may be necessary for a migration, you should, as soon as possible, work with the upstream IdPs to modify their configuration to point directly to the FusionAuth ACS URL. This is the safest and most secure configuration.
+====
+
+At a later time, request each SAML IdP update their configuration to point to the FusionAuth ACS URL. After all upstream providers have been migrated to the latest configuration, set the [field]#Destination assertion policy# field to [uielement]#Enabled#, the most secure setting. 
+
 == Additional Resources
 
 If you have a single users table and want to walk through how a migration would work with that, review the link:/docs/v1/tech/migration-guide/[Migrate Users tutorial].
@@ -671,5 +734,5 @@ FusionAuth maintains a https://github.com/FusionAuth/fusionauth-import-scripts[r
 
 If you need further assistance migrating to FusionAuth, please ask a question in the https://fusionauth.io/community/forum/[FusionAuth forum, window="_blank"].
 
-If you have a paid edition you may open a https://account.fusionauth.io[support request from your account for more migration assistance, window="_blank"].
+If you have a paid plan you may open a https://account.fusionauth.io[support request from your account for more migration assistance, window="_blank"].
 
