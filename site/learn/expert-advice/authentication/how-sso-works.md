@@ -15,6 +15,10 @@ Why? Because your organization typically has more than one customer facing appli
 
 Integrating single sign-on into your applications means your users can access all their applications with one set of credentials, such as a username and password, a magic link, or a WebAuthn passkey.
 
+Offering this allows you to have one view of the user, which is great for security and data consistency. 
+
+Single sign-on also allows users to minimize the time they spend getting into your apppliation and maximize the time spent using it.
+
 ## An SSO scenario
 
 Let's say you have two applications for which you want to enable single sign-on.
@@ -34,7 +38,7 @@ But how does it actually work? This article will dive into this, but first, let'
 
 ## Sessions
 
-Sessions are how HTTP based servers "know" they've seen a client before. Sessions are typically implemented using cookies whenenever the application is browser based.
+Sessions are how HTTP based servers "know" they've seen a client before. Sessions are typically implemented using cookies whenever the application is browser based.
 
 In the SSO scenario above, the following sessions exist:
 
