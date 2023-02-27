@@ -8,21 +8,22 @@ tags: client-node tutorial tutorial-express tutorial-node
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) web application which grants conditional access to users in a family structure. Specifically, a "child" user will request access to the site and then their "parent" user can grant or revoke their access at will.  
+In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) web application which grants conditional access to users in a family structure. Specifically, a parent user will be able to grant access to child users to certain areas of an application.  
 
 <!--more-->
 
-The application itself is very simple: it will let users sign up via FusionAuth, allow them to set permissions for their children, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/Blueper/family-api-full), although much of the application is defined in FusionAuth as detailed in this guide.
+The application itself is very simple: it will let users sign up via FusionAuth, allow them to set grant consent for their children to access certain features of an application, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/Blueper/family-api-full). Note that there is configuration defined in FusionAuth needed as detailed in this guide.
 
 You can also use [these kickstart files](https://github.com/Blueper/FamilyAPI-kickstart) to automatically handle the configuration of FusionAuth. You can find more information regarding kickstart files [here](https://fusionauth.io/docs/v1/tech/installation-guide/docker#kickstart)
 
 ## Prerequisites
 
 We'll explain nearly everything that we use, but we expect you to have:
--   Basic Node.js knowledge and a Node.js environment set up.
--   Preferably basic [Express](http://expressjs.com) knowledge (or knowledge of a similar web framework, or of the middleware concept).
--   Docker and Docker Compose set up as we'll set up FusionAuth using these.
-    
+
+- Basic Node.js knowledge and a Node.js environment set up.
+- Preferably basic [Express](http://expressjs.com) knowledge (or knowledge of a similar web framework, or of the middleware concept).
+- Docker and Docker Compose set up as we'll set up FusionAuth using these.
+
 It'll also help if you know the basics of OAuth or authentication in general.
 
 ## Installing and configuring FusionAuth with Docker Compose
@@ -62,17 +63,17 @@ Click the Save button at the top right for your changes to take effect.
 
 ## Setting up a FusionAuth API key
 
-Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile and consent permissions using the [FusionAuth Typescript module](https://www.npmjs.com/package/@fusionauth/typescript-client), provided with an API key.
+Once the user has logged in via the FusionAuth application, we can retrieve their FusionAuth profile and consents using the [FusionAuth Typescript module](https://www.npmjs.com/package/@fusionauth/typescript-client), provided with an API key.
 
 Navigate to Settings and then API Keys, then add a key. Add a name for the key and take note of the generated key value.
 
-For extra security, you can restrict the permissions for the key. For our app, we only need to enable the get action for `api/user`, the get and post actions for `api/user/consent`, and the get, post, and put actions for `/api/user/family`. This will let the key get basic user information, modify permissions to view the app, create a family and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
+Following the principle of least privilege, you can restrict the permissions for the key. For our app, we only need to enable the get action for `api/user`, the get and post actions for `api/user/consent`, and the get, post, and put actions for `/api/user/family`. This will let the key get basic user information, modify permissions to view the app, create a family and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-api-key.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
 ## Creating and registering users
 
-The application will have two users: a "child" user who will request access to the site and a "parent" user who can grant or revoke the child user's permission at any time. 
+The application will have two users: a parent user and a child user. The parent user will be able to grant consent for the child user to access certain features of the application.
 
 Let's create the parent user first. Navigate to `Users` and click the `Add` button. Select a tenant and supply an email address. Untoggle the `Send email to set up password` switch to directly supply a password. For display purposes, provide a `First Name`. By default, a user must be at least 21 years old in order to be designated as a family owner, so supply an appropriate `Birthdate` as well. This requirement can be modified in the [tenant configuration](https://fusionauth.io/docs/v1/tech/core-concepts/tenants#family).
 
@@ -124,7 +125,7 @@ curl -X PUT <YOUR_FUSIONAUTH_URL>/api/user/family/<YOUR_FAMILY_ID> \
 
 ## Creating a consent
 
-You are almost ready to build your custom application and leverage your FusionAuth configuration to enable permission-based access to your site. Now, you just have to add a [consent](https://fusionauth.io/docs/v1/tech/apis/consents#overview), which will enable the parent user to grant or revoke access to the child user. 
+You are almost ready to build your custom application and leverage your FusionAuth configuration to enable permission-based access to your site. Now, you just have to add a [consent](https://fusionauth.io/docs/v1/tech/apis/consents#overview), which will enable the parent user to grant or revoke access to the child user.
 
 Navigate to `Settings -> Consents` and click the `Add` button. Supply a name for the consent. By default, the minimum age of self-consent is 13, meaning any user aged 13 or older can access the site without needing permission from a parent user. You can modify this value if you wish. For the purposes of this guide, just make sure this number is higher than the age of your child user. If you did not supply a `Birthdate` for your child user, you can leave this value as-is, since a blank `Birthdate` will cause a user's age to be stored as -1.
 
@@ -132,13 +133,14 @@ Navigate to `Settings -> Consents` and click the `Add` button. Supply a name for
 
 ## Setting up Express
 
-Your FusionAuth configuration is now ready to go, and you can start building your application using Express. 
+Your FusionAuth configuration is now ready to go, and you can start building your application using Express.
 
 To get started, you should:
--   Scaffold a new Express application.
--   Install the scaffolded dependencies.
--   Install the helper libraries, and the FusionAuth Typescript client.
--   Start the server to ensure everything is installed and working.
+
+- Scaffold a new Express application.
+- Install the scaffolded dependencies.
+- Install the helper libraries, and the FusionAuth Typescript client.
+- Start the server to ensure everything is installed and working.
 
 Here are the commands to do it:
 
@@ -156,9 +158,9 @@ If all went well, the server should start successfully and you can visit `http:/
 
 ## Building the application
 
-Our application will have only one page apart from the FusionAuth login page: a landing page that will redirect the user to the FusionAuth login page. This page will dynamicaly display a list of children if the current user is a parent user, and a restricted section if the current user is either an adult or a child who has been granted permission to view it by a parent user.
+The application will have only one page apart from the FusionAuth login page: a landing page that will redirect the user to the FusionAuth login page. This page will dynamicaly display a list of children if the current user is a parent user, and a restricted section if the current user is either an adult or a child who has been granted permission to view it by a parent user.
 
-For the landing page, add the following to `views/index.pug`. 
+For the landing page, add the following to `views/index.pug`.
 
 ```js
 extends layout
@@ -191,7 +193,7 @@ block content
                   input(type='submit', value='Grant Consent')
     if self.status == "Active"
       h2 Restricted Section
-      p This is a restricted section. Only authorized users can view it.
+      p This is a restricted section. Only adult users can view it.
   else
     a(href='<YOUR_FUSIONAUTH_URL>/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect&scope=offline_access&code_challenge='+challenge+'&code_challenge_method=S256') Login
 ```
@@ -212,11 +214,11 @@ app.use(expressSession({resave: false, saveUninitialized: false, secret: 'fusion
 
 At this point, your application has a `Login` link that will redirect you to the FusionAuth login page, but it does not yet have the necessary information to complete the login. To do this, you need to add a route.
 
-# Adding Express routes
+## Adding Express routes
 
-You've got the basic framework and authorization code set up. Now you can add some routes. You can start with the `login` route to handle the redirect to FusionAuth.
+The basic framework and authorization code is set up. Now you can add some routes. You can start with the `login` route to handle the redirect to FusionAuth.
 
-First, you can define your dependencies. In the `routes/index.js` file, add the following code under the `var router = express.Router();` line:
+First, include the dependencies and credentials. In the `routes/index.js` file, add the following code under the `var router = express.Router();` line:
 
 ```js
 const pkceChallenge = require('pkce-challenge').default;
@@ -227,7 +229,7 @@ const client = new FusionAuthClient('<YOUR_API_KEY>', '<YOUR_FUSIONAUTH_URL>');
 const consentId = '<YOUR_CONSENT_ID>';
 ```
 
-The `pkceChallenge` package enables your application to utilize a Proof Key for Code Exchange (PKCE), which ensures that every step of the authorization flow is handled by FusionAuth and not a malicious actor. Here, you are also importing the FusionAuth TypeScript client as well as several parameters that allow your application to communicate with your FusionAuth configuration. `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` can be found in FusionAuth under `Applications -> Your Application`. In a production environment, you should use environment variables here to prevent your client secret from leaking. `<YOUR_API_KEY>` can be found under `Settings -> API Keys` and `<YOUR_CONSENT_ID>` can be found under `Settings -> Consents`. 
+The `pkceChallenge` package enables your application to utilize a Proof Key for Code Exchange (PKCE). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can’t be stolen or reused. Here, you are also importing the [FusionAuth TypeScript client](https://fusionauth.io/docs/v1/tech/client-libraries/typescript) as well as several parameters that allow your application to communicate with your FusionAuth configuration. `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` can be found in FusionAuth under `Applications -> Your Application`. In a production environment, you should use environment variables here to prevent your client secret from leaking. `<YOUR_API_KEY>` can be found under `Settings -> API Keys` and `<YOUR_CONSENT_ID>` can be found under `Settings -> Consents`.
 
 Now, in the `GET home page` section, replace the `res.render('index', { title: 'Express' });` line with the following:
 
@@ -238,18 +240,18 @@ Now, in the `GET home page` section, replace the `res.render('index', { title: '
     req.session.verifier = pkce_pair['code_verifier']
     req.session.challenge = pkce_pair['code_challenge']
 ```
-This sets up the PKCE information so that when you return from the FusionAuth login screen, you know that your email and password were not handled by an impostor. Next, add the following underneath what you just added.
+This sets up the PKCE information to prevent the authentication code from being re-used. Next, add the following code:
 
 ```js
     if (req.session.user && req.session.user.id) {
 
-        // build our family object for display
+        // build the family object for display
         client.retrieveFamilies(req.session.user.id)
 ```
 
-This grabs the information of the user who just logged in and uses it to request the information of all of that user's family members.
+This gets the `id` of the logged in user from the session and uses it to request the information of all of that user's family members from the FusionAuth API.
 
-Next, add the following underneath what you just added.
+Next, add the following underneath what you just added:
 
 ```js
             .then((response) => {
@@ -266,8 +268,8 @@ Next, add the following underneath what you just added.
                             family.push({"id": user.response.user.id, "email": user.response.user.email});
                         });
 ```
- 
-This gets the list of all children in the current user's family and pushes their information into an array. The current user is also added to that list regardless of their role in the family so that their consent status can be used to dynamically display the restricted section of the landing page after login. 
+
+This gets the list of all children in the current user's family and pushes their information into an array. The current user is also added to that list regardless of their role in the family so that their consent status can be used to dynamically display the restricted section of the landing page after login.
  
 Next, add the following underneath what you just added.
 
@@ -413,10 +415,10 @@ Close the private window and open a new one. Login as the child user again. This
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-testing-child-granted.png" alt="The child user logs in and can see the restricted section" class="img-fluid" figure=false %}
 
-## Where to next with Express and FusionAuth?
+## Where to next with Family API and Consents?
 
-That’s the basics of our Express + FusionAuth app done. The app has a fully featured authentication system, along with user consents, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/Blueper/family-api-full).
+That’s the basics of our Express Family API example app done. The app has a fully featured authentication system, along with parental controls, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/Blueper/family-api-full).
 
-Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, consents, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
+Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, parental controls, consents, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
 
 For a production environment, you would also need to do a bit more work in making sure FusionAuth was really safe. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
