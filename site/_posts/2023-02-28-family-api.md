@@ -175,22 +175,22 @@ block content
     if family
       - var self = family.filter(elem => elem.id == user.id)[0]
       - family = family.filter(elem => elem.id != user.id)
-      if family.length > 0
+      if family.length > 0 && self.role == "Adult"
         p Confirmed children
-      ul 
-        each val in family
-           form(action='/change-consent-status', method='POST')
-              p #{val.email}
-                |
-                Consent #{val.consentstatus}
-                input(type='hidden', name='userConsentId', value=val.userConsentId) 
-                |  
-                if val.status == "Active"
-                  input(type='submit', value='Revoke Consent')
-                  input(type='hidden', name='desiredStatus', value='Revoked') 
-                else
-                  input(type='hidden', name='desiredStatus', value='Active') 
-                  input(type='submit', value='Grant Consent')
+        ul 
+          each val in family
+             form(action='/change-consent-status', method='POST')
+                p #{val.email}
+                  |
+                  Consent #{val.consentstatus}
+                  input(type='hidden', name='userConsentId', value=val.userConsentId) 
+                  |  
+                  if val.status == "Active"
+                    input(type='submit', value='Revoke Consent')
+                    input(type='hidden', name='desiredStatus', value='Revoked') 
+                  else
+                    input(type='hidden', name='desiredStatus', value='Active') 
+                    input(type='submit', value='Grant Consent')
     if self.status == "Active"
       h2 Restricted Section
       p This is a restricted section. Only adult users can view it.
@@ -246,6 +246,10 @@ router.get('/', async function(req, res, next) {
         let children = response.response.families[0].members.filter(elem => elem.role !== 'Adult');
         children = children.concat(response.response.families[0].members.filter(elem => elem.userId === req.session.user.id));
         const users = await getFamilyUsers(children);
+        users.forEach(user => {
+            let self = children.filter(elem => elem.userId == user.response.user.id)[0];
+            user.response.user.role = self.role;
+        });
         family = buildFamilyArray(users);
         const consentsResponseArray = await getUserConsentStatuses(children);
         family = updateFamilyWithConsentStatus(family, consentsResponseArray);
@@ -297,7 +301,7 @@ First is `buildFamilyArray()`, which filters key information from the object ret
 function buildFamilyArray(users) {
   const family = [];
   users.forEach(user => {
-    family.push({"id": user.response.user.id, "email": user.response.user.email});
+    family.push({"id": user.response.user.id, "email": user.response.user.email, "role": user.response.user.role});
   });
   return family;
 }
