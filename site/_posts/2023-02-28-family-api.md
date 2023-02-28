@@ -377,6 +377,17 @@ router.post('/change-consent-status', function (req, res, next) {
     if (desiredStatus != 'Active') {
         desiredStatus = 'Revoked';
     }
+    
+    // check current user is an adult
+    const response = await client.retrieveFamilies(req.session.user.id);
+    var proceed = true;
+    if (response.response.families && response.response.families.length >= 1) {
+        let self = response.response.families[0].members.filter(elem => elem.userId == req.session.user.id)[0];
+        if(self.role !== 'Adult'){
+            console.log("Only Adult users can change consents")
+            res.redirect(302, '/')
+        }
+    }
 
     if (!userConsentId) {
         console.log("No userConsentId provided!");
