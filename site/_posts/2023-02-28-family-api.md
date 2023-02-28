@@ -234,97 +234,96 @@ The `pkceChallenge` package enables your application to utilize a Proof Key for 
 Now, in the `GET home page` section, replace the `res.render('index', { title: 'Express' });` line with the following:
 
 ```js
+router.get('/', async function(req, res, next) {
+  try {
     let family = [];
-    //generate the pkce challenge/verifier dict
-    pkce_pair = pkceChallenge();
-    req.session.verifier = pkce_pair['code_verifier']
-    req.session.challenge = pkce_pair['code_challenge']
-```
-This sets up the PKCE information to prevent the authentication code from being re-used. Next, add the following code:
-
-```js
+    const pkce_pair = pkceChallenge();
+    req.session.verifier = pkce_pair['code_verifier'];
+    req.session.challenge = pkce_pair['code_challenge'];
     if (req.session.user && req.session.user.id) {
-
-        // build the family object for display
-        client.retrieveFamilies(req.session.user.id)
-```
-
-This gets the `id` of the logged in user from the session and uses it to request the information of all of that user's family members from the FusionAuth API.
-
-Next, add the following underneath what you just added:
-
-```js
-            .then((response) => {
-                if (response.response.families && response.response.families.length >= 1) {
-                    // adults can only belong to one family
-                    let children = response.response.families[0].members.filter(elem => elem.role != 'Adult');
-                    //include current user in children list
-                    children = children.concat(response.response.families[0].members.filter(elem => elem.userId == req.session.user.id))
-                    let getUsers = children.map(elem => {
-                        return client.retrieveUser(elem.userId);
-                    });
-                    Promise.all(getUsers).then((users) => {
-                        users.forEach(user => {
-                            family.push({"id": user.response.user.id, "email": user.response.user.email});
-                        });
-```
-
-This gets the list of all children in the current user's family and pushes their information into an array. The current user is also added to that list regardless of their role in the family so that their consent status can be used to dynamically display the restricted section of the landing page after login.
- 
-Next, add the following underneath what you just added.
-
-```js
-                    }).then(() => {
-                        let getUserConsentStatuses = children.map(elem => {
-                            return client.retrieveUserConsents(elem.userId);
-                        });
-                        return Promise.all(getUserConsentStatuses);
-                    }).then((consentsResponseArray) => {
-                        // for each child, we'll want to get the status of the consent matching our consentId and put that in the family object, for that child.
-                        const userIdToStatus = {};
-                        const userIdToUserConsentId = {};
-                        consentsResponseArray.forEach((oneRes) => {
-                            const matchingConsent = oneRes.response.userConsents.filter((userConsent) => userConsent.consent.id == consentId)[0];
-                            if (matchingConsent) {
-                                const userId = matchingConsent.userId;
-                                userIdToUserConsentId[userId] = matchingConsent.id;
-                                userIdToStatus[userId] = matchingConsent.status;
-                            }
-                        });
-                        family = family.map((onePerson) => {
-                            onePerson["status"] = userIdToStatus[onePerson.id];
-                            onePerson["userConsentId"] = userIdToUserConsentId[onePerson.id];
-                            return onePerson;
-                        });
-```
-
-This gets the consent status of each user that you just retrieved. This is the crucial piece of information that decides whether or not the restricted section will be shown.
-
-
-Next, add the following underneath what you just added.
-```js
-
-                        //}).then(() => {
-                        res.render('index', {
-                            family: family,
-                            user: req.session.user,
-                            title: 'Family Example',
-                            challenge: pkce_pair['code_challenge']
-                        });
-                    });
-                } else {
-                    res.render('index', {family: family, user: req.session.user, title: 'Family Example', challenge: pkce_pair['code_challenge']});
-                }
-            }).catch((err) => {
-            console.log("in error");
-            console.error(JSON.stringify(err));
-        });
-    } else {
-        res.render('index', {family: family, user: req.session.user, title: 'Family Example', challenge: pkce_pair['code_challenge']});
+      const response = await client.retrieveFamilies(req.session.user.id);
+      if (response.response.families && response.response.families.length >= 1) {
+        let children = response.response.families[0].members.filter(elem => elem.role !== 'Adult');
+        children = children.concat(response.response.families[0].members.filter(elem => elem.userId === req.session.user.id));
+        const users = await getFamilyUsers(children);
+        family = buildFamilyArray(users);
+        const consentsResponseArray = await getUserConsentStatuses(children);
+        family = updateFamilyWithConsentStatus(family, consentsResponseArray);
+      }
     }
+    res.render('index', {
+      family: family,
+      user: req.session.user,
+      title: 'Family Example',
+      challenge: pkce_pair['code_challenge']
+    });
+  } catch (error) {
+    console.error("in error");
+    console.error(JSON.stringify(error));
+    next(error);
+  }
+});
 ```
 
-This packages all of the information you just retrieved and uses it to render the landing page. If anything goes wrong, the error text will be displayed in the terminal window from which you ran `npm start`. 
+The above code makes use of several named functions, which you now have to implement.  If anything goes wrong, the error text will be displayed in the terminal window from which you ran `npm start`. 
+
+Note that, when building the `children` array, the filter criterion is `!== 'Adult'`, not `== 'Child'` as you might expect. This is because FusionAuth also allows users to be designated as `Teen` to allow for further granularity when organizing consents, though that is outside the scope of this guide. 
+
+The first function to implement is `getFamilyUsers()`, which asynchronously gathers all children in the user's family. Note that, in the above code, the current user is added to the `children` array regardless of their family role. This is so that their consent status can be used to dynamically display the restricted section of the landing page after login.
+
+```js
+async function getFamilyUsers(children) {
+  const getUsers = children.map(elem => client.retrieveUser(elem.userId));
+  const users = await Promise.all(getUsers);
+  return users;
+}
+```
+
+Next is `getUserConsentStatuses()`, which gathers information about each user's consent permissions.
+
+```js
+async function getUserConsentStatuses(children) {
+  const getUserConsentStatuses = children.map(elem => client.retrieveUserConsents(elem.userId));
+  const consentsResponseArray = await Promise.all(getUserConsentStatuses);
+  return consentsResponseArray;
+}
+```
+
+Each of the above two functions asynchronously processes the `children` array into new objects that contain key information. Now, you can implement the functions that make use of those objects.
+
+First is `buildFamilyArray()`, which filters key information from the object returned from `getFamilyUsers`. 
+
+```js
+function buildFamilyArray(users) {
+  const family = [];
+  users.forEach(user => {
+    family.push({"id": user.response.user.id, "email": user.response.user.email});
+  });
+  return family;
+}
+```
+
+Next is `updateFamilyWithConsentStatus()`, which adds consent information to each element in the object returned from `buildFamilyArray()`. This data will then be pushed to the landing page so that it can dynamically display the information appropriate for the current user.
+
+```js
+function updateFamilyWithConsentStatus(family, consentsResponseArray) {
+  const userIdToStatus = {};
+  const userIdToUserConsentId = {};
+  consentsResponseArray.forEach((oneRes) => {
+    const matchingConsent = oneRes.response.userConsents.filter((userConsent) => userConsent.consent.id == consentId)[0];
+    if (matchingConsent) {
+      const userId = matchingConsent.userId;
+      userIdToUserConsentId[userId] = matchingConsent.id;
+      userIdToStatus[userId] = matchingConsent.status;
+    }
+  });
+  return family.map((onePerson) => {
+    onePerson["status"] = userIdToStatus[onePerson.id];
+    onePerson["userConsentId"] = userIdToUserConsentId[onePerson.id];
+    return onePerson;
+  });
+}
+```
 
 To enable the FusionAuth login page to securely authenticate and authorize your session, add the following underneath what you just added.
 
