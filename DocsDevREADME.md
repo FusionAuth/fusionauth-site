@@ -253,6 +253,7 @@ end tell
      class may not be necessary if there is adequate spacing below. When text continues below or right above you will need
      the class.
 - If you crop the image, don't use the `shadowed` role. And vice versa.
+- If you aren't running macOS or if the screenshot doesn't have any windows decoration, you can add `safari` class to the image to automatically add a default macOS titlebar and box shadow.
 - Highlight sections using image preview editor
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
