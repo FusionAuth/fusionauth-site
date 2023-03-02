@@ -41,15 +41,10 @@ Now, you can restrict access to the service by requiring a JWT. To do this, add 
   http-request set-var(txn.alg) http_auth_bearer,jwt_header_query('$.alg')
 
   # get payload part of the JWT
-  http-request set-var(txn.iss) http_auth_bearer,jwt_payload_query('$.iss')
-  http-request set-var(txn.aud) http_auth_bearer,jwt_payload_query('$.aud')
   http-request set-var(txn.exp) http_auth_bearer,jwt_payload_query('$.exp','int')
-  http-request set-var(txn.scope) http_auth_bearer,jwt_payload_query('$.scope')
 
   # Validate the JWT
   http-request deny content-type 'text/html' string 'Unsupported JWT signing algorithm'  unless { var(txn.alg) -m str RS256 }
-  http-request deny content-type 'text/html' string 'Invalid JWT issuer'  unless { var(txn.iss) -m str https://myaccount.auth0.com/ }
-  http-request deny content-type 'text/html' string 'Invalid JWT audience'  unless { var(txn.aud) -m str https://api.mywebsite.com }
   http-request deny content-type 'text/html' string 'Invalid JWT signature'  unless { http_auth_bearer,jwt_verify(txn.alg,"/etc/haproxy/pubkey.pem") -m int 1 }
 
   http-request set-var(txn.now) date()
