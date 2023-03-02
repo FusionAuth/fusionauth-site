@@ -35,9 +35,9 @@ An additional security benefit to passwordless login is that users are unable to
 
 ## Installing and Configuring FusionAuth Using Docker Compose
 
-There are a [number of ways](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) you can get up and running with FusionAuth on your system. If you have Docker installed on your system, the best choice is to use Docker and Docker Compose. This method has an added benefit if you plan to use FusionAuth in a Docker-compatible environment. 
+There are a [number of ways](/docs/v1/tech/installation-guide/) you can get up and running with FusionAuth on your system. If you have Docker installed on your system, the best choice is to use Docker and Docker Compose. This method has an added benefit if you plan to use FusionAuth in a Docker-compatible environment. 
 
-You can follow the guide [here](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker) to get started.
+You can follow the guide [here](/docs/v1/tech/getting-started/5-minute-docker) to get started.
 
 If you already have Docker installed on your system, you can run the following command to install and run FusionAuth.
 
@@ -103,7 +103,7 @@ Click the save icon in the top right for your changes to be applied to your appl
 
 ## Setting up OpenID Connect (OIDC)
 
-Once a user has logged in to our application using FusionAuth, you want to be able to retrieve details about their profile. We can achieve this using [OIDC](https://fusionauth.io/docs/v1/tech/oauth/), provided by FusionAuth.
+Once a user has logged in to our application using FusionAuth, you want to be able to retrieve details about their profile. We can achieve this using [OIDC](/docs/v1/tech/oauth/), provided by FusionAuth.
 
 To configure OIDC to work correctly, you need to configure FusionAuth's JWT issuing behavior.
 
@@ -131,7 +131,7 @@ To get started with SendGrid and SMTP, follow their guide [here](https://docs.se
 
 Take special note of the API key that SendGrid provides you with, as that can only be accessed once and will be used in our configuration.
 
-To enable your FusionAuth instance to use SMTP, you need to make a few changes to your tenant configuration. A full walkthrough of this can be found [here](https://fusionauth.io/docs/v1/tech/email-templates/configure-email).
+To enable your FusionAuth instance to use SMTP, you need to make a few changes to your tenant configuration. A full walkthrough of [email configuration can be found here](/docs/v1/tech/email-templates/configure-email).
 
 Change the following fields under the "Email" tab in your tenant configuration:
 
@@ -396,7 +396,7 @@ Once you’ve signed in with FusionAuth, you can see the contents of the page:
 
 This simple application demonstrates a very small slice of the capabilities that passwordless login offers but features a fully functional authentication system, without us having to build it ourselves. The complete code for this tutorial is available on GitHub, [here](https://github.com/ritza-co/nextjs-fusionauth-passwordless).
 
-To make this application more useful and production-ready, you could offer multiple channels by which users can receive magic links. You can do this using the [passwordless API directly](https://fusionauth.io/docs/v1/tech/guides/passwordless#using-the-api-directly).
+To make this application more useful and production-ready, you could offer multiple channels by which users can receive magic links. You can do this using the [passwordless API directly](/docs/v1/tech/guides/passwordless#using-the-api-directly).
 
-Additionally, you could use [themes](https://fusionauth.io/docs/v1/tech/themes/) to customize the look and feel of the FusionAuth login form to display the login options you want to offer your users. FusionAuth provides you with a full set of capabilities around authentication to make it safer and easier.
+Additionally, you could use [themes](/docs/v1/tech/themes/) to customize the look and feel of the FusionAuth login form to display the login options you want to offer your users. FusionAuth provides you with a full set of capabilities around authentication to make it safer and easier.
 
