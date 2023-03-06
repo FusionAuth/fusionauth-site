@@ -17,10 +17,12 @@ var indexPages = {
   '/docs/v1/tech/connectors/': true,
   '/docs/v1/tech/core-concepts/': true,
   '/docs/v1/tech/developer-guide/': true,
+  '/docs/v1/tech/developer-guide/api-gateways/': true,
   '/docs/v1/tech/email-templates/': true,
   '/docs/v1/tech/events-webhooks/': true,
   '/docs/v1/tech/events-webhooks/events/': true,
   '/docs/v1/tech/example-apps/': true,
+  '/docs/v1/tech/getting-started/': true,
   '/docs/v1/tech/guides/': true,
   '/docs/v1/tech/identity-providers/': true,
   '/docs/v1/tech/identity-providers/external-jwt/': true,
@@ -34,14 +36,17 @@ var indexPages = {
   '/docs/v1/tech/messengers/': true,
   '/docs/v1/tech/migration-guide/': true,
   '/docs/v1/tech/oauth/': true,
+  '/docs/v1/tech/passwordless/': true,
   '/docs/v1/tech/plugins/': true,
   '/docs/v1/tech/premium-features/': true,
+  '/docs/v1/tech/premium-features/webauthn/': true,
   '/docs/v1/tech/reference/': true,
   '/docs/v1/tech/samlv2/': true,
   '/docs/v1/tech/themes/': true,
   '/docs/v1/tech/tutorials/': true,
   '/docs/v1/tech/tutorials/gating/': true,
   '/docs/v1/tech/tutorials/two-factor/': true,
+  '/how-to/': true,
   '/learn/expert-advice/': true,
   '/learn/expert-advice/authentication/': true,
   '/learn/expert-advice/ciam/': true,
@@ -66,6 +71,9 @@ var redirects = {
   '/docs/v1/tech/installation-guide/upgrade': '/docs/v1/tech/admin-guide/upgrade',
   '/docs/v1/tech/guides/auth0-migration': '/docs/v1/tech/migration-guide/auth0',
   '/docs/v1/tech/guides/migration': '/docs/v1/tech/migration-guide/general',
+  '/docs/v1/tech/guides/passwordless': '/docs/v1/tech/passwordless/magic-links',
+  '/docs/v1/tech/guides/webauthn': '/docs/v1/tech/passwordless/webauthn-passkeys',
+  '/docs/v1/tech/passwordless/webauthn': '/docs/v1/tech/passwordless/webauthn-passkeys',
   '/docs/v1/tech/plugins/password-encryptors': '/docs/v1/tech/plugins/custom-password-hashing',
   '/docs/v1/tech/reference/password-encryptors': '/docs/v1/tech/reference/password-hashes',
   '/docs/v1/tech/reactor': '/docs/v1/tech/admin-guide/licensing',
@@ -87,14 +95,15 @@ var redirects = {
   '/features/user-management-reporting': '/features/user-management',
   '/gaming': '/industries/gaming-entertainment',
   '/gaming/': '/industries/gaming-entertainment',
-  '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes',
+  '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes/',
+  '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/learn/expert-advice/gaming-entertainment/gaming-identity-provider-needs',
   '/learn/expert-advice/dev-tools/jwt-debugger': '/learn/expert-advice/dev-tools/jwt-decoder',
   '/learn/expert-advice/identity-basics/avoid-lockin': '/learn/expert-advice/authentication/avoid-lockin',
   '/learn/expert-advice/identity-basics/common-authentication-implementation-risks': '/learn/expert-advice/authentication/common-authentication-implementation-risks',
   '/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales': '/learn/expert-advice/ciam/making-sure-your-auth-system-scales',
   '/learn/expert-advice/identity-basics/value-standards-compliant-authentication': '/learn/expert-advice/oauth/value-standards-compliant-authentication',
-  '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/learn/expert-advice/gaming-entertainment/gaming-identity-provider-needs',
-  '/learn/expert-advice/tokens/anatomy-of-jwt': '/learn/expert-advice/tokens/jwt-authentication-token-components-explained',
+  '/learn/expert-advice/tokens/anatomy-of-jwt': '/learn/expert-advice/tokens/jwt-components-explained',
+  '/learn/expert-advice/tokens/jwt-authentication-token-components-explained': '/learn/expert-advice/tokens/jwt-components-explained',
   '/podcast': '/',
   '/pricing/cloud/': '/pricing',
   '/pricing/edition': '/pricing',
@@ -108,7 +117,7 @@ var redirects = {
   '/upgrade/from-saas': '/compare'
 };
 var s3Paths = ['/direct-download', '/license'];
-var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/'];
+var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/'];
 
 function handler(event) {
   var request = event.request;
@@ -173,7 +182,7 @@ function handler(event) {
 }
 
 function removeSlash(uri) {
-  return indexPages[uri] !== true && !uri.startsWith('/blog/page');
+  return indexPages[uri] !== true && !uri.startsWith('/blog/page') && !uri.startsWith('/blog/archive');;
 }
 
 function calculateRedirect(uri) {

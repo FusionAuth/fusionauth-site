@@ -22,6 +22,9 @@ group :jekyll_plugins do
   gem "jekyll-environment-variables"
   gem "jekyll-algolia", "~> 1.0"
   gem "jekyll-minifier", "0.1.10"
+  gem "jekyll-archives", "2.2.1"
+  gem "jekyll-datapage-generator", "1.4.0"
+  gem "jekyll-remote-include", :github => "FusionAuth/jekyll-remote-include", :ref => "39ae1a1744c8837d5ee64b11c5f982304ea940e5"
 end
 
 # For the docs

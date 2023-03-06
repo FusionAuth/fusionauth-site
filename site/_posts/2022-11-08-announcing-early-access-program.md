@@ -4,8 +4,8 @@ title: Introducing the FusionAuth Early Access Program
 description: Authentication and authorization is critical application functionality. How can you stay on top of the latest features without affecting your users?
 author: Emily Jansen
 image: blogs/eap-announcement/early-access-program-header.png
-category: blog
-tags: topic-releases
+category: announcement
+tags: topic-releases release-announcement
 excerpt_separator: "<!--more-->"
 ---
 

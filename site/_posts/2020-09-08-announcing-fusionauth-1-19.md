@@ -4,7 +4,8 @@ title: Announcing FusionAuth 1.19
 description: The FusionAuth 1.19 release offers stateless, multi-tenant Single-Sign-on (SSO), more flexible configuration, and more.
 author: Dan Moore
 image: blogs/release-1-19/fusionauth-release-1-19.png
-category: blog
+category: announcement
+tags: release-announcement configuration refresh-token
 excerpt_separator: "<!--more-->"
 ---
 

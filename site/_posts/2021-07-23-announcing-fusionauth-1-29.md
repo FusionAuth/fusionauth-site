@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.29
 description: The FusionAuth 1.29 release includes identity linking improvements, better SAML and Freemarker debugging, and more.
 author: Dan Moore
 image: blogs/release-1-29/product-update-fusionauth-1-29.png
-category: blog
-tags: topic-troubleshooting
+category: announcement
+tags: topic-troubleshooting release-announcement identity-linking saml
 excerpt_separator: "<!--more-->"
 ---
 

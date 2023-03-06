@@ -4,7 +4,8 @@ title: Security and privacy risks when implementing an auth system
 description: When implementing an auth system, what security concerns should be on your radar?
 author: Rich Hickey
 image: blogs/security-privacy-implementation-risks/security-and-privacy-risks-when-implementing-an-auth-system-header-image.png
-category: blog
+category: article
+tags: security privacy risks
 excerpt_separator: "<!--more-->"
 ---
 

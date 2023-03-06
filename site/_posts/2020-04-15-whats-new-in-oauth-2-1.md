@@ -4,7 +4,8 @@ title: What's new in OAuth 2.1?
 description: A draft of the OAuth 2.1 specification was recently released. What's coming down the pike?
 author: Dan Moore
 image: blogs/whats-new-in-oauth-2-1/whats-new-with-oauth-2-1.png
-category: blog
+category: article
+tags: standards oauth
 excerpt_separator: "<!--more-->"
 ---
 

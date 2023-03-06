@@ -31,6 +31,8 @@ If you have a paid edition that includes technical support hours, you may open a
 * <<Troubleshooting FusionAuth Cloud API Calls>>
 * <<Troubleshooting Custom Password Hashing Plugins>>
 * <<Troubleshooting Proxies>>
+* <<Troubleshooting Kafka Integrations>>
+* <<Troubleshooting User Search With Elasticsearch>>
 * <<Exposing A Local Instance To The Internet>>
 * <<Common Errors>>
 
@@ -221,6 +223,14 @@ include::docs/v1/tech/plugins/_troubleshooting-plugin.adoc[]
 
 include::docs/v1/tech/admin-guide/_proxy-troubleshooting.adoc[]
 
+== Troubleshooting Kafka Integrations
+
+include::docs/v1/tech/integrations/_kafka_troubleshooting.adoc[]
+
+== Troubleshooting User Search With Elasticsearch
+
+include::docs/v1/tech/admin-guide/_troubleshooting-elasticsearch-queries.adoc[]
+
 == Exposing A Local Instance To The Internet
 
 include::docs/v1/tech/admin-guide/_exposing-local-instance.adoc[]
@@ -292,9 +302,33 @@ To fix your data, follow these steps:
 * Find the user's Id.
 * Modify the problematic `data` fields via the User API to remove the mismatched fields.
 
-Unfortunately, you can't search for the user by email, username, or other characteristics using the User Search API. If you have the user's Id, which may be available in the error messages, you can use that. Searching by UUID doesn't use Elasticsearch. If you do not have the UUID, you should change to the database search engine to find the user. You can switch back to Elasticsearch after you have corrected the `data` field.
+Unfortunately, you often can't search for the user by email, username, or other characteristics using the User Search API. If you have the user's Id, which may be available in the error messages, you can use that. Searching by UUID doesn't use Elasticsearch. You can also try to search for all emails, using a `queryString` of `email:*` if you don't have too many users. Another option is to change to the database search engine to find the user. You can switch back to Elasticsearch after you have corrected the `data` field.
 
 If you have a support contract, please https://account.fusionauth.io/account/support/[open a ticket] and we'll help you out. If not, please back up your FusionAuth database and test the fix thoroughly in a staging environment before applying it to your production instance.
+
+Suppose you had a data field called `customPermissions` which was a `string` on some users and an `object` on others. Below is a script which converts the type of `customPermissions` from `string` to an `object` for all users.
+
+[source,javascript,title="Script to convert mismatched data fields"]
+----
+import FusionAuthClient from "@fusionauth/typescript-client"
+
+const client = new FusionAuthClient('YOUR_API_KEY', 'https://yourinstance.fusionauth.io')
+
+const response = await client.searchUsersByQuery( request: {queryString: "email:*"}) // or whatever other query gets you a list of users
+for (let i = 0; i < response.data.users.length; i++) {
+  const user = response.data.users[i];
+  if (typeof user.data.customPermissions === "string") {
+     const body = {
+               user: { data: { customPermissions: JSON.parse(user.data.customPermissions) } }
+     }
+     await client.patchUser(user.id, { request: body })
+  }
+}
+----
+
+The complexity of the fix depends on how you find affected users and how far apart the data fields in their type. For instance, the above would be more complicated if `customPermissions` were sometimes a `string`, sometimes an `object`, sometimes an `integer`, and sometimes were missing.
+
+If you can't fix your data, you can instruct Elasticsearch to ignore mismatches.
 
 ==== Ignore Fields With a Mismatched Data Type
 

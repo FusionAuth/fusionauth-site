@@ -4,8 +4,8 @@ title: ClearSpend chose FusionAuth because of self-hosting and clear APIs
 description: ClearSpend, a spend-control and expense-management solution, uses FusionAuth for all their user management needs.
 author: Dan Moore
 image: blogs/clearspend-fusionauth/clearsend.png
-category: blog
-tags: topic-community-story 
+category: community-story
+tags: topic-community-story community-story java react-native
 excerpt_separator: "<!--more-->"
 ---
 

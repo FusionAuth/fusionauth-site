@@ -43,7 +43,7 @@ If you launch a single-platform game, further down the line you may find yoursel
 
 One of the major challenges of implementing cross-platform gaming is determining how to secure and transfer gamers’ accounts from one platform to another.
 
-This is where an authentication server comes into play. Instead of relying on platform-specific gaming authentication mechanisms (like Google Play Games and PSN), you need to use a third-party authentication server to verify a gamer’s login credentials. The authentication server may delegate and link accounts across different game networks, through buttons stating “Log In With Nintendo” or API calls, but the auth server is what the users visit to authenticate. Once verified, you could share their game details such as progress, collectables, and more, directly to the platform that they are playing on.
+This is where an authentication server comes into play. Instead of relying on platform-specific gaming authentication mechanisms (like Google Play Games and PSN), you need to use a third-party authentication server to verify a gamer’s login credentials. The authentication server may delegate and link accounts across different game networks, through buttons stating “Log In With Nintendo” or API calls, but the auth server is what the users visit to authenticate. Once verified, you could share their game details such as progress, collectibles, and more, directly to the platform that they are playing on.
 
 ## How Do You Choose an Auth Provider?
 
@@ -199,7 +199,7 @@ You are going to build a [Flutter](https://flutter.dev/) cross-platform game for
 
 FusionAuth offers multiple authentication options for you to consider when building your application. These include:
 
-- The [hosted login pages](/docs/v1/tech/core-concepts/integrations#hosted-login-pages) forms where FusionAuth hosts the registration forms and pages.
+- The [hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages) where FusionAuth hosts the registration forms and pages.
 - An [API-based](/docs/v1/tech/apis/users) approach to manage users.
 - [Third-party login](/docs/v1/tech/identity-providers/) using identity providers such as Google.
 

@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.40
 description: This release includes native windows installation, Okta SCIM support for deactivation of users, and a change to how you can install the MySQL driver.
 author: Dan Moore
 image: blogs/release-1-40/fusionauth-1-40.png
-category: blog
-tags: topic-scim
+category: announcement
+tags: topic-scim scim release-announcement windows installation
 excerpt_separator: "<!--more-->"
 ---
 

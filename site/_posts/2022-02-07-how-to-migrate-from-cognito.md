@@ -4,8 +4,8 @@ title: How to migrate from Amazon Cognito
 description: How can you migrate away from Amazon Cognito?
 author: Dan Moore
 image: blogs/migrate-from-cognito/how-to-migrate-from-amazon-cognito-header-image.png
-category: blog
-tags: topic-upgrade-cognito
+category: tutorial
+tags: topic-upgrade-cognito upgrade cognito
 excerpt_separator: "<!--more-->"
 ---
 
@@ -26,6 +26,8 @@ While [Amazon Cognito](https://aws.amazon.com/cognito/) is a low cost auth servi
 * The user interface presented to your customers is inflexible and hard to customize.
 * You can run Cognito only in the geographies supported by AWS.
 * Cognito pools are not multi-region. If the AWS region that your pool is in is unavailable, you have few options.
+* After setting up a user pool you can't change required attributes such as first and last name or anything else. Instead, you have to create a new user pool if you want different required attributes.
+* When moving between pools, you can't migrate users to the new pool, you either have to export and import their usernames and then have them create new passwords, or you have to migrate them using a special lambda trigger the next time they log in. Therefore you're maintaining two user pools for an indefinite period of time and maintaining complicated lambda triggers.
 * It doesn't support localization of messages or the user interface.
 * You can't backup or export all user data, notably password hashes.
 * SAML accounts are expensive after you grow beyond the free tier.

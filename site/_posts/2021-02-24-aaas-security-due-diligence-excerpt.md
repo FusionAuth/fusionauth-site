@@ -4,7 +4,8 @@ title: Authentication as a Service Security Due Diligence Tips
 description: Before you choose an Authentication as a Service (AaaS) vendor, what kind of security due diligence should you perform?
 author: Mihir Patel
 image: blogs/security-due-diligence/authentication-as-a-service-security-due-diligence-tips-header-image.png
-category: blog
+category: article
+tags: due-diligence
 excerpt_separator: "<!--more-->"
 ---
 

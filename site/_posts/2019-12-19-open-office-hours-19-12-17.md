@@ -4,7 +4,8 @@ title: Open Office Hours To Ask Anything About Identity, Authorization, and Auth
 description: Every month, ask the FusionAuth experts anything about identity, authorization, and authentication.
 author: Bryan Giese
 image: blogs/open-office-webinar-01.png
-category: blog
+category: announcement
+tags: office-hours ciam
 excerpt_separator: "<!--more-->"
 ---
 
@@ -35,7 +36,7 @@ If you missed the this first one, **FusionAuth's Open Office Hours** are free se
 - API endpoint to create API keys & related security issues
 - OAuth Standards
 - Implicit grants and vulnerabilities
-- FusionAuth [Expert Advice](/learn/expert-advice) on website
+- FusionAuth [Expert Advice](/learn/expert-advice/) on website
 - Send us your dev tool suggestions
 - JWS and JWE support
 - Mutual TLS to protect JWTs

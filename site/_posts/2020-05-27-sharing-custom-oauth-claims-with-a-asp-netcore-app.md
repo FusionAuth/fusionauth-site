@@ -4,8 +4,8 @@ title: ASP.NET Core Example with  Custom Claims
 description: We'll configure FusionAuth and extend the ASP.NET Core web application to display role and custom claims from a JWT.
 author: Dan Moore
 image: blogs/adding-more-claims-asp-net/fusionauth-asp-net-core-with-custom-claims.png
-category: blog
-tags: client-netcore tutorial tutorial-netcore
+category: tutorial
+tags: client-netcore tutorial tutorial-netcore netcore dotnet
 excerpt_separator: "<!--more-->"
 ---
 
