@@ -7,17 +7,17 @@ navcategory: developer
 
 == Overview
 
-HAProxy is a popular load-balancer that can also be used as an API Gateway. 
+https://www.haproxy.com:HAProxy is a popular load-balancer that can also be used as an https://www.haproxy.com/blog/using-haproxy-as-an-api-gateway-part-1/:API Gateway. 
 
 You can configure HAProxy to handle authorization to the services through JSON Web Tokens (JWTs) issued on behalf of a user authenticated by an identity provider.
 
-In this document, you'll learn how to set up HAProxy with FusionAuth as the identity provider to protect a simple HTTP service.
+In this document, you'll learn how to set up HAProxy with FusionAuth as the identity provider to protect a HTTP service using JWTs.
 
 == Prerequisites
 
 * A FusionAuth instance running on a publicly accessible URL. You can spin up a link:/pricing[basic FusionAuth Cloud instance] or link:/docs/v1/tech/installation-guide/[install it on any server].
-* An HAProxy instance routed to an HTTP service. You can follow the link:https://www.haproxy.com/blog/how-to-run-haproxy-with-docker/[this guide] to get a simple example running on Docker.
-** IMPORTANT: when creating your HAProxy container, be sure to use `haproxytech/haproxy-alpine:latest`, not `haproxytech/haproxy-alpine:2.4` as the guide instructs. 
+* An HAProxy instance routed to an HTTP service. You can follow the https://www.haproxy.com/blog/how-to-run-haproxy-with-docker/[this guide] to get a simple example running on Docker.
+** IMPORTANT: when creating your HAProxy container, be sure to use `haproxytech/haproxy-alpine:latest`, not `haproxytech/haproxy-alpine:2.4` as the guide instructs. Version 2.4 does not support the full set of JWT features needed in this tutorial.
 ** If you have trouble getting the `haproxy` container from the guide to start, make sure your `haproxy.cfg` file ends with a blank line. Even whitespace on the last line will prevent the container from running.
 
 == Restrict Access to your HAProxy Service
@@ -31,7 +31,7 @@ curl -X GET -I http://localhost:80
 
 If you have correctly set up HAProxy, this command will return `HTTP/1.1 200 OK`, indicating a successful connection to the service.
 
-Now, you can restrict access to the service by requiring a JWT. To do this, add the following lines to the `frontend myfrontend` section of your `haproxy.cfg` file. More information on this can be found link:https://www.haproxy.com/blog/verify-oauth-jwt-tokens-with-haproxy/#configure-haproxy-for-jwts[here].  
+Now, you can restrict access to the service by requiring a JWT. To do this, add the following lines to the `frontend myfrontend` section of your `haproxy.cfg` file. More information on this can be found https://www.haproxy.com/blog/verify-oauth-jwt-tokens-with-haproxy/#configure-haproxy-for-jwts[here].  
 
 [source,ini,title="Adding JWT requirement to HAProxy configuration file"]
 ----
@@ -56,9 +56,16 @@ Now, you can restrict access to the service by requiring a JWT. To do this, add 
 
 ----
 
-In the `Invalid JWT issuer` and `Invalid JWT audience` lines above, replace the `YOUR_FUSIONAUTH_URL` and `YOUR_APPLICATION_ID` variables with the appropriate values. These values will be explained in greater detail in the following `FusionAuth` configuration section. 
+In the `Invalid JWT issuer` and `Invalid JWT audience` lines above, the placeholder values `<YOUR_FUSIONAUTH_URL>` and `<YOUR_APPLICATION_ID>` will need to be updated. These values will be explained in greater detail in the following `FusionAuth` configuration section. 
 
 Note that your configuration file will look slightly different from the one on HAProxy's documentation linked above. You only need to import the lines necessary for proper JWT authentication. For example, you do not need to bind to port 443 or set up an SSL certificate, although it is good practice to do so in a production environment. More information on doing so can be found link:https://www.haproxy.com/blog/haproxy-ssl-termination/[here].
+
+Restart HAProxy by running the following:
+
+[source,shell,title="Testing that service is inaccessible without JWT"]
+----
+sudo docker kill -s HUP haproxy
+----
 
 At this point, the service is inaccessible without a token. To confirm this, you can execute:
 
@@ -73,11 +80,11 @@ which will return `HTTP/1.1 403 Forbidden`. You can also omit the `-I` option to
 
 Navigate to your FusionAuth instance.
 
-First, you need to make sure the JWT issuer setting is correct. Navigate to [breadcrumb]#Tenants -> Your Tenant# and change the [field]#Issuer# field to the URL of your FusionAuth instance, for example, `\https://local.fusionauth.io`. Record this value, because you will use it later when generating the JWT. This URL is the `YOUR_FUSIONAUTH_URL` value referred to in the `Restrict Access to your HAProxy Service` section above, so supply this value to your `haproxy.cfg` file accordingly.
+First, you need to make sure the JWT issuer setting is correct. Navigate to [breadcrumb]#Tenants -> Your Tenant# and change the [field]#Issuer# field to the URL of your FusionAuth instance, for example, `\https://local.fusionauth.io`. Record this value, because you will use it later when generating the JWT. This URL is the `YOUR_FUSIONAUTH_URL` value referred to in the `Restrict Access to your HAProxy Service` section above. Update this value in your `haproxy.cfg` file accordingly.
 
 image::api-gateways/HAProxy-Api-Gateway/haproxy-tenant-issuer.png[Tenant issuer,width=1200px]
 
-Next, you need to configure an application that will issue tokens to access the HAProxy service.
+Next, you need to configure a FusionAuth application to issue tokens to access the HAProxy services.
 
 Navigate to [breadcrumb]#Applications# and create a new application. Fill out the [field]#Name# field, then click the [breadcrumb]#JWT# tab and toggle the [field]#Enabled# switch. Select [uielement]#Auto generate a new key on save...# for the [field]#Access Token signing key# and [field]#Id token signing key# fields. This will generate an RS256 asymmetric key pair specifically for this application.
 
@@ -85,11 +92,11 @@ image::api-gateways/HAProxy-Api-Gateway/haproxy-application-jwt-settings.png[App
 
 Click the [uielement]#Save# button.
 
-After saving the application, find the application in the list of applications and click [uielement]#View# next to the application you just created. Here you will find the application [field]#Id#. This is the `YOUR_APPLICATION_ID` value referred to in the above `Restrict Access to your HAProxy Service` section, so supply this value to your `haproxy.cfg` file accordingly.
+After saving the application, find the application in the list of applications and click [uielement]#View# next to the application you just created. Here you will find the application [field]#Id#. This is the `YOUR_APPLICATION_ID` value referred to in the above `Restrict Access to your HAProxy Service` section. Update this value in your `haproxy.cfg` file accordingly.
 
 image::api-gateways/HAProxy-Api-Gateway/haproxy-application-id.png[Application id,width=1200px]
 
-Now, navigate to [breadcrumb]#Settings -> Key Master#. You will see the access key that you've just created in this list. By default, it has the name `Access token signing key generated for application <NAME_OF_APPLICATION>`. View the key and copy the entire contents of the [field]#PEM encoded# field under the [breadcrumb]#Public Key# section into a file in your current working directory. Name the file `pubkey.pem`, in accordance with the file path in the `Invalid JWT Signature` line in your `haproxy.cfg` file.
+Now, navigate to [breadcrumb]#Settings -> Key Master#. You will see the access key that you've just created in this list. By default, it has the name `Access token signing key generated for application <NAME_OF_APPLICATION>`. View the key and copy the entire contents of the [field]#PEM encoded# field under the [breadcrumb]#Public Key# section into a file in your current working directory. Name the file `pubkey.pem`, to match the file path in the `Invalid JWT Signature` line in your `haproxy.cfg` file.
 
 image::api-gateways/HAProxy-Api-Gateway/haproxy-public-key.png[Record the public key for later use,width=1200px]
 
