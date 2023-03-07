@@ -101,7 +101,7 @@ To test whether the Laravel application is up and running as expected, open a br
 
 According to its own docs, [Laravel Socialite](https://laravel.com/docs/9.x/socialite) is a _"a simple, convenient way to authenticate with OAuth providers"_, meaning that is a very straightforward way of calling a remote server in order to authenticate a user. And that is exactly what FusionAuth is all about!
 
-Officialy, it ships with support for Facebook, Twitter, LinkedIn, Google, GitHub, GitLab and Bitbucket, but there are several community projects that add other providers, and they are grouped in a project called [Socialite Providers](https://socialiteproviders.com/).
+Officially, it ships with support for Facebook, Twitter, LinkedIn, Google, GitHub, GitLab and Bitbucket, but there are several community projects that add other providers, and they are grouped in a project called [Socialite Providers](https://socialiteproviders.com/).
 
 Thanks to the open-source community, there is [this package to use FusionAuth as a provider](https://github.com/SocialiteProviders/FusionAuth), which we'll now use to show you how it's done!
 
@@ -143,7 +143,7 @@ Now, configure your application with the necessary settings to interact with the
 
 ### Configuring environment variables
 
-Instead of putting directly the values there, you should use environment variables, which is a good practice from both maintenance and security standpoints, as described in the [12 Factor App](https://12factor.net/config) methodology and in several others. Being so, alter your `.env` file to include those entries:
+Instead of putting the values directly there, you should use environment variables, which is a good practice from both maintenance and security standpoints, as described in the [12 Factor App](https://12factor.net/config) methodology and in several others. Being so, alter your `.env` file to include those entries:
 
 ```ini
 # Paste both client Id and secret for your application
@@ -163,7 +163,7 @@ FUSIONAUTH_REDIRECT_URI=http://localhost/auth/callback
 
 ### Creating new fields in the User model
 
-Migrations are the code-based version control for your database. Instead of having to share SQL queries with your coworkers so they can create a table or add a column everytime there is a change in the database, you can write code to programatically do this when running a command.
+Migrations are the code-based version control for your database. Instead of having to share SQL queries with your coworkers so they can create a table or add a column everytime there is a change in the database, you can write code to programmatically do this when running a command.
 
 In Laravel, to create a new migration you just need to run the `artisan make:migration` and inform a meaningful name for it. In the next line, we'll create a migration called `add_fusionauth_fields_user_table`:
 
@@ -313,7 +313,7 @@ Route::get('/auth/callback', function () {
 
 ### Changing the view
 
-To better see what is going on after logging in, you can change the view for the home page to actually display the name for the current user. You can do this by opening `resources/views/welcome.blade.php` and adding a new line after "Home":
+To better see what is going on after logging in, you can change the view for the home page to actually display the name or the current user. You can do this by opening `resources/views/welcome.blade.php` and adding a new line after "Home":
 
 ```php
 // Before:
