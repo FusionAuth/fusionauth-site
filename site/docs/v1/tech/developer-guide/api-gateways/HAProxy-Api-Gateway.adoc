@@ -20,7 +20,47 @@ In this document, you'll learn how to set up HAProxy with FusionAuth as the iden
 ** IMPORTANT: when creating your HAProxy container, be sure to use `haproxytech/haproxy-alpine:latest`, not `haproxytech/haproxy-alpine:2.4` as the guide instructs. Version 2.4 does not support the full set of JWT features needed in this tutorial.
 ** If you have trouble getting the `haproxy` container from the guide to start, make sure your `haproxy.cfg` file ends with a blank line. Even whitespace on the last line will prevent the container from running.
 
-== Restrict Access to your HAProxy Service
+== FusionAuth configuration
+
+Navigate to your FusionAuth instance.
+
+First, you need to make sure the JWT issuer setting is correct. Navigate to [breadcrumb]#Tenants -> Your Tenant# and change the [field]#Issuer# field to the URL of your FusionAuth instance, for example, `\https://local.fusionauth.io`. Record this value, because you will use it later when generating the JWT. It will be referred to as `<YOUR_FUSIONAUTH_URL>`.
+
+image::api-gateways/HAProxy-Api-Gateway/haproxy-tenant-issuer.png[Tenant issuer,width=1200px]
+
+Next, you need to configure a FusionAuth application to issue tokens to access the HAProxy services.
+
+Navigate to [breadcrumb]#Applications# and create a new application. Fill out the [field]#Name# field, then click the [breadcrumb]#JWT# tab and toggle the [field]#Enabled# switch. Select [uielement]#Auto generate a new key on save...# for the [field]#Access Token signing key# and [field]#Id token signing key# fields. This will generate an RS256 asymmetric key pair specifically for this application.
+
+image::api-gateways/HAProxy-Api-Gateway/haproxy-application-jwt-settings.png[Application JWT settings,width=1200px]
+
+Click the [uielement]#Save# button.
+
+After saving the application, find the application in the list of applications and click [uielement]#View# next to the application you just created. Here you will find the application [field]#Id#. Record this value, as you will need it later. It will be referred to later as `<YOUR_APPLICATION_ID>`.
+
+image::api-gateways/HAProxy-Api-Gateway/haproxy-application-id.png[Application id,width=1200px]
+
+Now, navigate to [breadcrumb]#Settings -> Key Master#. You will see the access key that you've just created in this list. By default, it has the name `Access token signing key generated for application <NAME_OF_APPLICATION>`. View the key and copy the entire contents of the [field]#PEM encoded# field under the [breadcrumb]#Public Key# section into a file in your current working directory. Name the file `pubkey.pem`. Remember this filename, as you will supply it to the HAProxy configuration file later.
+
+image::api-gateways/HAProxy-Api-Gateway/haproxy-public-key.png[Record the public key for later use,width=1200px]
+
+You will use FusionAuth's API to generate a test JWT for your application. However, in a real-world application, the user or service would get the JWT through an OAuth grant. In the case of a user, the appropriate grant is the Authorization Code grant, and for a service, the Client Credentials grant. To make this example simpler, you'll use the Login API to get the JWT. To do this, you need an API key with POST access to the `/api/login` endpoint. Go to [breadcrumb]#Settings -> API Keys# to add the key. Make sure the appropriate tenant is selected in the [field]#Tenant# field.
+
+image::api-gateways/HAProxy-Api-Gateway/haproxy-api-key-permissions.png[API key with post access to /api/login,width=1200px]
+
+After saving the API key, you can view the key in the list of API keys. Make a note of the value of the [field]#Key# field. You will need to click the red padlock icon next to the key to reveal the value.
+
+image::api-gateways/HAProxy-Api-Gateway/haproxy-api-key-value.png[Contents of API key,width=1200px]
+
+Finally, make sure there is at least one user registered to your application so that you can test with a JWT issued for that user. You can create a new user by navigating to [breadcrumb]#Users -> Add user#. Untoggle the [field]#Send email to set up password# switch to manually enter a password in the [field]#Password# field.
+
+image::api-gateways/HAProxy-Api-Gateway/haproxy-create-user.png[Create user with email and password,width=1200px]
+
+After saving this user, click [uielement]#Manage# and go to the [breadcrumb]#Registrations# tab. Click [uielement]#Add Registration# to register the user to your application.
+
+image::api-gateways/HAProxy-Api-Gateway/haproxy-user-registration.png[Register user to HAProxy application,width=1200px]
+
+== HAProxy configuration
 
 After following the HAProxy quickstart guide above, you can execute the following command in the terminal.
 
@@ -56,7 +96,7 @@ Now, you can restrict access to the service by requiring a JWT. To do this, add 
 
 ----
 
-In the `Invalid JWT issuer` and `Invalid JWT audience` lines above, the placeholder values `<YOUR_FUSIONAUTH_URL>` and `<YOUR_APPLICATION_ID>` will need to be updated. These values will be explained in greater detail in the following `FusionAuth` configuration section. 
+In the `Invalid JWT issuer` and `Invalid JWT audience` lines above, the placeholder values `<YOUR_FUSIONAUTH_URL>` and `<YOUR_APPLICATION_ID>` will need to be updated with the appropriate values from the previous section. `<YOUR_FUSIONAUTH_URL>` is the fully-qualified URL from the [field]#issuer# field in your [breadcrumb]#tenant# configuration and `<YOUR_APPLICATION_ID>` is the UUID that identifies your FusionAuth application.
 
 Note that your configuration file will look slightly different from the one on HAProxy's documentation linked above. You only need to import the lines necessary for proper JWT authentication. For example, you do not need to bind to port 443 or set up an SSL certificate, although it is good practice to do so in a production environment. More information on doing so can be found link:https://www.haproxy.com/blog/haproxy-ssl-termination/[here].
 
@@ -76,46 +116,6 @@ curl -X GET -I http://localhost:80
 
 which will return `HTTP/1.1 403 Forbidden`. You can also omit the `-I` option to see the error message that you supplied above, namely `Missing Authorization HTTP header`.
 
-== FusionAuth configuration
-
-Navigate to your FusionAuth instance.
-
-First, you need to make sure the JWT issuer setting is correct. Navigate to [breadcrumb]#Tenants -> Your Tenant# and change the [field]#Issuer# field to the URL of your FusionAuth instance, for example, `\https://local.fusionauth.io`. Record this value, because you will use it later when generating the JWT. This URL is the `YOUR_FUSIONAUTH_URL` value referred to in the `Restrict Access to your HAProxy Service` section above. Update this value in your `haproxy.cfg` file accordingly.
-
-image::api-gateways/HAProxy-Api-Gateway/haproxy-tenant-issuer.png[Tenant issuer,width=1200px]
-
-Next, you need to configure a FusionAuth application to issue tokens to access the HAProxy services.
-
-Navigate to [breadcrumb]#Applications# and create a new application. Fill out the [field]#Name# field, then click the [breadcrumb]#JWT# tab and toggle the [field]#Enabled# switch. Select [uielement]#Auto generate a new key on save...# for the [field]#Access Token signing key# and [field]#Id token signing key# fields. This will generate an RS256 asymmetric key pair specifically for this application.
-
-image::api-gateways/HAProxy-Api-Gateway/haproxy-application-jwt-settings.png[Application JWT settings,width=1200px]
-
-Click the [uielement]#Save# button.
-
-After saving the application, find the application in the list of applications and click [uielement]#View# next to the application you just created. Here you will find the application [field]#Id#. This is the `YOUR_APPLICATION_ID` value referred to in the above `Restrict Access to your HAProxy Service` section. Update this value in your `haproxy.cfg` file accordingly.
-
-image::api-gateways/HAProxy-Api-Gateway/haproxy-application-id.png[Application id,width=1200px]
-
-Now, navigate to [breadcrumb]#Settings -> Key Master#. You will see the access key that you've just created in this list. By default, it has the name `Access token signing key generated for application <NAME_OF_APPLICATION>`. View the key and copy the entire contents of the [field]#PEM encoded# field under the [breadcrumb]#Public Key# section into a file in your current working directory. Name the file `pubkey.pem`, to match the file path in the `Invalid JWT Signature` line in your `haproxy.cfg` file.
-
-image::api-gateways/HAProxy-Api-Gateway/haproxy-public-key.png[Record the public key for later use,width=1200px]
-
-You will use FusionAuth's API to generate a test JWT for your application. However, in a real-world application, the user or service would get the JWT through an OAuth grant. In the case of a user, the appropriate grant is the Authorization Code grant, and for a service, the Client Credentials grant. To make this example simpler, you'll use the Login API to get the JWT. To do this, you need an API key with POST access to the `/api/login` endpoint. Go to [breadcrumb]#Settings -> API Keys# to add the key. Make sure the appropriate tenant is selected in the [field]#Tenant# field.
-
-image::api-gateways/HAProxy-Api-Gateway/haproxy-api-key-permissions.png[API key with post access to /api/login,width=1200px]
-
-After saving the API key, you can view the key in the list of API keys. Make a note of the value of the [field]#Key# field. You will need to click the red padlock icon next to the key to reveal the value.
-
-image::api-gateways/HAProxy-Api-Gateway/haproxy-api-key-value.png[Contents of API key,width=1200px]
-
-Finally, make sure there is at least one user registered to your application so that you can test with a JWT issued for that user. You can create a new user by navigating to [breadcrumb]#Users -> Add user#. Untoggle the [field]#Send email to set up password# switch to manually enter a password in the [field]#Password# field.
-
-image::api-gateways/HAProxy-Api-Gateway/haproxy-create-user.png[Create user with email and password,width=1200px]
-
-After saving this user, click [uielement]#Manage# and go to the [breadcrumb]#Registrations# tab. Click [uielement]#Add Registration# to register the user to your application.
-
-image::api-gateways/HAProxy-Api-Gateway/haproxy-user-registration.png[Register user to HAProxy application,width=1200px]
-
 == Creating and Using the Service with a JWT
 
 You can now generate a test JWT to access your HAProxy service using FusionAuth's login API. Execute the following command in your terminal.
@@ -133,11 +133,11 @@ curl --location --request POST '<YOUR_FUSIONAUTH_URL>/api/login' \
   }'
 ----
 
-Here, `YOUR_FUSIONAUTH_URL` is the [field]#Issuer# name, and `API_KEY` is the key you noted when setting it up on the [breadcrumb]#Settings -> API Keys# page.
+Here, `<YOUR_FUSIONAUTH_URL>` is the [field]#Issuer# name, and `<API_KEY>` is the key you noted when setting it up on the [breadcrumb]#Settings -> API Keys# page.
 
-For `APPLICATION_ID`, use the Id of your FusionAuth application, noted when setting up the application.
+For `<APPLICATION_ID>`, use the Id of your FusionAuth application, noted when setting up the application.
 
-The values for `USER_EMAIL` and `USER_PASSWORD` are the username and password of the test user that you registered to that application.
+The values for `<USER_EMAIL>` and `<USER_PASSWORD>` are the username and password of the test user that you registered to that application.
 
 The returned response from FusionAuth should look similar to the following:
 
