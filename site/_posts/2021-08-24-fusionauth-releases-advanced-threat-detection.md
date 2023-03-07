@@ -4,8 +4,8 @@ title: FusionAuth Introduces Advanced Threat Detection to Help Safeguard User Id
 description: This feature simplifies process for developers to protect against malicious logins and account takeovers.
 author: David Polstra
 image: blogs/advanced-threat-detection-launch/fusionauth-introduces-advanced-threat-detection-to-help-safeguard-user-identity-header-image.png
-category: blog
-tags: feature-advanced-threat-detection topic-press-release
+category: announcement
+tags: feature-advanced-threat-detection topic-press-release advanced-threat-detection press-release
 excerpt_separator: "<!--more-->"
 ---
 

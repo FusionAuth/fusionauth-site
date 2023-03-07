@@ -4,8 +4,8 @@ title: Sunfinity self hosts FusionAuth for a "huge win in control, productivity 
 description: Sunfinity uses FusionAuth as their centralized auth system and connected it to their sales CRM, ops ticketing and other custom applications.
 author: Dan Moore
 image: blogs/sunfinity-fusionauth-python/sunfinity-self-hosts-fusionauth-for-a-huge-win-in-control-productivity-and-cost-header-image.png
-category: blog
-tags: topic-community-story topic-upgrade-homegrown
+category: community-story
+tags: topic-community-story topic-upgrade-homegrown community-story python upgrade homegrown api-gateway kong
 excerpt_separator: "<!--more-->"
 ---
 

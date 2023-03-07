@@ -4,7 +4,8 @@ title:  Download File Counts from Google Cloud Storage
 description: Getting download file counts from Google Cloud Storage using access logs and a Ruby script
 author: Brian Pontarelli
 image: blogs/download-count.png
-category: blog
+category: tutorial
+tags: google-cloud-storage script
 excerpt_separator: "<!--more-->"
 ---
 
@@ -80,7 +81,7 @@ Then for each file, I read each line of the file and determine if the line is a 
 
 As you can see I'm also filtering out downloads using an IP whitelist and a regular expression, we do a lot of testing and I don't want those to count towards our final metric. This part of the script may or may not be useful to everyone.
 
-Finally, I write out the header row and the counts out to a CSV file. The CSV file I'm writing to is accessible at this URL: [https://fusionauth.io/collateral/download-count.csv](/collateral/download-count.csv).
+Finally, I write out the header row and the counts out to a CSV file.
 
 ## Deployment and Cyfe
 

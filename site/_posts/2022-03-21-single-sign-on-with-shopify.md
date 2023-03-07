@@ -4,8 +4,8 @@ title: "How to Set Up Single Sign-On (SSO) Between FusionAuth and Shopify"
 description: This tutorial demonstrates how to integrate SSO to a Shopify site using FusionAuth.
 author: Aniket Bhattacharyea
 image: blogs/single-sign-on-shopify/how-to-set-up-single-sign-on-shopify.png
-category: blog
-tags: tutorial tutorial-integration
+category: tutorial
+tags: tutorial tutorial-integration integration shopify
 excerpt_separator: "<!--more-->"
 ---
 

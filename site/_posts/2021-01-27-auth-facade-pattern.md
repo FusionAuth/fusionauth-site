@@ -4,8 +4,8 @@ title: Hide upstream identity providers with the Auth Facade
 description: How can the auth facade pattern help you deploy apps in customer's networks?
 author: Dan Moore
 image: blogs/auth-facade/hide-upstream-identity-providers-with-the-auth-facade-header-image.png
-category: blog
-tags: topic-auth-patterns
+category: article
+tags: authentication authorization outsource patterns facade
 excerpt_separator: "<!--more-->"
 ---
 

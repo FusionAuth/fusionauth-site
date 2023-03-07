@@ -34,7 +34,7 @@ Usually, OAuth 2.0 is involved when a user (also called the Resource Owner) is p
 
 If you wanted to print images from your Pinterest account without downloading the images and uploading them again to a printing website, and without sharing your Pinterest username and password with the printing website, you could authorize the printing website to have read-only access to your Pinterest photos.
 
-You can do this using OAuth 2.0. Here's a diagram of the Autorization Code grant. (This is also sometimes called the Authorization Code flow.)
+You can do this using OAuth 2.0. Here's a diagram of the Authorization Code grant. (This is also sometimes called the Authorization Code flow.)
 
 {% plantuml source: _diagrams/learn/expert-advice/oauth/what-is-oauth-authorization-code-grant.plantuml, alt: "Example of the Authorization Code grant" %}
 

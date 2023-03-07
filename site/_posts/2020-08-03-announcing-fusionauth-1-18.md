@@ -4,7 +4,8 @@ title: Announcing FusionAuth 1.18
 description: The FusionAuth 1.18 Release offers custom registration forms, syncing with LDAP and more.
 author: Dan Moore
 image: blogs/release-1-18/fusionauth-release-1-18.png
-category: blog
+category: announcement
+tags: registration ldap release-announcement
 excerpt_separator: "<!--more-->"
 ---
 

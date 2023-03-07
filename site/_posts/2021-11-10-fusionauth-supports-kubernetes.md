@@ -4,8 +4,8 @@ title: FusionAuth Adds Enterprise Kubernetes Support, Making It Simple to Add Au
 description: FusionAuth, the authentication and authorization platform built for developers, today announced Enterprise Kubernetes Support. By deploying FusionAuth into their Kubernetes clusters, teams have an API-first, developer friendly identity provider for all their credentials and token management needs.
 author: David Polstra
 image: blogs/fusionauth-enterprise-kubernetes-support/press-release-fusionauth-adds-enterprise-kubernetes-support.png
-category: blog
-tags: topic-kubernetes topic-press-release
+category: announcement
+tags: topic-kubernetes topic-press-release press-release kubernetes
 excerpt_separator: "<!--more-->"
 ---
 
