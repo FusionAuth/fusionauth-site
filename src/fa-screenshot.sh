@@ -150,7 +150,7 @@ tell application theApp
 	activate
 	reopen
 	set xAxis to $xAxis
-	set yAxis to 360
+	set yAxis to 200
 	set the bounds of the first window to {xAxis, yAxis, appWidth + xAxis, appHeight + yAxis}
 end tell
 EOD
