@@ -103,7 +103,7 @@ To test whether the Laravel application is up and running as expected, open a br
 
 According to its own docs, [Laravel Socialite](https://laravel.com/docs/9.x/socialite) is a _"a simple, convenient way to authenticate with OAuth providers"_, meaning that is a very straightforward way of calling a remote server in order to authenticate a user. And that is exactly what FusionAuth is all about!
 
-Officialy, it is shipped with support for Facebook, Twitter, LinkedIn, Google, GitHub, GitLab and Bitbucket, but there are several community projects that add other providers, and they are grouped in a project called [Socialite Providers](https://socialiteproviders.com/).
+Officialy, it ships with support for Facebook, Twitter, LinkedIn, Google, GitHub, GitLab and Bitbucket, but there are several community projects that add other providers, and they are grouped in a project called [Socialite Providers](https://socialiteproviders.com/).
 
 Thanks to the open-source community, there is [this package to use FusionAuth as a provider](https://github.com/SocialiteProviders/FusionAuth), which we'll now use to show you how it's done!
 
@@ -344,4 +344,4 @@ Now you have a working Laravel application that has been authenticated by the us
 
 SSO-based authentication eases the process of signing in to applications, and it's a popular choice for many organizations. In this article, you learned about SSO and authentication platforms like [FusionAuth](https://fusionauth.io/), as well as how you can integrate a Laravel application with FusionAuth to successfully enable SSO-based authentication.
 
-Get your hands dirty by [downloading FusionAuth](https://fusionauth.io/download) on your end and set up SSO for your Laravel app today.
+Get your hands dirty by [downloading FusionAuth for free](https://fusionauth.io/download) and set up SSO for your Laravel app today.
