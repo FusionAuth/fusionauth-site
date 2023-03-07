@@ -130,6 +130,11 @@ Navigate to "Settings" then "Consents" and click the "Add" button. Supply a "Nam
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-add-consent.png" alt="Creating the consent" class="img-fluid" figure=false %}
 
+The parent user can self assign the consent. To do so navigate to "Users" and click the "Manage" user button for the parent user. Under the "Consent" tab click the "Add Consent" button and select the consent you created above and then click "Submit".
+
+{% include _image.liquid src="/assets/img/blogs/family-api/parent-assign-consent.png" alt="Parent self assign consent" class="img-fluid" figure=false %}
+
+
 ## Setting up Express
 
 Your FusionAuth configuration is now ready to go, and you can start building your application using Express.
