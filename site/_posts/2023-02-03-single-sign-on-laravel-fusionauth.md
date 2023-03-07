@@ -25,7 +25,7 @@ As previously stated, in this tutorial, you'll be shown how to implement SSO in 
 
 Before you begin, you'll need the following:
 
-* A Linux machine. The step-by-step instructions in this article are based on a [CentOS Linux machine](https://www.centos.org). If you want to work on a different OS, check out this [setup guide](https://fusionauth.io/docs/v1/tech/5-minute-setup-guide) for more information.
+* A Linux machine. The step-by-step instructions in this article are based on a [CentOS Linux machine](https://www.centos.org). If you want to work on a different OS, check out this [setup guide](/docs/v1/tech/5-minute-setup-guide) for more information.
 * [Docker Engine](https://docs.docker.com/engine/) and [Docker Compose](https://docs.docker.com/compose/).
 * Experience with a Laravel framework and application development.
 * The [Git client tool](https://git-scm.com/downloads).
@@ -40,7 +40,7 @@ git clone https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-o
 
 ## Installing FusionAuth
 
-If you already have a FusionAuth Cloud instance, you can use that, but for the sake of simplicity, this tutorial will assume you are using a locally hosted instance. There are detailed setup guides in the [documentation](https://fusionauth.io/docs/v1/tech/installation-guide/docker/), but the short version is that once you have Docker and Docker Compose set up and installed correctly, you can run the following command in a new directory to download and execute the necessary files.
+If you already have a FusionAuth Cloud instance, you can use that, but for the sake of simplicity, this tutorial will assume you are using a locally hosted instance. There are detailed setup guides in the [documentation](/docs/v1/tech/installation-guide/docker/), but the short version is that once you have Docker and Docker Compose set up and installed correctly, you can run the following command in a new directory to download and execute the necessary files.
 
 ```shell
 $ curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
@@ -70,9 +70,7 @@ This setup allows users in FusionAuth to sign in to the Laravel application auto
 
 ### Kickstart
 
-Instead of manually setting up FusionAuth using the admin UI as you did above, you can use Kickstart. This tool allows you to get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart).
-
-Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on/blob/main/fusionauth/kickstart/kickstart.json) which sets up FusionAuth for this tutorial.
+{% include posts/kickstart.liquid url="https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on/blob/main/fusionauth/kickstart/kickstart.json" %}
 
 ## Installing and configuring Laravel
 
@@ -175,7 +173,7 @@ $ ./vendor/bin/sail artisan make:migration add_fusionauth_fields_user_table
 
 Then, go to your `database/migrations` folder, where you'll find a file there with the name you created and prefixed by today's date (e.g `2023_02_03_123000_add_fusionauth_fields_user_table.php`).
 
-Edit that file to add three new columns to the `users` table: `fusionauth_id`, `fusionauth_access_token` and `fusionauth_refresh_token` and allow `NULL` values in the `password` column.
+Edit that file to add three new columns to the `users` table: `fusionauth_id`, `fusionauth_access_token` and `fusionauth_refresh_token` and allow `NULL` values in the `password` column. You'd want to save the access token in your database to make requests to the FusionAuth API on behalf of the user. This way, they don't need to log in again to your FusionAuth instance as long as the token is still valid. 
 
 {% include _callout-tip.liquid content="If you cloned our [GitHub repository](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on), you can just copy the contents from [laravel/migration.php](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on/blob/main/laravel/migration.php)." %}
 
@@ -342,6 +340,6 @@ Now you have a working Laravel application that has been authenticated by the us
 
 ## Conclusion
 
-SSO-based authentication eases the process of signing in to applications, and it's a popular choice for many organizations. In this article, you learned about SSO and authentication platforms like [FusionAuth](https://fusionauth.io/), as well as how you can integrate a Laravel application with FusionAuth to successfully enable SSO-based authentication.
+SSO-based authentication eases the process of signing in to applications, and it's a popular choice for many organizations. In this article, you learned about SSO and authentication platforms like [FusionAuth](/), as well as how you can integrate a Laravel application with FusionAuth to successfully enable SSO-based authentication.
 
-Get your hands dirty by [downloading FusionAuth for free](https://fusionauth.io/download) and set up SSO for your Laravel app today.
+Get your hands dirty by [downloading FusionAuth for free](/download) and set up SSO for your Laravel app today.
