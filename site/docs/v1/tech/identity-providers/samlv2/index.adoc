@@ -83,9 +83,11 @@ The image to be displayed in the button on the login form. When this value is om
 
 [field]#Enable IdP initiated login# [optional]#Optional# [since]#Available since 1.43.0#::
 Allows IdP initiated login requests for this configuration. You must have a valid license to use this feature.
++
+In general FusionAuth does not recommend you utilize this type of login due to the inherent risks of accepting an unsolicited authentication response from a third-party identity provider. In a service provider initiated login, the SAML Authentication Response is returned to the service provider (FusionAuth) in response to an authentication request. This means FusionAuth can validate certain parameters and only accept a response for a request that FusionAuth initiated. In contrast, during an identity provider initiated login, the third-party identity provider sends FusionAuth a SAML Authentication Response indicating a user has been authenticated without any context. The problem is that FusionAuth did not initiate this so it is unexpected, this limits what can be verified and requires FusionAuth to allow a cross site request from this third party. If you must enable this feature to support a legacy integration or because the user experience is of the highest concern, then you may proceed.
 
-[field]#Issuer# [required]#Required# [since]#Available since 1.43.0#::
-The EntityId (unique identifier) of the SAML v2 identity provider. Only available if IdP initiated login is enabled. This value should be provided to you.
+[field]#Issuer# [optional]#Optional# [since]#Available since 1.43.0#::
+The EntityId (unique identifier) of the SAML v2 identity provider. Required when [field]#Enable IdP initiated login# is enabled. This value should be provided to you.
 
 [field]#Linking strategy# [optional]#Optional# [default]#defaults to `Link on email. Create the user if they do not exist`# [since]#Available since 1.28.0#::
 The linking strategy for the SAMLv2 provider. link:/docs/v1/tech/identity-providers/#linking-strategies[See Linking Strategies for more].
@@ -129,6 +131,24 @@ The key used to sign the SAML request. Required when [field]#Sign request# is en
 
 [field]#Canonicalization method# [optional]#Optional#::
 The XML signature canonicalization method used when digesting and signing the SAML request. Required when [field]#Use POST method# and [field]#Sign request# are enabled.
+
+[field]#Enable login hint# [optional]#Optional# [since]#Available since 1.43.0#::
+When enabled FusionAuth will provide the username or email address when available to the IdP as a login hint when HTTP redirect bindings are used to initiate the AuthN request.
+
+[field]#Login hint parameter name# [optional]#Optional# [since]#Available since 1.43.0#::
+The name of the parameter used to pass the username or email as login hint to the IDP when HTTP redirect bindings are used to initiate the AuthN request. Required when [field]#Enable login hint# is enabled.
+
+[field]#Destination assertion policy# [optional]#Optional# [since]#Available since 1.43.0#::
+The policy to use when performing a destination assertion on the SAML login request.
++
+The possible values are:
++
+* `Enabled` - Verifies the Destination attribute in the SAML response is equal to the expected Destination which is the FusionAuth ACS (Assertion Consumer Service) URL. This is the default and the recommended setting.
+* `Disabled` - Do not validate the Destination attribute. This is not recommend, please use with caution.
+* `Allow alternates` - Verifies the Destination attribute is either the expected FusionAuth ACS, or one of the configured alternate values. This option is intended to assist with migrations from third-party IdPs and should be used with caution.
+
+[field]#Alternate destinations# [optional]#Optional# [since]#Available since 1.43.0#::
+The array of URLs that FusionAuth will accept as SAML login destinations if the [field]#Destination Assertion Policy# is `Allow alternates`.
 
 === Managed domains
 
