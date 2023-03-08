@@ -28,6 +28,22 @@ Determines if a UserRegistration is created for the User automatically or not. I
 Determines if this identity provider is enabled for the Application specified by the `applicationId` key.
 
 ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.assertionConfiguration.destination.alternates# [type]#[Array]# [optional]#Optional# [since]#Available since 1.43.0#::
+The array of URLs that FusionAuth will accept as SAML login destinations if the [field]#identityProvider.assertionConfiguration.destination.policy# setting is `AllowAlternates`.
+endif::[]
+
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.assertionConfiguration.destination.policy# [type]#[String]# [optional]#Optional# [default]#defaults to `Enabled`# [since]#Available since 1.43.0#::
+The policy to use when performing a destination assertion on the SAML login request.
++
+The possible values are:
++
+* `Enabled` - Verifies the Destination attribute in the SAML response is equal to the expected Destination which is the FusionAuth ACS (Assertion Consumer Service) URL. This is the default and the recommended setting.
+* `Disabled` - Do not validate the Destination attribute. This is not recommended, please use with caution.
+* `AllowAlternates` - Verifies the Destination attribute is either the expected FusionAuth ACS, or one of the configured alternate values. This option is intended to assist with migrations from third-party IdPs and should be used with caution.
+endif::[]
+
+ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.buttonImageURL# [type]#[String]# [optional]#Optional#::
 The top-level button image (URL) to use on the FusionAuth login page for this Identity Provider.
 endif::[]
@@ -57,6 +73,20 @@ ifndef::samlv2_idp_initiated[]
 The SAML v2 login page of the identity provider. Must be a valid URL.
 endif::[]
 
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.idpInitiatedConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `false`# [since]#Available since 1.43.0#::
+Determines if FusionAuth will accept IdP initiated login requests from this SAMLv2 Identity Provider. A valid license is required to use this feature.
++
+include::/docs/v1/tech/shared/_saml-idp-init-warning.adoc[]
+endif::[]
+
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.idpInitiatedConfiguration.issuer# [type]#[String]# [optional]#Optional# [since]#Available since 1.43.0#::
+The EntityId (unique identifier) of the SAML v2 identity provider. This value should be provided to you.
++
+Required when [field]#identityProvider.idpInitiatedConfiguration.enabled# is `true`.
+endif::[]
+
 ifdef::samlv2_idp_initiated[]
 [field]#identityProvider.issuer# [type]#[String]# [required]#Required#::
 The EntityId (unique identifier) of the SAML v2 identity provider. This value should be provided to you. Prior to 1.27.1 this value was required to be a URL.
@@ -72,11 +102,17 @@ The specified Lambda Id must be of type `SAMLv2Reconcile`.
 
 include::_identity-provider-linking-strategy-request-parameter.adoc[]
 
-[field]#identityProvider.loginHintConfiguration.enabled# [type]#[boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.43.0#::
-When enabled and HTTP-Redirect binding are used, a login hint will be passed (when available) as a query parameter to the IdP using the configured parameter name set by the [field]#identityProvider.loginHintConfiguration.parameterName#.
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.loginHintConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#defaults to `true`# [since]#Available since 1.43.0#::
+When enabled and HTTP-Redirect bindings are used, FusionAuth will provide the username or email address when available to the IdP as a login hint using the configured parameter name set by the [field]#identityProvider.loginHintConfiguration.parameterName# to initiate the AuthN request.
+endif::[]
 
-[field]#identityProvider.loginHintConfiguration.parameterName# [type]#[String] #Defaults to `login_hint`# [since]#Available since 1.43.0#::
-The name of the query parameter to use when sending a login hint to the IdP. This is only used when a login hint is available and [field]#identityProvider.loginHintConfiguration.enabled# is set to `true`.
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.loginHintConfiguration.parameterName# [type]#[String]# [optional]#Optional# [default]#defaults to `login_hint`# [since]#Available since 1.43.0#::
+The name of the parameter used to pass the username or email as login hint to the IDP when enabled, and HTTP redirect bindings are used to initiate the AuthN request.
++
+Required when [field]#identityProvider.loginHintConfiguration.enabled# is `true`.
+endif::[]
 
 [field]#identityProvider.name# [type]#[String]# [required]#Required#::
 The name of this SAML v2 identity provider. This is only used for display purposes. Must be unique across all identity providers.
