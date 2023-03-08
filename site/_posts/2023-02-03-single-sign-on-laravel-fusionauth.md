@@ -173,7 +173,7 @@ $ ./vendor/bin/sail artisan make:migration add_fusionauth_fields_user_table
 
 Then, go to your `database/migrations` folder, where you'll find a file there with the name you created and prefixed by today's date (e.g `2023_02_03_123000_add_fusionauth_fields_user_table.php`).
 
-Edit that file to add three new columns to the `users` table: `fusionauth_id`, `fusionauth_access_token` and `fusionauth_refresh_token` and allow `NULL` values in the `password` column. You'd want to save the access token in your database to make requests to the FusionAuth API on behalf of the user. This way, they don't need to log in again to your FusionAuth instance as long as the token is still valid. 
+Edit that file to add three new columns to the `users` table: `fusionauth_id`, `fusionauth_access_token` and `fusionauth_refresh_token` and allow `NULL` values in the `password` column. You'd want to save the access token in your database to make requests to the FusionAuth API on behalf of the user. The refresh token is used to exchange an expired access token with a new one (but you'd still have to implement this yourself, as Socialite still doesn't do it). This way, users don't need to log in again to your FusionAuth instance as long as the access token is still valid.
 
 {% include _callout-tip.liquid content="If you cloned our [GitHub repository](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on), you can just copy the contents from [laravel/migration.php](https://github.com/FusionAuth/fusionauth-example-laravel-single-sign-on/blob/main/laravel/migration.php)." %}
 
