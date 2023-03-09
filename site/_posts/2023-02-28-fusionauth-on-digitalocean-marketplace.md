@@ -3,7 +3,7 @@ layout: blog-post
 title: FusionAuth launches in the DigitalOcean marketplace
 description: FusionAuth is now available as a 1-Click App in the DigitalOcean Marketplace. The pre-configured one-click option allows developers to add enterprise-quality authentication and authorization to their DigitalOcean-hosted applications in just a few minutes.
 author: Emily Jansen
-category: blog
+category: announcement
 image: blogs/fusionauth-digitalocean/fusionauth-digitalocean-marketplace-header.png
 tags: marketplace digitalocean kubernetes
 category: announcement
