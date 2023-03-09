@@ -114,6 +114,14 @@ else
   printOut "pngquant is installed"
 fi
 
+if [ `defaults read "Apple Global Domain" AppleReduceDesktopTinting` == "0" ]; then
+  echo "Window will not have a gray background."
+  echo "Go to System Setting -> Appearance"
+  echo "And disable 'Allow wallpaper tinting in windows'"
+  exit 1;
+fi
+
+
 printOut "-- Checking whether safari is running"
 safaricount=`ps cax | grep -i "safari.app" | grep -iv grep | wc -l`;
 
