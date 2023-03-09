@@ -29,7 +29,9 @@ docker-compose up
 
 If you have Docker installed, that's all you have to do to get a FusionAuth instance up and running.
 
-After that, you need to integrate it with your application, typically using a standard OIDC library such as [Passport](https://www.passportjs.org/) or [Spring security](https://docs.spring.io/spring-security/reference/servlet/oauth2/client/index.html). But that's it. A full feature auth server, available on your laptop, for you to build against.
+After that, you need to integrate it with your application, typically using a standard OIDC library such as [Passport](https://www.passportjs.org/) or [Spring security](https://docs.spring.io/spring-security/reference/servlet/oauth2/client/index.html). But that's it.
+
+You get a full featured auth server, available on your laptop, for you to build against.
 
 ### What about production?
 
