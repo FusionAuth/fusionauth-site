@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-ruby "2.7.5"
+ruby "3.2.1"
 
 # Hello! This is where you manage which Jekyll version is used to run.
 # When you want to use a different version, change it below, save the
@@ -33,5 +33,6 @@ gem "haml", "5.1.2"
 gem "pygments.rb", "2.3.0"
 gem "sassc", "2.3.0"
 gem "tilt", "2.0.10"
+gem "rss", "0.2.9"
 
 gem "s3_website", "~> 3.4"
