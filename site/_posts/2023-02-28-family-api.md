@@ -8,7 +8,7 @@ tags: client-node tutorial tutorial-express tutorial-node
 excerpt_separator: "<!--more-->"
 ---
 
-In this tutorial, we'll build a basic Node.js + [Express](http://expressjs.com) web application which grants conditional access to users in a family structure. Specifically, a parent user will be able to grant access to child users to restricted areas of an application.  
+In this tutorial, you will build a basic Node.js + [Express](http://expressjs.com) web application which grants conditional access to users in a family structure. Specifically, a parent user will be able to grant access to child users to restricted areas of an application.  
 
 <!--more-->
 
@@ -18,11 +18,11 @@ You can also use [these kickstart files](https://github.com/ritza-co/fusionauth-
 
 ## Prerequisites
 
-We'll explain nearly everything that we use, but we expect you to have:
+This tutorial will explain nearly everything that is used, but expect you to have:
 
 - Basic Node.js knowledge and a Node.js environment set up.
 - Preferably basic [Express](http://expressjs.com) knowledge (or knowledge of a similar web framework, or of the middleware concept).
-- Docker and Docker Compose set up as we'll set up FusionAuth using these.
+- Docker and Docker Compose set up as you'll set up FusionAuth using these.
 
 It'll also help if you know the basics of OAuth or authentication in general.
 
@@ -40,7 +40,7 @@ Note that this uses a public `.env` file containing hard-coded database password
 
 ### An Overview of the Family and Consent APIs
 
-We'll deal with 3 main APIs in this tutorial:
+You will use 3 main FusionAuth APIs in this tutorial:
 
 - The [Family API](https://fusionauth.io/docs/v1/tech/apis/families) lets you create and manage families, and assign users to them.
 - The [Consent API](https://fusionauth.io/docs/v1/tech/apis/consents) lets you manage types of consents available in your application.
@@ -58,13 +58,13 @@ Family groups and roles by themselves don't automatically confer any access priv
 
 FusionAuth should now be running and reachable at `http://localhost:9011`, if you've installed it locally. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more setup steps, as shown below.
 
-{% include _image.liquid src="/assets/img/blogs/family-api/family-api-initial-setup.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/family-api/family-api-initial-setup.png" alt="FusionAuth prompts us with the setup steps that you need to complete." class="img-fluid" figure=false %}
 
-We'll skip step **#3** in this tutorial, but sending emails (to verify email addresses and do password resets) is a vital part of FusionAuth running in production, so you'll want to do that when you go live.
+You can skip step **#3** in this tutorial, but sending emails (to verify email addresses and do password resets) is a vital part of FusionAuth running in production, so you'll want to do that when you go live.
 
 ### Creating an application
 
-Click "Setup" under "Missing Application" and call your new app "Family-Api-App", or another name of your choice. Click on the "OAuth" tab. It'll get a "Client Id" and "Client Secret" automatically - save these, as we'll use them in the code. Later, we'll set up a Node.js + Express application which will run on `http://localhost:3000`, so configure the Authorized URLs accordingly. You should add:
+Click "Setup" under "Missing Application" and call your new app "Family-Api-App", or another name of your choice. Click on the "OAuth" tab. It'll get a "Client Id" and "Client Secret" automatically - save these, as you'll use them in the code. Later, you'll set up a Node.js + Express application which will run on `http://localhost:3000`, so configure the Authorized URLs accordingly. You should add:
 
 - `http://localhost:3000/oauth-redirect` to the "Authorized redirect URLs".
 - `http://localhost:3000/` to the "Authorized request origin URLs".
@@ -78,11 +78,11 @@ Click the "Save" button at the top right, for your changes to take effect.
 
 ## Setting up a FusionAuth API key
 
-Once the user has logged in via the FusionAuth application, we can retrieve their profile, consents, and family information from FusionAuth using the [FusionAuth Typescript module](https://www.npmjs.com/package/@fusionauth/typescript-client), provided with an API key.
+Once the user has logged in via the FusionAuth application, you can retrieve their profile, consents, and family information from FusionAuth using the [FusionAuth Typescript module](https://www.npmjs.com/package/@fusionauth/typescript-client), provided with an API key.
 
 Navigate to "Settings" and then "API Keys", then add a key. Add a name for the key and take note of the generated key value.
 
-Following the principle of least privilege, you can restrict the permissions for the key. For our app, we only need to enable the `GET` action for `api/user`, the `GET` and `PATCH` actions for `api/user/consent`, and the `GET`, `POST`, and `PUT` actions for `/api/user/family`. This will let the key get basic user information, grant or revoke consents to view the app, create a family and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
+Following the principle of least privilege, you can restrict the permissions for the key. For this app, you only need to enable the `GET` action for `api/user`, the `GET` and `PATCH` actions for `api/user/consent`, and the `GET`, `POST`, and `PUT` actions for `/api/user/family`. This will let the key get basic user information, grant or revoke consents to view the app, create a family and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-api-key.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
@@ -258,7 +258,7 @@ The `pkceChallenge` package enables your application to utilize a Proof Key for 
 
 ## Adding the OAuth Callback Route
 
-After authentication, FusionAuth will redirect to the callback route we provided in the login link to FusionAuth, as well as in the authorized callback route set in the FusionAuth application earlier. We can add this route now. Add the following route to the `routes/index.js` file.
+After authentication, FusionAuth will redirect to the callback route you provided in the login link to FusionAuth, as well as in the authorized callback route set in the FusionAuth application earlier. You can add this route now. Add the following route to the `routes/index.js` file.
 
 ```js
 router.get('/oauth-redirect', async function (req, res, next) {
@@ -339,7 +339,7 @@ router.get('/', async function (req, res, next) {
 });
 ```
 
-The `familyMembers` array is a filtered version of the entire family that only contains children, and the currently logged in adult. In other words, we remove any other adults from the family, as we won't need to set consents for them, but we do want to keep the family role information for the currently logged in adult. Note that, when building the `familyMembers` array, the filter criterion is `!== 'Adult'`, not `=== 'Child'` as you might expect. This is because FusionAuth also allows users to be designated as [`Teen`](https://fusionauth.io/docs/v1/tech/apis/families#add-a-user-to-a-family) to allow for further granularity when assiging roles in a family.
+The `familyMembers` array is a filtered version of the entire family that only contains children, and the currently logged in adult. In other words, remove any other adults from the family, as you won't need to set consents for them, but do want to keep the family role information for the currently logged in adult. Note that, when building the `familyMembers` array, the filter criterion is `!== 'Adult'`, not `=== 'Child'` as you might expect. This is because FusionAuth also allows users to be designated as [`Teen`](https://fusionauth.io/docs/v1/tech/apis/families#add-a-user-to-a-family) to allow for further granularity when assiging roles in a family.
 
 The above code makes use of several named functions, which you now have to implement. The first function to implement is `getUserProfiles()`, which gathers all user profiles in the family. This is needed because the [Family API call](https://fusionauth.io/docs/v1/tech/apis/families#retrieve-a-family) only returns a subset of each family member's information. We'd like to get the `usernames`/`emails` as well, which are available through the `client.retrieveUser` function.
 
@@ -489,8 +489,8 @@ Close the private window and open a new one. Login as the child user again. This
 
 ## Where to next with Family API and Consents?
 
-That’s the basics of our Express Family API example app done. The app has a fully featured authentication system, along with parental controls, without the hassle and possible risks of implementing all of that code ourselves. The complete code is hosted on GitHub [here](https://github.com/ritza-co/fusionauth-family-api-example).
+That’s the basics of the Express Family API example app done. The app has a fully featured authentication system, along with parental controls, without the hassle and possible risks of implementing all of that code yourself. The complete code is hosted on GitHub [here](https://github.com/ritza-co/fusionauth-family-api-example).
 
 Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, parental controls, consents, and general security with just a small amount of configuration code leaves a lot more time for your application's more useful and critical features.
 
-For a production environment, you would also need to do a bit more work in making sure FusionAuth is secured. In our example, we used the default password provided with Docker for our database, left debug mode on, and ran FusionAuth locally, co-hosted with our Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
+For a production environment, you would also need to do a bit more work in making sure FusionAuth is secured. In this example, you used the default password provided with Docker for the database, left debug mode on, and ran FusionAuth locally, co-hosted with the Express application. For a safer setup, you would run FusionAuth on its own infrastructure, physically separate from the Express app, and take more care around production configuration and deployment. FusionAuth gives you all of the tools to do this easily.
