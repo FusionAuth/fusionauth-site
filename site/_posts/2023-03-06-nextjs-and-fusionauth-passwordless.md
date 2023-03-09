@@ -15,7 +15,7 @@ In this guide, you'll build a web application using Next.js that allows a user t
 
 The completed application will include a public page that allows users to either sign up or login via FusionAuth, as well as a private page where they will be able to view profile information once they’ve logged in using OpenID Connect. Additionally, users will be able to log out and view the public page.
 
-If you’d prefer to skip ahead and take a look at the code, you can view it [here](https://github.com/ritza-co/nextjs-fusionauth-passwordless).
+If you’d prefer to skip ahead and take a look at the code, [view it here](https://github.com/FusionAuth/fusionauth-example-nextjs-magic-links).
 
 ## Prerequisites
 
@@ -404,7 +404,7 @@ Once you’ve signed in with FusionAuth, you can see the contents of the page:
 
 ## Next steps
 
-This simple application demonstrates a very small slice of the capabilities that passwordless login offers but features a fully functional authentication system, without you having to build it. The complete code for this tutorial is available on GitHub, [here](https://github.com/ritza-co/nextjs-fusionauth-passwordless).
+This simple application demonstrates a very small slice of the capabilities that passwordless login offers but features a fully functional authentication system, without you having to build it. The complete code for this tutorial is available on GitHub, [here](https://github.com/FusionAuth/fusionauth-example-nextjs-magic-links).
 
 To make this application more useful and production-ready, you could offer multiple channels by which users can receive magic links. You can do this using the [passwordless API directly](/docs/v1/tech/guides/passwordless#using-the-api-directly).
 
