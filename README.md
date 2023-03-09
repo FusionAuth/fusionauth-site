@@ -28,7 +28,7 @@ This project is built using jekyll and asciidoc. You'll need to have ruby instal
 Install these programs:
 
 - java
-- ruby (2.7.5)
+- ruby (3.2.1)
 - plantuml
 - git
 
@@ -49,6 +49,32 @@ To fix this, rebuild the eventmachine gem using:
 gem install eventmachine -v '1.2.7' -- --with-ldflags="-Wl,-undefined,dynamic_lookup"
 bundle install
 ```
+
+On x86 macs with ruby 3.2.1, you may get the error messages:
+
+```
+In file included from binder.cpp:20:
+./project.h:119:10: fatal error: 'openssl/ssl.h' file not found
+#include <openssl/ssl.h>
+         ^~~~~~~~~~~~~~~
+```
+
+Use `ln -s /usr/local/opt/openssl/include/openssl /usr/local/include`
+
+There may be an additional error:
+
+```
+Undefined symbols for architecture x86_64:
+  "_SSL_get1_peer_certificate", referenced from:
+      SslBox_t::GetPeerCert() in ssl.o
+ld: symbol(s) not found for architecture x86_64
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+make: *** [rubyeventmachine.bundle] Error 1
+```
+
+You can work around this by running: 
+
+`gem install eventmachine -- --with-openssl-dir=/usr/local/opt/openssl@3`
 
 #### Setup Savant
 
