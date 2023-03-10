@@ -1,7 +1,11 @@
 /*
- * Copyright (c) 2020, Inversoft Inc., All Rights Reserved
+ * Copyright (c) 2020-2023, Inversoft Inc., All Rights Reserved
  */
 'use strict';
+
+const monthlyInterval = 'monthly';
+const yearlyInterval = 'yearly';
+const defaultPlanPrice = { base: 0, mau: 0 };
 
 // noinspection DuplicatedCode
 class FusionAuthPriceCalculator {
@@ -10,11 +14,12 @@ class FusionAuthPriceCalculator {
     this.hostingSelectionDiv = document.getElementById('hosting-selection');
     this.hostingPriceDiv = document.getElementById('hosting-price');
     this.planSelectionDiv = document.getElementById('plan-selection');
-    this.planPriceDiv = document.getElementById('plan-price');
+    this.planBasePriceDiv = document.getElementById('plan-price');
+    this.planMauPriceDiv = document.getElementById('mau-price');
     this.sumDiv = document.getElementById('sum');
     this.monthlyActiveUserSlider = document.querySelector('input[name=monthly-active-users]');
-    this.monthlyActiveUserSlider.addEventListener('input', event => this._handleSliderChange(event));
-    this.monthlyActiveUserSlider.addEventListener('mouseup', event => this._handleSliderChange(event));
+    this.monthlyActiveUserSlider.addEventListener('input', event => this.#handleSliderChange(event));
+    this.monthlyActiveUserSlider.addEventListener('mouseup', event => this.#handleSliderChange(event));
     this.monthlyActiveUserSliderMin = parseInt(this.monthlyActiveUserSlider.getAttribute('min'));
     this.monthlyActiveUserSliderMax = parseInt(this.monthlyActiveUserSlider.getAttribute('max'));
     this.monthlyActiveUserValue = document.getElementById('monthly-active-users-value');
@@ -22,34 +27,31 @@ class FusionAuthPriceCalculator {
     this.starterButton = document.querySelector('a[data-plan=Starter]');
     this.purchaseButton = document.getElementById('purchase-button');
 
-    this.yearlyRadio = document.getElementById('yearly_radio');
-    this.yearlyRadio.addEventListener('change', event => this._handleBillingIntervalChange(event));
-    this.monthlyRadio = document.getElementById('monthly_radio');
-    this.monthlyRadio.addEventListener('change', event => this._handleBillingIntervalChange(event));
+    this.billingToggle = document.getElementById('billing-toggle');
+    this.billingToggle.addEventListener('mouseup', event => this.#handleBillingIntervalChange(event));
 
     this.hostingPrice = 0;
-    this.planPrice = 0;
-    this._loadState();
+    this.planPrice = defaultPlanPrice;
+    this.#loadState();
 
-    this.yearlyRadio.checked = true;
-    this.billingInterval = 'yearly';
+    this.billingInterval = this.#yearlySelected() ? yearlyInterval : monthlyInterval;
 
     document.querySelectorAll('a[data-step]')
-            .forEach(e => e.addEventListener('click', event => this._handleStepClick(event)))
+            .forEach(e => e.addEventListener('click', event => this.#handleStepClick(event)));
     document.querySelectorAll('a[data-plan]')
-            .forEach(e => e.addEventListener('click', event => this._handlePlanClick(event)))
-    window.addEventListener('popstate', event => this._handleStateChange(event));
+            .forEach(e => e.addEventListener('click', event => this.#handlePlanClick(event)));
+    window.addEventListener('popstate', event => this.#handleStateChange(event));
 
     fetch('https://account-local.fusionauth.io/ajax/purchase/price-model')
         .then(response => response.json())
         .then(json => {
           this.priceModel = json;
-          this._changeStep();
-          this._drawPlanPrices();
-        })
+          this.#changeStep();
+          this.#drawPlanPrices();
+        });
   }
 
-  _calculateHostingPrice(type) {
+  #calculateHostingPrice(type) {
     let price = 0;
 
     if (type === 'basic-cloud') {
@@ -60,37 +62,64 @@ class FusionAuthPriceCalculator {
       price = (2 * this.priceModel.ec2['medium']) + this.priceModel.elb.base + (this.priceModel.rds['medium'] * 2);
     }
 
+    if (this.billingInterval === yearlyInterval) {
+      price = price * 12;
+    }
+
     return price;
   }
 
-  _getBillingIntervalKey() {
-    return 'pricePerUnit' + (this.billingInterval === 'yearly' ? 'Yearly' : 'Monthly');
+  /**
+   * Inspects the billing toggle to get its state, which is done with the toggle-on CSS class
+   * @returns {boolean} true if the toggle is set to yearly, false if it's set to monthly
+   */
+  #yearlySelected() {
+    return this.billingToggle.classList.contains('toggle-on');
   }
 
-  _calculatePlanPrice(plan) {
+  /**
+   * Provides the key to use to look up pricing items in the pricing data
+   * @param {string} interval an optional billing interval. Defaults to what is currently set on the page.
+   * @returns {string} a key for looking up in the pricing JSON
+   */
+  #getBillingIntervalKey(interval = this.billingInterval) {
+    return 'pricePerUnit' + (interval === yearlyInterval ? 'Yearly' : 'Monthly');
+  }
+
+  /**
+   *
+   * @param plan
+   * @returns {{mau: number, base: number}|{mau: number, base: *}} an object containing the base price of the selected
+   * plan, and the expected MAU charge based on the MAU slider value
+   */
+  #calculatePlanPrice(plan) {
     if (plan === 'Community') {
-      return 0;
+      return defaultPlanPrice;
     }
 
-    var mau = parseInt(this.monthlyActiveUserSlider.value);
-    var planPricing = this.priceModel.plan.tierPricing[plan];
-    var billingKey = this._getBillingIntervalKey()
-    var increments = mau / 10000;
-    var price;
+    let mau = parseInt(this.monthlyActiveUserSlider.value);
+    let planPricing = this.priceModel.plan.tierPricing[plan];
+    let billingKey = this.#getBillingIntervalKey();
+    let increments = mau / 10000;
+    let mauPrice;
 
     if (increments < 10) {
-      price = planPricing.base[billingKey] + (planPricing.tier2[billingKey] * (increments - 1));
+      mauPrice = (planPricing.tier2[billingKey] * (increments - 1));
     } else if (increments < 100) {
-      price = planPricing.base[billingKey] + (planPricing.tier2[billingKey] * 9) + (planPricing.tier3[billingKey] * (increments - 10));
+      mauPrice = (planPricing.tier2[billingKey] * 9) + (planPricing.tier3[billingKey] * (increments - 10));
     } else {
-      price = planPricing.base[billingKey] + (planPricing.tier2[billingKey] * 9) + (planPricing.tier3[billingKey] * 90) + (planPricing.tier4[billingKey] * (increments - 100));
+      mauPrice = (planPricing.tier2[billingKey] * 9) + (planPricing.tier3[billingKey] * 90) + (planPricing.tier4[billingKey] * (increments - 100));
     }
 
-    return price;
+    //return price;
+    return {
+      base: planPricing.base[billingKey],
+      mau: mauPrice
+    };
   }
 
-  _changeStep() {
-    this._redraw();
+  #changeStep() {
+    this.#redraw();
     if (this.step) {
       this.url.searchParams.set('step', this.step);
     }
@@ -102,7 +131,7 @@ class FusionAuthPriceCalculator {
     }
   }
 
-  _handlePlanClick(event) {
+  #handlePlanClick(event) {
     // Let the download click bubble
     const plan = event.currentTarget.dataset.plan;
     if (this.hosting === 'self-hosting' && plan === 'Community') {
@@ -114,14 +143,14 @@ class FusionAuthPriceCalculator {
     if (plan) {
       this.plan = plan;
     }
-    this._redraw();
+    this.#redraw();
   }
 
-  _handleSliderChange() {
+  #handleSliderChange() {
     const mau = parseInt(this.monthlyActiveUserSlider.value);
     let mauText = new Intl.NumberFormat('en').format(mau);
     if (mau === 1000000) {
-      mauText += "+";
+      mauText += '+';
     }
     this.monthlyActiveUserValue.innerText = mauText;
 
@@ -135,21 +164,29 @@ class FusionAuthPriceCalculator {
       left -= 15;
     }
     this.monthlyActiveUserValue.style.left = left + 'px';
-    this._redraw();
+    this.#redraw();
   }
 
-  _handleBillingIntervalChange() {
-    this.billingInterval = this.yearlyRadio.checked ? 'yearly' : 'monthly';
-    this._redraw();
+  #handleBillingIntervalChange() {
+    let yearlySelected = !this.#yearlySelected();
+
+    // Flip the toggle
+    this.billingToggle.classList.remove('toggle-' + (yearlySelected ? 'off' : 'on'));
+    this.billingToggle.classList.add('toggle-' + (yearlySelected ? 'on' : 'off'));
+
+    // Set the billing interval
+    this.billingInterval = yearlySelected ? yearlyInterval : monthlyInterval;
+
+    this.#redraw();
   }
 
 
-  _handleStateChange() {
-    this._loadState();
-    this._redraw();
+  #handleStateChange() {
+    this.#loadState();
+    this.#redraw();
   }
 
-  _handleStepClick(event) {
+  #handleStepClick(event) {
     event.stopPropagation();
     event.preventDefault();
     if (event.currentTarget.dataset.step === 'back') {
@@ -164,11 +201,11 @@ class FusionAuthPriceCalculator {
     if (event.currentTarget.dataset.plan) {
       this.plan = event.currentTarget.dataset.plan;
     }
-    this._changeStep();
+    this.#changeStep();
     window.history.pushState({}, '', this.url);
   }
 
-  _loadState() {
+  #loadState() {
     this.url = new URL(window.location);
     this.step = this.url.searchParams.get('step');
     this.hosting = this.url.searchParams.get('hosting');
@@ -178,22 +215,35 @@ class FusionAuthPriceCalculator {
     }
   }
 
-  _drawPlanPrices() {
-    for(const plan in FusionAuthPriceCalculator.plans) {
-      if(plan !== 'community') {
-        var planPricing = this.priceModel.plan.tierPricing[FusionAuthPriceCalculator.plans[plan]];
-        var billingKey = this._getBillingIntervalKey()
-        var price = planPricing.base[billingKey];
-        var pricingDiv = document.getElementById(plan + "-base-price");
-        var intervalDiv = document.getElementById(plan + "-billing-interval")
+  #drawPlanPrices() {
+    let monthlyBillingKey = this.#getBillingIntervalKey(monthlyInterval);
+    let yearlyBillingKey = this.#getBillingIntervalKey(yearlyInterval);
+    let billingPreferenceLabel = this.billingInterval === monthlyInterval ? 'Monthly' : 'Annually';
 
-        pricingDiv.textContent = price.toLocaleString();
-        intervalDiv.textContent = this.billingInterval === 'yearly' ? 'yr' : 'mo';
+    // turn on/off the undiscounted monthly price and change the "Billed x-ly" text on the plan cards
+    document.querySelectorAll('.amount-div.discount').forEach(e => e.style.display = (this.billingInterval === monthlyInterval ? 'none' : 'flex'));
+    document.querySelectorAll('.billing-preference-text').forEach(e => e.innerText = 'Billed ' + billingPreferenceLabel);
+    document.getElementById('sum-billing-preference').innerText = billingPreferenceLabel;
+
+    // Update the price values on the plan cards
+    for (const plan in FusionAuthPriceCalculator.plans) {
+      if (plan !== 'community') {
+        let planPricing = this.priceModel.plan.tierPricing[FusionAuthPriceCalculator.plans[plan]];
+
+        let monthlyPrice = planPricing.base[monthlyBillingKey];
+        let yearlyPrice = planPricing.base[yearlyBillingKey];
+        let planPrice = this.billingInterval === monthlyInterval ? monthlyPrice : Math.round(yearlyPrice / 12);
+
+        document.getElementById(plan + '-price-struck').textContent = monthlyPrice.toLocaleString();
+        document.getElementById(plan + '-price').textContent = planPrice.toLocaleString();
       }
     }
+
+    // Update summary text
+    document.getElementById('mau-charge-text').innerText = this.billingInterval === 'monthly' ? 'Estimated MAU Charge' : 'Annual MAU charge';
   }
 
-  _redraw() {
+  #redraw() {
     document.querySelectorAll(`div[data-step]`).forEach(e => e.style.display = 'none');
     document.querySelector(`div[data-step=${this.step}]`).style.display = 'block';
 
@@ -201,7 +251,7 @@ class FusionAuthPriceCalculator {
     this.planSelectionDiv.innerText = this.plan ? this.plan : '-';
 
     if (this.hosting) {
-      this.hostingPrice = this._calculateHostingPrice(this.hosting);
+      this.hostingPrice = this.#calculateHostingPrice(this.hosting);
       this.hostingPriceDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(this.hostingPrice));
     } else {
       this.hostingPrice = 0;
@@ -235,17 +285,18 @@ class FusionAuthPriceCalculator {
 
     document.querySelectorAll('div[data-plan]').forEach(e => e.style.border = '2px solid transparent');
     if (this.plan) {
-      this.planPrice = this._calculatePlanPrice(this.plan);
-      this.planPriceDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(this.planPrice));
+      this.planPrice = this.#calculatePlanPrice(this.plan);
+      this.planBasePriceDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(this.planPrice.base));
+      this.planMauPriceDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(this.planPrice.mau));
       document.querySelector(`div[data-plan=${this.plan}]`).style.border = '2px solid #f58320';
     } else {
-      this.planPrice = 0;
-      this.planPriceDiv.innerText = '-';
+      this.planPrice = defaultPlanPrice;
+      this.planBasePriceDiv.innerText = '-';
+      this.planMauPriceDiv.innerText = '-';
     }
 
     if (this.hosting && this.plan) {
-      var purchaseHref = `https://account.fusionauth.io/account/purchase/start?hosting=${this.hosting}&plan=${this.plan}`;
-      purchaseHref += `&billingInterval=${this.billingInterval}&mau=${this.monthlyActiveUserSlider.value}`;
+      let purchaseHref = `https://account.fusionauth.io/account/purchase/start?hosting=${this.hosting}&plan=${this.plan}&billingInterval=${this.billingInterval}&mau=${this.monthlyActiveUserSlider.value}`;
 
       this.purchaseButton.removeAttribute('disabled');
       this.purchaseButton.classList.remove('grayed-out');
@@ -260,17 +311,17 @@ class FusionAuthPriceCalculator {
       this.sumDiv.innerText = 'Free trial';
       this.sumDiv.nextElementSibling.style.display = 'none';
       this.purchaseButton.innerHTML = 'Start trial';
-    } else if (this.hostingPrice !== 0 || this.planPrice !== 0) {
-      this.sumDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(this.hostingPrice + this.planPrice));
-      this.sumDiv.nextElementSibling.style.display = 'inline';
+    } else if (this.hostingPrice !== 0 || this.planPrice.base > 0) {
+      this.sumDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(this.hostingPrice + this.planPrice.base + this.planPrice.mau));
+      //this.sumDiv.nextElementSibling.style.display = 'inline';
       this.purchaseButton.innerHTML = 'Buy online';
     } else {
       this.sumDiv.innerText = '-';
-      this.sumDiv.nextElementSibling.style.display = 'inline';
+      //this.sumDiv.nextElementSibling.style.display = 'inline';
       this.purchaseButton.innerHTML = 'Buy online';
     }
 
-    this._drawPlanPrices()
+    this.#drawPlanPrices();
   }
 }
 
@@ -282,10 +333,10 @@ FusionAuthPriceCalculator.names = {
 }
 
 FusionAuthPriceCalculator.plans = {
-  'community': "Community",
-  'starter': "Starter",
-  'essentials': "Essentials",
-  'enterprise': "Enterprise"
+  'community': 'Community',
+  'starter': 'Starter',
+  'essentials': 'Essentials',
+  'enterprise': 'Enterprise'
 }
 
 document.addEventListener('DOMContentLoaded', () => new FusionAuthPriceCalculator());
