@@ -22,7 +22,7 @@ One report shows an average tenure in big tech is between 1.1 and 3.2 years.[^1]
 ### Bye, Felicia
 Switching jobs means new experiences, more money and a change of scenery. This can be very appealing early in your career and can help you level up quickly.
 
-The downside is that you rarely develop the same level of experiences and skill that you would by sticking around, learning to work through conflict, mastering a code base and learning how to stay productive in spite of company politics.
+The downside is that you rarely develop the same level of experiences and skill that you would by sticking around, learning to work through conflict, mastering a code base, and learning how to stay productive in spite of company politics.
 
 Unfortunately this doesn't seem to be the sentiment shared by many engineers. 
 
