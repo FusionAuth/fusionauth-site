@@ -1,0 +1,203 @@
+---
+layout: doc
+title: "OAuth Integrations: Salesforce"
+description: A practical approach of using FusionAuth SSO capabilities as a login provider in a Salesforce application
+navcategory: login-methods
+---
+
+== Overview
+
+link:https://www.salesforce.com/[Salesforce] is a robust customer relationship management software that allows users to sign in into their accounts using an external Identity Provider. This document covers the configuration necessary to get Salesforce working with FusionAuth as the identity provider using OpenID Connect.
+
+== Configure FusionAuth
+
+Navigate to [breadcrumb]#Applications# and click icon:plus[role=ui-button green,type=fas] to create an application named `Salesforce`.
+
+image::core-concepts/create-application.png[Create an Application,width=1200]
+
+Click icon:save[role=ui-button blue,type=fas] to save your application. After being redirected to the Applications page, click on the icon:search[role=ui-button green,type=fas] icon to view the application details. Write down the [field]#OAuth IdP login URL#, [field]#Logout URL#, [field]#Token endpoint# and [field]#Userinfo endpoint# fields, located in the [uielement]#OAuth2 & OpenID Connect Integration details# section, as you'll need that information later.
+
+== Configure Salesforce
+
+Before configuring FusionAuth as an identity provider in Salesforce, you need to create some code that will map the information returned from FusionAuth into a user entity that will then be persisted in Salesforce using  link:https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_intro_what_is_apex.htm[Apex], their object-oriented programming language.
+
+Navigate to [breadcrumb]#PLATFORM TOOLS -> Custom Code -> Apex Classes# and click the [uielement]#New# button to create a new class.
+
+image::oauth/integrations/salesforce/apex-class-new.png[Create an Apex class.,width=1276,role=box-shadow]
+
+In the editor, paste the following code:
+
+```java
+global class FusionAuthRegHandler implements Auth.RegistrationHandler {
+    // This is the profile name that you want to create users
+    static final string STANDARD_PROFILE = 'Standard User';
+
+    // This will be appended to the username and it must be unique across all Salesforce organizations
+    static final string ORG_SUFFIX = '.your.fusionauth.application.url';
+
+    global User createUser(Id portalId, Auth.UserData data) {
+        User u = buildUser(
+                new User(),
+                data
+        );
+        return u;
+    }
+
+    global void updateUser(Id userId, Id portalId, Auth.UserData data) {
+        User u = buildUser(
+                new User(id = userId),
+                data
+        );
+        update (u);
+    }
+
+    private User buildUser(User u, Auth.UserData data) {
+        Profile p = [SELECT Id FROM profile WHERE name = :STANDARD_PROFILE];
+        u.profileId = p.Id;
+        u.username = data.email + ORG_SUFFIX;
+        u.email = data.email;
+        if (data.firstName != null && data.firstName != '') {
+            u.firstName = data.firstName;
+        } else {
+            String givenName = data.attributeMap.get('given_name');
+            if (givenName != null && givenName != '') {
+                u.firstName = givenName;
+            }
+        }
+        if (data.lastName != null && data.lastName != '') {
+            u.lastName = data.lastName;
+        } else {
+            String familyName = data.attributeMap.get('family_name');
+            if (familyName != null && familyName != '') {
+                u.lastName = familyName;
+            }
+        }
+        String alias;
+        if (data.userName != null && data.userName != '') {
+            alias = data.userName;
+        } else {
+            alias = data.email;
+        }
+        if (alias.length() > 8) {
+            alias = alias.substring(0, 8);
+        }
+        u.alias = alias;
+        u.languagelocalekey = UserInfo.getLocale();
+        u.localesidkey = UserInfo.getLocale();
+        u.emailEncodingKey = 'UTF-8';
+        u.timeZoneSidKey = data.attributeMap.get('timezone');
+        if (u.timeZoneSidKey == null || u.timeZoneSidKey == '') {
+            // @TODO change this to the default timezone for users
+            u.timeZoneSidKey = 'GMT';
+        }
+        return u;
+    }
+}
+```
+
+Change the `ORG_SUFFIX` in the sixth line from that code with your actual FusionAuth instance URL. You can also modify the `STANDARD_PROFILE` in the third line with the profile name you want to add users to (you can find the available options navigating to [breacrumb]#ADMINISTRATION -> Users -> Profiles#) and `u.timeZoneSidKey` value in the 60th line with a timezone link:https://help.salesforce.com/s/articleView?id=sf.admin_supported_timezone.htm&type=5[from this list] to be used as a fallback when not receiving one from FusionAuth. Finally, click [uielement]#Save# to create the class.
+
+Browse to [breadcrumb]#SETTINGS -> Identity -> Auth. Providers# to get to the Authentication Providers page and click [uielement]#New#.
+
+image::oauth/integrations/salesforce/auth-provider-new.png[Create an Authentication Provider.,width=1276,role=box-shadow]
+
+Fill in the values as shown in the image below, using the information you copied from your FusionAuth application earlier.
+
+image::oauth/integrations/salesforce/auth-provider-form.png[Fill in Authentication Provider values.,width=1276,role=box-shadow]
+
+The following table describes the necessary values that you need to copy from your FusionAuth application onto the fields in Salesforce.
+
+[cols="1,2,1"]
+|===
+| Salesforce field | FusionAuth field | Sample value
+
+| [field]#Provider Type#
+| `Open ID Connect`
+| {nbsp}
+
+| [field]#Name#
+| FusionAuth
+| {nbsp}
+
+| [field]#URL Suffix#
+| FusionAuth
+| {nbsp}
+
+| [field]#Consumer Key#
+| Your FusionAuth application [field]#Client Id#
+| {nbsp}
+
+| [field]#Consumer Secret#
+| Your FusionAuth application [field]#Client Secret#
+| {nbsp}
+
+| [field]#Authorize Endpoint URL#
+| Your FusionAuth application [field]#OAuth IdP login URL# until the question mark (`?`)
+| `\https://your.fusionauth.application.url/oauth2/authorize`
+
+| [field]#Token Endpoint URL#
+| Your FusionAuth application [field]#Token endpoint#
+| `\https://your.fusionauth.application.url/oauth2/token`
+
+| [field]#User Info Endpoint URL#
+| Your FusionAuth application [field]#Userinfo endpoint#
+| `\https://your.fusionauth.application.url/oauth2/userinfo`
+
+| [field]#Token Issuer#
+| Your FusionAuth application [field]#Userinfo issuer#
+| `\https://your.fusionauth.application.url`
+
+| [field]#Default Scopes#
+| `openid email`
+| {nbsp}
+
+| [field]#Send access token in header#
+| Checked
+| {nbsp}
+
+| [field]#Send client credentials in header#
+| Unchecked
+| {nbsp}
+
+| [field]#Include Consumer Secret in SOAP API Responses#
+| Unchecked
+| {nbsp}
+
+| [field]#Custom Logout URL#
+| Your FusionAuth application [field]#Logout Url#
+| `\https://your.fusionauth.application.url/oauth2/logout?client_id=Application-Client-Id`
+|===
+
+In [field]#Registration Handler#, click the icon:search[type=fas] magnifying glass button to open a window with the existing Apex Classes in your Salesforce organization. There, click `FusionAuthRegHandler` to select it. Click the other icon:search[type=fas] magnifying glass button in [field]#Execute Registration As# and select the user that will be responsible for executing the registration (you can select your own user here).
+
+Click [uielement]#Save# to finish configuring the provider. Scroll down to the [uielement]#Salesforce Configuration# section and open the address from [uielement]#Test-Only Initialization URL# in an incognito window. After logging in with your FusionAuth credentials, you should be redirected to an XML file with the user details that Salesforce will receive from FusionAuth, like the example below.
+
+```xml
+<user>
+    <full_name>Your Full Name</full_name>
+    <provider>Open ID Connect</provider>
+    <org_id>000000000000000</org_id>
+    <last_name>Your Last Name</last_name>
+    <id>00000000-0000-0000-0000-000000000000</id>
+    <portal_id>000000000000000</portal_id>
+    <first_name>Your First Name</first_name>
+    <email>Your Email</email>
+</user>
+```
+
+[NOTE.note]
+====
+If you are not seeing these values, click [uielement]#Edit# in the Salesforce `Auth. Providers` page and double-check the values.
+====
+
+Copy the [field]#Callback URL# from Salesforce. Go back to your FusionAuth instance and edit your application, pasting this value as your application's [field]#Authorized redirect URLs# and save it.
+
+== Log in
+
+When browsing to your organization login page, users should see a [uielement]#Log in with FusionAuth# button. After clicking that, they should be redirected to the FusionAuth login page and after submitting their credentials, they should be brought back to your Salesforce account with a valid session.
+
+image::oauth/integrations/salesforce/salesforce-login.png[Salesforce login page.,width=635,role=box-shadow]
+
+== Troubleshooting
+
+Most errors occur due to misconfiguration in the fields in the Authentication Provider due to copy and paste errors from FusionAuth into Salesforce. Make sure you have provided the right values there.
