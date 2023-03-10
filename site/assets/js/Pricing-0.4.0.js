@@ -42,10 +42,14 @@ class FusionAuthPriceCalculator {
             .forEach(e => e.addEventListener('click', event => this.#handlePlanClick(event)));
     window.addEventListener('popstate', event => this.#handleStateChange(event));
 
-    fetch('https://account-local.fusionauth.io/ajax/purchase/price-model')
+    fetch('https://account.fusionauth.io/ajax/purchase/price-model')
         .then(response => response.json())
         .then(json => {
           this.priceModel = json;
+          let maxDiscount = Object.values(json.plan.tierPricing)
+                                  .map(val => 100 * (1 - (val.base.pricePerUnitYearly / (12 * val.base.pricePerUnitMonthly))))
+                                  .reduce((discount, currentMax) => discount > currentMax ? discount : currentMax);
+          document.getElementById("max-discount-text").innerText = `(Save up to ${Math.round(maxDiscount)}%)`;
           this.#changeStep();
           this.#drawPlanPrices();
         });
