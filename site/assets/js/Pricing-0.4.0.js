@@ -3,8 +3,8 @@
  */
 'use strict';
 
-const monthlyInterval = 'monthly';
-const yearlyInterval = 'yearly';
+const monthlyInterval = 'Monthly';
+const yearlyInterval = 'Yearly';
 const defaultPlanPrice = { base: 0, mau: 0 };
 
 // noinspection DuplicatedCode
@@ -299,7 +299,7 @@ class FusionAuthPriceCalculator {
     }
 
     if (this.hosting && this.plan) {
-      let purchaseHref = `https://account.fusionauth.io/account/purchase/start?hosting=${this.hosting}&plan=${this.plan}&billingInterval=${this.billingInterval}&mau=${this.monthlyActiveUserSlider.value}`;
+      let purchaseHref = `https://account.fusionauth.io/account/purchase/start?hosting=${this.hosting}&plan=${this.plan}&renewal=${this.billingInterval}&monthlyActiveUsers=${this.monthlyActiveUserSlider.value}`;
 
       this.purchaseButton.removeAttribute('disabled');
       this.purchaseButton.classList.remove('grayed-out');
