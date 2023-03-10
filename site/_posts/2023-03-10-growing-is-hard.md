@@ -9,7 +9,7 @@ tags: startup bootstrap dev hiring firing attrition
 excerpt_separator: "<!--more-->"
 ---
 
-Building a engineering team is hard. There are many reasons for this, and one of them is attrition. In this article I'll talk about my pain and suffering relate to attrition while building FusionAuth. 
+Building an engineering team is hard. There are many reasons for this, and one of them is attrition. In this article I'll talk about my pain and suffering related to attrition while building FusionAuth. 
 
 <!--more-->
 
