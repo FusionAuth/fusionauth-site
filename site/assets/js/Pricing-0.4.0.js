@@ -115,7 +115,6 @@ class FusionAuthPriceCalculator {
       mauPrice = (planPricing.tier2[billingKey] * 9) + (planPricing.tier3[billingKey] * 90) + (planPricing.tier4[billingKey] * (increments - 100));
     }
 
-    //return price;
     return {
       base: planPricing.base[billingKey],
       mau: mauPrice
@@ -317,11 +316,9 @@ class FusionAuthPriceCalculator {
       this.purchaseButton.innerHTML = 'Start trial';
     } else if (this.hostingPrice !== 0 || this.planPrice.base > 0) {
       this.sumDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(this.hostingPrice + this.planPrice.base + this.planPrice.mau));
-      //this.sumDiv.nextElementSibling.style.display = 'inline';
       this.purchaseButton.innerHTML = 'Buy online';
     } else {
       this.sumDiv.innerText = '-';
-      //this.sumDiv.nextElementSibling.style.display = 'inline';
       this.purchaseButton.innerHTML = 'Buy online';
     }
 
