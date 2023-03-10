@@ -43,7 +43,7 @@ The result is that it leaves the technical founders holding the bag every time. 
 
 ### Light at the end of the tunnel
 
-Thankfully, we have turned the corner on this issue and begun to dig our way out of the whole. As FusionAuth can continued to grow, we can now afford to pay competitive salaries, and we also have enough revenue to hire in bulk. Hiring more than one engineer at a time is helpful in several ways. 
+Thankfully, we have turned the corner on this issue and begun to dig our way out of the hole. As FusionAuth has continued to grow, we can now afford to pay competitive salaries, and we also have enough revenue to hire in bulk. Hiring more than one engineer at a time is helpful in several ways.
 
 The first is that the new team feels a sense of community as they all start from zero together. They do not have to compare their skill set or knowledge of the product with someone that has been doing it for 10 years, and instead can compare to another that is learning the same things.
 
