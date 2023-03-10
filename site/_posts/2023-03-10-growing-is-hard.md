@@ -55,7 +55,7 @@ Seeing mistakes in hindsight is not difficult. I would do many things differentl
 
 One of our biggest mistakes is thinking we could not afford to hire senior engineers. It can be difficult to hire these engineers early in a company because their salary requirements will likely be more than you pay yourself. But the reality is that they can produce 5-10x of an entry level engineer, and their salary not even close to 5-10x, and more likely 2x. 
 
-That is to say - the cost benefit analysis clearly indicates that paying more for experience is worth it. That isn't to say you shouldn't hire people of all experience levels, but when you are building a company from scratch- you want to be hiring people that you want to be leading the company in 2-3 years.
+The cost benefit analysis clearly indicates that paying more for experience is worth it. That isn't to say you shouldn't hire people of all experience levels, but when you are building a company from scratch, you want to be hiring people that you want to be leading the company in 2-3 years.
 
 -----
 
