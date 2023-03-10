@@ -17,7 +17,7 @@ Building an engineering team is hard. There are many reasons for this, and one o
 
 The average tenure of a software engineer varies. Interestingly, tenure may be lowest in the largest tech companies such as Facebook (Meta), Amazon, Apple, Netflix, and Google, commonly referred to as "FAANG".
 
-One report shows an average tenure in big tech is between 1.1 and 3.2 years.[^1] The US Bureau of Labor and Statistics report a nationwide average of 3.8 to 4.3 years which is not limited to the software industry.[^2] Regardless of which statistic you use, it is hard to argue that average tenure is short, and almost certainly lower than the average for the general US population.
+One report shows an average tenure in big tech is between 1.1 and 3.2 years.[^1] The US Bureau of Labor and Statistics report a nationwide average of 3.8 to 4.3 years which is not limited to the software industry.[^2] Regardless of which statistic you use, it is hard to argue that average tenure in big tech is short, and almost certainly lower than the average across all sectors.
 
 ### Bye, Felicia
 Switching jobs means new experiences, more money and a change of scenery. This can be very appealing early in your career and can help you level up quickly.
