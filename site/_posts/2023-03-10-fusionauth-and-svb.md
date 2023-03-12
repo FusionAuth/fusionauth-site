@@ -19,7 +19,7 @@ As many VC backed startups are frantically trying to figure out if they'll have 
 
 As the founder of the company, I started the company back in 2007 with the idea of building great software that companies could actually use. I wasn't looking for someone to write me a $90M check in hopes that I would someday figure out a product the industry needed. Instead, I built a tool based on my own needs. This tool was [CleanSpeak](https://cleanspeak.com) and it is still an awesome business that provides customer value to this day. The company was immediately profitable because we had to be. How could I pay salaries unless companies purchased licenses for our software? For years, we continued to grow the CleanSpeak business and as we made money, we built out the team and company.
 
-In 2016 or so, Daniel DeGroff and I started working on what eventually became FusionAuth. CleanSpeak was generating great revenue and this allowed us to build FusionAuth without taking on any debt or investment. In 2018, we launched FusionAuth and began selling support for it. As FusionAuth gained in popularity, we continued to add great customers, increased revenue, and hired awesome employees to help us build. To this day, we've built the company in this bootstrapped fashion.
+In 2016 or so, Daniel DeGroff and I started working on what eventually became FusionAuth. CleanSpeak was generating great revenue and this allowed us to build FusionAuth without taking on any debt or investment. In 2018, we launched FusionAuth and began selling support for it. As FusionAuth grew in popularity, we continued to add great customers, increased revenue, and hired awesome employees to help us build. To this day, we've built the company using this bootstrapped model.
 
 ## The VC model
 
@@ -33,8 +33,8 @@ Since we never raised money from VCs or needed any type of debt financing, SVB i
 
 While the SVB issues are going to leave a lasting mark on the tech industry and we feel for all those affected by the closure, FusionAuth is in a great position to continue providing value. We are bootstrapped and aren't going to disappear overnight or lay off most of our employees. We are profitable, so we pay our employees and all our expenses. We always have money left over each year, which we save in case we need it. 
 
-We are still growing, despite all of the issues the world is facing right now.
+Plus, we are still growing, despite all of the issues the world is facing right now.
 
-Trusting your login to a third party can be a hard decision because it is a mission critical component. It's the front door to your applications, and if it closes, your users will be angry. Picking the right company to work with can be challenging. If you need an industry leading vendor that is guaranteed not to disappear on you, FusionAuth is your best bet!
+Trusting your login to a third party can be a hard decision because it is a mission critical component. It's the front door to your applications, and if it closes, you are effectively closed for business (not to mention loads of angry customers). Picking the right company to work with can be challenging. If you need an industry leading vendor that is guaranteed not to disappear on you, FusionAuth is a great option!
 
 Thanks for reading and happy coding!
