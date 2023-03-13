@@ -4,8 +4,8 @@ title: Migrating off of Auth0? Here's what you need to know
 description: You aren't sure about the Okta acquisition. What are things you need to consider when migrating off of Auth0?
 author: Dan Moore
 image: blogs/migrating-off-auth0/migrating-off-of-auth0-heres-what-you-need-to-know-header-image.png
-category: blog
-tags: topic-upgrade-auth0
+category: article
+tags: topic-upgrade-auth0 migration auth0 upgrade
 excerpt_separator: "<!--more-->"
 ---
 
@@ -50,7 +50,7 @@ Switching your auth provider is similar to migrating from any other vendor in ma
 * Due diligence to perform on any auth vendor: ["Performing Due Diligence on Authentication Vendors"](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors)
 * A list of the challenges of customer identity and access management: ["Challenges of CIAM"](/learn/expert-advice/ciam/challenges-of-ciam)
 * Don't forget perspectives outside of engineering: ["Outsourcing auth: how to get buy-in from your team"](/blog/2021/02/03/outsourced-auth-team-buy-in)
-* Auth system scalability challenges: ["Making Sure Your Auth System Can Scale"](/learn/expert-advice/ciam/making-sure-your-auth-system-scale)
+* Auth system scalability challenges: ["Making Sure Your Auth System Can Scale"](/learn/expert-advice/ciam/making-sure-your-auth-system-scales)
 
 There are a number of different dimensions on which you could evaluate a system providing authentication, authorization and user management:
 

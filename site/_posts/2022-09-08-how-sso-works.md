@@ -4,8 +4,8 @@ title: How single sign-on works
 description: Single sign-on is a key part of the web experience. How does it typically work?
 author: Dan Moore
 image: blogs/sso-explanation/how-sso-works.png 
-category: blog
-tags: topic-single-sign-on
+category: article
+tags: topic-single-sign-on explainer single-sign-on sso
 excerpt_separator: "<!--more-->"
 ---
 

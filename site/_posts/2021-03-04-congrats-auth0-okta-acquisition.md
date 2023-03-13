@@ -4,8 +4,8 @@ title: Congratulations Auth0 on the acquisition by Okta
 description: The acquisition of Auth0 by Okta, a leader in the identity and access management (IAM) space, is continued validation of the importance of customer identity and access management (CIAM).
 author: Dan Moore
 image: blogs/auth0-okta-acquisition/congratulations-auth0-on-the-acquisition-by-okta-header-image.png
-category: blog
-tags: topic-upgrade-auth0
+category: announcement
+tags: topic-upgrade-auth0 auth0 upgrade
 excerpt_separator: "<!--more-->"
 ---
 

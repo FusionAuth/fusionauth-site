@@ -4,15 +4,20 @@ title: Adding social sign in to your Django web application using OAuth
 description: In this tutorial, we'll build a basic Django web application using FusionAuth for an easier and safer way of handling user registration and authentication.
 author: Gareth Dwyer
 image: blogs/social-sign-in-django/headerimage.png
-category: blog
+category: tutorial
 updated_date: 2022-09-27
-tags: client-python tutorial tutorial-django tutorial-python
+tags: client-python tutorial tutorial-django tutorial-python python django
 excerpt_separator: "<!--more-->"
 ---
 
 In this tutorial, we'll build a basic Django web application which does user registration and authentication via FusionAuth, an authentication platform with some unique features.
 
 <!--more-->
+
+{% include _callout-important.liquid
+content=
+ "If you'd like to use Django with OIDC to log your users in, see this [post on using Django, OIDC and FusionAuth together](/blog/2023/01/24/single-sign-on-django-fusionauth)."
+%}
 
 The application itself is very simple: it will let users put in their birthdays and keep this "secret" information safe for them. With these basics in place, you'll see how FusionAuth works and how it can extend the application to provide authentication. You can, as always, [skip ahead and view the code](https://github.com/fusionauth/fusionauth-example-python-django).
 

@@ -4,7 +4,8 @@ title: Single Sign-On vs. Single Logout
 description: 
 author: Anish Devasia
 image: blogs/sso-slo/single-sign-on-single-log-out-header.png
-category: blog
+tags: single-sign-on sso single-logout
+category: article
 excerpt_separator: "<!--more-->"
 ---
 

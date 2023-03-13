@@ -4,15 +4,20 @@ title: User registration and sign-in with Laravel and FusionAuth
 description: We'll build a Laravel application that delegates user management, registration, and login to FusionAuth.
 author: Karl Hughes
 image: blogs/fusionauth-laravel/user-registration-sign-in-laravel-fusionauth.png
-category: blog
+category: tutorial
 updated_date: 2021-04-05
-tags: client-php tutorial tutorial-laravel tutorial-php
+tags: client-php tutorial tutorial-laravel tutorial-php laravel php
 excerpt_separator: "<!--more-->"
 ---
 
 Laravel is one of the most popular PHP application frameworks in the marketplace today. While it includes a simple authentication model, most large-scale applications will outgrow it pretty quickly. [FusionAuth](https://fusionauth.io/) pairs well with Laravel because it can handle more complex user authentication models, roles, single sign-on, and more.
 
 <!--more-->
+
+{% include _callout-tip.liquid
+content=
+"This blog post has been [superseded by a newer Laravel tutorial](/blog/2023/03/13/single-sign-on-laravel-fusionauth)."
+%}
 
 In this tutorial, we'll set up a new Laravel application that uses FusionAuth to register and login users. All the code used here is [available on Github](https://github.com/FusionAuth/fusionauth-example-laravel). This application will show just a tiny sample of what you can do with FusionAuth, so be sure to check out the [PHP Client Library](/docs/v1/tech/client-libraries/php) and [documentation](/docs/v1/tech/) for much more.
 

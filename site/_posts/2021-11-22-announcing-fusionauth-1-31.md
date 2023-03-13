@@ -4,8 +4,8 @@ title: Announcing FusionAuth 1.31
 description: This release includes a number of bug fixes as well as enhancements to reconcile lambda functionality.
 author: Dan Moore
 image: blogs/release-1-31/product-update-fusionauth-1-31.png
-category: blog
-tags: topic-troubleshooting feature-advanced-threat-detection
+category: announcement
+tags: topic-troubleshooting feature-advanced-threat-detection advanced-threat-detection release-announcement lambda
 excerpt_separator: "<!--more-->"
 ---
 

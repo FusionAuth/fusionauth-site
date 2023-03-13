@@ -4,8 +4,8 @@ title: How to use FusionAuth's advanced registration forms
 description: Advanced registration forms let you easily build out multi-step registration forms.
 author: Dan Moore
 image: blogs/advanced-registration-forms/how-to-use-fusionauths-advanced-registration-forms.png
-category: blog
-tags: feature-advanced-registration-forms tutorial tutorial-reactor-feature
+category: tutorial
+tags: feature-advanced-registration-forms tutorial tutorial-reactor-feature advanced-registration-forms
 excerpt_separator: "<!--more-->"
 ---
 
@@ -174,7 +174,7 @@ If you go to the "User data" tab on the account details page, you can see the in
 
 {% include _image.liquid src="/assets/img/blogs/advanced-registration-forms/displaying-user-data.png" alt="The user data tab of the newly registered user." class="img-fluid" figure=false %}
 
-You now have a custom registration form and a user can sign up successfully. Nice work! This user information is available from the FusionAuth APIs, in the `registration.data` fields. You can retrieve and modify that data using the [APIs](/docs/v1/tech/apis).
+You now have a custom registration form and a user can sign up successfully. Nice work! This user information is available from the FusionAuth APIs, in the `registration.data` fields. You can retrieve and modify that data using the [APIs](/docs/v1/tech/apis/).
 
 Sorry to end on a down note, but there's trouble in paradise. The placeholders for the fields are not very user friendly. For example, `user.firstName` is an understandable hint, but it'd be better to say "Your first name". The hints also disappear as soon as you type anything in them, which means people might forget what they are putting where. 
 

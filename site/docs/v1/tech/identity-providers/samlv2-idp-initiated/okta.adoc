@@ -48,7 +48,7 @@ The final screen is related to marketing/support. This screen may or may not be 
 
 image::identity-providers/idp-initiated/feedback-marketing-step.png[Feedback Marketing Step,width=1200,role=bottom-cropped]
 
-Now, under the Sign On tab, scroll down until you see a button called "View SAML setup instructions".  This will open a new window/tab. You will need the values displayed to complete the rest of this tutorial.
+Now, under the Sign On tab, scroll down until you see a button called "View SAML setup instructions". This will open a new window/tab. You will need the values displayed to complete the rest of this tutorial.
 
 image::identity-providers/idp-initiated/view-saml-setup-instructions.png[View SAML Setup Instructions,width=1200, role=bottom-cropped]
 
@@ -109,11 +109,11 @@ image::identity-providers/idp-initiated/fusionauth-cors-settings.png[Configure C
 
 == Configure the FusionAuth Application Redirect URL
 
-Navigate to [breadcrumb]#Applications -> Your Application -> OAuth#. Update the [field]#Authorized redirect URLs# field to include `https://local.fusionauth.io/?client_id={clientId}` where `{clientId}` is the value from the [field]#Client Id# field.
+Navigate to [breadcrumb]#Applications -> Your Application -> OAuth#. Update the [field]#Authorized redirect URLs# field with one or more URLs. A redirect URL is where a user will end up after authentication and may be any valid URL.
 
 [NOTE]
 ====
-This URL is where a user will end up after authentication and may be any value URL.
+When a redirect URI is not specified, the first configured value will be utilized. To specify a specific redirect URL, follow the instructions below.
 ====
 
 Ensure the Authorization Code grant is enabled.
@@ -122,17 +122,66 @@ image::identity-providers/idp-initiated/fusionauth-set-up-application.png[Config
 
 == Complete SSO Configuration in Okta
 
-Return to the Configure SAML Tab.  This can be found by navigating as follows from the App homepage: [breadcrumb]#General > SAML Settings > Edit Button > General Settings > Next Button > Configure SAML# tab in the Okta Admin screen.
+Return to the Configure SAML Tab. This can be found by navigating as follows from the App homepage: [breadcrumb]#General > SAML Settings > Edit Button > General Settings > Next Button > Configure SAML# tab in the Okta Admin screen.
 
 * Set the value of the [field]#Single sign on URL# to the value of the [field]#Callback URL (ACS)# from the FusionAuth Identity Provider recorded above.
 * Set the value of the [field]#Audience URI (SP Entity ID)# to the value of the [field]#Issuer# recorded above.
-* Optionally set the value of [field]#Default RelayState# if you want to provide a specific redirect URI. If this value is omitted, the first Authorized redirect URI found in the FusionAuth Application OAuth configuration will be used. This option is supported in FusionAuth version greater than or equal to `1.41.0`. In prior versions, append `redirect_uri=` to the value specified [field]#Single sign on URL# to control the final redirect URI.
+* Optionally set the value of [field]#Default RelayState# if you want to provide a specific redirect URI. If this value is omitted, the first Authorized redirect URI found in the FusionAuth Application OAuth configuration will be used. This option is supported in FusionAuth version greater than or equal to `1.41.0`. In prior versions, append a query parameter `redirect_uri=` to the value specified in [field]#Single sign on URL# to control the final redirect URI. Please note, the URL must be encoded. For more information link:/docs/v1/tech/identity-providers/samlv2-idp-initiated/okta#optional-adding-a-specific-redirect-after-saml-login[see section below].
 * Set the [field]#Application username# to be `Email`.
 
 image::identity-providers/idp-initiated/okta-sign-on-advanced-settings.png[Configure Okta with the FusionAuth SP information,width=1200]
+There are a few additional configuration changes you can make to enable certain functionality. This includes storing persistent Ids in FusionAuth, receiving emails from Okta, and configuring a custom redirect page for the end user. The next sections detail this optional set up.  If not needed, please save the Okta application by clicking [breadcrumb]#"Next"# until complete and skip to <<Adding a User to the Okta Application>> .
 
-Save the Okta application by clicking [breadcrumb]#"Next"# until complete.
+=== Optional: Adding a Specific Redirect After SAML login
 
+If you want a user to return to a specific redirect url after SAML authentication is complete, there are two options to specify this URL:
+
+1. Add to Relay State field
+- As of version `1.41.0` FusionAuth allows adding a redirect in the relay state.
+- Simply add something like `https://hooli.com` to the [field]#Default RelayState# in your Okta configuration.
+2. Add to the ACS
+- You can append your redirect to the [field]#Single sign-on URL# (ACS)
+- Example: +
+`https://example.com/acs/22cea679-83af-422a-806a-baae792b3ab9/85a03867-dccf-4882-adde-1a79aeec50df?redirect_uri=http%3A%2F%2Fhooli.com`
+
+image::identity-providers/idp-initiated/saml-acs-and-relay-state.png[Showing Setting the Relay and ACS values,width=1200, role=bottom-cropped]
+
+The above values will need to be added to the link:/docs/v1/tech/identity-providers/samlv2-idp-initiated/okta#configure-the-fusionauth-application-redirect-url[Authorized redirect URLs] OAuth configuration of your application in FusionAuth. Additional information can be found link:/docs/v1/tech/identity-providers/samlv2-idp-initiated/#saml-v2-integration-details[in our SAML. overview documentation].
+
+=== Optional: Setting a Persistent Id and Sending Email as an Attribute
+
+Ensure you are still on the Configure SAML Tab. This can be found by navigating as follows from the App homepage: [breadcrumb]#General > SAML Settings > Edit Button > General Settings > Next Button > Configure SAML# tab in the Okta Admin screen.
+
+At times it may be helpful to receive a unique and immutable id from Okta and tie this to the new FusionAuth user (this is the value of a persistent SAML NameID). To enable this, on the `Edit SAML Integration` Okta (current) screen please click `Add Another` under the `Attribute Statements` section.  Under the [field]#Name# field enter `userId`, for [field]#Name format# leave as `Unspecified`, and finally, for [field]#Value# enter `user.id`. With this attribute added, Okta will be sending over a persistent Id for each user.
+
+You can also instruct Okta to send over another attribute in the AuthN Response of email. Under the [field]#Name# field enter `email`, for [field]#Name format# leave as `Unspecified`, and finally for [field]#Value# enter `user.email`.
+
+This is useful for when your link:/docs/v1/tech/identity-providers/#linking-strategies[linking strategy] is based on email addresses.
+
+image::identity-providers/idp-initiated/okta-add-attribute-statements.png[Add Persistent Id and email attribute statements,width=1200, role=bottom-cropped]
+
+By configuring Okta to send these two values you will be receiving an AuthN Response similar to the below:
+
+```Xml
+<saml2p:Response xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol" ... >
+// ...
+    <saml2:AttributeStatement xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">
+      <saml2:Attribute Name="email" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified">
+        <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">erlich@fusionauth.io</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute Name="userId" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified">
+        <saml2:AttributeValue xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xsi:type="xs:string">11t9vmcte3QO77udv</saml2:AttributeValue>
+      </saml2:Attribute>
+    </saml2:AttributeStatement>
+// ...
+</saml2p:Response>
+```
+
+You can tell FusionAuth how to find and use this persistent `userId` by modifying your newly created SAML IdP Initiated Provider in FusionAuth under the `Options` tab. Here you will add the value `userId` to the [field]#Unique Id claim# field. Additionally, on the same tab, you can instruct FusionAuth where to find the email claim by filling in the [field]#Email claim# with the value `email`. Depending on your Okta configuration, you can optionally indicate [field]#Use NameID for email# instead.
+
+image::identity-providers/idp-initiated/fusionauth-idp-init-options.png[Configure FusionAuth with Email and Id attributes defined,width=1200, role=top-cropped]
+
+== Adding a User to the Okta Application
 Navigate to the [breadcrumb]#General# tab and scroll to the [breadcrumb]#App Embed Link# section and note the [field]#Embed Link# value. This is the link a user needs to visit to begin the IdP initiated SSO, so you could place it in your application's navigation, launchpad, or elsewhere.
 
 Finally, click on the [breadcrumb]#Assignments# tab and assign the user to the application. First, select the user by clicking the [breadcrumb]#Assign# dropdown. Then by clicking [breadcrumb]#Assign to People#, and then finally selecting the [breadcrumb]#Assign# button for the user you would like to use.

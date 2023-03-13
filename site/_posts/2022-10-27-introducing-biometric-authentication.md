@@ -1,11 +1,11 @@
 ---
 layout: blog-post
 title: Introducing biometric authentication
-description: ...
+description: FusionAuth, the developer-focused authentication platform, today announces the addition of biometric passwordless login using WebAuthn to its long list of authentication features.
 author: Don Bergal
 image: blogs/introducing-biometric-authentication/webauthn-biometrics-launch-press-release.png
-category: blog
-tags: topic-press-release topic-webauthn
+category: announcement
+tags: topic-press-release topic-webauthn press-release webauthn
 excerpt_separator: "<!--more-->"
 related_resources:
   - 

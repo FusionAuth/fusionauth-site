@@ -1,11 +1,11 @@
 ---
 layout: blog-post
 title: Setting up single sign-on (SSO) with FusionAuth
-description: Who are the players you'll need to work with to make an outsourced auth implementation successful?
+description: How to set up single sign-on with FusionAuth
 image: blogs/sso-example/setting-up-single-sign-on-sso-with-fusionauth-header-image.png
 author: Dan Moore
-category: blog
-tags: feature-sso tutorial tutorial-feature
+category: tutorial
+tags: feature-sso tutorial tutorial-feature single-sign-on sso
 excerpt_separator: "<!--more-->"
 ---
 

@@ -4,8 +4,8 @@ title: Tucan uses FusionAuth with CockroachDB
 description: 
 author: Dan Moore
 image: blogs/tucan-fusionauth-cockroachdb/tucan-uses-fusionauth-with-cockroachdb-header-image.png
-category: blog
-tags: topic-community-story client-java topic-kubernetes
+category: community-story
+tags: topic-community-story client-java topic-kubernetes java kubernetes community-story cockroachdb
 excerpt_separator: "<!--more-->"
 ---
 

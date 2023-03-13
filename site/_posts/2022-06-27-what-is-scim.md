@@ -4,12 +4,12 @@ title: What is SCIM?
 description: What is SCIM and why would you use it?
 author: Dan Moore
 image: blogs/what-is-scim/what-is-scim.png
-category: blog
-tags: feature-scim
+category: article
+tags: topic-scim scim explainer
 excerpt_separator: "<!--more-->"
 ---
 
-SCIM, which stands for System for Cross-domain Identity Management, is a specification to add and remove users and groups using a standard protocol. 
+SCIM is a specification to add and remove users and groups using a standard protocol. 
 
 <!--more-->
 
@@ -17,15 +17,19 @@ Now, as of version 1.36, FusionAuth can consume SCIM requests and act as the pro
 
 But this post isn't about FusionAuth's support; rather it is about what SCIM is and why you might want to use it.
 
-## What does SCIM let you do?
+## What does SCIM mean?
+SCIM stands for System for Cross-domain Identity Management. It was created in 2011 as SCIM 1.0 by the Open Web Foundation. The current standard, SCIM 2.0 was released in 2015 as an [Internet Engineering Task Force (IETF) RFC](https://datatracker.ietf.org/doc/html/rfc7643). 
 
-At a high level, supporting SCIM allows you to provision and deprovision (add and remove) users and groups from your identity systems. When a new user is added to one system, that user's details can fan out to other systems with their own datastores.
+## How does SCIM provisioning work?
+
+At a high level, supporting SCIM allows you to automate the provisioning and deprovisioning (adding and removing) of users and groups from your identity systems. When a new user is added to one system, that user’s details can fan out to other systems with their own datastores.
 
 An example would be when a new developer is added to an HR system, they can be added to other systems required to do their job, such as a cloud computing provider, a source control system and a ping-pong tournament management system.
 
 If a new customer is added to a SaaS application, SCIM can add them to the support ticketing system and the accounting system as well.
 
-As you can imagine, you'd have to have a number of systems and users to make implementing SCIM worth your while. If you only have ten customers and bring on one a month, automating this may not be your highest priority. But there are many companies out there with large numbers of employees and users, for which SCIM makes sense.
+As you can imagine, you’d have to have a number of systems and users to make implementing SCIM worth your while. If you only have ten customers and bring on one a month, automating this may not be your highest priority. But there are many companies out there with large numbers of employees and users, for which SCIM makes sense.
+
 
 ## Why would you use SCIM?
 
@@ -49,7 +53,7 @@ Let's dive into some of the major pieces of SCIM.
 
 ## Client and Server
 
-There are two players in the SCIM game: the client and the server. The client provides the user data to the server.
+There are two players in the SCIM game: the client and the server. Unlike a traditional identity provider architecture, the terms client and server have different meanings in SCIM. The client provides the user data to the server. 
 
 In the example above, when a new developer is added to an HR system, SCIM adds them to other systems too. In this case, the HR system is the *client* and the other systems are *servers*.
 
@@ -95,9 +99,9 @@ For example, the HR system discussed above might have an identifier for the deve
 
 In addition, `$ref` attribute is commonly used. This string is an HTTP addressable resource which points to additional information about this item, and is often used to convey relationships between resources in SCIM. For example, a user object may contain group membership information. That group information may contain a `$ref` attribute pointing to the SCIM identifier of that group.
 
-## Supported operations
+## SCIM API
 
-There are a number of supported operations. As you'd expect, CRUDL is supported for each resource, and the API is broadly RESTful:
+In the standards-based SCIM API, there are a number of supported operations. As you'd expect, CRUDL is supported for each resource, and the API is broadly RESTful:
 
 * `Create`, which uses the HTTP `POST` method
 * `Read`, which uses the HTTP `GET` method

@@ -4,8 +4,8 @@ title: How to theme FusionAuth's advanced registration forms
 description: Advanced registration forms let you easily build out multi-step registration forms. You can use FusionAuth's full theming power to change how they look.
 author: Dan Moore
 image: blogs/theming-advanced-forms/how-to-theme-fusionauths-advanced-registration-forms.png
-category: blog
-tags: feature-advanced-registration-forms feature-themes tutorial tutorial-themes
+category: tutorial
+tags: feature-advanced-registration-forms feature-themes tutorial tutorial-themes themes advanced-registration-forms
 excerpt_separator: "<!--more-->"
 ---
 
@@ -257,11 +257,11 @@ Doing this will open a new tab. Click "OAuth register" in the left hand navigati
 
 ## Conclusion
 
-This post gives you a glimpse of the full flexibility of FusionAuth themes. You can use the power of Apache FreeMarker, ResourceBundles, CSS, and JavaScript to customize and localize these pages. As mentioned previously, it's also worth checking out the [theme documentation](/docs/v1/tech/themes). 
+This post gives you a glimpse of the full flexibility of FusionAuth themes. You can use the power of Apache FreeMarker, ResourceBundles, CSS, and JavaScript to customize and localize these pages. As mentioned previously, it's also worth checking out the [theme documentation](/docs/v1/tech/themes/). 
 
 If you are using FusionAuth registration forms, be sure to customize the default templates to improve users' experience. FusionAuth's themes can be manipulated both in the administrative user interface and by API calls.
 
 But what about after the registration? This information is available via the FusionAuth APIs, in the `user.data` and `registration.data` fields. It is also available for viewing, but not editing, in the administrative user interface. 
 
-Let's build a small portal page for the user to see their data. You can retrieve and modify user data using the [APIs](/docs/v1/tech/apis) and in a future blog post we'll see exactly how to do that.
+Let's build a small portal page for the user to see their data. You can retrieve and modify user data using the [APIs](/docs/v1/tech/apis/) and in a future blog post we'll see exactly how to do that.
 

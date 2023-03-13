@@ -4,7 +4,8 @@ title: "We'll see you at AWS re:Invent 2022"
 description: FusionAuth is going to AWS re:Invent. Stop by and see us!
 author: Dan Moore
 image: blogs/fusionauth-aws-reinvent-2022/see-you-at-aws-reinvent-header-image.png
-category: blog
+category: announcement
+tags: conference aws-re-invent
 excerpt_separator: "<!--more-->"
 ---
 
@@ -20,7 +21,7 @@ One is that FusionAuth and our clients often deploy on the AWS public cloud. Som
 
 AWS re:Invent is an opportunity to meet developers where they are at, both during talks and in the everpresent hallway track. We look forward to exchanging knowledge and ideas with folks building on the AWS platform.
 
-We're also excited to chat with attendees about auth. We like to hear from developers about what they are building on top of solutions like FusoinAuth, Auth0 and Cognito.
+We're also excited to chat with attendees about auth. We like to hear from developers about what they are building on top of solutions like FusionAuth, Auth0 and Cognito.
 
 You can migrate from [Auth0](/docs/v1/tech/migration-guide/auth0) to FusionAuth and we're of course happy to help. Migrating away from Cognito isn't as straightforward, but [there are ways](/docs/v1/tech/migration-guide/cognito).
 
