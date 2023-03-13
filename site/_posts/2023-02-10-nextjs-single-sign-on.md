@@ -36,9 +36,7 @@ Go through the [5-Minute Setup Guide](https://fusionauth.io/docs/v1/tech/5-minut
 
 ### Starting FusionAuth
 
-{% comment %}
 {% include posts/sso/starting.md %}
-{% endcomment %}
 
 ### Configure FusionAuth
 
@@ -58,35 +56,31 @@ In the dialog, fill in a name for your key, the issuer as your FusionAuth applic
 
 ### Set up the application
 
-{% comment %}
 {% include posts/sso/setup.md
 callbackUrl='http://localhost:3000/api/auth/callback/fusionauth'
 oauthDetailsImage='/assets/img/blogs/nextjs-single-sign-on/fusionauth-callback.png'
 beforeSavingInstructions='Go back to the beginning of the page and select the _"JWT"_ tab. There, click the _"Enabled"_ switch and change both _"Access token signing key"_ and _"Id token signing key"_ to your newly generated RSA signing key.'
 %}
-{% endcomment %}
 
 ### Register the user
 
-{% comment %}
 {% include posts/sso/register-user.md %}
-{% endcomment %}
 
 ### Kickstart
 
 Instead of manually setting up FusionAuth using the admin UI as you did above, you can use Kickstart. This tool allows you to get going quickly if you have a fresh installation of FusionAuth. Learn more about how to use [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart).
 
-Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-nextjs/blob/main/kickstart/kickstart.json) which sets up FusionAuth for this tutorial.
+Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/blob/main/kickstart/kickstart.json) which sets up FusionAuth for this tutorial.
 
 ## Method 1: Clone the demo repository
 
-If you want to run an already working application, you can clone the demo project from this [GitHub repository](https://github.com/FusionAuth/fusionauth-example-nextjs) using the following command.
+If you want to run an already working application, you can clone the demo project from this [GitHub repository](https://github.com/FusionAuth/fusionauth-example-nextjs-single-sign-on) using the following command.
 
 ```shell
-$ git clone git@github.com:FusionAuth/fusionauth-example-nextjs.git
+$ git clone git@github.com:FusionAuth/fusionauth-example-nextjs-single-sign-on.git
 ```
 
-Even though you do not need to actually execute the next steps, we do recommended that you read them to understand what was done in the demo application. After that, continue configuring the [Environment variables](#environment-variables).
+Even though you do not need to actually execute the next steps, we do recommend that you read them to understand what was done in the demo application. After that, continue configuring the [Environment variables](#environment-variables).
 
 ## Method 2: Create your own Next.js application
 
