@@ -1,7 +1,11 @@
 ## Documentation Style Guidelines
 
 Here are some guidelines to follow when writing documentation (everything under `/site/docs`) as well as the blog (`_posts`).
-
+- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
+  For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
+- If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
+ `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
+- From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` when describing a unique identifier
 - Use `logged in` instead of `logged-in`
