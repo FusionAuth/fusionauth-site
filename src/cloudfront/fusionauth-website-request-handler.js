@@ -65,7 +65,6 @@ var redirects = {
   '/docs/v1/tech/admin-guide/release-notifications': '/docs/v1/tech/admin-guide/releases',
   '/docs/v1/tech/apis/consent': '/docs/v1/tech/apis/consents',
   '/docs/v1/tech/common-errors': '/docs/v1/tech/admin-guide/troubleshooting',
-  '/docs/v1/tech/core-concepts/modes': '/docs/v1/tech/oauth/modes',
   '/docs/v1/tech/installation-guide/configuration-management': '/docs/v1/tech/admin-guide/configuration-management',
   '/docs/v1/tech/installation-guide/monitor': '/docs/v1/tech/admin-guide/monitor',
   '/docs/v1/tech/installation-guide/securing': '/docs/v1/tech/admin-guide/securing',
