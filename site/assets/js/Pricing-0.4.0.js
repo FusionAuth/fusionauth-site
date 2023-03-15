@@ -310,7 +310,7 @@ class FusionAuthPriceCalculator {
       this.purchaseButton.classList.add('grayed-out');
     }
 
-    if ((!this.hosting || this.hosting === 'self-hosting' || this.hosting === 'basic-cloud') && (!this.plan || this.plan === 'Community' || this.plan === 'Starter')) {
+    if (this.billingInterval === monthlyInterval && (!this.hosting || this.hosting === 'self-hosting' || this.hosting === 'basic-cloud') && (!this.plan || this.plan === 'Community' || this.plan === 'Starter')) {
       this.sumDiv.innerText = 'Free trial';
       this.sumDiv.nextElementSibling.style.display = 'none';
       this.purchaseButton.innerHTML = 'Start trial';
