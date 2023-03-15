@@ -2,7 +2,7 @@
 layout: blog-post
 title: Winning the customer auth market
 description: Explaining the FusionAuth market position and the customer identity and access management (CIAM) landscape in more detail.
-author: Mark Van Oppen
+author: Mark van Oppen
 category: announcement
 tags: auth big-picture ciam market fusionauth company auth0
 image: blogs/winning-customer-auth-market/winning-customer-auth-market-header.png
