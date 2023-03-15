@@ -3,7 +3,7 @@ layout: blog-post
 title: Using and Managing Consents in an Express App
 description: Build an app with marketing consent options and allow your users to update their preferences.
 author: Bradley Van Aardt
-category: blog
+category: tutorial
 image: blogs/consents-app/managing-consent-header.png
 tags: client-node tutorial tutorial-express tutorial-node feature-advanced-registration-forms feature-consents api-consents
 category: tutorial

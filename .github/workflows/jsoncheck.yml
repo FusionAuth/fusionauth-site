@@ -15,18 +15,18 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v3
-      - name: Check jq
+      - name: Check for broken json files
         run: |
-          jq --version
+          busted_files=""        
+          for file in `find site/docs/src -name "*.json"`; do
+            cat $file |jq -j '.' >/dev/null
+            if [ "x$?" != "x0" ]; then
+              busted_files="$busted_files $file"
+            fi
+          done
+          if [ "x$busted_files" != "x" ] ; then
+            echo "Busted json files"
+            echo $busted_files
+            exit 1
+          fi
         shell: bash
-      # invert the results of the find command. If we find anything, we want to fail. Otherwise succeed.
-      # more here: https://stackoverflow.com/questions/367069/how-can-i-negate-the-return-value-of-a-process
-      #- name: Check for broken internal asciidoctor links in output
-        #run: |
-          #! find _site/docs -type f|xargs grep -l 'BROKEN LINK'
-        #shell: bash
-      #- name: Check for broken external asciidoctor links in source
-        #run: |
-          #! find site/docs -type f -name "*.adoc"|xargs egrep '^/docs/v1/|[^:]/docs/v1/'|grep -v RSS
-          ## ignore lines including the word RSS since those have an href, not a link:
-        #shell: bash

@@ -9,7 +9,7 @@ ruby "2.7.5"
 #
 # This will help ensure the proper Jekyll version is running.
 # Happy Jekylling!
-gem "jekyll", "4.2.2"
+gem "jekyll", "4.3.2"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
@@ -24,7 +24,7 @@ group :jekyll_plugins do
   gem "jekyll-minifier", "0.1.10"
   gem "jekyll-archives", "2.2.1"
   gem "jekyll-datapage-generator", "1.4.0"
-  gem "jekyll-remote-include", :github => "FusionAuth/jekyll-remote-include", :ref => "39ae1a1744c8837d5ee64b11c5f982304ea940e5"
+  gem "jekyll-remote-include", :github => "FusionAuth/jekyll-remote-include", :ref => "b2b95a3771fdb89656b56b7ccf4236260e673b2e"
 end
 
 # For the docs
