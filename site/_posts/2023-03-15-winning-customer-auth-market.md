@@ -25,7 +25,9 @@ Any adult over the last 10 years has direct experience interacting with login te
 
 This anecdotal trend observation is backed up by data; the identity market is expected to grow more than 13% CAGR over the next five years. Companies lean on this technology because it’s a business imperative. Nobody can afford to forgo the market intelligence and insight that customer identity offers, and it is often a necessary security gate for service delivery. 
 
-Additionally, customer login has emerged as a standalone function within the microservices design strategy. Interacting with more discrete services, frequent updates, and a large number of moving parts has made customer login a more nuanced and complicated thing. This evolution means that customer login is an obvious candidate to require its own service level and availability targets, a core function often neglected until it breaks. Customers being able to log in is akin to being “Open for Business,” and it doesn’t get more critical.
+Additionally, customer login has emerged as a standalone function within the microservices design strategy. Interacting with more discrete services, frequent updates, and a large number of moving parts has made customer login a more nuanced and complicated thing. This evolution means that customer login is an obvious candidate to require its own service level and availability targets, a core function often neglected until it breaks.
+
+Customers being able to log in is akin to being “Open for Business,” and it doesn’t get more critical.
 
 ## The CIAM market
 
@@ -51,17 +53,23 @@ Updates are scheduled with customers instead of announced without a discussion. 
 
 FusionAuth is designed to fit with a microservices application architecture and is proud to build on open standards. We do not market a single, proprietary feature as the whole company’s purpose. Rather, we have designed a system that is very configurable and we focus each implementation on the business problem each customer faces. Furthermore, FusionAuth is truly API-first, which is very important to our developer audience.
 
-The result is a full-featured CIAM platform that compares favorably to any competitor on the market. We even prioritize product development to fulfill customer requirements as our customers ask for feature enhancement. Being a nimble company means that we take input, and pull forward roadmap features for delivery in weeks rather than months or years. The support organization also has a direct escalation path through product engineering. This tight alignment supports world class documentation and a robust set of resources for every customer use case. Ultimately our relationship with our customers is founded on providing a developer solution that performs technically and isn’t punitive commercially.
+The result is a full-featured CIAM platform that compares favorably to any competitor on the market. We even prioritize product development to fulfill customer requirements as our customers ask for feature enhancement. Being a nimble company means that we take input, and pull forward roadmap features for delivery in weeks rather than months or years. The support organization also has a direct escalation path through product engineering. This tight alignment supports world class documentation and a robust set of resources for every customer use case.
+
+Ultimately our relationship with our customers is founded on providing a developer solution that performs technically and isn’t punitive commercially.
 
 ## The pricing
 
 FusionAuth takes pride in [pricing transparency](/pricing). Our product pricing is organized around three variables, and we don’t hide them; infrastructure, software features, and user counts. Every version of our product can be purchased directly from the website, and we are [available to write custom contracts if needed](/contact). FusionAuth bills monthly by default, but has customers that prefer quarterly or annual payments as well.
 
-Monthly active users (MAU) is an imperfect measurement to gauge the complexity of an environment or user behavior, so we do not limit our contract structures around that variable. For example, under 10k MAU, it isn’t a particularly informative measurement for system requirements.  Over one million monthly active users also becomes a more nuanced conversation around behavior and patterns. If you want a custom proposal that may help you solve customer login more effectively, we are ready to talk and show you what is possible.
+Monthly active users (MAU) is an imperfect measurement to gauge the complexity of an environment or user behavior, so we do not limit our contract structures around that variable. For example, under 10k MAU, it isn’t a particularly informative measurement for system requirements.  Over one million monthly active users also becomes a more nuanced conversation around behavior and patterns.
+
+If you want a custom proposal that may help you solve customer login more effectively, we are ready to talk and show you what is possible.
 
 ## When considered, we win
 
-To summarize, FusionAuth is in a remarkable position in 2023. Customers have a distinct and underserved need, and FusionAuth is in an ideal position to provide value. We have a very healthy population of customers, the business is **profitable**, and we are not beholden to any outside influence that dilutes our mission to build the best authentication product available.  When we are considered alongside competitors, we win customer contracts at a staggering rate. It is a rewarding position to be in and comes down to these four points:
+To summarize, FusionAuth is in a remarkable position in 2023. Customers have a distinct and underserved need, and FusionAuth is in an ideal position to provide value. We have a very healthy population of customers, the business is **profitable**, and we are not beholden to any outside influence that dilutes our mission to build the best authentication product available. 
+
+When we are considered alongside competitors, we win customer contracts at a staggering rate. It is a rewarding position to be in and comes down to these four points:
 
 * A high-performance product running open standards
 * Flexible commercial options and month-to-month or contractual agreements
