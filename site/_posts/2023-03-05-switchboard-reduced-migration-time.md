@@ -3,7 +3,7 @@ layout: blog-post
 title: Switchboard.app reduced their estimated migration time by 66% using FusionAuth
 description: Switchboard, a collaborative digital workspace where people meet to work on any project, with any application or file, uses FusionAuth for OAuth and creating custom JWTs.
 author: Dan Moore
-image: blogs/illustrative-mathematics/illustrative-mathematics-fusionauth.png
+image: blogs/switchboard-fusionauth/switchboard-migrated-fusionauth-header.png
 category: community-story
 tags: topic-community-story topic-upgrade upgrade community-story saas
 excerpt_separator: "<!--more-->"
