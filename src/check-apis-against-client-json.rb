@@ -209,6 +209,11 @@ end
 
 def skip_file(fn) 
 
+  # this is an intermediate identity provider, we don't want to process it
+  if fn.end_with? "io.fusionauth.domain.provider.BaseSAMLv2IdentityProvider"
+    return true
+  end
+
   # this is a super class of user. we don't have an explicit API for it, though
   if fn.end_with? "io.fusionauth.domain.SecureIdentity.json"
     return true
