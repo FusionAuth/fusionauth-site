@@ -63,7 +63,7 @@ You can confirm that all three deployments, `db`, `fusionauth`, and `search`, ar
 helm list -n fusionauth
 ```
 
-Which should return something like the following:
+Which should return something like this:
 
 ```sh
 NAME      	NAMESPACE 	REVISION	UPDATED                                	STATUS  	CHART                	APP VERSION
@@ -72,13 +72,15 @@ fusionauth	fusionauth	1       	2023-03-16 05:35:37.338318231 +0000 UTC	deployed	
 search    	fusionauth	1       	2023-03-16 05:35:33.535086468 +0000 UTC	deployed	elasticsearch-19.5.14	8.6.2    
 ```
 
+You should see all 3 deployments listed as `deployed`.
+
 You can also check the status of all running pods with the following [`kubectl`](https://kubernetes.io/docs/tasks/tools/) command:
 
 ```sh
 kubectl get pods -n fusionauth
 ```
 
-Which should return something like the following:
+Which should return something similar to the following:
 
 ```sh
 NAME                                  READY   STATUS    RESTARTS   AGE
@@ -96,7 +98,7 @@ search-elasticsearch-master-1         1/1     Running   0          5m57s
 
 ## Upgrading FusionAuth
 
-As new versions of FusionAuth are released, you can use this bash script, using [`helm`](https://helm.sh/docs/intro/install/), to upgrade to the latest version. 
+As new versions of FusionAuth are released, you can use this bash script, which utilizes [`helm`](https://helm.sh/docs/intro/install/), to upgrade to the latest version.
 
 ```sh
 #!/bin/sh
@@ -119,14 +121,8 @@ STACK="fusionauth"
 CHART="fusionauth/fusionauth"
 NAMESPACE="fusionauth"
 
-if [ -z "${MP_KUBERNETES}" ]; then
-  # use local version of values.yml
-  ROOT_DIR=$(git rev-parse --show-toplevel)
-  VALUES="$ROOT_DIR/stacks/fusionauth/values.yml"
-else
-  # use github hosted master version of values.yml
-  VALUES="https://raw.githubusercontent.com/digitalocean/marketplace-kubernetes/master/stacks/fusionauth/values.yml"
-fi
+# use github hosted master version of values.yml, replace this if you want to use local values
+VALUES="https://raw.githubusercontent.com/digitalocean/marketplace-kubernetes/master/stacks/fusionauth/values.yml"
 
 # Retrieve current passwords and set them again during upgrade.
 DB_FUSIONAUTH_USER_PASSWORD=$(kubectl -n $NAMESPACE get secrets fusionauth-credentials -o jsonpath='{.data.password}' | base64 -d)
@@ -142,7 +138,7 @@ helm upgrade "$STACK" "$CHART" \
 Save the script into a file, `fusionauth-upgrade.sh`. If you're on macOS or Linux, you can make the file executable by running the following command in your terminal:
 
 ```sh
-chmod +X fusionauth-upgrade.sh
+chmod 700 fusionauth-upgrade.sh
 ```
 
 Then execute the script by running:
@@ -170,47 +166,6 @@ NOTES:
   export SERVICE_IP=$(kubectl get svc --namespace fusionauth fusionauth -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   echo http://$SERVICE_IP:9011
 ```
-
-If you experience any errors after running this script, you may want to force the usage of values from the DigitalOcean Marketplace hosted on GitHub. You can do this by removing the "if" clause entirely. If you choose to go this route, your upgrade script will look like this:
-
-```sh
-#!/bin/sh
-
-set -e
-
-################################################################################
-# repo
-################################################################################
-helm repo add stable https://charts.helm.sh/stable
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo add fusionauth https://fusionauth.github.io/charts
-helm repo update > /dev/null
-
-
-################################################################################
-# chart
-################################################################################
-STACK="fusionauth"
-CHART="fusionauth/fusionauth"
-NAMESPACE="fusionauth"
-
-
-# use github hosted master version of values.yml
-VALUES="https://raw.githubusercontent.com/digitalocean/marketplace-kubernetes/master/stacks/fusionauth/values.yml"
-
-# Retrieve current passwords and set them again during upgrade.
-DB_FUSIONAUTH_USER_PASSWORD=$(kubectl -n $NAMESPACE get secrets fusionauth-credentials -o jsonpath='{.data.password}' | base64 -d)
-DB_POSTGRES_USER_PASSWORD=$(kubectl -n $NAMESPACE get secrets fusionauth-credentials -o jsonpath='{.data.rootpassword}' | base64 -d)
-
-helm upgrade "$STACK" "$CHART" \
---namespace "$NAMESPACE" \
---values "$VALUES" \
---set database.password="$DB_FUSIONAUTH_USER_PASSWORD" \
---set database.root.password="$DB_POSTGRES_USER_PASSWORD"
-```
-
-Which should return the same output.
-
 ## Uninstalling FusionAuth
 
 To uninstall FusionAuth, you can use the following bash script:
@@ -238,7 +193,7 @@ kubectl delete ns fusionauth
 Save the script into a file, `fusionauth-uninstall.sh`. If you're on macOS or Linux, you can make the file executable by running the following command in your terminal:
 
 ```sh
-chmod +X fusionauth-uninstall.sh
+chmod 700 fusionauth-uninstall.sh
 ```
 
 Then execute the script by running:
@@ -257,7 +212,11 @@ release "fusionauth" uninstalled
 namespace "fusionauth" deleted
 ```
 
-FusionAuth will still appear in the `Marketplace` tab in your DigitalOcean dashboard, but it can still be reinstalled at any time by following the [installation instructions](https://fusionauth.io/posts/2023-03-30-digitalocean-oneclick-installation.md#Installation) above and selecting the current cluster instead of a new one.
+This removes all the FusionAuth, Elasticsearch, and database resources from your Kubernetes cluster, along with the `fusionauth` namespace. However, the Kubernetes cluster itself will still exist. You can delete this cluster from the DigitalOcean admin console. Click on "Kubernetes" in the side bar, then select the cluster you want to delete. Click on the "Actions" dropdown and select "Destroy". Follow the instructions to destroy the cluster.
+
+{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-destroy-cluster.png" alt="Destroying a cluster from the DigitalOcean admin console" class="img-fluid" figure=false %}
+
+You can reinstall FusionAuth to this cluster by following the [installation instructions](https://fusionauth.io/posts/2023-03-30-digitalocean-oneclick-installation.md#Installation) above and selecting the current cluster instead of a new one.
 
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-select-current-cluster.png" alt="Selecting current cluster from the dropdown in the configuration wizard" class="img-fluid" figure=false %}
 
