@@ -20,6 +20,7 @@ IGNORED_FIELD_REGEXPS = [
   /^application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
+  /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onMultiFactorEnable/, # no UX elements for this
   /^tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
   /^user\.uniqueUsername/, # this is a derived, internal field
   /^entity\.parentId/, # not currently documenting until this is further built out
