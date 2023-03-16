@@ -63,10 +63,35 @@ You can confirm that all three deployments, `db`, `fusionauth`, and `search`, ar
 helm list -n fusionauth
 ```
 
+Which should return something like the following:
+
+```sh
+NAME      	NAMESPACE 	REVISION	UPDATED                                	STATUS  	CHART                	APP VERSION
+db        	fusionauth	1       	2023-03-16 05:35:29.729584193 +0000 UTC	deployed	postgresql-12.2.3    	15.2.0     
+fusionauth	fusionauth	1       	2023-03-16 05:35:37.338318231 +0000 UTC	deployed	fusionauth-0.12.1    	1.42.0     
+search    	fusionauth	1       	2023-03-16 05:35:33.535086468 +0000 UTC	deployed	elasticsearch-19.5.14	8.6.2    
+```
+
 You can also check the status of all running pods with the following [`kubectl`](https://kubernetes.io/docs/tasks/tools/) command:
 
 ```sh
 kubectl get pods -n fusionauth
+```
+
+Which should return something like the following:
+
+```sh
+NAME                                  READY   STATUS    RESTARTS   AGE
+db-postgresql-0                       1/1     Running   0          6m1s
+fusionauth-6699f7bc8d-p6ph9           1/1     Running   0          5m54s
+search-elasticsearch-coordinating-0   1/1     Running   0          5m57s
+search-elasticsearch-coordinating-1   1/1     Running   0          5m57s
+search-elasticsearch-data-0           1/1     Running   0          5m57s
+search-elasticsearch-data-1           0/1     Pending   0          5m57s
+search-elasticsearch-ingest-0         1/1     Running   0          5m57s
+search-elasticsearch-ingest-1         1/1     Running   0          5m57s
+search-elasticsearch-master-0         1/1     Running   0          5m57s
+search-elasticsearch-master-1         1/1     Running   0          5m57s
 ```
 
 ## Upgrading FusionAuth
@@ -126,6 +151,66 @@ Then execute the script by running:
 ./fusionauth-upgrade.sh
 ```
 
+It should return the following:
+
+```sh
+"stable" has been added to your repositories
+"bitnami" has been added to your repositories
+"fusionauth" has been added to your repositories
+Release "fusionauth" has been upgraded. Happy Helming!
+NAME: fusionauth
+LAST DEPLOYED: Thu Mar 16 12:58:20 2023
+NAMESPACE: fusionauth
+STATUS: deployed
+REVISION: 2
+NOTES:
+1. Get the application URL by running these commands:
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get svc -w fusionauth'
+  export SERVICE_IP=$(kubectl get svc --namespace fusionauth fusionauth -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  echo http://$SERVICE_IP:9011
+```
+
+If you experience any errors after running this script, you may want to force the usage of values from the DigitalOcean Marketplace hosted on GitHub. You can do this by removing the "if" clause entirely. If you choose to go this route, your upgrade script will look like this:
+
+```sh
+#!/bin/sh
+
+set -e
+
+################################################################################
+# repo
+################################################################################
+helm repo add stable https://charts.helm.sh/stable
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add fusionauth https://fusionauth.github.io/charts
+helm repo update > /dev/null
+
+
+################################################################################
+# chart
+################################################################################
+STACK="fusionauth"
+CHART="fusionauth/fusionauth"
+NAMESPACE="fusionauth"
+
+
+# use github hosted master version of values.yml
+VALUES="https://raw.githubusercontent.com/digitalocean/marketplace-kubernetes/master/stacks/fusionauth/values.yml"
+
+# Retrieve current passwords and set them again during upgrade.
+DB_FUSIONAUTH_USER_PASSWORD=$(kubectl -n $NAMESPACE get secrets fusionauth-credentials -o jsonpath='{.data.password}' | base64 -d)
+DB_POSTGRES_USER_PASSWORD=$(kubectl -n $NAMESPACE get secrets fusionauth-credentials -o jsonpath='{.data.rootpassword}' | base64 -d)
+
+helm upgrade "$STACK" "$CHART" \
+--namespace "$NAMESPACE" \
+--values "$VALUES" \
+--set database.password="$DB_FUSIONAUTH_USER_PASSWORD" \
+--set database.root.password="$DB_POSTGRES_USER_PASSWORD"
+```
+
+Which should return the same output.
+
 ## Uninstalling FusionAuth
 
 To uninstall FusionAuth, you can use the following bash script:
@@ -162,6 +247,20 @@ Then execute the script by running:
 ./fusionauth-uninstall.sh
 ```
 
+It should return the following: 
+
+```sh
+release "search" uninstalled
+release "db" uninstalled
+release "fusionauth" uninstalled
+"fusionauth" has been removed from your repositories
+namespace "fusionauth" deleted
+```
+
+FusionAuth will still appear in the `Marketplace` tab in your DigitalOcean dashboard, but it can still be reinstalled at any time by following the [installation instructions](https://fusionauth.io/posts/2023-03-30-digitalocean-oneclick-installation.md#Installation) above and selecting the current cluster instead of a new one.
+
+{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-select-current-cluster.png" alt="Selecting current cluster from the dropdown in the configuration wizard" class="img-fluid" figure=false %}
+
 ## What to do if your cluster is destroyed
 
 If you destroy your kubernetes cluster using the "Actions->Destroy" button on your DigitalOcean admin console, without first running the uninstall script in the previous section, you will need to follow some steps to ensure that subsequent installs work properly.
@@ -193,6 +292,12 @@ Now that you've set the context to your new cluster, you can execute `kubectl de
 
 ```sh
 kubectl delete namespace fusionauth
+```
+
+That command should return the following.
+
+```sh
+namespace "fusionauth" deleted
 ```
 
 At this point, you can navigate back to the "Marketplace" tab and click "Try again" to continue the installation as normal.
