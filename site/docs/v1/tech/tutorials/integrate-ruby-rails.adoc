@@ -132,12 +132,11 @@ Then, set up a new rails app.
 rails new myapp && cd myapp
 ----
 
-Install the omniauth gem. Add the following to your Gemfile.
+Install the omniauth gem and other supporting gems. Add the following to your Gemfile.
 
-[source,shell]
+[source,ruby]
 ----
-gem "omniauth"
-gem "omniauth_openid_connect"
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/Gemfile[tags=gemfile]
 ----
 
 Then, install them.
@@ -147,143 +146,100 @@ Then, install them.
 bundle install
 ----
 
-Then, create a file called `omniauth.rb` in the `config/initializers` directory. Add this code to the file
+Next, update your `config/environments/development.rb` file with FusionAuth OIDC configuration information. You'll have to add similar settings when deploying to prod or other environments.
 
-
-[source,xml,title="Your omniauth.rb file"]
+[source,ruby]
 ----
-Rails.application.config.middleware.use OmniAuth::Builder do
-  provider :openid_connect, name: :my_provider,
-           issuer: 'http://localhost:9011',
-           client_options: {
-             identifier: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
-             secret: 'change-this-in-production-to-be-a-real-secret',
-             redirect_uri: 'http://localhost:3000/auth/my_provider/callback',
-             scope: 'openid profile email'
-           }
-end
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/config/environments/development.rb[tags=oidcConfig]
 ----
 
-Then, you need to create two directories:
+Then, create a file called `omniauth.rb` in the `config/initializers` directory. Add this to the file.
+
+[source,ruby,title="Your omniauth.rb initializer"]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/config/initializers/omniauth.rb[]
+----
+
+This pulls from the environment file and configures omniauth to communicate with FusionAuth.
+
+Next, you can create the following controllers and scaffolding.
 
 [source,shell]
 ----
-mkdir -p src/main/resources/templates && \
-mkdir -p src/main/java/io/fusionauth/example/spring/config
+rails generate controller auth
+rails generate controller home
+rails generate scaffold todos
+rails db:migrate
 ----
 
-Paste the below into `src/main/resources/application.properties`. This is mostly the OAuth configuration you need.
+These controllers have the following purpose:
 
-[source,properties]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/application.properties[]
-----
+* `auth` will handle the integration with omniauth
+* `home` will be an unprotected home page with a login button
+* `todos` is a set of protected CRUD routes; in a real world application these would be built out further.
 
-Then put this HTML in the `src/main/resources/templates/home.html` file.
-This is going to be the page unauthenticated users see.
+Let's update the `config/routes.rb` file. Here's what that should look like:
 
-[source,html]
+[source,ruby,title="Your routes"]
 ----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/home.html[]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/config/routes.rb[]
 ----
 
-Add this HTML in the `src/main/resources/templates/user.html` file.
-This is going to be the page authenticated users can access. This will
-only show a JSON representation of the user, but you could put other
-protected information in this page.
+Nothing too special here:
 
-[source,html]
+* `todos` is the CRUD resource.
+* `login` points you to the home page, which is available to unauthenticated users. This is also the default page.
+* `logout` is tied to the auth controller's logout method.
+* `auth/:provider/callback` is the omniauth callback method, which completes the OIDC flow.
+
+Now, update the auth controller at `app/controllers/auth_controller.rb` to have this code, which fulfills some of the routes above. This lets us have a nice `logout` method and handle the callback from omniauth, setting a `session` attribute with user data.
+
+[source,ruby,title="Your auth controller"]
 ----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/user.html[]
-----
-
-Then, you need to add the {language} files that comprise your Spring
-application. There are four:
-
-* An application startup class
-* A configuration class
-* Two controllers for the pages you added above
-
-Let’s add the startup file first. In
-`src/main/java/io/fusionauth/example/spring/FusionAuthSpringApplication.java`,
-put this code:
-
-[source,java]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/FusionAuthSpringApplication.java[]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/controllers/auth_controller.rb[]
 ----
 
-Next, the configuration class. In
-`src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java`,
-put this code:
 
-[source,java]
+Now, update the application controller at `app/controllers/application_controller.rb` to have this code. Here you're enforcing authentication for all routes in your application by checking for the session attribute set by the auth controller.
+
+[source,ruby,title="Your application controller"]
 ----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java[]
-----
-
-Finally, create the home and user controllers which back the HTML templates above.
-
-Here’s the home controller, which should live in
-`src/main/java/io/fusionauth/example/spring/HomeController.java`,
-which should contain this code:
-
-[source,java]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/HomeController.java[]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/controllers/application_controller.rb[]
 ----
 
-Here’s the profile controller, which should live in
-`src/main/java/io/fusionauth/example/spring/UserController.java`. It
-should have this code:
+Next, update the home controller at `app/controllers/home_controller.rb` to have this code.
 
-[source,java]
+[source,ruby,title="Your homepage controller"]
 ----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/UserController.java[]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/controllers/home_controller.rb[]
 ----
 
-At the end, your directory tree should look like: 
+Here, you're skipping authentication for this route so that the user has someplace to go if they are unauthenticated.
 
-[source]
+The view is also welcoming, but prompts them to login. Replace `app/views/home/index.html.erb` with this:
+
+[source,ruby,title="Your homepage view"]
 ----
-├── docker-compose.yml
-├── setup-fusionauth
-│   ├── pom.xml
-│   └── src
-│       └── main
-│           └── java
-│               └── io
-│                   └── fusionauth
-│                       └── example
-│                           └── Setup.java
-└── setup-spring
-    ├── pom.xml
-    └── src
-        └── main
-            ├── java
-            │   └── io
-            │       └── fusionauth
-            │           └── example
-            │               └── spring
-            │                   ├── FusionAuthSpringApplication.java
-            │                   ├── HomeController.java
-            │                   ├── UserController.java
-            │                   └── config
-            │                       └── SecurityConfiguration.java
-            └── resources
-                ├── application.properties
-                └── templates
-                    ├── home.html
-                    └── user.html
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/views/home/index.html.erb[]
 ----
 
-Once you’ve created this directory structure, you can start up the Spring application using this command: 
+Finally, update the layout so the user has login or logout buttons on every page. Add the below code just after the `<body>` tag.
+
+[source,ruby,title="Your layout"]
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/views/layouts/application.html.erb[tags=gemfile]
+----
+
+
+Once you’ve created this directory structure, you can start up the {technology} application using this command: 
 
 [source,shell,title="Start the application"]
 ----
-mvn spring-boot:run
+OP_SECRET_KEY=change-this-in-production-to-be-a-real-secret bundle exec rails s
 ----
 
-You can now open up an incognito window and visit http://localhost:8080[the Spring app].
-Log in using the user you added in FusionAuth, and you’ll see a JSON output of your profile on the profile page.
+`OP_SECRET_KEY` is the client secret, which was defined by the <<Configure FusionAuth>> step. You don't want to check that in, so you deliver it as an environment variable.
+
+You can now open up an incognito window and visit http://localhost:3000[the {technology} app].
+Log in using the user you added in FusionAuth, and you’ll see the email of the user next to a logout link.
 
