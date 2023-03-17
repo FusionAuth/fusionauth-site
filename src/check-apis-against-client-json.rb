@@ -20,6 +20,7 @@ IGNORED_FIELD_REGEXPS = [
   /^application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
+  /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onMultiFactorEnable/, # no UX elements for this
   /^tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
   /^user\.uniqueUsername/, # this is a derived, internal field
   /^entity\.parentId/, # not currently documenting until this is further built out
@@ -208,6 +209,11 @@ def downcase(string)
 end
 
 def skip_file(fn) 
+
+  # this is an intermediate identity provider, we don't want to process it
+  if fn.end_with? "io.fusionauth.domain.provider.BaseSAMLv2IdentityProvider"
+    return true
+  end
 
   # this is a super class of user. we don't have an explicit API for it, though
   if fn.end_with? "io.fusionauth.domain.SecureIdentity.json"
