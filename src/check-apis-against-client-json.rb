@@ -211,7 +211,7 @@ end
 def skip_file(fn) 
 
   # this is an intermediate identity provider, we don't want to process it
-  if fn.end_with? "io.fusionauth.domain.provider.BaseSAMLv2IdentityProvider"
+  if fn.end_with? "io.fusionauth.domain.provider.BaseSAMLv2IdentityProvider.json"
     return true
   end
 
