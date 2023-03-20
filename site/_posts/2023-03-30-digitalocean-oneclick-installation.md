@@ -9,6 +9,8 @@ excerpt_separator: "<!--more-->"
 
 In this tutorial, you will install FusionAuth onto a Kubernetes cluster hosted on DigitalOcean. You can install FusionAuth with one click from the DigitalOcean marketplace, but you will need to follow some additional steps in order to host your FusionAuth instance on a publicly accessible IP. 
 
+<!--more-->
+
 ## Prerequisites
 
 In order to follow along with this tutorial, you need to have a DigitalOcean account, which you can sign up for [here](https://www.digitalocean.com/go/developer-brand). You will also need to install the following command line tools:
@@ -33,7 +35,9 @@ You will then be taken to the cluster configuration page. The default values her
 
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-create-cluster.png" alt="Settings configuration for new Kubernetes cluster" class="img-fluid" figure=false %}
 
-FusionAuth may take several minutes to install. Once it does, you can click on its name to access guide, resources, settings and more. Select the "Overview" panel, and click "Get Started" to the second step "Connecting to Kubernetes". There you will you find a command on the "Automated" tab, in the the "Overview" panel with the appropriate value for `<YOUR_CLUSTER_ID>`.
+FusionAuth may take several minutes to install. Once it does, you can click on the cluster name to access guides, resources, settings and more. Select the "Overview" panel, and click "Get Started". Navigate to the second step "Connecting to Kubernetes". There you will you find a command on the "Automated" tab, with the appropriate value for `<YOUR_CLUSTER_ID>`.
+
+{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-connecting-to-kubernetes.png" alt="command line prompt to connect to your Kubernetes cluster" class="img-fluid" figure=false %}
 
 ```sh
 doctl kubernetes cluster kubeconfig save <YOUR_CLUSTER_ID>
@@ -212,54 +216,14 @@ release "fusionauth" uninstalled
 namespace "fusionauth" deleted
 ```
 
-This removes all the FusionAuth, Elasticsearch, and database resources from your Kubernetes cluster, along with the `fusionauth` namespace. However, the Kubernetes cluster itself will still exist. You can delete this cluster from the DigitalOcean admin console. Click on "Kubernetes" in the side bar, then select the cluster you want to delete. Click on the "Actions" dropdown and select "Destroy". Follow the instructions to destroy the cluster.
+This removes all the FusionAuth, Elasticsearch, and database resources from your Kubernetes cluster, along with the `fusionauth` namespace. However, the Kubernetes cluster itself will still exist. You can delete this cluster from the DigitalOcean admin console. Click on "Kubernetes" in the sidebar, then select the cluster you want to delete. Click on the "Actions" dropdown and select "Destroy". Follow the instructions to destroy the cluster.
 
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-destroy-cluster.png" alt="Destroying a cluster from the DigitalOcean admin console" class="img-fluid" figure=false %}
 
-You can reinstall FusionAuth to this cluster by following the [installation instructions](https://fusionauth.io/posts/2023-03-30-digitalocean-oneclick-installation.md#Installation) above and selecting the current cluster instead of a new one.
+If you did not destroy the cluster, you can reinstall FusionAuth to this cluster by following the installation instructions above and selecting the current cluster instead of a new one.
 
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-select-current-cluster.png" alt="Selecting current cluster from the dropdown in the configuration wizard" class="img-fluid" figure=false %}
 
-## What to do if your cluster is destroyed
-
-If you destroy your kubernetes cluster using the "Actions->Destroy" button on your DigitalOcean admin console, without first running the uninstall script in the previous section, you will need to follow some steps to ensure that subsequent installs work properly.
-
-The main problem to solve is that you will need to free up the `fusionauth` namespace, but you need to connect to a Kubernetes cluster to do this. Therefore, you will need to create a new cluster, delete the namespace, and then continue installing as per usual.  
-
-Start by returning to [the marketplace installation page](https://marketplace.digitalocean.com/apps/fusionauth) and click `Install App`. Create your new cluster as normal. FusionAuth will attempt to install, but will ultimately display a general `Installation Failed` error.
-
-{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-installation-failed.png" alt="Installation failed after destroying old cluster" class="img-fluid" figure=false %}
-
-This is because the kubernetes namespace `fusionauth` is still taken up by the previous installation. You need to delete this namespace in order to install FusionAuth again, but since you've already deleted your cluster, the `helm` and `kubectl` commands from the uninstall script above will not be able to connect and execute.  
-
-To fix this, you can set the Kubernetes context to the new cluster that you've just created. To do that, select the "Overview" panel, and click "Get Started" to get to the second step "Connecting to Kubernetes". There you will you find a command on the "Automated" tab, in the the "Overview" panel with the appropriate value for `<YOUR_CLUSTER_ID>`, pointing to the new cluster
-
-```sh
-doctl kubernetes cluster kubeconfig save <YOUR_CLUSTER_ID>
-```
-
-{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-connecting-to-kubernetes.png" alt="command line prompt to connect to your Kubernetes cluster" class="img-fluid" figure=false %}
-
-That command should return the following.
-
-```sh
-Notice: Adding cluster credentials to kubeconfig file found in "/Users/<USERNAME>/.kube/config"
-Notice: Setting current-context to <YOUR_CLUSTER_NAME>
-```
-
-Now that you've set the context to your new cluster, you can execute `kubectl delete` to free up the `fusionauth` namespace.
-
-```sh
-kubectl delete namespace fusionauth
-```
-
-That command should return the following.
-
-```sh
-namespace "fusionauth" deleted
-```
-
-At this point, you can navigate back to the "Marketplace" tab and click "Try again" to continue the installation as normal.
 
 ## Next steps
 
