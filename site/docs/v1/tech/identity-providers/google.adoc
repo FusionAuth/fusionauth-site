@@ -14,6 +14,8 @@ Adding a Login with Google button to FusionAuth is straightforward, and this gui
 * <<Create a Google Cloud Account>>
 * <<Create Google OAuth client credentials>>
 * <<Create a Google Identity Provider>>
+** <<Options>>
+** <<Google One Tap>>
 * <<Building Your Own Integration>>
 * <<Custom Parameters>>
 
@@ -110,23 +112,31 @@ The Google Client Id found in your Google credentials settings in the `Client ID
 [field]#Client secret# [required]#Required#::
 The Google Client Secret found in your Google credentials settings in the `Client secret` field.
 
-[field]#Button text# [required]#Required#::
-The text to be displayed in the button on the login form. This value is defaulted to `Login with Google` but it may be modified to your preference.
-
 [field]#Login Method# [optional]#Optional#::
 User interaction behavior after clicking on the IdP button (`Login with Google`, for instance).
 +
-* `Use redirect for login` - if selected, the user is redirected to a Google login page. Once authenticated, the user is redirected back to FusionAuth.
-If selected, the redirect URL *must* be set to an absolute URL in the Google console for your application. If your hostname is login.piedpiper.com, the redirect URL would be `https://login.piedpiper.com/oauth2/callback/`.
-+
-* `Use popup for login` - if selected, a popup is displayed to the user to login with google. Once authenticated, the window is closed.
+ * `Use redirect for login` - if selected, the user is redirected to a Google login page. Once authenticated, the user is redirected back to FusionAuth.
+If selected, the redirect URL *must* be set to an absolute URL in the Google console for your application. If your hostname is login.piedpiper.com, the redirect URL would be `\https://login.piedpiper.com/oauth2/callback/`.
+ * `Use popup for login` - if selected, a popup is displayed to the user to login with google. Once authenticated, the window is closed.
 If selected, the `Authorized JavaScript origins` URL *must* be allowed for your host name in the Google console for your application. For example, `\https://login.piedpiper.com`.
+ * `Use vendor JavaScript` - if selected, the login method will be determined by the vendor JavaScript library.
 +
 Please note if an `idp_hint` is appended to the OAuth Authorize endpoint, then the interaction behavior will be `redirect`, even if popup interaction is explicitly configured.
 +
+[since]#Since 1.44.0#
+**If you are using a version of FusionAuth older than 1.44.0**, `Use popup for login` won't work after Mar 31 2023. `UseRedirect` will continue to work after this date. Please see https://github.com/FusionAuth/fusionauth-issues/issues/1939[Issue #1939] for more. This https://fusionauth.io/community/forum/topic/2329/upcoming-google-identity-provider-changes[forum post] has more details on an available workaround and upgrade process.
+
+[field]#Button text# [required]#Required#::
+The text to be displayed in the button on the login form. This value is defaulted to `Login with Google` but it may be modified to your preference.
++
+[since]#Since 1.44.0#
+The [field]#Button text# value may only be used when the [field]#Login method# is set to `Use redirect for login`. The button text is managed by Google for all other configurations. Google allows for minor adjustments using their API. You may specify any valid API parameter in the [field]#Button properties# configuration.
 
 [field]#Scope# [optional]#Optional#::
-This optional field defines the scope you're requesting from the user during login. See the Google login documentation for further information. Three common scopes to include are `email` `profile`, and `openid`.
+This optional field defines the scope you're requesting from the user during login. See the Google login documentation for further information. Three common scopes to include are `email`, `profile`, and `openid`.
++
+[since]#Since 1.44.0#
+The [field]#Scope# value may only be used when the [field]#Login method# is set to `Use redirect for login`. The `email`, `profile`, and `openid` scopes will always be requested for all other configurations.
 
 [field]#Linking strategy# [optional]#Optional# [default]#defaults to `Link on email. Create the user if they do not exist`#::
 The linking strategy for the Google FusionAuth Identity Provider. link:/docs/v1/tech/identity-providers/#linking-strategies[See Linking Strategies for more].
@@ -138,6 +148,54 @@ To configure a lambda, navigate to [breadcrumb]#Customizations -> Lambdas#.
 
 [field]#Debug enabled# [optional]#Optional# [default]#defaults to `false`#::
 Enable debug to create an event log to assist you in debugging integration errors.
+
+=== Options
+
+The Options tab can be used to configure the Google identity provider by providing properties for the https://developers.google.com/identity/gsi/web/reference/html-reference[Google Identity Services API].
+
+image::identity-providers/identity-provider-google-add-options.png[Add Google Options,width=1200,role=top-cropped]
+
+==== Form Fields
+
+[.api]
+[field]#API properties# [optional]#Optional# [default]#defaults to **[see description]**# [since]#Available since 1.44.0#::
+Google Identity Services login API configuration in a properties file formatted String. Any attribute from https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_id_g_id_onload[Google's documentation] can be added. Properties can be referenced in templates that support Google login to initialize the API via HTML or JavaScript. The properties specified in this field should not include the `data-` prefix on the property name.
++
+If omitted, this value will default to the following properties:
++
+[source,properties]
+.Default API Configuration Properties
+----
+auto_prompt=true
+auto_select=false
+cancel_on_tap_outside=false
+context=signin
+itp_support=true
+----
+
+[field]#Button properties# [optional]#Optional# [default]#defaults to **[see description]**# [since]#Available since 1.44.0#::
+Google Identity Services button configuration in a properties file formatted String. Any attribute from https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_class_g_id_signin[Google's documentation] can be added. Properties can be referenced in templates that support Google login to render the login button via HTML or JavaScript. The properties specified in this field should not include the `data-` prefix on the property name.
++
+If omitted, this value will default to the following properties:
++
+[source,properties]
+.Default Button Properties
+----
+logo_alignment=left
+shape=rectangular
+size=large
+text=signin_with
+theme=outline
+type=standard
+----
+
+=== Google One Tap
+
+Google One Tap provides registration and authentication with a single user action on supporting applications.
+
+image::identity-providers/login-google-one-tap.png[Add Google Options,width=1200,role=bottom-cropped]
+
+Google One Tap can be enabled in FusionAuth `1.44.0` and later by including `auto_prompt=true` in the [field]#API properties# configuration.
 
 == Building Your Own Integration
 

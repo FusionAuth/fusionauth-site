@@ -2,21 +2,28 @@
 
 https://fusionauth.io
 
-
 The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs? Please report using an issue or submit a pull request.
 
 Thanks!
  - FusionAuth team
 
-
-
 ## Building
 
 If you want to submit a PR or test a change to fix a link, etc it may be helpful for you to build and run locally.
 
-This project is built using jekyll and asciidoc, you'll need to have ruby installed.
+### Building with Docker
 
-### Install
+If you have Docker installed your machine, you can use it to build and serve the site. To make things easier, there's a [`run-docker`](./run-docker) script to build the container image and mount some cache volumes to speed up future processes.
+
+To build the site and serve it locally, execute `./run-docker --serve` to start the Docker container with a local HTTP server available at [localhost:4000](http://localhost:4000). For more information, see [Build and run a local HTTP server](#build-and-run-a-local-http-server).
+
+You can just build the site with no HTTP server by executing `./run-docker`.
+
+### Building on your host machine
+
+This project is built using jekyll and asciidoc. You'll need to have ruby installed.
+
+#### Install
 
 Install these programs:
 
@@ -28,7 +35,7 @@ Install these programs:
 `gem install bundle`
 `bundle install`
 
-#### Build Errors
+##### Build Errors
 On M1 Macs, you may receive an error similar to:
 ```text
 Gem::Ext::BuildError: ERROR: Failed to build gem native extension.
@@ -43,7 +50,7 @@ gem install eventmachine -v '1.2.7' -- --with-ldflags="-Wl,-undefined,dynamic_lo
 bundle install
 ```
 
-### Setup Savant
+#### Setup Savant
 
 We use the Savant build tool. In order to build and run this project, you'll need to first setup Savant.
 

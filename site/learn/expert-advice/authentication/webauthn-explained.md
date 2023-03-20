@@ -275,8 +275,6 @@ This allows the website's server to store the credential and associate it with t
 
 Registration is tied to a specific website. If you use the same authenticator on multiple websites, each website will have its own corresponding key pair.
 
-{% include _image.liquid src="/assets/img/advice/webauthn-explained/keys-per-website.png" alt="Each website has its own keypair." class="img-fluid" figure=false %}
-
 Let's look at the code flow for the registration ceremony. The options are a bit more complicated than they are for the authentication ceremony. 
 
 ```javascript
