@@ -1,7 +1,7 @@
 ---
 layout: advice
 title: "Unlocking Growth: Why a Low Friction User Signup Process is Crucial for Your Business"
-description: What steps do you need to take to ensure your authentication system can scale?
+description: "What is the overall value of a sometimes overlooked piece of the CIAM puzzle: the value of low-friction user signups."
 author: Hannah Sutor
 image: advice/ciam-signup/ciam-signup-header.png
 category: CIAM
