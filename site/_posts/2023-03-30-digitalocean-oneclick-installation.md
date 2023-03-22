@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: Deploying FusionAuth on DigitalOcean using the One-click Installer
+title: Deploying FusionAuth on DigitalOcean using the One-Click Installer
 description: Revised version of the guide from the DigitalOcean Marketplace
 author: Dean Rodman, Bradley Van Aardt
 category: blog
@@ -13,13 +13,13 @@ In this tutorial, you will install FusionAuth onto a Kubernetes cluster hosted o
 
 ## Prerequisites
 
-In order to follow along with this tutorial, you need to have a DigitalOcean account, which you can sign up for [here](https://www.digitalocean.com/go/developer-brand). You will also need to install the following command line tools:
+In order to follow along with this tutorial, you need to have a DigitalOcean account, which you can sign up for [here](https://www.digitalocean.com/go/developer-brand). You will also need to install the following command-line tools:
 
-- [`doctl`](https://docs.digitalocean.com/reference/doctl/how-to/install/), the DigitalOcean command line interface
-- [`kubectl`](https://kubernetes.io/docs/tasks/tools/), the Kubernetes command line interface
+- [`doctl`](https://docs.digitalocean.com/reference/doctl/how-to/install/), the DigitalOcean command line interface.
+- [`kubectl`](https://kubernetes.io/docs/tasks/tools/), the Kubernetes command line interface.
 - [`helm`](https://helm.sh/docs/intro/install/), a helpful third-party tool for managing Kubernetes applications.
 
-Click the links above and follow the instructions for installing, configuring and authenticating each tool for your system.
+Click the links above and follow the instructions for installing, configuring, and authenticating each tool for your system.
 
 ## Installation
 
@@ -27,23 +27,25 @@ You can install FusionAuth on DigitalOcean by clicking the "Install App" button 
 
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-install-app.png" alt="Install FusionAuth from DigitalOcean marketplace" class="img-fluid" figure=false %}
 
-On the following screen, select "Install". By default, this will install FusionAuth on a new Kubernetes cluster, though you can choose an existing cluster from the dropdown if you have one.  
+On the next screen, select "Install". By default, this will install FusionAuth on a new Kubernetes cluster, but you can choose an existing cluster from the dropdown if you have one.  
 
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-select-cluster.png" alt="Select Kubernetes cluster to install FusionAuth on" class="img-fluid" figure=false %}
 
-You will then be taken to the cluster configuration page. The default values here will work. You may want to choose the project to install under, and give a more readable name to the cluster. After that, you can scroll down to the bottom of the page and click "Create Cluster".  Three nodes will be created in order for FusionAuth to work properly: one for the database, one for elasticsearch, and one for the FusionAuth API.
+You will be taken to the cluster configuration page. The default values here will work. You may want to choose the project to install under and give the cluster a more readable name. When you're done, scroll down to the bottom of the page and click "Create Cluster". Three nodes will be created so that FusionAuth works properly: one for the database, one for Elasticsearch, and one for the FusionAuth API.
 
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-create-cluster.png" alt="Settings configuration for new Kubernetes cluster" class="img-fluid" figure=false %}
 
-FusionAuth may take several minutes to install. Once it does, you can click on the cluster name to access guides, resources, settings and more. Select the "Overview" panel, and click "Get Started". Navigate to the second step "Connecting to Kubernetes". There you will you find a command on the "Automated" tab, with the appropriate value for `<YOUR_CLUSTER_ID>`.
+FusionAuth may take several minutes to install. Once installed, click on the cluster name to access guides, resources, settings, and more. Select the "Overview" panel and click "Get Started". Navigate to the second step, "Connecting to Kubernetes". There you will find a command on the "Automated" tab with the appropriate value for `<YOUR_CLUSTER_ID>`.
 
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-connecting-to-kubernetes.png" alt="command line prompt to connect to your Kubernetes cluster" class="img-fluid" figure=false %}
+
+If you have already installed the [DigitalOcean command line tool](https://docs.digitalocean.com/reference/doctl/how-to/install/), run the following command in your terminal:
 
 ```sh
 doctl kubernetes cluster kubeconfig save <YOUR_CLUSTER_ID>
 ```
 
-Running that command in your terminal (assuming you have already installed the [DigitalOcean command line tool](https://docs.digitalocean.com/reference/doctl/how-to/install/)) should return the following.
+This command should return the following:
 
 ```sh
 Notice: Adding cluster credentials to kubeconfig file found in "/Users/<USERNAME>/.kube/config"
@@ -57,7 +59,7 @@ export SERVICE_IP=$(kubectl get svc --namespace fusionauth fusionauth -o jsonpat
 echo http://$SERVICE_IP:9011/
 ```
 
-This command will output URL address to the terminal. Navigate to this URL in your web browser. You will be taken to the FusionAuth Setup Wizard. [Complete these steps](https://fusionauth.io/blog/2019/02/05/using-the-setup-wizard) to start using FusionAuth on your public Kubernetes cluster, provisioned by DigitalOcean.
+This command will output the URL address to the terminal. Navigate to this URL in your web browser. You will be taken to the FusionAuth Setup Wizard. [Complete these steps](https://fusionauth.io/blog/2019/02/05/using-the-setup-wizard) to start using FusionAuth on your public Kubernetes cluster provisioned by DigitalOcean.
 
 ## Monitoring
 
@@ -67,7 +69,7 @@ You can confirm that all three deployments, `db`, `fusionauth`, and `search`, ar
 helm list -n fusionauth
 ```
 
-Which should return something like this:
+This should return something like this:
 
 ```sh
 NAME      	NAMESPACE 	REVISION	UPDATED                                	STATUS  	CHART                	APP VERSION
@@ -76,15 +78,15 @@ fusionauth	fusionauth	1       	2023-03-16 05:35:37.338318231 +0000 UTC	deployed	
 search    	fusionauth	1       	2023-03-16 05:35:33.535086468 +0000 UTC	deployed	elasticsearch-19.5.14	8.6.2    
 ```
 
-You should see all 3 deployments listed as `deployed`.
+You should see all three deployments listed as `deployed`.
 
-You can also check the status of all running pods with the following [`kubectl`](https://kubernetes.io/docs/tasks/tools/) command:
+You can check the status of all running pods with the following [`kubectl`](https://kubernetes.io/docs/tasks/tools/) command:
 
 ```sh
 kubectl get pods -n fusionauth
 ```
 
-Which should return something similar to the following:
+This should return something similar to the following:
 
 ```sh
 NAME                                  READY   STATUS    RESTARTS   AGE
@@ -102,7 +104,7 @@ search-elasticsearch-master-1         1/1     Running   0          5m57s
 
 ## Upgrading FusionAuth
 
-As new versions of FusionAuth are released, you can use this bash script, which utilizes [`helm`](https://helm.sh/docs/intro/install/), to upgrade to the latest version.
+As new versions of FusionAuth are released, you can use this bash script (which uses [`helm`](https://helm.sh/docs/intro/install/)) to upgrade to the latest version:
 
 ```sh
 #!/bin/sh
@@ -125,10 +127,10 @@ STACK="fusionauth"
 CHART="fusionauth/fusionauth"
 NAMESPACE="fusionauth"
 
-# use github hosted master version of values.yml, replace this if you want to use local values
+# Use github-hosted master version of values.yml, replace this if you want to use local values
 VALUES="https://raw.githubusercontent.com/digitalocean/marketplace-kubernetes/master/stacks/fusionauth/values.yml"
 
-# Retrieve current passwords and set them again during upgrade.
+# Retrieve current passwords and set them again during upgrade
 DB_FUSIONAUTH_USER_PASSWORD=$(kubectl -n $NAMESPACE get secrets fusionauth-credentials -o jsonpath='{.data.password}' | base64 -d)
 DB_POSTGRES_USER_PASSWORD=$(kubectl -n $NAMESPACE get secrets fusionauth-credentials -o jsonpath='{.data.rootpassword}' | base64 -d)
 
@@ -139,7 +141,7 @@ helm upgrade "$STACK" "$CHART" \
 --set database.root.password="$DB_POSTGRES_USER_PASSWORD"
 ```
 
-Save the script into a file, `fusionauth-upgrade.sh`. If you're on macOS or Linux, you can make the file executable by running the following command in your terminal:
+Save the script to a file called `fusionauth-upgrade.sh`. If you're on macOS or Linux, you can make the file executable by running the following command in your terminal:
 
 ```sh
 chmod 700 fusionauth-upgrade.sh
@@ -151,7 +153,7 @@ Then execute the script by running:
 ./fusionauth-upgrade.sh
 ```
 
-It should return the following:
+This should return the following:
 
 ```sh
 "stable" has been added to your repositories
@@ -170,6 +172,7 @@ NOTES:
   export SERVICE_IP=$(kubectl get svc --namespace fusionauth fusionauth -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   echo http://$SERVICE_IP:9011
 ```
+
 ## Uninstalling FusionAuth
 
 To uninstall FusionAuth, you can use the following bash script:
@@ -194,7 +197,7 @@ helm repo remove fusionauth
 kubectl delete ns fusionauth
 ```
 
-Save the script into a file, `fusionauth-uninstall.sh`. If you're on macOS or Linux, you can make the file executable by running the following command in your terminal:
+Save the script into a file called `fusionauth-uninstall.sh`. If you're on macOS or Linux, you can make the file executable by running the following command in your terminal:
 
 ```sh
 chmod 700 fusionauth-uninstall.sh
@@ -206,7 +209,7 @@ Then execute the script by running:
 ./fusionauth-uninstall.sh
 ```
 
-It should return the following: 
+This should return the following: 
 
 ```sh
 release "search" uninstalled
@@ -225,6 +228,6 @@ If you did not destroy the cluster, you can reinstall FusionAuth to this cluster
 {% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-select-current-cluster.png" alt="Selecting current cluster from the dropdown in the configuration wizard" class="img-fluid" figure=false %}
 
 
-## Next steps
+## Next Steps
 
 You've now deployed a FusionAuth instance on a public Kubernetes cluster hosted on DigitalOcean. From here, you can [create an application](https://fusionauth.io/docs/v1/tech/core-concepts/applications) and [register users to it](https://fusionauth.io/docs/v1/tech/tutorials/register-user-login-api) to implement a login page. Be sure to check out the [guides](https://fusionauth.io/docs/v1/tech/guides/) for more information about how to implement FusionAuth's many features into your application.
