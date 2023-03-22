@@ -13,9 +13,15 @@ The React SDK from FusionAuth enables developers to implement the login, logout,
 
 <!--more-->
 
-To show the React SDK in action, we will be using the FusionDesk application. FusionDesk is a simple help desk example application that allows users to create tickets and view them. The application is built using React and Node.js. It uses a server backend built using Ts.Ed, Node.js, and Typescript. The FusionDesk application is available on GitHub.
+To show the React SDK in action, we will be using the FusionDesk application. FusionDesk is a simple help desk example application that allows users to create tickets and view them. The application is built using React and Node.js. It uses a server backend built using Ts.Ed, Node.js, and Typescript.
 
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-tickets.png" alt="FusionDesk showing the main list of tickets" class="img-fluid" figure=false %}
+
+To get started with your own React application, install the FusionAuth React SDK and follow the [FusionAuth React SDK](/docs/v1/tech/client-libraries/react-sdk) documentation.
+
+```bash
+npm install @fusionauth/react-sdk
+```
 
 ### Prerequisites
 
@@ -32,7 +38,7 @@ content=
 
 {% include _callout-important.liquid
 content=
-"This article was written using an early look at the FusionAuth Hosted OAuth Service Provider Endpoints. The feature may be not yet available in the latest version of FusionAuth."
+"This article was written using an early look at the FusionAuth Hosted OAuth Service Provider Endpoints. The feature may be not yet available in the latest version of FusionAuth. You can track progress on the issue on [Github fusionauth-issues#1943](https://github.com/FusionAuth/fusionauth-issues/issues/1943)"
 %}
 
 ### Clone the Repository
@@ -43,7 +49,7 @@ To begin, clone the demo application from GitHub using the following command:
 git clone https://github.com/FusionAuth/fusionauth-react-example-app-placeholder-replaceme
 ```
 
-### Set up the FusionAuth application
+### Set up the FusionAuth Application
 
 To set up the FusionAuth application, follow the steps below:
 
@@ -79,14 +85,14 @@ This will log you in as an agent. You can also log in as a user by using the fol
 - Email: `richard@example.com`
 - Password: `password`
 
-### Set up the Fusionauth Instance Manually
+### Set up the FusionAuth Instance manually
 
-If you do not want to use Docker, you can set up the FusionAuth instance manually. To do so, follow the steps detailed in the [FusionAuth documentation](https://fusionauth.io/docs/v1/tech/installation-guide/fusionauth-app) and the [README.md](https://github.com/FusionAuth/fusionauth-react-example-app-placeholder-replaceme/blob/main/README.md) of the example application.
+If you do not want to use Docker, you can set up the FusionAuth instance manually. To do so, follow the steps detailed in the [FusionAuth documentation](/docs/v1/tech/installation-guide/fusionauth-app) and the [README.md](https://github.com/FusionAuth/fusionauth-react-example-app-placeholder-replaceme/blob/main/README.md) of the example application.
 
 ## Using Hosted OAuth Service Provider Endpoints
 
 Authentication is hard. We want to make it easy.
-That is why we have added the necessary endpoints for the OAuth 2.0 login flow into the FusionAuth API. This means that you can use FusionAuth to authenticate users. This is a great way to get started with FusionAuth and to use it as a drop-in replacement for your existing OAuth 2.0 provider. So you can concentrate on providing the best experience for your users.
+That is why we have added the necessary endpoints for the OAuth 2.0 login flow into the FusionAuth API. This means that you can use FusionAuth to authenticate users without setting up a separate back end to handle the token exchange. This is a great way to get started with FusionAuth and to use it as a drop-in replacement for your existing OAuth 2.0 provider. So you can concentrate on providing the best experience for your users.
 
 {% include _callout-important.liquid
 content=
@@ -95,7 +101,7 @@ content=
 
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-fusionauth-login.png" alt="Login Screen of FusionAuth with the styling of FusionDesk" class="img-fluid" figure=false %}
 
-As you can see - if you inspect the backend of the example application - we do not provide any OAuth 2.0 endpoints. Instead, we use the FusionAuth API to authenticate users.
+As you can see - if you inspect the backend of the example application - we do not provide any OAuth 2.0 endpoints. Instead, we use FusionAuth provided functionality to authenticate users.
 
 When the user accesses the backend, we validate the `access_token` cookie. If the cookie is valid, we will return the tickets. If the cookie is not valid, we return a 401 error.
 
@@ -108,13 +114,13 @@ content=
 
 We also use the FusionAuth API to retrieve user information for the creator of a ticket. This is done in the `TicketController.ts` file using the `retrieveUser` method of the FusionAuth API client for typescript.
 
-### Theming the Login / Register View in Fusionauth
+### Theming the Login / Register View in FusionAuth
 
-The login / register view in FusionAuth can be themed using the FusionAuth theme editor. You can find more information about the theme editor in the [FusionAuth documentation](https://fusionauth.io/docs/v1/tech/themes/).
+The login / register view in FusionAuth can be themed using the FusionAuth theme editor. You can find more information about the theme editor in the [FusionAuth documentation](/docs/v1/tech/themes/).
 
 For this example application, we integrate Tailwind CSS and DaisyUI into the theme by automatically generating the css stylesheet based on the FusionAuth theme templates.
 
-## Benefits SDK
+## Benefits of the React SDK
 
 The React SDK enables developers to implement the login, logout, and registration flows in a React application.
 
@@ -152,7 +158,7 @@ content=
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-login.png" alt="Login / Register Prompt if the user is not authenticated" class="img-fluid" figure=false %}
 
 The login page allows the user to login or register using the FusionAuth login / register flow. The login page is implemented in the `LoginPage.tsx` file and displays the `login` and `register` buttons.
-We are not using the pre-built button components from the React SDK. Instead, we are using the `useFusionAuth` hook to get the `login` and `register` methods from the `FusionAuthContext`. This allows us to customize the login / register button.
+To use the button styling provided by DaisyUI, we are not using the pre-built buttons from the React SDK. Instead, we are using the `useFusionAuth` hook to get the `login` and `register` methods from the `FusionAuthContext`.
 
 ```tsx
   const {isAuthenticated, isLoading, login, register} = useFusionAuth();
@@ -181,7 +187,7 @@ We also embed the user information in the backend response. This allows us to di
 </div>
 ```
 
-### Ticket Page
+### Ticket Details Page
 
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-ticket.png" alt="Ticket details" class="img-fluid" figure=false %}
 
@@ -239,9 +245,3 @@ The profile page displays the user information. The profile page is implemented 
 ## Conclusion
 
 In this article, we have shown how to use the FusionAuth React SDK in a React application. We have also shown how to use the FusionAuth OAuth 2.0 login flow in a React application and what the benefits are.
-
-To get started with your own React application, install the FusionAuth React SDK and follow the [FusionAuth React SDK](https://fusionauth.io/docs/v1/tech/client-libraries/react-sdk) documentation.
-
-```bash
-npm install @fusionauth/react-sdk
-```
