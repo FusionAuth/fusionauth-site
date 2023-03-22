@@ -38,7 +38,7 @@ content=
 
 {% include _callout-important.liquid
 content=
-"This article was written using an early look at the FusionAuth Hosted OAuth Service Provider Endpoints. The feature may be not yet available in the latest version of FusionAuth. You can track progress on the issue on [Github fusionauth-issues#1943](https://github.com/FusionAuth/fusionauth-issues/issues/1943)"
+"This article was written using an early look at the FusionAuth Hosted OAuth Service Provider Endpoints. The feature may be not yet available in the latest version of FusionAuth. You can track the progress at [Github fusionauth-issues#1943](https://github.com/FusionAuth/fusionauth-issues/issues/1943)"
 %}
 
 ### Clone the Repository
@@ -46,7 +46,7 @@ content=
 To begin, clone the demo application from GitHub using the following command:
 
 ```bash
-git clone https://github.com/FusionAuth/fusionauth-react-example-app-placeholder-replaceme
+git clone https://github.com/sonderformat-llc/fusionauth-example-react-fusiondesk
 ```
 
 ### Set up the FusionAuth Application
@@ -54,7 +54,7 @@ git clone https://github.com/FusionAuth/fusionauth-react-example-app-placeholder
 To set up the FusionAuth application, follow the steps below:
 
 ```bash
-cd fusionauth-react-example-app-placeholder-replaceme
+cd fusionauth-example-react-fusiondesk
 docker compose up -d
 # Wait until FusionAuth is set up and available at http://localhost:9011
 cd server && cp example.env .env && npm install && npm run seed && cd ..
@@ -87,7 +87,7 @@ This will log you in as an agent. You can also log in as a user by using the fol
 
 ### Set up the FusionAuth Instance manually
 
-If you do not want to use Docker, you can set up the FusionAuth instance manually. To do so, follow the steps detailed in the [FusionAuth documentation](/docs/v1/tech/installation-guide/fusionauth-app) and the [README.md](https://github.com/FusionAuth/fusionauth-react-example-app-placeholder-replaceme/blob/main/README.md) of the example application.
+If you do not want to use Docker, you can set up the FusionAuth instance manually. To do so, follow the steps detailed in the [FusionAuth documentation](/docs/v1/tech/installation-guide/fusionauth-app) and the [README.md](https://github.com/sonderformat-llc/fusionauth-example-react-fusiondesk/blob/main/README.md) of the example application.
 
 ## Using Hosted OAuth Service Provider Endpoints
 
@@ -103,16 +103,28 @@ content=
 
 As you can see - if you inspect the backend of the example application - we do not provide any OAuth 2.0 endpoints. Instead, we use FusionAuth provided functionality to authenticate users.
 
-When the user accesses the backend, we validate the `access_token` cookie. If the cookie is valid, we will return the tickets. If the cookie is not valid, we return a 401 error.
+After the user has logged in to FusionAuth, the `access_token` is stored in a cookie. This cookie is then sent with every request to the backend, where we validate the token in a middleware. If the token is valid, we allow the request to continue. If the token is invalid, we return a `401` status code.
 
-See `server/src/middlewares/fusion-auth.middleware.ts` for the implementation.
-
-{% include _callout-note.liquid
-content=
-"Currently every request validates the `access_token` with FusionAuth using the `/oauth2/introspect` endpoint. This is not the most efficient way to validate the token. Depending on the security requirements of your application, you might want to cache this information or validate the `access_token` directly without using the FusionAuth API."
-%}
+```typescript
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/middlewares/fusion-auth.middleware.ts' %}
+```
 
 We also use the FusionAuth API to retrieve user information for the creator of a ticket. This is done in the `TicketController.ts` file using the `retrieveUser` method of the FusionAuth API client for typescript.
+
+```typescript
+const tickets = await this.ticketRepository.find({where, order: {id: 'DESC'}});
+
+// Retrieve uses from FusionAuth
+const creators = new Map<string, any>();
+const client = new FusionAuthClient(this.apiKey, this.baseUrl);
+
+for await (const ticket of tickets) {
+    if (!creators.has(ticket.creator)) {
+        const user = await client.retrieveUser(ticket.creator);
+        creators.set(ticket.creator, user.response.user);
+    }
+}
+```
 
 ### Theming the Login / Register View in FusionAuth
 
@@ -129,18 +141,16 @@ With `RequireAuth` you can wrap a component and require the user to be authentic
 
 `RequireAuth` is used in the `LoggedInMenu` component, which is used to display the user information, profile, and logout button if the user is authenticated.
 
+```tsx
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/components/LoggedInMenu.tsx' %}
+```
+
 With the `FusionAuthConfig` you can configure the FusionAuth instance that is used by the React SDK. If you are using a different OAuth 2.0 backend, you will most likely have to configure the route props.
 
 We are using the React Router v6 in the example application. To protect routes, we are using a custom `ProtectedRoutes` component. This component uses the `useFusionAuth` hook to check if the user is authenticated. If the user is authenticated, the component renders the `Outlet` component. If the user is not authenticated, the component redirects the user to the `/` route.
 
 ```tsx
-export const ProtectedRoutes: FC = () => {
-  const {isLoading, isAuthenticated} = useFusionAuth();
-
-  if (isLoading) return null;
-
-  return (isAuthenticated ? <Outlet/> : <Navigate to={'/'} replace={true}/>);
-};
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/components/ProtectedRoutes.tsx' %}
 ```
 
 {% include _callout-note.liquid
@@ -148,28 +158,15 @@ content=
 "For more information about the React SDK, see the [FusionAuth React SDK](/docs/v1/tech/client-libraries/react-sdk) documentation."
 %}
 
-{% include _callout-note.liquid
-content=
-"Any code snippets in this article are excerpts from the example application. You can find the full source code on GitHub."
-%}
-
 ### Login Page
 
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-login.png" alt="Login / Register Prompt if the user is not authenticated" class="img-fluid" figure=false %}
 
 The login page allows the user to login or register using the FusionAuth login / register flow. The login page is implemented in the `LoginPage.tsx` file and displays the `login` and `register` buttons.
-To use the button styling provided by DaisyUI, we are not using the pre-built buttons from the React SDK. Instead, we are using the `useFusionAuth` hook to get the `login` and `register` methods from the `FusionAuthContext`.
+To use the button styling provided by DaisyUI instead of the one provided by FusionAuth, we are not using the pre-built buttons from the React SDK. Instead, we are using the `useFusionAuth` hook to get the `login` and `register` methods from the `FusionAuthContext`.
 
 ```tsx
-  const {isAuthenticated, isLoading, login, register} = useFusionAuth();
-
-  return (
-    <div className="flex flex-col w-full border-opacity-50">
-      <button onClick={() => login()} className="btn btn-primary">Login</button>
-      <div className="divider">OR</div>
-      <button onClick={() => register()} className="btn btn-primary">Register Now</button>
-    </div>
-  )
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/pages/LoginPage.tsx' %}
 ```
 
 ### Tickets Page
@@ -180,11 +177,50 @@ The tickets page displays the tickets of the user. The tickets are retrieved fro
 
 We also embed the user information in the backend response. This allows us to display the creator information of the ticket (full name, picture).
 
+Backend `GET /` endpoint:
+
+```typescript
+@Get('/')
+async findAll(@Locals() locals: { user: any }): Promise<(Partial<TicketEntity> & { _creator: any }) []> {
+    const where: FindOptionsWhere<TicketEntity> = {};
+    if (!locals.user?.roles?.includes('agent')) {
+        where['creator'] = locals.user.sub;
+    }
+
+    // Get all tickets
+    const tickets = await this.ticketRepository.find({where, order: {id: 'DESC'}});
+
+    // Retrieve uses from FusionAuth
+    const creators = new Map<string, any>();
+    const client = new FusionAuthClient(this.apiKey, this.baseUrl);
+
+    for await (const ticket of tickets) {
+        if (!creators.has(ticket.creator)) {
+            const user = await client.retrieveUser(ticket.creator);
+            creators.set(ticket.creator, user.response.user);
+        }
+    }
+
+    // Return tickets with creator data embedded
+    return tickets
+        .map(ticket => {
+            return {
+                id: ticket.id,
+                title: ticket.title,
+                creator: ticket.creator,
+                status: ticket.status,
+                created: ticket.created,
+                updated: ticket.updated,
+                _creator: creators.get(ticket.creator)
+            };
+        });
+}
+```
+
+Frontend `TicketsPage.tsx`:
+
 ```tsx
-<div className="flex items-center space-x-3">
-  <Avatar name={ticket._creator.firstName + ' ' + ticket._creator.lastName} url={ticket._creator.imageUrl}/>
-  <div>{ticket._creator.firstName} {ticket._creator.lastName}</div>
-</div>
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/pages/TicketsPage.tsx' %}
 ```
 
 ### Ticket Details Page
@@ -204,6 +240,60 @@ The creator of the ticket then has the option to either close or reopen the tick
 
 After the ticket is closed, it cannot be edited anymore.
 
+Backend `GET :id`:
+
+```typescript
+@Get('/:id')
+find(@PathParams("id") @Integer() id: number): Promise<TicketEntity> {
+    return this.ticketRepository.findOneByOrFail({id});
+}
+```
+
+Backend `POST /`:
+
+```typescript
+@Post('/')
+create(@BodyParams() ticket: DeepPartial<TicketEntity>, @Locals() locals: { user: any }): Promise<TicketEntity> {
+    const ticketEntity = this.ticketRepository.create();
+    this.ticketRepository.merge(ticketEntity, {
+        title: ticket.title,
+        description: ticket.description,
+    });
+    ticketEntity.creator = locals.user.sub;
+    return this.ticketRepository.save(ticketEntity);
+}
+```
+
+Backend `PATCH /:id`:
+
+```typescript
+@Patch('/:id')
+async update(@PathParams("id") @Integer() id: number, @BodyParams() ticketInput: DeepPartial<TicketEntity>, @Locals() locals: { user: any }): Promise<TicketEntity> {
+    let filteredTicketInput: DeepPartial<TicketEntity> = {
+        title: ticketInput.title,
+        description: ticketInput.description,
+        status: ticketInput.status,
+    };
+    if (locals.user.roles.includes('agent')) {
+        filteredTicketInput = {
+            ...filteredTicketInput,
+            solution: ticketInput.solution,
+        };
+    } else if (ticketInput.status !== TicketStatus.OPEN && ticketInput.status !== TicketStatus.CLOSED)
+        throw new Error('You are not allowed to change the status of the ticket');
+
+    const ticket = await this.ticketRepository.findOneByOrFail({id});
+    this.ticketRepository.merge(ticket, filteredTicketInput);
+    return this.ticketRepository.save(ticket);
+}
+```
+
+Frontend `TicketPage.tsx`:
+
+```tsx
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/pages/TicketPage.tsx' %}
+```
+
 ### Profile Page
 
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-profile.png" alt="Profile screen with information about the logged in user" class="img-fluid" figure=false %}
@@ -211,35 +301,7 @@ After the ticket is closed, it cannot be edited anymore.
 The profile page displays the user information. The profile page is implemented in the `ProfilePage.tsx` file and displays the information of the FusionAuth `user`.
 
 ```tsx
-  const {user} = useFusionAuth();
-
-  return (
-    { user.picture ?(
-      <figure><img src={user.picture} className="w-96 h-96" alt="Avatar"/></figure>
-    ) : (
-      <figure className="bg-neutral-focus text-neutral-content w-96 h-96">
-        <span className="text-8xl">{initials(user.given_name + ' ' + user.family_name)}</span>
-      </figure>
-    )}
-    <div className="card-body">
-      <h2 className="card-title">{user.given_name} {user.family_name}</h2>
-    
-      <table>
-        <tbody>
-        <tr>
-          <td><FontAwesomeIcon icon={faAt}/></td>
-          <td>{user.email}</td>
-        </tr>
-        {user.phone_number &&
-          <tr>
-            <td><FontAwesomeIcon icon={faPhone}/></td>
-            <td>{user.phone_number}</td>
-          </tr>
-        }
-        </tbody>
-      </table>
-    </div>
-  )
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/pages/ProfilePage.tsx' %}
 ```
 
 ## Conclusion
