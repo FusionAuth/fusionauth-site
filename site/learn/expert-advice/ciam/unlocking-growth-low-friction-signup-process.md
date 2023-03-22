@@ -56,7 +56,7 @@ Also important is building accessibility into your signup process. Differences i
 Webauthn is an exciting development in the authentication world that adds yet another option for login flexibility. It is a standard that enables users to authenticate themselves using biometrics, such as facial recognition or fingerprint scanning, or a physical security key. The best part about it? It can be used to completely replace a password. Now that Apple, Google, and Microsoft have all added WebAuthn support into their products, passwordless authentication, which once seemed futuristic, is becoming a reality.
 
 
-### Lack of Transparency
+### Lack of transparency
 
 Privacy has been front and center in technology headlines lately. The era of reckless data collection and use is slowly fading. Customers are more cognizant of the information being asked of them:is it _really_ required? Why? Will my information be sold?
 
@@ -65,7 +65,7 @@ Building trust in the sign up process means being transparent about the data you
 When signing up, users should have access to a clearly worded privacy policy to let them know what will happen with their data. Companies that are transparent with their users are differentiating themselves. By having a “plain English” version of your privacy policy, or better yet, by providing your users granular control over _how_ their data is used, and which attributes of it are used, you are showing that you respect your customer. 
 
 
-### Poor Security Flows
+### Poor security flows
 
 It can’t be overstated how important security is as a part of your sign up flow. It’s important to put security measures into place when the user signs up and to make them non-negotiable or, at the very least, opt in by default.
 
@@ -86,7 +86,7 @@ Some examples of guidelines that are now passé are:
    - Masking password inputs. This does not increase security since very rarely is a human standing behind someone when they create a password. It makes it difficult to see if you entered the password correctly, and is no longer recommended. 
    - Security Questions. The answers to security questions are either secure or easy to remember, but almost never both. NIST recommends against using security questions as a tool. 
 
-### No Feedback
+### No feedback
 
 When things go wrong during sign up, make it easy for your user to know what went wrong and how to fix it. They should know exactly where they are in the onboarding flow - do they need to verify their email address or phone number before all of the features can be used? Tell them - and make it easy peasy to re-start the verification process if needed.
 
@@ -96,7 +96,7 @@ When things go wrong during sign up, make it easy for your user to know what wen
 A user’s journey in your product lives on long after signup is complete. Here are some ways you can ensure low-friction account self-service.
 
 
-### Self-Service profile editing
+### Self-service profile editing
 
 Things change, and no one knows those changes better than your users. Give them the autonomy to make profile changes on their own - especially for things like e-mail address changes, adding security features to login. This also helps you: it eliminates the support burden if users can solve it themselves, and it also allows you to act on the most up-to-date profile information.
 
@@ -119,7 +119,7 @@ Alerts provide a lot of value, both in security and ease of use. Use in-applicat
 These alerts can be useful when triggered further down the authentication flow. Consider that a user may have a username/password pair and then be prompted for a second factor. SMS and TOTP can be brute-forced. If the hacker gets past the username/password pair, alerting on incorrect SMS or TOTP entries may prevent a bad actor from entering if the user realizes in time. 
 
 
-### Account Recovery
+### Account recovery
 
 When it comes to account recovery, everyone wins with self-service. When users can recover their accounts themselves, it saves you costs in a lessened administrative burden. It also saves the user time: they don’t have to rely on a human on the other end. Who wants to wait on hold for a customer service rep unless required?
 
