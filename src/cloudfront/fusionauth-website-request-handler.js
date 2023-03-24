@@ -3,6 +3,7 @@ var indexPages = {
   '/blog/': true,
   '/community/forum/': true,
   '/docs/': true,
+  '/docs/quickstarts/': true,
   '/docs/v1/tech/': true,
   '/docs/v1/tech/account-management/': true,
   '/docs/v1/tech/admin-guide/': true,
