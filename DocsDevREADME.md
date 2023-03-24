@@ -417,3 +417,6 @@ Prior to requesting review on a PR, please complete the following checklist.
 1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
    - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
    - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
+2. If you are referring to a navigatable element, use `[breadcrumb]#Tenants#` or `[breadcrumb]#Tenants -> Your Tenant#`. In other words, use it even for singular elements.
+3. If you are referring to a field the user can fill out, use `[field]#Authorized Redirect URLs#`.
+4. If you are referring to any other UI element, such as a submit button or read-only name, use `[uielement]#Submit#` or (on the application view screen) `[uielement]#Introspect endpoint#`.
