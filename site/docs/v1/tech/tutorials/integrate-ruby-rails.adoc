@@ -50,10 +50,9 @@ First, make a directory:
 mkdir setup-fusionauth && cd setup-fusionauth
 ----
 
-If you want, you can http://localhost:9011[login to your instance] and
-examine the new application configuration the script created for you.
+If you want, you can http://localhost:9011[login to your instance] and examine the new application configuration the script created for you.
 
-Now, cut and paste the following file into `pom.xml`.
+Now, cut and paste the following file into `Gemfile`.
 
 [source,ruby,title="Your FusionAuth Gemfile"]
 ----
@@ -74,19 +73,18 @@ Then copy and paste the following code into the `setup.rb` file.
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/ruby/setup.rb[]
 ----
 
-Then, you can run the setup class. This will create FusionAuth
-configuration for your :technology: application.
+Then, you can run the setup class. This will create the FusionAuth configuration for your {technology} application.
 
 [source,shell]
 ----
 ruby setup.rb
 ----
 
-== Create Your :technology: Application
+== Create Your {technology} Application
 
-Now you are going to create a :technology: application. While this section uses a
-simple :technology: application, you can use the same configuration to
-integrate your :technology: application with FusionAuth.
+Now you are going to create a {technology} application. While this section uses a
+simple {technology} application, you can use the same configuration to
+integrate your {technology} application with FusionAuth.
 
 First, make a directory:
 
@@ -116,14 +114,19 @@ Then, install them.
 bundle install
 ----
 
-Next, update your `config/environments/development.rb` file with FusionAuth OIDC configuration information. You'll have to add similar settings when deploying to prod or other environments.
+Next, update your `config/environments/development.rb` file with FusionAuth OIDC configuration information.
 
 [source,ruby]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/config/environments/development.rb[tags=oidcConfig]
 ----
 
-Then, create a file called `omniauth.rb` in the `config/initializers` directory. Add this to the file.
+[NOTE.note]
+====
+You'll have to add similar configuration to the relevant environment files when deploying to prod or other environments.
+====
+
+Create a file called `omniauth.rb` in the `config/initializers` directory. Add the below to the file.
 
 [source,ruby,title="Your omniauth.rb initializer"]
 ----
@@ -142,13 +145,13 @@ rails generate scaffold todos
 rails db:migrate
 ----
 
-These controllers have the following purpose:
+These controllers have the following purposes:
 
-* `auth` will handle the integration with omniauth
-* `home` will be an unprotected home page with a login button
-* `todos` is a set of protected CRUD routes; in a real world application these would be built out further.
+* `auth` is for omniauth integration
+* `home` is an unprotected home page with a login button
+* `todos` is a set of protected CRUD pages; in a real world application these would be built out further.
 
-Let's update the `config/routes.rb` file. Here's what that should look like:
+First, let's update the `config/routes.rb` file. Here's what that should look like:
 
 [source,ruby,title="Your routes"]
 ----
@@ -160,31 +163,32 @@ Nothing too special here:
 * `todos` is the CRUD resource.
 * `login` points you to the home page, which is available to unauthenticated users. This is also the default page.
 * `logout` is tied to the auth controller's logout method.
-* `auth/:provider/callback` is the omniauth callback method, which completes the OIDC flow.
+* `auth/:provider/callback` is the omniauth callback method, which completes the OIDC grant.
 
-Now, update the auth controller at `app/controllers/auth_controller.rb` to have this code, which fulfills some of the routes above. This lets us have a nice `logout` method and handle the callback from omniauth, setting a `session` attribute with user data.
+Now, update the auth controller at `app/controllers/auth_controller.rb` to look like this, which fulfills some of the routes above.
+
+This lets us have a nice `logout` method and also handle the callback from omniauth. The latter sets a `session` attribute with user data, which can be used by views later.
 
 [source,ruby,title="Your auth controller"]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/controllers/auth_controller.rb[]
 ----
 
-
-Now, update the application controller at `app/controllers/application_controller.rb` to have this code. Here you're enforcing authentication for all routes in your application by checking for the session attribute set by the auth controller.
+Now, update the application controller at `app/controllers/application_controller.rb`. You're enforcing authentication for all routes in your application by checking for the session attribute set by the auth controller after a successful login.
 
 [source,ruby,title="Your application controller"]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/controllers/application_controller.rb[]
 ----
 
-Next, update the home controller at `app/controllers/home_controller.rb` to have this code.
+Now, let's build out the home page. Update the home controller at `app/controllers/home_controller.rb` to look like this:
 
 [source,ruby,title="Your homepage controller"]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/controllers/home_controller.rb[]
 ----
 
-Here, you're skipping authentication for this route so that the user has someplace to go if they are unauthenticated.
+You're skipping authentication for this route. This is so that a user has someplace to go if they are unauthenticated.
 
 The view is also welcoming, but prompts them to login. Replace `app/views/home/index.html.erb` with this:
 
@@ -195,21 +199,20 @@ include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-ra
 
 Finally, update the layout so the user has login or logout buttons on every page. Add the below code just after the `<body>` tag.
 
-[source,ruby,title="Your layout"]
+[source,ruby,title="An excerpt of changes to your layout"]
 ----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/views/layouts/application.html.erb[tags=gemfile]
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-rails-omniauth-guide/main/app/views/layouts/application.html.erb[tags=loginLogout]
 ----
 
-
-Once you’ve created this directory structure, you can start up the {technology} application using this command: 
+Once you’ve created these files, start up the {technology} application using this command: 
 
 [source,shell,title="Start the application"]
 ----
 OP_SECRET_KEY=change-this-in-production-to-be-a-real-secret bundle exec rails s
 ----
 
-`OP_SECRET_KEY` is the client secret, which was defined by the <<Configure FusionAuth>> step. You don't want to check that in, so you deliver it as an environment variable.
+`OP_SECRET_KEY` is the client secret, which was defined by the <<Configure FusionAuth>> step. You don't want to commit secrets like this to version contro, so use an environment variable.
 
 You can now open up an incognito window and visit http://localhost:3000[the {technology} app].
-Log in using the user you added in FusionAuth, and you’ll see the email of the user next to a logout link.
+Log in with the user account you created when setting up FusionAuth, and you’ll see the email of the user next to a logout link.
 
