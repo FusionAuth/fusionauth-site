@@ -6,7 +6,7 @@ image: advice/modern-guide-oauth/expert-advice-the-modern-guide-to-oauth-header-
 author: Brian Pontarelli and Dan Moore
 category: OAuth
 date: 2021-03-26 
-dateModified: 2021-03-26
+dateModified: 2023-03-24
 ---
 
 I know what you are thinking, is this really another guide to OAuth 2.0? 
@@ -302,7 +302,7 @@ A few terms we need to define before we dive into this grant.
 
 In this section we will also cover PKCE (Proof Key for Code Exchange - pronounced Pixy). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can't be stolen or reused. The application generates a secret key (called the code verifier) and hashes it using SHA-256. This hash is one-way, so it can't be reversed by an attacker. The application then sends the hash to the OAuth server, which stores it. Later, when the application is getting tokens from the OAuth server, the application will send the server the secret key and the OAuth server will verify that the hash of the provided secret key matches the previously provided value. This is a good protection against attackers that can intercept the authorization code, but don't have the secret key.
 
-**NOTE:** PKCE is not required for standard web browser uses of OAuth with the Authorization Code grant when the application backend is passing both the `client_id` and `client_secret` to the Token endpoint. We will cover this in more detail below, but depending on your implementation, you might be able to safely skip implementing PKCE. I recommend always using it but it isn't always required.
+**NOTE:** PKCE is not required for the Authorization Code grant when the application backend is passing both the `client_id` and `client_secret` to the Token endpoint. PKCE is orthogonal to client authentication and offers a dynamic secret. Using PKCE prevents CSRF and authorization code injection attacks. We will cover this in more detail below, but depending on your implementation, you might be able to safely skip implementing PKCE. I recommend always using it but it isn't always required.
 
 Let's take a look at how you implement this grant using a prebuilt OAuth server like FusionAuth.
 
