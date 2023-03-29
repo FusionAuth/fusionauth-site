@@ -90,7 +90,7 @@ include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-
 ----
 
 Then copy and paste the following code into the `setup.py` file.
-
+// I edited the redirect and logout urls to match the Flask defaults, so I used a source block instead of a link.
 [source,python]
 ----
 from fusionauth.fusionauth_client import FusionAuthClient
@@ -171,7 +171,10 @@ if not client_response.was_successful():
   sys.exit("couldn't register user "+ str(client_response.error_response))
 ----
 
-Then, you can run the setup script. You'll use `venv` to keep your workspace clean. This will create FusionAuth
+//not sure if I should go into more detail here about the specific errors I encountered when running the script on https://fusionauth.ritza.co. Might be helpful, but seems slightly out-of-scope.
+Then, you can run the setup script. Please note that this setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than Default. In order to follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. Refer to the https://fusionauth.io/docs/v1/tech/client-libraries/python[python client library] documentation for more information.
+
+You'll use `venv` to keep your workspace clean. This will create FusionAuth
 configuration for your {technology} application.
 
 [source,shell]
@@ -186,6 +189,14 @@ Now run the setup script:
 [source,shell]
 ----
 fusionauth_api_key=<your API key> python setup.py
+----
+
+If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
+
+[source,shell]
+----
+$env:fusionauth_api_key_1='C8yT_WM8SQIpvxGkh4m-8-eaIe81Qd4XNNyLaac-PCFwqzCO-dfKvl8Y'
+python setup.py
 ----
 
 This configures FusionAuth for your {technology} application.
@@ -330,6 +341,69 @@ if __name__ == "__main__":
 ----
 
 With that, the server is finished.
+
+The full `server.py` file contents are as follows.
+[source,python]
+----
+import json
+from os import environ as env
+from urllib.parse import quote_plus, urlencode
+
+from authlib.integrations.flask_client import OAuth
+from dotenv import find_dotenv, load_dotenv
+from flask import Flask, redirect, render_template, session, url_for
+
+ENV_FILE = find_dotenv()
+if ENV_FILE:
+    load_dotenv(ENV_FILE)
+
+app = Flask(__name__)
+app.secret_key = env.get("APP_SECRET_KEY")
+
+oauth = OAuth(app)
+
+oauth.register(
+    "FusionAuth",
+    client_id=env.get("CLIENT_ID"),
+    client_secret=env.get("CLIENT_SECRET"),
+    client_kwargs={
+        "scope": "openid profile email",
+        'code_challenge_method': 'S256' # This enables PKCE
+    },
+    server_metadata_url=f'{env.get("ISSUER")}/.well-known/openid-configuration'
+)
+
+@app.route("/login")
+def login():
+    return oauth.FusionAuth.authorize_redirect(
+        redirect_uri=url_for("callback", _external=True)
+    )
+
+@app.route("/callback", methods=["GET", "POST"])
+def callback():
+    token = oauth.FusionAuth.authorize_access_token()
+    session["user"] = token
+    return redirect("/")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+@app.route("/")
+def home():
+    logout = env.get("ISSUER") + "/oauth2/logout?" + urlencode({"client_id": env.get("CLIENT_ID")},quote_via=quote_plus)
+
+    return render_template(
+        "home.html",
+        session=session.get('user'),
+        profile=json.dumps(session.get('user'), indent=2),
+        logoutUrl=logout)
+    
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=env.get("PORT", 3000))
+----
+
 Now create a new folder called `templates` and navigate into it
 
 [source,shell]
@@ -364,14 +438,38 @@ Add a new file called `home.html` and insert the following into it.
 
 == Testing
 
-Navigate back to the parent directory
+Once you have completed the steps above, you should have a folder that is structured as follows.
 
-[source,shell]
+[source,txt]
 ----
-cd ..
++integrate-fusionauth
+|
++-- .env
+|
++-- docker-compose.yml
+|
++-- requirements.txt
+|
++-- setup.py
+|
++--+ setup-flask
+|  |
+|  +-- .env
+|  |
+|  +-- requirements.txt
+|  |
+|  +-- server.py
+|  |
+|  +--+ templates
+|     |
+|     +-- home.html
+|
++--+ venv
+   |
+   +-- ...
 ----
 
-and execute `flask run` to run your app.
+Navigate to the `setup-flask` directory and execute `flask run` to run your app.
 
 [source,shell]
 ----
