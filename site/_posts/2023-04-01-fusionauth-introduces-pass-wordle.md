@@ -5,7 +5,7 @@ description: Login gamified.
 author: Emily Jansen
 image: blogs/pass-wordle/fusionauth-pass-wordle-header-image.png
 category: article
-tags: april-fools passwords
+tags: passwords gamification
 excerpt_separator: "<!--more-->"
 ---
 
