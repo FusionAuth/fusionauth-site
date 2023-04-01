@@ -104,4 +104,6 @@ We even have a Twitter integration so your users can share it with their friends
 
 While adding friction to the login process is generally discouraged, we think users will appreciate the warm sensation they get from the friction added with our new product. Once your users experience it, they may find themselves wanting to log in multiple times a day.
 
+&nbsp;
+
 {% include _image.liquid src="/assets/img/blogs/pass-wordle/fusionauth-pass-wordle-footer.png" alt="April Fools!" class="img-fluid" figure=false %}
