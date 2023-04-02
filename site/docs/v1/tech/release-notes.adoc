@@ -27,10 +27,14 @@ If we change the version for archive, update 'cutOverVersion' in the `_download.
 ////
 Process, or at least one way to do it.
 
+Note, to generate a stub that you can copy/paste to get started on 1, 2 and 3..
+
+> ./generate-release-notes-stub.sh <version>
+
 1. Review the Milestone for the release in GH.
 2. Order the GH issues by number sequentially.
 3. Document the issue, describing the issue at a high level such that most anyone can understand it.
-4. If the GH issue was opened by a community member, provide credit, see examples in existing doc. 
+4. If the GH issue was opened by a community member, provide credit, see examples in existing doc.
 5. Identify if any doc updates need to be made as a result of the issue being closed out.
 6. Make any doc changes necessary w/ version flags if necessary.
 7. If the issue is for a new API, feature, or change to anything, please add a link to that API or relevant section if you say "for more information see..."
@@ -62,6 +66,131 @@ For next release
 
 [role=release-note]
 
+== Version 1.44.0
+_March 13th, 2023_
+
+:migration_message: pass:normal[{nbsp} + \
+*Additional details* \
+{nbsp} + \
+This migration will add an index to the `identity_provider_links` table. It is not expected to negatively impact the migration time during upgrade, but please be aware that deployments with millions of Identity Provider Links may experience additional processing time during the migration.]
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Fixed
+* A Lambda invocation may incorrectly fail indicating a recursive call was attempted. This is unlikely to occur, but under heavy load, it is possible.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2102[GitHub Issue #2102]
+* The Application API was failing to make a copy when using `sourceApplicationId` when the source Application has enabled and configured the SAML v2 IdP. This is a bug in a new feature that was added in version `1.43.0`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2118[GitHub Issue #2118]
+
+=== Enhancements
+* Add default configuration for read and connect timeouts to the SMTP server configuration. This helps protect FusionAuth against an SMTP server that never closes a socket. From time to time we observed an SMTP server hold open a socket, and tie up a send thread which may block other senders.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1742[GitHub Issue #1742]
+* Change Link API request body to match the response. Backwards compatibility is maintained, but this provides a more consistent API feel.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1747[GitHub Issue #1747]
+* Update the Google IdP JavaScript in the themed pages. This change removes the deprecated Google JavaScript library, and adds support for One Tap.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1939[GitHub Issue #1939], thanks to https://github.com/Brunom50[@Brunom50], https://github.com/harishreddy-m[@harishreddy-m], https://github.com/forteilgmbh[@forteilgmbh] for their contribution.
+* Return a `404` with status only for anything under `/api/*` instead of rendering a `404` page with HTML. It just seems like the right thing to do. Nobody wants HTML in their APIs!
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2109[GitHub Issue #2109]
+* Add a new index to the `identity_provider_links` table to increase performance. Better. Faster. Stronger.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2122[GitHub Issue #2122]
+////
+* Add `apiMode: [Public|Partner] to allow the user to select between the public or partner Steam API. The Partner API is preferred if you have access to it because it is not rate limited.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2127[GitHub Issue #2127]
+////
+
+=== Internal
+* Use `Cache-Control: no-store` more broadly in the FusionAuth admin application.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2097[GitHub Issue #2097]
+
+[role=release-note]
+
+== Version 1.43.1
+_March 6th, 2023_
+
+=== Fixed
+* Correct a potential FreeMarker render error caused by a missing CSRF token when performing an SAML v2 IdP initiated login to the FusionAuth admin UI. This error is a side effect of the caller not requesting the `scope=offline_access` parameter. With this fix, you should no longer encounter the error, and the `offline_access` scope is now optional on the request. A workaround is to request the `offline_access` scope.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2125[GitHub Issue #2125]
+
+[role=release-note]
+
+== Version 1.43.0
+_February 15th, 2023_
+
+include::docs/v1/tech/__database-migration-warning.adoc[]
+
+=== Known Issues
+* Creating a new application from another application with `sourceApplicationId` returns a `500` error when the source application has SAML v2 enabled and configured.  If you have not configured SAML v2, you will not be affected by this issue.  Workaround is to call Create Application API without the `sourceApplicationId` parameter and supply all the parameters copied from the source application.
+** Resolved in `1.44.0` via https://github.com/FusionAuth/fusionauth-issues/issues/2118[GitHub Issue #2118].
+
+=== Fixed
+* Support importing an x.509 certificate with a private key into KeyMaster in the admin UI.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1805[GitHub Issue #1805], thanks to https://github.com/konvergence[@konvergence] for reporting!
+* When using the Forgot Password workflow on the FusionAuth login page with a user without an email address, the page would refresh instead of redirecting to the success screen indicating an email had been sent.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1809[GitHub Issue #1809], thanks to one of our MVPs https://github.com/epbensimpson[@epbensimpson] for letting us know.
+* The Change Password API was incorrectly failing indicating a Trust Token was required even when provided if the user has MFA enabled.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1909[GitHub Issue #1909], thanks to https://github.com/timyourivh[@timyourivh] for the report!
+* Ensure that we correctly terminate an SSO session when beginning a new passwordless login flow with a different user in the same browser.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1912[GitHub Issue #1912]
+* Fix various limitations with adding a consent to a self-service account form.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1920[GitHub Issue #1920]
+* An error may occur when logging into the FusionAuth admin UI with an IdP initiated request from a SAML v2 IdP.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1941[GitHub Issue #1941], thanks to https://github.com/jon-at-advarra[@jon-at-advarra] for filing the bug!
+* An error may occur when logging into the FusionAuth admin UI with an IdP initiated request from a SAML v2 IdP and then navigating to your own profile page.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1976[GitHub Issue #1976], thanks to https://github.com/jon-at-advarra[@jon-at-advarra], this was a great edge case.
+* When taking a User Action, the duration is localized for the event. The localization is only available for a fixed number of locales. When an un-supported locale, such as Serbian is requested, an exception will occur. This has been fixed to avoid the exception, and if an un-supported Locale is requested, English will be used as the default.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1978[GitHub Issue #1978]
+* When sending a test event to verify the Kafka configuration, the topic was not being validated as required.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1985[GitHub Issue #1985], thanks to https://github.com/sixhobbits[@sixhobbits], nice catch!
+* When completing the forgot password workflow using the FusionAuth themed pages outside of an OAuth context, you may receive an error that says `Oops. It looks like you've gotten here by accident.`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1989[GitHub Issue #1989]
+* Update the Email Template preview in the view dialog to be be consistent with the preview in the edit page.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2007[GitHub Issue #2007], thanks to https://github.com/lancegliser[@lancegliser] for pointing this out!
+* Restrict the Two Factor Trust during a Change Password request to be used for the workflow that started the request.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2010[GitHub Issue #2010]
+* Fix the edit Form Field in the FusionAuth Admin UI for a consent field.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2026[GitHub Issue #2026]
+* Using password reset to unlock account may not work when MFA is enabled for the user. This is a bug in this new feature that was added in version `1.42.0`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2032[GitHub Issue #2032]
+
+=== Enhancements
+* Additional configuration for the Apple IdP to support login from Mobile and Desktop.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/778[GitHub Issue #778], thanks to https://github.com/johnmaia[@johnmaia] for his persistence!
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1248[GitHub Issue #1248], thanks to https://github.com/Brunom50[@Brunom50] to documenting this limitation.
+* Update the System Log viewer in the FusionAuth Admin UI to order logs for easier viewing pleasure.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1612[GitHub Issue #1612]
+* Allow Forgot Password API usage when the Forgot Password Email template is not configured if `sendForgotPasswordEmail` is `false`.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1735[GitHub Issue #1735], thanks to https://github.com/epbensimpson[@epbensimpson] for the suggestion.
+* Provide better developer feedback on the Change Password API when using an API key.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1897[GitHub Issue #1897], thanks to https://github.com/sujkattimani[@sujkattimani] for the feedback!
+* Allow the SAML v2 IdP to be used for both SP and IdP initiated login. Previously to utilize SP and IdP initiated login for the same SAML v2 IdP, you would have to create two separate configurations. It is still recommended to use the separate SAML v2 IdP initiated configuration if you will not be using an SP initiated login.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1900[GitHub Issue #1900], thanks to https://github.com/leesmith110[@leesmith110] for opening the issue and providing us so much valuable feedback.
+* Support for PostgreSQL 15
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1944[GitHub Issue #1944]
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2015[GitHub Issue #2015]
+* Add an option to include archived logs in gzip format on the System Log Download API. This will be the default when downloading the logs in the FusionAuth Admin UI.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1942[GitHub Issue #1942]
+* Allow the login hint that is passed to a 3rd Party SAML v2 IdP to be configured. Previously this was always `login_hint`, but Azure will expect `username`, this can now be configured.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1946[GitHub Issue #1946]
+* Add `sourceApplicationId` to the Application API to create an app from an existing Application to copy settings. This allows you to more easily use a single Application as a template, or to just make a copy.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1957[GitHub Issue #1957]
+* Ship default email templates for Add and Remove Multi-Factor methods.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1993[GitHub Issue #1993]
+* Add additional SAML IdP config to allow advanced assertion capabilities such as allow any destination, or alternate values. This is sort of a dangerous power user feature, but can be useful when migrating IdP configurations into FusionAuth w/out requiring each IdP to update their ACS.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1995[GitHub Issue #1995]
+* Add additional detail to the edit registration form in the FusionAuth Admin UI so you know which user you are editing. Seemed like a good idea.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2045[GitHub Issue #2045]
+* Do not validate `Content-Type` when a payload has not been provided.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2085[GitHub Issue #2085]
+
+=== New
+* Support for wild cards in OAuth2 Authorized Origin and Authorized Redirect URL configurations. Use with caution - but have fun with it!
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/437[GitHub Issue #437]. This one has been a long time coming, and we really appreciate all of the feedback and suggestions on this issue. In chronological order, thank you to https://github.com/SeanStayn[@SeanStayn], https://github.com/Jank1310[@Jank1310], https://github.com/JuliusPC[@JuliusPC], https://github.com/dystopiandev[@dystopiandev], https://github.com/alessandrojcm[@alessandrojcm], https://github.com/sjmog[@sjmog], https://github.com/huysentruitw[@huysentruitw] and https://github.com/mdnadm[@mdnadm].
+* Support for native TLS configuration in the FusionAuth HTTP server without the requirement to use a proxy with TLS termination.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1996[GitHub Issue #1996]
+* Add support for `salted-pbkdf2-hmac-sha512-512` password hash algorithm
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/2054[GitHub Issue #2054]
+
+[role=release-note]
+
 == Version 1.42.1
 _January 8th, 2023_
 
@@ -75,6 +204,8 @@ _January 8th, 2023_
 _December 7th, 2022_
 
 === Known Issues
+* In this release, you may now create a policy to allow a user to unlock their account after too many failed login attempts by completing a forgot password workflow. A bug was identified in this new feature that may cause this workflow to fail if the user also has 2FA enabled.
+** Resolved in `1.43.0` via https://github.com/FusionAuth/fusionauth-issues/issues/2032[GitHub Issue #2032]
 * An error was introduced that may, after one successful login, cause subsequent logins to fail for a user. In order to encounter this bug, you must have your tenant configured to re-hash passwords on login, and have a user login when their password encryption scheme or factor that does not match the configured tenant defaults. If you may have this type of configuration, please do not upgrade to version `1.42.0` and instead upgrade directly to version `1.42.1`.
 ** Resolved in `1.42.1` via https://github.com/FusionAuth/fusionauth-issues/issues/2043[GitHub Issue #2043]
 
@@ -112,6 +243,8 @@ _December 7th, 2022_
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/197[GitHub Issue #197]
 * Allow refresh tokens to be revoked for a user when enabling two-factor authentication. See `Tenants > Edit > JWT > Refresh token settings > Refresh token revocation > On multi-factor enable`.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1794[GitHub Issue #1794]
+* A new lambda function can be assigned to perform custom validation for any step during a self-service registration. This feature is only available when using a custom form, and is not available when using basic self-service registration. This may be useful to perform advanced field validation, or to call a 3rd party API to perform additional identity verification.
+** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1833[GitHub Issue #1833]
 
 [role=release-note]
 
@@ -943,7 +1076,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1391[GitHub Issue #1391]
 * Requests with IPv6 addresses cause NumberFormatExceptions.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1392[GitHub Issue #1392]
-* CAPTCHA may not work on the email verification required page. 
+* CAPTCHA may not work on the email verification required page.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1396[GitHub Issue #1396]
 * Rendering the passwordValidationRules object on the register page in theme preview does not work.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/1398[GitHub Issue #1398]
@@ -1250,6 +1383,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 === Known Issues
 * If you are using self-service registration there is a possibility that a user may be required to complete registration by adding additional fields to their account after they login. In this scenario it is possible that they will no longer be able to login and will be required to reset their password. The fix for this was added in `1.29.4`.
 ** Fixed in `1.29.4`, under https://github.com/FusionAuth/fusionauth-issues/issues/1344[GitHub Issue #1344], thanks to https://github.com/flangfeldt[@flangfeldt] for reporting the issue
+* If you are using the link:/docs/v1/tech/lambdas/samlv2-response-populate[SAML v2 Populate Lambda] or the link:/docs/v1/tech/lambdas/samlv2-response-reconcile[SAML v2 Reconcile Lambda] the `NameID` field has been changed to an array. You will need to update your lambda code if you are using this field.
 
 === Changed
 * You may no longer build a synthetic email address using a lambda for an OpenID Connect identity provider. This has been removed because you may now link a user by username or create a link w/out a username or an email to an existing FusionAuth user. If you are using this feature, you may need to plan for a migration to this new behavior. If you have a support contract with FusionAuth, please reach out and ask for additional information.
@@ -1268,7 +1402,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 ** Linking by username is now supported. There is a higher risk of account takeover using this strategy, you should use caution when using this feature.
 ** Tokens from identity providers should now be retrieved from the link, rather than the registration. More information can be found under `identityProviderLink.token` response value link:/docs/v1/tech/apis/identity-providers/links#retrieve-a-link[here]
 * Email Send API allows an email address in the To field instead of only allowing FusionAuth userIds
-** See the link:https://fusionauth.io/docs/v1/tech/apis/emails#send-an-email[Email Send] API for additional details.
+** See the link:/docs/v1/tech/apis/emails#send-an-email[Email Send] API for additional details.
 * SAML Identity Provider can now be configured to use any NameID format. Previously only the Email NameID format was utilized.
 ** This should allow the SAML identity provider configuration to be more flexible and work with additional SAML identity providers.
 
@@ -1276,7 +1410,7 @@ include::docs/v1/tech/__database-migration-warning.adoc[]
 * When FusionAuth is acting as a SAML Identity Provider, you may now send a NameID format of Email or Persistent.
 ** This should allow FusionAuth to work with additional SAML service providers such as Slack.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/522[GitHub Issue #522]
-* The link:https://fusionauth.io/docs/v1/tech/apis/emails#send-an-email[Email Send] API now allows you to send to a user that does not yet exist in FusionAuth by allowing you to specify an email address for the `To:` field.
+* The link:/docs/v1/tech/apis/emails#send-an-email[Email Send] API now allows you to send to a user that does not yet exist in FusionAuth by allowing you to specify an email address for the `To:` field.
 ** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/743[GitHub Issue #743]
 ** See the  link:/docs/v1/tech/apis/login[Email Send] API for additional details.
 * The Facebook and Google Identity Providers will now default to using a redirect instead of a popup for login. All existing configurations will be migrated to use the popup dialog to remain consistent with the previous behavior. With this update you may now also use the `idp_hint` parameter to login with Facebook and Google.
