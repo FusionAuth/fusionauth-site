@@ -5,7 +5,7 @@ description: In this tutorial, you'll create User Actions to coordinate events a
 author: Ritza
 category: tutorial
 tags: tutorial user-actions
-image: 
+image: blogs/fusionauth-user-actions/user-actions.png
 excerpt_separator: "<!--more-->"
 ---
 
