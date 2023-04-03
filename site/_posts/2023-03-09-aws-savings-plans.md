@@ -151,7 +151,7 @@ That's the kind of clickops I can get behind.
 
 ## Downsides of AWS Compute Savings plans
 
-What about that downside? Well, if FusionAuth ever needed to leave AWS, we'd have to plan ahead a year or so or eat the cost of the committed spend. However, `migrating off any cloud provider, especially when your system is the front door for millions of your customers' customers, isn't a task you undertake on a whim. That downside is acceptable.
+What about that downside? Well, if FusionAuth ever needed to leave AWS, we'd have to plan ahead a year or so or eat the cost of the committed spend. However, migrating off any cloud provider, especially when your system is the front door for millions of your customers' customers, isn't a task you undertake on a whim. That downside is acceptable.
 
 We're also not saving as much as we could. If we signed up for three years instead of one, we'd save more but lose flexibility. If we optimized, researched reserved instances (especially for RDS servers), and automated plan purchases, we could save even more. But we've made a conscious decision to focus on growth. Spending too much time optimizing cloud spend doesn't align with that.
 
