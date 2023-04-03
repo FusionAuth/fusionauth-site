@@ -132,7 +132,7 @@ For blog posts:
 -- tutorial: a tutorial on how to do something
 -- announcement: a press release or release announcement
 -- feature: a post about a particular feature
-
+- All captions should be one or more complete sentences.
 
 ## Lists
 
