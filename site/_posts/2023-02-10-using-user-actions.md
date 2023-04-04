@@ -2,7 +2,7 @@
 layout: blog-post
 title: Using FusionAuth User Actions
 description: In this tutorial, you'll create User Actions to coordinate events around a customer purchase.
-author: Ritza
+author: Bradley Van Aardt
 category: tutorial
 tags: tutorial user-actions
 image: blogs/fusionauth-user-actions/user-actions.png
@@ -19,9 +19,9 @@ You'll model a common type of scenario in this tutorial: A user buys temporary a
 
 ## Prerequisites
 
-We'll explain nearly everything that is used, but you'll need:
+Explanations will be provided for everything that is used, but you'll need:
 
-- Docker and Docker Compose set up as we'll set up FusionAuth using these.
+- Docker and Docker Compose set up as you'll set up FusionAuth using these.
 - [cURL](https://curl.se), [Postman](https://www.postman.com), or a similar tool installed to send test HTTP requests to the FusionAuth API.
 
 ## Installing and configuring FusionAuth with Docker Compose
@@ -44,7 +44,7 @@ FusionAuth should now be running and reachable on your chosen URL or `http://loc
 
 Once you've done this, you'll be prompted to complete three more set-up steps, as shown below.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/fusionauth-setup.png" alt="FusionAuth prompts us with the setup steps that you need to complete." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/fusionauth-setup.png" alt="FusionAuth prompts with the setup steps that you need to complete." class="img-fluid" figure=false %}
 
 Sending emails to communicate to the user about their purchase is a vital part of this tutorial, so you'll want to set that up, but specific details aren't covered . Read more about [setting up email on FusionAuth here](https://fusionauth.io/docs/v1/tech/email-templates/configure-email).
 
@@ -68,27 +68,27 @@ To create a user account, navigate to "Users" and click the "Add" button. Then s
 
 Record the Ids of both users. These will be UUIDs, and might look like `c49f5a75-1c3d-45db-98d2-25936b7c1966`.
  
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-create-user.png" alt="Create User" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-create-user.png" alt="Creating Users in FusionAuth" class="img-fluid" figure=false %}
  
 ### Creating an API key
  
 You will create and execute the User Action using API calls. Most API calls to FusionAuth are privileged and require an API key, so you'll need to set one up.
 
-To do so, navigate to "Settings" then "API Keys" and click the "Add" button. Make sure `POST` is enabled for both the `/api/user-action` and `/api/user/action` endpoints. You will use the former to create our User Action and the latter to execute it.
+To do so, navigate to "Settings" then "API Keys" and click the "Add" button. Make sure `POST` is enabled for both the `/api/user-action` and `/api/user/action` endpoints. You will use the former to create a User Action and the latter to execute it.
 
 You are creating an API Key with only the privileges needed, an example of the principle of least privilege, a good security practice.
  
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-create-api-key.png" alt="Create API Key" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-create-api-key.png" alt="Creating API Key" class="img-fluid" figure=false %}
  
 Record the value of your API Key, as indicated below.
  
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-api-key-created.png" alt="API Key Created" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-api-key-created.png" alt="Recording the value of the API key" class="img-fluid" figure=false %}
  
 ### Creating email templates
  
-Our User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their Ids under "Customizations", "Email Templates". More information on email templates in FusionAuth can be found [here](https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview).
+The User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their Ids under "Customizations", "Email Templates". More information on email templates in FusionAuth can be found [here](https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview).
  
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email-templates.png" alt="Email Templates" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email-templates.png" alt="Creating Email Templates in FusionAuth" class="img-fluid" figure=false %}
  
 ### Creating the User Action
  
@@ -100,14 +100,14 @@ curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user-action' \
  --header 'Content-Type: application/json' \
  --data-raw '{
  "userAction": {
-  "name": "Bought Temporary Access",
-  "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
-  "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
-  "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
-  "cancelEmailTemplateId": "981a1ecf-4a1d-44b8-8211-3215cb80319f",
-  "temporal": true,
-  "userEmailingEnabled": true,
-  "sendEndEvent": true
+    "name": "Bought Temporary Access",
+    "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
+    "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
+    "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+    "cancelEmailTemplateId": "981a1ecf-4a1d-44b8-8211-3215cb80319f",
+    "temporal": true,
+    "userEmailingEnabled": true,
+    "sendEndEvent": true
   }
  }'
 ```
@@ -146,23 +146,15 @@ Record the `id` value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`. You c
  
 ### Setting up webhooks
 
-To propagate a message when a user action is taken to our sister news sites, you can set up a webhook. To do this, navigate to "Settings" then "Webhooks" and click the "Add" button. To simulate the endpoint of our sister news site that will consume the user action information, you will use [https://webhook.site](https://webhook.site). If you visit this page, it will generate a unique URL of the form `https://webhook.site/<YOUR_WEBHOOK_SITE_ID>`. Copy this URL into the "URL" field.
+To propagate a message when a user action is taken to the sister news sites, you can set up a webhook. To do this, navigate to "Settings" then "Webhooks" and click the "Add" button. To simulate the endpoint of the sister news site that will consume the user action information, you will use [https://requestbin.com](https://requestbin.com). If you create a request bin, it will generate a unique URL of the form `https://<YOUR_WEBHOOK_SITE_ID>.x.pipedream.net`. Copy this URL into the "URL" field.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-add-webhook.png" alt="Add Webhook" class="img-fluid" figure=false %}
  
 Scroll down and make sure that the `user.action` event is enabled.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-webhook-switch.png" alt="Webhook event switch" class="img-fluid" figure=false %}
- 
-Then, select the "Tenants" tab and select your tenant. Alternatively, you can select "All tenants".
- 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-webhook-tenant.png" alt="Enable tenant on webhook page" class="img-fluid" figure=false %}
- 
-Navigate to "Tenants", then "Your tenant", and select the "Webhooks" tab. Make sure that the webhook is enabled. If you selected "All tenants" on the webhook page, its checkbox will be disabled.
- 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-tenants-webhooks.png" alt="Webhook enabled on tenants page" class="img-fluid" figure=false %}
- 
-Scroll down and make sure the `user.action` event is enabled here too.
+
+Navigate to the "Default" tenant and click on the "Edit" button. Scroll down and make sure the `user.action` event is enabled here too.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-tenants-switch.png" alt="Tenant event switch" class="img-fluid" figure=false %}
  
@@ -218,7 +210,7 @@ When this action is executed, the `actionee` will receive an email thanking them
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email.png" alt="Email confirmation" class="img-fluid" figure=false %}
  
-You can also verify that the request was propagated to the sister news site by checking `https://webhook.site/!#/<YOUR_WEBHOOK_SITE_ID>`. You will see the body of your request in the "Raw Content" field.
+You can also verify that the request was propagated to the sister news site by checking `https://requestbin.com/r/<YOUR_WEBHOOK_SITE_ID>`. You will see the body of your request in the "Raw Content" field.
 
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-webhook-site.png" alt="Webhook confirmation" class="img-fluid" figure=false %}
 
@@ -263,7 +255,7 @@ FusionAuth will return an object with an array of all actions currently active o
 
 ### Conclusion
  
-In this tutorial, you used User Actions to flag and email users who buy temporary access to our news site. You also propagate that request with webhooks to sister news sites.
+In this tutorial, you used User Actions to flag and email users who buy temporary access to your news site. You also propagate that request with webhooks to sister news sites.
  
 ### Further reading
  
