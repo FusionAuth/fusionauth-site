@@ -1,12 +1,20 @@
 ---
-import '../css/style.css'
-import Header from '../components/Header.astro'
-import Search from '../components/Search.astro'
-import TOC from '../components/TOC.astro'
+import '../css/style.css';
+import Header from '../components/Header.astro';
+import Navigation from '../components/Navigation.astro';
+import Search from '../components/Search.astro';
+import SectionNavigation from '../components/SectionNavigation.astro';
+import TOC from '../components/TOC.astro';
 
-let {description = "Looks like the developers forgot to include a description for this page. Sorry about that.", frontmatter = {}, headings = [], title = ""} = Astro.props
-title = frontmatter.title ? frontmatter.title : title
-description = frontmatter.description ? frontmatter.description : description
+let {author, date, description = "Looks like the developers forgot to include a description for this page. Sorry about that.", frontmatter = {}, headings = [], image, section, menu = [], title = ""} = Astro.props;
+author = frontmatter.author ? frontmatter.author : author;
+date = frontmatter.date ? frontmatter.date : date;
+description = frontmatter.description ? frontmatter.description : description;
+image = frontmatter.image ? frontmatter.image : image;
+section = frontmatter.section ? frontmatter.section : section;
+title = frontmatter.title ? frontmatter.title : title;
+
+const subMenu = menu.find(item => item.title === section).articles;
 ---
 
 <!DOCTYPE html>
@@ -52,47 +60,27 @@ description = frontmatter.description ? frontmatter.description : description
         </div>
 
         <!-- Section nav -->
-        <nav class="pb-8">
-          <ul class="space-y-4">
-            {([...Array(6)].map((x, i) =>
-              <li class={(i === 0 ? "active " : "") + "group"}>
-                <a href="#" class="flex font-medium group items-center group text-sm">
-                  <i class="fa-duotone fa-book-open h-6 mr-4 ring-1 ring-slate-900/5 pt-[4px] rounded-md shadow-sm text-center text-indigo-400 text-xs w-6 dark:bg-slate-800 dark:ring-0 dark:shadow-none dark:group-hover:bg-indigo-400 dark:group-hover:shadow-none dark:group-hover:text-indigo-600 dark:group-[.active]:bg-indigo-400 dark:group-[.active]:shadow-none dark:group-[.active]:text-indigo-600 group-[.active]:ring-slate-900/10 group-[.active]:shadow group-[.active]:shadow-indigo-200 group-[.active]:text-indigo-600 group-hover:ring-slate-900/10 group-hover:shadow group-hover:shadow-indigo-200 group-hover:text-indigo-600"></i>
-                  <span class="group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-[.active]:text-indigo-600 dark:group-[.active]:text-indigo-400">Section</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <SectionNavigation items={menu}/>
 
         <!-- Sidebar nav -->
-        <nav>
-          <ul>
-            {[...Array(20)].map((e, i) =>
-              <li>
-                <h5 class="font-semibold pb-4 text-sm">Side nav</h5>
-                <ul class="border-l border-slate-900/10 group mb-10 space-y-3 dark:border-slate-100/10">
-                  {[...Array(7)].map((e, i1) =>
-                    <li class={(i1 === 0 ? "active " : "") + "group"}><a href="#" class="block border-l border-transparent pl-4 text-slate-700 text-sm -ml-px dark:text-slate-400 dark:hover:border-slate-400 dark:group-[.active]:border-indigo-400 dark:group-[.active]:text-indigo-400 group-[.active]:border-indigo-600 group-[.active]:font-semibold group-[.active]:text-indigo-600 hover:border-slate-900/50">Item 1</a></li>
-                  )}
-                </ul>
-              </li>
-            )}
-          </ul>
-        </nav>
+        <Navigation items={subMenu} header={section}/>
       </div>
     </div>
 
     <!-- Main content section -->
-    <article class="max-w-none pb-24 prose prose-slate dark:prose-invert dark:prose-headings:text-indigo-400 lg:px-[19rem] prose-headings:scroll-mt-10 prose-headings:text-indigo-600">
-      <h1 class="text-lg">{title}</h1>
+    <article class="max-w-none pb-24 prose prose-slate dark:prose-invert dark:prose-headings:text-indigo-400 lg:px-[19rem] prose-headings:scroll-mt-24 prose-headings:text-indigo-600">
+      {image && <img src={"/img/" + image}/>}
+      {author &&
+        <p class="text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
+      }
+      <h1 class="mt-16 text-3xl">{title}</h1>
       <slot/>
     </article>
 
     <!-- Table of contents -->
     <aside class="bottom-0 fixed hidden left-auto overflow-y-auto pb-10 pt-8 px-4 right-[max(0px,calc(50%-45rem))] top-[3.5rem] w-[19rem] lg:block">
       <nav>
-        <TOC toc={headings}/>
+        <TOC toc={headings} depth={2}/>
       </nav>
     </aside>
   </main>

@@ -40,7 +40,10 @@ module.exports = {
 				logout: 'logout 5s ease-out infinite'
 			},
 			backgroundImage: {
-				'hero': 'url("/img/heroes/dots-code.svg"),radial-gradient(circle farthest-side at 0 0,#0f172a,rgba(62,102,252,0.43) 73%,#1e293b)'
+				'hero': 'url("/img/heroes/dots-code.svg"), radial-gradient(circle farthest-side at 0 0, #0f172a, #3e67fc 73%, #1e293b)'
+			},
+			backgroundPosition: {
+				'pos-hero': 'right 0 bottom 150px'
 			},
 			borderWidth: {
 				'10': '10px'
