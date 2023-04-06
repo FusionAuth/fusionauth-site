@@ -28,7 +28,7 @@ Explanations will be provided for everything that is used, but you'll need:
 
 There are [various ways](/docs/v1/tech/installation-guide/) to install FusionAuth depending on your system, but the easiest way is to use Docker and Docker Compose. Instructions are [here](/docs/v1/tech/installation-guide/docker). Currently, if you have Docker installed, you can run the following commands to install and run FusionAuth:
 
-```bash
+```sh
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
 docker-compose up
@@ -74,7 +74,7 @@ Record the Ids of both users. These will be UUIDs, and might look like `c49f5a75
  
 You will create and execute the User Action using API calls. Most API calls to FusionAuth are privileged and require an API key, so you'll need to set one up.
 
-To do so, navigate to "Settings" then "API Keys" and click the "Add" button. Make sure `POST` is enabled for both the `/api/user-action` and `/api/user/action` endpoints. You will use the former to create a User Action and the latter to execute it.
+To do so, navigate to "Settings" then "API Keys" and click the "Add" button. Make sure `POST` is enabled for the `/api/user-action` and both `POST` and `GET` are enabled for the `/api/user/action` endpoints. You will use the former to create a User Action and the latter to execute it.
 
 You are creating an API Key with only the privileges needed, an example of the principle of least privilege, a good security practice.
  
@@ -145,20 +145,20 @@ You can now create a [User Action definition](https://fusionauth.io/docs/v1/tech
  
 ```sh
 curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user-action' \
- --header 'Authorization: <YOUR API KEY>' \
- --header 'Content-Type: application/json' \
- --data-raw '{
- "userAction": {
-    "name": "Bought Temporary Access",
-    "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
-    "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
-    "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
-    "cancelEmailTemplateId": "981a1ecf-4a1d-44b8-8211-3215cb80319f",
-    "temporal": true,
-    "userEmailingEnabled": true,
-    "sendEndEvent": true
-  }
- }'
+  --header 'Authorization: <YOUR API KEY>' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+  "userAction": {
+     "name": "Bought Temporary Access",
+     "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
+     "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
+     "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+     "cancelEmailTemplateId": "981a1ecf-4a1d-44b8-8211-3215cb80319f",
+     "temporal": true,
+     "userEmailingEnabled": true,
+     "sendEndEvent": true
+   }
+  }'
 ```
 
 In this command, replace `<YOUR_FUSIONAUTH_BASE_URL>` with the URL of your FusionAuth instance, `<YOUR API KEY>` with the API key noted earlier, and the `startEmailTemplateId`, `endEmailTemplateId`, `modifyEmailTemplateId`, and `cancelEmailTemplateId` with appropriate values.
@@ -167,25 +167,25 @@ FusionAuth should return something similar to the following:
 
 ```json
 {
- "userAction": {
-  "active": true,
-  "cancelEmailTemplateId": "981a1ecf-4a1d-44b8-8211-3215cb80319f",
-  "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
-  "id": "6f4115c0-3db9-4734-aeda-b9c3f7dc4269",
-  "includeEmailInEventJSON": false,
-  "insertInstant": 1674937446558,
-  "lastUpdateInstant": 1674937446558,
-  "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
-  "name": "Bought Temporary Access",
-  "options": [],
-  "preventLogin": false,
-  "sendEndEvent": true,
-  "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
-  "temporal": true,
-  "transactionType": "None",
-  "userEmailingEnabled": true,
-  "userNotificationsEnabled": false
- }
+  "userAction": {
+    "active": true,
+    "cancelEmailTemplateId": "981a1ecf-4a1d-44b8-8211-3215cb80319f",
+    "endEmailTemplateId": "18490dc2-b3d4-462f-9a8e-882b4fb4e76f",
+    "id": "6f4115c0-3db9-4734-aeda-b9c3f7dc4269",
+    "includeEmailInEventJSON": false,
+    "insertInstant": 1674937446558,
+    "lastUpdateInstant": 1674937446558,
+    "modifyEmailTemplateId": "2011460f-bd11-4134-ba8a-9d4c6c4a23ae",
+    "name": "Bought Temporary Access",
+    "options": [],
+    "preventLogin": false,
+    "sendEndEvent": true,
+    "startEmailTemplateId": "5eaf58e7-2e5a-4eea-94b8-74a707724f7b",
+    "temporal": true,
+    "transactionType": "None",
+    "userEmailingEnabled": true,
+    "userNotificationsEnabled": false
+  }
 }
 ```
 
@@ -197,7 +197,7 @@ Record the `id` value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`. You c
 
 To propagate a message when a user action is taken to the sister news sites, you can set up a webhook. To do this, navigate to "Settings" then "Webhooks" and click the "Add" button. To simulate the endpoint of the sister news site that will consume the user action information, you can use [https://requestbin.com](https://requestbin.com). If you create a request bin, it will generate a unique URL of the form `https://<YOUR_WEBHOOK_SITE_ID>.x.pipedream.net`. Copy this URL into the "URL" field.
  
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-add-webhook.png" alt="Add a new Webhook to your RequestBin." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-add-webhook.png" alt="Add a new Webhook from your RequestBin." class="img-fluid" figure=false %}
  
 Scroll down and make sure that the `user.action` event is enabled.
  
@@ -219,9 +219,9 @@ Finally, make sure to update `<YOUR_FUSIONAUTH_BASE_URL>` and `<YOUR API KEY>` w
  
 ```sh
 curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user/action' \
- --header 'Authorization: <YOUR API KEY>' \
- --header 'Content-Type: application/json' \
- --data-raw '{
+  --header 'Authorization: <YOUR API KEY>' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
   "broadcast": true,
   "action": {
     "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
@@ -238,20 +238,20 @@ FusionAuth will reply with `200 OK`:
 
 ```json
 {
- "action": {
-  "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
-  "actionerUserId": "5ea819ea-6ff1-4b17-943f-eb2d1c246c3b",
-  "applicationIds": [],
-  "comment": "Signed up for 24 hour premium access",
-  "emailUserOnEnd": true,
-  "expiry": 1674939392664,
-  "id": "8ed1f910-4e62-4dd1-a88e-e45964b56e21",
-  "insertInstant": 1674938412450,
-  "localizedName": "Bought Temporary Access",
-  "name": "Bought Temporary Access",
-  "notifyUserOnEnd": false,
-  "userActionId": "6f4115c0-3db9-4734-aeda-b9c3f7dc4269"
- }
+  "action": {
+    "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
+    "actionerUserId": "5ea819ea-6ff1-4b17-943f-eb2d1c246c3b",
+    "applicationIds": [],
+    "comment": "Signed up for 24 hour premium access",
+    "emailUserOnEnd": true,
+    "expiry": 1674939392664,
+    "id": "8ed1f910-4e62-4dd1-a88e-e45964b56e21",
+    "insertInstant": 1674938412450,
+    "localizedName": "Bought Temporary Access",
+    "name": "Bought Temporary Access",
+    "notifyUserOnEnd": false,
+    "userActionId": "6f4115c0-3db9-4734-aeda-b9c3f7dc4269"
+  }
 }
 ```
 
@@ -271,34 +271,34 @@ Depending on how you control access to your articles, you might want to check th
 
 ```sh
 curl --location --request GET '<YOUR_FUSIONAUTH_BASE_URL>/api/user/action?userId=<USER_ID>&active=true' \
---header 'Authorization: <YOUR API KEY>'
+  --header 'Authorization: <YOUR API KEY>'
 ```
 
 Replace `<YOUR_FUSIONAUTH_BASE_URL>` , `<YOUR API KEY>`, and `<USER_ID>` with the appropriate values. 
 
 FusionAuth will return an object with an array of all actions currently active on the user. You can filter the results to find the `userActionId` of the user action you set up above to test if the user has temporary access:
 
-```sh
+```json
 {
-    "actions": [
-        {
-            "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
-            "actionerUserId": "5ea819ea-6ff1-4b17-943f-eb2d1c246c3b",
-            "applicationIds": [
-                "af4847c4-d183-4e51-ab8a-ce8940909127"
-            ],
-            "comment": "Signed up for 24 hour premium access",
-            "emailUserOnEnd": true,
-            "endEventSent": false,
-            "expiry": 1675890993000,
-            "id": "30e05e8f-fba6-4dd3-852c-abbc2d2e2461",
-            "insertInstant": 1675322145449,
-            "localizedName": "Bought Temporary Access",
-            "name": "Bought Temporary Access",
-            "notifyUserOnEnd": false,
-            "userActionId": "6f4115c0-3db9-4734-aeda-b9c3f7dc4269"
-        }
-    ]
+  "actions": [
+    {
+      "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
+      "actionerUserId": "5ea819ea-6ff1-4b17-943f-eb2d1c246c3b",
+      "applicationIds": [
+        "af4847c4-d183-4e51-ab8a-ce8940909127"
+      ],
+      "comment": "Signed up for 24 hour premium access",
+      "emailUserOnEnd": true,
+      "endEventSent": false,
+      "expiry": 1675890993000,
+      "id": "30e05e8f-fba6-4dd3-852c-abbc2d2e2461",
+      "insertInstant": 1675322145449,
+      "localizedName": "Bought Temporary Access",
+      "name": "Bought Temporary Access",
+      "notifyUserOnEnd": false,
+      "userActionId": "6f4115c0-3db9-4734-aeda-b9c3f7dc4269"
+    }
+  ]
 }
 ```
 
