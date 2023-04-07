@@ -1,5 +1,4 @@
 ---
-layout: ../../../layouts/Articles.astro
 title: WebAuthn Explained
 description: An in-depth look at how WebAuthn can help you add biometric authentication to your website.
 author: Dan Moore
@@ -317,17 +316,17 @@ Here's an example response.
 {
   response: {
     clientDataJSON: { 
-      type: “webauthn.create”,
+      type: "webauthn.create",
       challenge: ... // should match initial challenge
-      origin: ... //
+      origin: ...
     },
     attestationObject: {
       authData: {
         attestedCredentialData: {
           credentialId: ..., 
-          credentialPublicKey: ...,
+          credentialPublicKey: ...
         }
-      }, // other stuff about attestation 
+      } // other stuff about attestation 
     }
   }
 }
