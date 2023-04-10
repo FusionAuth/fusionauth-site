@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: Multi-factor Authentication for Developers
 description: What is multi-factor authentication and why is it important?
 author: Dan Moore
-image: advice/mfa/expert-advice-multi-factor-authentication-for-developers-header-image.png
-category: Authentication
+image: articles/mfa/header.png
+section: Authentication
 date: 2021-02-19
 dateModified: 2021-04-26
 ---
@@ -39,7 +38,7 @@ The majority of user accounts have a password as a factor. You might be working 
 
 ### What is the difference between MFA and 2FA?
 
-These terms are often used interchangably, which unfortunately blurs important differences between them.
+These terms are often used interchangeably, which unfortunately blurs important differences between them.
 
 When a system supports more than one method or factor of authentication, it supports MFA. Any factor in the categories of proof mentioned above suffices. Later in this article, we'll cover different factors in more detail.
 
@@ -55,7 +54,7 @@ Authentication, which ensures that a system knows who the user is, and authoriza
 
 If your users have only one factor of authentication, it can be stolen, especially if it is a password. At that point, you as a developer will have limited ability to stop the thief. Your system will have to notice suspicious behavior to determine who is legitimate and who is not. This can be done, but is complex to do at scale. If you can't determine illicit access, the thief will have the same privileges as the user whose stolen credentials are being used; they will be indistinguishable from that user.
 
-Unfortunately, passwords are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/learn/expert-advice/security/breached-password-detection) and users can protect themselves by practicing good password hygiene, requiring another factor increases the obstacles to a bad actor.
+Unfortunately, passwords are being stolen regularly. While systems can help prevent unauthorized access by [detecting stolen passwords](/articles/security/breached-password-detection) and users can protect themselves by practicing good password hygiene, requiring another factor increases the obstacles to a bad actor.
 
 In particular, if another factor is required as part of the login process, account security can increase dramatically. Microsoft researchers found that accounts are ["99.9% less likely to be compromised"](https://techcommunity.microsoft.com/t5/azure-active-directory-identity/your-pa-word-doesn-t-matter/ba-p/731984) if MFA is used.
 
@@ -71,7 +70,7 @@ Listen to your users when considering factors. You don't want them to circumvent
 
 As a developer, you need to balance between the user experience and the risk of account takeover. In some situations the call is easy. If your site lets users vote on cat pictures, MFA isn't really required. If your site transfers money to arbitrary people, on the other hand, it should require MFA. These scenarios are at opposite ends of the security and user experience spectrum:
 
-{% include _image.liquid src="/assets/img/advice/mfa/security-ux-spectrum.svg" alt="More secure or easier to use?" figure=false %}
+![More secure or easier to use?](/img/articles/mfa/security-ux-spectrum.svg)
 
 The hard part is the situations where the answer isn't obvious. What are some situations where you should consider requiring multi-factor authentication?
 
@@ -140,7 +139,7 @@ Solution availability, security and user experience all play a role in determini
 
 Below is a diagram displaying estimated relative deployment and security attributes of various factors. When deciding which is right for your application, think about security needs as well as what your users have accessible and can use, unless you will be providing all your users with a factor such as a Yubikey. You can also allow multiple factors and let users select one that works for them.
 
-{% include _image.liquid src="/assets/img/advice/mfa/security-deployment-spectrum.svg" alt="Secure, sure, but is it available?" figure=false %}
+![Secure, sure, but is it available?](/img/articles/mfa/security-deployment-spectrum.svg)
 
 Let's look at each category and examine the factors in more detail.
 

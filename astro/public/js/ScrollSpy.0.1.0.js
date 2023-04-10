@@ -5,6 +5,11 @@ class ScrollSpy {
   #shift;
 
   constructor() {
+    // Bail if there is no scroll spy
+    if (!document.querySelector('[data-widget="scroll-spy"]')) {
+      return;
+    }
+
     document.addEventListener('scroll', event => this.#handleScroll(event));
 
     this.#headers = [];

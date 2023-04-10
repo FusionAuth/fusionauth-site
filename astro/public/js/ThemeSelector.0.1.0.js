@@ -6,6 +6,11 @@ class ThemeSelector {
   #theme;
 
   constructor() {
+    // Bail if there is no theme selector
+    if (!document.querySelector('[data-widget="theme-selector"]')) {
+      return;
+    }
+
     this.#button = document.querySelector('[data-widget="theme-selector"] > button');
     this.#button.addEventListener('click', event => this.#handleMenu(event));
     this.#menu = document.querySelector('[data-widget="theme-selector"] > ul');

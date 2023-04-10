@@ -32,6 +32,8 @@ module.exports = {
 				900: '#7c2d12',
 			},
 			red: colors.rose,
+			rose: colors.pink,
+			yellow: colors.yellow,
 			slate: colors.slate,
 			white: colors.white
 		},

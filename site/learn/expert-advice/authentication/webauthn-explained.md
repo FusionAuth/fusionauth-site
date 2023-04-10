@@ -3,7 +3,7 @@ layout: advice
 title: WebAuthn Explained
 description: An in-depth look at how WebAuthn can help you add biometric authentication to your website.
 author: Dan Moore
-image: advice/webauthn-explained/webauthn-explained.png
+image: advice/webauthn-explained/header.png
 category: Authentication
 date: 2022-10-10
 dateModified: 2022-10-10

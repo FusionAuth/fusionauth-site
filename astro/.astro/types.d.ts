@@ -97,6 +97,34 @@ declare module 'astro:content' {
 
 	const entryMap: {
 		"articles": {
+"authentication/avoid-lockin.md": {
+  id: "authentication/avoid-lockin.md",
+  slug: "authentication/avoid-lockin",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"authentication/common-authentication-implementation-risks.md": {
+  id: "authentication/common-authentication-implementation-risks.md",
+  slug: "authentication/common-authentication-implementation-risks",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"authentication/developer-benefits-single-sign-on.md": {
+  id: "authentication/developer-benefits-single-sign-on.md",
+  slug: "authentication/developer-benefits-single-sign-on",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"authentication/login-authentication-workflows.md": {
+  id: "authentication/login-authentication-workflows.md",
+  slug: "authentication/login-authentication-workflows",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "authentication/mobile/oauth-resource-owners-grant.mdx": {
   id: "authentication/mobile/oauth-resource-owners-grant.mdx",
   slug: "authentication/mobile/oauth-resource-owners-grant",
@@ -104,6 +132,20 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"authentication/multi-factor-authentication.md": {
+  id: "authentication/multi-factor-authentication.md",
+  slug: "authentication/multi-factor-authentication",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"authentication/types-of-kubernetes-auth.md": {
+  id: "authentication/types-of-kubernetes-auth.md",
+  slug: "authentication/types-of-kubernetes-auth",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "authentication/webauthn-explained.md": {
   id: "authentication/webauthn-explained.md",
   slug: "authentication/webauthn-explained",

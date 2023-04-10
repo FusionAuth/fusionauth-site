@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: Types of Kubernetes Auth
 description: What are the three levels of Kubernetes authentication?
 author: Dan Moore
-image: advice/types-kubernetes-auth/types-kubernetes-auth.png
-category: Authentication
+image: articles/types-kubernetes-auth/header.png
+section: Authentication
 date: 2022-05-02
 dateModified: 2022-05-02
 ---
@@ -52,7 +51,7 @@ Here's a [tutorial on setting up Kubernetes RBAC with FusionAuth](/blog/2022/02/
 
 When you have containers running on Kubernetes, there are another two types of auth entirely different from the infrastructure auth outlined above.
 
-{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-diagram.png" alt="Diagram of todo application in kubernetes." class="img-fluid" figure=false %}
+![Diagram of todo application in kubernetes." class="img-fluid](/img/articles/types-kubernetes-auth/todo-application-diagram.png)
 
 For instance, if you are running a todo application like the one diagrammed above, you need to make sure a user Alice has access to Alice's todos and a user Bob has access to Bob's todos, but neither Alice nor Bob should have access to the other's data.
 
@@ -69,7 +68,7 @@ You want to lock down communication between the constituent parts of your applic
  
 Suppose the reminder service from the application above needs information from the todo service. There's a new feature being built. The reminder service will send an email to every user who has a todo with a due date falling in the next 24 hours. Therefore the reminder service needs to query the todo service.
 
-{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-service-to-service.png" alt="Diagram of service to service communication application in kubernetes." class="img-fluid" figure=false %}
+![Diagram of service to service communication application in kubernetes." class="img-fluid](/img/articles/types-kubernetes-auth/todo-application-service-to-service.png)
 
 When building this feature, you'll want to ensure:
 
@@ -151,7 +150,7 @@ However, what happens when a user is involved? Let's look at that next.
 
 ## Auth for Requests
 
-{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-user-request.png" alt="Diagram of user request." class="img-fluid" figure=false %}
+![Diagram of user request." class="img-fluid](/img/articles/types-kubernetes-auth/todo-application-user-request.png)
 
 When a request for a todo comes in, it is associated, as mentioned above, with a particular user such as Alice or Bob. This is an additional layer of authentication and authorization which client certificates or the other methods mentioned previously can't help with. In this case you want to reach for tokens. 
 
@@ -177,13 +176,13 @@ Tokens are typically provided by the requesting client and are the result of som
 
 Again, depending on your implementation, you may be able to configure a service mesh to examine claims in the token, such as the `roles` or `sub` claims. The former controls what roles a user has, while the latter is the identifier for a user. You can also use an ambassador container to examine these claims, or do so inside your microservices.
 
-These options are discussed in more detail in [this article about tokens](/learn/expert-advice/tokens/tokens-microservices-boundaries). What's important is that the auth information is included in the token, and can be shared between the various services to ensure they only offer up data or functionality that is appropriate for this user.
+These options are discussed in more detail in [this article about tokens](/articles/tokens/tokens-microservices-boundaries). What's important is that the auth information is included in the token, and can be shared between the various services to ensure they only offer up data or functionality that is appropriate for this user.
 
 ### On Behalf Of Requests
 
 However, there is an interesting subset of user requests. There can be cases where you want to make a request of a service on behalf of a user. To do so, modify the token from the request with additional information about the service making a request.
 
-{% include _image.liquid src="/assets/img/advice/types-kubernetes-auth/todo-application-on-behalf-of.png" alt="Diagram of on behalf of request." class="img-fluid" figure=false %}
+![Diagram of on behalf of request." class="img-fluid](/img/articles/types-kubernetes-auth/todo-application-on-behalf-of.png)
 
 For example, in the todos application, one feature would be todo sharing: Alice might share a todo with Bob. In this case, when Bob requests his shared todos, the share microservice will need to call the todo service. But the request must include information specifying it is doing so on behalf of Bob, not itself. 
 

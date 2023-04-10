@@ -2,7 +2,7 @@
 layout: advice
 title: Mobile OAuth login using resource owner password credentials grant with JWTs and refresh tokens
 description: An explanation of mobile application login using a native login form that submits to the application backend ( with JWTs and refresh tokens) which calls FusionAuth's OAuth Resource Owner's Password Grant
-image: advice/types-of-logins-article.png
+image: advice/header.png
 category: Authentication
 author: Brian Pontarelli
 date: 2019-11-04

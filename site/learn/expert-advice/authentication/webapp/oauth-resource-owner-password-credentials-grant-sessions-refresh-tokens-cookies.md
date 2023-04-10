@@ -2,7 +2,7 @@
 layout: advice
 title: Webapp OAuth login using resource owner password credentials grant with sessions and refresh tokens
 description: An explanation of webapp login using a native login form that submits to the application backend (with server-side sessions plus refresh tokens in cookies) which calls FusionAuth's Resource Owner's Password Grant
-image: advice/types-of-logins-article.png
+image: advice/header.png
 category: Authentication
 author: Brian Pontarelli
 date: 2019-11-04

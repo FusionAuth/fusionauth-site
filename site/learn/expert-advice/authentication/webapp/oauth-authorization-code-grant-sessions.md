@@ -2,7 +2,7 @@
 layout: advice
 title: Webapp OAuth login using authorization code grant with sessions
 description: An explanation of webapp login using FusionAuth OAuth interface with the authorization code grant with server-side sessions
-image: advice/types-of-logins-article.png
+image: advice/header.png
 category: Authentication
 author: Brian Pontarelli
 date: 2019-11-04

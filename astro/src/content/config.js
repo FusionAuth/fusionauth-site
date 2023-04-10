@@ -5,6 +5,7 @@ const articlesCollection = defineCollection({
     author: z.string(),
     date: z.date(),
     description: z.string(),
+    excludeFromIndex: z.boolean().default(false),
     image: z.string(),
     section: z.string(),
     title: z.string(),
