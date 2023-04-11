@@ -3,6 +3,7 @@ var indexPages = {
   '/blog/': true,
   '/community/forum/': true,
   '/docs/': true,
+  '/docs/quickstarts/': true,
   '/docs/v1/tech/': true,
   '/docs/v1/tech/account-management/': true,
   '/docs/v1/tech/admin-guide/': true,
@@ -46,6 +47,7 @@ var indexPages = {
   '/docs/v1/tech/tutorials/': true,
   '/docs/v1/tech/tutorials/gating/': true,
   '/docs/v1/tech/tutorials/two-factor/': true,
+  '/how-to/': true,
   '/learn/expert-advice/': true,
   '/learn/expert-advice/authentication/': true,
   '/learn/expert-advice/ciam/': true,
@@ -61,6 +63,7 @@ var redirects = {
   '/cognito': '/docs/v1/tech/migration-guide/cognito',
   '/cognito/': '/docs/v1/tech/migration-guide/cognito',
   '/docs': '/docs/',
+  '/docs/quickstarts': '/docs/quickstarts/',
   '/docs/v1/tech/admin-guide/release-notifications': '/docs/v1/tech/admin-guide/releases',
   '/docs/v1/tech/apis/consent': '/docs/v1/tech/apis/consents',
   '/docs/v1/tech/common-errors': '/docs/v1/tech/admin-guide/troubleshooting',
@@ -94,7 +97,7 @@ var redirects = {
   '/features/user-management-reporting': '/features/user-management',
   '/gaming': '/industries/gaming-entertainment',
   '/gaming/': '/industries/gaming-entertainment',
-  '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes',
+  '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes/',
   '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/learn/expert-advice/gaming-entertainment/gaming-identity-provider-needs',
   '/learn/expert-advice/dev-tools/jwt-debugger': '/learn/expert-advice/dev-tools/jwt-decoder',
   '/learn/expert-advice/identity-basics/avoid-lockin': '/learn/expert-advice/authentication/avoid-lockin',
@@ -116,7 +119,7 @@ var redirects = {
   '/upgrade/from-saas': '/compare'
 };
 var s3Paths = ['/direct-download', '/license'];
-var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/'];
+var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/'];
 
 function handler(event) {
   var request = event.request;
