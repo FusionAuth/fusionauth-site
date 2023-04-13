@@ -161,13 +161,13 @@ But we wanted to make this even easier. For some users, setting up server side c
 
 FusionAuth now offers a React SDK which communicates with endpoints managed by FusionAuth which will take care of the code exchange. They'll set the access token as an `HTTPOnly`, `Secure` cookie, as well as a refresh token if that is requested.
 
-The endpoints the SDK calls are documented. You can create your own custom code that answers to those same endpoint if you'd prefer, but the goal was to have FusionAuth be a one-stop shop for your authentication needs, no server side code needed.
+The endpoints the SDK calls are documented. You can create your own custom code at the same URLs if you'd prefer, but FusionAuth can be a one-stop shop for your authentication needs, no server side code needed.
 
 Check out the [React SDK here](https://github.com/FusionAuth/fusionauth-react-sdk/). Future SDKs [are planned](https://github.com/FusionAuth/fusionauth-issues/issues/2078) as well.
 
 ## Importing Drupal password hashes
 
-FusionAuth has the ability to import [password hashes](/docs/v1/tech/reference/password-hashes) when using the [Import User API](/docs/v1/tech/apis/users#import-users). Doing so lets you transparently [migrate your users](/docs/v1/tech/migration-guide/) from one identity store such as Auth0 or Keycloak to FusionAuth, without requiring them to reset their passwords. Sine you are importing hashes, the plaintext password is never revealed.
+FusionAuth has the ability to import [password hashes](/docs/v1/tech/reference/password-hashes) when using the [Import User API](/docs/v1/tech/apis/users#import-users). Doing so lets you transparently [migrate your users](/docs/v1/tech/migration-guide/) from one identity store such as Auth0 or Keycloak to FusionAuth, without requiring them to reset their passwords. Since you are importing hashes, the plaintext password is never revealed.
 
 While you can [write your own password hashing plugins](/docs/v1/tech/plugins/), FusionAuth also ships with a number of plugins that we maintain.
 
