@@ -7,11 +7,17 @@ image: blogs/react-native-oauth/securing-react-native-with-oauth.png
 category: tutorial
 tags: client-javascript tutorial tutorial-react-native tutorial-javascript react-native javascript
 excerpt_separator: "<!--more-->"
+updated_date: 2023-04-11
 ---
 
 In this tutorial, we will set up a React Native application to work with OAuth. We'll use FusionAuth for auth, but the React Native code should work with any OAuth compliant server. 
 
 <!--more-->
+
+{% include _callout-tip.liquid
+content=
+"This blog post has been [superseded by an updated blog post](/blog/2023/04/13/securing-react-native-with-oauth-0-71)."
+%}
 
 First, we'll be installing and configuring FusionAuth. Then we'll set up a React Native project. We'll then perform an Authorization Code grant from within the React Native app. Finally, we'll request information from an OIDC endpoint. With that data, we'll display the user's email in the React Native application. 
 
