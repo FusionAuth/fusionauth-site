@@ -5,7 +5,7 @@ description: This release includes search and pagination for ten plus FusionAuth
 author: Dan Moore
 image: blogs/release-1-45/fusionauth-1-45.png
 category: announcement
-tags: release-announcement 
+tags: release-announcement pagination search react drupal password-hashes
 excerpt_separator: "<!--more-->"
 ---
 
@@ -35,6 +35,8 @@ No more! With release 1.45, you can now search for:
 * Lambdas
 
 If you have a large number of them, you can also paginate the results. 
+
+{% include _image.liquid src="/assets/img/blogs/release-1-45/paginate.png" alt="Pagination in the application admin UI." class="img-fluid" figure=false %}
 
 Let's walk through this here. I'm going to use the ruby client library, but you can use curl or any of the other client libraries as well.
 
@@ -165,11 +167,11 @@ Check out the [React SDK here](https://github.com/FusionAuth/fusionauth-react-sd
 
 ## Importing Drupal password hashes
 
-FusionAuth has the ability to import a variety of XXX password hashes when using the XXX Import API. Doing so lets you transparently XXX migrate your users from one identity store to another, without requiring them to reset their passwords. Because you are importing hashes, the plaintext password is never visible.
+FusionAuth has the ability to import [password hashes](/docs/v1/tech/reference/password-hashes) when using the [Import User API](/docs/v1/tech/apis/users#import-users). Doing so lets you transparently [migrate your users](/docs/v1/tech/migration-guide/) from one identity store such as Auth0 or Keycloak to FusionAuth, without requiring them to reset their passwords. Sine you are importing hashes, the plaintext password is never revealed.
 
-While you can write your own password hashing plugins, FusionAuth also ships with a number of plugins that we maintain.
+While you can [write your own password hashing plugins](/docs/v1/tech/plugins/), FusionAuth also ships with a number of plugins that we maintain.
 
-With this release, FusionAuth supports the phpass (pronounced 'p h pass') MD5 and phpass SHA-512 hashing algorithms. These are commonly used by PHP applications, including Drupal.
+With this release, FusionAuth supports the phpass (pronounced 'p-h-pass', thank you very much) MD5 and SHA-512 hashing algorithms. These are commonly used by PHP applications, including Drupal.
 
 ## The rest of it
 
