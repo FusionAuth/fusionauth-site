@@ -125,9 +125,9 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"authentication/mobile/oauth-resource-owners-grant.mdx": {
-  id: "authentication/mobile/oauth-resource-owners-grant.mdx",
-  slug: "authentication/mobile/oauth-resource-owners-grant",
+"authentication/mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens.mdx": {
+  id: "authentication/mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens.mdx",
+  slug: "authentication/mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">

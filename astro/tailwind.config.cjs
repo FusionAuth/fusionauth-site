@@ -90,7 +90,12 @@ module.exports = {
       },
     },
     fontFamily: {
-      sans: ['-apple-system', 'system-ui', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif']
+      sans: [
+        'Inter, -apple-system, system-ui, BlinkMacSystemFont, Arial, sans-serif',
+        {
+          fontFeatureSettings: '"case", "zero"'
+        }
+      ]
     }
   },
   plugins: [
