@@ -42,7 +42,7 @@ Let's walk through this here. I'm going to use the ruby client library, but you 
 
 Make sure you install version 1.45 of the FusionAuth client. Here's my Gemfile:
 
-```gemfile
+```ruby
 source 'https://rubygems.org'
 
 gem 'fusionauth_client', '~> 1.45'
