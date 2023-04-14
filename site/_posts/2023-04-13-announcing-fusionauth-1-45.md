@@ -54,8 +54,8 @@ Let's create 100 applications:
 require 'fusionauth/fusionauth_client'
 
 client = FusionAuth::FusionAuthClient.new(
-    'YOUR_API_KEY',
-    'YOUR_FUSIONAUTH_INSTANCE_URL'
+  'YOUR_API_KEY',
+  'YOUR_FUSIONAUTH_INSTANCE_URL'
 )
 
 (1..100).each do |num|
@@ -84,8 +84,8 @@ You'll now have 101 Applications, at least, since the FusionAuth admin UI is als
 require 'fusionauth/fusionauth_client'
 
 client = FusionAuth::FusionAuthClient.new(
-    'YOUR_API_KEY',
-    'YOUR_FUSIONAUTH_INSTANCE_URL'
+  'YOUR_API_KEY',
+  'YOUR_FUSIONAUTH_INSTANCE_URL'
 )
 
 properties = { 
@@ -114,8 +114,8 @@ Finally, paginate through the applications. First you will find the total number
 require 'fusionauth/fusionauth_client'
 
 client = FusionAuth::FusionAuthClient.new(
-    'YOUR_API_KEY',
-    'YOUR_FUSIONAUTH_INSTANCE_URL'
+  'YOUR_API_KEY',
+  'YOUR_FUSIONAUTH_INSTANCE_URL'
 )
 
 find_total= { 
@@ -141,7 +141,7 @@ while total_seen < total do
 
   response = client.search_applications(properties)
   curr_batch_size = response.success_response.applications.size
-  puts "processing another #{curr_batch_size} applications"
+  puts "processing another #{curr_batch_size} applications..."
   total_seen += curr_batch_size 
 end
 ```
@@ -159,9 +159,9 @@ However, a key part of the Authorization Code grant is the exchange of the Autho
 
 But we wanted to make this even easier. For some users, setting up server side code is a hassle.
 
-FusionAuth now offers a React SDK which communicates with endpoints managed by FusionAuth which will take care of the code exchange. They'll set the access token as an `HTTPOnly`, `Secure` cookie, as well as a refresh token if that is requested.
+FusionAuth now offers a React SDK which communicates with endpoints managed by FusionAuth which will take care of the code exchange. They'll set the access token as an `HTTPOnly`, `Secure` cookie, as well as a refresh token as a cookie if requested.
 
-The endpoints the SDK calls are documented. You can create your own custom code at the same URLs if you'd prefer, but FusionAuth can be a one-stop shop for your authentication needs, no server side code needed.
+The endpoints the SDK calls are documented. You can create your own custom code at the same URLs if you'd prefer, but FusionAuth is a one-stop shop for your authentication needs, no server side code needed.
 
 Check out the [React SDK here](https://github.com/FusionAuth/fusionauth-react-sdk/). Future SDKs [are planned](https://github.com/FusionAuth/fusionauth-issues/issues/2078) as well.
 
