@@ -102,9 +102,7 @@ Settling down with a cross-platform gaming auth server is tricky. Your auth serv
 
 FusionAuth does that and more. Gaming accounts are valuable since players invest money into buying in-game merchandise and services. FusionAuth implements a powerful [hashing scheme](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy) to ensure that user accounts are secure. With its identity-linking strategies for a variety of identity providers, you can achieve seamless integration of your users’ accounts across multiple platforms.
 
-Installing FusionAuth is painless, and it can all be run from a simple cURL request (or PowerShell command in Windows).
-
-FusionAuth provides [multiple example requests](/docs/v1/tech/5-minute-setup-guide#1-install-fusionauth) to install it. 
+Installing FusionAuth is painless, and it can all be run from a simple cURL request (or PowerShell command in Windows). FusionAuth provides [multiple installation methods](/docs/v1/tech/installation-guide/).
 
 This guide will assume you are using [Fast Path](/docs/v1/tech/installation-guide/fast-path), which requires a previously installed MySQL or PostgreSQL database.
 
@@ -199,7 +197,7 @@ You are going to build a [Flutter](https://flutter.dev/) cross-platform game for
 
 FusionAuth offers multiple authentication options for you to consider when building your application. These include:
 
-- The [hosted login pages](/docs/v1/tech/core-concepts/integrations#hosted-login-pages) forms where FusionAuth hosts the registration forms and pages.
+- The [hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages) where FusionAuth hosts the registration forms and pages.
 - An [API-based](/docs/v1/tech/apis/users) approach to manage users.
 - [Third-party login](/docs/v1/tech/identity-providers/) using identity providers such as Google.
 

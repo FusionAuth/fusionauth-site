@@ -50,30 +50,85 @@ These concepts are critical to application security.
 
 If you are utilizing the JWT to authorize a user to your application, you must do more than just ensure the JWT has a valid signature and is not expired. You must also ensure the JWT has provided adequate claims to the user's authorization.
 
-If you enable "Require registration" on an application, the JWT won't be provided until the user is registered for this application.
+[NOTE.note]
+====
+Checking the JWT signature and expiration are only a part of the story. Make sure you check the `roles` and `applicationId` claim to ensure the user is properly registered for the application they are trying to access.
 
-*Checking the JWT signature and expiration are only a part of the story.*
+This check must be done by your web, mobile or native app.
+====
+
+If you enable [field]#Require registration# on an application, a JWT won't be provided until the user is registered for this application if you are using the hosted login pages.
 
 The `aud` claim identifies the context of the request, in other words who is this JWT for: a Payroll application, a mobile application, etc. The presence of the `applicationId` and `roles` claims identifies the User's registration (authorization) and access (roles) to the requested resource identified by the `aud` claim.
 
 === An Example
 
-Say Bob has access to applications A, B and C configured in FusionAuth, and Lisa has access to applications C, D and E. Assume there's also an application F to which neither Bob nor Lisa is registered.  Note that for this example to work all the applications A thru F have "Require registration" disabled (set to `false`).
+Say you have three people trying to log in:
+
+* Richard
+* Monica
+* Erlich
+
+The following Applications are configured in FusionAuth:
+
+* Pied Piper
+* Pied Piper Video Chat
+* Raviga Notes
+* Raviga Payroll
+* Hooli Jobs
 
 You grant access to a particular application with a link:/docs/v1/tech/core-concepts/registrations[User Registration]. Once registered, a user can have 0 or more link:/docs/v1/tech/core-concepts/roles[roles] as defined by the link:/docs/v1/tech/core-concepts/applications[Application].
 
-Login results for Bob:
-```
-Bob --> Login to Application (A, B or C) --> [200] Authenticated
-Bob --> Login to Application (D, E or F) --> [202] Authenticated not registered
-```
+Richard is registered for Pied Piper and Pied Piper Video Chat. Monica is registered for Pied Piper, Raviga Notes, and Raviga Payroll. Neither Richard nor Monica is registered for Hooli Jobs. Erlich does not have an account.
 
-Login results for Lisa:
-```
-Lisa --> Login to Application (A, B or F) --> [202] Authenticated not registered
-Lisa --> Login to Application (C, D or E) --> [200] Authenticated
-```
+What happens when each user tries to log in to a particular application?
 
-In addition to this status code, the JWT that is returned will not contain the `applicationId` or the `roles` claim because the user is not authorized for the requested resource.
+.Login Results
+[cols="1,1,1,1,1,1,1"]
+|===
+| Application | Richard Authenticated | Richard Authorized | Monica Authenticated | Monica Authorized | Erlich Authenticated | Erlich Authorized
 
-In other words, FusionAuth has successfully authenticated the user because they exist, and the credentials they provided were correct. But if the user is not authorized to the Application, a `202` will be returned and the access token (JWT) returned will not contain authorization for the resource.
+|Pied Piper
+|Yes
+|Yes
+|Yes
+|Yes
+|No
+|No
+
+|Pied Piper Video Chat
+|Yes
+|Yes
+|Yes
+|No
+|No
+|No
+
+|Raviga Notes
+|Yes
+|No
+|Yes
+|Yes
+|No
+|No
+
+|Raviga Payroll
+|Yes
+|No
+|Yes
+|Yes
+|No
+|No
+
+|Hooli Jobs
+|Yes
+|No
+|Yes
+|No
+|No
+|No
+
+|===
+
+FusionAuth successfully authenticates Richard and Monica because they exist, and the credentials they provided were correct. But if a user is not authorized to the Application, the access token (JWT) returned will not contain authorization (`applicationId`, `roles`) claims for the resource.
+

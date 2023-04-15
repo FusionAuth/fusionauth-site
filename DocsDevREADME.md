@@ -1,7 +1,11 @@
 ## Documentation Style Guidelines
 
 Here are some guidelines to follow when writing documentation (everything under `/site/docs`) as well as the blog (`_posts`).
-
+- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
+  For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
+- If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
+ `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
+- From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` when describing a unique identifier
 - Use `logged in` instead of `logged-in`
@@ -46,6 +50,7 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 - If you are including a file in the docs which uses asciidoctor, do not prepend the include file path with `/`. 
   - If it is a top level doc, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
   - If it is an included doc (that is, one that starts with `_`), use the relative path: `include::../../../../src/json/scim/enterpriseuser-create-request.json[]` or `include::_scim-customizable-schema-shared.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
+  - If you accidentally do this, you can find the files where the issue is by running: `bundle exec jekyll build --verbose > outfile 2>&1` and then looking through `outfile` for the `WARNING`. The file just before the warning line will be the one with an issue.
 - If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers: `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]` or `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=clientIdSecret]`
 
 ### For API docs
@@ -127,7 +132,7 @@ For blog posts:
 -- tutorial: a tutorial on how to do something
 -- announcement: a press release or release announcement
 -- feature: a post about a particular feature
-
+- All captions should be one or more complete sentences.
 
 ## Lists
 
@@ -158,6 +163,7 @@ For blog posts:
 - server-side
 - client-side
 - curl
+- self-service
 
 ## Words to avoid
 
@@ -242,6 +248,7 @@ end tell
 ## Screenshot Standards
 
 - Use light mode when capturing screenshots
+- In macOS **System Settings > Appearance** make sure _Allow wallpaper tinting in windows_ is turned _off_
 - Make sure you set your `fusionauth-app.runtime-mode` to `production` unless documenting a feature only available in `development` mode.
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
@@ -390,3 +397,43 @@ Content:	`site/learn/expert-advice/security` # or other top level category 
 Images: `site/assets/img/advice/<subdir>`
 Stamps: `site/assets/img/stamps`
 Diagrams: `site/_diagrams/learn/expert-advice/<subdir>`
+
+## Documentation self-review checklist
+
+Prior to requesting review on a PR, please complete the following checklist.
+
+### API documentation
+
+1. If you added or changed an API parameter, ensure you added a version flag.
+2. When APIs have default values, this is only documented on the request. Do not add it to the response.
+3. When adding or modifying request or response JSON examples, try to maintain themes and consistently.
+   - If the create request has a property of `"name": "My application"`, the response should contain this same value.
+   - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
+4. When referencing a field in the description of another field use this syntax: `[field]#name#`.
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
+6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
+
+#### Non API documentation
+1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
+   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
+   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
+2. If you are referring to a navigatable element, use `[breadcrumb]#Tenants#` or `[breadcrumb]#Tenants -> Your Tenant#`. In other words, use it even for singular elements.
+3. If you are referring to a field the user can fill out, use `[field]#Authorized Redirect URLs#`.
+4. If you are referring to any other UI element, such as a submit button or read-only name, use `[uielement]#Submit#` or (on the application view screen) `[uielement]#Introspect endpoint#`.
+
+
+## Blog post review checklist
+
+1. Assign the relevant issue to yourself.
+1. Work through the blog post as is. Make any updates you need to ensure the instructions work. **Test every instruction, please.**
+1. Use the latest released, supported versions of the technology and underlying technologies.
+1. Update any screenshots of the FusionAuth admin UI or resulting technology.
+1. If there are any videos, remove those from the blog post if the UX has changed as a result of this review.
+1. Update the example app in GitHub, if needed. If the technology is on an entirely different version, create a new example app. For instance, if the example uses React 16, and the latest version of React is React 18, don't try to update the existing example app. Instead, create a new repo with the name suffix `fusionauth-example-react-18`.
+1. If the existing example app uses a technology that is no longer supported, note that so it can be removed from the FusionAuth site, a link in the repo to the supported example app can be added, and the old repo archived.
+1. Update the example app URL and/or description in `site/_data/exampleapps.yaml`. If you created a new example app in GitHub, update the README of the old one to point to the new one, and archive the old one.
+1. Add an updated_date to the blog posts front matter: `updated_date: 2023-03-16`
+1. If there is an old blog post, add a link to the new blog post or docs page. See https://fusionauth.io/blog/2020/12/14/how-to-securely-implement-oauth-rails for an example of the callout which points to new doc.
+1. Update the quickstart page (`/docs/quickstarts/index.html`) to point to the updated blog post and remove the `coming-soon` class.
+1. Ask for review.
+1. Close out the issue after merging.
