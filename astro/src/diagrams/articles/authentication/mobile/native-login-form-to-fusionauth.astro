@@ -1,22 +1,48 @@
-@startuml
-  !include ../../../../_config.plantuml
-  !include ../_mobile-participants.plantuml
-  !include ../_mobile-intro.plantuml
-  !include _initialize.plantuml
+---
+import { Diagram, type Config } from "astro-diagram";
+import * as include from "./_includes.astro";
 
-  == Login ==
-  Mobile->FusionAuth : POST /api/login
-  FusionAuth->Mobile : (User, Refresh Token and JWT)
+const config = {
+  boxMargin: 30,
+  messageMargin: 5000,
+  mirrorActors: true,
+  noteMargin: 5,
+  wrap: true
+} as Config;
 
-  !include _shopping-cart-refresh-jwt-load.plantuml
+const oauth = `
+sequenceDiagram
+  autonumber
+  ${include.participants}
+  ${include.intro}
 
-  !include _shopping-cart-refresh-jwt-refresh.plantuml
+  Note over Mobile,Hacker: Login (inside Mobile App)
+  Mobile->>FusionAuth : POST /api/login
+  FusionAuth->>Mobile : (User, Refresh Token and JWT)
 
-  !include _shopping-cart-refresh-jwt-relogin.plantuml
+  ${include.shoppingCartLoad}
+  
+  ${include.shoppingCartRefresh}
+  
+  ${include.shoppingCartRelogin}
+  
+  ${include.mobileAttack}
+  
+  ${include.stolenJWT}
+  
+  ${include.stolenRefresh}
+`;
+---
 
-  !include ../_mobile-attack-vectors.plantuml
+<style is:global>
+    #diagram g:nth-child(17) .note, #diagram g:nth-child(19) .note {
+        fill: #fecaca !important;
+        stroke: #f87171 !important;
+    }
+    .dark #diagram g:nth-child(17) .note, .dark #diagram g:nth-child(19) .note {
+        fill: #f87171 !important;
+        stroke: #fecaca !important;
+    }
+</style>
 
-  !include _stolen-refresh-token-refresh-jwt.plantuml
-
-  !include _stolen-jwt-refresh-jwt.plantuml
-@enduml
+<Diagram code={oauth} config={config}/>

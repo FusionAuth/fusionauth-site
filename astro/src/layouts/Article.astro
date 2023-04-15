@@ -55,12 +55,36 @@ const sections = [
     "color": "indigo"
   }
 ];
+
 let items = [];
 let sideMenu = [];
 sideMenu.push({
   "title": section,
   "items": items
-})
+});
+
+// Handle the login workflow sub-menus
+let mobileItems = [];
+let spaItems = [];
+let webappItems = [];
+if (Astro.url.pathname.startsWith("/articles/authentication/login-authentication-workflows") ||
+    Astro.url.pathname.startsWith("/articles/authentication/mobile") ||
+    Astro.url.pathname.startsWith("/articles/authentication/spa") ||
+    Astro.url.pathname.startsWith("/articles/authentication/webapp")) {
+  sideMenu.push({
+    "title": "Mobile Workflows",
+    "items": mobileItems
+  });
+  sideMenu.push({
+    "title": "Single-Page App Workflows",
+    "items": spaItems
+  });
+  sideMenu.push({
+    "title": "WebApp Workflows",
+    "items": webappItems
+  });
+}
+
 const articles = await getCollection("articles");
 for (const article of articles) {
   if (article.data.section === section && !article.data.excludeFromIndex) {
@@ -68,9 +92,29 @@ for (const article of articles) {
       "title": article.data.title,
       "path": `/articles/${article.slug}`
     });
+  } else if (article.slug.startsWith("authentication/mobile") ||
+      article.slug.startsWith("authentication/spa") ||
+      article.slug.startsWith("authentication/webapp")) {
+
+    // Figure out which items list this login workflow goes into
+    if (article.slug.startsWith("authentication/mobile")) {
+      mobileItems.push({
+        "title": article.data.title,
+        "path": `/articles/${article.slug}`
+      });
+    } else if (article.slug.startsWith("authentication/spa")) {
+      spaItems.push({
+        "title": article.data.title,
+        "path": `/articles/${article.slug}`
+      });
+    } else {
+      webappItems.push({
+        "title": article.data.title,
+        "path": `/articles/${article.slug}`
+      });
+    }
   }
 }
-items.sort((one, two) => one.title < two.title);
 ---
 <Default sections={sections} sideMenu={sideMenu} {...Astro.props}>
   <slot/>
