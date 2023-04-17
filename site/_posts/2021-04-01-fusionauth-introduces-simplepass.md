@@ -5,7 +5,7 @@ description: Why enter a password when the system can do it for you?
 author: Dan Moore
 image: blogs/simplepass/fusionauth-releases-simplepass-header-image.png
 category: article
-tag: april-fools passwords
+tags: april-fools passwords
 excerpt_separator: "<!--more-->"
 ---
 

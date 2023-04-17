@@ -38,7 +38,7 @@ during the next authentication attempt. Value must be greater than 0.
 +
 When this value is not defined, the value defined by [field]#tenant.externalIdentifierConfiguration.twoFactorTrustIdTimeToLiveInSeconds# is utilized. When this value is defined it will override the tenant configured value.
 +
-This configuration is only utilized when [field]#application.multiFactorConfiguration.loginPolicy# is set to `Enabled`.
+This configuration is only utilized when [field]#application.multiFactorConfiguration.loginPolicy# is enabled.
 
 [field]#application.formConfiguration.selfServiceFormId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.26.0#::
 The unique Id of the form to to enable authenticated users to manage their profile on the account page.
@@ -114,6 +114,14 @@ The Id of the Lambda that will be invoked when an Id token is generated for this
 [field]#application.lambdaConfiguration.samlv2PopulateId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.6.0#::
 The Id of the Lambda that will be invoked when a a SAML response is generated during a SAML authentication request.
 
+[field]#application.lambdaConfiguration.selfServiceRegistrationValidationId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.43.0#::
+The unique Id of the lambda that will be used to perform additional validation on registration form steps.
++
+:premium_feature: custom forms
+include::../shared/_premium-edition-blurb-api.adoc[]
++
+:premium_feature!:
+
 [field]#application.loginConfiguration.allowTokenRefresh# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.5.0#::
 Indicates if a JWT may be refreshed using a Refresh Token for this application. This configuration is separate from issuing new Refresh Tokens which is controlled by the `generateRefreshTokens` parameter. This configuration indicates specifically if an existing Refresh Token may be used to request a new JWT using the link:/docs/v1/tech/apis/jwt#refresh-a-jwt[Refresh API].
 +
@@ -133,14 +141,15 @@ If you do not intend to use the Login API, or will only be calling this API from
 The Id of the email template that is used when notifying a user to complete a multi-factor authentication request.
 
 [field]#application.multiFactorConfiguration.loginPolicy# [type]#[String]# [optional]#Optional# [since]#Available since 1.37.0#::
-When enabled and a user has one or more two-factor methods configured, the user will be required to complete a two-factor challenge during login. When disabled, even when a user has configured one or more two-factor methods, the user will not be required to complete a two-factor challenge during login.
+When enabled and a user has one or more two-factor methods configured, the user will be required to complete a two-factor challenge during login. When disabled, even when a user has configured one or more two-factor methods, the user will not be required to complete a two-factor challenge during login. When required, the user will be required to complete a two-factor challenge during login.
 +
-+ When configured, this value overrides the value configured by the [field]#tenant.multiFactorConfiguration.loginPolicy#.
+When configured, this value overrides the value configured by the [field]#tenant.multiFactorConfiguration.loginPolicy#.
 +
 Supported values include:
 +
-* `Enabled` - Require a two-factor challenge during login.
+* `Enabled` - Require a two-factor challenge during login when an eligible method is available.
 * `Disabled` - Do not require a two-factor challenge during login.
+* `Required` - Require a two-factor challenge during login. A user will be required to configure 2FA if no eligible methods are available. [since]#Available since 1.42.0#
 
 [field]#application.multiFactorConfiguration.sms.templateId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.26.0#::
 The Id of the SMS template that is used when notifying a user to complete a multi-factor authentication request.
@@ -166,13 +175,19 @@ For improved security, all FusionAuth hosted login pages add an HTTP response he
 +
 Examples of valid authorized origin URIs:
 +
-* \https://example.com
-* com.myApp://example
-* com.myApp:/example
+ * \https://example.com
+ * com.myApp://example
+ * com.myApp:/example
 +
 [since]#Available since 1.32.0#
 +
 You may now use URLs that do not begin with `http` to support native application origins. Prior to this version the value will be validated to begin with `http`. This also includes authorized origins that use a single slash to denote there is no naming authority for the scheme. Prior to this version a URL such as `com.myApp:/example` would fail validation as an invalid URL.
++
+:validation_policy_field_name: application.oauthConfiguration.authorizedURLValidationPolicy
+:validation_policy_wildcard: pass:quotes[`AllowWildcards`]
+include::../shared/_oauth-wildcard-usage.adoc[]
+:validation_policy_wildcard!:
+:validation_policy_field_name!:
 
 
 [field]#application.oauthConfiguration.authorizedRedirectURLs# [type]#[Array<String>]# [optional]#Optional#::
@@ -180,9 +195,9 @@ An array of URLs that are the authorized redirect URLs for FusionAuth OAuth.
 +
 Examples of valid redirect URIs:
 +
-* \https://example.com/redirect
-* com.myApp://redirect
-* com.myApp:/redirect
+ * \https://example.com/redirect
+ * com.myApp://redirect
+ * com.myApp:/redirect
 +
 [since]#Available since 1.7.0#
 +
@@ -191,6 +206,20 @@ You may now use URLs that do not begin with `http` to support native application
 [since]#Available since 1.12.0#
 +
 You may now use URLs for application redirects that use a single slash to denote there is no naming authority for the scheme. Prior to this version a URL such as `com.myApp:/redirect` would fail validation as in invalid URL.
++
+:validation_policy_field_name: application.oauthConfiguration.authorizedURLValidationPolicy
+:validation_policy_wildcard: pass:quotes[`AllowWildcards`]
+include::../shared/_oauth-wildcard-usage.adoc[]
+:validation_policy_wildcard!:
+:validation_policy_field_name!:
+
+[field]#application.oauthConfiguration.authorizedURLValidationPolicy# [type]#String# [optional]#Optional# [default]#Defaults to `ExactMatch`# [since]#Available since 1.43.0#::
+Controls the validation policy for [field]#application.oauthConfiguration.authorizedOriginURLs# and [field]#application.oauthConfiguration.authorizedRedirectURLs#.
++
+The possible values are:
++
+ * `ExactMatch` - Only the configured values that do not contain wildcards are considered for validation. Values during OAuth 2.0 workflows must match a configured value exactly.
+ * `AllowWildcards` - Configured values with and without wildcards are considered for validation. Values during OAuth 2.0 workflows can be matched against wildcard patterns or exactly match a configured value.
 
 [field]#application.oauthConfiguration.clientAuthenticationPolicy# [type]#[String]# [optional]#Optional# [default]#Defaults to `Required`# [since]#Available since 1.28.0#::
 Determines the client authentication requirements for the OAuth 2.0 Token endpoint.
@@ -510,9 +539,9 @@ include::../shared/_advanced-edition-blurb-api.adoc[]
 [field]#sourceApplicationId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.43.0#::
 The optional Id of an existing Application from which a copy will be made.
 +
-A unique [field]#application.name# is required. If present, the [field]#application.id# value will used for the new Application. If no Id is specified, a secure random UUID will be generated and used.
+A unique [field]#application.name# is required.
 +
-The Oauth configuration is cleared.  Roles are copied with new ids. All other values will be copied from the source Application to the new Application.
+The `oauthConfiguration.clientSecret` and each role Id will be cleared so new values can be generated. All other values will be copied from the source Application.
 
 [field]#webhookIds# [type]#[Array<UUID>]# [optional]#Optional# [deprecated]#Deprecated#::
 An array of Webhook Ids. For Webhooks that are not already configured for All Applications, specifying an Id on this request will indicate the associated Webhook should handle events for this application.
