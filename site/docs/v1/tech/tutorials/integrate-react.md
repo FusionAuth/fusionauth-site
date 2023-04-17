@@ -1,61 +1,47 @@
 ---
 layout: doc
-title: Integrate Your Java Spring Application With FusionAuth
-description: Integrate your Java Spring application with FusionAuth
+title: Integrate Your React Application With FusionAuth
+description: Integrate your React application with FusionAuth
 navcategory: getting-started
 ---
 
-:page-liquid:
+== Integrate Your React Application With FusionAuth
 
-:prequisites: Java and Maven
-:technology: Java Spring
-:language: Java
+TBD intro
 
-== Integrate Your {technology} Application With FusionAuth
-
-include::docs/v1/tech/tutorials/_integrate-intro.adoc[]
-
-++++
 {% plantuml source: _diagrams/docs/login-before.plantuml, alt: "Login before FusionAuth." %}
-++++
 
 And here's the same application login flow when FusionAuth is introduced.
-++++
+
 {% plantuml source: _diagrams/docs/login-after.plantuml, alt: "Login with FusionAuth." %}
-++++
 
 
 == Prerequisites
 
-include::docs/v1/tech/tutorials/_integrate-prerequisites.adoc[]
+TBD prequisites
 
 == Download and Install FusionAuth
 
-include::docs/v1/tech/tutorials/_integrate-install-fusionauth.adoc[]
+TBD download and install
 
 == Create a User and an API Key
 
-include::docs/v1/tech/tutorials/_integrate-add-user.adoc[]
+TBD create a user and API key
 
 == Configure FusionAuth
 
-Next, you need to set up FusionAuth.
-This can be done in different ways, but we’re going to use the {language} client library.
+Next, you need to set up FusionAuth. This can be done in different ways, but we’re going to use the Typescript client library.
 The below instructions use maven from the command line, but you can use the client library with an IDE of your preference as well.
 
 First, make a directory:
 
-[source,shell]
-----
+```shell
 mkdir setup-fusionauth && cd setup-fusionauth
-----
+```
 
-Now, copy and paste the following file into `pom.xml`.
 
-[source,xml,title="Your FusionAuth configuration pom.xml"]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/java/pom.xml[]
-----
+Now, copy and paste the following file into `package.json`.
+
 
 Then make the directory for your setup class:
 
@@ -84,7 +70,6 @@ mvn compile && mvn exec:java \
 
 If you want, you can http://localhost:9011[login to your instance] and
 examine the new application configuration the script created for you.
-
 
 == Create Your :technology: Application
 
