@@ -3,7 +3,7 @@ layout: advice
 title: How Single Sign-on Works And Why You Should Care
 description: Integrating single sign-on (SSO) into your applications means your users can access all your applications with one set of credentials, such as a username and password, a magic link, or a WebAuthn passkey.
 author: Dan Moore
-image: advice/vendor-lockin/expert-advice-avoiding-authentication-system-lock-in-header-image.png
+image: advice/how-sso-works/how-sso-works-header.png
 category: Authentication
 date: 2023-02-24
 dateModified: 2023-02-24
