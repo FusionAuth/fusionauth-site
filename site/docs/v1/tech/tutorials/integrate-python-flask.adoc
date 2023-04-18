@@ -21,7 +21,7 @@ Here's a typical application login flow before integrating FusionAuth into your 
 {% plantuml source: _diagrams/docs/login-before.plantuml, alt: "Login before FusionAuth." %}
 ++++
 
-And here's the same application login flow when FusionAuth is introduced.
+Here's the same application login flow when FusionAuth is introduced.
 ++++
 {% plantuml source: _diagrams/docs/login-after.plantuml, alt: "Login with FusionAuth." %}
 ++++
@@ -30,7 +30,7 @@ And here's the same application login flow when FusionAuth is introduced.
 
 For this tutorial, you’ll need to have {prequisites} installed. You'll also need Docker, since that is how you'll install FusionAuth.
 
-The commands below are for macOS, but are limited to `mkdir` and `cd`.
+The commands below are for macOS and Linux, but are limited to `mkdir` and `cd`.
 
 == Download and Install FusionAuth
 
@@ -55,22 +55,20 @@ docker-compose up -d
 Next, http://localhost:9011[log into your FusionAuth instance].
 You’ll need to set up a user and a password, as well as accept the terms and conditions. 
 
-Then, you’re at the FusionAuth admin UI.
-This lets you configure FusionAuth manually.
-But for this tutorial, you're going to create an API key and then you’ll configure FusionAuth using our {language} client library.
+After logging in, you’ll be redirected to the FusionAuth admin UI. This lets you configure FusionAuth manually. However, for this tutorial, you're going to create an API key and then you’ll configure FusionAuth via it's API using our {language} client library.
 
 Navigate to [breadcrumb]#Settings -> API Keys#. Click the [uielement]#+# button to add a new API Key.
+
 Copy the value of the [field]#Key# field and then save the key.
-It might be a value like `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`.
+It should be a value similar to `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`. 
 
 Doing so creates an API key that can be used for any FusionAuth API call.
-Save that key value off as you’ll be using it later.
+Note that key value as you’ll be using it later.
 
 == Configure FusionAuth
 
 Next, you need to set up FusionAuth.
-This can be done in different ways, but we’re going to use the {language} client library.
-The below instructions use maven from the command line, but you can use the client library with an IDE of your preference as well.
+This can be done in different ways, but we’re going to use the {language} client library. The below instructions use maven from the command line, but you can use the client library with an IDE of your preference as well.
 
 First, make a directory:
 
@@ -78,9 +76,6 @@ First, make a directory:
 ----
 mkdir setup-fusionauth && cd setup-fusionauth
 ----
-
-If you want, you can http://localhost:9011[login to your instance] and
-examine the new application configuration the script created for you after you are done.
 
 Now, cut and paste the following file into `requirements.txt`.
 
@@ -90,7 +85,7 @@ include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-
 ----
 
 Then copy and paste the following code into the `setup.py` file.
-// I edited the redirect and logout urls to match the Flask defaults, so I used a source block instead of a link.
+// TODO: This might need to be added to `https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/python/` as setup-flask.py. Change from `setup.py`:  edited the redirect and logout urls to match the Flask defaults
 [source,python]
 ----
 from fusionauth.fusionauth_client import FusionAuthClient
@@ -171,11 +166,9 @@ if not client_response.was_successful():
   sys.exit("couldn't register user "+ str(client_response.error_response))
 ----
 
-//not sure if I should go into more detail here about the specific errors I encountered when running the script on https://fusionauth.ritza.co. Might be helpful, but seems slightly out-of-scope.
 Then, you can run the setup script. Please note that this setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than Default. In order to follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. Refer to the https://fusionauth.io/docs/v1/tech/client-libraries/python[python client library] documentation for more information.
 
-You'll use `venv` to keep your workspace clean. This will create FusionAuth
-configuration for your {technology} application.
+You'll use `venv` to keep your workspace clean.
 
 [source,shell]
 ----
@@ -200,6 +193,8 @@ python setup.py
 ----
 
 This configures FusionAuth for your {technology} application.
+
+If you want, you can http://localhost:9011[login to your instance] and examine the new application configuration the script created for you after you are done.
 
 == Create Your {technology} Application
 
@@ -239,7 +234,7 @@ ISSUER=http://localhost:9011
 APP_SECRET_KEY=my_super_secret_key_that_needs_to_be_changed
 ----
 
-You can now start writing the code for your Flask webserver. Create a new file called `server.py` and add the following import statements into it:
+You can now start writing the code for your Flask application. Create a new file called `server.py` and add the following import statements into it:
 
 [source,python]
 ----
@@ -252,7 +247,7 @@ from dotenv import find_dotenv, load_dotenv
 from flask import Flask, redirect, render_template, session, url_for
 ----
 
-The following code uses `json` to surface the user's OpenID profile, `os.environ`, `dotenv.find_dotenv`, and `dotenv.load_dontenv` to load environment variables, `urllib.parse.quote_plus` and `urllib.parse.urlencode` to build the logout URL, `authlib.integrations.flask_client.OAuth` to handle OIDC verification, and various `flask` modules to facilitate the app's functionality.
+The following code uses `json` to process data from the FusionAuth API, `os.environ`, `dotenv.find_dotenv`, and `dotenv.load_dontenv` to load environment variables, `urllib.parse.quote_plus` and `urllib.parse.urlencode` to build the logout URL, `authlib.integrations.flask_client.OAuth` to handle OIDC verification, and various `flask` modules to facilitate the app's functionality.
 
 Next, locate the `.env` file and retrieve the `APP_SECRET_KEY` environment variable:
 
@@ -285,7 +280,7 @@ oauth.register(
 ----
 
 Now, you can start adding service routes. 
-First, add the `login` route, which uses the new FusionAuth registration to authorize a redirect to the callback URL.
+First, add the `login` route, which redirects to FusionAuth to handle user authentication:
 
 [source,python]
 ----
@@ -296,7 +291,7 @@ def login():
     )
 ----
 
-Next, add the `callback` route, which surfaces the FusionAuth login screen and uses the information supplied to it to generate an access token.
+Next, add the `callback` route, which is called by FusionAuth after a login and uses the information supplied to it to generate an access token.
 
 [source,python]
 ----
@@ -307,7 +302,7 @@ def callback():
     return redirect("/")
 ----
 
-Then, add a `logout` route, which simply clears the session and redirects the user to the base URL.
+Then, add a `logout` route, which simply clears the session and redirects the user to the base URL. This route will be called by FusionAuth after a successful logout from FusionAuth. 
 
 [source,python]
 ----
@@ -340,71 +335,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=env.get("PORT", 3000))
 ----
 
-With that, the server is finished.
-
-The full `server.py` file contents are as follows.
-[source,python]
-----
-import json
-from os import environ as env
-from urllib.parse import quote_plus, urlencode
-
-from authlib.integrations.flask_client import OAuth
-from dotenv import find_dotenv, load_dotenv
-from flask import Flask, redirect, render_template, session, url_for
-
-ENV_FILE = find_dotenv()
-if ENV_FILE:
-    load_dotenv(ENV_FILE)
-
-app = Flask(__name__)
-app.secret_key = env.get("APP_SECRET_KEY")
-
-oauth = OAuth(app)
-
-oauth.register(
-    "FusionAuth",
-    client_id=env.get("CLIENT_ID"),
-    client_secret=env.get("CLIENT_SECRET"),
-    client_kwargs={
-        "scope": "openid profile email",
-        'code_challenge_method': 'S256' # This enables PKCE
-    },
-    server_metadata_url=f'{env.get("ISSUER")}/.well-known/openid-configuration'
-)
-
-@app.route("/login")
-def login():
-    return oauth.FusionAuth.authorize_redirect(
-        redirect_uri=url_for("callback", _external=True)
-    )
-
-@app.route("/callback", methods=["GET", "POST"])
-def callback():
-    token = oauth.FusionAuth.authorize_access_token()
-    session["user"] = token
-    return redirect("/")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
-
-@app.route("/")
-def home():
-    logout = env.get("ISSUER") + "/oauth2/logout?" + urlencode({"client_id": env.get("CLIENT_ID")},quote_via=quote_plus)
-
-    return render_template(
-        "home.html",
-        session=session.get('user'),
-        profile=json.dumps(session.get('user'), indent=2),
-        logoutUrl=logout)
-    
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=env.get("PORT", 3000))
-----
-
-Now create a new folder called `templates` and navigate into it
+The route code is completed. Now create a new folder called `templates` and navigate into it
 
 [source,shell]
 ----
@@ -490,7 +421,7 @@ Open an incognito window and navigate to `http://127.0.0.1:5000`.
 
 image::integrations/flask-integration/flask-homepage.png
 
-Then hit `login`.
+Then click `login`.
 
 image::integrations/flask-integration/flask-login.png
 
@@ -499,7 +430,7 @@ If successful, you should see your OpenID profile information.
 
 image::integrations/flask-integration/flask-profile.png
 
-Now, hit `logout`. 
+Now, click `logout`. 
 If successful, you should be brought right back to the `Hello Guest` homepage.
 
 The full code for this guide can be found https://github.com/Blueper/flask-integration-guide[here].
