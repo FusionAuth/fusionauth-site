@@ -42,178 +42,57 @@ mkdir setup-fusionauth && cd setup-fusionauth
 
 Now, copy and paste the following file into `package.json`.
 
+```javascript
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/package.json %}
+```
 
-Then make the directory for your setup class:
+Then copy and paste the following file into `setup.js`.
 
-[source,shell]
-----
-mkdir -p src/main/java/io/fusionauth/example
-----
+```javascript
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
+```
 
-Then copy and paste the following code into the
-`src/main/java/io/fusionauth/example/Setup.java` file.
+Next, install the dependencies.
 
-[source,java]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/java/src/main/java/io/fusionauth/example/Setup.java[]
-----
+```shell
+npm install
+```
 
-Then, you can run the setup class. This will create FusionAuth
-configuration for your Spring application.
+Then, you can run the setup class. This will create FusionAuth configuration for your React application.
 
-[source,shell]
-----
-mvn compile && mvn exec:java \
-  -Dexec.mainClass="io.fusionauth.example.Setup" \
-  -Dfusionauth.api.key=<your API key>
-----
+```shell
+npm run setup
+```
 
 If you want, you can http://localhost:9011[login to your instance] and
 examine the new application configuration the script created for you.
 
-== Create Your :technology: Application
+== Create Your React Application
 
-Now you are going to create a :technology: application. While this section uses a
-simple :technology: application, you can use the same configuration to
-integrate your :technology: application with FusionAuth.
+Now you are going to create a react application. While this section uses a
+simple react application, you can use the same configuration to
+integrate your react application with FusionAuth.
 
 First, make a directory:
 
 [source,shell]
 ----
-mkdir ../setup-spring && cd ../setup-spring
-----
-
-Then, install the following files in these locations.
-
-Put a `pom.xml` file at the top level. Here are the contents of this
-file:
-
-[source,xml,title="Your Spring pom.xml file"]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/pom.xml[]
-----
-
-Then, you need to create two directories:
-
-[source,shell]
-----
-mkdir -p src/main/resources/templates && \
-mkdir -p src/main/java/io/fusionauth/example/spring/config
-----
-
-Paste the below into `src/main/resources/application.properties`. This is mostly the OAuth configuration you need.
-
-[source,properties]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/application.properties[]
-----
-
-Then put this HTML in the `src/main/resources/templates/home.html` file.
-This is going to be the page unauthenticated users see.
-
-[source,html]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/home.html[]
-----
-
-Add this HTML in the `src/main/resources/templates/user.html` file.
-This is going to be the page authenticated users can access. This will
-only show a JSON representation of the user, but you could put other
-protected information in this page.
-
-[source,html]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/user.html[]
-----
-
-Then, you need to add the {language} files that comprise your Spring
-application. There are four:
-
-* An application startup class
-* A configuration class
-* Two controllers for the pages you added above
-
-Let’s add the startup file first. In
-`src/main/java/io/fusionauth/example/spring/FusionAuthSpringApplication.java`,
-put this code:
-
-[source,java]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/FusionAuthSpringApplication.java[]
-----
-
-Next, the configuration class. In
-`src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java`,
-put this code:
-
-[source,java]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java[]
-----
-
-Finally, create the home and user controllers which back the HTML templates above.
-
-Here’s the home controller, which should live in
-`src/main/java/io/fusionauth/example/spring/HomeController.java`,
-which should contain this code:
-
-[source,java]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/HomeController.java[]
-----
-
-Here’s the profile controller, which should live in
-`src/main/java/io/fusionauth/example/spring/UserController.java`. It
-should have this code:
-
-[source,java]
-----
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/UserController.java[]
+mkdir ../setup-react && cd ../setup-react
 ----
 
 At the end, your directory tree should look like: 
 
-[source]
-----
-├── docker-compose.yml
-├── setup-fusionauth
-│   ├── pom.xml
-│   └── src
-│       └── main
-│           └── java
-│               └── io
-│                   └── fusionauth
-│                       └── example
-│                           └── Setup.java
-└── setup-spring
-    ├── pom.xml
-    └── src
-        └── main
-            ├── java
-            │   └── io
-            │       └── fusionauth
-            │           └── example
-            │               └── spring
-            │                   ├── FusionAuthSpringApplication.java
-            │                   ├── HomeController.java
-            │                   ├── UserController.java
-            │                   └── config
-            │                       └── SecurityConfiguration.java
-            └── resources
-                ├── application.properties
-                └── templates
-                    ├── home.html
-                    └── user.html
-----
+```
+TODO TREE
 
-Once you’ve created this directory structure, you can start up the Spring application using this command: 
+```
 
-[source,shell,title="Start the application"]
-----
-mvn spring-boot:run
-----
+Once you’ve created this directory structure, you can start up the React application using this command: 
 
-You can now open up an incognito window and visit http://localhost:8080[the Spring app].
-Log in using the user you added in FusionAuth, and you’ll see a JSON output of your profile on the profile page.
+```shell
+TODO
+```
+
+You can now open up an incognito window and visit http://localhost:3000[the React app].
+Log in using the user you created when you first set up FusionAuth, and you'll... TODO
 
