@@ -16,7 +16,7 @@ In this post, we'll walk step-by-step through implementing the OAuth Authorizati
 
 {% include _callout-tip.liquid
 content=
- "This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk), currently in beta."
+ "This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk)."
 %}
 
 Our app will be able to:
