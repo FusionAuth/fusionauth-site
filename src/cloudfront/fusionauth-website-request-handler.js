@@ -126,7 +126,7 @@ var redirects = {
   '/upgrade/from-saas': '/compare'
 };
 var s3Paths = ['/direct-download', '/license'];
-var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/', '/dev-tools/'];
+var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/dev-tools/', '/how-to/'];
 
 function handler(event) {
   var request = event.request;
