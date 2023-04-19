@@ -337,12 +337,8 @@ It's always smart to leverage existing libraries as they are likely to be more s
 [source,shell]
 ----
 dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect
-dotnet add package IdentityModel.AspNetCore -v 1.0.0-rc.4.1
+dotnet add package IdentityModel.AspNetCore
 ----
-
-You'll note that unlike the link:/blog/2020/04/28/dot-net-command-line-client(command line tool), we aren't using FusionAuth client packages. We'll be protecting this page using standard OAuth and so there's no need for any FusionAuth specific API calls. While I'll be highlighting FusionAuth, you could run this code against any OAuth2 compliant server. 
-
-We specify version `1.0.0-rc.4.1` for the https://github.com/IdentityModel/IdentityModel.AspNetCore/(IdentityModel) package because it hasn't been released just yet.<todo: check accuracy> This package makes integrating with standards-based OAuth servers a snap, so we'll overlook it being not quite released.
 
 We need to protect our "Secure" page. We do this using the https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute(Authorize filter attribute) on the backing class. From `Secure.cshtml.cs`:
 
@@ -354,19 +350,6 @@ namespace setup_dotnet.Pages
     [Authorize]
     public class SecureModel : PageModel
     {
-// ...
-----
-
-<todo: maybe delete? seems to violate style guide principle of not giving the user too many options>
-We could also have added a `RazorPagesOptions` to our `Startup.cs` file, specifying which pages should be protected by an authorization call. This would be a good choice if we wanted everything centralized. Depending on the needs and size of your application, one of these choices might be better than the other.
-
-[source,csharp]
-----
-// ...
-services.AddRazorPages().AddRazorPagesOptions(options =>
-                 {
-                     options.Conventions.AuthorizePage("/Secure");
-                 });
 // ...
 ----
 
@@ -539,9 +522,6 @@ app.UseAuthentication();
 // ...
 ----
 
-<todo: tone check. Seems a bit casual>
-Wait, I thought we were preventing users from accessing certain pages? Isn't that authorization, not authentication? When we first set up the application, we didn't have any authentication scheme configured. And, in this case, we're actually prohibiting access to any anonymous user, so any authenticated user is authorized.
-
 For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of the `Configure` method. This makes it easier to see https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII(errors in the OAuth flow). But for production code, please remove it.
 
 [source,csharp]
@@ -684,57 +664,6 @@ Finally, we need to change the `Startup.cs` file to use the new cookie name.
 Great! Now you can both sign in and sign out of your application.
 
 (If you are interested, you can see the application's current code by looking at the [`add-logout` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-logout).
-
-<todo: maybe delete this entire section? Seems extraneous>
-## Checking claims
-
-You should check the claims of the token to be sure that you know that you should be consuming the token. If the token was intended for another audience, say a different application with different roles, you don't want to inadvertently provide escalated or incorrect access.
-
-First, add a `services.AddAuthorization` clause, which will check the claims of the provided token. Add it after the `JwtSecurityTokenHandler.DefaultMapInboundClaims` line. 
-
-In FusionAuth, the `aud` claim is the same as the `ClientId` or application Id. We'll check that these are the same.
-
-```csharp
-//...
-JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
-
-// Configure your policies
-services.AddAuthorization(options =>
-  options.AddPolicy("Registered", policy => policy.RequireClaim("aud", Configuration["SetupDotnet:ClientId"])));
-
-services.AddRazorPages();
-
-//...
-```
-
-Then, because the `aud` claim is by default not available, you need to add `options.ClaimActions.Remove("aud");` to the `AddOpenIdConnect` options section.
-
-```csharp
-.AddOpenIdConnect("oidc", options =>
-{
-  options.Authority = Configuration["SetupDotnet:Authority"];
-  options.ClientId = Configuration["SetupDotnet:ClientId"];
-  options.ClientSecret = Configuration["SetupDotnet:ClientSecret"];
-  options.Scope.Add("openid");
-
-  options.ClaimActions.Remove("aud");
-
-  options.ResponseType = "code";
-  options.RequireHttpsMetadata = false;
-//...
-```
-
-Finally, you can add one or more token validation parameters. These will let the framework automatically verify the audience. This is slightly duplicative of the `AddAuthorization` clause above, but this check applies everywhere, whereas the `AddAuthorization` clause can be more flexible. For instance, you could examine claims other than `aud`, such as roles, when protecting a page.
-
-```csharp
-//...
-options.RequireHttpsMetadata = false;
-options.TokenValidationParameters = new TokenValidationParameters
-{
-  ValidateAudience = true,
-  ValidAudience = Configuration["SetupDotnet:ClientId"]
-};
-```
 
 ## Conclusion
 
