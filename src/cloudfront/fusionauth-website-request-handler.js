@@ -106,7 +106,7 @@ var redirects = {
   '/learn/expert-advice/dev-tools/date-time': '/dev-tools/date-time',
   '/learn/expert-advice/dev-tools/uuid-generator': '/dev-tools/uuid-generator',
   '/learn/expert-advice/dev-tools/base64-encoder-decoder': '/dev-tools/base64-encoder-decoder',
-  '/learn/expert-advice/dev-tools/base64-encoder-decoder': '/dev-tools/base64-encoder-decoder',
+  '/learn/expert-advice/dev-tools/url-encoder-decoder': '/dev-tools/url-encoder-decoder',
   '/learn/expert-advice/identity-basics/avoid-lockin': '/learn/expert-advice/authentication/avoid-lockin',
   '/learn/expert-advice/identity-basics/common-authentication-implementation-risks': '/learn/expert-advice/authentication/common-authentication-implementation-risks',
   '/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales': '/learn/expert-advice/ciam/making-sure-your-auth-system-scales',
