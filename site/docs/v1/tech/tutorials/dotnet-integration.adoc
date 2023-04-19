@@ -1,5 +1,6 @@
 <todo: convert to md>
-<todo: enforce PascalCase>
+<todo: fix on Safari>
+<todo: host full code>
 
 ---
 layout: doc
@@ -79,7 +80,7 @@ First, create a {technology} project in a new directory like so:
 
 [source,shell]
 ----
-dotnet new console --output setup-fusionauth && cd setup-fusionauth
+dotnet new console --output SetupFusionauth && cd SetupFusionauth
 ----
 
 If you want, you can http://localhost:9011[login to your instance] and
@@ -99,7 +100,7 @@ using Newtonsoft.Json;
 using io.fusionauth.domain.oauth2;
 using io.fusionauth.domain.search;
 
-namespace setup
+namespace Setup
 {
 	class Program
 	{
@@ -238,8 +239,8 @@ First, let's create a new web application using the `dotnet` CLI and go to that 
 
 [source,shell]
 ----
-dotnet new webapp -o setup-dotnet
-cd setup-dotnet
+dotnet new webapp -o SetupDotnet
+cd SetupDotnet
 ----
 
 To see the results, we publish this application and run it. There are https://docs.microsoft.com/en-us/dotnet/core/deploying/(multiple ways of deploying an application), but publishing ensures your deployment process is repeatable. In this tutorial, you'll be building a standalone Windows 64-bit executable, but with the same codebase you can also https://learn.microsoft.com/en-us/dotnet/core/rid-catalog(build a macOS or Linux program). Here's the command to publish a standalone executable you could deploy behind a proxy like nginx:
@@ -256,7 +257,7 @@ Then start up the executable.
 bin/Debug/netcoreapp3.1/win-x64/publish/setup-dotnet.exe
 ----
 
-<todo: image>
+{% include _image.liquid src="/assets/img/docs/dotnet-welcome-page.png" alt="Home page for .Net app" class="img-fluid" figure=false %}
 
 You can hit `control-C` to exit out of this application. 
 
@@ -286,7 +287,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 
-namespace setup_dotnet.Pages
+namespace SetupDotnet.Pages
 {
     public class SecureModel : PageModel
     {
@@ -324,7 +325,7 @@ dotnet publish -r win-x64 && bin/Debug/netcoreapp3.1/win-x64/publish/setup-dotne
 
 Visit `http://localhost:5000` and view your new page: click on "Secure".
 
-<todo: image>
+{% include _image.liquid src="/assets/img/docs/dotnet-secure-page.png" alt="Home page for .Net app" class="img-fluid" figure=false %}
 
 If you are looking at the GitHub repository, you can see the application at this point by looking at the https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/setup-application(`setup-application` branch).
 
@@ -412,7 +413,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Logging;
 
-namespace setup_dotnet
+namespace SetupDotnet
 {
     public class Startup
     {
@@ -445,10 +446,10 @@ namespace setup_dotnet
                 })
                 .AddOpenIdConnect("oidc", options =>
                 {
-                    options.Authority = Configuration["SampleApp:Authority"];
+                    options.Authority = Configuration["SetupDotnet:Authority"];
 
-                    options.ClientId = Configuration["SampleApp:ClientId"];
-                    options.ClientSecret = Configuration["SampleApp:ClientSecret"];
+                    options.ClientId = Configuration["SetupDotnet:ClientId"];
+                    options.ClientSecret = Configuration["SetupDotnet:ClientSecret"];
 
                     options.ResponseType = "code";
                     options.RequireHttpsMetadata = false;
@@ -517,10 +518,10 @@ Finally, we set up our previously referenced authentication provider, `"oidc"`. 
 // ...
 .AddOpenIdConnect("oidc", options =>
 {
-    options.Authority = Configuration["SampleApp:Authority"];
+    options.Authority = Configuration["SetupDotnet:Authority"];
 
-    options.ClientId = Configuration["SampleApp:ClientId"];
-    options.ClientSecret = Configuration["SampleApp:ClientSecret"];
+    options.ClientId = Configuration["SetupDotnet:ClientId"];
+    options.ClientSecret = Configuration["SetupDotnet:ClientSecret"];
     options.Scope.Add("openid");
     options.ClaimActions.Remove("aud");
 
@@ -575,16 +576,16 @@ Wait, where's the client secret? This file is in git, but we should not put secr
 
 [source,shell]
 ----
-dotnet publish -r win-x64 && SampleApp__ClientSecret=<YOUR_CLIENT_SECRET> bin/Debug/netcoreapp3.1/win-x64/publish/setup-dotnet.exe
+dotnet publish -r win-x64 && SetupDotnet__ClientSecret=<YOUR_CLIENT_SECRET> bin/Debug/netcoreapp3.1/win-x64/publish/setup-dotnet.exe
 ----
 
 Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the "Secure" page. You'll be prompted to log in using FusionAuth's default login page. You can [theme the login screen of FusionAuth](/docs/v1/tech/themes/) if you want to make the login page look like your company's brand.
 
-<todo: image>
+{% include _image.liquid src="/assets/img/docs/dotnet-login-page.png" alt="FusionAuth login" class="img-fluid" figure=false %}
 
 After you've signed in, you'll end up at the "Secure" page and will see all claims encoded in the JWT.
 
-<todo: image>
+{% include _image.liquid src="/assets/img/docs/dotnet-secure-page.png" alt="logged in with claims" class="img-fluid" figure=false %}
 
 You can see the source of the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-authentication).
 
@@ -604,7 +605,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 
-namespace SampleApp.Pages
+namespace SetupDotnet.Pages
 {
     public class LogoutModel : PageModel
     {
@@ -620,10 +621,10 @@ namespace SampleApp.Pages
         public IActionResult OnGet()
         {
               SignOut("cookie", "oidc");
-              var host = _configuration["SampleApp:Authority"];
-              var cookieName = _configuration["SampleApp:CookieName"];
+              var host = _configuration["SetupDotnet:Authority"];
+              var cookieName = _configuration["SetupDotnet:CookieName"];
 
-              var clientId = _configuration["SampleApp:ClientId"];
+              var clientId = _configuration["SetupDotnet:ClientId"];
               var url = host + "/oauth2/logout?client_id="+clientId;
               Response.Cookies.Delete(cookieName);
               return Redirect(url);
@@ -661,7 +662,7 @@ You also need to update the `appsettings.json` file with the cookie name setting
 ```json
 {
   ...
-  "SampleApp" : {
+  "SetupDotnet" : {
     "Authority" : "http://localhost:9011",
     "CookieName" : "mycookie",
     "ClientId" : "4420013f-bc5e-4d5a-9f94-f4b64ad5107c"
@@ -676,7 +677,7 @@ Finally, we need to change the `Startup.cs` file to use the new cookie name.
 // ...
 .AddCookie("cookie", options =>
 {
-    options.Cookie.Name = Configuration["SampleApp:CookieName"];
+    options.Cookie.Name = Configuration["SetupDotnet:CookieName"];
 })
 // ...
 ```
@@ -700,7 +701,7 @@ JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
 // Configure your policies
 services.AddAuthorization(options =>
-  options.AddPolicy("Registered", policy => policy.RequireClaim("aud", Configuration["SampleApp:ClientId"])));
+  options.AddPolicy("Registered", policy => policy.RequireClaim("aud", Configuration["SetupDotnet:ClientId"])));
 
 services.AddRazorPages();
 
@@ -712,9 +713,9 @@ Then, because the `aud` claim is by default not available, you need to add `opti
 ```csharp
 .AddOpenIdConnect("oidc", options =>
 {
-  options.Authority = Configuration["SampleApp:Authority"];
-  options.ClientId = Configuration["SampleApp:ClientId"];
-  options.ClientSecret = Configuration["SampleApp:ClientSecret"];
+  options.Authority = Configuration["SetupDotnet:Authority"];
+  options.ClientId = Configuration["SetupDotnet:ClientId"];
+  options.ClientSecret = Configuration["SetupDotnet:ClientSecret"];
   options.Scope.Add("openid");
 
   options.ClaimActions.Remove("aud");
@@ -732,11 +733,11 @@ options.RequireHttpsMetadata = false;
 options.TokenValidationParameters = new TokenValidationParameters
 {
   ValidateAudience = true,
-  ValidAudience = Configuration["SampleApp:ClientId"]
+  ValidAudience = Configuration["SetupDotnet:ClientId"]
 };
 ```
 
-## Testing
+## Conclusion
 
 At the end, your directory tree should look like this:
 
@@ -781,13 +782,8 @@ At the end, your directory tree should look like this:
 Once you’ve created this directory structure, you can start up the {technology} application using this command: 
 
 ```shell
-SampleApp__ClientSecret='change-this-in-production-to-be-a-real-secret' bin/Debug/net7.0/osx-x64/publish/setup-dotnet
+SetupDotnet__ClientSecret='change-this-in-production-to-be-a-real-secret' bin/Debug/net7.0/osx-x64/publish/setup-dotnet
 ```
-
-You can now open up an incognito window and visit http://localhost:5000[the app].
-Log in using the user you added in FusionAuth, and you’ll see your claims on the Secure page.
-
-<todo: image>
 
 ## Troubleshooting
 
@@ -799,5 +795,3 @@ This tutorial doesn't use any new .NET functionality, so should work on any vers
 
 * [3.1 repo](https://github.com/FusionAuth/fusionauth-example-asp-netcore)
 * [5.0 repo](https://github.com/FusionAuth/fusionauth-example-asp-netcore5)
-
-
