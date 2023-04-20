@@ -19,6 +19,8 @@ And here's the same application login flow when FusionAuth is introduced.
 == Prerequisites
 
 TBD prequisites
+npm
+node
 
 == Download and Install FusionAuth
 
@@ -69,16 +71,31 @@ examine the new application configuration the script created for you.
 
 == Create Your React Application
 
-Now you are going to create a react application. While this section uses a
-simple react application, you can use the same configuration to
-integrate your react application with FusionAuth.
+Now you are going to create a react application. While this section uses a simple react application without any framework, you can use the same configuration to integrate any react application with FusionAuth.
 
 First, make a directory:
 
-[source,shell]
-----
+```shell
 mkdir ../setup-react && cd ../setup-react
-----
+```
+
+Put the following in the `package.json` file:
+
+```json
+TODO pull package 
+```
+
+Then install modules:
+
+```shell
+npm install
+```
+
+Add the following to your `index.js` file.
+
+```
+TODO pull from remote
+```
 
 At the end, your directory tree should look like: 
 
