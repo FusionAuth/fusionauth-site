@@ -2,28 +2,22 @@
 layout: blog-post
 title: How to Set Up Single Sign-On Between FusionAuth and WordPress
 description: In this tutorial, you'll be learning how to implement OAuth SSO for WordPress users.
-author: Aniket Bhattacharyea
+author: Aniket Bhattacharyea and Michael Roth
 image: blogs/wordpress-sso-fusionauth/how-to-set-up-single-sign-on-sso-between-fusionauth-and-wordpress-header-image.png
 category: tutorial
 tags: tutorial tutorial-php client-php tutorial-integration wordpress single-sign-on oauth
 excerpt_separator: "<!--more-->"
-updated_date: 2023-04-20
 ---
 
 User authentication is one of the most important parts of building any application, and almost every application features some sort of authentication. However, it quickly gets difficult to manage authentication when you have multiple related but independent applications to maintain.
 
 <!--more-->
 
-{% include _callout-tip.liquid
-content=
-"This blog post has been [superseded by a newer FusionAuth/Wordpress tutorial](/blog/2023/04/20/how-to-set-up-single-sign-on-between-fusionauth-wordpress)."
-%}
-
 Let's say you're building a photo-sharing application that lets a user sign up with a username and password to share their pictures. Your team might later decide to [create a forum using WordPress](https://wordpress.com/go/tutorials/create-a-forum-with-wordpress-com/) to help answer your users' questions, but this new project isn't tied to your original application. It uses an entirely different tech stack, database, and hosting setup.
 
 This means your users need to sign up _again_ on this second website and remember another set of usernames and passwords. Giving users two entirely different sets of credentials is not ideal, so that's where Single Sign-On comes in.
 
-Single Sign-On, commonly known as SSO, is an authentication mechanism that enables users to use a single set of credentials to log in to multiple different applications or websites. In a typical SSO setup, you have a service provider-the application the user is trying to log in to-and an identity provider like [FusionAuth](https://fusionauth.io), which handles the authentication. This means your users need only one set of credentials to log into all of your applications.
+Single Sign-On, commonly known as SSO, is an authentication mechanism that enables users to use a single set of credentials to log in to multiple different applications or websites. In a typical SSO setup, you have a service provider-the application the user is trying to log in to-and an identity provider like [FusionAuth](https://fusionauth.io/), which handles the authentication. This means your users need only one set of credentials to log into all of your applications.
 
 ## Using FusionAuth for SSO
 
@@ -125,7 +119,7 @@ This is what the "OAuth" tab should look like after you are done:
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/create-application-oauth-screen.png" alt="Create application OAuth tab." class="img-fluid" figure=false %}
 
-By default, FusionAuth provides login functionality. You will need to manually create new users through the admin panel or via API. This is useful if you're building an internal site where you do not want users to register themselves, but in this tutorial, users should be able to create an account. 
+By default, FusionAuth provides login functionality. You will need to manually create new users through the admin panel or via API. This is useful if you're building an internal site where you do not want users to register themselves, but in this tutorial, users should be able to create an account.
 
 To enable user registration, click on the "Registration" tab and turn on "Self service registration." Keep the default settings unchanged.
 
@@ -157,22 +151,39 @@ You should see this configuration screen:
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/configure-oidc-generic-client-settings-start.png" alt="Configure the OpenID Connect Generic Client." class="img-fluid" figure=false %}
 
-Go back to the FusionAuth screen and copy the "Client Id" and "Client Secret" from the popup window (you might have to scroll down a bit). 
+Go back to the FusionAuth screen and copy the "Client Id" and "Client Secret" from the popup window (you might have to scroll down a bit).
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/application-view-client-id-client-secret.png" alt="Finding the Client Id and Client Secret." class="img-fluid" figure=false %}
 
-Now, flip back to the WordPress plugin configuration screen and begin entering values. 
+Now, flip back to the WordPress plugin configuration screen and begin entering values.
 
 * Paste the values "Client Id" and "Client Secret" fields in the configuration form.
+
 * Put `openid` in the "OpenID Scope" field.
-* In the "Login Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/authorize`. In our case, it will be `http://localhost:9011/oauth2/authorize`.
-* In the "Userinfo Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/userinfo`. However since we're running in a Docker container, WordPress can't reach FusionAuth through `localhost`, so the URL should be `http://fusionauth:9011/oauth2/userinfo`. Docker is taking care of the local DNS resolution.
-* In the "Token Validation Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/token`. In our case, it should be `http://localhost:9011/oauth2/token` . In our case, for the same reason, it will be `http://fusionauth:9011/oauth2/token`.
-* In the "End Session Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/logout`. In our case, it will be `http://localhost:9011/oauth2/logout`.
+
+* In the "Login Endpoint URL" field, put *`<your-fusionauth-domain>/oauth2/authorize`*.
+  <br>In our case, it will be:
+  <br>`http://localhost:9011/oauth2/authorize`
+
+* In the "Userinfo Endpoint URL" field, put *`<your-fusionauth-domain>/oauth2/userinfo`*. However since we're running in a Docker container, WordPress can't reach FusionAuth through *`localhost`*, so the URL should be:
+  <br>`http://fusionauth:9011/oauth2/userinfo`
+  {% include _callout-tip.liquid content= "Docker is taking care of the local DNS resolution. Inside of the Docker network `service names` will be available as `domain names`. Therefore `fusionauth` can be used in the URL for the communication between the `FusionAuth` instance and Wordpress as they both are in the same Docker network." %}
+
+* In the "Token Validation Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/token`.
+  <br>In our case, for the same reason, it will be:
+  <br>`http://fusionauth:9011/oauth2/token`
+
+* In the "End Session Endpoint URL" field, put `<your-fusionauth-domain>/oauth2/logout`.
+  <br>In our case, it will be:
+  <br>`http://localhost:9011/oauth2/logout`
+
 * Check "Disable SSL Verify" since none of our docker instances are running HTTPS.
+
 * Change the "Identity Key" and "Nickname Key" values to `sub`. This is what WordPress will use as Ids internally.
+
 * Change the "Display Name Formatting" to `{email}`. This is what will be displayed to the user in the WordPress admin screen.
-* Check "Link Existing Users" if users in your local WordPress database have the same emails as users in your FusionAuth database; otherwise you'll see an error when those users try to log in. 
+
+* Check "Link Existing Users" if users in your local WordPress database have the same emails as users in your FusionAuth database; otherwise you'll see an error when those users try to log in.
 
 Note that the "Authorize Endpoint" need not be changed since that will be opened in the browser. As mentioned above, for URLs like the "Token Validation Endpoint URL", if you are using Docker, you will need to use a docker resolvable hostname like `fusionauth`. If you're not using Docker, you should keep all the URLs pointed at `localhost`.
 
@@ -195,7 +206,7 @@ You can also click the "Create an account" link and register a new user.
 
 {% include _image.liquid src="/assets/img/blogs/wordpress-sso-fusionauth/fusionauth-wp-registration-screen.png" alt="FusionAuth registration screen." class="img-fluid" figure=false %}
 
-Once successfully authenticated, you will be redirected back to the WordPress site's admin homepage. 
+Once successfully authenticated, you will be redirected back to the WordPress site's admin homepage.
 
 {% include _callout-tip.liquid content= "All FusionAuth user facing pages can be themed to look like the other application pages. [Learn more here](/docs/v1/tech/themes/)." %}
 
