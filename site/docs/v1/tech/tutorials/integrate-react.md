@@ -79,23 +79,39 @@ First, make a directory:
 mkdir ../setup-react && cd ../setup-react
 ```
 
-Put the following in the `package.json` file:
-
-```json
-TODO pull package 
-```
-
-Then install modules:
+Next, create a simple React template using vite. Using this lets you easily integrate FusionAuth, but for a production application you'll probably use something like [NextJS or Remix](/docs/quickstarts/#single-page-app).
 
 ```shell
-npm install
+npm create vite@latest react-app -- --template react
 ```
 
-Add the following to your `index.js` file.
+Now, change into the `react-app` directory and install the needed modules.
 
+```shell
+cd react-app && npm install
 ```
+
+You can start up the server and visit the URL provided to ensure you have a basic app running.
+
+```json
+npm run dev
+```
+
+You'll want to open another terminal window to continue. You can edit `src/App.jsx` to make changes to the view to test out the automatic reloading.
+
+Now, let's install the [FusionAuth React SDK](https://www.npmjs.com/package/@fusionauth/react-sdk).
+
+```shell
+npm install @fusionauth/react-sdk
+```
+
+Update `src/main.jsx` to wrap your app with `FusionAuthProvider`. This file should look like this:
+
+```jsx
 TODO pull from remote
 ```
+
+
 
 At the end, your directory tree should look like: 
 
