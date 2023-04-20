@@ -132,7 +132,7 @@ For blog posts:
 -- tutorial: a tutorial on how to do something
 -- announcement: a press release or release announcement
 -- feature: a post about a particular feature
-
+- All captions should be one or more complete sentences.
 
 ## Lists
 
@@ -420,3 +420,20 @@ Prior to requesting review on a PR, please complete the following checklist.
 2. If you are referring to a navigatable element, use `[breadcrumb]#Tenants#` or `[breadcrumb]#Tenants -> Your Tenant#`. In other words, use it even for singular elements.
 3. If you are referring to a field the user can fill out, use `[field]#Authorized Redirect URLs#`.
 4. If you are referring to any other UI element, such as a submit button or read-only name, use `[uielement]#Submit#` or (on the application view screen) `[uielement]#Introspect endpoint#`.
+
+
+## Blog post review checklist
+
+1. Assign the relevant issue to yourself.
+1. Work through the blog post as is. Make any updates you need to ensure the instructions work. **Test every instruction, please.**
+1. Use the latest released, supported versions of the technology and underlying technologies.
+1. Update any screenshots of the FusionAuth admin UI or resulting technology.
+1. If there are any videos, remove those from the blog post if the UX has changed as a result of this review.
+1. Update the example app in GitHub, if needed. If the technology is on an entirely different version, create a new example app. For instance, if the example uses React 16, and the latest version of React is React 18, don't try to update the existing example app. Instead, create a new repo with the name suffix `fusionauth-example-react-18`.
+1. If the existing example app uses a technology that is no longer supported, note that so it can be removed from the FusionAuth site, a link in the repo to the supported example app can be added, and the old repo archived.
+1. Update the example app URL and/or description in `site/_data/exampleapps.yaml`. If you created a new example app in GitHub, update the README of the old one to point to the new one, and archive the old one.
+1. Add an updated_date to the blog posts front matter: `updated_date: 2023-03-16`
+1. If there is an old blog post, add a link to the new blog post or docs page. See https://fusionauth.io/blog/2020/12/14/how-to-securely-implement-oauth-rails for an example of the callout which points to new doc.
+1. Update the quickstart page (`/docs/quickstarts/index.html`) to point to the updated blog post and remove the `coming-soon` class.
+1. Ask for review.
+1. Close out the issue after merging.

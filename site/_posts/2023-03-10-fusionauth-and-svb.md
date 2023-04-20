@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: How FusionAuth is affected by the SVB failure
-description: Wondering how FusionAuth is affected by the failure of SVN? Read this post to find out.
+description: Wondering how FusionAuth is affected by the failure of SVB? Read this post to find out.
 author: Brian Pontarelli
 category: announcement
 tags: svb fusionauth financials origin-story
