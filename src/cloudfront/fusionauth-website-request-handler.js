@@ -63,7 +63,6 @@ var redirects = {
   '/blog': '/blog/',
   '/cognito': '/docs/v1/tech/migration-guide/cognito',
   '/cognito/': '/docs/v1/tech/migration-guide/cognito',
-  '/dev-tools': '/dev-tools/',
   '/docs': '/docs/',
   '/docs/quickstarts': '/docs/quickstarts/',
   '/docs/v1/tech/admin-guide/release-notifications': '/docs/v1/tech/admin-guide/releases',
@@ -101,8 +100,8 @@ var redirects = {
   '/gaming/': '/industries/gaming-entertainment',
   '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes/',
   '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/learn/expert-advice/gaming-entertainment/gaming-identity-provider-needs',
+  '/learn/expert-advice/dev-tools/jwt-debugger': '/learn/expert-advice/dev-tools/jwt-decoder',
   '/learn/expert-advice/dev-tools/': '/dev-tools/',
-  '/learn/expert-advice/dev-tools/jwt-debugger': '/dev-tools/jwt-decoder',
   '/learn/expert-advice/dev-tools/jwt-decoder': '/dev-tools/jwt-decoder',
   '/learn/expert-advice/dev-tools/date-time': '/dev-tools/date-time',
   '/learn/expert-advice/dev-tools/uuid-generator': '/dev-tools/uuid-generator',
@@ -127,7 +126,7 @@ var redirects = {
   '/upgrade/from-saas': '/compare'
 };
 var s3Paths = ['/direct-download', '/license'];
-var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/dev-tools/', '/how-to/'];
+var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/'];
 
 function handler(event) {
   var request = event.request;
