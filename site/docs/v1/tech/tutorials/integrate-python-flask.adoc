@@ -7,10 +7,9 @@ navcategory: getting-started
 
 :page-liquid:
 
-// TBD how much these are useful
 :prequisites: python3 and pip3
 :technology: Python Flask
-:language: python
+:language: Python
 
 == Integrate Your {technology} Application With FusionAuth
 
@@ -52,40 +51,40 @@ docker-compose up -d
 
 == Create a User and an API Key
 
-Next, http://localhost:9011[log into your FusionAuth instance].
-You’ll need to set up a user and a password, as well as accept the terms and conditions. 
+Next, log into your FusionAuth instance. You’ll need to set up a user and a password, as well as accept the terms and conditions.
 
-After logging in, you’ll be redirected to the FusionAuth admin UI. This lets you configure FusionAuth manually. However, for this tutorial, you're going to create an API key and then you’ll configure FusionAuth via it's API using our {language} client library.
+image::integrations/flask-integration/admin-user-setup.png[Admin user setup in FusionAuth,width=1200]
+
+Then, you’re at the FusionAuth admin UI. This lets you configure FusionAuth manually. But for this tutorial, you're going to create an API key and then you’ll configure FusionAuth via the API using the {language} client library.
 
 Navigate to [breadcrumb]#Settings -> API Keys#. Click the [uielement]#+# button to add a new API Key.
 
-Copy the value of the [field]#Key# field and then save the key.
-It should be a value similar to `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`. 
+image::integrations/flask-integration/api-key.png[API key setup in FusionAuth,width=1200]
 
-Doing so creates an API key that can be used for any FusionAuth API call.
-Note that key value as you’ll be using it later.
+Copy the value of the [field]#Key# field and then save the key. It should be a value similar to `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`.
+
+Doing so creates an API key that can be used for any FusionAuth API call. Note that key value as you’ll be using it later.
 
 == Configure FusionAuth
 
-Next, you need to set up FusionAuth.
-This can be done in different ways, but we’re going to use the {language} client library. The below instructions use maven from the command line, but you can use the client library with an IDE of your preference as well.
+Next, you need to set up FusionAuth. This can be done in different ways, but we’re going to use the {language} client library. You can use the client library with an IDE of your preference as well.
 
-First, make a directory:
+First, create the required files:
 
 [source,shell]
 ----
-mkdir setup-fusionauth && cd setup-fusionauth
+touch requirements.txt setup.py
 ----
 
-Now, cut and paste the following file into `requirements.txt`.
+Now, cut and paste the following requirements into `requirements.txt`.
 
-[source,text,title="Your FusionAuth configuration requirements file"]
+[source,text,title="FusionAuth setup configuration requirements file"]
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/python/requirements.txt[]
 ----
 
-Then copy and paste the following code into the `setup.py` file.
-// TODO: This might need to be added to `https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/python/` as setup-flask.py. Change from `setup.py`:  edited the redirect and logout urls to match the Flask defaults
+Then, copy and paste the following code into the `setup.py` file.
+
 [source,python]
 ----
 from fusionauth.fusionauth_client import FusionAuthClient
@@ -94,7 +93,7 @@ import sys
 
 APPLICATION_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
 
-#  You must supply your API key 
+#  you must supply your API key 
 api_key_name = 'fusionauth_api_key'
 api_key = os.getenv(api_key_name)
 if not api_key:
@@ -128,17 +127,17 @@ application["name"] = "PythonExampleApp"
 
 # configure oauth
 application["oauthConfiguration"] = {}
-application["oauthConfiguration"]["authorizedRedirectURLs"] = ["http://localhost:5000/callback/"] 
+application["oauthConfiguration"]["authorizedRedirectURLs"] = ["http://127.0.0.1:5000/callback"]
 application["oauthConfiguration"]["requireRegistration"] = True
 application["oauthConfiguration"]["enabledGrants"] = ["authorization_code", "refresh_token"]
-application["oauthConfiguration"]["logoutURL"] = "http://localhost:5000/logout"
+application["oauthConfiguration"]["logoutURL"] = "http://127.0.0.1:5000/logout"
 application["oauthConfiguration"]["clientSecret"] = "change-this-in-production-to-be-a-real-secret"
 
 # some libraries don't support pkce, notably mozilla-django-oidc: https://github.com/mozilla/mozilla-django-oidc/issues/397
 # since we are server side and have a solid client secret, we're okay turning pkce off
 application["oauthConfiguration"]["proofKeyForCodeExchangePolicy"] = "NotRequiredWhenUsingClientAuthentication"
 
-# assign key from above to sign our tokens. This needs to be asymmetric
+# assign key from above to sign tokens. This needs to be asymmetric
 application["jwtConfiguration"] = {}
 application["jwtConfiguration"]["enabled"] = True
 application["jwtConfiguration"]["accessTokenKeyId"] = rsa_key_id
@@ -166,9 +165,9 @@ if not client_response.was_successful():
   sys.exit("couldn't register user "+ str(client_response.error_response))
 ----
 
-Then, you can run the setup script. Please note that this setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than Default. In order to follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. Refer to the https://fusionauth.io/docs/v1/tech/client-libraries/python[python client library] documentation for more information.
+Then, you can run the setup script. Please note that this setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than "Default". To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. Refer to the link:/docs/v1/tech/client-libraries/python[Python client library] documentation for more information.
 
-You'll use `venv` to keep your workspace clean.
+You'll use a virtual environment `venv` to keep your workspace clean.
 
 [source,shell]
 ----
@@ -177,7 +176,7 @@ source venv/bin/activate && \
 pip install -r requirements.txt 
 ----
 
-Now run the setup script:
+Now run the setup script, replacing `<your API key>` with the value of the API key noted earlier.
 
 [source,shell]
 ----
@@ -188,13 +187,13 @@ If you are using PowerShell, you will need to set the environment variable in a 
 
 [source,shell]
 ----
-$env:fusionauth_api_key_1='C8yT_WM8SQIpvxGkh4m-8-eaIe81Qd4XNNyLaac-PCFwqzCO-dfKvl8Y'
+$env:fusionauth_api_key_1='<your API key>'
 python setup.py
 ----
 
 This configures FusionAuth for your {technology} application.
 
-If you want, you can http://localhost:9011[login to your instance] and examine the new application configuration the script created for you after you are done.
+When you're done, you can log in to your instance and examine the new application configuration the script created for you.
 
 == Create Your {technology} Application
 
@@ -204,11 +203,10 @@ First, make a directory:
 
 [source,shell]
 ----
-mkdir ../setup-flask && cd ../setup-flask
+mkdir setup-flask && cd setup-flask
 ----
 
-Now, create a new `requirements.txt` file to include {technology}.
-Add the `flask`, 'python-dotenv', and `authlib` plugins so that your requirements file looks like this:
+Now, create a new `requirements.txt` file to include {technology}. Add the `flask`, `python-dotenv`, and `authlib` plugins so that your requirements file looks like this:
 
 [source,text,title="Your application requirements file"]
 ----
@@ -217,7 +215,7 @@ python-dotenv>=1.0.0
 authlib>=1.2.0
 ----
 
-Then, re-run `pip install` to install these new packages
+Then, rerun `pip install` to install these new packages.
 
 [source,shell]
 ----
@@ -249,7 +247,7 @@ from flask import Flask, redirect, render_template, session, url_for
 
 The following code uses `json` to process data from the FusionAuth API, `os.environ`, `dotenv.find_dotenv`, and `dotenv.load_dontenv` to load environment variables, `urllib.parse.quote_plus` and `urllib.parse.urlencode` to build the logout URL, `authlib.integrations.flask_client.OAuth` to handle OIDC verification, and various `flask` modules to facilitate the app's functionality.
 
-Next, locate the `.env` file and retrieve the `APP_SECRET_KEY` environment variable:
+Next, locate the `.env` file and retrieve the `APP_SECRET_KEY` environment variable.
 
 [source,python]
 ----
@@ -280,6 +278,7 @@ oauth.register(
 ----
 
 Now, you can start adding service routes. 
+
 First, add the `login` route, which redirects to FusionAuth to handle user authentication:
 
 [source,python]
@@ -291,7 +290,7 @@ def login():
     )
 ----
 
-Next, add the `callback` route, which is called by FusionAuth after a login and uses the information supplied to it to generate an access token.
+Next, add the `callback` route, which is called by FusionAuth after a successful login and uses the information supplied to it to generate an access token.
 
 [source,python]
 ----
@@ -327,15 +326,17 @@ def home():
         logoutUrl=logout)
 ----
 
-Now, just add one more statement to run the app and listen on all available interfaces.
+Now, just add one more statement to run the app and listen on available interfaces.
 
 [source,python]
 ----
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=env.get("PORT", 3000))
+    app.run(host="0.0.0.0", port=env.get("PORT", 5000))
 ----
 
-The route code is completed. Now create a new folder called `templates` and navigate into it
+The route code is completed. 
+
+Now create a new folder called `templates` and navigate to it.
 
 [source,shell]
 ----
@@ -346,6 +347,7 @@ Add a new file called `home.html` and insert the following into it.
 
 [source,html]
 ----
+{% raw %}
 <html>
 <head>
   <meta charset="utf-8" />
@@ -365,9 +367,10 @@ Add a new file called `home.html` and insert the following into it.
   {% endif %}
 </body>
 </html>
+{% endraw %}
 ----
 
-== Testing
+== Testing the Authentication Flow
 
 Once you have completed the steps above, you should have a folder that is structured as follows.
 
@@ -417,20 +420,18 @@ WARNING: This is a development server. Do not use it in a production deployment.
  * Running on http://127.0.0.1:5000
 ----
 
-Open an incognito window and navigate to `http://127.0.0.1:5000`. 
+Open an incognito window and navigate to `\http://127.0.0.1:5000`.
 
-image::integrations/flask-integration/flask-homepage.png
+image::integrations/flask-integration/flask-homepage.png[Flask application home page,width=1200,role=bottom-cropped]
 
-Then click `login`.
+Then click [uielement]#Login#.
 
-image::integrations/flask-integration/flask-login.png
+image::integrations/flask-integration/flask-login.png[Flask application login page,width=1200,role=bottom-cropped]
 
-Enter in the email and password that you assigned to your FusionAuth user.  
-If successful, you should see your OpenID profile information.
+Enter the [field]#email# and [field]#password# that you assigned to your FusionAuth user. If login is successful, you should see your OpenID profile information.
 
-image::integrations/flask-integration/flask-profile.png
+image::integrations/flask-integration/flask-profile.png[Flask application profile page,width=1200,role=bottom-cropped]
 
-Now, click `logout`. 
-If successful, you should be brought right back to the `Hello Guest` homepage.
+Now, click [uielement]#Logout#. If successful, you should be brought back to the `Hello Guest` homepage.
 
-The full code for this guide can be found https://github.com/Blueper/flask-integration-guide[here].
+The full code for this guide can be found link:https://github.com/ritza-co/fusionauth-flask-integration-guide[here].
