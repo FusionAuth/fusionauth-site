@@ -63,7 +63,6 @@ var redirects = {
   '/blog': '/blog/',
   '/cognito': '/docs/v1/tech/migration-guide/cognito',
   '/cognito/': '/docs/v1/tech/migration-guide/cognito',
-  '/dev-tools': '/dev-tools/',
   '/docs': '/docs/',
   '/docs/quickstarts': '/docs/quickstarts/',
   '/docs/v1/tech/admin-guide/release-notifications': '/docs/v1/tech/admin-guide/releases',
