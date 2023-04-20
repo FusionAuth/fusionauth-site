@@ -72,7 +72,10 @@ Instead of manually setting up FusionAuth using the admin UI as you did above, y
 
 Here's an example [Kickstart file](https://github.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/blob/main/kickstart/kickstart.json) which sets up FusionAuth for this tutorial.
 
-## Method 1: Clone the demo repository
+## Create the Next.js application
+
+You have two options here. You can either clone a working example, or build the app from scratch.
+### Clone the demo repository
 
 If you want to run an already working application, you can clone the demo project from this [GitHub repository](https://github.com/FusionAuth/fusionauth-example-nextjs-single-sign-on) using the following command.
 
@@ -80,14 +83,16 @@ If you want to run an already working application, you can clone the demo projec
 $ git clone git@github.com:FusionAuth/fusionauth-example-nextjs-single-sign-on.git
 ```
 
-Even though you do not need to actually execute the next steps, we do recommend that you read them to understand what was done in the demo application. After that, continue configuring the [Environment variables](#environment-variables).
+Since you've cloned a working rep, you don't need to follow the next section. If you'd like to understand more about what was done in the demo application, feel free to read them. 
 
-## Method 2: Create your own Next.js application
+Either way, continue configuring the [Environment variables](#environment-variables) to proceed with this tutorial.
+
+## Create your own Next.js application
 
 If you want to create your own application instead of using our demo project, you can create a new Next.js application by running the command below.
 
 ```shell
-$ npx create-next-app name-of-your-application
+npx create-next-app name-of-your-application
 ```
 
 If it is your first time creating a Next.js application, you'll be prompted to install the `create-next-app` package. Just type `y` to accept it.
@@ -102,11 +107,11 @@ You can answer the questions from the wizard any way you want. Here are the ones
 ✔ What import alias would you like configured? … @/*
 ```
 
-There are several ways of [implementing authentication with Next.js](https://nextjs.org/docs/authentication, and we'll use [NextAuth.js](https://next-auth.js.org), a complete open-source authentication solution, in this article.
+There are several ways of [implementing authentication with Next.js](https://nextjs.org/docs/authentication), and we'll use [NextAuth.js](https://next-auth.js.org), a complete open-source authentication solution, in this article.
 
 ### Installing NextAuth.js
 
-{% include _callout-note.liquid content="We recommend you look at the [NextAuth.js Getting Start guide](https://next-auth.js.org/getting-started/example) for more up-to-date instructions." %}
+{% include _callout-note.liquid content="We recommend you look at the [NextAuth.js Getting Start guide](https://next-auth.js.org/getting-started/example) for the most up-to-date instructions." %}
 
 First, install NextAuth.js via one of the following three methods.
 
@@ -144,7 +149,7 @@ export default NextAuth(authOptions)
 
 ### Exposing session state
 
-Change `src/pages/_app.js` to have your application rendered inside a `<SessionProvider>` context, like shown below.
+Change `src/pages/_app.js` to have your application rendered inside a `<SessionProvider>` context. Update `src/pages/_app.js` to have the below code.
 
 ```jsx
 import {SessionProvider} from "next-auth/react"
@@ -161,7 +166,9 @@ export default function App({
 }
 ```
 
-Doing this, all your components will have access to the [`useSession()`](https://next-auth.js.org/getting-started/client#usesession) React Hook, which is responsible for checking if the user is logged in. To make things reusable, you can create a component that will either render a "Log in" or "Log out" button, depending on the session state, in a `src/components/login-button.jsx` file.
+By making this change, all your components have access to the [`useSession()`](https://next-auth.js.org/getting-started/client#usesession) React Hook, which is responsible for checking if the user is logged in. 
+
+You can create a component that will either render a "Log in" or "Log out" button, depending on the session state. Make a `src/components` directory and then add the following to the `src/components/login-button.jsx` file.
 
 ```jsx
 import {useSession, signIn, signOut} from "next-auth/react"
@@ -202,7 +209,7 @@ export default function Home() {
 
 ## Environment variables
 
-If you cloned the demo repository, you can copy `.env.local.dist` to `.env.local` and change the values there. If not, create it and fill in the details from your FusionAuth application.
+If you cloned the demo repository, you can copy `.env.local.dist` to `.env.local` and change the values there. If not, create `.env.local` file and fill in the details from your FusionAuth application.
 
 ```dotenv
 FUSIONAUTH_ISSUER="<APP ISSUER FROM FUSIONAUTH>" # example: my-website.com
