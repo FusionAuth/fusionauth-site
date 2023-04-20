@@ -86,11 +86,13 @@ Record the value of your API Key, as indicated below.
  
 ### Creating email templates
  
-The User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their Ids under "Customizations", "Email Templates". More information on email templates in FusionAuth can be found [here](https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview).
- 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email-templates.png" alt="Create 4 new email templates for each event in the subscription lifecycle. " class="img-fluid" figure=false %}
+The User Action will send four different emails to the `actionee` upon four different conditions: when they `sign up`, if they `modify` or `cancel` their subscription, and when that subscription `expires`. Create four email templates for each of these conditions and record their Ids under "Customizations", "Email Templates". More information on [email templates in FusionAuth can be found here](https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview).
 
-Here are sample contents for each email template that you can use for this tutorial. You can copy and paste the contents into the templates you create on FusionAuth.
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/create-email-template.png" alt="The create screen for an email template. " class="img-fluid" figure=false %}
+
+Here are sample contents for each email template that you can use for this tutorial. You can copy and paste the contents into the templates you create on FusionAuth. For this tutorial you can use the same values for HTML and text template text, but for production usage you will want to use HTML for the HTML tempaltes.
+
+Here's the signup email.
 
 ```
 Name: Sign up for limited access
@@ -104,6 +106,8 @@ Your access will expire in 24 hours. Happy reading!
 -- The Silicon Valley Team
 ```
 
+Here's the cancellation email.
+
 ```
 Name: Limited Access Cancelled
 Subject: You've cancelled your membership to Silicon Valley Chronicle
@@ -115,6 +119,8 @@ You've successfully cancelled your temporary membership to Silicon Valley Chroni
 -- The Silicon Valley Chronicle Team
 ```
 
+Here's an email when the user has changed their access.
+
 ```
 Name: Limited Access Changed
 Subject: Change of limited access to Silicon Valley Chronicle
@@ -125,6 +131,8 @@ Your temporary membership to Silicon Valley Chronicle has been changed. Please v
 
 -- The Silicon Valley Chronicle Team
 ```
+
+Here's an email for when access has expired.
 
 ```
 Name: Limited Access Expired
@@ -139,9 +147,15 @@ We hope to see you again soon!
 -- The Silicon Valley Chronicle Team
 ```
 
+Here's a list of email templates after you've added them. Your Ids will be different.
+
+{% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-email-templates.png" alt="Create 4 new email templates for each event in the subscription lifecycle. " class="img-fluid" figure=false %}
+
 ### Creating the User Action
  
-You can now create a [User Action definition](https://fusionauth.io/docs/v1/tech/apis/user-actions) with the email template Ids and `POST` to the `/api/user-action` route. Setting the `temporal` attribute to `true` allows us to set an `expiry` time when you execute the action on a user. This means that the action will automatically be removed from the user after the time set in `expiry`. You can also set `sendEndEvent` to `true` so that you can be notified via webhook when the access period has expired.
+You can now create a [User Action definition](https://fusionauth.io/docs/v1/tech/apis/user-actions) with the email template Ids and `POST` to the `/api/user-action` route. Setting the `temporal` attribute to `true` allows us to set an `expiry` time when you execute the action on a user. This means that the action will automatically be removed from the user after the time set in `expiry`.
+
+You can also set `sendEndEvent` to `true` so that you can be notified via webhook when the access period has expired.
  
 ```sh
 curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user-action' \
@@ -189,7 +203,9 @@ FusionAuth should return something similar to the following:
 }
 ```
 
-Record the `id` value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`. You can verify that the User Action was created by going to "Settings", then "User Actions" in the FusionAuth admin portal.
+Record the `id` value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`.
+
+You can verify that the User Action was created by going to "Settings", then "User Actions" in the FusionAuth admin portal.
  
 {% include _image.liquid src="/assets/img/blogs/fusionauth-user-actions/user-actions-user-action-created.png" alt="Verify that the User Action was created by checking in the admin portal." class="img-fluid" figure=false %}
  
@@ -224,12 +240,12 @@ curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user/action' \
   --data-raw '{
   "broadcast": true,
   "action": {
-    "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
+    "actioneeUserId": "c49f5a75-1c3d-45db-98d2-25936b7c1966",
     "actionerUserId": "5ea819ea-6ff1-4b17-943f-eb2d1c246c3b",
     "comment": "Signed up for 24 hour premium access",
     "emailUser": true,
     "expiry": 1674903995472,
-    "userActionId": "fbff792c-2340-4d72-b4fd-534f94d0a94b"
+    "userActionId": "6f4115c0-3db9-4734-aeda-b9c3f7dc4269"
   }
 }'
 ```
@@ -239,7 +255,7 @@ FusionAuth will reply with `200 OK`:
 ```json
 {
   "action": {
-    "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
+    "actioneeUserId": "c49f5a75-1c3d-45db-98d2-25936b7c1966",
     "actionerUserId": "5ea819ea-6ff1-4b17-943f-eb2d1c246c3b",
     "applicationIds": [],
     "comment": "Signed up for 24 hour premium access",
@@ -282,7 +298,7 @@ FusionAuth will return an object with an array of all actions currently active o
 {
   "actions": [
     {
-      "actioneeUserId": "12e22430-162c-4f7e-bf40-58f7a69a26ce",
+      "actioneeUserId": "c49f5a75-1c3d-45db-98d2-25936b7c1966",
       "actionerUserId": "5ea819ea-6ff1-4b17-943f-eb2d1c246c3b",
       "applicationIds": [
         "af4847c4-d183-4e51-ab8a-ce8940909127"
