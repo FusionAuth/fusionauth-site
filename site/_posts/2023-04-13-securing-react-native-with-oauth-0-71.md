@@ -2,7 +2,7 @@
 layout: blog-post
 title: Securing React Native with OAuth
 description: React Native lets you build mobile applications for iOS and Android using JavaScript. This tutorial will show you how to use OAuth to authenticate users in a React Native application.
-author: Colin Frick
+author: Krissanawat Kaewsanmuang and Colin Frick
 image: blogs/react-native-oauth-0-71/securing-react-native-with-oauth.png
 category: tutorial
 tags: client-javascript tutorial tutorial-react-native tutorial-javascript react-native javascript
