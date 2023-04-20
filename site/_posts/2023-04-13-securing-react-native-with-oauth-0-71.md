@@ -50,11 +50,11 @@ However, this architecture can be simplified. The server can be removed; the mob
 
 Next up, let's configure the OAuth server and set up our coding environment.
 
-## Setting up FusionAuth as your Auth Provider
+## Setting up FusionAuth as your auth provider
 
 In order to set up FusionAuth, follow the [5-minute setup guide](/docs/v1/tech/5-minute-setup-guide). It is simple and quick. By default, the OAuth server will run at the address `http://localhost:9011`.
 
-### Configure the FusionAuth Application
+### Configure the FusionAuth application
 
 In this step, we are going to configure a FusionAuth application. This is different from the FusionAuth server instance or the React Native application. In FusionAuth, an application is anything a user might log in to. To configure this, sign in to the FusionAuth administrative interface and navigate to "Applications". From there, create a new application.
 
@@ -70,13 +70,13 @@ Make sure to register your user to the new application. Doing so creates a relat
 
 If you want, you can add more users in the "Users" tab, but make sure to register them with your new application. Now, we move on to setting up the React Native project.
 
-## Setting up the React Native Development Environment
+## Setting up the React Native development environment
 
 Since we are going to use the React Native command line interface (CLI) for development, we must have the React Native development environment installed. For installation instructions, please follow [the official documentation](https://reactnative.dev/docs/environment-setup). You'll also want to make sure you select `react-native-cli` rather than `expo`. These instructions also walk you through starting your application, so if you are new to React Native, make sure you give them a read.
 
 We also need to install development environments for iOS, Android, or both. We are going to use [brew](https://brew.sh/) to install needed packages as well. If you are following along, make sure that `brew` is installed, or install the packages in a different way. 
 
-### iOS Environment
+### iOS environment
 
 First, we'll install watchman, which is used to automatically rebuild files when they change:
 
@@ -90,7 +90,7 @@ Then we need to install the Xcode CLI tools, which are not normally present and 
 
 iOS is ready to go.
 
-### Android Environment
+### Android environment
 
 For Android, JDK 11 is required, as other versions may result in errors. We can download this version from the Oracle website or using `brew` as shown in the snippet below:
 
@@ -112,7 +112,7 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 Now the setup for the Android platform is done.
 
-## React Native Project Setup
+## React Native project setup
 
 We are now going to create a new React Native project. First, create a directory to contain all of our code, then `cd` to that directory. Pick an application name; we chose `RNfusionauth` and will use that name throughout the tutorial.
 
@@ -142,7 +142,7 @@ Using this library will help us build the OAuth integration quickly and securely
 
 {% include _image.liquid src="/assets/img/blogs/react-native-oauth-0-71/oauth-authorization-code-flow.png" alt="The authorization code flow for native applications." class="img-fluid" figure=false %}
 
-### Setting up iOS Auth 
+### Setting up iOS auth 
 
 Now, we'll configure auth for an iOS build of the React Native app. The basics will be covered below, but if you want to learn more about other options, check out the [docs](https://github.com/FormidableLabs/react-native-app-auth#setup). 
 
@@ -183,7 +183,7 @@ The last step is to change the `ios/RNfusionauth/AppDelegate.h` file to include 
 @end
 ```
 
-### Setting up Auth for Android
+### Setting up auth for Android
 
 For Android, we need additional configuration to capture the [authorization redirect](https://github.com/openid/AppAuth-android#capturing-the-authorization-redirect). Add the following property to the `defaultConfig` object in the `android/app/build.gradle` file:
 
@@ -203,7 +203,7 @@ However, a new issue pops up when we start working on the Android application. D
 
 A better solution is to use an actual Android mobile device. When you are doing so, how can you connect the FusionAuth server, running on localhost, to the device, which is on a Wi-Fi or cell network? The solution is to use a local tunnel service such as [ngrok](/docs/v1/tech/developer-guide/exposing-instance).
 
-## Coding a React Native Application to use OAuth and FusionAuth
+## Coding a React Native application to use OAuth and FusionAuth
 
 Finally, the code! If you want to skip ahead, grab the Apache2 licensed code from the [GitHub repository](https://github.com/fusionauth/fusionauth-example-react-native-0-71).
 
@@ -263,7 +263,7 @@ const [authState, setAuthState] = useState(defaultAuthState);
 
 Now, we are ready to configure the code which receives the token. 
 
-## Configuring React Native OAuth Authorization
+## Configuring React Native OAuth authorization
 
 Let's create the function to get the token; this will use the previously created `configs` object. It will also use the `authorize` function from the `react-native-app-auth` package. It will do all the heavy lifting and connect with the OAuth server. The implementation of the function is below:
 
@@ -289,7 +289,7 @@ const handleAuthorize = async () => {
 
 `newAuthState` is returned from the `authorize` function, as we can set our auth state to that returned value. Now we have the code to interface with FusionAuth, so we'll want to give the user a way to invoke the code.
 
-## Building the User Interface
+## Building the user interface
 
 So, we need to create a user interface (UI). We'll create a simple UI to begin authentication. After the user has logged in, we'll display the access token. The access token is what FusionAuth provides once a user has successfully signed in. 
 
@@ -445,7 +445,7 @@ const getAccessToken = async () => {
 
 Now we can, when handed an access token, securely store and retrieve the JWT. Next, let's look at what we can do with the token.
 
-## Retrieving more Information about the authenticated User
+## Retrieving more information about the authenticated user
 
 Since we have the access token, we can now retrieve user data from FusionAuth. Of course, you could also use the access token to call other services or APIs, but that's beyond the scope of this tutorial.
 
