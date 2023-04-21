@@ -17,7 +17,7 @@ Integrating single sign-on into your applications means your users can access al
 
 Offering this allows you to have one view of the user, which is great for security and data consistency. 
 
-Single sign-on also allows users to minimize the time they spend getting into your apppliation and maximize the time spent using it.
+Single sign-on also allows users to minimize the time they spend getting into your application and maximize the time spent using it.
 
 ## An SSO scenario
 
