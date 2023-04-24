@@ -21,7 +21,7 @@ This is a lot, but the ride will be fun. Ready to get going?
 
 Here's what you need to get started:
 
-* NodeJS version >= 14.0
+* NodeJS version >= 18.0
 * VSCode or any other text editor
 * `git`
 * `npx` 
@@ -72,57 +72,19 @@ If you want, you can add more users in the "Users" tab, but make sure to registe
 
 ## Setting up the React Native development environment
 
-Since we are going to use the React Native command line interface (CLI) for development, we must have the React Native development environment installed. For installation instructions, please follow [the official documentation](https://reactnative.dev/docs/environment-setup). You'll also want to make sure you select `react-native-cli` rather than `expo`. These instructions also walk you through starting your application, so if you are new to React Native, make sure you give them a read.
-
-We also need to install development environments for iOS, Android, or both. We are going to use [brew](https://brew.sh/) to install needed packages as well. If you are following along, make sure that `brew` is installed, or install the packages in a different way. 
-
-### iOS environment
-
-First, we'll install watchman, which is used to automatically rebuild files when they change:
-
-```shell
-brew install watchman
-```
-
-Then we need to install the Xcode CLI tools, which are not normally present and can't be done with `brew`. To install, open Xcode and navigate to "Preferences" and then "Locations". Pick the Xcode version for command-line tools as shown in the screenshot below:
-
-{% include _image.liquid src="/assets/img/blogs/react-native-oauth-0-71/activate-xcode.png" alt="Activating Xcode." class="img-fluid" figure=false %}
-
-iOS is ready to go.
-
-### Android environment
-
-For Android, JDK 11 is required, as other versions may result in errors. We can download this version from the Oracle website or using `brew` as shown in the snippet below:
-
-```shell
-brew install openjdk
-```
-
-Next, we need to download and install the [Android studio](https://developer.android.com/studio/install).
-
-Then, we need to configure the `ANDROID_HOME` environment variable in our system path.  We can add the following lines to our `$HOME/.bash_profile` or `$HOME/.bashrc`. If you are using zsh, the files are `~/.zprofile` or `~/.zshrc`.
-
-```bash
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/tools/bin
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-```
-
-Now the setup for the Android platform is done.
+Since we are going to use the React Native command line interface (CLI) for development, we must have the React Native development environment installed. For installation instructions, please follow [the official documentation](https://reactnative.dev/docs/environment-setup?guide=native). You'll also want to make sure you select `React Native CLI Quickstart` rather than `Expo Go Quickstart`. These instructions also walk you through starting your application, so if you are new to React Native, make sure you give them a read.
 
 ## React Native project setup
 
-We are now going to create a new React Native project. First, create a directory to contain all of our code, then `cd` to that directory. Pick an application name; we chose `RNfusionauth` and will use that name throughout the tutorial.
-
-Run this command to create the basic project files and configuration:
+To create a new React Native project, run this command:
 
 ```shell
 npx react-native@latest init RNfusionauth
 ```
 
 We'll be making additional changes to these files as we build out the application.
+
+If you want to skip to [Run the app](#run-the-app), grab the Apache2 licensed code from the [GitHub repository](https://github.com/fusionauth/fusionauth-example-react-native-0-71).
 
 ### Installing `react-native-app-auth` to communicate with the OAuth 2.0 and OpenId Connect server
 
@@ -135,7 +97,7 @@ This package supports the Authorization Code grant and enables the PKCE extensio
 To install `react-native-app-auth`, run the following in the project directory:
 
 ```shell
-yarn add react-native-app-auth
+npm i react-native-app-auth
 ```
 
 Using this library will help us build the OAuth integration quickly and securely. It takes care of many of the steps specified by RFC 8252; we just have to make sure to kick off the process (step 1) and receive and store the access token (step 6). As a reminder, here's the diagram from the RFC:
@@ -205,7 +167,7 @@ A better solution is to use an actual Android mobile device. When you are doing 
 
 ## Coding a React Native application to use OAuth and FusionAuth
 
-Finally, the code! If you want to skip ahead, grab the Apache2 licensed code from the [GitHub repository](https://github.com/fusionauth/fusionauth-example-react-native-0-71).
+Finally, the code!
 
 Big picture, we're going to be building out our logic and views in the `App.tsx` file. For a bigger project, you'd split this code up into components, but for our tutorial having one file will make things easier. We'll use libraries to manage authorization and secure storage of our data, however. 
 
@@ -379,7 +341,7 @@ Once the user has successfully authenticated, we will have an access token, and 
 There are many options, but the Formidable team, the creators of the `react-native-app-auth` package we are using, recommend [`react-native-keychain`](https://github.com/oblador/react-native-keychain). Install it by running the following command:
 
 ```shell
-yarn add react-native-keychain
+npm i react-native-keychain
 cd ios ; pod install
 ```
 
@@ -516,7 +478,18 @@ Of course, it's not much fun to get the data without displaying it. Let's update
 
 In this UI snippet, we're checking if we have `userInfo`. If so, we'll display some of the user's information; this data is retrieved from FusionAuth.
 
+## Run the app
+
 There you have it. You have successfully configured a React Native application to interact with FusionAuth. We have authenticated a user, stored their access token securely, and displayed information from that user.
+
+To run the application, you can use one of the following commands:
+
+```shell
+npx react-native run-ios
+npx react-native run-android
+```
+
+{% include _image.liquid src="/assets/img/blogs/react-native-oauth-0-71/react-native-ios-walkthrough.gif" alt="React Native Example App Walkthrough" class="img-fluid" figure=false %}
 
 ## Conclusion
 
