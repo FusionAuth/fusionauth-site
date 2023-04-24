@@ -31,6 +31,9 @@ This guide was tested against Keycloak 15.
 ** <<Social Logins>>
 ** <<Other Entities>>
 * <<Exporting Users>>
+** <<Exporting From MySQL>>
+** <<Exporting From PostgreSQL>>
+** <<Export Result>>
 * <<Importing Users>>
 ** <<Set Up FusionAuth>>
 ** <<Get the Script>>
@@ -94,10 +97,14 @@ To import your users, you'll need their attributes, including their password has
 
 include::docs/v1/tech/migration-guide/_password-hash-note.adoc[]
 
-Here's a SQL script that will query the needed fields. Update `RealmID` with the name of the Keycloak realm to export, gathered from the <<Obtaining User Data>> step.
+Here are SQL scripts that will query the needed fields. Update `RealmID` with the name of the Keycloak realm to export, gathered from the <<Obtaining User Data>> step. The scripts are different depending on if you are exporting from MySQL or PostgreSQL.
+
+=== Exporting From MySQL
+
+Here's the SQL to export from MySQL.
 
 [source,sql]
-.Keycloak Export SQL
+.Keycloak Export MySQL SQL
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/master/keycloak/keycloak-export.sql[]
 ----
@@ -112,15 +119,27 @@ Here's how to generate CSV with MySQL, assuming the SQL above is in `keycloak-ex
 cat keycloak-export.sql | mysql -u USER -p keycloak| sed 's/\t/,/g' > out.csv
 ----
 
-Here's how to generate CSV with PostgreSQL. Replace `CONTENTS OF SQL FILE` with the SQL above.
+=== Exporting From PostgreSQL
+
+Here's the SQL to export from PostgreSQL.
+
+[source,sql]
+.Keycloak Export Postgres SQL
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/master/keycloak/keycloak-export-postgres.sql[]
+----
+
+Here's how to generate CSV with PostgreSQL, assuming the SQL above is in `keycloak-export-postgres.sql`. You may have to remove the header line from the `out.csv` file.
 
 [source,shell]
 .Generate CSV with PostgreSQL
 ----
-psql -W -h localhost -p5433 -U USER -d fusionauth -c "Copy (CONTENTS OF SQL FILE) To STDOUT With CSV HEADER DELIMITER ',';" > out.csv
+psql -W -h localhost -p5433 -U USER -d keycloak -c "Copy (`cat keycloak-export-postgres.sql`) To STDOUT With CSV HEADER DELIMITER ',';" > out.csv
 ----
 
-At the end of this process, you'll have a file that looks like:
+=== Export Result
+
+Whichever database you are exporting from, at the end of the export process you'll have a file that looks like:
 
 [source,csv]
 .Sample User Export
@@ -223,9 +242,9 @@ When you run the script, you'll see output like:
 
 [source,shell,title=Import script output]
 ----
-$ ruby ./import.rb -f http://localhost:9011 -k '...' -u users.json
+$ ruby ./import.rb -f http://localhost:9011 -k '...' -u out.csv
 FusionAuth Importer : Keycloak
- > User file: users.json
+ > User file: out.csv
  > Call FusionAuth to import users
  > Import success
 Duplicate users 0
