@@ -44,7 +44,7 @@ Once you have Docker running and a FusionAuth account, run the following command
 ```bash
 git clone https://github.com/FusionAuth/fusionauth-example-wordpress-sso.git
 cd fusionauth-example-wordpress-sso
-docker-compose up -d
+docker compose up -d
 ```
 
 This will start a WordPress instance on port 8030 and a FusionAuth instance on port 9011. Now, finish the installation of WordPress by opening up a browser window and navigating to `localhost:8030`.
