@@ -1,0 +1,74 @@
+---
+import { Diagram, type Config } from "astro-diagram";
+import * as include from "./_includes.astro";
+
+const config = {
+  boxMargin: 30,
+  messageMargin: 5000,
+  mirrorActors: true,
+  noteMargin: 5,
+  wrap: true
+} as Config;
+
+const diagram = `
+sequenceDiagram
+  autonumber
+  ${include.participants}
+  ${include.initialize}
+
+  Note over Browser,Hacker: Login (browser navigates away from SPA)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=code}
+  FusionAuth->>Browser: (Login form HTML)
+  Browser->>FusionAuth: POST /oauth2/authorize<br/>(response_type=code)
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ code}<br/>[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->>Store: GET {redirect_uri w/ code}
+  Store->>FusionAuth: POST /oauth2/token<br/>(code, client_secret)
+  FusionAuth->>Store: 200 Ok<br/>(Refresh token and JWT - ignored)
+  Store->>Store: Create session and store User in it
+  Store->>Browser: 302 Location: /<br/>[SessionId HttpOnly w/ domain: Store.Example.com]
+  Browser->>Store: GET /
+  Store->>Browser: (SPA HTML, CSS & JavaScript)
+  Browser->>Store: AJAX GET /api/user<br/>[SessionId HttpOnly w/ domain: Store.Example.com]
+  Store->>Browser: 200 Ok<br/>(User)
+
+  ${include.shoppingCartSessionLoad}
+
+  ${include.shoppingCartSessionRelogin}
+
+  ${include.sso}
+
+  ${include.forumsInitialize}
+  
+  Note over Browser,Hacker: Login (browser navigates away from SPA but auto-logs-in since the session exists)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=code}<br/>[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ code}<br/>[SessionId HttpOnly w/ domain: login.fusionauth.io]
+  Browser->>Forums: GET {redirect_uri w/ code}
+  Forums->>FusionAuth: POST /oauth2/token<br/>(code, client_secret)
+  FusionAuth->>Forums: 200 Ok<br/>(Refresh token and JWT - ignored)
+  Forums->>Forums: Create session and store User in it
+  Forums->>Browser: 302 Location: /<br/>[SessionId HttpOnly w/ domain: Store.Example.com]
+  Browser->>Forums: GET /
+  Forums->>Browser: (SPA HTML, CSS & JavaScript)
+  Browser->>Forums: AJAX GET /api/user<br/>[SessionId HttpOnly w/ domain: Store.Example.com]
+  Forums->>Browser: 200 Ok<br/>(User)
+
+  ${include.forumsSessionLoad}
+
+  ${include.attackVectors}
+
+  ${include.stolenSessionId}
+`;
+---
+
+<style is:global>
+    #diagram g:nth-child(18) .note, #diagram g:nth-child(20) .note {
+        fill: #fecaca !important;
+        stroke: #f87171 !important;
+    }
+    .dark #diagram g:nth-child(18) .note, .dark #diagram g:nth-child(20) .note {
+        fill: #f87171 !important;
+        stroke: #fecaca !important;
+    }
+</style>
+
+<Diagram code={diagram} config={config}/>

@@ -125,6 +125,20 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"authentication/mobile/native-login-form-to-application-backend-jwts-refresh-tokens.mdx": {
+  id: "authentication/mobile/native-login-form-to-application-backend-jwts-refresh-tokens.mdx",
+  slug: "authentication/mobile/native-login-form-to-application-backend-jwts-refresh-tokens",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/mobile/native-login-form-to-fusionauth-jwts-refresh-tokens.mdx": {
+  id: "authentication/mobile/native-login-form-to-fusionauth-jwts-refresh-tokens.mdx",
+  slug: "authentication/mobile/native-login-form-to-fusionauth-jwts-refresh-tokens",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "authentication/mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens.mdx": {
   id: "authentication/mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens.mdx",
   slug: "authentication/mobile/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens",
@@ -139,6 +153,111 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"authentication/spa/native-login-form-to-application-backend-jwts-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/native-login-form-to-application-backend-jwts-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/native-login-form-to-application-backend-jwts-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/native-login-form-to-application-backend-sessions-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/native-login-form-to-application-backend-sessions.mdx": {
+  id: "authentication/spa/native-login-form-to-application-backend-sessions.mdx",
+  slug: "authentication/spa/native-login-form-to-application-backend-sessions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/native-login-form-to-fusionauth-jwts-local-storage-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/native-login-form-to-fusionauth-jwts-local-storage-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/native-login-form-to-fusionauth-jwts-local-storage-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/native-login-form-to-fusionauth-jwts-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/native-login-form-to-fusionauth-jwts-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/native-login-form-to-fusionauth-jwts-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/native-login-form-to-fusionauth-same-domain-jwts-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/native-login-form-to-fusionauth-same-domain-jwts-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/native-login-form-to-fusionauth-same-domain-jwts-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-authorization-code-grant-sessions-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/oauth-authorization-code-grant-sessions-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/oauth-authorization-code-grant-sessions-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-authorization-code-grant-sessions.mdx": {
+  id: "authentication/spa/oauth-authorization-code-grant-sessions.mdx",
+  slug: "authentication/spa/oauth-authorization-code-grant-sessions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-implicit-grant-jwts-cookies.mdx": {
+  id: "authentication/spa/oauth-implicit-grant-jwts-cookies.mdx",
+  slug: "authentication/spa/oauth-implicit-grant-jwts-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-implicit-grant-jwts-local-storage.mdx": {
+  id: "authentication/spa/oauth-implicit-grant-jwts-local-storage.mdx",
+  slug: "authentication/spa/oauth-implicit-grant-jwts-local-storage",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-implicit-grant-sessions.mdx": {
+  id: "authentication/spa/oauth-implicit-grant-sessions.mdx",
+  slug: "authentication/spa/oauth-implicit-grant-sessions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-resource-owner-password-credentials-grant-sessions-refresh-tokens-cookies.mdx": {
+  id: "authentication/spa/oauth-resource-owner-password-credentials-grant-sessions-refresh-tokens-cookies.mdx",
+  slug: "authentication/spa/oauth-resource-owner-password-credentials-grant-sessions-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/spa/oauth-resource-owner-password-credentials-grant-sessions.mdx": {
+  id: "authentication/spa/oauth-resource-owner-password-credentials-grant-sessions.mdx",
+  slug: "authentication/spa/oauth-resource-owner-password-credentials-grant-sessions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "authentication/types-of-kubernetes-auth.md": {
   id: "authentication/types-of-kubernetes-auth.md",
   slug: "authentication/types-of-kubernetes-auth",
@@ -146,6 +265,69 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"authentication/webapp/native-login-form-to-application-backend-jwts-refresh-tokens-cookies.mdx": {
+  id: "authentication/webapp/native-login-form-to-application-backend-jwts-refresh-tokens-cookies.mdx",
+  slug: "authentication/webapp/native-login-form-to-application-backend-jwts-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/webapp/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.mdx": {
+  id: "authentication/webapp/native-login-form-to-application-backend-sessions-refresh-tokens-cookies.mdx",
+  slug: "authentication/webapp/native-login-form-to-application-backend-sessions-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/webapp/native-login-form-to-application-backend-sessions.mdx": {
+  id: "authentication/webapp/native-login-form-to-application-backend-sessions.mdx",
+  slug: "authentication/webapp/native-login-form-to-application-backend-sessions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.mdx": {
+  id: "authentication/webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies.mdx",
+  slug: "authentication/webapp/oauth-authorization-code-grant-jwts-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/webapp/oauth-authorization-code-grant-sessions-refresh-tokens-cookies.mdx": {
+  id: "authentication/webapp/oauth-authorization-code-grant-sessions-refresh-tokens-cookies.mdx",
+  slug: "authentication/webapp/oauth-authorization-code-grant-sessions-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/webapp/oauth-authorization-code-grant-sessions.mdx": {
+  id: "authentication/webapp/oauth-authorization-code-grant-sessions.mdx",
+  slug: "authentication/webapp/oauth-authorization-code-grant-sessions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies.mdx": {
+  id: "authentication/webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies.mdx",
+  slug: "authentication/webapp/oauth-resource-owner-password-credentials-grant-jwts-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/webapp/oauth-resource-owner-password-credentials-grant-sessions-refresh-tokens-cookies.mdx": {
+  id: "authentication/webapp/oauth-resource-owner-password-credentials-grant-sessions-refresh-tokens-cookies.mdx",
+  slug: "authentication/webapp/oauth-resource-owner-password-credentials-grant-sessions-refresh-tokens-cookies",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"authentication/webapp/oauth-resource-owner-password-credentials-grant-sessions.mdx": {
+  id: "authentication/webapp/oauth-resource-owner-password-credentials-grant-sessions.mdx",
+  slug: "authentication/webapp/oauth-resource-owner-password-credentials-grant-sessions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "authentication/webauthn-explained.md": {
   id: "authentication/webauthn-explained.md",
   slug: "authentication/webauthn-explained",

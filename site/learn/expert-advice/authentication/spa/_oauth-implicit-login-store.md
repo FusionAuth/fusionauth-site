@@ -1,6 +1,0 @@
-1. The user clicks the login link and the browser navigates away from the single-page application to FusionAuth's OAuth 2 interface. The browser requests the OAuth 2 login page from FusionAuth with a `response_type` of `token` indicating that it is using the implicit grant
-1. FusionAuth responds with the HTML, CSS & JavaScript of the login page (including the form)
-1. The user inputs their credentials and clicks the submit button. The browser `POST`s the form data to FusionAuth
-1. FusionAuth returns a redirect to the application backend's OAuth 2 `redirect_uri`. This redirect includes the access token (in our case a JWT) from FusionAuth. Also, this response includes a session id for the FusionAuth OAuth 2 interface as an HTTP cookie. This cookie is HttpOnly, which prevents JavaScript from accessing it, making it less vulnerable to theft
-1. The browser requests the application backend's OAuth `redirect_uri`. This request does not include the JWT because it is after the `#` in the URL, which means the browser will not send it in the HTTP request to the application backend 
-1. The application backend responds with the HTML, CSS & JavaScript of the application. During this step, the browser will initialize the single-page application. As part of the initialization of the application, the JWT  will be pulled from the current URL of the browser 
