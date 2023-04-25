@@ -6,22 +6,46 @@ navcategory: getting-started
 ---
 
 {% assign language = "Dart" %}
-{% include docs/v1/tech/tutorials/_integrate-intro.liquid technology="Flutter" %}
+{% assign technology = "Flutter" %}
+{% include docs/v1/tech/tutorials/_integrate-intro.liquid technology=technology %}
 
 ## Prerequisites
 
 For this tutorial, you’ll need to have some of these tools installed.
 
+- [Flutter](https://docs.flutter.dev/get-started/install)
 - If you want to develop applications for iOS:
     - Xcode
     - iPhone simulator or real iOS device
-    - iPhone development environment
+    - [iPhone development environment](https://docs.flutter.dev/get-started/install/macos#ios-setup)
 - If you want to develop applications for Android:
     - Android emulator or real Android device
-    - Android development environment
+    - [Android development environment](https://docs.flutter.dev/get-started/install/linux#android-setup)
 - Familiarity with ngrok (optional, useful if you want to test on a device)
 
 {% include docs/v1/tech/tutorials/_integrate-prerequisites.liquid %}
+
+To make sure your environment is working correctly, run the following command in your terminal window.
+
+```shell
+flutter doctor
+```
+
+If everything is configured properly, you will see something like the following result in your terminal window:
+
+```shell
+Doctor summary (to see all details, run flutter doctor -v):
+[✓] Flutter (Channel stable, 3.7.10)
+[✓] Android toolchain - develop for Android devices (Android SDK version 33.0.0)
+[✓] Xcode - develop for iOS and macOS (Xcode 14.3)
+[✓] Chrome - develop for the web
+[✓] Android Studio (version 2022.2)
+[✓] IntelliJ IDEA Community Edition (version 2022.2)
+[✓] Connected device (2 available)
+[✓] HTTP Host Availability
+
+• No issues found!
+```
 
 ## Download and Install FusionAuth
 
@@ -38,10 +62,10 @@ This can be done in different ways, but we’re going to use the {{language}} cl
 The below instructions use Dart from the command line, but you can use the client library with an IDE of your preference as well.
 
 ```shell
-$ mkdir setup-fusionauth && cd setup-fusionauth
+mkdir setup-fusionauth && cd setup-fusionauth
 ```
 
-If you want, you can http://localhost:9011[login to your instance] and examine the new application configuration the script created for you.
+If you want, you can [login to your instance](http://localhost:9011) and examine the new application configuration the script created for you.
 
 Now, cut and paste the following file into `pubspec.yml`.
 
@@ -52,7 +76,7 @@ Now, cut and paste the following file into `pubspec.yml`.
 Install the dependencies.
 
 ```shell
-$ dart pub get
+dart pub get
 ```
 
 Then copy and paste the following code into `lib/main.dart`.
@@ -64,44 +88,12 @@ Then copy and paste the following code into `lib/main.dart`.
 Then, you can run the setup class. This will create the FusionAuth configuration for your {{technology}} application.
 
 ```shell
-$ dart run lib/main.dart
+dart run lib/main.dart
 ```
 
-## Setting up the Flutter project
+## Create Your Flutter Application
 
-Setting up the Flutter project is simple and easy for every OS: just follow the instructions in the [Flutter documentation](https://docs.flutter.dev/get-started/install).
-
-You can check if everything is configured properly by running the following command in your terminal window:
-
-```shell
-flutter doctor
-```
-
-If everything is configured properly, you will see something like the following result in your terminal window:
-
-```shell
-$ flutter doctor
-Doctor summary (to see all details, run flutter doctor -v):
-[✓] Flutter (Channel stable, 3.7.10)
-[✓] Android toolchain - develop for Android devices (Android SDK version 33.0.0)
-[✓] Chrome - develop for the web
-[✓] Linux toolchain - develop for Linux desktop
-[✓] Android Studio (version 2022.2)
-[✓] IntelliJ IDEA Community Edition (version 2022.2)
-[✓] Connected device (2 available)
-[✓] HTTP Host Availability
-
-• No issues found!
-```
-
-Note that Flutter depends on iOS and/or Android development environments being installed. Doing so is beyond the scope of this tutorial, however. If you need to do that, please consult the links below for installation instructions.
-
-- [Android setup instructions](https://docs.flutter.dev/get-started/install/linux#android-setup)
-- [iOS setup instructions](https://docs.flutter.dev/get-started/install/macos#ios-setup)
-
-## Creating a new Flutter app
-
-In order to create and set up the new Flutter app, run the following command. You'll want to be in a directory where the project should live.
+In order to create and set up the new {{technology}} app, run the following command. You'll want to be in a directory where the project should live.
 
 ```shell
 flutter create fusionauth_demo
@@ -148,43 +140,21 @@ Let's look at Android first.
 
 In your editor, you need to go to the `android/app/build.gradle` file for your Android app to specify the custom scheme. There should be a section in the file that looks similar to the below code block, but you'll need to add the FusionAuth URL: `com.fusionauth.flutterdemo`.
 
-At the end of your editing, make sure the `appAuthRedirectScheme` section looks similar to this:
+At the end of your editing, make sure the `appAuthRedirectScheme` section looks similar to the one shown below.
 
 ```gradle
-// ...
-android {
-  //...
-  defaultConfig {
-    // ...
-    manifestPlaceholders += [
-      'appAuthRedirectScheme': 'com.fusionauth.flutterdemo'
-    ]
-  }
-}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-flutter-dart/main/android/app/build.gradle %}
 ```
 
 ### iOS setup
 
-You need to edit the `Info.plist` file in the iOS app to specify the custom scheme. There should be a section in it that looks similar to the following, but you'll need to add the FusionAuth URL: `com.fusionauth.flutterdemo://login-callback`.
+You need to edit the `ios/Runner/Info.plist` file in the iOS app to specify the custom scheme. There should be a section in it that looks similar to the following, but you'll need to add the FusionAuth URL: `com.fusionauth.flutterdemo://login-callback`.
 
 At the end of your editing, make sure the `CFBundleURLSchemes` section looks similar to this:
 
 ```xml
-
-<key>CFBundleURLTypes</key>
-<array>
-<dict>
-    <key>CFBundleTypeRole</key>
-    <string>Editor</string>
-    <key>CFBundleURLSchemes</key>
-    <array>
-        <string>com.fusionauth.flutterdemo://login-callback</string>
-    </array>
-</dict>
-</array>
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-flutter-dart/main/ios/Runner/Info.plist %}
 ```
-
-> @TODO check if we really need ://login-callback here
 
 ## Dive into the code
 
@@ -205,6 +175,8 @@ Now, start up your emulators or real devices again.
 ```shell
 flutter run -d all
 ```
+
+After the application is loaded, click the "Login" button. Log in with the user account you created when setting up FusionAuth, and you’ll see the user picture and name next to a logout button.
 
 You should see something similar to this demo:
 
