@@ -7,6 +7,7 @@ image: blogs/connecting-fusionauth-remix/connecting-fusionauth-remix-runapp.png
 category: tutorial
 tags: remix remix-run tutorial javascript
 excerpt_separator: "<!--more-->"
+updated_date: 2023-04-25
 ---
 
 Remix is the new hotness in web development! It is an attempt to solve some of the performance issues of React by cleverly splitting up server-side code (called Loaders and Actions) from the functionality that absolutely must be shipped to the client, such as JavaScript and CSS for transitions. It also offers benefits in accessibility through a commitment to using web standards and progressive enhancement. Remix allows for almost all parts of the stack to be easily swapped out, e.g. you can choose from several different datastores that are pre-packaged with Remix for your convenience.
@@ -50,10 +51,10 @@ File-based session storage has one drawback that is only relevant at a certain s
 For this example, you will also need a working FusionAuth instance. There are [various ways](/docs/v1/tech/installation-guide/fusionauth-app) to install FusionAuth depending on your system, but the easiest way is to use Docker and Docker Compose. [Instructions are here](/docs/v1/tech/installation-guide/docker). Assuming you have Docker installed, start FusionAuth by running these commands:
 
 ```bash
-curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
+curl -o docker compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 You'll want to do this from a different directory than the cloned remix application, otherwise the `.env` files will collide. The `.env` file used by this Docker Compose command contains hard-coded database passwords and is not suitable for production use.
@@ -85,13 +86,13 @@ Here's an example of the `.env` file, with values filled out. Some of your value
 ```
 CLIENT_ID="85a03867-dccf-4882-adde-1a79aeec50df"
 CLIENT_SECRET="b4xOdsBUWHQkkU3BOqAxSilfttI4TJv9eI_LOj8zVgE"
-AUTH_URL="http://localhost:9000"
+AUTH_URL="http://localhost:9011/oauth2"
 AUTH_CALLBACK_URL="http://localhost:3000/auth/callback"
 ```
 
 ## Test it out
 
-At this point you should be ready to fire up the Remix server. Do so by running `npm start` in the directory where your `.env` file is.
+At this point you should be ready to fire up the Remix server. Do so by running `npm run dev` in the directory where your `.env` file is.
 
 Try out the example at a default address of `http://localhost:3000`. Click the login link. That will take you to the `/login` route.
 
@@ -107,7 +108,7 @@ Once you've done all this configuration, auth is easy because all the heavy lift
 
 The `/login` route looks like this:
 
-```js
+```tsx
 import type { LoaderFunction } from "@remix-run/node"
 import { authenticator } from "~/auth.server";
 
@@ -127,7 +128,7 @@ What is the `authenticator` all about?
 
 If you open the `/app/auth.server` file, you should see something like this (slightly simplified here):
 
-```js
+```tsx
 import { Authenticator } from "remix-auth";
 import { sessionStorage } from "~/session.server";
 import { OAuth2Strategy } from "remix-auth-oauth2";
@@ -171,7 +172,7 @@ If you are not logged in, our Remix `/login` route will redirect you to the Fusi
 
 If you log in, you will be redirected to `/auth/callback` which checks your login again in code that should be familiar since it's almost identical to the `/login` route:
 
-```js
+```tsx
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { sessionStorage } from "~/session.server";
