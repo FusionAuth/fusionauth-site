@@ -132,18 +132,19 @@ Then, we need to open the React Native project with Xcode. Edit the `ios/RNfusio
 
 Here, the `CFBundleURLSchemes` defines the URL schemes handled by this application. The scheme we are registering, `fusionauth.demo`, should look familiar, as we configured FusionAuth to redirect to a URL with that scheme in it. If you modify it here, you should modify it there as well.
 
-The last step is to change the `ios/RNfusionauth/AppDelegate.h` file to include needed imports and properties:
+The last step is to change `ios/RNfusionauth/AppDelegate.h` and `ios/RNfusionauth/AppDelegate.mm` to include needed imports and properties:
 
+AppDelegate.h:
 ```objective_c
-#import <RCTAppDelegate.h>
-#import <UIKit/UIKit.h>
-#import "RNAppAuthAuthorizationFlowManager.h"
-
-@interface AppDelegate : RCTAppDelegate <RNAppAuthAuthorizationFlowManager>
-
-@property(nonatomic, weak)id<RNAppAuthAuthorizationFlowManagerDelegate>authorizationFlowManagerDelegate;
-@end
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/AppDelegate.h' %}
 ```
+
+AppDelegate.mm:
+```objective_c
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/AppDelegate.mm' %}
+```
+
+The changes in `AppDelegate.mm` allows the authentication with [Magic Links](/docs/v1/tech/passwordless/magic-links).
 
 ### Setting up auth for Android
 
