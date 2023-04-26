@@ -189,3 +189,14 @@ Enter the correct credentials created when you set up FusionAuth and submit the 
 
 {% include _image.liquid src="/assets/img/blogs/nextjs-single-sign-on/after-login.png" alt="The nextjs application after logging in." class="img-fluid" figure=true %}
 
+## Next steps
+
+What's next?
+
+You could:
+
+* Make FusionAuth [look like your nextjs application using themes](/docs/v1/tech/themes/).
+* [Learn more about OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/).
+* Build out a real nextjs application with a protected page.
+
+Happy coding!
