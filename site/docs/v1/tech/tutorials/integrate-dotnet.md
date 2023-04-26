@@ -1,85 +1,52 @@
 ---
-layout: doc
-title: Integrate Your C# .NET Application With FusionAuth
-description: Integrate your C# .NET application with FusionAuth
+layout: doc 
+title: Integrate Your C# .NET Application With FusionAuth 
+description: Integrate your C# .NET application with FusionAuth 
 navcategory: getting-started
+prequisites: C# and dotnet
+technology: .NET 7
+language: C#
 ---
 
-:page-liquid:
+{% include_relative _integrate-intro.md %}
 
-// TBD how much these are useful
-:prequisites: C# and dotnet
-:technology: .NET 7
-:language: C#
+## Prerequisites
 
-== Integrate Your {technology} Application With FusionAuth
+For this tutorial, you’ll need to have {{page.prerequisites}} installed. You’ll also need [Docker](https://www.docker.com), since that is how you’ll install FusionAuth. Although this guide shows how to build the {{page.technology}} application using command line tools, you can also use [Visual Studio](https://visualstudio.microsoft.com) to build the project.
 
-In this article, you are going to learn how to integrate a {technology} application with FusionAuth.
+## Download and Install FusionAuth
 
-Here's a typical application login flow before integrating FusionAuth into your {technology} application..
+{% include_relative _integrate-install-fusionauth.md %}
 
-++++
-{% plantuml source: _diagrams/docs/login-before.plantuml, alt: "Login before FusionAuth." %}
-++++
+## Create a User and an API Key
 
-And here's the same application login flow when FusionAuth is introduced.
-++++
-{% plantuml source: _diagrams/docs/login-after.plantuml, alt: "Login with FusionAuth." %}
-++++
+Next, [log into your FusionAuth instance](http://localhost:9011). You’ll need to set up a user and a password, as well as accept the terms and conditions.
 
-== Prerequisites
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/admin-user-setup.png" alt="Admin user setup in FusionAuth." class="img-fluid" width="1200" figure=false %}
 
-For this tutorial, you’ll need to have {prequisites} installed. You'll also need link:https://www.docker.com[Docker], since that is how you’ll install FusionAuth. Although this guide shows how to build the {technology} application using command line tools, you can also use link:https://visualstudio.microsoft.com to build the project.
+Then, you’ll login to the FusionAuth admin UI. This lets you configure FusionAuth manually. But for this tutorial, you’re going to create an API key and then you’ll configure FusionAuth using the {{page.language}} client library.
 
-== Download and Install FusionAuth
+Navigate to <span class="breadcrumb">Settings → API Keys</span>. Click the <span class="uielement">+</span> button to add a new API Key. Copy the value of the <span class="field">Key</span> field and then save the key. It might be a value like `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`.
 
-First, make a project directory:
-
-[source,shell]
-----
-mkdir integrate-fusionauth && cd integrate-fusionauth
-----
-
-Then, install FusionAuth:
-
-[source,bash]
-----
-curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up -d
-----
-
-== Create a User and an API Key
-
-Next, link:http://localhost:9011[log into your FusionAuth instance]. You’ll need to set up a user and a password, as well as accept the terms and conditions.
-
-image::integrations/dotnet-integration/admin-user-setup.png[Admin user setup,width=1200,role=bottom-cropped]
-
-Then, you’ll login to the FusionAuth admin UI. This lets you configure FusionAuth manually. But for this tutorial, you're going to create an API key and then you’ll configure FusionAuth using the {language} client library.
-
-Navigate to [breadcrumb]#Settings -> API Keys#. Click the [uielement]#+# button to add a new API Key. Copy the value of the [field]#Key# field and then save the key. It might be a value like `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`.
-
-image::integrations/dotnet-integration/api-key.png[API Key setup,width=1200,role=bottom-cropped]
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/api-key.png" alt="API Key setup in FusionAuth." class="img-fluid" width="1200" figure=false %}
 
 Doing so creates an API key that can be used for any FusionAuth API call. Save that key value as you’ll be using it later.
 
-== Configure FusionAuth
+## Configure FusionAuth
 
-Next, you need to set up FusionAuth. This can be done in different ways, but you’re going to use the {language} client library. The below instructions use `dotnet` from the command line, but you can use the client library with an IDE of your choice as well.
+Next, you need to set up FusionAuth. This can be done in different ways, but you’re going to use the {{page.language}} client library. The below instructions use `dotnet` from the command line, but you can use the client library with an IDE of your choice as well.
 
-First, create a {technology} project in a new directory like so:
+First, create a {{page.technology}} project in a new directory like so:
 
-[source,shell]
-----
+```shell
 dotnet new console --output SetupFusionauth && cd SetupFusionauth
-----
+```
 
-If you want, you can http://localhost:9011[login to your instance] and examine the new application configuration, the script created for you.
+If you want, you can [login to your instance](http://localhost:9011) and examine the new application configuration, the script created for you.
 
 Now, copy and paste the following code into `Program.cs`.
 
-[source,csharp]
-----
+```csharp
 using System;
 using io.fusionauth;
 using io.fusionauth.domain;
@@ -215,53 +182,48 @@ namespace Setup
         }
     }
 }
-----
+```
 
-Then, you'll need to import a few NuGet packages:
+Then, you’ll need to import a few NuGet packages:
 
-[source,shell]
-----
+```shell
 dotnet add package JSON.Net # for debugging
 dotnet add package FusionAuth.Client # for our client access
-----
+```
 
-== Create Your {technology} Application
+## Create Your {{page.technology}} Application
 
-Now you are going to create a {technology} application. While this section uses a simple {technology} application, you can use the same configuration to integrate your {technology} application with FusionAuth.
+Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application, you can use the same configuration to integrate your {{page.technology}} application with FusionAuth.
 
-You'll use link:https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-7.0&tabs=visual-studio[Razor Pages] and .Net 7.0. This application will display common information to all users. There will also be a secured area, only available to an authenticated user. The link:https://github.com/ritza-co/fusionauth-dotnet-integration[full source code] is available if you want to download it and take a look.
+You’ll use [Razor Pages](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-7.0&tabs=visual-studio) and {{page.technology}}. This application will display common information to all users. There will also be a secured area, only available to an authenticated user. The [full source code](https://github.com/ritza-co/fusionauth-dotnet-integration) is available if you want to download it and take a look.
 
-First, let's create a new web application using the `dotnet` CLI and go to that directory:
+First, let’s create a new web application using the `dotnet` CLI and go to that directory:
 
-[source,shell]
-----
+```shell
 dotnet new webapp -o SetupDotnet && cd SetupDotnet
-----
+```
 
-To see the results, you should publish this application and run it. There are link:https://docs.microsoft.com/en-us/dotnet/core/deploying/[multiple ways of deploying an application], but publishing ensures your deployment process is repeatable. You can use the https://learn.microsoft.com/en-us/dotnet/core/rid-catalog[RID catalog] to build different versions of this application for different platforms. Here's the command to publish a standalone executable you could deploy behind a proxy like nginx:
+To see the results, you should publish this application and run it. There are [multiple ways of deploying an application](https://docs.microsoft.com/en-us/dotnet/core/deploying/), but publishing ensures your deployment process is repeatable. You can use the [RID catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) to build different versions of this application for different platforms. Here’s the command to publish a standalone executable you could deploy behind a proxy like nginx:
 
-[source,shell]
-----
+```shell
 dotnet publish -r osx-x64
-----
+```
 
 Then start up the executable.
 
-[source,shell]
-----
+```shell
 ASPNETCORE_ENVIRONMENT=Development bin/Debug/net7.0/osx-x64/publish/SetupDotnet
-----
+```
 
-image::integrations/dotnet-integration/dotnet-welcome-page.png[Home page for .Net app,width=1200,role=bottom-cropped]
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-welcome-page.png" alt="Home page for .Net app" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-You can hit `control-C` to exit out of this application. 
+You can hit `control-C` to exit out of this application.
 
-You'll also want to add a page to be secured, which you can aptly call "Secure". Add `Secure.cshtml` and `Secure.cshtml.cs` to the `SetupDotnet/Pages` directory.
+You’ll also want to add a page to be secured, which you can aptly call "Secure". Add `Secure.cshtml` and `Secure.cshtml.cs` to the `SetupDotnet/Pages` directory.
 
 Copy the following code into `Secure.cshtml`:
 
-[source,html]
-----
+```html
 @page
 @model SecureModel
 @{
@@ -270,12 +232,11 @@ Copy the following code into `Secure.cshtml`:
 <h1>@ViewData["Title"]</h1>
 
 <p>TBD</p>
-----
+```
 
 `Secure.cshtml.cs` should contain this code:
 
-[source,csharp]
-----
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -300,44 +261,40 @@ namespace SetupDotnet.Pages
         }
     }
 }
-----
+```
 
-Don't forget to add a navigation element to `Pages/Shared/_Layout.cshtml` after the "Privacy" list item:
+Don’t forget to add a navigation element to `Pages/Shared/_Layout.cshtml` after the "Privacy" list item:
 
-[source,html]
-----
+```html
 <li class="nav-item">
     <a class="nav-link text-dark" asp-area="" asp-page="/Secure">Secure</a>
 </li>
-----
+```
 
-Hit `control-C` to exit the application if you haven't already. Then republish it and start it up again. 
+Hit `control-C` to exit the application if you haven’t already. Then republish it and start it up again.
 
-[source,shell]
-----
+```shell
 dotnet publish -r osx-x64 && ASPNETCORE_ENVIRONMENT=Development bin/Debug/net7.0/osx-x64/publish/SetupDotnet
-----
+```
 
-Visit `\http://localhost:5000` and view your new page. Click on [uielement]#Secure#.
+Visit `http://localhost:5000` and view your new page. Click on <span class="uielement">Secure</span>.
 
-image::integrations/dotnet-integration/dotnet-secure-page.png[Home page for .Net app,width=1200,role=bottom-cropped]
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-secure-page.png" alt="Secure page for .Net app" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-You've added a page, but it sure isn't secure yet. Let's do that next.
+You’ve added a page, but it sure isn’t secure yet. Let’s do that next.
 
-== Handle Login for your {technology} application
+## Handle Login for your {{page.technology}} application
 
-It's always smart to leverage existing libraries as they are likely to be more secure and better handle edge cases. You're going to add two new libraries to the application. Make sure you're in the `SetupDotnet` directory and run these commands to add them.
+It’s always smart to leverage existing libraries as they are likely to be more secure and better handle edge cases. You’re going to add two new libraries to the application. Make sure you’re in the `SetupDotnet` directory and run these commands to add them.
 
-[source,shell]
-----
+```shell
 dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect
 dotnet add package IdentityModel.AspNetCore
-----
+```
 
-You need to protect the "Secure" page. You do this using the link:https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute[Authorize filter attribute] on the backing class, from `Secure.cshtml.cs`:
+You need to protect the "Secure" page. You do this using the [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) on the backing class, from `Secure.cshtml.cs`:
 
-[source,csharp]
-----
+```csharp
 using Microsoft.AspNetCore.Authorization;
 
 namespace setup_dotnet.Pages
@@ -348,12 +305,11 @@ namespace setup_dotnet.Pages
         // ...
     }
 }
-----
+```
 
-You'll also display the claims contained in the JWT that FusionAuth creates upon authentication. Here `Secure.cshtml` iterates over the claims. Update that file with the following code. A claim is essentially the information the authentication server has shared about a subject in the JWT.
+You’ll also display the claims contained in the JWT that FusionAuth creates upon authentication. Here `Secure.cshtml` iterates over the claims. Update that file with the following code. A claim is essentially the information the authentication server has shared about a subject in the JWT.
 
-[source,html]
-----
+```html
 @page
 @using Microsoft.AspNetCore.Authentication
 @model SecureModel
@@ -371,12 +327,11 @@ You'll also display the claims contained in the JWT that FusionAuth creates upon
         <dd>@claim.Value</dd>
     }
 </dl>
-----
+```
 
 You also need to set up some services to specify how this page is protected. Create a `Startup.cs` file and add the following code:
 
-[source,csharp]
-----
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -458,34 +413,31 @@ namespace SetupDotnet
         }
     }
 }
-----
+```
 
-Let's go through some of the more interesting parts. First, you're setting up authentication including the scheme and challenge method. You'll be using cookies to store the authentication information and "oidc" for the authentication provider, which is defined further below.
+Let’s go through some of the more interesting parts. First, you’re setting up authentication including the scheme and challenge method. You’ll be using cookies to store the authentication information and "oidc" for the authentication provider, which is defined further below.
 
-[source, csharp]
-----
+```csharp
 services.AddAuthentication(options =>
 {
     options.DefaultScheme = "cookie";
     options.DefaultChallengeScheme = "oidc";
 })
-----
+```
 
 Here you configure the cookie, including setting the cookie name:
 
-[source,csharp]
-----
+```csharp
 .AddCookie("cookie", options =>
 {
     options.Cookie.Name = "mycookie";
     // ...
 }
-----
+```
 
-Finally, you set up the previously referenced authentication provider, `"oidc"`. You could have multiple providers. You create an link:https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-7.0[OpenIdConnectOptions] object to fully configure this provider. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant. You pull configuration information like the client id from either `appsettings.json` or the environment.  These are the values you saved off when you were configuring FusionAuth. (You'll add them to `appsettings.json` a bit later.) You'll create an link:https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-7.0[OpenIdConnectOptions] object to configure your provider. PKCE is turned on by default, so you're ready for link:/blog/2020/04/15/whats-new-in-oauth-2-1[OAuth 2.1].
+Finally, you set up the previously referenced authentication provider, `"oidc"`. You could have multiple providers. You create an [OpenIdConnectOptions](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-7.0) object to fully configure this provider. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant. You pull configuration information like the client id from either `appsettings.json` or the environment. These are the values you saved off when you were configuring FusionAuth. (You’ll add them to `appsettings.json` a bit later.) You’ll create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-7.0) object to configure your provider. PKCE is turned on by default, so you’re ready for [OAuth 2.1](/blog/2020/04/15/whats-new-in-oauth-2-1).
 
-[source,csharp]
-----
+```csharp
 .AddOpenIdConnect("oidc", options =>
 {
     options.Authority = Configuration["SetupDotnet:Authority"];
@@ -498,26 +450,23 @@ Finally, you set up the previously referenced authentication provider, `"oidc"`.
     options.ResponseType = "code";
     options.RequireHttpsMetadata = false;
 });
-----
+```
 
 You also need to turn on authentication for the application:
 
-[source,csharp]
-----
+```csharp
 app.UseAuthentication();
-----
+```
 
-For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of the `Configure` method. This makes it easier to see link:https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII[errors in the OAuth flow]. But in production code, it must be removed.
+For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of the `Configure` method. This makes it easier to see [errors in the OAuth flow](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII). But in production code, it must be removed.
 
-[source,csharp]
-----
+```csharp
 IdentityModelEventSource.ShowPII = true;
-----
+```
 
-Here's the `appsettings.json` file. You need to add the entire [field]#SetupDotnet# object so that the code above can be configured correctly. [field]#Authority# is just the location of the user identity server, in this case FusionAuth.
+Here’s the `appsettings.json` file. You need to add the entire <span class="field">SetupDotnet</span> object so that the code above can be configured correctly. <span class="field">Authority</span> is just the location of the user identity server, in this case FusionAuth.
 
-[source,json]
-----
+```json
 {
   "Logging": {
     "LogLevel": {
@@ -532,32 +481,30 @@ Here's the `appsettings.json` file. You need to add the entire [field]#SetupDotn
       "ClientId" : "4243b56f-0b45-4882-aa23-ac75eea22d22"
    }
 }
-----
+```
 
-Wait, where's the client secret? This file is in git, but you should not put secrets under version control. Instead, the client secret is provided on the command line via an environment variable. This change means the correct way to publish and start the web application is now (where you replace `<YOUR_CLIENT_SECRET>` with the client secret value. For this example the value for the client secret is `change-this-in-production-to-be-a-real-secret`):
+Wait, where’s the client secret? This file is in git, but you should not put secrets under version control. Instead, the client secret is provided on the command line via an environment variable. This change means the correct way to publish and start the web application is now (where you replace `<YOUR_CLIENT_SECRET>` with the client secret value. For this example the value for the client secret is `change-this-in-production-to-be-a-real-secret`):
 
-[source,shell]
-----
+```shell
 dotnet publish -r osx-x64 && ASPNETCORE_ENVIRONMENT=Development SetupDotnet__ClientSecret=<YOUR_CLIENT_SECRET> bin/Debug/net7.0/osx-x64/publish/SetupDotnet
-----
+```
 
-Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `\http://localhost:5000` and click on the [uielement]#Secure# page. You'll be prompted to log in using FusionAuth's default login page. You can link:/docs/v1/tech/themes/[theme the login screen of FusionAuth] if you want to make the login page look like your company's brand.
+Once you’ve updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the <span class="uielement">Secure</span> page. You’ll be prompted to log in using FusionAuth’s default login page. You can [theme the login screen of FusionAuth](/docs/v1/tech/themes/) if you want to make the login page look like your company’s brand.
 
-image::integrations/dotnet-integration/dotnet-login-page.png[FusionAuth login,width=1200, role=bottom-cropped]
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-login-page.png" alt="FusionAuth login page" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-After you've signed in, you'll end up at the "Secure" page and will see all claims encoded in the JWT.
+After you’ve signed in, you’ll end up at the "Secure" page and will see all claims encoded in the JWT.
 
-image::integrations/dotnet-integration/dotnet-secure-page-claims.png[Logged in with claims,width=1200]
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-secure-page-claims.png" alt="Logged in page with claims" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 
-== Logout
+## Logout
 
-Awesome, now you can log in with valid user credentials. However, right now there's no way to log out. The JWT is stored in a session cookie. When you're ready to leave, you want to log out of your ASP.NET Core session and of the FusionAuth session. So, you need to add a logout page, remove the session cookie, and redirect to the FusionAuth OAuth logout endpoint. FusionAuth will destroy its session and then redirect back to the configured logout URL. You'll add a "Logout" page to do all of this.
+Awesome, now you can log in with valid user credentials. However, right now there’s no way to log out. The JWT is stored in a session cookie. When you’re ready to leave, you want to log out of your ASP.NET Core session and of the FusionAuth session. So, you need to add a logout page, remove the session cookie, and redirect to the FusionAuth OAuth logout endpoint. FusionAuth will destroy its session and then redirect back to the configured logout URL. You’ll add a "Logout" page to do all of this.
 
 Add the following file into the `Pages` directory and call it `Logout.cshtml.cs`:
 
-[source,csharp]
-----
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -593,61 +540,56 @@ namespace SetupDotnet.Pages
         }
     }
 }
-----
+```
 
 `OnGet` is the important method. Here you sign out using a method of the authentication library, delete the JWT cookie and send the user to the FusionAuth OAuth logout endpoint.
 
 Now add `Logout.cshtml`. No content is necessary. Just declare the page and model.
 
-[source,html]
-----
+```html
 @page
 @model LogoutModel
-@{	
+@{
 }
-----
+```
 
-Don't forget to add a `Logout` link to the navigation, but only if the user is signed in:
+Don’t forget to add a `Logout` link to the navigation, but only if the user is signed in:
 
-[source,html]
-----
+```html
 @if (User.Identity.IsAuthenticated)
 {
     <li class="nav-item">
         <a class="nav-link text-dark" asp-area="" asp-page="/Logout">Logout</a>
     </li>
 }
-----
+```
 
-You also need to update the `appsettings.json` file with the cookie name setting. Since you're now referencing the cookie in two places, pulling it out to the `appsettings.json` file will make for a more maintainable application.
+You also need to update the `appsettings.json` file with the cookie name setting. Since you’re now referencing the cookie in two places, pulling it out to the `appsettings.json` file will make for a more maintainable application.
 
-[source,json]
-----
+```json
 "SetupDotnet" : {
   "Authority" : "http://localhost:9011",
   "CookieName" : "mycookie",
   "ClientId" : "4243b56f-0b45-4882-aa23-ac75eea22d22"
 }
-----
+```
 
 Finally, you need to change the `Startup.cs` file to use the new cookie name.
 
-[source,csharp]
-----
+```csharp
 .AddCookie("cookie", options =>
 {
     options.Cookie.Name = Configuration["SetupDotnet:CookieName"];
 })
-----
+```
 
 Great! Now you can both sign in and sign out of your application.
 
-== Conclusion
+## Conclusion
 
 At the end, your directory tree should look like this:
 
-[source,text]
-----
+```text
 ├── docker-compose.yml
 ├── SetupFusionauth
 │   ├── Program.cs
@@ -683,29 +625,30 @@ At the end, your directory tree should look like this:
     ├── SetupDotnet.sln
     ├── Startup.cs
     └── wwwroot/
-----
+```
 
-Once you’ve created this directory structure, you can start up the {technology} application using this command: 
+Once you’ve created this directory structure, you can start up the {{page.technology}} application using this command:
 
-[source,shell]
-----
+```shell
 ASPNETCORE_ENVIRONMENT=Development SetupDotnet__ClientSecret='change-this-in-production-to-be-a-real-secret' bin/Debug/net7.0/osx-x64/publish/SetupDotnet
-----
+```
 
-The full code is available link:https://github.com/ritza-co/fusionauth-dotnet-integration[here].
+The full code is available [here](https://github.com/ritza-co/fusionauth-dotnet-integration).
 
 ## Troubleshooting
 
 If you run into an issue with cookies on Chrome or other browsers, you might need to run the ASP.NET application under SSL.
 
-You can follow https://learn.microsoft.com/en-us/dotnet/core/additional-tools/self-signed-certificates-guide[this guide] to install development SSL certificates for your .NET environment. 
+You can follow [this guide](https://learn.microsoft.com/en-us/dotnet/core/additional-tools/self-signed-certificates-guide) to install development SSL certificates for your .NET environment.
 
-Alternatively, you can run the project using https://visualstudio.microsoft.com[Visual Studio], which will run the project using SSL. 
+Alternatively, you can run the project using [Visual Studio](https://visualstudio.microsoft.com), which will run the project using SSL.
 
-If you do this, make sure to update the [field]#Authorized Redirect URL# to reflect the `https` protocol. Also note that the project will probably run on a different port when using SSL, so you must update that as well. To do so, log into the administrative user interface, navigate to [breadcrumb]#Applications#, then click the [uielement]#Edit# button on your application, and navigate  to the [breadcrumb]#OAuth# tab. You can have more than one URL.
+If you do this, make sure to update the <span class="field">Authorized Redirect URL</span> to reflect the `https` protocol. Also note that the project will probably run on a different port when using SSL, so you must update that as well. To do so, log into the administrative user interface, navigate to <span class="breadcrumb">Applications</span>, then click the <span class="uielement">Edit</span> button on your application, and navigate to the <span class="breadcrumb">OAuth</span> tab. You can have more than one URL.
 
 This tutorial has example versions built for a few versions of ASP.NET. Check out the below repos for the full code for various versions:
 
-* link:https://github.com/FusionAuth/fusionauth-example-asp-netcore[3.1 repo]
-* link:https://github.com/FusionAuth/fusionauth-example-asp-netcore5[5.0 repo]
-* link:https://github.com/ritza-co/fusionauth-dotnet-integration[7.0 repo]
+- [3.1 repo](https://github.com/FusionAuth/fusionauth-example-asp-netcore)
+
+- [5.0 repo](https://github.com/FusionAuth/fusionauth-example-asp-netcore5)
+
+- [7.0 repo](https://github.com/ritza-co/fusionauth-dotnet-integration)
