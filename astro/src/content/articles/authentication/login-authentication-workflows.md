@@ -16,7 +16,7 @@ Also, these articles do not discuss the pros and cons of the different types of 
 
 ## Definitions
 
-* **Native login form** - this is a form built directly into the application rather then leveraging an external login form such as OAuth
+* **Native login form** - this is a form built directly into the application rather then leveraging an external login form such as an OAuth provider
 * **Application backend** - this is the backend of the application, not the IdP (i.e. not FusionAuth)
 
 ## Traditional web application authentication

@@ -1,4 +1,4 @@
----
+
 export const participants = `
   participant Browser
   participant Store
@@ -207,4 +207,3 @@ export const stolenSessionRefreshToken = `
   Store->>Store: Create session and store User in
   Store->>Hacker: (Shopping cart contents)<br/>[New session id HttpOnly w/ domain: Store.Example.com]
 `;
----
