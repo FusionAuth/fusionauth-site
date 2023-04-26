@@ -173,4 +173,19 @@ Start the HTTP server by running the following command.
 npm run dev
 ```
 
-Browse to [localhost:3000](http://localhost:3000) and click the "Log in" button to be taken to a page with a "Sign in with FusionAuth" button. After clicking it, you should be redirected to your FusionAuth login screen. Enter the correct credentials created when you set up FusionAuth and submit the form. You'll arrive back at your Next.js application home screen, with your email address displayed and a "Log out" button.
+Browse to [localhost:3000](http://localhost:3000).
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-single-sign-on/before-login.png" alt="The initial nextjs screen." class="img-fluid" figure=true %}
+
+Click the "Log in" button to be taken to a page with a "Sign in with FusionAuth" button.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-single-sign-on/ask-for-login.png" alt="The sign-in button screen." class="img-fluid" figure=true %}
+
+After clicking it, you should be redirected to your FusionAuth login screen.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-single-sign-on/login-screen.png" alt="The FusionAuth sign-in screen." class="img-fluid" figure=true %}
+
+Enter the correct credentials created when you set up FusionAuth and submit the form. You'll arrive back at your Next.js application home screen, with your email address displayed and a "Log out" button.
+
+{% include _image.liquid src="/assets/img/blogs/nextjs-single-sign-on/after-login.png" alt="The nextjs application after logging in." class="img-fluid" figure=true %}
+
