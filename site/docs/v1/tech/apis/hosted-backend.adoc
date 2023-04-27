@@ -1,7 +1,7 @@
 ---
 layout: doc
 title: Hosted Backend APIs
-description: APIs that you to perform OAuth 2 Authorization Code Flow login, logout, and refresh for applications
+description: APIs that you to perform OAuth2 Authorization Code Flow login, logout, and refresh for applications
 ---
 
 == Overview
@@ -11,9 +11,7 @@ description: APIs that you to perform OAuth 2 Authorization Code Flow login, log
 This API has been available since 1.45.0
 ====
 
-These APIs provide a pre-built solution for getting your app up and running using the OAuth 2.0 Authorization Code flow
-with PKCE. We have in the past shown you how to link:/blog/2021/11/11/how-to-authenticate-your-react-app#create-the-express-server[create these endpoints yourself]
-but this solution allows you to get going with your app without writing any backend code. You just need FusionAuth!
+These APIs provide a pre-built solution for getting your app up and running using the OAuth2 Authorization Code flow with PKCE. We have in the past shown you how to link:/blog/2021/11/11/how-to-authenticate-your-react-app#create-the-express-server[create these endpoints yourself] but this solution allows you to get going with your app without writing any backend code. You just need FusionAuth!
 
 * <<Prerequisites>>
 * <<Login>>
@@ -28,38 +26,41 @@ but this solution allows you to get going with your app without writing any back
 Be sure to review the link:/docs/v1/tech/core-concepts/applications#oauth[Applications] section of the FusionAuth user guide to ensure proper configuration before using the hosted endpoints.
 
 These endpoints will set the following cookies which are `Secure` and have a `SameSite` value of `Lax`. This follows our link:/learn/expert-advice/oauth/oauth-token-storage#client-side-storage[expert advice on client-side storage].
+
+.Cookies Set By the Hosted Backend
+[cols="1,1,3"]
 |===
 | Name | HttpOnly | Description
 
 | app.at
 | true
-| The access token (JWT) for the configured application
+| The access token for the configured application. This is a JWT and can be presented to your APIs to access data and functionality.
 
 | app.rt
 | true
-| The refresh token for the configured applicaiton
+| The refresh token for the configured application. Only present if the `offline_access` scope is requested. This can be presented to FusionAuth to retrieve a new access token.
 
 | app.idt
 | false
-| The Id token (JWT) for the user for the configured application
+| The Id token for the user for the configured application. Only present if the `openid` scope is requested. This is a JWT and can be accessed by JavaScript to display user account information.
 
 | app.at_exp
 | false
-| The unix timestamp in seconds indicating when the access token will expire
+| The unix epoch timestamp indicating when the access token will expire. This can be checked by JavaScript to determine when a refresh token should be used to get a new access token.
 
 |===
 
-FusionAuth will set the domain on these cookies to `.yourdomain.io` where `yourdomain` is the domain that FusionAuth is serving from, `io` is the top-level domain, and the `.` allows the cookie to match the domain and all subdomains. If the host is a simple host name or IP address FusionAuth will set the domain to that (i.e. `localhost` or `127.0.0.1`).
+FusionAuth will set the domain on these cookies to `.example.com` where `example` is the domain name that FusionAuth is serving from either from the domain or any subdomain, `com` is the top-level domain, and the `.` allows the cookie to match the domain and all subdomains. If the host is a simple host name or IP address FusionAuth will set the domain to that (i.e. `localhost` or `127.0.0.1`).
 
-What this means is that FusionAuth needs to be hosted on the same domain or a sub-domain or sibling-domain of the application that you intend to use with these endpoints.
+What this means is that FusionAuth needs to be hosted on the same domain or a subdomain or sibling domain of the application that you intend to use with these endpoints.
 
-For example if your app is on `app.yourdomain.io` and FusionAuth is on `auth.yourdomain.io` the cookies would be usable by your application.
+For example if your app is on `app.example.com` and FusionAuth is on `auth.example.com` the cookies would be usable by your application.
 
 == Login
 
-This API will start an OAuth 2 authorization code flow by building a valid request and then redirecting the browser to our `/oauth2/authorize` endpoint. If the user is not logged in the user will be presented with the login page and prompted for credentials before being redirected back to the <<callback>> endpoint.
+This API will start an OAuth2 Authorization Code flow by building a valid request and then redirecting the browser to our `/oauth2/authorize` endpoint. If the user is not logged in the user will be presented with the login page and prompted for credentials before being redirected back to the <<Callback>> endpoint.
 
-To use this API correctly the browser should be redirected to this route and it will respond with a redirect status code if successful.
+To use this API, redirect the browser to this route. This is not meant to be called by non-browser clients.
 
 === Request
 
@@ -76,16 +77,16 @@ link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[ty
 
 [.api]
 [field]#clientId# [type]#[UUID]# [required]#Required#::
-The top-level client Id for your application.
+The client Id for your Application.
 
 [field]#redirect_uri# [type]#[String]# [optional]#Optional#::
-The URI that the browser will be redirected to at the end of the login flow. If provided this url must be defined in the list of Authorized Redirect URLs for your application. If not provided the default will be the first of the Authorized Redirect URLs defined for your application.
+The URL encoded URL that the browser will be redirected to at the end of the login flow. If provided, this URL must be included in the list of [field]#Authorized Redirect URLs# for your application. If not provided, the default will be the first value in the [field]#Authorized Redirect URLs# list defined for your application. This parameter is validated the same as if it were being passed to `/oauth/authorize`, however when using this endpoint FusionAuth will pass <<Callback>> as the [field]#redirect_uri# to `/oauth2/authorize` as that route will handle the token exchange.
 
 [field]#state# [type]#[String]# [optional]#Optional#::
 The value of this parameter will be echoed back in the [field]#state# parameter of the redirect URL at the end of the login flow.
 
 [field]#scope# [type]#[String]# [optional]#Optional# [default]#defaults to `openid offline_access`#::
-The OAuth 2 `scope` parameter to be passed to the authorize endpoint. The format is a url-encoded, space-separated list of scopes (i.e `+` or `%20`).
+The OAuth2 [field]#scope# parameter to be passed to the `/oauth2/authorize` endpoint. The format is a URL encoded, space-separated list of scopes (i.e `openid+offline_access` or `openid%20offline_access`).
 +
 Available scopes:
 +
@@ -95,7 +96,7 @@ Available scopes:
 .Example Request URL
 [source,url]
 ----
-https://auth.yourdomain.io/app/login/297ca84b-69a9-4508-8649-97644e1d0b3d?redirect_uri=https%3A%2F%2Fapp.yourdomain.io%2Fcallback&state=yourStateData&scope=offline_access
+https://auth.example.com/app/login/297ca84b-69a9-4508-8649-97644e1d0b3d?redirect_uri=https%3A%2F%2Fapp.example.com%2Fcallback&state=yourStateData&scope=offline_access
 ----
 
 === Response
@@ -108,13 +109,13 @@ Successful invocations of this route will return a  `302` redirect to `/oauth2/a
 |Code |Description
 
 |200
-|This is likely an error case. The route will serve up an error page with html and details on what went wrong.
+|There was an error. The route will serve up an error page with html and details on what went wrong.
 
 |302
 |A successful request will redirect the user to `/oauth2/authorize` to log in.
 
 |403
-|A forbidden response typically means that the Origin of this request did not pass the FusionAuth CORS filter. You likely need to add your app to your link:/docs/v1/tech/reference/cors[CORS Configuration].
+|A forbidden response typically means that the Origin of this request did not pass the FusionAuth CORS filter. Add your app to your link:/docs/v1/tech/reference/cors[CORS Configuration] as an [field]#Allowed Origin#.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -122,11 +123,11 @@ Successful invocations of this route will return a  `302` redirect to `/oauth2/a
 
 == Register
 
-This API will start an OAuth 2 authorization code flow by building a valid request and then redirecting the browser to our `/oauth2/register` endpoint. This endpoint is nearly identical to the <<login>> endpoint with the exception that the target is registration instead of login. If the user is not logged in the user will be presented with the registration page and prompted for credentials before being redirected back to the <<callback>> endpoint.
+This API will start a registration flow by building a valid request and then redirecting the browser to our `/oauth2/register` endpoint. This endpoint is nearly identical to the <<login>> endpoint; however the end result is user registration instead of a login. If the user is not logged in the user will be presented with the registration page and prompted for credentials before being redirected back to the <<Callback>> endpoint. If the user is logged in they will be redirected to `/oauth2/authorize` and subsequently to the <<Callback>>
 
-link:/docs/v1/tech/guides/basic-registration-forms[Self-service Registration] will need to be enabled otherwise this endpoint will redirect to <<Login>>.
+link:/docs/v1/tech/core-concepts/applications#registration[Self-service Registration] will need to be enabled otherwise this endpoint will redirect to <<Login>>.
 
-To use this API correctly the browser should be redirected to this route and it will respond with a redirect status code if successful.
+To use this API, redirect the browser to this route. This is not meant to be called by non-browser clients.
 
 === Request
 
@@ -143,16 +144,16 @@ link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[ty
 
 [.api]
 [field]#clientId# [type]#[UUID]# [required]#Required#::
-The top-level client Id for your application.
+The client Id for your Application.
 
 [field]#redirect_uri# [type]#[String]# [optional]#Optional#::
-The URI that the browser will be redirected to at the end of the login flow. If provided this url must be defined in the list of Authorized Redirect URLs for your application. If not provided the default will be the first of the Authorized Redirect URLs defined for your application.
+The URL encoded URL that the browser will be redirected to at the end of the registration. If provided, this URL must be included in the list of [field]#Authorized Redirect URLs# for your application. If not provided, the default will be the first value in the [field]#Authorized Redirect URLs# list defined for your application. This parameter is validated the same as if it were being passed to `/oauth/register`, however when using this endpoint FusionAuth will pass <<Callback>> as the [field]#redirect_uri# to `/oauth2/register` as that route will handle the token exchange.
 
 [field]#state# [type]#[String]# [optional]#Optional#::
 The value of this parameter will be echoed back in the [field]#state# parameter of the redirect URL at the end of the registration flow.
 
 [field]#scope# [type]#[String]# [optional]#Optional# [default]#defaults to `openid offline_access`#::
-The OAuth 2 `scope` parameter to be passed to the authorize endpoint.
+The OAuth2 [field]#scope# parameter to be passed to the `/oauth2/register` endpoint. The format is a URL encoded, space-separated list of scopes (i.e `openid+offline_access` or `openid%20offline_access`).
 +
 Available scopes:
 +
@@ -162,7 +163,7 @@ Available scopes:
 .Example Request URL
 [source,url]
 ----
-https://auth.yourdomain.io/app/register/297ca84b-69a9-4508-8649-97644e1d0b3d?redirect_uri=https%3A%2F%2Fapp.yourdomain.io%2Fcallback&state=yourStateData&scope=offline_access
+https://auth.example.com/app/register/297ca84b-69a9-4508-8649-97644e1d0b3d?redirect_uri=https%3A%2F%2Fapp.example.com%2Fcallback&state=yourStateData&scope=offline_access
 ----
 
 === Response
@@ -175,13 +176,13 @@ Successful invocations of this route will return a  `302` redirect to `/oauth2/r
 |Code |Description
 
 |200
-|This is likely an error case. The route will serve up an error page with html and details on what went wrong.
+|There was an error. The route will serve up an error page with html and details on what went wrong.
 
 |302
 |A successful request will redirect the user to `/oauth2/register` to register.
 
 |403
-|A forbidden response typically means that the Origin of this request did not pass the FusionAuth CORS filter. You likely need to add your app to your link:/docs/v1/tech/reference/cors[CORS Configuration].
+|A forbidden response typically means that the Origin of this request did not pass the FusionAuth CORS filter. Add your app to your link:/docs/v1/tech/reference/cors[CORS Configuration] as an [field]#Allowed Origin#.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -189,12 +190,17 @@ Successful invocations of this route will return a  `302` redirect to `/oauth2/r
 
 == Callback
 
-You do *NOT* need to call this endpoint directly. The browser should be redirected here automatically after a successful login. This is the route that handles the token exchange and sets the cookies on the browser and will redirect the browser to the defined `redirect_uri`.
+[NOTE.note]
+====
+You do not need to call this endpoint directly. The browser should be redirected here automatically after a successful login or registration. This is the route that handles the token exchange and sets the cookies on the browser and will redirect the browser to the defined `redirect_uri`.
+
+This endpoint is documented for educational purposes only.
+====
 
 === Request
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Receive the callback from the authorization flow.
+link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Receive the callback from the authorization flow
 
 [.endpoint]
 .URI
@@ -206,33 +212,17 @@ link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[ty
 
 [.api]
 [field]#client_id# [type]#[UUID]# [required]#Required#::
-The top-level client Id for your application.
-
-[field]#code# [type]#[String]# [required]#Required#::
-The authorization code returned on the `/oauth2/authorize` response.
+The client Id for your Application.
 
 [field]#tenantId# [type]#[UUID]# [required]#Required#::
-The unique tenant that is associated with the application.
+The Id of the Tenant that is associated with the Application.
 
-[field]#locale# [type]#[String]# [optional]#Optional#::
-The link:/docs/v1/tech/reference/data-types#locales[locale] that was used to render the login page, or a previously selected locale by the user during a previous session.
-
-[field]#state# [type]#[String]# [optional]#Optional#::
-The state that was provided on the Authorization request.
-This parameter will be omitted if the [field]#state# request parameter was not provided.
-
-[field]#userState# [type]#[String]# [optional]#Optional#::
-The FusionAuth user state.
-+
-The possible values are:
-+
-* `Authenticated` - The user is successfully authenticated for the requested application.
-* `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
+include::docs/v1/tech/shared/_oauth-authorize-redirect-parameters.adoc[]
 
 .Example Request URL
 [source,url]
 ----
-https://auth.yourdomain.io/app/callback?code=wJfjafZLvo_KH5-D4r-3YwMmStN3yHoZDGmBivjioz0&locale=en&state=eyJjIjoiODVhMDM4NjctZGNjZi00ODgyLWFkZGUtMWE3&userState=Authenticated&client_id=297ca84b-69a9-4508-8649-97644e1d0b3d&tenantId=e707be45-afa8-4881-9efb-4be7288395d2
+https://auth.example.com/app/callback?code=wJfjafZLvo_KH5-D4r-3YwMmStN3yHoZDGmBivjioz0&locale=en&state=eyJjIjoiODVhMDM4NjctZGNjZi00ODgyLWFkZGUtMWE3&userState=Authenticated&client_id=297ca84b-69a9-4508-8649-97644e1d0b3d&tenantId=e707be45-afa8-4881-9efb-4be7288395d2
 ----
 
 === Response
@@ -245,25 +235,29 @@ A successful response should set cookies and return a `302` redirect to the `red
 |Code |Description
 
 |200
-|This is likely an error case. The route will serve up an error page with html and details on what went wrong.
+|There was error. The route will serve up an error page with html and details on what went wrong.
 
 |302
-|A successful request will redirect the user to `redirect_uri` specified in the request or the default Authorized Redirect URL configured for the application.
+|A successful request will redirect the user to `redirect_uri` specified in the request or the default [field]#Authorized Redirect URL# configured for the Application.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
 |===
 
+==== Response Cookies
+
+include::docs/v1/tech/shared/_hosted-backend-response-cookies.adoc[]
+
 == Refresh
 
-This endpoint will extract the `app.rt` cookie if present and use it to make a `refresh_token` request from `/oauth/token`. If successful a new set of cookies will be set on the response the will continue to allow access to the application.
+This endpoint will extract the `app.rt` cookie if present and use it to make a `refresh_token` request from `/oauth/token`. If successful a new set of cookies will be set on the response the will continue to allow access to the application. You can call this any time or you can review the value of `app.at_exp` and call it when the access token is about to expire.
 
-This is an api that should be made from the client application and the browser should *NOT* be redirected to this endpoint.
+This API request is made from the client application. The browser should *NOT* be redirected to this endpoint.
 
 === Request
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Refresh the current session cookies.
+link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[type=fas]] Refresh the access token
 
 [.endpoint]
 .URI
@@ -275,12 +269,12 @@ link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas
 
 [.api]
 [field]#client_id# [type]#[UUID]# [required]#Required#::
-The top-level client Id for your application.
+The client Id for your Application.
 
 .Example Request URL
 [source,url]
 ----
-https://auth.yourdomain.io/app/refresh/297ca84b-69a9-4508-8649-97644e1d0b3d
+https://auth.example.com/app/refresh/297ca84b-69a9-4508-8649-97644e1d0b3d
 ----
 
 === Response
@@ -293,14 +287,18 @@ A successful response should set cookies and return a `200`.
 |Code |Description
 
 |200
-|This is likely an error case. The route will serve up an error page with html and details on what went wrong.
+|There was an error. The route will serve up an error page with html and details on what went wrong.
 
 |400
-|The request was not successful. The client may need to reauthorize.
+|The request was not successful. The client needs to reauthorize. Redirect the browser to the `Login` endpoint.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
 |===
+
+==== Response Cookies
+
+include::docs/v1/tech/shared/_hosted-backend-response-cookies.adoc[]
 
 == Me
 
@@ -311,7 +309,7 @@ This is an api that should be made from the client application and the browser s
 === Request
 
 [.api-authentication]
-link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Get info about the user.
+link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas]] Get info about the user
 
 [.endpoint]
 .URI
@@ -322,7 +320,7 @@ link:/docs/v1/tech/apis/authentication#jwt-authentication[icon:id-badge[type=fas
 .Example Request URL
 [source,url]
 ----
-https://auth.yourdomain.io/app/me
+https://auth.example.com/app/me
 ----
 
 === Response
@@ -338,7 +336,7 @@ A successful response should set cookies and return a `302` redirect to the `red
 |The request was successful. The response will contain a JSON body.
 
 |401
-|The user is not authorized. May need to refresh or log in again.
+|The user is not authorized. Call `Refresh` or redirect the browser to the `Login` endpoint.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -350,9 +348,9 @@ include::docs/v1/tech/shared/_user-info-response.adoc[]
 
 == Logout
 
-This API will start a logout. The cookies specific to this session will be removed and if an SSO session was started it will be ended.
+This API will start a logout. The cookies set on <<Callback>> or <<Refresh>> will be removed. If an SSO session was started, it will be ended.
 
-To use this API correctly the browser should be redirected to this route and it will respond with a `302` redirect status code if successful.
+To use this API, redirect the browser should be redirected to this route and the router will respond with a `302` redirect status code. This is not meant to be called by non-browser clients.
 
 === Request
 
@@ -369,20 +367,20 @@ link:/docs/v1/tech/apis/authentication#no-authentication-required[icon:unlock[ty
 
 [.api]
 [field]#clientId# [type]#[UUID]# [required]#Required#::
-The top-level client Id for your application.
+The client Id for your Application.
 
 [field]#redirect_uri# [type]#[String]# [optional]#Optional#::
-The URI that the browser will be redirected to at the end of the logout flow. If not provided this will be the `Logout URL` configured for the application. Other values must be defined in the `Authorized Redirect URLs` for the application.
+The URL encoded URL that the browser will be redirected to at the end of the logout flow. If not provided, this will be the [field]#Logout URL# configured for the Application. If another value is used, it must be defined in the [field]#Authorized Redirect URLs# for the Application.
 
 .Example Request URL
 [source,url]
 ----
-https://auth.yourdomain.io/app/logout/297ca84b-69a9-4508-8649-97644e1d0b3d?redirect_uri=https%3A%2F%2Fapp.yourdomain.io%2
+https://auth.example.com/app/logout/297ca84b-69a9-4508-8649-97644e1d0b3d?redirect_uri=https%3A%2F%2Fapp.example.com%2
 ----
 
 === Response
 
-Successful invocations of this route will return a  `302` redirect to `/oauth2/logout`. Other status codes indicate an error. After logout the browser should be redirected to the defined `redirect_uri`.
+Successful invocations of this route will return a  `302` redirect to `/oauth2/logout`. Other status codes indicate an error. After logout the browser is redirected to the defined `redirect_uri`.
 
 [cols="1a,9a"]
 .Response Codes
@@ -390,10 +388,10 @@ Successful invocations of this route will return a  `302` redirect to `/oauth2/l
 |Code |Description
 
 |200
-|This is likely an error case. The route will serve up an error page with html and details on what went wrong.
+|There was an error. The route will serve up an error page with html and details on what went wrong.
 
 |302
-|A successful request will redirect the user to `/oauth2/authorize` to log in.
+|A successful request will redirect the user to `/oauth2/logout` to complete the logout.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
