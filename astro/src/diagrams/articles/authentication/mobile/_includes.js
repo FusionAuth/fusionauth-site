@@ -1,4 +1,3 @@
----
 export const initialize = `
   Note over Mobile,Hacker: Initialize
   Mobile->>Mobile: Open app and render login form
@@ -63,4 +62,3 @@ export const stolenRefresh = `
   FusionAuth->>Store: (JWT)
   Store->>Hacker: (Shopping cart contents and new JWT)
 `;
----

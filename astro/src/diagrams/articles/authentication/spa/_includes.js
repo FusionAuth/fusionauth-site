@@ -46,7 +46,7 @@ export const forumsInitializeLocalStorage = `
   Browser->>Browser: Check local storage for JWT
 `;
 
-export const forumsJWTLocalStoreLoad = `
+export const forumsJWTLocalStorageLoad = `
   Note over Browser,Hacker: Forums load
   Browser->>Forums: AJAX GET /api/load-load-posts<br/>(JWT from local storage)
   Forums->>Browser: (Forum posts)
