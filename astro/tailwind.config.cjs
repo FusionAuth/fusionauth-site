@@ -14,6 +14,7 @@ module.exports = {
         light: '#e6e7e8',
         dark: '#3e4e50'
       },
+      fuchsia: colors.fuchsia,
       gray: colors.slate,
       green: colors.teal,
       indigo: colors.indigo,
