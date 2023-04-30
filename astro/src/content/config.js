@@ -6,6 +6,7 @@ const articlesCollection = defineCollection({
     description: z.string(),
     excludeFromIndex: z.boolean().default(false),
     image: z.string(),
+    indexPage: z.boolean().default(false),
     section: z.string(),
     title: z.string(),
   }),

@@ -1,7 +1,6 @@
-import path from 'node:path';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import puppeteer from 'puppeteer';
-import type { Props } from './Props';
 
 // Global diagram config
 const config = {
@@ -12,7 +11,7 @@ const config = {
   wrap: true
 };
 
-export default async function renderDiagram({ code, id }: Props) {
+export default async function renderDiagram({ code, id }) {
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
 
@@ -23,18 +22,13 @@ export default async function renderDiagram({ code, id }: Props) {
 
   await page.addScriptTag({ content });
 
-  const result: {
-    status: string;
-    error?: Error;
-    message?: string;
-    svgCode?: string;
-  } = await page.evaluate(
-    (configB, codeB: string, id: string) => {
+  const result = await page.evaluate(
+    (configB, codeB, id) => {
       // FIXME: `window.mermaid` global browser stubbing
       window.mermaid.initialize(configB);
 
       try {
-        /* Render the mermaid diagram */
+        // Render the mermaid diagram
         const svgCode = window.mermaid.mermaidAPI.render(id, codeB);
         return { status: 'success', svgCode };
       } catch (error) {

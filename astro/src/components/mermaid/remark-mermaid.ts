@@ -14,7 +14,7 @@
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { visit } from 'unist-util-visit';
-import renderDiagram from './render-diagram';
+import renderDiagram from './render-diagram.js';
 
 const style = `display: flex; justify-content: center; width: 100%;`;
 
