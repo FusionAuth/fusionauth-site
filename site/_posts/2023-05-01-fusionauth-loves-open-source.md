@@ -13,16 +13,15 @@ Open source is at the core of many applications built today – in fact, almost 
 
 <!--more-->
 
-
-
-
 At FusionAuth, our [client libraries and SDKs](/docs/v1/tech/client-libraries/) and community projects like our [non-blocking NIO Java HTTP Server](https://github.com/FusionAuth/java-http) are all licensed under the Apache 2.0 open source license. And, though [it is not open source](https://fusionauth.io/license-faq#30), our [community edition](/download) has been downloaded more than 10,000,000 times and is actively used by tens of thousands of developers to power the authentication and authorization for tens of millions of end users. 
+
+## Open source works
 
 We believe strongly in the open source model as a way to decrease friction and improve developer experience. Open source is used in standalone projects, incorporated into commercial projects (if the license allows, of course) and served up as in SaaS form by startups and cloud providers. Open source really is critical to the functioning of the modern software economy. 
 
 But the reality is that many open source projects are often underfunded — if not completely unfunded. So we are proud to announce open source project sponsorships. We want these projects to thrive  and benefit developers everywhere that are building applications that need to be secured. Some of these are also used to help build our own product, FusionAuth, so we have a vested interest in supporting them. 
 
-Here are the independent open source projects that FusionAuth is currently sponsoring: 
+Below are the independent open source projects that FusionAuth is currently sponsoring. 
 
 ## Git
 
