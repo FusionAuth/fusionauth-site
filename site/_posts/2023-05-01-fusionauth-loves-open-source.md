@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Open Source Sponsorships
-description: In this tutorial, we'll build a basic Next.js web application using FusionAuth to handle single sign-on.
+title: Open Source Sponsorship
+description: FusionAuth loves open source, and we love sponsoring it too.
 author: Emily Jansen
 category: announcement
 tags: open-source sponsorship community open-source-software
