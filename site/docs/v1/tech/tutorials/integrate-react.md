@@ -26,7 +26,7 @@ language: JavaScript
 
 ## Configure FusionAuth
 
-Next, you need to set up FusionAuth. This can be done in different ways, but we’re going to use the Typescript client library. The below instructions use npm from the command line, but you can use the client library with an IDE of your preference as well.
+Next, you need to set up FusionAuth. This can be done in different ways, but we’re going to use the Typescript client library. The below instructions use `npm` on the command line, but you can use the client library with an IDE of your preference as well.
 
 First, make a directory:
 
@@ -34,37 +34,35 @@ First, make a directory:
 mkdir setup-fusionauth && cd setup-fusionauth
 ```
 
-
 Now, copy and paste the following file into `package.json`.
 
 ```javascript
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/package.json %}
 ```
 
-Then copy and paste the following file into `setup.js`.
-
-```javascript
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
-```
-
-Next, install the dependencies.
+Now you need to install the dependencies in `package.json`.
 
 ```shell
 npm install
 ```
 
-Then, you can run the setup class. This will create FusionAuth configuration for your React application.
+Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS and more to allow for easy integration. 
+
+```javascript
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
+```
+
+Then, you can run the setup script.
 
 ```shell
 npm run setup
 ```
 
-If you want, you can http://localhost:9011[login to your instance] and
-examine the new application configuration the script created for you.
+If you want, you can http://localhost:9011[login to your instance] and examine the new Application the script created for you.
 
-## Create Your React Application
+## Create Your {{page.technology}} Application
 
-Now you are going to create a react application. While this section uses a simple react application without any framework, you can use the same configuration to integrate any react application with FusionAuth.
+Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application without any framework, you can use the same steps to integrate any {{page.technology}} application with FusionAuth.
 
 First, make a directory:
 
@@ -72,27 +70,27 @@ First, make a directory:
 mkdir ../setup-react && cd ../setup-react
 ```
 
-Next, create a simple React template using vite. Using this lets you easily integrate FusionAuth, but for a production application you'll probably use something like [NextJS or Remix](/docs/quickstarts/#single-page-app).
+Next, create a simple {{page.technology}} template using vite. Using this lets you easily integrate FusionAuth. For a production application you'll probably use something like [NextJS or Remix](/docs/quickstarts/#single-page-app).
 
 ```shell
 npm create vite@latest react-app -- --template react
 ```
 
-Now, change into the `react-app` directory and install the needed modules.
+Now, change into the `react-app` directory and install the needed packages.
 
 ```shell
 cd react-app && npm install
 ```
 
-You can start up the server and visit the URL provided to ensure you have a basic app running.
+You can start up the server and visit the URL displayed to ensure the default application works.
 
 ```shell
 npm run dev
 ```
 
-{% include _callout-tip.liquid content="If you are using a different port for your React app, update the redirect URL in the setup script. It needs to match exactly." %}
+You'll want to open another terminal window to continue. Edit `src/App.jsx` to make changes to the view to test out the automatic reloading.
 
-You'll want to open another terminal window to continue. You can edit `src/App.jsx` to make changes to the view to test out the automatic reloading.
+{% include _callout-tip.liquid content="If you are using a different port for your {{page.technology}} app, update the redirect URL in the setup script, or modify it manuall. It needs to match exactly." %}
 
 Now, let's install the [FusionAuth React SDK](https://www.npmjs.com/package/@fusionauth/react-sdk).
 
@@ -100,13 +98,13 @@ Now, let's install the [FusionAuth React SDK](https://www.npmjs.com/package/@fus
 npm install @fusionauth/react-sdk
 ```
 
-Update `src/main.jsx` to wrap your app with `FusionAuthProvider`. This file should look like this, but make sure you update the attributes of the provider if you changed the port of the react server:
+Update `src/main.jsx` to wrap your app with `FusionAuthProvider`. This file should look similar to this, but make sure you update the attributes of the provider if you changed the port of the {{page.technology}} server:
 
 ```jsx
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-guide/main/src/main.jsx %}
 ```
 
-Now, let's add a login and logout button to your React application. Open up `src/App.jsx` and replace the content with the following:
+Now, let's add a login and logout button to your {{page.technology}} application. Open up `src/App.jsx` and replace the content with the following:
 
 ```jsx
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-guide/main/src/App.jsx %}
@@ -114,7 +112,7 @@ Now, let's add a login and logout button to your React application. Open up `src
 
 In this code, you are adding in the FusionAuth login and logout buttons, as well as a welcome message which will only show up if the user is logged in.
 
-You can now open up an incognito window and visit http://localhost:5173[the React app]. View the page and log in with the user you configured. If you used the setup script, it will be `richard@example.com`.
+You can now open up an incognito window and visit http://localhost:5173[the {{page.technology}} app]. View the page and log in with the user you configured. If you used the setup script, it will be `richard@example.com`.
 
 You've successfully added login and logout to a React application.
 
