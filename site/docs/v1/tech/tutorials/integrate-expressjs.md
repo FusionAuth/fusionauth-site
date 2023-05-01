@@ -1,7 +1,7 @@
 ---
 layout: doc
-title: Integrate Your Node.js Application With FusionAuth
-description: Integrate your Node.js application with FusionAuth
+title: Integrate Your Express.js Application With FusionAuth
+description: Integrate your Express.js application with FusionAuth
 navcategory: getting-started
 ---
 
