@@ -1,12 +1,9 @@
 ---
-layout: advice
 title: The Demise of Third-Party Cookies and Why You Need to Run Your Own CIAM System
 description: What is the future of third party cookies and how does that tie into customer identity and access management?
+section: CIAM
 author: Kuntal Chakraborty
 image: advice/demise-third-party-cookies/demise-of-third-party-cookies-why-you-need-your-own-ciam-system.png
-category: CIAM
-date: 2022-01-07
-dateModified: 2022-01-07
 ---
 
 Third-party cookies track user information like browsing habits, purchases, and other interactions, which helps companies know how to market to their target demographic. By utilizing third-party cookies, companies can track users across multiple websites. However, the collection of personal information raises concern about online privacy. As a result, more and more browsers are allowing users to block third-party cookies.

@@ -139,6 +139,55 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"ciam/auth-and-the-bottleneck-architecture.md": {
+  id: "ciam/auth-and-the-bottleneck-architecture.md",
+  slug: "ciam/auth-and-the-bottleneck-architecture",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"ciam/auth-facade-pattern.md": {
+  id: "ciam/auth-facade-pattern.md",
+  slug: "ciam/auth-facade-pattern",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"ciam/ciam-vs-iam.md": {
+  id: "ciam/ciam-vs-iam.md",
+  slug: "ciam/ciam-vs-iam",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"ciam/demise-of-third-party-cookies-running-own-ciam.md": {
+  id: "ciam/demise-of-third-party-cookies-running-own-ciam.md",
+  slug: "ciam/demise-of-third-party-cookies-running-own-ciam",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"ciam/developers-guide-to-gdpr.md": {
+  id: "ciam/developers-guide-to-gdpr.md",
+  slug: "ciam/developers-guide-to-gdpr",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"ciam/making-sure-your-auth-system-scales.md": {
+  id: "ciam/making-sure-your-auth-system-scales.md",
+  slug: "ciam/making-sure-your-auth-system-scales",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"ciam/unlocking-growth-low-friction-signup-process.md": {
+  id: "ciam/unlocking-growth-low-friction-signup-process.md",
+  slug: "ciam/unlocking-growth-low-friction-signup-process",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "login-authentication-workflows/index.md": {
   id: "login-authentication-workflows/index.md",
   slug: "login-authentication-workflows",

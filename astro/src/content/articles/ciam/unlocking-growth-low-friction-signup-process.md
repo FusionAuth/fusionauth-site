@@ -1,12 +1,9 @@
 ---
-layout: advice
 title: "Unlocking Growth: Why a Low Friction User Signup Process is Crucial for Your Business"
 description: What is the overall value of low-friction user signups? This article covers all the ways low-friction signups add value to your application and business.
+section: CIAM
 author: Hannah Sutor
 image: advice/ciam-signup/ciam-signup-header.png
-category: CIAM
-date: 2023-03-22
-dateModified: 2023-03-22
 ---
 
 Customer Identity and Access Management (CIAM) is a critical component of any modern digital business strategy. At its core, CIAM is about providing users with seamless and secure access to digital products and services. Sometimes, when thinking about authentication flows, it can be easy to get caught up in the details. I’d like to take a step back and discuss the overall value of a sometimes overlooked piece of the CIAM puzzle: the value of low-friction user signups.

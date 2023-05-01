@@ -1,12 +1,9 @@
 ---
-layout: advice
 title: Developer's Guide to GDPR
 description: A complete guide for developers to ensure their applications are GDPR compliant.
+section: CIAM
 author: Brian Pontarelli
 image: advice/developers-guide-to-gdpr-article.png
-category: CIAM
-date: 2019-11-04
-dateModified: 2020-10-07
 ---
 
 ## The who, what, when, where, and why of the GDPR for developers
@@ -191,5 +188,3 @@ General Data Protection Regulation Text
 * [How Will the GDPR Impact Third-Party Lead Generation?](https://www.cmswire.com/digital-marketing/how-will-the-gdpr-impact-third-party-lead-generation/)
 * [The Media Agency's Guide To GDPR And EPrivacy](https://adexchanger.com/agencies/media-agencys-guide-gdpr-eprivacy/)
 * [MarTech Today's Guide to GDPR — The General Data Protection Regulation](https://martechtoday.com/guide/gdpr-the-general-data-protection-regulation)
-
-{% include _advice-get-started.liquid intro="If you are looking for a GDPR compliant solution, FusionAuth has you covered." %}

@@ -41,7 +41,7 @@ There are [several considerations](https://cheatsheetseries.owasp.org/cheatsheet
 - Account lockout policy
 - A strong modern hashing algorithm
 
-Let's dive a bit into [password hashing](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy). Using a modern hashing algorithm is critical. If an individual password hash is leaked (via an SQL injection attack, for example) or perhaps even an entire database is stolen, then an attacker has the opportunity to try to figure out what the plain text passwords are. They can take a list of common or randomized passwords, hash each potential password, and see if the hashes match any in the database. Salting can help here, but not if they have the salt as well.
+Let's dive a bit into [password hashing](/articles/security/math-of-password-hashing-algorithms-entropy). Using a modern hashing algorithm is critical. If an individual password hash is leaked (via an SQL injection attack, for example) or perhaps even an entire database is stolen, then an attacker has the opportunity to try to figure out what the plain text passwords are. They can take a list of common or randomized passwords, hash each potential password, and see if the hashes match any in the database. Salting can help here, but not if they have the salt as well.
 
 Consider the [difference between using a strong and weak algorithm](https://www.sjoerdlangkemper.nl/2016/05/25/iterative-password-hashing/):
 
@@ -94,7 +94,7 @@ If your company has the time, money, and people to invest, and considers authent
 
 ## Vendor Assessment
 
-If you're considering using a third-party vendor, then you need to make sure you perform due diligence in [assessing how appropriate and risky that vendor is](/learn/expert-advice/identity-basics/due-diligence-authentication-vendors). Many regulatory programs like SOC2 require some kind of controls around vendor risk management.
+If you're considering using a third-party vendor, then you need to make sure you perform due diligence in [assessing how appropriate and risky that vendor is](/articles/identity-basics/due-diligence-authentication-vendors). Many regulatory programs like SOC2 require some kind of controls around vendor risk management.
 
 While this article has already touched on areas of risk in implementing an auth system, like application security, financials, and performance, assessing a vendor is where the rubber meets the road. It's where you apply all your knowledge about risk in authentication implementation.
 

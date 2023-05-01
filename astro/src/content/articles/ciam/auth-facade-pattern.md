@@ -1,12 +1,9 @@
 ---
-layout: advice
 title: The Auth Facade Pattern
 description: Introducing a facade in front of customer identity providers adds implementation flexibility and gives additional control to your applications
 image: advice/auth-facade/expert-advice-the-auth-facade-pattern-header-image.png
-category: CIAM
+section: CIAM
 author: Dan Moore
-date: 2021-04-30
-dateModified: 2021-04-30
 ---
 
 When talking about identity architectures in FusionAuth customers, there's a common deployment pattern called the "Auth Facade". This is also commonly referred to as the "Identity Broker" pattern. 
@@ -45,7 +42,7 @@ As an enterprise software developer, you have a few options:
 
 Like any [facade](https://en.wikipedia.org/wiki/Facade_pattern), the auth facade hides a subsystem; the subsystem hidden here is a client's identity provider. As part of your application, ship an embedded auth and user management system. Your application's authentication and authorization requests are sent to this embedded system. It federates as needed with upstream authentication providers. 
 
-{% include _image.liquid src="/assets/img/advice/auth-facade/auth-facade-pattern.svg" alt="The identity broker architectural pattern." class="img-fluid" figure=false %}
+![The identity broker architectural pattern.](/img/articles/auth-facade/auth-facade-pattern.svg)
 
 ## The auth facade vs federation
 
