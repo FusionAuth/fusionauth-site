@@ -43,15 +43,19 @@ Here are some guidelines to follow when writing documentation (everything under 
 ```
 egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
 ```
-- You can use icons to mention UI buttons, like this:
-  - `icon:plus[role=ui-button green,type=fas]`
-  - `icon:edit[role=ui-button blue,type=fas]`
-  - `icon:save[role=ui-button blue,type=fas]`
-  - `icon:user[role=ui-button purple,type=fas]`
-  - `icon:search[role=ui-button green,type=fas]`
-  - `icon:key[role=ui-button purple,type=fa]`
+- We currently use [FontAwesome v5](https://fontawesome.com/v5/search?m=free) to render icons, so you can use them to refer to UI buttons, like this:
+  - ```asciidoc
+    icon:plus[role=ui-button green,type=fas]
+    icon:search[role=ui-button green,type=fas]
+    icon:edit[role=ui-button blue,type=fas]
+    icon:save[role=ui-button blue,type=fas]
+    icon:user[role=ui-button purple,type=fas]
+    icon:key[role=ui-button purple,type=fa]
+    icon:minus-circle[role=ui-button gray,type=fa]
+    icon:trash-alt[role=ui-button red,type=fa]
+    ```
 
-  ![icons](https://user-images.githubusercontent.com/1877191/235474702-31ebdbc3-553f-46d5-8228-9a47b40d7766.png)
+    ![icons](https://user-images.githubusercontent.com/1877191/235482795-fd00698a-96f1-45cc-aa75-873e9bd4f47a.png)
 
 
 ### Including files
