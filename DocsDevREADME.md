@@ -437,3 +437,52 @@ Prior to requesting review on a PR, please complete the following checklist.
 1. Update the quickstart page (`/docs/quickstarts/index.html`) to point to the updated blog post and remove the `coming-soon` class.
 1. Ask for review.
 1. Close out the issue after merging.
+
+## Quickstarts
+
+### Webapps
+
+Model this after the ruby on [rails quickstart](https://fusionauth.io/docs/v1/tech/tutorials/integrate-ruby-rails).
+
+* Use markdown instead of asciidoc (the ruby quickstart needs to be ported over).
+* Use a client library to configure the project; don't use the admin ui. Add any setup scripts (or reuse them if needed) to https://github.com/FusionAuth/fusionauth-example-client-libraries
+* Make sure you create a sample project and include files from it (using `remote_include`) rather than inline the code.
+* For the login integration, use a standard OIDC library, not the FusionAuth client library.
+* Build the application from scratch, using whatever codegen tools are standard for the tech stack.
+* Include an image at the end
+* Use the includes under `site/_includes/docs/integration` for the first sections of the tutorial. Make sure you set the expected values in the front matter:
+
+<pre>
+... other front matter
+prerequisites: nodejs
+technology: react
+language: javascript
+---
+
+## Integrate Your {{page.technology}} Application With FusionAuth
+
+{% include docs/integration/_intro.md %}
+
+## Prerequisites
+
+{% include docs/integration/_prerequisites.md %}
+
+## Download and Install FusionAuth
+
+{% include docs/integration/_install-fusionauth.md %}
+
+## Create a User and an API Key
+
+{% include docs/integration/_add-user.md %}
+</pre>
+
+
+### APIs
+
+If you are doing a quickstart for an API, rather than for an application:
+
+* Set up FusionAuth to set access token and refresh tokens as cookies using new hosted backend (full docs incoming, but you can see the PR here: https://github.com/FusionAuth/fusionauth-site/pull/2115
+* Make sure jwt is signed with rs256 key
+* Write standalone service which returns 401 if user doesn't present a correct access token.
+* Service should return JSON if jwt is valid. Check signature using lib, not using validate endpoint. Also check audience, exp and issuer claims
+* Add a small bit of js on the browser to call the API, if it gets a 401, should call the refresh endpoint.
