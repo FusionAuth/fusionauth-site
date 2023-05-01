@@ -440,7 +440,13 @@ Prior to requesting review on a PR, please complete the following checklist.
 
 ## Quickstarts
 
+Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
+
+For blog posts that are updated and linked under /docs/quickstarts, see `Blog post review checklist`.
+
 ### Webapps
+
+Webapps are web applications that the user will log into.
 
 Model this after the ruby on [rails quickstart](https://fusionauth.io/docs/v1/tech/tutorials/integrate-ruby-rails).
 
@@ -479,7 +485,9 @@ language: javascript
 
 ### APIs
 
-If you are doing a quickstart for an API, rather than for an application:
+APIS are JSON HTTP APIs that will validate a JWT and return a value. 
+
+If you are doing a quickstart for an API, rather than for a web application, follow these guidelines:
 
 * Set up FusionAuth to set access token and refresh tokens as cookies using new hosted backend (full docs incoming, but you can see the PR here: https://github.com/FusionAuth/fusionauth-site/pull/2115
 * Make sure jwt is signed with rs256 key
