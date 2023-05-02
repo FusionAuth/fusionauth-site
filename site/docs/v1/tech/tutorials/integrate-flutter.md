@@ -65,9 +65,7 @@ The below instructions use Dart from the command line, but you can use the clien
 mkdir setup-fusionauth && cd setup-fusionauth
 ```
 
-If you want, you can [login to your instance](http://localhost:9011) and examine the new application configuration the script created for you.
-
-Now, cut and paste the following file into `pubspec.yml`.
+Now, copy and paste the following file into `pubspec.yml`.
 
 ```yaml
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/dart/pubspec.yml %}
@@ -90,6 +88,8 @@ Then, you can run the setup class. This will create the FusionAuth configuration
 ```shell
 dart run lib/main.dart
 ```
+
+If you want, you can [login to your instance](http://localhost:9011) and examine the new application configuration the script created for you.
 
 ## Create Your Flutter Application
 
