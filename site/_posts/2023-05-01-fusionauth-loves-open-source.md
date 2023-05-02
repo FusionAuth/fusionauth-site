@@ -47,14 +47,6 @@ Below are the independent open source projects that FusionAuth is currently spon
 
 *Our contribution supports ongoing development of NextAuth.js and Auth.js.*
 
-## Caddy
-
-{% include _image.liquid src="/assets/img/blogs/open-source-sponsorship/caddy-logo.png" alt="Caddy is an enterprise-ready, open source web server with automatic HTTPS." class="img-fluid" figure=true %}
-
-[Caddy](https://caddyserver.com/), written by [Matt Holt](https://github.com/sponsors/mholt) is an open source web server. Written in Go, Caddy is an alternative to solutions like NGINX or Apache HTTPD. It has tight integration with ACME certificate authorities such as LetsEncrypt and ZeroSSL (which sponsors the project). It's useful both as a reverse proxy, speeding up your webapps, and a static file server.
-
-*Our contribution supports ongoing development of Caddy.*
-
 ## Does your project need help?
 
 Want us to sponsor your open source project?
