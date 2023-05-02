@@ -43,9 +43,17 @@ Below are the independent open source projects that FusionAuth is currently spon
 
 {% include _image.liquid src="/assets/img/blogs/open-source-sponsorship/next-auth-js-logo.png" alt="NextAuth.js is an open source authentication solution for Next.js." class="img-fluid" figure=true %}
 
-[NextAuth.js](https://opencollective.com/nextauth) is a complete open source authentication solution for <a href="http://nextjs.org/">Next.js</a> applications. This project has over 15,000 stars on GitHub. They are also changing their name to Auth.js and broadening their scope in their next version (v4).
+[NextAuth.js](https://opencollective.com/nextauth) is a complete open source authentication solution for [Next.js](http://nextjs.org) applications. This project has over 15,000 stars on GitHub. They are also changing their name to Auth.js and broadening their scope in their next version (v4).
 
 *Our contribution supports ongoing development of NextAuth.js and Auth.js.*
+
+## Caddy
+
+{% include _image.liquid src="/assets/img/blogs/open-source-sponsorship/caddy-logo.png" alt="Caddy is an enterprise-ready, open source web server with automatic HTTPS." class="img-fluid" figure=true %}
+
+[Caddy](https://caddyserver.com/), written by [Matt Holt](https://github.com/sponsors/mholt) is an open source web server. Written in Go, Caddy is an alternative to solutions like NGINX or Apache HTTPD. It has tight integration with ACME certificate authorities such as LetsEncrypt and ZeroSSL (which sponsors the project). It's useful both as a reverse proxy, speeding up your webapps, and a static file server.
+
+*Our contribution supports ongoing development of Caddy.*
 
 ## Does your project need help?
 
