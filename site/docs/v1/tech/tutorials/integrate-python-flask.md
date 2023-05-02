@@ -8,35 +8,21 @@ technology: Python Flask
 language: Python
 ---
 
-{% include_relative _integrate-intro.md %}
+## Integrate Your {{page.technology}} Application With FusionAuth
+
+{% include docs/integration/_intro.md %}
 
 ## Prerequisites
 
-For this tutorial, you’ll need to have {{page.prerequisites}} installed. You’ll also need Docker, since that is how you’ll install FusionAuth.
-
-The commands below are for macOS and Linux, but are limited to `mkdir` and `cd`.
+{% include docs/integration/_prerequisites.md %}
 
 ## Download and Install FusionAuth
 
-{% include_relative _integrate-install-fusionauth.md %}
+{% include docs/integration/_install-fusionauth.md %}
 
 ## Create a User and an API Key
 
-Next, [log into your FusionAuth instance](http://localhost:9011). You’ll need to set up a user and a password, as well as accept the terms and conditions.
-
-{% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/admin-user-setup.png" alt="Admin user setup in FusionAuth." class="img-fluid" width="1200" figure=false %}
-
-
-Then, you’re at the FusionAuth admin UI. This lets you configure FusionAuth manually. But for this tutorial, you’re going to create an API key and then you’ll configure FusionAuth via the API using the [{{page.language}} client library](/docs/v1/tech/client-libraries/python).
-
-Navigate to <span class="breadcrumb">Settings → API Keys</span>. Click the <span class="uielement">+</span> button to add a new API Key.
-
-{% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/api-key.png" alt="API key setup in FusionAuth." class="img-fluid" width="1200" figure=false %}
-
-
-Copy the value of the <span class="field">Key</span> field and then save the key. It should be a value similar to `CY1EUq2oAQrCgE7azl3A2xwG-OEwGPqLryDRBCoz-13IqyFYMn1_Udjt`.
-
-Doing so creates an API key that can be used for any FusionAuth API call. Note that key value as you’ll be using it later.
+{% include docs/integration/_add-user.md %}
 
 ## Configure FusionAuth
 
@@ -51,88 +37,13 @@ touch requirements.txt setup.py
 Now, cut and paste the following requirements into `requirements.txt`:
 
 ```text
-fusionauth-client==1.42.0
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-flask-integration/main/requirements.txt %}
 ```
 
 Then, copy and paste the following code into the `setup.py` file.
 
 ```python
-from fusionauth.fusionauth_client import FusionAuthClient
-import os
-import sys
-
-APPLICATION_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
-
-#  you must supply your API key
-api_key_name = 'fusionauth_api_key'
-api_key = os.getenv(api_key_name)
-if not api_key:
-  sys.exit("please set api key in the '" + api_key_name + "' environment variable")
-
-client = FusionAuthClient(api_key, 'http://localhost:9011')
-
-# set the issuer up correctly
-client_response = client.retrieve_tenants()
-if client_response.was_successful():
-  tenant = client_response.success_response["tenants"][0]
-else:
-  sys.exit("couldn't find tenants " + str(client_response.error_response))
-
-client_response = client.patch_tenant(tenant["id"], {"tenant": {"issuer":"http://localhost:9011"}})
-if not client_response.was_successful():
-  sys.exit("couldn't update tenant "+ str(client_response.error_response))
-
-# generate RSA keypair for signing
-rsa_key_id = "356a6624-b33c-471a-b707-48bbfcfbc593"
-
-client_response = client.generate_key({"key": {"algorithm":"RS256", "name":"For PythonExampleApp", "length": 2048}}, rsa_key_id)
-if not client_response.was_successful():
-  sys.exit("couldn't create RSA key "+ str(client_response.error_response))
-
-# create application
-# too much to inline it
-
-application = {}
-application["name"] = "PythonExampleApp"
-
-# configure oauth
-application["oauthConfiguration"] = {}
-application["oauthConfiguration"]["authorizedRedirectURLs"] = ["http://127.0.0.1:5000/callback"]
-application["oauthConfiguration"]["requireRegistration"] = True
-application["oauthConfiguration"]["enabledGrants"] = ["authorization_code", "refresh_token"]
-application["oauthConfiguration"]["logoutURL"] = "http://127.0.0.1:5000/logout"
-application["oauthConfiguration"]["clientSecret"] = "change-this-in-production-to-be-a-real-secret"
-
-# some libraries don't support pkce, notably mozilla-django-oidc: https://github.com/mozilla/mozilla-django-oidc/issues/397
-# since we are server side and have a solid client secret, we're okay turning pkce off
-application["oauthConfiguration"]["proofKeyForCodeExchangePolicy"] = "NotRequiredWhenUsingClientAuthentication"
-
-# assign key from above to sign tokens. This needs to be asymmetric
-application["jwtConfiguration"] = {}
-application["jwtConfiguration"]["enabled"] = True
-application["jwtConfiguration"]["accessTokenKeyId"] = rsa_key_id
-application["jwtConfiguration"]["idTokenKeyId"] = rsa_key_id
-
-client_response = client.create_application({"application": application}, APPLICATION_ID)
-if not client_response.was_successful():
-  sys.exit("couldn't create application "+ str(client_response.error_response))
-
-# register user, there should be only one, so grab the first
-client_response = client.search_users_by_query({"search": {"queryString":"*"}})
-if not client_response.was_successful():
-  sys.exit("couldn't find users "+ str(client_response.error_response))
-
-user = client_response.success_response["users"][0]
-
-# patch the user to make sure they have a full name, otherwise OIDC has issues
-client_response = client.patch_user(user["id"], {"user": {"fullName": user["firstName"]+" "+user["lastName"]}})
-if not client_response.was_successful():
-  sys.exit("couldn't patch user "+ str(client_response.error_response))
-
-# now register the user
-client_response = client.register({"registration":{"applicationId":APPLICATION_ID}}, user["id"])
-if not client_response.was_successful():
-  sys.exit("couldn't register user "+ str(client_response.error_response))
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-flask-integration/main/setup.py %}
 ```
 
 Then, you can run the setup script. Please note that this setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than "Default". To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. Refer to the [Python client library](/docs/v1/tech/client-libraries/python) documentation for more information.
@@ -175,9 +86,7 @@ mkdir setup-flask && cd setup-flask
 Now, create a new `requirements.txt` file to include {{page.technology}}. Add the `flask`, `python-dotenv`, and `authlib` plugins so that your requirements file looks like this:
 
 ```text
-flask>=2.2.3
-python-dotenv>=1.0.0
-authlib>=1.2.0
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-flask-integration/main/setup-flask/requirements.txt %}
 ```
 
 Then, rerun `pip install` to install these new packages.
@@ -299,29 +208,11 @@ mkdir templates && cd templates
 
 Add a new file called `home.html` and insert the following into it.
 
-```html
-{% raw %}
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>FusionAuth OpenID and PKCE example</title>
-</head>
-<body>
-  {% if session %}
-      <h1>You are logged in as {{session.userinfo.email}}</h1>
-      <h2>Here is your OpenID profile</h2>
-      <div><pre>{{profile}}</pre></div>
-      <br/>
 
-      <p><a href="{{logoutUrl}}">Logout</a></p>
-  {% else %}
-    <h1>Hello Guest</h1>
-    <p>Please <a href="/login">Login</a> to see your profile</p>
-  {% endif %}
-</body>
-</html>
-{% endraw %}
+```html
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-flask-integration/main/setup-flask/templates/home.html %}
 ```
+
 
 ## Testing the Authentication Flow
 
@@ -372,16 +263,16 @@ WARNING: This is a development server. Do not use it in a production deployment.
 
 Open an incognito window and navigate to `http://127.0.0.1:5000`.
 
-{% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/flask-homepage.png" alt="Flask application home page." class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include _image.liquid src="/assets/img/docs/integrations/flask-integration/flask-homepage.png" alt="Flask application home page." class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 
 Then click <span class="uielement">Login</span>.
 
-{% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/flask-login.png" alt="Flask application login page." class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include _image.liquid src="/assets/img/docs/integrations/flask-integration/flask-login.png" alt="Flask application login page." class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 Enter the <span class="field">email</span> and <span class="field">password</span> that you assigned to your FusionAuth user. If login is successful, you should see your OpenID profile information.
 
-{% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/flask-profile.png" alt="Flask application profile page." class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include _image.liquid src="/assets/img/docs/integrations/flask-integration/flask-profile.png" alt="Flask application profile page." class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 Now, click <span class="uielement">Logout</span>. If successful, you should be brought back to the `Hello Guest` homepage.
 
