@@ -62,7 +62,7 @@ If you want, you can http://localhost:9011[login to your instance] and examine t
 
 ## Create Your {{page.technology}} Application
 
-Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application without any framework, you can use the same steps to integrate any {{page.technology}} application with FusionAuth.
+Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application, you can use the same steps to integrate any {{page.technology}} application with FusionAuth.
 
 First, make a directory:
 
@@ -113,7 +113,7 @@ Now, let's add a login and logout button to your {{page.technology}} application
 
 In this code, you are adding in the FusionAuth login and logout buttons, as well as a welcome message which will only show up if the user is logged in.
 
-You can now open up an incognito window and visit http://localhost:5173[the {{page.technology}} app]. View the page and log in with the user you configured. If you used the setup script, it will be `richard@example.com`.
+You can now open up an incognito window and visit [the {{page.technology}} app](http://localhost:5173). View the page and log in with the user you configured. If you used the setup script, it will be `richard@example.com`.
 
 You've successfully added login and logout to a React application.
 
