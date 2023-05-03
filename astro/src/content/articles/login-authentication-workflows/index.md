@@ -3,7 +3,6 @@ title: Overview
 description: A detailed explanation of the various types of login & authentication workflows used by applications.
 image: articles/login-authentication-workflows/header.png
 section: Login & Auth Workflows
-author: Brian Pontarelli
 indexPage: true
 ---
 

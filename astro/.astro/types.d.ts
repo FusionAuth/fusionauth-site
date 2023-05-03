@@ -153,6 +153,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"ciam/challenges-of-ciam.mdx": {
+  id: "ciam/challenges-of-ciam.mdx",
+  slug: "ciam/challenges-of-ciam",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "ciam/ciam-vs-iam.md": {
   id: "ciam/ciam-vs-iam.md",
   slug: "ciam/ciam-vs-iam",
@@ -174,6 +181,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"ciam/index.mdx": {
+  id: "ciam/index.mdx",
+  slug: "ciam",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "ciam/making-sure-your-auth-system-scales.md": {
   id: "ciam/making-sure-your-auth-system-scales.md",
   slug: "ciam/making-sure-your-auth-system-scales",
