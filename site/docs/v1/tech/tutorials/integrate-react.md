@@ -90,7 +90,8 @@ npm run dev
 
 You'll want to open another terminal window to continue. Edit `src/App.jsx` to make changes to the view to test out the automatic reloading.
 
-{% include _callout-tip.liquid content="If you are using a different port for your {{page.technology}} app, update the redirect URL in the setup script, or modify it manually. It needs to match exactly." %}
+{% capture callout_content %}If you a different port than 5173 for your {{page.technology}} app, update the redirect URL in the setup script, or modify it manually. It needs to match.{% endcapture %}
+{% include _callout-tip.liquid content=callout_content %}
 
 Now, let's install the [FusionAuth React SDK](https://www.npmjs.com/package/@fusionauth/react-sdk).
 
