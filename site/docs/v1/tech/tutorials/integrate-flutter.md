@@ -59,37 +59,33 @@ Doctor summary (to see all details, run flutter doctor -v):
 
 Next, you need to set up FusionAuth.
 This can be done in different ways, but we’re going to use the {{language}} client library.
-The below instructions use Dart from the command line, but you can use the client library with an IDE of your preference as well.
+The below instructions use `npm` from the command line, but you can use the client library with an IDE of your preference as well.
 
 ```shell
 mkdir setup-fusionauth && cd setup-fusionauth
 ```
 
-Now, copy and paste the following file into `pubspec.yml`.
+Now, copy and paste the following file into `package.json`.
 
-```yaml
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/dart/pubspec.yml %}
-````
+```javascript
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/package.json %}
+```
 
-Install the dependencies.
+Now you need to install the dependencies in `package.json`.
 
 ```shell
-dart pub get
+npm install
 ```
 
-Then copy and paste the following code into `lib/main.dart`.
-
-```dart
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/dart/lib/main.dart %}
+Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS and more to allow for easy integration.
+```javascript
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
 ```
-
-Then, you can run the setup class. This will create the FusionAuth configuration for your {{technology}} application.
-
+Then, you can run the setup script.
 ```shell
-dart run lib/main.dart
+npm run setup
 ```
-
-If you want, you can [login to your instance](http://localhost:9011) and examine the new application configuration the script created for you.
+If you want, you can [login to your instance](http://localhost:9011) and examine the new Application the script created for you.
 
 ## Create Your Flutter Application
 
