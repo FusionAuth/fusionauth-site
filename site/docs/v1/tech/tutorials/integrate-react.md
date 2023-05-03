@@ -62,7 +62,7 @@ If you want, you can http://localhost:9011[login to your instance] and examine t
 
 ## Create Your {{page.technology}} Application
 
-Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application without any framework, you can use the same steps to integrate any {{page.technology}} application with FusionAuth.
+Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application, you can use the same steps to integrate any {{page.technology}} application with FusionAuth.
 
 First, make a directory:
 
