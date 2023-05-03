@@ -22,7 +22,7 @@ language: JavaScript
 
 ## Create a User and an API Key
 
-{% include docs/integration/_add-user.md %}
+{% include docs/integration/_add-user.md language=page.language %}
 
 ## Configure FusionAuth
 
