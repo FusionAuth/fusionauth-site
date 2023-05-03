@@ -115,9 +115,11 @@ In this code, you are adding in the FusionAuth login and logout buttons, as well
 
 You can now open up an incognito window and visit [the {{page.technology}} app](http://localhost:5173). View the page and log in with the user you configured. If you used the setup script, it will be `richard@example.com`.
 
+{% include _image.liquid src="/assets/img/docs/quickstarts/react/react-app.png" alt="The sample React application." class="img-fluid" figure=true %}
+
 You've successfully added login and logout to a React application.
 
-Any requests you make to an API on the same domain will receive the access token cookies and can validate the token and return data.
+You now have an access token safely stored as a cookie. Any requests you make to an API on the same domain will receive the access token. The API can then validate the token and return data or otherwise offer functionality.
 
 {% comment %}
 TODO update to point to an API that looks for a JWT in the correct cookie
