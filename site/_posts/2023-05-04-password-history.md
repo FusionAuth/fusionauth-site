@@ -15,7 +15,7 @@ Happy world password day! This is a great day to change your passwords on import
 
 World password day day is the [first Thursday in May](https://nationaldaycalendar.com/world-password-day-first-thursday-in-may/) every year. Inspired by security researcher [Mark Burnett](https://xato.net/), this is a yearly reminder to change your important passwords. This will help protect your accounts if there is a data breach. Password data can remain in the world for a long long time, but changing a password for an important account immediately helps secure it.
 
-Choosing a good password as well as enabling [multi-factor authentication](https://fusionauth.io/learn/expert-advice/authentication/multi-factor-authentication) will ensure that your data remain secure.
+Choosing a good password as well as enabling [multi-factor authentication](https://fusionauth.io/learn/expert-advice/authentication/multi-factor-authentication) will ensure that your data remains secure.
 
 ## The first online password
 
@@ -45,13 +45,13 @@ Scherr will be forever known as the first password hacker.
 
 Nowadays, passwords aren't stored in plaintext, thank goodness. In 1974, the [`crypt`](https://www.man7.org/linux/man-pages/man3/crypt.3.html) function was introduced to Unix, which encrypts passwords.
 
-Nowadays, the [advice from institutions such as NIST](https://pages.nist.gov/800-63-3/sp800-63b.html#sec5) is to salt and hash passwords using a "one-way key deriviation function". The purpose of hashing is to perform a one way transformation of text like `password123` to `db98b98d746d601572f0ae07e74e7b78`. This is done with a relatively slow hashing algorithm such as PBKDF2 or Balloon, and is done many times. The number of times the password is hashed is called the `factor`. This proces makes password hashing an expensive operation taking tens to hundreds of milliseconds. 
+Nowadays, the [advice from institutions such as NIST](https://pages.nist.gov/800-63-3/sp800-63b.html#sec5) is to salt and hash passwords using a "one-way key derivation function". The purpose of hashing is to perform a one way transformation of text like `password123` to `db98b98d746d601572f0ae07e74e7b78`. This is done with a relatively slow hashing algorithm such as PBKDF2 or Balloon, and is done many times. The number of times the password is hashed is called the `factor`. This process makes password hashing an expensive operation taking tens to hundreds of milliseconds. 
 
 The algorithm and factor are not typically in your control; it's the province of whoever owns the system to which you are logging in. There are additional concepts that I'm not going to dive into here, such as a salt and a pepper. You can read more about the [math of password hashing here](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy).
  
 When passwords are hashed properly, the next time you enter your password, the same function is applied the same number of times. If the derived hash is exactly the same, you entered the password correctly and should be granted access.
 
-A few hundred milliseconds isn't really noticeable when you are logging in. On the other hand, if a nefarious person or system is trying to guess your password, the duration of each variation means the attempt becomes is slow, and therefore cost prohibitive.
+A few hundred milliseconds isn't really noticeable when you are logging in. On the other hand, if a nefarious person or system is trying to guess your password, the duration of each variation means the attempt becomes slow, and therefore cost prohibitive.
 
 You can additionally make it harder to guess your password by choosing a long, complex password. This increases the number of guesses said nefarious person will have to make. For example, a password of 4 digits has 10^4 (or 10,000) possible values.
 
