@@ -12,3 +12,4 @@
 * [ ] Decide if we move `Dev Tools ` to the top level or keep them under articles (probably should move them but the top nav might get cluttered)
 * [ ] Rebuild the Docs landing page in Astro (`/docs/`). I did a decent amount of this work already, but the page still exists in Jekyll and my page isn’t hooked up to anything
 * [ ] Click test everything
+* [ ] Fix 
