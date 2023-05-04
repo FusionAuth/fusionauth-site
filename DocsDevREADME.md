@@ -436,6 +436,7 @@ Prior to requesting review on a PR, please complete the following checklist.
 1. Update the example app URL and/or description in `site/_data/exampleapps.yaml`. If you created a new example app in GitHub, update the README of the old one to point to the new one, and archive the old one.
 1. Add an updated_date to the blog posts front matter: `updated_date: 2023-03-16`
 1. If there is an old blog post, add a link to the new blog post or docs page. See https://fusionauth.io/blog/2020/12/14/how-to-securely-implement-oauth-rails for an example of the callout which points to new doc. This is only applicable if there is an old blog post that uses radically different technology. For example, the rails posts used omniauth and the oauth2 gem, two radically different technologies.
+1. Run the blog post through a spell and grammar checker. I like to use Google docs (just copy and paste the entire contents of the blog post into a google doc and then use "Tools" -> "Spelling and Grammar" -> "Spelling and Grammar Check". But other spell checks work too.
 1. Update the quickstart page (`/docs/quickstarts/index.html`) to point to the updated blog post and remove the `coming-soon` class.
 1. Ask for review.
 1. Close out the issue after merging.
