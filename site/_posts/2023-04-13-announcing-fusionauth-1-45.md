@@ -161,7 +161,7 @@ But we wanted to make this even easier. For some users, setting up server side c
 
 FusionAuth now offers a React SDK which communicates with endpoints managed by FusionAuth which will take care of the code exchange. They'll set the access token as an `HTTPOnly`, `Secure` cookie, as well as a refresh token as a cookie if requested.
 
-The endpoints the SDK calls are documented. You can create your own custom code at the same URLs if you'd prefer, but FusionAuth is a one-stop shop for your authentication needs, no server side code needed.
+The endpoints the SDK calls are documented. You can create your own custom code at the same URLs if you'd prefer, but FusionAuth is a one-stop shop for your authentication needs, no server side code needed. [Read the docs here](/docs/v1/tech/apis/hosted-backend).
 
 Check out the [React SDK here](https://github.com/FusionAuth/fusionauth-react-sdk/). Future SDKs [are planned](https://github.com/FusionAuth/fusionauth-issues/issues/2078) as well.
 
