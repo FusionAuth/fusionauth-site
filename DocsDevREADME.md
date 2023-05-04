@@ -426,6 +426,8 @@ Prior to requesting review on a PR, please complete the following checklist.
 
 1. Assign the relevant issue to yourself.
 1. Work through the blog post as is. Make any updates you need to ensure the instructions work. **Test every instruction, please.**
+1. Do not create a new blog post. Update the existing blog post. If you feel like the code and structure has changed radically enough that a new blog post is better, please contact Dan and discuss.
+1. Update the install instructions to use the docker install. You can use `{% include posts/install-fusionauth.md %}` to do this easily.
 1. Use the latest released, supported versions of the technology and underlying technologies.
 1. Update any screenshots of the FusionAuth admin UI or resulting technology.
 1. If there are any videos, remove those from the blog post if the UX has changed as a result of this review.
@@ -433,7 +435,7 @@ Prior to requesting review on a PR, please complete the following checklist.
 1. If the existing example app uses a technology that is no longer supported, note that so it can be removed from the FusionAuth site, a link in the repo to the supported example app can be added, and the old repo archived.
 1. Update the example app URL and/or description in `site/_data/exampleapps.yaml`. If you created a new example app in GitHub, update the README of the old one to point to the new one, and archive the old one.
 1. Add an updated_date to the blog posts front matter: `updated_date: 2023-03-16`
-1. If there is an old blog post, add a link to the new blog post or docs page. See https://fusionauth.io/blog/2020/12/14/how-to-securely-implement-oauth-rails for an example of the callout which points to new doc.
+1. If there is an old blog post, add a link to the new blog post or docs page. See https://fusionauth.io/blog/2020/12/14/how-to-securely-implement-oauth-rails for an example of the callout which points to new doc. This is only applicable if there is an old blog post that uses radically different technology. For example, the rails posts used omniauth and the oauth2 gem, two radically different technologies.
 1. Update the quickstart page (`/docs/quickstarts/index.html`) to point to the updated blog post and remove the `coming-soon` class.
 1. Ask for review.
 1. Close out the issue after merging.
