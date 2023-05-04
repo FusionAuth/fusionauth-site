@@ -1,11 +1,11 @@
 ---
 layout: blog-post
 title: The first password to be hacked
-description: Learn more about the history of passwords and the first one to be hacked.
+description: Learn more about the history of passwords, and the first one which was hacked.
 author: Dan Moore
 category: article
-image: blogs/aws-savings-plans/aws-compute-savings-plan.png
-tags: passwords world-password-day
+image: blogs/world-password-day-2023/world-password-day.png
+tags: passwords world-password-day history roman-empire mit
 excerpt_separator: "<!--more-->"
 ---
 
@@ -21,6 +21,8 @@ Choosing a good password as well as enabling [multi-factor authentication](https
 
 Passwords, which are secrets used to gain access to systems, have been around for thousands of years. The Romans used watchwords and had a specific position in the army, the [tesserarius](https://en.wikipedia.org/wiki/Tesserarius), which was responsible for obtaining and sharing these secrets.
 
+{% include _image.liquid src="/assets/img/blogs/world-password-day-2023/colosseum.png" alt="Gratuitous picture of the Roman Colosseum." class="img-fluid" figure=false %}
+
 But the first password in an online system was for the MIT Compatible Time Sharing System (CTSS) at MIT, which was demonstrated in 1961. CTSS was the first general purpose time sharing operating system. That is, the first computing system with which more than one person could interact.
 
 It was also the [first system to have passwords](https://www.wired.com/2012/01/computer-password/). Fernando Corbató, who demonstrated the system in 1961, was responsible for passwords. From an interview with Wired magazine in 2012:
@@ -31,24 +33,28 @@ The password based system didn't only control access to a user's files, but also
 
 ## The first password hack
 
-It didn't take long for the first password system to be hacked. According to [Thinkset Magazine](https://thinksetmag.com/issue-6/the-case-of-the-purloined-password), one of the graduate students, Allan Scherr, wasn't happy with the limits on his computer time. He needed more time to do his research.
+It didn't take long for the first password system to be hacked. According to [Thinkset Magazine](https://thinksetmag.com/issue-6/the-case-of-the-purloined-password), one of the graduate students, Allan Scherr, wasn't happy with the limits on his computer time. He needed more time to do his research, and felt he should have it.
 
 In 1966, he discovered that he could print out files, including the master password file, with a system request. When Shcherr did that, he obtained access to all the passwords of all the users on the system.
 
-Scherr didn't keep these passwords to himself, however. He shared the printouts with others to make it more difficult to track him down. He'll be known as the first password hacker in history.
+Scherr didn't keep these passwords to himself, however. He shared the printouts with others to make it more difficult to track him down. Plus, other folks probably enjoyed the extra computational time. (Scherr didn't reveal his actions until decades later, at a college reunion.)
+
+Scherr will be forever known as the first password hacker.
 
 ## Pick a long password and hash it well
 
-Nowadays, passwords aren't stored in plaintext. In 1974, the [`crypt`](https://www.man7.org/linux/man-pages/man3/crypt.3.html) function was introduced to Unix, which encrypts passwords. 
+Nowadays, passwords aren't stored in plaintext, thank goodness. In 1974, the [`crypt`](https://www.man7.org/linux/man-pages/man3/crypt.3.html) function was introduced to Unix, which encrypts passwords.
 
-Nowadays, the [advice from institutions such as NIST](https://pages.nist.gov/800-63-3/sp800-63b.html#sec5) is to salt and hash passwords using a "one-way key deriviation function". The purpose of hashing is to perform a one way transformation of text like `password123` to `db98b98d746d601572f0ae07e74e7b78`. This is done with a relatively slow hashing algorithm such as PBKDF2 or Balloon, and is done many times. This makes password hashing an expensive operation that can take tens to hundreds of milliseconds.
+Nowadays, the [advice from institutions such as NIST](https://pages.nist.gov/800-63-3/sp800-63b.html#sec5) is to salt and hash passwords using a "one-way key deriviation function". The purpose of hashing is to perform a one way transformation of text like `password123` to `db98b98d746d601572f0ae07e74e7b78`. This is done with a relatively slow hashing algorithm such as PBKDF2 or Balloon, and is done many times. The number of times the password is hashed is called the `factor`. This proces makes password hashing an expensive operation taking tens to hundreds of milliseconds. 
+
+The algorithm and factor are not typically in your control; it's the province of whoever owns the system to which you are logging in. There are additional concepts that I'm not going to dive into here, such as a salt and a pepper. You can read more about the [math of password hashing here](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy).
  
-When passwords are protected in this way, the next time you enter your password, the same hashing function can be applied the same number of times. If the derived hash is the same, you entered the correct password and can be granted access. A few hundred milliseconds isn't really noticeable when you are logging in.
+When passwords are hashed properly, the next time you enter your password, the same function is applied the same number of times. If the derived hash is exactly the same, you entered the password correctly and should be granted access.
 
-On the other hand, if a nefarious person is trying to guess your password, the length of time needed to guess each variation means the attempt becomes cost prohibitive.
+A few hundred milliseconds isn't really noticeable when you are logging in. On the other hand, if a nefarious person or system is trying to guess your password, the duration of each variation means the attempt becomes is slow, and therefore cost prohibitive.
 
 You can additionally make it harder to guess your password by choosing a long, complex password. This increases the number of guesses said nefarious person will have to make. For example, a password of 4 digits has 10^4 (or 10,000) possible values.
 
-In contrast, a 12 character with digits, lower and upper case letters and symbols has 95^12 (or 5.4036009e+23) possible values, approximately 54 quintillion more than the first example. (There are [95 printable ASCII characters](https://www.ascii-code.com/characters/printable-characters).)
+In contrast, a 12 character with digits, lower and upper case letters and symbols has 95^12 (or 5.4036009e+23) possible values, approximately 54 quintillion more than the first example. There are [95 printable ASCII characters](https://www.ascii-code.com/characters/printable-characters).
 
-
+Happy passwording!
