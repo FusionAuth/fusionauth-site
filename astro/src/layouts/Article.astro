@@ -62,12 +62,8 @@ const sections = [
   }
 ];
 
-let items = [];
+const articles = await getCollection("articles");
 let sideMenu = [];
-sideMenu.push({
-  "title": section,
-  "items": items
-});
 
 // Handle the login workflow sub-menus
 let mobileItems = [];
@@ -86,21 +82,8 @@ if (Astro.url.pathname.startsWith("/articles/login-authentication-workflows")) {
     "title": "WebApp Workflows",
     "items": webappItems
   });
-}
 
-const articles = await getCollection("articles");
-for (const article of articles) {
-  if (article.data.section === section && !article.data.excludeFromIndex) {
-    let path = `/articles/${article.slug}`;
-    if (article.data.indexPage) {
-      path += "/";
-    }
-
-    items.push({
-      "title": article.data.title,
-      "path": path
-    });
-  } else if (article.slug.startsWith("login-authentication-workflows/")) {
+  for (const article of articles) {
     // Figure out which items list this login workflow goes into
     if (article.slug.startsWith("login-authentication-workflows/mobile")) {
       mobileItems.push({
@@ -116,6 +99,26 @@ for (const article of articles) {
       webappItems.push({
         "title": article.data.title,
         "path": `/articles/${article.slug}`
+      });
+    }
+  }
+} else {
+  let items = [];
+  sideMenu.push({
+    "title": section,
+    "items": items
+  });
+
+  for (const article of articles) {
+    if (article.data.excludeFromNav) {
+      continue;
+    }
+
+    if (article.data.section === section) {
+      let path = `/articles/${article.slug}`;
+      items.push({
+        "title": article.data.title,
+        "path": path
       });
     }
   }

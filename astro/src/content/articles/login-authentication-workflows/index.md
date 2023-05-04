@@ -3,7 +3,6 @@ title: Overview
 description: A detailed explanation of the various types of login & authentication workflows used by applications.
 image: articles/login-authentication-workflows/header.png
 section: Login & Auth Workflows
-indexPage: true
 ---
 
 The landscape of applications today is broad. Similarly, the methods of authentication used is similarly varied. This section covers some of the login and authentication workflows used by applications today. These examples use FusionAuth as the IdP (identity provider), but any IdP could be used. You can use these articles to help architect and design the authentication system for your application.
