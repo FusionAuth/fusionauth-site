@@ -428,6 +428,7 @@ Prior to requesting review on a PR, please complete the following checklist.
 1. Work through the blog post as is. Make any updates you need to ensure the instructions work. **Test every instruction, please.**
 1. Do not create a new blog post. Update the existing blog post. If you feel like the code and structure has changed radically enough that a new blog post is better, please contact Dan and discuss.
 1. Update the install instructions to use the docker install. You can use `{% include posts/install-fusionauth.md %}` to do this easily.
+1. If there are any remote code blocks, pull them in with the `remote_include` plugin from the example app.
 1. Use the latest released, supported versions of the technology and underlying technologies.
 1. Update any screenshots of the FusionAuth admin UI or resulting technology.
 1. If there are any videos, remove those from the blog post if the UX has changed as a result of this review.
