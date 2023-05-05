@@ -55,7 +55,7 @@ Then copy and paste the following file into `setup.js`. This file uses the [Fusi
 Then, you can run the setup script.
 
 ```shell
-npm run setup
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
 ```
 
 If you want, you can http://localhost:9011[login to your instance] and examine the new Application the script created for you.
