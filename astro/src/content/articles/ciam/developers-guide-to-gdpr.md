@@ -3,7 +3,7 @@ title: Developer's Guide to GDPR
 description: A complete guide for developers to ensure their applications are GDPR compliant.
 section: CIAM
 author: Brian Pontarelli
-image: advice/developers-guide-to-gdpr-article.png
+icon: /img/icons/developer-guide-gdpr.svg
 ---
 
 ## The who, what, when, where, and why of the GDPR for developers

@@ -2,10 +2,8 @@
 title: Multi-factor Authentication for Developers
 description: What is multi-factor authentication and why is it important?
 author: Dan Moore
-image: articles/mfa/header.png
 section: Authentication
-date: 2021-02-19
-dateModified: 2021-04-26
+icon: /img/icons/multi-factor-authentication.svg
 ---
 
 As more of our lives move online, multi-factor authentication (MFA) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep safe. 

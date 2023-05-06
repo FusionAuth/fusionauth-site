@@ -3,7 +3,7 @@ title: Making Sure Your Auth System Can Scale
 description: What steps do you need to take to ensure your authentication system can scale?
 section: CIAM
 author: James Hickey
-image: advice/auth-system-scale/making-sure-your-auth-system-can-scale-header-image.png
+icon: /img/icons/auth-system-scale.svg
 ---
 
 Have you ever worked on a software system that stored passwords in plain text? I once worked on a product that stored encrypted plain-text passwords. Thankfully, this system was eventually fixed to store hashed passwords!

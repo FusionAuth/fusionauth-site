@@ -2,10 +2,8 @@
 title: Types of Kubernetes Auth
 description: What are the three levels of Kubernetes authentication?
 author: Dan Moore
-image: articles/types-kubernetes-auth/header.png
 section: Authentication
-date: 2022-05-02
-dateModified: 2022-05-02
+icon: /img/icons/types-kubernetes-auth.svg
 ---
 
 When considering auth inside your Kubernetes cluster, it's good to think of three different types. Each has different needs and requirements and implementation choices.

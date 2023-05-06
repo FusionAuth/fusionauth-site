@@ -2,10 +2,8 @@
 title: WebAuthn Explained
 description: An in-depth look at how WebAuthn can help you add biometric authentication to your website.
 author: Dan Moore
-image: articles/webauthn-explained/header.png
 section: Authentication
-date: 2022-10-10
-dateModified: 2022-10-10
+icon: /img/icons/webauthn-explained.svg
 ---
 
 WebAuthn is a new way to authenticate your users using biometric, secure authentication methods. It is also called "passkeys", but WebAuthn is the standard, so that's the term this document will use.

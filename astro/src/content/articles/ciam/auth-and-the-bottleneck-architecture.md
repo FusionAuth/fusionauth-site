@@ -3,7 +3,7 @@ title: The Auth Bottleneck Pattern
 description: Why you might use a centralized user management system rather than having individual applications manange their own auth.
 section: CIAM
 author: Dan Moore
-image: advice/bottleneck/the-auth-bottleneck-pattern.png
+icon: /img/icons/auth-bottleneck-architecture.svg
 ---
 
 A common pattern for modern organizations is to centralize user management with a bottleneck architecture, both for customers and for employees. A user management system is provisioned and all authentication and authorization requests are routed through it. Rather than individual applications having their own auth components, the auth system provides a single point of control. If there are other user databases, some auth requests may be federated.

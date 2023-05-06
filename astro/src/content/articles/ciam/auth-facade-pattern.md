@@ -1,9 +1,9 @@
 ---
 title: The Auth Facade Pattern
 description: Introducing a facade in front of customer identity providers adds implementation flexibility and gives additional control to your applications
-image: advice/auth-facade/expert-advice-the-auth-facade-pattern-header-image.png
 section: CIAM
 author: Dan Moore
+icon: /img/icons/auth-facade-pattern.svg
 ---
 
 When talking about identity architectures in FusionAuth customers, there's a common deployment pattern called the "Auth Facade". This is also commonly referred to as the "Identity Broker" pattern. 

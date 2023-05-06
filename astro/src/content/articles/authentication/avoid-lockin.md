@@ -3,7 +3,7 @@ title: Avoiding Authentication System Lock-in
 description: What steps do you need to take to ensure your authentication system can scale?
 author: Cameron Pavey
 section: Authentication
-icon: articles/avoid-lockin/icon.svg
+icon: /img/icons/avoiding-authentication-system-lock-in.svg
 ---
 
 Years ago your team decided to use a third-party authentication system to avoid the time and cost of building one in-house. But now a better option has hit the market and you're wanting to make the switch. Except, hold on, your old system is so deeply ingrained into your organization that you're practically locked-in to your current vendor.

@@ -23,12 +23,13 @@ class ThemeSelector {
 
     document.addEventListener('click', () => this.closeMenu());
     document.addEventListener('keydown', event => this.#handleKeyDown(event));
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => this.#handleChange(event));
   }
 
   changeTheme(theme) {
     if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
-    } else if (theme === 'light') {
+    } else {
       document.documentElement.classList.remove('dark');
     }
 
@@ -46,7 +47,7 @@ class ThemeSelector {
   }
 
   #handleChange(event) {
-    const theme = event.target.dataset.theme;
+    const theme = (event.target.dataset && event.target.dataset.theme) || 'system';
     this.changeTheme(theme);
   }
 

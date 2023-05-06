@@ -7,7 +7,6 @@ const articlesCollection = defineCollection({
     disableTOC: z.boolean().default(false),
     excludeFromNav: z.boolean().default(false),
     icon: z.string().optional(),
-    image: z.string().optional(),
     section: z.string(),
     title: z.string(),
   }),
