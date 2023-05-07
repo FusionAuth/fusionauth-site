@@ -3,17 +3,38 @@
  */
 'use strict';
 
-var EncoderDecoder = function() {
-  Prime.Utils.bindAll(this);
-  Prime.Document.queryById('decoded-textarea').addEventListener('keyup', this._handleKeyUp);
-  Prime.Document.queryById('encoded-textarea').addEventListener('keyup', this._handleKeyUp);
-};
+class EncoderDecoder {
+  #decoded;
+  #decodedEditor;
+  #encoded;
+  #encodedEditor;
 
-EncoderDecoder.constructor = EncoderDecoder;
-EncoderDecoder.prototype = {
-  _encodeDecode: function(s, encoding) {
-    var parts = [];
-    var vars = s.split('&');
+  constructor() {
+    this.#decoded = document.getElementById('decoded-textarea');
+    this.#encoded = document.getElementById('encoded-textarea');
+
+    let options = {
+      autofocus: false,
+      lineNumbers: true,
+      lineWrapping: true,
+      mode: 'text'
+    };
+    this.#decodedEditor = CodeMirror.fromTextArea(this.#decoded, options);
+    this.#decodedEditor.display.wrapper.querySelector('textarea').addEventListener('keyup', event => this.#handleChange(event))
+    this.#encodedEditor = CodeMirror.fromTextArea(this.#encoded, options);
+    this.#encodedEditor.display.wrapper.querySelector('textarea').addEventListener('keyup', event => this.#handleChange(event))
+  }
+
+  #handleChange(event) {
+    const encoding = event.target === this.#decodedEditor.display.wrapper.querySelector('textarea');
+    const src = encoding ? this.#decodedEditor : this.#encodedEditor;
+    const dst = encoding ? this.#encodedEditor : this.#decodedEditor;
+    this.#update(src.getValue(), encoding, dst)
+  }
+
+  #update(value, encoding, dst) {
+    const parts = [];
+    const vars = value.split('&');
     for (var i = 0; i < vars.length; i++) {
       if (parts.length !== 0) {
         parts.push('&');
@@ -38,26 +59,8 @@ EncoderDecoder.prototype = {
       }
     }
 
-    return parts.join('');
-  },
-
-  _handleKeyUp: function(event) {
-    var target = new Prime.Document.Element(event.target);
-    var encoding = target.getId().startsWith('decoded');
-
-    var src = Prime.Document.queryById(encoding ? 'decoded-textarea' : 'encoded-textarea');
-    var dst = Prime.Document.queryById(encoding ? 'encoded-textarea' : 'decoded-textarea');
-    var s = src.getValue();
-
-    var index = s.indexOf('?');
-    if (index === -1) {
-      dst.setValue(this._encodeDecode(s, encoding));
-    } else {
-      dst.setValue(s.substring(0, index) + '?' + this._encodeDecode(s.substring(index + 1), encoding));
-    }
+    dst.setValue(parts.join(''));
   }
-};
+}
 
-Prime.Document.onReady(function() {
-  new EncoderDecoder();
-});
+document.addEventListener('DOMContentLoaded', () => new EncoderDecoder());

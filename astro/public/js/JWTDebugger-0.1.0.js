@@ -3,7 +3,7 @@
  */
 'use strict';
 
-CodeMirror.defineMode("encoded-jwt", function() {
+CodeMirror.defineMode('encoded-jwt', function() {
   return {
     token: function(stream, state) {
       if (stream.eatWhile(/[^.]/)) {
@@ -29,48 +29,45 @@ CodeMirror.defineMode("encoded-jwt", function() {
   };
 });
 
-var JWTDecoder = function() {
-  Prime.Utils.bindAll(this);
-  this.encoded = Prime.Document.queryById('encoded-textarea');
+class JWTDecoder {
+  constructor() {
+    this.encoded = document.getElementById('encoded-textarea');
+    this.encoded.focus();
+    this.jwtHeader = document.getElementById('header-textarea');
+    this.jwtBody = document.getElementById('payload-textarea');
 
-  this.encoded.focus();
-  this.jwtHeader = Prime.Document.queryById('header-textarea');
-  this.jwtBody = Prime.Document.queryById('payload-textarea');
+    this.encoedEditor = CodeMirror.fromTextArea(this.encoded, {
+      autofocus: true,
+      lineNumbers: true,
+      lineWrapping: true,
+      viewportMargin: 100,
+      mode: 'encoded-jwt'
+    });
+    this.encoedEditor.setSize(null, 50);
+    this.encoedEditor.on('keyup', event => this.#handleKeyUp(event));
 
-  this.encoedEditor = CodeMirror.fromTextArea(this.encoded.domElement, {
-    autofocus: true,
-    lineNumbers: true,
-    lineWrapping: true,
-    viewportMargin: 100,
-    mode: 'encoded-jwt'
-  });
-  this.encoedEditor.setSize(null, 50);
-  this.encoedEditor.on('keyup', this._handleKeyUp);
+    this.jwtHeaderEditor = CodeMirror.fromTextArea(this.jwtHeader, {
+      autofocus: false,
+      lineNumbers: true,
+      lineWrapping: false,
+      viewportMargin: 100,
+      mode: 'javascript'
+    });
+    this.jwtHeaderEditor.setSize(null, 80);
+    this.jwtHeaderEditor.on('keyup', event => this.#handleJSONKeyUp(event));
 
-  this.jwtHeaderEditor = CodeMirror.fromTextArea(this.jwtHeader.domElement, {
-    autofocus: false,
-    lineNumbers: true,
-    lineWrapping: false,
-    viewportMargin: 100,
-    mode: 'javascript'
-  });
-  this.jwtHeaderEditor.setSize(null, 80);
-  this.jwtHeaderEditor.on('keyup', this._handleJSONKeyUp);
+    this.jwtBodyEditor = CodeMirror.fromTextArea(this.jwtBody, {
+      autofocus: false,
+      lineNumbers: true,
+      lineWrapping: false,
+      viewportMargin: 100,
+      mode: 'javascript'
+    });
+    this.jwtBodyEditor.setSize(null, 120);
+    this.jwtBodyEditor.on('keyup', event => this.#handleJSONKeyUp(event));
+  }
 
-  this.jwtBodyEditor = CodeMirror.fromTextArea(this.jwtBody.domElement, {
-    autofocus: false,
-    lineNumbers: true,
-    lineWrapping: false,
-    viewportMargin: 100,
-    mode: 'javascript'
-  });
-  this.jwtBodyEditor.setSize(null, 120);
-  this.jwtBodyEditor.on('keyup', this._handleJSONKeyUp);
-};
-
-JWTDecoder.constructor = JWTDecoder;
-JWTDecoder.prototype = {
-  _handleJSONKeyUp: function() {
+  #handleJSONKeyUp() {
     var current = this.encoedEditor.getValue().split('.');
     // Do each part separately so that if we exception we can continue
 
@@ -101,17 +98,17 @@ JWTDecoder.prototype = {
     }
 
     this.encoedEditor.setValue(current.join('.'));
-  },
+  }
 
-  _handleKeyUp: function() {
+  #handleKeyUp() {
     try {
-      this.encoedEditor.setSize(null, this.encoded.getNextSibling().queryFirst('.CodeMirror-sizer').getOuterHeight() + 5);
+      this.encoedEditor.setSize(null, this.encoded.nextElementSibling.querySelector('.CodeMirror-sizer').offsetHeight + 5);
       var s = this.encoedEditor.getValue().split('.');
       if (s.length > 0) {
         var header = JSON.parse(window.atob(s[0]));
         this.jwtHeaderEditor.setValue(JSON.stringify(header, null, 2));
         try {
-          this.jwtHeaderEditor.setSize(null, this.jwtHeader.getNextSibling().queryFirst('.CodeMirror-sizer').getOuterHeight() + 5);
+          this.jwtHeaderEditor.setSize(null, this.jwtHeader.nextElementSibling.querySelector('.CodeMirror-sizer').offsetHeight + 5);
         } catch (error) {
           // Ignore
         }
@@ -121,7 +118,7 @@ JWTDecoder.prototype = {
         var body = JSON.parse(window.atob(s[1]));
         this.jwtBodyEditor.setValue(JSON.stringify(body, null, 2));
         try {
-          this.jwtBodyEditor.setSize(null, this.jwtBody.getNextSibling().queryFirst('.CodeMirror-sizer').getOuterHeight() + 5);
+          this.jwtBodyEditor.setSize(null, this.jwtBody.nextElementSibling.querySelector('.CodeMirror-sizer').offsetHeight + 5);
         } catch (error) {
           // Ignore
         }
@@ -130,7 +127,6 @@ JWTDecoder.prototype = {
       // Ignore
     }
   }
-};
-Prime.Document.onReady(function() {
-  new JWTDecoder();
-});
+}
+
+document.addEventListener('DOMContentLoaded', () => new JWTDecoder());
