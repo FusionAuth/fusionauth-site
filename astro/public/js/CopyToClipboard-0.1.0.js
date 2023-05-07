@@ -3,7 +3,7 @@
  */
 'use strict';
 
-class FusionAuthCopyToClipboard {
+class CopyToClipboard {
   constructor() {
     document.addEventListener('click', event => this.#handleClick(event));
   }
@@ -45,4 +45,4 @@ class FusionAuthCopyToClipboard {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => new FusionAuthCopyToClipboard());
+document.addEventListener('DOMContentLoaded', () => new CopyToClipboard());
