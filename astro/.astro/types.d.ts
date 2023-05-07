@@ -406,6 +406,50 @@ declare module 'astro:content' {
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
 },
+"dev-tools": {
+"base64-encoder-decoder.mdx": {
+  id: "base64-encoder-decoder.mdx",
+  slug: "base64-encoder-decoder",
+  body: string,
+  collection: "dev-tools",
+  data: InferEntrySchema<"dev-tools">
+} & { render(): Render[".mdx"] },
+"date-time.mdx": {
+  id: "date-time.mdx",
+  slug: "date-time",
+  body: string,
+  collection: "dev-tools",
+  data: InferEntrySchema<"dev-tools">
+} & { render(): Render[".mdx"] },
+"index.mdx": {
+  id: "index.mdx",
+  slug: "index",
+  body: string,
+  collection: "dev-tools",
+  data: InferEntrySchema<"dev-tools">
+} & { render(): Render[".mdx"] },
+"jwt-decoder.mdx": {
+  id: "jwt-decoder.mdx",
+  slug: "jwt-decoder",
+  body: string,
+  collection: "dev-tools",
+  data: InferEntrySchema<"dev-tools">
+} & { render(): Render[".mdx"] },
+"url-encoder-decoder.mdx": {
+  id: "url-encoder-decoder.mdx",
+  slug: "url-encoder-decoder",
+  body: string,
+  collection: "dev-tools",
+  data: InferEntrySchema<"dev-tools">
+} & { render(): Render[".mdx"] },
+"uuid-generator.mdx": {
+  id: "uuid-generator.mdx",
+  slug: "uuid-generator",
+  body: string,
+  collection: "dev-tools",
+  data: InferEntrySchema<"dev-tools">
+} & { render(): Render[".mdx"] },
+},
 
 	};
 

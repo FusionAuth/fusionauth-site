@@ -12,6 +12,18 @@ const articlesCollection = defineCollection({
   }),
 });
 
+const devToolsCollection = defineCollection({
+  schema: z.object({
+    author: z.string().optional(),
+    color: z.string().optional(),
+    description: z.string(),
+    disableTOC: z.boolean().default(false),
+    faIcon: z.string().optional(),
+    title: z.string()
+  }),
+});
+
 export const collections = {
   'articles': articlesCollection,
+  'dev-tools': devToolsCollection,
 };
