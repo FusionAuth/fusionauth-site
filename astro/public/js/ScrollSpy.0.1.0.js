@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2018-2022, Inversoft Inc., All Rights Reserved
+ */
 'use strict';
 
 class ScrollSpy {

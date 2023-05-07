@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2018-2022, Inversoft Inc., All Rights Reserved
+ */
+'use strict';
+
 var EncoderDecoder = function() {
   Prime.Utils.bindAll(this);
   Prime.Document.queryById('decoded-textarea').addEventListener('keyup', this._handleKeyUp);

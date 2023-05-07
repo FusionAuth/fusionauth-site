@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2018-2022, Inversoft Inc., All Rights Reserved
+ */
+'use strict';
+
 var DateTimeTools = function() {
   Prime.Utils.bindAll(this);
   Prime.Document.queryById('seconds-form').addEventListener('submit', this._handleFormSubmit);

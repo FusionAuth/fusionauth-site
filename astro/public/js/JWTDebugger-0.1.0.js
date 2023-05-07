@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2018-2022, Inversoft Inc., All Rights Reserved
+ */
+'use strict';
+
 CodeMirror.defineMode("encoded-jwt", function() {
   return {
     token: function(stream, state) {

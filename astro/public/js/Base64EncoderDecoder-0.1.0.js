@@ -1,55 +1,63 @@
+/*
+ * Copyright (c) 2018-2022, Inversoft Inc., All Rights Reserved
+ */
+'use strict';
 
+class Base64EncoderDecoder {
+  constructor() {
+    this.decoded = document.getElementById('decoded-textarea');
+    this.encoded = document.getElementById('encoded-textarea');
+    this.urlSafe = document.getElementById('url_safe');
+    this.urlSafe.addEventListener('change', event => this.#handleChange(event))
+    this.withoutPadding = document.getElementById('without_padding');
+    this.withoutPadding.addEventListener('change', event => this.#handleChange(event))
 
-var Base64EncoderDecoder = function() {
-  Prime.Utils.bindAll(this);
-  Prime.Document.queryById('decoded-textarea').addEventListener('keyup', this._handleKeyUp);
-  Prime.Document.queryById('encoded-textarea').addEventListener('keyup', this._handleKeyUp);
-  this.urlSafe = Prime.Document.queryById('url_safe');
-  this.withoutPadding = Prime.Document.queryById('without_padding');
-};
+    let options = {
+      autofocus: false,
+      lineNumbers: true,
+      lineWrapping: true,
+      mode: 'text'
+    };
+    this.decodedEditor = CodeMirror.fromTextArea(this.decoded, options);
+    this.decodedEditor.display.wrapper.querySelector('textarea').addEventListener('keyup', event => this.#handleChange(event))
+    this.encodedEditor = CodeMirror.fromTextArea(this.encoded, options);
+    this.encodedEditor.display.wrapper.querySelector('textarea').addEventListener('keyup', event => this.#handleChange(event))
+  }
 
-Base64EncoderDecoder.constructor = Base64EncoderDecoder;
-Base64EncoderDecoder.prototype = {
-  decode: function(s) {
+  decode(s) {
     return atob(s);
-  },
+  }
 
-  encode: function(s) {
+  encode(s) {
     return btoa(s);
-  },
+  }
 
-  urlSafeDecode: function(s) {
-    return this.decode(s.replace(/-/g, '+')
-        .replace(/_/g, '\\'));
-  },
+  urlSafeDecode(s) {
+    return this.decode(s.replace(/-/g, '+').replace(/_/g, '\\'));
+  }
 
-  urlSafeEncode: function(s) {
-    return this.encode(s)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_');
-  },
+  urlSafeEncode(s) {
+    return this.encode(s).replace(/\+/g, '-').replace(/\//g, '_');
+  }
 
-  _handleKeyUp: function(event) {
-    var target = new Prime.Document.Element(event.target);
-    var encoding = target.getId().startsWith('decoded');
+  #handleChange(event) {
+    const encoding = event.target === this.decodedEditor.display.wrapper.querySelector('textarea') || event.target === this.urlSafe || event.target === this.withoutPadding;
+    const src = encoding ? this.decodedEditor : this.encodedEditor;
+    const dst = encoding ? this.encodedEditor : this.decodedEditor;
+    this.#update(src.getValue(), encoding, dst)
+  }
 
-    var src = Prime.Document.queryById(encoding ? 'decoded-textarea' : 'encoded-textarea');
-    var dst = Prime.Document.queryById(encoding ? 'encoded-textarea' : 'decoded-textarea');
-    var s = src.getValue();
-
+  #update(value, encoding, dst) {
     if (encoding) {
-      var encoded = this.urlSafe.isChecked() ? this.urlSafeEncode(s) : this.encode(s);
-      if (this.withoutPadding.isChecked()) {
+      var encoded = this.urlSafe.checked ? this.urlSafeEncode(value) : this.encode(value);
+      if (this.withoutPadding.checked) {
         encoded = encoded.replace(/=+$/, '');
       }
 
       dst.setValue(encoded);
     } else {
-      dst.setValue(this.urlSafe.isChecked() ? this.urlSafeDecode(s) : this.decode(s));
+      dst.setValue(this.urlSafe.checked ? this.urlSafeDecode(value) : this.decode(value));
     }
   }
-};
-
-Prime.Document.onReady(function() {
-  new Base64EncoderDecoder();
-});
+}
+document.addEventListener('DOMContentLoaded', () => new Base64EncoderDecoder());
