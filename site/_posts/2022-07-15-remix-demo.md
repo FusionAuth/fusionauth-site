@@ -48,14 +48,7 @@ File-based session storage has one drawback that is only relevant at a certain s
 
 ## Installing FusionAuth
 
-For this example, you will also need a working FusionAuth instance. There are [various ways](/docs/v1/tech/installation-guide/fusionauth-app) to install FusionAuth depending on your system, but the easiest way is to use Docker and Docker Compose. [Instructions are here](/docs/v1/tech/installation-guide/docker). Assuming you have Docker installed, start FusionAuth by running these commands:
-
-```bash
-curl -o docker compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
-https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
-curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker compose up
-```
+{% include posts/install-fusionauth.md %}
 
 You'll want to do this from a different directory than the cloned remix application, otherwise the `.env` files will collide. The `.env` file used by this Docker Compose command contains hard-coded database passwords and is not suitable for production use.
 
@@ -98,7 +91,7 @@ Try out the example at a default address of `http://localhost:3000`. Click the l
 
 If you are not logged in, the `/login` route will redirect you to the FusionAuth login, which you can [customize easily](/docs/v1/tech/themes/) with your own CSS, HTML and more! These pages looks like this out of the box:
 
-{% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/dinesh-login.png" alt="FusionAuth login screen" class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/fusionauth-login.png" alt="FusionAuth login screen" class="img-fluid" figure=true role=bottom-cropped %}
 
 After you log in, you will be redirected to `/auth/callback` which checks your login and then sends you along to the dashboard.
 
@@ -109,81 +102,29 @@ Once you've done all this configuration, auth is easy because all the heavy lift
 The `/login` route looks like this:
 
 ```tsx
-import type { LoaderFunction } from "@remix-run/node"
-import { authenticator } from "~/auth.server";
-
-export let loader: LoaderFunction = async ({ request }) => {
-  // If the user is already authenticated redirect to /dashboard directly
-  return await authenticator.authenticate("FusionAuth", request, {
-    successRedirect: "/dashboard",
-    failureRedirect: "/error",
-  },
-  );
-};
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-remix/main/app/routes/login.tsx %}
 ```
 
 This is all the app code you need to protect any route. As you can see, you use the `authenticator.authenticate` method, and redirect to either the `/dashboard` or the `/error` route on success or failure, respectively.
 
 What is the `authenticator` all about? 
 
-If you open the `/app/auth.server` file, you should see something like this (slightly simplified here):
+If you open the `/app/auth.server` file, you should see something like this:
 
-```tsx
-import { Authenticator } from "remix-auth";
-import { sessionStorage } from "~/session.server";
-import { OAuth2Strategy } from "remix-auth-oauth2";
-
-// Create an instance of the authenticator. 
-// specify we are using session storage
-// then specify the use of the OAuth2 authentication strategy
-export let authenticator = new Authenticator<User>(sessionStorage);
-
-authenticator.use(
-  new OAuth2Strategy(
-    {
-      authorizationURL: `${process.env.AUTH_URL}/authorize`,
-      tokenURL: `${process.env.AUTH_URL}/token`,
-      clientID: process.env.CLIENT_ID || "",
-      clientSecret: process.env.CLIENT_SECRET || "",
-      callbackURL: process.env.AUTH_CALLBACK_URL || "",
-
-    },
-    async ({ accessToken, refreshToken, extraParams, profile, context }) => {
-      // This function is MANDATORY for the system to work, and would be the
-      // main cause of being redirected to the /error route
-
-      // here we are simply verifying the user successfully authenticated, 
-      // but you could also look the user up using the userInfo endpoint 
-      // or FusionAuth APIs in order to get more profile data, such as roles.
-      console.log("Successful authentication by FusionAuth!")
-    }
-  ),
-  // this is optional, but if you set up more than one OAuth2 instance you will
-  // need to set a custom name to each one
-  "FusionAuth"
-);
+```typescript
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-remix/main/app/auth.server.ts %}
 ```
 
 This code leans very heavily on [@sergiodxa's](https://twitter.com/sergiodxa) OAuth work for Remix, the npm packages `remix-auth` and `remix-auth-oauth2`. It will handle all the tedious boilerplate necessary to negotiate between Remix apps and an OAuth2 server like FusionAuth. The `OAuth2Strategy` configuration informs FusionAuth what app you are trying to log in from, and where you want to go afterwards.
 
 If you are not logged in, our Remix `/login` route will redirect you to the FusionAuth login page mentioned above:
 
-{% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/dinesh-login.png" alt="FusionAuth login screen" class="img-fluid" figure=true %}
+{% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/fusionauth-login.png" alt="FusionAuth login screen" class="img-fluid" figure=true role=bottom-cropped %}
 
 If you log in, you will be redirected to `/auth/callback` which checks your login again in code that should be familiar since it's almost identical to the `/login` route:
 
 ```tsx
-import type { LoaderFunction, ActionFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import { sessionStorage } from "~/session.server";
-import { authenticator } from "~/auth.server";
-
-export const loader: LoaderFunction = async ({request}) => {
-  await authenticator.authenticate("FusionAuth", request, {
-    successRedirect: "/dashboard",
-    failureRedirect: "/login",
-  });
-}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-remix/main/app/routes/auth.callback.tsx %}
 ```
 
 From there you'll be sent to `/dashboard` which is just a message saying you're logged in. If you then try the same click path again, you will get passed through to `/dashboard` without being forced to reauthenticate!
