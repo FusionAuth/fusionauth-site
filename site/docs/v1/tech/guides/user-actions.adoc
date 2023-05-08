@@ -7,15 +7,35 @@ navcategory: developer
 
 == Overview
 
-User Actions in FusionAuth can be quite powerful. They are often used to temporarily disable access to a user upon some infringement or account review. However, they can be used in positive scenarios as well. A common type of scenario will be modelled in this tutorial: A user buying temporary access to a news site. You can apply a FusionAuth User Action to broadcast the purchase to sister news sites so that they can upsell the user a subscription and send automatic emails to the user when they subscribe, modify or cancel their subscription, and when the subscription expires.
+User Actions in FusionAuth are powerful events you can use to interact with, reward, and discipline users.
+
+Highly customizable events that invoke an action on a user, User Actions can be created and executed using API calls and are sent using the FusionAuth Webhook configuration.
+
+You can define User Actions to [coordinate events around a customer purchase](https://fusionauth.io/blog/2023/04/20/using-user-actions#undefined), for example, or permanently or temporarily disable access to a user following an infringement or when their account is due for review.
+
+A User Action is a tenant scoped event that can be sent to all tenants or to one or more specified tenants. 
+
+Types of User Actions
+Creating an API Key
+Creating a User Action
+Setting up a Webhook
+Executing a User Action
 
 == Types of User Actions
 
-User actions can be created and configured by navigating to [breadcrumb]#Settings -> User Actions#. A User Action is defined by its [field]#Name#, how it communicates with its associated link:https://www.redhat.com/en/topics/automation/what-is-a-webhook[webhooks], its temporality, and its notification policy. If the User Action is [uielement]#Time-based#, it can also be set to [uielement]#Prevent login# of its associated user and the [uielement]#Send end event# switch can be set to notify webhooks if the action expires or is manually cancelled.
+Create and configure a User Action by navigating to [breadcrumb]#Settings -> User Actions#. 
+
+A User Action is defined by its [field]#Name#, how it communicates with its associated link:https://www.redhat.com/en/topics/automation/what-is-a-webhook[webhooks], its temporality, and its notification policy. 
+
+If the User Action is [uielement]#Time-based#, it can also be set to [uielement]#Prevent login# of its associated user and the [uielement]#Send end event# switch can be set to notify webhooks if the action expires or is manually cancelled.
 
 image::tutorials/user-actions/user-actions-edit-top-panel.png[Configuration setup fields for creating a User Action, width=1200px, role=bottom-cropped]
 
-If the User Action is not [uielement]#Time-based#, then you can define a series of [uielement]#Options# associated with it as well. For example, when applying a permanent ban to a user, you may want to provide the choice between doing so in a nice or mean way, depending on who the user is and the severity of their infraction. In that case, you can define both the mean and nice option and add any necessary [uielement]#Localization# for them.
+You can configure [uielement]#Email# settings for when an action starts, is modified, is cancelled, or ends. Toggle the [field]#Email user# field to select whether the user should receive an email notification, and [uielement]#Send to Webhook# to select whether FusionAuth will include the email information in the JSON that is sent to the webhook. You can also specify the link:https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview[email templates] that should be used.
+
+image::tutorials/user-actions/user-actions-edit-email.png[Setting up email configuration for user action, width=1200px]
+
+If the User Action is not [uielement]#Time-based#, you can define a series of [uielement]#Options# associated with it. For example, you may want to provide localized variations of an automatic email to send to users, and have the correct option selected based on the user's language and region settings.
 
 image::tutorials/user-actions/user-actions-edit-options.png[Defining an option and adding a localization to it, width=1200px, role=bottom-cropped]
 
@@ -23,108 +43,23 @@ You can also add [uielement]#Localization# for the name of the User Action itsel
 
 image::tutorials/user-actions/user-actions-edit-localization.png[Adding a localization to the name of the User Action, width=1200px, role=bottom-cropped]
 
-Finally, you can configure [uielement]#Email# to be sent when the action starts, is modified, is cancelled, or ends. You can choose whether to send an email to the user by toggling [field]#Email user# or whether FusionAuth will include the email information in the JSON that is sent to the webhook by toggling [uielement]#Send to Webhook#. You can specify link:https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview[email templates], [field]#Start template#, [field]#Modify template#, [field]#Cancel template# and [field]#End template# for when the action starts, is modified, is cancelled, or ends respectively.
-
-image::tutorials/user-actions/user-actions-edit-email.png[Setting up email configuration for user action, width=1200px]
-
-By modifying these settings, you can design a robust set of actions to handle just about any change of the user's state, from banning them to allowing them temporary access, as this guide will walk you through. You will need cURL, Postman, or a similar tool installed to send test HTTP requests to the FusionAuth API. You can also use one of the many link:https://fusionauth.io/docs/v1/tech/client-libraries/[FusionAuth client libraries] to perform the requests from your application code.
-
-
-== Creating an Application
-
-In FusionAuth, an application is anything a user can log in to. To create an application navigate to [breadcrumb]#Applications# then click the [uielement]#Add# button. Call your new app "Silicon Valley Chronicle" or another name of your choice.
-
-image::tutorials/user-actions/user-actions-add-application.png[Adding a new Application in FusionAuth,width=1200px, role=bottom-cropped]
-
-Click the [uielement]#Save# button at the top right for your changes to take effect.
-
-
-== Creating a User
-
-Two users are required for a User Action to take effect: an `actioner` and an `actionee`. In this case the `actioner` will be the admin user that you created when you set up FusionAuth for the first time. The `actionee` will be the user who buys temporary access to your news site.
-
-To create a user, navigate to [breadcrumb]#Users# and click the [uielement]#Add# button. Then supply an email address. You can untoggle the [uielement]#Send email to set up password# switch to supply a password straight away.
-
-Record the Ids of both users.
-
-image::tutorials/user-actions/user-actions-create-user.png[Create a user in FusionAuth,width=1200px, role=bottom-cropped]
+You can refer to our [User Action event guide](https://fusionauth.io/docs/v1/tech/apis/actioning-users) for a full description of User Action event parameters.
 
 == Creating an API key
 
-You will create and execute your User Actions through API calls, so you need to set up an API Key. Navigate to [breadcrumb]#Settings -> API Keys# and click the [uielement]#Add# button. Make sure `POST` is enabled for the `/api/user-action` and both `POST` and `GET` are enabled for the `/api/user/action` endpoints. You will use the former to create your User Action and the latter to execute it.
+You can create and execute a User Action with API calls. To set up an API Key, navigate to [breadcrumb]#Settings -> API Keys# and click the [uielement]#Add# button. Make sure `POST` is enabled for the `/api/user-action` and both `POST` and `GET` are enabled for the `/api/user/action` endpoints. You will use the former to create your User Action and the latter to execute it.
 
 image::tutorials/user-actions/user-actions-create-api-key.png[Creating an API Key in FusionAuth,width=1200px]
 
-Record the value of your API Key.
+Be sure to record the value of your API Key.
 
 image::tutorials/user-actions/user-actions-api-key-created.png[Recording the value of the API Key,width=1200px, role=bottom-cropped]
 
-== Creating Email Templates
-
-The User Action will send four different emails to the `actionee` upon four different conditions: when they sign up, if they modify or cancel their subscription, and when that subscription expires. Create four email templates for each of these conditions and record their Ids under [breadcrumb]#Customizations -> Email Templates#. More information on email templates in FusionAuth can be found link:https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview[here].
-
-image::tutorials/user-actions/user-actions-email-templates.png[Creating Email Templates for different states of the User Action,width=1200px]
-
-Here are sample contents for each email template that you can use. You can copy and paste the contents into the templates you create on FusionAuth.
-
-[source,text,title="Sign up for limited access email template."]
-----
-Name: Sign up for limited access
-Subject: Welcome to The Silicon Valley Chronicle!
-Message:
-Hi,
-
-We'd like to thank you for your purchase of access to the Silicon Valley Chronicle.
-Your access will expire in 24 hours. Happy reading!
-
--- The Silicon Valley Team
-----
-
-[source,text,title="Limited access cancelled email template."]
-----
-Name: Limited Access Cancelled
-Subject: You've cancelled your membership to Silicon Valley Chronicle
-Message:
-Hi,
-
-You've successfully cancelled your temporary membership to Silicon Valley Chronicle.
-We hate to see you go, but you are welcome to come back at any time.
-
--- The Silicon Valley Chronicle Team
-----
 
 
-[source,text,title="Limited access changed email template."]
-----
-Name: Limited Access Changed
-Subject: Change of limited access to Silicon Valley Chronicle
-Message:
-Hi,
+== Creating a User Action
 
-Your temporary membership to Silicon Valley Chronicle has been changed.
-Please visit the site for more information.
-
--- The Silicon Valley Chronicle Team
-----
-
-[source,text,title="Limited access expired email template."]
-----
-Name: Limited Access Expired
-Subject: Your limited access to Silicon Valley Chronicle has expired
-Message:
-Hi,
-
-Thank you for your purchase of our limited access offering. We hope you enjoyed your reads.
-Your access has now expired, but you are free to purchase additional access at any time.
-
-We hope to see you again soon!
-
--- The Silicon Valley Chronicle Team
-----
-
-== Creating the User Action
-
-You can now create a link:https://fusionauth.io/docs/v1/tech/apis/user-actions[User Action definition] with the email template Ids by sending a `POST` request to the `/api/user-action` route. Setting the [field]#temporal# attribute to `true` allows you to set an [field]#expiry# time when you execute the action on a user. This means that the action will automatically be removed from the user after the set expiry time. You can also set [field]#sendEndEvent# to `true` so that users can be notified via webhook when the access period has expired.
+You can create a link:https://fusionauth.io/docs/v1/tech/apis/user-actions[User Action definition] by sending a `POST` request to the `/api/user-action` route. For example, the following code defines a User Action that sends automatic emails to a user who has purchased a temporary subscription to a news site. 
 
 [source,shell,title="User action creation API call"]
 ----
@@ -145,7 +80,9 @@ curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user-action' \
   }'
 ----
 
-In this command, replace `<YOUR_FUSIONAUTH_BASE_URL>` with the URL of your FusionAuth instance, `<YOUR API KEY>` with the API key noted earlier, and the [field]#startEmailTemplateId#, [field]#endEmailTemplateId#, [field]#modifyEmailTemplateId#, and [field]#cancelEmailTemplateId# with appropriate values.
+Here, `<YOUR_FUSIONAUTH_BASE_URL>` would be the URL of the FusionAuth instance and `<YOUR API KEY>` would be the API key noted earlier. Note that the email template Ids are included in the command. Read more about [setting up email in FusionAuth here](https://fusionauth.io/docs/v1/tech/email-templates/configure-email) and [email templates in FusionAuth here](https://fusionauth.io/docs/v1/tech/email-templates/email-templates).
+
+If you set the [field]#temporal# attribute to `true`, you can set an [field]#expiry# time for an action. This means that the action will automatically be removed from the user after the set expiry time. In this example, the [field]#sendEndEvent# field is set to `true` so that the user is notified via webhook when the access period has expired.
 
 FusionAuth should return something similar to the following:
 
@@ -174,13 +111,15 @@ FusionAuth should return something similar to the following:
 }
 ----
 
-Record the [field]#id# value. Here, it is `6f4115c0-3db9-4734-aeda-b9c3f7dc4269`. You can verify that the User Action was created by going to [breadcrumb]#Settings -> User Actions# in the FusionAuth admin portal.
+Note that the User Action is given an [field]#Id# value here. This is a randomly generated Id. If you prefer to provide a unique Id for your User Action, you can add it to the `POST` request like this: `/api/user-action/{userActionId}`. Make note of this value to use when you execute the User Action.
+
+Verify that the User Action was created by going to [breadcrumb]#Settings -> User Actions# in the FusionAuth admin portal.
 
 image::tutorials/user-actions/user-actions-user-action-created.png[Viewing the created User Action,width=1200px, role=bottom-cropped]
 
-== Setting up Webhook
+== Setting up a Webhook
 
-To propagate a message when a User Action is taken to the sister news sites, you can set up a webhook. To do this, navigate to [breadcrumb]#Settings -> Webhooks# and click the [uielement]#Add# button. To simulate the endpoint of the sister news site that will consume the User Action information, you will use link:https://requestbin.com[https://requestbin.com]. If you create a request bin, it will generate a unique URL of the form `\https://<YOUR_WEBHOOK_SITE_ID>.x.pipedream.net`. Copy this URL into the [field]#URL# field.
+To set up a webhook to use with a User Action, navigate to [breadcrumb]#Settings -> Webhooks# and click the [uielement]#Add# button. You can optionally give the webhook an Id and complete the description field. Add the fully qualified URL of the webhook’s endpoint that will accept the event requests from FusionAuth and set the required timeout durations.
 
 image::tutorials/user-actions/user-actions-add-webhook.png[Adding a new Webhook from your RequestBin.",width=1200px]
 
@@ -188,11 +127,11 @@ Scroll down and make sure that the [uielement]#user.action# event is enabled.
 
 image::tutorials/user-actions/user-actions-webhook-switch.png[Ensuring that the user.action Webhook event switch is enabled,width=1200px]
 
-Then, select the [breadcrumb]#Tenants# tab and select your tenant if you have multiple tenants set up. Alternatively, you can select [uielement]#All tenants#.
+Next, click on the [breadcrumb]#Tenants# tab and select the tenant the User Action will be associated with or select [uielement]#All tenants#.
 
 image::tutorials/user-actions/user-actions-webhook-tenant.png[Enabling Webhook for Tenant,width=1200px]
 
-Navigate to [breadcrumb]#Tenants# , then [uielement]#Your tenant#, and select the [uielement]#Webhooks# tab. Make sure that the webhook is enabled. If you selected [uielement]#All tenants# on the webhook page, its checkbox will be disabled.
+Navigate to [breadcrumb]#Tenants#, then [uielement]#Your tenant#, and select the [uielement]#Webhooks# tab. Make sure that the webhook is enabled. If you selected [uielement]#All tenants# on the webhook page, this checkbox will be disabled.
 
 image::tutorials/user-actions/user-actions-tenants-webhooks.png[Viewing the enabled webhooks on the Tenant page,width=1200px]
 
@@ -202,7 +141,7 @@ image::tutorials/user-actions/user-actions-tenants-switch.png[Ensuring that the 
 
 == Executing the User Action
 
-Now you can link:https://fusionauth.io/docs/v1/tech/apis/actioning-users[apply the action] to a specific user with the `api/user/action` endpoint. The [field]#expiry# time follows the UNIX epoch format in milliseconds. Make sure the [field]#actioneeUserId#, [field]#actionerUserId#, and [field]#userActionId# values match the ones you recorded in the previous steps. Update the [field]#expiry# value to be in the future. Finally, make sure to update `<YOUR_FUSIONAUTH_BASE_URL>` and `<YOUR API KEY>` with your hostname and API key.
+Now you can link:https://fusionauth.io/docs/v1/tech/apis/actioning-users[apply the action] to a specific user with the `api/user/action` endpoint. 
 
 [source,shell,title="User Action execution command"]
 ----
@@ -221,6 +160,14 @@ curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user/action' \
   }
  }'
 ----
+
+The [field]#broadcast# field is optional and specifies whether or not FusionAuth will broadcast the User Action to any registered Webhooks. The default is `false`.
+
+The [field]#actioneeUserId# specifies the unique identifier of the user the action is being performed on. The [field]#actionerUserId# specifies the Id of the User that performed the action. If the action was initiated by FusionAuth, this value will not be provided.
+
+The [field]#expiry# time follows the UNIX epoch format in milliseconds. 
+
+The [field]#userActionId# value is the Id you provided or the randomly generated one you recorded when creating the User Action. 
 
 FusionAuth will reply with `200 OK`:
 
@@ -244,19 +191,13 @@ FusionAuth will reply with `200 OK`:
 }
 ----
 
-When this action is executed, the `actionee` will receive an email thanking them for their subscription.
+In this example, when the action is executed, the `actionee` will receive an email thanking them for their subscription.
 
 image::tutorials/user-actions/user-actions-email.png[Email confirmation from User Action event,width=1200px, role=bottom-cropped]
 
-You can also verify that the request was propagated to the sister news site by checking `\https://requestbin.com/r/<YOUR_WEBHOOK_SITE_ID>`. You will see the body of your request in the [field]#Body# field.
-
-image::tutorials/user-actions/user-actions-webhook-site.png[Webhook confirmation from User Action event,width=1200px]
-
-When the action expires, the webhook will be fired again.
-
 == Querying Action Status on a User
 
-Depending on how you control access to your articles, you might want to check the user to see if they have temporary access actioned. You can do this by link:https://fusionauth.io/docs/v1/tech/apis/actioning-users#retrieve-a-previously-taken-action[querying the actions API] and filtering by user and action:
+You might want to check to see if there are any User Actions currently actioned on a user. To do this, you can link:https://fusionauth.io/docs/v1/tech/apis/actioning-users#retrieve-a-previously-taken-action[query the actions API] and filter by user and action:
 
 [source,shell,title="Query User Action status command"]
 ----
@@ -264,9 +205,7 @@ curl --location --request GET '<YOUR_FUSIONAUTH_BASE_URL>/api/user/action?userId
 --header 'Authorization: <YOUR API KEY>'
 ----
 
-Replace `<YOUR_FUSIONAUTH_BASE_URL>` , `<YOUR API KEY>`, and `<USER_ID>` with the appropriate values.
-
-FusionAuth will return an object with an array of all actions currently active on the user. You can filter the results to find the `userActionId` of the User Action you set up above to test if the user has temporary access:
+FusionAuth will return an object with an array of all actions currently active on the user. You can filter the results using the `userActionId` value:
 
 [source,json,title="Returned JSON after querying User Action status"]
 ----
@@ -293,9 +232,7 @@ FusionAuth will return an object with an array of all actions currently active o
 }
 ----
 
-== Conclusion
 
-In this guide, you used User Actions to flag and email users who buy temporary access to your news site. You also propagate that request to sister news sites so that they can upsell to the user.
 
 == Further reading
 
