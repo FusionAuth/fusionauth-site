@@ -16,7 +16,7 @@ However, new users should be aware that the authentication functionality current
 
 <!--more-->
 
-In this post we will explain what problems this might cause for developers, and how to upgrade to a better solution with less work. FusionAuth provides a free-to-use OIDC server, so our example will use FusionAuth. In principle the same solution will work with any identity provider which supports OAuth2 and OIDC.
+In this post, we will explain what problems this might cause for developers and how to upgrade to a better solution with less work. FusionAuth provides a free-to-use OIDC server, so our example will use FusionAuth. In principle, the same solution will work with any identity provider which supports OAuth2 and OIDC.
 
 ## Why not use Remix's authentication?
 
@@ -27,7 +27,7 @@ This solution is appealingly straightforward and might be sufficient for low-ris
 For instance, an auth server such as FusionAuth can very easily allow you to:
 
 * Offer federated login by [trusted sources](/docs/v1/tech/identity-providers/) such as Google, Facebook, or Apple
-* Set up your org as an source of authentication and authorization for multiple apps
+* Set up your org as a source of authentication and authorization for multiple apps
 * [Protect your own APIs](/docs/v1/tech/guides/api-authorization) from unauthorized access
 * Limit the scope of authentication to a specific domain or client
 * [Theme your login and other authentication workflow pages](/docs/v1/tech/themes/) to match your Remix app 
@@ -40,11 +40,11 @@ But to get these benefits, you need to adopt modern standards and practices, the
 
 We've prepared a small package illustrating how to log in and out of a Remix application, as well as requiring authentication for a given component. To follow along, clone [this repository](https://github.com/FusionAuth/fusionauth-example-remix) and run `npm install`. 
 
-There's one somewhat unusual feature of this example, which is that we chose file-based rather than cookie-based session storage. With file-based storage, only ["only the session ID is stored in the cookie"](https://remix.run/docs/en/v1/api/remix#createfilesessionstorage-node). A common security principle is to avoid having sensitive data on a client such as a browser or mobile app whenever possible. This principle is the reason this example uses file based session storage.
+There's one somewhat unusual feature of this example, which is that we chose file-based rather than cookie-based session storage. With file-based storage, [only the session ID is stored in the cookie](https://remix.run/docs/en/v1/api/remix#createfilesessionstorage-node). A common security principle is to avoid having sensitive data on a client such as a browser or mobile app whenever possible. This principle is the reason this example uses file based session storage.
 
-Additionally, FusionAuth always recommends a corresponding server component for every front-end application. For instance our [React demo](https://github.com/FusionAuth/fusionauth-example-react-2.0) has a client written in React that talks to an Express server which talks to the FusionAuth server. If you compare Remix to React, one of the biggest differences is that Remix has the server built in, so there's no need to run a separate server process.
+Additionally, FusionAuth always recommends a corresponding server component for every front-end application. For instance, our [React demo](https://github.com/FusionAuth/fusionauth-example-react-2.0) has a client written in React that talks to an Express server which talks to the FusionAuth server. If you compare Remix to React, one of the biggest differences is that Remix has the server built in, so there's no need to run a separate server process.
 
-File-based session storage has one drawback that is only relevant at a certain scale: once you need more than one Remix server, you will have to pin each user to a particular server for the duration of that session. However most developers are unlikely to encounter that kind of problem -- or by the time you do, you'll have the resources to solve it. For example, you can switch to the [Cloudflare KV session storage](https://remix.run/docs/en/v1/api/remix#createcloudflarekvsessionstorage-cloudflare-workers).
+File-based session storage has one drawback that is only relevant at a certain scale: once you need more than one Remix server, you will have to pin each user to a particular server for the duration of that session. However, most developers are unlikely to encounter that kind of problem -- or by the time you do, you'll have the resources to solve it. For example, you can switch to the [Cloudflare KV session storage](https://remix.run/docs/en/v1/api/remix#createcloudflarekvsessionstorage-cloudflare-workers).
 
 ## Installing FusionAuth
 
@@ -85,11 +85,11 @@ AUTH_CALLBACK_URL="http://localhost:3000/auth/callback"
 
 ## Test it out
 
-At this point you should be ready to fire up the Remix server. Do so by running `npm run dev` in the directory where your `.env` file is.
+At this point, you should be ready to fire up the Remix server. Do so by running `npm run dev` in the directory where your `.env` file is.
 
 Try out the example at a default address of `http://localhost:3000`. Click the login link. That will take you to the `/login` route.
 
-If you are not logged in, the `/login` route will redirect you to the FusionAuth login, which you can [customize easily](/docs/v1/tech/themes/) with your own CSS, HTML and more! These pages looks like this out of the box:
+If you are not logged in, the `/login` route will redirect you to the FusionAuth login, which you can [customize easily](/docs/v1/tech/themes/) with your own CSS, HTML, and more! These pages look like this out of the box:
 
 {% include _image.liquid src="/assets/img/blogs/connecting-fusionauth-remix/fusionauth-login.png" alt="FusionAuth login screen" class="img-fluid" figure=true role=bottom-cropped %}
 
@@ -115,7 +115,7 @@ If you open the `/app/auth.server` file, you should see something like this:
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-remix/main/app/auth.server.ts %}
 ```
 
-This code leans very heavily on [@sergiodxa's](https://twitter.com/sergiodxa) OAuth work for Remix, the npm packages `remix-auth` and `remix-auth-oauth2`. It will handle all the tedious boilerplate necessary to negotiate between Remix apps and an OAuth2 server like FusionAuth. The `OAuth2Strategy` configuration informs FusionAuth what app you are trying to log in from, and where you want to go afterwards.
+This code leans very heavily on [@sergiodxa's](https://twitter.com/sergiodxa) OAuth work for Remix, the npm packages `remix-auth` and `remix-auth-oauth2`. It will handle all the tedious boilerplate necessary to negotiate between Remix apps and an OAuth2 server like FusionAuth. The `OAuth2Strategy` configuration informs FusionAuth, what app you are trying to log in from, and where you want to go afterward.
 
 If you are not logged in, our Remix `/login` route will redirect you to the FusionAuth login page mentioned above:
 
