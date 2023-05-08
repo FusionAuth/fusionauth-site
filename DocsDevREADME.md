@@ -426,6 +426,9 @@ Prior to requesting review on a PR, please complete the following checklist.
 
 1. Assign the relevant issue to yourself.
 1. Work through the blog post as is. Make any updates you need to ensure the instructions work. **Test every instruction, please.**
+1. Do not create a new blog post. Update the existing blog post. If you feel like the code and structure has changed radically enough that a new blog post is better, please contact Dan and discuss.
+1. Update the install instructions to use the docker install. You can use `{% include posts/install-fusionauth.md %}` to do this easily.
+1. If there are any remote code blocks, pull them in with the `remote_include` plugin from the example app.
 1. Use the latest released, supported versions of the technology and underlying technologies.
 1. Update any screenshots of the FusionAuth admin UI or resulting technology.
 1. If there are any videos, remove those from the blog post if the UX has changed as a result of this review.
@@ -433,7 +436,65 @@ Prior to requesting review on a PR, please complete the following checklist.
 1. If the existing example app uses a technology that is no longer supported, note that so it can be removed from the FusionAuth site, a link in the repo to the supported example app can be added, and the old repo archived.
 1. Update the example app URL and/or description in `site/_data/exampleapps.yaml`. If you created a new example app in GitHub, update the README of the old one to point to the new one, and archive the old one.
 1. Add an updated_date to the blog posts front matter: `updated_date: 2023-03-16`
-1. If there is an old blog post, add a link to the new blog post or docs page. See https://fusionauth.io/blog/2020/12/14/how-to-securely-implement-oauth-rails for an example of the callout which points to new doc.
+1. If there is an old blog post, add a link to the new blog post or docs page. See https://fusionauth.io/blog/2020/12/14/how-to-securely-implement-oauth-rails for an example of the callout which points to new doc. This is only applicable if there is an old blog post that uses radically different technology. For example, the rails posts used omniauth and the oauth2 gem, two radically different technologies.
+1. Run the blog post through a spell and grammar checker. I like to use Google docs (just copy and paste the entire contents of the blog post into a google doc and then use "Tools" -> "Spelling and Grammar" -> "Spelling and Grammar Check". But other spell checks work too.
 1. Update the quickstart page (`/docs/quickstarts/index.html`) to point to the updated blog post and remove the `coming-soon` class.
 1. Ask for review.
 1. Close out the issue after merging.
+
+## Quickstarts
+
+Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
+
+For blog posts that are updated and linked under /docs/quickstarts, see `Blog post review checklist`.
+
+### Webapps
+
+Webapps are web applications that the user will log into.
+
+Model this after the ruby on [rails quickstart](https://fusionauth.io/docs/v1/tech/tutorials/integrate-ruby-rails).
+
+* Use markdown instead of asciidoc (the ruby quickstart needs to be ported over).
+* Use a client library to configure the project; don't use the admin ui. Add any setup scripts (or reuse them if needed) to https://github.com/FusionAuth/fusionauth-example-client-libraries
+* Make sure you create a sample project and include files from it (using `remote_include`) rather than inline the code.
+* For the login integration, use a standard OIDC library, not the FusionAuth client library.
+* Build the application from scratch, using whatever codegen tools are standard for the tech stack.
+* Include an image at the end
+* Use the includes under `site/_includes/docs/integration` for the first sections of the tutorial. Make sure you set the expected values in the front matter:
+
+<pre>
+... other front matter
+prerequisites: nodejs
+technology: react
+language: javascript
+---
+
+## Integrate Your {{page.technology}} Application With FusionAuth
+
+{% include docs/integration/_intro.md %}
+
+## Prerequisites
+
+{% include docs/integration/_prerequisites.md %}
+
+## Download and Install FusionAuth
+
+{% include docs/integration/_install-fusionauth.md %}
+
+## Create a User and an API Key
+
+{% include docs/integration/_add-user.md %}
+</pre>
+
+
+### APIs
+
+APIS are JSON HTTP APIs that will validate a JWT and return a value. 
+
+If you are doing a quickstart for an API, rather than for a web application, follow these guidelines:
+
+* Set up FusionAuth to set access token and refresh tokens as cookies using new hosted backend (full docs incoming, but you can see the PR here: https://github.com/FusionAuth/fusionauth-site/pull/2115
+* Make sure jwt is signed with rs256 key
+* Write standalone service which returns 401 if user doesn't present a correct access token.
+* Service should return JSON if jwt is valid. Check signature using lib, not using validate endpoint. Also check audience, exp and issuer claims
+* Add a small bit of js on the browser to call the API, if it gets a 401, should call the refresh endpoint.
