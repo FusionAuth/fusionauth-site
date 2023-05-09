@@ -52,15 +52,48 @@ You can stay informed about new FusionAuth releases and updates by:
 
 == How to Think About Upgrades
 
-Before upgrading FusionAuth, consider the following:
+Before upgrading FusionAuth, there are a number of things to consider. Go through each of the points below to see if any of them apply to your situation.
 
-. Read the link:/docs/v1/tech/release-notes[release notes].  Release notes help you understand if an update affects you. They include details on new features, improvements, bug fixes, and potential breaking changes.
-. Test the upgrade in a staging or development environment to identify potential issues
-. Plan for any downtime or maintenance windows required for the upgrade. If there are changes to the database schema required, this could require more steps and downtime than a pure application upgrade. 
-. FusionAuth can perform database migrations automatically and silently, interactively, or you can run any needed scripts yourself. With any method, you should perform a manual backup of your database before upgrading.
-. Consider that a FusionAuth server upgrade might mean that you need to upgrade your client libraries as well. Check before upgrading if this is needed, as it will entail a more complex upgrade process, and may require more downtime.
-. Review custom themes, client libraries, and configuration settings for compatibility with the new version
-. Consider using blue/green deployments or rolling upgrades to minimize downtime
+=== Update Contents and Notes
+
+Read the link:/docs/v1/tech/release-notes[release notes].  Release notes help you understand if an update affects you. They include details on new features, improvements, bug fixes, and potential breaking changes.
+
+=== Testing
+
+Before starting the upgrade process on production, test the upgrade in a staging or development environment to identify potential issues. This is particularly important on more complex upgrades involving multiple version jumps, or if you have made customizations to FusionAuth.
+
+=== Downtime and Database Migrations
+
+Plan for any downtime or maintenance windows required for the upgrade. If changes to the database schema are required, this could require more steps and downtime that affects end users. A pure application upgrade on the other hand may only affect admin functionality, and not require any downtime from an end user perspective.
+
+FusionAuth can perform database migrations automatically and silently using called link:/docs/v1/tech/guides/silent-mode[Silent Mode]. 
+
+If you want to interactively (called link:/docs/v1/tech/installation-guide/fusionauth-app#maintenance-mode[Maintenance Mode]), or you can run any needed scripts out of band (meaning directly on the database yourself). With any method, you should perform a backup of your database before upgrading.
+
+The timing of the database upgrade is also important to note. When an upgraded node is added to a FusionAuth cluster, it will lock the database and perform the database upgrade if configured for Silent Mode. This means that the database will be unavailable to other nodes in the cluster until the upgrade is complete. 
+
+=== Connected Applications and Client Libraries
+
+Consider that a FusionAuth server upgrade might mean that you need to upgrade your client libraries as well. Check before upgrading if this is needed, as it will entail a more complex upgrade process, and may require more downtime.
+
+=== Skipping Versions 
+
+Sometimes, you will want to upgrade to a FusionAuth version that is a few versions newer than your current version. This is called a "version jump". FusionAuth migration can run all the necessary database migrations to get you to the latest version. However, we recommend that you don't skip minor versions, and rather migrate from one minor version to the next, step by step. For example, if you want to get to version 1.43, and you are on version 1.37, we recommend that you upgrade to each minor step to 1.43.
+
+=== Migrating Configuration between Environments
+
+There are a number of options you can use to manage the configuration of your FusionAuth instance over time, as well as to promote changes from one environment. These include:
+
+- Script The Changes
+- Terraform
+- Pulumi
+- Manual Configuration via the UI
+
+You can read more at link:/docs/v1/tech/admin-guide/configuration-management[the Configuration Management guide].
+
+=== Themes and Customizations
+
+Review custom themes. If you have made any customizations, you may need to update them to work with the new version of FusionAuth. You can use the https://github.com/FusionAuth/fusionauth-theme-helper[Theme Helper] project to perform diffs on the themes to identify any changes that need to be made.
 
 == Upgrade Options
 
@@ -68,11 +101,11 @@ Before upgrading FusionAuth, consider the following:
 
 The easiest upgrade route is to simply stop all your services, upgrade everything, and then bring it all back online. 
 
-This is a good option for single instance development or QA systems, or for systems that can tolerate downtime.
+This is a good option for single instance development or QA systems, or for systems that can tolerate longer amounts of downtime.
 
 If minimizing downtime is a goal, then rolling upgrades, or a blue/green deployment might be more suitable. 
 
-== Rolling Upgrade
+=== Rolling Upgrade
 
 You can perform a rolling upgrade if you have 3 FusionAuth nodes running behind a load balancer. Each node is upgraded one at a time, and the load balancer is configured to direct traffic to the upgraded nodes as they become available for use. This allows you to upgrade FusionAuth with minimal downtime. 
 
