@@ -33,12 +33,13 @@ To follow along with this article, you will need to have the following installed
 
 {% include _callout-tip.liquid
 content=
-"If you want to run the example application on another domain than `localhost`, you need to make sure that FusionAuth runs on the same domain as the backend of the application. This is a limitation of the Hosted OAuth Service Provider Endpoints."
-%}
+"If you want to run the example application on another domain than `localhost`, you need to make sure that FusionAuth runs on the same domain as the backend of the application.
 
-{% include _callout-important.liquid
-content=
-"This article was written using an early look at the FusionAuth Hosted OAuth Service Provider Endpoints. The feature may be not yet available in the latest version of FusionAuth. You can track the progress at [Github fusionauth-issues#1943](https://github.com/FusionAuth/fusionauth-issues/issues/1943)"
+FusionAuth will set the `SameSite` attribute of the access token `app.at` cookie to `Lax`. This enables the cookie to be sent with requests to applications in the same subdomain. If the backend of the application runs on a different domain, the cookie will not be sent. This will result in the backend not being able to validate the token.
+
+For example, if FusionAuth is running on `https://auth.example.com` and the backend of the application is running on `https://api.example.com`, the access token will be transmitted, but if the backend of the application is running on `https://api.piedpiper.com`, the access token will not be transmitted.
+
+See the [Hosted Backend APIs documentation](/docs/v1/tech/apis/hosted-backend#prerequisites) for more information."
 %}
 
 ### Clone the Repository
@@ -75,7 +76,7 @@ Open a new terminal and run the following command:
 cd client && npm run start
 ```
 
-The application is now running on `http://localhost:3000`.
+The application is now running on [localhost:3000](http://localhost:3000).
 
 Use the following credentials to log in:
 - Email: `admin@example.com`
@@ -94,22 +95,17 @@ If you do not want to use Docker, you can set up the FusionAuth instance manuall
 Authentication is hard. We want to make it easy.
 That is why we have added the necessary endpoints for the OAuth 2.0 login flow into the FusionAuth API. This means that you can use FusionAuth to authenticate users without setting up a separate back end to handle the token exchange. This is a great way to get started with FusionAuth and to use it as a drop-in replacement for your existing OAuth 2.0 provider. So you can concentrate on providing the best experience for your users.
 
-{% include _callout-important.liquid
-content=
-"For limitations and prerequisites, see the [Hosted OAuth Service Provider Endpoints](https://fusionauth.io/xyz) documentation."
-%}
-
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-fusionauth-login.png" alt="Login Screen of FusionAuth with the styling of FusionDesk" class="img-fluid" figure=false %}
 
 As you can see - if you inspect the backend of the example application - we do not provide any OAuth 2.0 endpoints. Instead, we use FusionAuth provided functionality to authenticate users.
 
-After the user has logged in to FusionAuth, the `access_token` is stored in a cookie. This cookie is then sent with every request to the backend, where we validate the token in a middleware. If the token is valid, we allow the request to continue. If the token is invalid, we return a `401` status code.
+After the user has logged in to FusionAuth, the `app.at` is stored in a cookie. This cookie is then sent with every request to the backend, where we validate the token in a middleware. If the token is valid, we allow the request to continue. If the token is invalid, we return a `401` status code.
 
 ```typescript
 {% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/middlewares/fusion-auth.middleware.ts' %}
 ```
 
-We also use the FusionAuth API to retrieve user information for the creator of a ticket. This is done in the `TicketController.ts` file using the `retrieveUser` method of the FusionAuth API client for typescript.
+We also use the FusionAuth API to retrieve user information for the creator of a ticket. This is done in the `FindAllTicketsController.ts` file using the `retrieveUser` method of the FusionAuth API client for typescript.
 
 ```typescript
 const tickets = await this.ticketRepository.find({where, order: {id: 'DESC'}});
@@ -119,10 +115,10 @@ const creators = new Map<string, any>();
 const client = new FusionAuthClient(this.apiKey, this.baseUrl);
 
 for await (const ticket of tickets) {
-    if (!creators.has(ticket.creator)) {
-        const user = await client.retrieveUser(ticket.creator);
-        creators.set(ticket.creator, user.response.user);
-    }
+  if (!creators.has(ticket.creator)) {
+    const user = await client.retrieveUser(ticket.creator);
+    creators.set(ticket.creator, user.response.user);
+  }
 }
 ```
 
@@ -131,6 +127,10 @@ for await (const ticket of tickets) {
 The login / register view in FusionAuth can be themed using the FusionAuth theme editor. You can find more information about the theme editor in the [FusionAuth documentation](/docs/v1/tech/themes/).
 
 For this example application, we integrate Tailwind CSS and DaisyUI into the theme by automatically generating the css stylesheet based on the FusionAuth theme templates.
+
+{% comment %}
+Link to [Tailwind documentation](/docs/v1/tech/themes/tailwind)
+{% endcomment %}
 
 ## Benefits of the React SDK
 
@@ -180,41 +180,7 @@ We also embed the user information in the backend response. This allows us to di
 Backend `GET /` endpoint:
 
 ```typescript
-@Get('/')
-async findAll(@Locals() locals: { user: any }): Promise<(Partial<TicketEntity> & { _creator: any }) []> {
-    const where: FindOptionsWhere<TicketEntity> = {};
-    if (!locals.user?.roles?.includes('agent')) {
-        where['creator'] = locals.user.sub;
-    }
-
-    // Get all tickets
-    const tickets = await this.ticketRepository.find({where, order: {id: 'DESC'}});
-
-    // Retrieve uses from FusionAuth
-    const creators = new Map<string, any>();
-    const client = new FusionAuthClient(this.apiKey, this.baseUrl);
-
-    for await (const ticket of tickets) {
-        if (!creators.has(ticket.creator)) {
-            const user = await client.retrieveUser(ticket.creator);
-            creators.set(ticket.creator, user.response.user);
-        }
-    }
-
-    // Return tickets with creator data embedded
-    return tickets
-        .map(ticket => {
-            return {
-                id: ticket.id,
-                title: ticket.title,
-                creator: ticket.creator,
-                status: ticket.status,
-                created: ticket.created,
-                updated: ticket.updated,
-                _creator: creators.get(ticket.creator)
-            };
-        });
-}
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/FindAllTicketsController.ts' %}
 ```
 
 Frontend `TicketsPage.tsx`:
@@ -232,7 +198,7 @@ Depending on the state of the ticket and the role of the user, different actions
 
 Currently, the following flow is implemented:
 
-{% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-flow.png" alt="The ticket flow inplemented in FusionDesk" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-flow.png" alt="The ticket flow implemented in FusionDesk" class="img-fluid" figure=false %}
 
 If the ticket is open and the user is an `agent`, the user can mark the ticket as `solved`.
 
@@ -240,52 +206,22 @@ The creator of the ticket then has the option to either close or reopen the tick
 
 After the ticket is closed, it cannot be edited anymore.
 
-Backend `GET :id`:
+Backend `GET /:id`:
 
 ```typescript
-@Get('/:id')
-find(@PathParams("id") @Integer() id: number): Promise<TicketEntity> {
-    return this.ticketRepository.findOneByOrFail({id});
-}
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/FindTicketController.ts' %}
 ```
 
 Backend `POST /`:
 
 ```typescript
-@Post('/')
-create(@BodyParams() ticket: DeepPartial<TicketEntity>, @Locals() locals: { user: any }): Promise<TicketEntity> {
-    const ticketEntity = this.ticketRepository.create();
-    this.ticketRepository.merge(ticketEntity, {
-        title: ticket.title,
-        description: ticket.description,
-    });
-    ticketEntity.creator = locals.user.sub;
-    return this.ticketRepository.save(ticketEntity);
-}
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/CreateTicketController.ts' %}
 ```
 
 Backend `PATCH /:id`:
 
 ```typescript
-@Patch('/:id')
-async update(@PathParams("id") @Integer() id: number, @BodyParams() ticketInput: DeepPartial<TicketEntity>, @Locals() locals: { user: any }): Promise<TicketEntity> {
-    let filteredTicketInput: DeepPartial<TicketEntity> = {
-        title: ticketInput.title,
-        description: ticketInput.description,
-        status: ticketInput.status,
-    };
-    if (locals.user.roles.includes('agent')) {
-        filteredTicketInput = {
-            ...filteredTicketInput,
-            solution: ticketInput.solution,
-        };
-    } else if (ticketInput.status !== TicketStatus.OPEN && ticketInput.status !== TicketStatus.CLOSED)
-        throw new Error('You are not allowed to change the status of the ticket');
-
-    const ticket = await this.ticketRepository.findOneByOrFail({id});
-    this.ticketRepository.merge(ticket, filteredTicketInput);
-    return this.ticketRepository.save(ticket);
-}
+{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/UpdateTicketController.ts' %}
 ```
 
 Frontend `TicketPage.tsx`:
