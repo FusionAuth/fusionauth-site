@@ -71,7 +71,7 @@ python setup.py
 
 This configures FusionAuth for your {{page.technology}} application.
 
-When you’re done, you can log in to your instance and examine the new application configuration, the script created for you.
+When you’re done, you can log in to your instance and examine the new application configuration that the script created for you.
 
 ## Create Your {{page.technology}} Application
 
