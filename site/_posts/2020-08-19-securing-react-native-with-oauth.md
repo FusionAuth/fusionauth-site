@@ -63,9 +63,9 @@ In FusionAuth, an Application is anything a user might log in to. To configure t
 
 From there, create a new application.
 
-Once you've done that, navigate to the "OAuth" tab, set Client Authentication to `Not required`, and add `fusionauth.demo:/oauthredirect` to the Authorized redirect URLs. We'll use this redirect URL in our React Native application later.
+Once you've done that, navigate to the "OAuth" tab, set "Client Authentication" to `Not required`, and add `fusionauth.demo:/oauthredirect` to the "Authorized Redirect URLs". We'll use this redirect URL in our React Native application later.
 
-Also, note the value of "Client Id"; we'll need that later too. Click "Save", then edit the Application again by clicking the blue "Edit" button.
+Also, note the value of "Client Id"; we'll need that later too. Click "Save", then edit the Application again by clicking the blue "Edit" button to double check your setup.
 
 When properly configured, the application details screen should look like this:
 
