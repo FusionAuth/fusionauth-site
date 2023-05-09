@@ -6,7 +6,7 @@ image: advice/oauth-device-authorization-article.png
 author: Matthew Altman & Trevor Smith
 category: OAuth
 date: 2019-11-04
-dateModified: 2019-11-04
+dateModified: 2023-03-24
 ---
 
 If you have a modern entertainment device like a Roku, AppleTV, XBox, Playstation, etc., there's a good chance that at some point you will connect it to subscription services such as Netflix, Amazon, Pandora, or HBO. In theory it should be easy. It's your device and you've already purchased a subscription to the service. So, just turn it on and go right? Sadly, no. 
@@ -121,11 +121,7 @@ After the user has entered their code and logged in, the call that the Nerd Stuf
 We're excited to offer this new feature in FusionAuth, and hope you take the time to try it out for yourself. For more information:
 
 - Read this [tutorial](/docs/v1/tech/oauth/#example-device-authorization-grant) that explains how to implement this with specific code examples.
-- Check out the updated API docs which lay out changes and additions to the [Oauth2 API](/docs/v1/tech/oauth/endpoints).
-- Download [fusionauth-example-device-grant](https://github.com/FusionAuth/fusionauth-example-device-grant) which is a toy example app that represents the device side of the workflow. With it and [FusionAuth](/) you can have a complete working example of the Device Authorization Grant.
-
-## FusionAuth is Always Improving
-
-We test and update FusionAuth constantly to ensure that we are providing you with the most flexible and powerful identity and access management solution. If you find a bug or have any questions, let us know either at [GitHub](https://github.com/FusionAuth/fusionauth-issues "Jump to GitHub") or [StackOverflow](https://stackoverflow.com/questions/tagged/fusionauth "Jump to StackOverflow") and we'll take a look.
+- Check out the docs which explain the [OAuth2 Device Grant](/docs/v1/tech/oauth/endpoints) parameters in detail.
+- Download [fusionauth-example-device-grant](https://github.com/FusionAuth/fusionauth-example-device-grant) which is a toy example app that represents the device side of the workflow. With it and [FusionAuth](/) you can have a complete working Device Authorization grant.
 
 {% include _advice-get-started.liquid intro="If you are looking for a solution that provides full support for OAuth Device Authorization, FusionAuth has you covered." %}

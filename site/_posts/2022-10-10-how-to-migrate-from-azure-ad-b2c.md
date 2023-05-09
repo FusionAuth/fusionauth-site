@@ -136,7 +136,7 @@ The basic steps of a slow migration are:
 
 * Set up the new system. Make sure you map all functionality and data from Azure AD B2C to the new system.
 * Determine what constitutes "done" for this migration, since it is unlikely that every single user will log in and be migrated, no matter how long you run these two systems in parallel. You can see [more details on how to calculate that](/docs/v1/tech/migration-guide/general#migration-timeline).
-* Set up a way for the new system to present user credentials to Azure AD B2C for an authentication event. The exact method will depend on new system features. This can be done with an Azure Function; see [this document](/docs/v1/tech/migration-guide/azureadb2c#configuring-the-azure-functionset-up-aws) for an example which works with FusionAuth.
+* Set up a way for the new system to present user credentials to Azure AD B2C for an authentication event. The exact method will depend on new system features. This can be done with an Azure Function; see [this document](/docs/v1/tech/migration-guide/azureadb2c#configuring-the-azure-function) for an example which works with FusionAuth.
 * Create configuration in the new auth system corresponding to the configuration in Azure AD B2C. You should also customize the user interface, messages, MFA methods and any other Azure AD B2C specific settings that are relevant.
 * Update your applications to point to the new auth system.
 * Wait for the migration to occur as each user logs in. You can run reports periodically to determine if you've migrated enough users to shut down the drip migration.
